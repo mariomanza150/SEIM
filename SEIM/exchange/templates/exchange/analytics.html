@@ -1,0 +1,364 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Analytics - SEIM{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'exchange:dashboard' %}" class="text-white-50 text-decoration-none">Dashboard</a></li>
+<li class="breadcrumb-item active">Analytics</li>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+
+<!-- DataTables Includes -->
+{% include 'includes/datatables_includes.html' %}
+
+<!-- Custom DataTables Styling -->
+<link rel="stylesheet" href="{% static 'exchange/css/vendor/datatables-custom.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-12">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4">
+            <div class="mb-3 mb-sm-0">
+                <h1 class="h3 mb-1">Exchange Program Analytics</h1>
+                <p class="text-muted mb-0">Comprehensive insights and performance metrics</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <a href="{% url 'exchange:export-report' %}" class="btn btn-primary">
+                    <i class="bi bi-download me-2"></i>Export Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm bg-primary-subtle">
+            <div class="card-body text-center">
+                <i class="bi bi-mortarboard display-4 text-primary mb-2"></i>
+                <h5 class="card-title mb-1">Total Exchanges</h5>
+                <p class="card-text fs-3 fw-bold text-primary mb-0">{{ stats.status_summary.total }}</p>
+                <small class="text-muted">All Applications</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm bg-success-subtle">
+            <div class="card-body text-center">
+                <i class="bi bi-check-circle display-4 text-success mb-2"></i>
+                <h5 class="card-title mb-1">Approval Rate</h5>
+                <p class="card-text fs-3 fw-bold text-success mb-0">{{ stats.approval_rate.approval_rate|floatformat:1 }}%</p>
+                <small class="text-muted">Last 30 Days</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm bg-warning-subtle">
+            <div class="card-body text-center">
+                <i class="bi bi-clock display-4 text-warning mb-2"></i>
+                <h5 class="card-title mb-1">Avg. Processing</h5>
+                <p class="card-text fs-3 fw-bold text-warning mb-0">{{ stats.processing_time.avg_days|floatformat:1 }}</p>
+                <small class="text-muted">Days (Submit to Decision)</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm bg-info-subtle">
+            <div class="card-body text-center">
+                <i class="bi bi-plus-circle display-4 text-info mb-2"></i>
+                <h5 class="card-title mb-1">New Applications</h5>
+                <p class="card-text fs-3 fw-bold text-info mb-0">{{ stats.activity.new_applications }}</p>
+                <small class="text-muted">Last 30 Days</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <!-- Status Distribution -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0 d-flex align-items-center">
+                    <i class="bi bi-pie-chart me-2"></i>
+                    Application Status Distribution
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Monthly Applications -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0 d-flex align-items-center">
+                    <i class="bi bi-graph-up me-2"></i>
+                    Monthly Applications
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyChart" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Top Destinations -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0 d-flex align-items-center">
+                    <i class="bi bi-building me-2"></i>
+                    Top Destination Universities
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="universitiesChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0">
+                <h5 class="mb-0 d-flex align-items-center">
+                    <i class="bi bi-globe me-2"></i>
+                    Top Destination Countries
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="countriesChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 d-flex align-items-center">
+                    <i class="bi bi-activity me-2"></i>
+                    Recent Activity
+                </h5>
+                <div>
+                    <a href="{% url 'exchange:export-report' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-download me-1"></i>Export Full Report
+                    </a>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table id="activityTable" class="table table-hover align-middle mb-0 w-100">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0 ps-4">ID</th>
+                                <th class="border-0">Student</th>
+                                <th class="border-0">Activity</th>
+                                <th class="border-0">Description</th>
+                                <th class="border-0">User</th>
+                                <th class="border-0 pe-4">Date/Time</th>
+                                <th class="border-0 pe-4 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            <!-- DataTables will populate this via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+
+<!-- DataTables Configuration Script -->
+<script src="{% static 'exchange/js/vendor/datatables-config.js' %}"></script>
+
+<script>
+let activityDataTable;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable for Recent Activity
+    initializeActivityDataTable();
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+function initializeActivityDataTable() {
+    // Define columns for DataTables
+    const columns = [
+        { 
+            data: null, 
+            name: 'id',
+            render: function(data, type, row) {
+                return `
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-sm rounded bg-info bg-opacity-10 text-info me-3 d-flex align-items-center justify-content-center">
+                            #${row[0]}
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Activity #${row[0]}</h6>
+                        </div>
+                    </div>
+                `;
+            }
+        },
+        { data: 1, name: 'exchange__student__first_name' },
+        { data: 2, name: 'action' },
+        { data: 3, name: 'description' },
+        { data: 4, name: 'created_by__first_name' },
+        { data: 5, name: 'created_at' },
+        { 
+            data: 6, 
+            name: 'actions', 
+            orderable: false, 
+            searchable: false,
+            className: 'text-end'
+        }
+    ];
+    
+    // Initialize DataTable with SGII configuration
+    activityDataTable = initSGIIDataTable(
+        '#activityTable',
+        '{% url "exchange:activity-datatable" %}',
+        columns,
+        {
+            order: [[5, 'desc']], // Default sort by date (newest first)
+            pageLength: 15, // Show more entries for activity log
+            drawCallback: function() {
+                // Re-initialize tooltips after each draw
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                    new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+        }
+    );
+}
+    // Status Distribution Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ stats.status_summary.labels|safe }},
+            datasets: [{
+                data: {{ stats.status_summary.data|safe }},
+                backgroundColor: [
+                    '#6c757d', // Draft
+                    '#ffc107', // Submitted
+                    '#17a2b8', // Under Review
+                    '#28a745', // Approved
+                    '#dc3545', // Rejected
+                    '#0d6efd'  // Completed
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                }
+            }
+        }
+    });
+    
+    // Monthly Applications Chart
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ stats.monthly_applications.labels|safe }},
+            datasets: [{
+                label: 'Applications',
+                data: {{ stats.monthly_applications.data|safe }},
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            }
+        }
+    });
+    
+    // Top Universities Chart
+    const uniCtx = document.getElementById('universitiesChart').getContext('2d');
+    new Chart(uniCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ stats.universities.labels|safe }},
+            datasets: [{
+                label: 'Applications',
+                data: {{ stats.universities.data|safe }},
+                backgroundColor: 'rgba(13, 110, 253, 0.7)',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+    
+    // Top Countries Chart
+    const countryCtx = document.getElementById('countriesChart').getContext('2d');
+    new Chart(countryCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ stats.countries.labels|safe }},
+            datasets: [{
+                label: 'Applications',
+                data: {{ stats.countries.data|safe }},
+                backgroundColor: 'rgba(40, 167, 69, 0.7)',
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: 'y',
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

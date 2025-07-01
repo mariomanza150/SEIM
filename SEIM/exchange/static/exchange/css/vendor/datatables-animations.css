@@ -1,0 +1,511 @@
+/* 
+ * Enhanced DataTables Animations for SGII
+ * Provides smooth visual transitions and improved user experience
+ */
+
+/* Base transition for all interactive elements */
+.sgii-transition {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* DataTable Row Animations */
+.dataTable tbody tr {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.dataTable tbody tr:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(var(--bs-primary-rgb), 0.15);
+    background-color: rgba(var(--bs-primary-rgb), 0.02) !important;
+}
+
+.dataTable tbody tr:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(var(--bs-primary-rgb), 0.1);
+}
+
+/* Row selection animations */
+.dataTable tbody tr.selected {
+    background-color: rgba(var(--bs-primary-rgb), 0.08) !important;
+    border-left: 3px solid var(--bs-primary);
+}
+
+.dataTable tbody tr.selected:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.12) !important;
+}
+
+/* Smooth row updates */
+.row-updated {
+    animation: highlightUpdate 1.5s ease-in-out;
+    position: relative;
+}
+
+@keyframes highlightUpdate {
+    0% { 
+        background-color: rgba(40, 167, 69, 0.3);
+        box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+    }
+    50% { 
+        background-color: rgba(40, 167, 69, 0.15);
+        box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.1);
+    }
+    100% { 
+        background-color: transparent;
+        box-shadow: none;
+    }
+}
+
+/* New row insertion animation */
+.row-inserted {
+    animation: slideInFromTop 0.6s ease-out;
+}
+
+@keyframes slideInFromTop {
+    0% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Row deletion animation */
+.row-deleted {
+    animation: slideOutToRight 0.4s ease-in forwards;
+}
+
+@keyframes slideOutToRight {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* Loading state improvements */
+.dataTables_processing {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(8px);
+    animation: processingPulse 1.5s ease-in-out infinite;
+    border-radius: 8px;
+    border: 1px solid rgba(var(--bs-primary-rgb), 0.2);
+}
+
+@keyframes processingPulse {
+    0%, 100% { 
+        opacity: 0.9;
+        transform: scale(1);
+    }
+    50% { 
+        opacity: 1;
+        transform: scale(1.02);
+    }
+}
+
+.dataTables_processing .spinner-border {
+    animation: processingSpinner 1s linear infinite;
+}
+
+@keyframes processingSpinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Enhanced pagination animations */
+.dataTables_paginate .paginate_button {
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.dataTables_paginate .paginate_button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(var(--bs-primary-rgb), 0.2);
+}
+
+.dataTables_paginate .paginate_button:active {
+    transform: translateY(0);
+}
+
+.dataTables_paginate .paginate_button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.dataTables_paginate .paginate_button:hover::before {
+    width: 100%;
+    height: 100%;
+}
+
+/* Bulk selection animations */
+.row-checkbox {
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.row-checkbox:checked + label::after {
+    animation: checkboxConfirm 0.3s ease-out;
+}
+
+@keyframes checkboxConfirm {
+    0% { 
+        transform: scale(0) rotate(45deg);
+        opacity: 0;
+    }
+    50% { 
+        transform: scale(1.2) rotate(45deg);
+        opacity: 1;
+    }
+    100% { 
+        transform: scale(1) rotate(45deg);
+        opacity: 1;
+    }
+}
+
+/* Bulk action bar animations */
+#bulkActionBar {
+    animation: slideInFromBottom 0.4s ease-out;
+    transition: all 0.3s ease;
+}
+
+#bulkActionBar.d-none {
+    animation: slideOutToBottom 0.4s ease-in;
+}
+
+@keyframes slideInFromBottom {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOutToBottom {
+    0% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+}
+
+/* Filter panel animations */
+#advancedFiltersPanel {
+    transition: all 0.3s ease;
+}
+
+#advancedFiltersPanel .card-body {
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    overflow: hidden;
+}
+
+#advancedFiltersPanel.collapsed .card-body {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* Progress bar animations */
+.progress-bar {
+    transition: width 0.5s ease-in-out;
+}
+
+.progress-bar-animated {
+    animation: progressBarStripes 1s linear infinite;
+}
+
+@keyframes progressBarStripes {
+    0% { background-position: 0 0; }
+    100% { background-position: 1rem 0; }
+}
+
+/* Modal animations */
+.modal.fade .modal-dialog {
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+    transform: translate(0, -50px) scale(0.95);
+}
+
+.modal.show .modal-dialog {
+    transform: translate(0, 0) scale(1);
+}
+
+/* Button animations */
+.btn {
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Action button specific animations */
+.btn-group .btn {
+    position: relative;
+    z-index: 1;
+}
+
+.btn-group .btn:hover {
+    z-index: 2;
+}
+
+/* Status badge animations */
+.badge {
+    transition: all 0.2s ease;
+}
+
+.badge:hover {
+    transform: scale(1.05);
+}
+
+/* Search input animations */
+.form-control:focus {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+    transition: all 0.2s ease;
+}
+
+/* Dropdown animations */
+.dropdown-menu {
+    animation: dropdownFadeIn 0.3s ease;
+}
+
+@keyframes dropdownFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Card hover effects */
+.card-hover {
+    transition: all 0.3s ease;
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Tooltip animations */
+.tooltip {
+    animation: tooltipFadeIn 0.2s ease;
+}
+
+@keyframes tooltipFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Alert animations */
+.alert {
+    animation: alertSlideIn 0.4s ease;
+}
+
+@keyframes alertSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Active filter tags animations */
+.filter-tag {
+    animation: tagFadeIn 0.3s ease;
+    transition: all 0.2s ease;
+}
+
+.filter-tag:hover {
+    transform: scale(1.05);
+}
+
+.filter-tag.removing {
+    animation: tagFadeOut 0.3s ease forwards;
+}
+
+@keyframes tagFadeIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes tagFadeOut {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+}
+
+/* Keyboard navigation highlight */
+.keyboard-focus {
+    outline: 2px solid var(--bs-primary);
+    outline-offset: 2px;
+    background-color: rgba(var(--bs-primary-rgb), 0.05) !important;
+    animation: keyboardFocusPulse 1s ease-in-out;
+}
+
+@keyframes keyboardFocusPulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(var(--bs-primary-rgb), 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0);
+    }
+}
+
+/* Export button loading state */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    border-right-color: transparent;
+    animation: buttonSpinner 0.75s linear infinite;
+}
+
+@keyframes buttonSpinner {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive animations - reduce motion for mobile */
+@media (max-width: 768px) {
+    .dataTable tbody tr:hover {
+        transform: none;
+        box-shadow: none;
+    }
+    
+    .btn:hover {
+        transform: none;
+    }
+    
+    .card-hover:hover {
+        transform: none;
+    }
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .dataTable tbody tr:hover {
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+        background-color: rgba(255, 255, 255, 0.02) !important;
+    }
+    
+    .dataTables_processing {
+        background: rgba(33, 37, 41, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .keyboard-focus {
+        outline: 3px solid;
+        outline-offset: 3px;
+    }
+}
+
+/* Print styles - disable animations */
+@media print {
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }
+}

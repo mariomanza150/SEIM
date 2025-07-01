@@ -1,0 +1,189 @@
+<!-- Document Upload Modal -->
+<div class="modal fade" id="documentUploadModal" tabindex="-1" aria-labelledby="documentUploadModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="documentUploadModalLabel">
+                    <i class="fas fa-upload"></i> Upload Document
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="documentUploadForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="documentCategory" class="form-label">Document Type <span class="text-danger">*</span></label>
+                        <select name="category" id="documentCategory" class="form-control" required>
+                            <option value="">Select document type...</option>
+                            <option value="TRANSCRIPT">Academic Transcript</option>
+                            <option value="LANGUAGE_CERT">Language Certificate</option>
+                            <option value="MOTIVATION">Motivation Letter</option>
+                            <option value="RECOMMENDATION">Recommendation Letter</option>
+                            <option value="PASSPORT">Passport Copy</option>
+                            <option value="MEDICAL">Medical Certificate</option>
+                            <option value="FINANCIAL">Financial Statement</option>
+                            <option value="OTHER">Other Document</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="documentFile" class="form-label">File <span class="text-danger">*</span></label>
+                        <input type="file" name="document_file" id="documentFile" class="form-control" required>
+                        <small class="text-muted">Accepted formats: PDF, JPG, PNG (Max size: 10MB)</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="documentDescription" class="form-label">Description</label>
+                        <textarea name="description" id="documentDescription" class="form-control" rows="3" 
+                                  placeholder="Add any relevant notes about this document..."></textarea>
+                    </div>
+                    
+                    <!-- Progress bar -->
+                    <div class="progress d-none" id="uploadProgressContainer">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                             role="progressbar" 
+                             id="uploadProgressBar"
+                             style="width: 0%"
+                             aria-valuenow="0" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">0%</div>
+                    </div>
+                    
+                    <!-- Error message container -->
+                    <div class="alert alert-danger d-none" id="uploadError">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <span id="uploadErrorMessage"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="uploadSubmitBtn">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Document upload handler
+$(document).ready(function() {
+    $('#documentUploadForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        // Get exchange ID from data attribute or URL
+        const exchangeId = $('#documentUploadModal').data('exchange-id');
+        if (!exchangeId) {
+            showUploadError('Exchange ID not found');
+            return;
+        }
+        
+        // Prepare form data
+        const formData = new FormData(this);
+        formData.append('exchange', exchangeId);
+        
+        // Reset error messages
+        $('#uploadError').addClass('d-none');
+        $('#uploadProgressContainer').removeClass('d-none');
+        $('#uploadSubmitBtn').prop('disabled', true);
+        
+        // Upload file with progress tracking
+        $.ajax({
+            url: '/api/documents/upload/',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            xhr: function() {
+                const xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener("progress", function(evt) {
+                    if (evt.lengthComputable) {
+                        const percentComplete = Math.round((evt.loaded / evt.total) * 100);
+                        $('#uploadProgressBar')
+                            .css('width', percentComplete + '%')
+                            .attr('aria-valuenow', percentComplete)
+                            .text(percentComplete + '%');
+                    }
+                }, false);
+                return xhr;
+            },
+            success: function(response) {
+                // Hide modal and reset form
+                $('#documentUploadModal').modal('hide');
+                $('#documentUploadForm')[0].reset();
+                $('#uploadProgressContainer').addClass('d-none');
+                $('#uploadProgressBar').css('width', '0%').text('0%');
+                $('#uploadSubmitBtn').prop('disabled', false);
+                
+                // Reload document list or show success message
+                if (typeof reloadDocuments === 'function') {
+                    reloadDocuments();
+                } else {
+                    location.reload();
+                }
+                
+                // Show success toast
+                showToast('success', 'Document uploaded successfully!');
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON?.error || 'Upload failed. Please try again.';
+                showUploadError(error);
+                $('#uploadProgressContainer').addClass('d-none');
+                $('#uploadSubmitBtn').prop('disabled', false);
+            }
+        });
+    });
+    
+    // Reset modal when hidden
+    $('#documentUploadModal').on('hidden.bs.modal', function() {
+        $('#documentUploadForm')[0].reset();
+        $('#uploadError').addClass('d-none');
+        $('#uploadProgressContainer').addClass('d-none');
+        $('#uploadProgressBar').css('width', '0%').text('0%');
+        $('#uploadSubmitBtn').prop('disabled', false);
+    });
+});
+
+function showUploadError(message) {
+    $('#uploadErrorMessage').text(message);
+    $('#uploadError').removeClass('d-none');
+}
+
+// Helper function to show toast notifications
+function showToast(type, message) {
+    const toastHtml = `
+        <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0" 
+             role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" 
+                        data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    `;
+    
+    // Create or get toast container
+    let toastContainer = $('#toastContainer');
+    if (toastContainer.length === 0) {
+        toastContainer = $('<div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3"></div>');
+        $('body').append(toastContainer);
+    }
+    
+    // Add toast and show it
+    const toast = $(toastHtml);
+    toastContainer.append(toast);
+    const bsToast = new bootstrap.Toast(toast[0]);
+    bsToast.show();
+    
+    // Remove toast after it hides
+    toast.on('hidden.bs.toast', function() {
+        $(this).remove();
+    });
+}
+</script>

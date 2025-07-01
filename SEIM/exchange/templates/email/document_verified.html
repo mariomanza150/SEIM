@@ -1,0 +1,44 @@
+{% extends "email/base.html" %}
+
+{% block title %}Document Verified{% endblock %}
+
+{% block header %}Document Verification - SEIM{% endblock %}
+
+{% block content %}
+<h2>Hello {{ student_name }},</h2>
+
+<p>We are pleased to inform you that your document has been <strong>successfully verified</strong>.</p>
+
+<div class="info-box">
+    <h3>Document Details</h3>
+    <table>
+        <tr>
+            <th>Document Type:</th>
+            <td>{{ document_type }}</td>
+        </tr>
+        <tr>
+            <th>Document Title:</th>
+            <td>{{ document_title }}</td>
+        </tr>
+        <tr>
+            <th>Verified On:</th>
+            <td>{{ verified_at|date:"F j, Y" }}</td>
+        </tr>
+        <tr>
+            <th>Exchange Application:</th>
+            <td>{{ exchange.destination_university }}</td>
+        </tr>
+    </table>
+</div>
+
+<p>This verification is an important step in your exchange application process. You can review the status of all your documents on your dashboard.</p>
+
+<div style="text-align: center;">
+    <a href="{{ settings.FRONTEND_URL }}/exchanges/{{ exchange.id }}/documents" class="button">View Documents</a>
+</div>
+
+<p>If you have any questions regarding your application or need to submit additional documentation, please don't hesitate to contact us.</p>
+
+<p>Best regards,<br>
+International Exchange Office</p>
+{% endblock %}

@@ -1,0 +1,33 @@
+Command: python -m mypy SEIM/ --ignore-missing-imports
+Exit Code: 1
+Timestamp: 2025-05-29 17:18:34.285942
+================================================================================
+STDOUT:
+SEIM\seim\custom_settings\storage.py:87: error: Need type annotation for "STATICFILES_DIRS" (hint: "STATICFILES_DIRS: list[<type>] = ...")  [var-annotated]
+SEIM\exchange\services\base.py:33: error: Incompatible types in assignment (expression has type "None", variable has type "type[Any]")  [assignment]
+SEIM\exchange\migrations\0013_add_real_performance_indexes.py:12: error: Need type annotation for "operations" (hint: "operations: list[<type>] = ...")  [var-annotated]
+SEIM\seim\custom_settings\dev.py:23: error: Dict entry 1 has incompatible type "str": "Path"; expected "str": "str"  [dict-item]
+SEIM\seim\custom_settings\api.py:138: error: Need type annotation for "WEBHOOK_ENDPOINTS" (hint: "WEBHOOK_ENDPOINTS: dict[<type>, <type>] = ...")  [var-annotated]
+SEIM\seim\custom_settings\prod.py:24: error: Incompatible types in assignment (expression has type "str | None", variable has type "str")  [assignment]
+SEIM\seim\custom_settings\prod.py:69: error: Incompatible types in assignment (expression has type "str", variable has type "Path")  [assignment]
+SEIM\seim\custom_settings\prod.py:168: error: Dict entry 4 has incompatible type "str": "dict[str, str]"; expected "str": "list[str]"  [dict-item]
+SEIM\seim\custom_settings\prod.py:172: error: Dict entry 5 has incompatible type "str": "str"; expected "str": "list[str]"  [dict-item]
+SEIM\seim\custom_settings\prod.py:173: error: Dict entry 6 has incompatible type "str": "int"; expected "str": "list[str]"  [dict-item]
+SEIM\seim\custom_settings\prod.py:194: error: Item "None" of "str | None" has no attribute "split"  [union-attr]
+SEIM\exchange\models\base.py:84: error: Name "AddStudentProfile" already defined on line 72  [no-redef]
+SEIM\exchange\models\base.py:88: error: Name "AddStudentDashboard" already defined on line 77  [no-redef]
+SEIM\seim\settings.py:17: error: Incompatible import of "DATABASES" (imported name has type "dict[str, dict[str, str]]", local name has type "dict[str, dict[str, object]]")  [assignment]
+SEIM\seim\settings.py:17: error: Incompatible import of "CACHES" (imported name has type "dict[str, dict[str, str]]", local name has type "dict[str, dict[str, str | None]]")  [assignment]
+SEIM\seim\settings.py:25: error: Incompatible types in assignment (expression has type "Path", variable has type "str")  [assignment]
+SEIM\seim\settings.py:26: error: "str" has no attribute "mkdir"  [attr-defined]
+SEIM\exchange\admin.py:115: error: "Callable[[ExchangeAdmin, Any], Any]" has no attribute "short_description"  [attr-defined]
+SEIM\exchange\admin.py:127: error: "Callable[[ExchangeAdmin, Any], Any]" has no attribute "short_description"  [attr-defined]
+SEIM\exchange\admin.py:143: error: "Callable[[ExchangeAdmin, Any], Any]" has no attribute "short_description"  [attr-defined]
+SEIM\exchange\admin.py:181: error: "Callable[[DocumentAdmin, Any], Any]" has no attribute "short_description"  [attr-defined]
+SEIM\exchange\admin.py:187: error: "Callable[[DocumentAdmin, Any], Any]" has no attribute "short_description"  [attr-defined]
+SEIM\exchange\admin.py:198: error: "Callable[[DocumentAdmin, Any], Any]" has no attribute "short_description"  [attr-defined]
+SEIM\exchange\services\form_handler.py:6: error: Module "exchange.models" has no attribute "FormStep"  [attr-defined]
+SEIM\exchange\services\form_handler.py:6: error: Module "exchange.models" has no attribute "FormSubmission"  [attr-defined]
+Found 25 errors in 10 files (checked 125 source files)
+
+STDERR:

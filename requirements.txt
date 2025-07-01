@@ -1,0 +1,5 @@
+# Main requirements file
+# This file includes all requirements for development
+# For production, use requirements/prod.txt
+
+-r requirements/dev.txt

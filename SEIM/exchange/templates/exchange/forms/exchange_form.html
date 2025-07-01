@@ -1,0 +1,572 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit Exchange{% else %}New Exchange Application{% endif %} - SEIM{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'exchange:dashboard' %}" class="text-white-50 text-decoration-none">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'exchange:exchange-list' %}" class="text-white-50 text-decoration-none">Exchanges</a></li>
+<li class="breadcrumb-item active">{% if form.instance.pk %}Edit Exchange{% else %}New Application{% endif %}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-10">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <div class="avatar mx-auto mb-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 4rem; height: 4rem;">
+                <i class="bi bi-mortarboard display-6"></i>
+            </div>
+            <h1 class="h3 mb-2">
+                {% if form.instance.pk %}
+                    Edit Exchange Application
+                {% else %}
+                    New Exchange Application
+                {% endif %}
+            </h1>
+            <p class="text-muted">
+                {% if form.instance.pk %}
+                    Update your exchange application details below.
+                {% else %}
+                    Complete the form below to submit your exchange application.
+                {% endif %}
+            </p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            <!-- Progress Indicator -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="small text-muted">Application Progress</span>
+                        <span class="small text-muted">Step 1 of 1</span>
+                    </div>
+                    <div class="progress mt-2" style="height: 4px;">
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <h5 class="mb-1 d-flex align-items-center">
+                        <i class="bi bi-person-badge me-2 text-primary"></i>
+                        Personal Information
+                    </h5>
+                    <p class="text-muted small mb-0">Your personal details for the exchange application</p>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.first_name }}
+                                <label for="{{ form.first_name.id_for_label }}">
+                                    <i class="bi bi-person me-2"></i>First Name *
+                                </label>
+                                {% if form.first_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.first_name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.last_name }}
+                                <label for="{{ form.last_name.id_for_label }}">
+                                    <i class="bi bi-person me-2"></i>Last Name *
+                                </label>
+                                {% if form.last_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.last_name.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.student_number }}
+                                <label for="{{ form.student_number.id_for_label }}">
+                                    <i class="bi bi-credit-card me-2"></i>Student ID *
+                                </label>
+                                {% if form.student_number.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.student_number.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.email }}
+                                <label for="{{ form.email.id_for_label }}">
+                                    <i class="bi bi-envelope me-2"></i>Contact Email *
+                                </label>
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.phone }}
+                                <label for="{{ form.phone.id_for_label }}">
+                                    <i class="bi bi-telephone me-2"></i>Phone Number
+                                </label>
+                                {% if form.phone.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.phone.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.date_of_birth }}
+                                <label for="{{ form.date_of_birth.id_for_label }}">
+                                    <i class="bi bi-calendar me-2"></i>Date of Birth
+                                </label>
+                                {% if form.date_of_birth.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.date_of_birth.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Exchange Details -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <h5 class="mb-1 d-flex align-items-center">
+                        <i class="bi bi-globe me-2 text-success"></i>
+                        Exchange Details
+                    </h5>
+                    <p class="text-muted small mb-0">Information about your desired exchange program</p>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.destination_university }}
+                                <label for="{{ form.destination_university.id_for_label }}">
+                                    <i class="bi bi-building me-2"></i>Host University *
+                                </label>
+                                <datalist id="universities">
+                                    <option value="Harvard University">
+                                    <option value="Stanford University">
+                                    <option value="MIT">
+                                    <option value="Oxford University">
+                                    <option value="Cambridge University">
+                                    <option value="Sorbonne University">
+                                    <option value="University of Tokyo">
+                                    <option value="Australian National University">
+                                </datalist>
+                                {% if form.destination_university.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.destination_university.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.destination_country }}
+                                <label for="{{ form.destination_country.id_for_label }}">
+                                    <i class="bi bi-geo-alt me-2"></i>Host Country *
+                                </label>
+                                {% if form.destination_country.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.destination_country.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.exchange_program }}
+                                <label for="{{ form.exchange_program.id_for_label }}">
+                                    <i class="bi bi-book me-2"></i>Exchange Program *
+                                </label>
+                                <datalist id="programs">
+                                    <option value="Semester Exchange">
+                                    <option value="Summer Program">
+                                    <option value="Academic Year Program">
+                                    <option value="Research Exchange">
+                                    <option value="Internship Program">
+                                    <option value="Study Abroad">
+                                    <option value="Double Degree">
+                                    <option value="Short-term Program">
+                                </datalist>
+                                {% if form.exchange_program.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.exchange_program.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.current_year }}
+                                <label for="{{ form.current_year.id_for_label }}">
+                                    <i class="bi bi-calendar me-2"></i>Current Year
+                                </label>
+                                {% if form.current_year.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.current_year.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.start_date }}
+                                <label for="{{ form.start_date.id_for_label }}">
+                                    <i class="bi bi-calendar-event me-2"></i>Start Date *
+                                </label>
+                                {% if form.start_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.start_date.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.end_date }}
+                                <label for="{{ form.end_date.id_for_label }}">
+                                    <i class="bi bi-calendar-check me-2"></i>End Date *
+                                </label>
+                                {% if form.end_date.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.end_date.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <h5 class="mb-1 d-flex align-items-center">
+                        <i class="bi bi-journal-text me-2 text-info"></i>
+                        Academic Information
+                    </h5>
+                    <p class="text-muted small mb-0">Your current academic status and achievements</p>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.current_university }}
+                                <label for="{{ form.current_university.id_for_label }}">
+                                    <i class="bi bi-building me-2"></i>Current University *
+                                </label>
+                                {% if form.current_university.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.current_university.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.current_program }}
+                                <label for="{{ form.current_program.id_for_label }}">
+                                    <i class="bi bi-journal-code me-2"></i>Current Program *
+                                </label>
+                                {% if form.current_program.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.current_program.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.gpa }}
+                                <label for="{{ form.gpa.id_for_label }}">
+                                    <i class="bi bi-award me-2"></i>Current GPA
+                                </label>
+                                <div class="form-text">Scale: 0.0 - 4.0</div>
+                                {% if form.gpa.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.gpa.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ form.language_proficiency }}
+                                <label for="{{ form.language_proficiency.id_for_label }}">
+                                    <i class="bi bi-translate me-2"></i>Language Proficiency
+                                </label>
+                                {% if form.language_proficiency.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.language_proficiency.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statement of Purpose -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <h5 class="mb-1 d-flex align-items-center">
+                        <i class="bi bi-chat-quote me-2 text-warning"></i>
+                        Statement of Purpose
+                    </h5>
+                    <p class="text-muted small mb-0">Explain your motivation and goals for this exchange</p>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="form-floating">
+                        {{ form.motivation_letter }}
+                        <label for="{{ form.motivation_letter.id_for_label }}">
+                            <i class="bi bi-textarea-t me-2"></i>Statement of Purpose *
+                        </label>
+                        <div class="form-text">
+                            <div class="d-flex justify-content-between">
+                                <span>Explain why you want to participate in this exchange program (minimum 200 words)</span>
+                                <span class="text-muted" id="wordCount">0 words</span>
+                            </div>
+                        </div>
+                        {% if form.motivation_letter.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.motivation_letter.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <h5 class="mb-1 d-flex align-items-center">
+                        <i class="bi bi-info-circle me-2 text-secondary"></i>
+                        Additional Information
+                    </h5>
+                    <p class="text-muted small mb-0">Optional additional details</p>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-floating">
+                                {{ form.special_requirements }}
+                                <label for="{{ form.special_requirements.id_for_label }}">
+                                    <i class="bi bi-clipboard-check me-2"></i>Special Requirements
+                                </label>
+                                {% if form.special_requirements.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.special_requirements.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-floating">
+                                {{ form.emergency_contact }}
+                                <label for="{{ form.emergency_contact.id_for_label }}">
+                                    <i class="bi bi-person-lines-fill me-2"></i>Emergency Contact Information
+                                </label>
+                                {% if form.emergency_contact.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in form.emergency_contact.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex flex-column flex-sm-row gap-3 justify-content-between align-items-sm-center">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="agreeTerms" required>
+                            <label class="form-check-label" for="agreeTerms">
+                                I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">terms and conditions</a> *
+                            </label>
+                            <div class="invalid-feedback">
+                                You must agree to the terms and conditions.
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a href="{% url 'exchange:exchange-list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-2"></i>Cancel
+                            </a>
+                            <button type="button" class="btn btn-outline-primary" id="saveAsDraft">
+                                <i class="bi bi-file-earmark me-2"></i>Save as Draft
+                            </button>
+                            <button type="submit" class="btn btn-primary" id="submitForm">
+                                <i class="bi bi-check-circle me-2"></i>
+                                {% if form.instance.pk %}Update Application{% else %}Submit Application{% endif %}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header border-0">
+                <h1 class="modal-title h5" id="termsModalLabel">Terms and Conditions</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Eligibility Requirements</h6>
+                <p class="small text-muted mb-3">Students must meet all academic and administrative requirements...</p>
+                
+                <h6>2. Application Process</h6>
+                <p class="small text-muted mb-3">All information provided must be accurate and complete...</p>
+                
+                <h6>3. Academic Responsibilities</h6>
+                <p class="small text-muted mb-3">Students are expected to maintain academic standards...</p>
+                
+                <h6>4. Financial Obligations</h6>
+                <p class="small text-muted mb-3">Students are responsible for all costs associated...</p>
+                
+                <h6>5. Code of Conduct</h6>
+                <p class="small text-muted mb-0">Students must adhere to all institutional policies...</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                    <i class="bi bi-check me-2"></i>I Understand
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('.needs-validation');
+    const submitBtn = document.getElementById('submitForm');
+    const saveAsDraftBtn = document.getElementById('saveAsDraft');
+    
+    // Word count for statement of purpose
+    const purposeTextarea = document.getElementById('{{ form.motivation_letter.id_for_label }}');
+    const wordCountElement = document.getElementById('wordCount');
+    
+    if (purposeTextarea && wordCountElement) {
+        function updateWordCount() {
+            const words = purposeTextarea.value.trim().split(/\s+/).filter(word => word.length > 0);
+            const count = words.length;
+            wordCountElement.textContent = count + ' words';
+            
+            if (count < 200) {
+                wordCountElement.classList.add('text-warning');
+                wordCountElement.classList.remove('text-success');
+            } else {
+                wordCountElement.classList.add('text-success');
+                wordCountElement.classList.remove('text-warning');
+            }
+        }
+        
+        purposeTextarea.addEventListener('input', updateWordCount);
+        updateWordCount(); // Initial count
+    }
+    
+    // Date validation
+    const startDateInput = document.getElementById('{{ form.start_date.id_for_label }}');
+    const endDateInput = document.getElementById('{{ form.end_date.id_for_label }}');
+    
+    function validateDates() {
+        if (startDateInput.value && endDateInput.value) {
+            const startDate = new Date(startDateInput.value);
+            const endDate = new Date(endDateInput.value);
+            const today = new Date();
+            
+            if (startDate < today) {
+                startDateInput.setCustomValidity('Start date cannot be in the past');
+            } else if (endDate <= startDate) {
+                endDateInput.setCustomValidity('End date must be after start date');
+            } else {
+                startDateInput.setCustomValidity('');
+                endDateInput.setCustomValidity('');
+            }
+        }
+    }
+    
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', validateDates);
+        endDateInput.addEventListener('change', validateDates);
+    }
+    
+    // Form submission
+    form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        validateDates();
+        
+        if (form.checkValidity()) {
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Submitting...';
+            submitBtn.disabled = true;
+            
+            // Add action field for submission
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'submit';
+            form.appendChild(actionInput);
+            
+            form.submit();
+        }
+        
+        form.classList.add('was-validated');
+    });
+    
+    // Save as draft
+    if (saveAsDraftBtn) {
+        saveAsDraftBtn.addEventListener('click', function() {
+            // Remove required validation temporarily for draft
+            const requiredFields = form.querySelectorAll('[required]');
+            const originalRequired = [];
+            
+            requiredFields.forEach((field, index) => {
+                if (field.id !== 'agreeTerms') {  // Keep terms checkbox required
+                    originalRequired[index] = field.hasAttribute('required');
+                    field.removeAttribute('required');
+                }
+            });
+            
+            // Add action field for draft
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = 'draft';
+            form.appendChild(actionInput);
+            
+            saveAsDraftBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Saving...';
+            saveAsDraftBtn.disabled = true;
+            
+            form.submit();
+        });
+    }
+});
+</script>
+{% endblock %}

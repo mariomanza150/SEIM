@@ -1,0 +1,53 @@
+{% extends "email/base.html" %}
+
+{% block title %}Exchange Application Update{% endblock %}
+
+{% block content %}
+<h2>Dear {{ student_name }},</h2>
+
+<p>Thank you for your interest in the student exchange program.</p>
+
+<p>After careful consideration, we regret to inform you that your exchange application to <strong>{{ destination }}</strong> has not been approved at this time.</p>
+
+<div class="info-box">
+    <h3>Application Details</h3>
+    <table>
+        <tr>
+            <th>Destination University:</th>
+            <td>{{ destination }}</td>
+        </tr>
+        <tr>
+            <th>Application ID:</th>
+            <td>{{ exchange.id }}</td>
+        </tr>
+    </table>
+</div>
+
+{% if reason %}
+<div class="warning-box">
+    <h3>Feedback</h3>
+    <p>{{ reason }}</p>
+</div>
+{% endif %}
+
+<h3>What Can You Do Next?</h3>
+<ul>
+    <li><strong>Review feedback:</strong> Consider the feedback provided and work on improving those areas</li>
+    <li><strong>Reapply:</strong> You may reapply for future exchange opportunities</li>
+    <li><strong>Seek guidance:</strong> Schedule a meeting with your academic advisor or the International Relations Office</li>
+    <li><strong>Alternative programs:</strong> Explore other exchange programs that might be a better fit</li>
+</ul>
+
+<p>This decision does not reflect on your academic abilities or potential. Exchange programs are highly competitive, and many factors are considered in the selection process.</p>
+
+<div style="text-align: center;">
+    <a href="{{ settings.FRONTEND_URL }}/exchanges/{{ exchange.id }}" class="button">View Application</a>
+</div>
+
+<p>If you have questions about this decision or would like to discuss future opportunities, please don't hesitate to contact the International Relations Office.</p>
+
+<p>We encourage you to continue pursuing international opportunities and wish you success in your academic journey.</p>
+
+<p>Best regards,<br>
+The SEIM Team</p>
+{% endblock %}

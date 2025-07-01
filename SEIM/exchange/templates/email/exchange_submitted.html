@@ -1,0 +1,50 @@
+{% extends "email/base.html" %}
+
+{% block title %}Exchange Application Submitted{% endblock %}
+
+{% block content %}
+<h2>Hello {{ student_name }},</h2>
+
+<p>Your exchange application has been successfully submitted!</p>
+
+<div class="info-box">
+    <h3>Application Details</h3>
+    <table>
+        <tr>
+            <th>Destination University:</th>
+            <td>{{ destination }}</td>
+        </tr>
+        <tr>
+            <th>Submission Date:</th>
+            <td>{{ submission_date|date:"F j, Y g:i A" }}</td>
+        </tr>
+        <tr>
+            <th>Application ID:</th>
+            <td>{{ exchange.id }}</td>
+        </tr>
+    </table>
+</div>
+
+<h3>What happens next?</h3>
+<ol>
+    <li>Your application will be reviewed by our international relations team</li>
+    <li>We may contact you if additional information is required</li>
+    <li>You will receive an email notification once a decision has been made</li>
+    <li>The review process typically takes 2-3 weeks</li>
+</ol>
+
+<p>You can track the status of your application by logging into the SEIM portal.</p>
+
+<div style="text-align: center;">
+    <a href="{{ settings.FRONTEND_URL }}/exchanges/{{ exchange.id }}" class="button">View Application</a>
+</div>
+
+<div class="warning-box">
+    <strong>Important:</strong> Please ensure all your documents are up to date. You may still upload additional documents if needed.
+</div>
+
+<p>If you have any questions, please contact the International Relations Office.</p>
+
+<p>Best regards,<br>
+The SEIM Team</p>
+{% endblock %}

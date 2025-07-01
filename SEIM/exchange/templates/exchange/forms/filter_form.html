@@ -1,0 +1,72 @@
+<form id="filterForm" method="get" class="card">
+    <div class="card-header">
+        <h5>Filter Exchanges</h5>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <label>Status</label>
+            <select name="status" class="form-control">
+                <option value="">All</option>
+                <option value="DRAFT">Draft</option>
+                <option value="SUBMITTED">Submitted</option>
+                <option value="UNDER_REVIEW">Under Review</option>
+                <option value="APPROVED">Approved</option>
+                <option value="REJECTED">Rejected</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label>Date Range</label>
+            <input type="date" name="start_date" class="form-control mb-2" placeholder="Start Date">
+            <input type="date" name="end_date" class="form-control" placeholder="End Date">
+        </div>
+        <div class="mb-3">
+            <label>Host University</label>
+            <input type="text" name="host_university" class="form-control" placeholder="Search by university...">
+        </div>
+        <div class="mb-3">
+            <label>Country</label>
+            <input type="text" name="country" class="form-control" placeholder="Search by country...">
+        </div>
+        <div class="mb-3">
+            <label>Academic Level</label>
+            <select name="academic_level" class="form-control">
+                <option value="">All Levels</option>
+                <option value="BACHELOR">Bachelor</option>
+                <option value="MASTER">Master</option>
+                <option value="PHD">PhD</option>
+            </select>
+        </div>
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i> Apply Filters
+            </button>
+            <button type="reset" class="btn btn-secondary">
+                <i class="fas fa-undo"></i> Clear
+            </button>
+        </div>
+    </div>
+</form>
+
+<script>
+$(document).ready(function() {
+    // Preserve filter values from URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Set form values from URL parameters
+    urlParams.forEach((value, key) => {
+        const input = $(`#filterForm [name="${key}"]`);
+        if (input.length) {
+            input.val(value);
+        }
+    });
+    
+    // Reset form handler
+    $('#filterForm button[type="reset"]').click(function(e) {
+        e.preventDefault();
+        // Clear form values
+        $('#filterForm')[0].reset();
+        // Redirect to clean URL
+        window.location.href = window.location.pathname;
+    });
+});
+</script>

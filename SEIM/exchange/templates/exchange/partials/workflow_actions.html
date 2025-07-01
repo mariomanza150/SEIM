@@ -1,0 +1,167 @@
+<!-- Workflow Actions Component -->
+<div class="workflow-actions mt-3">
+    {% if exchange.status == 'DRAFT' and user == exchange.student %}
+    <button class="btn btn-primary workflow-action" 
+            data-action="submit" 
+            data-exchange-id="{{ exchange.id }}">
+        <i class="fas fa-paper-plane"></i> Submit Application
+    </button>
+    {% elif exchange.status == 'SUBMITTED' and user.is_staff %}
+    <button class="btn btn-info workflow-action" 
+            data-action="start_review" 
+            data-exchange-id="{{ exchange.id }}">
+        <i class="fas fa-search"></i> Start Review
+    </button>
+    {% elif exchange.status == 'UNDER_REVIEW' and user.is_staff %}
+    <div class="btn-group" role="group">
+        <button class="btn btn-success workflow-action" 
+                data-action="approve" 
+                data-exchange-id="{{ exchange.id }}">
+            <i class="fas fa-check"></i> Approve
+        </button>
+        <button class="btn btn-danger workflow-action" 
+                data-action="reject" 
+                data-exchange-id="{{ exchange.id }}">
+            <i class="fas fa-times"></i> Reject
+        </button>
+        <button class="btn btn-warning workflow-action" 
+                data-action="request_info" 
+                data-exchange-id="{{ exchange.id }}">
+            <i class="fas fa-question-circle"></i> Request Info
+        </button>
+    </div>
+    {% elif exchange.status == 'APPROVED' and user == exchange.student %}
+    <button class="btn btn-success" disabled>
+        <i class="fas fa-check-circle"></i> Application Approved
+    </button>
+    {% if not exchange.accepted_at %}
+    <button class="btn btn-primary workflow-action" 
+            data-action="accept_offer" 
+            data-exchange-id="{{ exchange.id }}">
+        <i class="fas fa-handshake"></i> Accept Offer
+    </button>
+    {% endif %}
+    {% elif exchange.status == 'REJECTED' and user == exchange.student %}
+    <button class="btn btn-danger" disabled>
+        <i class="fas fa-times-circle"></i> Application Rejected
+    </button>
+    <button class="btn btn-secondary workflow-action" 
+            data-action="appeal" 
+            data-exchange-id="{{ exchange.id }}">
+        <i class="fas fa-gavel"></i> Appeal Decision
+    </button>
+    {% endif %}
+    
+    {% if exchange.can_be_cancelled and user == exchange.student %}
+    <button class="btn btn-outline-danger workflow-action" 
+            data-action="cancel" 
+            data-exchange-id="{{ exchange.id }}">
+        <i class="fas fa-ban"></i> Cancel Application
+    </button>
+    {% endif %}
+    
+    {% if user.is_staff %}
+    <button class="btn btn-outline-secondary" 
+            data-bs-toggle="modal" 
+            data-bs-target="#addNoteModal">
+        <i class="fas fa-sticky-note"></i> Add Note
+    </button>
+    {% endif %}
+</div>
+
+<!-- Add Note Modal -->
+{% if user.is_staff %}
+<div class="modal fade" id="addNoteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Internal Note</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addNoteForm">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="noteContent" class="form-label">Note</label>
+                        <textarea class="form-control" id="noteContent" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="noteVisibility" class="form-label">Visibility</label>
+                        <select class="form-control" id="noteVisibility">
+                            <option value="INTERNAL">Internal Only</option>
+                            <option value="STUDENT">Visible to Student</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Handle note submission
+    $('#addNoteForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const noteData = {
+            content: $('#noteContent').val(),
+            visibility: $('#noteVisibility').val(),
+            exchange_id: {{ exchange.id }}
+        };
+        
+        $.ajax({
+            url: '/api/exchanges/{{ exchange.id }}/notes/',
+            type: 'POST',
+            data: JSON.stringify(noteData),
+            contentType: 'application/json',
+            success: function(response) {
+                $('#addNoteModal').modal('hide');
+                $('#addNoteForm')[0].reset();
+                Exchange.showAlert('Note added successfully!', 'success');
+                // Reload notes section if exists
+                if (typeof reloadNotes === 'function') {
+                    reloadNotes();
+                } else {
+                    location.reload();
+                }
+            },
+            error: function(xhr) {
+                const error = xhr.responseJSON?.error || 'Failed to add note';
+                Exchange.showAlert(error, 'danger');
+            }
+        });
+    });
+});
+</script>
+{% endif %}
+
+<style>
+.workflow-actions {
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.workflow-actions .btn {
+    margin: 0.25rem;
+}
+
+@media (max-width: 576px) {
+    .workflow-actions .btn-group {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .workflow-actions .btn-group .btn {
+        width: 100%;
+        margin: 0.125rem 0;
+    }
+}
+</style>

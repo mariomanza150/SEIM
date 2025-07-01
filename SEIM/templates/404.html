@@ -1,0 +1,205 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Page Not Found - SEIM{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">404 Error</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-xl-5">
+        <div class="text-center">
+            <!-- Error Illustration -->
+            <div class="mb-5">
+                <div class="position-relative d-inline-block">
+                    <!-- Large 404 -->
+                    <div class="display-1 fw-bold text-primary opacity-25" style="font-size: 8rem; line-height: 1;">
+                        404
+                    </div>
+                    
+                    <!-- Floating Elements -->
+                    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                        <div class="avatar bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center" 
+                             style="width: 4rem; height: 4rem; animation: float 3s ease-in-out infinite;">
+                            <i class="bi bi-search display-6"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional floating icons -->
+                    <div class="position-absolute" style="top: 20%; left: -20%; animation: float 4s ease-in-out infinite reverse;">
+                        <div class="avatar avatar-sm bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center">
+                            <i class="bi bi-question-circle"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="position-absolute" style="top: 60%; right: -15%; animation: float 5s ease-in-out infinite;">
+                        <div class="avatar avatar-sm bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Error Content -->
+            <div class="mb-5">
+                <h1 class="h3 mb-3">Oops! Page Not Found</h1>
+                <p class="text-muted mb-4 lead">
+                    The page you're looking for seems to have gone on its own exchange program. 
+                    Don't worry, we'll help you find your way back!
+                </p>
+                
+                <!-- Search Box -->
+                <div class="card bg-light border-0 mb-4">
+                    <div class="card-body p-4">
+                        <h6 class="mb-3">Try searching for what you need:</h6>
+                        <form method="get" action="{% url 'exchange:exchange-list' %}">
+                            <div class="input-group">
+                                <input type="text" class="form-control form-control-lg border-0 bg-white" 
+                                       name="search" placeholder="Search exchanges, documents, or pages..." 
+                                       value="{{ request.GET.search }}">
+                                <button class="btn btn-primary btn-lg" type="submit">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                    <a href="{% url 'exchange:dashboard' %}" class="btn btn-primary">
+                        <i class="bi bi-house-door me-2"></i>Go to Dashboard
+                    </a>
+                    <a href="{% url 'exchange:exchange-list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-list-ul me-2"></i>View Exchanges
+                    </a>
+                    <button class="btn btn-outline-info" onclick="history.back()">
+                        <i class="bi bi-arrow-left me-2"></i>Go Back
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Helpful Links -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h6 class="mb-3">Popular Pages</h6>
+                    <div class="row g-3 text-start">
+                        <div class="col-md-6">
+                            <a href="{% url 'exchange:dashboard' %}" class="text-decoration-none">
+                                <div class="d-flex align-items-center p-2 rounded hover-bg-light">
+                                    <div class="avatar avatar-sm me-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-speedometer2"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-medium">Dashboard</div>
+                                        <small class="text-muted">Your main overview</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{% url 'exchange:exchange-list' %}" class="text-decoration-none">
+                                <div class="d-flex align-items-center p-2 rounded hover-bg-light">
+                                    <div class="avatar avatar-sm me-3 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-list-ul"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-medium">All Exchanges</div>
+                                        <small class="text-muted">Browse applications</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% if user.profile.role == 'STUDENT' %}
+                        <div class="col-md-6">
+                            <a href="{% url 'exchange:create-exchange' %}" class="text-decoration-none">
+                                <div class="d-flex align-items-center p-2 rounded hover-bg-light">
+                                    <div class="avatar avatar-sm me-3 bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-medium">New Application</div>
+                                        <small class="text-muted">Start an exchange</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-6">
+                            <a href="{% url 'exchange:profile' %}" class="text-decoration-none">
+                                <div class="d-flex align-items-center p-2 rounded hover-bg-light">
+                                    <div class="avatar avatar-sm me-3 bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-medium">Your Profile</div>
+                                        <small class="text-muted">Manage your info</small>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Background decoration -->
+<div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+     style="z-index: -1; pointer-events: none;">
+    <div class="position-absolute" style="width: 400px; height: 400px; background: linear-gradient(135deg, var(--bs-primary), var(--bs-info)); opacity: 0.03; border-radius: 50%; filter: blur(100px); top: 10%; left: 10%;"></div>
+    <div class="position-absolute" style="width: 300px; height: 300px; background: linear-gradient(135deg, var(--bs-success), var(--bs-warning)); opacity: 0.03; border-radius: 50%; filter: blur(80px); bottom: 20%; right: 15%;"></div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+.hover-bg-light:hover {
+    background-color: var(--bs-gray-100) !important;
+    transition: background-color 0.15s ease-in-out;
+}
+
+[data-bs-theme="dark"] .hover-bg-light:hover {
+    background-color: var(--bs-gray-800) !important;
+}
+
+/* Add some subtle animations */
+.card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .display-1 {
+        font-size: 6rem !important;
+    }
+    
+    .avatar {
+        width: 3rem !important;
+        height: 3rem !important;
+    }
+    
+    .position-absolute {
+        display: none;
+    }
+}
+</style>
+{% endblock %}

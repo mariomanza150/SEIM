@@ -1,0 +1,129 @@
+"""
+Admin configuration for Exchange model.
+"""
+
+from django.contrib import admin
+from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
+
+from ..models.applications.exchange import Exchange
+
+
+@admin.register(Exchange)
+class ExchangeAdmin(admin.ModelAdmin):
+    """Admin interface for Exchange model"""
+
+    list_display = (
+        "id",
+        "student",
+        "host_university",
+        "destination_country",
+        "status",
+        "submission_date",
+        "decision_date",
+        "has_all_documents",
+    )
+    list_filter = (
+        "status",
+        "destination_country",
+        "submission_date",
+        "decision_date",
+    )
+    search_fields = (
+        "student__username",
+        "student__email",
+        "student__first_name",
+        "student__last_name",
+        "host_university",
+        "destination_country",
+    )
+    date_hierarchy = "created_at"
+    readonly_fields = ("created_at", "updated_at", "workflow_history")
+    fieldsets = (
+        (
+            _("Student Information"),
+            {
+                "fields": (
+                    "student",
+                )
+            },
+        ),
+        (
+            _("Academic Information"),
+            {
+                "fields": (
+                    "home_university",
+                    "degree",
+                    "major",
+                    "program",
+                    "academic_year",
+                    "current_semester",
+                )
+            },
+        ),
+        (
+            _("Exchange Details"),
+            {
+                "fields": (
+                    "host_university",
+                    "destination_country",
+                )
+            },
+        ),
+        (
+            _("Application Details"),
+            {
+                "fields": (
+                    "study_goals",
+                    "referral_source",
+                )
+            },
+        ),
+        (
+            _("Status and Workflow"),
+            {
+                "fields": (
+                    "status",
+                    "submission_date",
+                    "review_date",
+                    "decision_date",
+                    "reviewed_by",
+                    "notes",
+                    "workflow_history",
+                )
+            },
+        ),
+        (
+            _("System Information"),
+            {"fields": ("created_at", "updated_at"), "classes": ("collapse",)},
+        ),
+    )
+
+    def has_all_documents(self, obj):
+        """Display if exchange has all required documents"""
+        has_docs = obj.has_required_documents()
+        icon = "✅" if has_docs else "❌"
+        return format_html(
+            '{} <a href="{}">View Documents</a>',
+            icon,
+            reverse("admin:exchange_document_changelist") + f"?exchange__id={obj.id}",
+        )
+
+    has_all_documents.short_description = _("Required Documents")
+
+    def workflow_history(self, obj):
+        """Display workflow history in admin"""
+        logs = obj.workflow_logs.all().order_by("-timestamp")
+        if not logs:
+            return _("No workflow history")
+
+        html = "<table><tr><th>Date</th><th>From</th><th>To</th><th>User</th><th>Comment</th></tr>"
+        for log in logs:
+            html += f"<tr><td>{log.timestamp}</td><td>{log.from_status}</td><td>{log.to_status}</td>"
+            html += f'<td>{log.user.username if log.user else "System"}</td><td>{log.comment}</td></tr>'
+        html += "</table>"
+
+        return format_html(html)
+
+    workflow_history.short_description = _("Workflow History")

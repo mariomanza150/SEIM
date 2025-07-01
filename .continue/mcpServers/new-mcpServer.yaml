@@ -1,0 +1,10 @@
+name: VsCode mcpServer
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: VsCode MCP Server
+    command: npx
+    args:
+      - mcp-remote@next
+      - http://localhost:32000/mcp"
+    env: {}

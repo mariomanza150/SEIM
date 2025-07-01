@@ -1,0 +1,337 @@
+<!-- Advanced Filters Panel Template -->
+<div id="advancedFiltersPanel" class="card border-0 shadow-sm mb-4 d-none">
+    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">
+            <i class="bi bi-funnel me-2"></i>Advanced Filters
+            <span id="activeFiltersCount" class="badge bg-primary-subtle text-primary border border-primary-subtle ms-2 d-none">0</span>
+        </h6>
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-primary" onclick="sgiiFilters.saveFilterPreset()">
+                <i class="bi bi-bookmark-plus me-1"></i>Save Preset
+            </button>
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
+                    data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-collection me-1"></i>Presets
+            </button>
+            <ul class="dropdown-menu" id="filterPresetsDropdown">
+                <li><h6 class="dropdown-header">Quick Presets</h6></li>
+                <li><a class="dropdown-item" href="#" onclick="sgiiFilters.applyQuickPreset('pending')">
+                    <i class="bi bi-clock text-warning me-2"></i>Pending Review
+                </a></li>
+                <li><a class="dropdown-item" href="#" onclick="sgiiFilters.applyQuickPreset('approved_recent')">
+                    <i class="bi bi-check-circle text-success me-2"></i>Recently Approved
+                </a></li>
+                <li><a class="dropdown-item" href="#" onclick="sgiiFilters.applyQuickPreset('overdue')">
+                    <i class="bi bi-exclamation-triangle text-danger me-2"></i>Overdue Applications
+                </a></li>
+                <li><a class="dropdown-item" href="#" onclick="sgiiFilters.applyQuickPreset('this_month')">
+                    <i class="bi bi-calendar3 text-info me-2"></i>This Month
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header">Saved Presets</h6></li>
+                <li id="savedPresetsContainer"><small class="dropdown-item-text text-muted">No saved presets</small></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item text-primary" href="#" onclick="sgiiFilters.managePresets()">
+                    <i class="bi bi-gear me-2"></i>Manage Presets
+                </a></li>
+            </ul>
+            <button type="button" class="btn btn-outline-danger" onclick="sgiiFilters.clearAllFilters()">
+                <i class="bi bi-x-circle me-1"></i>Clear All
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Primary Filters Row -->
+        <div class="row g-3 mb-3">
+            <!-- Date Range Filter -->
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label small fw-semibold">
+                    <i class="bi bi-calendar-range me-1"></i>Date Range
+                </label>
+                <div class="input-group input-group-sm">
+                    <input type="date" class="form-control" id="dateFrom" name="date_from" 
+                           title="Filter from this date">
+                    <span class="input-group-text px-2">to</span>
+                    <input type="date" class="form-control" id="dateTo" name="date_to"
+                           title="Filter to this date">
+                </div>
+                <div class="mt-1">
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        <button type="button" class="btn btn-outline-secondary" onclick="sgiiFilters.setDateRange('today')">Today</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="sgiiFilters.setDateRange('week')">This Week</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="sgiiFilters.setDateRange('month')">This Month</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Status Multi-Select -->
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label small fw-semibold">
+                    <i class="bi bi-check-circle me-1"></i>Status (Multiple)
+                </label>
+                <select class="form-select form-select-sm" id="statusFilter" multiple size="1"
+                        title="Select multiple statuses">
+                    <option value="DRAFT">Draft</option>
+                    <option value="SUBMITTED">Submitted</option>
+                    <option value="UNDER_REVIEW">Under Review</option>
+                    <option value="APPROVED">Approved</option>
+                    <option value="REJECTED">Rejected</option>
+                    <option value="COMPLETED">Completed</option>
+                </select>
+                <div class="form-text small">Hold Ctrl/Cmd to select multiple</div>
+            </div>
+            
+            <!-- Country Multi-Select -->
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label small fw-semibold">
+                    <i class="bi bi-globe me-1"></i>Countries (Multiple)
+                </label>
+                <select class="form-select form-select-sm" id="countryFilter" multiple size="1"
+                        title="Select multiple countries">
+                    <option value="USA">United States</option>
+                    <option value="UK">United Kingdom</option>
+                    <option value="DE">Germany</option>
+                    <option value="FR">France</option>
+                    <option value="JP">Japan</option>
+                    <option value="AU">Australia</option>
+                    <option value="CA">Canada</option>
+                    <option value="IT">Italy</option>
+                    <option value="ES">Spain</option>
+                    <option value="NL">Netherlands</option>
+                    <option value="CH">Switzerland</option>
+                    <option value="SE">Sweden</option>
+                    <option value="NO">Norway</option>
+                    <option value="DK">Denmark</option>
+                </select>
+                <div class="form-text small">Hold Ctrl/Cmd to select multiple</div>
+            </div>
+            
+            <!-- Program Type Filter -->
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label small fw-semibold">
+                    <i class="bi bi-mortarboard me-1"></i>Program Type
+                </label>
+                <select class="form-select form-select-sm" id="programFilter" multiple size="1"
+                        title="Select program types">
+                    <option value="SEMESTER">Semester Exchange</option>
+                    <option value="YEAR">Full Year</option>
+                    <option value="SUMMER">Summer Program</option>
+                    <option value="INTERNSHIP">Internship</option>
+                    <option value="RESEARCH">Research Program</option>
+                    <option value="LANGUAGE">Language Immersion</option>
+                </select>
+                <div class="form-text small">Hold Ctrl/Cmd to select multiple</div>
+            </div>
+        </div>
+        
+        <!-- Secondary Filters Row -->
+        <div class="row g-3 mb-3">
+            <!-- Global Search -->
+            <div class="col-lg-4 col-md-6">
+                <label class="form-label small fw-semibold">
+                    <i class="bi bi-search me-1"></i>Global Search
+                </label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" id="globalSearch" 
+                           placeholder="Search across all fields..."
+                           title="Search in names, universities, programs, etc.">
+                    <button class="btn btn-outline-secondary" type="button" 
+                            onclick="$('#globalSearch').val('').trigger('input')"
+                            title="Clear search">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Student Filter -->
+            <div class="col-lg-4 col-md-6">
+                <label class="form-label small fw-semibold">
+                    <i class="bi bi-person me-1"></i>Student
+                </label>
+                <select class="form-select form-select-sm" id="studentFilter">
+                    <option value="">All Students</option>
+                    <option value="me">My Applications Only</option>
+                    <option value="unassigned">Unassigned</option>
+                </select>
+            </div>
+            
+            <!-- Duration Filter -->
+            <div class="col-lg-4 col-md-6">
+                <label class="form-label small fw-semibold">
+                    <i class="bi bi-clock me-1"></i>Duration (Months)
+                </label>
+                <div class="input-group input-group-sm">
+                    <input type="number" class="form-control" id="durationMin" 
+                           placeholder="Min" min="1" max="24" title="Minimum duration in months">
+                    <span class="input-group-text px-2">to</span>
+                    <input type="number" class="form-control" id="durationMax" 
+                           placeholder="Max" min="1" max="24" title="Maximum duration in months">
+                </div>
+            </div>
+        </div>
+        
+        <!-- Filter Actions Row -->
+        <div class="row g-3 align-items-end">
+            <div class="col-lg-6">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoApplyToggle">
+                        <label class="form-check-label small" for="autoApplyToggle">
+                            <i class="bi bi-lightning me-1"></i>Auto Apply
+                        </label>
+                    </div>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="saveFiltersToggle">
+                        <label class="form-check-label small" for="saveFiltersToggle">
+                            <i class="bi bi-bookmark me-1"></i>Remember Filters
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-outline-info btn-sm" 
+                            onclick="sgiiFilters.showFilterSummary()">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Summary
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" 
+                            onclick="sgiiFilters.applyAdvancedFilters()">
+                        <i class="bi bi-search me-1"></i>
+                        Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Filters Display -->
+        <div id="activeFiltersDisplay" class="mt-3 d-none">
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <small class="text-muted me-2 fw-semibold">Active Filters:</small>
+                <div id="activeFilterTags" class="d-flex flex-wrap gap-1"></div>
+                <button type="button" class="btn btn-link btn-sm p-0 ms-2" 
+                        onclick="sgiiFilters.clearAllFilters()">
+                    <i class="bi bi-x-circle text-danger"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Filter Performance Info -->
+        <div id="filterPerformanceInfo" class="mt-2 d-none">
+            <small class="text-muted">
+                <i class="bi bi-stopwatch me-1"></i>
+                Filtered <span id="filteredCount">0</span> records in <span id="filterTime">0</span>ms
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Advanced Filters Styles -->
+<style>
+#advancedFiltersPanel .form-select[multiple] {
+    min-height: 2.5rem;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 12px;
+}
+
+#advancedFiltersPanel .input-group-sm .form-control,
+#advancedFiltersPanel .input-group-sm .form-select {
+    font-size: 0.875rem;
+}
+
+#advancedFiltersPanel .form-text {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.filter-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+}
+
+.filter-tag .btn-close {
+    font-size: 0.625rem;
+    margin-left: 0.5rem;
+    opacity: 0.7;
+}
+
+.filter-tag .btn-close:hover {
+    opacity: 1;
+}
+
+.filter-tag:hover {
+    transform: scale(1.05);
+}
+
+#activeFiltersCount {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+}
+
+.btn-group-sm .btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+/* Dropdown improvements */
+.dropdown-menu {
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+}
+
+.dropdown-header {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--bs-gray-600);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+/* Animation for filter panel */
+#advancedFiltersPanel {
+    transition: all 0.3s ease;
+}
+
+#advancedFiltersPanel:not(.d-none) {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    #advancedFiltersPanel .row > div {
+        margin-bottom: 1rem;
+    }
+    
+    #advancedFiltersPanel .btn-group .btn {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+}
+</style>

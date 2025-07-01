@@ -1,0 +1,57 @@
+# Production requirements for SGII
+# Includes base requirements plus production-specific packages
+
+-r base.txt
+
+# Production web server
+gunicorn==23.0.0
+gevent==24.2.1
+
+# Monitoring and logging
+sentry-sdk==2.8.0
+python-json-logger==2.0.7
+django-log-request-id==2.1.0
+
+# Security
+django-csp==3.8
+django-permissions-policy==4.20.0
+django-ratelimit==4.1.0
+
+# Performance and caching
+django-redis==5.4.0
+hiredis==2.4.0
+django-cachalot==2.6.3
+django-compress==1.0.1
+
+# Database optimization
+django-db-connection-pool==1.2.5
+django-auto-prefetch==1.8.0
+
+# Static file serving
+django-storages==1.14.4
+
+# Health checks
+django-health-check==3.18.3
+django-watchman==1.3.0
+
+# API documentation
+drf-spectacular==0.27.2
+
+# Session security
+django-session-security==2.6.7
+
+# Backup and maintenance
+django-dbbackup==4.1.0
+
+# Email backends
+django-ses==4.1.0
+django-anymail==11.0.1
+
+# Task monitoring
+flower==2.0.1
+django-celery-beat==2.6.0
+django-celery-results==2.5.1
+
+# Production utilities
+django-environ==0.11.2
+python-decouple==3.8

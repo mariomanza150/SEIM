@@ -1,0 +1,10 @@
+Command: python -m pylint SEIM/ --output-format=text
+Exit Code: 1
+Timestamp: 2025-05-29 17:18:19.807432
+================================================================================
+STDOUT:
+************* Module SEIM
+SEIM\__init__.py:1:0: F0010: error while code parsing: Unable to load file SEIM\__init__.py:
+[Errno 2] No such file or directory: 'SEIM\\__init__.py' (parse-error)
+
+STDERR:

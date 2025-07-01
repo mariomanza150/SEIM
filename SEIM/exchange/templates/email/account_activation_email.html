@@ -1,0 +1,43 @@
+{% extends "email/base_email.html" %}
+
+{% block content %}
+<h2>Welcome to SEIM</h2>
+
+<p>Dear {{ user.first_name }} {{ user.last_name }},</p>
+
+<p>Thank you for registering with the Student Exchange and International Mobility (SEIM) system. To activate your account, please click the button below:</p>
+
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
+  <tbody>
+    <tr>
+      <td align="center">
+        <a href="{{ activation_url }}" target="_blank">Activate Account</a>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>After activating your account, you will be able to:</p>
+<ul>
+    <li>Create and manage exchange program applications</li>
+    <li>Upload required documents</li>
+    <li>Track your application status</li>
+    <li>Communicate with exchange coordinators</li>
+</ul>
+
+<p>For security reasons, please change your password after your first login.</p>
+
+<p>If you can't click the button, you can copy and paste this link in your browser:</p>
+<p>{{ activation_url }}</p>
+
+<p>This activation link will expire in 24 hours. If you did not register for a SEIM account, please ignore this email.</p>
+
+<div class="security-notice">
+    <p><small>For security: Never share your password or login credentials. SEIM staff will never ask for your password.</small></p>
+</div>
+
+<p>If you have any questions or need assistance, please contact our support team.</p>
+
+<p>Best regards,<br>
+The SEIM Team</p>
+{% endblock %}

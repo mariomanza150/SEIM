@@ -1,0 +1,502 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Exchanges - SEIM{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'exchange:dashboard' %}" class="text-white-50 text-decoration-none">Dashboard</a></li>
+<li class="breadcrumb-item active">Exchanges</li>
+{% endblock %}
+
+{% block extra_css %}
+
+<!-- Custom DataTables Styling -->
+<link rel="stylesheet" href="{% static 'exchange/css/vendor/datatables-custom.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Filters Sidebar -->
+    <div class="col-lg-3">
+        <div class="card border-0 shadow-sm sticky-top" style="top: 100px;">
+            <div class="card-header bg-transparent border-0 pb-2">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="bi bi-funnel me-2"></i>
+                    Filter & Searchhhh
+                </h6>
+            </div>
+            <div class="card-body pt-2">
+                <form method="get" class="filter-form">
+                    <!-- Search -->
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <input type="text" class="form-control form-control-sm" id="search" name="search" 
+                                   value="{{ request.GET.search }}" placeholder="Search exchanges...">
+                            <label for="search">
+                                <i class="bi bi-search me-1"></i>Search
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Filter -->
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Status</label>
+                        <select class="form-select form-select-sm" name="status">
+                            <option value="">All Statuses</option>
+                            <option value="DRAFT" {% if request.GET.status == 'DRAFT' %}selected{% endif %}>Draft</option>
+                            <option value="SUBMITTED" {% if request.GET.status == 'SUBMITTED' %}selected{% endif %}>Submitted</option>
+                            <option value="UNDER_REVIEW" {% if request.GET.status == 'UNDER_REVIEW' %}selected{% endif %}>Under Review</option>
+                            <option value="APPROVED" {% if request.GET.status == 'APPROVED' %}selected{% endif %}>Approved</option>
+                            <option value="REJECTED" {% if request.GET.status == 'REJECTED' %}selected{% endif %}>Rejected</option>
+                            <option value="COMPLETED" {% if request.GET.status == 'COMPLETED' %}selected{% endif %}>Completed</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Date Range -->
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Created Date</label>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <input type="date" class="form-control form-control-sm" name="date_from" 
+                                       value="{{ request.GET.date_from }}" placeholder="From">
+                            </div>
+                            <div class="col-6">
+                                <input type="date" class="form-control form-control-sm" name="date_to" 
+                                       value="{{ request.GET.date_to }}" placeholder="To">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Country Filter -->
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">Country</label>
+                        <select class="form-select form-select-sm" name="country">
+                            <option value="">All Countries</option>
+                            <option value="USA" {% if request.GET.country == 'USA' %}selected{% endif %}>United States</option>
+                            <option value="UK" {% if request.GET.country == 'UK' %}selected{% endif %}>United Kingdom</option>
+                            <option value="DE" {% if request.GET.country == 'DE' %}selected{% endif %}>Germany</option>
+                            <option value="FR" {% if request.GET.country == 'FR' %}selected{% endif %}>France</option>
+                            <option value="JP" {% if request.GET.country == 'JP' %}selected{% endif %}>Japan</option>
+                            <option value="AU" {% if request.GET.country == 'AU' %}selected{% endif %}>Australia</option>
+                        </select>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-search me-1"></i>Apply Filters
+                        </button>
+                        <a href="{% url 'exchange:exchange-list' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-x-circle me-1"></i>Clear All
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="col-lg-9">
+        <!-- Header Section -->
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4">
+            <div class="mb-3 mb-sm-0">
+                <h1 class="h3 mb-1">Exchange Applications</h1>
+                <p class="text-muted mb-0">
+                    {% if exchanges.count %}
+                        Showing {{ exchanges.count }} of {{ exchanges.count }} applications
+                    {% else %}
+                        No applications found
+                    {% endif %}
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <!-- View Toggle -->
+                <div class="btn-group" role="group" aria-label="View toggle">
+                    <input type="radio" class="btn-check" name="view" id="cardView" autocomplete="off" checked>
+                    <label class="btn btn-outline-secondary btn-sm" for="cardView">
+                        <i class="bi bi-grid"></i>
+                    </label>
+                    <input type="radio" class="btn-check" name="view" id="listView" autocomplete="off">
+                    <label class="btn btn-outline-secondary btn-sm" for="listView">
+                        <i class="bi bi-list"></i>
+                    </label>
+                </div>
+                
+                {% if user.profile.role == 'STUDENT' %}
+                    <a href="{% url 'exchange:create-exchange' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle me-2"></i>New Application
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Exchanges Display -->
+        <div id="exchangesContainer">
+            {% if exchanges %}
+                <!-- Card View (Default) -->
+                <div id="cardViewContent" class="row g-4">
+                    {% for exchange in exchanges %}
+                    <div class="col-md-6 col-xl-4">
+                        <div class="card border-0 shadow-sm h-100 card-hover">
+                            <!-- Status Badge -->
+                            <div class="position-absolute top-0 end-0 m-3">
+                                <span class="badge {% if exchange.status == 'APPROVED' %}bg-success-subtle text-success border border-success-subtle{% elif exchange.status == 'REJECTED' %}bg-danger-subtle text-danger border border-danger-subtle{% elif exchange.status == 'SUBMITTED' %}bg-warning-subtle text-warning border border-warning-subtle{% elif exchange.status == 'UNDER_REVIEW' %}bg-info-subtle text-info border border-info-subtle{% elif exchange.status == 'COMPLETED' %}bg-secondary-subtle text-secondary border border-secondary-subtle{% else %}bg-light text-muted border{% endif %}">
+                                    {{ exchange.get_status_display }}
+                                </span>
+                            </div>
+                            
+                            <div class="card-body p-4">
+                                <!-- Header -->
+                                <div class="d-flex align-items-start mb-3">
+                                    <div class="avatar rounded-circle bg-primary bg-opacity-10 text-primary me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                                        <i class="bi bi-mortarboard"></i>
+                                    </div>
+                                    <div class="flex-grow-1 min-w-0">
+                                        <h6 class="mb-1 text-truncate">{{ exchange.host_university|truncatewords:4 }}</h6>
+                                        <small class="text-muted">
+                                            <i class="bi bi-geo-alt me-1"></i>
+                                            {{ exchange.host_country|default:"Country not specified" }}
+                                        </small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Details -->
+                                <div class="mb-3">
+                                    <div class="row g-2 small">
+                                        <div class="col-6">
+                                            <span class="text-muted">Student:</span>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <span class="fw-medium">{{ exchange.student.get_full_name|default:exchange.student.username }}</span>
+                                        </div>
+                                        <div class="col-6">
+                                            <span class="text-muted">Program:</span>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            <span class="fw-medium">{{ exchange.program|default:"Not specified" }}</span>
+                                        </div>
+                                        <div class="col-6">
+                                            <span class="text-muted">Duration:</span>
+                                        </div>
+                                        <div class="col-6 text-end">
+                                            {% if exchange.start_date and exchange.end_date %}
+                                                <span class="fw-medium">{{ exchange.start_date|date:"M Y" }} - {{ exchange.end_date|date:"M Y" }}</span>
+                                            {% else %}
+                                                <span class="text-muted small">Not specified</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Progress Bar -->
+                                {% if exchange.status == 'SUBMITTED' %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small class="text-muted">Progress</small>
+                                        <small class="text-muted">25%</small>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-warning" style="width: 25%"></div>
+                                    </div>
+                                </div>
+                                {% elif exchange.status == 'UNDER_REVIEW' %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small class="text-muted">Progress</small>
+                                        <small class="text-muted">50%</small>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-info" style="width: 50%"></div>
+                                    </div>
+                                </div>
+                                {% elif exchange.status == 'APPROVED' %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small class="text-muted">Progress</small>
+                                        <small class="text-muted">75%</small>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-success" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                                {% elif exchange.status == 'COMPLETED' %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <small class="text-muted">Progress</small>
+                                        <small class="text-muted">100%</small>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-success" style="width: 100%"></div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Card Footer -->
+                            <div class="card-footer bg-transparent border-0 pt-0 px-4 pb-4">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        <i class="bi bi-calendar me-1"></i>
+                                        {{ exchange.created_at|date:"M d, Y" }}
+                                    </small>
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'exchange:exchange-detail' exchange.id %}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           data-bs-toggle="tooltip" 
+                                           data-bs-title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        {% if user == exchange.student or user.profile.role in 'COORDINATOR,ADMINISTRATOR' %}
+                                            {% if exchange.status in 'DRAFT,SUBMITTED' %}
+                                                <a href="{% url 'exchange:edit-exchange' exchange.id %}" 
+                                                   class="btn btn-sm btn-outline-secondary"
+                                                   data-bs-toggle="tooltip" 
+                                                   data-bs-title="Edit">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- List View (Hidden by default) -->
+                <div id="listViewContent" class="d-none">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table id="exchangesTable" class="table table-hover align-middle mb-0 w-100">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="border-0 ps-4">ID</th>
+                                            <th class="border-0">Student</th>
+                                            <th class="border-0">University</th>
+                                            <th class="border-0">Country</th>
+                                            <th class="border-0">Program</th>
+                                            <th class="border-0">Duration</th>
+                                            <th class="border-0">Status</th>
+                                            <th class="border-0">Created</th>
+                                            <th class="border-0 pe-4 text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="table-group-divider">
+                                        <!-- DataTables will populate this via AJAX -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pagination -->
+                {% if is_paginated %}
+                    <nav aria-label="Exchanges pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                        <i class="bi bi-chevron-left"></i>
+                                        <span class="d-none d-sm-inline ms-1">Previous</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.urlencode %}{{ request.GET.urlencode }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                        <span class="d-none d-sm-inline me-1">Next</span>
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <!-- Empty State -->
+                <div class="text-center py-5">
+                    <div class="avatar mx-auto mb-4 bg-light text-muted d-flex align-items-center justify-content-center" style="width: 5rem; height: 5rem;">
+                        <i class="bi bi-inbox display-4"></i>
+                    </div>
+                    <h5 class="text-muted mb-2">No exchanges found</h5>
+                    <p class="text-muted mb-4">
+                        {% if request.GET %}
+                            Try adjusting your filters or search terms.
+                        {% else %}
+                            Get started by creating your first exchange application.
+                        {% endif %}
+                    </p>
+                    <div class="d-flex gap-2 justify-content-center">
+                        {% if request.GET %}
+                            <a href="{% url 'exchange:exchange-list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle me-2"></i>Clear Filters
+                            </a>
+                        {% endif %}
+                        {% if user.profile.role == 'STUDENT' %}
+                            <a href="{% url 'exchange:create-exchange' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Create Exchange
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- DataTables Configuration Script -->
+{% include 'includes/datatables_includes.html' %}
+<!-- DataTables Includes -->
+<script src="{% static 'exchange/js/vendor/datatables-config.js' %}"></script>
+
+<script>
+let exchangesDataTable;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // View toggle functionality
+    const cardViewBtn = document.getElementById('cardView');
+    const listViewBtn = document.getElementById('listView');
+    const cardViewContent = document.getElementById('cardViewContent');
+    const listViewContent = document.getElementById('listViewContent');
+    
+    cardViewBtn.addEventListener('change', function() {
+        if (this.checked) {
+            cardViewContent.classList.remove('d-none');
+            listViewContent.classList.add('d-none');
+            localStorage.setItem('exchangeView', 'card');
+            // Destroy DataTable if it exists
+            if (exchangesDataTable) {
+                exchangesDataTable.destroy();
+                exchangesDataTable = null;
+            }
+        }
+    });
+    
+    listViewBtn.addEventListener('change', function() {
+        if (this.checked) {
+            cardViewContent.classList.add('d-none');
+            listViewContent.classList.remove('d-none');
+            localStorage.setItem('exchangeView', 'list');
+            // Initialize DataTable
+            initializeExchangesDataTable();
+        }
+    });
+    
+    // Restore saved view preference
+    const savedView = localStorage.getItem('exchangeView');
+    if (savedView === 'list') {
+        listViewBtn.checked = true;
+        listViewBtn.dispatchEvent(new Event('change'));
+    }
+    
+    // Auto-submit filter form on change (only for card view)
+    const filterForm = document.querySelector('.filter-form');
+    const filterInputs = filterForm.querySelectorAll('select, input[type="date"]');
+    
+    filterInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            // Only auto-submit for card view
+            if (cardViewBtn.checked) {
+                setTimeout(() => {
+                    filterForm.submit();
+                }, 100);
+            }
+        });
+    });
+    
+    // Search input with debounce (only for card view)
+    const searchInput = document.getElementById('search');
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            // Only auto-submit for card view
+            if (cardViewBtn.checked) {
+                filterForm.submit();
+            }
+        }, 500);
+    });
+});
+
+function initializeExchangesDataTable() {
+    if (exchangesDataTable) {
+        return; // Already initialized
+    }
+    
+    // Define columns for DataTables
+    const columns = [
+        { 
+            data: null, 
+            name: 'id',
+            render: function(data, type, row) {
+                return `
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-sm rounded bg-primary bg-opacity-10 text-primary me-3 d-flex align-items-center justify-content-center">
+                            #${row[0]}
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Exchange #${row[0]}</h6>
+                        </div>
+                    </div>
+                `;
+            }
+        },
+        { data: 1, name: 'student__first_name' },
+        { data: 2, name: 'host_university' },
+        { data: 3, name: 'host_country' },
+        { data: 4, name: 'program' },
+        { data: 5, name: 'start_date', orderable: false },
+        { data: 6, name: 'status' },
+        { data: 7, name: 'created_at' },
+        { 
+            data: 8, 
+            name: 'actions', 
+            orderable: false, 
+            searchable: false,
+            className: 'text-end'
+        }
+    ];
+    
+    // Initialize DataTable with SGII configuration
+    exchangesDataTable = initSGIIDataTable(
+        '#exchangesTable',
+        '{% url "exchange:exchanges-datatable" %}',
+        columns,
+        {
+            order: [[7, 'desc']], // Default sort by created date
+            drawCallback: function() {
+                // Re-initialize tooltips after each draw
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                    new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+        }
+    );
+}
+</script>
+{% endblock %}

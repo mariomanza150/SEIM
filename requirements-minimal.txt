@@ -1,0 +1,11 @@
+# Minimal requirements for testing
+Django==5.2.1
+psycopg2-binary==2.9.10
+redis==6.1.0
+celery==5.5.2
+python-magic==0.4.27
+Pillow==10.4.0
+djangorestframework==3.16.0
+django-cors-headers==4.7.0
+whitenoise==6.9.0
+reportlab==4.2.5

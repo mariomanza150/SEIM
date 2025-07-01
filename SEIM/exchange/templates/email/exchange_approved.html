@@ -1,0 +1,56 @@
+{% extends "email/base.html" %}
+
+{% block title %}Exchange Application Approved{% endblock %}
+
+{% block content %}
+<h2>Congratulations {{ student_name }}!</h2>
+
+<p>We are pleased to inform you that your exchange application has been <strong>APPROVED</strong>!</p>
+
+<div class="info-box" style="background-color: #dcfce7; border-color: #22c55e;">
+    <h3>Exchange Details</h3>
+    <table>
+        <tr>
+            <th>Destination University:</th>
+            <td>{{ destination }}</td>
+        </tr>
+        <tr>
+            <th>Exchange Period:</th>
+            <td>{{ start_date|date:"F j, Y" }} - {{ end_date|date:"F j, Y" }}</td>
+        </tr>
+        <tr>
+            <th>Application ID:</th>
+            <td>{{ exchange.id }}</td>
+        </tr>
+    </table>
+</div>
+
+<h3>Next Steps</h3>
+<ol>
+    <li><strong>Accept the offer:</strong> Log into SEIM to officially accept this exchange opportunity</li>
+    <li><strong>Complete pre-departure forms:</strong> Additional forms will be available in your dashboard</li>
+    <li><strong>Visa application:</strong> Begin your visa application process (if required)</li>
+    <li><strong>Accommodation:</strong> Start looking for accommodation at your destination</li>
+    <li><strong>Attend orientation:</strong> Mandatory pre-departure orientation details will be sent soon</li>
+</ol>
+
+<div style="text-align: center;">
+    <a href="{{ settings.FRONTEND_URL }}/exchanges/{{ exchange.id }}" class="button">Accept Offer</a>
+</div>
+
+<div class="warning-box">
+    <strong>Important Deadlines:</strong>
+    <ul>
+        <li>Accept offer within 7 days</li>
+        <li>Complete all pre-departure requirements at least 30 days before departure</li>
+        <li>Submit visa application (if required) as soon as possible</li>
+    </ul>
+</div>
+
+<p>The International Relations Office will contact you shortly with more detailed information about your exchange.</p>
+
+<p>Congratulations once again on this exciting opportunity!</p>
+
+<p>Best regards,<br>
+The SEIM Team</p>
+{% endblock %}

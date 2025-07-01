@@ -1,0 +1,1531 @@
+Command: python -m radon raw SEIM/
+Exit Code: 0
+Timestamp: 2025-05-29 17:18:18.446283
+================================================================================
+STDOUT:
+SEIM\manage.py
+    LOC: 22
+    LLOC: 13
+    SLOC: 15
+    Comments: 1
+    Single comments: 3
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 7%
+        (C + M % L): 5%
+SEIM\exchange\admin.py
+    LOC: 343
+    LLOC: 117
+    SLOC: 282
+    Comments: 0
+    Single comments: 15
+    Multi: 3
+    Blank: 43
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 1%
+SEIM\exchange\apps.py
+    LOC: 6
+    LLOC: 4
+    SLOC: 4
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 2
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\filters.py
+    LOC: 98
+    LLOC: 33
+    SLOC: 69
+    Comments: 7
+    Single comments: 7
+    Multi: 9
+    Blank: 13
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 10%
+        (C + M % L): 16%
+SEIM\exchange\forms.py
+    LOC: 24
+    LLOC: 3
+    SLOC: 3
+    Comments: 3
+    Single comments: 3
+    Multi: 14
+    Blank: 4
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 100%
+        (C + M % L): 71%
+SEIM\exchange\permissions.py
+    LOC: 71
+    LLOC: 36
+    SLOC: 30
+    Comments: 2
+    Single comments: 2
+    Multi: 18
+    Blank: 21
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 7%
+        (C + M % L): 28%
+SEIM\exchange\tasks.py
+    LOC: 208
+    LLOC: 104
+    SLOC: 140
+    Comments: 7
+    Single comments: 7
+    Multi: 20
+    Blank: 41
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 5%
+        (C + M % L): 13%
+SEIM\exchange\urls.py
+    LOC: 120
+    LLOC: 4
+    SLOC: 117
+    Comments: 12
+    Single comments: 0
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 10%
+        (C + M % L): 10%
+SEIM\exchange\views.py
+    LOC: 25
+    LLOC: 2
+    SLOC: 1
+    Comments: 1
+    Single comments: 1
+    Multi: 20
+    Blank: 3
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 100%
+        (C + M % L): 84%
+SEIM\exchange\__init__.py
+    LOC: 0
+    LLOC: 0
+    SLOC: 0
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\api\__init__.py
+    LOC: 1
+    LLOC: 1
+    SLOC: 0
+    Comments: 0
+    Single comments: 1
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\api\v1\document_serializers.py
+    LOC: 175
+    LLOC: 55
+    SLOC: 83
+    Comments: 2
+    Single comments: 2
+    Multi: 56
+    Blank: 34
+    - Comment Stats
+        (C % L): 1%
+        (C % S): 2%
+        (C + M % L): 33%
+SEIM\exchange\api\v1\exchange_serializers.py
+    LOC: 146
+    LLOC: 33
+    SLOC: 75
+    Comments: 0
+    Single comments: 0
+    Multi: 46
+    Blank: 25
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 32%
+SEIM\exchange\api\v1\serializers.py
+    LOC: 24
+    LLOC: 5
+    SLOC: 19
+    Comments: 10
+    Single comments: 3
+    Multi: 0
+    Blank: 2
+    - Comment Stats
+        (C % L): 42%
+        (C % S): 53%
+        (C + M % L): 42%
+SEIM\exchange\api\v1\urls.py
+    LOC: 12
+    LLOC: 6
+    SLOC: 7
+    Comments: 1
+    Single comments: 2
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 14%
+        (C + M % L): 8%
+SEIM\exchange\api\v1\user_serializers.py
+    LOC: 111
+    LLOC: 27
+    SLOC: 57
+    Comments: 0
+    Single comments: 0
+    Multi: 34
+    Blank: 20
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 31%
+SEIM\exchange\api\v1\views.py
+    LOC: 1
+    LLOC: 1
+    SLOC: 0
+    Comments: 0
+    Single comments: 1
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\api\v1\__init__.py
+    LOC: 1
+    LLOC: 1
+    SLOC: 0
+    Comments: 0
+    Single comments: 1
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\authentication\serializers.py
+    LOC: 86
+    LLOC: 36
+    SLOC: 65
+    Comments: 0
+    Single comments: 0
+    Multi: 9
+    Blank: 12
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 10%
+SEIM\exchange\authentication\views.py
+    LOC: 109
+    LLOC: 72
+    SLOC: 80
+    Comments: 0
+    Single comments: 0
+    Multi: 15
+    Blank: 14
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 14%
+SEIM\exchange\authentication\__init__.py
+    LOC: 0
+    LLOC: 0
+    SLOC: 0
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\forms\authentication_forms.py
+    LOC: 97
+    LLOC: 36
+    SLOC: 52
+    Comments: 5
+    Single comments: 4
+    Multi: 22
+    Blank: 19
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 10%
+        (C + M % L): 28%
+SEIM\exchange\forms\exchange_forms.py
+    LOC: 269
+    LLOC: 71
+    SLOC: 210
+    Comments: 10
+    Single comments: 12
+    Multi: 17
+    Blank: 30
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 5%
+        (C + M % L): 10%
+SEIM\exchange\forms\form_choices.py
+    LOC: 35
+    LLOC: 4
+    SLOC: 23
+    Comments: 3
+    Single comments: 3
+    Multi: 5
+    Blank: 4
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 13%
+        (C + M % L): 23%
+SEIM\exchange\forms\form_utils.py
+    LOC: 138
+    LLOC: 60
+    SLOC: 62
+    Comments: 2
+    Single comments: 2
+    Multi: 47
+    Blank: 27
+    - Comment Stats
+        (C % L): 1%
+        (C % S): 3%
+        (C + M % L): 36%
+SEIM\exchange\forms\form_widgets.py
+    LOC: 100
+    LLOC: 59
+    SLOC: 71
+    Comments: 1
+    Single comments: 8
+    Multi: 8
+    Blank: 13
+    - Comment Stats
+        (C % L): 1%
+        (C % S): 1%
+        (C + M % L): 9%
+SEIM\exchange\forms\profile_forms.py
+    LOC: 132
+    LLOC: 56
+    SLOC: 87
+    Comments: 6
+    Single comments: 6
+    Multi: 20
+    Blank: 19
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 7%
+        (C + M % L): 20%
+SEIM\exchange\forms\__init__.py
+    LOC: 36
+    LLOC: 6
+    SLOC: 17
+    Comments: 7
+    Single comments: 3
+    Multi: 12
+    Blank: 4
+    - Comment Stats
+        (C % L): 19%
+        (C % S): 41%
+        (C + M % L): 53%
+SEIM\exchange\management\__init__.py
+    LOC: 1
+    LLOC: 0
+    SLOC: 0
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 100%
+        (C % S): 100%
+        (C + M % L): 100%
+SEIM\exchange\management\commands\check_file_integrity.py
+    LOC: 121
+    LLOC: 54
+    SLOC: 87
+    Comments: 7
+    Single comments: 7
+    Multi: 3
+    Blank: 24
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 8%
+SEIM\exchange\management\commands\create_staff_user.py
+    LOC: 151
+    LLOC: 68
+    SLOC: 106
+    Comments: 14
+    Single comments: 16
+    Multi: 3
+    Blank: 26
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 13%
+        (C + M % L): 11%
+SEIM\exchange\management\commands\fix_exchange_data.py
+    LOC: 208
+    LLOC: 103
+    SLOC: 165
+    Comments: 9
+    Single comments: 9
+    Multi: 3
+    Blank: 31
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 5%
+        (C + M % L): 6%
+SEIM\exchange\management\commands\scan_documents.py
+    LOC: 151
+    LLOC: 69
+    SLOC: 110
+    Comments: 9
+    Single comments: 9
+    Multi: 3
+    Blank: 29
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 8%
+SEIM\exchange\management\commands\setup_exchange_permissions.py
+    LOC: 97
+    LLOC: 39
+    SLOC: 72
+    Comments: 5
+    Single comments: 5
+    Multi: 3
+    Blank: 17
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 7%
+        (C + M % L): 8%
+SEIM\exchange\management\commands\setup_initial_data.py
+    LOC: 69
+    LLOC: 34
+    SLOC: 54
+    Comments: 7
+    Single comments: 5
+    Multi: 0
+    Blank: 10
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 13%
+        (C + M % L): 10%
+SEIM\exchange\management\commands\setup_permissions.py
+    LOC: 221
+    LLOC: 93
+    SLOC: 173
+    Comments: 14
+    Single comments: 11
+    Multi: 3
+    Blank: 34
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 8%
+SEIM\exchange\management\commands\__init__.py
+    LOC: 1
+    LLOC: 0
+    SLOC: 0
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 100%
+        (C % S): 100%
+        (C + M % L): 100%
+SEIM\exchange\migrations\0001_initial.py
+    LOC: 288
+    LLOC: 9
+    SLOC: 280
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 7
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\migrations\0002_comment_course_grade_review_timeline_workflowlog_and_more.py
+    LOC: 647
+    LLOC: 9
+    SLOC: 640
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 6
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\migrations\0003_phase3_bulk_actions.py
+    LOC: 249
+    LLOC: 8
+    SLOC: 243
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\migrations\0004_rename_exchange_bu_action__4f7e2d_idx_exchange_bu_action__854ad6_idx_and_more.py
+    LOC: 87
+    LLOC: 4
+    SLOC: 81
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 1%
+        (C % S): 1%
+        (C + M % L): 1%
+SEIM\exchange\migrations\0005_remove_exchange_advisor_email_and_more.py
+    LOC: 99
+    LLOC: 4
+    SLOC: 93
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 1%
+        (C % S): 1%
+        (C + M % L): 1%
+SEIM\exchange\migrations\0006_userprofile_city_userprofile_country_and_more.py
+    LOC: 44
+    LLOC: 4
+    SLOC: 38
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 3%
+        (C + M % L): 2%
+SEIM\exchange\migrations\0007_rename_street_address_userprofile_address_and_more.py
+    LOC: 32
+    LLOC: 4
+    SLOC: 26
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 3%
+SEIM\exchange\migrations\0008_userprofile_student_id.py
+    LOC: 18
+    LLOC: 4
+    SLOC: 12
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 6%
+SEIM\exchange\migrations\0009_add_profile_fields.py
+    LOC: 88
+    LLOC: 4
+    SLOC: 82
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 1%
+        (C % S): 1%
+        (C + M % L): 1%
+SEIM\exchange\migrations\0010_add_created_at_to_document.py
+    LOC: 21
+    LLOC: 5
+    SLOC: 16
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 6%
+        (C + M % L): 5%
+SEIM\exchange\migrations\0011_alter_exchange_options_and_more.py
+    LOC: 62
+    LLOC: 4
+    SLOC: 56
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 2%
+        (C + M % L): 2%
+SEIM\exchange\migrations\0012_add_performance_indexes.py
+    LOC: 26
+    LLOC: 5
+    SLOC: 20
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 5%
+        (C + M % L): 4%
+SEIM\exchange\migrations\0013_add_real_performance_indexes.py
+    LOC: 13
+    LLOC: 4
+    SLOC: 7
+    Comments: 2
+    Single comments: 2
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 29%
+        (C + M % L): 15%
+SEIM\exchange\migrations\0014_update_userprofile_model.py
+    LOC: 85
+    LLOC: 7
+    SLOC: 79
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 5
+    - Comment Stats
+        (C % L): 1%
+        (C % S): 1%
+        (C + M % L): 1%
+SEIM\exchange\migrations\__init__.py
+    LOC: 0
+    LLOC: 0
+    SLOC: 0
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\models\application_answer.py
+    LOC: 21
+    LLOC: 9
+    SLOC: 14
+    Comments: 2
+    Single comments: 0
+    Multi: 3
+    Blank: 4
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 14%
+        (C + M % L): 24%
+SEIM\exchange\models\base.py
+    LOC: 90
+    LLOC: 48
+    SLOC: 63
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 27
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\models\bulk_action.py
+    LOC: 212
+    LLOC: 111
+    SLOC: 157
+    Comments: 5
+    Single comments: 17
+    Multi: 3
+    Blank: 35
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 3%
+        (C + M % L): 4%
+SEIM\exchange\models\comment.py
+    LOC: 124
+    LLOC: 66
+    SLOC: 83
+    Comments: 7
+    Single comments: 10
+    Multi: 9
+    Blank: 22
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 13%
+SEIM\exchange\models\course.py
+    LOC: 141
+    LLOC: 62
+    SLOC: 95
+    Comments: 11
+    Single comments: 13
+    Multi: 9
+    Blank: 24
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 12%
+        (C + M % L): 14%
+SEIM\exchange\models\document.py
+    LOC: 139
+    LLOC: 71
+    SLOC: 112
+    Comments: 0
+    Single comments: 0
+    Multi: 6
+    Blank: 21
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 4%
+SEIM\exchange\models\exchange.py
+    LOC: 197
+    LLOC: 102
+    SLOC: 132
+    Comments: 12
+    Single comments: 16
+    Multi: 18
+    Blank: 31
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 9%
+        (C + M % L): 15%
+SEIM\exchange\models\question.py
+    LOC: 38
+    LLOC: 20
+    SLOC: 28
+    Comments: 0
+    Single comments: 1
+    Multi: 0
+    Blank: 9
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\models\timeline.py
+    LOC: 210
+    LLOC: 63
+    SLOC: 159
+    Comments: 5
+    Single comments: 5
+    Multi: 25
+    Blank: 21
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 3%
+        (C + M % L): 14%
+SEIM\exchange\models\timestamp_base.py
+    LOC: 9
+    LLOC: 6
+    SLOC: 6
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 3
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\models\user_profile.py
+    LOC: 165
+    LLOC: 96
+    SLOC: 111
+    Comments: 4
+    Single comments: 6
+    Multi: 19
+    Blank: 29
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 4%
+        (C + M % L): 14%
+SEIM\exchange\models\utils.py
+    LOC: 61
+    LLOC: 37
+    SLOC: 33
+    Comments: 3
+    Single comments: 2
+    Multi: 14
+    Blank: 12
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 9%
+        (C + M % L): 28%
+SEIM\exchange\models\__init__.py
+    LOC: 26
+    LLOC: 9
+    SLOC: 21
+    Comments: 0
+    Single comments: 0
+    Multi: 3
+    Blank: 2
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 12%
+SEIM\exchange\serializers\__init__.py
+    LOC: 25
+    LLOC: 3
+    SLOC: 15
+    Comments: 5
+    Single comments: 2
+    Multi: 5
+    Blank: 3
+    - Comment Stats
+        (C % L): 20%
+        (C % S): 33%
+        (C + M % L): 40%
+SEIM\exchange\services\analytics.py
+    LOC: 303
+    LLOC: 119
+    SLOC: 168
+    Comments: 8
+    Single comments: 9
+    Multi: 62
+    Blank: 64
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 5%
+        (C + M % L): 23%
+SEIM\exchange\services\base.py
+    LOC: 67
+    LLOC: 56
+    SLOC: 40
+    Comments: 1
+    Single comments: 13
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 1%
+        (C % S): 2%
+        (C + M % L): 1%
+SEIM\exchange\services\batch_processor.py
+    LOC: 306
+    LLOC: 137
+    SLOC: 201
+    Comments: 13
+    Single comments: 12
+    Multi: 51
+    Blank: 42
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 21%
+SEIM\exchange\services\cache_manager.py
+    LOC: 376
+    LLOC: 214
+    SLOC: 238
+    Comments: 29
+    Single comments: 45
+    Multi: 27
+    Blank: 66
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 12%
+        (C + M % L): 15%
+SEIM\exchange\services\document_generator.py
+    LOC: 344
+    LLOC: 121
+    SLOC: 264
+    Comments: 23
+    Single comments: 27
+    Multi: 5
+    Blank: 48
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 9%
+        (C + M % L): 8%
+SEIM\exchange\services\email_notifications.py
+    LOC: 204
+    LLOC: 71
+    SLOC: 134
+    Comments: 8
+    Single comments: 8
+    Multi: 30
+    Blank: 32
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 19%
+SEIM\exchange\services\email_service.py
+    LOC: 177
+    LLOC: 59
+    SLOC: 122
+    Comments: 6
+    Single comments: 6
+    Multi: 27
+    Blank: 22
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 5%
+        (C + M % L): 19%
+SEIM\exchange\services\form_handler.py
+    LOC: 347
+    LLOC: 118
+    SLOC: 289
+    Comments: 11
+    Single comments: 21
+    Multi: 0
+    Blank: 37
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 3%
+SEIM\exchange\services\notification.py
+    LOC: 206
+    LLOC: 50
+    SLOC: 151
+    Comments: 13
+    Single comments: 18
+    Multi: 0
+    Blank: 37
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 9%
+        (C + M % L): 6%
+SEIM\exchange\services\optimization.py
+    LOC: 463
+    LLOC: 149
+    SLOC: 317
+    Comments: 28
+    Single comments: 17
+    Multi: 70
+    Blank: 59
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 9%
+        (C + M % L): 21%
+SEIM\exchange\services\secure_file_validator.py
+    LOC: 185
+    LLOC: 70
+    SLOC: 101
+    Comments: 26
+    Single comments: 17
+    Multi: 30
+    Blank: 37
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 26%
+        (C + M % L): 30%
+SEIM\exchange\services\workflow.py
+    LOC: 204
+    LLOC: 100
+    SLOC: 120
+    Comments: 23
+    Single comments: 30
+    Multi: 10
+    Blank: 44
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 19%
+        (C + M % L): 16%
+SEIM\exchange\services\__init__.py
+    LOC: 1
+    LLOC: 0
+    SLOC: 0
+    Comments: 1
+    Single comments: 1
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 100%
+        (C % S): 100%
+        (C + M % L): 100%
+SEIM\exchange\storage\backends.py
+    LOC: 233
+    LLOC: 97
+    SLOC: 142
+    Comments: 8
+    Single comments: 7
+    Multi: 45
+    Blank: 39
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 6%
+        (C + M % L): 23%
+SEIM\exchange\storage\__init__.py
+    LOC: 7
+    LLOC: 3
+    SLOC: 2
+    Comments: 0
+    Single comments: 0
+    Multi: 3
+    Blank: 2
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 43%
+SEIM\exchange\tests\test_api.py
+    LOC: 62
+    LLOC: 29
+    SLOC: 48
+    Comments: 0
+    Single comments: 2
+    Multi: 3
+    Blank: 9
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 5%
+SEIM\exchange\tests\test_authentication.py
+    LOC: 176
+    LLOC: 75
+    SLOC: 133
+    Comments: 5
+    Single comments: 14
+    Multi: 3
+    Blank: 26
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 5%
+SEIM\exchange\tests\test_email_service.py
+    LOC: 305
+    LLOC: 179
+    SLOC: 237
+    Comments: 3
+    Single comments: 21
+    Multi: 3
+    Blank: 44
+    - Comment Stats
+        (C % L): 1%
+        (C % S): 1%
+        (C + M % L): 2%
+SEIM\exchange\tests\test_filters.py
+    LOC: 223
+    LLOC: 107
+    SLOC: 161
+    Comments: 23
+    Single comments: 30
+    Multi: 3
+    Blank: 29
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 14%
+        (C + M % L): 12%
+SEIM\exchange\tests\test_integration.py
+    LOC: 333
+    LLOC: 130
+    SLOC: 225
+    Comments: 34
+    Single comments: 40
+    Multi: 3
+    Blank: 65
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 15%
+        (C + M % L): 11%
+SEIM\exchange\tests\test_models.py
+    LOC: 96
+    LLOC: 42
+    SLOC: 77
+    Comments: 3
+    Single comments: 5
+    Multi: 3
+    Blank: 11
+    - Comment Stats
+        (C % L): 3%
+        (C % S): 4%
+        (C + M % L): 6%
+SEIM\exchange\tests\test_pdf_viewer.py
+    LOC: 200
+    LLOC: 89
+    SLOC: 143
+    Comments: 15
+    Single comments: 21
+    Multi: 3
+    Blank: 33
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 10%
+        (C + M % L): 9%
+SEIM\exchange\tests\test_views.py
+    LOC: 374
+    LLOC: 189
+    SLOC: 255
+    Comments: 6
+    Single comments: 36
+    Multi: 3
+    Blank: 80
+    - Comment Stats
+        (C % L): 2%
+        (C % S): 2%
+        (C + M % L): 2%
+SEIM\exchange\tests\__init__.py
+    LOC: 13
+    LLOC: 9
+    SLOC: 8
+    Comments: 1
+    Single comments: 1
+    Multi: 3
+    Blank: 1
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 12%
+        (C + M % L): 31%
+SEIM\exchange\tests\integration\test_api.py
+    LOC: 67
+    LLOC: 39
+    SLOC: 31
+    Comments: 9
+    Single comments: 21
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 29%
+        (C + M % L): 13%
+SEIM\exchange\tests\integration\test_workflow.py
+    LOC: 65
+    LLOC: 31
+    SLOC: 30
+    Comments: 12
+    Single comments: 22
+    Multi: 0
+    Blank: 13
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 40%
+        (C + M % L): 18%
+SEIM\exchange\tests\unit\test_forms.py
+    LOC: 49
+    LLOC: 28
+    SLOC: 18
+    Comments: 7
+    Single comments: 17
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 39%
+        (C + M % L): 14%
+SEIM\exchange\tests\unit\test_models.py
+    LOC: 58
+    LLOC: 32
+    SLOC: 25
+    Comments: 7
+    Single comments: 18
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 12%
+        (C % S): 28%
+        (C + M % L): 12%
+SEIM\exchange\tests\unit\test_serializers.py
+    LOC: 59
+    LLOC: 32
+    SLOC: 25
+    Comments: 8
+    Single comments: 19
+    Multi: 0
+    Blank: 15
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 32%
+        (C + M % L): 14%
+SEIM\exchange\tests\unit\test_services.py
+    LOC: 63
+    LLOC: 35
+    SLOC: 27
+    Comments: 8
+    Single comments: 20
+    Multi: 0
+    Blank: 16
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 30%
+        (C + M % L): 13%
+SEIM\exchange\validators\file_validators.py
+    LOC: 271
+    LLOC: 123
+    SLOC: 154
+    Comments: 17
+    Single comments: 13
+    Multi: 56
+    Blank: 48
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 11%
+        (C + M % L): 27%
+SEIM\exchange\validators\__init__.py
+    LOC: 12
+    LLOC: 2
+    SLOC: 11
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 1
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\exchange\views\admin_views.py
+    LOC: 48
+    LLOC: 20
+    SLOC: 33
+    Comments: 2
+    Single comments: 3
+    Multi: 4
+    Blank: 8
+    - Comment Stats
+        (C % L): 4%
+        (C % S): 6%
+        (C + M % L): 12%
+SEIM\exchange\views\analytics_views.py
+    LOC: 108
+    LLOC: 34
+    SLOC: 85
+    Comments: 7
+    Single comments: 9
+    Multi: 0
+    Blank: 14
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 6%
+SEIM\exchange\views\api_views.py
+    LOC: 849
+    LLOC: 346
+    SLOC: 640
+    Comments: 68
+    Single comments: 77
+    Multi: 19
+    Blank: 113
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 11%
+        (C + M % L): 10%
+SEIM\exchange\views\auth_views.py
+    LOC: 280
+    LLOC: 144
+    SLOC: 183
+    Comments: 26
+    Single comments: 21
+    Multi: 25
+    Blank: 51
+    - Comment Stats
+        (C % L): 9%
+        (C % S): 14%
+        (C + M % L): 18%
+SEIM\exchange\views\batch_views.py
+    LOC: 289
+    LLOC: 146
+    SLOC: 190
+    Comments: 31
+    Single comments: 38
+    Multi: 3
+    Blank: 58
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 16%
+        (C + M % L): 12%
+SEIM\exchange\views\dashboard_views.py
+    LOC: 66
+    LLOC: 30
+    SLOC: 49
+    Comments: 4
+    Single comments: 5
+    Multi: 4
+    Blank: 8
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 12%
+SEIM\exchange\views\document_views.py
+    LOC: 294
+    LLOC: 145
+    SLOC: 207
+    Comments: 23
+    Single comments: 30
+    Multi: 3
+    Blank: 54
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 11%
+        (C + M % L): 9%
+SEIM\exchange\views\exchange_views.py
+    LOC: 498
+    LLOC: 229
+    SLOC: 379
+    Comments: 38
+    Single comments: 38
+    Multi: 7
+    Blank: 74
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 10%
+        (C + M % L): 9%
+SEIM\exchange\views\health_views.py
+    LOC: 37
+    LLOC: 17
+    SLOC: 25
+    Comments: 3
+    Single comments: 3
+    Multi: 3
+    Blank: 6
+    - Comment Stats
+        (C % L): 8%
+        (C % S): 12%
+        (C + M % L): 16%
+SEIM\exchange\views\notification_views.py
+    LOC: 23
+    LLOC: 11
+    SLOC: 8
+    Comments: 4
+    Single comments: 6
+    Multi: 4
+    Blank: 5
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 50%
+        (C + M % L): 35%
+SEIM\exchange\views\template_views.py
+    LOC: 235
+    LLOC: 131
+    SLOC: 146
+    Comments: 12
+    Single comments: 12
+    Multi: 33
+    Blank: 44
+    - Comment Stats
+        (C % L): 5%
+        (C % S): 8%
+        (C + M % L): 19%
+SEIM\exchange\views\workflow_views.py
+    LOC: 327
+    LLOC: 164
+    SLOC: 238
+    Comments: 20
+    Single comments: 27
+    Multi: 4
+    Blank: 58
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 8%
+        (C + M % L): 7%
+SEIM\exchange\views\__init__.py
+    LOC: 118
+    LLOC: 14
+    SLOC: 94
+    Comments: 29
+    Single comments: 16
+    Multi: 5
+    Blank: 3
+    - Comment Stats
+        (C % L): 25%
+        (C % S): 31%
+        (C + M % L): 29%
+SEIM\seim\asgi.py
+    LOC: 16
+    LLOC: 5
+    SLOC: 4
+    Comments: 0
+    Single comments: 0
+    Multi: 6
+    Blank: 6
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 38%
+SEIM\seim\celery.py
+    LOC: 50
+    LLOC: 15
+    SLOC: 31
+    Comments: 11
+    Single comments: 7
+    Multi: 3
+    Blank: 9
+    - Comment Stats
+        (C % L): 22%
+        (C % S): 35%
+        (C + M % L): 28%
+SEIM\seim\internationalization.py
+    LOC: 164
+    LLOC: 20
+    SLOC: 27
+    Comments: 24
+    Single comments: 24
+    Multi: 86
+    Blank: 27
+    - Comment Stats
+        (C % L): 15%
+        (C % S): 89%
+        (C + M % L): 67%
+SEIM\seim\settings.py
+    LOC: 30
+    LLOC: 14
+    SLOC: 13
+    Comments: 5
+    Single comments: 5
+    Multi: 5
+    Blank: 7
+    - Comment Stats
+        (C % L): 17%
+        (C % S): 38%
+        (C + M % L): 33%
+SEIM\seim\urls.py
+    LOC: 42
+    LLOC: 15
+    SLOC: 20
+    Comments: 3
+    Single comments: 2
+    Multi: 15
+    Blank: 5
+    - Comment Stats
+        (C % L): 7%
+        (C % S): 15%
+        (C + M % L): 43%
+SEIM\seim\wsgi.py
+    LOC: 16
+    LLOC: 5
+    SLOC: 4
+    Comments: 0
+    Single comments: 0
+    Multi: 6
+    Blank: 6
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 38%
+SEIM\seim\__init__.py
+    LOC: 0
+    LLOC: 0
+    SLOC: 0
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+SEIM\seim\custom_settings\api.py
+    LOC: 140
+    LLOC: 18
+    SLOC: 121
+    Comments: 9
+    Single comments: 7
+    Multi: 3
+    Blank: 9
+    - Comment Stats
+        (C % L): 6%
+        (C % S): 7%
+        (C + M % L): 9%
+SEIM\seim\custom_settings\base.py
+    LOC: 185
+    LLOC: 33
+    SLOC: 127
+    Comments: 20
+    Single comments: 17
+    Multi: 8
+    Blank: 33
+    - Comment Stats
+        (C % L): 11%
+        (C % S): 16%
+        (C + M % L): 15%
+SEIM\seim\custom_settings\celery.py
+    LOC: 92
+    LLOC: 41
+    SLOC: 60
+    Comments: 22
+    Single comments: 14
+    Multi: 3
+    Blank: 15
+    - Comment Stats
+        (C % L): 24%
+        (C % S): 37%
+        (C + M % L): 27%
+SEIM\seim\custom_settings\dev.py
+    LOC: 121
+    LLOC: 29
+    SLOC: 98
+    Comments: 16
+    Single comments: 11
+    Multi: 0
+    Blank: 12
+    - Comment Stats
+        (C % L): 13%
+        (C % S): 16%
+        (C + M % L): 13%
+SEIM\seim\custom_settings\prod.py
+    LOC: 208
+    LLOC: 59
+    SLOC: 176
+    Comments: 21
+    Single comments: 15
+    Multi: 0
+    Blank: 17
+    - Comment Stats
+        (C % L): 10%
+        (C % S): 12%
+        (C + M % L): 10%
+SEIM\seim\custom_settings\security.py
+    LOC: 108
+    LLOC: 37
+    SLOC: 80
+    Comments: 17
+    Single comments: 12
+    Multi: 3
+    Blank: 13
+    - Comment Stats
+        (C % L): 16%
+        (C % S): 21%
+        (C + M % L): 19%
+SEIM\seim\custom_settings\storage.py
+    LOC: 120
+    LLOC: 53
+    SLOC: 80
+    Comments: 22
+    Single comments: 17
+    Multi: 3
+    Blank: 20
+    - Comment Stats
+        (C % L): 18%
+        (C % S): 28%
+        (C + M % L): 21%
+SEIM\seim\custom_settings\test.py
+    LOC: 21
+    LLOC: 8
+    SLOC: 14
+    Comments: 3
+    Single comments: 3
+    Multi: 0
+    Blank: 4
+    - Comment Stats
+        (C % L): 14%
+        (C % S): 21%
+        (C + M % L): 14%
+SEIM\seim\custom_settings\__init__.py
+    LOC: 0
+    LLOC: 0
+    SLOC: 0
+    Comments: 0
+    Single comments: 0
+    Multi: 0
+    Blank: 0
+    - Comment Stats
+        (C % L): 0%
+        (C % S): 0%
+        (C + M % L): 0%
+
+STDERR:

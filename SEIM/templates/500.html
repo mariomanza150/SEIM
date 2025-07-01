@@ -1,0 +1,300 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Server Error - SEIM{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">500 Error</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6 col-xl-5">
+        <div class="text-center">
+            <!-- Error Illustration -->
+            <div class="mb-5">
+                <div class="position-relative d-inline-block">
+                    <!-- Large 500 -->
+                    <div class="display-1 fw-bold text-danger opacity-25" style="font-size: 8rem; line-height: 1;">
+                        500
+                    </div>
+                    
+                    <!-- Floating Elements -->
+                    <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center">
+                        <div class="avatar bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" 
+                             style="width: 4rem; height: 4rem; animation: pulse 2s ease-in-out infinite;">
+                            <i class="bi bi-tools display-6"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional floating icons -->
+                    <div class="position-absolute" style="top: 20%; left: -20%; animation: float 4s ease-in-out infinite reverse;">
+                        <div class="avatar avatar-sm bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="position-absolute" style="top: 60%; right: -15%; animation: float 5s ease-in-out infinite;">
+                        <div class="avatar avatar-sm bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center">
+                            <i class="bi bi-gear"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Error Content -->
+            <div class="mb-5">
+                <h1 class="h3 mb-3">Something Went Wrong</h1>
+                <p class="text-muted mb-4 lead">
+                    Our servers are experiencing some technical difficulties right now. 
+                    Our team has been notified and is working to fix this issue.
+                </p>
+                
+                <!-- Status Information -->
+                <div class="card bg-light border-0 mb-4">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center justify-content-center mb-3">
+                            <div class="spinner-border text-primary me-3" role="status" style="width: 2rem; height: 2rem;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">We're working on it</h6>
+                                <small class="text-muted">Estimated fix time: 10-15 minutes</small>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info border-0 mb-0">
+                            <i class="bi bi-info-circle me-2"></i>
+                            <strong>What you can do:</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>Wait a few minutes and try again</li>
+                                <li>Check if other pages are working</li>
+                                <li>Clear your browser cache</li>
+                                <li>Contact support if the problem persists</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center mb-4">
+                    <button class="btn btn-primary" onclick="location.reload()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Try Again
+                    </button>
+                    <a href="{% url 'exchange:dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-house-door me-2"></i>Go to Dashboard
+                    </a>
+                    <button class="btn btn-outline-info" onclick="history.back()">
+                        <i class="bi bi-arrow-left me-2"></i>Go Back
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Support Information -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h6 class="mb-3">Need Help?</h6>
+                    <div class="row g-3 text-start">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center p-2">
+                                <div class="avatar avatar-sm me-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-envelope"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-medium">Email Support</div>
+                                    <small class="text-muted">support@seim.edu</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center p-2">
+                                <div class="avatar avatar-sm me-3 bg-success bg-opacity-10 text-success d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-telephone"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-medium">Phone Support</div>
+                                    <small class="text-muted">+1 (555) 123-4567</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center p-2">
+                                <div class="avatar avatar-sm me-3 bg-info bg-opacity-10 text-info d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-question-circle"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-medium">Help Center</div>
+                                    <small class="text-muted">24/7 Self-Service</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center p-2">
+                                <div class="avatar avatar-sm me-3 bg-warning bg-opacity-10 text-warning d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-chat-dots"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-medium">Live Chat</div>
+                                    <small class="text-muted">Mon-Fri 9AM-5PM</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <small class="text-muted me-3">Error ID: #{{ request.META.REQUEST_TIME|default:"ERR-500" }}</small>
+                            <button class="btn btn-link btn-sm p-0" onclick="copyErrorId()">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Background decoration -->
+<div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+     style="z-index: -1; pointer-events: none;">
+    <div class="position-absolute" style="width: 400px; height: 400px; background: linear-gradient(135deg, var(--bs-danger), var(--bs-warning)); opacity: 0.03; border-radius: 50%; filter: blur(100px); top: 10%; left: 10%;"></div>
+    <div class="position-absolute" style="width: 300px; height: 300px; background: linear-gradient(135deg, var(--bs-info), var(--bs-primary)); opacity: 0.03; border-radius: 50%; filter: blur(80px); bottom: 20%; right: 15%;"></div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Add some subtle animations */
+.card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Auto-refresh indicator */
+.auto-refresh {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1050;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .display-1 {
+        font-size: 6rem !important;
+    }
+    
+    .avatar {
+        width: 3rem !important;
+        height: 3rem !important;
+    }
+    
+    .position-absolute {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let refreshTimer;
+let countdown = 60; // Auto-refresh in 60 seconds
+
+function startAutoRefresh() {
+    // Create countdown element
+    const countdownElement = document.createElement('div');
+    countdownElement.className = 'auto-refresh';
+    countdownElement.innerHTML = `
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-2 text-center">
+                <small class="text-muted">Auto-refresh in <span id="countdown">${countdown}</span>s</small>
+                <div class="mt-1">
+                    <button class="btn btn-link btn-sm p-0" onclick="cancelAutoRefresh()">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(countdownElement);
+    
+    refreshTimer = setInterval(function() {
+        countdown--;
+        const countdownSpan = document.getElementById('countdown');
+        if (countdownSpan) {
+            countdownSpan.textContent = countdown;
+        }
+        
+        if (countdown <= 0) {
+            location.reload();
+        }
+    }, 1000);
+}
+
+function cancelAutoRefresh() {
+    if (refreshTimer) {
+        clearInterval(refreshTimer);
+    }
+    const autoRefreshElement = document.querySelector('.auto-refresh');
+    if (autoRefreshElement) {
+        autoRefreshElement.remove();
+    }
+}
+
+function copyErrorId() {
+    const errorId = '#{{ request.META.REQUEST_TIME|default:"ERR-500" }}';
+    navigator.clipboard.writeText(errorId).then(function() {
+        // Show success toast
+        const toast = document.createElement('div');
+        toast.className = 'toast position-fixed bottom-0 end-0 m-3';
+        toast.innerHTML = `
+            <div class="toast-body bg-success text-white">
+                <i class="bi bi-check-circle me-2"></i>Error ID copied to clipboard!
+            </div>
+        `;
+        document.body.appendChild(toast);
+        
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+        
+        setTimeout(() => toast.remove(), 3000);
+    }).catch(function() {
+        alert('Error ID: ' + errorId);
+    });
+}
+
+// Start auto-refresh timer when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Start auto-refresh after 5 seconds
+    setTimeout(startAutoRefresh, 5000);
+});
+
+// Cancel auto-refresh if user interacts with the page
+document.addEventListener('click', function() {
+    cancelAutoRefresh();
+});
+
+document.addEventListener('keydown', function() {
+    cancelAutoRefresh();
+});
+</script>
+{% endblock %}

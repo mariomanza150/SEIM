@@ -1,0 +1,152 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Login - SEIM{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Login</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-lg">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <div class="avatar mx-auto mb-3 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 4rem; height: 4rem;">
+                        <i class="bi bi-person-circle fs-1"></i>
+                    </div>
+                    <h2 class="h4 mb-1">Welcome Back</h2>
+                    <p class="text-muted small">Sign in to your SEIM account</p>
+                </div>
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger border-0 d-flex align-items-center" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <div>{{ form.non_field_errors.0 }}</div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            <input type="text" 
+                                   class="form-control {% if form.username.errors %}is-invalid{% endif %}" 
+                                   id="{{ form.username.id_for_label }}" 
+                                   name="{{ form.username.name }}"
+                                   value="{{ form.username.value|default:'' }}"
+                                   placeholder="Username"
+                                   required>
+                            <label for="{{ form.username.id_for_label }}">
+                                <i class="bi bi-person me-2"></i>Username
+                            </label>
+                            {% if form.username.errors %}
+                                <div class="invalid-feedback">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    {{ form.username.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-floating">
+                            <input type="password" 
+                                   class="form-control {% if form.password.errors %}is-invalid{% endif %}" 
+                                   id="{{ form.password.id_for_label }}" 
+                                   name="{{ form.password.name }}"
+                                   placeholder="Password"
+                                   required>
+                            <label for="{{ form.password.id_for_label }}">
+                                <i class="bi bi-lock me-2"></i>Password
+                            </label>
+                            {% if form.password.errors %}
+                                <div class="invalid-feedback">
+                                    <i class="bi bi-exclamation-circle me-1"></i>
+                                    {{ form.password.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="rememberMe">
+                            <label class="form-check-label small text-muted" for="rememberMe">
+                                Remember me
+                            </label>
+                        </div>
+                        <a href="#" class="small text-decoration-none">
+                            Forgot password?
+                        </a>
+                    </div>
+                    
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>
+                            Sign In
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center">
+                    <hr class="my-4">
+                    <p class="small text-muted mb-0">
+                        Don't have an account? 
+                        <a href="{% url 'exchange:register' %}" class="text-decoration-none fw-medium">
+                            Create one here
+                            <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Help -->
+        <div class="text-center mt-4">
+            <p class="small text-muted">
+                <i class="bi bi-shield-check me-1"></i>
+                Your information is secure and encrypted
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Optional: Add some visual elements for enhanced design -->
+<div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="z-index: -1; pointer-events: none;">
+    <div class="position-absolute" style="width: 300px; height: 300px; background: linear-gradient(135deg, var(--bs-primary), var(--bs-info)); opacity: 0.1; border-radius: 50%; filter: blur(100px); top: 10%; left: 10%;"></div>
+    <div class="position-absolute" style="width: 200px; height: 200px; background: linear-gradient(135deg, var(--bs-success), var(--bs-warning)); opacity: 0.1; border-radius: 50%; filter: blur(80px); bottom: 20%; right: 15%;"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add some interactive feedback
+    const form = document.querySelector('form');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    form.addEventListener('submit', function(e) {
+        if (form.checkValidity()) {
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+        }
+    });
+    
+    // Add floating label animation improvements
+    const floatingInputs = document.querySelectorAll('.form-floating input');
+    floatingInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('focused');
+        });
+        
+        input.addEventListener('blur', function() {
+            if (!this.value) {
+                this.parentElement.classList.remove('focused');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

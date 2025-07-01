@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Document Preview - {{ document.name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-file-pdf"></i> {{ document.name }}
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'exchange:exchange-detail' document.exchange.id %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Exchange
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="document-info">
+                                <h5>Document Information</h5>
+                                <dl>
+                                    <dt>Category:</dt>
+                                    <dd>{{ document.get_category_display }}</dd>
+                                    
+                                    <dt>Uploaded:</dt>
+                                    <dd>{{ document.uploaded_at|date:"F j, Y g:i A" }}</dd>
+                                    
+                                    <dt>Size:</dt>
+                                    <dd>{{ document.file.size|filesizeformat }}</dd>
+                                    
+                                    <dt>Status:</dt>
+                                    <dd>
+                                        {% if document.is_verified %}
+                                            <span class="badge badge-success">
+                                                <i class="fas fa-check-circle"></i> Verified
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-warning">
+                                                <i class="fas fa-clock"></i> Pending Verification
+                                            </span>
+                                        {% endif %}
+                                    </dd>
+                                </dl>
+                                
+                                <div class="mt-3">
+                                    <a href="{{ document.file.url }}" class="btn btn-primary btn-block" download>
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            {% if document.file.name|lower|slice:"-4:" == ".pdf" %}
+                                <div class="pdf-viewer-container" data-pdf-url="{{ document.file.url }}">
+                                    <!-- PDF viewer will be initialized here -->
+                                </div>
+                            {% else %}
+                                <div class="non-pdf-preview">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i>
+                                        Preview is not available for this file type. 
+                                        Please download the file to view it.
+                                    </div>
+                                    
+                                    {% if document.file.name|lower|slice:"-4:" in ".jpg,.jpeg,.png,.gif" %}
+                                        <div class="text-center">
+                                            <img src="{{ document.file.url }}" 
+                                                 alt="{{ document.name }}" 
+                                                 class="img-fluid"
+                                                 style="max-height: 600px;">
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- PDF.js library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+</script>
+
+<!-- Custom PDF viewer -->
+<script src="{% static 'exchange/js/components/pdf_viewer.js' %}"></script>
+{% endblock %}

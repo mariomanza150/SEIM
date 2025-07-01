@@ -1,0 +1,349 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}My Documents - SEIM{% endblock %}
+
+{% block extra_css %}
+<!-- DataTables Includes -->
+{% include 'includes/datatables_includes.html' %}
+
+<!-- Custom DataTables Styling -->
+<link rel="stylesheet" href="{% static 'exchange/css/vendor/datatables-custom.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-1">
+                        <i class="bi bi-file-earmark-text me-2"></i>Document Management
+                    </h1>
+                    <p class="text-muted mb-0">Upload, organize, and manage your exchange documents</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <!-- View Toggle -->
+                    <div class="btn-group" role="group" aria-label="View toggle">
+                        <input type="radio" class="btn-check" name="view" id="gridView" autocomplete="off" checked>
+                        <label class="btn btn-outline-secondary btn-sm" for="gridView">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                        </label>
+                        <input type="radio" class="btn-check" name="view" id="listView" autocomplete="off">
+                        <label class="btn btn-outline-secondary btn-sm" for="listView">
+                            <i class="bi bi-list"></i>
+                        </label>
+                    </div>
+                    
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#documentUploadModal">
+                        <i class="bi bi-cloud-upload me-2"></i>Upload Document
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Document Statistics -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm bg-primary-subtle">
+                        <div class="card-body text-center">
+                            <i class="bi bi-files display-4 text-primary mb-2"></i>
+                            <h5 class="card-title mb-1">Total Documents</h5>
+                            <p class="card-text fs-3 fw-bold text-primary mb-0">{{ documents.count }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm bg-success-subtle">
+                        <div class="card-body text-center">
+                            <i class="bi bi-check-circle display-4 text-success mb-2"></i>
+                            <h5 class="card-title mb-1">Verified</h5>
+                            <p class="card-text fs-3 fw-bold text-success mb-0">{{ verified_count|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm bg-warning-subtle">
+                        <div class="card-body text-center">
+                            <i class="bi bi-clock display-4 text-warning mb-2"></i>
+                            <h5 class="card-title mb-1">Pending Review</h5>
+                            <p class="card-text fs-3 fw-bold text-warning mb-0">{{ pending_count|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm bg-info-subtle">
+                        <div class="card-body text-center">
+                            <i class="bi bi-upload display-4 text-info mb-2"></i>
+                            <h5 class="card-title mb-1">Recent Uploads</h5>
+                            <p class="card-text fs-3 fw-bold text-info mb-0">{{ recent_count|default:0 }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Document Grid View -->
+            <div class="row g-4" id="documentGrid">
+                {% for document in documents %}
+                <div class="col-md-6 col-xl-4" id="document-card-{{ document.id }}">
+                    <div class="card border-0 shadow-sm h-100 card-hover">
+                        <div class="card-header bg-transparent border-0 pb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 d-flex align-items-center">
+                                    <i class="bi bi-file-earmark me-2 text-primary"></i>
+                                    {{ document.get_category_display }}
+                                </h6>
+                                {% if document.status %}
+                                <span class="badge {% if document.status == 'VERIFIED' %}bg-success-subtle text-success border border-success-subtle{% elif document.status == 'REJECTED' %}bg-danger-subtle text-danger border border-danger-subtle{% elif document.status == 'PENDING' %}bg-warning-subtle text-warning border border-warning-subtle{% else %}bg-info-subtle text-info border border-info-subtle{% endif %}">
+                                    {{ document.get_status_display }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="card-body pt-2">
+                            <h6 class="card-title text-truncate" title="{{ document.original_name }}">{{ document.original_name|truncatewords:5 }}</h6>
+                            <div class="mb-3">
+                                <div class="row g-2 small">
+                                    <div class="col-6">
+                                        <span class="text-muted">Exchange:</span>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <a href="{% url 'exchange:exchange-detail' document.exchange.id %}" class="fw-medium text-decoration-none">
+                                            #{{ document.exchange.id }}
+                                        </a>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-muted">Uploaded:</span>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <span class="fw-medium">{{ document.uploaded_at|date:"M d, Y" }}</span>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-muted">Size:</span>
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <span class="fw-medium">{{ document.file_size|filesizeformat }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% if document.description %}
+                            <p class="card-text small text-muted">{{ document.description|truncatewords:10 }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer bg-transparent border-0 pt-0">
+                            <div class="d-grid gap-2">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'exchange:document-detail' document.exchange.id document.id %}" 
+                                       class="btn btn-outline-primary btn-sm"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-title="View Details">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    {% if document.file %}
+                                    <a href="{{ document.file.url }}" 
+                                       class="btn btn-outline-secondary btn-sm"
+                                       data-bs-toggle="tooltip" 
+                                       data-bs-title="Download"
+                                       target="_blank">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                    {% endif %}
+                                    <button onclick="previewDocument({{ document.id }})" 
+                                            class="btn btn-outline-info btn-sm"
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-title="Preview">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <div class="avatar mx-auto mb-4 bg-light text-muted d-flex align-items-center justify-content-center" style="width: 5rem; height: 5rem;">
+                        <i class="bi bi-folder2-open display-4"></i>
+                    </div>
+                    <h5 class="text-muted mb-2">No documents uploaded yet</h5>
+                    <p class="text-muted mb-4">Start by uploading your first document to begin managing your exchange paperwork.</p>
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#documentUploadModal">
+                        <i class="bi bi-cloud-upload me-2"></i>Upload Document
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- List View Alternative -->
+            <div class="d-none" id="documentTable">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table id="documentsTable" class="table table-hover align-middle mb-0 w-100">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="border-0 ps-4">ID</th>
+                                        <th class="border-0">Name</th>
+                                        <th class="border-0">Category</th>
+                                        <th class="border-0">Student</th>
+                                        <th class="border-0">Status</th>
+                                        <th class="border-0">Size</th>
+                                        <th class="border-0">Uploaded</th>
+                                        <th class="border-0 pe-4 text-end">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="table-group-divider">
+                                    <!-- DataTables will populate this via AJAX -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Document Upload Modal -->
+{% include 'exchange/partials/document_upload_modal.html' %}
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- DataTables Configuration Script -->
+<script src="{% static 'exchange/js/vendor/datatables-config.js' %}"></script>
+
+<script>
+let documentsDataTable;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // View toggle functionality
+    const gridViewBtn = document.getElementById('gridView');
+    const listViewBtn = document.getElementById('listView');
+    const gridViewContent = document.getElementById('documentGrid');
+    const listViewContent = document.getElementById('documentTable');
+    
+    gridViewBtn.addEventListener('change', function() {
+        if (this.checked) {
+            gridViewContent.classList.remove('d-none');
+            listViewContent.classList.add('d-none');
+            localStorage.setItem('documentView', 'grid');
+            // Destroy DataTable if it exists
+            if (documentsDataTable) {
+                documentsDataTable.destroy();
+                documentsDataTable = null;
+            }
+        }
+    });
+    
+    listViewBtn.addEventListener('change', function() {
+        if (this.checked) {
+            gridViewContent.classList.add('d-none');
+            listViewContent.classList.remove('d-none');
+            localStorage.setItem('documentView', 'list');
+            // Initialize DataTable
+            initializeDocumentsDataTable();
+        }
+    });
+    
+    // Restore saved view preference
+    const savedView = localStorage.getItem('documentView');
+    if (savedView === 'list') {
+        listViewBtn.checked = true;
+        listViewBtn.dispatchEvent(new Event('change'));
+    }
+});
+
+function initializeDocumentsDataTable() {
+    if (documentsDataTable) {
+        return; // Already initialized
+    }
+    
+    // Define columns for DataTables
+    const columns = [
+        { 
+            data: null, 
+            name: 'id',
+            render: function(data, type, row) {
+                return `
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-sm rounded bg-primary bg-opacity-10 text-primary me-3 d-flex align-items-center justify-content-center">
+                            #${row[0]}
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Doc #${row[0]}</h6>
+                        </div>
+                    </div>
+                `;
+            }
+        },
+        { 
+            data: 1, 
+            name: 'original_name',
+            render: function(data, type, row) {
+                return `<span class="text-truncate" title="${data}">${data}</span>`;
+            }
+        },
+        { data: 2, name: 'category' },
+        { data: 3, name: 'exchange__student__first_name' },
+        { data: 4, name: 'status' },
+        { data: 5, name: 'file_size', orderable: false },
+        { data: 6, name: 'uploaded_at' },
+        { 
+            data: 7, 
+            name: 'actions', 
+            orderable: false, 
+            searchable: false,
+            className: 'text-end'
+        }
+    ];
+    
+    // Initialize DataTable with SGII configuration
+    documentsDataTable = initSGIIDataTable(
+        '#documentsTable',
+        '{% url "exchange:documents-datatable" %}',
+        columns,
+        {
+            order: [[6, 'desc']], // Default sort by uploaded date
+            drawCallback: function() {
+                // Re-initialize tooltips after each draw
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                    new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+        }
+    );
+}
+
+// Document preview function
+function previewDocument(documentId) {
+    // Implement document preview logic here
+    console.log('Preview document:', documentId);
+    // You can add modal preview functionality here
+}
+
+// Document category icon mapping (using Bootstrap Icons)
+const categoryIcons = {
+    'TRANSCRIPT': 'bi-mortarboard',
+    'LANGUAGE_CERT': 'bi-translate',
+    'MOTIVATION': 'bi-file-earmark-text',
+    'RECOMMENDATION': 'bi-person-check',
+    'PASSPORT': 'bi-person-badge',
+    'MEDICAL': 'bi-heart-pulse',
+    'FINANCIAL': 'bi-cash-stack',
+    'OTHER': 'bi-file-earmark'
+};
+
+// Status color mapping
+const statusColors = {
+    'VERIFIED': 'success',
+    'REJECTED': 'danger',
+    'PENDING': 'warning',
+    'UPLOADED': 'info'
+};
+</script>
+{% endblock %}

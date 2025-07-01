@@ -1,0 +1,16 @@
+{% load i18n %}
+{% if form %}
+  <h2>{% trans "Filter" %}</h2>
+  <form class="filter-form" action="" method="get">
+    {% for field in form %}
+      <div class="form-group">
+        {{ field.label_tag }}
+        {{ field }}
+        {% if field.help_text %}
+          <span class="help-block">{{ field.help_text|safe }}</span>
+        {% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit" class="btn btn-primary">{% trans "Apply Filter" %}</button>
+  </form>
+{% endif %}

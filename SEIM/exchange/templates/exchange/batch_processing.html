@@ -1,0 +1,227 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Batch Processing - SEIM{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1>Batch Processing</h1>
+        <p class="lead">Process multiple exchange applications or documents at once.</p>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Batch Status Update -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Batch Status Update</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'exchange:batch-status-update' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="status_filter" class="form-label">Select applications by current status</label>
+                        <select id="status_filter" name="status_filter" class="form-select" required>
+                            <option value="" selected disabled>-- Select current status --</option>
+                            {% for status_code, status_label in status_choices %}
+                                <option value="{{ status_code }}">{{ status_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="new_status" class="form-label">Change to new status</label>
+                        <select id="new_status" name="new_status" class="form-select" required>
+                            <option value="" selected disabled>-- Select new status --</option>
+                            {% for status_code, status_label in status_choices %}
+                                <option value="{{ status_code }}">{{ status_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Comment (optional)</label>
+                        <textarea id="comment" name="comment" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="confirmation" name="confirmation" required>
+                        <label class="form-check-label" for="confirmation">
+                            I confirm this status change for all matching applications
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Process Status Changes</button>
+                </form>
+            </div>
+            <div class="card-footer bg-light">
+                <small class="text-muted">This action will affect all applications matching the selected current status.</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Batch Document Verification -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Batch Document Verification</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'exchange:batch-document-verification' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="document_category" class="form-label">Select documents by category</label>
+                        <select id="document_category" name="document_category" class="form-select" required>
+                            <option value="" selected disabled>-- Select document category --</option>
+                            {% for category_code, category_label in document_types %}
+                                <option value="{{ category_code }}">{{ category_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="verification_action" class="form-label">Action</label>
+                        <select id="verification_action" name="verification_action" class="form-select" required>
+                            <option value="" selected disabled>-- Select action --</option>
+                            <option value="verify">Verify all matching documents</option>
+                            <option value="reject">Reject all matching documents</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes (optional)</label>
+                        <textarea id="notes" name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="doc_confirmation" name="doc_confirmation" required>
+                        <label class="form-check-label" for="doc_confirmation">
+                            I confirm this action for all matching documents
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Process Documents</button>
+                </form>
+            </div>
+            <div class="card-footer bg-light">
+                <small class="text-muted">This action will affect all pending documents of the selected category.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- CSV Import -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Import Exchanges from CSV</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'exchange:import-csv' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="csv_file" class="form-label">CSV File</label>
+                        <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <h6>CSV Format Requirements:</h6>
+                        <ul class="mb-0">
+                            <li>File must have a header row with field names</li>
+                            <li>Required fields: first_name, last_name, email, destination_university, destination_country, start_date, end_date</li>
+                            <li>Dates should be in YYYY-MM-DD format</li>
+                        </ul>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Import CSV</button>
+                    <a href="{% url 'exchange:download-csv-template' %}" class="btn btn-outline-secondary">Download Template</a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Batch Notifications -->
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Send Batch Notifications</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'exchange:batch-notifications' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="notification_status" class="form-label">Select recipients by status</label>
+                        <select id="notification_status" name="notification_status" class="form-select" required>
+                            <option value="" selected disabled>-- Select status --</option>
+                            {% for status_code, status_label in status_choices %}
+                                <option value="{{ status_code }}">{{ status_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="notification_type" class="form-label">Notification type</label>
+                        <select id="notification_type" name="notification_type" class="form-select" required>
+                            <option value="" selected disabled>-- Select notification type --</option>
+                            <option value="reminder">Application Status Reminder</option>
+                            <option value="document_request">Missing Documents Reminder</option>
+                            <option value="deadline">Upcoming Deadline Notification</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="notification_confirmation" name="notification_confirmation" required>
+                        <label class="form-check-label" for="notification_confirmation">
+                            I confirm sending notifications to all matching recipients
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Send Notifications</button>
+                </form>
+            </div>
+            <div class="card-footer bg-light">
+                <small class="text-muted">All selected recipients will receive the notification. Please use this feature responsibly.</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Batch Processing Results -->
+{% if results %}
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Batch Processing Results</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Summary:</h6>
+                        <ul>
+                            <li><strong>Total processed:</strong> {{ results.total }}</li>
+                            <li><strong>Successful:</strong> {{ results.success_count }}</li>
+                            <li><strong>Failed:</strong> {{ results.failure_count }}</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        {% if results.errors %}
+                            <h6>Errors:</h6>
+                            <ul class="text-danger">
+                                {% for error in results.errors %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

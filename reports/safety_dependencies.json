@@ -1,0 +1,1945 @@
+Command: python -m safety check --json
+Exit Code: 0
+Timestamp: 2025-05-29 17:18:26.511297
+================================================================================
+STDOUT:
+
+
++===========================================================================================================================================================================================+
+
+
+DEPRECATED: this command (`check`) has been DEPRECATED, and will be unsupported beyond 01 June 2024.
+
+
+We highly encourage switching to the new `scan` command which is easier to use, more powerful, and can be set up to mimic the deprecated command if required.
+
+
++===========================================================================================================================================================================================+
+
+
+{
+    "report_meta": {
+        "scan_target": "environment",
+        "scanned": [
+            "C:\\Users\\mario\\.conda\\envs\\sgii\\Lib\\site-packages",
+            "C:\\Users\\mario\\.conda\\envs\\sgii",
+            "C:\\Users\\mario\\.conda\\envs\\sgii\\Lib\\site-packages\\setuptools\\_vendor",
+            "C:\\Users\\mario\\.conda\\envs\\sgii\\DLLs",
+            "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor",
+            "E:\\mario\\Documents\\SGII",
+            "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages",
+            "C:\\Users\\mario\\.conda\\envs\\sgii\\python313.zip",
+            "C:\\Users\\mario\\.conda\\envs\\sgii\\Lib"
+        ],
+        "scanned_full_path": [
+            "E:\\mario\\Documents\\SGII",
+            "C:\\Users\\mario\\.conda\\envs\\sgii\\python313.zip",
+            "C:\\Users\\mario\\.conda\\envs\\sgii\\DLLs",
+            "C:\\Users\\mario\\.conda\\envs\\sgii\\Lib",
+            "C:\\Users\\mario\\.conda\\envs\\sgii",
+            "C:\\Users\\mario\\.conda\\envs\\sgii\\Lib\\site-packages",
+            "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages",
+            "C:\\Users\\mario\\.conda\\envs\\sgii\\Lib\\site-packages\\setuptools\\_vendor",
+            "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+        ],
+        "target_languages": [
+            "python"
+        ],
+        "policy_file": null,
+        "policy_file_source": "local",
+        "audit_and_monitor": false,
+        "api_key": false,
+        "account": "",
+        "local_database_path": null,
+        "safety_version": "3.5.1",
+        "timestamp": "2025-05-29 17:18:26",
+        "packages_found": 122,
+        "vulnerabilities_found": 0,
+        "vulnerabilities_ignored": 0,
+        "remediations_recommended": 0,
+        "telemetry": {
+            "safety_options": {
+                "json": {
+                    "--json": 1
+                }
+            },
+            "safety_version": "3.5.1",
+            "safety_source": "cli",
+            "os_type": "Windows",
+            "os_release": "11",
+            "os_description": "Windows-11-10.0.26100-SP0",
+            "python_version": "3.13.2",
+            "safety_command": "check"
+        },
+        "git": {
+            "branch": "master",
+            "tag": "",
+            "commit": "",
+            "dirty": "False",
+            "origin": ""
+        },
+        "project": null,
+        "json_version": "1.1",
+        "remediations_attempted": 0,
+        "remediations_completed": 0,
+        "remediation_mode": "NON_INTERACTIVE"
+    },
+    "scanned_packages": {
+        "markupsafe": {
+            "name": "markupsafe",
+            "version": "3.0.2",
+            "requirements": [
+                {
+                    "raw": "markupsafe==3.0.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "markupsafe",
+                    "specifier": "==3.0.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pyyaml": {
+            "name": "pyyaml",
+            "version": "6.0.2",
+            "requirements": [
+                {
+                    "raw": "pyyaml==6.0.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pyyaml",
+                    "specifier": "==6.0.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "amqp": {
+            "name": "amqp",
+            "version": "5.3.1",
+            "requirements": [
+                {
+                    "raw": "amqp==5.3.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "amqp",
+                    "specifier": "==5.3.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "annotated-types": {
+            "name": "annotated-types",
+            "version": "0.7.0",
+            "requirements": [
+                {
+                    "raw": "annotated-types==0.7.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "annotated-types",
+                    "specifier": "==0.7.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "anyio": {
+            "name": "anyio",
+            "version": "4.9.0",
+            "requirements": [
+                {
+                    "raw": "anyio==4.9.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "anyio",
+                    "specifier": "==4.9.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "asgiref": {
+            "name": "asgiref",
+            "version": "3.8.1",
+            "requirements": [
+                {
+                    "raw": "asgiref==3.8.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "asgiref",
+                    "specifier": "==3.8.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "astroid": {
+            "name": "astroid",
+            "version": "3.3.10",
+            "requirements": [
+                {
+                    "raw": "astroid==3.3.10",
+                    "extras": [],
+                    "marker": null,
+                    "name": "astroid",
+                    "specifier": "==3.3.10",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "authlib": {
+            "name": "authlib",
+            "version": "1.6.0",
+            "requirements": [
+                {
+                    "raw": "authlib==1.6.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "authlib",
+                    "specifier": "==1.6.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "bandit": {
+            "name": "bandit",
+            "version": "1.8.3",
+            "requirements": [
+                {
+                    "raw": "bandit==1.8.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "bandit",
+                    "specifier": "==1.8.3",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "billiard": {
+            "name": "billiard",
+            "version": "4.2.1",
+            "requirements": [
+                {
+                    "raw": "billiard==4.2.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "billiard",
+                    "specifier": "==4.2.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "black": {
+            "name": "black",
+            "version": "25.1.0",
+            "requirements": [
+                {
+                    "raw": "black==25.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "black",
+                    "specifier": "==25.1.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "boto3": {
+            "name": "boto3",
+            "version": "1.38.16",
+            "requirements": [
+                {
+                    "raw": "boto3==1.38.16",
+                    "extras": [],
+                    "marker": null,
+                    "name": "boto3",
+                    "specifier": "==1.38.16",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "botocore": {
+            "name": "botocore",
+            "version": "1.38.16",
+            "requirements": [
+                {
+                    "raw": "botocore==1.38.16",
+                    "extras": [],
+                    "marker": null,
+                    "name": "botocore",
+                    "specifier": "==1.38.16",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "celery": {
+            "name": "celery",
+            "version": "5.5.2",
+            "requirements": [
+                {
+                    "raw": "celery==5.5.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "celery",
+                    "specifier": "==5.5.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "certifi": {
+            "name": "certifi",
+            "version": "2025.4.26",
+            "requirements": [
+                {
+                    "raw": "certifi==2025.4.26",
+                    "extras": [],
+                    "marker": null,
+                    "name": "certifi",
+                    "specifier": "==2025.4.26",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "cffi": {
+            "name": "cffi",
+            "version": "1.17.1",
+            "requirements": [
+                {
+                    "raw": "cffi==1.17.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "cffi",
+                    "specifier": "==1.17.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "cfgv": {
+            "name": "cfgv",
+            "version": "3.4.0",
+            "requirements": [
+                {
+                    "raw": "cfgv==3.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "cfgv",
+                    "specifier": "==3.4.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "charset-normalizer": {
+            "name": "charset-normalizer",
+            "version": "3.4.2",
+            "requirements": [
+                {
+                    "raw": "charset-normalizer==3.4.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "charset-normalizer",
+                    "specifier": "==3.4.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "click": {
+            "name": "click",
+            "version": "8.1.8",
+            "requirements": [
+                {
+                    "raw": "click==8.1.8",
+                    "extras": [],
+                    "marker": null,
+                    "name": "click",
+                    "specifier": "==8.1.8",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "click-didyoumean": {
+            "name": "click-didyoumean",
+            "version": "0.3.1",
+            "requirements": [
+                {
+                    "raw": "click-didyoumean==0.3.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "click-didyoumean",
+                    "specifier": "==0.3.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "click-plugins": {
+            "name": "click-plugins",
+            "version": "1.1.1",
+            "requirements": [
+                {
+                    "raw": "click-plugins==1.1.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "click-plugins",
+                    "specifier": "==1.1.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "click-repl": {
+            "name": "click-repl",
+            "version": "0.3.0",
+            "requirements": [
+                {
+                    "raw": "click-repl==0.3.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "click-repl",
+                    "specifier": "==0.3.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "colorama": {
+            "name": "colorama",
+            "version": "0.4.6",
+            "requirements": [
+                {
+                    "raw": "colorama==0.4.6",
+                    "extras": [],
+                    "marker": null,
+                    "name": "colorama",
+                    "specifier": "==0.4.6",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "coverage": {
+            "name": "coverage",
+            "version": "7.8.0",
+            "requirements": [
+                {
+                    "raw": "coverage==7.8.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "coverage",
+                    "specifier": "==7.8.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "cryptography": {
+            "name": "cryptography",
+            "version": "45.0.3",
+            "requirements": [
+                {
+                    "raw": "cryptography==45.0.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "cryptography",
+                    "specifier": "==45.0.3",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "dill": {
+            "name": "dill",
+            "version": "0.4.0",
+            "requirements": [
+                {
+                    "raw": "dill==0.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "dill",
+                    "specifier": "==0.4.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "distlib": {
+            "name": "distlib",
+            "version": "0.3.9",
+            "requirements": [
+                {
+                    "raw": "distlib==0.3.9",
+                    "extras": [],
+                    "marker": null,
+                    "name": "distlib",
+                    "specifier": "==0.3.9",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "django": {
+            "name": "django",
+            "version": "5.2.1",
+            "requirements": [
+                {
+                    "raw": "django==5.2.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "django",
+                    "specifier": "==5.2.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "django-cors-headers": {
+            "name": "django-cors-headers",
+            "version": "4.7.0",
+            "requirements": [
+                {
+                    "raw": "django-cors-headers==4.7.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "django-cors-headers",
+                    "specifier": "==4.7.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "django-debug-toolbar": {
+            "name": "django-debug-toolbar",
+            "version": "5.2.0",
+            "requirements": [
+                {
+                    "raw": "django-debug-toolbar==5.2.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "django-debug-toolbar",
+                    "specifier": "==5.2.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "django-filter": {
+            "name": "django-filter",
+            "version": "25.1",
+            "requirements": [
+                {
+                    "raw": "django-filter==25.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "django-filter",
+                    "specifier": "==25.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "django-rest-framework-nested": {
+            "name": "django-rest-framework-nested",
+            "version": "0.0.1",
+            "requirements": [
+                {
+                    "raw": "django-rest-framework-nested==0.0.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "django-rest-framework-nested",
+                    "specifier": "==0.0.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "djangorestframework": {
+            "name": "djangorestframework",
+            "version": "3.16.0",
+            "requirements": [
+                {
+                    "raw": "djangorestframework==3.16.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "djangorestframework",
+                    "specifier": "==3.16.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "dparse": {
+            "name": "dparse",
+            "version": "0.6.4",
+            "requirements": [
+                {
+                    "raw": "dparse==0.6.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "dparse",
+                    "specifier": "==0.6.4",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "filelock": {
+            "name": "filelock",
+            "version": "3.16.1",
+            "requirements": [
+                {
+                    "raw": "filelock==3.16.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "filelock",
+                    "specifier": "==3.16.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "flake8": {
+            "name": "flake8",
+            "version": "7.2.0",
+            "requirements": [
+                {
+                    "raw": "flake8==7.2.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "flake8",
+                    "specifier": "==7.2.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "gunicorn": {
+            "name": "gunicorn",
+            "version": "23.0.0",
+            "requirements": [
+                {
+                    "raw": "gunicorn==23.0.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "gunicorn",
+                    "specifier": "==23.0.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "h11": {
+            "name": "h11",
+            "version": "0.16.0",
+            "requirements": [
+                {
+                    "raw": "h11==0.16.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "h11",
+                    "specifier": "==0.16.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "httpcore": {
+            "name": "httpcore",
+            "version": "1.0.9",
+            "requirements": [
+                {
+                    "raw": "httpcore==1.0.9",
+                    "extras": [],
+                    "marker": null,
+                    "name": "httpcore",
+                    "specifier": "==1.0.9",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "httpx": {
+            "name": "httpx",
+            "version": "0.28.1",
+            "requirements": [
+                {
+                    "raw": "httpx==0.28.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "httpx",
+                    "specifier": "==0.28.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "identify": {
+            "name": "identify",
+            "version": "2.6.10",
+            "requirements": [
+                {
+                    "raw": "identify==2.6.10",
+                    "extras": [],
+                    "marker": null,
+                    "name": "identify",
+                    "specifier": "==2.6.10",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "idna": {
+            "name": "idna",
+            "version": "3.10",
+            "requirements": [
+                {
+                    "raw": "idna==3.10",
+                    "extras": [],
+                    "marker": null,
+                    "name": "idna",
+                    "specifier": "==3.10",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "iniconfig": {
+            "name": "iniconfig",
+            "version": "2.1.0",
+            "requirements": [
+                {
+                    "raw": "iniconfig==2.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "iniconfig",
+                    "specifier": "==2.1.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "isort": {
+            "name": "isort",
+            "version": "6.0.1",
+            "requirements": [
+                {
+                    "raw": "isort==6.0.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "isort",
+                    "specifier": "==6.0.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "jinja2": {
+            "name": "jinja2",
+            "version": "3.1.6",
+            "requirements": [
+                {
+                    "raw": "jinja2==3.1.6",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jinja2",
+                    "specifier": "==3.1.6",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "jmespath": {
+            "name": "jmespath",
+            "version": "1.0.1",
+            "requirements": [
+                {
+                    "raw": "jmespath==1.0.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jmespath",
+                    "specifier": "==1.0.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "joblib": {
+            "name": "joblib",
+            "version": "1.5.1",
+            "requirements": [
+                {
+                    "raw": "joblib==1.5.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "joblib",
+                    "specifier": "==1.5.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "kombu": {
+            "name": "kombu",
+            "version": "5.5.3",
+            "requirements": [
+                {
+                    "raw": "kombu==5.5.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "kombu",
+                    "specifier": "==5.5.3",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "libmagic": {
+            "name": "libmagic",
+            "version": "1.0",
+            "requirements": [
+                {
+                    "raw": "libmagic==1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "libmagic",
+                    "specifier": "==1.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "mando": {
+            "name": "mando",
+            "version": "0.7.1",
+            "requirements": [
+                {
+                    "raw": "mando==0.7.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mando",
+                    "specifier": "==0.7.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "markdown-it-py": {
+            "name": "markdown-it-py",
+            "version": "3.0.0",
+            "requirements": [
+                {
+                    "raw": "markdown-it-py==3.0.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "markdown-it-py",
+                    "specifier": "==3.0.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "marshmallow": {
+            "name": "marshmallow",
+            "version": "4.0.0",
+            "requirements": [
+                {
+                    "raw": "marshmallow==4.0.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "marshmallow",
+                    "specifier": "==4.0.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "mccabe": {
+            "name": "mccabe",
+            "version": "0.7.0",
+            "requirements": [
+                {
+                    "raw": "mccabe==0.7.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mccabe",
+                    "specifier": "==0.7.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "mdurl": {
+            "name": "mdurl",
+            "version": "0.1.2",
+            "requirements": [
+                {
+                    "raw": "mdurl==0.1.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mdurl",
+                    "specifier": "==0.1.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "mypy": {
+            "name": "mypy",
+            "version": "1.16.0",
+            "requirements": [
+                {
+                    "raw": "mypy==1.16.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mypy",
+                    "specifier": "==1.16.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "mypy-extensions": {
+            "name": "mypy-extensions",
+            "version": "1.1.0",
+            "requirements": [
+                {
+                    "raw": "mypy-extensions==1.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "mypy-extensions",
+                    "specifier": "==1.1.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "nltk": {
+            "name": "nltk",
+            "version": "3.9.1",
+            "requirements": [
+                {
+                    "raw": "nltk==3.9.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "nltk",
+                    "specifier": "==3.9.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "nodeenv": {
+            "name": "nodeenv",
+            "version": "1.9.1",
+            "requirements": [
+                {
+                    "raw": "nodeenv==1.9.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "nodeenv",
+                    "specifier": "==1.9.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "packaging": {
+            "name": "packaging",
+            "version": "25.0",
+            "requirements": [
+                {
+                    "raw": "packaging==25.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "packaging",
+                    "specifier": "==25.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pathspec": {
+            "name": "pathspec",
+            "version": "0.12.1",
+            "requirements": [
+                {
+                    "raw": "pathspec==0.12.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pathspec",
+                    "specifier": "==0.12.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pbr": {
+            "name": "pbr",
+            "version": "6.1.1",
+            "requirements": [
+                {
+                    "raw": "pbr==6.1.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pbr",
+                    "specifier": "==6.1.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pip": {
+            "name": "pip",
+            "version": "25.1",
+            "requirements": [
+                {
+                    "raw": "pip==25.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pip",
+                    "specifier": "==25.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "platformdirs": {
+            "name": "platformdirs",
+            "version": "4.3.8",
+            "requirements": [
+                {
+                    "raw": "platformdirs==4.3.8",
+                    "extras": [],
+                    "marker": null,
+                    "name": "platformdirs",
+                    "specifier": "==4.3.8",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pluggy": {
+            "name": "pluggy",
+            "version": "1.5.0",
+            "requirements": [
+                {
+                    "raw": "pluggy==1.5.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pluggy",
+                    "specifier": "==1.5.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pre-commit": {
+            "name": "pre-commit",
+            "version": "4.2.0",
+            "requirements": [
+                {
+                    "raw": "pre-commit==4.2.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pre-commit",
+                    "specifier": "==4.2.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "prompt-toolkit": {
+            "name": "prompt-toolkit",
+            "version": "3.0.51",
+            "requirements": [
+                {
+                    "raw": "prompt-toolkit==3.0.51",
+                    "extras": [],
+                    "marker": null,
+                    "name": "prompt-toolkit",
+                    "specifier": "==3.0.51",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "psutil": {
+            "name": "psutil",
+            "version": "6.1.1",
+            "requirements": [
+                {
+                    "raw": "psutil==6.1.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "psutil",
+                    "specifier": "==6.1.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "psycopg2-binary": {
+            "name": "psycopg2-binary",
+            "version": "2.9.10",
+            "requirements": [
+                {
+                    "raw": "psycopg2-binary==2.9.10",
+                    "extras": [],
+                    "marker": null,
+                    "name": "psycopg2-binary",
+                    "specifier": "==2.9.10",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pycodestyle": {
+            "name": "pycodestyle",
+            "version": "2.13.0",
+            "requirements": [
+                {
+                    "raw": "pycodestyle==2.13.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pycodestyle",
+                    "specifier": "==2.13.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pycparser": {
+            "name": "pycparser",
+            "version": "2.22",
+            "requirements": [
+                {
+                    "raw": "pycparser==2.22",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pycparser",
+                    "specifier": "==2.22",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pydantic": {
+            "name": "pydantic",
+            "version": "2.9.2",
+            "requirements": [
+                {
+                    "raw": "pydantic==2.9.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pydantic",
+                    "specifier": "==2.9.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pydantic-core": {
+            "name": "pydantic-core",
+            "version": "2.23.4",
+            "requirements": [
+                {
+                    "raw": "pydantic-core==2.23.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pydantic-core",
+                    "specifier": "==2.23.4",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pyflakes": {
+            "name": "pyflakes",
+            "version": "3.3.2",
+            "requirements": [
+                {
+                    "raw": "pyflakes==3.3.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pyflakes",
+                    "specifier": "==3.3.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pygments": {
+            "name": "pygments",
+            "version": "2.19.1",
+            "requirements": [
+                {
+                    "raw": "pygments==2.19.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pygments",
+                    "specifier": "==2.19.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pylint": {
+            "name": "pylint",
+            "version": "3.3.7",
+            "requirements": [
+                {
+                    "raw": "pylint==3.3.7",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pylint",
+                    "specifier": "==3.3.7",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pytest": {
+            "name": "pytest",
+            "version": "8.3.5",
+            "requirements": [
+                {
+                    "raw": "pytest==8.3.5",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pytest",
+                    "specifier": "==8.3.5",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pytest-cov": {
+            "name": "pytest-cov",
+            "version": "6.1.1",
+            "requirements": [
+                {
+                    "raw": "pytest-cov==6.1.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pytest-cov",
+                    "specifier": "==6.1.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "pytest-django": {
+            "name": "pytest-django",
+            "version": "4.11.1",
+            "requirements": [
+                {
+                    "raw": "pytest-django==4.11.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "pytest-django",
+                    "specifier": "==4.11.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "python-dateutil": {
+            "name": "python-dateutil",
+            "version": "2.9.0.post0",
+            "requirements": [
+                {
+                    "raw": "python-dateutil==2.9.0.post0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "python-dateutil",
+                    "specifier": "==2.9.0.post0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "python-magic": {
+            "name": "python-magic",
+            "version": "0.4.27",
+            "requirements": [
+                {
+                    "raw": "python-magic==0.4.27",
+                    "extras": [],
+                    "marker": null,
+                    "name": "python-magic",
+                    "specifier": "==0.4.27",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "python-magic-bin": {
+            "name": "python-magic-bin",
+            "version": "0.4.14",
+            "requirements": [
+                {
+                    "raw": "python-magic-bin==0.4.14",
+                    "extras": [],
+                    "marker": null,
+                    "name": "python-magic-bin",
+                    "specifier": "==0.4.14",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "radon": {
+            "name": "radon",
+            "version": "6.0.1",
+            "requirements": [
+                {
+                    "raw": "radon==6.0.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "radon",
+                    "specifier": "==6.0.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "redis": {
+            "name": "redis",
+            "version": "6.1.0",
+            "requirements": [
+                {
+                    "raw": "redis==6.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "redis",
+                    "specifier": "==6.1.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "regex": {
+            "name": "regex",
+            "version": "2024.11.6",
+            "requirements": [
+                {
+                    "raw": "regex==2024.11.6",
+                    "extras": [],
+                    "marker": null,
+                    "name": "regex",
+                    "specifier": "==2024.11.6",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "requests": {
+            "name": "requests",
+            "version": "2.32.3",
+            "requirements": [
+                {
+                    "raw": "requests==2.32.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "requests",
+                    "specifier": "==2.32.3",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "rich": {
+            "name": "rich",
+            "version": "14.0.0",
+            "requirements": [
+                {
+                    "raw": "rich==14.0.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "rich",
+                    "specifier": "==14.0.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "ruamel.yaml": {
+            "name": "ruamel.yaml",
+            "version": "0.18.11",
+            "requirements": [
+                {
+                    "raw": "ruamel.yaml==0.18.11",
+                    "extras": [],
+                    "marker": null,
+                    "name": "ruamel.yaml",
+                    "specifier": "==0.18.11",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "ruamel.yaml.clib": {
+            "name": "ruamel.yaml.clib",
+            "version": "0.2.12",
+            "requirements": [
+                {
+                    "raw": "ruamel.yaml.clib==0.2.12",
+                    "extras": [],
+                    "marker": null,
+                    "name": "ruamel.yaml.clib",
+                    "specifier": "==0.2.12",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "s3transfer": {
+            "name": "s3transfer",
+            "version": "0.12.0",
+            "requirements": [
+                {
+                    "raw": "s3transfer==0.12.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "s3transfer",
+                    "specifier": "==0.12.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "safety": {
+            "name": "safety",
+            "version": "3.5.1",
+            "requirements": [
+                {
+                    "raw": "safety==3.5.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "safety",
+                    "specifier": "==3.5.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "safety-schemas": {
+            "name": "safety-schemas",
+            "version": "0.0.14",
+            "requirements": [
+                {
+                    "raw": "safety-schemas==0.0.14",
+                    "extras": [],
+                    "marker": null,
+                    "name": "safety-schemas",
+                    "specifier": "==0.0.14",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "setuptools": {
+            "name": "setuptools",
+            "version": "78.1.1",
+            "requirements": [
+                {
+                    "raw": "setuptools==78.1.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "setuptools",
+                    "specifier": "==78.1.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "shellingham": {
+            "name": "shellingham",
+            "version": "1.5.4",
+            "requirements": [
+                {
+                    "raw": "shellingham==1.5.4",
+                    "extras": [],
+                    "marker": null,
+                    "name": "shellingham",
+                    "specifier": "==1.5.4",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "six": {
+            "name": "six",
+            "version": "1.17.0",
+            "requirements": [
+                {
+                    "raw": "six==1.17.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "six",
+                    "specifier": "==1.17.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "sniffio": {
+            "name": "sniffio",
+            "version": "1.3.1",
+            "requirements": [
+                {
+                    "raw": "sniffio==1.3.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "sniffio",
+                    "specifier": "==1.3.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "sqlparse": {
+            "name": "sqlparse",
+            "version": "0.5.3",
+            "requirements": [
+                {
+                    "raw": "sqlparse==0.5.3",
+                    "extras": [],
+                    "marker": null,
+                    "name": "sqlparse",
+                    "specifier": "==0.5.3",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "stevedore": {
+            "name": "stevedore",
+            "version": "5.4.1",
+            "requirements": [
+                {
+                    "raw": "stevedore==5.4.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "stevedore",
+                    "specifier": "==5.4.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "tenacity": {
+            "name": "tenacity",
+            "version": "9.1.2",
+            "requirements": [
+                {
+                    "raw": "tenacity==9.1.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "tenacity",
+                    "specifier": "==9.1.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "tomlkit": {
+            "name": "tomlkit",
+            "version": "0.13.2",
+            "requirements": [
+                {
+                    "raw": "tomlkit==0.13.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "tomlkit",
+                    "specifier": "==0.13.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "tqdm": {
+            "name": "tqdm",
+            "version": "4.67.1",
+            "requirements": [
+                {
+                    "raw": "tqdm==4.67.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "tqdm",
+                    "specifier": "==4.67.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "typer": {
+            "name": "typer",
+            "version": "0.16.0",
+            "requirements": [
+                {
+                    "raw": "typer==0.16.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "typer",
+                    "specifier": "==0.16.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "typing-extensions": {
+            "name": "typing-extensions",
+            "version": "4.13.2",
+            "requirements": [
+                {
+                    "raw": "typing-extensions==4.13.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "typing-extensions",
+                    "specifier": "==4.13.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "tzdata": {
+            "name": "tzdata",
+            "version": "2025.2",
+            "requirements": [
+                {
+                    "raw": "tzdata==2025.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "tzdata",
+                    "specifier": "==2025.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "urllib3": {
+            "name": "urllib3",
+            "version": "2.4.0",
+            "requirements": [
+                {
+                    "raw": "urllib3==2.4.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "urllib3",
+                    "specifier": "==2.4.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "vine": {
+            "name": "vine",
+            "version": "5.1.0",
+            "requirements": [
+                {
+                    "raw": "vine==5.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "vine",
+                    "specifier": "==5.1.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "virtualenv": {
+            "name": "virtualenv",
+            "version": "20.31.2",
+            "requirements": [
+                {
+                    "raw": "virtualenv==20.31.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "virtualenv",
+                    "specifier": "==20.31.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "vulture": {
+            "name": "vulture",
+            "version": "2.14",
+            "requirements": [
+                {
+                    "raw": "vulture==2.14",
+                    "extras": [],
+                    "marker": null,
+                    "name": "vulture",
+                    "specifier": "==2.14",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "wcwidth": {
+            "name": "wcwidth",
+            "version": "0.2.13",
+            "requirements": [
+                {
+                    "raw": "wcwidth==0.2.13",
+                    "extras": [],
+                    "marker": null,
+                    "name": "wcwidth",
+                    "specifier": "==0.2.13",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "wheel": {
+            "name": "wheel",
+            "version": "0.45.1",
+            "requirements": [
+                {
+                    "raw": "wheel==0.45.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "wheel",
+                    "specifier": "==0.45.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "whitenoise": {
+            "name": "whitenoise",
+            "version": "6.9.0",
+            "requirements": [
+                {
+                    "raw": "whitenoise==6.9.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "whitenoise",
+                    "specifier": "==6.9.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages"
+                }
+            ]
+        },
+        "autocommand": {
+            "name": "autocommand",
+            "version": "2.2.2",
+            "requirements": [
+                {
+                    "raw": "autocommand==2.2.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "autocommand",
+                    "specifier": "==2.2.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+                }
+            ]
+        },
+        "backports.tarfile": {
+            "name": "backports.tarfile",
+            "version": "1.2.0",
+            "requirements": [
+                {
+                    "raw": "backports.tarfile==1.2.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "backports.tarfile",
+                    "specifier": "==1.2.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+                }
+            ]
+        },
+        "importlib-metadata": {
+            "name": "importlib-metadata",
+            "version": "8.0.0",
+            "requirements": [
+                {
+                    "raw": "importlib-metadata==8.0.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "importlib-metadata",
+                    "specifier": "==8.0.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+                }
+            ]
+        },
+        "inflect": {
+            "name": "inflect",
+            "version": "7.3.1",
+            "requirements": [
+                {
+                    "raw": "inflect==7.3.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "inflect",
+                    "specifier": "==7.3.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+                }
+            ]
+        },
+        "jaraco.collections": {
+            "name": "jaraco.collections",
+            "version": "5.1.0",
+            "requirements": [
+                {
+                    "raw": "jaraco.collections==5.1.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jaraco.collections",
+                    "specifier": "==5.1.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+                }
+            ]
+        },
+        "jaraco.context": {
+            "name": "jaraco.context",
+            "version": "5.3.0",
+            "requirements": [
+                {
+                    "raw": "jaraco.context==5.3.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jaraco.context",
+                    "specifier": "==5.3.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+                }
+            ]
+        },
+        "jaraco.functools": {
+            "name": "jaraco.functools",
+            "version": "4.0.1",
+            "requirements": [
+                {
+                    "raw": "jaraco.functools==4.0.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jaraco.functools",
+                    "specifier": "==4.0.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+                }
+            ]
+        },
+        "jaraco.text": {
+            "name": "jaraco.text",
+            "version": "3.12.1",
+            "requirements": [
+                {
+                    "raw": "jaraco.text==3.12.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "jaraco.text",
+                    "specifier": "==3.12.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+                }
+            ]
+        },
+        "more-itertools": {
+            "name": "more-itertools",
+            "version": "10.3.0",
+            "requirements": [
+                {
+                    "raw": "more-itertools==10.3.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "more-itertools",
+                    "specifier": "==10.3.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+                }
+            ]
+        },
+        "tomli": {
+            "name": "tomli",
+            "version": "2.0.1",
+            "requirements": [
+                {
+                    "raw": "tomli==2.0.1",
+                    "extras": [],
+                    "marker": null,
+                    "name": "tomli",
+                    "specifier": "==2.0.1",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+                }
+            ]
+        },
+        "typeguard": {
+            "name": "typeguard",
+            "version": "4.3.0",
+            "requirements": [
+                {
+                    "raw": "typeguard==4.3.0",
+                    "extras": [],
+                    "marker": null,
+                    "name": "typeguard",
+                    "specifier": "==4.3.0",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+                }
+            ]
+        },
+        "zipp": {
+            "name": "zipp",
+            "version": "3.19.2",
+            "requirements": [
+                {
+                    "raw": "zipp==3.19.2",
+                    "extras": [],
+                    "marker": null,
+                    "name": "zipp",
+                    "specifier": "==3.19.2",
+                    "url": null,
+                    "found": "c:\\users\\mario\\.conda\\envs\\sgii\\lib\\site-packages\\setuptools\\_vendor"
+                }
+            ]
+        }
+    },
+    "affected_packages": {},
+    "announcements": [],
+    "vulnerabilities": [],
+    "ignored_vulnerabilities": [],
+    "remediations": {},
+    "remediations_results": {
+        "vulnerabilities_fixed": [],
+        "remediations_applied": {},
+        "remediations_skipped": {}
+    }
+}
+
+
++===========================================================================================================================================================================================+
+
+
+DEPRECATED: this command (`check`) has been DEPRECATED, and will be unsupported beyond 01 June 2024.
+
+
+We highly encourage switching to the new `scan` command which is easier to use, more powerful, and can be set up to mimic the deprecated command if required.
+
+
++===========================================================================================================================================================================================+
+
+
+
+STDERR:

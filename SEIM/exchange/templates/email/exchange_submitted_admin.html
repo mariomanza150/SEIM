@@ -1,0 +1,70 @@
+{% extends "email/base.html" %}
+
+{% block title %}New Exchange Application Submitted{% endblock %}
+
+{% block header %}SEIM Admin Notification{% endblock %}
+
+{% block content %}
+<h2>New Exchange Application Received</h2>
+
+<p>A new exchange application has been submitted and requires review.</p>
+
+<div class="info-box">
+    <h3>Student Information</h3>
+    <table>
+        <tr>
+            <th>Student Name:</th>
+            <td>{{ student_name }}</td>
+        </tr>
+        <tr>
+            <th>Student ID:</th>
+            <td>{{ student_id }}</td>
+        </tr>
+        <tr>
+            <th>GPA:</th>
+            <td>{% if gpa %}{{ gpa }}{% else %}Not provided{% endif %}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="info-box">
+    <h3>Exchange Details</h3>
+    <table>
+        <tr>
+            <th>Destination University:</th>
+            <td>{{ destination }}</td>
+        </tr>
+        <tr>
+            <th>Submission Date:</th>
+            <td>{{ submission_date|date:"F j, Y g:i A" }}</td>
+        </tr>
+        <tr>
+            <th>Application ID:</th>
+            <td>{{ exchange.id }}</td>
+        </tr>
+    </table>
+</div>
+
+<div style="text-align: center;">
+    <a href="{{ settings.BACKEND_URL }}/admin/exchange/exchange/{{ exchange.id }}/change/" class="button">Review Application</a>
+</div>
+
+<h3>Action Required</h3>
+<ul>
+    <li>Review the application details and uploaded documents</li>
+    <li>Check if all required documents are present</li>
+    <li>Assign the application to a reviewer if necessary</li>
+    <li>Update the application status accordingly</li>
+</ul>
+
+<div class="warning-box">
+    <strong>Reminder:</strong> Applications should be processed within 2-3 weeks of submission.
+</div>
+
+<p>This is an automated notification. Please log into the admin panel to take action.</p>
+{% endblock %}
+
+{% block footer %}
+<p>This is an administrative notification from SEIM.</p>
+<p>© {% now "Y" %} Student Exchange Information Manager. Admin Portal.</p>
+{% endblock %}

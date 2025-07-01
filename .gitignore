@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+
+# Docker
+*.log
+.env.*
+
+# VSCode / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local development
+local_settings.py
+
+# Test coverage
+htmlcov/
+.coverage
+.tox/
+.pytest_cache/
+
+# Backup files
+*.backup
+*_old.*
+refactor_*.txt
+
+# Temporary files
+*.tmp
+*.temp
+quick_test*

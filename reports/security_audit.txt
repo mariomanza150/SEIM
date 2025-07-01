@@ -1,0 +1,1441 @@
+[main]	INFO	profile include tests: None
+[main]	INFO	profile exclude tests: None
+[main]	INFO	cli include tests: None
+[main]	INFO	cli exclude tests: None
+[main]	INFO	running on Python 3.12.10
+Working... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:01
+Run started:2025-05-29 05:08:07.037584
+
+Test results:
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'changeme123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/management/commands/setup_initial_data.py:17:16
+16	            if not User.objects.filter(username='admin').exists():
+17	                User.objects.create_superuser(
+18	                    username='admin',
+19	                    email='admin@example.com',
+20	                    password='changeme123'
+21	                )
+22	                self.stdout.write(
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b110_try_except_pass.html
+   Location: /app/exchange/management/commands/setup_initial_data.py:65:12
+64	                self.stdout.write(self.style.SUCCESS('Created cache table'))
+65	            except Exception:
+66	                pass  # Table might already exist
+67	            
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b110_try_except_pass.html
+   Location: /app/exchange/models/document.py:154:12
+153	                NotificationService.send_document_verification_notification(self)
+154	            except Exception as e:
+155	                # Log the error but don't prevent verification
+156	                pass
+157	            
+
+--------------------------------------------------
+>> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+   Severity: High   Confidence: High
+   CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b324_hashlib.html
+   Location: /app/exchange/services/cache_manager.py:67:26
+66	        if len(cache_key) > 200:
+67	            hash_suffix = hashlib.md5(cache_key.encode()).hexdigest()[:8]
+68	            cache_key = f"{base_prefix}:hashed:{hash_suffix}"
+
+--------------------------------------------------
+>> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+   Severity: High   Confidence: High
+   CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b324_hashlib.html
+   Location: /app/exchange/services/cache_manager.py:93:22
+92	        """Generate cache key for search results"""
+93	        search_hash = hashlib.md5(search_term.encode()).hexdigest()[:8]
+94	        return cls.generate_cache_key(
+
+--------------------------------------------------
+>> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+   Severity: High   Confidence: High
+   CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b324_hashlib.html
+   Location: /app/exchange/services/cache_manager.py:117:22
+116	        """Cache user's filter preferences"""
+117	        filter_hash = hashlib.md5(json.dumps(filters, sort_keys=True).encode()).hexdigest()[:8]
+118	        cache_key = cls.get_user_filter_cache_key(user_id, table_name, filter_hash)
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_api.py:16:20
+15	        self.client = APIClient()
+16	        self.user = User.objects.create_user(
+17	            username='testuser',
+18	            email='test@example.com',
+19	            password='testpass123'
+20	        )
+21	        self.client.force_authenticate(user=self.user)
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_authentication.py:20:28
+19	        # Create test users with different roles
+20	        self.student_user = User.objects.create_user(
+21	            username='student1',
+22	            email='student1@test.com',
+23	            password='testpass123'
+24	        )
+25	        self.student_profile = UserProfile.objects.create(
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_authentication.py:31:32
+30	        
+31	        self.coordinator_user = User.objects.create_user(
+32	            username='coordinator1',
+33	            email='coordinator1@test.com',
+34	            password='testpass123',
+35	            is_staff=True
+36	        )
+37	        self.coordinator_profile = UserProfile.objects.create(
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_authentication.py:43:28
+42	        
+43	        self.manager_user = User.objects.create_user(
+44	            username='manager1',
+45	            email='manager1@test.com',
+46	            password='testpass123',
+47	            is_staff=True
+48	        )
+49	        self.manager_profile = UserProfile.objects.create(
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'test123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_authentication.py:102:24
+101	        # Create test users
+102	        self.student1 = User.objects.create_user(username='student1', password='test123')
+103	        self.student1_profile = UserProfile.objects.create(user=self.student1, role='STUDENT')
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'test123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_authentication.py:106:24
+105	        
+106	        self.student2 = User.objects.create_user(username='student2', password='test123')
+107	        self.student2_profile = UserProfile.objects.create(user=self.student2, role='STUDENT')
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'test123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_authentication.py:110:27
+109	        
+110	        self.coordinator = User.objects.create_user(username='coord1', password='test123', is_staff=True)
+111	        self.coordinator_profile = UserProfile.objects.create(user=self.coordinator, role='COORDINATOR')
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'test_secret'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_email_service.py:28:13
+27	        """Test initialization with AWS SES enabled."""
+28	        with override_settings(
+29	            USE_AWS_SES=True,
+30	            AWS_SES_REGION='us-east-1',
+31	            AWS_ACCESS_KEY_ID='test_key',
+32	            AWS_SECRET_ACCESS_KEY='test_secret'
+33	        ):
+34	            with patch('boto3.client') as mock_boto_client:
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:36:16
+35	                service = EmailService()
+36	                assert service.use_aws_ses is True
+37	                mock_boto_client.assert_called_once_with(
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'test_secret'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_email_service.py:37:16
+36	                assert service.use_aws_ses is True
+37	                mock_boto_client.assert_called_once_with(
+38	                    'ses',
+39	                    region_name='us-east-1',
+40	                    aws_access_key_id='test_key',
+41	                    aws_secret_access_key='test_secret'
+42	                )
+43	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:48:12
+47	            service = EmailService()
+48	            assert service.use_aws_ses is False
+49	            assert not hasattr(service, 'ses_client')
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:49:12
+48	            assert service.use_aws_ses is False
+49	            assert not hasattr(service, 'ses_client')
+50	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:71:16
+70	                
+71	                assert result is True
+72	                mock_render_to_string.assert_called_once_with(
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'test_secret'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_email_service.py:97:13
+96	        
+97	        with override_settings(
+98	            USE_AWS_SES=True, 
+99	            DEFAULT_FROM_EMAIL='noreply@test.com',
+100	            AWS_ACCESS_KEY_ID='test_key',
+101	            AWS_SECRET_ACCESS_KEY='test_secret'
+102	        ):
+103	            with patch('boto3.client') as mock_boto_client:
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:116:16
+115	                
+116	                assert result is True
+117	                mock_ses.send_email.assert_called_once()
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:119:16
+118	                call_args = mock_ses.send_email.call_args[1]
+119	                assert call_args['Source'] == 'noreply@test.com'
+120	                assert call_args['Destination']['ToAddresses'] == ['test@example.com']
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:120:16
+119	                assert call_args['Source'] == 'noreply@test.com'
+120	                assert call_args['Destination']['ToAddresses'] == ['test@example.com']
+121	                assert call_args['Message']['Subject']['Data'] == 'Test Subject'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:121:16
+120	                assert call_args['Destination']['ToAddresses'] == ['test@example.com']
+121	                assert call_args['Message']['Subject']['Data'] == 'Test Subject'
+122	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:137:16
+136	                
+137	                assert result is False
+138	
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_email_service.py:147:15
+146	        """Create a test user."""
+147	        return User.objects.create_user(
+148	            username='testuser',
+149	            email='test@example.com',
+150	            password='testpass123'
+151	        )
+152	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:183:12
+182	            service = ExchangeEmailNotificationService()
+183	            assert service.admin_emails == ['admin1@test.com', 'admin2@test.com']
+184	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:195:8
+194	        
+195	        assert result is True
+196	        # Should send 2 emails: one to student, one to admins
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:197:8
+196	        # Should send 2 emails: one to student, one to admins
+197	        assert mock_send_email.call_count == 2
+198	        
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:201:8
+200	        student_call = mock_send_email.call_args_list[0]
+201	        assert student_call[1]['to_emails'] == ['john.doe@example.com']
+202	        assert 'Submitted' in student_call[1]['subject']
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:202:8
+201	        assert student_call[1]['to_emails'] == ['john.doe@example.com']
+202	        assert 'Submitted' in student_call[1]['subject']
+203	        assert student_call[1]['template_name'] == 'exchange_submitted'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:203:8
+202	        assert 'Submitted' in student_call[1]['subject']
+203	        assert student_call[1]['template_name'] == 'exchange_submitted'
+204	        
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:207:8
+206	        admin_call = mock_send_email.call_args_list[1]
+207	        assert 'New Exchange Application' in admin_call[1]['subject']
+208	        assert admin_call[1]['template_name'] == 'exchange_submitted_admin'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:208:8
+207	        assert 'New Exchange Application' in admin_call[1]['subject']
+208	        assert admin_call[1]['template_name'] == 'exchange_submitted_admin'
+209	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:219:8
+218	        
+219	        assert result is True
+220	        mock_send_email.assert_called_once()
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:222:8
+221	        call_args = mock_send_email.call_args[1]
+222	        assert call_args['to_emails'] == ['john.doe@example.com']
+223	        assert 'Approved' in call_args['subject']
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:223:8
+222	        assert call_args['to_emails'] == ['john.doe@example.com']
+223	        assert 'Approved' in call_args['subject']
+224	        assert call_args['template_name'] == 'exchange_approved'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:224:8
+223	        assert 'Approved' in call_args['subject']
+224	        assert call_args['template_name'] == 'exchange_approved'
+225	        assert call_args['context']['exchange'] == exchange
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:225:8
+224	        assert call_args['template_name'] == 'exchange_approved'
+225	        assert call_args['context']['exchange'] == exchange
+226	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:237:8
+236	        
+237	        assert result is True
+238	        mock_send_email.assert_called_once()
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:240:8
+239	        call_args = mock_send_email.call_args[1]
+240	        assert call_args['to_emails'] == ['john.doe@example.com']
+241	        assert 'Update' in call_args['subject']
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:241:8
+240	        assert call_args['to_emails'] == ['john.doe@example.com']
+241	        assert 'Update' in call_args['subject']
+242	        assert call_args['template_name'] == 'exchange_rejected'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:242:8
+241	        assert 'Update' in call_args['subject']
+242	        assert call_args['template_name'] == 'exchange_rejected'
+243	        assert call_args['context']['reason'] == 'Insufficient GPA'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:243:8
+242	        assert call_args['template_name'] == 'exchange_rejected'
+243	        assert call_args['context']['reason'] == 'Insufficient GPA'
+244	    
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'pass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_email_service.py:249:19
+248	        mock_send_email.return_value = True
+249	        reviewer = User.objects.create_user(
+250	            username='reviewer',
+251	            email='reviewer@test.com',
+252	            password='pass123',
+253	            first_name='Jane',
+254	            last_name='Reviewer'
+255	        )
+256	        exchange.reviewed_by = reviewer
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:261:8
+260	        
+261	        assert result is True
+262	        mock_send_email.assert_called_once()
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:264:8
+263	        call_args = mock_send_email.call_args[1]
+264	        assert call_args['to_emails'] == ['reviewer@test.com']
+265	        assert 'Review' in call_args['subject']
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:265:8
+264	        assert call_args['to_emails'] == ['reviewer@test.com']
+265	        assert 'Review' in call_args['subject']
+266	        assert call_args['context']['reviewer_name'] == 'Jane Reviewer'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:266:8
+265	        assert 'Review' in call_args['subject']
+266	        assert call_args['context']['reviewer_name'] == 'Jane Reviewer'
+267	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:273:8
+272	        
+273	        assert result is True
+274	        mock_send_email.assert_not_called()
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:287:12
+286	            
+287	            assert result is True
+288	            mock_send_email.assert_called_once()
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:290:12
+289	            call_args = mock_send_email.call_args[1]
+290	            assert call_args['to_emails'] == ['admin@test.com']
+291	            assert 'Document Uploaded' in call_args['subject']
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_email_service.py:291:12
+290	            assert call_args['to_emails'] == ['admin@test.com']
+291	            assert 'Document Uploaded' in call_args['subject']
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_filters.py:21:15
+20	        """Create a test user."""
+21	        return User.objects.create_user(
+22	            username='testuser',
+23	            email='test@example.com',
+24	            password='testpass123'
+25	        )
+26	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:100:8
+99	        )
+100	        assert filter_set.qs.count() == 1
+101	        assert filter_set.qs.first().status == 'SUBMITTED'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:101:8
+100	        assert filter_set.qs.count() == 1
+101	        assert filter_set.qs.first().status == 'SUBMITTED'
+102	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:112:8
+111	        # Should get exchange1 only (submitted today)
+112	        assert filter_set.qs.count() == 1
+113	        assert filter_set.qs.first().first_name == 'John'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:113:8
+112	        assert filter_set.qs.count() == 1
+113	        assert filter_set.qs.first().first_name == 'John'
+114	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:122:8
+121	        )
+122	        assert filter_set.qs.count() == 1
+123	        assert filter_set.qs.first().first_name == 'Jane'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:123:8
+122	        assert filter_set.qs.count() == 1
+123	        assert filter_set.qs.first().first_name == 'Jane'
+124	        
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:130:8
+129	        )
+130	        assert filter_set.qs.count() == 1
+131	        assert filter_set.qs.first().email == 'jane.smith@example.com'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:131:8
+130	        assert filter_set.qs.count() == 1
+131	        assert filter_set.qs.first().email == 'jane.smith@example.com'
+132	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:142:8
+141	        # Should get exchanges with GPA 3.5 and 3.8
+142	        assert filter_set.qs.count() == 2
+143	        
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:149:8
+148	        )
+149	        assert filter_set.qs.count() == 1
+150	        assert filter_set.qs.first().current_year == 3
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:150:8
+149	        assert filter_set.qs.count() == 1
+150	        assert filter_set.qs.first().current_year == 3
+151	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:159:8
+158	        )
+159	        assert filter_set.qs.count() == 1
+160	        assert filter_set.qs.first().destination_country == 'USA'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:160:8
+159	        assert filter_set.qs.count() == 1
+160	        assert filter_set.qs.first().destination_country == 'USA'
+161	        
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:167:8
+166	        )
+167	        assert filter_set.qs.count() == 1
+168	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:176:8
+175	        )
+176	        assert filter_set.qs.count() == 1
+177	        assert filter_set.qs.first().destination_university == 'MIT'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:177:8
+176	        assert filter_set.qs.count() == 1
+177	        assert filter_set.qs.first().destination_university == 'MIT'
+178	        
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:184:8
+183	        )
+184	        assert filter_set.qs.count() == 1
+185	        assert filter_set.qs.first().current_program == 'Engineering'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:185:8
+184	        assert filter_set.qs.count() == 1
+185	        assert filter_set.qs.first().current_program == 'Engineering'
+186	        
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:192:8
+191	        )
+192	        assert filter_set.qs.count() == 3  # All have @example.com
+193	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:202:8
+201	        ordered_qs = list(filter_set.qs)
+202	        assert ordered_qs[0].gpa == Decimal('3.8')  # Jane
+203	        assert ordered_qs[1].gpa == Decimal('3.5')  # John
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:203:8
+202	        assert ordered_qs[0].gpa == Decimal('3.8')  # Jane
+203	        assert ordered_qs[1].gpa == Decimal('3.5')  # John
+204	        assert ordered_qs[2].gpa == Decimal('3.2')  # Bob
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:204:8
+203	        assert ordered_qs[1].gpa == Decimal('3.5')  # John
+204	        assert ordered_qs[2].gpa == Decimal('3.2')  # Bob
+205	        
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:213:8
+212	        # Bob has no submission date (NULL), Jane submitted 10 days ago, John today
+213	        assert ordered_qs[0].first_name == 'Bob'  # NULL first
+214	        assert ordered_qs[1].first_name == 'Jane'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:214:8
+213	        assert ordered_qs[0].first_name == 'Bob'  # NULL first
+214	        assert ordered_qs[1].first_name == 'Jane'
+215	        assert ordered_qs[2].first_name == 'John'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:215:8
+214	        assert ordered_qs[1].first_name == 'Jane'
+215	        assert ordered_qs[2].first_name == 'John'
+216	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:226:8
+225	        # Should only get Jane's exchange
+226	        assert filter_set.qs.count() == 1
+227	        result = filter_set.qs.first()
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:228:8
+227	        result = filter_set.qs.first()
+228	        assert result.first_name == 'Jane'
+229	        assert result.status == 'APPROVED'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:229:8
+228	        assert result.first_name == 'Jane'
+229	        assert result.status == 'APPROVED'
+230	        assert result.gpa == Decimal('3.8')
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:230:8
+229	        assert result.status == 'APPROVED'
+230	        assert result.gpa == Decimal('3.8')
+231	        assert result.destination_country == 'UK'
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:231:8
+230	        assert result.gpa == Decimal('3.8')
+231	        assert result.destination_country == 'UK'
+232	    
+
+--------------------------------------------------
+>> Issue: [B101:assert_used] Use of assert detected. The enclosed code will be removed when compiling to optimised byte code.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b101_assert_used.html
+   Location: /app/exchange/tests/test_filters.py:240:8
+239	        # Should return all exchanges
+240	        assert filter_set.qs.count() == 3
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:22:23
+21	        # Create users
+22	        self.student = User.objects.create_user(
+23	            username='student',
+24	            email='student@test.com',
+25	            password='testpass123'
+26	        )
+27	        self.student_profile = UserProfile.objects.create(
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:32:27
+31	        
+32	        self.coordinator = User.objects.create_user(
+33	            username='coordinator',
+34	            email='coordinator@test.com',
+35	            password='testpass123'
+36	        )
+37	        self.coordinator_profile = UserProfile.objects.create(
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:45:8
+44	        # Step 1: Student creates draft exchange
+45	        self.client.login(username='student', password='testpass123')
+46	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:97:8
+96	        self.client.logout()
+97	        self.client.login(username='coordinator', password='testpass123')
+98	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:126:8
+125	        # Create and submit exchange
+126	        self.client.login(username='student', password='testpass123')
+127	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:137:8
+136	        self.client.logout()
+137	        self.client.login(username='coordinator', password='testpass123')
+138	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:174:8
+173	        
+174	        self.client.login(username='student', password='testpass123')
+175	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:224:8
+223	        # Login as coordinator
+224	        self.client.login(username='coordinator', password='testpass123')
+225	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:247:8
+246	        self.client.logout()
+247	        self.client.login(username='student', password='testpass123')
+248	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:272:8
+271	        
+272	        self.client.login(username='coordinator', password='testpass123')
+273	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:298:24
+297	        # Create another student
+298	        other_student = User.objects.create_user(
+299	            username='otherstudent',
+300	            email='other@test.com',
+301	            password='testpass123'
+302	        )
+303	        UserProfile.objects.create(user=other_student, role='STUDENT')
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:314:8
+313	        # Try to access as other student
+314	        self.client.login(username='otherstudent', password='testpass123')
+315	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_integration.py:337:8
+336	        """Test AJAX error responses"""
+337	        self.client.login(username='student', password='testpass123')
+338	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_models.py:14:20
+13	    def setUp(self):
+14	        self.user = User.objects.create_user(
+15	            username='testuser',
+16	            email='test@example.com',
+17	            password='testpass123'
+18	        )
+19	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_models.py:40:20
+39	    def setUp(self):
+40	        self.user = User.objects.create_user(
+41	            username='testuser',
+42	            email='test@example.com',
+43	            password='testpass123'
+44	        )
+45	        self.exchange = Exchange.objects.create(
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_pdf_viewer.py:24:20
+23	        # Create test user
+24	        self.user = User.objects.create_user(
+25	            username='testuser',
+26	            email='test@example.com',
+27	            password='testpass123'
+28	        )
+29	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_pdf_viewer.py:77:8
+76	        """Test document detail view with PDF file."""
+77	        self.client.login(username='testuser', password='testpass123')
+78	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_pdf_viewer.py:93:8
+92	        """Test document detail view with image file."""
+93	        self.client.login(username='testuser', password='testpass123')
+94	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'otherpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_pdf_viewer.py:110:21
+109	        # Create another user
+110	        other_user = User.objects.create_user(
+111	            username='otheruser',
+112	            email='other@example.com',
+113	            password='otherpass123'
+114	        )
+115	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'otherpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_pdf_viewer.py:125:8
+124	        # Login as other user and try to access
+125	        self.client.login(username='otheruser', password='otherpass123')
+126	        response = self.client.get(url)
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_pdf_viewer.py:131:8
+130	        """Test that PDF viewer JavaScript is properly included."""
+131	        self.client.login(username='testuser', password='testpass123')
+132	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_pdf_viewer.py:150:8
+149	        """Test that document information is correctly displayed."""
+150	        self.client.login(username='testuser', password='testpass123')
+151	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_pdf_viewer.py:165:8
+164	        """Test download button functionality."""
+165	        self.client.login(username='testuser', password='testpass123')
+166	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_pdf_viewer.py:192:8
+191	        
+192	        self.client.login(username='testuser', password='testpass123')
+193	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:21:28
+20	        # Create test users
+21	        self.student_user = User.objects.create_user(
+22	            username='student1',
+23	            email='student@test.com',
+24	            password='testpass123'
+25	        )
+26	        self.student_profile = UserProfile.objects.create(
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:32:32
+31	        
+32	        self.coordinator_user = User.objects.create_user(
+33	            username='coordinator1',
+34	            email='coordinator@test.com',
+35	            password='testpass123'
+36	        )
+37	        self.coordinator_profile = UserProfile.objects.create(
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:42:26
+41	        
+42	        self.admin_user = User.objects.create_user(
+43	            username='admin1',
+44	            email='admin@test.com',
+45	            password='testpass123',
+46	            is_staff=True
+47	        )
+48	        self.admin_profile = UserProfile.objects.create(
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:81:8
+80	        """Test student can access dashboard"""
+81	        self.client.login(username='student1', password='testpass123')
+82	        response = self.client.get(reverse('exchange:dashboard'))
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:88:8
+87	        """Test coordinator can access dashboard with different content"""
+88	        self.client.login(username='coordinator1', password='testpass123')
+89	        response = self.client.get(reverse('exchange:dashboard'))
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:114:8
+113	        
+114	        self.client.login(username='student1', password='testpass123')
+115	        response = self.client.get(reverse('exchange:exchange-list'))
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:122:8
+121	        """Test coordinator sees all exchanges"""
+122	        self.client.login(username='coordinator1', password='testpass123')
+123	        response = self.client.get(reverse('exchange:exchange-list'))
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:138:8
+137	        
+138	        self.client.login(username='coordinator1', password='testpass123')
+139	        response = self.client.get(reverse('exchange:exchange-list') + '?status=SUBMITTED')
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:155:8
+154	        """Test student can view their own exchange"""
+155	        self.client.login(username='student1', password='testpass123')
+156	        response = self.client.get(reverse('exchange:exchange-detail', args=[self.exchange.id]))
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:172:8
+171	        
+172	        self.client.login(username='student1', password='testpass123')
+173	        response = self.client.get(reverse('exchange:exchange-detail', args=[other_exchange.id]))
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:179:8
+178	        """Test coordinator can view any exchange"""
+179	        self.client.login(username='coordinator1', password='testpass123')
+180	        response = self.client.get(reverse('exchange:exchange-detail', args=[self.exchange.id]))
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:196:8
+195	        """Test that only students can create exchanges"""
+196	        self.client.login(username='coordinator1', password='testpass123')
+197	        response = self.client.get(reverse('exchange:create-exchange'))
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:202:8
+201	        """Test GET request for create exchange"""
+202	        self.client.login(username='student1', password='testpass123')
+203	        response = self.client.get(reverse('exchange:create-exchange'))
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:210:8
+209	        """Test POST request with valid data"""
+210	        self.client.login(username='student1', password='testpass123')
+211	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:241:8
+240	        """Test saving exchange as draft"""
+241	        self.client.login(username='student1', password='testpass123')
+242	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:271:8
+270	        """Test student can edit their draft exchange"""
+271	        self.client.login(username='student1', password='testpass123')
+272	        response = self.client.get(reverse('exchange:exchange-edit', args=[self.exchange.id]))
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:282:8
+281	        
+282	        self.client.login(username='student1', password='testpass123')
+283	        response = self.client.get(reverse('exchange:exchange-edit', args=[self.exchange.id]))
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:292:8
+291	        
+292	        self.client.login(username='coordinator1', password='testpass123')
+293	        response = self.client.get(reverse('exchange:exchange-edit', args=[self.exchange.id]))
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:303:8
+302	        """Test student can submit draft exchange"""
+303	        self.client.login(username='student1', password='testpass123')
+304	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:319:8
+318	        
+319	        self.client.login(username='coordinator1', password='testpass123')
+320	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:334:8
+333	        
+334	        self.client.login(username='coordinator1', password='testpass123')
+335	        
+
+--------------------------------------------------
+>> Issue: [B106:hardcoded_password_funcarg] Possible hardcoded password: 'testpass123'
+   Severity: Low   Confidence: Medium
+   CWE: CWE-259 (https://cwe.mitre.org/data/definitions/259.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b106_hardcoded_password_funcarg.html
+   Location: /app/exchange/tests/test_views.py:349:8
+348	        
+349	        self.client.login(username='coordinator1', password='testpass123')
+350	        
+
+--------------------------------------------------
+>> Issue: [B110:try_except_pass] Try, Except, Pass detected.
+   Severity: Low   Confidence: High
+   CWE: CWE-703 (https://cwe.mitre.org/data/definitions/703.html)
+   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b110_try_except_pass.html
+   Location: /app/exchange/views/auth_views.py:136:8
+135	            return Response({'message': 'Successfully logged out'}, status=status.HTTP_200_OK)
+136	        except:
+137	            pass #return Response({'error': 'Error logging out'}, status=status.HTTP_400_BAD_REQUEST)
+138	    
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 10485
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 129
+		Medium: 0
+		High: 3
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 0
+		Medium: 60
+		High: 72
+Files skipped (0):

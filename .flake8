@@ -1,0 +1,17 @@
+
+[flake8]
+max-line-length = 120
+exclude = 
+    migrations,
+    __pycache__,
+    .venv,
+    staticfiles,
+    media
+ignore = 
+    # Black compatibility
+    E203,  # whitespace before ':'
+    W503,  # line break before binary operator
+    # Django specific
+    DJ01,  # null=True on string fields
+per-file-ignores =
+    __init__.py:F401

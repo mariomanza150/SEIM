@@ -1,0 +1,250 @@
+:root {
+  /* SEIM Brand Colors */
+  --bs-primary: #0066cc;
+  --bs-primary-rgb: 0, 102, 204;
+  --bs-secondary: #6c757d;
+  --bs-success: #28a745;
+  --bs-info: #17a2b8;
+  --bs-warning: #ffc107;
+  --bs-danger: #dc3545;
+  
+  /* Custom Brand Variables */
+  --seim-brand-primary: #0066cc;
+  --seim-brand-secondary: #004499;
+  --seim-accent: #ff6b35;
+  --seim-neutral-light: #f8f9fa;
+  --seim-text-muted: #6c757d;
+  
+  /* Enhanced Spacing */
+  --seim-section-padding: clamp(2rem, 5vw, 4rem);
+  --seim-card-padding: 1.5rem;
+  --seim-border-radius: 0.75rem;
+  --seim-border-radius-sm: 0.5rem;
+  --seim-border-radius-lg: 1rem;
+  
+  /* Shadow System */
+  --seim-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --seim-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --seim-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --seim-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --seim-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  
+  /* Animation */
+  --seim-transition-fast: 150ms ease-in-out;
+  --seim-transition-normal: 250ms ease-in-out;
+  --seim-transition-slow: 350ms ease-in-out;
+}
+
+/* Dark Theme Overrides */
+[data-bs-theme="dark"] {
+  --seim-neutral-light: #212529;
+  --seim-text-muted: #adb5bd;
+  
+  /* Adjusted shadows for dark mode */
+  --seim-shadow-xs: 0 1px 2px 0 rgba(255, 255, 255, 0.05);
+  --seim-shadow-sm: 0 1px 3px 0 rgba(255, 255, 255, 0.1), 0 1px 2px 0 rgba(255, 255, 255, 0.06);
+  --seim-shadow-md: 0 4px 6px -1px rgba(255, 255, 255, 0.1), 0 2px 4px -1px rgba(255, 255, 255, 0.06);
+  --seim-shadow-lg: 0 10px 15px -3px rgba(255, 255, 255, 0.1), 0 4px 6px -2px rgba(255, 255, 255, 0.05);
+  --seim-shadow-xl: 0 20px 25px -5px rgba(255, 255, 255, 0.1), 0 10px 10px -5px rgba(255, 255, 255, 0.04);
+}
+
+/* Utility Classes */
+.avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.avatar-sm {
+  width: 2rem;
+  height: 2rem;
+}
+
+.avatar-lg {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.shadow-seim-sm {
+  box-shadow: var(--seim-shadow-sm) !important;
+}
+
+.shadow-seim-md {
+  box-shadow: var(--seim-shadow-md) !important;
+}
+
+.shadow-seim-lg {
+  box-shadow: var(--seim-shadow-lg) !important;
+}
+
+.rounded-seim {
+  border-radius: var(--seim-border-radius) !important;
+}
+
+.rounded-seim-sm {
+  border-radius: var(--seim-border-radius-sm) !important;
+}
+
+.rounded-seim-lg {
+  border-radius: var(--seim-border-radius-lg) !important;
+}
+
+/* Theme icon management */
+.theme-icon {
+  display: none;
+}
+
+.theme-icon-active {
+  display: inline-block;
+}
+
+/* Enhanced focus states */
+.btn:focus-visible,
+.form-control:focus,
+.form-select:focus {
+  box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+  border-color: var(--bs-primary);
+}
+
+/* Loading states */
+.loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1rem;
+  height: 1rem;
+  margin: -0.5rem 0 0 -0.5rem;
+  border: 2px solid transparent;
+  border-top-color: var(--bs-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Activity Feed Styles */
+.activity-feed {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.activity-feed::-webkit-scrollbar {
+  width: 4px;
+}
+
+.activity-feed::-webkit-scrollbar-track {
+  background: var(--bs-gray-100);
+}
+
+.activity-feed::-webkit-scrollbar-thumb {
+  background: var(--bs-gray-400);
+  border-radius: 2px;
+}
+
+.activity-feed::-webkit-scrollbar-thumb:hover {
+  background: var(--bs-gray-500);
+}
+
+/* Enhanced card hover effects */
+.card-hover {
+  transition: transform var(--seim-transition-normal), box-shadow var(--seim-transition-normal);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--seim-shadow-lg);
+}
+
+/* Status badge improvements */
+.badge-subtle {
+  border: 1px solid;
+}
+
+/* Table enhancements */
+.table-hover tbody tr:hover {
+  background-color: var(--bs-gray-50);
+}
+
+[data-bs-theme="dark"] .table-hover tbody tr:hover {
+  background-color: var(--bs-gray-800);
+}
+
+/* Enhanced buttons */
+.btn-gradient-primary {
+  background: linear-gradient(135deg, var(--bs-primary), var(--bs-info));
+  border: none;
+  color: white;
+}
+
+.btn-gradient-primary:hover {
+  background: linear-gradient(135deg, var(--bs-info), var(--bs-primary));
+  color: white;
+}
+
+/* Enhanced navigation */
+.navbar-gradient {
+  background: linear-gradient(135deg, var(--seim-brand-primary), var(--seim-brand-secondary)) !important;
+}
+
+/* Mobile responsive improvements */
+@media (max-width: 768px) {
+  .avatar {
+    width: 2rem;
+    height: 2rem;
+  }
+  
+  .avatar-sm {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+  
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .btn-group .btn {
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+  
+  /* Stack statistics cards vertically on mobile */
+  .stats-card-mobile {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .navbar,
+  .btn,
+  .dropdown,
+  footer {
+    display: none !important;
+  }
+  
+  .card {
+    border: 1px solid #000 !important;
+    box-shadow: none !important;
+  }
+  
+  .table {
+    border-collapse: collapse !important;
+  }
+  
+  .table th,
+  .table td {
+    border: 1px solid #000 !important;
+  }
+}

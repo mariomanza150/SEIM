@@ -1,0 +1,318 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Profile - SEIM{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'exchange:dashboard' %}" class="text-white-50 text-decoration-none">Dashboard</a></li>
+<li class="breadcrumb-item active">Profile</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Profile Sidebar -->
+    <div class="col-lg-4 col-xl-3">
+        <div class="card border-0 shadow-sm sticky-top" style="top: 100px;">
+            <div class="card-body text-center p-4">
+                <!-- Profile Image -->
+                <div class="position-relative d-inline-block mb-3">
+                    <div class="avatar mx-auto bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 5rem; height: 5rem; font-size: 2rem;">
+                        {% if user.first_name %}
+                            {{ user.first_name|first|upper }}{{ user.last_name|first|upper }}
+                        {% else %}
+                            {{ user.username|first|upper }}
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- User Info -->
+                <h5 class="mb-1">{{ user.get_full_name|default:user.username }}</h5>
+                <p class="text-muted small mb-2">{{ user.email }}</p>
+                {% if user.profile %}
+                    <span class="badge bg-primary-subtle text-primary">{{ user.profile.get_role_display }}</span>
+                    {% if user.profile.is_staff_role %}
+                        <span class="badge bg-success-subtle text-success ms-2">Staff</span>
+                    {% endif %}
+                {% endif %}
+                
+                <!-- Stats -->
+                <div class="row g-0 mt-4">
+                    <div class="col">
+                        <div class="text-center">
+                            <h6 class="mb-0">{{ total_exchanges|default:0 }}</h6>
+                            <small class="text-muted">Exchanges</small>
+                        </div>
+                    </div>
+                    <div class="col border-start">
+                        <div class="text-center">
+                            <h6 class="mb-0">{{ completed_exchanges|default:0 }}</h6>
+                            <small class="text-muted">Completed</small>
+                        </div>
+                    </div>
+                    <div class="col border-start">
+                        <div class="text-center">
+                            <h6 class="mb-0">{{ profile_completeness|default:0 }}%</h6>
+                            <small class="text-muted">Complete</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Profile Completeness -->
+                <div class="mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">Profile Completeness</small>
+                        <small class="text-muted">{{ profile_completeness|default:0 }}%</small>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar bg-primary" style="width: {{ profile_completeness|default:0 }}%"></div>
+                    </div>
+                    <small class="text-muted mt-1 d-block">Complete your profile to improve your exchange applications</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Profile Content -->
+    <div class="col-lg-8 col-xl-9">
+        
+        <!-- Profile Form -->
+        <form method="post" class="needs-validation" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="personal">
+            
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <h6 class="mb-1">Basic Information</h6>
+                    <p class="text-muted small mb-0">Update your personal details</p>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.first_name }}
+                                <label for="{{ personal_form.first_name.id_for_label }}">
+                                    <i class="bi bi-person me-2"></i>First Name
+                                </label>
+                                {% if personal_form.first_name.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.first_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.last_name }}
+                                <label for="{{ personal_form.last_name.id_for_label }}">
+                                    <i class="bi bi-person me-2"></i>Last Name
+                                </label>
+                                {% if personal_form.last_name.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.last_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.email }}
+                                <label for="{{ personal_form.email.id_for_label }}">
+                                    <i class="bi bi-envelope me-2"></i>Email Address
+                                </label>
+                                {% if personal_form.email.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.email.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.phone }}
+                                <label for="{{ personal_form.phone.id_for_label }}">
+                                    <i class="bi bi-telephone me-2"></i>Phone Number
+                                </label>
+                                {% if personal_form.phone.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.phone.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.date_of_birth }}
+                                <label for="{{ personal_form.date_of_birth.id_for_label }}">
+                                    <i class="bi bi-calendar me-2"></i>Date of Birth
+                                </label>
+                                {% if personal_form.date_of_birth.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.date_of_birth.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.gender }}
+                                <label for="{{ personal_form.gender.id_for_label }}">
+                                    <i class="bi bi-person-badge me-2"></i>Gender
+                                </label>
+                                {% if personal_form.gender.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.gender.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <h6 class="mb-1">Academic/Professional Information</h6>
+                    <p class="text-muted small mb-0">Your institution and role details</p>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.institution }}
+                                <label for="{{ personal_form.institution.id_for_label }}">
+                                    <i class="bi bi-building me-2"></i>Institution
+                                </label>
+                                {% if personal_form.institution.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.institution.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if user.profile.is_student %}
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.current_program }}
+                                <label for="{{ personal_form.current_program.id_for_label }}">
+                                    <i class="bi bi-diagram-3 me-2"></i>Current Program
+                                </label>
+                                {% if personal_form.current_program.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.current_program.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="student_id" name="student_id" value="{{ user.profile.student_id|default:'' }}" placeholder="Student ID">
+                                <label for="student_id">
+                                    <i class="bi bi-credit-card me-2"></i>Student ID
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if user.profile.is_staff_role %}
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.position }}
+                                <label for="{{ personal_form.position.id_for_label }}">
+                                    <i class="bi bi-briefcase me-2"></i>Position
+                                </label>
+                                {% if personal_form.position.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.position.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.department }}
+                                <label for="{{ personal_form.department.id_for_label }}">
+                                    <i class="bi bi-diagram-3 me-2"></i>Department
+                                </label>
+                                {% if personal_form.department.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.department.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.office_phone }}
+                                <label for="{{ personal_form.office_phone.id_for_label }}">
+                                    <i class="bi bi-telephone-fill me-2"></i>Office Phone
+                                </label>
+                                {% if personal_form.office_phone.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.office_phone.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent border-0 pb-0">
+                    <h6 class="mb-1">Address Information</h6>
+                    <p class="text-muted small mb-0">Your current address details</p>
+                </div>
+                <div class="card-body pt-3">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="form-floating">
+                                {{ personal_form.address }}
+                                <label for="{{ personal_form.address.id_for_label }}">
+                                    <i class="bi bi-house me-2"></i>Street Address
+                                </label>
+                                {% if personal_form.address.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.address.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.city }}
+                                <label for="{{ personal_form.city.id_for_label }}">
+                                    <i class="bi bi-building me-2"></i>City
+                                </label>
+                                {% if personal_form.city.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.city.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                {{ personal_form.country }}
+                                <label for="{{ personal_form.country.id_for_label }}">
+                                    <i class="bi bi-geo-alt me-2"></i>Country
+                                </label>
+                                {% if personal_form.country.errors %}
+                                    <div class="invalid-feedback d-block">{{ personal_form.country.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle me-2"></i>Save Changes
+                </button>
+            </div>
+        </form>
+        
+        <!-- Coming Soon Notice -->
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-body">
+                <h6 class="mb-3">Coming Soon</h6>
+                <p class="text-muted mb-0">Additional features like password management, notification preferences, and two-factor authentication will be available in future updates.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    });
+});
+</script>
+{% endblock %}

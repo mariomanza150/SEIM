@@ -1,0 +1,157 @@
+Black Formatting Report
+Generated: 2025-05-29 17:19:19.870479
+================================================================================
+
+Errors:
+Identified `E:\mario\Documents\SGII` as project root containing a .git directory.
+Using configuration from project root.
+line_length: 120
+target_version: ['py312']
+include: \.pyi?$
+extend_exclude: /(
+  migrations
+  | __pycache__
+  | \.venv
+  | build
+  | dist
+)/
+
+Found input source directory: "E:\mario\Documents\SGII\SEIM"
+E:\mario\Documents\SGII\SEIM\db.sqlite3 ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\api\v1\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\api\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\authentication\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\forms\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\management\commands\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\management\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\migrations ignored: matches the --extend-exclude regular expression
+E:\mario\Documents\SGII\SEIM\exchange\models\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\serializers\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\services\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\storage\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\tests\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\validators\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\views\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\media ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\seim\custom_settings\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\seim\media ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\seim\staticfiles ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\seim\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\staticfiles ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\__pycache__ ignored: matches a .gitignore file content
+E:\mario\Documents\SGII\SEIM\exchange\__init__.py already well formatted, good job.
+E:\mario\Documents\SGII\SEIM\exchange\api\v1\__init__.py already well formatted, good job.
+E:\mario\Documents\SGII\SEIM\exchange\api\__init__.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\authentication\serializers.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\forms\__init__.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\api\v1\urls.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\api\v1\serializers.py
+E:\mario\Documents\SGII\SEIM\exchange\api\v1\views.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\authentication\views.py
+E:\mario\Documents\SGII\SEIM\exchange\authentication\__init__.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\forms\authentication_forms.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\forms.py
+E:\mario\Documents\SGII\SEIM\exchange\management\__init__.py already well formatted, good job.
+E:\mario\Documents\SGII\SEIM\exchange\management\commands\__init__.py already well formatted, good job.
+E:\mario\Documents\SGII\SEIM\exchange\apps.py already well formatted, good job.
+E:\mario\Documents\SGII\SEIM\exchange\forms\form_widgets.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\api\v1\user_serializers.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\filters.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\forms\form_choices.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\api\v1\document_serializers.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\api\v1\exchange_serializers.py
+E:\mario\Documents\SGII\SEIM\exchange\models\__init__.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\management\commands\setup_initial_data.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\models\application_answer.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\management\commands\check_file_integrity.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\forms\form_utils.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\management\commands\setup_exchange_permissions.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\management\commands\scan_documents.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\management\commands\create_staff_user.py
+E:\mario\Documents\SGII\SEIM\exchange\models\question.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\models\base.py
+E:\mario\Documents\SGII\SEIM\exchange\models\timestamp_base.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\forms\profile_forms.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\admin.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\management\commands\fix_exchange_data.py
+E:\mario\Documents\SGII\SEIM\exchange\serializers\__init__.py already well formatted, good job.
+E:\mario\Documents\SGII\SEIM\exchange\services\__init__.py already well formatted, good job.
+E:\mario\Documents\SGII\SEIM\exchange\permissions.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\forms\exchange_forms.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\models\comment.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\models\utils.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\models\course.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\management\commands\setup_permissions.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\services\base.py
+E:\mario\Documents\SGII\SEIM\exchange\services\email_service.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\models\document.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\models\exchange.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\models\timeline.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\models\bulk_action.py
+E:\mario\Documents\SGII\SEIM\exchange\storage\__init__.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\models\user_profile.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\services\analytics.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\services\email_notifications.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\__init__.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\services\notification.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\services\secure_file_validator.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\integration\test_workflow.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\integration\test_api.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\services\batch_processor.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\services\workflow.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\test_api.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\services\cache_manager.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\storage\backends.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\services\form_handler.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tasks.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\test_models.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\unit\test_models.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\unit\test_serializers.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\validators\__init__.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\test_authentication.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\unit\test_services.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\unit\test_forms.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\views\__init__.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\services\document_generator.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\views\analytics_views.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\urls.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\test_integration.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\test_email_service.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\views\admin_views.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\test_pdf_viewer.py
+E:\mario\Documents\SGII\SEIM\exchange\views\notification_views.py already well formatted, good job.
+E:\mario\Documents\SGII\SEIM\exchange\views\health_views.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\test_filters.py
+E:\mario\Documents\SGII\SEIM\exchange\views.py already well formatted, good job.
+E:\mario\Documents\SGII\SEIM\manage.py already well formatted, good job.
+E:\mario\Documents\SGII\SEIM\seim\__init__.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\services\optimization.py
+E:\mario\Documents\SGII\SEIM\seim\asgi.py already well formatted, good job.
+E:\mario\Documents\SGII\SEIM\seim\custom_settings\__init__.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\exchange\views\dashboard_views.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\validators\file_validators.py
+reformatted E:\mario\Documents\SGII\SEIM\seim\celery.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\views\auth_views.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\tests\test_views.py
+reformatted E:\mario\Documents\SGII\SEIM\seim\custom_settings\api.py
+reformatted E:\mario\Documents\SGII\SEIM\seim\custom_settings\celery.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\views\template_views.py
+reformatted E:\mario\Documents\SGII\SEIM\seim\custom_settings\base.py
+reformatted E:\mario\Documents\SGII\SEIM\seim\custom_settings\test.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\views\document_views.py
+reformatted E:\mario\Documents\SGII\SEIM\seim\custom_settings\dev.py
+E:\mario\Documents\SGII\SEIM\seim\wsgi.py already well formatted, good job.
+reformatted E:\mario\Documents\SGII\SEIM\seim\settings.py
+reformatted E:\mario\Documents\SGII\SEIM\seim\urls.py
+reformatted E:\mario\Documents\SGII\SEIM\seim\internationalization.py
+reformatted E:\mario\Documents\SGII\SEIM\seim\custom_settings\storage.py
+reformatted E:\mario\Documents\SGII\SEIM\seim\custom_settings\security.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\views\workflow_views.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\views\batch_views.py
+reformatted E:\mario\Documents\SGII\SEIM\seim\custom_settings\prod.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\views\exchange_views.py
+reformatted E:\mario\Documents\SGII\SEIM\exchange\views\api_views.py
+
+All done! \u2728 \U0001f370 \u2728
+87 files reformatted, 25 files left unchanged.

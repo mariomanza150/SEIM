@@ -1,0 +1,573 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Pending Approvals - SEIM{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'exchange:dashboard' %}" class="text-white-50 text-decoration-none">Dashboard</a></li>
+<li class="breadcrumb-item active">Pending Approvals</li>
+{% endblock %}
+
+{% block extra_css %}
+
+<!-- Custom DataTables Styling -->
+<link rel="stylesheet" href="{% static 'exchange/css/vendor/datatables-custom.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-lg-3">
+        <!-- Filter Section -->
+        <div class="card border-0 shadow-sm sticky-top" style="top: 100px;">
+            <div class="card-header bg-transparent border-0 pb-2">
+                <h6 class="mb-0 d-flex align-items-center">
+                    <i class="bi bi-funnel me-2"></i>
+                    Filter & Search
+                </h6>
+            </div>
+            <div class="card-body pt-2">
+                <div class="mb-3">
+                    <label class="form-label small text-muted">Status</label>
+                    <select id="statusFilter" class="form-select form-select-sm">
+                        <option value="">All Pending</option>
+                        <option value="SUBMITTED">Submitted</option>
+                        <option value="UNDER_REVIEW">Under Review</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <div class="form-floating">
+                        <input type="text" class="form-control form-control-sm" id="searchFilter" placeholder="Search by name or university...">
+                        <label><i class="bi bi-search me-1"></i>Search</label>
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary btn-sm" onclick="applyFilters()">
+                        <i class="bi bi-search me-1"></i>Apply Filters
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearFilters()">
+                        <i class="bi bi-x-circle me-1"></i>Clear All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-9">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4">
+            <div class="mb-3 mb-sm-0">
+                <h1 class="h3 mb-1">Pending Approvals</h1>
+                <p class="text-muted mb-0">Review and process exchange applications awaiting approval</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2">
+                    <i class="bi bi-clock me-1"></i>
+                    <span id="pendingCount">Loading...</span> pending
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bulk Actions Bar -->
+        <div id="bulkActionsBar" class="card border-0 shadow-sm mb-3 d-none">
+            <div class="card-body py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <span class="text-muted me-3">
+                            <i class="bi bi-check-square me-1"></i>
+                            <span id="selectedCount">0</span> selected
+                        </span>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-success btn-sm" onclick="bulkApprove()">
+                                <i class="bi bi-check-circle me-1"></i>Bulk Approve
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="bulkReject()">
+                                <i class="bi bi-x-circle me-1"></i>Bulk Reject
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearSelection()">
+                                <i class="bi bi-x me-1"></i>Clear Selection
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <small class="text-muted">Use checkboxes to select applications for bulk actions</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pending Applications List -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table id="pendingApprovalsTable" class="table table-hover align-middle mb-0 w-100">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="border-0 ps-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                                        <label class="form-check-label" for="selectAll"></label>
+                                    </div>
+                                </th>
+                                <th class="border-0">ID</th>
+                                <th class="border-0">Student</th>
+                                <th class="border-0">University</th>
+                                <th class="border-0">Program</th>
+                                <th class="border-0">Status</th>
+                                <th class="border-0">Submitted</th>
+                                <th class="border-0 pe-4 text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="table-group-divider">
+                            <!-- DataTables will populate this via AJAX -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Modal -->
+<div class="modal fade" id="quickActionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quickActionTitle">Confirm Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickActionForm" method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="actionComment" class="form-label">Comment (optional for approval, required for rejection):</label>
+                        <textarea class="form-control" id="actionComment" name="comment" rows="3" placeholder="Enter your comment or reason here..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn" id="confirmActionBtn" onclick="submitQuickAction()">
+                    <i class="bi bi-check-circle me-1"></i>Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Action Modal -->
+<div class="modal fade" id="bulkActionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkActionTitle">Bulk Action Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info d-flex align-items-center mb-3">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <div>
+                        <strong>Selected Applications:</strong> <span id="bulkSelectedCount">0</span>
+                    </div>
+                </div>
+                
+                <div id="bulkSelectedList" class="mb-3">
+                    <!-- Selected applications will be listed here -->
+                </div>
+                
+                <form id="bulkActionForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" id="bulkActionType" name="action_type" value="">
+                    <input type="hidden" id="bulkExchangeIds" name="exchange_ids" value="">
+                    
+                    <div class="mb-3">
+                        <label for="bulkActionComment" class="form-label">
+                            <span id="bulkCommentLabel">Comment (optional for approval, required for rejection):</span>
+                        </label>
+                        <textarea class="form-control" id="bulkActionComment" name="bulk_comment" rows="4" placeholder="Enter your comment or reason for this bulk action..."></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="confirmBulkAction" required>
+                        <label class="form-check-label" for="confirmBulkAction">
+                            I confirm that I want to perform this bulk action on the selected applications
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i>Cancel
+                </button>
+                <button type="button" class="btn" id="confirmBulkActionBtn" onclick="submitBulkAction()" disabled>
+                    <i class="bi bi-check-circle me-1"></i>Confirm Bulk Action
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- DataTables Includes -->
+{% include 'includes/datatables_includes.html' %}
+<!-- DataTables Configuration Script -->
+<script src="{% static 'exchange/js/vendor/datatables-config.js' %}"></script>
+
+<script>
+// Prevent variable redeclaration
+if (typeof window.pendingApprovalsDataTable === 'undefined') {
+    window.pendingApprovalsDataTable = null;
+}
+if (typeof window.currentExchangeId === 'undefined') {
+    window.currentExchangeId = null;
+}
+if (typeof window.currentAction === 'undefined') {
+    window.currentAction = null;
+}
+if (typeof window.selectedExchanges === 'undefined') {
+    window.selectedExchanges = new Set();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize DataTable
+    initializePendingApprovalsDataTable();
+    
+    // Initialize tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Initialize bulk action modal checkbox listener
+    document.getElementById('confirmBulkAction').addEventListener('change', function() {
+        document.getElementById('confirmBulkActionBtn').disabled = !this.checked;
+    });
+});
+
+function initializePendingApprovalsDataTable() {
+    // Define columns for DataTables
+    const columns = [
+        { 
+            data: null,
+            orderable: false,
+            searchable: false,
+            className: 'text-center',
+            render: function(data, type, row) {
+                return `
+                    <div class="form-check">
+                        <input class="form-check-input row-checkbox" type="checkbox" value="${row[1]}" onchange="updateSelection(this)">
+                    </div>
+                `;
+            }
+        },
+        { 
+            data: null, 
+            name: 'id',
+            render: function(data, type, row) {
+                return `
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-sm rounded bg-warning bg-opacity-10 text-warning me-3 d-flex align-items-center justify-content-center">
+                            #${row[1]}
+                        </div>
+                        <div>
+                            <h6 class="mb-0">Exchange #${row[1]}</h6>
+                        </div>
+                    </div>
+                `;
+            }
+        },
+        { 
+            data: 2, 
+            name: 'student__first_name',
+            render: function(data, type, row) {
+                return `
+                    <div>
+                        <div class="fw-semibold">${data}</div>
+                        <small class="text-muted">${row[2].split('|')[1] || ''}</small>
+                    </div>
+                `;
+            }
+        },
+        { data: 3, name: 'destination_university' },
+        { data: 4, name: 'exchange_program' },
+        { data: 5, name: 'status' },
+        { data: 6, name: 'created_at' },
+        { 
+            data: 7, 
+            name: 'actions', 
+            orderable: false, 
+            searchable: false,
+            className: 'text-end'
+        }
+    ];
+    
+    // Initialize DataTable with SGII configuration
+    window.pendingApprovalsDataTable = initSGIIDataTable(
+        '#pendingApprovalsTable',
+        '{% url "exchange:pending-approvals-datatable" %}',
+        columns,
+        {
+            order: [[6, 'asc']], // Default sort by submission date (oldest first)
+            drawCallback: function(settings) {
+                // Update pending count
+                const info = this.api().page.info();
+                document.getElementById('pendingCount').textContent = info.recordsTotal;
+                
+                // Re-initialize tooltips after each draw
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+                    new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+                
+                // Update bulk selection state
+                updateBulkSelectionState();
+            }
+        }
+    );
+}
+
+// Filter functions
+function applyFilters() {
+    if (window.pendingApprovalsDataTable) {
+        const statusFilter = document.getElementById('statusFilter').value;
+        const searchFilter = document.getElementById('searchFilter').value;
+        
+        // Apply global search
+        window.pendingApprovalsDataTable.search(searchFilter).draw();
+        
+        // Apply status filter (you can extend this based on your API)
+        // For now, we'll use the global search for status filtering
+        // In a more advanced implementation, you could modify the API to accept additional filters
+    }
+}
+
+function clearFilters() {
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('searchFilter').value = '';
+    
+    if (window.pendingApprovalsDataTable) {
+        window.pendingApprovalsDataTable.search('').draw();
+    }
+}
+
+// Quick action functions
+function quickAction(exchangeId, action) {
+    window.currentExchangeId = exchangeId;
+    window.currentAction = action;
+    
+    const modal = new bootstrap.Modal(document.getElementById('quickActionModal'));
+    const title = document.getElementById('quickActionTitle');
+    const btn = document.getElementById('confirmActionBtn');
+    const commentField = document.getElementById('actionComment');
+    
+    if (action === 'approve') {
+        title.textContent = 'Approve Application';
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Approve';
+        btn.className = 'btn btn-success';
+        commentField.required = false;
+        commentField.placeholder = 'Add an optional approval comment...';
+    } else if (action === 'reject') {
+        title.textContent = 'Reject Application';
+        btn.innerHTML = '<i class="bi bi-x-circle me-1"></i>Reject';
+        btn.className = 'btn btn-danger';
+        commentField.required = true;
+        commentField.placeholder = 'Please provide a reason for rejection...';
+    }
+    
+    modal.show();
+}
+
+function submitQuickAction() {
+    if (!window.currentExchangeId || !window.currentAction) return;
+    
+    const form = document.getElementById('quickActionForm');
+    const comment = document.getElementById('actionComment').value;
+    
+    // For rejection, require a comment
+    if (window.currentAction === 'reject' && !comment.trim()) {
+        alert('Please provide a reason for rejection.');
+        return;
+    }
+    
+    // Set form action based on current action
+    if (window.currentAction === 'approve') {
+        form.action = `{% url 'exchange:approve-exchange' 0 %}`.replace('0', window.currentExchangeId);
+    } else if (window.currentAction === 'reject') {
+        form.action = `{% url 'exchange:reject-exchange' 0 %}`.replace('0', window.currentExchangeId);
+    }
+    
+    form.submit();
+}
+
+// Review action function
+function startReview(exchangeId) {
+    window.location.href = `{% url 'exchange:review-exchange' 0 %}`.replace('0', exchangeId);
+}
+
+// Add event listeners for filter inputs
+document.addEventListener('DOMContentLoaded', function() {
+    // Real-time search with debounce
+    let searchTimeout;
+    document.getElementById('searchFilter').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            applyFilters();
+        }, 500);
+    });
+    
+    // Status filter change
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        applyFilters();
+    });
+});
+
+// Bulk Selection Functions
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    
+    rowCheckboxes.forEach(checkbox => {
+        checkbox.checked = selectAllCheckbox.checked;
+        updateSelection(checkbox);
+    });
+}
+
+function updateSelection(checkbox) {
+    const exchangeId = checkbox.value;
+    
+    if (checkbox.checked) {
+        window.selectedExchanges.add(exchangeId);
+    } else {
+        window.selectedExchanges.delete(exchangeId);
+        // Uncheck select all if individual item is unchecked
+        document.getElementById('selectAll').checked = false;
+    }
+    
+    updateBulkSelectionState();
+}
+
+function updateBulkSelectionState() {
+    const selectedCount = window.selectedExchanges.size;
+    const bulkActionsBar = document.getElementById('bulkActionsBar');
+    const selectedCountElement = document.getElementById('selectedCount');
+    
+    selectedCountElement.textContent = selectedCount;
+    
+    if (selectedCount > 0) {
+        bulkActionsBar.classList.remove('d-none');
+    } else {
+        bulkActionsBar.classList.add('d-none');
+    }
+    
+    // Update select all checkbox state
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAll');
+    
+    if (selectedCount === rowCheckboxes.length && rowCheckboxes.length > 0) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+    } else if (selectedCount > 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+    } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    }
+}
+
+function clearSelection() {
+    window.selectedExchanges.clear();
+    document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    document.getElementById('selectAll').checked = false;
+    updateBulkSelectionState();
+}
+
+// Bulk Action Functions
+function bulkApprove() {
+    if (window.selectedExchanges.size === 0) {
+        alert('Please select at least one application to approve.');
+        return;
+    }
+    
+    showBulkActionModal('approve');
+}
+
+function bulkReject() {
+    if (window.selectedExchanges.size === 0) {
+        alert('Please select at least one application to reject.');
+        return;
+    }
+    
+    showBulkActionModal('reject');
+}
+
+function showBulkActionModal(action) {
+    const modal = new bootstrap.Modal(document.getElementById('bulkActionModal'));
+    const title = document.getElementById('bulkActionTitle');
+    const btn = document.getElementById('confirmBulkActionBtn');
+    const commentField = document.getElementById('bulkActionComment');
+    const commentLabel = document.getElementById('bulkCommentLabel');
+    const actionType = document.getElementById('bulkActionType');
+    const exchangeIds = document.getElementById('bulkExchangeIds');
+    const selectedCount = document.getElementById('bulkSelectedCount');
+    const selectedList = document.getElementById('bulkSelectedList');
+    
+    // Reset form
+    document.getElementById('bulkActionForm').reset();
+    document.getElementById('confirmBulkActionBtn').disabled = true;
+    
+    selectedCount.textContent = window.selectedExchanges.size;
+    actionType.value = action;
+    exchangeIds.value = Array.from(window.selectedExchanges).join(',');
+    
+    // Create list of selected applications
+    const listHtml = Array.from(window.selectedExchanges).map(id => {
+        return `<span class="badge bg-primary-subtle text-primary border border-primary-subtle me-1 mb-1">#${id}</span>`;
+    }).join('');
+    selectedList.innerHTML = `<div class="border rounded p-2 bg-light">${listHtml}</div>`;
+    
+    if (action === 'approve') {
+        title.textContent = 'Bulk Approve Applications';
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Approve Selected';
+        btn.className = 'btn btn-success';
+        commentField.required = false;
+        commentLabel.textContent = 'Comment (optional):';
+        commentField.placeholder = 'Add an optional comment for the bulk approval...';
+    } else if (action === 'reject') {
+        title.textContent = 'Bulk Reject Applications';
+        btn.innerHTML = '<i class="bi bi-x-circle me-1"></i>Reject Selected';
+        btn.className = 'btn btn-danger';
+        commentField.required = true;
+        commentLabel.textContent = 'Comment (required for rejection):';
+        commentField.placeholder = 'Please provide a reason for the bulk rejection...';
+    }
+    
+    modal.show();
+}
+
+function submitBulkAction() {
+    const form = document.getElementById('bulkActionForm');
+    const comment = document.getElementById('bulkActionComment').value;
+    const actionType = document.getElementById('bulkActionType').value;
+    
+    // For rejection, require a comment
+    if (actionType === 'reject' && !comment.trim()) {
+        alert('Please provide a reason for rejection.');
+        return;
+    }
+    
+    // Show loading state
+    const btn = document.getElementById('confirmBulkActionBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
+    btn.disabled = true;
+    
+    // Set form action
+    form.action = '{% url "exchange:bulk-action" %}';
+    form.submit();
+}
+</script>
+{% endblock %}

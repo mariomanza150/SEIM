@@ -1,0 +1,376 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Dashboard - SEIM{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Dashboard</li>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Section -->
+<div class="row align-items-center mb-4">
+    <div class="col-md-8">
+        <h1 class="display-6 fw-bold mb-2">
+            Welcome back, {{ user.first_name|default:user.username }}! 👋
+        </h1>
+        <p class="text-muted mb-0">Here's what's happening with your exchanges today.</p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0">
+        {% if user.profile.role == 'STUDENT' %}
+            <a href="{% url 'exchange:create-exchange' %}" class="btn btn-primary btn-lg shadow-sm">
+                <i class="bi bi-plus-circle me-2"></i>New Application
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-5">
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 bg-gradient text-white h-100" style="background: linear-gradient(135deg, var(--bs-primary), var(--bs-info));">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h2 class="h3 fw-bold mb-1">{{ total_exchanges|default:0 }}</h2>
+                        <p class="mb-0 opacity-75 small">Total Exchanges</p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-arrow-up-right-circle fs-1 opacity-50"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="d-flex align-items-center opacity-75">
+                        <i class="bi bi-arrow-up me-1"></i>
+                        +12% from last month
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 bg-gradient text-white h-100" style="background: linear-gradient(135deg, var(--bs-success), var(--bs-info));">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h2 class="h3 fw-bold mb-1">{{ active_exchanges|default:0 }}</h2>
+                        <p class="mb-0 opacity-75 small">Active</p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-check-circle fs-1 opacity-50"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="d-flex align-items-center opacity-75">
+                        <i class="bi bi-arrow-up me-1"></i>
+                        +5% this week
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 bg-gradient text-white h-100" style="background: linear-gradient(135deg, var(--bs-warning), var(--bs-danger));">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h2 class="h3 fw-bold mb-1">{{ pending_exchanges|default:0 }}</h2>
+                        <p class="mb-0 opacity-75 small">Pending</p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-clock fs-1 opacity-50"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="d-flex align-items-center opacity-75">
+                        <i class="bi bi-dash me-1"></i>
+                        2 need attention
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-6 col-lg-3">
+        <div class="card border-0 bg-gradient text-white h-100" style="background: linear-gradient(135deg, var(--bs-secondary), var(--bs-dark));">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h2 class="h3 fw-bold mb-1">{{ completed_exchanges|default:0 }}</h2>
+                        <p class="mb-0 opacity-75 small">Completed</p>
+                    </div>
+                    <div class="flex-shrink-0">
+                        <i class="bi bi-award fs-1 opacity-50"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <small class="d-flex align-items-center opacity-75">
+                        <i class="bi bi-check me-1"></i>
+                        All time
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Profile Card -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100 card-hover">
+            <div class="card-header bg-transparent border-0 pb-0">
+                <div class="d-flex align-items-center">
+                    <div class="avatar rounded-circle bg-primary bg-opacity-10 text-primary me-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-person-circle fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Profile Information</h6>
+                        <small class="text-muted">Keep your profile updated</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body pt-2">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Username</span>
+                        <span class="fw-medium">{{ user.username }}</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Email</span>
+                        <span class="fw-medium">{{ user.email }}</span>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Full Name</span>
+                        <span class="fw-medium">{{ user.get_full_name|default:"Not set" }}</span>
+                    </div>
+                </div>
+                {% if user.profile %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted small">Role</span>
+                            <span class="badge bg-primary-subtle text-primary">{{ user.profile.get_role_display }}</span>
+                        </div>
+                    </div>
+                {% endif %}
+                <div class="d-grid">
+                    <a href="{% url 'exchange:profile' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-pencil me-2"></i>Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100 card-hover">
+            <div class="card-header bg-transparent border-0 pb-0">
+                <div class="d-flex align-items-center">
+                    <div class="avatar rounded-circle bg-success bg-opacity-10 text-success me-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-lightning fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Quick Actions</h6>
+                        <small class="text-muted">Common tasks</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body pt-2">
+                <div class="d-grid gap-2">
+                    {% if user.profile.role == 'STUDENT' %}
+                        <a href="{% url 'exchange:create-exchange' %}" class="btn btn-primary d-flex align-items-center">
+                            <i class="bi bi-plus-circle me-2"></i>New Exchange Application
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'exchange:exchange-list' %}" class="btn btn-outline-secondary d-flex align-items-center">
+                        <i class="bi bi-list-ul me-2"></i>View All Exchanges
+                    </a>
+                    {% if user.profile.role in 'COORDINATOR,ADMINISTRATOR' %}
+                        <a href="{% url 'exchange:pending-approvals' %}" class="btn btn-outline-warning d-flex align-items-center">
+                            <i class="bi bi-clock-history me-2"></i>Review Pending
+                            {% if pending_exchanges > 0 %}
+                                <span class="badge bg-warning text-dark ms-auto">{{ pending_exchanges }}</span>
+                            {% endif %}
+                        </a>
+                    {% endif %}
+                    <a href="#" class="btn btn-outline-info d-flex align-items-center">
+                        <i class="bi bi-graph-up me-2"></i>View Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100 card-hover">
+            <div class="card-header bg-transparent border-0 pb-0">
+                <div class="d-flex align-items-center">
+                    <div class="avatar rounded-circle bg-info bg-opacity-10 text-info me-3 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-activity fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="mb-0">Recent Activity</h6>
+                        <small class="text-muted">Latest updates</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body pt-2">
+                <div class="activity-feed">
+                    <!-- Mock activity items -->
+                    <div class="d-flex mb-3">
+                        <div class="avatar avatar-sm rounded-circle bg-success bg-opacity-20 text-success me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="mb-1 small">Exchange #123 approved</p>
+                            <small class="text-muted">2 hours ago</small>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="avatar avatar-sm rounded-circle bg-primary bg-opacity-20 text-primary me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                            <i class="bi bi-file-earmark-plus"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="mb-1 small">Document uploaded</p>
+                            <small class="text-muted">1 day ago</small>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <div class="avatar avatar-sm rounded-circle bg-warning bg-opacity-20 text-warning me-3 d-flex align-items-center justify-content-center flex-shrink-0">
+                            <i class="bi bi-clock"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="mb-1 small">Application submitted</p>
+                            <small class="text-muted">3 days ago</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Exchanges Table -->
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-transparent border-0 d-flex align-items-center justify-content-between">
+                <div>
+                    <h5 class="mb-0">Recent Exchanges</h5>
+                    <small class="text-muted">Your latest exchange applications</small>
+                </div>
+                <a href="{% url 'exchange:exchange-list' %}" class="btn btn-outline-primary btn-sm">
+                    View All <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_exchanges %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="border-0 ps-4">Exchange</th>
+                                    <th class="border-0">University</th>
+                                    <th class="border-0">Program</th>
+                                    <th class="border-0">Status</th>
+                                    <th class="border-0">Created</th>
+                                    <th class="border-0 pe-4 text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider">
+                                {% for exchange in recent_exchanges %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar avatar-sm rounded bg-primary bg-opacity-10 text-primary me-3 d-flex align-items-center justify-content-center">
+                                                #{{ exchange.id }}
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">Exchange #{{ exchange.id }}</h6>
+                                                <small class="text-muted">{{ exchange.created_at|date:"M d" }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <div class="fw-medium">{{ exchange.host_university|truncatewords:4 }}</div>
+                                            <small class="text-muted">{{ exchange.host_country|default:"Country not specified" }}</small>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-truncate d-inline-block" style="max-width: 150px;">
+                                            {{ exchange.program|default:"Program not specified" }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if exchange.status == 'APPROVED' %}bg-success-subtle text-success border border-success-subtle{% elif exchange.status == 'REJECTED' %}bg-danger-subtle text-danger border border-danger-subtle{% elif exchange.status == 'SUBMITTED' %}bg-warning-subtle text-warning border border-warning-subtle{% elif exchange.status == 'UNDER_REVIEW' %}bg-info-subtle text-info border border-info-subtle{% elif exchange.status == 'COMPLETED' %}bg-secondary-subtle text-secondary border border-secondary-subtle{% else %}bg-light text-muted border{% endif %}">
+                                            {{ exchange.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <time datetime="{{ exchange.created_at|date:'c' }}">
+                                            {{ exchange.created_at|date:"M d, Y" }}
+                                        </time>
+                                    </td>
+                                    <td class="pe-4 text-end">
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'exchange:exchange-detail' exchange.id %}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               data-bs-toggle="tooltip" 
+                                               data-bs-title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            {% if user == exchange.student or user.profile.role in 'COORDINATOR,ADMINISTRATOR' %}
+                                                {% if exchange.status in 'DRAFT,SUBMITTED' %}
+                                                    <a href="{% url 'exchange:edit-exchange' exchange.id %}" 
+                                                       class="btn btn-sm btn-outline-secondary"
+                                                       data-bs-toggle="tooltip" 
+                                                       data-bs-title="Edit">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </a>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="avatar mx-auto mb-3 bg-light text-muted d-flex align-items-center justify-content-center" style="width: 4rem; height: 4rem;">
+                            <i class="bi bi-inbox fs-1"></i>
+                        </div>
+                        <h6 class="text-muted">No exchanges yet</h6>
+                        <p class="text-muted mb-3">Get started by creating your first exchange application.</p>
+                        {% if user.profile.role == 'STUDENT' %}
+                            <a href="{% url 'exchange:create-exchange' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Create Your First Application
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,313 @@
+{% extends 'base/base.html' %}
+{% load static %}
+
+{% block title %}Notifications - SEIM{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>
+                    <i class="fas fa-bell"></i> Notifications
+                </h2>
+                <div>
+                    <button class="btn btn-outline-primary" onclick="markAllAsRead()">
+                        <i class="fas fa-check-double"></i> Mark All as Read
+                    </button>
+                    <a href="{% url 'exchange:notification-settings' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-cog"></i> Settings
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Notification Filters -->
+            <div class="btn-group mb-3" role="group">
+                <button type="button" class="btn btn-outline-secondary active" data-filter="all">
+                    All <span class="badge bg-secondary">{{ notifications.count }}</span>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-filter="unread">
+                    Unread <span class="badge bg-primary">{{ unread_count }}</span>
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-filter="exchange">
+                    Exchange Updates
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-filter="document">
+                    Documents
+                </button>
+                <button type="button" class="btn btn-outline-secondary" data-filter="system">
+                    System
+                </button>
+            </div>
+            
+            <!-- Notifications List -->
+            <div class="list-group" id="notificationsList">
+                {% for notification in notifications %}
+                <div class="list-group-item {% if not notification.is_read %}list-group-item-info{% endif %} notification-item"
+                     data-notification-id="{{ notification.id }}"
+                     data-type="{{ notification.type }}">
+                    <div class="d-flex justify-content-between">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-start">
+                                <div class="me-3">
+                                    <i class="fas fa-{{ notification.get_icon }} fa-2x text-{{ notification.get_color }}"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">{{ notification.title }}</h6>
+                                    <p class="mb-1">{{ notification.message }}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-clock"></i> {{ notification.created_at|timesince }} ago
+                                        {% if notification.related_exchange %}
+                                        | <a href="{% url 'exchange:exchange-detail' notification.related_exchange.id %}">
+                                            Exchange #{{ notification.related_exchange.id }}
+                                        </a>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <div class="btn-group-vertical btn-group-sm">
+                                {% if not notification.is_read %}
+                                <button class="btn btn-outline-primary" 
+                                        onclick="markAsRead({{ notification.id }})">
+                                    <i class="fas fa-check"></i> Mark as Read
+                                </button>
+                                {% endif %}
+                                <button class="btn btn-outline-danger" 
+                                        onclick="deleteNotification({{ notification.id }})">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No notifications</h4>
+                    <p class="text-muted">You're all caught up!</p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Notifications pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie"></i> Notification Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="notificationChart"></canvas>
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Exchange Updates</span>
+                        <span class="badge bg-primary">{{ exchange_notifications_count }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Document Updates</span>
+                        <span class="badge bg-success">{{ document_notifications_count }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>System Messages</span>
+                        <span class="badge bg-warning">{{ system_notifications_count }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Other</span>
+                        <span class="badge bg-secondary">{{ other_notifications_count }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'exchange:exchange-list' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-exchange-alt"></i> View Exchanges
+                        </a>
+                        <a href="{% url 'exchange:document-list' %}" class="btn btn-outline-success">
+                            <i class="fas fa-file-alt"></i> View Documents
+                        </a>
+                        <a href="{% url 'profile' %}" class="btn btn-outline-info">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Notification management functions
+function markAsRead(notificationId) {
+    $.ajax({
+        url: `/api/notifications/${notificationId}/read/`,
+        type: 'POST',
+        success: function() {
+            const item = $(`.notification-item[data-notification-id="${notificationId}"]`);
+            item.removeClass('list-group-item-info');
+            item.find('button[onclick*="markAsRead"]').remove();
+            updateUnreadCount();
+        },
+        error: function(xhr) {
+            Exchange.showAlert('Failed to mark notification as read', 'danger');
+        }
+    });
+}
+
+function markAllAsRead() {
+    if (confirm('Mark all notifications as read?')) {
+        $.ajax({
+            url: '/api/notifications/mark-all-read/',
+            type: 'POST',
+            success: function() {
+                $('.notification-item').removeClass('list-group-item-info');
+                $('.notification-item button[onclick*="markAsRead"]').remove();
+                updateUnreadCount();
+                Exchange.showAlert('All notifications marked as read', 'success');
+            },
+            error: function(xhr) {
+                Exchange.showAlert('Failed to mark all as read', 'danger');
+            }
+        });
+    }
+}
+
+function deleteNotification(notificationId) {
+    if (confirm('Delete this notification?')) {
+        $.ajax({
+            url: `/api/notifications/${notificationId}/`,
+            type: 'DELETE',
+            success: function() {
+                $(`.notification-item[data-notification-id="${notificationId}"]`).fadeOut(() => {
+                    $(`.notification-item[data-notification-id="${notificationId}"]`).remove();
+                    if ($('.notification-item').length === 0) {
+                        location.reload();
+                    }
+                });
+            },
+            error: function(xhr) {
+                Exchange.showAlert('Failed to delete notification', 'danger');
+            }
+        });
+    }
+}
+
+function updateUnreadCount() {
+    $.ajax({
+        url: '/api/notifications/unread-count/',
+        type: 'GET',
+        success: function(data) {
+            $('.badge:contains("Unread")').next('.badge').text(data.count);
+            // Update notification badge in navbar if exists
+            $('#notificationBadge').text(data.count);
+            if (data.count === 0) {
+                $('#notificationBadge').hide();
+            } else {
+                $('#notificationBadge').show();
+            }
+        }
+    });
+}
+
+// Filter notifications
+$('.btn-group[role="group"] button[data-filter]').click(function() {
+    const filter = $(this).data('filter');
+    $('.btn-group[role="group"] button').removeClass('active');
+    $(this).addClass('active');
+    
+    if (filter === 'all') {
+        $('.notification-item').show();
+    } else if (filter === 'unread') {
+        $('.notification-item').hide();
+        $('.notification-item.list-group-item-info').show();
+    } else {
+        $('.notification-item').hide();
+        $(`.notification-item[data-type="${filter}"]`).show();
+    }
+});
+
+// Initialize notification chart
+$(document).ready(function() {
+    const ctx = document.getElementById('notificationChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Exchange', 'Documents', 'System', 'Other'],
+            datasets: [{
+                data: [
+                    {{ exchange_notifications_count }},
+                    {{ document_notifications_count }},
+                    {{ system_notifications_count }},
+                    {{ other_notifications_count }}
+                ],
+                backgroundColor: [
+                    'rgba(13, 110, 253, 0.8)',
+                    'rgba(25, 135, 84, 0.8)',
+                    'rgba(255, 193, 7, 0.8)',
+                    'rgba(108, 117, 125, 0.8)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
