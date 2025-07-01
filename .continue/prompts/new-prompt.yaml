@@ -1,7 +1,0 @@
-name: New prompt
-version: 0.0.1
-schema: v1
-prompts:
-  - name: MCP Tool use Guide
-    description: Description of available mcp tools
-    prompt: "E:\mario\Documents\SGII\.continue\rules\new-rule.yaml" read file.

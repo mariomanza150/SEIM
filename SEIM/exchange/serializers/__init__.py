@@ -6,20 +6,32 @@ All serializers have been moved to exchange.api.v1.serializers.
 """
 
 # Redirect imports to the new API v1 location
-from ..api.v1.serializers import *
+from .people import UserSerializer, StudentProfileSerializer, StaffProfileSerializer, ContactProfileSerializer
+from .enums import CitySerializer, StateSerializer, CampusSerializer, CountrySerializer, QuestionSerializer, UniversitySerializer
+from .applications import CommentSerializer, DocumentSerializer, ExchangeSerializer, TimelineSerializer, DocumentTypeSerializer, ApplicationStatusSerializer, ApplicationAnswerSerializer
+
 
 # Maintain backward compatibility
 __all__ = [
+    "CitySerializer",
+    "StateSerializer",
+    "CampusSerializer",
+    "CountrySerializer",
+    "QuestionSerializer",
+    "UniversitySerializer",
     # Document serializers
     "DocumentSerializer",
-    "DocumentUploadSerializer",
     "DocumentTypeSerializer",
     # Exchange serializers
     "ExchangeSerializer",
-    "ExchangeListSerializer",
-    "ExchangeDetailSerializer",
+    "CommentSerializer",
+    "TimelineSerializer",
     # User serializers
     "UserSerializer",
-    "UserProfileSerializer",
-    "RegisterSerializer",
+    "StudentProfileSerializer",
+    "StaffProfileSerializer",
+    "ContactProfileSerializer",
+    # Application
+    "ApplicationAnswerSerializer",
+    "ApplicationStatusSerializer"
 ]

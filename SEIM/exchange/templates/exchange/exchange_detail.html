@@ -274,7 +274,7 @@
                 
                 <!-- Add Comment Form -->
                 <div class="mt-4">
-                    <form method="post" action="{% url 'exchange:add-comment' exchange.id %}">
+                    <form id="addCommentForm" method="post" action="{% url 'exchange:add-comment' exchange.id %}">
                         {% csrf_token %}
                         <div class="form-floating mb-3">
                             <textarea class="form-control" id="commentContent" name="content" placeholder="Add a comment..." style="height: 100px;" required></textarea>
@@ -450,6 +450,11 @@
                 </div>
             </div>
         </div>
+
+        <!-- Workflow Timeline (History) -->
+        <div id="workflow-timeline-container">
+            {% include 'exchange/partials/workflow_timeline.html' %}
+        </div>
     </div>
 </div>
 
@@ -461,7 +466,7 @@
                 <h1 class="modal-title h5" id="uploadModalLabel">Upload Document</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="post" enctype="multipart/form-data" action="{% url 'exchange:upload-document' exchange.id %}">
+            <form id="uploadDocumentForm" method="post" enctype="multipart/form-data" action="{% url 'exchange:upload-document' exchange.id %}">
                 <div class="modal-body">
                     {% csrf_token %}
                     <div class="mb-3">
@@ -513,7 +518,7 @@
                 <h1 class="modal-title h5" id="approveModalLabel">Approve Application</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="post" action="{% url 'exchange:approve-exchange' exchange.id %}">
+            <form id="approveExchangeForm" method="post" action="{% url 'exchange:approve-exchange' exchange.id %}">
                 <div class="modal-body">
                     {% csrf_token %}
                     <div class="alert alert-success border-0">
@@ -545,7 +550,7 @@
                 <h1 class="modal-title h5" id="rejectModalLabel">Reject Application</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form method="post" action="{% url 'exchange:reject-exchange' exchange.id %}">
+            <form id="rejectExchangeForm" method="post" action="{% url 'exchange:reject-exchange' exchange.id %}">
                 <div class="modal-body">
                     {% csrf_token %}
                     <div class="alert alert-danger border-0">
@@ -705,6 +710,77 @@ document.getElementById('documentFile').addEventListener('change', function(e) {
             titleInput.value = file.name.split('.')[0];
         }
     }
+});
+
+// AJAX: Add Comment
+$('#addCommentForm').on('submit', function(e) {
+    e.preventDefault();
+    const $form = $(this);
+    const data = $form.serialize();
+    $.post($form.attr('action'), data)
+        .done(function(response) {
+            // Update comments section (assume response.html contains updated comments)
+            $('.card-body.pt-3').first().html($(response).find('.card-body.pt-3').first().html());
+            $('#commentContent').val('');
+        })
+        .fail(function(xhr) {
+            alert('Error posting comment');
+        });
+});
+
+// AJAX: Document Upload
+$('#uploadDocumentForm').on('submit', function(e) {
+    e.preventDefault();
+    const $form = $(this)[0];
+    const formData = new FormData($form);
+    $.ajax({
+        url: $form.action,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            // Update documents section (assume response.html contains updated documents)
+            $('.card-body.pt-3').eq(1).html($(response).find('.card-body.pt-3').eq(1).html());
+            $('#uploadModal').modal('hide');
+            $form.reset();
+        },
+        error: function(xhr) {
+            alert('Error uploading document');
+        }
+    });
+});
+
+// AJAX: Approve Exchange
+$('#approveExchangeForm').on('submit', function(e) {
+    e.preventDefault();
+    const $form = $(this);
+    const data = $form.serialize();
+    $.post($form.attr('action'), data)
+        .done(function(response) {
+            // Update workflow timeline and actions
+            $('#workflow-timeline-container').html($(response).find('#workflow-timeline-container').html());
+            $('#approveModal').modal('hide');
+        })
+        .fail(function(xhr) {
+            alert('Error approving application');
+        });
+});
+
+// AJAX: Reject Exchange
+$('#rejectExchangeForm').on('submit', function(e) {
+    e.preventDefault();
+    const $form = $(this);
+    const data = $form.serialize();
+    $.post($form.attr('action'), data)
+        .done(function(response) {
+            // Update workflow timeline and actions
+            $('#workflow-timeline-container').html($(response).find('#workflow-timeline-container').html());
+            $('#rejectModal').modal('hide');
+        })
+        .fail(function(xhr) {
+            alert('Error rejecting application');
+        });
 });
 </script>
 {% endblock %}

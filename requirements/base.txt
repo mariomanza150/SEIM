@@ -9,7 +9,8 @@ djangorestframework==3.16.0
 django-rest-framework-nested==0.0.1
 django-ratelimit==4.1.0
 whitenoise==6.9.0
-django-fsm==3.0.0
+#django-fsm==3.0.0
+django-viewflow==2.2.11
 
 # Redis support
 django-redis==5.4.0

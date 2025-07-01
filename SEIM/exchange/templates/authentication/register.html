@@ -9,7 +9,7 @@
             <div class="card-body">
                 <h2 class="card-title text-center mb-4">Register</h2>
                 
-                <form method="post">
+                <form id="registerForm" method="post">
                     {% csrf_token %}
                     
                     {% if form.non_field_errors %}
@@ -67,16 +67,16 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="{{ form.password1.id_for_label }}" class="form-label">Password</label>
-                        <input type="password" class="form-control {% if form.password1.errors %}is-invalid{% endif %}" 
-                               id="{{ form.password1.id_for_label }}" 
-                               name="{{ form.password1.name }}"
+                        <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+                        <input type="password" class="form-control {% if form.password.errors %}is-invalid{% endif %}" 
+                               id="{{ form.password.id_for_label }}" 
+                               name="{{ form.password.name }}"
                                required>
-                        {% for error in form.password1.errors %}
+                        {% for error in form.password.errors %}
                             <div class="invalid-feedback">{{ error }}</div>
                         {% endfor %}
-                        {% if form.password1.help_text %}
-                            <small class="form-text text-muted">{{ form.password1.help_text }}</small>
+                        {% if form.password.help_text %}
+                            <small class="form-text text-muted">{{ form.password.help_text }}</small>
                         {% endif %}
                     </div>
                     
@@ -115,4 +115,45 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showSpinner() {
+    if ($('#globalSpinner').length === 0) {
+        $('body').append('<div id="globalSpinner" class="modal" tabindex="-1" style="display:block; background:rgba(0,0,0,0.2); z-index:2000;"><div class="d-flex justify-content-center align-items-center" style="height:100vh;"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div></div>');
+    }
+}
+function hideSpinner() {
+    $('#globalSpinner').remove();
+}
+function showToast(message, type='success') {
+    if ($('#toastContainer').length === 0) {
+        $('body').append('<div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>');
+    }
+    const toastHtml = `<div class="toast align-items-center text-bg-${type} border-0 show mb-2" role="alert"><div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>`;
+    const $toast = $(toastHtml);
+    $('#toastContainer').append($toast);
+    setTimeout(() => { $toast.fadeOut(() => $toast.remove()); }, 4000);
+}
+
+$('#registerForm').on('submit', function(e) {
+    e.preventDefault();
+    showSpinner();
+    $.post(this.action, $(this).serialize())
+        .done(function(response) {
+            hideSpinner();
+            showToast('Registration successful!', 'success');
+            if (response.redirect_url) {
+                window.location.href = response.redirect_url;
+            }
+        })
+        .fail(function(xhr) {
+            hideSpinner();
+            let msg = 'Registration failed';
+            if (xhr.responseJSON && xhr.responseJSON.error) msg = xhr.responseJSON.error;
+            showToast(msg, 'danger');
+        });
+});
+</script>
 {% endblock %}

@@ -10,8 +10,8 @@ from django.views.generic import CreateView, TemplateView
 from django.views.decorators.cache import cache_control
 from django_ratelimit.decorators import ratelimit
 
-from ..forms import LoginForm, RegistrationForm, UserProfileForm
-from ..models import Exchange, UserProfile
+from ..forms import LoginForm, RegistrationForm, StudentProfileForm, StaffProfileForm
+from ..models import Exchange, StudentProfile, StaffProfile
 
 
 @method_decorator(ratelimit(key="ip", rate="5/m", method=["GET", "POST"]), name="dispatch")
@@ -117,7 +117,7 @@ def dashboard_view(request):
     if hasattr(user, "profile"):
         profile = user.profile
 
-        if profile.role == "STUDENT":
+        if isinstance(profile, StudentProfile):
             exchanges = Exchange.objects.filter(student=user)
         elif profile.role in ["COORDINATOR", "ADMINISTRATOR"]:
             exchanges = Exchange.objects.all()
@@ -136,7 +136,7 @@ def dashboard_view(request):
         )
     else:
         # If no profile exists, create one
-        UserProfile.objects.get_or_create(user=user, defaults={"role": "STUDENT"})
+        StudentProfile.objects.get_or_create(user=user, defaults={"role": "STUDENT"})
         context.update(
             {
                 "total_exchanges": 0,
@@ -155,16 +155,22 @@ def profile_view(request):
     """
     User profile view and update
     """
-    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    profile, created = StudentProfile.objects.get_or_create(user=request.user)
 
     if request.method == "POST":
-        form = UserProfileForm(request.POST, instance=profile)
+        if isinstance(profile, StudentProfile):
+            form = StudentProfileForm(request.POST, instance=profile)
+        elif isinstance(profile, StaffProfile):
+            form = StaffProfileForm(request.POST, instance=profile)
         if form.is_valid():
             form.save()
             messages.success(request, "Your profile has been updated.")
             return redirect("exchange:profile")
     else:
-        form = UserProfileForm(instance=profile)
+        if isinstance(profile, StudentProfile):
+            form = StudentProfileForm(instance=profile)
+        elif isinstance(profile, StaffProfile):
+            form = StaffProfileForm(instance=profile)
 
     return render(request, "authentication/profile.html", {"form": form})
 

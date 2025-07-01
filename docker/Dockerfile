@@ -11,7 +11,8 @@ RUN apt-get update && \
 
 # Copy and install requirements
 COPY requirements/ /tmp/build/requirements/
-RUN pip install --user -r requirements/base.txt
+COPY requirements.txt /tmp/build/
+RUN pip install --user -r requirements.txt
 
 FROM python:3.12-slim
 WORKDIR /app

@@ -20,11 +20,17 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from django.views.generic import RedirectView
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("favicon.ico", RedirectView.as_view(url=settings.STATIC_URL or '/static/' + "images/favicon.ico")),
     path("", include("exchange.urls")),  # Include exchange app URLs at root
+    # API schema and docs
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    # API v1 endpoints
+    path("api/v1/", include("exchange.api.v1.urls")),
 ]
 
 # Serve static and media files during development

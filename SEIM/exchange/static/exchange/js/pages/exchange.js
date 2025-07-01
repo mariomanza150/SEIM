@@ -45,9 +45,78 @@ const Exchange = {
         
         // Workflow action buttons
         $(document).on('click', '.workflow-action', function() {
-            const action = $(this).data('action');
-            const exchangeId = $(this).data('exchange-id');
-            Exchange.handleWorkflowAction(action, exchangeId);
+            const $btn = $(this);
+            const transition = $btn.data('transition');
+            const requiresComment = $btn.data('requires-comment') === true || $btn.data('requires-comment') === 'true';
+            const exchangeId = $btn.data('exchange-id');
+            let comment = '';
+
+            function reloadWorkflowPartials() {
+                // Reload actions
+                $.get(`/exchanges/${exchangeId}/workflow-actions-partial/`, function(data) {
+                    $('#workflow-actions-container').html(data.html);
+                });
+                // Reload timeline
+                $.get(`/exchanges/${exchangeId}/workflow-timeline-partial/`, function(data) {
+                    $('#workflow-timeline-container').html(data.html);
+                });
+            }
+
+            function doTransition() {
+                Exchange.showLoader();
+                $.ajax({
+                    url: `/api/exchanges/${exchangeId}/transition/`,
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ status: transition, comment: comment }),
+                    success: function(response) {
+                        Exchange.hideLoader();
+                        Exchange.showAlert('Action completed successfully!', 'success');
+                        reloadWorkflowPartials();
+                    },
+                    error: function(xhr) {
+                        Exchange.hideLoader();
+                        const error = xhr.responseJSON?.error || 'An error occurred';
+                        Exchange.showAlert(error, 'danger');
+                    }
+                });
+            }
+
+            if (requiresComment) {
+                Swal.fire({
+                    title: 'Comment Required',
+                    input: 'textarea',
+                    inputLabel: 'Please provide a comment for this action:',
+                    inputPlaceholder: 'Enter your comment here...',
+                    inputAttributes: { 'aria-label': 'Comment' },
+                    showCancelButton: true,
+                    confirmButtonText: 'Submit',
+                    cancelButtonText: 'Cancel',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'Comment is required!';
+                        }
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        comment = result.value;
+                        doTransition();
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'Are you sure?',
+                    text: 'Do you want to perform this action?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'No'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        doTransition();
+                    }
+                });
+            }
         });
         
         // Document preview
@@ -70,66 +139,6 @@ const Exchange = {
         tooltipTriggerList.map(function (tooltipTriggerEl) {
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
-    },
-    
-    // Handle workflow actions
-    handleWorkflowAction: function(action, exchangeId) {
-        let confirmMessage = '';
-        let apiUrl = `/api/exchanges/${exchangeId}/`;
-        
-        switch(action) {
-            case 'submit':
-                confirmMessage = 'Are you sure you want to submit this exchange application? Once submitted, you cannot make changes.';
-                apiUrl += 'submit/';
-                break;
-            case 'start_review':
-                confirmMessage = 'Start reviewing this exchange application?';
-                apiUrl += 'review/';
-                break;
-            case 'approve':
-                confirmMessage = 'Are you sure you want to approve this exchange?';
-                apiUrl += 'approve/';
-                break;
-            case 'reject':
-                confirmMessage = 'Are you sure you want to reject this exchange?';
-                const reason = prompt('Please provide a reason for rejection:');
-                if (!reason) return;
-                apiUrl += 'reject/';
-                break;
-            case 'cancel':
-                confirmMessage = 'Are you sure you want to cancel this exchange?';
-                apiUrl += 'cancel/';
-                break;
-            default:
-                console.error('Unknown action:', action);
-                return;
-        }
-        
-        if (confirm(confirmMessage)) {
-            Exchange.showLoader();
-            
-            const data = {};
-            if (action === 'reject' && reason) {
-                data.reason = reason;
-            }
-            
-            $.ajax({
-                url: apiUrl,
-                type: 'POST',
-                data: JSON.stringify(data),
-                contentType: 'application/json',
-                success: function(response) {
-                    Exchange.hideLoader();
-                    Exchange.showAlert('Action completed successfully!', 'success');
-                    setTimeout(() => location.reload(), 1500);
-                },
-                error: function(xhr) {
-                    Exchange.hideLoader();
-                    const error = xhr.responseJSON?.error || 'An error occurred';
-                    Exchange.showAlert(error, 'danger');
-                }
-            });
-        }
     },
     
     // Preview document

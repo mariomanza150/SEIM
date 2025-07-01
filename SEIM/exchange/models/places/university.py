@@ -1,9 +1,9 @@
 from django.db import models
 from .address.country import Country
-from ..base_models.config_model import ConfigModel
+from ..base import Option
 
 
-class University(ConfigModel):
+class University(Option):
     country = models.ForeignKey(Country, on_delete=models.PROTECT)
     code = models.CharField(max_length=50, unique=True)
     is_partner = models.BooleanField(default=True)
@@ -16,6 +16,6 @@ class University(ConfigModel):
     ])
 
     def __str__(self):
-        return f"{self.name} ({self.country.iso_code})"
+        return f"{self.name} ({self.country.code})"
 
 

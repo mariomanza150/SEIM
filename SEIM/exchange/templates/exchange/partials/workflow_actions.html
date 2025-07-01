@@ -1,72 +1,15 @@
 <!-- Workflow Actions Component -->
 <div class="workflow-actions mt-3">
-    {% if exchange.status == 'DRAFT' and user == exchange.student %}
-    <button class="btn btn-primary workflow-action" 
-            data-action="submit" 
+    {% for transition in available_transitions %}
+    <button class="btn btn-primary workflow-action"
+            data-transition="{{ transition.to_status }}"
+            data-requires-comment="{{ transition.requires_comment|yesno:'true,false' }}"
             data-exchange-id="{{ exchange.id }}">
-        <i class="fas fa-paper-plane"></i> Submit Application
+        <i class="fas fa-random"></i> {{ transition.label }}
     </button>
-    {% elif exchange.status == 'SUBMITTED' and user.is_staff %}
-    <button class="btn btn-info workflow-action" 
-            data-action="start_review" 
-            data-exchange-id="{{ exchange.id }}">
-        <i class="fas fa-search"></i> Start Review
-    </button>
-    {% elif exchange.status == 'UNDER_REVIEW' and user.is_staff %}
-    <div class="btn-group" role="group">
-        <button class="btn btn-success workflow-action" 
-                data-action="approve" 
-                data-exchange-id="{{ exchange.id }}">
-            <i class="fas fa-check"></i> Approve
-        </button>
-        <button class="btn btn-danger workflow-action" 
-                data-action="reject" 
-                data-exchange-id="{{ exchange.id }}">
-            <i class="fas fa-times"></i> Reject
-        </button>
-        <button class="btn btn-warning workflow-action" 
-                data-action="request_info" 
-                data-exchange-id="{{ exchange.id }}">
-            <i class="fas fa-question-circle"></i> Request Info
-        </button>
-    </div>
-    {% elif exchange.status == 'APPROVED' and user == exchange.student %}
-    <button class="btn btn-success" disabled>
-        <i class="fas fa-check-circle"></i> Application Approved
-    </button>
-    {% if not exchange.accepted_at %}
-    <button class="btn btn-primary workflow-action" 
-            data-action="accept_offer" 
-            data-exchange-id="{{ exchange.id }}">
-        <i class="fas fa-handshake"></i> Accept Offer
-    </button>
-    {% endif %}
-    {% elif exchange.status == 'REJECTED' and user == exchange.student %}
-    <button class="btn btn-danger" disabled>
-        <i class="fas fa-times-circle"></i> Application Rejected
-    </button>
-    <button class="btn btn-secondary workflow-action" 
-            data-action="appeal" 
-            data-exchange-id="{{ exchange.id }}">
-        <i class="fas fa-gavel"></i> Appeal Decision
-    </button>
-    {% endif %}
-    
-    {% if exchange.can_be_cancelled and user == exchange.student %}
-    <button class="btn btn-outline-danger workflow-action" 
-            data-action="cancel" 
-            data-exchange-id="{{ exchange.id }}">
-        <i class="fas fa-ban"></i> Cancel Application
-    </button>
-    {% endif %}
-    
-    {% if user.is_staff %}
-    <button class="btn btn-outline-secondary" 
-            data-bs-toggle="modal" 
-            data-bs-target="#addNoteModal">
-        <i class="fas fa-sticky-note"></i> Add Note
-    </button>
-    {% endif %}
+    {% empty %}
+    <span class="text-muted">No available actions</span>
+    {% endfor %}
 </div>
 
 <!-- Add Note Modal -->

@@ -29,8 +29,8 @@ from rest_framework.response import Response
 
 from ..forms import LoginForm, RegistrationForm
 from ..services.email_service import EmailService
-from ..models import UserProfile
-from ..serializers import UserProfileSerializer, UserSerializer
+from ..models import StudentProfile, StaffProfile
+from ..serializers import UserSerializer, StudentProfileSerializer, StaffProfileSerializer
 
 
 @method_decorator(ratelimit(key='ip', rate='5/m', method=['POST']), name='post')
@@ -50,7 +50,7 @@ class CustomAuthToken(ObtainAuthToken):
             {
                 "token": token.key,
                 "user": UserSerializer(user).data,
-                "profile": (UserProfileSerializer(user.profile).data if hasattr(user, "profile") else None),
+                "profile": (StudentProfileSerializer(user.profile).data if hasattr(user, "profile") else None),
             }
         )
 
@@ -67,7 +67,7 @@ class RegisterView(generics.CreateAPIView):
     permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
-        return render(request, "authentication/register.html", {"form": {RegistrationForm()}})
+        return render(request, "authentication/register.html", {"form": RegistrationForm()})
 
     def create(self, request, *args, **kwargs):
         username = request.data.get("username")
@@ -107,9 +107,8 @@ class RegisterView(generics.CreateAPIView):
         )
 
         # Create user profile with default student role
-        profile = UserProfile.objects.create(
+        profile = StudentProfile.objects.create(
             user=user,
-            role="STUDENT", 
             institution=request.data.get("institution", "")
         )
 
@@ -135,9 +134,9 @@ class RegisterView(generics.CreateAPIView):
 
         if not email_result:
             # If email fails, delete user and return error
-            user.delete()
+            #user.delete()
             return Response(
-                {"error": "Failed to send verification email"},
+                {"error": "User Created, but Failed to send verification email"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
@@ -199,11 +198,13 @@ def profile_view(request):
     """
     View function for user profile page - simplified version
     """
-    from ..forms import UserProfileForm
+    from ..forms import StudentProfileForm, StaffProfileForm
 
     # Ensure user has a profile
-    profile, created = UserProfile.objects.get_or_create(user=request.user)
-
+    try:
+        profile, created = StudentProfile.objects.get_or_create(user=request.user)
+    except Exception:
+        profile, created = StaffProfile.objects.get_or_create(user=request.user)
     # Initialize context with all expected values
     context = {
         "profile_completeness": profile.get_profile_completeness(),
@@ -212,7 +213,7 @@ def profile_view(request):
     }
 
     # Get exchange counts for students
-    if profile.is_student and hasattr(request.user, "exchange_applications"):
+    if isinstance(profile, StudentProfile) and hasattr(request.user, "exchange_applications"):
         exchanges = request.user.exchange_applications.all()
         context["total_exchanges"] = exchanges.count()
         context["completed_exchanges"] = exchanges.filter(status="COMPLETED").count()
@@ -221,7 +222,10 @@ def profile_view(request):
         form_type = request.POST.get("form_type", "personal")
 
         if form_type == "personal":
-            form = UserProfileForm(request.POST, instance=profile)
+            if isinstance(profile, StudentProfile):
+                form = StudentProfileForm(request.POST, instance=profile)
+            elif isinstance(profile, StaffProfile):
+                form = StaffProfileForm(request.POST, instance=profile)
             if form.is_valid():
                 form.save()
                 messages.success(request, "Profile updated successfully.")
@@ -233,7 +237,10 @@ def profile_view(request):
             messages.info(request, f"The {form_type} form is not yet implemented.")
             return redirect("exchange:profile")
     else:
-        form = UserProfileForm(instance=profile)
+        if isinstance(profile, StudentProfile):
+            form = StudentProfileForm(instance=profile)
+        elif isinstance(profile, StaffProfile):
+            form = StaffProfileForm(instance=profile)
 
     # Pass the same form for all tabs to avoid template errors
     # In the future, different forms can be created for each tab
@@ -276,7 +283,7 @@ def update_profile(request):
     return Response(
         {
             "user": UserSerializer(user).data,
-            "profile": UserProfileSerializer(profile).data,
+            "profile": StudentProfileSerializer(profile).data if isinstance(profile, StudentProfile) else StaffProfileSerializer(profile).data,
         }
     )
 

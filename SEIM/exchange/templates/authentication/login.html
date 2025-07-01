@@ -19,7 +19,7 @@
                     <p class="text-muted small">Sign in to your SEIM account</p>
                 </div>
                 
-                <form method="post" novalidate>
+                <form id="loginForm" method="post" novalidate>
                     {% csrf_token %}
                     
                     {% if form.non_field_errors %}
@@ -122,31 +122,41 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add some interactive feedback
-    const form = document.querySelector('form');
-    const submitBtn = form.querySelector('button[type="submit"]');
-    
-    form.addEventListener('submit', function(e) {
-        if (form.checkValidity()) {
-            submitBtn.classList.add('loading');
-            submitBtn.disabled = true;
-        }
-    });
-    
-    // Add floating label animation improvements
-    const floatingInputs = document.querySelectorAll('.form-floating input');
-    floatingInputs.forEach(input => {
-        input.addEventListener('focus', function() {
-            this.parentElement.classList.add('focused');
-        });
-        
-        input.addEventListener('blur', function() {
-            if (!this.value) {
-                this.parentElement.classList.remove('focused');
+function showSpinner() {
+    if ($('#globalSpinner').length === 0) {
+        $('body').append('<div id="globalSpinner" class="modal" tabindex="-1" style="display:block; background:rgba(0,0,0,0.2); z-index:2000;"><div class="d-flex justify-content-center align-items-center" style="height:100vh;"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div></div>');
+    }
+}
+function hideSpinner() {
+    $('#globalSpinner').remove();
+}
+function showToast(message, type='success') {
+    if ($('#toastContainer').length === 0) {
+        $('body').append('<div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>');
+    }
+    const toastHtml = `<div class="toast align-items-center text-bg-${type} border-0 show mb-2" role="alert"><div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>`;
+    const $toast = $(toastHtml);
+    $('#toastContainer').append($toast);
+    setTimeout(() => { $toast.fadeOut(() => $toast.remove()); }, 4000);
+}
+
+$('#loginForm').on('submit', function(e) {
+    e.preventDefault();
+    showSpinner();
+    $.post(this.action, $(this).serialize())
+        .done(function(response) {
+            hideSpinner();
+            showToast('Login successful!', 'success');
+            if (response.redirect_url) {
+                window.location.href = response.redirect_url;
             }
+        })
+        .fail(function(xhr) {
+            hideSpinner();
+            let msg = 'Login failed';
+            if (xhr.responseJSON && xhr.responseJSON.error) msg = xhr.responseJSON.error;
+            showToast(msg, 'danger');
         });
-    });
 });
 </script>
 {% endblock %}

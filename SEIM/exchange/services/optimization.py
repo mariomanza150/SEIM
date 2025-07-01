@@ -22,8 +22,13 @@ class DataTableOptimizer:
         """
         # Base queryset with select_related for foreign keys
         queryset = (
-            Exchange.objects.select_related("student", "student__profile", "reviewed_by", "reviewed_by__profile")
+            Exchange.objects.select_related("student", "reviewed_by")
             .prefetch_related(
+                # Prefetch profile relationships
+                "student__studentprofile",
+                "student__staffprofile",
+                "reviewed_by__studentprofile", 
+                "reviewed_by__staffprofile",
                 # Prefetch related documents with only needed fields
                 Prefetch(
                     "documents",
@@ -55,12 +60,15 @@ class DataTableOptimizer:
 
         # Apply user-based filtering
         if user:
-            if hasattr(user, "profile"):
-                if user.profile.role == "STUDENT":
-                    queryset = queryset.filter(student=user)
-                elif user.profile.role not in ["COORDINATOR", "MANAGER", "ADMIN"]:
+            if hasattr(user, "studentprofile"):
+                queryset = queryset.filter(student=user)
+            elif hasattr(user, "staffprofile"):
+                if user.staffprofile.role not in ["COORDINATOR", "MANAGER", "ADMIN"]:
                     # For other roles, return empty queryset
                     queryset = queryset.none()
+            else:
+                # User has no profile, return empty queryset
+                queryset = queryset.none()
 
         return queryset
 
@@ -73,8 +81,11 @@ class DataTableOptimizer:
             Document.objects.select_related(
                 "exchange",
                 "exchange__student",
-                "exchange__student__profile",
                 "uploaded_by",
+            )
+            .prefetch_related(
+                "exchange__student__studentprofile",
+                "exchange__student__staffprofile",
             )
             .only(
                 # Only select needed fields to reduce memory usage
@@ -106,10 +117,13 @@ class DataTableOptimizer:
         )
 
         # Apply user-based filtering
-        if user and hasattr(user, "profile"):
-            if user.profile.role == "STUDENT":
+        if user:
+            if hasattr(user, "studentprofile"):
                 queryset = queryset.filter(exchange__student=user)
-            elif user.profile.role not in ["COORDINATOR", "MANAGER", "ADMIN"]:
+            elif hasattr(user, "staffprofile"):
+                if user.staffprofile.role not in ["COORDINATOR", "MANAGER", "ADMIN"]:
+                    queryset = queryset.none()
+            else:
                 queryset = queryset.none()
 
         return queryset
@@ -123,8 +137,11 @@ class DataTableOptimizer:
             Timeline.objects.select_related(
                 "exchange",
                 "exchange__student",
-                "exchange__student__profile",
                 "created_by",
+            )
+            .prefetch_related(
+                "exchange__student__studentprofile",
+                "exchange__student__staffprofile",
             )
             .only(
                 "id",
@@ -161,10 +178,13 @@ class DataTableOptimizer:
         )
 
         # Apply user-based filtering
-        if user and hasattr(user, "profile"):
-            if user.profile.role == "STUDENT":
+        if user:
+            if hasattr(user, "studentprofile"):
                 queryset = queryset.filter(exchange__student=user)
-            elif user.profile.role not in ["COORDINATOR", "MANAGER", "ADMIN"]:
+            elif hasattr(user, "staffprofile"):
+                if user.staffprofile.role not in ["COORDINATOR", "MANAGER", "ADMIN"]:
+                    queryset = queryset.none()
+            else:
                 queryset = queryset.none()
 
         return queryset
@@ -276,7 +296,8 @@ class DataTableOptimizer:
         """
         queryset = (
             Exchange.objects.filter(id__in=exchange_ids)
-            .select_related("student", "student__profile")
+            .select_related("student")
+            .prefetch_related("student__studentprofile", "student__staffprofile")
             .only(
                 "id",
                 "status",
@@ -290,10 +311,13 @@ class DataTableOptimizer:
         )
 
         # Apply user-based filtering for security
-        if user and hasattr(user, "profile"):
-            if user.profile.role == "STUDENT":
+        if user:
+            if hasattr(user, "studentprofile"):
                 queryset = queryset.filter(student=user)
-            elif user.profile.role not in ["COORDINATOR", "MANAGER", "ADMIN"]:
+            elif hasattr(user, "staffprofile"):
+                if user.staffprofile.role not in ["COORDINATOR", "MANAGER", "ADMIN"]:
+                    queryset = queryset.none()
+            else:
                 queryset = queryset.none()
 
         return queryset
@@ -355,8 +379,13 @@ class DataTableOptimizer:
             export_format: Export format (csv, excel, pdf)
         """
         # For exports, we need all data but can optimize the queries
-        return queryset.select_related("student", "student__profile", "reviewed_by").prefetch_related(
-            "documents", "timeline__created_by"
+        return queryset.select_related("student", "reviewed_by").prefetch_related(
+            "student__studentprofile",
+            "student__staffprofile",
+            "reviewed_by__studentprofile",
+            "reviewed_by__staffprofile",
+            "documents",
+            "timeline__created_by"
         )
 
     @staticmethod

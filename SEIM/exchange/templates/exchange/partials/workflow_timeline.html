@@ -1,0 +1,21 @@
+<div class="timeline-vertical">
+    {% for log in workflow_history %}
+    <div class="timeline-item-vertical completed">
+        <div class="timeline-marker-vertical bg-info"></div>
+        <div class="timeline-content-vertical">
+            <h6 class="timeline-title-vertical">{{ log.to_status|capfirst }}</h6>
+            <p class="timeline-text-vertical mb-0">
+                {{ log.timestamp|date:"M d, Y H:i" }}<br>
+                <small>By {{ log.user.get_full_name|default:log.user.username }}{% if log.comment %}: {{ log.comment }}{% endif %}</small>
+            </p>
+        </div>
+    </div>
+    {% empty %}
+    <div class="timeline-item-vertical">
+        <div class="timeline-marker-vertical bg-light"></div>
+        <div class="timeline-content-vertical">
+            <span class="text-muted">No workflow history yet.</span>
+        </div>
+    </div>
+    {% endfor %}
+</div> 

@@ -58,7 +58,6 @@ TEMPLATES = [
         "DIRS": [
             BASE_DIR.parent / "templates",  # Root project templates at SGII/templates/
             BASE_DIR / "templates",  # Django project templates at SGII/SEIM/templates/
-            BASE_DIR / "seim" / "templates",  # Templates in SEIM/seim/templates/
             os.path.join(BASE_DIR.parent, "templates"),  # Alternative format for compatibility
         ],
         "APP_DIRS": True,  # This will find templates in exchange/templates/ automatically

@@ -6,6 +6,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from ..services import document_generator, email_service, workflow
+from ..test_constants import TEST_PASSWORD
 
 
 class WorkflowServiceTest(TestCase):
@@ -13,7 +14,7 @@ class WorkflowServiceTest(TestCase):
 
     def setUp(self):
         """Set up test data."""
-        self.user = User.objects.create_user(username="testuser", email="test@example.com", password="testpass123")
+        self.user = User.objects.create_user(username="testuser", email="test@example.com", password=TEST_PASSWORD)
 
     def test_status_transition_valid(self):
         """Test valid status transitions."""

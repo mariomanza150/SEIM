@@ -19,7 +19,7 @@
                 <h5 class="mb-0">Batch Status Update</h5>
             </div>
             <div class="card-body">
-                <form method="post" action="{% url 'exchange:batch-status-update' %}">
+                <form id="batchStatusUpdateForm" method="post" action="{% url 'exchange:batch-status-update' %}">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="status_filter" class="form-label">Select applications by current status</label>
@@ -69,7 +69,7 @@
                 <h5 class="mb-0">Batch Document Verification</h5>
             </div>
             <div class="card-body">
-                <form method="post" action="{% url 'exchange:batch-document-verification' %}">
+                <form id="batchDocumentVerificationForm" method="post" action="{% url 'exchange:batch-document-verification' %}">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="document_category" class="form-label">Select documents by category</label>
@@ -120,7 +120,7 @@
                 <h5 class="mb-0">Import Exchanges from CSV</h5>
             </div>
             <div class="card-body">
-                <form method="post" action="{% url 'exchange:import-csv' %}" enctype="multipart/form-data">
+                <form id="importCsvForm" method="post" action="{% url 'exchange:import-csv' %}" enctype="multipart/form-data">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="csv_file" class="form-label">CSV File</label>
@@ -150,7 +150,7 @@
                 <h5 class="mb-0">Send Batch Notifications</h5>
             </div>
             <div class="card-body">
-                <form method="post" action="{% url 'exchange:batch-notifications' %}">
+                <form id="batchNotificationsForm" method="post" action="{% url 'exchange:batch-notifications' %}">
                     {% csrf_token %}
                     <div class="mb-3">
                         <label for="notification_status" class="form-label">Select recipients by status</label>
@@ -223,5 +223,100 @@
     </div>
 </div>
 {% endif %}
+
+{% block extra_js %}
+<script>
+function showSpinner() {
+    if ($('#globalSpinner').length === 0) {
+        $('body').append('<div id="globalSpinner" class="modal" tabindex="-1" style="display:block; background:rgba(0,0,0,0.2); z-index:2000;"><div class="d-flex justify-content-center align-items-center" style="height:100vh;"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div></div>');
+    }
+}
+function hideSpinner() {
+    $('#globalSpinner').remove();
+}
+function showToast(message, type='success') {
+    if ($('#toastContainer').length === 0) {
+        $('body').append('<div id="toastContainer" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>');
+    }
+    const toastHtml = `<div class="toast align-items-center text-bg-${type} border-0 show mb-2" role="alert"><div class="d-flex"><div class="toast-body">${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>`;
+    const $toast = $(toastHtml);
+    $('#toastContainer').append($toast);
+    setTimeout(() => { $toast.fadeOut(() => $toast.remove()); }, 4000);
+}
+
+$('#batchStatusUpdateForm').on('submit', function(e) {
+    e.preventDefault();
+    showSpinner();
+    $.post(this.action, $(this).serialize())
+        .done(function(response) {
+            hideSpinner();
+            showToast('Batch status update processed!', 'success');
+            // Optionally update results section
+            if ($('#resultsSection').length && response.html) {
+                $('#resultsSection').html(response.html);
+            }
+        })
+        .fail(function(xhr) {
+            hideSpinner();
+            showToast('Error processing batch status update', 'danger');
+        });
+});
+$('#batchDocumentVerificationForm').on('submit', function(e) {
+    e.preventDefault();
+    showSpinner();
+    $.post(this.action, $(this).serialize())
+        .done(function(response) {
+            hideSpinner();
+            showToast('Batch document verification processed!', 'success');
+            if ($('#resultsSection').length && response.html) {
+                $('#resultsSection').html(response.html);
+            }
+        })
+        .fail(function(xhr) {
+            hideSpinner();
+            showToast('Error processing batch document verification', 'danger');
+        });
+});
+$('#importCsvForm').on('submit', function(e) {
+    e.preventDefault();
+    showSpinner();
+    var formData = new FormData(this);
+    $.ajax({
+        url: this.action,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            hideSpinner();
+            showToast('CSV import completed!', 'success');
+            if ($('#resultsSection').length && response.html) {
+                $('#resultsSection').html(response.html);
+            }
+        },
+        error: function(xhr) {
+            hideSpinner();
+            showToast('Error importing CSV', 'danger');
+        }
+    });
+});
+$('#batchNotificationsForm').on('submit', function(e) {
+    e.preventDefault();
+    showSpinner();
+    $.post(this.action, $(this).serialize())
+        .done(function(response) {
+            hideSpinner();
+            showToast('Batch notifications sent!', 'success');
+            if ($('#resultsSection').length && response.html) {
+                $('#resultsSection').html(response.html);
+            }
+        })
+        .fail(function(xhr) {
+            hideSpinner();
+            showToast('Error sending batch notifications', 'danger');
+        });
+});
+</script>
+{% endblock %}
 
 {% endblock %}

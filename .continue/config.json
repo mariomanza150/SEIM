@@ -1,0 +1,9 @@
+{
+    "plugins": [
+        {
+            "name": "web-search",
+            "provider": "continue",
+            "enabled": true
+        }
+    ]
+}

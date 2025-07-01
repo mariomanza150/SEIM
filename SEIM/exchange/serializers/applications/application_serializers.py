@@ -1,11 +1,11 @@
 from rest_framework import serializers
-from SEIM.exchange.models.applications.application_answer import ApplicationAnswer
-from SEIM.exchange.models.applications.application_status import ApplicationStatus
-from SEIM.exchange.models.applications.comment import Comment
-from SEIM.exchange.models.applications.document import Document
-from SEIM.exchange.models.applications.document_type import DocumentType
-from SEIM.exchange.models.applications.exchange import Exchange
-from SEIM.exchange.models.applications.timeline import Timeline
+from ...models.applications.application_answer import ApplicationAnswer
+from ...models.applications.application_status import ApplicationStatus
+from ...models.applications.comment import Comment
+from ...models.applications.document import Document
+from ...models.applications.document_type import DocumentType
+from ...models.applications.exchange import Exchange
+from ...models.applications.timeline import Timeline
 
 class ApplicationAnswerSerializer(serializers.ModelSerializer):
     class Meta:

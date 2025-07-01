@@ -12,6 +12,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.template.loader import render_to_string
 
 from ..forms import ExchangeForm
 from ..models import Comment, Exchange, WorkflowLog
@@ -26,16 +27,16 @@ def exchange_list(request):
     user = request.user
 
     # Determine which exchanges to show based on user role
-    if user.is_staff or (hasattr(user, "profile") and user.profile.role in ["COORDINATOR", "ADMINISTRATOR"]):
+    if user.is_staff or (hasattr(user, "staffprofile") and user.staffprofile.role in ["COORDINATOR", "ADMINISTRATOR"]):
         # Staff can see all exchanges - optimize with select_related and prefetch_related
         exchanges = Exchange.objects.select_related(
-            "student", "student__profile", "exchange_program"
-        ).prefetch_related("documents", "comments").all()
+            "student", "exchange_program"
+        ).prefetch_related("documents", "comments", "student__studentprofile", "student__staffprofile").all()
     else:
         # Students see only their own exchanges - optimize queries
         exchanges = Exchange.objects.filter(student=user).select_related(
-            "student", "student__profile", "exchange_program"
-        ).prefetch_related("documents", "comments")
+            "student", "exchange_program"
+        ).prefetch_related("documents", "comments", "student__studentprofile", "student__staffprofile")
 
     # Apply filters if provided
     status_filter = request.GET.get("status")
@@ -77,7 +78,7 @@ def exchange_detail(request, pk):
     if not (
         exchange.student == request.user
         or request.user.is_staff
-        or (hasattr(request.user, "profile") and request.user.profile.role in ["COORDINATOR", "ADMINISTRATOR"])
+        or (hasattr(request.user, "staffprofile") and request.user.staffprofile.role in ["COORDINATOR", "ADMINISTRATOR"])
     ):
         messages.error(request, "You don't have permission to view this exchange.")
         return redirect("exchange:dashboard")
@@ -86,7 +87,7 @@ def exchange_detail(request, pk):
     documents = exchange.documents.all()
 
     # Get workflow history - optimize with select_related
-    workflow_history = exchange.workflow_logs.select_related("user", "user__profile").order_by("-timestamp")
+    workflow_history = exchange.workflow_logs.select_related("user").prefetch_related("user__studentprofile", "user__staffprofile").order_by("-timestamp")
 
     # Get available transitions for current user
     available_transitions = WorkflowService.get_available_transitions(exchange, request.user)
@@ -317,7 +318,7 @@ def add_comment(request, pk):
     if not (
         exchange.student == request.user
         or request.user.is_staff
-        or (hasattr(request.user, "profile") and request.user.profile.role in ["COORDINATOR", "ADMINISTRATOR"])
+        or (hasattr(request.user, "staffprofile") and request.user.staffprofile.role in ["COORDINATOR", "ADMINISTRATOR"])
     ):
         messages.error(request, "You don't have permission to comment on this exchange.")
         return redirect("exchange:dashboard")
@@ -329,7 +330,7 @@ def add_comment(request, pk):
             try:
                 # Determine comment type based on user role
                 if request.user.is_staff or (
-                    hasattr(request.user, "profile") and request.user.profile.role in ["COORDINATOR", "ADMINISTRATOR"]
+                    hasattr(request.user, "staffprofile") and request.user.staffprofile.role in ["COORDINATOR", "ADMINISTRATOR"]
                 ):
                     comment_type = "INTERNAL"  # Staff comments are internal by default
                 else:
@@ -373,15 +374,15 @@ def exchange_list_api(request):
     try:
         # Determine which exchanges to show based on user role
         if request.user.is_staff or (
-            hasattr(request.user, "profile") and request.user.profile.role in ["COORDINATOR", "ADMINISTRATOR"]
+            hasattr(request.user, "staffprofile") and request.user.staffprofile.role in ["COORDINATOR", "ADMINISTRATOR"]
         ):
             exchanges = Exchange.objects.select_related(
-                "student", "student__profile", "exchange_program"
-            ).prefetch_related("documents").all()
+                "student", "exchange_program"
+            ).prefetch_related("documents", "student__studentprofile", "student__staffprofile").all()
         else:
             exchanges = Exchange.objects.filter(student=request.user).select_related(
-                "student", "student__profile", "exchange_program"
-            ).prefetch_related("documents")
+                "student", "exchange_program"
+            ).prefetch_related("documents", "student__studentprofile", "student__staffprofile")
 
         # Apply filters if provided
         status_filter = request.GET.get("status")
@@ -431,7 +432,8 @@ def profile_view(request):
     from ..forms import UserProfileForm
 
     if request.method == "POST":
-        form = UserProfileForm(request.POST, instance=request.user.profile)
+        profile = getattr(request.user, 'studentprofile', None) or getattr(request.user, 'staffprofile', None)
+        form = UserProfileForm(request.POST, instance=profile)
         if form.is_valid():
             form.save()
             messages.success(request, "Profile updated successfully.")
@@ -440,6 +442,29 @@ def profile_view(request):
             messages.error(request, f"Issue while saving profile! {form.errors}")
             return redirect("exchange:profile")
     else:
-        form = UserProfileForm(instance=request.user.profile if hasattr(request.user, "profile") else None)
+        profile = getattr(request.user, 'studentprofile', None) or getattr(request.user, 'staffprofile', None)
+        form = UserProfileForm(instance=profile)
 
     return render(request, "authentication/profile.html", {"personal_form": form})
+
+
+@login_required
+def exchange_workflow_actions_partial(request, pk):
+    exchange = get_object_or_404(Exchange, id=pk)
+    available_transitions = WorkflowService.get_available_transitions(exchange, request.user)
+    html = render_to_string('exchange/partials/workflow_actions.html', {
+        'exchange': exchange,
+        'available_transitions': available_transitions,
+        'user': request.user,
+    }, request=request)
+    return JsonResponse({'html': html})
+
+
+@login_required
+def exchange_workflow_timeline_partial(request, pk):
+    exchange = get_object_or_404(Exchange, id=pk)
+    workflow_history = exchange.workflow_logs.select_related('user').order_by('-timestamp')
+    html = render_to_string('exchange/partials/workflow_timeline.html', {
+        'workflow_history': workflow_history,
+    }, request=request)
+    return JsonResponse({'html': html})

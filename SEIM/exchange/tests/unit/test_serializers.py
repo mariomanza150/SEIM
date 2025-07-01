@@ -1,14 +1,16 @@
 """Unit tests for API serializers."""
 
 import unittest
+import pytest
+from django.contrib.auth import get_user_model
+from django.apps import apps
+from SEIM.exchange.api.v1.exchange_serializers import ExchangeSerializer
 
-from django.contrib.auth.models import User
-from django.test import TestCase
-
-from ..api.v1.serializers import DocumentSerializer, ExchangeSerializer, UserSerializer
+Exchange = apps.get_model('exchange', 'Exchange')
+User = get_user_model()
 
 
-class ExchangeSerializerTest(TestCase):
+class ExchangeSerializerTest(unittest.TestCase):
     """Test cases for Exchange serializer."""
 
     def test_serialization(self):
@@ -26,8 +28,25 @@ class ExchangeSerializerTest(TestCase):
         # TODO: Implement test
         pass
 
+    @pytest.mark.django_db
+    def test_exchange_serializer_valid(self):
+        """Test ExchangeSerializer with valid data."""
+        user = User.objects.create_user(username='student', password='pass')
+        exchange = Exchange.objects.create(student=user)
+        data = dict(ExchangeSerializer(exchange).data)
+        assert data['student'] == user.id or data['student'] == user.pk
+        assert data['status'] == 'DRAFT'
 
-class DocumentSerializerTest(TestCase):
+    @pytest.mark.django_db
+    def test_exchange_serializer_invalid(self):
+        """Test ExchangeSerializer with invalid data."""
+        # Missing required student field
+        serializer = ExchangeSerializer(data={})
+        assert not serializer.is_valid()
+        assert 'student' in serializer.errors
+
+
+class DocumentSerializerTest(unittest.TestCase):
     """Test cases for Document serializer."""
 
     def test_file_serialization(self):
@@ -41,7 +60,7 @@ class DocumentSerializerTest(TestCase):
         pass
 
 
-class UserSerializerTest(TestCase):
+class UserSerializerTest(unittest.TestCase):
     """Test cases for User serializer."""
 
     def test_password_handling(self):

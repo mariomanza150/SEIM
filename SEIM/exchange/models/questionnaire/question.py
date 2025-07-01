@@ -1,7 +1,7 @@
 from django.apps import apps
 from django.db import models as djm
 
-from ..config_model import ConfigModel
+from ..base import Option
 
 
 class Question(djm.Model):
@@ -44,5 +44,5 @@ class Question(djm.Model):
         self.validate_select_model()
         super().save(*args, **kwargs)
 
-class QuestionSet(ConfigModel):
+class QuestionSet(Option):
     questions = djm.ManyToManyField(Question, related_name="question_set")

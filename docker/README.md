@@ -12,7 +12,7 @@ This directory contains Docker configuration files for the SEIM project.
 ## Containers
 
 ### Web Container (Django Application)
-- **Base Image**: Python 3.9-slim
+- **Base Image**: Python 3.12-slim
 - **Port**: 8000
 - **Volumes**: 
   - `/app`: Application code
@@ -20,7 +20,7 @@ This directory contains Docker configuration files for the SEIM project.
 - **Environment**: Development settings
 
 ### Database Container (PostgreSQL)
-- **Image**: PostgreSQL 13
+- **Image**: PostgreSQL 17
 - **Port**: 5432
 - **Volumes**: Persistent data storage
 - **Credentials**: Configured in `.env` file
@@ -112,7 +112,7 @@ PostgreSQL database service.
 
 ```yaml
 db:
-  image: postgres:13
+  image: postgres:17
   ports:
     - "5432:5432"
   environment:
@@ -161,7 +161,7 @@ services:
 
 ### Development Dockerfile
 ```dockerfile
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -192,7 +192,7 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 ### Production Dockerfile
 ```dockerfile
-FROM python:3.9-slim
+FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -318,7 +318,7 @@ ports:
 
 1. **Use specific image versions**
    ```yaml
-   image: postgres:13.3
+   image: postgres:17
    ```
 
 2. **Set resource limits**
@@ -342,12 +342,12 @@ ports:
 4. **Multi-stage builds for smaller images**
    ```dockerfile
    # Build stage
-   FROM python:3.9 as builder
+   FROM python:3.12 as builder
    COPY requirements.txt .
    RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements.txt
 
    # Final stage
-   FROM python:3.9-slim
+   FROM python:3.12-slim
    COPY --from=builder /wheels /wheels
    RUN pip install --no-cache /wheels/*
    ```
@@ -444,7 +444,7 @@ docker-compose up -d --no-deps --build web
 
 3. **Use Alpine images when possible**
    ```dockerfile
-   FROM python:3.9-alpine
+   FROM python:3.12-alpine
    ```
 
 This Docker configuration provides a complete development and production setup for the SEIM project. Always test changes locally before deploying to production.

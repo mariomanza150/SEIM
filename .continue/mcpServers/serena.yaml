@@ -1,0 +1,11 @@
+name: Serena
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: Serena
+    command: uvx
+    args:
+      - --from
+      - git+https://github.com/oraios/serena
+      - serena-mcp-server.exe
+    env: {}

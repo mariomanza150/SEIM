@@ -91,7 +91,7 @@ class CacheManager:
     def make_key(cls, prefix: str, params: dict) -> str:
         """Generate cache key from prefix and parameters."""
         param_str = json.dumps(params, sort_keys=True)
-        param_hash = hashlib.md5(param_str.encode()).hexdigest()
+        param_hash = hashlib.sha256(param_str.encode()).hexdigest()
         return f"{prefix}:{param_hash}"
     
     @classmethod
