@@ -1,6 +1,6 @@
 Command: python -m radon hal SEIM/
 Exit Code: 0
-Timestamp: 2025-05-29 17:18:18.763394
+Timestamp: 2025-05-31 03:58:53.560890
 ================================================================================
 STDOUT:
 SEIM\manage.py:
@@ -121,6 +121,162 @@ SEIM\exchange\views.py:
     time: 0.0
     bugs: 0.0
 SEIM\exchange\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\admin\academic.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\admin\applications.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\admin\bulk_action.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\admin\comment.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\admin\course.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\admin\document.py:
+    h1: 1
+    h2: 2
+    N1: 1
+    N2: 2
+    vocabulary: 3
+    length: 3
+    calculated_length: 2.0
+    volume: 4.754887502163469
+    difficulty: 0.5
+    effort: 2.3774437510817346
+    time: 0.1320802083934297
+    bugs: 0.0015849625007211565
+SEIM\exchange\admin\exchange.py:
+    h1: 2
+    h2: 7
+    N1: 5
+    N2: 9
+    vocabulary: 9
+    length: 14
+    calculated_length: 21.651484454403228
+    volume: 44.37895002019238
+    difficulty: 1.2857142857142858
+    effort: 57.05865002596163
+    time: 3.169925001442313
+    bugs: 0.014792983340064125
+SEIM\exchange\admin\exchange_program.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\admin\people.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\admin\timeline.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\admin\user_profile.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\admin\__init__.py:
     h1: 0
     h2: 0
     N1: 0
@@ -277,18 +433,18 @@ SEIM\exchange\authentication\__init__.py:
     time: 0.0
     bugs: 0.0
 SEIM\exchange\forms\authentication_forms.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
+    h1: 2
+    h2: 5
+    N1: 4
+    N2: 5
+    vocabulary: 7
+    length: 9
+    calculated_length: 13.60964047443681
+    volume: 25.26619429851844
+    difficulty: 1.0
+    effort: 25.26619429851844
+    time: 1.403677461028802
+    bugs: 0.008422064766172813
 SEIM\exchange\forms\exchange_forms.py:
     h1: 10
     h2: 20
@@ -342,18 +498,18 @@ SEIM\exchange\forms\form_widgets.py:
     time: 0.4444444444444444
     bugs: 0.004
 SEIM\exchange\forms\profile_forms.py:
-    h1: 1
-    h2: 2
-    N1: 1
-    N2: 2
-    vocabulary: 3
-    length: 3
-    calculated_length: 2.0
-    volume: 4.754887502163469
-    difficulty: 0.5
-    effort: 2.3774437510817346
-    time: 0.1320802083934297
-    bugs: 0.0015849625007211565
+    h1: 3
+    h2: 11
+    N1: 7
+    N2: 12
+    vocabulary: 14
+    length: 19
+    calculated_length: 42.808635307173745
+    volume: 72.33974351909447
+    difficulty: 1.6363636363636365
+    effort: 118.37412575851823
+    time: 6.57634031991768
+    bugs: 0.024113247839698156
 SEIM\exchange\forms\__init__.py:
     h1: 0
     h2: 0
@@ -393,6 +549,19 @@ SEIM\exchange\management\commands\check_file_integrity.py:
     effort: 102.79453952522255
     time: 5.710807751401252
     bugs: 0.01499087034742829
+SEIM\exchange\management\commands\create_performance_indexes.py:
+    h1: 4
+    h2: 6
+    N1: 5
+    N2: 8
+    vocabulary: 10
+    length: 13
+    calculated_length: 23.509775004326936
+    volume: 43.18506523353572
+    difficulty: 2.6666666666666665
+    effort: 115.16017395609524
+    time: 6.397787442005291
+    bugs: 0.014395021744511906
 SEIM\exchange\management\commands\create_staff_user.py:
     h1: 4
     h2: 11
@@ -497,175 +666,6 @@ SEIM\exchange\migrations\0001_initial.py:
     effort: 0
     time: 0.0
     bugs: 0.0
-SEIM\exchange\migrations\0002_comment_course_grade_review_timeline_workflowlog_and_more.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\migrations\0003_phase3_bulk_actions.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\migrations\0004_rename_exchange_bu_action__4f7e2d_idx_exchange_bu_action__854ad6_idx_and_more.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\migrations\0005_remove_exchange_advisor_email_and_more.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\migrations\0006_userprofile_city_userprofile_country_and_more.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\migrations\0007_rename_street_address_userprofile_address_and_more.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\migrations\0008_userprofile_student_id.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\migrations\0009_add_profile_fields.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\migrations\0010_add_created_at_to_document.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\migrations\0011_alter_exchange_options_and_more.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\migrations\0012_add_performance_indexes.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\migrations\0013_add_real_performance_indexes.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\migrations\0014_update_userprofile_model.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
 SEIM\exchange\migrations\__init__.py:
     h1: 0
     h2: 0
@@ -679,149 +679,6 @@ SEIM\exchange\migrations\__init__.py:
     effort: 0
     time: 0.0
     bugs: 0.0
-SEIM\exchange\models\application_answer.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\models\base.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\models\bulk_action.py:
-    h1: 6
-    h2: 12
-    N1: 8
-    N2: 14
-    vocabulary: 18
-    length: 22
-    calculated_length: 58.52932501298082
-    volume: 91.73835003173087
-    difficulty: 3.5
-    effort: 321.08422511105806
-    time: 17.838012506169893
-    bugs: 0.030579450010576957
-SEIM\exchange\models\comment.py:
-    h1: 1
-    h2: 2
-    N1: 2
-    N2: 2
-    vocabulary: 3
-    length: 4
-    calculated_length: 2.0
-    volume: 6.339850002884625
-    difficulty: 0.5
-    effort: 3.1699250014423126
-    time: 0.17610694452457293
-    bugs: 0.002113283334294875
-SEIM\exchange\models\course.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\models\document.py:
-    h1: 5
-    h2: 7
-    N1: 5
-    N2: 9
-    vocabulary: 12
-    length: 14
-    calculated_length: 31.26112492884004
-    volume: 50.18947501009619
-    difficulty: 3.2142857142857144
-    effort: 161.32331253245204
-    time: 8.962406251802891
-    bugs: 0.016729825003365395
-SEIM\exchange\models\exchange.py:
-    h1: 6
-    h2: 17
-    N1: 11
-    N2: 21
-    vocabulary: 23
-    length: 32
-    calculated_length: 84.99664330558272
-    volume: 144.75398259382442
-    difficulty: 3.7058823529411766
-    effort: 536.4412296124082
-    time: 29.802290534022674
-    bugs: 0.048251327531274806
-SEIM\exchange\models\question.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\models\timeline.py:
-    h1: 2
-    h2: 6
-    N1: 3
-    N2: 6
-    vocabulary: 8
-    length: 9
-    calculated_length: 17.509775004326936
-    volume: 27.0
-    difficulty: 1.0
-    effort: 27.0
-    time: 1.5
-    bugs: 0.009
-SEIM\exchange\models\timestamp_base.py:
-    h1: 0
-    h2: 0
-    N1: 0
-    N2: 0
-    vocabulary: 0
-    length: 0
-    calculated_length: 0
-    volume: 0
-    difficulty: 0
-    effort: 0
-    time: 0.0
-    bugs: 0.0
-SEIM\exchange\models\user_profile.py:
-    h1: 7
-    h2: 19
-    N1: 15
-    N2: 30
-    vocabulary: 26
-    length: 45
-    calculated_length: 100.36210720983135
-    volume: 211.51978731634918
-    difficulty: 5.526315789473684
-    effort: 1168.925140432456
-    time: 64.94028557958089
-    bugs: 0.07050659577211639
 SEIM\exchange\models\utils.py:
     h1: 3
     h2: 11
@@ -848,7 +705,1047 @@ SEIM\exchange\models\__init__.py:
     effort: 0
     time: 0.0
     bugs: 0.0
+SEIM\exchange\models\academic\academic_term.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\academic\degree.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\academic\language.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\academic\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\academic\exchange\academic_program.py:
+    h1: 10
+    h2: 39
+    N1: 29
+    N2: 51
+    vocabulary: 49
+    length: 80
+    calculated_length: 239.34996748450132
+    volume: 449.17678752921665
+    difficulty: 6.538461538461538
+    effort: 2936.9251492294934
+    time: 163.1625082905274
+    bugs: 0.1497255958430722
+SEIM\exchange\models\academic\exchange\exchange_program_old.py:
+    h1: 9
+    h2: 25
+    N1: 20
+    N2: 35
+    vocabulary: 34
+    length: 55
+    calculated_length: 144.62572975734892
+    volume: 279.8104562687687
+    difficulty: 6.3
+    effort: 1762.8058744932428
+    time: 97.93365969406904
+    bugs: 0.09327015208958957
+SEIM\exchange\models\academic\exchange\funding.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\academic\exchange\partner_agreement.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\academic\exchange\program_requirements.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\academic\exchange\program_type.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\academic\exchange\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\applications\application_answer.py:
+    h1: 2
+    h2: 4
+    N1: 3
+    N2: 4
+    vocabulary: 6
+    length: 7
+    calculated_length: 10.0
+    volume: 18.094737505048094
+    difficulty: 1.0
+    effort: 18.094737505048094
+    time: 1.0052631947248942
+    bugs: 0.006031579168349364
+SEIM\exchange\models\applications\application_status.py:
+    h1: 2
+    h2: 3
+    N1: 2
+    N2: 3
+    vocabulary: 5
+    length: 5
+    calculated_length: 6.754887502163469
+    volume: 11.60964047443681
+    difficulty: 1.0
+    effort: 11.60964047443681
+    time: 0.6449800263576005
+    bugs: 0.0038698801581456034
+SEIM\exchange\models\applications\comment.py:
+    h1: 1
+    h2: 2
+    N1: 2
+    N2: 2
+    vocabulary: 3
+    length: 4
+    calculated_length: 2.0
+    volume: 6.339850002884625
+    difficulty: 0.5
+    effort: 3.1699250014423126
+    time: 0.17610694452457293
+    bugs: 0.002113283334294875
+SEIM\exchange\models\applications\course.py:
+    h1: 6
+    h2: 16
+    N1: 10
+    N2: 20
+    vocabulary: 22
+    length: 30
+    calculated_length: 79.50977500432694
+    volume: 133.78294855911892
+    difficulty: 3.75
+    effort: 501.68605709669595
+    time: 27.87144761648311
+    bugs: 0.044594316186372975
+SEIM\exchange\models\applications\course_category.py:
+    h1: 1
+    h2: 2
+    N1: 1
+    N2: 2
+    vocabulary: 3
+    length: 3
+    calculated_length: 2.0
+    volume: 4.754887502163469
+    difficulty: 0.5
+    effort: 2.3774437510817346
+    time: 0.1320802083934297
+    bugs: 0.0015849625007211565
+SEIM\exchange\models\applications\document.py:
+    h1: 6
+    h2: 15
+    N1: 9
+    N2: 17
+    vocabulary: 21
+    length: 26
+    calculated_length: 74.11313393845472
+    volume: 114.20025299224778
+    difficulty: 3.4
+    effort: 388.28086017364245
+    time: 21.571158898535693
+    bugs: 0.03806675099741593
+SEIM\exchange\models\applications\document_type.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\applications\exchange.py:
+    h1: 7
+    h2: 65
+    N1: 39
+    N2: 79
+    vocabulary: 72
+    length: 118
+    calculated_length: 411.1053923012527
+    volume: 728.0511501701928
+    difficulty: 4.253846153846154
+    effort: 3097.0175849547436
+    time: 172.05653249748576
+    bugs: 0.2426837167233976
+SEIM\exchange\models\applications\timeline.py:
+    h1: 3
+    h2: 6
+    N1: 3
+    N2: 6
+    vocabulary: 9
+    length: 9
+    calculated_length: 20.264662506490406
+    volume: 28.529325012980813
+    difficulty: 1.5
+    effort: 42.793987519471216
+    time: 2.377443751081734
+    bugs: 0.009509775004326938
+SEIM\exchange\models\applications\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\base_models\base.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\base_models\config_model.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\base_models\timestamped_model.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\people\base_profile.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\people\contact_profile.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\people\staff_profile.py:
+    h1: 2
+    h2: 8
+    N1: 4
+    N2: 8
+    vocabulary: 10
+    length: 12
+    calculated_length: 26.0
+    volume: 39.863137138648355
+    difficulty: 1.0
+    effort: 39.863137138648355
+    time: 2.2146187299249087
+    bugs: 0.013287712379549451
+SEIM\exchange\models\people\student_profile.py:
+    h1: 4
+    h2: 7
+    N1: 5
+    N2: 10
+    vocabulary: 11
+    length: 15
+    calculated_length: 27.651484454403228
+    volume: 51.89147427955947
+    difficulty: 2.857142857142857
+    effort: 148.26135508445563
+    time: 8.236741949136423
+    bugs: 0.01729715809318649
+SEIM\exchange\models\people\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\places\campus.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\places\city.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\places\country.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\places\institution.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\places\state.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\places\university.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\places\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\questionnaire\question.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\models\tracking\bulk_action.py:
+    h1: 6
+    h2: 12
+    N1: 8
+    N2: 14
+    vocabulary: 18
+    length: 22
+    calculated_length: 58.52932501298082
+    volume: 91.73835003173087
+    difficulty: 3.5
+    effort: 321.08422511105806
+    time: 17.838012506169893
+    bugs: 0.030579450010576957
+SEIM\exchange\models\tracking\notification.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\base_serializers.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\bulk_action_serializers.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\comment_serializers.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\review_serializers.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\timeline_serializers.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\workflow_log_serializers.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
 SEIM\exchange\serializers\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\academic\base_serializers.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\applications\application_serializers.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\applications\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\enums\enum_serializers.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\enums\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\people\people_serializers.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers\people\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers_new\base.py:
+    h1: 2
+    h2: 4
+    N1: 2
+    N2: 4
+    vocabulary: 6
+    length: 6
+    calculated_length: 10.0
+    volume: 15.509775004326936
+    difficulty: 1.0
+    effort: 15.509775004326936
+    time: 0.861654166907052
+    bugs: 0.005169925001442312
+SEIM\exchange\serializers_new\bulk_action.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers_new\notification.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers_new\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers_new\applications\application_answer.py:
+    h1: 7
+    h2: 37
+    N1: 24
+    N2: 45
+    vocabulary: 44
+    length: 69
+    calculated_length: 212.4012589826744
+    volume: 376.70078168597354
+    difficulty: 4.256756756756757
+    effort: 1603.52359771732
+    time: 89.08464431762889
+    bugs: 0.12556692722865784
+SEIM\exchange\serializers_new\applications\application_status.py:
+    h1: 4
+    h2: 14
+    N1: 11
+    N2: 15
+    vocabulary: 18
+    length: 26
+    calculated_length: 61.30296890880645
+    volume: 108.41805003750011
+    difficulty: 2.142857142857143
+    effort: 232.32439293750022
+    time: 12.906910718750012
+    bugs: 0.036139350012500036
+SEIM\exchange\serializers_new\applications\comment.py:
+    h1: 8
+    h2: 57
+    N1: 36
+    N2: 62
+    vocabulary: 65
+    length: 98
+    calculated_length: 356.4747308073903
+    volume: 590.1920456767886
+    difficulty: 4.350877192982456
+    effort: 2567.8531110147997
+    time: 142.65850616748887
+    bugs: 0.19673068189226284
+SEIM\exchange\serializers_new\applications\course.py:
+    h1: 6
+    h2: 24
+    N1: 14
+    N2: 27
+    vocabulary: 30
+    length: 41
+    calculated_length: 125.5488750216347
+    volume: 201.18251441994926
+    difficulty: 3.375
+    effort: 678.9909861673287
+    time: 37.721721453740486
+    bugs: 0.06706083813998309
+SEIM\exchange\serializers_new\applications\document.py:
+    h1: 7
+    h2: 14
+    N1: 9
+    N2: 15
+    vocabulary: 21
+    length: 24
+    calculated_length: 72.95445336320968
+    volume: 105.41561814669026
+    difficulty: 3.75
+    effort: 395.30856805008847
+    time: 21.961587113893803
+    bugs: 0.03513853938223009
+SEIM\exchange\serializers_new\applications\document_type.py:
+    h1: 8
+    h2: 30
+    N1: 21
+    N2: 35
+    vocabulary: 38
+    length: 56
+    calculated_length: 171.20671786825557
+    volume: 293.8839407528408
+    difficulty: 4.666666666666667
+    effort: 1371.4583901799238
+    time: 76.19213278777355
+    bugs: 0.09796131358428026
+SEIM\exchange\serializers_new\applications\exchange.py:
+    h1: 12
+    h2: 28
+    N1: 18
+    N2: 35
+    vocabulary: 40
+    length: 53
+    calculated_length: 177.62548782626678
+    volume: 282.0621890290302
+    difficulty: 7.5
+    effort: 2115.4664177177265
+    time: 117.52591209542925
+    bugs: 0.09402072967634341
+SEIM\exchange\serializers_new\applications\timeline.py:
+    h1: 4
+    h2: 18
+    N1: 10
+    N2: 21
+    vocabulary: 22
+    length: 31
+    calculated_length: 83.05865002596161
+    volume: 138.24238017775622
+    difficulty: 2.3333333333333335
+    effort: 322.56555374809784
+    time: 17.920308541560992
+    bugs: 0.046080793392585404
+SEIM\exchange\serializers_new\applications\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers_new\enums\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers_new\enums\academic\academic_term.py:
+    h1: 6
+    h2: 13
+    N1: 16
+    N2: 30
+    vocabulary: 19
+    length: 46
+    calculated_length: 63.61549134016113
+    volume: 195.40466561840492
+    difficulty: 6.923076923076923
+    effort: 1352.8015312043417
+    time: 75.15564062246342
+    bugs: 0.0651348885394683
+SEIM\exchange\serializers_new\enums\academic\degree.py:
+    h1: 3
+    h2: 8
+    N1: 4
+    N2: 8
+    vocabulary: 11
+    length: 12
+    calculated_length: 28.75488750216347
+    volume: 41.51317942364757
+    difficulty: 1.5
+    effort: 62.26976913547136
+    time: 3.4594316186372978
+    bugs: 0.01383772647454919
+SEIM\exchange\serializers_new\enums\academic\language.py:
+    h1: 10
+    h2: 38
+    N1: 29
+    N2: 57
+    vocabulary: 48
+    length: 86
+    calculated_length: 232.64052645972987
+    volume: 480.3067750620195
+    difficulty: 7.5
+    effort: 3602.300812965146
+    time: 200.12782294250812
+    bugs: 0.1601022583540065
+SEIM\exchange\serializers_new\enums\academic\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers_new\enums\academic\exchange\academic_program.py:
+    h1: 14
+    h2: 51
+    N1: 33
+    N2: 64
+    vocabulary: 65
+    length: 97
+    calculated_length: 342.59666134935276
+    volume: 584.1696778637601
+    difficulty: 8.784313725490197
+    effort: 5131.529719273814
+    time: 285.0849844041008
+    bugs: 0.1947232259545867
+SEIM\exchange\serializers_new\enums\academic\exchange\funding.py:
+    h1: 3
+    h2: 9
+    N1: 7
+    N2: 10
+    vocabulary: 12
+    length: 17
+    calculated_length: 33.28421251514428
+    volume: 60.94436251225966
+    difficulty: 1.6666666666666667
+    effort: 101.57393752043276
+    time: 5.642996528912931
+    bugs: 0.020314787504086555
+SEIM\exchange\serializers_new\enums\academic\exchange\partner_agreement.py:
+    h1: 7
+    h2: 18
+    N1: 21
+    N2: 41
+    vocabulary: 25
+    length: 62
+    calculated_length: 94.71013448036484
+    volume: 287.9190837660329
+    difficulty: 7.972222222222222
+    effort: 2295.3549178014287
+    time: 127.51971765563492
+    bugs: 0.09597302792201096
+SEIM\exchange\serializers_new\enums\academic\exchange\program_requirements.py:
+    h1: 9
+    h2: 72
+    N1: 53
+    N2: 100
+    vocabulary: 81
+    length: 153
+    calculated_length: 472.76392511682724
+    volume: 969.9970504413477
+    difficulty: 6.25
+    effort: 6062.481565258423
+    time: 336.80453140324573
+    bugs: 0.3233323501471159
+SEIM\exchange\serializers_new\enums\academic\exchange\program_type.py:
+    h1: 3
+    h2: 9
+    N1: 7
+    N2: 10
+    vocabulary: 12
+    length: 17
+    calculated_length: 33.28421251514428
+    volume: 60.94436251225966
+    difficulty: 1.6666666666666667
+    effort: 101.57393752043276
+    time: 5.642996528912931
+    bugs: 0.020314787504086555
+SEIM\exchange\serializers_new\enums\academic\exchange\__init__.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers_new\enums\address\__init__.py:
+    h1: 6
+    h2: 26
+    N1: 19
+    N2: 30
+    vocabulary: 32
+    length: 49
+    calculated_length: 137.72120767599534
+    volume: 245.0
+    difficulty: 3.4615384615384617
+    effort: 848.0769230769231
+    time: 47.11538461538461
+    bugs: 0.08166666666666667
+SEIM\exchange\serializers_new\people\base_profile.py:
+    h1: 0
+    h2: 0
+    N1: 0
+    N2: 0
+    vocabulary: 0
+    length: 0
+    calculated_length: 0
+    volume: 0
+    difficulty: 0
+    effort: 0
+    time: 0.0
+    bugs: 0.0
+SEIM\exchange\serializers_new\people\student_profile.py:
+    h1: 11
+    h2: 39
+    N1: 30
+    N2: 52
+    vocabulary: 50
+    length: 82
+    calculated_length: 244.18443434063795
+    volume: 462.7962075615274
+    difficulty: 7.333333333333333
+    effort: 3393.8388554512007
+    time: 188.54660308062228
+    bugs: 0.15426540252050913
+SEIM\exchange\serializers_new\people\__init__.py:
     h1: 0
     h2: 0
     N1: 0
@@ -863,17 +1760,17 @@ SEIM\exchange\serializers\__init__.py:
     bugs: 0.0
 SEIM\exchange\services\analytics.py:
     h1: 8
-    h2: 33
-    N1: 20
-    N2: 39
-    vocabulary: 41
-    length: 59
-    calculated_length: 190.46500593882897
-    volume: 316.09556827246695
-    difficulty: 4.7272727272727275
-    effort: 1494.2699591062076
-    time: 83.01499772812264
-    bugs: 0.10536518942415565
+    h2: 31
+    N1: 19
+    N2: 37
+    vocabulary: 39
+    length: 56
+    calculated_length: 177.58008562199316
+    volume: 295.98252425628596
+    difficulty: 4.774193548387097
+    effort: 1413.077857739688
+    time: 78.50432542998266
+    bugs: 0.09866084141876198
 SEIM\exchange\services\base.py:
     h1: 0
     h2: 0
@@ -901,18 +1798,18 @@ SEIM\exchange\services\batch_processor.py:
     time: 79.89915409190976
     bugs: 0.1402004024631624
 SEIM\exchange\services\cache_manager.py:
-    h1: 4
-    h2: 12
-    N1: 6
-    N2: 12
-    vocabulary: 16
-    length: 18
-    calculated_length: 51.01955000865388
-    volume: 72.0
-    difficulty: 2.0
-    effort: 144.0
-    time: 8.0
-    bugs: 0.024
+    h1: 7
+    h2: 15
+    N1: 9
+    N2: 17
+    vocabulary: 22
+    length: 26
+    calculated_length: 78.25484338853101
+    volume: 115.94522208456974
+    difficulty: 3.966666666666667
+    effort: 459.91604760212664
+    time: 25.55089153345148
+    bugs: 0.038648407361523245
 SEIM\exchange\services\document_generator.py:
     h1: 4
     h2: 26
@@ -991,6 +1888,19 @@ SEIM\exchange\services\optimization.py:
     effort: 3559.894828008156
     time: 197.771934889342
     bugs: 0.17001447034346942
+SEIM\exchange\services\optimized_queries.py:
+    h1: 2
+    h2: 12
+    N1: 6
+    N2: 12
+    vocabulary: 14
+    length: 18
+    calculated_length: 45.01955000865388
+    volume: 68.53238859703687
+    difficulty: 1.0
+    effort: 68.53238859703687
+    time: 3.8073549220576037
+    bugs: 0.022844129532345624
 SEIM\exchange\services\secure_file_validator.py:
     h1: 7
     h2: 16
@@ -1006,17 +1916,17 @@ SEIM\exchange\services\secure_file_validator.py:
     bugs: 0.048251327531274806
 SEIM\exchange\services\workflow.py:
     h1: 8
-    h2: 27
-    N1: 19
-    N2: 34
-    vocabulary: 35
-    length: 53
-    calculated_length: 152.38196255841368
-    volume: 271.8519998980832
-    difficulty: 5.037037037037037
-    effort: 1369.3285920792339
-    time: 76.07381067106854
-    bugs: 0.09061733329936106
+    h2: 34
+    N1: 26
+    N2: 42
+    vocabulary: 42
+    length: 68
+    calculated_length: 196.97373660251156
+    volume: 366.6775847489557
+    difficulty: 4.9411764705882355
+    effort: 1811.8186540536637
+    time: 100.6565918918702
+    bugs: 0.12222586158298523
 SEIM\exchange\services\__init__.py:
     h1: 0
     h2: 0
@@ -1317,18 +2227,18 @@ SEIM\exchange\views\api_views.py:
     time: 746.3860901029781
     bugs: 0.5562240289302448
 SEIM\exchange\views\auth_views.py:
-    h1: 3
-    h2: 14
-    N1: 9
-    N2: 14
-    vocabulary: 17
-    length: 23
-    calculated_length: 58.05785641096992
-    volume: 94.01164534875782
-    difficulty: 1.5
-    effort: 141.01746802313673
-    time: 7.834303779063152
-    bugs: 0.031337215116252606
+    h1: 4
+    h2: 19
+    N1: 12
+    N2: 19
+    vocabulary: 23
+    length: 31
+    calculated_length: 88.71062275542812
+    volume: 140.2304206377674
+    difficulty: 2.0
+    effort: 280.4608412755348
+    time: 15.58115784864082
+    bugs: 0.04674347354592247
 SEIM\exchange\views\batch_views.py:
     h1: 9
     h2: 47
@@ -1408,18 +2318,18 @@ SEIM\exchange\views\notification_views.py:
     time: 0.0
     bugs: 0.0
 SEIM\exchange\views\template_views.py:
-    h1: 5
-    h2: 16
-    N1: 9
-    N2: 17
-    vocabulary: 21
-    length: 26
-    calculated_length: 75.60964047443682
-    volume: 114.20025299224778
-    difficulty: 2.65625
-    effort: 303.34442201065815
-    time: 16.85246788948101
-    bugs: 0.03806675099741593
+    h1: 6
+    h2: 21
+    N1: 12
+    N2: 22
+    vocabulary: 27
+    length: 34
+    calculated_length: 107.74844088268091
+    volume: 161.66617507355795
+    difficulty: 3.142857142857143
+    effort: 508.093693088325
+    time: 28.227427393795832
+    bugs: 0.053888725024519316
 SEIM\exchange\views\workflow_views.py:
     h1: 5
     h2: 26
@@ -1486,31 +2396,31 @@ SEIM\seim\internationalization.py:
     time: 0.0
     bugs: 0.0
 SEIM\seim\settings.py:
-    h1: 3
-    h2: 12
-    N1: 8
-    N2: 16
-    vocabulary: 15
-    length: 24
-    calculated_length: 47.77443751081735
-    volume: 93.76537429460444
-    difficulty: 2.0
-    effort: 187.53074858920888
-    time: 10.418374921622716
-    bugs: 0.03125512476486815
+    h1: 4
+    h2: 15
+    N1: 10
+    N2: 19
+    vocabulary: 19
+    length: 29
+    calculated_length: 66.60335893412778
+    volume: 123.18989788986397
+    difficulty: 2.533333333333333
+    effort: 312.08107465432204
+    time: 17.33783748079567
+    bugs: 0.04106329929662132
 SEIM\seim\urls.py:
-    h1: 1
-    h2: 6
-    N1: 4
-    N2: 8
-    vocabulary: 7
-    length: 12
-    calculated_length: 15.509775004326936
-    volume: 33.68825906469125
-    difficulty: 0.6666666666666666
-    effort: 22.458839376460833
-    time: 1.2477132986922685
-    bugs: 0.011229419688230418
+    h1: 2
+    h2: 9
+    N1: 7
+    N2: 14
+    vocabulary: 11
+    length: 21
+    calculated_length: 30.529325012980813
+    volume: 72.64806399138325
+    difficulty: 1.5555555555555556
+    effort: 113.00809954215173
+    time: 6.2782277523417624
+    bugs: 0.024216021330461083
 SEIM\seim\wsgi.py:
     h1: 0
     h2: 0
@@ -1552,17 +2462,17 @@ SEIM\seim\custom_settings\api.py:
     bugs: 0.004
 SEIM\seim\custom_settings\base.py:
     h1: 1
-    h2: 8
-    N1: 5
-    N2: 10
-    vocabulary: 9
-    length: 15
-    calculated_length: 24.0
-    volume: 47.548875021634686
-    difficulty: 0.625
-    effort: 29.718046888521677
-    time: 1.651002604917871
-    bugs: 0.01584962500721156
+    h2: 10
+    N1: 8
+    N2: 16
+    vocabulary: 11
+    length: 24
+    calculated_length: 33.219280948873624
+    volume: 83.02635884729514
+    difficulty: 0.8
+    effort: 66.42108707783612
+    time: 3.690060393213118
+    bugs: 0.02767545294909838
 SEIM\seim\custom_settings\celery.py:
     h1: 1
     h2: 2
@@ -1591,17 +2501,17 @@ SEIM\seim\custom_settings\dev.py:
     bugs: 0.05351317942364757
 SEIM\seim\custom_settings\prod.py:
     h1: 6
-    h2: 18
-    N1: 15
-    N2: 27
-    vocabulary: 24
-    length: 42
-    calculated_length: 90.56842503028855
-    volume: 192.56842503028858
-    difficulty: 4.5
-    effort: 866.5579126362986
-    time: 48.142106257572145
-    bugs: 0.0641894750100962
+    h2: 19
+    N1: 16
+    N2: 29
+    vocabulary: 25
+    length: 45
+    calculated_length: 96.22039775975506
+    volume: 208.9735285398626
+    difficulty: 4.578947368421052
+    effort: 956.8787885772655
+    time: 53.159932698736974
+    bugs: 0.06965784284662087
 SEIM\seim\custom_settings\security.py:
     h1: 2
     h2: 12

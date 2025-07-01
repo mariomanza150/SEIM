@@ -1,6 +1,18 @@
+<!--
+File: docs/DEVELOPER_SETUP.md
+Title: Developer Setup Guide
+Purpose: Guide developers through setting up a local development environment for the SEIM project.
+-->
+
 # Developer Setup Guide
 
-This guide helps developers set up their local development environment for the SEIM project.
+## Purpose
+This guide helps developers set up their local development environment for the SEIM project, including prerequisites, setup steps, and troubleshooting.
+
+## Revision History
+| Date       | Author              | Description                                 |
+|------------|---------------------|---------------------------------------------|
+| 2025-05-31 | Documentation Team  | Updated for Python 3.12, Docker Compose, and new environment variables. |
 
 ---
 
@@ -86,8 +98,3 @@ python manage.py runserver
 
 ## Troubleshooting
 See [docs/TROUBLESHOOTING.md](TROUBLESHOOTING.md) for common issues and solutions.
-
----
-
-## Revision History
-- 2025-05-31: Updated for Python 3.12, Docker Compose, and new environment variables.

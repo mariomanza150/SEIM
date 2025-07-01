@@ -10,11 +10,11 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 
-from ..base_models.timestamped_model import TimestampedModel
+from ..base import Timestamped
 from ..utils import document_upload_path
 
 
-class Document(TimestampedModel):
+class Document(Timestamped):
     """
     Model for documents uploaded as part of an exchange application.
 

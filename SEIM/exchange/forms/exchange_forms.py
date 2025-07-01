@@ -32,9 +32,21 @@ class ExchangeForm(forms.ModelForm):
             "host_university",
             "current_year",
             "motivation_letter",
+            "start_date",
             "end_date",
             "special_requirements",
             "destination_country",
+            "degree",
+            "major",
+            "program",
+            "academic_year",
+            "current_semester",
+            "study_goals",
+            "referral_source",
+            "language_proficiencies",
+            "emergency_contact_name",
+            "emergency_contact_phone",
+            "emergency_contact_relationship",
         ]
 
         widgets = {
@@ -78,6 +90,17 @@ class ExchangeForm(forms.ModelForm):
                     "placeholder": "Any special requirements or accommodations needed",
                 }
             ),
+            "degree": forms.TextInput(attrs={"class": "form-control", "placeholder": "Degree"}),
+            "major": forms.TextInput(attrs={"class": "form-control", "placeholder": "Major"}),
+            "program": forms.TextInput(attrs={"class": "form-control", "placeholder": "Program"}),
+            "academic_year": forms.TextInput(attrs={"class": "form-control", "placeholder": "Academic Year"}),
+            "current_semester": forms.TextInput(attrs={"class": "form-control", "placeholder": "Current Semester"}),
+            "study_goals": forms.Textarea(attrs={"class": "form-control", "rows": 3, "placeholder": "Study Goals"}),
+            "referral_source": forms.TextInput(attrs={"class": "form-control", "placeholder": "Referral Source"}),
+            "language_proficiencies": forms.Textarea(attrs={"class": "form-control", "rows": 2, "placeholder": "Language Proficiencies (JSON or text)"}),
+            "emergency_contact_name": forms.TextInput(attrs={"class": "form-control", "placeholder": "Emergency Contact Name"}),
+            "emergency_contact_phone": forms.TextInput(attrs={"class": "form-control", "placeholder": "Emergency Contact Phone"}),
+            "emergency_contact_relationship": forms.TextInput(attrs={"class": "form-control", "placeholder": "Relationship"}),
         }
 
         labels = {
@@ -89,6 +112,17 @@ class ExchangeForm(forms.ModelForm):
             "end_date": "End Date *",
             "motivation_letter": "Statement of Purpose *",
             "special_requirements": "Special Requirements",
+            "degree": "Degree",
+            "major": "Major",
+            "program": "Program",
+            "academic_year": "Academic Year",
+            "current_semester": "Current Semester",
+            "study_goals": "Study Goals",
+            "referral_source": "Referral Source",
+            "language_proficiencies": "Language Proficiencies",
+            "emergency_contact_name": "Emergency Contact Name",
+            "emergency_contact_phone": "Emergency Contact Phone",
+            "emergency_contact_relationship": "Relationship",
         }
 
     def __init__(self, *args, **kwargs):
@@ -141,6 +175,19 @@ class ExchangeForm(forms.ModelForm):
             if gpa < 0 or gpa > 4.0:
                 raise ValidationError("GPA must be between 0.0 and 4.0")
         return gpa
+
+    def clean_language_proficiencies(self):
+        """Validate language proficiencies field."""
+        data = self.cleaned_data.get("language_proficiencies")
+        # Optionally validate JSON or expected format here
+        return data
+
+    def clean_emergency_contact_phone(self):
+        """Validate emergency contact phone number."""
+        phone = self.cleaned_data.get("emergency_contact_phone")
+        if phone and not phone.isdigit():
+            raise ValidationError("Emergency contact phone must contain only digits.")
+        return phone
 
     def clean(self):
         """Additional form validation for date ranges and field consistency."""

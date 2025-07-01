@@ -1,10 +1,11 @@
 from django.db import models
-from ..university import University
-from ..institution import Institution
-from ..campus import Campus
-from ..config_model import ConfigModel
 
-class Degree(ConfigModel):
+from ..places.university import University
+from ..places.institution import Institution
+from ..places.campus import Campus
+from ..base import Option
+
+class Degree(Option):
     code = models.CharField(max_length=20, blank=True)
     university = models.ForeignKey(University, on_delete=models.CASCADE)
     institution = models.ForeignKey(Institution, on_delete=models.CASCADE)

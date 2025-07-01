@@ -8,7 +8,7 @@ profiles, and authentication-related data.
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from ...models import UserProfile
+from ...models import StudentProfile
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -37,7 +37,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
     class Meta:
-        model = UserProfile
+        model = StudentProfile
         fields = [
             "user",
             "institution",

@@ -1,7 +1,7 @@
 from django.db import models
-from ..base_models.timestamped_model import TimestampedModel
+from ..base import Timestamped
 
-class CourseCategory(TimestampedModel):
+class CourseCategory(Timestamped):
     """
     Represents a category for courses (e.g., Core, Elective, Language, etc.).
 

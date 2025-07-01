@@ -25,8 +25,6 @@ Welcome to the Student Exchange Information Manager documentation. This director
 
 ### Implementation
 - [Implementation Summary](IMPLEMENTATION_SUMMARY.md) - Complete implementation details
-- [Authentication & Permissions](AUTHENTICATION_AND_PERMISSIONS.md) - Security implementation
-- [Media Storage](MEDIA_STORAGE_QUICKSTART.md) - File handling guide
 
 ### Development
 - [Contributing Guide](../CONTRIBUTING.md) - How to contribute

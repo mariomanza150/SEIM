@@ -100,6 +100,55 @@ class ExchangeAdmin(admin.ModelAdmin):
         ),
     )
 
+    def has_view_permission(self, request, obj=None):
+        """Allow staff, Exchange Managers, or owner to view."""
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return True
+        if obj and hasattr(obj, "student"):
+            return obj.student == request.user
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """Allow staff, Exchange Managers, or owner (if status is DRAFT) to edit."""
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return True
+        if obj and hasattr(obj, "student") and obj.status == "DRAFT":
+            return obj.student == request.user
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """Allow staff, Exchange Managers, or owner (if status is DRAFT) to delete."""
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return True
+        if obj and hasattr(obj, "student") and obj.status == "DRAFT":
+            return obj.student == request.user
+        return False
+
+    def has_add_permission(self, request):
+        """Allow staff, Exchange Managers, or students to add."""
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return True
+        if request.user.groups.filter(name="Students").exists():
+            return True
+        return False
+
+    def get_queryset(self, request):
+        """Staff and Exchange Managers see all; students see only their own."""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser or request.user.is_staff:
+            return qs
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return qs
+        return qs.filter(student=request.user)
+
     def has_all_documents(self, obj):
         """Display if exchange has all required documents"""
         has_docs = obj.has_required_documents()

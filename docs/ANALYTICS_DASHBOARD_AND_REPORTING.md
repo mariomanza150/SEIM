@@ -1,7 +1,18 @@
+<!--
+File: docs/ANALYTICS_DASHBOARD_AND_REPORTING.md
+Title: Analytics Dashboard & Reporting
+Purpose: Describe analytics and reporting features, metrics, and best practices for SEIM.
+-->
+
 # Analytics Dashboard & Reporting
 
 ## Purpose
 This document describes the analytics and reporting features of SEIM, including available metrics, dashboard functionality, and extensibility for custom reports.
+
+## Revision History
+| Date       | Author              | Description                                 |
+|------------|---------------------|---------------------------------------------|
+| 2025-05-31 | Documentation Team  | Initial draft for analytics and reporting documentation. |
 
 ---
 
@@ -53,6 +64,3 @@ SEIM provides an analytics dashboard for administrators and managers to monitor 
 - [Batch Processing](api/batch.md) *(if available)*
 
 ---
-
-## Revision History
-- 2025-05-31: Initial draft for analytics and reporting documentation.

@@ -1,7 +1,7 @@
 from django.db import models
-from ...config_model import ConfigModel
+from ...base import Option
 
-class ProgramRequirements(ConfigModel):
+class ProgramRequirements(Option):
     DURATION_UNITS = (
         ('WEEKS', 'Weeks'),
         ('MONTHS', 'Months'),

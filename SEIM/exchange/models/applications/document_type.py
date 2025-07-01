@@ -1,5 +1,5 @@
 from django.db import models
-from ..base_models.timestamped_model import TimestampedModel
+from ..base import Timestamped
 
 class DocumentStage(models.TextChoices):
     APPLICATION = 'APPLICATION', 'Application'
@@ -7,7 +7,7 @@ class DocumentStage(models.TextChoices):
     ACCEPTANCE = 'ACCEPTANCE', 'Acceptance'
     FINALIZATION = 'FINALIZATION', 'Finalization'
 
-class DocumentType(TimestampedModel):
+class DocumentType(Timestamped):
     """
     Represents a type of document required in the exchange process.
 

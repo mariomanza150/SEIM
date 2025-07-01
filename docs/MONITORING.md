@@ -1,6 +1,18 @@
+<!--
+File: docs/MONITORING.md
+Title: Monitoring Guide
+Purpose: Describe monitoring, alerting, and logging strategies for the SEIM application in all environments.
+-->
+
 # Monitoring Guide
 
-This guide covers monitoring strategies for the SEIM application in development and production environments.
+## Purpose
+This guide covers monitoring strategies for the SEIM application in development and production environments, including error tracking, metrics, and alerting.
+
+## Revision History
+| Date       | Author              | Description                                 |
+|------------|---------------------|---------------------------------------------|
+| 2025-05-31 | Documentation Team  | Added template compliance, title, purpose, and revision history. |
 
 ## Overview
 

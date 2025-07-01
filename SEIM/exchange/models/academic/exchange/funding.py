@@ -1,7 +1,7 @@
 from django.db import models
-from ....timestamp_base import TimestampedModel
+from ...base import Timestamped
 
-class FundingType(TimestampedModel):
+class FundingType(Timestamped):
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     is_recurring = models.BooleanField(default=False)

@@ -1,15 +1,12 @@
 from django.db import models
-from ..base_models.config_model import ConfigModel
+from ..base import Option
 from .university import University
-from .address import City, State, Country
+from .address import Address
 
-class Campus(ConfigModel):
+class Campus(Option):
     university = models.ForeignKey(University, on_delete=models.CASCADE, related_name='campuses')
 
-    address = models.TextField(blank=True)
-    city = models.ForeignKey(City, on_delete=models.PROTECT)
-    state = models.ForeignKey(State, on_delete=models.PROTECT)
-    country = models.ForeignKey(Country, on_delete=models.PROTECT)
+    address = models.ForeignKey(Address, on_delete=models.PROTECT)
 
     latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
     longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)

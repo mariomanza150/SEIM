@@ -2,7 +2,7 @@
 Exchange-related enum models
 """
 
-from .academic_program import ExchangeProgram
+from .exchange_program import ExchangeProgram
 from .funding import FundingType
 from .partner_agreement import PartnerAgreement
 from .program_requirements import ProgramRequirements

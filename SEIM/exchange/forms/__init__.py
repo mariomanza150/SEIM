@@ -18,7 +18,7 @@ from . import form_choices, form_utils, form_widgets
 # Import all form classes for backward compatibility
 from .authentication_forms import LoginForm, RegistrationForm
 from .exchange_forms import ExchangeForm
-from .profile_forms import UserProfileForm
+from .profiles import BaseProfileForm, ContactProfileForm, StaffProfileForm, StudentProfileForm
 
 # Export all forms for easy importing
 __all__ = [
@@ -26,7 +26,10 @@ __all__ = [
     "LoginForm",
     "RegistrationForm",
     # Profile forms
-    "UserProfileForm",
+    "BaseProfileForm",
+    "ContactProfileForm",
+    "StaffProfileForm",
+    "StudentProfileForm",
     # Exchange forms
     "ExchangeForm",
     # Helper modules

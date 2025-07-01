@@ -9,7 +9,7 @@ The SEIM system follows a modular, three-tier architecture:
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                        Frontend Layer                            │
-│  (React/Vue/Angular Application or Mobile App)                   │
+│  (Django Templates + Bootstrap 5, partial reloads, AJAX/API)      │
 └─────────────────────────────────────────────────────────────────┘
                                   │
                                   │ HTTPS
@@ -50,13 +50,15 @@ The SEIM system follows a modular, three-tier architecture:
 
 ### Frontend Layer
 - **Purpose**: User interface for students and managers
-- **Technologies**: React, Vue.js, Angular, or mobile apps
+- **Technologies**: Django Templates, Bootstrap 5, jQuery/AJAX for partial reloads and API calls
 - **Responsibilities**:
   - User authentication and session management
   - Form rendering and validation
   - Document upload interface
-  - Real-time status updates
+  - Real-time status updates via AJAX/API
   - Responsive design for all devices
+
+*Note: SPA/mobile app support is a possible future direction, but not currently implemented.*
 
 ### API Gateway Layer
 - **Purpose**: RESTful API interface

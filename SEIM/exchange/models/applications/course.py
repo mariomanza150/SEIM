@@ -4,10 +4,11 @@ Course and Grade models for the exchange app.
 This module contains the Course model for tracking courses at the host institution and their equivalence at the home university.
 """
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 
+User = get_user_model()
 
 class Course(models.Model):
     """
@@ -29,16 +30,14 @@ class Course(models.Model):
         approved_by (ForeignKey): User who approved the course (optional).
     """
 
-    # Course status choices
-    STATUS_CHOICES = (
-        ("PLANNED", "Planned"),
-        ("APPROVED", "Approved in Learning Agreement"),
-        ("ENROLLED", "Enrolled"),
-        ("IN_PROGRESS", "In Progress"),
-        ("COMPLETED", "Completed"),
-        ("DROPPED", "Dropped"),
-        ("REPLACED", "Replaced"),
-    )
+    class Status(models.TextChoices):
+        PLANNED = "PLANNED", "Planned"
+        APPROVED = "APPROVED", "Approved in Learning Agreement"
+        ENROLLED = "ENROLLED", "Enrolled"
+        IN_PROGRESS = "IN_PROGRESS", "In Progress"
+        COMPLETED = "COMPLETED", "Completed"
+        DROPPED = "DROPPED", "Dropped"
+        REPLACED = "REPLACED", "Replaced"
 
     exchange = models.ForeignKey("Exchange", on_delete=models.CASCADE, related_name="courses")
 
@@ -59,8 +58,8 @@ class Course(models.Model):
     # Status tracking
     status = models.CharField(
         max_length=20,
-        choices=STATUS_CHOICES,
-        default="PLANNED",
+        choices=Status.choices,
+        default=Status.PLANNED,
         help_text="Status of the course in the exchange process.",
     )
     approved_by = models.ForeignKey(
@@ -75,6 +74,8 @@ class Course(models.Model):
 
     class Meta:
         ordering = ["course_code"]
+        verbose_name = "Course"
+        verbose_name_plural = "Courses"
         indexes = [
             models.Index(fields=["status", "course_code"], name="course_status_code_idx"),
         ]
@@ -92,22 +93,24 @@ class Course(models.Model):
             raise ValueError("Credits must be greater than zero.")
         if self.hours_per_week is not None and self.hours_per_week <= 0:
             raise ValueError("Hours per week must be greater than zero.")
+        if self.status not in self.Status.values:
+            raise ValueError(f"Invalid status: {self.status}")
 
     def save(self, *args, **kwargs):
         self.clean()
         super().save(*args, **kwargs)
 
     def is_approved(self) -> bool:
-        return self.status == "APPROVED"
+        return self.status == self.Status.APPROVED
 
     def is_completed(self) -> bool:
-        return self.status == "COMPLETED"
+        return self.status == self.Status.COMPLETED
 
     def is_in_progress(self) -> bool:
-        return self.status == "IN_PROGRESS"
+        return self.status == self.Status.IN_PROGRESS
 
     def is_planned(self) -> bool:
-        return self.status == "PLANNED"
+        return self.status == self.Status.PLANNED
 
 
 class Grade(models.Model):
@@ -115,12 +118,10 @@ class Grade(models.Model):
     Model for recording grades for completed courses
     """
 
-    # Grade status choices
-    STATUS_CHOICES = (
-        ("PROVISIONAL", "Provisional"),
-        ("OFFICIAL", "Official"),
-        ("TRANSFERRED", "Transferred to Home University"),
-    )
+    class Status(models.TextChoices):
+        PROVISIONAL = "PROVISIONAL", "Provisional"
+        OFFICIAL = "OFFICIAL", "Official"
+        TRANSFERRED = "TRANSFERRED", "Transferred to Home University"
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="grades")
 
@@ -130,7 +131,7 @@ class Grade(models.Model):
     converted_grade = models.CharField(max_length=10, blank=True, null=True)
 
     # Metadata
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PROVISIONAL")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PROVISIONAL)
     date_received = models.DateField()
     date_processed = models.DateField(blank=True, null=True)
 
@@ -155,7 +156,7 @@ class Grade(models.Model):
 
     def transfer_to_home_university(self, user) -> None:
         """Mark grade as transferred to home university"""
-        self.status = "TRANSFERRED"
+        self.status = self.Status.TRANSFERRED
         self.processed_by = user
         self.date_processed = timezone.now().date()
         self.save()

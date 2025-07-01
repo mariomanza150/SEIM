@@ -148,3 +148,19 @@ This documentation update provides developers, users, and maintainers with all t
 Documentation updated by: Assistant
 Date: January 15, 2025
 Version: 1.0.0
+
+# Notable Changes
+
+In addition to the above updates, the following guides have been added to the documentation:
+
+- [Testing Guide](TESTING.md): Added comprehensive instructions for running and writing tests, including Docker and local workflows. All developers should follow this guide for test coverage and troubleshooting.
+- [Deployment Guide](DEPLOYMENT.md): Added step-by-step production deployment instructions, environment setup, and rollback procedures. All deployment should reference this guide.
+- [Security Guide](SECURITY.md): Added summary of security features, best practices, and production recommendations. Review regularly for compliance.
+
+# Archival Notes
+
+The following files are now archived and no longer referenced in the documentation:
+
+- **README_IMPLEMENTATION.md** - Archived implementation details
+- **IMPLEMENTATION_GUIDE.md** - Archived implementation guide
+- **IMPLEMENTATION_SUCCESS.md** - Archived success metrics and validation

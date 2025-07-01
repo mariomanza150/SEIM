@@ -1,4 +1,18 @@
+<!--
+File: docs/AUTHENTICATION_AND_PERMISSIONS.md
+Title: Authentication and Permissions Documentation
+Purpose: Describe authentication mechanisms and role-based permissions in the SEIM system.
+-->
+
 # Authentication and Permissions Documentation
+
+## Purpose
+This document details the authentication methods and permission structure used in the SEIM system, including user roles, token usage, and best practices.
+
+## Revision History
+| Date       | Author              | Description                                 |
+|------------|---------------------|---------------------------------------------|
+| 2025-05-31 | Documentation Team  | Added template compliance, title, purpose, and revision history. |
 
 ## Overview
 

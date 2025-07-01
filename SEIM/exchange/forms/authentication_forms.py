@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 import re
 
-from ..models import UserProfile
+from ..models import StudentProfile
 from .form_widgets import BootstrapWidgets
 
 
@@ -53,7 +53,7 @@ class RegistrationForm(UserCreationForm):
         required=False,
         widget=BootstrapWidgets.text_input(placeholder="Department")
     )
-    password1 = forms.CharField(
+    password = forms.CharField(
         widget=BootstrapWidgets.password_input(placeholder="Password"),
         help_text="Password must include at least 8 characters with letters, numbers and symbols."
     )
@@ -71,7 +71,7 @@ class RegistrationForm(UserCreationForm):
         self.fields['username'].help_text = "Letters, digits and @.+-_ only. Maximum 150 characters."
 
     def clean_password1(self):
-        password = self.cleaned_data.get('password1')
+        password = self.cleaned_data.get('password')
         if len(password) < 8:
             raise ValidationError("Password must be at least 8 characters long.")
         if not re.search(r'[A-Za-z]', password):
@@ -95,9 +95,8 @@ class RegistrationForm(UserCreationForm):
         if commit:
             user.save()
             # Create the associated profile with student role
-            UserProfile.objects.create(
+            StudentProfile.objects.create(
                 user=user,
-                role='STUDENT',
                 institution=self.cleaned_data.get('institution', ''),
                 department=self.cleaned_data.get('department', '')
             )

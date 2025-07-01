@@ -1,8 +1,7 @@
 from django.db import models
-from ..config_model import ConfigModel
-from ...timestamp_base import TimestampedModel
+from ..base import Option, Timestamped
 
-class ProficiencyLevels(ConfigModel):
+class ProficiencyLevels(Option):
     SCALE_TYPES = (
         ("NUMERIC", "Numeric"),
         ("ALPHABETIC", "Alphabetic"),
@@ -13,13 +12,13 @@ class ProficiencyLevels(ConfigModel):
     max_level = models.CharField()
     has_plus = models.BooleanField()
 
-class Language(ConfigModel, TimestampedModel):
+class Language(Option, Timestamped):
     iso_code = models.CharField(max_length=10)
 
     def __str__(self):
         pass
 
-class LanguageProficiencyTest(ConfigModel, TimestampedModel):
+class LanguageProficiencyTest(Option, Timestamped):
     language = models.ForeignKey(Language, on_delete=models.CASCADE)
     scale = models.ForeignKey(ProficiencyLevels, on_delete=models.CASCADE)
     min_score = models.CharField()

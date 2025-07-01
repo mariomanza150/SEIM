@@ -1,6 +1,6 @@
 from django.db import models
 from .exchange import Exchange
-from ..places.questionnaire.question import Question
+from ..questionnaire.question import Question
 
 
 class ApplicationAnswer(models.Model):
@@ -37,6 +37,11 @@ class ApplicationAnswer(models.Model):
         help_text="ID of the selected option if the question type is 'select'.",
     )
 
+    class Meta:
+        verbose_name = "Application Answer"
+        verbose_name_plural = "Application Answers"
+        ordering = ["exchange", "question"]
+
     def __str__(self) -> str:
         return f"Answer to '{self.question}' for Exchange {self.exchange.pk}"
 
@@ -48,6 +53,7 @@ class ApplicationAnswer(models.Model):
         super().clean()
         if not self.answer_text and not self.selected_option_id:
             raise ValueError("Either answer_text or selected_option_id must be provided.")
+        # Add more robust validation here if question type logic is available
 
     def save(self, *args, **kwargs) -> None:
         self.clean()

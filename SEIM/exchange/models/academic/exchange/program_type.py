@@ -1,5 +1,5 @@
-from ...config_model import ConfigModel
+from ...base import Option
 
-class ProgramType(ConfigModel):
+class ProgramType(Option):
     def __str__(self):
         return self.name

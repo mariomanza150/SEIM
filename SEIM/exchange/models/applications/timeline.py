@@ -4,10 +4,11 @@ Timeline models for tracking status changes and events in the exchange app.
 This module contains the Timeline model for tracking status changes and significant events in the exchange application lifecycle.
 """
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 
+User = get_user_model()
 
 class Timeline(models.Model):
     """
@@ -25,28 +26,26 @@ class Timeline(models.Model):
         actor (ForeignKey): User who performed the action (optional).
     """
 
-    # Event types
-    EVENT_TYPES = (
-        ("STATUS_CHANGE", "Status Change"),
-        ("DOCUMENT_UPLOAD", "Document Uploaded"),
-        ("DOCUMENT_APPROVED", "Document Approved"),
-        ("DOCUMENT_REJECTED", "Document Rejected"),
-        ("REVIEW_ADDED", "Review Added"),
-        ("COMMENT_ADDED", "Comment Added"),
-        ("REMINDER_SENT", "Reminder Sent"),
-        ("DEADLINE_CHANGED", "Deadline Changed"),
-        ("APPLICATION_EDITED", "Application Edited"),
-        ("ASSIGNMENT_CHANGED", "Assignment Changed"),
-        ("COURSE_ADDED", "Course Added"),
-        ("COURSE_APPROVED", "Course Approved"),
-        ("GRADE_ADDED", "Grade Added"),
-        ("GRADE_TRANSFERRED", "Grade Transferred"),
-        ("MILESTONE", "Milestone Reached"),
-        ("OTHER", "Other Event"),
-    )
+    class EventType(models.TextChoices):
+        STATUS_CHANGE = "STATUS_CHANGE", "Status Change"
+        DOCUMENT_UPLOAD = "DOCUMENT_UPLOAD", "Document Uploaded"
+        DOCUMENT_APPROVED = "DOCUMENT_APPROVED", "Document Approved"
+        DOCUMENT_REJECTED = "DOCUMENT_REJECTED", "Document Rejected"
+        REVIEW_ADDED = "REVIEW_ADDED", "Review Added"
+        COMMENT_ADDED = "COMMENT_ADDED", "Comment Added"
+        REMINDER_SENT = "REMINDER_SENT", "Reminder Sent"
+        DEADLINE_CHANGED = "DEADLINE_CHANGED", "Deadline Changed"
+        APPLICATION_EDITED = "APPLICATION_EDITED", "Application Edited"
+        ASSIGNMENT_CHANGED = "ASSIGNMENT_CHANGED", "Assignment Changed"
+        COURSE_ADDED = "COURSE_ADDED", "Course Added"
+        COURSE_APPROVED = "COURSE_APPROVED", "Course Approved"
+        GRADE_ADDED = "GRADE_ADDED", "Grade Added"
+        GRADE_TRANSFERRED = "GRADE_TRANSFERRED", "Grade Transferred"
+        MILESTONE = "MILESTONE", "Milestone Reached"
+        OTHER = "OTHER", "Other Event"
 
     exchange = models.ForeignKey("Exchange", on_delete=models.CASCADE, related_name="timeline_events")
-    event_type = models.CharField(max_length=20, choices=EVENT_TYPES)
+    event_type = models.CharField(max_length=30, choices=EventType.choices)
     description = models.TextField()
     timestamp = models.DateTimeField(default=timezone.now)
 
@@ -74,6 +73,8 @@ class Timeline(models.Model):
 
     class Meta:
         ordering = ["-timestamp"]
+        verbose_name = "Timeline Event"
+        verbose_name_plural = "Timeline Events"
         indexes = [
             models.Index(fields=["event_type", "timestamp"], name="timeline_evt_type_ts_idx"),
         ]
@@ -82,7 +83,7 @@ class Timeline(models.Model):
         return f"{self.get_event_type_display()} on {self.timestamp.strftime('%Y-%m-%d')} for Exchange {self.exchange_id}"
 
     def is_status_change(self):
-        return self.event_type == "STATUS_CHANGE"
+        return self.event_type == self.EventType.STATUS_CHANGE
 
     def clean(self):
         """
@@ -91,8 +92,7 @@ class Timeline(models.Model):
         super().clean()
 
         # Validate event type
-        valid_event_types = [choice[0] for choice in self.EVENT_TYPES]
-        if self.event_type not in valid_event_types:
+        if self.event_type not in self.EventType.values:
             raise ValueError(f"Invalid event type: {self.event_type}")
 
         # Validate timestamp

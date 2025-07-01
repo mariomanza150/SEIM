@@ -7,7 +7,7 @@ from .comment import Comment
 from .document import Document
 from .document_type import DocumentType
 from .exchange import Exchange
-from ..places.academic.exchange.exchange_program import ExchangeProgram
+from ..academic.exchange.exchange_program import ExchangeProgram
 from .timeline import Timeline
 
 __all__ = [

@@ -1,6 +1,18 @@
+<!--
+File: docs/TROUBLESHOOTING.md
+Title: Troubleshooting Guide
+Purpose: Provide solutions and diagnostic steps for common issues encountered in the SEIM system.
+-->
+
 # Troubleshooting Guide
 
-This guide helps resolve common issues with the SEIM system.
+## Purpose
+This guide helps resolve common issues with the SEIM system, including environment, deployment, and runtime errors.
+
+## Revision History
+| Date       | Author              | Description                                 |
+|------------|---------------------|---------------------------------------------|
+| 2025-05-31 | Documentation Team  | Added template compliance, title, purpose, and revision history. |
 
 ## Common Issues
 

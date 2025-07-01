@@ -1,17 +1,17 @@
 from django.db import models
 
-from ....timestamp_base import TimestampedModel
-from ...config_model import ConfigModel
-from ...university import University
-from .academic_program import ExchangeProgram
+from ...base import Timestamped
+from ...base import Option
+from ...places.university import University
+from .exchange_program import ExchangeProgram
 
-class PartnerAgreement(TimestampedModel):
+class PartnerAgreement(Option, Timestamped):
     home_university = models.ForeignKey(University, on_delete=models.PROTECT, related_name="home_agreements")
     partner_university = models.ForeignKey(University, on_delete=models.PROTECT, related_name="partner_agreements")
     program = models.ForeignKey(ExchangeProgram, on_delete=models.PROTECT)
     start_date = models.DateField()
     end_date = models.DateField()
-    active = models.BooleanField(default=True)
+
     quota_limit = models.PositiveIntegerField(null=True, blank=True)
 
     class Meta:

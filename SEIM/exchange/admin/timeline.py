@@ -58,6 +58,55 @@ class TimelineAdmin(admin.ModelAdmin):
         ),
     )
 
+    def has_view_permission(self, request, obj=None):
+        """Allow staff, Exchange Managers, or owner to view."""
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return True
+        if obj and hasattr(obj, "exchange") and hasattr(obj.exchange, "student"):
+            return obj.exchange.student == request.user
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """Allow staff, Exchange Managers, or owner to edit."""
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return True
+        if obj and hasattr(obj, "exchange") and hasattr(obj.exchange, "student"):
+            return obj.exchange.student == request.user
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """Allow staff, Exchange Managers, or owner to delete."""
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return True
+        if obj and hasattr(obj, "exchange") and hasattr(obj.exchange, "student"):
+            return obj.exchange.student == request.user
+        return False
+
+    def has_add_permission(self, request):
+        """Allow staff, Exchange Managers, or students to add."""
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return True
+        if request.user.groups.filter(name="Students").exists():
+            return True
+        return False
+
+    def get_queryset(self, request):
+        """Staff and Exchange Managers see all; students see only their own."""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser or request.user.is_staff:
+            return qs
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return qs
+        return qs.filter(exchange__student=request.user)
+
 
 @admin.register(WorkflowLog)
 class WorkflowLogAdmin(admin.ModelAdmin):
@@ -109,3 +158,52 @@ class WorkflowLogAdmin(admin.ModelAdmin):
             },
         ),
     )
+
+    def has_view_permission(self, request, obj=None):
+        """Allow staff, Exchange Managers, or owner to view."""
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return True
+        if obj and hasattr(obj, "exchange") and hasattr(obj.exchange, "student"):
+            return obj.exchange.student == request.user
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """Allow staff, Exchange Managers, or owner to edit."""
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return True
+        if obj and hasattr(obj, "exchange") and hasattr(obj.exchange, "student"):
+            return obj.exchange.student == request.user
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        """Allow staff, Exchange Managers, or owner to delete."""
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return True
+        if obj and hasattr(obj, "exchange") and hasattr(obj.exchange, "student"):
+            return obj.exchange.student == request.user
+        return False
+
+    def has_add_permission(self, request):
+        """Allow staff, Exchange Managers, or students to add."""
+        if request.user.is_superuser or request.user.is_staff:
+            return True
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return True
+        if request.user.groups.filter(name="Students").exists():
+            return True
+        return False
+
+    def get_queryset(self, request):
+        """Staff and Exchange Managers see all; students see only their own."""
+        qs = super().get_queryset(request)
+        if request.user.is_superuser or request.user.is_staff:
+            return qs
+        if request.user.groups.filter(name="Exchange Managers").exists():
+            return qs
+        return qs.filter(exchange__student=request.user)

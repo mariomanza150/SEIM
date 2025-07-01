@@ -1,7 +1,7 @@
 from django.db import models
-from ..config_model import ConfigModel
+from ..base import Option
 
-class AcademicTerm(ConfigModel):
+class AcademicTerm(Option):
     SEASONS = (
         ("SPRING", "Spring"),
         ("SUMMER", "Summer"),

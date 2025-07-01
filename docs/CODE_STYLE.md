@@ -1,6 +1,18 @@
+<!--
+File: docs/CODE_STYLE.md
+Title: Code Style Guide
+Purpose: Define and enforce consistent coding standards for the SEIM project across all languages and frameworks.
+-->
+
 # Code Style Guide
 
-This document outlines the coding standards for the SEIM project.
+## Purpose
+This document outlines the coding standards and best practices for the SEIM project to ensure code quality, maintainability, and consistency across the codebase.
+
+## Revision History
+| Date       | Author      | Description                      |
+|------------|-------------|----------------------------------|
+| 2025-05-31 | Documentation Team | Added template compliance, title, purpose, and revision history. |
 
 ## Python Style Guide
 

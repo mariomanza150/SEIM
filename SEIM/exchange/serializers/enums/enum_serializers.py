@@ -1,10 +1,10 @@
 from rest_framework import serializers
-from SEIM.exchange.models.places.campus import Campus
-from SEIM.exchange.models.places.address.city import City
-from SEIM.exchange.models.places.address.country import Country
-from SEIM.exchange.models.places.questionnaire.question import Question
-from SEIM.exchange.models.places.address.state import State
-from SEIM.exchange.models.places.university import University
+from ...models.places.campus import Campus
+from ...models.places.address.city import City
+from ...models.places.address.country import Country
+from ...models.questionnaire.question import Question
+from ...models.places.address.state import State
+from ...models.places.university import University
 
 class CampusSerializer(serializers.ModelSerializer):
     class Meta:

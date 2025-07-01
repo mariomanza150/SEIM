@@ -6,10 +6,11 @@ This module contains models for user comments and (optionally) reviews on exchan
 - Review: (Consider splitting into a separate file if it grows large.)
 """
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 
+User = get_user_model()
 
 class Comment(models.Model):
     """
@@ -28,16 +29,14 @@ class Comment(models.Model):
         viewed_at (DateTimeField): When the student viewed the comment.
     """
 
-    # Comment types
-    COMMENT_TYPES = (
-        ("INTERNAL", "Internal Note"),
-        ("STUDENT", "Student Visible"),
-        ("OFFICIAL", "Official Communication"),
-    )
+    class CommentType(models.TextChoices):
+        INTERNAL = "INTERNAL", "Internal Note"
+        STUDENT = "STUDENT", "Student Visible"
+        OFFICIAL = "OFFICIAL", "Official Communication"
 
     exchange = models.ForeignKey("Exchange", on_delete=models.CASCADE, related_name="comments")
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="exchange_comments")
-    comment_type = models.CharField(max_length=10, choices=COMMENT_TYPES, default="INTERNAL")
+    comment_type = models.CharField(max_length=10, choices=CommentType.choices, default=CommentType.INTERNAL)
     text = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -71,7 +70,7 @@ class Comment(models.Model):
 
     def __str__(self):
         # Defensive fallback for display methods
-        comment_type = dict(self.COMMENT_TYPES).get(self.comment_type, self.comment_type)
+        comment_type = dict(self.CommentType.choices).get(self.comment_type, self.comment_type)
         author = getattr(self.author, 'username', str(self.author))
         created = self.created_at.strftime('%Y-%m-%d') if self.created_at else ''
         return f"{comment_type} by {author} on {created}"
@@ -88,27 +87,23 @@ class Review(models.Model):
     Model for formal reviews of exchange applications
     """
 
-    # Review types
-    REVIEW_TYPES = (
-        ("ACADEMIC", "Academic Review"),
-        ("FINANCIAL", "Financial Review"),
-        ("ADMINISTRATIVE", "Administrative Review"),
-        ("FINAL", "Final Decision"),
-    )
+    class ReviewType(models.TextChoices):
+        ACADEMIC = "ACADEMIC", "Academic Review"
+        FINANCIAL = "FINANCIAL", "Financial Review"
+        ADMINISTRATIVE = "ADMINISTRATIVE", "Administrative Review"
+        FINAL = "FINAL", "Final Decision"
 
-    # Review decisions
-    DECISION_CHOICES = (
-        ("APPROVED", "Approved"),
-        ("CONDITIONALLY_APPROVED", "Conditionally Approved"),
-        ("REJECTED", "Rejected"),
-        ("DEFERRED", "Deferred"),
-        ("MORE_INFO", "More Information Needed"),
-    )
+    class Decision(models.TextChoices):
+        APPROVED = "APPROVED", "Approved"
+        CONDITIONALLY_APPROVED = "CONDITIONALLY_APPROVED", "Conditionally Approved"
+        REJECTED = "REJECTED", "Rejected"
+        DEFERRED = "DEFERRED", "Deferred"
+        MORE_INFO = "MORE_INFO", "More Information Needed"
 
     exchange = models.ForeignKey("Exchange", on_delete=models.CASCADE, related_name="reviews")
     reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviews")
-    review_type = models.CharField(max_length=15, choices=REVIEW_TYPES)
-    decision = models.CharField(max_length=25, choices=DECISION_CHOICES)
+    review_type = models.CharField(max_length=15, choices=ReviewType.choices)
+    decision = models.CharField(max_length=25, choices=Decision.choices)
 
     # Review details
     comments = models.TextField()
@@ -132,8 +127,8 @@ class Review(models.Model):
         # Trigger any hooks or signals for review revision here if needed
 
     def __str__(self):
-        review_type = dict(self.REVIEW_TYPES).get(self.review_type, self.review_type)
-        decision = dict(self.DECISION_CHOICES).get(self.decision, self.decision)
+        review_type = dict(self.ReviewType.choices).get(self.review_type, self.review_type)
+        decision = dict(self.Decision.choices).get(self.decision, self.decision)
         reviewer = getattr(self.reviewer, 'username', str(self.reviewer))
         return f"{review_type} by {reviewer} - {decision}"
 

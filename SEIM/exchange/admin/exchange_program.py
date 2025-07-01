@@ -1,6 +1,6 @@
 from django.contrib import admin
-from ..models import Exchange
+from ..models import ExchangeProgram
 
-@admin.register(Exchange)
-class ExchangeAdmin(admin.ModelAdmin):
+@admin.register(ExchangeProgram)
+class ExchangeProgramAdmin(admin.ModelAdmin):
     pass

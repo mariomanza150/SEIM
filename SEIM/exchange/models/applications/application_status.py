@@ -1,8 +1,8 @@
 from django.db import models
-from ..base_models.timestamped_model import TimestampedModel
+from ..base import Timestamped
 import re
 
-class ApplicationStatus(TimestampedModel):
+class ApplicationStatus(Timestamped):
     """
     Represents a possible status for an exchange application (e.g., Submitted, Under Review, Approved).
 

@@ -7,12 +7,11 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
-from django_fsm import FSMField, transition, can_proceed
 
-from ..base_models.timestamped_model import TimestampedModel
+from ..base import Timestamped
 
 
-class Exchange(TimestampedModel):
+class Exchange(Timestamped):
     """
     Main model for student exchange applications with state machine workflow.
 
@@ -36,7 +35,7 @@ class Exchange(TimestampedModel):
         study_goals (TextField): Academic goals for the exchange.
         special_requirements (TextField): Any special requirements or accommodations needed.
         referral_source (CharField): How the student learned about the program.
-        status (FSMField): Current status of the application (see STATUS_CHOICES).
+        status (CharField): Current status of the application (set by workflow).
     """
     
     # Status choices with additional CANCELLED state
@@ -139,10 +138,20 @@ class Exchange(TimestampedModel):
     )
     
     # Status management with FSM
-    status = FSMField(
-        default="DRAFT",
+    status = models.CharField(
+        max_length=20,
         choices=STATUS_CHOICES,
-        help_text="Current status of the application"
+        default="DRAFT",
+        help_text="Current status of the application (set by workflow)"
+    )
+    
+    # Link to Viewflow process
+    flow_process = models.OneToOneField(
+        'SEIM.exchange.models.applications.exchange_process.ExchangeProcess',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='exchange_instance'
     )
     
     # Timeline tracking
@@ -207,56 +216,6 @@ class Exchange(TimestampedModel):
         student = getattr(self.student, 'username', str(self.student))
         return f"Exchange Application for {student} ({status})"
 
-    # FSM Transitions
-    
-    @transition(field=status, source='DRAFT', target='SUBMITTED')
-    def submit(self, user=None):
-        """Submit the exchange application for review."""
-        if not self.has_required_documents():
-            raise ValidationError("Cannot submit without all required documents.")
-        self.submission_date = timezone.now()
-        # Log the transition
-        self._log_transition('DRAFT', 'SUBMITTED', user, "Application submitted")
-    
-    @transition(field=status, source='SUBMITTED', target='UNDER_REVIEW')
-    def start_review(self, user=None):
-        """Start the review process."""
-        self.review_date = timezone.now()
-        if user:
-            self.reviewed_by = user
-        self._log_transition('SUBMITTED', 'UNDER_REVIEW', user, "Review started")
-    
-    @transition(field=status, source=['SUBMITTED', 'UNDER_REVIEW'], target='APPROVED')
-    def approve(self, user=None, comment=""):
-        """Approve the exchange application."""
-        self.decision_date = timezone.now()
-        if user:
-            self.approved_by = user
-        self._log_transition(self.status, 'APPROVED', user, comment or "Application approved")
-    
-    @transition(field=status, source=['SUBMITTED', 'UNDER_REVIEW'], target='REJECTED')
-    def reject(self, user=None, reason=""):
-        """Reject the exchange application."""
-        self.decision_date = timezone.now()
-        self.rejection_reason = reason
-        self._log_transition(self.status, 'REJECTED', user, reason or "Application rejected")
-    
-    @transition(field=status, source='APPROVED', target='COMPLETED')
-    def complete(self, user=None):
-        """Mark the exchange as completed."""
-        self.completion_date = timezone.now()
-        self._log_transition('APPROVED', 'COMPLETED', user, "Exchange completed")
-    
-    @transition(field=status, source=['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED'], target='CANCELLED')
-    def cancel(self, user=None, reason=""):
-        """Cancel the exchange application."""
-        self._log_transition(self.status, 'CANCELLED', user, reason or "Application cancelled")
-    
-    def _log_transition(self, from_status, to_status, user, comment):
-        """Log workflow transitions."""
-        # Timeline logging can be handled by signals or external services
-        pass
-    
     # Validation methods
     
     def has_required_documents(self):
@@ -288,16 +247,7 @@ class Exchange(TimestampedModel):
     
     def get_available_transitions(self):
         """Get list of available status transitions."""
-        if hasattr(self, 'get_available_status_transitions'):
-            return [
-                {
-                    'name': t.name,
-                    'source': t.source,
-                    'target': t.target,
-                    'available': can_proceed(getattr(self, t.name))
-                }
-                for t in self.get_available_status_transitions()
-            ]
+        # Viewflow handles transitions via flow tasks; this is a placeholder for UI compatibility
         return []
     
     def clean(self):
@@ -428,49 +378,3 @@ class Exchange(TimestampedModel):
         events.sort(key=lambda x: x['date'])
         
         return events
-    
-    # Backward compatibility methods
-    
-    def can_transition_to(self, new_status):
-        """Check if transition to new status is allowed (backward compatibility)."""
-        # Map old transition check to FSM
-        transition_map = {
-            ('DRAFT', 'SUBMITTED'): self.submit,
-            ('SUBMITTED', 'UNDER_REVIEW'): self.start_review,
-            ('SUBMITTED', 'APPROVED'): self.approve,
-            ('SUBMITTED', 'REJECTED'): self.reject,
-            ('UNDER_REVIEW', 'APPROVED'): self.approve,
-            ('UNDER_REVIEW', 'REJECTED'): self.reject,
-            ('APPROVED', 'COMPLETED'): self.complete,
-        }
-        
-        key = (self.status, new_status)
-        if key in transition_map:
-            return can_proceed(transition_map[key])
-        
-        # Check cancel transition
-        if new_status == 'CANCELLED' and self.status in ['DRAFT', 'SUBMITTED', 'UNDER_REVIEW', 'APPROVED']:
-            return can_proceed(self.cancel)
-        
-        return False
-    
-    def transition_to(self, new_status, user=None, comment=""):
-        """Transition to new status (backward compatibility wrapper)."""
-        # Map to FSM transitions
-        if self.status == 'DRAFT' and new_status == 'SUBMITTED':
-            self.submit(user=user)
-        elif self.status == 'SUBMITTED' and new_status == 'UNDER_REVIEW':
-            self.start_review(user=user)
-        elif new_status == 'APPROVED':
-            self.approve(user=user, comment=comment)
-        elif new_status == 'REJECTED':
-            self.reject(user=user, reason=comment)
-        elif self.status == 'APPROVED' and new_status == 'COMPLETED':
-            self.complete(user=user)
-        elif new_status == 'CANCELLED':
-            self.cancel(user=user, reason=comment)
-        else:
-            raise ValueError(f"Cannot transition from {self.status} to {new_status}")
-        
-        self.save(skip_validation=True)
-        return True
