@@ -1,0 +1,137 @@
+Here is a **comprehensive prompt** you can give to an LLM:
+
+---
+
+You are tasked with ensuring the complete and correct testing of the **SEIM (Student Exchange Information Manager)** project. Follow these precise instructions:
+
+---
+
+### ✅ **Main Objectives**
+
+1. **Run all available test suites across the project**, including backend, frontend, and Selenium E2E tests.
+2. **Ensure all tests pass successfully.**
+3. **Verify that overall test coverage meets or exceeds 80%.**
+4. **Fix any failing tests, broken configurations, or runtime issues you encounter during testing.**
+
+---
+
+### 🧪 **Test Suites to Run**
+
+#### **1. Unit & Integration Tests (Docker)**
+
+* **Command to run all tests:**
+
+  ```bash
+  make test
+  ```
+* **Or run individually:**
+
+  ```bash
+  make test-unit
+  make test-integration
+  make test-api
+  ```
+* **Check test coverage:**
+
+  ```bash
+  make test-coverage
+  ```
+* **Expected Coverage:** ≥ 80%
+
+#### **2. Frontend Tests (Host OS)**
+
+* **Command to run all frontend tests:**
+
+  ```bash
+  npx jest --config=jest.config.js
+  ```
+* **Check coverage:**
+
+  ```bash
+  npx jest --config=jest.config.js --coverage
+  ```
+* **Expected Coverage:** ≥ 80%
+
+#### **3. Selenium E2E Tests (Host OS)**
+
+* **Setup Selenium environment (recommended):**
+
+  ```bash
+  make setup-selenium-host
+  ```
+* **Run all Selenium tests:**
+
+  ```bash
+  make test-selenium
+  ```
+* **Verify Selenium test coverage activate env first (optional):**
+
+  ```bash
+  python -m pytest tests/e2e/ --cov=. --cov-report=html:htmlcov_selenium
+  ```
+
+---
+
+### 🛡️ **Fix and Verify**
+
+* If **any test fails**, debug the problem, modify the code or test as needed, and **re-run the corresponding suite**.
+* Ensure all dependencies are correctly installed and all services (such as the Django server and database) are running as expected. Use:
+
+  ```bash
+  docker-compose up web
+  ```
+* Pay special attention to **Selenium tests**, which must run from the **host OS** with the virtual env activated, not inside Docker.
+* Confirm **Chrome and ChromeDriver** are properly installed and accessible.
+* Fix any flaky tests, configuration mismatches, or outdated dependencies.
+
+---
+
+### 📊 **Coverage Validation**
+
+* Ensure combined backend and frontend **coverage is at least 80%.**
+* If any test coverage is below the target, add new tests for uncovered code paths.
+
+---
+
+### ⚙️ **Example Commands for Troubleshooting**
+
+* Backend test coverage:
+
+  ```bash
+  make test-coverage
+  ```
+* Frontend test coverage:
+
+  ```bash
+  npx jest --config=jest.config.js --coverage
+  ```
+* Re-run specific Selenium test file:
+
+  ```bash
+  python -m pytest tests/e2e/test_user_workflows.py -v
+  ```
+
+---
+
+### 🚨 **Final Report**
+
+Prepare and output a **clear summary** of:
+
+* ✅ All test suites executed
+* 📈 Coverage reports for backend, frontend, and Selenium
+* 🔧 Any issues fixed
+* ✅ Final verification showing **all tests pass** and **coverage ≥ 80%**
+
+---
+
+### 🔚 **Completion Criteria**
+
+You are finished when:
+
+* All SEIM tests (unit, integration, frontend, and Selenium) pass without errors.
+* Code coverage for both backend and frontend is **≥ 80%.**
+* No critical or high-severity test issues remain.
+
+---
+
+Execute the full test lifecycle **now** and provide your final report.

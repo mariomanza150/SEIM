@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Icon Visibility Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #0d6efd;
+            --bg-primary: #ffffff;
+            --text-primary: #212529;
+            --border-color: #dee2e6;
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #212529;
+            --text-primary: #f8f9fa;
+            --border-color: #495057;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        
+        .theme-toggle {
+            color: var(--text-primary) !important;
+            background-color: transparent !important;
+            border-color: var(--border-color) !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .theme-toggle:hover {
+            color: var(--primary-color) !important;
+            background-color: rgba(13, 110, 253, 0.1) !important;
+            border-color: var(--primary-color) !important;
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+        
+        .icon-test {
+            display: inline-block;
+            margin: 10px;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1>Theme Toggle Icon Visibility Test</h1>
+        
+        <div class="test-section">
+            <h3>Icon Tests</h3>
+            
+            <div class="icon-test">
+                <h5>With aria-hidden="true" (Hidden)</h5>
+                <i class="bi bi-moon-fill" aria-hidden="true"></i>
+                <p>This icon should be hidden from screen readers</p>
+            </div>
+            
+            <div class="icon-test">
+                <h5>Without aria-hidden (Visible)</h5>
+                <i class="bi bi-moon-fill"></i>
+                <p>This icon should be visible</p>
+            </div>
+            
+            <div class="icon-test">
+                <h5>Theme Toggle Button</h5>
+                <button id="theme-toggle" class="btn btn-outline-secondary btn-sm theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <i class="bi bi-moon-fill"></i>
+                </button>
+                <p>This button should show the moon icon</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Positioning Test</h3>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>Left Content</div>
+                <button id="theme-toggle-2" class="btn btn-outline-secondary btn-sm theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <i class="bi bi-moon-fill"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h3>Theme Toggle Test</h3>
+            <button class="btn btn-primary" onclick="toggleTheme()">Toggle Theme</button>
+            <p>Current theme: <span id="current-theme">light</span></p>
+        </div>
+    </div>
+
+    <script>
+        let currentTheme = 'light';
+        
+        function toggleTheme() {
+            const html = document.documentElement;
+            currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+            
+            if (currentTheme === 'dark') {
+                html.setAttribute('data-theme', 'dark');
+            } else {
+                html.removeAttribute('data-theme');
+            }
+            
+            // Update toggle buttons
+            const toggles = document.querySelectorAll('#theme-toggle, #theme-toggle-2');
+            toggles.forEach(toggle => {
+                const icon = toggle.querySelector('i');
+                icon.className = currentTheme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-fill';
+            });
+            
+            document.getElementById('current-theme').textContent = currentTheme;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Icon visibility test loaded');
+            console.log('Theme toggle buttons found:', document.querySelectorAll('#theme-toggle, #theme-toggle-2').length);
+        });
+    </script>
+</body>
+</html> 

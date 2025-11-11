@@ -1,0 +1,106 @@
+[
+  {
+    "model": "exchange.applicationstatus",
+    "pk": 1,
+    "fields": {
+      "name": "draft",
+      "order": 1
+    }
+  },
+  {
+    "model": "exchange.applicationstatus",
+    "pk": 2,
+    "fields": {
+      "name": "submitted",
+      "order": 2
+    }
+  },
+  {
+    "model": "exchange.applicationstatus",
+    "pk": 3,
+    "fields": {
+      "name": "under_review",
+      "order": 3
+    }
+  },
+  {
+    "model": "exchange.applicationstatus",
+    "pk": 4,
+    "fields": {
+      "name": "approved",
+      "order": 4
+    }
+  },
+  {
+    "model": "exchange.applicationstatus",
+    "pk": 5,
+    "fields": {
+      "name": "rejected",
+      "order": 5
+    }
+  },
+  {
+    "model": "exchange.applicationstatus",
+    "pk": 6,
+    "fields": {
+      "name": "completed",
+      "order": 6
+    }
+  },
+  {
+    "model": "exchange.program",
+    "pk": 1,
+    "fields": {
+      "name": "Erasmus+ Exchange Program",
+      "description": "A semester exchange program in Europe through the Erasmus+ program. Students can study at partner universities across Europe.",
+      "start_date": "2025-09-01",
+      "end_date": "2025-12-31",
+      "is_active": true,
+      "min_gpa": 3.0,
+      "required_language": "English",
+      "recurring": true
+    }
+  },
+  {
+    "model": "exchange.program",
+    "pk": 2,
+    "fields": {
+      "name": "Summer Exchange in Japan",
+      "description": "A summer exchange program in Japan focusing on Japanese language and culture.",
+      "start_date": "2025-06-01",
+      "end_date": "2025-08-31",
+      "is_active": true,
+      "min_gpa": 2.8,
+      "required_language": "Japanese",
+      "recurring": true
+    }
+  },
+  {
+    "model": "exchange.program",
+    "pk": 3,
+    "fields": {
+      "name": "Semester Abroad in Australia",
+      "description": "A full semester exchange program at Australian universities.",
+      "start_date": "2025-02-01",
+      "end_date": "2025-06-30",
+      "is_active": true,
+      "min_gpa": 3.2,
+      "required_language": "English",
+      "recurring": true
+    }
+  },
+  {
+    "model": "exchange.program",
+    "pk": 4,
+    "fields": {
+      "name": "Inactive Test Program",
+      "description": "This program is inactive for testing purposes.",
+      "start_date": "2025-01-01",
+      "end_date": "2025-12-31",
+      "is_active": false,
+      "min_gpa": 2.5,
+      "required_language": "English",
+      "recurring": false
+    }
+  }
+] 
