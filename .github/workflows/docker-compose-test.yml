@@ -1,0 +1,66 @@
+name: Docker Compose Test
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  docker-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOF
+          DEBUG=False
+          SECRET_KEY=test-secret-key-for-ci-$(openssl rand -hex 32)
+          DATABASE_URL=postgresql://postgres:postgres@db:5432/seim
+          REDIS_URL=redis://redis:6379/0
+          ALLOWED_HOSTS=localhost,127.0.0.1
+          DJANGO_SETTINGS_MODULE=seim.settings.test
+          EOF
+
+      - name: Build Docker images
+        run: docker-compose build
+
+      - name: Start services
+        run: docker-compose up -d
+
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for PostgreSQL..."
+          for i in {1..30}; do
+            docker-compose exec -T db pg_isready -U postgres && break
+            echo "Waiting for database to be ready..."
+            sleep 2
+          done
+          
+          echo "Waiting for Redis..."
+          for i in {1..30}; do
+            docker-compose exec -T redis redis-cli ping && break
+            echo "Waiting for Redis to be ready..."
+            sleep 2
+          done
+
+      - name: Run migrations
+        run: docker-compose exec -T web python manage.py migrate --noinput
+
+      - name: Run tests
+        run: docker-compose exec -T web pytest tests/ -v --maxfail=5
+
+      - name: Check logs on failure
+        if: failure()
+        run: |
+          docker-compose logs web
+          docker-compose logs db
+          docker-compose logs redis
+
+      - name: Cleanup
+        if: always()
+        run: docker-compose down -v
+
