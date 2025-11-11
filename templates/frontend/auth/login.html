@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - SEIM{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-box-arrow-in-right"></i> Sign In
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form id="loginForm" method="post" action="javascript:void(0)">
+                        {% csrf_token %}
+                        
+                        <!-- Username/Email Field -->
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="bi bi-person"></i> Username or Email
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="username" 
+                                   name="username" 
+                                   required 
+                                   autocomplete="username"
+                                   placeholder="Enter your username or email">
+                            <div class="form-text">Use your institutional email or username</div>
+                        </div>
+                        
+                        <!-- Password Field -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="bi bi-lock"></i> Password
+                            </label>
+                            <div class="input-group">
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password" 
+                                       name="password" 
+                                       required 
+                                       autocomplete="current-password"
+                                       placeholder="Enter your password">
+                                <button class="btn btn-outline-secondary" 
+                                        type="button" 
+                                        id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Remember Me -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe" name="remember_me">
+                            <label class="form-check-label" for="rememberMe">
+                                Remember me for 30 days
+                            </label>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-box-arrow-in-right"></i> Sign In
+                            </button>
+                        </div>
+                        
+                        <!-- Links -->
+                        <div class="text-center">
+                            <a href="{% url 'frontend:password_reset' %}" class="text-decoration-none">
+                                <i class="bi bi-question-circle"></i> Forgot your password?
+                            </a>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center bg-light">
+                    <p class="mb-0">
+                        Don't have an account? 
+                        <a href="{% url 'frontend:register' %}" class="text-decoration-none">
+                            <i class="bi bi-person-plus"></i> Register here
+                        </a>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Demo Accounts Info -->
+            <div class="card mt-4 border-0 bg-light">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="bi bi-info-circle"></i> Demo Accounts
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <strong>Admin:</strong><br>
+                                Username: admin<br>
+                                Password: admin123
+                            </small>
+                        </div>
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                <strong>Student:</strong><br>
+                                Username: student<br>
+                                Password: student123
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Redirect to dashboard if already logged in (JWT present)
+document.addEventListener('DOMContentLoaded', function() {
+    const accessToken = localStorage.getItem('seim_access_token');
+    if (accessToken) {
+        window.location.href = '/dashboard/';
+        return;
+    }
+    
+    // Setup login form handler
+    setupLoginForm();
+});
+
+async function setupLoginForm() {
+    const loginForm = document.getElementById('loginForm');
+    const submitBtn = loginForm.querySelector('button[type="submit"]');
+    
+    loginForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Get form data
+        const formData = new FormData(loginForm);
+        const username = formData.get('username');
+        const password = formData.get('password');
+        
+        // Validate form
+        if (!username || !password) {
+            alert('Please fill in all fields');
+            return;
+        }
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Signing In...';
+        
+        try {
+            // Make login request
+            const response = await fetch('/api/accounts/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    login: username,
+                    password: password
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                // Store tokens
+                localStorage.setItem('seim_access_token', data.access);
+                localStorage.setItem('seim_refresh_token', data.refresh);
+                
+                // Show success message
+                submitBtn.innerHTML = '<i class="bi bi-check-circle"></i> Success!';
+                submitBtn.className = 'btn btn-success btn-lg';
+                
+                // Redirect to dashboard
+                setTimeout(() => {
+                    window.location.href = '/dashboard/';
+                }, 1000);
+                
+            } else {
+                // Show error message
+                const errorMessage = data.detail || data.message || 'Login failed. Please check your credentials.';
+                alert(errorMessage);
+                
+                // Reset button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Sign In';
+            }
+            
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('Network error. Please try again.');
+            
+            // Reset button
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="bi bi-box-arrow-in-right"></i> Sign In';
+        }
+    });
+    
+    // Setup password toggle
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    
+    if (togglePassword && passwordInput) {
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            togglePassword.innerHTML = type === 'password' ? '<i class="bi bi-eye"></i>' : '<i class="bi bi-eye-slash"></i>';
+        });
+    }
+}
+
+// Add CSS for spinning icon
+const style = document.createElement('style');
+style.textContent = `
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %} 

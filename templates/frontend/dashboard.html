@@ -1,0 +1,787 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - SEIM{% endblock %}
+
+{% block content %}
+<div id="dashboard-loader" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-3">Loading dashboard...</p>
+</div>
+
+<div id="dashboard-content" style="display:none;">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">Welcome back, <span id="user-name"></span>!</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-primary" onclick="refreshDashboard()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Role Badge -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info d-flex align-items-center" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                <div>
+                    <strong>Role:</strong> <span id="user-role-badge" class="badge bg-primary"></span>
+                    <span id="role-description" class="ms-2"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Display -->
+    <div class="row mb-4" id="error-display" style="display:none;">
+        <div class="col-12">
+            <div class="alert alert-warning d-flex align-items-center" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <div>
+                    <strong>Connection Issue:</strong> Some dashboard data may not be available. 
+                    <button type="button" class="btn btn-sm btn-outline-warning ms-2" onclick="retryLoadData()">
+                        <i class="bi bi-arrow-clockwise"></i> Retry
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-lightning"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3" id="quick-actions">
+                        <!-- Quick actions will be populated by JS based on user role -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4" id="statistics-section">
+        <!-- Statistics cards will be populated by JS -->
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clock-history"></i> Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="recent-activity">
+                        <!-- Recent activity will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role-Specific Content -->
+    <div id="role-specific-content">
+        <!-- Role-specific content will be populated by JS -->
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Error</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="error-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="retryOperation()">Retry</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global variables
+let currentUser = null;
+let dashboardData = null;
+
+// Check for logout signal and clear JWT tokens
+const clearJwtTokens = document.cookie.split(';').some(cookie => 
+    cookie.trim().startsWith('clear_jwt_tokens=')
+);
+if (clearJwtTokens) {
+    localStorage.removeItem('seim_access_token');
+    localStorage.removeItem('seim_refresh_token');
+    // Clear the cookie
+    document.cookie = 'clear_jwt_tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    // Redirect to login immediately
+    window.location.href = '/login/';
+}
+
+// On page load, check JWT and fetch user info
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('=== DASHBOARD INITIALIZATION STARTED ===');
+    await initializeDashboard();
+});
+
+async function initializeDashboard() {
+    console.log('1. Checking access token...');
+    const accessToken = localStorage.getItem('seim_access_token');
+    console.log('Access token exists:', !!accessToken);
+    
+    if (!accessToken) {
+        console.log('No access token found, redirecting to login');
+        window.location.href = '/login/';
+        return;
+    }
+
+    console.log('2. Fetching user profile...');
+    try {
+        const userResponse = await fetch('/api/accounts/profile/', {
+            headers: { 'Authorization': 'Bearer ' + accessToken }
+        });
+        
+        console.log('User profile response status:', userResponse.status);
+        
+        if (userResponse.status === 401) {
+            console.log('Authentication failed (401), redirecting to login');
+            localStorage.removeItem('seim_access_token');
+            localStorage.removeItem('seim_refresh_token');
+            // Only redirect if we're not already on login page
+            if (window.location.pathname !== '/login/') {
+                window.location.href = '/login/';
+            }
+            return;
+        }
+        
+        if (!userResponse.ok) {
+            console.log('User profile request failed with status:', userResponse.status);
+            throw new Error(`HTTP ${userResponse.status}`);
+        }
+        
+        currentUser = await userResponse.json();
+        console.log('3. User profile loaded successfully:', currentUser);
+        
+        console.log('4. Showing dashboard content...');
+        document.getElementById('dashboard-loader').style.display = 'none';
+        document.getElementById('dashboard-content').style.display = 'block';
+        
+        console.log('5. Loading dashboard data...');
+        await loadDashboardData();
+        
+        console.log('6. Rendering dashboard components...');
+        renderDashboardComponents();
+        
+        console.log('7. Initializing navigation...');
+        initializeNavigation();
+        
+        console.log('=== DASHBOARD INITIALIZATION COMPLETED SUCCESSFULLY ===');
+        
+    } catch (error) {
+        console.error('Dashboard initialization failed:', error);
+        console.log('Error type:', error.name);
+        console.log('Error message:', error.message);
+        
+        // Only redirect on network errors
+        if (error.name === 'TypeError' || error.message.includes('fetch')) {
+            console.log('Network error detected, redirecting to login');
+            localStorage.removeItem('seim_access_token');
+            localStorage.removeItem('seim_refresh_token');
+            // Only redirect if we're not already on login page
+            if (window.location.pathname !== '/login/') {
+                window.location.href = '/login/';
+            }
+        } else {
+            console.log('Non-network error, showing dashboard with error state');
+            document.getElementById('dashboard-loader').style.display = 'none';
+            document.getElementById('dashboard-content').style.display = 'block';
+            document.getElementById('error-display').style.display = 'block';
+            currentUser = { username: 'User', role: 'student' };
+            renderDashboardComponents();
+            initializeNavigation();
+        }
+    }
+}
+
+async function loadDashboardData() {
+    console.log('Loading dashboard data...');
+    const accessToken = localStorage.getItem('seim_access_token');
+    
+    try {
+        // Load metrics
+        const metricsResponse = await fetch('/api/metrics/dashboard/', {
+            headers: { 'Authorization': 'Bearer ' + accessToken }
+        });
+        
+        if (metricsResponse.ok) {
+            dashboardData = await metricsResponse.json();
+            console.log('Metrics loaded successfully');
+        } else {
+            console.warn('Failed to load metrics, using default data');
+            dashboardData = getDefaultDashboardData();
+        }
+        
+        // Load applications
+        const applicationsResponse = await fetch('/api/applications/', {
+            headers: { 'Authorization': 'Bearer ' + accessToken }
+        });
+        
+        if (applicationsResponse.ok) {
+            dashboardData.userApplications = await applicationsResponse.json();
+            console.log('Applications loaded successfully:', dashboardData.userApplications);
+        } else {
+            console.warn('Failed to load applications');
+            dashboardData.userApplications = [];
+        }
+        
+        // Load notifications
+        try {
+            const notificationsResponse = await fetch('/api/notifications/', {
+                headers: { 'Authorization': 'Bearer ' + accessToken }
+            });
+            
+            if (notificationsResponse.ok) {
+                dashboardData.notifications = await notificationsResponse.json();
+                console.log('Notifications loaded successfully');
+            } else {
+                dashboardData.notifications = [];
+            }
+        } catch (error) {
+            console.warn('Notifications endpoint not available');
+            dashboardData.notifications = [];
+        }
+        
+    } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+        dashboardData = getDefaultDashboardData();
+    }
+}
+
+function renderDashboardComponents() {
+    console.log('Rendering dashboard components...');
+    
+    // Set user info
+    document.getElementById('user-name').textContent = currentUser.full_name || currentUser.username;
+    document.getElementById('user-role-badge').textContent = currentUser.role;
+    
+    // Set role description
+    const roleDescriptions = {
+        'student': 'You can view and manage your exchange applications',
+        'coordinator': 'You can review applications and manage programs',
+        'admin': 'You have full system access and can manage all aspects'
+    };
+    document.getElementById('role-description').textContent = roleDescriptions[currentUser.role] || '';
+
+    // Render components
+    renderQuickActions();
+    renderStatistics();
+    renderRecentActivity();
+    renderRoleSpecificContent();
+    
+    console.log('Dashboard components rendered successfully');
+}
+
+function getDefaultDashboardData() {
+    return {
+        total_applications: 0,
+        ongoing_applications: 0,
+        approved_applications: 0,
+        rejected_applications: 0,
+        userApplications: [],
+        notifications: []
+    };
+}
+
+function renderQuickActions() {
+    const quickActionsContainer = document.getElementById('quick-actions');
+    let actions = [];
+
+    if (currentUser.role === 'student') {
+        actions = [
+            {
+                title: 'New Application',
+                description: 'Apply for an exchange program',
+                icon: 'bi-plus-circle',
+                url: '/applications/create/',
+                color: 'primary'
+            },
+            {
+                title: 'My Applications',
+                description: 'View your applications',
+                icon: 'bi-file-earmark-text',
+                url: '/applications/',
+                color: 'info'
+            },
+            {
+                title: 'Documents',
+                description: 'Manage your documents',
+                icon: 'bi-folder',
+                url: '/documents/',
+                color: 'success'
+            },
+            {
+                title: 'Programs',
+                description: 'Browse available programs',
+                icon: 'bi-calendar-event',
+                url: '/programs/',
+                color: 'warning'
+            }
+        ];
+    } else if (currentUser.role === 'coordinator') {
+        actions = [
+            {
+                title: 'Review Applications',
+                description: 'Review pending applications',
+                icon: 'bi-eye',
+                url: '/applications/',
+                color: 'primary'
+            },
+            {
+                title: 'Manage Programs',
+                description: 'Create and edit programs',
+                icon: 'bi-gear',
+                url: '/programs/',
+                color: 'info'
+            },
+            {
+                title: 'Analytics',
+                description: 'View program statistics',
+                icon: 'bi-graph-up',
+                url: '/analytics/',
+                color: 'success'
+            }
+        ];
+    } else if (currentUser.role === 'admin') {
+        actions = [
+            {
+                title: 'System Analytics',
+                description: 'View system-wide statistics',
+                icon: 'bi-graph-up',
+                url: '/analytics/',
+                color: 'primary'
+            },
+            {
+                title: 'Manage Users',
+                description: 'User management',
+                icon: 'bi-people',
+                url: '/admin/',
+                color: 'info'
+            },
+            {
+                title: 'System Settings',
+                description: 'Configure system settings',
+                icon: 'bi-gear',
+                url: '/admin/',
+                color: 'warning'
+            }
+        ];
+    }
+
+    quickActionsContainer.innerHTML = actions.map(action => `
+        <div class="col-md-3 col-sm-6">
+            <a href="${action.url}" class="card text-decoration-none h-100">
+                <div class="card-body text-center">
+                    <i class="bi ${action.icon} text-${action.color} display-4"></i>
+                    <h6 class="card-title mt-3">${action.title}</h6>
+                    <p class="card-text text-muted small">${action.description}</p>
+                </div>
+            </a>
+        </div>
+    `).join('');
+}
+
+function renderStatistics() {
+    const statsContainer = document.getElementById('statistics-section');
+    
+    if (currentUser.role === 'student') {
+        const userApps = dashboardData.userApplications || {};
+        
+        // Handle both array and paginated response formats
+        const applications = Array.isArray(userApps) ? userApps : (userApps.results || []);
+        
+        const stats = [
+            {
+                title: 'My Applications',
+                value: applications.length,
+                icon: 'bi-file-earmark-text',
+                color: 'primary'
+            },
+            {
+                title: 'In Progress',
+                value: applications.filter(app => ['submitted', 'under_review'].includes(app.status)).length,
+                icon: 'bi-clock',
+                color: 'warning'
+            },
+            {
+                title: 'Approved',
+                value: applications.filter(app => app.status === 'approved').length,
+                icon: 'bi-check-circle',
+                color: 'success'
+            },
+            {
+                title: 'Documents',
+                value: applications.reduce((total, app) => total + (app.documents?.length || 0), 0),
+                icon: 'bi-folder',
+                color: 'info'
+            }
+        ];
+        
+        statsContainer.innerHTML = stats.map(stat => `
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card text-white bg-${stat.color} h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">${stat.title}</h6>
+                                <h2 class="mb-0">${stat.value}</h2>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi ${stat.icon} display-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        // Admin/Coordinator statistics
+        const stats = [
+            {
+                title: 'Total Applications',
+                value: dashboardData.total_applications || 0,
+                icon: 'bi-file-earmark-text',
+                color: 'primary'
+            },
+            {
+                title: 'Ongoing',
+                value: dashboardData.ongoing_applications || 0,
+                icon: 'bi-clock',
+                color: 'warning'
+            },
+            {
+                title: 'Approved',
+                value: dashboardData.approved_applications || 0,
+                icon: 'bi-check-circle',
+                color: 'success'
+            },
+            {
+                title: 'Rejected',
+                value: dashboardData.rejected_applications || 0,
+                icon: 'bi-x-circle',
+                color: 'danger'
+            }
+        ];
+        
+        statsContainer.innerHTML = stats.map(stat => `
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="card text-white bg-${stat.color} h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">${stat.title}</h6>
+                                <h2 class="mb-0">${stat.value}</h2>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="bi ${stat.icon} display-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+}
+
+function renderRecentActivity() {
+    const activityContainer = document.getElementById('recent-activity');
+    const userApps = dashboardData.userApplications || {};
+    
+    // Handle both array and paginated response formats
+    const applications = Array.isArray(userApps) ? userApps : (userApps.results || []);
+    
+    if (applications.length === 0) {
+        activityContainer.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-clock-history display-4 text-muted"></i>
+                <h5 class="mt-3">No Recent Activity</h5>
+                <p class="text-muted">Start by creating your first application!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Show recent applications
+    const recentApps = applications.slice(0, 5);
+    activityContainer.innerHTML = recentApps.map(app => `
+        <div class="d-flex align-items-center py-2 border-bottom">
+            <div class="flex-shrink-0">
+                <i class="bi bi-file-earmark-text text-primary"></i>
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>${app.program?.name || 'Unknown Program'}</strong>
+                        <br>
+                        <small class="text-muted">Status: ${app.status}</small>
+                    </div>
+                    <span class="badge bg-${getStatusColor(app.status)}">${app.status}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderRoleSpecificContent() {
+    const contentContainer = document.getElementById('role-specific-content');
+    
+    if (currentUser.role === 'student') {
+        contentContainer.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-bell"></i> Recent Notifications
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="notifications-list">
+                                ${renderNotifications()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-calendar"></i> Upcoming Deadlines
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="deadlines-list">
+                                ${renderDeadlines()}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else {
+        contentContainer.innerHTML = `
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-graph-up"></i> System Overview
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Use the analytics page to view detailed system statistics and reports.</p>
+                            <a href="/analytics/" class="btn btn-primary">
+                                <i class="bi bi-graph-up"></i> View Analytics
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+}
+
+function renderNotifications() {
+    const notifications = dashboardData.notifications || [];
+    
+    if (notifications.results.length === 0) {
+        return `
+            <div class="text-center py-3">
+                <i class="bi bi-bell-slash text-muted"></i>
+                <p class="text-muted mb-0">No new notifications</p>
+            </div>
+        `;
+    }
+
+    return notifications.results.slice(0, 3).map(notification => `
+        <div class="d-flex align-items-start py-2">
+            <div class="flex-shrink-0">
+                <i class="bi bi-bell text-primary"></i>
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <p class="mb-1">${notification.message}</p>
+                <small class="text-muted">${new Date(notification.created_at).toLocaleDateString()}</small>
+            </div>
+        </div>
+    `).join('');
+}
+
+function renderDeadlines() {
+    const userApps = dashboardData.userApplications || {};
+    
+    // Handle both array and paginated response formats
+    const applications = Array.isArray(userApps) ? userApps : (userApps.results || []);
+    
+    if (applications.length === 0) {
+        return `
+            <div class="text-center py-3">
+                <i class="bi bi-calendar-x text-muted"></i>
+                <p class="text-muted mb-0">No upcoming deadlines</p>
+            </div>
+        `;
+    }
+    
+    // Mock deadlines - in real implementation, this would come from the backend
+    return `
+        <div class="d-flex align-items-start py-2">
+            <div class="flex-shrink-0">
+                <i class="bi bi-calendar-event text-warning"></i>
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <p class="mb-1">Document submission deadline</p>
+                <small class="text-muted">Due in 5 days</small>
+            </div>
+        </div>
+    `;
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'draft': 'secondary',
+        'submitted': 'info',
+        'under_review': 'warning',
+        'approved': 'success',
+        'rejected': 'danger',
+        'withdrawn': 'dark'
+    };
+    return colors[status] || 'secondary';
+}
+
+function initializeNavigation() {
+    // Ensure navigation is properly initialized
+    const accessToken = localStorage.getItem('seim_access_token');
+    if (accessToken) {
+        document.querySelectorAll('.authed-nav').forEach(el => el.style.display = 'flex');
+        document.querySelectorAll('.unauth-nav').forEach(el => el.style.display = 'none');
+        
+        // Set username in navigation
+        document.querySelectorAll('.user-username').forEach(el => {
+            if (el.tagName === 'SPAN') {
+                el.textContent = currentUser.full_name || currentUser.username;
+            }
+        });
+        
+        // Show admin nav if needed
+        if (currentUser.role === 'admin') {
+            document.querySelectorAll('.admin-nav').forEach(el => el.style.display = 'block');
+        }
+    }
+}
+
+async function refreshDashboard() {
+    const refreshBtn = document.querySelector('button[onclick="refreshDashboard()"]');
+    const originalText = refreshBtn.innerHTML;
+    
+    try {
+        refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise spin"></i> Refreshing...';
+        refreshBtn.disabled = true;
+        
+        await loadDashboardData();
+        renderDashboardComponents();
+        
+        // Show success message
+        showToast('Dashboard refreshed successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Failed to refresh dashboard:', error);
+        showToast('Failed to refresh dashboard', 'error');
+    } finally {
+        refreshBtn.innerHTML = originalText;
+        refreshBtn.disabled = false;
+    }
+}
+
+function retryLoadData() {
+    document.getElementById('error-display').style.display = 'none'; // Hide error display
+    document.getElementById('dashboard-loader').style.display = 'block'; // Show loader
+    document.getElementById('dashboard-content').style.display = 'none'; // Hide content
+    
+    // Re-initialize dashboard
+    initializeDashboard().then(() => {
+        document.getElementById('dashboard-loader').style.display = 'none';
+        document.getElementById('dashboard-content').style.display = 'block';
+    }).catch(error => {
+        console.error('Failed to retry loading data:', error);
+        document.getElementById('dashboard-loader').style.display = 'none';
+        document.getElementById('dashboard-content').style.display = 'block';
+        document.getElementById('error-display').style.display = 'block';
+    });
+}
+
+function showToast(message, type = 'info') {
+    // Simple toast implementation
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.remove();
+        }
+    }, 5000);
+}
+
+function retryOperation() {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('errorModal'));
+    modal.hide();
+    initializeDashboard();
+}
+
+// Add CSS for spinning icon
+const style = document.createElement('style');
+style.textContent = `
+    .spin {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+</script>
+<script src="{% static 'dist/main.js' %}"></script>
+{% endblock %}

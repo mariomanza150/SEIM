@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <!-- Critical CSS for immediate rendering -->
+        <style>
+            /* Basic critical styles for immediate rendering */
+            :root {
+                --primary-color: #0d6efd;
+                --secondary-color: #6c757d;
+                --success-color: #198754;
+                --danger-color: #dc3545;
+                --warning-color: #ffc107;
+                --info-color: #0dcaf0;
+                --light-color: #f8f9fa;
+                --dark-color: #212529;
+                --white: #ffffff;
+                --black: #000000;
+                
+                /* Theme Colors - Light Mode (Default) */
+                --bg-primary: var(--white);
+                --bg-secondary: var(--light-color);
+                --bg-tertiary: #e9ecef;
+                --text-primary: var(--dark-color);
+                --text-secondary: #6c757d;
+                --text-muted: #6c757d;
+                --border-color: #dee2e6;
+                --border-color-light: #e9ecef;
+                --shadow-color: rgba(0, 0, 0, 0.1);
+                --shadow-color-light: rgba(0, 0, 0, 0.05);
+            }
+            
+            /* Dark Mode Overrides */
+            [data-theme="dark"] {
+                --bg-primary: #212529;
+                --bg-secondary: #343a40;
+                --bg-tertiary: #495057;
+                --text-primary: #f8f9fa;
+                --text-secondary: #e9ecef;
+                --text-muted: #adb5bd;
+                --border-color: #495057;
+                --border-color-light: #6c757d;
+                --shadow-color: rgba(0, 0, 0, 0.3);
+                --shadow-color-light: rgba(0, 0, 0, 0.2);
+            }
+            
+            body {
+                margin: 0;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                line-height: 1.6;
+                color: var(--text-primary);
+                background-color: var(--bg-primary);
+                transition: color 0.3s ease, background-color 0.3s ease;
+            }
+            
+            .container-fluid {
+                padding: 1rem;
+            }
+            
+            /* Theme toggle button critical styles */
+            .theme-toggle {
+                color: var(--text-primary);
+                background-color: transparent;
+                border-color: var(--border-color);
+                transition: var(--transition-fast);
+            }
+            
+            .theme-toggle:hover {
+                color: var(--primary-color);
+                background-color: var(--primary-light);
+                border-color: var(--primary-color);
+            }
+            
+            .theme-toggle i {
+                color: inherit;
+            }
+        </style>
+        
+        <!-- Theme Initialization Script - Run before page load -->
+        <script>
+            // Immediate theme initialization to prevent flash
+            (function() {
+                try {
+                    // Get stored theme preference
+                    const storedTheme = localStorage.getItem('seim-theme');
+                    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    const theme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
+                    
+                    // Apply theme immediately to prevent flash
+                    if (theme === 'dark') {
+                        document.documentElement.setAttribute('data-theme', 'dark');
+                    } else {
+                        document.documentElement.removeAttribute('data-theme');
+                    }
+                    
+                    console.log('ThemeManager: Pre-initialized theme:', theme);
+                } catch (error) {
+                    console.warn('ThemeManager: Pre-initialization failed:', error);
+                }
+            })();
+        </script>
+        
+        <!-- Meta tags -->
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="Student Exchange Information Manager - Streamline your exchange program management">
+        <meta name="keywords" content="student exchange, program management, applications, documents">
+        <meta name="author" content="SEIM Team">
+        
+        <!-- Open Graph tags -->
+        <meta property="og:title" content="{% block og_title %}SEIM - Student Exchange Information Manager{% endblock %}">
+        <meta property="og:description" content="{% block og_description %}Streamline your student exchange program management{% endblock %}">
+        <meta property="og:type" content="website">
+        <meta property="og:url" content="{{ request.build_absolute_uri }}">
+        
+        <!-- Twitter Card tags -->
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{% block twitter_title %}SEIM - Student Exchange Information Manager{% endblock %}">
+        <meta name="twitter:description" content="{% block twitter_description %}Streamline your student exchange program management{% endblock %}">
+        
+        <!-- Page title -->
+        <title>{% block title %}SEIM - Student Exchange Information Manager{% endblock %}</title>
+        
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Bootstrap Icons -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+        
+        <!-- Custom CSS -->
+        {% load static %}
+        <link href="{% static 'css/main.css' %}" rel="stylesheet">
+        {% load js_reverse %}
+        {% block extra_css %}{% endblock %}
+        
+        <!-- Favicon -->
+        <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+        <link rel="apple-touch-icon" href="{% static 'favicon_io/apple-touch-icon.png' %}">
+        
+        <!-- CSRF Token for AJAX requests -->
+        <meta name="csrf-token" content="{{ csrf_token }}">
+        
+        <!-- Preload Critical Resources -->
+        <link rel="preload" href="{% static 'css/main.css' %}" as="style">
+        <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style">
+</head>
+<body class="{% if user.is_authenticated %}authenticated{% endif %}" {% if user.is_authenticated %}data-user-id="{{ user.id }}"{% endif %}>
+    <!-- Navigation -->
+    {% include 'components/navigation/navbar.html' %}
+
+    <!-- Main Content -->
+    <main class="container-fluid py-4" role="main">
+        <!-- Messages -->
+        {% include 'components/messages.html' %}
+        
+        <!-- Page Content -->
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    {% include 'components/footer.html' %}
+
+    <!-- jQuery (required for some legacy components like dynforms) -->
+    {% block jquery %}
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    {% endblock %}
+    
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Theme Manager -->
+    <script src="{% static 'js/theme-manager.js' %}"></script>
+    
+    <!-- Custom JS -->
+    {# Remove direct main.js and auth.js includes #}
+    {# <script src="{% static 'js/main.js' %}"></script> #}
+    {# <script src="{% static 'js/auth.js' %}"></script> #}
+    {# Dynamically include the correct Webpack bundle for auth pages #}
+    {% if request.resolver_match and request.resolver_match.url_name == 'login' %}
+      <script src="{% static 'dist/auth_entry.363836a3f6e7533568b7.js' %}"></script>
+    {% elif request.resolver_match and request.resolver_match.url_name == 'register' %}
+      <script src="{% static 'dist/auth_entry.363836a3f6e7533568b7.js' %}"></script>
+    {% elif request.resolver_match and request.resolver_match.url_name == 'password_reset' %}
+      <script src="{% static 'dist/auth_entry.363836a3f6e7533568b7.js' %}"></script>
+    {% endif %}
+    <script src="{% url 'js_reverse' %}"></script>
+    {% block pre_js %}{% endblock %}
+    {% block extra_js %}
+    {% endblock %}
+<script>
+// Show/hide nav based on JWT auth state or Django session
+document.addEventListener('DOMContentLoaded', function() {
+    // Ensure logout link works
+    const logoutLink = document.getElementById('logoutLink');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            // Try to call JWT logout API if we have a refresh token
+            const refreshToken = localStorage.getItem('seim_refresh_token');
+            if (refreshToken) {
+                try {
+                    await fetch(window.API_ENDPOINTS.logout, { 
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Bearer ' + accessToken
+                        },
+                        body: JSON.stringify({ refresh: refreshToken })
+                    });
+                } catch (error) {
+                    console.warn('JWT logout API call failed:', error);
+                }
+            }
+            
+            // Clear JWT tokens
+            localStorage.removeItem('seim_access_token');
+            localStorage.removeItem('seim_refresh_token');
+            
+            // Redirect to Django logout view
+            window.location.href = '/logout/';
+        });
+    }
+    
+    const accessToken = localStorage.getItem('seim_access_token');
+    
+    // Check if user is authenticated via JWT or Django session
+    const isAuthenticated = accessToken || document.body.classList.contains('authenticated') || 
+                           document.querySelector('[data-user-id]') !== null;
+    
+    if (isAuthenticated) {
+        document.querySelectorAll('.authed-nav').forEach(el => el.style.display = 'flex');
+        document.querySelectorAll('.unauth-nav').forEach(el => el.style.display = 'none');
+        
+        // Redirect authenticated users away from home page to dashboard
+        const currentPath = window.location.pathname;
+        if (currentPath === '/' || currentPath === '/home/') {
+            window.location.href = '/dashboard/';
+            return;
+        }
+        
+        // If we have JWT token, fetch user info and show admin nav if needed
+        if (accessToken) {
+            fetch('/api/accounts/profile/', { headers: { 'Authorization': 'Bearer ' + accessToken } })
+                .then(r => {
+                    if (r.ok) {
+                        return r.json();
+                    } else if (r.status === 401) {
+                        // Only clear tokens and redirect on actual auth failure
+                        localStorage.removeItem('seim_access_token');
+                        localStorage.removeItem('seim_refresh_token');
+                        // Only redirect if we're not already on login page
+                        if (window.location.pathname !== '/login/') {
+                            window.location.href = '/login/';
+                        }
+                        throw new Error('Authentication failed');
+                    } else {
+                        // For other errors, just log and continue
+                        console.warn('Failed to load user profile:', r.status);
+                        return { username: 'User', role: 'student' };
+                    }
+                })
+                .then(user => {
+                    // Display full name if available, otherwise username
+                    const displayName = (user.first_name && user.last_name) 
+                        ? `${user.first_name} ${user.last_name}` 
+                        : user.username;
+                    document.querySelectorAll('.user-username').forEach(el => el.textContent = displayName);
+                    if (user.role === 'admin') {
+                        document.querySelectorAll('.admin-nav').forEach(el => el.style.display = 'block');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading user profile:', error);
+                    // Don't redirect unless it's an auth error
+                    if (error.message !== 'Authentication failed') {
+                        document.querySelectorAll('.user-username').forEach(el => el.textContent = 'User');
+                    }
+                });
+        } else {
+            // For Django session auth, try to get user info from the page
+            const usernameElement = document.querySelector('.user-username');
+            if (usernameElement && usernameElement.textContent.trim()) {
+                // Username is already populated by Django template
+                console.log('Using Django session authentication');
+            } else {
+                // Fallback: try to get user info from Django context
+                document.querySelectorAll('.user-username').forEach(el => el.textContent = 'User');
+            }
+        }
+    } else {
+        document.querySelectorAll('.authed-nav').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('.unauth-nav').forEach(el => el.style.display = 'flex');
+    }
+    // Check for logout signal and clear JWT tokens
+    const clearJwtTokens = document.cookie.split(';').some(cookie => 
+        cookie.trim().startsWith('clear_jwt_tokens=')
+    );
+    if (clearJwtTokens) {
+        localStorage.removeItem('seim_access_token');
+        localStorage.removeItem('seim_refresh_token');
+        // Clear the cookie
+        document.cookie = 'clear_jwt_tokens=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    }
+    
+    // Theme manager fallback
+    setTimeout(function() {
+        if (!window.themeManager) {
+            console.warn('ThemeManager: Fallback initialization');
+            // Force re-initialization if theme manager failed to load
+            const script = document.createElement('script');
+            script.src = '{% static "js/theme-manager.js" %}';
+            document.head.appendChild(script);
+        }
+    }, 2000);
+});
+</script>
+    
+    <!-- API Configuration -->
+    <script>
+        // API Endpoints Configuration
+        window.API_ENDPOINTS = {
+            // Authentication
+            token: '/api/accounts/login/',
+            refresh: '{% url "token_refresh" %}',
+            register: '{% url "accounts:register" %}',
+            passwordReset: '{% url "accounts:password-reset" %}',
+            logout: '{% url "accounts:logout" %}',
+            
+            // Exchange
+            programs: '/api/programs/',
+            applications: '/api/applications/',
+            applicationStatuses: '/api/application-statuses/',
+            comments: '/api/comments/',
+            timelineEvents: '/api/timeline-events/',
+            dynamicForms: '/api/dynamic-forms/',
+            
+            // Documents
+            documentTypes: '/api/document-types/',
+            documents: '/api/documents/',
+            documentValidations: '/api/document-validations/',
+            documentResubmissions: '/api/document-resubmissions/',
+            documentComments: '/api/document-comments/',
+            
+            // Notifications
+            notificationTypes: '/api/notification-types/',
+            notifications: '/api/notifications/',
+            notificationPreferences: '/api/notification-preferences/',
+            
+            // Analytics
+            reports: '/api/reports/',
+            metrics: '/api/metrics/',
+            dashboardConfigs: '/api/dashboard-configs/'
+        };
+        
+        // JWT Token Management
+        const JWT_ACCESS_TOKEN_KEY = 'seim_access_token';
+        const JWT_REFRESH_TOKEN_KEY = 'seim_refresh_token';
+        
+        // Get stored tokens
+        function getAccessToken() {
+            return localStorage.getItem(JWT_ACCESS_TOKEN_KEY);
+        }
+        
+        function getRefreshToken() {
+            return localStorage.getItem(JWT_REFRESH_TOKEN_KEY);
+        }
+        
+        // Store tokens
+        function storeTokens(accessToken, refreshToken) {
+            localStorage.setItem(JWT_ACCESS_TOKEN_KEY, accessToken);
+            localStorage.setItem(JWT_REFRESH_TOKEN_KEY, refreshToken);
+        }
+        
+        // Clear tokens
+        function clearTokens() {
+            localStorage.removeItem(JWT_ACCESS_TOKEN_KEY);
+            localStorage.removeItem(JWT_REFRESH_TOKEN_KEY);
+        }
+        
+        // Check if user is authenticated
+        function isAuthenticated() {
+            return getAccessToken() !== null;
+        }
+        
+        // Redirect to login if not authenticated
+        function requireAuth() {
+            if (!isAuthenticated()) {
+                window.location.href = '{% url "frontend:login" %}';
+            }
+        }
+    </script>
+</body>
+</html> 

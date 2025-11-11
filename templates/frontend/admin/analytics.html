@@ -1,0 +1,674 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics - SEIM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-graph-up"></i> Analytics & Reports
+                    </h1>
+                    <p class="text-muted mb-0">Comprehensive system analytics and reporting</p>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="refreshAnalytics()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="exportReport()">
+                        <i class="bi bi-download"></i> Export
+                    </button>
+                    <a href="{% url 'frontend:admin_dashboard' %}" class="btn btn-outline-info">
+                        <i class="bi bi-speedometer2"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="dateRangeForm" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" 
+                                   value="{{ start_date|default:'' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" 
+                                   value="{{ end_date|default:'' }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="report_type" class="form-label">Report Type</label>
+                            <select class="form-select" id="report_type" name="report_type">
+                                <option value="overview">Overview</option>
+                                <option value="applications">Applications</option>
+                                <option value="programs">Programs</option>
+                                <option value="users">Users</option>
+                                <option value="documents">Documents</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-search"></i> Generate Report
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="total-applications">-</h4>
+                            <p class="card-text">Total Applications</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-file-earmark-text display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="approval-rate">-</h4>
+                            <p class="card-text">Approval Rate</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-check-circle display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="avg-processing-time">-</h4>
+                            <p class="card-text">Avg Processing Time</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-clock display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="active-programs">-</h4>
+                            <p class="card-text">Active Programs</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-globe display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row mb-4">
+        <!-- Application Status Chart -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-pie-chart"></i> Application Status Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="applicationStatusChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Applications Trend -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-graph-up"></i> Monthly Applications Trend
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="monthlyTrendChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Program Performance -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-trophy"></i> Program Performance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="programPerformanceTable">
+                            <thead>
+                                <tr>
+                                    <th>Program</th>
+                                    <th>Applications</th>
+                                    <th>Approval Rate</th>
+                                    <th>Avg Processing Time</th>
+                                    <th>Popularity Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading program performance data...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Activity and Demographics -->
+    <div class="row mb-4">
+        <!-- User Activity -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-people"></i> User Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="userActivityChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demographics -->
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-pie-chart-fill"></i> User Demographics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="demographicsChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Reports -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-table"></i> Detailed Reports
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-file-earmark-text display-4 text-primary"></i>
+                                    <h5 class="card-title mt-3">Applications Report</h5>
+                                    <p class="card-text">Detailed analysis of application trends and patterns</p>
+                                    <button type="button" class="btn btn-primary" onclick="generateReport('applications')">
+                                        Generate Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-globe display-4 text-success"></i>
+                                    <h5 class="card-title mt-3">Programs Report</h5>
+                                    <p class="card-text">Performance analysis of exchange programs</p>
+                                    <button type="button" class="btn btn-success" onclick="generateReport('programs')">
+                                        Generate Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-people display-4 text-info"></i>
+                                    <h5 class="card-title mt-3">Users Report</h5>
+                                    <p class="card-text">User engagement and activity analysis</p>
+                                    <button type="button" class="btn btn-info" onclick="generateReport('users')">
+                                        Generate Report
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report Modal -->
+<div class="modal fade" id="reportModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="reportModalTitle">
+                    <i class="bi bi-file-earmark-text"></i> Report
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="reportContent">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Generating report...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="downloadReport()">
+                    <i class="bi bi-download"></i> Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let charts = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadAnalytics();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    document.getElementById('dateRangeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        loadAnalytics();
+    });
+}
+
+async function loadAnalytics() {
+    const formData = new FormData(document.getElementById('dateRangeForm'));
+    const params = new URLSearchParams(formData);
+    
+    try {
+        const response = await fetch(`/api/analytics/dashboard/?${params}`, {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            updateMetrics(data);
+            renderCharts(data);
+            renderProgramPerformance(data.program_performance);
+        }
+    } catch (error) {
+        console.error('Error loading analytics:', error);
+        showToast('Failed to load analytics data', 'error');
+    }
+}
+
+function updateMetrics(data) {
+    if (data.metrics) {
+        document.getElementById('total-applications').textContent = data.metrics.total_applications || 0;
+        document.getElementById('approval-rate').textContent = (data.metrics.approval_rate || 0) + '%';
+        document.getElementById('avg-processing-time').textContent = (data.metrics.avg_processing_time || 0) + ' days';
+        document.getElementById('active-programs').textContent = data.metrics.active_programs || 0;
+    }
+}
+
+function renderCharts(data) {
+    // Application Status Chart
+    if (data.application_status) {
+        renderApplicationStatusChart(data.application_status);
+    }
+    
+    // Monthly Trend Chart
+    if (data.monthly_trend) {
+        renderMonthlyTrendChart(data.monthly_trend);
+    }
+    
+    // User Activity Chart
+    if (data.user_activity) {
+        renderUserActivityChart(data.user_activity);
+    }
+    
+    // Demographics Chart
+    if (data.demographics) {
+        renderDemographicsChart(data.demographics);
+    }
+}
+
+function renderApplicationStatusChart(data) {
+    const ctx = document.getElementById('applicationStatusChart').getContext('2d');
+    
+    if (charts.applicationStatus) {
+        charts.applicationStatus.destroy();
+    }
+    
+    charts.applicationStatus = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(data),
+            datasets: [{
+                data: Object.values(data),
+                backgroundColor: [
+                    '#0d6efd', // Primary
+                    '#198754', // Success
+                    '#ffc107', // Warning
+                    '#dc3545', // Danger
+                    '#6c757d', // Secondary
+                    '#0dcaf0'  // Info
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function renderMonthlyTrendChart(data) {
+    const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+    
+    if (charts.monthlyTrend) {
+        charts.monthlyTrend.destroy();
+    }
+    
+    charts.monthlyTrend = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: data.labels || [],
+            datasets: [{
+                label: 'Applications',
+                data: data.values || [],
+                borderColor: '#0d6efd',
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function renderUserActivityChart(data) {
+    const ctx = document.getElementById('userActivityChart').getContext('2d');
+    
+    if (charts.userActivity) {
+        charts.userActivity.destroy();
+    }
+    
+    charts.userActivity = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.labels || [],
+            datasets: [{
+                label: 'Active Users',
+                data: data.values || [],
+                backgroundColor: '#198754'
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+function renderDemographicsChart(data) {
+    const ctx = document.getElementById('demographicsChart').getContext('2d');
+    
+    if (charts.demographics) {
+        charts.demographics.destroy();
+    }
+    
+    charts.demographics = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: Object.keys(data),
+            datasets: [{
+                data: Object.values(data),
+                backgroundColor: [
+                    '#0d6efd',
+                    '#198754',
+                    '#ffc107',
+                    '#dc3545',
+                    '#6c757d'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function renderProgramPerformance(data) {
+    const tbody = document.querySelector('#programPerformanceTable tbody');
+    
+    if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No program performance data available</td></tr>';
+        return;
+    }
+    
+    let html = '';
+    data.forEach(program => {
+        html += `
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-globe me-2"></i>
+                        <div>
+                            <div class="fw-bold">${program.name}</div>
+                            <small class="text-muted">${program.institution}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-primary">${program.applications}</span>
+                </td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: ${program.approval_rate}%">
+                            ${program.approval_rate}%
+                        </div>
+                    </div>
+                </td>
+                <td>${program.avg_processing_time} days</td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                            <div class="progress-bar bg-warning" role="progressbar" 
+                                 style="width: ${program.popularity_score}%"></div>
+                        </div>
+                        <small>${program.popularity_score}%</small>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tbody.innerHTML = html;
+}
+
+function refreshAnalytics() {
+    loadAnalytics();
+    showToast('Analytics refreshed!', 'success');
+}
+
+function exportReport() {
+    const formData = new FormData(document.getElementById('dateRangeForm'));
+    const params = new URLSearchParams(formData);
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = `/api/analytics/export/?${params}`;
+    link.download = 'analytics-report.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast('Report exported successfully!', 'success');
+}
+
+function generateReport(type) {
+    const modal = new bootstrap.Modal(document.getElementById('reportModal'));
+    modal.show();
+    
+    document.getElementById('reportModalTitle').innerHTML = 
+        `<i class="bi bi-file-earmark-text"></i> ${type.charAt(0).toUpperCase() + type.slice(1)} Report`;
+    
+    loadDetailedReport(type);
+}
+
+async function loadDetailedReport(type) {
+    const formData = new FormData(document.getElementById('dateRangeForm'));
+    const params = new URLSearchParams(formData);
+    
+    try {
+        const response = await fetch(`/api/analytics/reports/${type}/?${params}`, {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const report = await response.json();
+            renderDetailedReport(report);
+        } else {
+            document.getElementById('reportContent').innerHTML = 
+                '<p class="text-muted text-center">Unable to generate report.</p>';
+        }
+    } catch (error) {
+        console.error('Error loading detailed report:', error);
+        document.getElementById('reportContent').innerHTML = 
+            '<p class="text-muted text-center">Unable to generate report.</p>';
+    }
+}
+
+function renderDetailedReport(report) {
+    const container = document.getElementById('reportContent');
+    
+    let html = `
+        <div class="row mb-4">
+            <div class="col-12">
+                <h6>Report Summary</h6>
+                <p class="text-muted">${report.summary || 'No summary available'}</p>
+            </div>
+        </div>
+    `;
+    
+    if (report.data && report.data.length > 0) {
+        html += `
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            ${Object.keys(report.data[0]).map(key => `<th>${key.replace(/_/g, ' ').toUpperCase()}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${report.data.map(row => `
+                            <tr>
+                                ${Object.values(row).map(value => `<td>${value}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    } else {
+        html += '<p class="text-muted text-center">No data available for this report.</p>';
+    }
+    
+    container.innerHTML = html;
+}
+
+function downloadReport() {
+    // Implementation for downloading PDF report
+    showToast('PDF download feature coming soon!', 'info');
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% block page-title %}Form Designer{% endblock %} - SEIM{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'dynforms/dynforms.min.css' %}" type="text/css"/>
+    <link rel="stylesheet" href="{% static 'dynforms/builder.min.css' %}" type="text/css"/>
+    {% block page-styles %}{% endblock %}
+    <style>
+        /* Essential layout CSS - dynforms needs these for proper rendering */
+        body.dynforms-page main.container-fluid {
+            padding: 0 !important;
+            max-width: 100% !important;
+        }
+        
+        body.dynforms-page footer {
+            display: none;
+        }
+        
+        /* Dynforms builder layout - essential for rendering */
+        #df-builder {
+            position: fixed;
+            top: 56px; /* Below navbar */
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+        }
+        
+        #df-sidebar {
+            position: absolute;
+            left: 0;
+            top: 60px;
+            bottom: 0;
+            width: 300px;
+            overflow-y: auto;
+        }
+        
+        #df-preview {
+            position: absolute;
+            left: 300px;
+            top: 60px;
+            right: 0;
+            bottom: 0;
+            overflow-y: auto;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    {# Map dynforms 'body' block to our 'content' block #}
+    <script>
+        document.body.classList.add('dynforms-page');
+    </script>
+    {% block body %}{% endblock %}
+{% endblock %}
+
+{% block pre_js %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.10.4/jquery-ui.min.js" integrity="sha512-BI1itUvyiWbbZ446/8IOccwMPB/xobCTyQTS0r1+k8Pq1VPT3uIJKNCoMH12rKk18J9sH33xQNve7srB0IGYlg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-form@3.50.0/jquery.form.min.js"></script>
+    <script src="{% static 'dynforms/dynforms.min.js' %}"></script>
+    <script src="{% static 'dynforms/df-toasts.min.js' %}"></script>
+    {% block page-scripts %}{% endblock %}
+{% endblock %}
+

@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - SEIM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-person-circle"></i> My Profile
+                    </h1>
+                    <p class="text-muted mb-0">Manage your personal information and preferences</p>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="editProfile()">
+                        <i class="bi bi-pencil"></i> Edit Profile
+                    </button>
+                    <a href="{% url 'frontend:settings' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-gear"></i> Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Information -->
+    <div class="row">
+        <!-- Profile Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="profile-avatar">
+                            <i class="bi bi-person-circle display-1 text-primary"></i>
+                        </div>
+                    </div>
+                    <h4 class="card-title">{{ user.get_full_name|default:user.username }}</h4>
+                    <p class="text-muted">{{ user.email }}</p>
+                    
+                    <div class="mb-3">
+                        <span class="badge bg-primary">{{ user.role|title }}</span>
+                        {% if user.is_staff %}
+                            <span class="badge bg-warning">Staff</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="text-muted small">
+                        <p class="mb-1">Member since {{ user.date_joined|date:"M d, Y" }}</p>
+                        <p class="mb-0">Last login: {{ user.last_login|date:"M d, Y H:i"|default:"Never" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Details -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-info-circle"></i> Personal Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Full Name</label>
+                            <p class="form-control-plaintext">{{ user.get_full_name|default:"Not provided" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Email Address</label>
+                            <p class="form-control-plaintext">{{ user.email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Username</label>
+                            <p class="form-control-plaintext">{{ user.username }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Role</label>
+                            <p class="form-control-plaintext">
+                                <span class="badge bg-primary">{{ user.role|title }}</span>
+                            </p>
+                        </div>
+                        {% if user.profile and user.role == "student" %}
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Student ID</label>
+                                <p class="form-control-plaintext">{{ user.profile.student_id|default:"Not provided" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">GPA</label>
+                                <p class="form-control-plaintext">{{ user.profile.gpa|default:"Not provided" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Language</label>
+                                <p class="form-control-plaintext">{{ user.profile.language|default:"Not provided" }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-graph-up"></i> My Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3" id="profile-stats">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="display-6 text-primary" id="total-applications">-</div>
+                                <small class="text-muted">Total Applications</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="display-6 text-success" id="approved-applications">-</div>
+                                <small class="text-muted">Approved</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="display-6 text-warning" id="pending-applications">-</div>
+                                <small class="text-muted">Pending</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <div class="display-6 text-info" id="total-documents">-</div>
+                                <small class="text-muted">Documents</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clock-history"></i> Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="recent-activity-list">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading recent activity...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   value="{{ user.first_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   value="{{ user.last_name }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ user.email }}" required>
+                        </div>
+                        {% if user.profile %}
+                            <div class="col-md-6">
+                                <label for="student_id" class="form-label">Student ID</label>
+                                <input type="text" class="form-control" id="student_id" name="student_id" 
+                                       value="{{ user.profile.student_id }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="gpa" class="form-label">GPA</label>
+                                <input type="number" class="form-control" id="gpa" name="gpa" 
+                                       value="{{ user.profile.gpa }}" step="0.01" min="0" max="4">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="language" class="form-label">Language</label>
+                                <input type="text" class="form-control" id="language" name="language" 
+                                       value="{{ user.profile.language }}">
+                            </div>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveProfile()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadProfileStats();
+    loadRecentActivity();
+});
+
+async function loadProfileStats() {
+    try {
+        const response = await fetch('/api/accounts/profile/stats/', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const stats = await response.json();
+            
+            document.getElementById('total-applications').textContent = stats.total_applications || 0;
+            document.getElementById('approved-applications').textContent = stats.approved_applications || 0;
+            document.getElementById('pending-applications').textContent = stats.pending_applications || 0;
+            document.getElementById('total-documents').textContent = stats.total_documents || 0;
+        } else {
+            console.error('Failed to load profile stats');
+        }
+    } catch (error) {
+        console.error('Error loading profile stats:', error);
+    }
+}
+
+async function loadRecentActivity() {
+    try {
+        const response = await fetch('/api/accounts/profile/activity/', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const activities = await response.json();
+            const activityList = document.getElementById('recent-activity-list');
+            
+            if (activities.length === 0) {
+                activityList.innerHTML = '<p class="text-muted text-center">No recent activity</p>';
+                return;
+            }
+            
+            const activityHtml = activities.map(activity => `
+                <div class="activity-item d-flex align-items-start mb-3">
+                    <div class="activity-icon me-3">
+                        <i class="bi bi-${getActivityIcon(activity.type)} text-primary"></i>
+                    </div>
+                    <div class="activity-content flex-grow-1">
+                        <div class="activity-title">${activity.title}</div>
+                        <div class="activity-description text-muted">${activity.description}</div>
+                        <div class="activity-time text-muted small">${formatDate(activity.created_at)}</div>
+                    </div>
+                </div>
+            `).join('');
+            
+            activityList.innerHTML = activityHtml;
+        } else {
+            document.getElementById('recent-activity-list').innerHTML = 
+                '<p class="text-muted text-center">Failed to load recent activity</p>';
+        }
+    } catch (error) {
+        console.error('Error loading recent activity:', error);
+        document.getElementById('recent-activity-list').innerHTML = 
+            '<p class="text-muted text-center">Failed to load recent activity</p>';
+    }
+}
+
+function getActivityIcon(type) {
+    const icons = {
+        'application_created': 'file-earmark-plus',
+        'application_submitted': 'send',
+        'application_approved': 'check-circle',
+        'application_rejected': 'x-circle',
+        'document_uploaded': 'upload',
+        'comment_added': 'chat',
+        'profile_updated': 'person',
+        'login': 'box-arrow-in-right'
+    };
+    return icons[type] || 'circle';
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
+    
+    if (diffInHours < 1) {
+        return 'Just now';
+    } else if (diffInHours < 24) {
+        return `${Math.floor(diffInHours)} hours ago`;
+    } else if (diffInHours < 48) {
+        return 'Yesterday';
+    } else {
+        return date.toLocaleDateString();
+    }
+}
+
+function editProfile() {
+    const modal = new bootstrap.Modal(document.getElementById('editProfileModal'));
+    modal.show();
+}
+
+async function saveProfile() {
+    const form = document.getElementById('editProfileForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    const submitBtn = document.querySelector('#editProfileModal .btn-primary');
+    setLoadingState(submitBtn, true, 'Saving...');
+    
+    try {
+        const response = await fetch('/api/accounts/profile/update/', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token'),
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(data)
+        });
+        
+        if (response.ok) {
+            showSuccessAlert('Profile Updated!', 'Your profile has been updated successfully.');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editProfileModal'));
+            modal.hide();
+            location.reload(); // Refresh to show updated data
+        } else {
+            const error = await response.json();
+            showErrorAlert('Update Failed', error.message || 'Failed to update profile');
+        }
+    } catch (error) {
+        showErrorAlert('Error', 'Failed to update profile. Please try again.');
+    } finally {
+        setLoadingState(submitBtn, false);
+    }
+}
+</script>
+
+<style>
+.activity-item {
+    padding: 1rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.activity-item:hover {
+    background-color: #f8f9fa;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e7f1ff;
+    border-radius: 50%;
+}
+
+.activity-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.activity-description {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.activity-time {
+    font-size: 0.8rem;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e7f1ff;
+    border-radius: 50%;
+}
+</style>
+{% endblock %} 

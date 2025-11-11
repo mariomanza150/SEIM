@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if application %}Edit Application{% else %}Create Application{% endif %} - SEIM{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-file-earmark-text"></i> 
+                        {% if application %}Edit Application{% else %}Create Application{% endif %}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {% if application %}
+                            Update your application details
+                        {% else %}
+                            Submit your application for an exchange program
+                        {% endif %}
+                    </p>
+                </div>
+                <a href="{% url 'frontend:applications' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Applications
+                </a>
+            </div>
+
+            <!-- Application Form -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pencil-square"></i> Application Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="applicationForm" method="post" enctype="multipart/form-data"
+                          data-is-edit="{% if application %}true{% else %}false{% endif %}"
+                          data-application-id="{% if application %}{{ application.id }}{% endif %}">
+                        {% csrf_token %}
+                        
+                        <!-- Program Selection -->
+                        <div class="mb-4">
+                            <label for="program" class="form-label">
+                                <i class="bi bi-calendar-event"></i> Exchange Program
+                            </label>
+                            <select class="form-select" id="program" name="program" required>
+                                <option value="">Select a program...</option>
+                                {% if programs %}
+                                    {% for program in programs %}
+                                        <option value="{{ program.id }}" 
+                                                {% if application.program.id == program.id %}selected{% endif %}
+                                                data-requirements="{{ program.language_requirements|default:'' }}"
+                                                data-min-gpa="{{ program.min_gpa }}"
+                                                data-deadline="{{ program.application_deadline|date:'Y-m-d' }}">
+                                            {{ program.name }} - {{ program.institution }} ({{ program.country }})
+                                        </option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                            <div class="form-text">Choose the exchange program you want to apply for</div>
+                        </div>
+
+                        <!-- Program Requirements Info -->
+                        <div id="programRequirements" class="alert alert-info d-none">
+                            <h6><i class="bi bi-info-circle"></i> Program Requirements</h6>
+                            <div id="requirementsContent"></div>
+                        </div>
+
+                        <!-- Personal Statement -->
+                        <div class="mb-4">
+                            <label for="personal_statement" class="form-label">
+                                <i class="bi bi-chat-text"></i> Personal Statement
+                            </label>
+                            <textarea class="form-control" 
+                                      id="personal_statement" 
+                                      name="personal_statement" 
+                                      rows="6" 
+                                      required
+                                      placeholder="Describe your motivation for participating in this exchange program, your academic goals, and how this experience will benefit your studies and future career...">{{ application.personal_statement|default:'' }}</textarea>
+                            <div class="form-text">Explain your motivation and goals for this exchange program (500-1000 words)</div>
+                        </div>
+
+                        <!-- Academic Background -->
+                        <div class="mb-4">
+                            <label for="academic_background" class="form-label">
+                                <i class="bi bi-mortarboard"></i> Academic Background
+                            </label>
+                            <textarea class="form-control" 
+                                      id="academic_background" 
+                                      name="academic_background" 
+                                      rows="4" 
+                                      required
+                                      placeholder="Describe your current academic standing, relevant coursework, research interests, and any academic achievements...">{{ application.academic_background|default:'' }}</textarea>
+                            <div class="form-text">Provide details about your academic background and achievements</div>
+                        </div>
+
+                        <!-- Language Proficiency -->
+                        <div class="mb-4">
+                            <label for="language_proficiency" class="form-label">
+                                <i class="bi bi-translate"></i> Language Proficiency
+                            </label>
+                            <textarea class="form-control" 
+                                      id="language_proficiency" 
+                                      name="language_proficiency" 
+                                      rows="3" 
+                                      required
+                                      placeholder="Describe your proficiency in the required language(s) for this program...">{{ application.language_proficiency|default:'' }}</textarea>
+                            <div class="form-text">Explain your language skills and any certifications you have</div>
+                        </div>
+
+                        <!-- Financial Plan -->
+                        <div class="mb-4">
+                            <label for="financial_plan" class="form-label">
+                                <i class="bi bi-currency-dollar"></i> Financial Plan
+                            </label>
+                            <textarea class="form-control" 
+                                      id="financial_plan" 
+                                      name="financial_plan" 
+                                      rows="3" 
+                                      required
+                                      placeholder="Describe how you plan to finance your exchange program...">{{ application.financial_plan|default:'' }}</textarea>
+                            <div class="form-text">Explain your financial resources and funding plan for the exchange</div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="mb-4">
+                            <label for="additional_info" class="form-label">
+                                <i class="bi bi-plus-circle"></i> Additional Information
+                            </label>
+                            <textarea class="form-control" 
+                                      id="additional_info" 
+                                      name="additional_info" 
+                                      rows="3" 
+                                      placeholder="Any additional information you'd like to share...">{{ application.additional_info|default:'' }}</textarea>
+                            <div class="form-text">Optional: Any other relevant information about your application</div>
+                        </div>
+
+                        <!-- Dynamic Form Fields (if program has a custom form) -->
+                        {% load form_tags %}
+                        {% if form_type %}
+                            {% include 'includes/dynamic_form_fields.html' with form_type=form_type form_data=form_data %}
+                        {% endif %}
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'frontend:applications' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="bi bi-check-circle"></i> 
+                                {% if application %}Update Application{% else %}Submit Application{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include dynamic forms handler -->
+<script src="{% static 'js/modules/dynamic-forms.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('applicationForm');
+    const programSelect = document.getElementById('program');
+    const requirementsDiv = document.getElementById('programRequirements');
+    const requirementsContent = document.getElementById('requirementsContent');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Show program requirements when program is selected
+    programSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.value) {
+            const requirements = selectedOption.dataset.requirements;
+            const minGpa = selectedOption.dataset.minGpa;
+            const deadline = selectedOption.dataset.deadline;
+            
+            let content = `<p><strong>Minimum GPA:</strong> ${minGpa}</p>`;
+            content += `<p><strong>Application Deadline:</strong> ${new Date(deadline).toLocaleDateString()}</p>`;
+            
+            if (requirements) {
+                content += `<p><strong>Language Requirements:</strong> ${requirements}</p>`;
+            }
+            
+            requirementsContent.innerHTML = content;
+            requirementsDiv.classList.remove('d-none');
+        } else {
+            requirementsDiv.classList.add('d-none');
+        }
+    });
+
+    // Handle form submission via AJAX
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Show loading state
+        setLoadingState(submitBtn, true, 'Submitting...');
+        
+        try {
+            const formData = new FormData(form);
+            const isEdit = form.dataset.isEdit === 'true';
+            const applicationId = form.dataset.applicationId;
+            
+            let url, method;
+            if (isEdit && applicationId) {
+                url = Urls['api:application-detail'](applicationId);
+                method = 'PUT';
+            } else {
+                url = Urls['api:application-list']();
+                method = 'POST';
+            }
+            
+            const data = await apiRequest(url, {
+                method: method,
+                body: formData
+            });
+            
+            // Show success message
+            const successMessage = isEdit ? 
+                'Your application has been updated successfully.' : 
+                'Your application has been submitted successfully.';
+            showSuccessAlert('Application Submitted!', successMessage);
+            
+            // Redirect to application detail or list
+            setTimeout(() => {
+                if (data.id) {
+                    window.location.href = Urls['frontend:application_detail'](data.id);
+                } else {
+                    window.location.href = Urls['frontend:applications']();
+                }
+            }, 2000);
+            
+        } catch (error) {
+            let title = 'Error';
+            let message = 'Failed to submit application. Please try again.';
+            
+            if (error.title) title = error.title;
+            if (error.message) message = error.message;
+            
+            showErrorAlert(title, message);
+        } finally {
+            setLoadingState(submitBtn, false);
+        }
+    });
+});
+</script>
+{% endblock %} 

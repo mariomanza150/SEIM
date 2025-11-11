@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - SEIM{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-person-plus"></i> Create Account
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form id="registerForm" method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Email Field -->
+                        <div class="mb-3">
+                            <label for="email" class="form-label">
+                                <i class="bi bi-envelope"></i> Institutional Email
+                            </label>
+                            <input type="email" 
+                                   class="form-control" 
+                                   id="email" 
+                                   name="email" 
+                                   required 
+                                   autocomplete="email"
+                                   placeholder="Enter your institutional email">
+                            <div class="form-text">Must be a valid institutional email address</div>
+                        </div>
+                        
+                        <!-- Username Field -->
+                        <div class="mb-3">
+                            <label for="username" class="form-label">
+                                <i class="bi bi-person"></i> Username
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="username" 
+                                   name="username" 
+                                   required 
+                                   autocomplete="username"
+                                   placeholder="Choose a username">
+                            <div class="form-text">Letters, numbers, and underscores only</div>
+                        </div>
+                        
+                        <!-- Password Field -->
+                        <div class="mb-3">
+                            <label for="password" class="form-label">
+                                <i class="bi bi-lock"></i> Password
+                            </label>
+                            <div class="input-group">
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password" 
+                                       name="password" 
+                                       required 
+                                       autocomplete="new-password"
+                                       placeholder="Create a strong password">
+                                <button class="btn btn-outline-secondary" 
+                                        type="button" 
+                                        id="togglePassword">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Password Strength Indicator -->
+                            <div class="mt-2">
+                                <div class="progress" style="height: 5px;">
+                                    <div class="progress-bar" id="passwordStrength" role="progressbar" style="width: 0%"></div>
+                                </div>
+                                <small class="text-muted" id="passwordFeedback">Password strength indicator</small>
+                            </div>
+                            
+                            <!-- Password Requirements -->
+                            <div class="mt-2">
+                                <small class="text-muted">Password must contain:</small>
+                                <ul class="list-unstyled small text-muted">
+                                    <li id="req-length"><i class="bi bi-x-circle text-danger"></i> At least 8 characters</li>
+                                    <li id="req-uppercase"><i class="bi bi-x-circle text-danger"></i> One uppercase letter</li>
+                                    <li id="req-lowercase"><i class="bi bi-x-circle text-danger"></i> One lowercase letter</li>
+                                    <li id="req-number"><i class="bi bi-x-circle text-danger"></i> One number</li>
+                                    <li id="req-special"><i class="bi bi-x-circle text-danger"></i> One special character</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- Confirm Password Field -->
+                        <div class="mb-3">
+                            <label for="confirm_password" class="form-label">
+                                <i class="bi bi-lock-fill"></i> Confirm Password
+                            </label>
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="confirm_password" 
+                                   name="confirm_password" 
+                                   required 
+                                   autocomplete="new-password"
+                                   placeholder="Confirm your password">
+                            <div class="form-text" id="passwordMatch"></div>
+                        </div>
+                        
+                        <!-- Terms and Conditions -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="agreeTerms" name="agree_terms" required>
+                            <label class="form-check-label" for="agreeTerms">
+                                I agree to the <a href="#" class="text-decoration-none">Terms of Service</a> and 
+                                <a href="#" class="text-decoration-none">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                                <i class="bi bi-person-plus"></i> Create Account
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center bg-light">
+                    <p class="mb-0">
+                        Already have an account? 
+                        <a href="{% url 'frontend:login' %}" class="text-decoration-none">
+                            <i class="bi bi-box-arrow-in-right"></i> Sign in here
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirm_password');
+    const submitBtn = document.getElementById('submitBtn');
+    const passwordStrength = document.getElementById('passwordStrength');
+    const passwordFeedback = document.getElementById('passwordFeedback');
+    
+    // Password strength validation
+    function validatePassword(password) {
+        const minLength = 8;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+        
+        let strength = 0;
+        if (password.length >= minLength) strength += 20;
+        if (hasUpperCase) strength += 20;
+        if (hasLowerCase) strength += 20;
+        if (hasNumbers) strength += 20;
+        if (hasSpecialChar) strength += 20;
+        
+        return {
+            strength: strength,
+            isValid: password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar,
+            errors: {
+                length: password.length < minLength,
+                uppercase: !hasUpperCase,
+                lowercase: !hasLowerCase,
+                numbers: !hasNumbers,
+                special: !hasSpecialChar
+            }
+        };
+    }
+    
+    // Update password strength indicator
+    function updatePasswordStrength() {
+        const validation = validatePassword(password.value);
+        
+        // Update progress bar
+        passwordStrength.style.width = validation.strength + '%';
+        
+        // Update progress bar color
+        if (validation.strength < 40) {
+            passwordStrength.className = 'progress-bar bg-danger';
+            passwordFeedback.textContent = 'Weak password';
+        } else if (validation.strength < 80) {
+            passwordStrength.className = 'progress-bar bg-warning';
+            passwordFeedback.textContent = 'Moderate password';
+        } else {
+            passwordStrength.className = 'progress-bar bg-success';
+            passwordFeedback.textContent = 'Strong password';
+        }
+        
+        // Update requirement indicators
+        document.getElementById('req-length').innerHTML = 
+            validation.errors.length ? '<i class="bi bi-x-circle text-danger"></i>' : '<i class="bi bi-check-circle text-success"></i>' + ' At least 8 characters';
+        document.getElementById('req-uppercase').innerHTML = 
+            validation.errors.uppercase ? '<i class="bi bi-x-circle text-danger"></i>' : '<i class="bi bi-check-circle text-success"></i>' + ' One uppercase letter';
+        document.getElementById('req-lowercase').innerHTML = 
+            validation.errors.lowercase ? '<i class="bi bi-x-circle text-danger"></i>' : '<i class="bi bi-check-circle text-success"></i>' + ' One lowercase letter';
+        document.getElementById('req-number').innerHTML = 
+            validation.errors.numbers ? '<i class="bi bi-x-circle text-danger"></i>' : '<i class="bi bi-check-circle text-success"></i>' + ' One number';
+        document.getElementById('req-special').innerHTML = 
+            validation.errors.special ? '<i class="bi bi-x-circle text-danger"></i>' : '<i class="bi bi-check-circle text-success"></i>' + ' One special character';
+        
+        checkFormValidity();
+    }
+    
+    // Check password match
+    function checkPasswordMatch() {
+        const matchDiv = document.getElementById('passwordMatch');
+        if (confirmPassword.value === '') {
+            matchDiv.textContent = '';
+            matchDiv.className = 'form-text';
+        } else if (password.value === confirmPassword.value) {
+            matchDiv.textContent = 'Passwords match';
+            matchDiv.className = 'form-text text-success';
+        } else {
+            matchDiv.textContent = 'Passwords do not match';
+            matchDiv.className = 'form-text text-danger';
+        }
+        checkFormValidity();
+    }
+    
+    // Check overall form validity
+    function checkFormValidity() {
+        const email = document.getElementById('email').value.trim();
+        const username = document.getElementById('username').value.trim();
+        const passwordValid = validatePassword(password.value).isValid;
+        const passwordsMatch = password.value === confirmPassword.value;
+        const termsAgreed = document.getElementById('agreeTerms').checked;
+        
+        const isValid = email && username && passwordValid && passwordsMatch && termsAgreed;
+        submitBtn.disabled = !isValid;
+    }
+    
+    // Event listeners
+    password.addEventListener('input', updatePasswordStrength);
+    confirmPassword.addEventListener('input', checkPasswordMatch);
+    
+    // Email validation
+    document.getElementById('email').addEventListener('input', function() {
+        const email = this.value.trim();
+        const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        this.classList.toggle('is-valid', isValid && email.length > 0);
+        this.classList.toggle('is-invalid', !isValid && email.length > 0);
+        checkFormValidity();
+    });
+    
+    // Username validation
+    document.getElementById('username').addEventListener('input', function() {
+        const username = this.value.trim();
+        const isValid = /^[a-zA-Z0-9_]+$/.test(username) && username.length >= 3;
+        this.classList.toggle('is-valid', isValid && username.length > 0);
+        this.classList.toggle('is-invalid', !isValid && username.length > 0);
+        checkFormValidity();
+    });
+    
+    // Terms checkbox
+    document.getElementById('agreeTerms').addEventListener('change', checkFormValidity);
+    
+    // Toggle password visibility
+    const togglePassword = document.getElementById('togglePassword');
+    if (togglePassword && password) {
+        togglePassword.addEventListener('click', function() {
+            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+            password.setAttribute('type', type);
+            
+            const icon = this.querySelector('i');
+            icon.classList.toggle('bi-eye');
+            icon.classList.toggle('bi-eye-slash');
+        });
+    }
+    
+    // Form submission is handled by the auth module
+    // The auth module will handle API submission and redirect
+    
+    // Auto-focus on email field
+    const emailField = document.getElementById('email');
+    if (emailField) {
+        emailField.focus();
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,213 @@
+/* SEIM Color System
+   CSS Custom Properties for consistent theming */
+
+:root {
+    /* Primary Colors */
+    --primary-color: #0d6efd;
+    --primary-hover: #0b5ed7;
+    --primary-light: rgba(13, 110, 253, 0.1);
+    --primary-dark: #0a58ca;
+    
+    /* Secondary Colors */
+    --secondary-color: #6c757d;
+    --secondary-hover: #5c636a;
+    --secondary-light: rgba(108, 117, 125, 0.1);
+    
+    /* Semantic Colors */
+    --success-color: #198754;
+    --success-hover: #157347;
+    --success-light: rgba(25, 135, 84, 0.1);
+    
+    --danger-color: #dc3545;
+    --danger-hover: #bb2d3b;
+    --danger-light: rgba(220, 53, 69, 0.1);
+    
+    --warning-color: #ffc107;
+    --warning-hover: #ffca2c;
+    --warning-light: rgba(255, 193, 7, 0.1);
+    
+    --info-color: #0dcaf0;
+    --info-hover: #31d2f2;
+    --info-light: rgba(13, 202, 240, 0.1);
+    
+    /* Neutral Colors */
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+    --white: #ffffff;
+    --black: #000000;
+    
+    /* Gray Scale */
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #6c757d;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+    
+    /* Status Colors */
+    --status-draft: var(--secondary-color);
+    --status-submitted: var(--info-color);
+    --status-under-review: var(--warning-color);
+    --status-approved: var(--success-color);
+    --status-rejected: var(--danger-color);
+    --status-completed: var(--primary-color);
+    --status-cancelled: var(--secondary-color);
+    
+    /* Theme Colors - Light Mode */
+    --bg-primary: var(--white);
+    --bg-secondary: var(--gray-100);
+    --bg-tertiary: var(--gray-200);
+    --text-primary: var(--dark-color);
+    --text-secondary: var(--gray-700);
+    --text-muted: var(--gray-600);
+    --border-color: var(--gray-300);
+    --border-color-light: var(--gray-200);
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --shadow-color-light: rgba(0, 0, 0, 0.05);
+}
+
+/* Dark Mode Color Overrides */
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Dark Mode Neutral Colors */
+        --light-color: #343a40;
+        --dark-color: #f8f9fa;
+        --white: #212529;
+        --black: #ffffff;
+        
+        /* Dark Mode Gray Scale */
+        --gray-100: #343a40;
+        --gray-200: #495057;
+        --gray-300: #6c757d;
+        --gray-400: #adb5bd;
+        --gray-500: #ced4da;
+        --gray-600: #dee2e6;
+        --gray-700: #e9ecef;
+        --gray-800: #f8f9fa;
+        --gray-900: #ffffff;
+        
+        /* Dark Mode Theme Colors */
+        --bg-primary: #212529;
+        --bg-secondary: #343a40;
+        --bg-tertiary: #495057;
+        --text-primary: #f8f9fa;
+        --text-secondary: #e9ecef;
+        --text-muted: #adb5bd;
+        --border-color: #495057;
+        --border-color-light: #6c757d;
+        --shadow-color: rgba(0, 0, 0, 0.3);
+        --shadow-color-light: rgba(0, 0, 0, 0.2);
+        
+        /* Adjust semantic colors for dark mode */
+        --primary-light: rgba(13, 110, 253, 0.2);
+        --secondary-light: rgba(108, 117, 125, 0.2);
+        --success-light: rgba(25, 135, 84, 0.2);
+        --danger-light: rgba(220, 53, 69, 0.2);
+        --warning-light: rgba(255, 193, 7, 0.2);
+        --info-light: rgba(13, 202, 240, 0.2);
+    }
+}
+
+/* Manual Light Mode Class - Override system preference */
+[data-theme="light"] {
+    /* Light Mode Neutral Colors */
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+    --white: #ffffff;
+    --black: #000000;
+    
+    /* Light Mode Gray Scale */
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #6c757d;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+    
+    /* Light Mode Theme Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --text-primary: #212529;
+    --text-secondary: #495057;
+    --text-muted: #6c757d;
+    --border-color: #dee2e6;
+    --border-color-light: #e9ecef;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --shadow-color-light: rgba(0, 0, 0, 0.05);
+    
+    /* Adjust semantic colors for light mode */
+    --primary-light: rgba(13, 110, 253, 0.1);
+    --secondary-light: rgba(108, 117, 125, 0.1);
+    --success-light: rgba(25, 135, 84, 0.1);
+    --danger-light: rgba(220, 53, 69, 0.1);
+    --warning-light: rgba(255, 193, 7, 0.1);
+    --info-light: rgba(13, 202, 240, 0.1);
+}
+
+/* Manual Dark Mode Class */
+[data-theme="dark"] {
+    /* Dark Mode Neutral Colors */
+    --light-color: #343a40;
+    --dark-color: #f8f9fa;
+    --white: #212529;
+    --black: #ffffff;
+    
+    /* Dark Mode Gray Scale */
+    --gray-100: #343a40;
+    --gray-200: #495057;
+    --gray-300: #6c757d;
+    --gray-400: #adb5bd;
+    --gray-500: #ced4da;
+    --gray-600: #dee2e6;
+    --gray-700: #e9ecef;
+    --gray-800: #f8f9fa;
+    --gray-900: #ffffff;
+    
+    /* Dark Mode Theme Colors */
+    --bg-primary: #212529;
+    --bg-secondary: #343a40;
+    --bg-tertiary: #495057;
+    --text-primary: #f8f9fa;
+    --text-secondary: #e9ecef;
+    --text-muted: #adb5bd;
+    --border-color: #495057;
+    --border-color-light: #6c757d;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --shadow-color-light: rgba(0, 0, 0, 0.2);
+    
+    /* Adjust semantic colors for dark mode */
+    --primary-light: rgba(13, 110, 253, 0.2);
+    --secondary-light: rgba(108, 117, 125, 0.2);
+    --success-light: rgba(25, 135, 84, 0.2);
+    --danger-light: rgba(220, 53, 69, 0.2);
+    --warning-light: rgba(255, 193, 7, 0.2);
+    --info-light: rgba(13, 202, 240, 0.2);
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #0056b3;
+        --success-color: #006400;
+        --danger-color: #cc0000;
+        --warning-color: #cc6600;
+        --info-color: #0066cc;
+    }
+} 
+
+/* Bootstrap-compatible Background Utility Classes using theme variables */
+.bg-primary { background-color: var(--primary-color) !important; }
+.bg-secondary { background-color: var(--secondary-color) !important; }
+.bg-success { background-color: var(--success-color) !important; }
+.bg-danger { background-color: var(--danger-color) !important; }
+.bg-warning { background-color: var(--warning-color) !important; }
+.bg-info { background-color: var(--info-color) !important; }
+.bg-light { background-color: var(--light-color) !important; }
+.bg-dark { background-color: var(--dark-color) !important; } 

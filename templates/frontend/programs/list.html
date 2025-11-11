@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block title %}Exchange Programs - SEIM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-calendar-event"></i> Exchange Programs
+                    </h1>
+                    <p class="text-muted mb-0">Browse available exchange programs and opportunities</p>
+                </div>
+                {% if user.role == 'admin' %}
+                    <a href="{% url 'frontend:program_create' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Add Program
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="programsFilterForm" method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search Programs</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="search" 
+                                   name="search" 
+                                   value="{{ request.GET.search }}"
+                                   placeholder="Search by name, institution, or country">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="country" class="form-label">Country</label>
+                            <select class="form-select" id="country" name="country">
+                                <option value="">All Countries</option>
+                                <option value="USA">United States</option>
+                                <option value="UK">United Kingdom</option>
+                                <option value="Canada">Canada</option>
+                                <option value="Australia">Australia</option>
+                                <option value="Germany">Germany</option>
+                                <option value="France">France</option>
+                                <option value="Japan">Japan</option>
+                                <option value="South Korea">South Korea</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="duration" class="form-label">Duration</label>
+                            <select class="form-select" id="duration" name="duration">
+                                <option value="">All Durations</option>
+                                <option value="semester">One Semester</option>
+                                <option value="year">Full Year</option>
+                                <option value="summer">Summer Program</option>
+                                <option value="short">Short Term</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Programs Grid -->
+    <div id="programsListContainer" class="row g-4">
+        {% if programs %}
+            {% for program in programs %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title mb-1">{{ program.name }}</h5>
+                                    <p class="text-muted mb-0">{{ program.description|truncatewords:10 }}</p>
+                                </div>
+                                <span class="badge bg-primary">{{ program.start_date|date:"M Y" }}</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <p class="card-text">{{ program.description|truncatewords:30 }}</p>
+                            
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted">Start Date</small><br>
+                                    <strong>{{ program.start_date|date:"M d, Y" }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">End Date</small><br>
+                                    <strong>{{ program.end_date|date:"M d, Y" }}</strong>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted">Min GPA</small><br>
+                                    <strong>{{ program.min_gpa|default:"Not specified" }}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Duration</small><br>
+                                    <strong>{{ program.end_date|timeuntil:program.start_date }}</strong>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">Program Period</small><br>
+                                <strong>{{ program.start_date|date:"M d, Y" }} - {{ program.end_date|date:"M d, Y" }}</strong>
+                            </div>
+                            
+                            {% if program.language_requirements %}
+                                <div class="mb-3">
+                                    <small class="text-muted">Language Requirements</small><br>
+                                    {% for lang, level in program.language_requirements.items %}
+                                        <span class="badge bg-info me-1">{{ lang }}: {{ level }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                {% if user.role == 'student' %}
+                                    {% if program in my_applications %}
+                                        <span class="badge bg-success">Already Applied</span>
+                                    {% else %}
+                                        <a href="{% url 'frontend:application_create' %}?program={{ program.id }}" 
+                                           class="btn btn-primary btn-sm">
+                                            <i class="bi bi-plus-circle"></i> Apply Now
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                                <span class="text-muted">
+                                    <i class="bi bi-info-circle"></i> Program ID: {{ program.id }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="bi bi-calendar-x display-4 text-muted"></i>
+                        <h4 class="mt-3">No Programs Found</h4>
+                        <p class="text-muted">There are currently no exchange programs available.</p>
+                        {% if user.role == 'admin' %}
+                            <a href="{% url 'frontend:program_create' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Add First Program
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if programs.has_other_pages %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <nav aria-label="Programs pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if programs.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ programs.previous_page_number }}&{{ request.GET.urlencode }}">
+                                    <i class="bi bi-chevron-left"></i> Previous
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in programs.paginator.page_range %}
+                            {% if programs.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > programs.number|add:'-3' and num < programs.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if programs.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ programs.next_page_number }}&{{ request.GET.urlencode }}">
+                                    Next <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on filter change
+    const filterSelects = document.querySelectorAll('select[name="country"], select[name="duration"]');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.closest('form').submit();
+        });
+    });
+    
+    // Debounced search
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                this.closest('form').submit();
+            }, 500);
+        });
+    }
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,765 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - SEIM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-speedometer2"></i> Admin Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">System overview and management</p>
+                </div>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary" onclick="refreshDashboard()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                    <a href="{% url 'frontend:analytics' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-graph-up"></i> Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-activity"></i> System Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3" id="system-status">
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-circle-fill text-success"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0">Database</h6>
+                                    <small class="text-muted">Connected</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-circle-fill text-success"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0">Redis Cache</h6>
+                                    <small class="text-muted">Active</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-circle-fill text-success"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0">Celery Workers</h6>
+                                    <small class="text-muted">Running</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <i class="bi bi-circle-fill text-success"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0">Static Files</h6>
+                                    <small class="text-muted">Served</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="total-users">-</h4>
+                            <p class="card-text">Total Users</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-people display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="total-applications">-</h4>
+                            <p class="card-text">Applications</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-file-earmark-text display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="total-programs">-</h4>
+                            <p class="card-text">Active Programs</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-globe display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="pending-reviews">-</h4>
+                            <p class="card-text">Pending Reviews</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-clock-history display-6"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity and Quick Actions -->
+    <div class="row">
+        <!-- Recent Activity -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clock-history"></i> Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="recent-activity-list">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading recent activity...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-lightning"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'frontend:applications' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-file-earmark-text"></i> Review Applications
+                        </a>
+                        <a href="{% url 'frontend:programs' %}" class="btn btn-outline-success">
+                            <i class="bi bi-globe"></i> Manage Programs
+                        </a>
+                        <a href="{% url 'frontend:documents_list' %}" class="btn btn-outline-info">
+                            <i class="bi bi-file-earmark"></i> Review Documents
+                        </a>
+                        <a href="{% url 'frontend:analytics' %}" class="btn btn-outline-warning">
+                            <i class="bi bi-graph-up"></i> View Analytics
+                        </a>
+                        <a href="/dynforms/" class="btn btn-outline-dark" target="_blank">
+                            <i class="bi bi-gear"></i> Advanced Form Builder
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearCache()">
+                            <i class="bi bi-trash"></i> Clear Cache
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" onclick="showSystemInfo()">
+                            <i class="bi bi-info-circle"></i> System Info
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Status Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-pie-chart"></i> Application Status Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3" id="application-status">
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <div class="display-6 text-primary" id="draft-count">-</div>
+                                <small class="text-muted">Draft</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <div class="display-6 text-warning" id="submitted-count">-</div>
+                                <small class="text-muted">Submitted</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <div class="display-6 text-info" id="review-count">-</div>
+                                <small class="text-muted">Under Review</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <div class="display-6 text-success" id="approved-count">-</div>
+                                <small class="text-muted">Approved</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <div class="display-6 text-danger" id="rejected-count">-</div>
+                                <small class="text-muted">Rejected</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <div class="display-6 text-secondary" id="withdrawn-count">-</div>
+                                <small class="text-muted">Withdrawn</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Performance -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-cpu"></i> System Performance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="performance-metrics">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading performance metrics...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> System Alerts
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="system-alerts">
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading system alerts...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Info Modal -->
+<div class="modal fade" id="systemInfoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-info-circle"></i> System Information
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="system-info-content">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading system information...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="exportSystemInfo()">
+                    <i class="bi bi-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    loadRecentActivity();
+    loadPerformanceMetrics();
+    loadSystemAlerts();
+});
+
+async function loadDashboardData() {
+    try {
+        const response = await fetch('/api/admin/dashboard/metrics/', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            updateMetrics(data);
+        } else {
+            console.error('Failed to load dashboard data:', response.status);
+        }
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+function updateMetrics(data) {
+    // Update key metrics
+    document.getElementById('total-users').textContent = data.total_users || 0;
+    document.getElementById('total-applications').textContent = data.total_applications || 0;
+    document.getElementById('total-programs').textContent = data.total_programs || 0;
+    document.getElementById('pending-reviews').textContent = data.pending_reviews || 0;
+
+    // Update application status counts
+    if (data.application_status) {
+        document.getElementById('draft-count').textContent = data.application_status.draft || 0;
+        document.getElementById('submitted-count').textContent = data.application_status.submitted || 0;
+        document.getElementById('review-count').textContent = data.application_status.under_review || 0;
+        document.getElementById('approved-count').textContent = data.application_status.approved || 0;
+        document.getElementById('rejected-count').textContent = data.application_status.rejected || 0;
+        document.getElementById('withdrawn-count').textContent = data.application_status.withdrawn || 0;
+    }
+}
+
+async function loadRecentActivity() {
+    try {
+        const response = await fetch('/api/admin/dashboard/activity/', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const activities = await response.json();
+            renderRecentActivity(activities);
+        } else {
+            console.error('Failed to load recent activity:', response.status);
+            document.getElementById('recent-activity-list').innerHTML = 
+                '<p class="text-muted text-center">No recent activity to display.</p>';
+        }
+    } catch (error) {
+        console.error('Error loading recent activity:', error);
+        document.getElementById('recent-activity-list').innerHTML = 
+            '<p class="text-muted text-center">Unable to load recent activity.</p>';
+    }
+}
+
+function renderRecentActivity(activities) {
+    const container = document.getElementById('recent-activity-list');
+    
+    if (!activities || activities.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No recent activity to display.</p>';
+        return;
+    }
+    
+    let html = '<div class="list-group list-group-flush">';
+    activities.forEach(activity => {
+        const iconClass = getActivityIcon(activity.type);
+        const badgeClass = getActivityBadgeClass(activity.type);
+        
+        html += `
+            <div class="list-group-item d-flex justify-content-between align-items-start">
+                <div class="ms-2 me-auto">
+                    <div class="fw-bold">
+                        <i class="${iconClass} me-2"></i>${activity.title}
+                    </div>
+                    <small class="text-muted">${activity.description}</small>
+                    <br>
+                    <small class="text-muted">by ${activity.user}</small>
+                </div>
+                <div class="text-end">
+                    <span class="badge ${badgeClass}">${activity.type}</span>
+                    <br>
+                    <small class="text-muted">${activity.timestamp}</small>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+function getActivityIcon(type) {
+    const icons = {
+        'application': 'bi bi-file-earmark-text',
+        'document': 'bi bi-file-earmark',
+        'user': 'bi bi-person',
+        'program': 'bi bi-globe',
+        'system': 'bi bi-gear'
+    };
+    return icons[type] || 'bi bi-info-circle';
+}
+
+function getActivityBadgeClass(type) {
+    const classes = {
+        'application': 'bg-primary',
+        'document': 'bg-info',
+        'user': 'bg-success',
+        'program': 'bg-warning',
+        'system': 'bg-secondary'
+    };
+    return classes[type] || 'bg-secondary';
+}
+
+async function loadPerformanceMetrics() {
+    try {
+        const response = await fetch('/api/admin/dashboard/performance/', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const metrics = await response.json();
+            renderPerformanceMetrics(metrics);
+        } else {
+            console.error('Failed to load performance metrics:', response.status);
+            document.getElementById('performance-metrics').innerHTML = 
+                '<p class="text-muted text-center">Unable to load performance metrics.</p>';
+        }
+    } catch (error) {
+        console.error('Error loading performance metrics:', error);
+        document.getElementById('performance-metrics').innerHTML = 
+            '<p class="text-muted text-center">Unable to load performance metrics.</p>';
+    }
+}
+
+function renderPerformanceMetrics(metrics) {
+    const container = document.getElementById('performance-metrics');
+    
+    let html = '<div class="row g-3">';
+    
+    // CPU Usage
+    html += `
+        <div class="col-6">
+            <div class="d-flex justify-content-between">
+                <span>CPU Usage</span>
+                <span class="fw-bold">${metrics.cpu_usage || 0}%</span>
+            </div>
+            <div class="progress mt-1">
+                <div class="progress-bar" role="progressbar" style="width: ${metrics.cpu_usage || 0}%"></div>
+            </div>
+        </div>
+    `;
+    
+    // Memory Usage
+    html += `
+        <div class="col-6">
+            <div class="d-flex justify-content-between">
+                <span>Memory Usage</span>
+                <span class="fw-bold">${metrics.memory_usage || 0}%</span>
+            </div>
+            <div class="progress mt-1">
+                <div class="progress-bar" role="progressbar" style="width: ${metrics.memory_usage || 0}%"></div>
+            </div>
+        </div>
+    `;
+    
+    // Database Connections
+    html += `
+        <div class="col-6">
+            <div class="d-flex justify-content-between">
+                <span>DB Connections</span>
+                <span class="fw-bold">${metrics.db_connections || 0}</span>
+            </div>
+        </div>
+    `;
+    
+    // Cache Hit Rate
+    html += `
+        <div class="col-6">
+            <div class="d-flex justify-content-between">
+                <span>Cache Hit Rate</span>
+                <span class="fw-bold">${metrics.cache_hit_rate || 0}%</span>
+            </div>
+        </div>
+    `;
+    
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+async function loadSystemAlerts() {
+    try {
+        const response = await fetch('/api/admin/dashboard/alerts/', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const alerts = await response.json();
+            renderSystemAlerts(alerts);
+        } else {
+            document.getElementById('system-alerts').innerHTML = 
+                '<p class="text-muted text-center">No system alerts.</p>';
+        }
+    } catch (error) {
+        console.error('Error loading system alerts:', error);
+        document.getElementById('system-alerts').innerHTML = 
+            '<p class="text-muted text-center">Unable to load system alerts.</p>';
+    }
+}
+
+function renderSystemAlerts(alerts) {
+    const container = document.getElementById('system-alerts');
+    
+    if (!alerts || alerts.length === 0) {
+        container.innerHTML = '<p class="text-muted text-center">No system alerts.</p>';
+        return;
+    }
+    
+    let html = '<div class="list-group list-group-flush">';
+    alerts.forEach(alert => {
+        const alertClass = getAlertClass(alert.level);
+        const iconClass = getAlertIcon(alert.level);
+        
+        html += `
+            <div class="alert ${alertClass} d-flex align-items-center" role="alert">
+                <i class="${iconClass} me-2"></i>
+                <div>
+                    <strong>${alert.title}</strong>
+                    <br>
+                    <small>${alert.message}</small>
+                    <br>
+                    <small class="text-muted">${alert.timestamp}</small>
+                </div>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+function getAlertClass(level) {
+    const classes = {
+        'info': 'alert-info',
+        'warning': 'alert-warning',
+        'error': 'alert-danger',
+        'success': 'alert-success'
+    };
+    return classes[level] || 'alert-info';
+}
+
+function getAlertIcon(level) {
+    const icons = {
+        'info': 'bi bi-info-circle',
+        'warning': 'bi bi-exclamation-triangle',
+        'error': 'bi bi-x-circle',
+        'success': 'bi bi-check-circle'
+    };
+    return icons[level] || 'bi bi-info-circle';
+}
+
+function refreshDashboard() {
+    loadDashboardData();
+    loadRecentActivity();
+    loadPerformanceMetrics();
+    loadSystemAlerts();
+    showToast('Dashboard refreshed!', 'success');
+}
+
+async function clearCache() {
+    if (!confirm('Are you sure you want to clear all cache? This may temporarily slow down the system.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/cache/clear/', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            showToast('Cache cleared successfully!', 'success');
+            refreshDashboard();
+        } else {
+            const error = await response.json();
+            showToast(error.message || 'Failed to clear cache', 'error');
+        }
+    } catch (error) {
+        console.error('Error clearing cache:', error);
+        showToast('Failed to clear cache', 'error');
+    }
+}
+
+function showSystemInfo() {
+    const modal = new bootstrap.Modal(document.getElementById('systemInfoModal'));
+    modal.show();
+    loadSystemInfo();
+}
+
+async function loadSystemInfo() {
+    try {
+        const response = await fetch('/api/admin/dashboard/system_info/', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const info = await response.json();
+            renderSystemInfo(info);
+        } else {
+            document.getElementById('system-info-content').innerHTML = 
+                '<p class="text-muted text-center">Unable to load system information.</p>';
+        }
+    } catch (error) {
+        console.error('Error loading system info:', error);
+        document.getElementById('system-info-content').innerHTML = 
+            '<p class="text-muted text-center">Unable to load system information.</p>';
+    }
+}
+
+function renderSystemInfo(info) {
+    const container = document.getElementById('system-info-content');
+    
+    let html = '<div class="row g-3">';
+    
+    // Django Version
+    html += `
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Django Version</label>
+            <p class="form-control-plaintext">${info.django_version || 'Unknown'}</p>
+        </div>
+    `;
+    
+    // Python Version
+    html += `
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Python Version</label>
+            <p class="form-control-plaintext">${info.python_version || 'Unknown'}</p>
+        </div>
+    `;
+    
+    // Database
+    html += `
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Database</label>
+            <p class="form-control-plaintext">${info.database || 'Unknown'}</p>
+        </div>
+    `;
+    
+    // Redis
+    html += `
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Redis</label>
+            <p class="form-control-plaintext">${info.redis || 'Unknown'}</p>
+        </div>
+    `;
+    
+    // Environment
+    html += `
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Environment</label>
+            <p class="form-control-plaintext">${info.environment || 'Unknown'}</p>
+        </div>
+    `;
+    
+    // Debug Mode
+    html += `
+        <div class="col-md-6">
+            <label class="form-label fw-bold">Debug Mode</label>
+            <p class="form-control-plaintext">
+                <span class="badge ${info.debug ? 'bg-warning' : 'bg-success'}">
+                    ${info.debug ? 'Enabled' : 'Disabled'}
+                </span>
+            </p>
+        </div>
+    `;
+    
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+function showToast(message, type = 'info') {
+    // Simple toast notification using SweetAlert2
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+    });
+    
+    Toast.fire({
+        icon: type,
+        title: message
+    });
+}
+
+function exportSystemInfo() {
+    // Implementation for exporting system info
+    showToast('System information export feature coming soon!', 'info');
+}
+</script>
+{% endblock %} 

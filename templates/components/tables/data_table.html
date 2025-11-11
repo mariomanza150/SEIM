@@ -1,0 +1,234 @@
+<!-- Data Table Component -->
+<div class="data-table-container" role="region" aria-label="Data table">
+    <!-- Table Header with Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">{{ table_title|default:"Data Table" }}</h2>
+        
+        <!-- Table Actions -->
+        <div class="table-actions">
+            {% if show_export %}
+            <div class="btn-group" role="group" aria-label="Export options">
+                <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-download" aria-hidden="true"></i> Export
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#" data-export="csv">
+                        <i class="bi bi-file-earmark-text" aria-hidden="true"></i> CSV
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" data-export="excel">
+                        <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i> Excel
+                    </a></li>
+                    <li><a class="dropdown-item" href="#" data-export="pdf">
+                        <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i> PDF
+                    </a></li>
+                </ul>
+            </div>
+            {% endif %}
+            
+            {% if show_bulk_actions %}
+            <div class="btn-group ms-2" role="group" aria-label="Bulk actions">
+                <button type="button" class="btn btn-outline-primary btn-sm" id="bulk-select-all">
+                    <i class="bi bi-check-square" aria-hidden="true"></i> Select All
+                </button>
+                <button type="button" class="btn btn-outline-danger btn-sm" id="bulk-delete" disabled>
+                    <i class="bi bi-trash" aria-hidden="true"></i> Delete Selected
+                </button>
+            </div>
+            {% endif %}
+            
+            {% if add_url %}
+            <a href="{{ add_url }}" class="btn btn-primary btn-sm ms-2">
+                <i class="bi bi-plus" aria-hidden="true"></i> Add New
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table table-hover table-striped" id="{{ table_id|default:'data-table' }}">
+            <thead class="table-light">
+                <tr>
+                    {% if show_bulk_actions %}
+                    <th scope="col" class="bulk-select-header" style="width: 40px;">
+                        <input type="checkbox" class="form-check-input" id="select-all-checkbox" aria-label="Select all rows">
+                    </th>
+                    {% endif %}
+                    
+                    {% for column in columns %}
+                    <th scope="col" class="{% if column.sortable %}sortable{% endif %}" {% if column.sortable %}data-sort="{{ column.field }}"{% endif %}>
+                        <div class="d-flex align-items-center">
+                            <span>{{ column.label }}</span>
+                            {% if column.sortable %}
+                            <i class="bi bi-arrow-down-up ms-1 text-muted" aria-hidden="true"></i>
+                            {% endif %}
+                        </div>
+                    </th>
+                    {% endfor %}
+                    
+                    {% if show_actions %}
+                    <th scope="col" class="text-end" style="width: 120px;">Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            
+            <tbody>
+                {% if object_list %}
+                    {% for object in object_list %}
+                    <tr data-id="{{ object.id }}" class="{% if object.status %}status-{{ object.status }}{% endif %}">
+                        {% if show_bulk_actions %}
+                        <td>
+                            <input type="checkbox" class="form-check-input bulk-select-item" value="{{ object.id }}" aria-label="Select row">
+                        </td>
+                        {% endif %}
+                        
+                        {% for column in columns %}
+                        <td>
+                            {% if column.field == 'status' %}
+                                <span class="status-badge status-{{ object.status|default:'draft' }}">
+                                    {{ object.get_status_display|default:object.status|title }}
+                                </span>
+                            {% elif column.field == 'created_at' or column.field == 'updated_at' %}
+                                <span class="text-muted">{{ object|getattr:column.field|date:"M j, Y" }}</span>
+                            {% elif column.field == 'user' %}
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-person-circle me-2" aria-hidden="true"></i>
+                                    <span>{{ object.user.get_full_name|default:object.user.username }}</span>
+                                </div>
+                            {% else %}
+                                {{ object|getattr:column.field|default:'' }}
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                        
+                        {% if show_actions %}
+                        <td class="text-end">
+                            <div class="btn-group" role="group" aria-label="Row actions">
+                                {% if detail_url %}
+                                <a href="{% url detail_url object.id %}" class="btn btn-sm btn-outline-primary" aria-label="View details">
+                                    <i class="bi bi-eye" aria-hidden="true"></i>
+                                </a>
+                                {% endif %}
+                                
+                                {% if edit_url %}
+                                <a href="{% url edit_url object.id %}" class="btn btn-sm btn-outline-secondary" aria-label="Edit">
+                                    <i class="bi bi-pencil" aria-hidden="true"></i>
+                                </a>
+                                {% endif %}
+                                
+                                {% if delete_url %}
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="{{ object.id }}" aria-label="Delete">
+                                    <i class="bi bi-trash" aria-hidden="true"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="{% if show_bulk_actions %}{{ columns|length|add:2 }}{% else %}{{ columns|length|add:1 }}{% endif %}" class="text-center py-5">
+                            <div class="table-empty">
+                                <i class="bi bi-inbox table-empty-icon" aria-hidden="true"></i>
+                                <h3 class="table-empty-title">No data found</h3>
+                                <p class="table-empty-message">
+                                    {% if empty_message %}
+                                        {{ empty_message }}
+                                    {% else %}
+                                        No records match your current filters.
+                                    {% endif %}
+                                </p>
+                                {% if add_url %}
+                                <a href="{{ add_url }}" class="btn btn-primary">
+                                    <i class="bi bi-plus" aria-hidden="true"></i> Add First Record
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="table-pagination">
+        <div class="pagination-info">
+            Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+        </div>
+        
+        <nav aria-label="Table pagination">
+            <ul class="pagination pagination-sm mb-0">
+                <!-- Previous Page -->
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous page">
+                        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-label="Previous page">
+                        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                    </span>
+                </li>
+                {% endif %}
+                
+                <!-- Page Numbers -->
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                {% endfor %}
+                
+                <!-- Next Page -->
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next page">
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </a>
+                </li>
+                {% else %}
+                <li class="page-item disabled">
+                    <span class="page-link" aria-label="Next page">
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </span>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% if delete_url %}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this item? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="" id="deleteForm" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %} 

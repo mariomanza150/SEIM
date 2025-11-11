@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Document - SEIM{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-upload"></i> Upload Document
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {% if resubmit_document %}
+                            Resubmit document for review
+                        {% else %}
+                            Upload a new document for your application
+                        {% endif %}
+                    </p>
+                </div>
+                <a href="{% url 'frontend:documents_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Documents
+                </a>
+            </div>
+
+            <!-- Upload Form -->
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-file-earmark-plus"></i> Document Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form id="documentUploadForm" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Document Type -->
+                        <div class="mb-4">
+                            <label for="documentType" class="form-label">
+                                <i class="bi bi-tag"></i> Document Type
+                            </label>
+                            <select class="form-select" id="documentType" name="document_type" required>
+                                <option value="">Select document type...</option>
+                                {% for doc_type in document_types %}
+                                    <option value="{{ doc_type.id }}" 
+                                            {% if resubmit_document and resubmit_document.document_type.id == doc_type.id %}selected{% endif %}>
+                                        {{ doc_type.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Choose the type of document you're uploading</div>
+                        </div>
+
+                        <!-- Application Association -->
+                        <div class="mb-4">
+                            <label for="application" class="form-label">
+                                <i class="bi bi-file-earmark-text"></i> Associate with Application (Optional)
+                            </label>
+                            <select class="form-select" id="application" name="application">
+                                <option value="">No specific application</option>
+                                {% for app in applications %}
+                                    <option value="{{ app.id }}" 
+                                            {% if resubmit_document and resubmit_document.application.id == app.id %}selected{% endif %}>
+                                        {{ app.program.name }} - {{ app.program.institution }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Link this document to a specific application</div>
+                        </div>
+
+                        <!-- File Upload Area -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="bi bi-file-earmark"></i> Document File
+                            </label>
+                            <div class="file-upload-area" id="fileUploadArea">
+                                <div class="file-upload-content text-center p-5">
+                                    <i class="bi bi-cloud-upload display-4 text-muted mb-3"></i>
+                                    <h5>Drag and drop your file here</h5>
+                                    <p class="text-muted">or</p>
+                                    <input type="file" 
+                                           class="form-control" 
+                                           id="documentFile" 
+                                           name="file" 
+                                           required
+                                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                           style="display: none;">
+                                    <button type="button" class="btn btn-primary" onclick="document.getElementById('documentFile').click()">
+                                        <i class="bi bi-folder2-open"></i> Choose File
+                                    </button>
+                                    <div class="mt-3">
+                                        <small class="text-muted">
+                                            Supported formats: PDF, DOC, DOCX, JPG, PNG (Max 10MB)
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="file-display mt-3" id="fileDisplay" style="display: none;">
+                                    <!-- File information will be displayed here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-4">
+                            <label for="description" class="form-label">
+                                <i class="bi bi-chat-text"></i> Description (Optional)
+                            </label>
+                            <textarea class="form-control" 
+                                      id="description" 
+                                      name="description" 
+                                      rows="3"
+                                      placeholder="Add any additional notes or context about this document...">{{ resubmit_document.description|default:'' }}</textarea>
+                            <div class="form-text">Provide additional context or notes about this document</div>
+                        </div>
+
+                        <!-- Resubmission Notice -->
+                        {% if resubmit_document %}
+                            <div class="alert alert-info mb-4">
+                                <h6><i class="bi bi-info-circle"></i> Resubmission Notice</h6>
+                                <p class="mb-0">
+                                    You are resubmitting a document that was previously 
+                                    <strong>{{ resubmit_document.status }}</strong>. 
+                                    Please ensure you have addressed any feedback provided for the original document.
+                                </p>
+                            </div>
+                        {% endif %}
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'frontend:documents_list' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="bi bi-upload"></i> 
+                                {% if resubmit_document %}Resubmit Document{% else %}Upload Document{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Upload Guidelines -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-info-circle"></i> Upload Guidelines
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Supported File Types</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check-circle text-success"></i> PDF documents (.pdf)</li>
+                                <li><i class="bi bi-check-circle text-success"></i> Word documents (.doc, .docx)</li>
+                                <li><i class="bi bi-check-circle text-success"></i> Image files (.jpg, .jpeg, .png)</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>File Requirements</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="bi bi-check-circle text-success"></i> Maximum file size: 10MB</li>
+                                <li><i class="bi bi-check-circle text-success"></i> Clear, readable content</li>
+                                <li><i class="bi bi-check-circle text-success"></i> Original documents preferred</li>
+                                <li><i class="bi bi-check-circle text-success"></i> No password-protected files</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('documentUploadForm');
+    const fileInput = document.getElementById('documentFile');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileDisplay = document.getElementById('fileDisplay');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Drag and drop functionality
+    fileUploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    });
+
+    fileUploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+    });
+
+    fileUploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            updateFileDisplay(files[0]);
+        }
+    });
+
+    // File input change
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            updateFileDisplay(this.files[0]);
+        }
+    });
+
+    function updateFileDisplay(file) {
+        const fileSize = formatFileSize(file.size);
+        const fileName = escapeHtml(file.name);
+        const fileType = file.name.split('.').pop().toUpperCase();
+        
+        fileDisplay.innerHTML = `
+            <div class="alert alert-success">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-file-earmark-check me-3 fs-4"></i>
+                    <div>
+                        <strong>${fileName}</strong><br>
+                        <small class="text-muted">${fileType} • ${fileSize}</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger ms-auto" onclick="removeFile()">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        fileDisplay.style.display = 'block';
+    }
+
+    // Handle form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        // Validate file
+        if (!fileInput.files.length) {
+            showErrorAlert('No File Selected', 'Please select a file to upload.');
+            return;
+        }
+        
+        const file = fileInput.files[0];
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        
+        if (file.size > maxSize) {
+            showErrorAlert('File Too Large', 'File size must be less than 10MB.');
+            return;
+        }
+        
+        // Show loading state
+        setLoadingState(submitBtn, true, 'Uploading...');
+        
+        try {
+            const formData = new FormData(form);
+            
+            // Add resubmission context if applicable
+            {% if resubmit_document %}
+                formData.append('resubmit_from', {{ resubmit_document.id }});
+            {% endif %}
+            
+            const data = await apiRequest(Urls['api:document-list'](), {
+                method: 'POST',
+                body: formData
+            });
+            
+            // Show success message
+            const successMessage = {% if resubmit_document %}
+                'Your document has been resubmitted successfully.' 
+            {% else %}
+                'Your document has been uploaded successfully.'
+            {% endif %};
+            
+            showSuccessAlert('Document Uploaded!', successMessage);
+            
+            // Redirect to document detail or list
+            setTimeout(() => {
+                if (data.id) {
+                    window.location.href = Urls['frontend:document_detail'](data.id);
+                } else {
+                    window.location.href = Urls['frontend:documents_list']();
+                }
+            }, 2000);
+            
+        } catch (error) {
+            let title = 'Upload Error';
+            let message = 'Failed to upload document. Please try again.';
+            
+            if (error.title) title = error.title;
+            if (error.message) message = error.message;
+            
+            showErrorAlert(title, message);
+        } finally {
+            setLoadingState(submitBtn, false);
+        }
+    });
+});
+
+// Global functions
+function removeFile() {
+    document.getElementById('documentFile').value = '';
+    document.getElementById('fileDisplay').style.display = 'none';
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+
+<style>
+.file-upload-area {
+    border: 2px dashed #dee2e6;
+    border-radius: 0.375rem;
+    transition: all 0.3s ease;
+}
+
+.file-upload-area.dragover {
+    border-color: #0d6efd;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.file-upload-content {
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.file-upload-area:hover {
+    border-color: #adb5bd;
+}
+</style>
+{% endblock %} 

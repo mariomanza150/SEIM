@@ -1,0 +1,108 @@
+{% load static %}
+
+<!-- Navigation Component -->
+<nav class="navbar navbar-expand-lg">
+    <div class="container">
+        <!-- Brand -->
+        <a class="navbar-brand" href="{% url 'frontend:home' %}">
+            <i class="bi bi-globe"></i> SEIM
+        </a>
+        
+        <!-- Mobile Toggle -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <!-- Navigation Menu -->
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <!-- Authenticated Navigation -->
+            <ul class="navbar-nav me-auto authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'frontend:dashboard' %}" aria-label="Dashboard">
+                        <i class="bi bi-speedometer2" aria-hidden="true"></i> 
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'frontend:programs' %}" aria-label="Programs">
+                        <i class="bi bi-calendar-event" aria-hidden="true"></i> 
+                        <span>Programs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'frontend:applications' %}" aria-label="Applications">
+                        <i class="bi bi-file-earmark-text" aria-hidden="true"></i> 
+                        <span>Applications</span>
+                    </a>
+                </li>
+                <!-- Admin Navigation -->
+                <li class="nav-item admin-nav" {% if user.is_authenticated and user.role == 'admin' %}style="display:block;"{% else %}style="display:none;"{% endif %}>
+                    <a class="nav-link" href="{% url 'frontend:admin_dashboard' %}" aria-label="Admin Dashboard">
+                        <i class="bi bi-gear" aria-hidden="true"></i> 
+                        <span>Admin</span>
+                    </a>
+                </li>
+                <li class="nav-item admin-nav" {% if user.is_authenticated and user.role == 'admin' %}style="display:block;"{% else %}style="display:none;"{% endif %}>
+                    <a class="nav-link" href="/dynforms/" aria-label="Dynamic Form Builder" target="_blank">
+                        <i class="bi bi-ui-checks" aria-hidden="true"></i>
+                        <span>Form Builder</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- User Menu -->
+            <ul class="navbar-nav ms-auto authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle user-username" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
+                        <i class="bi bi-person-circle" aria-hidden="true"></i> 
+                        <span class="user-username">
+                            {% if user.is_authenticated %}{{ user.get_full_name|default:user.username }}{% else %}User{% endif %}
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'frontend:profile' %}" aria-label="Profile">
+                                <i class="bi bi-person" aria-hidden="true"></i> Profile
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'frontend:settings' %}" aria-label="Settings">
+                                <i class="bi bi-gear" aria-hidden="true"></i> Settings
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item" href="#" id="logoutLink" aria-label="Logout">
+                                <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            
+            <!-- Unauthenticated Navigation -->
+            <ul class="navbar-nav ms-auto unauth-nav" {% if not user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'frontend:login' %}" aria-label="Login">
+                        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Login
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'frontend:register' %}" aria-label="Register">
+                        <i class="bi bi-person-plus" aria-hidden="true"></i> Register
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Theme Toggle Container - Always Visible -->
+        <div class="navbar-nav ms-auto theme-container">
+            <div class="theme-toggle-wrapper">
+                <button id="theme-toggle" class="btn btn-outline-secondary btn-sm theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+                    <i class="bi bi-moon-fill"></i>
+                </button>
+                <div id="theme-feedback" class="theme-feedback" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+</nav> 

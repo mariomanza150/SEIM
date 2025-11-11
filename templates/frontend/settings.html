@@ -1,0 +1,902 @@
+{% extends 'base.html' %}
+
+{% block title %}Settings - SEIM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-gear"></i> Settings
+                    </h1>
+                    <p class="text-muted mb-0">Manage your account settings and preferences</p>
+                </div>
+                <a href="{% url 'frontend:profile' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-person-circle"></i> Profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Navigation -->
+    <div class="row">
+        <div class="col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Settings Menu</h6>
+                </div>
+                <div class="list-group list-group-flush" id="settings-nav">
+                    <a href="#account" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                        <i class="bi bi-person me-2"></i>Account Settings
+                    </a>
+                    <a href="#security" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="bi bi-shield-lock me-2"></i>Security
+                    </a>
+                    <a href="#notifications" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="bi bi-bell me-2"></i>Notifications
+                    </a>
+                    <a href="#appearance" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="bi bi-palette me-2"></i>Appearance
+                    </a>
+                    <a href="#privacy" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                        <i class="bi bi-eye-slash me-2"></i>Privacy
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="col-lg-9">
+            <div class="tab-content">
+                <!-- Account Settings -->
+                <div class="tab-pane fade show active" id="account">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-person"></i> Account Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="accountSettingsForm">
+                                {% csrf_token %}
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="username" class="form-label">Username</label>
+                                        <input type="text" class="form-control" id="username" name="username" 
+                                               value="{{ user.username }}" readonly>
+                                        <div class="form-text">Username cannot be changed</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">Email Address</label>
+                                        <input type="email" class="form-control" id="email" name="email" 
+                                               value="{{ user.email }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="first_name" class="form-label">First Name</label>
+                                        <input type="text" class="form-control" id="first_name" name="first_name" 
+                                               value="{{ user.first_name }}" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="last_name" class="form-label">Last Name</label>
+                                        <input type="text" class="form-control" id="last_name" name="last_name" 
+                                               value="{{ user.last_name }}" required>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-check"></i> Save Account Settings
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Settings -->
+                <div class="tab-pane fade" id="security">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-shield-lock"></i> Security Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <!-- Change Password -->
+                            <div class="mb-4">
+                                <h6>Change Password</h6>
+                                <form id="changePasswordForm">
+                                    {% csrf_token %}
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="current_password" class="form-label">Current Password</label>
+                                            <input type="password" class="form-control" id="current_password" 
+                                                   name="current_password" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="new_password" class="form-label">New Password</label>
+                                            <input type="password" class="form-control" id="new_password" 
+                                                   name="new_password" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                                            <input type="password" class="form-control" id="confirm_password" 
+                                                   name="confirm_password" required>
+                                        </div>
+                                        <div class="col-12">
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="bi bi-key"></i> Change Password
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Two-Factor Authentication -->
+                            <div class="mb-4">
+                                <h6>Two-Factor Authentication</h6>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="twoFactorEnabled">
+                                    <label class="form-check-label" for="twoFactorEnabled">
+                                        Enable two-factor authentication
+                                    </label>
+                                </div>
+                                <div class="form-text">Add an extra layer of security to your account</div>
+                            </div>
+
+                            <!-- Session Management -->
+                            <div>
+                                <h6>Active Sessions</h6>
+                                <div id="activeSessions">
+                                    <div class="text-center py-3">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="mt-2">Loading active sessions...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Settings -->
+                <div class="tab-pane fade" id="notifications">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-bell"></i> Notification Preferences
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="notificationSettingsForm">
+                                {% csrf_token %}
+                                <div class="mb-4">
+                                    <h6>Email Notifications</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="emailApplications" checked>
+                                        <label class="form-check-label" for="emailApplications">
+                                            Application status updates
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="emailDocuments" checked>
+                                        <label class="form-check-label" for="emailDocuments">
+                                            Document upload confirmations
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="emailPrograms">
+                                        <label class="form-check-label" for="emailPrograms">
+                                            New program announcements
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="emailSystem" checked>
+                                        <label class="form-check-label" for="emailSystem">
+                                            System notifications
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6>In-App Notifications</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="inAppApplications" checked>
+                                        <label class="form-check-label" for="inAppApplications">
+                                            Application status updates
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="inAppDocuments" checked>
+                                        <label class="form-check-label" for="inAppDocuments">
+                                            Document upload confirmations
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="inAppComments" checked>
+                                        <label class="form-check-label" for="inAppComments">
+                                            New comments on applications
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check"></i> Save Notification Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Appearance Settings -->
+                <div class="tab-pane fade" id="appearance">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-palette"></i> Appearance Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="appearanceSettingsForm">
+                                {% csrf_token %}
+                                <div class="mb-4">
+                                    <h6>Theme</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="theme" id="themeLight" value="light" checked>
+                                        <label class="form-check-label" for="themeLight">
+                                            Light Theme
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="theme" id="themeDark" value="dark">
+                                        <label class="form-check-label" for="themeDark">
+                                            Dark Theme
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="theme" id="themeAuto" value="auto">
+                                        <label class="form-check-label" for="themeAuto">
+                                            Auto (Follow system)
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6>Language</h6>
+                                    <select class="form-select" id="language" name="language">
+                                        <option value="en">English</option>
+                                        <option value="es">Español</option>
+                                        <option value="fr">Français</option>
+                                        <option value="de">Deutsch</option>
+                                    </select>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check"></i> Save Appearance Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Privacy Settings -->
+                <div class="tab-pane fade" id="privacy">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="bi bi-eye-slash"></i> Privacy Settings
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="privacySettingsForm">
+                                {% csrf_token %}
+                                <div class="mb-4">
+                                    <h6>Profile Visibility</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="profilePublic">
+                                        <label class="form-check-label" for="profilePublic">
+                                            Make my profile visible to other users
+                                        </label>
+                                    </div>
+                                    <div class="form-text">Allow other users to see your basic profile information</div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6>Data Sharing</h6>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="shareAnalytics" checked>
+                                        <label class="form-check-label" for="shareAnalytics">
+                                            Share anonymous usage data for analytics
+                                        </label>
+                                    </div>
+                                    <div class="form-text">Help us improve the platform by sharing anonymous usage data</div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6>Data Export</h6>
+                                    <p class="text-muted">You can request a copy of all your data at any time.</p>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="requestDataExport()">
+                                        <i class="bi bi-download"></i> Request Data Export
+                                    </button>
+                                </div>
+
+                                <div class="mb-4">
+                                    <h6>Account Deletion</h6>
+                                    <p class="text-muted">Permanently delete your account and all associated data.</p>
+                                    <button type="button" class="btn btn-outline-danger" onclick="showDeleteAccountModal()">
+                                        <i class="bi bi-trash"></i> Delete Account
+                                    </button>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check"></i> Save Privacy Settings
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal fade" id="deleteAccountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This action cannot be undone. All your data will be permanently deleted.
+                </div>
+                <p>Are you sure you want to delete your account? This will:</p>
+                <ul>
+                    <li>Delete all your applications</li>
+                    <li>Delete all your documents</li>
+                    <li>Delete all your comments</li>
+                    <li>Remove your profile information</li>
+                </ul>
+                <form id="deleteAccountForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="deleteConfirmation" class="form-label">Type "DELETE" to confirm</label>
+                        <input type="text" class="form-control" id="deleteConfirmation" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="deleteAccount()">Delete Account</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+// Utility functions for settings page
+function setLoadingState(element, isLoading, loadingText = 'Loading...') {
+    if (isLoading) {
+        element.disabled = true;
+        element.dataset.originalText = element.innerHTML;
+        element.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${loadingText}`;
+    } else {
+        element.disabled = false;
+        element.innerHTML = element.dataset.originalText || 'Submit';
+    }
+}
+
+function showSuccessAlert(title, message) {
+    Swal.fire({
+        icon: 'success',
+        title: title,
+        text: message,
+        confirmButtonColor: '#0d6efd'
+    });
+}
+
+function showErrorAlert(title, message) {
+    Swal.fire({
+        icon: 'error',
+        title: title,
+        text: message,
+        confirmButtonColor: '#dc3545'
+    });
+}
+
+function showInfoAlert(title, message) {
+    Swal.fire({
+        icon: 'info',
+        title: title,
+        text: message,
+        confirmButtonColor: '#0dcaf0'
+    });
+}
+
+async function showConfirmDialog(title, text, confirmButtonText = 'Yes, proceed') {
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: title,
+        text: text,
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: confirmButtonText,
+        cancelButtonText: 'Cancel'
+    });
+    return result;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize settings forms
+    initializeSettingsForms();
+    loadActiveSessions();
+    loadNotificationSettings();
+    loadAppearanceSettings();
+    loadPrivacySettings();
+});
+
+function initializeSettingsForms() {
+    // Account Settings Form
+    document.getElementById('accountSettingsForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await saveAccountSettings();
+    });
+
+    // Change Password Form
+    document.getElementById('changePasswordForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await changePassword();
+    });
+
+    // Notification Settings Form
+    document.getElementById('notificationSettingsForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await saveNotificationSettings();
+    });
+
+    // Appearance Settings Form
+    document.getElementById('appearanceSettingsForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await saveAppearanceSettings();
+    });
+
+    // Privacy Settings Form
+    document.getElementById('privacySettingsForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        await savePrivacySettings();
+    });
+}
+
+async function saveAccountSettings() {
+    const form = document.getElementById('accountSettingsForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    setLoadingState(submitBtn, true, 'Saving...');
+    
+    try {
+        const response = await fetch('/api/accounts/profile/update/', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token'),
+                'X-CSRFToken': data.csrfmiddlewaretoken
+            },
+            body: JSON.stringify({
+                email: data.email,
+                first_name: data.first_name,
+                last_name: data.last_name
+            })
+        });
+        
+        if (response.ok) {
+            showSuccessAlert('Settings Saved!', 'Your account settings have been updated successfully.');
+        } else {
+            const error = await response.json();
+            showErrorAlert('Save Failed', error.message || 'Failed to save account settings');
+        }
+    } catch (error) {
+        showErrorAlert('Error', 'Failed to save account settings. Please try again.');
+    } finally {
+        setLoadingState(submitBtn, false);
+    }
+}
+
+async function changePassword() {
+    const form = document.getElementById('changePasswordForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    if (data.new_password !== data.confirm_password) {
+        showErrorAlert('Password Mismatch', 'New password and confirmation password do not match.');
+        return;
+    }
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    setLoadingState(submitBtn, true, 'Changing...');
+    
+    try {
+        const response = await fetch('/api/accounts/change-password/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token'),
+                'X-CSRFToken': data.csrfmiddlewaretoken
+            },
+            body: JSON.stringify({
+                current_password: data.current_password,
+                new_password: data.new_password
+            })
+        });
+        
+        if (response.ok) {
+            showSuccessAlert('Password Changed!', 'Your password has been changed successfully.');
+            form.reset();
+        } else {
+            const error = await response.json();
+            showErrorAlert('Change Failed', error.message || 'Failed to change password');
+        }
+    } catch (error) {
+        showErrorAlert('Error', 'Failed to change password. Please try again.');
+    } finally {
+        setLoadingState(submitBtn, false);
+    }
+}
+
+async function loadActiveSessions() {
+    try {
+        const response = await fetch('/api/accounts/sessions/', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const sessions = await response.json();
+            const sessionsContainer = document.getElementById('activeSessions');
+            
+            // Handle both array and paginated response
+            const sessionsArray = Array.isArray(sessions) ? sessions : (sessions.results || []);
+            
+            if (sessionsArray.length === 0) {
+                sessionsContainer.innerHTML = '<p class="text-muted">No active sessions found.</p>';
+                return;
+            }
+            
+            const sessionsHtml = sessionsArray.map(session => `
+                <div class="session-item d-flex justify-content-between align-items-center p-3 border rounded mb-2">
+                    <div>
+                        <strong>${session.device || 'Unknown Device'}</strong>
+                        <br>
+                        <small class="text-muted">${session.location || 'Unknown Location'} • Last active: ${formatDate(session.last_activity)}</small>
+                    </div>
+                    ${session.current ? 
+                        '<span class="badge bg-primary">Current</span>' : 
+                        '<button class="btn btn-sm btn-outline-danger" onclick="revokeSession(\'' + session.id + '\')">Revoke</button>'
+                    }
+                </div>
+            `).join('');
+            
+            sessionsContainer.innerHTML = sessionsHtml;
+        } else {
+            document.getElementById('activeSessions').innerHTML = 
+                '<p class="text-muted">Failed to load active sessions.</p>';
+        }
+    } catch (error) {
+        console.error('Error loading active sessions:', error);
+        document.getElementById('activeSessions').innerHTML = 
+            '<p class="text-muted">Failed to load active sessions.</p>';
+    }
+}
+
+async function loadNotificationSettings() {
+    try {
+        const response = await fetch('/api/accounts/notification-settings/', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const settings = await response.json();
+            
+            // Set checkbox values
+            document.getElementById('emailApplications').checked = settings.email_applications;
+            document.getElementById('emailDocuments').checked = settings.email_documents;
+            document.getElementById('emailPrograms').checked = settings.email_programs;
+            document.getElementById('emailSystem').checked = settings.email_system;
+            document.getElementById('inAppApplications').checked = settings.inapp_applications;
+            document.getElementById('inAppDocuments').checked = settings.inapp_documents;
+            document.getElementById('inAppComments').checked = settings.inapp_comments;
+        }
+    } catch (error) {
+        console.error('Error loading notification settings:', error);
+    }
+}
+
+async function saveNotificationSettings() {
+    const form = document.getElementById('notificationSettingsForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    const settings = {
+        email_applications: document.getElementById('emailApplications').checked,
+        email_documents: document.getElementById('emailDocuments').checked,
+        email_programs: document.getElementById('emailPrograms').checked,
+        email_system: document.getElementById('emailSystem').checked,
+        inapp_applications: document.getElementById('inAppApplications').checked,
+        inapp_documents: document.getElementById('inAppDocuments').checked,
+        inapp_comments: document.getElementById('inAppComments').checked
+    };
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    setLoadingState(submitBtn, true, 'Saving...');
+    
+    try {
+        const response = await fetch('/api/accounts/notification-settings/', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token'),
+                'X-CSRFToken': data.csrfmiddlewaretoken
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        if (response.ok) {
+            showSuccessAlert('Settings Saved!', 'Your notification settings have been updated successfully.');
+        } else {
+            showErrorAlert('Save Failed', 'Failed to save notification settings');
+        }
+    } catch (error) {
+        showErrorAlert('Error', 'Failed to save notification settings. Please try again.');
+    } finally {
+        setLoadingState(submitBtn, false);
+    }
+}
+
+async function loadAppearanceSettings() {
+    try {
+        const response = await fetch('/api/accounts/appearance-settings/', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const settings = await response.json();
+            
+            // Set theme radio button
+            const themeElement = document.getElementById(`theme${settings.theme.charAt(0).toUpperCase() + settings.theme.slice(1)}`);
+            if (themeElement) {
+                themeElement.checked = true;
+            }
+            
+            // Set font size if it exists
+            const fontSizeElement = document.getElementById('fontSize');
+            if (fontSizeElement && settings.font_size) {
+                fontSizeElement.value = settings.font_size;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading appearance settings:', error);
+    }
+}
+
+async function saveAppearanceSettings() {
+    const form = document.getElementById('appearanceSettingsForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    const settings = {
+        theme: data.theme,
+        font_size: data.font_size || 'medium'
+    };
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    setLoadingState(submitBtn, true, 'Saving...');
+    
+    try {
+        const response = await fetch('/api/accounts/appearance-settings/', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token'),
+                'X-CSRFToken': data.csrfmiddlewaretoken
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        if (response.ok) {
+            showSuccessAlert('Settings Saved!', 'Your appearance settings have been updated successfully.');
+            // Apply theme changes immediately
+            if (settings.theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        } else {
+            showErrorAlert('Save Failed', 'Failed to save appearance settings');
+        }
+    } catch (error) {
+        showErrorAlert('Error', 'Failed to save appearance settings. Please try again.');
+    } finally {
+        setLoadingState(submitBtn, false);
+    }
+}
+
+async function loadPrivacySettings() {
+    try {
+        const response = await fetch('/api/accounts/privacy-settings/', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            const settings = await response.json();
+            
+            document.getElementById('profilePublic').checked = settings.profile_public;
+            document.getElementById('shareAnalytics').checked = settings.share_analytics;
+        }
+    } catch (error) {
+        console.error('Error loading privacy settings:', error);
+    }
+}
+
+async function savePrivacySettings() {
+    const form = document.getElementById('privacySettingsForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    const settings = {
+        profile_public: document.getElementById('profilePublic').checked,
+        share_analytics: document.getElementById('shareAnalytics').checked
+    };
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    setLoadingState(submitBtn, true, 'Saving...');
+    
+    try {
+        const response = await fetch('/api/accounts/privacy-settings/', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token'),
+                'X-CSRFToken': data.csrfmiddlewaretoken
+            },
+            body: JSON.stringify(settings)
+        });
+        
+        if (response.ok) {
+            showSuccessAlert('Settings Saved!', 'Your privacy settings have been updated successfully.');
+        } else {
+            showErrorAlert('Save Failed', 'Failed to save privacy settings');
+        }
+    } catch (error) {
+        showErrorAlert('Error', 'Failed to save privacy settings. Please try again.');
+    } finally {
+        setLoadingState(submitBtn, false);
+    }
+}
+
+async function revokeSession(sessionId) {
+    const result = await showConfirmDialog(
+        'Revoke Session',
+        'Are you sure you want to revoke this session? The user will be logged out from that device.',
+        'Yes, Revoke'
+    );
+    
+    if (result.isConfirmed) {
+        try {
+            const response = await fetch(`/api/accounts/sessions/${sessionId}/revoke/`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+                }
+            });
+            
+            if (response.ok) {
+                showSuccessAlert('Session Revoked', 'The session has been revoked successfully.');
+                loadActiveSessions(); // Reload sessions
+            } else {
+                showErrorAlert('Revoke Failed', 'Failed to revoke session');
+            }
+        } catch (error) {
+            showErrorAlert('Error', 'Failed to revoke session. Please try again.');
+        }
+    }
+}
+
+function requestDataExport() {
+    showInfoAlert('Data Export', 'Your data export request has been submitted. You will receive an email when it\'s ready for download.');
+}
+
+function showDeleteAccountModal() {
+    const modal = new bootstrap.Modal(document.getElementById('deleteAccountModal'));
+    modal.show();
+}
+
+async function deleteAccount() {
+    const confirmation = document.getElementById('deleteConfirmation').value;
+    
+    if (confirmation !== 'DELETE') {
+        showErrorAlert('Invalid Confirmation', 'Please type "DELETE" to confirm account deletion.');
+        return;
+    }
+    
+    const submitBtn = document.querySelector('#deleteAccountModal .btn-danger');
+    setLoadingState(submitBtn, true, 'Deleting...');
+    
+    try {
+        const response = await fetch('/api/accounts/delete/', {
+            method: 'DELETE',
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem('seim_access_token')
+            }
+        });
+        
+        if (response.ok) {
+            showSuccessAlert('Account Deleted', 'Your account has been permanently deleted.');
+            // Clear local storage and redirect to home
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = '/';
+        } else {
+            showErrorAlert('Delete Failed', 'Failed to delete account');
+        }
+    } catch (error) {
+        showErrorAlert('Error', 'Failed to delete account. Please try again.');
+    } finally {
+        setLoadingState(submitBtn, false);
+    }
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
+    
+    if (diffInHours < 1) {
+        return 'Just now';
+    } else if (diffInHours < 24) {
+        return `${Math.floor(diffInHours)} hours ago`;
+    } else if (diffInHours < 48) {
+        return 'Yesterday';
+    } else {
+        return date.toLocaleDateString();
+    }
+}
+</script>
+
+<style>
+.session-item {
+    background-color: #f8f9fa;
+    transition: background-color 0.3s ease;
+}
+
+.session-item:hover {
+    background-color: #e9ecef;
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.form-check-input:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+</style>
+{% endblock extra_js %} 

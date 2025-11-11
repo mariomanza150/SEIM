@@ -1,0 +1,546 @@
+{% extends 'base.html' %}
+{% load filters %}
+
+{% block title %}Documents - SEIM{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-file-earmark"></i> Documents
+                    </h1>
+                    <p class="text-muted mb-0">Manage and track your application documents</p>
+                </div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                    <i class="bi bi-upload"></i> Upload Document
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="documentsFilterForm" method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="search" class="form-label">Search Documents</label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="search" 
+                                   name="search" 
+                                   value="{{ request.GET.search }}"
+                                   placeholder="Search by filename or type">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="document_type" class="form-label">Document Type</label>
+                            <select class="form-select" id="document_type" name="document_type">
+                                <option value="">All Types</option>
+                                {% for doc_type in document_types %}
+                                    <option value="{{ doc_type.id }}">{{ doc_type.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="validated">Validated</option>
+                                <option value="rejected">Rejected</option>
+                                <option value="resubmission_required">Resubmission Required</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="application" class="form-label">Application</label>
+                            <select class="form-select" id="application" name="application">
+                                <option value="">All Applications</option>
+                                {% for app in applications %}
+                                    <option value="{{ app.id }}">{{ app.program.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Filter Documents
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                <i class="bi bi-x-circle"></i> Clear Filters
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents List -->
+    <div id="documentsListContainer">
+        {% if documents %}
+            <div class="row g-4">
+                {% for document in documents %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="card-title mb-1">{{ document.filename }}</h5>
+                                        <p class="text-muted mb-0">{{ document.document_type.name }}</p>
+                                    </div>
+                                    <span class="badge bg-{{ document.status|document_status_color }}">{{ document.status|title }}</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <small class="text-muted">Uploaded</small><br>
+                                        <strong>{{ document.uploaded_at|date:"M d, Y" }}</strong>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Size</small><br>
+                                        <strong>{{ document.file.size|filesizeformat }}</strong>
+                                    </div>
+                                </div>
+                                
+                                {% if document.application %}
+                                    <div class="mb-3">
+                                        <small class="text-muted">Application</small><br>
+                                        <strong>{{ document.application.program.name }}</strong>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if document.validation_status %}
+                                    <div class="mb-3">
+                                        <small class="text-muted">Validation</small><br>
+                                        <span class="badge bg-{{ document.validation_status|validation_status_color }}">
+                                            {{ document.validation_status|title }}
+                                        </span>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if document.comments.exists %}
+                                    <div class="mb-3">
+                                        <small class="text-muted">Latest Comment</small><br>
+                                        <p class="mb-0 text-muted">{{ document.comments.last.text|truncatewords:15 }}</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="{% url 'frontend:document_detail' document.id %}" 
+                                       class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ document.file.url }}" 
+                                           class="btn btn-outline-secondary btn-sm"
+                                           target="_blank">
+                                            <i class="bi bi-download"></i> Download
+                                        </a>
+                                        {% if document.status == 'rejected' or document.status == 'resubmission_required' %}
+                                            <button type="button" 
+                                                    class="btn btn-warning btn-sm"
+                                                    onclick="resubmitDocument({{ document.id }})">
+                                                <i class="bi bi-arrow-clockwise"></i> Resubmit
+                                            </button>
+                                        {% endif %}
+                                        {% if user.role == 'coordinator' or user.role == 'admin' %}
+                                            <button type="button" 
+                                                    class="btn btn-success btn-sm"
+                                                    onclick="validateDocument({{ document.id }})">
+                                                <i class="bi bi-check-circle"></i> Validate
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="bi bi-file-earmark-x display-4 text-muted"></i>
+                            <h4 class="mt-3">No Documents Found</h4>
+                            <p class="text-muted">You haven't uploaded any documents yet.</p>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                                <i class="bi bi-upload"></i> Upload Your First Document
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if documents.has_other_pages %}
+        <div class="row mt-4">
+            <div class="col-12">
+                <nav aria-label="Documents pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if documents.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ documents.previous_page_number }}&{{ request.GET.urlencode }}">
+                                    <i class="bi bi-chevron-left"></i> Previous
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for num in documents.paginator.page_range %}
+                            {% if documents.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > documents.number|add:'-3' and num < documents.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}&{{ request.GET.urlencode }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if documents.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ documents.next_page_number }}&{{ request.GET.urlencode }}">
+                                    Next <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Upload Document Modal -->
+<div class="modal fade" id="uploadDocumentModal" tabindex="-1" aria-labelledby="uploadDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadDocumentModalLabel">
+                    <i class="bi bi-upload"></i> Upload Document
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="uploadDocumentForm" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="documentType" class="form-label">Document Type</label>
+                        <select class="form-select" id="documentType" name="document_type" required>
+                            <option value="">Select document type...</option>
+                            {% for doc_type in document_types %}
+                                <option value="{{ doc_type.id }}">{{ doc_type.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Choose the type of document you're uploading</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="application" class="form-label">Application (Optional)</label>
+                        <select class="form-select" id="application" name="application">
+                            <option value="">No specific application</option>
+                            {% for app in applications %}
+                                <option value="{{ app.id }}">{{ app.program.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Associate this document with a specific application</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="documentFile" class="form-label">File</label>
+                        <input type="file" 
+                               class="form-control" 
+                               id="documentFile" 
+                               name="file" 
+                               required
+                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png">
+                        <div class="form-text">Supported formats: PDF, DOC, DOCX, JPG, PNG (Max 10MB)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description (Optional)</label>
+                        <textarea class="form-control" 
+                                  id="description" 
+                                  name="description" 
+                                  rows="3"
+                                  placeholder="Add any additional notes about this document..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="uploadBtn">
+                        <i class="bi bi-upload"></i> Upload Document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('documentsFilterForm');
+    const documentsListContainer = document.getElementById('documentsListContainer');
+    const uploadForm = document.getElementById('uploadDocumentForm');
+    
+    // Handle document filtering
+    if (filterForm && documentsListContainer) {
+        const debouncedFetch = debounce(fetchDocuments, 400);
+        
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            fetchDocuments();
+        });
+        
+        filterForm.querySelectorAll('input, select').forEach(el => {
+            el.addEventListener('change', debouncedFetch);
+        });
+    }
+    
+    // Handle document upload
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const uploadBtn = document.getElementById('uploadBtn');
+            setLoadingState(uploadBtn, true, 'Uploading...');
+            
+            try {
+                const formData = new FormData(uploadForm);
+                const data = await apiRequest(Urls['api:document-list'](), {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                showSuccessAlert('Document Uploaded!', 'Your document has been uploaded successfully.');
+                
+                // Close modal and refresh list
+                const modal = bootstrap.Modal.getInstance(document.getElementById('uploadDocumentModal'));
+                modal.hide();
+                uploadForm.reset();
+                
+                // Refresh the documents list
+                fetchDocuments();
+                
+            } catch (error) {
+                let title = 'Upload Error';
+                let message = 'Failed to upload document. Please try again.';
+                
+                if (error.title) title = error.title;
+                if (error.message) message = error.message;
+                
+                showErrorAlert(title, message);
+            } finally {
+                setLoadingState(uploadBtn, false);
+            }
+        });
+    }
+
+    async function fetchDocuments() {
+        showSectionLoading('#documentsListContainer', 'Loading documents...');
+        const params = new URLSearchParams(new FormData(filterForm)).toString();
+        
+        try {
+            const data = await apiRequest(`/api/documents/?${params}`);
+            renderDocumentsList(data.results || data);
+            showToast('Documents updated!', 'success');
+        } catch (err) {
+            let title = 'Error', message = 'Could not load documents.';
+            if (err && err.title) title = err.title;
+            if (err && err.message) message = err.message;
+            showErrorAlert(title, message);
+        } finally {
+            hideSectionLoading('#documentsListContainer');
+        }
+    }
+
+    function renderDocumentsList(documents) {
+        if (!Array.isArray(documents)) return;
+        
+        if (documents.length === 0) {
+            documentsListContainer.innerHTML = `
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-body text-center py-5">
+                                <i class="bi bi-file-earmark-x display-4 text-muted"></i>
+                                <h4 class="mt-3">No Documents Found</h4>
+                                <p class="text-muted">No documents match your current filters.</p>
+                                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                                    <i class="bi bi-upload"></i> Upload Document
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            return;
+        }
+        
+        let html = '<div class="row g-4">';
+        documents.forEach(document => {
+            const statusColor = getDocumentStatusColor(document.status);
+            const validationColor = document.validation_status ? getValidationStatusColor(document.validation_status) : '';
+            const uploadedDate = new Date(document.uploaded_at).toLocaleDateString();
+            
+            html += `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title mb-1">${escapeHtml(document.filename)}</h5>
+                                    <p class="text-muted mb-0">${escapeHtml(document.document_type.name)}</p>
+                                </div>
+                                <span class="badge bg-${statusColor}">${document.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted">Uploaded</small><br>
+                                    <strong>${uploadedDate}</strong>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Size</small><br>
+                                    <strong>${formatFileSize(document.file_size || 0)}</strong>
+                                </div>
+                            </div>
+                            
+                            ${document.application ? `
+                                <div class="mb-3">
+                                    <small class="text-muted">Application</small><br>
+                                    <strong>${escapeHtml(document.application.program.name)}</strong>
+                                </div>
+                            ` : ''}
+                            
+                            ${validationColor ? `
+                                <div class="mb-3">
+                                    <small class="text-muted">Validation</small><br>
+                                    <span class="badge bg-${validationColor}">${document.validation_status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a href="${Urls['frontend:document_detail'](document.id)}" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye"></i> View Details
+                                </a>
+                                <div class="btn-group" role="group">
+                                    <a href="${document.file_url}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                        <i class="bi bi-download"></i> Download
+                                    </a>
+                                    ${getDocumentActionButtons(document)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        });
+        html += '</div>';
+        documentsListContainer.innerHTML = html;
+    }
+
+    function getDocumentStatusColor(status) {
+        const colors = {
+            'pending': 'warning',
+            'validated': 'success',
+            'rejected': 'danger',
+            'resubmission_required': 'info'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    function getValidationStatusColor(status) {
+        const colors = {
+            'pending': 'warning',
+            'valid': 'success',
+            'invalid': 'danger'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    function getDocumentActionButtons(document) {
+        let buttons = '';
+        
+        if (document.status === 'rejected' || document.status === 'resubmission_required') {
+            buttons += `
+                <button type="button" class="btn btn-warning btn-sm" onclick="resubmitDocument(${document.id})">
+                    <i class="bi bi-arrow-clockwise"></i> Resubmit
+                </button>`;
+        }
+        
+        // Add coordinator/admin validation button
+        if (window.currentUserRole === 'coordinator' || window.currentUserRole === 'admin') {
+            buttons += `
+                <button type="button" class="btn btn-success btn-sm" onclick="validateDocument(${document.id})">
+                    <i class="bi bi-check-circle"></i> Validate
+                </button>`;
+        }
+        
+        return buttons;
+    }
+
+    function clearFilters() {
+        filterForm.reset();
+        fetchDocuments();
+    }
+
+    function showToast(message, type = 'info') {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: type,
+            title: message,
+            showConfirmButton: false,
+            timer: 2000,
+            timerProgressBar: true
+        });
+    }
+});
+
+// Global functions for document actions
+async function validateDocument(documentId) {
+    const result = await showConfirmDialog(
+        'Validate Document',
+        'Are you sure you want to mark this document as validated?',
+        'Yes, Validate'
+    );
+    
+    if (result.isConfirmed) {
+        try {
+            await apiRequest(Urls['api:document-validate'](documentId), {
+                method: 'POST'
+            });
+            showSuccessAlert('Document Validated!', 'The document has been marked as validated.');
+            location.reload();
+        } catch (error) {
+            showErrorAlert('Error', 'Failed to validate document. Please try again.');
+        }
+    }
+}
+
+async function resubmitDocument(documentId) {
+    const result = await showConfirmDialog(
+        'Resubmit Document',
+        'Are you sure you want to resubmit this document? This will create a new version.',
+        'Yes, Resubmit'
+    );
+    
+    if (result.isConfirmed) {
+        // Redirect to document upload form with pre-filled document type
+        window.location.href = Urls['frontend:document_upload']() + '?resubmit=' + documentId;
+    }
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Program - SEIM{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Add New Program</h4>
+                    <div>
+                        <a href="/dynforms/" class="btn btn-outline-info btn-sm me-2" target="_blank">
+                            <i class="bi bi-list-ul"></i> View Forms
+                        </a>
+                        <a href="/dynforms/builder/" class="btn btn-outline-primary btn-sm" target="_blank">
+                            <i class="bi bi-ui-checks"></i> Create Form
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Form Builder Instructions -->
+                    <div class="alert alert-info mb-4">
+                        <h6><i class="bi bi-info-circle"></i> Dynamic Form Builder</h6>
+                        <p class="mb-2">You can create custom application forms for this program using the dynamic form builder.</p>
+                        <ol class="mb-0 small">
+                            <li>Click "Create Form" to open the form builder in a new tab</li>
+                            <li>Design your form with fields like motivation, experience, etc.</li>
+                            <li>Save the form and return here to select it</li>
+                            <li>Or select an existing form from the dropdown below</li>
+                        </ol>
+                    </div>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        {{ form.non_field_errors }}
+                        {% for field in form %}
+                            <div class="mb-3">
+                                {% if field.field.widget.input_type == 'checkbox' %}
+                                    <div class="form-check">
+                                        {{ field }}
+                                        <label class="form-check-label" for="{{ field.id_for_label }}">
+                                            {{ field.label }}
+                                        </label>
+                                        {% if field.help_text %}
+                                            <div class="form-text">{{ field.help_text }}</div>
+                                        {% endif %}
+                                        {% for error in field.errors %}
+                                            <div class="text-danger small">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.help_text %}
+                                        <div class="form-text">{{ field.help_text }}</div>
+                                    {% endif %}
+                                    {% for error in field.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'frontend:programs' %}" class="btn btn-secondary me-2">Cancel</a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Create Program
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
