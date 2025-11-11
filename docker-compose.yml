@@ -1,0 +1,92 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: seim
+      POSTGRES_USER: seimuser
+      POSTGRES_PASSWORD: seimpass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U seimuser -d seim"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: seim-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+
+  web:
+    build: .
+    command: bash -c "/app/scripts/wait-for-db.sh && python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DJANGO_ENV=dev
+      - DEBUG=true
+
+  celery:
+    build: .
+    command: bash -c "/app/scripts/wait-for-db.sh && celery -A seim worker --loglevel=info"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    command: bash -c "/app/scripts/wait-for-db.sh && pytest --cov=. --cov-report=html:htmlcov --cov-report=term-missing --cov-fail-under=80"
+    volumes:
+      - .:/app
+      - test_coverage:/app/htmlcov
+    env_file:
+      - .env
+    environment:
+      - DJANGO_ENV=test
+      - DEBUG=false
+      - TESTING=true
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    profiles:
+      - test
+
+volumes:
+  postgres_data:
+  static_volume:
+  test_coverage:
+  redis_data:
+    driver: local 

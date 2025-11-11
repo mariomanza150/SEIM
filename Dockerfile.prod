@@ -1,0 +1,53 @@
+# syntax=docker/dockerfile:1
+FROM python:3.12-slim as base
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+        gcc \
+        libmagic1 \
+        curl \
+        && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN groupadd -r seim && useradd -r -g seim seim
+
+# Set work directory
+WORKDIR /app
+
+# Install Python dependencies
+COPY requirements.txt requirements-dev.txt ./
+RUN pip install --upgrade pip && \
+    pip install gunicorn[gevent] && \
+    pip install -r requirements.txt
+
+# Copy project files
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p /var/log/seim /app/staticfiles /app/media && \
+    chown -R seim:seim /app /var/log/seim
+
+# Make scripts executable
+RUN chmod +x /app/scripts/wait-for-db.sh
+
+# Switch to non-root user
+USER seim
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health/ || exit 1
+
+# Expose port
+EXPOSE 8000
+
+# Default command (can be overridden)
+CMD ["gunicorn", "seim.wsgi:application", "--bind", "0.0.0.0:8000"]
