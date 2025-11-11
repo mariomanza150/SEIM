@@ -1,0 +1,56 @@
+# Core Django and DRF
+Django==5.2.3
+djangorestframework==3.15.1
+django-cors-headers==4.3.1
+django-environ==0.11.2
+
+# Authentication and Security
+djangorestframework-simplejwt==5.3.1
+
+# Database and Caching
+psycopg2-binary==2.9.9
+redis==5.0.4
+django-redis==5.4.0
+django-cacheops==7.0.2
+
+# Background Tasks and Queue Management
+celery==5.3.6
+django-celery-results==2.5.1
+django-celery-beat==2.8.1
+
+# Performance and Monitoring
+psutil==5.9.8
+django-extensions==3.2.3
+
+# File Handling and Media
+Pillow==10.2.0
+django-storages==1.14.2
+pylibmagic==0.5.0
+
+# API Documentation
+drf-spectacular==0.27.1
+
+# Production and Deployment
+gunicorn==21.2.0
+whitenoise==6.6.0
+sentry-sdk==1.40.0
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2024.1
+requests==2.31.0
+django-js-reverse==0.10.2
+django-filter==24.1
+
+# Dynamic Forms and UI Components
+django-dynforms==2025.7.38
+crispy-bootstrap5==2025.6
+django-crisp-modals==2025.7.0
+django-itemlist==2025.3.11
+
+# Additional Utilities
+Markdown==3.8.2
+numpy==2.3.1
+py-dateutil==2.2
+pycryptodome==3.23.0
+pyparsing==3.2.3

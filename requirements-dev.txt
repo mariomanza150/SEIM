@@ -1,0 +1,64 @@
+-r requirements.txt
+
+# Development and Code Quality Tools for SEIM
+
+# Code formatting and linting
+ruff==0.1.15
+isort==5.13.2
+flake8==6.1.0
+flake8-docstrings==1.7.0
+flake8-import-order==0.18.2
+flake8-quotes==3.4.0
+flake8-bugbear==24.2.6
+flake8-django==1.4
+
+# Type checking
+mypy==1.8.0
+django-stubs==4.2.7
+types-requests==2.31.0.20240106
+types-PyYAML==6.0.12.12
+
+# Code complexity and quality
+radon==6.0.1
+mccabe==0.7.0
+pylint==2.17.7
+pylint-django==2.5.5
+
+# Security analysis
+bandit==1.7.7
+
+# Pre-commit hooks
+pre-commit==3.6.0
+
+# Documentation
+sphinx==7.4.7
+sphinx-rtd-theme==2.0.0
+sphinx-autodoc-typehints==1.25.3
+
+# Development utilities
+ipython==8.21.0
+ipdb==0.13.13
+django-debug-toolbar==4.3.0
+django-livereload==1.7
+
+# Testing and Code Coverage
+pytest==7.4.4
+pytest-django==4.7.0
+pytest-cov==4.1.0
+pytest-html==4.1.1
+pytest-json-report==1.5.0
+pytest-mock==3.12.0
+pytest-xdist==3.5.0
+pytest-asyncio==0.23.3
+pytest-selenium==4.1.0
+factory-boy==3.3.0
+faker==22.5.1
+freezegun==1.4.0
+responses==0.24.1
+httpretty==1.1.4
+coverage==7.4.1
+webdriver-manager==4.0.1
+
+# Performance profiling
+memory-profiler==0.61.0
+line-profiler==4.1.2
