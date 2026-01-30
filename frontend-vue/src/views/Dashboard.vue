@@ -75,7 +75,14 @@
           </div>
 
           <!-- Stats Cards -->
-          <div class="row mb-4">
+          <div v-if="loading" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading dashboard...</p>
+          </div>
+
+          <div v-else class="row mb-4">
             <div class="col-md-3 mb-3">
               <div class="card text-center">
                 <div class="card-body">
@@ -115,25 +122,21 @@
           </div>
 
           <!-- Recent Activity -->
-          <div class="card">
+          <div v-if="!loading" class="card">
             <div class="card-header">
               <h5 class="mb-0">Recent Activity</h5>
             </div>
             <div class="card-body">
-              <div v-if="loading" class="text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">Loading...</span>
-                </div>
-              </div>
-              <div v-else-if="error" class="alert alert-danger">
+              <div v-if="error" class="alert alert-warning alert-dismissible fade show" role="alert">
+                <i class="bi bi-exclamation-triangle me-2"></i>
                 {{ error }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
               </div>
-              <div v-else>
-                <p class="text-muted">No recent activity to display.</p>
-                <p class="small">
-                  This is a placeholder. Once the API is connected, real data will appear here.
-                </p>
-              </div>
+              <p class="text-muted">No recent activity to display.</p>
+              <p class="small">
+                <i class="bi bi-info-circle me-1"></i>
+                Your applications, documents, and notifications will appear here.
+              </p>
             </div>
           </div>
         </div>
@@ -146,15 +149,18 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
+import api from '@/services/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { success, error: errorToast } = useToast()
 
 const userName = computed(() => authStore.userName)
-const loading = ref(false)
+const loading = ref(true)
 const error = ref(null)
 
-// Mock stats - replace with real API calls
+// Dashboard stats from API
 const stats = ref({
   applications: 0,
   documents: 0,
@@ -162,14 +168,34 @@ const stats = ref({
   pending: 0,
 })
 
+async function fetchDashboardStats() {
+  try {
+    loading.value = true
+    error.value = null
+    
+    const response = await api.get('/api/accounts/dashboard/stats/')
+    stats.value = response.data
+    
+    console.log('Dashboard stats loaded:', response.data)
+  } catch (err) {
+    console.error('Failed to load dashboard stats:', err)
+    error.value = 'Failed to load dashboard statistics'
+    errorToast('Unable to load dashboard statistics')
+    // Don't block UI on stats error - show 0s
+  } finally {
+    loading.value = false
+  }
+}
+
 async function handleLogout() {
   await authStore.logout()
+  success('You have been logged out successfully')
   router.push('/login')
 }
 
 onMounted(async () => {
-  // TODO: Fetch dashboard data from API
   console.log('Dashboard mounted. User:', authStore.user)
+  await fetchDashboardStats()
 })
 </script>
 

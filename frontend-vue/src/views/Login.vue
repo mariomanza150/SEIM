@@ -85,10 +85,12 @@
 import { ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const { success: successToast, error: errorToast } = useToast()
 
 const email = ref('')
 const password = ref('')
@@ -105,14 +107,17 @@ async function handleLogin() {
     const success = await authStore.login(email.value, password.value)
 
     if (success) {
+      successToast(`Welcome back, ${authStore.userName}!`)
       // Redirect to original destination or dashboard
       const redirect = route.query.redirect || '/dashboard'
       router.push(redirect)
     } else {
       error.value = authStore.error || 'Login failed. Please try again.'
+      errorToast(error.value)
     }
   } catch (err) {
     error.value = 'An unexpected error occurred. Please try again.'
+    errorToast(error.value)
     console.error('Login error:', err)
   } finally {
     isLoading.value = false
