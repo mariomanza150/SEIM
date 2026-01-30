@@ -7,6 +7,8 @@ import { useAuthStore } from '@/stores/auth'
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
+const Applications = () => import('@/views/Applications.vue')
+const ApplicationDetail = () => import('@/views/ApplicationDetail.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
 const routes = [
@@ -31,6 +33,24 @@ const routes = [
     meta: {
       requiresAuth: true,
       title: 'Dashboard - SEIM',
+    },
+  },
+  {
+    path: '/applications',
+    name: 'Applications',
+    component: Applications,
+    meta: {
+      requiresAuth: true,
+      title: 'Applications - SEIM',
+    },
+  },
+  {
+    path: '/applications/:id',
+    name: 'ApplicationDetail',
+    component: ApplicationDetail,
+    meta: {
+      requiresAuth: true,
+      title: 'Application Details - SEIM',
     },
   },
   // Catch-all 404

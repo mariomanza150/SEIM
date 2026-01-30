@@ -47,12 +47,12 @@
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2">
           <div class="list-group">
-            <a href="#" class="list-group-item list-group-item-action active">
+            <router-link to="/dashboard" class="list-group-item list-group-item-action active">
               <i class="bi bi-house-door me-2"></i>Dashboard
-            </a>
-            <a href="#" class="list-group-item list-group-item-action">
+            </router-link>
+            <router-link to="/applications" class="list-group-item list-group-item-action">
               <i class="bi bi-file-earmark-text me-2"></i>Applications
-            </a>
+            </router-link>
             <a href="#" class="list-group-item list-group-item-action">
               <i class="bi bi-folder me-2"></i>Documents
             </a>
@@ -84,13 +84,15 @@
 
           <div v-else class="row mb-4">
             <div class="col-md-3 mb-3">
-              <div class="card text-center">
-                <div class="card-body">
-                  <i class="bi bi-file-earmark-text fs-1 text-primary"></i>
-                  <h3 class="mt-2">{{ stats.applications }}</h3>
-                  <p class="text-muted mb-0">Applications</p>
+              <router-link to="/applications" class="text-decoration-none">
+                <div class="card text-center card-hover">
+                  <div class="card-body">
+                    <i class="bi bi-file-earmark-text fs-1 text-primary"></i>
+                    <h3 class="mt-2">{{ stats.applications }}</h3>
+                    <p class="text-muted mb-0">Applications</p>
+                  </div>
                 </div>
-              </div>
+              </router-link>
             </div>
             <div class="col-md-3 mb-3">
               <div class="card text-center">
