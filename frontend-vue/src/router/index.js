@@ -12,6 +12,7 @@ const ApplicationForm = () => import('@/views/ApplicationForm.vue')
 const ApplicationDetail = () => import('@/views/ApplicationDetail.vue')
 const Documents = () => import('@/views/Documents.vue')
 const DocumentDetail = () => import('@/views/DocumentDetail.vue')
+const Notifications = () => import('@/views/Notifications.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
 const routes = [
@@ -90,6 +91,15 @@ const routes = [
     meta: {
       requiresAuth: true,
       title: 'Document Details - SEIM',
+    },
+  },
+  {
+    path: '/notifications',
+    name: 'Notifications',
+    component: Notifications,
+    meta: {
+      requiresAuth: true,
+      title: 'Notifications - SEIM',
     },
   },
   // Catch-all 404

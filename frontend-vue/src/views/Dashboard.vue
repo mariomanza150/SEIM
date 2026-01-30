@@ -13,7 +13,8 @@
           <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
+          <ul class="navbar-nav ms-auto align-items-center">
+            <NotificationDropdown />
             <li class="nav-item dropdown">
               <a
                 class="nav-link dropdown-toggle"
@@ -56,9 +57,9 @@
             <router-link to="/documents" class="list-group-item list-group-item-action">
               <i class="bi bi-folder me-2"></i>Documents
             </router-link>
-            <a href="#" class="list-group-item list-group-item-action">
+            <router-link to="/notifications" class="list-group-item list-group-item-action">
               <i class="bi bi-bell me-2"></i>Notifications
-            </a>
+            </router-link>
             <a href="#" class="list-group-item list-group-item-action">
               <i class="bi bi-gear me-2"></i>Settings
             </a>
@@ -106,13 +107,15 @@
               </router-link>
             </div>
             <div class="col-md-3 mb-3">
-              <div class="card text-center">
-                <div class="card-body">
-                  <i class="bi bi-bell fs-1 text-warning"></i>
-                  <h3 class="mt-2">{{ stats.notifications }}</h3>
-                  <p class="text-muted mb-0">Notifications</p>
+              <router-link to="/notifications" class="text-decoration-none">
+                <div class="card text-center card-hover">
+                  <div class="card-body">
+                    <i class="bi bi-bell fs-1 text-warning"></i>
+                    <h3 class="mt-2">{{ stats.notifications }}</h3>
+                    <p class="text-muted mb-0">Notifications</p>
+                  </div>
                 </div>
-              </div>
+              </router-link>
             </div>
             <div class="col-md-3 mb-3">
               <div class="card text-center">
@@ -154,6 +157,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import api from '@/services/api'
 
 const router = useRouter()
