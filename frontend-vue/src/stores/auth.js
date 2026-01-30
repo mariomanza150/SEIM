@@ -103,7 +103,23 @@ export const useAuthStore = defineStore('auth', () => {
         },
       })
 
-      user.value = response.data
+      // Profile API returns profile with nested user data
+      // Transform to flat structure for easier use
+      const profileData = response.data
+      user.value = {
+        id: profileData.id,
+        email: profileData.email,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
+        full_name: profileData.full_name,
+        role: profileData.role,
+        username: profileData.username,
+        // Add other profile fields
+        secondary_email: profileData.secondary_email,
+        gpa: profileData.gpa,
+        language: profileData.language,
+      }
+      
       return user.value
     } catch (err) {
       console.error('Fetch user profile error:', err)

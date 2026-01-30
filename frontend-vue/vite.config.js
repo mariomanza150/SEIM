@@ -20,22 +20,22 @@ export default defineConfig({
     // Proxy API requests to Django backend
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',  // Django in Docker
+        target: 'http://localhost:8001',  // Django in Docker (external port)
         changeOrigin: true,
         secure: false,
       },
       '/media': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8001',
         changeOrigin: true,
         secure: false,
       },
       '/seim/admin': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8001',
         changeOrigin: true,
         secure: false,
       },
       '/cms': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8001',
         changeOrigin: true,
         secure: false,
       },

@@ -8,7 +8,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5434:5432"  # Use port 5434 to avoid conflict with bmad-postgres
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U seimuser -d seim"]
       interval: 10s
@@ -39,7 +39,7 @@ services:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     ports:
-      - "8000:8000"
+      - "8001:8000"  # Use port 8001 externally to avoid conflict with bmad-taiga
     env_file:
       - .env
     depends_on:
