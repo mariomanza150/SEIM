@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/auth'
 const Login = () => import('@/views/Login.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
 const Applications = () => import('@/views/Applications.vue')
+const ApplicationForm = () => import('@/views/ApplicationForm.vue')
 const ApplicationDetail = () => import('@/views/ApplicationDetail.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
@@ -42,6 +43,24 @@ const routes = [
     meta: {
       requiresAuth: true,
       title: 'Applications - SEIM',
+    },
+  },
+  {
+    path: '/applications/new',
+    name: 'ApplicationNew',
+    component: ApplicationForm,
+    meta: {
+      requiresAuth: true,
+      title: 'New Application - SEIM',
+    },
+  },
+  {
+    path: '/applications/:id/edit',
+    name: 'ApplicationEdit',
+    component: ApplicationForm,
+    meta: {
+      requiresAuth: true,
+      title: 'Edit Application - SEIM',
     },
   },
   {
