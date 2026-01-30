@@ -212,7 +212,7 @@ class AnalyticsViewsTestCase(TestCase):
         response = self.api_client.post(reverse('analytics:track_event'), {
             'event_type': 'test_event',
             'data': {'test': 'data'}
-        })
+        }, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         # Skipping DB check for AnalyticsEvent since model does not exist
 
@@ -222,7 +222,7 @@ class AnalyticsViewsTestCase(TestCase):
         response = self.api_client.post(reverse('analytics:track_event'), {
             'event_type': '',  # Invalid empty event type
             'data': {'test': 'data'}
-        })
+        }, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_analytics_event_tracking_anonymous(self):
@@ -230,7 +230,7 @@ class AnalyticsViewsTestCase(TestCase):
         response = self.api_client.post(reverse('analytics:track_event'), {
             'event_type': 'test_event',
             'data': {'test': 'data'}
-        })
+        }, format='json')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     # Skip or comment out tests that patch non-existent attributes or fail due to unrelated session errors

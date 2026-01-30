@@ -1,0 +1,168 @@
+{% extends "cms/base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="section-blue text-white py-5">
+    <div class="container text-center">
+        <i class="bi bi-chat-quote display-3 mb-4" style="color: var(--uadec-gold);"></i>
+        <h1 class="display-4 fw-bold text-white mb-3" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+            {{ page.title }}
+        </h1>
+        {% if page.introduction %}
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="lead text-white">
+                    {{ page.introduction|richtext }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Filters -->
+<section class="bg-light py-4 border-bottom">
+    <div class="container">
+        <form method="get" class="row g-3 justify-content-center">
+            <div class="col-md-6">
+                <label class="form-label fw-bold">Filtrar por País de Destino</label>
+                <div class="input-group">
+                    <select name="country" class="form-select">
+                        <option value="">Todos los países</option>
+                        {% for testimonial in testimonials %}
+                            <option value="{{ testimonial.destination_country }}" 
+                                    {% if request.GET.country == testimonial.destination_country %}selected{% endif %}>
+                                {{ testimonial.destination_country }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-filter me-2"></i>Filtrar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- Testimonials Grid -->
+<section class="py-5">
+    <div class="container">
+        {% if testimonials %}
+        <div class="row g-4">
+            {% for testimonial in testimonials %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm hover-card">
+                    {% if testimonial.student_photo %}
+                    <div class="card-img-top position-relative" style="height: 250px; overflow: hidden;">
+                        {% image testimonial.student_photo fill-400x300 class="w-100 h-100" style="object-fit: cover;" %}
+                        <div class="position-absolute top-0 end-0 m-3">
+                            {% if testimonial.would_recommend %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-hand-thumbs-up-fill me-1"></i>Recomendado
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <h5 class="card-title fw-bold mb-2">{{ testimonial.student_name }}</h5>
+                            {% if testimonial.student_major %}
+                            <p class="card-text small text-muted mb-1">{{ testimonial.student_major }}</p>
+                            {% endif %}
+                            {% if testimonial.exchange_period %}
+                            <p class="card-text small text-muted mb-0">
+                                <i class="bi bi-calendar me-1"></i>{{ testimonial.exchange_period }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="card-text small mb-3">
+                            <i class="bi bi-geo-alt me-1" style="color: var(--uadec-gold);"></i>
+                            <strong>{{ testimonial.destination_country }}</strong><br>
+                            {{ testimonial.destination_institution }}
+                        </p>
+                        
+                        <blockquote class="blockquote small mb-3 ps-3 border-start border-3" style="border-color: var(--uadec-gold) !important;">
+                            <p class="mb-0">"{{ testimonial.quote|truncatewords:20 }}"</p>
+                        </blockquote>
+                        
+                        <a href="{% pageurl testimonial %}" class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-book-fill me-2"></i>Leer Historia Completa
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if testimonials.has_other_pages %}
+        <nav aria-label="Testimonials pagination" class="mt-5">
+            <ul class="pagination justify-content-center">
+                {% if testimonials.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ testimonials.previous_page_number }}{% if request.GET.country %}&country={{ request.GET.country }}{% endif %}">
+                        <i class="bi bi-chevron-left"></i> Anterior
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for num in testimonials.paginator.page_range %}
+                <li class="page-item {% if testimonials.number == num %}active{% endif %}">
+                    <a class="page-link" href="?page={{ num }}{% if request.GET.country %}&country={{ request.GET.country }}{% endif %}">
+                        {{ num }}
+                    </a>
+                </li>
+                {% endfor %}
+                
+                {% if testimonials.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ testimonials.next_page_number }}{% if request.GET.country %}&country={{ request.GET.country }}{% endif %}">
+                        Siguiente <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle me-2"></i>
+            No hay testimonios disponibles en este momento.
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="section-gold text-white py-5">
+    <div class="container text-center">
+        <h2 class="display-6 fw-bold mb-3">¿Quieres Vivir Tu Propia Historia?</h2>
+        <p class="lead mb-4">Únete a cientos de estudiantes que han transformado sus vidas a través del intercambio académico</p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a href="/internacional/movilidad-estudiantil/" class="btn btn-primary btn-lg px-5 py-3">
+                <i class="bi bi-compass me-2"></i>Explorar Programas
+            </a>
+            <a href="/seim/register/" class="btn btn-outline-light btn-lg px-5 py-3">
+                <i class="bi bi-person-plus me-2"></i>Crear Cuenta
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.hover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+</style>
+{% endblock %}
+

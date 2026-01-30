@@ -1,0 +1,5 @@
+---
+description: Remember to read/update relevant documentation files to help you understand the current codebase. main documentation folder: "/docs"
+globs:
+alwaysApply: false
+---

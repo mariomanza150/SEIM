@@ -1,4 +1,5 @@
 {% load static %}
+{% load i18n %}
 
 <!-- Navigation Component -->
 <nav class="navbar navbar-expand-lg">
@@ -18,40 +19,78 @@
             <!-- Authenticated Navigation -->
             <ul class="navbar-nav me-auto authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'frontend:dashboard' %}" aria-label="Dashboard">
+                    <a class="nav-link" href="{% url 'frontend:dashboard' %}" aria-label="{% trans 'Dashboard' %}">
                         <i class="bi bi-speedometer2" aria-hidden="true"></i> 
-                        <span>Dashboard</span>
+                        <span>{% trans "Dashboard" %}</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'frontend:programs' %}" aria-label="Programs">
+                    <a class="nav-link" href="{% url 'frontend:programs' %}" aria-label="{% trans 'Programs' %}">
                         <i class="bi bi-calendar-event" aria-hidden="true"></i> 
-                        <span>Programs</span>
+                        <span>{% trans "Programs" %}</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'frontend:applications' %}" aria-label="Applications">
+                    <a class="nav-link" href="{% url 'frontend:applications' %}" aria-label="{% trans 'Applications' %}">
                         <i class="bi bi-file-earmark-text" aria-hidden="true"></i> 
-                        <span>Applications</span>
+                        <span>{% trans "Applications" %}</span>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'frontend:calendar' %}" aria-label="{% trans 'Calendar' %}">
+                        <i class="bi bi-calendar3" aria-hidden="true"></i> 
+                        <span>{% trans "Calendar" %}</span>
+                    </a>
+                </li>
+                <!-- Coordinator Navigation -->
+                <li class="nav-item coordinator-nav" {% if user.is_authenticated and user.is_coordinator %}style="display:block;"{% else %}style="display:none;"{% endif %}>
+                    <a class="nav-link" href="{% url 'frontend:coordinator_dashboard' %}" aria-label="{% trans 'Coordinator Dashboard' %}">
+                        <i class="bi bi-kanban" aria-hidden="true"></i> 
+                        <span>{% trans "Reviews" %}</span>
+                    </a>
+                </li>
+                
                 <!-- Admin Navigation -->
-                <li class="nav-item admin-nav" {% if user.is_authenticated and user.role == 'admin' %}style="display:block;"{% else %}style="display:none;"{% endif %}>
-                    <a class="nav-link" href="{% url 'frontend:admin_dashboard' %}" aria-label="Admin Dashboard">
+                <li class="nav-item admin-nav" {% if user.is_authenticated and user.is_admin %}style="display:block;"{% else %}style="display:none;"{% endif %}>
+                    <a class="nav-link" href="{% url 'frontend:admin_dashboard' %}" aria-label="{% trans 'Admin Dashboard' %}">
                         <i class="bi bi-gear" aria-hidden="true"></i> 
-                        <span>Admin</span>
+                        <span>{% trans "Admin" %}</span>
                     </a>
                 </li>
-                <li class="nav-item admin-nav" {% if user.is_authenticated and user.role == 'admin' %}style="display:block;"{% else %}style="display:none;"{% endif %}>
-                    <a class="nav-link" href="/dynforms/" aria-label="Dynamic Form Builder" target="_blank">
+                <li class="nav-item admin-nav" {% if user.is_authenticated and user.is_admin %}style="display:block;"{% else %}style="display:none;"{% endif %}>
+                    <a class="nav-link" href="{% url 'application_forms:form-list' %}" aria-label="{% trans 'Dynamic Form Builder' %}">
                         <i class="bi bi-ui-checks" aria-hidden="true"></i>
-                        <span>Form Builder</span>
+                        <span>{% trans "Form Builder" %}</span>
                     </a>
                 </li>
             </ul>
             
             <!-- User Menu -->
             <ul class="navbar-nav ms-auto authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
+                <!-- WebSocket Connection Status -->
+                <li class="nav-item">
+                    <span class="nav-link" id="wsConnectionStatus" title="Real-time notifications status">
+                        <i class="bi bi-wifi" id="wsStatusIcon" aria-hidden="true"></i>
+                        <span class="visually-hidden">WebSocket connection status</span>
+                    </span>
+                </li>
+                <!-- Notification Bell -->
+                <li class="nav-item">
+                    <button class="nav-link btn btn-link position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#notificationCenter" aria-controls="notificationCenter" aria-label="Notifications">
+                        <i class="bi bi-bell" aria-hidden="true"></i>
+                        <span class="notification-badge position-absolute">0</span>
+                    </button>
+                </li>
+                <!-- Language Switcher -->
+                <li class="nav-item">
+                    {% include 'components/language-switcher.html' %}
+                </li>
+                <!-- Theme Toggle -->
+                <li class="nav-item">
+                    <button class="nav-link btn btn-link theme-toggle" id="themeToggle" aria-label="{% trans 'Toggle theme' %}">
+                        <i class="bi bi-moon-fill" id="themeIcon" aria-hidden="true"></i>
+                    </button>
+                </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle user-username" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
                         <i class="bi bi-person-circle" aria-hidden="true"></i> 
@@ -61,19 +100,24 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                         <li>
-                            <a class="dropdown-item" href="{% url 'frontend:profile' %}" aria-label="Profile">
-                                <i class="bi bi-person" aria-hidden="true"></i> Profile
+                            <a class="dropdown-item" href="{% url 'frontend:profile' %}" aria-label="{% trans 'Profile' %}">
+                                <i class="bi bi-person" aria-hidden="true"></i> {% trans "Profile" %}
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="{% url 'frontend:settings' %}" aria-label="Settings">
-                                <i class="bi bi-gear" aria-hidden="true"></i> Settings
+                            <a class="dropdown-item" href="{% url 'frontend:settings' %}" aria-label="{% trans 'Settings' %}">
+                                <i class="bi bi-gear" aria-hidden="true"></i> {% trans "Settings" %}
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'frontend:preferences' %}" aria-label="{% trans 'Preferences' %}">
+                                <i class="bi bi-sliders" aria-hidden="true"></i> {% trans "Preferences" %}
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <a class="dropdown-item" href="#" id="logoutLink" aria-label="Logout">
-                                <i class="bi bi-box-arrow-right" aria-hidden="true"></i> Logout
+                            <a class="dropdown-item" href="#" id="logoutLink" aria-label="{% trans 'Logout' %}">
+                                <i class="bi bi-box-arrow-right" aria-hidden="true"></i> {% trans "Logout" %}
                             </a>
                         </li>
                     </ul>
@@ -83,13 +127,13 @@
             <!-- Unauthenticated Navigation -->
             <ul class="navbar-nav ms-auto unauth-nav" {% if not user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'frontend:login' %}" aria-label="Login">
-                        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Login
+                    <a class="nav-link" href="{% url 'frontend:login' %}" aria-label="{% trans 'Login' %}">
+                        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> {% trans "Login" %}
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'frontend:register' %}" aria-label="Register">
-                        <i class="bi bi-person-plus" aria-hidden="true"></i> Register
+                    <a class="nav-link" href="{% url 'frontend:register' %}" aria-label="{% trans 'Register' %}">
+                        <i class="bi bi-person-plus" aria-hidden="true"></i> {% trans "Register" %}
                     </a>
                 </li>
             </ul>

@@ -1,0 +1,114 @@
+{% extends "cms/base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="section-blue text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-{% if page.featured_image %}8{% else %}12{% endif %}">
+                <h1 class="display-4 fw-bold text-white mb-3" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                    {{ page.title }}
+                </h1>
+                {% if page.subtitle %}
+                <p class="lead text-white mb-0" style="font-size: 1.25rem;">{{ page.subtitle }}</p>
+                {% endif %}
+            </div>
+            {% if page.featured_image %}
+            <div class="col-lg-4">
+                {% image page.featured_image fill-400x400 class="img-fluid rounded shadow-lg" %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Introduction -->
+{% if page.introduction %}
+<section class="py-4 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <p class="lead text-center">{{ page.introduction }}</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Main Content -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-{% if page.show_contact %}8{% else %}10 mx-auto{% endif %}">
+                {% for block in page.body %}
+                    <div class="mb-4 fade-in-up">
+                        {% include_block block %}
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Contact Sidebar -->
+            {% if page.show_contact %}
+            <div class="col-lg-4">
+                <div class="card shadow-sm sticky-top" style="top: 100px;">
+                    <div class="card-header" style="background: var(--uadec-blue); color: white; font-weight: 600;">
+                        <i class="bi bi-person-lines-fill me-2"></i>Contacto
+                    </div>
+                    <div class="card-body">
+                        {% if page.contact_name %}
+                        <div class="mb-3">
+                            <h5 class="fw-bold mb-1">{{ page.contact_name }}</h5>
+                            {% if page.contact_title %}
+                            <p class="text-muted small mb-0">{{ page.contact_title }}</p>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <ul class="list-unstyled">
+                            {% if page.contact_email %}
+                            <li class="mb-2">
+                                <i class="bi bi-envelope me-2" style="color: var(--uadec-gold);"></i>
+                                <a href="mailto:{{ page.contact_email }}">{{ page.contact_email }}</a>
+                            </li>
+                            {% endif %}
+                            {% if page.contact_phone %}
+                            <li class="mb-2">
+                                <i class="bi bi-telephone me-2" style="color: var(--uadec-gold);"></i>
+                                <a href="tel:{{ page.contact_phone }}">{{ page.contact_phone }}</a>
+                            </li>
+                            {% endif %}
+                            {% if page.contact_office %}
+                            <li class="mb-0">
+                                <i class="bi bi-geo-alt me-2" style="color: var(--uadec-gold);"></i>
+                                {{ page.contact_office }}
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Breadcrumb Navigation -->
+<section class="py-3 bg-light border-top">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                {% for ancestor in page.get_ancestors %}
+                    {% if ancestor.depth > 2 %}
+                    <li class="breadcrumb-item"><a href="{% pageurl ancestor %}">{{ ancestor.title }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="breadcrumb-item active" aria-current="page">{{ page.title }}</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+{% endblock %}
+

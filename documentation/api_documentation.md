@@ -312,6 +312,84 @@ Get dashboard metrics.
 #### GET /api/dashboard-configs/
 Get dashboard configuration.
 
+### Application Forms
+
+#### GET /api/application-forms/form-types/
+List all form types.
+
+**Query Parameters:**
+- `page`: Page number for pagination
+- `search`: Search by form name
+
+**Permissions:** Admin
+
+#### POST /api/application-forms/form-types/
+Create a new form type.
+
+**Request Body:**
+```json
+{
+  "name": "string",
+  "schema": {},
+  "ui_schema": {}
+}
+```
+
+**Permissions:** Admin
+
+#### GET /api/application-forms/form-types/{id}/
+Get form type details including schema.
+
+**Permissions:** Admin or Coordinator
+
+#### PUT /api/application-forms/form-types/{id}/
+Update form type.
+
+**Request Body:**
+```json
+{
+  "name": "string",
+  "schema": {},
+  "ui_schema": {}
+}
+```
+
+**Permissions:** Admin
+
+#### DELETE /api/application-forms/form-types/{id}/
+Delete form type.
+
+**Permissions:** Admin
+
+#### GET /api/application-forms/builder/
+Access the visual form builder interface.
+
+**Permissions:** Admin
+
+#### GET /api/application-forms/builder/{id}/
+Edit existing form in the visual builder.
+
+**Permissions:** Admin
+
+#### POST /api/application-forms/submissions/
+Submit a form.
+
+**Request Body:**
+```json
+{
+  "form_type": "uuid",
+  "application": "uuid",
+  "data": {}
+}
+```
+
+**Permissions:** Student (own applications)
+
+#### GET /api/application-forms/submissions/{id}/
+Get form submission details.
+
+**Permissions:** Student (own), Coordinator, Admin
+
 ## Error Responses
 
 ### 400 Bad Request
@@ -7558,6 +7636,176 @@ Last updated: 2025-11-11 19:07:27
 ## Generated Documentation
 
 Last updated: 2025-11-11 19:07:27
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:54:02
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:54:02
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:54:02
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:54:02
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:54:02
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:54:02
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:54:02
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:54:02
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:57:59
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:57:59
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:57:59
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:58:00
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:58:00
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:58:00
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:58:00
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-12 04:58:00
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2025-11-20 14:31:50
 
 - [API Schema](generated/api_schema.yaml)
 - [API Endpoints](generated/api_endpoints.md)

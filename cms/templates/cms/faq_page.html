@@ -1,0 +1,29 @@
+{% extends "cms/base.html" %}
+{% load wagtailcore_tags %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{% pageurl page.get_parent %}">FAQ</a></li>
+                        <li class="breadcrumb-item active">{{ page.title }}</li>
+                    </ol>
+                </nav>
+                
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h1 class="display-6 mb-4">{{ page.title }}</h1>
+                        <div class="faq-answer">
+                            {{ page.answer|richtext }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

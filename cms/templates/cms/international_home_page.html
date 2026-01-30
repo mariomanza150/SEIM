@@ -1,0 +1,163 @@
+{% extends "cms/base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="section-blue text-white py-5" style="min-height: 70vh; display: flex; align-items: center;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-3 fw-bold text-white mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                    {{ page.hero_title }}
+                </h1>
+                <p class="lead text-white mb-4" style="font-size: 1.5rem;">{{ page.hero_subtitle }}</p>
+                <div class="d-flex gap-3 flex-wrap">
+                    <a href="{% pageurl page %}/movilidad-estudiantil/" class="btn btn-secondary btn-lg px-5 py-3 shadow">
+                        <i class="bi bi-airplane-fill me-2"></i>Movilidad Estudiantil
+                    </a>
+                    <a href="{% pageurl page %}/institucional/" class="btn btn-outline-light btn-lg px-5 py-3 shadow">
+                        <i class="bi bi-building me-2"></i>Información Institucional
+                    </a>
+                </div>
+            </div>
+            {% if page.hero_image %}
+            <div class="col-lg-4">
+                {% image page.hero_image fill-500x500 class="img-fluid rounded shadow-lg" %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Statistics Section -->
+{% if page.show_stats %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-md-3">
+                <div class="p-4">
+                    <i class="bi bi-journal-text display-3 text-primary mb-3"></i>
+                    <h3 class="display-4 fw-bold text-primary">{{ page.stat_programs_count }}</h3>
+                    <p class="lead">Programas Activos</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4">
+                    <i class="bi bi-globe-americas display-3 mb-3" style="color: var(--uadec-gold);"></i>
+                    <h3 class="display-4 fw-bold" style="color: var(--uadec-gold);">{{ page.stat_countries_count }}</h3>
+                    <p class="lead">Países</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4">
+                    <i class="bi bi-people-fill display-3 text-primary mb-3"></i>
+                    <h3 class="display-4 fw-bold text-primary">{{ page.stat_students_count }}</h3>
+                    <p class="lead">Estudiantes en Movilidad</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4">
+                    <i class="bi bi-bank2 display-3 mb-3" style="color: var(--uadec-gold);"></i>
+                    <h3 class="display-4 fw-bold" style="color: var(--uadec-gold);">{{ page.stat_institutions_count }}</h3>
+                    <p class="lead">Instituciones Aliadas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Introduction -->
+{% if page.introduction %}
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="content lead">
+                    {{ page.introduction|richtext }}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Main Content (StreamField) -->
+{% if page.body %}
+<section class="py-5 bg-light">
+    <div class="container">
+        {% for block in page.body %}
+            <div class="mb-4">
+                {% include_block block %}
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Quick Access Cards -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 fw-bold text-primary">Acceso Rápido</h2>
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm hover-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-airplane-fill display-4 me-4" style="color: var(--uadec-gold);"></i>
+                            <div>
+                                <h3 class="card-title fw-bold mb-3">Para Estudiantes</h3>
+                                <p class="card-text mb-4">Descubre programas de intercambio, revisa requisitos y aplica en línea.</p>
+                                <a href="{% pageurl page %}/movilidad-estudiantil/" class="btn btn-primary">
+                                    <i class="bi bi-arrow-right me-2"></i>Movilidad Estudiantil
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100 shadow-sm hover-card">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-building display-4 me-4" style="color: var(--uadec-blue);"></i>
+                            <div>
+                                <h3 class="card-title fw-bold mb-3">Información Institucional</h3>
+                                <p class="card-text mb-4">Conoce sobre CGRI, convenios internacionales y acreditaciones.</p>
+                                <a href="{% pageurl page %}/institucional/" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-right me-2"></i>CGRI
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="section-gold text-white py-5">
+    <div class="container text-center">
+        <i class="bi bi-globe-americas display-3 mb-4"></i>
+        <h2 class="display-5 fw-bold mb-3">¿Listo para tu Experiencia Internacional?</h2>
+        <p class="lead mb-4" style="font-size: 1.25rem;">Explora oportunidades de intercambio académico y cultural</p>
+        <a href="{% pageurl page %}/movilidad-estudiantil/" class="btn btn-primary btn-lg px-5 py-3 shadow">
+            <i class="bi bi-compass me-2"></i>Explorar Programas
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.hover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+</style>
+{% endblock %}
+

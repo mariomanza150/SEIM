@@ -31,15 +31,37 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    # Wagtail CMS
+    "wagtail.contrib.forms",
+    "wagtail.contrib.redirects",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail.admin",
+    "wagtail",
+    "wagtail.contrib.settings",
+    "wagtail.contrib.table_block",
+    "wagtail.contrib.routable_page",
+    "wagtailseo",
+    "wagtailmarkdown",
+    "modelcluster",
+    "taggit",
+    # DRF and API
     "rest_framework",
     "corsheaders",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "drf_spectacular",
     "django_js_reverse",
+    "channels",
 ]
 
 LOCAL_APPS = [
+    "cms",  # Wagtail CMS pages and content
     "exchange",
     "notifications",
     "documents",
@@ -73,6 +95,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # Wagtail Middleware
+    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
     # API Response Caching Middleware
     "core.cache.APICacheMiddleware",
 ]
@@ -90,12 +114,14 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.static",
+                "wagtail.contrib.settings.context_processors.settings",
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = "seim.wsgi.application"
+ASGI_APPLICATION = "seim.asgi.application"
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -337,3 +363,93 @@ VIRUS_SCANNER_CONFIG = {
     "threat_name": env("VIRUS_SCANNER_THREAT_NAME", default="TestVirus"),
 }
 VIRUS_SCAN_FAIL_SECURE = env.bool("VIRUS_SCAN_FAIL_SECURE", default=True)
+
+# Channels Configuration
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [env("REDIS_URL", default="redis://redis:6379/2")],
+        },
+    },
+}
+
+# WebSocket Configuration
+WEBSOCKET_ENABLED = env.bool("WEBSOCKET_ENABLED", default=True)
+WEBSOCKET_RECONNECT_INTERVAL = env.int("WEBSOCKET_RECONNECT_INTERVAL", default=5000)
+
+# Feature Flags
+FEATURE_FLAGS = {
+    'WEBSOCKET_NOTIFICATIONS': env.bool('FEATURE_WEBSOCKET_NOTIFICATIONS', default=True),
+    'ADVANCED_SEARCH': env.bool('FEATURE_ADVANCED_SEARCH', default=True),
+    'CALENDAR_VIEW': env.bool('FEATURE_CALENDAR_VIEW', default=True),
+    'NOTIFICATION_CENTER': env.bool('FEATURE_NOTIFICATION_CENTER', default=True),
+}
+
+# Wagtail CMS Configuration
+WAGTAIL_SITE_NAME = "SEIM - Student Exchange Information Manager"
+WAGTAILADMIN_BASE_URL = env("WAGTAILADMIN_BASE_URL", default="http://localhost:8000")
+
+# Media files configuration for Wagtail
+MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"
+
+# Wagtail search backend
+WAGTAILSEARCH_BACKENDS = {
+    "default": {
+        "BACKEND": "wagtail.search.backends.database",
+    }
+}
+
+# Wagtail image formats
+WAGTAILIMAGES_FORMAT_CONVERSIONS = {
+    'webp': 'webp',
+    'jpeg': 'jpeg',
+}
+
+# Wagtail custom image renditions
+WAGTAILIMAGES_EXTENSIONS = ['gif', 'jpg', 'jpeg', 'png', 'webp', 'svg']
+
+# Wagtail image max upload size (10MB)
+WAGTAILIMAGES_MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+
+# Enable Wagtail image feature detection (faces, etc.)
+WAGTAILIMAGES_FEATURE_DETECTION_ENABLED = False
+
+# Wagtail document max upload size (50MB)
+WAGTAILDOCS_MAX_UPLOAD_SIZE = 50 * 1024 * 1024
+
+# Enable Wagtail workflows and moderation
+WAGTAIL_WORKFLOW_ENABLED = True
+WAGTAIL_MODERATION_ENABLED = True
+
+# Wagtail email notification settings
+WAGTAILADMIN_NOTIFICATION_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@seim.local")
+WAGTAILADMIN_NOTIFICATION_USE_HTML = True
+
+# Wagtail admin UI customization
+WAGTAIL_ENABLE_UPDATE_CHECK = False  # Disable update check in production
+WAGTAIL_GRAVATAR_PROVIDER_URL = None  # Disable Gravatar
+
+# Wagtail user settings - uses Django's AUTH_USER_MODEL (accounts.User)
+WAGTAIL_USER_EDIT_FORM = 'wagtail.users.forms.UserEditForm'
+WAGTAIL_USER_CREATION_FORM = 'wagtail.users.forms.UserCreationForm'
+WAGTAIL_USER_CUSTOM_FIELDS = []
+
+# Wagtail automatically uses the AUTH_USER_MODEL specified above
+# Both Django admin and Wagtail admin share the same authentication
+# Users can access both admin interfaces based on their permissions
+
+# Password required for private pages
+WAGTAIL_PASSWORD_MANAGEMENT_ENABLED = True
+WAGTAIL_PASSWORD_REQUIRED_TEMPLATE = 'wagtailcore/password_required.html'
+
+# Allowed file extensions for Wagtail documents
+WAGTAILDOCS_EXTENSIONS = [
+    'csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'txt', 'xlsx', 'zip',
+]
+
+# Wagtail SEO Configuration
+SEO_JS_ENABLED = False  # Disable JavaScript SEO checks for better performance
+SEO_TWITTER_CARD_TYPE = "summary_large_image"  # Default Twitter card type
+SEO_DEFAULT_IMAGE = None  # Will be set per environment if needed

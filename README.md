@@ -3,19 +3,20 @@
 [![Backend Status](https://img.shields.io/badge/Backend-Stable-brightgreen)](https://img.shields.io/badge/Backend-Stable-brightgreen)
 [![Frontend Status](https://img.shields.io/badge/Frontend-Complete-brightgreen)](https://img.shields.io/badge/Frontend-Complete-brightgreen)
 [![Production Status](https://img.shields.io/badge/Production-Ready-green)](https://img.shields.io/badge/Production-Ready-green)
-[![Tests](https://img.shields.io/badge/Tests-402%20Passing-success)](https://img.shields.io/badge/Tests-402%20Passing-success)
+[![Tests](https://img.shields.io/badge/Tests-1147%20Passing-success)](https://img.shields.io/badge/Tests-1147%20Passing-success)
 
 A comprehensive Django-based web application for managing student exchange programs, applications, and workflows with a modern Bootstrap 5 frontend.
 
 ## 🎉 Project Status
 
 **✅ Production Ready**  
-**✅ Backend Implementation Complete (402 tests passing)**  
+**✅ Backend Implementation Complete (1,147 tests passing)**  
 **✅ Frontend Implementation Complete**  
 **✅ Testing Infrastructure Stabilized**  
-**✅ Code Quality Verified**
+**✅ Code Quality Verified**  
+**✅ Documentation Comprehensive & Up-to-Date**
 
-SEIM is production-ready with comprehensive features, security, and infrastructure. The system features a modern, responsive Django frontend with Bootstrap 5, JWT authentication, and role-based dashboards. Recent improvements include 346% increase in test coverage, resolution of all critical bugs, and comprehensive code quality improvements.
+SEIM is production-ready with comprehensive features, security, and infrastructure. The system features a modern, responsive Django frontend with Bootstrap 5, JWT authentication, and role-based dashboards. The codebase includes 1,147 comprehensive tests covering all critical functionality, with robust CI/CD automation and comprehensive security hardening.
 
 ### 🚀 What's Ready for Production
 - Complete user authentication and authorization
@@ -25,8 +26,10 @@ SEIM is production-ready with comprehensive features, security, and infrastructu
 - Analytics dashboard and reporting
 - RESTful API with comprehensive documentation
 - Docker containerization and deployment scripts
-- **NEW**: Modular settings structure for different environments
-- **NEW**: Comprehensive cleanup and maintenance tools
+- **Enhanced Form Builder**: Visual drag-and-drop form creator
+- Modular settings structure for different environments
+- Comprehensive cleanup and maintenance tools
+- Grade translation system for international students
 
 ### 🔧 Optional Enhancements
 1. **Expanded Test Coverage** - Currently 34% backend, target 80% (estimated 4-6 weeks)
@@ -34,6 +37,44 @@ SEIM is production-ready with comprehensive features, security, and infrastructu
 3. **Internationalization** - Multi-language support
 
 **Note**: All critical functionality is tested and stable. Coverage expansion is an enhancement, not a blocker for production deployment.
+
+---
+
+## 🎨 CMS & Landing Page
+
+SEIM includes a **Wagtail CMS** for managing the public landing page with rich content blocks, blog posts, exchange program listings, and FAQs.
+
+### Quick CMS Restore
+
+After database reset or initial setup:
+
+```bash
+docker-compose exec web python manage.py restore_cms
+```
+
+This single command:
+- ✅ Sets up Wagtail site structure
+- ✅ Populates UAdeC content (programs, blog, FAQs)
+- ✅ Enhances homepage with rich content blocks
+
+### Export/Import Workflow
+
+Save your customized CMS:
+```bash
+docker-compose exec web python manage.py export_cms
+```
+
+Restore it later:
+```bash
+docker-compose exec web python manage.py import_cms --clear
+```
+
+**📖 See [docs/CMS_RESTORE_GUIDE.md](docs/CMS_RESTORE_GUIDE.md) for complete documentation**
+
+### CMS Access
+- **Public Landing Page**: http://localhost:8000/
+- **CMS Admin**: http://localhost:8000/cms/
+- **Django Admin**: http://localhost:8000/seim/admin/
 
 ---
 
@@ -139,6 +180,9 @@ docker-compose exec web python manage.py migrate
 
 # Create initial data
 docker-compose exec web python manage.py create_initial_data
+
+# Restore CMS content (Wagtail landing page)
+docker-compose exec web python manage.py restore_cms
 
 # Collect static files
 docker-compose exec web python manage.py collectstatic --noinput
@@ -406,25 +450,35 @@ export DJANGO_SETTINGS_MODULE=seim.settings.production
 
 ## 📚 Documentation
 
-### **Core Documentation**
+SEIM documentation is organized into two main directories:
+
+### **`documentation/` - Manual/Maintained Documentation**
+**Authoritative source** for development guidelines, user guides, and planning documents. Manually maintained by the team.
+
+- **[Documentation Index](documentation/README.md)** - Complete documentation index
 - **[Developer Guide](documentation/developer_guide.md)** - Complete development documentation
 - **[Installation Guide](documentation/installation.md)** - Setup and deployment instructions
 - **[Architecture](documentation/architecture.md)** - System design and architecture
 - **[Business Rules](documentation/business_rules.md)** - Business logic and rules
-- **[Grade Translation Guide](documentation/grade_translation_user_guide.md)** - Grade scale conversion system 🆕
-
-### **Project Planning**
+- **[Form Builder Guide](documentation/form_builder_guide.md)** - Dynamic form creation system
+- **[Grade Translation Guide](documentation/grade_translation_user_guide.md)** - Grade scale conversion system
 - **[Roadmap](documentation/roadmap.md)** - Development roadmap and upcoming features
 - **[Backlog](documentation/backlog.md)** - Current development tasks and priorities
 - **[User Stories](documentation/user_stories.md)** - User requirements and acceptance criteria
-
-### **Technical Reference**
-- **[Changelog](documentation/changelog.md)** - Release notes and change history
 - **[Deployment Guide](documentation/deployment.md)** - Production deployment instructions
 - **[Architectural Decisions](documentation/architectural_decisions.md)** - Key design decisions and rationale
 
-### **UI/UX Reference**
-- **[Wireframes](documentation/wireframes/)** - UI/UX wireframes for key screens
+### **`docs/` - Generated/Auto-Generated Documentation**
+**Auto-generated** documentation from code analysis and tools. Regenerated periodically.
+
+- **[Documentation Index](docs/index.md)** - Index of generated documentation
+- **[Project Structure Guide](docs/PROJECT_STRUCTURE.md)** - Comprehensive project structure guide
+- **[Architecture](docs/architecture.md)** - Auto-generated technical architecture
+- **[API Contracts](docs/api-contracts.md)** - Auto-generated API documentation
+- **[Data Models](docs/data-models.md)** - Auto-generated database schema
+- **[Component Inventory](docs/component-inventory.md)** - Auto-generated component catalog
+- **[Status Reports](docs/status/)** - Project status and progress tracking
+- **[Quick Guides](docs/guides/)** - Quick reference guides
 
 ### **API Documentation**
 - **[Interactive API Docs](http://localhost:8000/api/docs/)** - Swagger UI (auto-generated, Docker)
@@ -442,6 +496,11 @@ export DJANGO_SETTINGS_MODULE=seim.settings.production
   ```bash
   make docs-workflow
   ```
+
+**Quick Reference:**
+- Need authoritative info? → Check `documentation/`
+- Need current system state? → Check `docs/`
+- Need project structure? → See [PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
 
 ---
 
@@ -476,7 +535,8 @@ SEIM follows a modular, service-oriented architecture with a Django frontend:
 - **`documents/`** - Document management system
 - **`notifications/`** - Email and notification system
 - **`analytics/`** - Reporting and metrics
-- **`grades/`** - Grade translation system 🆕
+- **`grades/`** - Grade translation system
+- **`application_forms/`** - Dynamic form builder and management
 - **`api/`** - REST API endpoints
 - **`dashboard/`** - Admin and user interfaces
 - **`frontend/`** - Django templates and static files
@@ -498,6 +558,7 @@ SEIM follows a modular, service-oriented architecture with a Django frontend:
 - **Bootstrap Icons** - Icon library
 - **Django Templates** - Server-side rendering
 - **JavaScript ES6+** - Client-side functionality
+- **SortableJS** - Drag-and-drop functionality
 - **CSS3** - Custom styling
 
 ### **Development & Deployment**

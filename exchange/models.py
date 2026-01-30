@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.models import TimeStampedModel, UUIDModel
 
@@ -12,40 +13,40 @@ class Program(UUIDModel, TimeStampedModel):
     end_date = models.DateField()
     is_active = models.BooleanField(default=True)
     min_gpa = models.FloatField(
-        null=True, blank=True, help_text="Minimum GPA required for eligibility."
+        null=True, blank=True, help_text=_("Minimum GPA required for eligibility.")
     )
     required_language = models.CharField(
         max_length=64,
         null=True,
         blank=True,
-        help_text="Required language for eligibility.",
+        help_text=_("Required language for eligibility."),
     )
     min_language_level = models.CharField(
         max_length=10,
         null=True,
         blank=True,
         choices=[
-            ('A1', 'Beginner (A1)'),
-            ('A2', 'Elementary (A2)'),
-            ('B1', 'Intermediate (B1)'),
-            ('B2', 'Upper Intermediate (B2)'),
-            ('C1', 'Advanced (C1)'),
-            ('C2', 'Proficient (C2)'),
+            ('A1', _('Beginner (A1)')),
+            ('A2', _('Elementary (A2)')),
+            ('B1', _('Intermediate (B1)')),
+            ('B2', _('Upper Intermediate (B2)')),
+            ('C1', _('Advanced (C1)')),
+            ('C2', _('Proficient (C2)')),
         ],
-        help_text="Minimum language proficiency level (CEFR scale)."
+        help_text=_("Minimum language proficiency level (CEFR scale).")
     )
     max_age = models.PositiveIntegerField(
-        null=True, blank=True, help_text="Maximum age for eligibility."
+        null=True, blank=True, help_text=_("Maximum age for eligibility.")
     )
     min_age = models.PositiveIntegerField(
-        null=True, blank=True, help_text="Minimum age for eligibility."
+        null=True, blank=True, help_text=_("Minimum age for eligibility.")
     )
     auto_reject_ineligible = models.BooleanField(
         default=False,
-        help_text="Automatically reject applications that don't meet eligibility criteria."
+        help_text=_("Automatically reject applications that don't meet eligibility criteria.")
     )
     recurring = models.BooleanField(
-        default=False, help_text="Is this program recurring (e.g., every semester)?"
+        default=False, help_text=_("Is this program recurring (e.g., every semester)?")
     )
     # Link to dynamic form created via django-dynforms
     application_form = models.ForeignKey(
@@ -53,7 +54,7 @@ class Program(UUIDModel, TimeStampedModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        help_text="Dynamic application form for this program"
+        help_text=_("Dynamic application form for this program")
     )
 
     class Meta:
@@ -87,8 +88,8 @@ class Application(UUIDModel, TimeStampedModel):
             models.Index(fields=['-created_at'], name='app_created_desc_idx'),
         ]
         ordering = ['-created_at']
-        verbose_name = 'Application'
-        verbose_name_plural = 'Applications'
+        verbose_name = _('Application')
+        verbose_name_plural = _('Applications')
 
     def __str__(self):
         return f"{self.student} - {self.program}"
@@ -131,3 +132,49 @@ class TimelineEvent(UUIDModel, TimeStampedModel):
 
     def __str__(self):
         return f"{self.event_type} - {self.description}"
+
+
+class SavedSearch(UUIDModel, TimeStampedModel):
+    """Saved search filters for users (coordinators/admins)."""
+    
+    user = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name='saved_searches')
+    name = models.CharField(max_length=100, help_text="Name for this saved search")
+    search_type = models.CharField(
+        max_length=20,
+        choices=[
+            ('program', 'Program Search'),
+            ('application', 'Application Search'),
+        ],
+        help_text="Type of search (programs or applications)"
+    )
+    filters = models.JSONField(
+        default=dict,
+        help_text="JSON object containing filter parameters"
+    )
+    is_default = models.BooleanField(
+        default=False,
+        help_text="Use this search as default for this user"
+    )
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Saved Search'
+        verbose_name_plural = 'Saved Searches'
+        indexes = [
+            models.Index(fields=['user', 'search_type'], name='savedsearch_user_type_idx'),
+            models.Index(fields=['user', 'is_default'], name='savedsearch_user_default_idx'),
+        ]
+    
+    def __str__(self):
+        return f"{self.name} ({self.search_type}) - {self.user.username}"
+    
+    def save(self, *args, **kwargs):
+        """Ensure only one default search per type per user."""
+        if self.is_default:
+            # Clear other defaults for this user and search type
+            SavedSearch.objects.filter(
+                user=self.user,
+                search_type=self.search_type,
+                is_default=True
+            ).exclude(id=self.id).update(is_default=False)
+        super().save(*args, **kwargs)

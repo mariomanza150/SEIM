@@ -1,6 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -11,7 +12,22 @@ from core.cache import cache_api_response
 from exchange.models import Application, Program
 
 from .models import DashboardConfig, Metric, Report
-from .serializers import DashboardConfigSerializer, MetricSerializer, ReportSerializer
+from .serializers import (
+    ActivitySerializer,
+    AlertSerializer,
+    ApplicationStatisticsSerializer,
+    DashboardConfigSerializer,
+    DashboardMetricsSerializer,
+    ErrorResponseSerializer,
+    GenericAnalyticsSerializer,
+    MetricSerializer,
+    PerformanceMetricsSerializer,
+    ProgramStatisticsSerializer,
+    ReportSerializer,
+    SystemInfoSerializer,
+    TrackEventRequestSerializer,
+    UserActivitySerializer,
+)
 from .services import AnalyticsService
 
 # Create your views here.
@@ -77,6 +93,23 @@ class DashboardConfigViewSet(viewsets.ModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
 
+@extend_schema_view(
+    metrics=extend_schema(
+        responses={200: DashboardMetricsSerializer, 403: ErrorResponseSerializer, 500: ErrorResponseSerializer}
+    ),
+    activity=extend_schema(
+        responses={200: ActivitySerializer(many=True), 403: ErrorResponseSerializer, 500: ErrorResponseSerializer}
+    ),
+    performance=extend_schema(
+        responses={200: PerformanceMetricsSerializer, 403: ErrorResponseSerializer, 500: ErrorResponseSerializer}
+    ),
+    alerts=extend_schema(
+        responses={200: AlertSerializer(many=True), 403: ErrorResponseSerializer, 500: ErrorResponseSerializer}
+    ),
+    system_info=extend_schema(
+        responses={200: SystemInfoSerializer, 403: ErrorResponseSerializer, 500: ErrorResponseSerializer}
+    ),
+)
 class AdminDashboardViewSet(viewsets.ViewSet):
     """Admin dashboard API endpoints."""
     permission_classes = [IsAuthenticated]
@@ -272,23 +305,43 @@ def user_activity_view(request):
 def export_data_view(request):
     return render(request, 'frontend/admin/analytics.html')
 
+@extend_schema(
+    responses={200: ApplicationStatisticsSerializer}
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def api_application_statistics(request):
+    """Get application statistics."""
     return Response({"total_applications": 0}, status=status.HTTP_200_OK)
 
+
+@extend_schema(
+    responses={200: ProgramStatisticsSerializer}
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def api_program_statistics(request):
+    """Get program statistics."""
     return Response({"total_programs": 0}, status=status.HTTP_200_OK)
 
+
+@extend_schema(
+    responses={200: UserActivitySerializer}
+)
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def api_user_activity(request):
+    """Get user activity statistics."""
     return Response({"total_users": 0}, status=status.HTTP_200_OK)
 
+
+@extend_schema(
+    request=TrackEventRequestSerializer,
+    responses={201: None, 400: None, 401: None}
+)
 @api_view(['POST'])
 def track_event(request):
+    """Track an analytics event."""
     if not request.user.is_authenticated:
         return Response({}, status=status.HTTP_401_UNAUTHORIZED)
     event_type = request.data.get('event_type', '')
@@ -296,30 +349,65 @@ def track_event(request):
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
     return Response({}, status=status.HTTP_201_CREATED)
 
+
+@extend_schema(
+    responses={200: GenericAnalyticsSerializer}
+)
 @api_view(['GET'])
 def metrics_view(request):
+    """Get metrics stub."""
     return Response({'metrics': 'stub'}, status=200)
 
+
+@extend_schema(
+    responses={200: GenericAnalyticsSerializer}
+)
 @api_view(['GET'])
 def reports_view(request):
+    """Get reports stub."""
     return Response({'reports': 'stub'}, status=200)
 
+
+@extend_schema(
+    responses={200: GenericAnalyticsSerializer}
+)
 @api_view(['GET'])
 def application_analytics_view(request):
+    """Get application analytics stub."""
     return Response({'application_analytics': 'stub'}, status=200)
 
+
+@extend_schema(
+    responses={200: GenericAnalyticsSerializer}
+)
 @api_view(['GET'])
 def document_analytics_view(request):
+    """Get document analytics stub."""
     return Response({'document_analytics': 'stub'}, status=200)
 
+
+@extend_schema(
+    responses={200: GenericAnalyticsSerializer}
+)
 @api_view(['GET'])
 def notification_analytics_view(request):
+    """Get notification analytics stub."""
     return Response({'notification_analytics': 'stub'}, status=200)
 
+
+@extend_schema(
+    responses={200: GenericAnalyticsSerializer}
+)
 @api_view(['GET'])
 def program_analytics_view(request):
+    """Get program analytics stub."""
     return Response({'program_analytics': 'stub'}, status=200)
 
+
+@extend_schema(
+    responses={200: GenericAnalyticsSerializer}
+)
 @api_view(['GET'])
 def user_analytics_view(request):
+    """Get user analytics stub."""
     return Response({'user_analytics': 'stub'}, status=200)

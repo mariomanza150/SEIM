@@ -389,3 +389,40 @@ class UserSessionSerializer(serializers.ModelSerializer):
         model = UserSession
         fields = ['id', 'device', 'location', 'last_activity', 'is_active']
         read_only_fields = ['id', 'device', 'location', 'last_activity', 'is_active']
+
+
+class LogoutSerializer(serializers.Serializer):
+    """Serializer for logout request."""
+    refresh = serializers.CharField(required=False, help_text="JWT refresh token to blacklist")
+
+
+class LogoutResponseSerializer(serializers.Serializer):
+    """Serializer for logout response."""
+    message = serializers.CharField()
+
+
+class DeleteAccountResponseSerializer(serializers.Serializer):
+    """Serializer for account deletion response."""
+    detail = serializers.CharField()
+
+
+class ProfileUpdateRequestSerializer(serializers.Serializer):
+    """Serializer for profile update request."""
+    email = serializers.EmailField(required=False)
+    first_name = serializers.CharField(required=False, max_length=150)
+    last_name = serializers.CharField(required=False, max_length=150)
+
+
+class ProfileUpdateResponseSerializer(serializers.Serializer):
+    """Serializer for profile update response."""
+    detail = serializers.CharField()
+
+
+class RevokeSessionRequestSerializer(serializers.Serializer):
+    """Serializer for session revocation request."""
+    pass  # No request body needed, session_id is in URL
+
+
+class RevokeSessionResponseSerializer(serializers.Serializer):
+    """Serializer for session revocation response."""
+    detail = serializers.CharField()

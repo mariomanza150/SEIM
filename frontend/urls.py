@@ -33,8 +33,13 @@ urlpatterns = [
     # User pages
     path("profile/", views.profile_view, name="profile"),
     path("settings/", views.settings_view, name="settings"),
+    path("preferences/", views.preferences_view, name="preferences"),
+    path("calendar/", views.calendar_view, name="calendar"),
+    path("sessions/", views.sessions_view, name="sessions"),
+    path("user-management/", views.user_management_view, name="user_management"),
     # Admin pages
     path("admin-dashboard/", views.admin_dashboard_view, name="admin_dashboard"),
+    path("coordinator-dashboard/", views.coordinator_dashboard_view, name="coordinator_dashboard"),
     path("analytics/", views.AnalyticsView.as_view(), name="analytics"),
     path("programs/create/", program_create_view, name="program_create"),
     # Cache management
@@ -42,9 +47,7 @@ urlpatterns = [
     path("cache/clear/", views.clear_cache_view, name="clear_cache"),
     # Test pages
     path("dark-mode-test/", views.dark_mode_test_view, name="dark_mode_test"),
-    path("debug-theme/", views.debug_theme_view, name="debug_theme"),
     path("theme-test/", views.theme_test_view, name="theme_test"),
-    path("theme-debug/", views.theme_debug_view, name="theme_debug"),
     path(
         "theme-feedback-test/",
         views.theme_feedback_test_view,

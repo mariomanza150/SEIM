@@ -7,18 +7,24 @@ from rest_framework.response import Response
 from core.cache import cache_api_response
 from core.permissions import IsAdminOrReadOnly, IsStudentOrReadOnly
 
+from datetime import datetime, timedelta
+
+from .filters import ApplicationFilter, ProgramFilter
 from .models import (
     Application,
     ApplicationStatus,
     Comment,
     Program,
+    SavedSearch,
     TimelineEvent,
 )
 from .serializers import (
     ApplicationSerializer,
     ApplicationStatusSerializer,
+    CalendarEventSerializer,
     CommentSerializer,
     ProgramSerializer,
+    SavedSearchSerializer,
     TimelineEventSerializer,
 )
 from .services import ApplicationService
@@ -37,7 +43,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = ["is_active"]
+    filterset_class = ProgramFilter  # Use advanced filter
     search_fields = ["name", "description"]
     ordering_fields = ["name", "start_date", "end_date", "created_at"]
 
@@ -151,8 +157,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         filters.SearchFilter,
         filters.OrderingFilter,
     ]
-    filterset_fields = ["status", "program", "student"]
-    search_fields = ["program__name"]
+    filterset_class = ApplicationFilter  # Use advanced filter
+    search_fields = ["program__name", "student__username", "student__email"]
     ordering_fields = ["created_at", "submitted_at"]
 
     def get_queryset(self):
@@ -343,3 +349,153 @@ class TimelineEventViewSet(viewsets.ReadOnlyModelViewSet):
     def list(self, request, *args, **kwargs):
         """List timeline events with caching."""
         return super().list(request, *args, **kwargs)
+
+
+class SavedSearchViewSet(viewsets.ModelViewSet):
+    """ViewSet for saved searches (coordinators/admins only)."""
+    
+    queryset = SavedSearch.objects.all()
+    serializer_class = SavedSearchSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ['search_type', 'is_default']
+    ordering_fields = ['created_at', 'name']
+    
+    def get_queryset(self):
+        """Users can only see their own saved searches."""
+        return SavedSearch.objects.filter(user=self.request.user)
+    
+    def perform_create(self, serializer):
+        """Set user from request."""
+        serializer.save(user=self.request.user)
+    
+    @action(detail=True, methods=['post'])
+    def apply(self, request, pk=None):
+        """
+        Apply a saved search and return the filters.
+        
+        Returns the filter parameters that can be used to filter
+        programs or applications.
+        """
+        saved_search = self.get_object()
+        return Response({
+            'search_type': saved_search.search_type,
+            'filters': saved_search.filters,
+            'name': saved_search.name
+        })
+    
+    @action(detail=True, methods=['post'])
+    def set_default(self, request, pk=None):
+        """Set this search as the default for its type."""
+        saved_search = self.get_object()
+        saved_search.is_default = True
+        saved_search.save()
+        return Response({'status': 'default set'})
+
+
+class CalendarEventViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for calendar events.
+    
+    Returns events in FullCalendar format:
+    - Program application deadlines
+    - Program start/end dates
+    - User-specific application deadlines
+    """
+    
+    serializer_class = CalendarEventSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        """
+        Return calendar events based on query parameters.
+        
+        Query parameters:
+        - start: Start date filter (ISO format)
+        - end: End date filter (ISO format)
+        - type: Event type filter (program, application, deadline)
+        """
+        # Return an empty queryset since we're building events dynamically in list()
+        # Use Program as base model for schema generation
+        return Program.objects.none()
+    
+    def list(self, request, *args, **kwargs):
+        """Generate calendar events based on programs and applications."""
+        user = request.user
+        events = []
+        
+        # Get date range from query parameters
+        start_param = request.query_params.get('start')
+        end_param = request.query_params.get('end')
+        event_type = request.query_params.get('type')
+        
+        try:
+            start_date = datetime.fromisoformat(start_param.replace('Z', '+00:00')) if start_param else datetime.now() - timedelta(days=30)
+            end_date = datetime.fromisoformat(end_param.replace('Z', '+00:00')) if end_param else datetime.now() + timedelta(days=365)
+        except (ValueError, AttributeError):
+            start_date = datetime.now() - timedelta(days=30)
+            end_date = datetime.now() + timedelta(days=365)
+        
+        # Get programs within date range
+        programs = Program.objects.filter(
+            start_date__lte=end_date.date(),
+            end_date__gte=start_date.date()
+        )
+        
+        if not event_type or event_type == 'program':
+            # Add program events
+            for program in programs:
+                # Program start event
+                events.append({
+                    'id': f'program-start-{program.id}',
+                    'title': f'{program.name} - Start',
+                    'start': datetime.combine(program.start_date, datetime.min.time()).isoformat(),
+                    'url': f'/programs/{program.id}/',
+                    'className': 'event-program-start',
+                    'backgroundColor': '#0d6efd',
+                    'borderColor': '#0d6efd',
+                    'allDay': True
+                })
+                
+                # Program end event
+                events.append({
+                    'id': f'program-end-{program.id}',
+                    'title': f'{program.name} - End',
+                    'start': datetime.combine(program.end_date, datetime.min.time()).isoformat(),
+                    'url': f'/programs/{program.id}/',
+                    'className': 'event-program-end',
+                    'backgroundColor': '#6c757d',
+                    'borderColor': '#6c757d',
+                    'allDay': True
+                })
+        
+        if not event_type or event_type == 'application':
+            # Get user's applications or all applications for coordinators
+            if user.has_role('coordinator') or user.has_role('admin'):
+                applications = Application.objects.filter(
+                    program__start_date__lte=end_date.date(),
+                    program__end_date__gte=start_date.date()
+                ).select_related('program', 'student', 'status')
+            else:
+                applications = Application.objects.filter(
+                    student=user,
+                    program__start_date__lte=end_date.date(),
+                    program__end_date__gte=start_date.date()
+                ).select_related('program', 'status')
+            
+            # Add application events
+            for application in applications:
+                # Application deadline (program start date as proxy)
+                events.append({
+                    'id': f'application-{application.id}',
+                    'title': f'Application: {application.program.name}',
+                    'start': datetime.combine(application.program.start_date, datetime.min.time()).isoformat(),
+                    'url': f'/applications/{application.id}/',
+                    'className': f'event-application event-status-{application.status.name}',
+                    'backgroundColor': '#198754' if application.status.name == 'approved' else '#ffc107',
+                    'borderColor': '#198754' if application.status.name == 'approved' else '#ffc107',
+                    'allDay': True
+                })
+        
+        serializer = self.get_serializer(events, many=True)
+        return Response(serializer.data)

@@ -1,0 +1,10 @@
+services:
+  web:
+    # Use Django's runserver for local development instead of Daphne
+    # This avoids collectstatic permission issues and provides better dev experience
+    command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=seim.settings.development
+      - DJANGO_ENV=dev
+      - DEBUG=true
+

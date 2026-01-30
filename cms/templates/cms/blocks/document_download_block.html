@@ -1,0 +1,17 @@
+<div class="document-block my-4">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">
+                <i class="bi bi-file-earmark-arrow-down"></i>
+                {% if value.title %}{{ value.title }}{% else %}{{ value.document.title }}{% endif %}
+            </h5>
+            {% if value.description %}
+            <p class="card-text">{{ value.description }}</p>
+            {% endif %}
+            <a href="{{ value.document.url }}" class="btn btn-primary" download>
+                <i class="bi bi-download"></i> Download
+            </a>
+        </div>
+    </div>
+</div>
+

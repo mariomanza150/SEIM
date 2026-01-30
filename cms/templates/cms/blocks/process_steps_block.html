@@ -1,0 +1,31 @@
+<div class="process-steps-block my-5">
+    {% if value.heading or value.subheading %}
+    <div class="text-center mb-5">
+        {% if value.heading %}
+        <h2 class="fw-bold text-primary" style="font-size: 2.5rem;">{{ value.heading }}</h2>
+        {% endif %}
+        {% if value.subheading %}
+        <p class="lead" style="color: var(--uadec-text);">{{ value.subheading }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <div class="row g-4">
+        {% for step in value.steps %}
+        <div class="col-md-3">
+            <div class="process-step text-center h-100 p-4">
+                <div class="step-number mb-3 mx-auto">
+                    {% if step.icon %}
+                    <i class="bi {{ step.icon }}" style="font-size: 1.75rem;"></i>
+                    {% else %}
+                    <span class="fw-bold" style="font-size: 1.5rem;">{{ step.number }}</span>
+                    {% endif %}
+                </div>
+                <h5 class="fw-bold mb-3" style="color: var(--uadec-blue);">{{ step.title }}</h5>
+                <p style="color: var(--uadec-text);">{{ step.description }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+

@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Calendar - SEIM{% endblock %}
+
+{% block extra_css %}
+<!-- FullCalendar CSS -->
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css' rel='stylesheet' />
+
+<style>
+.calendar-container {
+    background: var(--bg-primary);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.calendar-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+#calendar {
+    background: var(--bg-primary);
+}
+
+/* FullCalendar theme customization */
+.fc {
+    color: var(--text-primary);
+}
+
+.fc-button {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.fc-button:hover {
+    background-color: var(--primary-hover) !important;
+}
+
+.fc-button-active {
+    background-color: var(--primary-active) !important;
+}
+
+.fc-daygrid-day {
+    background: var(--bg-primary);
+}
+
+.fc-daygrid-day:hover {
+    background: var(--bg-secondary);
+}
+
+.fc-col-header-cell {
+    background: var(--bg-secondary);
+}
+
+/* Event colors */
+.fc-event.event-program-start {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.fc-event.event-program-end {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.fc-event.event-application {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.fc-event.event-deadline {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* Loading overlay */
+.calendar-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    border-radius: 8px;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .calendar-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .calendar-filters {
+        width: 100%;
+    }
+    
+    .fc-toolbar {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .fc-toolbar-chunk {
+        display: flex;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1><i class="bi bi-calendar3"></i> Calendar</h1>
+                    <p class="text-muted">View program dates, application deadlines, and reminders</p>
+                </div>
+                <button class="btn btn-primary" id="todayBtn">
+                    <i class="bi bi-calendar-today"></i> Today
+                </button>
+            </div>
+            
+            <!-- Calendar Filters -->
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <h5 class="mb-0">Events</h5>
+                    <div class="calendar-filters">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input event-filter" type="checkbox" id="filterPrograms" value="program" checked>
+                            <label class="form-check-label" for="filterPrograms">
+                                <span class="badge bg-primary">Programs</span>
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input event-filter" type="checkbox" id="filterApplications" value="application" checked>
+                            <label class="form-check-label" for="filterApplications">
+                                <span class="badge bg-success">Applications</span>
+                            </label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input event-filter" type="checkbox" id="filterDeadlines" value="deadline" checked>
+                            <label class="form-check-label" for="filterDeadlines">
+                                <span class="badge bg-danger">Deadlines</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Calendar -->
+                <div class="position-relative">
+                    <div id="calendar"></div>
+                    <div class="calendar-loading d-none" id="calendarLoading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Legend -->
+            <div class="mt-3">
+                <h6>Legend:</h6>
+                <div class="d-flex gap-3 flex-wrap">
+                    <span><span class="badge bg-primary">Blue</span> Program Start</span>
+                    <span><span class="badge bg-secondary">Gray</span> Program End</span>
+                    <span><span class="badge bg-success">Green</span> Application</span>
+                    <span><span class="badge bg-danger">Red</span> Deadline</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- FullCalendar JS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js'></script>
+
+<!-- Calendar Module -->
+<script src="{% static 'js/modules/calendar.js' %}"></script>
+
+<script>
+// Initialize calendar on page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('calendar')) {
+        window.calendarManager = new CalendarManager({
+            containerEl: document.getElementById('calendar'),
+            apiEndpoint: '/api/calendar/events/'
+        });
+    }
+});
+</script>
+{% endblock %}
+

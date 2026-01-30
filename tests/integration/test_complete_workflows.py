@@ -148,9 +148,16 @@ class TestStudentApplicationWorkflow(TestCase):
             content_type="application/pdf"
         )
         
+        # Create DocumentType
+        from documents.models import DocumentType
+        doc_type = DocumentType.objects.create(
+            name='transcript',
+            description='Academic transcript'
+        )
+        
         document = Document.objects.create(
             application=application,
-            document_type='transcript',
+            type=doc_type,
             file=uploaded_file,
             uploaded_by=student
         )
@@ -308,7 +315,7 @@ class TestCoordinatorWorkflow(TestCase):
                 "approved"
             )
         
-        self.assertIn('not authorized', str(context.exception).lower())
+        self.assertIn('permission', str(context.exception).lower())
 
 
 @pytest.mark.django_db
@@ -388,8 +395,8 @@ class TestGradeTranslationWorkflow(TestCase):
         GradeTranslation.objects.create(
             source_grade=german_grade,
             target_grade=us_a,
-            confidence_score=1.0,
-            translation_method='direct'
+            confidence=1.0,
+            notes='Direct translation'
         )
         
         # Translate to US scale using the service (uses IDs not objects)
@@ -451,10 +458,10 @@ class TestNotificationWorkflow(TestCase):
         
         # Send notification
         notification = NotificationService.send_notification(
-            user=self.student,
+            recipient=self.student,
             title="Test Notification",
             message="This is a test message",
-            notification_type=self.email_type
+            notification_type="email"
         )
         
         self.assertIsNotNone(notification)
@@ -468,14 +475,14 @@ class TestNotificationWorkflow(TestCase):
         # Disable email notifications
         NotificationService.set_preference(
             user=self.student,
-            notification_type=self.email_type,
+            type_name="email",
             enabled=False
         )
         
         # Check preference
         is_enabled = NotificationService.is_enabled(
             self.student,
-            self.email_type
+            "email"
         )
         
         self.assertFalse(is_enabled)
@@ -486,10 +493,10 @@ class TestNotificationWorkflow(TestCase):
         
         # Create notification
         notification = NotificationService.send_notification(
-            user=self.student,
+            recipient=self.student,
             title="Test",
             message="Test message",
-            notification_type=self.email_type
+            notification_type="email"
         )
         
         # Mark as read

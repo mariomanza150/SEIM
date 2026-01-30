@@ -149,7 +149,7 @@
                                                 <i class="bi bi-arrow-clockwise"></i> Resubmit
                                             </button>
                                         {% endif %}
-                                        {% if user.role == 'coordinator' or user.role == 'admin' %}
+                                        {% if user.is_coordinator or user.is_admin %}
                                             <button type="button" 
                                                     class="btn btn-success btn-sm"
                                                     onclick="validateDocument({{ document.id }})">

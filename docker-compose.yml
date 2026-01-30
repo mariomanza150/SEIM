@@ -32,10 +32,12 @@ services:
 
   web:
     build: .
-    command: bash -c "/app/scripts/wait-for-db.sh && python manage.py runserver 0.0.0.0:8000"
+    # Use Daphne (ASGI server) for production-like WebSocket support
+    command: bash -c "python manage.py collectstatic --noinput && daphne -b 0.0.0.0 -p 8000 seim.asgi:application"
     volumes:
       - .:/app
       - static_volume:/app/staticfiles
+      - media_volume:/app/media
     ports:
       - "8000:8000"
     env_file:
@@ -46,12 +48,26 @@ services:
       redis:
         condition: service_healthy
     environment:
+      - DJANGO_SETTINGS_MODULE=seim.settings.development
       - DJANGO_ENV=dev
       - DEBUG=true
 
   celery:
     build: .
     command: bash -c "/app/scripts/wait-for-db.sh && celery -A seim worker --loglevel=info"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-beat:
+    build: .
+    command: bash -c "/app/scripts/wait-for-db.sh && celery -A seim beat --loglevel=info"
     volumes:
       - .:/app
     env_file:
@@ -87,6 +103,7 @@ services:
 volumes:
   postgres_data:
   static_volume:
+  media_volume:
   test_coverage:
   redis_data:
     driver: local 

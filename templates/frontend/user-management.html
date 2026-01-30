@@ -1,0 +1,303 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "User Management" %} - SEIM{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0">
+                <i class="bi bi-people"></i> {% trans "User Management" %}
+            </h1>
+            <p class="text-muted">{% trans "View user login times and session information" %}</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="get" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">{% trans "Search" %}</label>
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="search" 
+                                name="search" 
+                                placeholder="{% trans 'Name, username, or email' %}"
+                                value="{{ search_query }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="role" class="form-label">{% trans "Role" %}</label>
+                            <select class="form-select" id="role" name="role">
+                                <option value="">{% trans "All Roles" %}</option>
+                                <option value="student" {% if role_filter == 'student' %}selected{% endif %}>{% trans "Student" %}</option>
+                                <option value="coordinator" {% if role_filter == 'coordinator' %}selected{% endif %}>{% trans "Coordinator" %}</option>
+                                <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>{% trans "Admin" %}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-5 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="bi bi-search"></i> {% trans "Search" %}
+                            </button>
+                            <a href="{% url 'frontend:user_management' %}" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> {% trans "Clear" %}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-list"></i> {% trans "Users" %}
+                        <span class="badge bg-primary ms-2">{{ users|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if users %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "User" %}</th>
+                                        <th>{% trans "Email" %}</th>
+                                        <th>{% trans "Roles" %}</th>
+                                        <th>{% trans "Last Login" %}</th>
+                                        <th>{% trans "Active Sessions" %}</th>
+                                        <th>{% trans "Status" %}</th>
+                                        <th>{% trans "Actions" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for u in users %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-person-circle fs-4 me-2 text-primary"></i>
+                                                <div>
+                                                    <div class="fw-bold">{{ u.get_full_name|default:u.username }}</div>
+                                                    <small class="text-muted">@{{ u.username }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <small>{{ u.email }}</small>
+                                            {% if not u.is_email_verified %}
+                                                <span class="badge bg-warning text-dark" title="{% trans 'Email not verified' %}">
+                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% for role in u.roles.all %}
+                                                <span class="badge 
+                                                    {% if role.name == 'admin' %}bg-danger
+                                                    {% elif role.name == 'coordinator' %}bg-info
+                                                    {% else %}bg-secondary
+                                                    {% endif %}">
+                                                    {{ role.name|title }}
+                                                </span>
+                                            {% empty %}
+                                                <span class="badge bg-secondary">{% trans "No Role" %}</span>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            {% if u.last_login_time %}
+                                                <div>
+                                                    <i class="bi bi-clock"></i> {{ u.last_login_time|timesince }} {% trans "ago" %}
+                                                </div>
+                                                <small class="text-muted">{{ u.last_login_time|date:"Y-m-d H:i" }}</small>
+                                            {% else %}
+                                                <span class="text-muted">{% trans "Never" %}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if u.active_sessions_count > 0 %}
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-display"></i> {{ u.active_sessions_count }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">0</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if u.is_active %}
+                                                {% if u.is_locked_out %}
+                                                    <span class="badge bg-danger">
+                                                        <i class="bi bi-lock"></i> {% trans "Locked" %}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle"></i> {% trans "Active" %}
+                                                    </span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-x-circle"></i> {% trans "Inactive" %}
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <a href="{% url 'frontend:profile' %}?user_id={{ u.id }}" 
+                                                   class="btn btn-outline-primary" 
+                                                   title="{% trans 'View Profile' %}">
+                                                    <i class="bi bi-eye"></i>
+                                                </a>
+                                                {% if user.is_admin %}
+                                                    <button 
+                                                        type="button" 
+                                                        class="btn btn-outline-warning view-sessions-btn" 
+                                                        data-user-id="{{ u.id }}"
+                                                        data-username="{{ u.username }}"
+                                                        title="{% trans 'View Sessions' %}">
+                                                        <i class="bi bi-shield-lock"></i>
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1"></i>
+                            <p class="mt-2">{% trans "No users found" %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Actions (Admin Only) -->
+    {% if user.is_admin %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">{% trans "Export Options" %}</h6>
+                    <button type="button" class="btn btn-outline-primary" id="export-csv-btn">
+                        <i class="bi bi-file-earmark-spreadsheet"></i> {% trans "Export to CSV" %}
+                    </button>
+                    <button type="button" class="btn btn-outline-success" id="export-excel-btn">
+                        <i class="bi bi-file-earmark-excel"></i> {% trans "Export to Excel" %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- User Sessions Modal -->
+<div class="modal fade" id="userSessionsModal" tabindex="-1" aria-labelledby="userSessionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userSessionsModalLabel">{% trans "User Sessions" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="sessions-loading" class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">{% trans "Loading..." %}</span>
+                    </div>
+                </div>
+                <div id="sessions-content" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Close" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const sessionsModal = new bootstrap.Modal(document.getElementById('userSessionsModal'));
+    
+    // View user sessions
+    document.querySelectorAll('.view-sessions-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const userId = this.dataset.userId;
+            const username = this.dataset.username;
+            
+            document.getElementById('userSessionsModalLabel').textContent = `{% trans "Sessions for" %} ${username}`;
+            document.getElementById('sessions-loading').style.display = 'block';
+            document.getElementById('sessions-content').style.display = 'none';
+            
+            sessionsModal.show();
+            
+            try {
+                const response = await fetch(`/api/accounts/users/${userId}/sessions/`);
+                const data = await response.json();
+                
+                let html = '';
+                if (data.sessions && data.sessions.length > 0) {
+                    html = '<div class="list-group">';
+                    data.sessions.forEach(session => {
+                        html += `
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">${session.device || 'Unknown Device'}</h6>
+                                        <p class="mb-1 small text-muted">
+                                            <i class="bi bi-geo-alt"></i> ${session.location || 'Unknown'}<br>
+                                            <i class="bi bi-globe"></i> ${session.ip_address || 'Unknown'}<br>
+                                            <i class="bi bi-clock"></i> Last active: ${session.last_activity}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        ${session.is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>'}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                } else {
+                    html = '<p class="text-center text-muted">{% trans "No sessions found" %}</p>';
+                }
+                
+                document.getElementById('sessions-content').innerHTML = html;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('sessions-content').innerHTML = '<p class="text-center text-danger">{% trans "Error loading sessions" %}</p>';
+            } finally {
+                document.getElementById('sessions-loading').style.display = 'none';
+                document.getElementById('sessions-content').style.display = 'block';
+            }
+        });
+    });
+    
+    // Export CSV
+    document.getElementById('export-csv-btn')?.addEventListener('click', function() {
+        window.location.href = '{% url "frontend:user_management" %}?export=csv';
+    });
+    
+    // Export Excel
+    document.getElementById('export-excel-btn')?.addEventListener('click', function() {
+        window.location.href = '{% url "frontend:user_management" %}?export=excel';
+    });
+});
+</script>
+{% endblock %}
+

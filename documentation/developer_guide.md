@@ -12,6 +12,8 @@ This guide is for developers working on SEIM (Student Exchange Information Manag
 - **`notifications/`**: Email and in-app notification logic
 - **`documents/`**: Document processing, upload, and validation
 - **`accounts/`**: Custom user management and authentication
+- **`application_forms/`**: Dynamic form builder and management
+- **`grades/`**: Grade translation system for international students
 - **`core/`**: Shared utilities, base models, and project-wide logic
 - **`analytics/`**: Dashboards, metrics, and reporting
 - **`api/`**: RESTful endpoints and third-party integrations
@@ -27,13 +29,14 @@ This guide is for developers working on SEIM (Student Exchange Information Manag
 - **TimelineEvent**: Audit log for all critical actions
 - **DynamicForm**: Dynamic application forms using django-dynforms
 
-### **Dynamic Forms (django-dynforms):**
-- **Form Builder**: Admin interface at `/dynforms/` for creating dynamic application forms
-- **Field Types**: Text, textarea, select, checkbox, radio, file upload, and more
-- **Validation**: Configurable field validation rules
-- **Conditional Logic**: Show/hide fields based on answers
+### **Dynamic Form Builder:**
+- **Enhanced Form Builder**: Visual drag-and-drop interface at `/api/application-forms/builder/`
+- **Field Types**: Text, textarea, email, number, date, select, checkbox, radio, file upload (9 types)
+- **Real-time Preview**: See forms as you build them
+- **JSON Schema Storage**: Standards-based storage in PostgreSQL
+- **Field Configuration**: Labels, placeholders, required flags, help text, options
 - **Integration**: Forms can be attached to exchange programs
-- **Testing**: Selenium tests cover form builder functionality
+- **Documentation**: See [Form Builder Guide](documentation/form_builder_guide.md)
 
 ---
 

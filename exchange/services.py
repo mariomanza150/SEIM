@@ -1,10 +1,12 @@
+from typing import Dict, Any, Optional, List
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
+from accounts.models import User
 from notifications.services import NotificationService
 
-from .models import Application, ApplicationStatus, Comment, TimelineEvent
+from .models import Application, ApplicationStatus, Comment, TimelineEvent, Program
 
 
 class ApplicationService:
@@ -13,7 +15,7 @@ class ApplicationService:
     """
 
     @staticmethod
-    def check_eligibility(student, program):
+    def check_eligibility(student: User, program: Program) -> Dict[str, Any]:
         """
         Comprehensive eligibility check for student applying to program.
 
@@ -120,7 +122,7 @@ class ApplicationService:
         }
 
     @staticmethod
-    def can_submit_application(user, program):
+    def can_submit_application(user: User, program: Program) -> bool:
         """Check if user has another active application for this program."""
         return not Application.objects.filter(
             student=user,
@@ -131,7 +133,7 @@ class ApplicationService:
 
     @staticmethod
     @transaction.atomic
-    def submit_application(application: Application, user):
+    def submit_application(application: Application, user: User) -> Application:
         """Submit an application (draft -> submitted) with eligibility and single active check."""
         if application.status.name != "draft":
             raise ValueError("Only draft applications can be submitted.")
@@ -161,7 +163,7 @@ class ApplicationService:
         return application
 
     @staticmethod
-    def can_transition_status(user, application, new_status):
+    def can_transition_status(user: User, application: Application, new_status: str) -> bool:
         """
         Check if user can transition application to new status.
         
@@ -185,7 +187,7 @@ class ApplicationService:
 
     @staticmethod
     @transaction.atomic
-    def transition_status(application: Application, user, new_status_name):
+    def transition_status(application: Application, user: User, new_status_name: str) -> Application:
         """Transition application status with role validation."""
         from django.utils import timezone
         
@@ -233,7 +235,7 @@ class ApplicationService:
 
     @staticmethod
     @transaction.atomic
-    def withdraw_application(application: Application, user):
+    def withdraw_application(application: Application, user: User) -> Application:
         """Withdraw an application (if not in final status)."""
         if not ApplicationService.can_withdraw_application(application):
             raise ValueError("Application cannot be withdrawn in its current status.")

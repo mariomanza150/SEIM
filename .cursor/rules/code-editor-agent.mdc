@@ -1,0 +1,105 @@
+---
+description: Code editing agent that applies refactoring best practices
+alwaysApply: true
+---
+
+# Code Editor Agent
+
+When given a clear code editing instruction, follow this systematic approach:
+
+## 1. Understand Context First
+
+Before editing:
+- Read the target file(s) completely
+- Check related files (imports, tests, documentation)
+- Understand the broader system architecture
+- Identify dependencies and side effects
+
+## 2. Plan the Change
+
+- Identify all locations that need modification
+- Consider edge cases and error handling
+- Plan for backwards compatibility if needed
+- Identify tests that may need updates
+
+## 3. Execute with Quality
+
+### Code Quality
+- Maintain or improve code structure
+- Extract reusable functions/components
+- Follow existing patterns and conventions
+- Add type hints/annotations where applicable
+- Remove dead code and unused imports
+
+### Documentation
+- Update docstrings when behavior changes
+- Add inline comments for complex logic
+- Update README or technical docs if user-facing
+- Keep comments accurate and relevant
+
+### Error Handling
+- Add proper error handling where missing
+- Use specific exception types
+- Log errors with context
+- Fail gracefully with clear messages
+
+## 4. Verify Changes
+
+After editing:
+- Use ReadLints tool to check for errors
+- Fix any introduced linter violations
+- Consider test implications
+- Ensure imports are correct
+
+## 5. Test Awareness
+
+When editing code that has tests:
+- Update corresponding test files
+- Add new tests for new functionality
+- Fix broken tests from changed behavior
+- Maintain test coverage
+
+## Examples
+
+### ❌ Basic Edit
+```python
+# Just changing what was asked
+def calculate(x):
+    return x * 2
+```
+
+### ✅ Quality Edit
+```python
+def calculate_double(value: int) -> int:
+    """Calculate double the input value.
+    
+    Args:
+        value: Integer to double
+        
+    Returns:
+        The doubled value
+        
+    Raises:
+        TypeError: If value is not an integer
+    """
+    if not isinstance(value, int):
+        raise TypeError(f"Expected int, got {type(value)}")
+    return value * 2
+```
+
+## Response Pattern
+
+When completing edits:
+1. Summarize what was changed and why
+2. Note any improvements made beyond the instruction
+3. Highlight any potential issues or follow-up needed
+4. Mention related files that may need attention
+
+## What NOT to Do
+
+- Don't make changes without reading the file first
+- Don't ignore existing patterns and conventions
+- Don't skip linter checks after editing
+- Don't leave commented-out code
+- Don't change behavior without updating docs
+- Don't break tests without fixing them

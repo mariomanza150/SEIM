@@ -1,0 +1,74 @@
+{% extends "cms/base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="section-blue py-5 mb-0" style="min-height: 70vh; display: flex; align-items: center;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-3 fw-bold text-white mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                    {{ page.hero_title }}
+                </h1>
+                <p class="lead text-white mb-4" style="font-size: 1.5rem;">{{ page.hero_subtitle }}</p>
+                {% if page.hero_cta_text and page.hero_cta_link %}
+                    <a href="{{ page.hero_cta_link }}" class="btn btn-secondary btn-lg px-5 py-3 shadow">
+                        <i class="bi bi-arrow-right-circle me-2"></i>{{ page.hero_cta_text }}
+                    </a>
+                {% endif %}
+            </div>
+            {% if page.hero_image %}
+                <div class="col-lg-4">
+                    {% image page.hero_image fill-400x400 class="img-fluid rounded shadow-lg" %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Introduction Section -->
+{% if page.intro %}
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-10 mx-auto">
+                    <div class="content">
+                        {{ page.intro|richtext }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endif %}
+
+<!-- Body Content (StreamField) -->
+{% if page.body %}
+    <section class="py-5 bg-light">
+        <div class="container">
+            {% for block in page.body %}
+                {% include_block block %}
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
+
+<!-- Final Call to Action -->
+<section class="section-gold text-white py-5">
+    <div class="container text-center">
+        <h2 class="display-5 fw-bold mb-3" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
+            <i class="bi bi-globe-americas me-3"></i>¿Listo para Comenzar tu Aventura Internacional?
+        </h2>
+        <p class="lead mb-5" style="font-size: 1.25rem;">Descubre los programas disponibles y aprende cómo aplicar</p>
+        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+            <a href="/como-aplicar/" class="btn btn-primary btn-lg px-5 py-3 shadow">
+                <i class="bi bi-file-earmark-check me-2"></i>¿Cómo Aplicar?
+            </a>
+            <a href="/programas/" class="btn btn-outline-light btn-lg px-5 py-3 shadow">
+                <i class="bi bi-list-ul me-2"></i>Ver Programas
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}{% endblock %}

@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Active Sessions" %} - SEIM{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'frontend:dashboard' %}">{% trans "Dashboard" %}</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'frontend:settings' %}">{% trans "Settings" %}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{% trans "Sessions" %}</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0">
+                <i class="bi bi-shield-lock"></i> {% trans "Active Sessions" %}
+            </h1>
+            <p class="text-muted">{% trans "Manage your active login sessions across devices" %}</p>
+        </div>
+    </div>
+
+    <!-- Security Info Alert -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-info" role="alert">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>{% trans "Security Tip:" %}</strong> {% trans "If you see a session you don't recognize, revoke it immediately and change your password." %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sessions List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-display"></i> {% trans "Your Active Sessions" %}
+                        <span class="badge bg-primary ms-2">{{ sessions|length }}</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if sessions %}
+                        <div class="list-group list-group-flush">
+                            {% for session in sessions %}
+                            <div class="list-group-item">
+                                <div class="row align-items-center">
+                                    <div class="col-auto">
+                                        <!-- Device Icon -->
+                                        {% if 'Mobile' in session.user_agent or 'Android' in session.user_agent or 'iPhone' in session.user_agent %}
+                                            <i class="bi bi-phone fs-2 text-primary"></i>
+                                        {% elif 'Tablet' in session.user_agent or 'iPad' in session.user_agent %}
+                                            <i class="bi bi-tablet fs-2 text-primary"></i>
+                                        {% else %}
+                                            <i class="bi bi-laptop fs-2 text-primary"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col">
+                                        <h6 class="mb-1">
+                                            {{ session.device|default:"Unknown Device" }}
+                                            {% if forloop.first %}
+                                                <span class="badge bg-success ms-2">{% trans "Current Session" %}</span>
+                                            {% endif %}
+                                        </h6>
+                                        <div class="text-muted small">
+                                            <div class="mb-1">
+                                                <i class="bi bi-geo-alt"></i> {{ session.location|default:"Unknown Location" }}
+                                            </div>
+                                            <div class="mb-1">
+                                                <i class="bi bi-globe"></i> {{ session.ip_address|default:"Unknown IP" }}
+                                            </div>
+                                            <div>
+                                                <i class="bi bi-clock"></i> {% trans "Last active:" %} {{ session.last_activity|timesince }} {% trans "ago" %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        {% if not forloop.first %}
+                                            <button 
+                                                class="btn btn-outline-danger btn-sm revoke-session-btn" 
+                                                data-session-id="{{ session.id }}"
+                                                type="button">
+                                                <i class="bi bi-x-circle"></i> {% trans "Revoke" %}
+                                            </button>
+                                        {% else %}
+                                            <button class="btn btn-outline-secondary btn-sm" type="button" disabled>
+                                                <i class="bi bi-check-circle"></i> {% trans "Active" %}
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-shield-x fs-1"></i>
+                            <p class="mt-2">{% trans "No active sessions found" %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer text-muted">
+                    <small>
+                        <i class="bi bi-info-circle"></i>
+                        {% trans "Sessions expire after 30 days of inactivity or when you logout from that device." %}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> {% trans "Security Actions" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p>{% trans "If you suspect unauthorized access to your account:" %}</p>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-danger" id="revoke-all-sessions-btn">
+                            <i class="bi bi-x-circle"></i> {% trans "Revoke All Other Sessions" %}
+                        </button>
+                        <a href="{% url 'frontend:settings' %}" class="btn btn-outline-danger">
+                            <i class="bi bi-key"></i> {% trans "Change Password" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmRevokeModal" tabindex="-1" aria-labelledby="confirmRevokeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmRevokeModalLabel">{% trans "Confirm Revoke Session" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>{% trans "Are you sure you want to revoke this session? The user will be logged out from that device." %}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+                <button type="button" class="btn btn-danger" id="confirm-revoke-btn">{% trans "Revoke Session" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let sessionIdToRevoke = null;
+    const confirmModal = new bootstrap.Modal(document.getElementById('confirmRevokeModal'));
+    
+    // Handle individual session revocation
+    document.querySelectorAll('.revoke-session-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            sessionIdToRevoke = this.dataset.sessionId;
+            confirmModal.show();
+        });
+    });
+    
+    // Confirm revoke button
+    document.getElementById('confirm-revoke-btn').addEventListener('click', async function() {
+        if (!sessionIdToRevoke) return;
+        
+        try {
+            const response = await fetch(`/api/accounts/sessions/${sessionIdToRevoke}/revoke/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            if (response.ok) {
+                confirmModal.hide();
+                location.reload();
+            } else {
+                alert('{% trans "Failed to revoke session. Please try again." %}');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('{% trans "An error occurred. Please try again." %}');
+        }
+    });
+    
+    // Revoke all other sessions
+    document.getElementById('revoke-all-sessions-btn').addEventListener('click', async function() {
+        if (!confirm('{% trans "This will log you out from all other devices. Continue?" %}')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/accounts/sessions/revoke-all/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            if (response.ok) {
+                location.reload();
+            } else {
+                alert('{% trans "Failed to revoke sessions. Please try again." %}');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('{% trans "An error occurred. Please try again." %}');
+        }
+    });
+    
+    // Helper function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});
+</script>
+{% endblock %}
+

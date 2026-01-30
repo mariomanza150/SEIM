@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Preferences - SEIM{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h1><i class="bi bi-sliders"></i> Preferences</h1>
+            <p class="text-muted">Customize your experience</p>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-8">
+            <!-- Appearance Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-palette"></i> Appearance</h5>
+                </div>
+                <div class="card-body">
+                    <form id="appearanceForm">
+                        <!-- Theme -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Theme</label>
+                            <div class="btn-group w-100" role="group" aria-label="Theme selection">
+                                <input type="radio" class="btn-check" name="theme" id="themeLight" value="light" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="themeLight">
+                                    <i class="bi bi-sun"></i> Light
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="theme" id="themeDark" value="dark" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="themeDark">
+                                    <i class="bi bi-moon"></i> Dark
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="theme" id="themeAuto" value="auto" autocomplete="off" checked>
+                                <label class="btn btn-outline-primary" for="themeAuto">
+                                    <i class="bi bi-circle-half"></i> Auto
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">Auto mode matches your system preference</small>
+                        </div>
+                        
+                        <!-- Font Size -->
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Font Size</label>
+                            <div class="btn-group w-100" role="group" aria-label="Font size selection">
+                                <input type="radio" class="btn-check" name="fontSize" id="fontNormal" value="normal" autocomplete="off" checked>
+                                <label class="btn btn-outline-primary" for="fontNormal">
+                                    Normal
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="fontSize" id="fontLarge" value="large" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="fontLarge">
+                                    Large
+                                </label>
+                                
+                                <input type="radio" class="btn-check" name="fontSize" id="fontXLarge" value="x-large" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="fontXLarge">
+                                    Extra Large
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">Adjust text size for better readability</small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Accessibility Settings -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-universal-access"></i> Accessibility</h5>
+                </div>
+                <div class="card-body">
+                    <form id="accessibilityForm">
+                        <!-- High Contrast -->
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="highContrast" name="highContrast">
+                                <label class="form-check-label" for="highContrast">
+                                    <strong>High Contrast Mode</strong>
+                                    <p class="mb-0 text-muted small">Increase color contrast for better visibility</p>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Reduce Motion -->
+                        <div class="mb-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" id="reduceMotion" name="reduceMotion">
+                                <label class="form-check-label" for="reduceMotion">
+                                    <strong>Reduce Motion</strong>
+                                    <p class="mb-0 text-muted small">Minimize animations and transitions</p>
+                                </label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Save Button -->
+            <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" id="resetBtn">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset to Defaults
+                </button>
+                <button type="button" class="btn btn-primary" id="saveBtn">
+                    <i class="bi bi-check-lg"></i> Save Preferences
+                </button>
+            </div>
+        </div>
+        
+        <!-- Preview Panel -->
+        <div class="col-md-4">
+            <div class="card sticky-top" style="top: 1rem;">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="bi bi-eye"></i> Preview</h6>
+                </div>
+                <div class="card-body">
+                    <h4>Sample Heading</h4>
+                    <p>This is a sample paragraph to show how your preferences will affect the text appearance throughout the application.</p>
+                    <div class="d-flex gap-2 mb-3">
+                        <button class="btn btn-primary btn-sm">Primary</button>
+                        <button class="btn btn-secondary btn-sm">Secondary</button>
+                    </div>
+                    <div class="alert alert-info mb-0">
+                        <i class="bi bi-info-circle"></i> Changes are previewed in real-time
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="position-fixed top-0 start-0 w-100 h-100 d-none" id="loadingOverlay" style="background: rgba(0,0,0,0.3); z-index: 9999;">
+    <div class="d-flex align-items-center justify-content-center h-100">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Saving preferences...</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/modules/preferences.js' %}"></script>
+<script>
+// Initialize preferences manager
+document.addEventListener('DOMContentLoaded', function() {
+    window.preferencesManager = new PreferencesManager();
+});
+</script>
+{% endblock %}
+

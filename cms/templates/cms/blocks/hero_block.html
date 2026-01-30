@@ -1,0 +1,19 @@
+{% load wagtailcore_tags wagtailimages_tags %}
+<div class="hero-block bg-{{ value.background_color }} text-white py-5 my-4 shadow-sm" 
+     {% if value.background_image %}style="background-image: linear-gradient(rgba(46, 80, 144, 0.8), rgba(30, 58, 95, 0.8)), url('{% image_url value.background_image 'fill-1920x600' %}'); background-size: cover; background-position: center;"{% endif %}>
+    <div class="container text-center">
+        <h2 class="display-4 fw-bold mb-3" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">{{ value.title }}</h2>
+        {% if value.subtitle %}
+        <p class="lead mb-4" style="font-size: 1.25rem;">{{ value.subtitle }}</p>
+        {% endif %}
+        {% if value.button_text %}
+            {% if value.button_page or value.button_link %}
+            <a href="{% if value.button_page %}{% pageurl value.button_page %}{% else %}{{ value.button_link }}{% endif %}" 
+               class="btn btn-secondary btn-lg px-5 py-3 shadow">
+                <i class="bi bi-arrow-right-circle me-2"></i>{{ value.button_text }}
+            </a>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+

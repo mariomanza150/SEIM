@@ -50,18 +50,71 @@ class User(AbstractUser, UUIDModel, TimeStampedModel):
     )
 
     def has_role(self, role_name):
+        """Check if user has specific role."""
         return self.roles.filter(name=role_name).exists()
+
+    def has_any_role(self, role_names):
+        """Check if user has any of the specified roles."""
+        if isinstance(role_names, str):
+            role_names = [role_names]
+        return self.roles.filter(name__in=role_names).exists()
+
+    def has_all_roles(self, role_names):
+        """Check if user has all of the specified roles."""
+        if isinstance(role_names, str):
+            role_names = [role_names]
+        return all(self.has_role(role) for role in role_names)
+
+    def get_all_roles(self):
+        """Get list of all role names."""
+        return list(self.roles.values_list('name', flat=True))
+
+    def has_permission(self, permission_name):
+        """Check if user has specific permission based on their roles."""
+        from core.permissions import PermissionManager
+        return PermissionManager.user_has_permission(self, permission_name)
+
+    def get_all_permissions(self):
+        """Get all permissions for user based on their roles."""
+        from core.permissions import PermissionManager
+        return PermissionManager.get_user_permissions(self)
 
     @property
     def primary_role(self):
-        """Get the primary role name for the user."""
+        """
+        Get the primary role name for the user.
+        Priority: admin > coordinator > student
+        """
+        role_priority = ['admin', 'coordinator', 'student']
+        user_roles = self.get_all_roles()
+
+        for role in role_priority:
+            if role in user_roles:
+                return role
+
+        # Default to first role if no priority match
         first_role = self.roles.first()
         return first_role.name if first_role else "student"
 
     @property
     def role(self):
-        """Get the primary role name for the user (alias for primary_role)."""
+        """Alias for primary_role for backward compatibility."""
         return self.primary_role
+
+    @property
+    def is_admin(self):
+        """Check if user has admin role or is superuser."""
+        return self.has_role('admin') or self.is_superuser
+
+    @property
+    def is_coordinator(self):
+        """Check if user has coordinator role."""
+        return self.has_role('coordinator')
+
+    @property
+    def is_student(self):
+        """Check if user has student role."""
+        return self.has_role('student')
 
     def generate_email_verification_token(self):
         """Generate a random token for email verification."""
@@ -116,18 +169,28 @@ class UserSettings(TimeStampedModel):
             ('dark', 'Dark'),
             ('auto', 'Auto'),
         ],
-        default='light',
+        default='auto',
         help_text="User's preferred theme"
     )
     font_size = models.CharField(
         max_length=20,
         choices=[
-            ('small', 'Small'),
-            ('medium', 'Medium'),
+            ('normal', 'Normal'),
             ('large', 'Large'),
+            ('x-large', 'Extra Large'),
         ],
-        default='medium',
+        default='normal',
         help_text="User's preferred font size"
+    )
+    
+    # Accessibility settings
+    high_contrast = models.BooleanField(
+        default=False,
+        help_text="Enable high contrast mode for improved visibility"
+    )
+    reduce_motion = models.BooleanField(
+        default=False,
+        help_text="Reduce animations and transitions for accessibility"
     )
 
     # Notification settings

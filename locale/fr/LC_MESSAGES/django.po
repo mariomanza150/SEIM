@@ -1,0 +1,117 @@
+# French translations for SEIM.
+# Copyright (C) 2025 SEIM Team
+# This file is distributed under the same license as the SEIM package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: SEIM 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-12 12:00+0000\n"
+"PO-Revision-Date: 2025-11-12 12:00+0000\n"
+"Last-Translator: SEIM Team\n"
+"Language-Team: French\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+# Navigation
+msgid "Dashboard"
+msgstr "Tableau de Bord"
+
+msgid "Programs"
+msgstr "Programmes"
+
+msgid "Applications"
+msgstr "Candidatures"
+
+msgid "Calendar"
+msgstr "Calendrier"
+
+msgid "Admin"
+msgstr "Administration"
+
+msgid "Form Builder"
+msgstr "Créateur de Formulaires"
+
+# User menu
+msgid "Profile"
+msgstr "Profil"
+
+msgid "Settings"
+msgstr "Paramètres"
+
+msgid "Preferences"
+msgstr "Préférences"
+
+msgid "Logout"
+msgstr "Déconnexion"
+
+msgid "Login"
+msgstr "Connexion"
+
+msgid "Register"
+msgstr "S'inscrire"
+
+# Common actions
+msgid "Refresh"
+msgstr "Actualiser"
+
+msgid "Retry"
+msgstr "Réessayer"
+
+msgid "Loading..."
+msgstr "Chargement..."
+
+msgid "Loading dashboard..."
+msgstr "Chargement du tableau de bord..."
+
+# Dashboard
+msgid "Welcome back, <span id=\"user-name\"></span>!"
+msgstr "Bon retour, <span id=\"user-name\"></span>!"
+
+msgid "Role:"
+msgstr "Rôle:"
+
+msgid "Connection Issue:"
+msgstr "Problème de Connexion:"
+
+msgid "Some dashboard data may not be available."
+msgstr "Certaines données du tableau de bord peuvent ne pas être disponibles."
+
+msgid "Quick Actions"
+msgstr "Actions Rapides"
+
+msgid "Recent Activity"
+msgstr "Activité Récente"
+
+# Language
+msgid "Language"
+msgstr "Langue"
+
+msgid "Select language"
+msgstr "Sélectionner la langue"
+
+msgid "Select Language"
+msgstr "Sélectionner la Langue"
+
+msgid "Toggle theme"
+msgstr "Changer de thème"
+
+# Model fields
+msgid "Minimum GPA required for eligibility."
+msgstr "GPA minimum requis pour l'éligibilité."
+
+msgid "Required language for eligibility."
+msgstr "Langue requise pour l'éligibilité."
+
+msgid "Minimum language proficiency level (CEFR scale)."
+msgstr "Niveau minimum de compétence linguistique (échelle CECR)."
+
+msgid "Application"
+msgstr "Candidature"
+
+msgid "Applications"
+msgstr "Candidatures"
+

@@ -101,6 +101,12 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=9, minute=0),  # Daily at 9 AM
         "options": {"queue": "notifications"},
     },
+    # Phase 2: Deadline reminders (every 15 minutes)
+    "send-deadline-reminders": {
+        "task": "notifications.tasks.send_deadline_reminders",
+        "schedule": crontab(minute="*/15"),  # Every 15 minutes
+        "options": {"queue": "notifications", "expires": 600},
+    },
     # Document tasks
     "process-document-validations": {
         "task": "documents.tasks.process_pending_validations",
@@ -144,7 +150,7 @@ app.conf.beat_schedule = {
 
 @app.task(bind=True)
 def debug_task(self):
-    """Debug task for testing Celery configuration"""
+    """Debug task for testing Celery configuration (development/testing only)"""
     print(f"Request: {self.request!r}")
 
 

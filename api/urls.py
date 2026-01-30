@@ -31,14 +31,17 @@ from documents.views import (
 from exchange.views import (
     ApplicationStatusViewSet,
     ApplicationViewSet,
+    CalendarEventViewSet,
     CommentViewSet,
     ProgramViewSet,
+    SavedSearchViewSet,
     TimelineEventViewSet,
 )
 from notifications.views import (
     NotificationPreferenceViewSet,
     NotificationTypeViewSet,
     NotificationViewSet,
+    ReminderViewSet,
 )
 
 router = routers.DefaultRouter()
@@ -56,6 +59,8 @@ router.register(r"applications", ApplicationViewSet, basename="application")
 router.register(r"application-statuses", ApplicationStatusViewSet)
 router.register(r"comments", CommentViewSet)
 router.register(r"timeline-events", TimelineEventViewSet)
+router.register(r"saved-searches", SavedSearchViewSet, basename="saved-search")
+router.register(r"calendar/events", CalendarEventViewSet, basename="calendar-event")
 
 # Documents
 router.register(r"document-types", DocumentTypeViewSet)
@@ -68,6 +73,7 @@ router.register(r"document-comments", DocumentCommentViewSet)
 router.register(r"notification-types", NotificationTypeViewSet)
 router.register(r"notifications", NotificationViewSet)
 router.register(r"notification-preferences", NotificationPreferenceViewSet)
+router.register(r"reminders", ReminderViewSet, basename="reminder")
 
 # Analytics
 router.register(r"reports", ReportViewSet)

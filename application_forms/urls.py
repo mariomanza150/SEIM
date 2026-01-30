@@ -17,5 +17,10 @@ router.register(r'submissions', views.FormSubmissionViewSet, basename='formsubmi
 
 urlpatterns = [
     path('', include(router.urls)),
+    # Form list view
+    path('list/', views.FormTypeListView.as_view(), name='form-list'),
+    # Enhanced form builder
+    path('builder/', views.EnhancedFormBuilderView.as_view(), name='enhanced-builder'),
+    path('builder/<int:pk>/', views.EnhancedFormBuilderView.as_view(), name='enhanced-builder-edit'),
 ]
 

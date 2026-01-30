@@ -5,6 +5,7 @@ These tests validate the authentication flow between frontend and backend,
 ensuring proper JWT token handling, user registration, and login functionality.
 """
 
+import uuid
 import pytest
 from django.contrib.auth import get_user_model
 from django.urls import reverse
@@ -28,12 +29,17 @@ class TestAuthenticationAPI(APITestCase):
         self.refresh_url = reverse("token_refresh")
         self.verify_email_url = reverse("accounts:verify-email")
         self.password_reset_url = reverse("accounts:password_reset_request")
+        # Generate unique identifier for this test run
+        self.unique_id = uuid.uuid4().hex[:8]
 
     def test_user_registration_success(self):
         """Test successful user registration."""
+        username = f"testuser_{self.unique_id}"
+        email = f"test_{self.unique_id}@example.com"
+        
         data = {
-            "username": "testuser",
-            "email": "test@example.com",
+            "username": username,
+            "email": email,
             "password": "testpass123",
             "password2": "testpass123",
             "first_name": "Test",
@@ -42,26 +48,26 @@ class TestAuthenticationAPI(APITestCase):
 
         response = self.client.post(self.register_url, data, format="json")
         print(
-            "DEBUG registration response:",
             response.status_code,
             getattr(response, "data", response.content),
         )
         self.assert_response_success(response, status.HTTP_201_CREATED)
-        self.assert_model_exists(User, username="testuser", email="test@example.com")
+        self.assert_model_exists(User, username=username, email=email)
 
         # Check that user is created but not verified
-        user = User.objects.get(username="testuser")
+        user = User.objects.get(username=username)
         self.assertFalse(user.is_email_verified)
         self.assertFalse(user.is_active)
 
     def test_user_registration_duplicate_username(self):
         """Test registration with duplicate username."""
+        username = f"existinguser_{self.unique_id}"
         # Create existing user
-        TestUtils.create_test_user(username="existinguser")
+        TestUtils.create_test_user(username=username)
 
         data = {
-            "username": "existinguser",
-            "email": "new@example.com",
+            "username": username,
+            "email": f"new_{self.unique_id}@example.com",
             "password": "testpass123",
         }
 
@@ -72,12 +78,13 @@ class TestAuthenticationAPI(APITestCase):
 
     def test_user_registration_duplicate_email(self):
         """Test registration with duplicate email."""
+        email = f"existing_{self.unique_id}@example.com"
         # Create existing user
-        TestUtils.create_test_user(email="existing@example.com")
+        TestUtils.create_test_user(email=email)
 
         data = {
-            "username": "newuser",
-            "email": "existing@example.com",
+            "username": f"newuser_{self.unique_id}",
+            "email": email,
             "password": "testpass123",
         }
 
@@ -103,12 +110,14 @@ class TestAuthenticationAPI(APITestCase):
 
     def test_user_login_success(self):
         """Test successful user login."""
+        username = f"testuser_{self.unique_id}"
+        email = f"test_{self.unique_id}@example.com"
         # Create user
         TestUtils.create_test_user(
-            username="testuser", email="test@example.com", password="testpass123"
+            username=username, email=email, password="testpass123"
         )
 
-        data = {"login": "testuser", "password": "testpass123"}
+        data = {"login": username, "password": "testpass123"}
 
         response = self.client.post(self.login_url, data, format="json")
 
@@ -140,7 +149,6 @@ class TestAuthenticationAPI(APITestCase):
 
         response = self.client.post(self.login_url, data, format="json")
         print(
-            "DEBUG login with email response:",
             response.status_code,
             getattr(response, "data", response.content),
         )
@@ -150,10 +158,11 @@ class TestAuthenticationAPI(APITestCase):
 
     def test_user_login_invalid_credentials(self):
         """Test login with invalid credentials."""
+        username = f"testuser_{self.unique_id}"
         # Create user
-        TestUtils.create_test_user(username="testuser", password="testpass123")
+        TestUtils.create_test_user(username=username, password="testpass123")
 
-        data = {"login": "testuser", "password": "wrongpassword"}
+        data = {"login": username, "password": "wrongpassword"}
 
         response = self.client.post(self.login_url, data, format="json")
 
@@ -191,9 +200,10 @@ class TestAuthenticationAPI(APITestCase):
 
     def test_email_verification_success(self):
         """Test successful email verification."""
+        email = f"test_{self.unique_id}@example.com"
         # Create unverified user
         user = TestUtils.create_test_user(
-            email="test@example.com", is_email_verified=False
+            email=email, is_email_verified=False
         )
 
         # Use the actual email verification token
@@ -203,7 +213,6 @@ class TestAuthenticationAPI(APITestCase):
 
         response = self.client.post(self.verify_email_url, data, format="json")
         print(
-            "DEBUG email verification response:",
             response.status_code,
             getattr(response, "data", response.content),
         )
@@ -223,14 +232,14 @@ class TestAuthenticationAPI(APITestCase):
 
     def test_password_reset_request_success(self):
         """Test successful password reset request."""
+        email = f"test_{self.unique_id}@example.com"
         # Create user
-        TestUtils.create_test_user(email="test@example.com")
+        TestUtils.create_test_user(email=email)
 
-        data = {"email": "test@example.com"}
+        data = {"email": email}
 
         response = self.client.post(self.password_reset_url, data, format="json")
         print(
-            "DEBUG password reset response:",
             type(response),
             getattr(response, "data", response.content),
         )
@@ -303,15 +312,17 @@ class TestAuthenticationAPI(APITestCase):
 
     def test_frontend_login_with_username_and_email(self):
         """Test frontend login flow using /api/accounts/login/ with both username and email."""
+        username = f"frontenduser_{self.unique_id}"
+        email = f"frontend_{self.unique_id}@example.com"
         TestUtils.create_test_user(
-            username="frontenduser",
-            email="frontend@example.com",
+            username=username,
+            email=email,
             password="frontendpass123",
             is_email_verified=True,
             is_active=True,
         )
         # Login with username
-        data_username = {"login": "frontenduser", "password": "frontendpass123"}
+        data_username = {"login": username, "password": "frontendpass123"}
         response_username = self.client.post(
             self.login_url, data_username, format="json"
         )
@@ -320,7 +331,7 @@ class TestAuthenticationAPI(APITestCase):
             self.assertIn("access", response_username.data)
             self.assertIn("refresh", response_username.data)
         # Login with email
-        data_email = {"login": "frontend@example.com", "password": "frontendpass123"}
+        data_email = {"login": email, "password": "frontendpass123"}
         response_email = self.client.post(self.login_url, data_email, format="json")
         self.assert_response_success(response_email, status.HTTP_200_OK)
         if hasattr(response_email, "data"):
@@ -329,15 +340,17 @@ class TestAuthenticationAPI(APITestCase):
 
     def test_token_obtain_pair_username_vs_email(self):
         """Test /api/token/ only works with username, not email."""
+        username = f"tokenuser_{self.unique_id}"
+        email = f"token_{self.unique_id}@example.com"
         TestUtils.create_test_user(
-            username="tokenuser",
-            email="token@example.com",
+            username=username,
+            email=email,
             password="tokenpass123",
             is_email_verified=True,
             is_active=True,
         )
         # Login with username (should succeed)
-        data_username = {"username": "tokenuser", "password": "tokenpass123"}
+        data_username = {"username": username, "password": "tokenpass123"}
         response_username = self.client.post(
             "/api/token/", data_username, format="json"
         )
@@ -346,7 +359,7 @@ class TestAuthenticationAPI(APITestCase):
             self.assertIn("access", response_username.data)
             self.assertIn("refresh", response_username.data)
         # Login with email (should fail)
-        data_email = {"username": "token@example.com", "password": "tokenpass123"}
+        data_email = {"username": email, "password": "tokenpass123"}
         response_email = self.client.post("/api/token/", data_email, format="json")
         self.assert_response_error(response_email, status.HTTP_401_UNAUTHORIZED)
 
@@ -354,12 +367,21 @@ class TestAuthenticationAPI(APITestCase):
 class TestAuthenticationIntegration(APITestCase):
     """Test authentication integration scenarios."""
 
+    def setUp(self):
+        """Set up test case."""
+        super().setUp()
+        # Generate unique identifier for this test run
+        self.unique_id = uuid.uuid4().hex[:8]
+
     def test_complete_auth_workflow(self):
         """Test complete authentication workflow from registration to logout."""
+        username = f"newuser_{self.unique_id}"
+        email = f"newuser_{self.unique_id}@example.com"
+        
         # 1. Register new user
         register_data = {
-            "username": "newuser",
-            "email": "newuser@example.com",
+            "username": username,
+            "email": email,
             "password": "testpass123",
             "password2": "testpass123",
             "first_name": "New",
@@ -374,7 +396,7 @@ class TestAuthenticationIntegration(APITestCase):
         # 1b. Verify email for new user
         from accounts.models import User
 
-        user = User.objects.get(username="newuser")
+        user = User.objects.get(username=username)
         verify_data = {"token": user.email_verification_token}
         verify_response = self.client.post(
             reverse("accounts:verify-email"), verify_data, format="json"
@@ -382,7 +404,7 @@ class TestAuthenticationIntegration(APITestCase):
         self.assert_response_success(verify_response, status.HTTP_200_OK)
 
         # 2. Login with new user
-        login_data = {"username": "newuser", "password": "testpass123"}
+        login_data = {"username": username, "password": "testpass123"}
 
         login_response = self.client.post(
             reverse("token_obtain_pair"), login_data, format="json"
@@ -466,6 +488,12 @@ class TestAuthenticationIntegration(APITestCase):
 class TestAuthenticationSecurity(APITestCase):
     """Test authentication security features."""
 
+    def setUp(self):
+        """Set up test case."""
+        super().setUp()
+        # Generate unique identifier for this test run
+        self.unique_id = uuid.uuid4().hex[:8]
+
     def test_password_strength_validation(self):
         """Test password strength validation during registration."""
         weak_passwords = [
@@ -475,10 +503,10 @@ class TestAuthenticationSecurity(APITestCase):
             "abc123",  # Too simple
         ]
 
-        for password in weak_passwords:
+        for i, password in enumerate(weak_passwords):
             data = {
-                "username": f"testuser_{password}",
-                "email": f"test_{password}@example.com",
+                "username": f"testuser_{self.unique_id}_{i}",
+                "email": f"test_{self.unique_id}_{i}@example.com",
                 "password": password,
             }
 
@@ -491,14 +519,15 @@ class TestAuthenticationSecurity(APITestCase):
 
     def test_account_lockout_after_failed_attempts(self):
         """Test account lockout after multiple failed login attempts."""
+        username = f"lockoutuser_{self.unique_id}"
         # Create user
         user = TestUtils.create_test_user(
-            username="lockoutuser", password="testpass123"
+            username=username, password="testpass123"
         )
 
         # Attempt multiple failed logins
         for i in range(5):
-            data = {"login": "lockoutuser", "password": "wrongpassword"}
+            data = {"login": username, "password": "wrongpassword"}
             response = self.client.post(reverse("accounts:login"), data, format="json")
 
             if i < 4:  # First 4 attempts should fail but not lock

@@ -341,4 +341,64 @@
     .form-textarea {
         border-width: 2px;
     }
+}
+
+/* WebSocket Connection Status Indicator */
+#wsConnectionStatus {
+    cursor: default;
+    padding: 0.5rem;
+    transition: color 0.3s ease;
+}
+
+#wsStatusIcon {
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+/* Animation for reconnecting status */
+#wsConnectionStatus .bi-arrow-repeat {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Tooltip-style hover effect */
+#wsConnectionStatus:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+}
+
+/* Notification badge */
+.notification-badge {
+    top: 0;
+    right: 0;
+    transform: translate(25%, -25%);
+    padding: 0.25rem 0.4rem;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    background-color: var(--danger-color, #dc3545);
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+    display: none;
 } 

@@ -208,7 +208,7 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        {% if user.role == 'coordinator' or user.role == 'admin' %}
+                        {% if user.is_coordinator or user.is_admin %}
                             {% if document.status == 'pending' %}
                                 <button type="button" 
                                         class="btn btn-success"

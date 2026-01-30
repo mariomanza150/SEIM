@@ -1,0 +1,136 @@
+{% extends "cms/base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="section-blue text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">{{ page.title }}</h1>
+                {% if page.institution %}
+                    <p class="lead mb-2">
+                        <i class="bi bi-building me-2" style="color: var(--uadec-gold);"></i>{{ page.institution }}
+                    </p>
+                {% endif %}
+                {% if page.location %}
+                    <p class="mb-0" style="font-size: 1.1rem;">
+                        <i class="bi bi-geo-alt-fill me-2" style="color: var(--uadec-gold);"></i>{{ page.location }}
+                    </p>
+                {% endif %}
+            </div>
+            {% if page.featured_image %}
+                <div class="col-lg-4">
+                    {% image page.featured_image fill-400x400 class="img-fluid rounded shadow-lg" %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Program Details -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                {% if page.description %}
+                    <div class="mb-5">
+                        <h2>About This Program</h2>
+                        <p class="lead">{{ page.description }}</p>
+                    </div>
+                {% endif %}
+                
+                {% if page.body %}
+                    <div class="mb-5">
+                        {% for block in page.body %}
+                            {% include_block block %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header" style="background: var(--uadec-blue); color: white; font-weight: 600;">
+                        <i class="bi bi-info-circle me-2"></i>Detalles del Programa
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            {% if page.duration %}
+                                <li class="mb-3 pb-3 border-bottom">
+                                    <i class="bi bi-clock me-2" style="color: var(--uadec-gold);"></i>
+                                    <strong>Duración:</strong><br>
+                                    <span class="ms-4">{{ page.duration }}</span>
+                                </li>
+                            {% endif %}
+                            {% if page.start_date %}
+                                <li class="mb-3 pb-3 border-bottom">
+                                    <i class="bi bi-calendar-event me-2" style="color: var(--uadec-gold);"></i>
+                                    <strong>Fecha de Inicio:</strong><br>
+                                    <span class="ms-4">{{ page.start_date|date:"F Y" }}</span>
+                                </li>
+                            {% endif %}
+                            {% if page.application_deadline %}
+                                <li class="mb-3 pb-3 border-bottom">
+                                    <i class="bi bi-calendar-x me-2" style="color: var(--uadec-orange);"></i>
+                                    <strong>Fecha Límite:</strong><br>
+                                    <span class="ms-4">{{ page.application_deadline|date:"F d, Y" }}</span>
+                                </li>
+                            {% endif %}
+                            {% if page.available_spots %}
+                                <li class="mb-0">
+                                    <i class="bi bi-people me-2" style="color: var(--uadec-gold);"></i>
+                                    <strong>Cupos Disponibles:</strong><br>
+                                    <span class="ms-4">{{ page.available_spots }}</span>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="card shadow-lg" style="background: linear-gradient(135deg, var(--uadec-gold) 0%, var(--uadec-gold-dark) 100%); border: none;">
+                    <div class="card-body text-center text-white p-4">
+                        <i class="bi bi-rocket-takeoff display-4 mb-3"></i>
+                        <h5 class="card-title fw-bold mb-3">¿Listo para Aplicar?</h5>
+                        <p class="card-text mb-4">Comienza tu solicitud hoy</p>
+                        {% if user.is_authenticated %}
+                            <a href="/seim/applications/create/?program={{ page.slug }}" class="btn btn-primary btn-lg px-4 shadow">
+                                <i class="bi bi-file-earmark-check me-2"></i>Aplicar Ahora
+                            </a>
+                        {% else %}
+                            <a href="/seim/login/?next=/seim/applications/create/?program={{ page.slug }}" class="btn btn-light btn-lg px-4 shadow">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Requirements Section -->
+{% if page.requirements %}
+    <section class="bg-light py-5">
+        <div class="container">
+            <h2 class="mb-4 text-primary">
+                <i class="bi bi-clipboard-check me-2"></i>Requisitos
+            </h2>
+            <div class="card shadow-sm">
+                <div class="card-header" style="background: var(--uadec-light-gray); color: var(--uadec-blue); font-weight: 600;">
+                    <i class="bi bi-list-check me-2"></i>Requisitos del Programa
+                </div>
+                <div class="card-body">
+                    {{ page.requirements|richtext }}
+                </div>
+            </div>
+        </div>
+    </section>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+{% endblock %}

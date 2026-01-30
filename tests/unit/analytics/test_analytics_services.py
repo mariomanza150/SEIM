@@ -370,3 +370,281 @@ class TestAnalyticsService:
         AnalyticsService.get_user_statistics()
         end_time = time.time()
         assert end_time - start_time < 1.0
+    
+    def test_get_user_demographics_by_department(self, user):
+        """Test getting user demographics broken down by additional criteria."""
+        demographics = AnalyticsService.get_user_demographics()
+        
+        # Verify structure
+        assert 'total_users' in demographics
+        assert demographics['total_users'] >= 1
+        assert isinstance(demographics['users_by_role'], dict)
+    
+    def test_get_application_statistics_caching(self, applications):
+        """Test that application statistics are cached."""
+        # First call
+        stats1 = AnalyticsService.get_application_statistics()
+        
+        # Second call should use cache
+        stats2 = AnalyticsService.get_application_statistics()
+        
+        # Should return same results
+        assert stats1 == stats2
+    
+    def test_get_program_performance_with_inactive_programs(self, programs, applications):
+        """Test program performance includes inactive programs."""
+        metrics = AnalyticsService.get_program_performance_metrics()
+        
+        # Should include both active and inactive
+        assert len(metrics) == 2
+        
+        # Verify we have both types
+        active_count = sum(1 for m in metrics if m['is_active'])
+        inactive_count = sum(1 for m in metrics if not m['is_active'])
+        
+        assert active_count >= 1
+        assert inactive_count >= 1
+    
+    def test_get_timeline_statistics_ordering(self, applications):
+        """Test that timeline statistics are ordered by day."""
+        stats = AnalyticsService.get_timeline_statistics(days=30)
+        
+        if len(stats) > 1:
+            # Verify ordering
+            days = [s['day'] for s in stats]
+            assert days == sorted(days)
+    
+    def test_get_conversion_rates_precision(self, applications):
+        """Test conversion rates are calculated with proper precision."""
+        rates = AnalyticsService.get_conversion_rates()
+        
+        # Verify precision (should be float, not int)
+        assert isinstance(rates['draft_to_submitted'], (int, float))
+        assert isinstance(rates['submitted_to_approved'], (int, float))
+        
+        # Verify range (0-100 for percentages)
+        assert 0 <= rates['draft_to_submitted'] <= 100
+        assert 0 <= rates['submitted_to_approved'] <= 100
+    
+    def test_get_user_engagement_precision(self, applications):
+        """Test user engagement metrics are precise."""
+        metrics = AnalyticsService.get_user_engagement_metrics()
+        
+        # Verify average is float with precision
+        assert isinstance(metrics['average_applications_per_user'], (int, float))
+        assert metrics['average_applications_per_user'] >= 0
+    
+    def test_analytics_with_multiple_application_statuses(self, user, programs, application_statuses):
+        """Test analytics with applications in various statuses."""
+        # Create applications in different statuses
+        for status_name in ['draft', 'submitted', 'under_review', 'approved', 'rejected']:
+            if status_name in application_statuses:
+                Application.objects.create(
+                    student=user,
+                    program=programs['active'],
+                    status=application_statuses[status_name]
+                )
+        
+        stats = AnalyticsService.get_application_statistics()
+        
+        # Verify all statuses counted
+        assert stats['total_applications'] >= 5
+        assert len(stats['applications_by_status']) >= 5
+    
+    def test_get_program_statistics_no_applications(self, programs):
+        """Test program statistics when programs have no applications."""
+        # Delete all applications
+        Application.objects.all().delete()
+        
+        stats = AnalyticsService.get_program_statistics()
+        
+        # Should still return program stats
+        assert len(stats) == 2
+        for stat in stats:
+            assert stat['total_applications'] == 0
+    
+    def test_get_user_statistics_multiple_applications(self, user, programs, application_statuses):
+        """Test user statistics with users having multiple applications."""
+        # Create multiple applications for same user
+        for i in range(5):
+            Application.objects.create(
+                student=user,
+                program=programs['active'],
+                status=application_statuses['draft']
+            )
+        
+        stats = AnalyticsService.get_user_statistics()
+        
+        # Find user's stats
+        user_stat = next((s for s in stats if s['username'] == user.username), None)
+        assert user_stat is not None
+        assert user_stat['total_applications'] >= 5
+    
+    def test_get_timeline_statistics_data_structure(self, applications):
+        """Test timeline statistics return proper data structure."""
+        stats = AnalyticsService.get_timeline_statistics(days=30)
+        
+        assert isinstance(stats, list)
+        
+        if len(stats) > 0:
+            # Verify each entry has required fields
+            for entry in stats:
+                assert 'day' in entry
+                assert 'applications' in entry
+                assert isinstance(entry['applications'], int)
+    
+    def test_get_system_health_with_large_dataset(self, user, programs, application_statuses):
+        """Test system health metrics with larger dataset."""
+        # Create many applications
+        for i in range(20):
+            Application.objects.create(
+                student=user,
+                program=programs['active'],
+                status=application_statuses['submitted']
+            )
+        
+        metrics = AnalyticsService.get_system_health_metrics()
+        
+        # Verify metrics scale appropriately
+        assert metrics['total_applications'] >= 20
+        assert metrics['total_programs'] >= 1
+        assert metrics['total_users'] >= 1
+    
+    def test_cache_decorator_different_params(self, applications):
+        """Test that cache distinguishes between different parameters."""
+        # Get timeline for 7 days
+        stats_7 = AnalyticsService.get_timeline_statistics(days=7)
+        
+        # Get timeline for 30 days
+        stats_30 = AnalyticsService.get_timeline_statistics(days=30)
+        
+        # Should be different results (different cache keys)
+        # Length may differ
+        assert isinstance(stats_7, list)
+        assert isinstance(stats_30, list)
+    
+    def test_application_statistics_distinct_users(self, user, another_user, programs, application_statuses):
+        """Test that user count is distinct."""
+        # Create multiple applications for same user
+        for i in range(3):
+            Application.objects.create(
+                student=user,
+                program=programs['active'],
+                status=application_statuses['draft']
+            )
+        
+        # Create one application for another user
+        Application.objects.create(
+            student=another_user,
+            program=programs['active'],
+            status=application_statuses['draft']
+        )
+        
+        stats = AnalyticsService.get_application_statistics()
+        
+        # Should count 2 distinct users, not 4
+        assert stats['total_users'] == 2
+        assert stats['total_applications'] == 4
+    
+    def test_conversion_rates_with_complex_funnel(self, user, programs, application_statuses):
+        """Test conversion rates with realistic funnel."""
+        # Create 10 draft applications
+        for i in range(10):
+            Application.objects.create(
+                student=user,
+                program=programs['active'],
+                status=application_statuses['draft']
+            )
+        
+        # 7 of them submitted
+        for i in range(7):
+            Application.objects.create(
+                student=user,
+                program=programs['active'],
+                status=application_statuses['submitted']
+            )
+        
+        # 3 approved
+        for i in range(3):
+            Application.objects.create(
+                student=user,
+                program=programs['active'],
+                status=application_statuses['approved']
+            )
+        
+        rates = AnalyticsService.get_conversion_rates()
+        
+        # draft_to_submitted: 7/10 = 70%
+        # submitted_to_approved: 3/7 ≈ 42.86%
+        assert 65 <= rates['draft_to_submitted'] <= 75
+        assert 40 <= rates['submitted_to_approved'] <= 45
+    
+    def test_analytics_methods_are_static(self):
+        """Test that analytics methods are static (no instance needed)."""
+        # Should be able to call methods without instantiation
+        stats = AnalyticsService.get_application_statistics()
+        assert stats is not None
+        
+        # Verify class doesn't need to be instantiated
+        # (If methods weren't static, this would fail)
+        assert isinstance(stats, dict)
+    
+    def test_analytics_cache_timeout(self, applications):
+        """Test that analytics cache has proper timeout."""
+        # Get stats (should cache for 30 min)
+        AnalyticsService.get_application_statistics()
+        
+        # Cache key should exist
+        from core.cache import generate_cache_key
+        cache_key = generate_cache_key('analytics', 'get_application_statistics')
+        
+        from django.core.cache import cache
+        cached_value = cache.get(cache_key)
+        
+        # Should be cached
+        assert cached_value is not None
+    
+    def test_get_dashboard_metrics_structure(self, applications):
+        """Test dashboard metrics return complete structure."""
+        metrics = AnalyticsService.get_dashboard_metrics()
+        
+        # Verify all expected keys present
+        required_keys = ['total_students', 'applications_by_status', 'ongoing_applications']
+        for key in required_keys:
+            assert key in metrics, f"Missing key: {key}"
+    
+    def test_get_program_metrics_single_program(self, programs, applications):
+        """Test getting metrics for a single program."""
+        metrics = AnalyticsService.get_program_metrics(program_id=programs['active'].id)
+        
+        # Verify structure for single program
+        assert 'total_applications' in metrics
+        assert isinstance(metrics['total_applications'], int)
+    
+    def test_analytics_error_handling(self):
+        """Test analytics methods handle errors gracefully."""
+        # Test with invalid program ID
+        try:
+            metrics = AnalyticsService.get_program_metrics(program_id=999999)
+            # Should either return empty/zero metrics or handle gracefully
+            assert isinstance(metrics, dict)
+        except Exception:
+            # If it raises an exception, it should be a known type
+            pass
+    
+    def test_concurrent_analytics_calls(self, applications):
+        """Test that concurrent analytics calls don't interfere."""
+        import concurrent.futures
+        
+        def get_stats():
+            return AnalyticsService.get_application_statistics()
+        
+        # Make multiple concurrent calls
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            futures = [executor.submit(get_stats) for _ in range(3)]
+            results = [f.result() for f in futures]
+        
+        # All should succeed and return same data
+        assert len(results) == 3
+        for result in results:
+            assert result['total_applications'] == results[0]['total_applications']

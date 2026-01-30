@@ -1,0 +1,136 @@
+{% extends "cms/base.html" %}
+{% load wagtailcore_tags %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="section-blue text-white py-5">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold text-white mb-3" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+            {{ page.title }}
+        </h1>
+        {% if page.introduction %}
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="lead text-white">
+                    {{ page.introduction|richtext }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Filters -->
+<section class="bg-light py-4 border-bottom">
+    <div class="container">
+        <form method="get" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label fw-bold">País</label>
+                <select name="country" class="form-select">
+                    <option value="">Todos los países</option>
+                    {% for country in countries %}
+                    <option value="{{ country }}" {% if request.GET.country == country %}selected{% endif %}>
+                        {{ country }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label fw-bold">Tipo de Convenio</label>
+                <select name="type" class="form-select">
+                    <option value="">Todos los tipos</option>
+                    <option value="bilateral" {% if request.GET.type == "bilateral" %}selected{% endif %}>Bilateral</option>
+                    <option value="multilateral" {% if request.GET.type == "multilateral" %}selected{% endif %}>Multilateral</option>
+                    <option value="erasmus" {% if request.GET.type == "erasmus" %}selected{% endif %}>Erasmus+</option>
+                    <option value="specific" {% if request.GET.type == "specific" %}selected{% endif %}>Programa Específico</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-filter me-2"></i>Filtrar
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- Convenios List -->
+<section class="py-5">
+    <div class="container">
+        {% if convenios %}
+        <div class="row g-4">
+            {% for convenio in convenios %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm hover-card">
+                    {% if convenio.institution_logo %}
+                    <div class="card-header bg-light text-center p-3">
+                        {% image convenio.institution_logo fill-200x100 class="img-fluid" %}
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold mb-2">{{ convenio.institution_name }}</h5>
+                        <p class="card-text small mb-2">
+                            <i class="bi bi-geo-alt me-1" style="color: var(--uadec-gold);"></i>
+                            {{ convenio.city }}{% if convenio.city %}, {% endif %}{{ convenio.country }}
+                        </p>
+                        <p class="card-text small mb-3">
+                            <span class="badge" style="background: var(--uadec-blue);">{{ convenio.get_agreement_type_display }}</span>
+                        </p>
+                        {% if convenio.introduction %}
+                        <p class="card-text small text-muted mb-3">{{ convenio.introduction|truncatewords:20 }}</p>
+                        {% endif %}
+                        
+                        <div class="d-flex gap-2 mb-3 small">
+                            {% if convenio.available_for_students %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-mortarboard-fill me-1"></i>Estudiantes
+                            </span>
+                            {% endif %}
+                            {% if convenio.available_for_faculty %}
+                            <span class="badge bg-info">
+                                <i class="bi bi-person-badge me-1"></i>Profesores
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <a href="{% pageurl convenio %}" class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-arrow-right me-2"></i>Ver Detalles
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle me-2"></i>
+            No se encontraron convenios con los filtros seleccionados.
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="section-gold text-white py-5">
+    <div class="container text-center">
+        <h2 class="display-6 fw-bold mb-3">¿Necesitas Más Información?</h2>
+        <p class="lead mb-4">Contáctanos para conocer más sobre nuestros convenios internacionales</p>
+        <a href="/internacional/institucional/contacto/" class="btn btn-primary btn-lg px-5 py-3">
+            <i class="bi bi-envelope me-2"></i>Contactar a CGRI
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.hover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+</style>
+{% endblock %}
+

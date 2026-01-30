@@ -13,7 +13,13 @@ import { errorHandler } from './modules/error-handler.js';
 // Authentication state
 let authState = {
     user: null,
-    tokenExpiry: null
+    tokenExpiry: null,
+    permissions: [],
+    roles: [],
+    primary_role: null,
+    is_admin: false,
+    is_coordinator: false,
+    is_student: false
 };
 
 // Initialize authentication when DOM is loaded
@@ -295,6 +301,9 @@ async function getUserInfo() {
             authState.user = userData;
             authState.isAuthenticated = true;
             
+            // Fetch user permissions
+            await fetchUserPermissions();
+            
             // Update UI
             updateUserInterface(userData);
             
@@ -370,25 +379,74 @@ function showLoginForm() {
 }
 
 /**
+ * Fetch user permissions from backend
+ * Called after successful login/token validation
+ */
+async function fetchUserPermissions() {
+    try {
+        const response = await Auth.apiRequest('/api/accounts/permissions/');
+        
+        if (response.ok) {
+            const permData = await response.json();
+            // Update authState with permissions from backend
+            authState.permissions = permData.permissions || [];
+            authState.roles = permData.roles || [];
+            authState.primary_role = permData.primary_role || 'student';
+            authState.is_admin = permData.is_admin || false;
+            authState.is_coordinator = permData.is_coordinator || false;
+            authState.is_student = permData.is_student || false;
+            
+            logger.info('[AUTH] Permissions loaded:', authState.permissions.length);
+            return true;
+        } else {
+            logger.warn('[AUTH] Failed to fetch permissions');
+            return false;
+        }
+    } catch (error) {
+        logger.error('[AUTH] Error fetching permissions:', error);
+        return false;
+    }
+}
+
+/**
  * Check if user has permission
+ * Now uses permissions fetched from backend instead of hardcoded list
  */
 function hasPermission(permission) {
     if (!authState.isAuthenticated || !authState.user) {
         return false;
     }
     
-    const userRole = authState.user.role;
+    // Check if permissions are loaded
+    if (!authState.permissions || authState.permissions.length === 0) {
+        logger.warn('[AUTH] Permissions not loaded yet');
+        return false;
+    }
     
-    // Define role permissions
-    const permissions = {
-        'admin': ['all'],
-        'coordinator': ['view_applications', 'review_applications', 'manage_documents'],
-        'student': ['view_own_applications', 'create_applications', 'upload_documents']
-    };
+    // Check if user has the specific permission
+    return authState.permissions.includes(permission);
+}
+
+/**
+ * Check if user has any of the specified roles
+ */
+function hasAnyRole(roleNames) {
+    if (!authState.isAuthenticated || !authState.roles) {
+        return false;
+    }
     
-    const userPermissions = permissions[userRole] || [];
+    if (typeof roleNames === 'string') {
+        roleNames = [roleNames];
+    }
     
-    return userPermissions.includes('all') || userPermissions.includes(permission);
+    return roleNames.some(role => authState.roles.includes(role));
+}
+
+/**
+ * Check if user has specific role
+ */
+function hasRole(roleName) {
+    return authState.roles && authState.roles.includes(roleName);
 }
 
 /**
@@ -463,10 +521,19 @@ window.Auth = {
     logout: handleLogout,
     resetPassword: handlePasswordReset,
     getUserInfo,
+    fetchUserPermissions,
     hasPermission,
+    hasRole,
+    hasAnyRole,
     requireAuth,
     requirePermission,
     isAuthenticated: () => authState.isAuthenticated,
     getUser: () => authState.user,
-    setupAuthForms // <-- Export the new function
+    getPermissions: () => authState.permissions,
+    getRoles: () => authState.roles,
+    getPrimaryRole: () => authState.primary_role,
+    isAdmin: () => authState.is_admin,
+    isCoordinator: () => authState.is_coordinator,
+    isStudent: () => authState.is_student,
+    setupAuthForms
 }; 

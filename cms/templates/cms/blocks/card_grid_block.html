@@ -1,0 +1,36 @@
+<div class="card-grid-block my-5">
+    {% if value.heading or value.subheading %}
+    <div class="text-center mb-5">
+        {% if value.heading %}
+        <h2 class="fw-bold text-primary" style="font-size: 2.5rem;">{{ value.heading }}</h2>
+        {% endif %}
+        {% if value.subheading %}
+        <p class="lead" style="color: var(--uadec-text);">{{ value.subheading }}</p>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <div class="row g-4">
+        {% for card in value.cards %}
+        <div class="col-md-{{ 12|divisibleby:value.columns }}">
+            <div class="card h-100 shadow-sm" style="transition: all 0.3s ease;">
+                <div class="card-body text-center p-4">
+                    {% if card.icon %}
+                    <div class="mb-4">
+                        <i class="bi {{ card.icon }} display-3" style="color: var(--uadec-gold);"></i>
+                    </div>
+                    {% endif %}
+                    <h5 class="card-title fw-bold mb-3" style="color: var(--uadec-blue);">{{ card.title }}</h5>
+                    <p class="card-text mb-4" style="color: var(--uadec-text);">{{ card.text }}</p>
+                    {% if card.link %}
+                    <a href="{{ card.link }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-right me-1"></i>{{ card.link_text|default:"Ver Más" }}
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+

@@ -1,0 +1,98 @@
+{% extends "cms/base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="bg-light py-5">
+    <div class="container">
+        <h1 class="display-4 fw-bold">{{ page.title }}</h1>
+        {% if page.intro %}
+            <p class="lead">{{ page.intro|richtext }}</p>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Blog Posts -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                <div class="row g-4">
+                    {% for post in page.get_children.live.specific %}
+                        <div class="col-md-6">
+                            <article class="card h-100 shadow-sm">
+                                {% if post.featured_image %}
+                                    <a href="{% pageurl post %}">
+                                        {% image post.featured_image fill-600x400 class="card-img-top" %}
+                                    </a>
+                                {% endif %}
+                                <div class="card-body">
+                                    <div class="mb-2">
+                                        {% for category in post.categories.all %}
+                                            <span class="badge bg-primary">{{ category.name }}</span>
+                                        {% endfor %}
+                                        <small class="text-muted ms-2">{{ post.date|date:"M d, Y" }}</small>
+                                    </div>
+                                    <h5 class="card-title">
+                                        <a href="{% pageurl post %}" class="text-decoration-none text-dark">
+                                            {{ post.title }}
+                                        </a>
+                                    </h5>
+                                    {% if post.excerpt %}
+                                        <p class="card-text">{{ post.excerpt }}</p>
+                                    {% endif %}
+                                    <a href="{% pageurl post %}" class="btn btn-sm btn-outline-primary">
+                                        Read More →
+                                    </a>
+                                </div>
+                            </article>
+                        </div>
+                    {% empty %}
+                        <div class="col-12">
+                            <div class="alert alert-info">
+                                <p class="mb-0">No blog posts have been published yet. Check back soon!</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Categories -->
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Categories</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for category in page.get_categories %}
+                                <a href="?category={{ category.slug }}" class="badge bg-secondary text-decoration-none">
+                                    {{ category.name }}
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Posts -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">Recent Posts</h5>
+                        <ul class="list-unstyled">
+                            {% for post in page.get_children.live.specific|slice:":5" %}
+                                <li class="mb-2">
+                                    <a href="{% pageurl post %}" class="text-decoration-none">
+                                        {{ post.title }}
+                                    </a>
+                                    <br>
+                                    <small class="text-muted">{{ post.date|date:"M d, Y" }}</small>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

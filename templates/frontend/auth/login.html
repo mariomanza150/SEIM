@@ -120,12 +120,29 @@
 document.addEventListener('DOMContentLoaded', function() {
     const accessToken = localStorage.getItem('seim_access_token');
     if (accessToken) {
+        // Clear the from_login flag if we have a token
+        sessionStorage.removeItem('from_login');
         window.location.href = '/dashboard/';
         return;
     }
     
-    // Setup login form handler
-    setupLoginForm();
+    // Check if we have Django session but no JWT
+    // If so, try to get JWT token or allow session-based auth
+    fetch('/api/accounts/profile/', {
+        credentials: 'include'
+    }).then(response => {
+        if (response.ok) {
+            // We have a Django session, redirect to dashboard
+            // The dashboard will handle getting JWT token
+            window.location.href = '/dashboard/';
+        } else {
+            // No session, proceed with login form
+            setupLoginForm();
+        }
+    }).catch(() => {
+        // Error checking session, proceed with login form
+        setupLoginForm();
+    });
 });
 
 async function setupLoginForm() {

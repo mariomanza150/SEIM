@@ -1,0 +1,59 @@
+{% extends "cms/base.html" %}
+{% load wagtailcore_tags %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="bg-light py-5">
+    <div class="container">
+        <h1 class="display-4 fw-bold">{{ page.title }}</h1>
+        {% if page.intro %}
+            <p class="lead">{{ page.intro|richtext }}</p>
+        {% endif %}
+    </div>
+</section>
+
+<!-- FAQ List -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="accordion" id="faqAccordion">
+                    {% for faq in page.get_children.live.specific %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 
+                                        type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#faq{{ forloop.counter }}"
+                                        aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}">
+                                    {{ faq.title }}
+                                </button>
+                            </h2>
+                            <div id="faq{{ forloop.counter }}" 
+                                 class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
+                                 data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    {{ faq.answer|richtext }}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="alert alert-info">
+                            <p class="mb-0">No FAQs are currently available. Check back soon!</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="bg-light py-5">
+    <div class="container text-center">
+        <h3 class="mb-3">¿Aún tienes preguntas?</h3>
+        <p class="lead mb-4">¡Estamos aquí para ayudarte!</p>
+        <a href="/contacto/" class="btn btn-primary btn-lg">Contáctanos</a>
+    </div>
+</section>
+{% endblock %}

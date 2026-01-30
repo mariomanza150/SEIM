@@ -2,6 +2,15 @@
 
 Welcome to the SEIM (Student Exchange Information Manager) documentation. This comprehensive guide provides everything you need to understand, deploy, and maintain the SEIM platform.
 
+**📌 Documentation Structure:**
+- **`documentation/`** (this directory) - **Manual/Maintained Documentation** - Authoritative source for development guidelines, user guides, and planning documents. Manually maintained by the team.
+- **`docs/`** - **Generated/Auto-Generated Documentation** - Auto-generated documentation from code analysis and tools. See [docs/index.md](../docs/index.md) for generated documentation.
+
+**Quick Reference:**
+- Need authoritative info? → Check this directory (`documentation/`)
+- Need current system state? → Check [`docs/`](../docs/)
+- Need project structure? → See [PROJECT_STRUCTURE.md](../docs/PROJECT_STRUCTURE.md)
+
 ---
 
 ## 📚 Documentation Index
@@ -16,6 +25,7 @@ Welcome to the SEIM (Student Exchange Information Manager) documentation. This c
 - **[Architecture](architecture.md)** - System design and technical architecture
 - **[Business Rules](business_rules.md)** - Business logic and rules
 - **[Frontend Guide](frontend_guide.md)** - Frontend development and UI patterns
+- **[Form Builder Guide](form_builder_guide.md)** - Dynamic form creation and management
 
 ### **🔧 Technical Reference**
 - **[API Documentation](api_documentation.md)** - API endpoints and usage
@@ -48,8 +58,10 @@ Welcome to the SEIM (Student Exchange Information Manager) documentation. This c
 
 ### **📦 Historical Reference**
 - **[Archive](archive/)** - Historical reports and assessments
+  - **[Session 2025-11](archive/session_2025_11/)** - November 2025 development session (Testing, Quality, Documentation)
   - **[Session 2025-10-18](archive/session_2025_10_18/)** - October 2025 development session (New Features + Admin UI)
   - **[Session 2025-01](archive/session_2025_01/)** - January 2025 cleanup session reports
+  - **[Form Builder Development](archive/form_builder_development/)** - Form Builder feature development docs
 - **[Audit Reports](audit_reports/)** - Code and documentation audits
 
 ---
@@ -89,6 +101,7 @@ SEIM is a comprehensive Django-based web application for managing student exchan
 - **Notifications**: Email and in-app notification system
 - **Analytics**: Real-time dashboards and reporting
 - **API Layer**: RESTful API with comprehensive documentation
+- **Form Builder**: Visual drag-and-drop dynamic form creator
 - **Grade Translation**: International grade scale conversion system
 
 ### **Technology Stack:**
@@ -125,7 +138,7 @@ docker-compose exec web python manage.py create_initial_data
 
 ---
 
-## 📖 Documentation Generation
+## 📖 Documentation Generation & Maintenance
 
 ### **Generate All Documentation:**
 ```bash
@@ -147,6 +160,11 @@ make docs-sphinx-docker
 # View at: documentation/sphinx/build/html/index.html
 ```
 
+### **Documentation Maintenance:**
+
+For maintaining and updating documentation, see:
+- **[Documentation Maintenance Guide](documentation_maintenance.md)** - Complete guide for keeping docs up-to-date
+
 ---
 
 ## 📁 Project Structure
@@ -160,6 +178,7 @@ make docs-sphinx-docker
 | `notifications/` | Communication system |
 | `analytics/` | Reporting and metrics |
 | `grades/` | Grade translation system |
+| `application_forms/` | Dynamic form builder |
 | `api/` | REST API layer |
 | `core/` | Shared utilities |
 | `dashboard/` | User interfaces |
@@ -194,6 +213,6 @@ This documentation is continuously maintained as part of the SEIM project:
 
 ---
 
-**Last Updated**: October 18, 2025  
-**Version**: 2.1  
+**Last Updated**: November 20, 2025  
+**Version**: 2.2  
 **Maintained By**: SEIM Development Team

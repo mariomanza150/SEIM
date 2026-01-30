@@ -196,8 +196,8 @@
                         <a href="{% url 'frontend:analytics' %}" class="btn btn-outline-warning">
                             <i class="bi bi-graph-up"></i> View Analytics
                         </a>
-                        <a href="/dynforms/" class="btn btn-outline-dark" target="_blank">
-                            <i class="bi bi-gear"></i> Advanced Form Builder
+                        <a href="{% url 'application_forms:form-list' %}" class="btn btn-outline-dark">
+                            <i class="bi bi-gear"></i> Form Builder
                         </a>
                         <button type="button" class="btn btn-outline-secondary" onclick="clearCache()">
                             <i class="bi bi-trash"></i> Clear Cache

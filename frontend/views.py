@@ -95,7 +95,7 @@ def applications_view(request):
     """Applications listing page with caching."""
     user = request.user
 
-    if user.has_role("coordinator") or user.has_role("admin"):
+    if user.has_any_role(['coordinator', 'admin']):
         applications = Application.objects.all()
     else:
         applications = Application.objects.filter(student=user)
@@ -119,7 +119,7 @@ class AnalyticsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
     template_name = "frontend/admin/analytics.html"
 
     def test_func(self):
-        return self.request.user.role in ["admin", "coordinator"]
+        return self.request.user.has_any_role(["admin", "coordinator"])
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -142,7 +142,7 @@ def admin_dashboard_view(request):
     """Admin dashboard with comprehensive analytics and caching."""
     if (
         not request.user.is_authenticated
-        or not request.user.has_role("admin")
+        or not request.user.is_admin
     ):
         return redirect("frontend:dashboard")
 
@@ -164,6 +164,60 @@ def admin_dashboard_view(request):
     return render(request, "frontend/admin/dashboard.html", context)
 
 
+@cache_page_with_auth(
+    timeout=900, key_prefix="coordinator_dashboard"
+)  # Cache for 15 minutes
+def coordinator_dashboard_view(request):
+    """
+    Coordinator dashboard for reviewing applications and managing documents.
+    Accessible to coordinators and admins.
+    """
+    if (
+        not request.user.is_authenticated
+        or not request.user.has_any_role(['coordinator', 'admin'])
+    ):
+        return redirect("frontend:dashboard")
+
+    # Get pending applications and documents
+    try:
+        from exchange.models import Application
+        
+        pending_applications = Application.objects.filter(
+            status__name__in=['submitted', 'under_review']
+        ).select_related(
+            'student', 'program', 'status'
+        ).order_by('-updated_at')[:20]
+        
+        # Get documents needing validation
+        from documents.models import Document
+        
+        pending_documents = Document.objects.filter(
+            documentvalidation__isnull=True
+        ).select_related(
+            'application', 'application__student', 'type'
+        ).order_by('-uploaded_at')[:20]
+        
+        # Get recent activity
+        recent_applications = Application.objects.all().select_related(
+            'student', 'program', 'status'
+        ).order_by('-updated_at')[:10]
+        
+    except Exception:
+        pending_applications = []
+        pending_documents = []
+        recent_applications = []
+
+    context = {
+        "user": request.user,
+        "pending_applications": pending_applications,
+        "pending_documents": pending_documents,
+        "recent_applications": recent_applications,
+        "role": "coordinator",
+    }
+
+    return render(request, "frontend/coordinator/dashboard.html", context)
+
+
 def invalidate_user_cache(request):
     """Invalidate cache for the current user."""
     if request.user.is_authenticated:
@@ -181,7 +235,7 @@ def clear_cache_view(request):
     """Clear all cache (admin only)."""
     if (
         not request.user.is_authenticated
-        or not request.user.has_role("admin")
+        or not request.user.is_admin
     ):
         return JsonResponse({"error": "Unauthorized"}, status=403)
 
@@ -200,9 +254,90 @@ def profile_view(request):
 
 
 @login_required
+def sessions_view(request):
+    """User session management page - view and revoke active sessions."""
+    from accounts.models import UserSession
+    
+    sessions = UserSession.objects.filter(
+        user=request.user,
+        is_active=True
+    ).order_by('-last_activity')
+    
+    context = {
+        "user": request.user,
+        "sessions": sessions,
+    }
+    
+    return render(request, "frontend/sessions.html", context)
+
+
+@login_required
+def user_management_view(request):
+    """
+    User management page for coordinators and admins.
+    Shows all users with their last login times and session information.
+    """
+    # Check permission
+    if not request.user.has_any_role(['coordinator', 'admin']):
+        messages.error(request, "You don't have permission to access this page.")
+        return redirect("frontend:dashboard")
+    
+    from django.contrib.auth import get_user_model
+    from accounts.models import UserSession
+    from django.db.models import Max, Count, Q
+    
+    User = get_user_model()
+    
+    # Get filter parameters
+    role_filter = request.GET.get('role', '')
+    search_query = request.GET.get('search', '')
+    
+    # Build query
+    users = User.objects.annotate(
+        last_login_time=Max('sessions__last_activity'),
+        active_sessions_count=Count('sessions', filter=Q(sessions__is_active=True))
+    ).select_related().prefetch_related('roles')
+    
+    # Apply filters
+    if role_filter:
+        users = users.filter(roles__name=role_filter)
+    
+    if search_query:
+        users = users.filter(
+            Q(username__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query)
+        )
+    
+    users = users.order_by('-last_login_time')
+    
+    context = {
+        "user": request.user,
+        "users": users,
+        "role_filter": role_filter,
+        "search_query": search_query,
+    }
+    
+    return render(request, "frontend/user-management.html", context)
+
+
+@login_required
 def settings_view(request):
     """User settings page."""
     return render(request, "frontend/settings.html", {"user": request.user})
+
+
+@login_required
+def preferences_view(request):
+    """User preferences page for theme and accessibility settings."""
+    return render(request, "preferences.html", {"user": request.user})
+
+
+@login_required
+def calendar_view(request):
+    """Calendar page showing program dates and deadlines."""
+    return render(request, "calendar.html", {"user": request.user})
 
 
 def dark_mode_test_view(request):
@@ -210,19 +345,9 @@ def dark_mode_test_view(request):
     return render(request, "frontend/dark-mode-test.html")
 
 
-def debug_theme_view(request):
-    """Theme debug page."""
-    return render(request, "frontend/debug-theme.html")
-
-
 def theme_test_view(request):
     """Theme test view for testing theme toggle functionality."""
     return render(request, "frontend/theme-test.html")
-
-
-def theme_debug_view(request):
-    """Theme debug view for debugging theme manager functionality."""
-    return render(request, "frontend/theme-debug.html")
 
 
 def application_create_view(request):
@@ -349,15 +474,18 @@ def documents_list_view(request):
 
 
 def is_admin(user):
-    return user.has_role('admin')
+    """Check if user is admin (for use with user_passes_test decorator)."""
+    return user.is_admin
 
 @login_required
 @user_passes_test(is_admin)
 def program_create_view(request):
+    """Create new program (admin only)."""
     if request.method == 'POST':
         form = ProgramForm(request.POST)
         if form.is_valid():
             form.save()
+            messages.success(request, "Program created successfully!")
             return redirect('frontend:programs')
     else:
         form = ProgramForm()

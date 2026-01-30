@@ -1,0 +1,5 @@
+---
+description: Before command execution, activate the project virtual environment, located at ".venv"
+globs:
+alwaysApply: true
+---

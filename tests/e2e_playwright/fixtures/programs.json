@@ -1,0 +1,27 @@
+[
+  {
+    "name": "Erasmus+ Program",
+    "description": "Exchange program with European universities through Erasmus+",
+    "is_active": true,
+    "min_gpa": 3.0,
+    "required_language": "English",
+    "max_participants": 20
+  },
+  {
+    "name": "Summer Exchange Program",
+    "description": "Short-term summer exchange program for cultural immersion",
+    "is_active": true,
+    "min_gpa": 2.8,
+    "required_language": "English",
+    "max_participants": 15
+  },
+  {
+    "name": "Research Exchange Program",
+    "description": "Research-focused exchange program for graduate students",
+    "is_active": true,
+    "min_gpa": 3.5,
+    "required_language": "English",
+    "max_participants": 10
+  }
+]
+

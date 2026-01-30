@@ -1,0 +1,65 @@
+/* Custom CSS for Wagtail Admin */
+
+/* Branding */
+.wagtail-logo {
+    background-color: #0d6efd; /* Bootstrap primary blue */
+}
+
+/* Custom color scheme matching SEIM branding */
+:root {
+    --color-primary: #0d6efd;
+    --color-primary-darker: #0a58ca;
+    --color-secondary: #6c757d;
+}
+
+/* Wagtail admin header customization */
+.w-header {
+    background-color: var(--color-primary);
+}
+
+.w-header__item a:hover,
+.w-header__item button:hover {
+    background-color: var(--color-primary-darker);
+}
+
+/* Button customization */
+.button,
+.w-button {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.button:hover,
+.w-button:hover {
+    background-color: var(--color-primary-darker);
+}
+
+/* Success button */
+.button--success,
+.w-button--success {
+    background-color: #198754;
+}
+
+/* Sidebar navigation */
+.sidebar-nav__item.active {
+    background-color: var(--color-primary);
+}
+
+/* Dashboard panels */
+.w-panel {
+    border-color: var(--color-primary);
+}
+
+/* Custom branding in login page */
+.login-form {
+    max-width: 400px;
+}
+
+.login-form__brand {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--color-primary);
+    margin-bottom: 2rem;
+}
+

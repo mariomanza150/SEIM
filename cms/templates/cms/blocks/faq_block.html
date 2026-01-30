@@ -1,0 +1,28 @@
+{% load wagtailcore_tags %}
+<div class="faq-block my-5">
+    <h2 class="text-center mb-4">{{ value.heading }}</h2>
+    <div class="accordion" id="faqAccordion{{ forloop.counter }}">
+        {% for item in value.items %}
+        <div class="accordion-item">
+            <h3 class="accordion-header" id="faqHeading{{ forloop.counter }}">
+                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 
+                        type="button" data-bs-toggle="collapse" 
+                        data-bs-target="#faqCollapse{{ forloop.counter }}" 
+                        aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+                        aria-controls="faqCollapse{{ forloop.counter }}">
+                    {{ item.question }}
+                </button>
+            </h3>
+            <div id="faqCollapse{{ forloop.counter }}" 
+                 class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+                 aria-labelledby="faqHeading{{ forloop.counter }}" 
+                 data-bs-parent="#faqAccordion{{ forloop.parentloop.counter }}">
+                <div class="accordion-body">
+                    {{ item.answer|richtext }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+

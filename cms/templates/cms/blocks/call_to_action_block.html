@@ -1,0 +1,18 @@
+{% load wagtailcore_tags %}
+<div class="cta-block text-center py-5 my-4 bg-light rounded shadow-sm">
+    <div class="container">
+        <h2 class="text-primary mb-3" style="font-weight: 700;">{{ value.title }}</h2>
+        {% if value.text %}
+        <p class="lead mb-4" style="color: var(--uadec-text);">{{ value.text }}</p>
+        {% endif %}
+        {% if value.button_text %}
+            {% if value.button_page or value.button_link %}
+            <a href="{% if value.button_page %}{% pageurl value.button_page %}{% else %}{{ value.button_link }}{% endif %}" 
+               class="btn btn-{{ value.style }} btn-lg px-5 py-3 shadow">
+                <i class="bi bi-arrow-right-circle me-2"></i>{{ value.button_text }}
+            </a>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+

@@ -22,8 +22,9 @@ This guide covers comprehensive testing strategies for SEIM (Student Exchange In
 1. **Unit Tests**: Individual components and functions
 2. **Integration Tests**: API endpoints and database interactions
 3. **Frontend Tests**: JavaScript functionality and UI components
-4. **End-to-End Tests**: Complete user workflows (Selenium - HOST OS ONLY)
-5. **Performance Tests**: Load and stress testing
+4. **End-to-End Tests (Playwright)**: Comprehensive user workflows with visual regression and accessibility testing
+5. **End-to-End Tests (Selenium)**: Legacy browser automation (HOST OS ONLY)
+6. **Performance Tests**: Load and stress testing
 
 ---
 
@@ -43,7 +44,30 @@ make test-integration
 make test-e2e
 ```
 
-### **Selenium E2E Tests (HOST OS ONLY - Virtual Environment Required):**
+### **Playwright E2E Tests (Recommended):**
+```bash
+# Setup E2E environment
+make e2e-setup
+
+# Run E2E tests
+make e2e-test
+
+# Run with visible browser (debugging)
+make e2e-test-headed
+
+# Run in Docker
+make e2e-docker
+
+# Run visual regression tests
+make e2e-visual
+
+# Run accessibility tests
+make e2e-accessibility
+```
+
+**See detailed documentation:** [E2E Testing Guide](e2e_testing_guide.md)
+
+### **Selenium E2E Tests (Legacy - HOST OS ONLY):**
 ```bash
 # 1. Setup Virtual Environment (one-time)
 python -m venv .venv

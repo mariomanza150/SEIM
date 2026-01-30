@@ -1,0 +1,150 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: seim_e2e
+          POSTGRES_USER: seimuser
+          POSTGRES_PASSWORD: seimpass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+      
+      - name: Install Playwright browsers
+        run: |
+          playwright install chromium --with-deps
+      
+      - name: Create .env file
+        run: |
+          cp env.example .env
+          echo "DATABASE_URL=postgresql://seimuser:seimpass@localhost:5432/seim_e2e" >> .env
+          echo "REDIS_URL=redis://localhost:6379/0" >> .env
+          echo "DEBUG=false" >> .env
+          echo "DJANGO_SETTINGS_MODULE=seim.settings.test" >> .env
+      
+      - name: Run migrations
+        run: |
+          python manage.py migrate --noinput
+      
+      - name: Create test data
+        run: |
+          python manage.py create_test_users
+          python manage.py populate_test_data
+      
+      - name: Collect static files
+        run: |
+          python manage.py collectstatic --noinput
+      
+      - name: Start Django server
+        run: |
+          python manage.py runserver 0.0.0.0:8000 &
+          sleep 5
+        env:
+          DJANGO_SETTINGS_MODULE: seim.settings.test
+      
+      - name: Wait for server
+        run: |
+          timeout 60 bash -c 'until curl -f http://localhost:8000/ > /dev/null 2>&1; do sleep 2; done'
+      
+      - name: Run E2E tests
+        run: |
+          pytest tests/e2e_playwright/ \
+            --base-url=http://localhost:8000 \
+            --browser=chromium \
+            --headed=false \
+            -n auto \
+            --maxfail=5 \
+            --html=tests/e2e_playwright/reports/report.html \
+            --self-contained-html \
+            -v
+        env:
+          HEADLESS: true
+      
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e-screenshots
+          path: tests/e2e_playwright/screenshots/
+          retention-days: 7
+      
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e-test-report
+          path: tests/e2e_playwright/reports/
+          retention-days: 14
+      
+      - name: Upload videos on failure
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: e2e-videos
+          path: tests/e2e_playwright/videos/
+          retention-days: 7
+      
+      - name: Comment PR with results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = 'tests/e2e_playwright/reports/report.html';
+            
+            if (fs.existsSync(reportPath)) {
+              const report = fs.readFileSync(reportPath, 'utf8');
+              const match = report.match(/(\d+) passed/);
+              const passed = match ? match[1] : '0';
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## E2E Test Results\n\n✅ ${passed} tests passed\n\nFull report available in artifacts.`
+              });
+            }
+

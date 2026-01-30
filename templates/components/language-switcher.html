@@ -1,0 +1,80 @@
+{% load static %}
+{% load i18n %}
+
+<!-- Language Switcher Component -->
+<div class="language-switcher dropdown">
+    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="languageSwitcher" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{% trans 'Select language' %}">
+        <i class="bi bi-translate"></i>
+        <span class="d-none d-md-inline ms-1">{% trans "Language" %}</span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageSwitcher">
+        <li>
+            <h6 class="dropdown-header">{% trans "Select Language" %}</h6>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+            <form action="{% url 'set_language' %}" method="post" class="language-form">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ request.get_full_path }}" />
+                
+                <!-- English -->
+                <button type="submit" name="language" value="en" class="dropdown-item {% if LANGUAGE_CODE == 'en' %}active{% endif %}">
+                    <span class="flag-icon">🇬🇧</span> English
+                </button>
+                
+                <!-- Spanish -->
+                <button type="submit" name="language" value="es" class="dropdown-item {% if LANGUAGE_CODE == 'es' %}active{% endif %}">
+                    <span class="flag-icon">🇪🇸</span> Español
+                </button>
+                
+                <!-- French -->
+                <button type="submit" name="language" value="fr" class="dropdown-item {% if LANGUAGE_CODE == 'fr' %}active{% endif %}">
+                    <span class="flag-icon">🇫🇷</span> Français
+                </button>
+                
+                <!-- German -->
+                <button type="submit" name="language" value="de" class="dropdown-item {% if LANGUAGE_CODE == 'de' %}active{% endif %}">
+                    <span class="flag-icon">🇩🇪</span> Deutsch
+                </button>
+            </form>
+        </li>
+    </ul>
+</div>
+
+<style>
+.language-switcher .flag-icon {
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
+}
+
+.language-switcher .dropdown-item {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+}
+
+.language-switcher .dropdown-item:hover {
+    background-color: var(--bs-dropdown-link-hover-bg);
+}
+
+.language-switcher .dropdown-item.active {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.language-switcher .dropdown-item.active:hover {
+    background-color: var(--bs-primary);
+    opacity: 0.9;
+}
+
+.language-form {
+    margin: 0;
+    padding: 0;
+}
+</style>
+

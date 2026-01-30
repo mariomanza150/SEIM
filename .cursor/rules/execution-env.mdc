@@ -1,0 +1,5 @@
+---
+description: Main Operating system is Windows, your command interface is the Powershell. Docker is used for running the project in containers. Main docker folder: "/docker"
+globs:
+alwaysApply: true
+---

@@ -1,0 +1,51 @@
+[
+  {
+    "username": "admin",
+    "email": "admin@seim.edu",
+    "password": "admin123",
+    "first_name": "Admin",
+    "last_name": "User",
+    "role": "admin",
+    "is_staff": true,
+    "is_superuser": true,
+    "is_active": true,
+    "is_email_verified": true
+  },
+  {
+    "username": "coordinator",
+    "email": "coordinator@seim.edu",
+    "password": "coord123",
+    "first_name": "Coordinator",
+    "last_name": "User",
+    "role": "coordinator",
+    "is_staff": false,
+    "is_superuser": false,
+    "is_active": true,
+    "is_email_verified": true
+  },
+  {
+    "username": "student1",
+    "email": "student1@university.edu",
+    "password": "student123",
+    "first_name": "Student",
+    "last_name": "One",
+    "role": "student",
+    "is_staff": false,
+    "is_superuser": false,
+    "is_active": true,
+    "is_email_verified": true
+  },
+  {
+    "username": "student2",
+    "email": "student2@university.edu",
+    "password": "student123",
+    "first_name": "Student",
+    "last_name": "Two",
+    "role": "student",
+    "is_staff": false,
+    "is_superuser": false,
+    "is_active": true,
+    "is_email_verified": true
+  }
+]
+

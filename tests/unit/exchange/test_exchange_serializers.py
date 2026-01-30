@@ -384,5 +384,4 @@ class TestApplicationSerializer(TestCase):
         serializer = ApplicationSerializer(application, data=data, partial=True)
         self.assertTrue(serializer.is_valid())
         updated_application = serializer.save()
-        print(f"DEBUG: submitted_at before: {original_submitted_at}, after: {updated_application.submitted_at}")
         self.assertEqual(updated_application.submitted_at, original_submitted_at)

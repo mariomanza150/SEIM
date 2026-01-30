@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from django.utils.html import format_html
 
-from .models import Application, ApplicationStatus, Comment, Program, TimelineEvent
+from .models import Application, ApplicationStatus, Comment, Program, SavedSearch, TimelineEvent
 
 
 class CommentInline(admin.TabularInline):
@@ -323,3 +323,49 @@ class TimelineEventAdmin(admin.ModelAdmin):
     list_display = ("application", "event_type", "created_by", "created_at")
     search_fields = ("application__id", "event_type", "description")
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(SavedSearch)
+class SavedSearchAdmin(admin.ModelAdmin):
+    """Admin interface for SavedSearch model."""
+    
+    list_display = ("name", "user", "search_type", "is_default", "filter_count", "created_at")
+    search_fields = ("name", "user__username", "user__email")
+    list_filter = ("search_type", "is_default", "created_at")
+    readonly_fields = ("created_at", "updated_at", "filter_preview")
+    
+    fieldsets = (
+        (None, {
+            "fields": ("user", "name", "search_type", "is_default")
+        }),
+        ("Filters", {
+            "fields": ("filters", "filter_preview"),
+            "description": "JSON filter parameters"
+        }),
+        ("Audit", {
+            "fields": ("created_at", "updated_at"),
+            "classes": ("collapse",)
+        }),
+    )
+    
+    def filter_count(self, obj):
+        """Show number of filters applied."""
+        count = len(obj.filters)
+        return format_html(
+            '<span class="badge" style="background: #0d6efd;">{} filter{}</span>',
+            count,
+            's' if count != 1 else ''
+        )
+    
+    filter_count.short_description = "Filters"
+    
+    def filter_preview(self, obj):
+        """Show preview of filter parameters."""
+        import json
+        filters_json = json.dumps(obj.filters, indent=2)
+        return format_html(
+            '<pre style="background: #f8f9fa; padding: 10px; border-radius: 4px;">{}</pre>',
+            filters_json
+        )
+    
+    filter_preview.short_description = "Filter Parameters"

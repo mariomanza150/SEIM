@@ -8,10 +8,16 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && \
-    apt-get install -y build-essential libpq-dev gcc && \
+    apt-get install -y \
+    build-essential \
+    libpq-dev \
+    gcc \
+    libmagic1 \
+    libjpeg-dev \
+    libpng-dev \
+    libwebp-dev \
+    zlib1g-dev && \
     rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update && apt-get install -y libmagic1 && rm -rf /var/lib/apt/lists/*
 
 # Note: Selenium tests run from HOST OS, not Docker containers
 # Chrome and ChromeDriver are not installed in Docker
@@ -23,6 +29,9 @@ RUN pip install --upgrade pip && \
 
 # Copy project files
 COPY . .
+
+# Create media directory for Wagtail uploads
+RUN mkdir -p /app/media
 
 # Make the wait-for-db script executable
 RUN chmod +x /app/scripts/wait-for-db.sh

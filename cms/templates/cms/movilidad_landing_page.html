@@ -1,0 +1,226 @@
+{% extends "cms/base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="section-blue text-white py-5" style="min-height: 60vh; display: flex; align-items: center;">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-3 fw-bold text-white mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                    {{ page.hero_title }}
+                </h1>
+                <p class="lead text-white mb-4" style="font-size: 1.5rem;">{{ page.hero_subtitle }}</p>
+                
+                {% if user.is_authenticated %}
+                    <a href="/seim/applications/" class="btn btn-secondary btn-lg px-5 py-3 shadow">
+                        <i class="bi bi-speedometer2 me-2"></i>Mi Panel
+                    </a>
+                {% else %}
+                    <div class="d-flex gap-3 flex-wrap">
+                        <a href="/seim/register/" class="btn btn-secondary btn-lg px-5 py-3 shadow">
+                            <i class="bi bi-person-plus me-2"></i>Crear Cuenta
+                        </a>
+                        <a href="/seim/login/" class="btn btn-outline-light btn-lg px-4 py-3 shadow">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            {% if page.hero_image %}
+            <div class="col-lg-4">
+                {% image page.hero_image fill-500x500 class="img-fluid rounded shadow-lg" %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Introduction -->
+{% if page.introduction %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <div class="content lead text-center">
+                    {{ page.introduction|richtext }}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Quick Links -->
+{% if page.show_quick_links %}
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5 fw-bold text-primary">Información Importante</h2>
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="card h-100 text-center shadow-sm hover-card">
+                    <div class="card-body p-4">
+                        <i class="bi bi-list-ul display-3 mb-3" style="color: var(--uadec-gold);"></i>
+                        <h5 class="fw-bold mb-3">Programas</h5>
+                        <p class="small mb-3">Explora opciones de intercambio</p>
+                        <a href="{% pageurl page %}/programas/" class="btn btn-primary btn-sm">Ver Programas</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 text-center shadow-sm hover-card">
+                    <div class="card-body p-4">
+                        <i class="bi bi-clipboard-check display-3 mb-3" style="color: var(--uadec-blue);"></i>
+                        <h5 class="fw-bold mb-3">Requisitos</h5>
+                        <p class="small mb-3">Conoce los requisitos</p>
+                        <a href="{% pageurl page %}/requisitos/" class="btn btn-primary btn-sm">Ver Requisitos</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 text-center shadow-sm hover-card">
+                    <div class="card-body p-4">
+                        <i class="bi bi-file-earmark-text display-3 mb-3" style="color: var(--uadec-gold);"></i>
+                        <h5 class="fw-bold mb-3">Documentación</h5>
+                        <p class="small mb-3">Documentos necesarios</p>
+                        <a href="{% pageurl page %}/documentacion/" class="btn btn-primary btn-sm">Ver Documentos</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card h-100 text-center shadow-sm hover-card">
+                    <div class="card-body p-4">
+                        <i class="bi bi-question-circle display-3 mb-3" style="color: var(--uadec-blue);"></i>
+                        <h5 class="fw-bold mb-3">Preguntas</h5>
+                        <p class="small mb-3">Resuelve tus dudas</p>
+                        <a href="{% pageurl page %}/preguntas-frecuentes/" class="btn btn-primary btn-sm">FAQ</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Active Programs Section -->
+{% if active_programs %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5 fw-bold text-primary">Programas Destacados</h2>
+        <div class="row g-4">
+            {% for program in active_programs %}
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm hover-card">
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold mb-3">{{ program.name }}</h5>
+                        <p class="card-text small mb-3">
+                            <i class="bi bi-geo-alt me-1" style="color: var(--uadec-gold);"></i>
+                            {{ program.destination_university.name }}
+                        </p>
+                        <p class="card-text small mb-3">
+                            <i class="bi bi-flag me-1" style="color: var(--uadec-blue);"></i>
+                            {{ program.destination_country.name }}
+                        </p>
+                        {% if program.cms_page %}
+                        <a href="{% pageurl program.cms_page %}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-arrow-right me-1"></i>Ver Detalles
+                        </a>
+                        {% else %}
+                        <a href="/seim/programs/{{ program.id }}/" class="btn btn-primary btn-sm">
+                            <i class="bi bi-arrow-right me-1"></i>Ver Detalles
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-4">
+            <a href="{% pageurl page %}/programas/" class="btn btn-outline-primary">
+                Ver Todos los Programas <i class="bi bi-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Main Content (StreamField) -->
+{% if page.body %}
+<section class="py-5">
+    <div class="container">
+        {% for block in page.body %}
+            <div class="mb-4">
+                {% include_block block %}
+            </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Recent Blog Posts -->
+{% if recent_posts %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5 fw-bold text-primary">Noticias y Actualizaciones</h2>
+        <div class="row g-4">
+            {% for post in recent_posts %}
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm">
+                    {% if post.featured_image %}
+                    {% image post.featured_image fill-400x250 class="card-img-top" %}
+                    {% endif %}
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold">{{ post.title }}</h5>
+                        <p class="card-text small text-muted mb-2">
+                            <i class="bi bi-calendar me-1"></i>{{ post.published_date|date:"d M Y" }}
+                        </p>
+                        <p class="card-text">{{ post.introduction|truncatewords:20 }}</p>
+                        <a href="{% pageurl post %}" class="btn btn-primary btn-sm">Leer Más</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Application CTA -->
+{% if page.show_application_cta %}
+<section class="section-gold text-white py-5">
+    <div class="container text-center">
+        <i class="bi bi-rocket-takeoff display-3 mb-4"></i>
+        <h2 class="display-5 fw-bold mb-3">¿Listo para Aplicar?</h2>
+        <p class="lead mb-4" style="font-size: 1.25rem;">
+            {% if user.is_authenticated %}
+            Comienza tu aplicación ahora y da el primer paso hacia tu experiencia internacional
+            {% else %}
+            Crea tu cuenta y comienza tu aplicación para vivir una experiencia internacional única
+            {% endif %}
+        </p>
+        {% if user.is_authenticated %}
+            <a href="/seim/applications/create/" class="btn btn-primary btn-lg px-5 py-3 shadow">
+                <i class="bi bi-file-earmark-plus me-2"></i>{{ page.application_cta_text }}
+            </a>
+        {% else %}
+            <a href="/seim/register/" class="btn btn-primary btn-lg px-5 py-3 shadow">
+                <i class="bi bi-person-plus me-2"></i>{{ page.application_cta_text }}
+            </a>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.hover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.hover-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+</style>
+{% endblock %}
+

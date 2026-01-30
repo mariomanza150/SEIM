@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Notification, NotificationPreference, NotificationType
+from .models import Notification, NotificationPreference, NotificationType, Reminder
 from .services import NotificationService
 
 
@@ -31,3 +31,21 @@ class NotificationPreferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotificationPreference
         fields = "__all__"
+
+
+class ReminderSerializer(serializers.ModelSerializer):
+    """Serializer for Reminder model."""
+    
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    notification = serializers.PrimaryKeyRelatedField(read_only=True)
+    
+    class Meta:
+        model = Reminder
+        fields = "__all__"
+    
+    def create(self, validated_data):
+        """Set user from request context."""
+        request = self.context.get('request')
+        if request and request.user:
+            validated_data['user'] = request.user
+        return super().create(validated_data)

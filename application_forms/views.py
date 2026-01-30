@@ -4,6 +4,9 @@ Application Forms Views
 API views for form types and submissions.
 """
 
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.shortcuts import render
+from django.views.generic import TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
@@ -16,6 +19,39 @@ from .serializers import (
     FormTypeListSerializer,
     FormTypeSerializer,
 )
+
+
+def is_admin(user):
+    """Check if user is admin - either has admin role OR is superuser"""
+    if not user.is_authenticated:
+        return False
+    if user.is_superuser:
+        return True
+    return user.has_role('admin')
+
+
+class AdminOnlyMixin(UserPassesTestMixin):
+    def test_func(self):
+        return is_admin(self.request.user)
+
+
+class FormTypeListView(LoginRequiredMixin, AdminOnlyMixin, TemplateView):
+    """List view for form types"""
+    template_name = 'application_forms/list.html'
+
+
+class EnhancedFormBuilderView(LoginRequiredMixin, AdminOnlyMixin, TemplateView):
+    """Enhanced form builder view with custom UI"""
+    template_name = 'application_forms/builder.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        form_id = kwargs.get('pk')
+        context['form_id'] = form_id
+        # Pass form_id to template for JavaScript
+        if form_id:
+            context['form_id_js'] = form_id
+        return context
 
 
 class FormTypeViewSet(viewsets.ModelViewSet):
@@ -134,4 +170,3 @@ class FormSubmissionViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Auto-assign submitted_by to current user"""
         serializer.save(submitted_by=self.request.user)
-

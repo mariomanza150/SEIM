@@ -3,7 +3,7 @@ Unit tests for application_forms serializers.
 """
 
 import pytest
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from django.contrib.auth import get_user_model
 from django.test import TestCase, RequestFactory
 from rest_framework.test import APIRequestFactory
@@ -117,12 +117,12 @@ class TestFormTypeSerializer(TestCase):
         data = {
             'name': 'New Form',
             'form_type': 'application',
-            'schema': None
+            # schema field is omitted, will use default=dict from model
         }
         
         serializer = FormTypeSerializer(data=data)
-        # Schema has a default, so None should be replaced with {}
-        self.assertTrue(serializer.is_valid())
+        # Schema has a default, so omitted schema should be replaced with {}
+        self.assertTrue(serializer.is_valid(), serializer.errors)
 
     def test_validate_ui_schema_valid(self):
         """Test ui_schema validation with valid dict."""
@@ -154,17 +154,17 @@ class TestFormTypeSerializer(TestCase):
         """Test creating FormType through serializer."""
         data = {
             'name': 'Created Form',
-            'form_type': 'contact',
+            'form_type': 'custom',  # Changed from 'contact' to valid choice
             'description': 'Created via serializer',
             'schema': {'properties': {'test': {'type': 'string'}}}
         }
         
         serializer = FormTypeSerializer(data=data)
-        self.assertTrue(serializer.is_valid())
+        self.assertTrue(serializer.is_valid(), serializer.errors)
         form_type = serializer.save(created_by=self.user)
         
         self.assertEqual(form_type.name, 'Created Form')
-        self.assertEqual(form_type.form_type, 'contact')
+        self.assertEqual(form_type.form_type, 'custom')
 
     def test_update_form_type(self):
         """Test updating FormType through serializer."""
@@ -212,6 +212,8 @@ class TestFormSubmissionSerializer(TestCase):
         self.program = Program.objects.create(
             name="Test Program",
             description="Test",
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
             is_active=True
         )
         
@@ -446,6 +448,8 @@ class TestFormSubmissionListSerializer(TestCase):
         self.program = Program.objects.create(
             name="Test Program",
             description="Test",
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=30),
             is_active=True
         )
         

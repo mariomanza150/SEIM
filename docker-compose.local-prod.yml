@@ -1,0 +1,156 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: seim-db-local-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: seim_prod
+      POSTGRES_USER: seimuser
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme123}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    networks:
+      - seim-prod-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U seimuser -d seim_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Message Broker
+  redis:
+    image: redis:7.2-alpine
+    container_name: seim-redis-local-prod
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    volumes:
+      - redis_prod_data:/data
+    networks:
+      - seim-prod-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Django Web Application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: seim-web-local-prod
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        python manage.py migrate &&
+        echo 'Collecting static files...' &&
+        python manage.py collectstatic --noinput &&
+        echo 'Starting Gunicorn...' &&
+        gunicorn seim.wsgi:application 
+          --bind 0.0.0.0:8000 
+          --workers 2
+          --worker-class sync
+          --timeout 30
+          --access-logfile -
+          --error-logfile -
+          --log-level info
+      "
+    ports:
+      - "8001:8000"
+    volumes:
+      - static_prod_volume:/app/staticfiles
+      - media_prod_volume:/app/media
+    networks:
+      - seim-prod-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DJANGO_SETTINGS_MODULE=seim.settings.production
+      - DJANGO_ENV=production
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
+      - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      # Relaxed security for local testing
+      - SECURE_SSL_REDIRECT=False
+      - SESSION_COOKIE_SECURE=False
+      - CSRF_COOKIE_SECURE=False
+      - CORS_ALLOWED_ORIGINS=http://localhost:8001,http://127.0.0.1:8001
+      - CSRF_TRUSTED_ORIGINS=http://localhost:8001,http://127.0.0.1:8001
+
+  # Celery Worker
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: seim-celery-local-prod
+    restart: unless-stopped
+    command: celery -A seim worker --loglevel=info --concurrency=2
+    volumes:
+      - media_prod_volume:/app/media
+    networks:
+      - seim-prod-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DJANGO_SETTINGS_MODULE=seim.settings.production
+      - DJANGO_ENV=production
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
+      - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+
+  # Celery Beat Scheduler
+  celery-beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: seim-celery-beat-local-prod
+    restart: unless-stopped
+    command: celery -A seim beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    networks:
+      - seim-prod-network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DJANGO_SETTINGS_MODULE=seim.settings.production
+      - DJANGO_ENV=production
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
+      - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+
+volumes:
+  postgres_prod_data:
+    driver: local
+  redis_prod_data:
+    driver: local
+  static_prod_volume:
+    driver: local
+  media_prod_volume:
+    driver: local
+
+networks:
+  seim-prod-network:
+    driver: bridge
+

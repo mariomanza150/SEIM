@@ -33,6 +33,17 @@ help:
 	@echo "  test-all           - Run complete test suite"
 	@echo "  test-workflow      - Run test workflow (quick + frontend + selenium setup)"
 	@echo ""
+	@echo "Playwright E2E Tests:"
+	@echo "  e2e-setup          - Setup Playwright E2E environment"
+	@echo "  e2e-test           - Run E2E tests (headless)"
+	@echo "  e2e-test-headed    - Run E2E tests (visible browser)"
+	@echo "  e2e-docker         - Run E2E tests in Docker"
+	@echo "  e2e-video-demos    - Generate video demo walkthroughs"
+	@echo "  e2e-visual         - Run visual regression tests"
+	@echo "  e2e-accessibility  - Run accessibility tests"
+	@echo "  e2e-report         - Open E2E test report"
+	@echo "  e2e-clean          - Clean E2E test artifacts"
+	@echo ""
 	@echo "Production Deployment:"
 	@echo "  build-prod         - Build production Docker images"
 	@echo "  deploy-prod        - Deploy to production environment"
@@ -582,4 +593,97 @@ prod-clean:
 	docker-compose -f docker-compose.prod.yml down -v
 	docker system prune -f
 	@echo "⚠️  WARNING: This will delete all production data!"
-	@echo "✅ Production environment cleaned!" 
+	@echo "✅ Production environment cleaned!"
+
+# Playwright E2E testing targets
+e2e-setup:
+	@echo "🎭 Setting up Playwright E2E testing environment..."
+	pip install -r requirements-test.txt
+	playwright install chromium firefox webkit --with-deps
+	@echo "✅ Playwright E2E environment setup complete!"
+
+e2e-test:
+	@echo "🎭 Running E2E tests (headless)..."
+	pytest tests/e2e_playwright/ -v --headed=false --base-url=http://localhost:8000
+
+e2e-test-headed:
+	@echo "🎭 Running E2E tests (headed - visible browser)..."
+	pytest tests/e2e_playwright/ -v --headed=true --slowmo=100 --base-url=http://localhost:8000
+
+e2e-test-slow:
+	@echo "🎭 Running E2E tests (slow motion for debugging)..."
+	pytest tests/e2e_playwright/ -v --headed=true --slowmo=500 --base-url=http://localhost:8000
+
+e2e-docker:
+	@echo "🎭 Running E2E tests in Docker..."
+	docker-compose -f docker-compose.e2e.yml --profile e2e up --build --abort-on-container-exit e2e_playwright
+	docker-compose -f docker-compose.e2e.yml --profile e2e down
+	@echo "✅ E2E tests completed!"
+
+e2e-video-demos:
+	@echo "🎬 Generating video demo walkthroughs..."
+	@mkdir -p tests/e2e_playwright/videos
+	@docker-compose -f docker-compose.e2e.yml run --rm e2e_playwright pytest tests/e2e_playwright/test_video_demos.py -v --browser=chromium --base-url=http://web:8000 -m video_demo --tb=short
+	@echo ""
+	@echo "✅ Video demos complete! Check tests/e2e_playwright/videos/"
+
+e2e-docker-shell:
+	@echo "🎭 Opening shell in E2E container..."
+	docker-compose -f docker-compose.e2e.yml run e2e_playwright bash
+
+e2e-visual:
+	@echo "🎭 Running visual regression tests..."
+	pytest tests/e2e_playwright/test_visual_regression.py -v --base-url=http://localhost:8000
+
+e2e-visual-update:
+	@echo "🎭 Updating visual regression baselines..."
+	pytest tests/e2e_playwright/test_visual_regression.py -v --update-baseline --base-url=http://localhost:8000
+
+e2e-accessibility:
+	@echo "🎭 Running accessibility tests..."
+	pytest tests/e2e_playwright/test_accessibility.py -v --base-url=http://localhost:8000
+
+e2e-auth:
+	@echo "🎭 Running authentication workflow tests..."
+	pytest tests/e2e_playwright/test_auth_workflows.py -v --base-url=http://localhost:8000
+
+e2e-student:
+	@echo "🎭 Running student workflow tests..."
+	pytest tests/e2e_playwright/test_student_workflows.py -v --base-url=http://localhost:8000
+
+e2e-coordinator:
+	@echo "🎭 Running coordinator workflow tests..."
+	pytest tests/e2e_playwright/test_coordinator_workflows.py -v --base-url=http://localhost:8000
+
+e2e-admin:
+	@echo "🎭 Running admin workflow tests..."
+	pytest tests/e2e_playwright/test_admin_workflows.py -v --base-url=http://localhost:8000
+
+e2e-parallel:
+	@echo "🎭 Running E2E tests in parallel..."
+	pytest tests/e2e_playwright/ -v -n auto --base-url=http://localhost:8000
+
+e2e-smoke:
+	@echo "🎭 Running E2E smoke tests..."
+	pytest tests/e2e_playwright/ -v -m smoke --base-url=http://localhost:8000
+
+e2e-report:
+	@echo "📊 Opening E2E test report..."
+	@if [ -f tests/e2e_playwright/reports/report.html ]; then \
+		open tests/e2e_playwright/reports/report.html || xdg-open tests/e2e_playwright/reports/report.html || start tests/e2e_playwright/reports/report.html; \
+	else \
+		echo "❌ No test report found. Run tests first with 'make e2e-test'"; \
+	fi
+
+e2e-clean:
+	@echo "🧹 Cleaning E2E test artifacts..."
+	rm -rf tests/e2e_playwright/screenshots/*.png 2>/dev/null || true
+	rm -rf tests/e2e_playwright/videos/*.webm 2>/dev/null || true
+	rm -rf tests/e2e_playwright/reports/*.html 2>/dev/null || true
+	rm -rf tests/e2e_playwright/visual/diffs/*.png 2>/dev/null || true
+	@echo "✅ E2E test artifacts cleaned!"
+
+e2e-clean-all: e2e-clean
+	@echo "🧹 Cleaning E2E baselines and snapshots..."
+	rm -rf tests/e2e_playwright/visual/snapshots/*.png 2>/dev/null || true
+	@echo "✅ All E2E test data cleaned!" 

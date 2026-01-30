@@ -510,6 +510,21 @@ def frozen_time():
         yield
 
 
+@pytest.fixture(autouse=True)
+def clear_cache():
+    """Clear cache before and after each test to ensure isolation."""
+    from django.core.cache import cache
+    cache.clear()
+    yield
+    cache.clear()
+
+
+@pytest.fixture(autouse=True)
+def enable_db_access_for_all_tests(db):
+    """Enable database access for all tests automatically."""
+    pass
+
+
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================

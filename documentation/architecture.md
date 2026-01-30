@@ -9,24 +9,58 @@ SEIM (Student Exchange Information Manager) is a Django-based web application de
 
 ### **High-Level Architecture:**
 ```
-┌─────────────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend              │    │   API Layer     │    │   Business      │
-│   (Django Templates +   │◄──►│   (DRF)         │◄──►│   Logic Layer   │
-│   Bootstrap 5 +         │    │                 │    │   (Services)    │
-│   ES6+ JavaScript)      │    │                 │    │                 │
-└─────────────────────────┘    └─────────────────┘    └─────────────────┘
-                                        │                       │
-                                        ▼                       ▼
-                       ┌─────────────────┐    ┌─────────────────────────┐
-                       │   Data Layer    │    │   External Services     │
-                       │   (Django ORM)  │    │   (Email, Cache, Queue) │
-                       └─────────────────┘    └─────────────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐
-                       │   Database      │
-                       │   (PostgreSQL)  │
-                       └─────────────────┘
+┌────────────────────────────────────────────────────────────────────┐
+│                          Frontend Layer                            │
+│  ┌──────────────────────┐         ┌───────────────────────────┐  │
+│  │  Public Pages        │         │  Authenticated Pages      │  │
+│  │  (Wagtail CMS)       │         │  (Django Templates +      │  │
+│  │  - Home, Blog        │         │   Bootstrap 5 +           │  │
+│  │  - Program Pages     │         │   ES6+ JavaScript)        │  │
+│  │  - Info Pages        │         │  - Dashboard              │  │
+│  └──────────────────────┘         │  - Applications           │  │
+│                                    │  - Documents              │  │
+│                                    └───────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────┘
+                                     │
+                                     ▼
+┌────────────────────────────────────────────────────────────────────┐
+│                     Admin Interfaces                               │
+│  ┌──────────────────────┐         ┌───────────────────────────┐  │
+│  │  Wagtail CMS Admin   │         │  Django Admin             │  │
+│  │  - Content Pages     │         │  - System Config          │  │
+│  │  - Blog Management   │         │  - User Management        │  │
+│  │  - Forms             │         │  - Exchange Workflows     │  │
+│  └──────────────────────┘         └───────────────────────────┘  │
+└────────────────────────────────────────────────────────────────────┘
+                                     │
+                                     ▼
+┌────────────────────────────────────────────────────────────────────┐
+│   API Layer (DRF) ◄──────────────────────────────────────┐        │
+│   - REST API                                              │        │
+│   - JWT Authentication                                    │        │
+│   - OpenAPI Documentation                                 │        │
+└───────────────────────────────────────────────────────────┼────────┘
+                                     │                      │
+                                     ▼                      ▼
+┌────────────────────────────────────────┐   ┌──────────────────────┐
+│   Business Logic Layer (Services)      │   │  External Services   │
+│   - WorkflowService                    │   │  - Email (Celery)    │
+│   - ApplicationService                 │   │  - Redis (Cache)     │
+│   - DocumentService                    │   │  - File Storage      │
+└────────────────────────────────────────┘   └──────────────────────┘
+                                     │
+                                     ▼
+                       ┌──────────────────────────┐
+                       │   Data Layer (ORM)       │
+                       │   - Django Models        │
+                       │   - Wagtail Pages        │
+                       └──────────────────────────┘
+                                     │
+                                     ▼
+                       ┌──────────────────────────┐
+                       │   Database               │
+                       │   (PostgreSQL)           │
+                       └──────────────────────────┘
 ```
 
 ---
@@ -65,6 +99,26 @@ SEIM (Student Exchange Information Manager) is a Django-based web application de
   - Dashboard metrics calculation
   - Program-specific analytics
   - User activity tracking
+
+- **`grades/`**: Grade translation system
+  - International grade scale conversion
+  - GPA equivalency calculations
+  - Support for multiple grading systems
+
+- **`cms/`**: Wagtail CMS for content management
+  - HomePage, StandardPage, BlogPost pages
+  - Program pages with rich content
+  - Dynamic form builder (replacing django-dynforms)
+  - StreamField blocks for flexible content
+  - SEO optimization
+  - Publishing workflows and moderation
+  - Integration with exchange.Program model
+
+- **`application_forms/`**: Dynamic form builder (DEPRECATED)
+  - Being replaced by Wagtail FormPage
+  - Historical data preserved
+  - Migration command available
+  - Will be removed in future version
 
 - **`api/`**: REST API endpoints
   - DRF-based API with OpenAPI documentation
@@ -137,6 +191,38 @@ class Document(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
     is_validated = models.BooleanField(default=False)
     validation_notes = models.TextField(blank=True)
+```
+
+#### **Dynamic Forms:**
+```python
+class FormType(models.Model):
+    name = models.CharField(max_length=200)
+    schema = models.JSONField()  # JSON Schema format
+    ui_schema = models.JSONField(default=dict)  # UI hints
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+class FormSubmission(models.Model):
+    form_type = models.ForeignKey(FormType, on_delete=models.CASCADE)
+    application = models.ForeignKey('exchange.Application', on_delete=models.CASCADE)
+    data = models.JSONField()  # Submitted form data
+    submitted_at = models.DateTimeField(auto_now_add=True)
+```
+
+#### **Grade Translation:**
+```python
+class GradeScale(models.Model):
+    name = models.CharField(max_length=100)
+    country = models.CharField(max_length=100)
+    min_grade = models.DecimalField(max_digits=5, decimal_places=2)
+    max_grade = models.DecimalField(max_digits=5, decimal_places=2)
+    passing_grade = models.DecimalField(max_digits=5, decimal_places=2)
+
+class GradeTranslation(models.Model):
+    from_scale = models.ForeignKey(GradeScale, related_name='from_translations')
+    to_scale = models.ForeignKey(GradeScale, related_name='to_translations')
+    from_grade = models.DecimalField(max_digits=5, decimal_places=2)
+    to_grade = models.DecimalField(max_digits=5, decimal_places=2)
 ```
 
 #### **Audit Logging:**
@@ -335,12 +421,61 @@ class TimelineEvent(models.Model):
 
 ---
 
+## CMS Integration (Wagtail)
+
+### **Content Management System:**
+
+The SEIM platform now includes a comprehensive CMS powered by Wagtail:
+
+#### **Architecture:**
+- **Dual Admin Interface**: Wagtail CMS admin for content, Django admin for system configuration
+- **Shared Authentication**: Single user model (accounts.User) for both interfaces
+- **URL Routing**: Wagtail catch-all at the end of URL patterns, preserving all API and app routes
+
+#### **Page Types:**
+1. **HomePage**: Main landing page with hero section and flexible content blocks
+2. **StandardPage**: General information pages (About, Contact, Help)
+3. **BlogIndexPage & BlogPostPage**: Full-featured blog with categories, tags, and SEO
+4. **ProgramIndexPage & ProgramPage**: Rich program pages linked to exchange.Program model
+5. **FormPage**: Dynamic forms replacing django-dynforms
+6. **FAQIndexPage & FAQPage**: Frequently Asked Questions with accordion UI
+
+#### **StreamField Blocks:**
+- Rich Text, Images, Videos
+- Call-to-Action blocks
+- Card Grids, Testimonials
+- FAQ Sections, Process Steps
+- Two-column layouts
+- Embedded forms
+
+#### **Features:**
+- **SEO Optimization**: wagtail-seo integration for meta tags, Open Graph, Twitter Cards
+- **Media Library**: Centralized image and document management
+- **Publishing Workflows**: Draft → Review → Approve → Publish
+- **Revision History**: Full version control with rollback capability
+- **Multi-language Support**: Wagtail's internationalization framework
+- **Responsive Design**: Bootstrap 5 integration for all page templates
+
+#### **Integration Points:**
+- **exchange.Program**: ProgramPage.program OneToOneField for rich program content
+- **accounts.User**: Shared authentication and permissions
+- **FormPage → Exchange Applications**: Forms can be linked to programs for applications
+
+#### **Migration from django-dynforms:**
+- Management command: `migrate_forms_to_wagtail.py`
+- Preserves historical FormSubmission data
+- Maps JSON schema fields to Wagtail form fields
+- Command: `remove_old_form_system.py` for cleanup after verification
+
 ## Future Enhancements
 
 ### **Planned Features:**
-- Real-time notifications (WebSockets)
-- Advanced analytics and reporting
+- Real-time notifications (WebSockets) - Implemented
+- Advanced analytics and reporting - In Progress
 - Mobile API endpoints
+- Enhanced CMS features (A/B testing, personalization)
+- Multi-language content management via Wagtail
+- Advanced form logic and conditional fields
 - Third-party integrations
 - Plugin system expansion
 

@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Form Builder - SEIM{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'application_forms/css/form-builder.css' %}">
+    <style>
+        .form-list-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .form-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        
+        .form-card {
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+            background: var(--bg-primary);
+        }
+        
+        .form-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+        
+        .form-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+        
+        .form-card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+        }
+        
+        .form-card-meta {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+        
+        .form-card-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-active {
+            background-color: #198754;
+            color: white;
+        }
+        
+        .badge-inactive {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="form-list-container">
+    <div class="form-list-header">
+        <div>
+            <h1><i class="bi bi-file-earmark-text"></i> Form Builder</h1>
+            <p class="text-muted">Create and manage dynamic forms for exchange programs</p>
+        </div>
+        <a href="{% url 'application_forms:enhanced-builder' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create New Form
+        </a>
+    </div>
+    
+    <div id="forms-list">
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading forms...</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadForms();
+        });
+        
+        async function loadForms() {
+            try {
+                const response = await fetch('/api/application-forms/form-types/', {
+                    credentials: 'include'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load forms');
+                }
+                
+                const forms = await response.json();
+                renderForms(forms.results || forms);
+            } catch (error) {
+                console.error('Error loading forms:', error);
+                document.getElementById('forms-list').innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <p>Error loading forms. Please refresh the page.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderForms(forms) {
+            const container = document.getElementById('forms-list');
+            
+            if (forms.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="bi bi-inbox"></i>
+                        <h3>No forms yet</h3>
+                        <p>Create your first form to get started</p>
+                        <a href="{% url 'application_forms:enhanced-builder' %}" class="btn btn-primary mt-3">
+                            <i class="bi bi-plus-circle"></i> Create Form
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = forms.map(form => `
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <div>
+                            <h3 class="form-card-title">${escapeHtml(form.name)}</h3>
+                            <div class="form-card-meta">
+                                <span><i class="bi bi-tag"></i> ${form.form_type || 'application'}</span>
+                                <span><i class="bi bi-list-ul"></i> ${form.field_count || 0} fields</span>
+                                <span><i class="bi bi-calendar"></i> ${formatDate(form.created_at)}</span>
+                            </div>
+                        </div>
+                        <div class="form-card-actions">
+                            <span class="badge ${form.is_active ? 'badge-active' : 'badge-inactive'}">
+                                ${form.is_active ? 'Active' : 'Inactive'}
+                            </span>
+                        </div>
+                    </div>
+                    ${form.description ? `<p class="text-muted">${escapeHtml(form.description)}</p>` : ''}
+                    <div class="form-card-actions mt-3">
+                        <a href="/api/application-forms/builder/${form.id}/" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="toggleFormStatus(${form.id}, ${form.is_active})">
+                            <i class="bi bi-${form.is_active ? 'eye-slash' : 'eye'}"></i> ${form.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteForm(${form.id}, '${escapeHtml(form.name)}')">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
+        }
+        
+        async function toggleFormStatus(formId, currentStatus) {
+            try {
+                const response = await fetch(`/api/application-forms/form-types/${formId}/`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ is_active: !currentStatus })
+                });
+                
+                if (response.ok) {
+                    loadForms(); // Reload list
+                } else {
+                    alert('Failed to update form status');
+                }
+            } catch (error) {
+                console.error('Error toggling form status:', error);
+                alert('Error updating form status');
+            }
+        }
+        
+        async function deleteForm(formId, formName) {
+            if (!confirm(`Are you sure you want to delete "${formName}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/application-forms/form-types/${formId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': getCSRFToken()
+                    },
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    loadForms(); // Reload list
+                } else {
+                    alert('Failed to delete form');
+                }
+            } catch (error) {
+                console.error('Error deleting form:', error);
+                alert('Error deleting form');
+            }
+        }
+        
+        function getCSRFToken() {
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'csrftoken') {
+                    return value;
+                }
+            }
+            return '';
+        }
+    </script>
+{% endblock %}
+

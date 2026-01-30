@@ -1,0 +1,145 @@
+{% load static %}
+<!-- Notification Center Offcanvas -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="notificationCenter" aria-labelledby="notificationCenterLabel">
+    <div class="offcanvas-header border-bottom">
+        <h5 class="offcanvas-title" id="notificationCenterLabel">
+            <i class="bi bi-bell me-2"></i>Notifications
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    
+    <div class="offcanvas-body p-0">
+        <!-- Actions Bar -->
+        <div class="p-3 border-bottom bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="markAllReadBtn" aria-label="Mark all notifications as read">
+                    <i class="bi bi-check-all"></i> Mark all as read
+                </button>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Filter notifications">
+                    <input type="radio" class="btn-check" name="notificationFilter" id="filterAll" value="all" checked autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="filterAll">All</label>
+                    
+                    <input type="radio" class="btn-check" name="notificationFilter" id="filterUnread" value="unread" autocomplete="off">
+                    <label class="btn btn-outline-secondary" for="filterUnread">Unread</label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notifications List -->
+        <div id="notificationsList" class="list-group list-group-flush" role="list" aria-live="polite">
+            <!-- Loading spinner -->
+            <div class="text-center py-5" id="notificationsLoading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading notifications...</span>
+                </div>
+            </div>
+            
+            <!-- Empty state -->
+            <div class="text-center py-5 d-none" id="notificationsEmpty">
+                <i class="bi bi-bell-slash display-1 text-muted"></i>
+                <p class="text-muted mt-3">No notifications</p>
+            </div>
+            
+            <!-- Notifications will be dynamically inserted here -->
+        </div>
+        
+        <!-- Load More -->
+        <div class="p-3 border-top d-none" id="loadMoreContainer">
+            <button type="button" class="btn btn-sm btn-outline-primary w-100" id="loadMoreBtn">
+                Load More
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Badge in Navbar (add to navbar) -->
+<style>
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #dc3545;
+    color: white;
+    border-radius: 10px;
+    padding: 2px 6px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    display: none;
+}
+
+.notification-item {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.notification-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.notification-item.unread {
+    background-color: rgba(13, 110, 253, 0.05);
+    border-left: 3px solid #0d6efd;
+}
+
+.notification-item.unread:hover {
+    background-color: rgba(13, 110, 253, 0.1);
+}
+
+.notification-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.notification-icon.info {
+    background-color: rgba(13, 202, 240, 0.1);
+    color: #0dcaf0;
+}
+
+.notification-icon.success {
+    background-color: rgba(25, 135, 84, 0.1);
+    color: #198754;
+}
+
+.notification-icon.warning {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.notification-icon.error {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.notification-time {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.notification-actions {
+    display: none;
+}
+
+.notification-item:hover .notification-actions {
+    display: flex;
+}
+</style>
+
+<!-- Notification Center Script -->
+{# notification-center.js is already loaded in base.html, no need to load again #}
+<script>
+// Initialize notification center on page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.body.classList.contains('authenticated')) {
+        window.notificationCenter = new NotificationCenter();
+        
+        // Update badge on page load
+        updateNotificationBadge();
+    }
+});
+</script>
+

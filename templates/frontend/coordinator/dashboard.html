@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Coordinator Dashboard" %} - SEIM{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="bi bi-kanban"></i> {% trans "Coordinator Dashboard" %}
+                    </h1>
+                    <p class="text-muted mb-0">{% trans "Review and manage applications" %}</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'frontend:applications' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-list"></i> {% trans "All Applications" %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">{% trans "Pending Reviews" %}</h6>
+                            <h2 class="card-title mb-0">{{ pending_applications|length }}</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-clock-history fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">{% trans "Documents to Validate" %}</h6>
+                            <h2 class="card-title mb-0">{{ pending_documents|length }}</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-file-earmark-check fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-subtitle mb-2 text-white-50">{% trans "Recent Activity" %}</h6>
+                            <h2 class="card-title mb-0">{{ recent_applications|length }}</h2>
+                        </div>
+                        <div>
+                            <i class="bi bi-activity fs-1 opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Applications -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-clock-history"></i> {% trans "Pending Reviews" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_applications %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "Student" %}</th>
+                                        <th>{% trans "Program" %}</th>
+                                        <th>{% trans "Status" %}</th>
+                                        <th>{% trans "Submitted" %}</th>
+                                        <th>{% trans "Actions" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for application in pending_applications %}
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <i class="bi bi-person-circle me-2"></i>
+                                                <div>
+                                                    <div>{{ application.student.get_full_name|default:application.student.username }}</div>
+                                                    <small class="text-muted">{{ application.student.email }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <strong>{{ application.program.name }}</strong><br>
+                                            <small class="text-muted">{{ application.program.institution }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-warning">{{ application.status.name }}</span>
+                                        </td>
+                                        <td>
+                                            <small>{{ application.updated_at|date:"Y-m-d H:i" }}</small>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'frontend:application_detail' application.id %}" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-eye"></i> {% trans "Review" %}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-check-circle fs-1"></i>
+                            <p class="mt-2">{% trans "No pending applications to review" %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Documents -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-file-earmark-check"></i> {% trans "Documents Awaiting Validation" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if pending_documents %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{% trans "Document" %}</th>
+                                        <th>{% trans "Student" %}</th>
+                                        <th>{% trans "Application" %}</th>
+                                        <th>{% trans "Uploaded" %}</th>
+                                        <th>{% trans "Actions" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for document in pending_documents %}
+                                    <tr>
+                                        <td>
+                                            <i class="bi bi-file-earmark-pdf me-2"></i>
+                                            {{ document.type.name }}
+                                        </td>
+                                        <td>{{ document.application.student.get_full_name|default:document.application.student.username }}</td>
+                                        <td>{{ document.application.program.name }}</td>
+                                        <td>
+                                            <small>{{ document.uploaded_at|date:"Y-m-d H:i" }}</small>
+                                        </td>
+                                        <td>
+                                            <a href="{{ document.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-download"></i> {% trans "View" %}
+                                            </a>
+                                            <a href="{% url 'frontend:application_detail' document.application.id %}" class="btn btn-sm btn-primary">
+                                                <i class="bi bi-check-circle"></i> {% trans "Validate" %}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-check-circle fs-1"></i>
+                            <p class="mt-2">{% trans "All documents have been validated" %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-activity"></i> {% trans "Recent Activity" %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if recent_applications %}
+                        <div class="list-group list-group-flush">
+                            {% for application in recent_applications %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">{{ application.student.get_full_name|default:application.student.username }}</h6>
+                                        <p class="mb-1 text-muted">
+                                            {{ application.program.name }} - 
+                                            <span class="badge bg-{{ application.status.name|lower }}">{{ application.status.name }}</span>
+                                        </p>
+                                        <small class="text-muted">
+                                            <i class="bi bi-clock"></i> {{ application.updated_at|timesince }} ago
+                                        </small>
+                                    </div>
+                                    <div>
+                                        <a href="{% url 'frontend:application_detail' application.id %}" class="btn btn-sm btn-outline-primary">
+                                            {% trans "View" %}
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-inbox fs-1"></i>
+                            <p class="mt-2">{% trans "No recent activity" %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

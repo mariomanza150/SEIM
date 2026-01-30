@@ -372,8 +372,8 @@ class TestUserSettingsModel:
 
         settings = UserSettings.objects.create(user=user)
 
-        assert settings.theme == 'light'
-        assert settings.font_size == 'medium'
+        assert settings.theme == 'auto'
+        assert settings.font_size == 'normal'
         assert settings.email_applications is True
         assert settings.email_documents is True
         assert settings.email_programs is False

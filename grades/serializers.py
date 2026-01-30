@@ -1,4 +1,5 @@
 """Serializers for grade translation API."""
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .models import GradeScale, GradeTranslation, GradeValue
@@ -47,6 +48,7 @@ class GradeScaleListSerializer(serializers.ModelSerializer):
             'min_value', 'max_value', 'grade_count'
         ]
 
+    @extend_schema_field(serializers.IntegerField)
     def get_grade_count(self, obj):
         """Get the count of grade values."""
         return obj.grade_values.count()
@@ -77,6 +79,7 @@ class GradeTranslationSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
+    @extend_schema_field(serializers.FloatField)
     def get_gpa_difference(self, obj):
         """Calculate GPA difference between source and target."""
         return abs(obj.source_grade.gpa_equivalent - obj.target_grade.gpa_equivalent)

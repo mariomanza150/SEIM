@@ -1,0 +1,10 @@
+{% load wagtailcore_tags %}
+<div class="video-block my-4">
+    <div class="ratio ratio-16x9">
+        {{ value.video|safe }}
+    </div>
+    {% if value.caption %}
+    <p class="text-center text-muted mt-2">{{ value.caption }}</p>
+    {% endif %}
+</div>
+

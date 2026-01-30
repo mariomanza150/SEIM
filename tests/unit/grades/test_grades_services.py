@@ -594,4 +594,290 @@ class TestGradeTranslationService(TestCase):
         )
         
         self.assertEqual(len(translations), 0)
+    
+    # Additional edge case and coverage tests
+    
+    def test_translate_grade_with_no_gpa_fallback_empty_target(self):
+        """Test translation without fallback when target scale empty."""
+        empty_scale = GradeScale.objects.create(
+            name="Empty Scale",
+            code="EMPTY_NO_FB",
+            min_value=0.0,
+            max_value=10.0,
+            passing_value=5.0
+        )
+        
+        result = GradeTranslationService.translate_grade(
+            source_grade_value_id=str(self.us_a.id),
+            target_scale_id=str(empty_scale.id),
+            fallback_to_gpa=False
+        )
+        
+        self.assertIsNone(result)
+    
+    def test_get_direct_translation_returns_none_when_missing(self):
+        """Test _get_direct_translation returns None when no mapping exists."""
+        result = GradeTranslationService._get_direct_translation(
+            self.us_a, self.ects_scale
+        )
+        
+        self.assertIsNone(result)
+    
+    def test_convert_gpa_boundary_values(self):
+        """Test GPA conversion with boundary values."""
+        # Test min value (0.0)
+        result_min = GradeTranslationService.convert_gpa_to_scale(
+            gpa_value=0.0,
+            target_scale_id=str(self.us_scale.id)
+        )
+        self.assertIsNotNone(result_min)
+        
+        # Test max value (4.0)
+        result_max = GradeTranslationService.convert_gpa_to_scale(
+            gpa_value=4.0,
+            target_scale_id=str(self.us_scale.id)
+        )
+        self.assertIsNotNone(result_max)
+    
+    def test_get_available_translations_no_translations(self):
+        """Test getting available translations when none exist."""
+        translations = GradeTranslationService.get_available_translations(
+            str(self.us_b.id)
+        )
+        
+        self.assertEqual(len(translations), 0)
+    
+    def test_suggest_translation_without_user(self):
+        """Test suggesting translation without user."""
+        translation = GradeTranslationService.suggest_translation(
+            source_grade_id=str(self.us_a.id),
+            target_grade_id=str(self.ects_a.id),
+            notes="Anonymous suggestion"
+        )
+        
+        self.assertIsNotNone(translation)
+        self.assertIsNone(translation.created_by)
+    
+    def test_suggest_translation_confidence_calculation(self):
+        """Test confidence calculation for various GPA differences."""
+        # Create grades with different GPAs
+        us_d = GradeValue.objects.create(
+            grade_scale=self.us_scale,
+            label="D",
+            numeric_value=1.0,
+            gpa_equivalent=1.0,
+            order=4
+        )
+        
+        # Large GPA difference (4.0 - 1.0 = 3.0)
+        translation = GradeTranslationService.suggest_translation(
+            source_grade_id=str(self.us_a.id),
+            target_grade_id=str(self.ects_c.id)  # Different GPA
+        )
+        
+        # Confidence should be between 0 and 1
+        self.assertGreaterEqual(translation.confidence, 0.0)
+        self.assertLessEqual(translation.confidence, 1.0)
+    
+    def test_check_eligibility_with_closest_grade_match(self):
+        """Test eligibility check finds closest grade when exact match missing."""
+        result = GradeTranslationService.check_eligibility_with_translation(
+            student_gpa=3.75,  # Between B (3.0) and A (4.0)
+            student_scale_id=str(self.us_scale.id),
+            required_gpa=3.0,
+            required_scale_id=str(self.us_scale.id)
+        )
+        
+        # Should find closest grade and still check eligibility
+        self.assertIn('eligible', result)
+        self.assertIn('student_gpa_equivalent', result)
+    
+    def test_check_eligibility_empty_scale(self):
+        """Test eligibility check with empty grade scale."""
+        empty_scale = GradeScale.objects.create(
+            name="Empty for Eligibility",
+            code="EMPTY_ELIG",
+            min_value=0.0,
+            max_value=10.0,
+            passing_value=5.0
+        )
+        
+        result = GradeTranslationService.check_eligibility_with_translation(
+            student_gpa=4.0,
+            student_scale_id=str(empty_scale.id),
+            required_gpa=3.0,
+            required_scale_id=str(self.us_scale.id)
+        )
+        
+        self.assertFalse(result['eligible'])
+        self.assertIn('reason', result)
+    
+    def test_find_closest_grade_with_ties(self):
+        """Test finding closest grade when multiple grades equidistant."""
+        # Add grades that create a tie scenario
+        us_b_minus = GradeValue.objects.create(
+            grade_scale=self.us_scale,
+            label="B-",
+            numeric_value=2.7,
+            gpa_equivalent=2.7,
+            order=5
+        )
+        
+        us_c_plus = GradeValue.objects.create(
+            grade_scale=self.us_scale,
+            label="C+",
+            numeric_value=2.3,
+            gpa_equivalent=2.3,
+            order=6
+        )
+        
+        # Find closest to 2.5 (equidistant from 2.3 and 2.7)
+        result = GradeTranslationService._find_closest_grade(
+            numeric_value=2.5,
+            grade_scale=self.us_scale
+        )
+        
+        # Should return one of them (deterministic due to order)
+        self.assertIsNotNone(result)
+        self.assertIn(result.label, ['B-', 'C+'])
+    
+    def test_bulk_create_translations_with_duplicates(self):
+        """Test bulk create handles duplicate mappings gracefully."""
+        mapping = {
+            'A': 'A',
+            'A': 'A',  # Duplicate key (dict will have only one)
+        }
+        
+        translations = GradeTranslationService.bulk_create_translations(
+            source_scale_id=str(self.us_scale.id),
+            target_scale_id=str(self.ects_scale.id),
+            mapping=mapping
+        )
+        
+        # Should create only 1 translation
+        self.assertEqual(len(translations), 1)
+    
+    def test_translate_grade_performance_with_large_scale(self):
+        """Test translation performance with large grade scale."""
+        # Create a large target scale
+        large_scale = GradeScale.objects.create(
+            name="Large Scale",
+            code="LARGE",
+            min_value=0.0,
+            max_value=100.0,
+            passing_value=50.0
+        )
+        
+        # Add many grade values
+        for i in range(50):
+            GradeValue.objects.create(
+                grade_scale=large_scale,
+                label=f"Grade_{i}",
+                numeric_value=float(i),
+                gpa_equivalent=float(i) / 25.0,  # Scale to 0-4
+                order=i
+            )
+        
+        # Translation should still work efficiently
+        result = GradeTranslationService.translate_grade(
+            source_grade_value_id=str(self.us_a.id),
+            target_scale_id=str(large_scale.id),
+            fallback_to_gpa=True
+        )
+        
+        self.assertIsNotNone(result)
+    
+    def test_get_gpa_equivalent_consistency(self):
+        """Test GPA equivalent is consistent across calls."""
+        gpa1 = GradeTranslationService.get_gpa_equivalent(str(self.us_a.id))
+        gpa2 = GradeTranslationService.get_gpa_equivalent(str(self.us_a.id))
+        
+        self.assertEqual(gpa1, gpa2)
+        self.assertEqual(gpa1, 4.0)
+    
+    def test_translate_by_gpa_equivalent_all_same_gpa(self):
+        """Test GPA translation when all target grades have same GPA."""
+        uniform_scale = GradeScale.objects.create(
+            name="Uniform Scale",
+            code="UNIFORM",
+            min_value=0.0,
+            max_value=10.0,
+            passing_value=5.0
+        )
+        
+        # Create grades with same GPA equivalent
+        for i in range(3):
+            GradeValue.objects.create(
+                grade_scale=uniform_scale,
+                label=f"Grade_{i}",
+                numeric_value=float(i),
+                gpa_equivalent=3.0,  # All same
+                order=i
+            )
+        
+        result = GradeTranslationService._translate_by_gpa_equivalent(
+            self.us_b,  # GPA 3.0
+            uniform_scale
+        )
+        
+        # Should find one (the first with min diff = 0)
+        self.assertIsNotNone(result)
+    
+    def test_conversion_rates_preserve_decimal_precision(self):
+        """Test that conversion calculations preserve decimal precision."""
+        us_b_plus = GradeValue.objects.create(
+            grade_scale=self.us_scale,
+            label="B+",
+            numeric_value=3.33333,
+            gpa_equivalent=3.33333,
+            order=10
+        )
+        
+        gpa = GradeTranslationService.get_gpa_equivalent(str(us_b_plus.id))
+        
+        # Should preserve decimal precision
+        self.assertAlmostEqual(gpa, 3.33333, places=5)
+    
+    def test_eligibility_check_equal_gpas(self):
+        """Test eligibility when student and required GPA are exactly equal."""
+        result = GradeTranslationService.check_eligibility_with_translation(
+            student_gpa=3.0,
+            student_scale_id=str(self.us_scale.id),
+            required_gpa=3.0,
+            required_scale_id=str(self.us_scale.id)
+        )
+        
+        # Equal GPA should be eligible (>=)
+        self.assertTrue(result['eligible'])
+        self.assertEqual(result['student_gpa_equivalent'], 3.0)
+        self.assertEqual(result['required_gpa_equivalent'], 3.0)
+    
+    def test_bulk_create_updates_existing_translations(self):
+        """Test bulk create updates existing translations."""
+        mapping = {'A': 'A', 'B': 'B'}
+        
+        # Create initial translations
+        trans1 = GradeTranslationService.bulk_create_translations(
+            source_scale_id=str(self.us_scale.id),
+            target_scale_id=str(self.ects_scale.id),
+            mapping=mapping,
+            user=self.user
+        )
+        
+        # Create again with same mapping
+        trans2 = GradeTranslationService.bulk_create_translations(
+            source_scale_id=str(self.us_scale.id),
+            target_scale_id=str(self.ects_scale.id),
+            mapping=mapping,
+            user=self.user
+        )
+        
+        # Should update existing, not create duplicates
+        self.assertEqual(len(trans1), 2)
+        self.assertEqual(len(trans2), 2)
+        
+        # IDs should match (same objects updated)
+        trans1_ids = {t.id for t in trans1}
+        trans2_ids = {t.id for t in trans2}
+        self.assertEqual(trans1_ids, trans2_ids)
 

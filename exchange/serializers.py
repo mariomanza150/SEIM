@@ -5,6 +5,7 @@ from .models import (
     ApplicationStatus,
     Comment,
     Program,
+    SavedSearch,
     TimelineEvent,
 )
 from .services import ApplicationService
@@ -141,3 +142,34 @@ class TimelineEventSerializer(serializers.ModelSerializer):
     class Meta:
         model = TimelineEvent
         fields = "__all__"
+
+
+class SavedSearchSerializer(serializers.ModelSerializer):
+    """Serializer for SavedSearch model."""
+    
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    
+    class Meta:
+        model = SavedSearch
+        fields = "__all__"
+    
+    def create(self, validated_data):
+        """Set user from request context."""
+        request = self.context.get('request')
+        if request and request.user:
+            validated_data['user'] = request.user
+        return super().create(validated_data)
+
+
+class CalendarEventSerializer(serializers.Serializer):
+    """Serializer for calendar events in FullCalendar format."""
+    
+    id = serializers.CharField()
+    title = serializers.CharField()
+    start = serializers.DateTimeField()
+    end = serializers.DateTimeField(required=False, allow_null=True)
+    url = serializers.URLField(required=False, allow_null=True)
+    className = serializers.CharField(required=False, allow_null=True)
+    backgroundColor = serializers.CharField(required=False, allow_null=True)
+    borderColor = serializers.CharField(required=False, allow_null=True)
+    allDay = serializers.BooleanField(default=False)

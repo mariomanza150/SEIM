@@ -1,0 +1,17 @@
+{% load wagtailimages_tags %}
+<div class="testimonial-block my-5 text-center">
+    <blockquote class="blockquote">
+        <p class="mb-4">"{{ value.quote }}"</p>
+        <footer class="blockquote-footer">
+            {% if value.author_image %}
+            {% image value.author_image fill-80x80 class="rounded-circle mb-2" %}
+            <br>
+            {% endif %}
+            <strong>{{ value.author }}</strong>
+            {% if value.author_title %}
+            <br><small>{{ value.author_title }}</small>
+            {% endif %}
+        </footer>
+    </blockquote>
+</div>
+

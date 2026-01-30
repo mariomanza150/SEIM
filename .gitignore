@@ -231,4 +231,29 @@ htmlcov/
 .coverage
 .coverage.*
 coverage.xml
-*.cover 
+*.cover
+
+# AI Agent directories (various tools)
+.agent/
+.agentvibes/
+.augment/
+.claude/
+.clinerules/
+.codex/
+.crush/
+.gemini/
+.iflow/
+.opencode/
+.qwen/
+.rovodev/
+.trae/
+.windsurf/
+.kilocodemodes
+.roomodes
+.mcp.json
+
+# Coverage HTML reports
+coverage/
+
+# Jest cache
+.jest-cache/ 

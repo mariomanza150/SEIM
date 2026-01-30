@@ -1,0 +1,13 @@
+[
+  {
+    "student_username": "student1",
+    "program_name": "Erasmus+ Program",
+    "status": "draft"
+  },
+  {
+    "student_username": "student2",
+    "program_name": "Summer Exchange Program",
+    "status": "submitted"
+  }
+]
+

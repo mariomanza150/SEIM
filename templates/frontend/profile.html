@@ -83,7 +83,7 @@
                                 <span class="badge bg-primary">{{ user.role|title }}</span>
                             </p>
                         </div>
-                        {% if user.profile and user.role == "student" %}
+                        {% if user.profile and user.is_student %}
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Student ID</label>
                                 <p class="form-control-plaintext">{{ user.profile.student_id|default:"Not provided" }}</p>

@@ -19,8 +19,10 @@ from .views import (
     ProfileView,
     ProfileViewSet,
     RegistrationView,
+    ResendVerificationEmailView,
     RevokeSessionView,
     RoleViewSet,
+    UserPermissionsView,
     UserSessionsView,
     UserSessionViewSet,
     UserSettingsView,
@@ -43,6 +45,7 @@ urlpatterns = [
 
     path("register/", RegistrationView.as_view(), name="register"),
     path("verify-email/", EmailVerificationView.as_view(), name="verify-email"),
+    path("resend-verification/", ResendVerificationEmailView.as_view(), name="resend_verification"),
     path("login/", LoginView.as_view(), name="login"),
     path(
         "password-reset-request/",
@@ -59,6 +62,9 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
     path("change-password/", ChangePasswordView.as_view(), name="change_password"),
     path("password-reset/", password_reset_view, name="password-reset"),
+
+    # Permissions endpoint for frontend
+    path("permissions/", UserPermissionsView.as_view(), name="user_permissions"),
 
     # Settings endpoints
     path("appearance-settings/", AppearanceSettingsView.as_view(), name="appearance_settings"),

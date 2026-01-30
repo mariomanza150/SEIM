@@ -46,3 +46,55 @@ def send_notification_by_id(notification_id):
         return True
     except Notification.DoesNotExist:
         return False
+
+
+@shared_task
+def send_deadline_reminders():
+    """
+    Send reminder notifications for upcoming deadlines.
+    
+    This task should be run periodically (e.g., every 15 minutes) via Celery Beat.
+    It finds all reminders that are due and haven't been sent yet, then creates
+    notifications for them.
+    """
+    from django.utils import timezone
+    from .models import Reminder
+    from .services import NotificationService
+    
+    now = timezone.now()
+    
+    # Get all unsent reminders that are due
+    due_reminders = Reminder.objects.filter(
+        remind_at__lte=now,
+        sent=False
+    ).select_related('user')
+    
+    sent_count = 0
+    
+    for reminder in due_reminders:
+        try:
+            # Create notification for this reminder
+            notification = NotificationService.send_notification(
+                recipient=reminder.user,
+                title=f"Reminder: {reminder.event_title}",
+                message=f"This is a reminder about {reminder.event_title}",
+                notification_type="both",  # Send both email and in-app
+                category="warning",  # Reminders are warnings
+                data={
+                    'event_type': reminder.event_type,
+                    'event_id': str(reminder.event_id),
+                }
+            )
+            
+            # Mark reminder as sent
+            reminder.sent = True
+            reminder.notification = notification
+            reminder.save()
+            
+            sent_count += 1
+            
+        except Exception as e:
+            # Log error but continue with other reminders
+            print(f"Error sending reminder {reminder.id}: {e}")
+    
+    return sent_count

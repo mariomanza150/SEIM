@@ -1,0 +1,149 @@
+{% load static wagtailcore_tags wagtailuserbar %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ page.title }}{% endblock %} | UAdeC - Intercambio Académico</title>
+    
+    {% block meta_tags %}
+        <meta name="description" content="{{ page.search_description }}">
+    {% endblock %}
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- UAdeC Custom Styles -->
+    <link rel="stylesheet" href="{% static 'css/uadec-styles.css' %}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% wagtailuserbar %}
+    
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <i class="bi bi-mortarboard-fill me-2" style="font-size: 1.5rem;"></i>
+                <span>UAdeC Intercambio Académico</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/programas/">Programas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/blog/">Noticias</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/preguntas-frecuentes/">FAQ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/contacto/">Contacto</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-light text-dark ms-2 px-4" href="/como-aplicar/">
+                            <i class="bi bi-file-earmark-check me-1"></i> ¿Cómo Aplicar?
+                        </a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Mi Cuenta
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                                <li><a class="dropdown-item" href="/seim/dashboard/">Dashboard</a></li>
+                                <li><a class="dropdown-item" href="/seim/applications/">Mis Solicitudes</a></li>
+                                <li><a class="dropdown-item" href="/seim/profile/">Mi Perfil</a></li>
+                                {% if user.is_staff %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="/cms/">CMS Admin</a></li>
+                                    <li><a class="dropdown-item" href="/seim/admin/">Administración</a></li>
+                                {% endif %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/seim/logout/">Cerrar Sesión</a></li>
+                            </ul>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    {% block content %}{% endblock %}
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-white mt-5 py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5 class="text-uppercase mb-3" style="color: var(--uadec-gold);">
+                        <i class="bi bi-mortarboard-fill me-2"></i>UAdeC
+                    </h5>
+                    <p class="mb-1"><strong>Universidad Autónoma de Coahuila</strong></p>
+                    <p class="mb-3 small">Dirección de Intercambio Académico</p>
+                    <p class="small text-white-50">
+                        <i class="bi bi-geo-alt-fill me-2"></i>Saltillo, Coahuila, México
+                    </p>
+                </div>
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h6 class="text-uppercase mb-3" style="color: var(--uadec-gold);">Enlaces Rápidos</h6>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2"><a href="/programas/" class="text-white-50 text-decoration-none"><i class="bi bi-chevron-right me-1"></i>Programas</a></li>
+                        <li class="mb-2"><a href="/como-aplicar/" class="text-white-50 text-decoration-none"><i class="bi bi-chevron-right me-1"></i>¿Cómo Aplicar?</a></li>
+                        <li class="mb-2"><a href="/preguntas-frecuentes/" class="text-white-50 text-decoration-none"><i class="bi bi-chevron-right me-1"></i>FAQ</a></li>
+                        <li class="mb-2"><a href="/contacto/" class="text-white-50 text-decoration-none"><i class="bi bi-chevron-right me-1"></i>Contacto</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h6 class="text-uppercase mb-3" style="color: var(--uadec-gold);">Síguenos</h6>
+                    <div class="d-flex gap-3 mb-3">
+                        <a href="https://facebook.com/uadec" target="_blank" class="text-white-50" style="font-size: 1.5rem;">
+                            <i class="bi bi-facebook"></i>
+                        </a>
+                        <a href="https://twitter.com/uadec" target="_blank" class="text-white-50" style="font-size: 1.5rem;">
+                            <i class="bi bi-twitter-x"></i>
+                        </a>
+                        <a href="https://instagram.com/uadec" target="_blank" class="text-white-50" style="font-size: 1.5rem;">
+                            <i class="bi bi-instagram"></i>
+                        </a>
+                    </div>
+                    <p class="small mb-0">
+                        <a href="https://www.uadec.mx/" class="text-decoration-none" style="color: var(--uadec-gold);" target="_blank">
+                            <i class="bi bi-globe me-1"></i>www.uadec.mx
+                        </a>
+                    </p>
+                </div>
+            </div>
+            <hr class="my-4" style="border-color: var(--uadec-gold); opacity: 0.3;">
+            <div class="row">
+                <div class="col-12 text-center">
+                    <p class="mb-0 small text-white-50">
+                        © 2025 Universidad Autónoma de Coahuila - Todos los derechos reservados
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

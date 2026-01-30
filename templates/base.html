@@ -128,6 +128,7 @@
         <!-- Custom CSS -->
         {% load static %}
         <link href="{% static 'css/main.css' %}" rel="stylesheet">
+        <link href="{% static 'css/accessibility.css' %}" rel="stylesheet">
         {% load js_reverse %}
         {% block extra_css %}{% endblock %}
         
@@ -143,11 +144,14 @@
         <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style">
 </head>
 <body class="{% if user.is_authenticated %}authenticated{% endif %}" {% if user.is_authenticated %}data-user-id="{{ user.id }}"{% endif %}>
+    <!-- Skip to main content link for keyboard navigation -->
+    <a href="#main-content" class="skip-to-main">Skip to main content</a>
+    
     <!-- Navigation -->
     {% include 'components/navigation/navbar.html' %}
 
     <!-- Main Content -->
-    <main class="container-fluid py-4" role="main">
+    <main class="container-fluid py-4" role="main" id="main-content" tabindex="-1">
         <!-- Messages -->
         {% include 'components/messages.html' %}
         
@@ -157,6 +161,11 @@
 
     <!-- Footer -->
     {% include 'components/footer.html' %}
+    
+    <!-- Notification Center -->
+    {% if user.is_authenticated %}
+        {% include 'components/notification-center.html' %}
+    {% endif %}
 
     <!-- jQuery (required for some legacy components like dynforms) -->
     {% block jquery %}
@@ -169,6 +178,15 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Theme Manager -->
     <script src="{% static 'js/theme-manager.js' %}"></script>
+    
+    <!-- WebSocket Client -->
+    <script src="{% static 'js/modules/websocket-client.js' %}"></script>
+    
+    <!-- Toast Notifications -->
+    <script src="{% static 'js/modules/toast-notifications.js' %}"></script>
+    
+    <!-- Notification Center -->
+    <script src="{% static 'js/modules/notification-center.js' %}"></script>
     
     <!-- Custom JS -->
     {# Remove direct main.js and auth.js includes #}
@@ -265,8 +283,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         ? `${user.first_name} ${user.last_name}` 
                         : user.username;
                     document.querySelectorAll('.user-username').forEach(el => el.textContent = displayName);
-                    if (user.role === 'admin') {
+                    
+                    // Use Auth.isCoordinator() and Auth.isAdmin() from permissions
+                    if (window.Auth && window.Auth.isAdmin && window.Auth.isAdmin()) {
                         document.querySelectorAll('.admin-nav').forEach(el => el.style.display = 'block');
+                    }
+                    if (window.Auth && window.Auth.isCoordinator && window.Auth.isCoordinator()) {
+                        document.querySelectorAll('.coordinator-nav').forEach(el => el.style.display = 'block');
                     }
                 })
                 .catch(error => {
@@ -312,7 +335,167 @@ document.addEventListener('DOMContentLoaded', function() {
             document.head.appendChild(script);
         }
     }, 2000);
+    
+    // Initialize WebSocket for authenticated users
+    if (isAuthenticated) {
+        initializeWebSocket();
+        initializeNotificationCenter();
+    }
 });
+
+// WebSocket initialization
+function initializeWebSocket() {
+    // Determine WebSocket URL (ws:// for http, wss:// for https)
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/notifications/`;
+    
+    // Create WebSocket client
+    window.wsClient = new WebSocketClient(wsUrl, {
+        reconnectInterval: 1000,
+        maxReconnectInterval: 30000,
+        maxReconnectAttempts: 10
+    });
+    
+    // Handle connection events
+    wsClient.on('connected', () => {
+        console.log('WebSocket: Connected successfully');
+        updateConnectionStatus('connecting');
+    });
+    
+    wsClient.on('ready', (data) => {
+        console.log('WebSocket: Ready', data);
+        updateConnectionStatus('connected');
+    });
+    
+    wsClient.on('disconnected', () => {
+        console.log('WebSocket: Disconnected');
+        updateConnectionStatus('disconnected');
+    });
+    
+    wsClient.on('reconnecting', (attempt) => {
+        console.log(`WebSocket: Reconnecting (attempt ${attempt})`);
+        updateConnectionStatus('reconnecting');
+    });
+    
+    wsClient.on('error', (error) => {
+        console.error('WebSocket: Error', error);
+        updateConnectionStatus('error');
+    });
+    
+    // Handle incoming notifications
+    wsClient.on('notification', (notification) => {
+        console.log('WebSocket: New notification', notification);
+        
+        // Show toast notification
+        if (window.toastNotifications) {
+            window.toastNotifications.show(notification);
+        }
+        
+        // Update notification badge
+        updateNotificationBadge();
+        
+        // Emit custom event for notification center
+        const event = new CustomEvent('notification-received', {
+            detail: notification
+        });
+        document.dispatchEvent(event);
+    });
+    
+    wsClient.on('notification_read', (notificationId) => {
+        console.log('WebSocket: Notification marked as read', notificationId);
+        updateNotificationBadge();
+    });
+    
+    // Connect to WebSocket
+    wsClient.connect();
+    
+    // Make WebSocket client available for Notification Center
+    window.wsClient = wsClient;
+}
+
+// Initialize Notification Center
+function initializeNotificationCenter() {
+    // Wait for DOM to be ready and NotificationCenter to be loaded
+    if (typeof NotificationCenter !== 'undefined') {
+        window.notificationCenter = new NotificationCenter();
+        console.log('NotificationCenter: Initialized');
+    } else {
+        // Retry after a short delay if NotificationCenter not loaded yet
+        setTimeout(initializeNotificationCenter, 100);
+    }
+}
+
+// Update notification badge count
+function updateNotificationBadge() {
+    const accessToken = localStorage.getItem('seim_access_token');
+    if (!accessToken) return;
+    
+    fetch('/api/notifications/unread_count/', {
+        headers: {
+            'Authorization': `Bearer ${accessToken}`
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        const badge = document.querySelector('.notification-badge');
+        if (badge) {
+            const count = data.count || 0;
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error updating notification badge:', error);
+    });
+}
+
+// Update WebSocket connection status indicator
+function updateConnectionStatus(status) {
+    const statusIcon = document.getElementById('wsStatusIcon');
+    const statusEl = document.getElementById('wsConnectionStatus');
+    
+    if (!statusIcon || !statusEl) return;
+    
+    // Remove all status classes
+    statusIcon.classList.remove('bi-wifi', 'bi-wifi-off', 'bi-arrow-repeat');
+    statusEl.classList.remove('text-success', 'text-danger', 'text-warning', 'text-muted');
+    
+    switch (status) {
+        case 'connected':
+            statusIcon.classList.add('bi-wifi');
+            statusEl.classList.add('text-success');
+            statusEl.title = 'Real-time notifications: Connected';
+            break;
+        case 'connecting':
+            statusIcon.classList.add('bi-arrow-repeat');
+            statusEl.classList.add('text-warning');
+            statusEl.title = 'Real-time notifications: Connecting...';
+            break;
+        case 'reconnecting':
+            statusIcon.classList.add('bi-arrow-repeat');
+            statusEl.classList.add('text-warning');
+            statusEl.title = 'Real-time notifications: Reconnecting...';
+            break;
+        case 'disconnected':
+            statusIcon.classList.add('bi-wifi-off');
+            statusEl.classList.add('text-muted');
+            statusEl.title = 'Real-time notifications: Disconnected';
+            break;
+        case 'error':
+            statusIcon.classList.add('bi-wifi-off');
+            statusEl.classList.add('text-danger');
+            statusEl.title = 'Real-time notifications: Connection error';
+            break;
+        default:
+            statusIcon.classList.add('bi-wifi');
+            statusEl.classList.add('text-muted');
+            statusEl.title = 'Real-time notifications status';
+    }
+}
 </script>
     
     <!-- API Configuration -->

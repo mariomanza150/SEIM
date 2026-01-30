@@ -100,7 +100,7 @@ class TestCoreFunctionality(unittest.TestCase):
         self.driver.execute_script("window.localStorage.clear();")
         self.driver.execute_script("window.sessionStorage.clear();")
 
-        # Debug: Check current URL and page title
+        # Check current URL and page title
         print(f"Registration page URL: {self.driver.current_url}")
         print(f"Registration page title: {self.driver.title}")
 
@@ -183,7 +183,7 @@ class TestCoreFunctionality(unittest.TestCase):
         self.driver.execute_script("window.localStorage.clear();")
         self.driver.execute_script("window.sessionStorage.clear();")
 
-        # Debug: Check current URL and page title
+        # Check current URL and page title
         print(f"Login page URL: {self.driver.current_url}")
         print(f"Login page title: {self.driver.title}")
 

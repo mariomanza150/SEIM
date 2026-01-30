@@ -1,0 +1,40 @@
+{% extends "cms/base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="section-blue py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-10 mx-auto text-center">
+                <h1 class="display-4 fw-bold text-white mb-3">{{ page.title }}</h1>
+                {% if page.introduction %}
+                    <p class="lead text-white-75">{{ page.introduction }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Page Content -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                {% if page.body %}
+                    {% for block in page.body %}
+                        <div class="mb-4 fade-in-up">
+                            {% include_block block %}
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>En Construcción:</strong> El contenido de esta página se está actualizando.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

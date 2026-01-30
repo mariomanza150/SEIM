@@ -16,7 +16,7 @@ class Document(UUIDModel, TimeStampedModel):
     application = models.ForeignKey("exchange.Application", on_delete=models.CASCADE)
     type = models.ForeignKey(DocumentType, on_delete=models.CASCADE)
     file = models.FileField(upload_to="documents/")
-    uploaded_by = models.ForeignKey("accounts.User", on_delete=models.CASCADE)
+    uploaded_by = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="uploaded_documents")
     is_valid = models.BooleanField(default=False)
     validated_at = models.DateTimeField(null=True, blank=True)
 

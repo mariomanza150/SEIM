@@ -1,0 +1,16 @@
+{% load wagtailcore_tags %}
+<div class="two-column-block my-4">
+    <div class="row">
+        <div class="col-md-6">
+            {% for block in value.left_column.content %}
+                {% include_block block %}
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            {% for block in value.right_column.content %}
+                {% include_block block %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+

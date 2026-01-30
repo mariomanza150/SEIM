@@ -1,5 +1,8 @@
+import logging
 from datetime import timedelta
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
@@ -8,6 +11,8 @@ from .models import Notification, NotificationPreference, NotificationType
 from .tasks import (
     send_notification_by_id,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class NotificationService:
@@ -34,7 +39,7 @@ class NotificationService:
 
     @staticmethod
     def send_notification(recipient, title, message, notification_type="in_app", data=None,
-                         action_url=None, action_text="View Details"):
+                         action_url=None, action_text="View Details", category="info"):
         """
         Send a notification to a user with optional action link.
 
@@ -46,6 +51,7 @@ class NotificationService:
             data: Additional JSON data
             action_url: Direct link to related resource (e.g., '/applications/123/')
             action_text: Text for the action button (default: "View Details")
+            category: Notification category ('info', 'success', 'warning', 'error')
 
         Returns:
             Notification instance
@@ -62,14 +68,72 @@ class NotificationService:
             notification_type=notification_type,
             action_url=action_url,
             action_text=action_text,
-            data=data or {}
+            data=data or {},
+            category=category
         )
 
         # Send email notification if type is email or both
         if notification_type in ['email', 'both']:
             send_notification_by_id.delay(notification.id)
 
+        # Send real-time notification via WebSocket
+        NotificationService._broadcast_notification(recipient, notification)
+
         return notification
+    
+    @staticmethod
+    def _broadcast_notification(recipient, notification):
+        """
+        Broadcast notification to user's WebSocket channel via Django Channels.
+        
+        This method sends real-time notifications to connected clients through WebSocket.
+        If the user is not connected or WebSocket broadcasting fails, the notification
+        is still saved in the database and can be retrieved via API.
+        
+        Args:
+            recipient: User to send notification to
+            notification: Notification instance
+        """
+        try:
+            channel_layer = get_channel_layer()
+            if not channel_layer:
+                logger.warning("Channel layer not configured. WebSocket notifications disabled.")
+                return
+                
+            notification_group = f"notifications_{recipient.id}"
+            
+            # Prepare notification data for WebSocket
+            notification_data = {
+                'type': 'notification_new',
+                'notification': {
+                    'id': str(notification.id),
+                    'title': notification.title,
+                    'message': notification.message,
+                    'category': notification.category,
+                    'action_url': notification.action_url,
+                    'action_text': notification.action_text,
+                    'sent_at': notification.sent_at.isoformat(),
+                    'is_read': notification.is_read,
+                }
+            }
+            
+            # Send to user's notification group
+            async_to_sync(channel_layer.group_send)(
+                notification_group,
+                notification_data
+            )
+            
+            logger.debug(
+                f"Broadcast notification {notification.id} to user {recipient.id} via WebSocket"
+            )
+            
+        except Exception as e:
+            # Log error but don't fail the notification
+            # The notification is still saved in database and accessible via API
+            logger.error(
+                f"Failed to broadcast notification {notification.id} via WebSocket: {e}",
+                exc_info=True
+            )
 
     @staticmethod
     def send_bulk_notifications(recipients, title, message, notification_type="in_app"):

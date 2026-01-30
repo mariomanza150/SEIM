@@ -1,0 +1,168 @@
+{% extends "cms/base.html" %}
+{% load wagtailcore_tags wagtailimages_tags %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="section-blue text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <div class="d-flex align-items-center mb-3">
+                    {% if page.institution_logo %}
+                    {% image page.institution_logo fill-80x80 class="rounded me-3 bg-white p-2" %}
+                    {% endif %}
+                    <div>
+                        <h1 class="display-5 fw-bold text-white mb-2" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                            {{ page.institution_name }}
+                        </h1>
+                        <p class="lead mb-0">
+                            <i class="bi bi-geo-alt-fill me-2" style="color: var(--uadec-gold);"></i>
+                            {{ page.city }}{% if page.city %}, {% endif %}{{ page.country }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Info Bar -->
+<section class="bg-light py-3 border-bottom">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="p-2">
+                    <i class="bi bi-bookmark-star me-2" style="color: var(--uadec-gold);"></i>
+                    <strong>Tipo:</strong> {{ page.get_agreement_type_display }}
+                </div>
+            </div>
+            {% if page.start_date %}
+            <div class="col-md-3">
+                <div class="p-2">
+                    <i class="bi bi-calendar-check me-2" style="color: var(--uadec-blue);"></i>
+                    <strong>Vigente desde:</strong> {{ page.start_date|date:"Y" }}
+                </div>
+            </div>
+            {% endif %}
+            {% if page.available_for_students %}
+            <div class="col-md-3">
+                <div class="p-2">
+                    <i class="bi bi-mortarboard-fill me-2" style="color: var(--uadec-gold);"></i>
+                    <strong>Estudiantes</strong> <i class="bi bi-check-circle-fill text-success"></i>
+                </div>
+            </div>
+            {% endif %}
+            {% if page.institution_website %}
+            <div class="col-md-3">
+                <div class="p-2">
+                    <a href="{{ page.institution_website }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary">
+                        <i class="bi bi-globe me-2"></i>Sitio Web
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Main Content -->
+            <div class="col-lg-8">
+                {% if page.introduction %}
+                <div class="mb-5">
+                    <h2 class="fw-bold text-primary mb-3">Sobre el Convenio</h2>
+                    <p class="lead">{{ page.introduction }}</p>
+                </div>
+                {% endif %}
+                
+                {% for block in page.body %}
+                    <div class="mb-4 fade-in-up">
+                        {% include_block block %}
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Availability Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header" style="background: var(--uadec-blue); color: white; font-weight: 600;">
+                        <i class="bi bi-info-circle me-2"></i>Disponibilidad
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">
+                                <i class="bi bi-{% if page.available_for_students %}check-circle-fill text-success{% else %}x-circle text-muted{% endif %} me-2"></i>
+                                Estudiantes
+                            </li>
+                            <li class="mb-2">
+                                <i class="bi bi-{% if page.available_for_faculty %}check-circle-fill text-success{% else %}x-circle text-muted{% endif %} me-2"></i>
+                                Profesores/Personal
+                            </li>
+                            <li class="mb-0">
+                                <i class="bi bi-{% if page.available_for_research %}check-circle-fill text-success{% else %}x-circle text-muted{% endif %} me-2"></i>
+                                Investigación
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Related Programs -->
+                {% if page.related_programs.all %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header" style="background: var(--uadec-gold); color: white; font-weight: 600;">
+                        <i class="bi bi-journal-text me-2"></i>Programas Relacionados
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            {% for program in page.related_programs.all %}
+                            <li class="mb-2 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+                                <a href="/seim/programs/{{ program.id }}/" class="text-decoration-none">
+                                    <i class="bi bi-arrow-right-circle me-2"></i>{{ program.name }}
+                                </a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- CTA Card -->
+                {% if page.available_for_students %}
+                <div class="card shadow-lg" style="background: linear-gradient(135deg, var(--uadec-gold) 0%, var(--uadec-gold-dark) 100%); border: none;">
+                    <div class="card-body text-center text-white p-4">
+                        <i class="bi bi-airplane-fill display-4 mb-3"></i>
+                        <h5 class="fw-bold mb-3">¿Te Interesa?</h5>
+                        <p class="mb-4">Explora programas disponibles bajo este convenio</p>
+                        <a href="/internacional/movilidad-estudiantil/programas/?country={{ page.country }}" class="btn btn-primary btn-lg px-4">
+                            <i class="bi bi-search me-2"></i>Ver Programas
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Breadcrumb -->
+<section class="py-3 bg-light border-top">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                {% for ancestor in page.get_ancestors %}
+                    {% if ancestor.depth > 2 %}
+                    <li class="breadcrumb-item"><a href="{% pageurl ancestor %}">{{ ancestor.title }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="breadcrumb-item active" aria-current="page">{{ page.institution_name }}</li>
+            </ol>
+        </nav>
+    </div>
+</section>
+{% endblock %}
+

@@ -1,0 +1,158 @@
+# Spanish translations for SEIM.
+# Copyright (C) 2025 SEIM Team
+# This file is distributed under the same license as the SEIM package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: SEIM 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-11-12 12:00+0000\n"
+"PO-Revision-Date: 2025-11-12 12:00+0000\n"
+"Last-Translator: SEIM Team\n"
+"Language-Team: Spanish\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# Navigation
+msgid "Dashboard"
+msgstr "Panel de Control"
+
+msgid "Programs"
+msgstr "Programas"
+
+msgid "Applications"
+msgstr "Solicitudes"
+
+msgid "Calendar"
+msgstr "Calendario"
+
+msgid "Admin"
+msgstr "Administración"
+
+msgid "Form Builder"
+msgstr "Constructor de Formularios"
+
+msgid "Admin Dashboard"
+msgstr "Panel de Administración"
+
+msgid "Dynamic Form Builder"
+msgstr "Constructor Dinámico de Formularios"
+
+# User menu
+msgid "Profile"
+msgstr "Perfil"
+
+msgid "Settings"
+msgstr "Configuración"
+
+msgid "Preferences"
+msgstr "Preferencias"
+
+msgid "Logout"
+msgstr "Cerrar Sesión"
+
+msgid "Login"
+msgstr "Iniciar Sesión"
+
+msgid "Register"
+msgstr "Registrarse"
+
+# Common actions
+msgid "Refresh"
+msgstr "Actualizar"
+
+msgid "Retry"
+msgstr "Reintentar"
+
+msgid "Loading..."
+msgstr "Cargando..."
+
+msgid "Loading dashboard..."
+msgstr "Cargando panel de control..."
+
+# Dashboard
+msgid "Welcome back, <span id=\"user-name\"></span>!"
+msgstr "¡Bienvenido de nuevo, <span id=\"user-name\"></span>!"
+
+msgid "Role:"
+msgstr "Rol:"
+
+msgid "Connection Issue:"
+msgstr "Problema de Conexión:"
+
+msgid "Some dashboard data may not be available."
+msgstr "Algunos datos del panel pueden no estar disponibles."
+
+msgid "Quick Actions"
+msgstr "Acciones Rápidas"
+
+msgid "Recent Activity"
+msgstr "Actividad Reciente"
+
+# Language
+msgid "Language"
+msgstr "Idioma"
+
+msgid "Select language"
+msgstr "Seleccionar idioma"
+
+msgid "Select Language"
+msgstr "Seleccionar Idioma"
+
+msgid "Toggle theme"
+msgstr "Cambiar tema"
+
+# Model fields - Program
+msgid "Minimum GPA required for eligibility."
+msgstr "GPA mínimo requerido para elegibilidad."
+
+msgid "Required language for eligibility."
+msgstr "Idioma requerido para elegibilidad."
+
+msgid "Minimum language proficiency level (CEFR scale)."
+msgstr "Nivel mínimo de competencia lingüística (escala MCER)."
+
+msgid "Maximum age for eligibility."
+msgstr "Edad máxima para elegibilidad."
+
+msgid "Minimum age for eligibility."
+msgstr "Edad mínima para elegibilidad."
+
+msgid "Automatically reject applications that don't meet eligibility criteria."
+msgstr "Rechazar automáticamente solicitudes que no cumplan los criterios de elegibilidad."
+
+msgid "Is this program recurring (e.g., every semester)?"
+msgstr "¿Es este programa recurrente (por ejemplo, cada semestre)?"
+
+msgid "Dynamic application form for this program"
+msgstr "Formulario de solicitud dinámico para este programa"
+
+# Language levels
+msgid "Beginner (A1)"
+msgstr "Principiante (A1)"
+
+msgid "Elementary (A2)"
+msgstr "Elemental (A2)"
+
+msgid "Intermediate (B1)"
+msgstr "Intermedio (B1)"
+
+msgid "Upper Intermediate (B2)"
+msgstr "Intermedio Alto (B2)"
+
+msgid "Advanced (C1)"
+msgstr "Avanzado (C1)"
+
+msgid "Proficient (C2)"
+msgstr "Competente (C2)"
+
+# Model verbose names
+msgid "Application"
+msgstr "Solicitud"
+
+msgid "Applications"
+msgstr "Solicitudes"
+

@@ -1,0 +1,441 @@
+/**
+ * UAdeC (Universidad Autónoma de Coahuila) Official Color Scheme
+ * Based on official website: https://www.uadec.mx/
+ * 
+ * Primary: Royal Blue and Gold
+ * Last Updated: November 2025
+ */
+
+/* ============================================
+   COLOR VARIABLES
+   ============================================ */
+:root {
+    /* Primary Colors */
+    --uadec-gold: #C7A162;
+    --uadec-gold-light: #D4B177;
+    --uadec-gold-dark: #B08D4D;
+    
+    --uadec-blue: #2E5090;
+    --uadec-blue-light: #3B5FA5;
+    --uadec-blue-dark: #1E3A5F;
+    
+    /* Secondary Colors */
+    --uadec-navy: #1E3A5F;
+    --uadec-navy-dark: #152840;
+    
+    /* Accent Colors */
+    --uadec-orange: #E67E22;
+    --uadec-orange-light: #F39C12;
+    
+    /* Neutral Colors */
+    --uadec-white: #FFFFFF;
+    --uadec-light-gray: #F5F5F5;
+    --uadec-medium-gray: #E0E0E0;
+    --uadec-dark-gray: #333333;
+    --uadec-text: #2C3E50;
+    
+    /* Status Colors */
+    --uadec-success: #27AE60;
+    --uadec-warning: #F39C12;
+    --uadec-danger: #E74C3C;
+    --uadec-info: #3498DB;
+}
+
+/* ============================================
+   GLOBAL STYLES
+   ============================================ */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--uadec-text);
+    background-color: var(--uadec-white);
+    line-height: 1.6;
+}
+
+/* ============================================
+   NAVIGATION
+   ============================================ */
+
+/* Top Utility Bar */
+.navbar.navbar-dark.bg-primary {
+    background-color: var(--uadec-gold) !important;
+    border-bottom: 3px solid var(--uadec-gold-dark);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-dark .navbar-brand {
+    color: var(--uadec-white) !important;
+    font-weight: 600;
+    font-size: 1.25rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-dark .nav-link {
+    color: var(--uadec-white) !important;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+}
+
+.navbar-dark .nav-link:hover {
+    color: var(--uadec-navy) !important;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.navbar-dark .nav-link.btn-light {
+    background-color: var(--uadec-blue) !important;
+    color: var(--uadec-white) !important;
+    border: 2px solid var(--uadec-white);
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+}
+
+.navbar-dark .nav-link.btn-light:hover {
+    background-color: var(--uadec-blue-dark) !important;
+    border-color: var(--uadec-gold);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   HERO SECTIONS
+   ============================================ */
+.hero-block {
+    background: linear-gradient(135deg, var(--uadec-blue) 0%, var(--uadec-blue-dark) 100%);
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-left: 5px solid var(--uadec-gold);
+}
+
+.hero-block .display-4 {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.hero-block .lead {
+    font-size: 1.25rem;
+    opacity: 0.95;
+}
+
+/* Gold Hero Variant */
+.hero-gold {
+    background: linear-gradient(135deg, var(--uadec-gold) 0%, var(--uadec-gold-dark) 100%);
+    color: var(--uadec-white);
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.btn-primary {
+    background-color: var(--uadec-blue);
+    border-color: var(--uadec-blue);
+    color: var(--uadec-white);
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:hover {
+    background-color: var(--uadec-blue-dark);
+    border-color: var(--uadec-blue-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-secondary {
+    background-color: var(--uadec-gold);
+    border-color: var(--uadec-gold);
+    color: var(--uadec-white);
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background-color: var(--uadec-gold-dark);
+    border-color: var(--uadec-gold-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-outline-primary {
+    border-color: var(--uadec-blue);
+    color: var(--uadec-blue);
+    border-width: 2px;
+    font-weight: 600;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--uadec-blue);
+    border-color: var(--uadec-blue);
+    color: var(--uadec-white);
+}
+
+/* ============================================
+   CARDS & CONTENT BLOCKS
+   ============================================ */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-4px);
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--uadec-blue) 0%, var(--uadec-blue-light) 100%);
+    color: var(--uadec-white);
+    font-weight: 600;
+    border-bottom: 3px solid var(--uadec-gold);
+}
+
+/* CTA Blocks */
+.cta-block {
+    background: linear-gradient(135deg, var(--uadec-light-gray) 0%, var(--uadec-white) 100%);
+    border-left: 5px solid var(--uadec-gold);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.cta-block h2 {
+    color: var(--uadec-blue);
+    font-weight: 700;
+}
+
+/* Process Steps */
+.process-step {
+    background-color: var(--uadec-white);
+    border: 2px solid var(--uadec-medium-gray);
+    border-radius: 8px;
+    padding: 2rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.process-step:hover {
+    border-color: var(--uadec-gold);
+    box-shadow: 0 4px 12px rgba(199, 161, 98, 0.2);
+}
+
+.process-step .step-number {
+    background: linear-gradient(135deg, var(--uadec-blue) 0%, var(--uadec-blue-dark) 100%);
+    color: var(--uadec-white);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    border: 3px solid var(--uadec-gold);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================================
+   SECTIONS & BACKGROUNDS
+   ============================================ */
+.bg-light {
+    background-color: var(--uadec-light-gray) !important;
+}
+
+.bg-primary {
+    background-color: var(--uadec-blue) !important;
+}
+
+.bg-secondary {
+    background-color: var(--uadec-gold) !important;
+}
+
+.section-gold {
+    background: linear-gradient(135deg, var(--uadec-gold-light) 0%, var(--uadec-gold) 100%);
+    padding: 4rem 0;
+}
+
+.section-blue {
+    background: linear-gradient(135deg, var(--uadec-blue) 0%, var(--uadec-navy) 100%);
+    color: var(--uadec-white);
+    padding: 4rem 0;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+.bg-dark {
+    background-color: var(--uadec-navy) !important;
+}
+
+footer.bg-dark {
+    border-top: 4px solid var(--uadec-gold);
+    background: linear-gradient(180deg, var(--uadec-navy) 0%, var(--uadec-navy-dark) 100%);
+}
+
+footer a {
+    color: var(--uadec-gold-light) !important;
+    transition: color 0.3s ease;
+}
+
+footer a:hover {
+    color: var(--uadec-white) !important;
+}
+
+/* ============================================
+   LINKS
+   ============================================ */
+a {
+    color: var(--uadec-blue);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: var(--uadec-blue-dark);
+    text-decoration: underline;
+}
+
+/* ============================================
+   BADGES & LABELS
+   ============================================ */
+.badge-primary {
+    background-color: var(--uadec-blue);
+}
+
+.badge-secondary {
+    background-color: var(--uadec-gold);
+}
+
+.badge-success {
+    background-color: var(--uadec-success);
+}
+
+.badge-warning {
+    background-color: var(--uadec-orange);
+}
+
+/* ============================================
+   FORMS
+   ============================================ */
+.form-control:focus {
+    border-color: var(--uadec-gold);
+    box-shadow: 0 0 0 0.2rem rgba(199, 161, 98, 0.25);
+}
+
+.form-label {
+    color: var(--uadec-text);
+    font-weight: 600;
+}
+
+/* ============================================
+   TABLES
+   ============================================ */
+.table thead {
+    background-color: var(--uadec-blue);
+    color: var(--uadec-white);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(199, 161, 98, 0.05);
+}
+
+/* ============================================
+   ALERTS
+   ============================================ */
+.alert-primary {
+    background-color: rgba(46, 80, 144, 0.1);
+    border-left: 4px solid var(--uadec-blue);
+    color: var(--uadec-blue-dark);
+}
+
+.alert-success {
+    background-color: rgba(39, 174, 96, 0.1);
+    border-left: 4px solid var(--uadec-success);
+}
+
+.alert-warning {
+    background-color: rgba(243, 156, 18, 0.1);
+    border-left: 4px solid var(--uadec-orange);
+}
+
+.alert-danger {
+    background-color: rgba(231, 76, 60, 0.1);
+    border-left: 4px solid var(--uadec-danger);
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+.text-primary {
+    color: var(--uadec-blue) !important;
+}
+
+.text-secondary {
+    color: var(--uadec-gold) !important;
+}
+
+.border-primary {
+    border-color: var(--uadec-blue) !important;
+}
+
+.border-secondary {
+    border-color: var(--uadec-gold) !important;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+    .navbar-brand {
+        font-size: 1rem;
+    }
+    
+    .hero-block .display-4 {
+        font-size: 2rem;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+        padding: 0.5rem 1.5rem;
+    }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+    .navbar,
+    footer,
+    .btn {
+        display: none;
+    }
+    
+    body {
+        color: #000;
+        background: #fff;
+    }
+}
+

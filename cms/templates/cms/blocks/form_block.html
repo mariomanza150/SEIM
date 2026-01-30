@@ -1,0 +1,16 @@
+{% load wagtailcore_tags %}
+<div class="embedded-form-block my-4">
+    <div class="card">
+        <div class="card-body">
+            {% if value.show_title %}
+            <h3 class="card-title">{{ value.form_page.title }}</h3>
+            {% endif %}
+            <p class="text-muted">
+                <a href="{% pageurl value.form_page %}" class="btn btn-primary">
+                    Go to Form
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+

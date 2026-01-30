@@ -1,0 +1,130 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: seim_e2e
+      POSTGRES_USER: seimuser
+      POSTGRES_PASSWORD: seimpass
+    volumes:
+      - postgres_e2e_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U seimuser -d seim_e2e"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - e2e_network
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: seim-redis-e2e
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_e2e_data:/data
+    networks:
+      - e2e_network
+
+  web:
+    build: .
+    command: bash -c "python manage.py collectstatic --noinput && python manage.py migrate && daphne -b 0.0.0.0 -p 8000 seim.asgi:application"
+    volumes:
+      - .:/app
+      - static_e2e_volume:/app/staticfiles
+      - media_e2e_volume:/app/media
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DJANGO_SETTINGS_MODULE=seim.settings.development
+      - DJANGO_ENV=e2e_test
+      - DEBUG=true
+      - DATABASE_URL=postgresql://seimuser:seimpass@db:5432/seim_e2e
+      - REDIS_URL=redis://redis:6379/0
+      - DOCKER_ENV=true
+      - SECRET_KEY=e2e-test-secret-key-for-testing-only
+    networks:
+      - e2e_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  e2e_playwright:
+    build:
+      context: .
+      dockerfile: Dockerfile.e2e
+    command: >
+      bash -c "
+        echo 'Waiting for web server to be ready...' &&
+        until curl -f http://web:8000/ > /dev/null 2>&1; do
+          echo 'Web server not ready yet, waiting...'
+          sleep 2
+        done &&
+        echo 'Web server is ready!' &&
+        echo 'Running E2E tests...' &&
+        pytest tests/e2e_playwright/ 
+          -v 
+          --base-url=http://web:8000
+          --browser=chromium
+          --headed=false
+          --html=tests/e2e_playwright/reports/report.html
+          --self-contained-html
+          -n auto
+          --maxfail=5
+      "
+    volumes:
+      - .:/app
+      - e2e_screenshots:/app/tests/e2e_playwright/screenshots
+      - ./tests/e2e_playwright/videos:/app/tests/e2e_playwright/videos
+      - e2e_reports:/app/tests/e2e_playwright/reports
+      - e2e_visual:/app/tests/e2e_playwright/visual
+    depends_on:
+      web:
+        condition: service_healthy
+    environment:
+      - BASE_URL=http://web:8000
+      - DOCKER_ENV=true
+      - HEADLESS=true
+      - WORKERS=4
+      - RETRIES=2
+      - RECORD_VIDEO=on_failure
+      - VISUAL_THRESHOLD=0.1
+    networks:
+      - e2e_network
+    profiles:
+      - e2e
+
+networks:
+  e2e_network:
+    driver: bridge
+
+volumes:
+  postgres_e2e_data:
+  redis_e2e_data:
+  static_e2e_volume:
+  media_e2e_volume:
+  e2e_screenshots:
+  # e2e_videos:  # Changed to bind mount - videos now saved directly to host
+  e2e_reports:
+  e2e_visual:
+

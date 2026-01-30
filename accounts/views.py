@@ -1,9 +1,12 @@
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema, extend_schema_field
 from rest_framework import generics, status, viewsets
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.throttling import BurstRateThrottle
@@ -12,15 +15,21 @@ from .models import Permission, Profile, Role, UserSession, UserSettings
 from .serializers import (
     AppearanceSettingsSerializer,
     ChangePasswordSerializer,
+    DeleteAccountResponseSerializer,
     EmailVerificationSerializer,
     LoginSerializer,
+    LogoutResponseSerializer,
+    LogoutSerializer,
     NotificationSettingsSerializer,
     PasswordResetConfirmSerializer,
     PasswordResetRequestSerializer,
     PermissionSerializer,
     PrivacySettingsSerializer,
     ProfileSerializer,
+    ProfileUpdateRequestSerializer,
+    ProfileUpdateResponseSerializer,
     RegistrationSerializer,
+    RevokeSessionResponseSerializer,
     RoleSerializer,
     UserSerializer,
     UserSessionSerializer,
@@ -214,7 +223,12 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 class ProfileUpdateView(generics.GenericAPIView):
     """View for updating user account information (email, first_name, last_name)."""
     permission_classes = [IsAuthenticated]
+    serializer_class = ProfileUpdateRequestSerializer
 
+    @extend_schema(
+        request=ProfileUpdateRequestSerializer,
+        responses={200: ProfileUpdateResponseSerializer, 400: ProfileUpdateResponseSerializer}
+    )
     def patch(self, request, *args, **kwargs):
         user = request.user
         data = request.data
@@ -249,8 +263,14 @@ class ProfileUpdateView(generics.GenericAPIView):
 
 
 class LogoutView(generics.GenericAPIView):
+    """API view for logging out users."""
     permission_classes = [IsAuthenticated]
+    serializer_class = LogoutSerializer
 
+    @extend_schema(
+        request=LogoutSerializer,
+        responses={200: LogoutResponseSerializer}
+    )
     def post(self, request, *args, **kwargs):
         try:
             refresh_token = request.data.get("refresh")
@@ -336,13 +356,20 @@ class UserSessionsView(generics.ListAPIView):
     pagination_class = None  # Disable pagination for sessions
 
     def get_queryset(self):
+        # Handle swagger schema generation
+        if getattr(self, 'swagger_fake_view', False):
+            return UserSession.objects.none()
         return UserSession.objects.filter(user=self.request.user, is_active=True)
 
 
 class RevokeSessionView(generics.GenericAPIView):
     """View for revoking a user session."""
     permission_classes = [IsAuthenticated]
+    serializer_class = RevokeSessionResponseSerializer
 
+    @extend_schema(
+        responses={200: RevokeSessionResponseSerializer, 404: RevokeSessionResponseSerializer}
+    )
     def post(self, request, session_id):
         try:
             session = UserSession.objects.get(
@@ -366,7 +393,11 @@ class RevokeSessionView(generics.GenericAPIView):
 class DeleteAccountView(generics.GenericAPIView):
     """View for deleting user account."""
     permission_classes = [IsAuthenticated]
+    serializer_class = DeleteAccountResponseSerializer
 
+    @extend_schema(
+        responses={200: DeleteAccountResponseSerializer}
+    )
     def delete(self, request):
         user = request.user
         # Soft delete by deactivating the user
@@ -403,9 +434,132 @@ class UserSessionViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        # Handle swagger schema generation
+        if getattr(self, 'swagger_fake_view', False):
+            return UserSession.objects.none()
         return UserSession.objects.filter(user=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserPermissionsView(APIView):
+    """
+    API endpoint to get current user's permissions.
+    Used by frontend JavaScript to determine what UI elements to show.
+    
+    GET /api/accounts/permissions/
+    
+    Returns:
+        {
+            "roles": ["student", "coordinator"],
+            "primary_role": "coordinator",
+            "permissions": ["view_own_applications", "create_application", ...],
+            "is_admin": false,
+            "is_coordinator": true,
+            "is_student": true
+        }
+    """
+    permission_classes = [IsAuthenticated]
+    
+    @extend_schema(
+        summary="Get user permissions",
+        description="Returns current user's roles and permissions for frontend use",
+        responses={200: {
+            "type": "object",
+            "properties": {
+                "roles": {"type": "array", "items": {"type": "string"}},
+                "primary_role": {"type": "string"},
+                "permissions": {"type": "array", "items": {"type": "string"}},
+                "is_admin": {"type": "boolean"},
+                "is_coordinator": {"type": "boolean"},
+                "is_student": {"type": "boolean"},
+            }
+        }}
+    )
+    def get(self, request):
+        user = request.user
+        return Response({
+            'roles': user.get_all_roles(),
+            'primary_role': user.primary_role,
+            'permissions': user.get_all_permissions(),
+            'is_admin': user.is_admin,
+            'is_coordinator': user.is_coordinator,
+            'is_student': user.is_student,
+        })
+
+
+class ResendVerificationEmailView(APIView):
+    """
+    API endpoint to resend verification email.
+    
+    POST /api/accounts/resend-verification/
+    Body: {"email": "user@example.com"}
+    
+    Rate limited to prevent abuse (1 request per 5 minutes per email).
+    """
+    permission_classes = []  # Allow unauthenticated
+    throttle_classes = [BurstRateThrottle]
+    
+    @extend_schema(
+        summary="Resend verification email",
+        description="Resend email verification link to user's email address",
+        request={
+            "type": "object",
+            "properties": {
+                "email": {"type": "string", "format": "email"}
+            },
+            "required": ["email"]
+        },
+        responses={
+            200: {"description": "Verification email sent"},
+            400: {"description": "Email already verified or not found"},
+            429: {"description": "Too many requests"}
+        }
+    )
+    def post(self, request):
+        email = request.data.get('email')
+        
+        if not email:
+            return Response(
+                {"error": "Email is required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        User = get_user_model()
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Don't reveal if email exists (security)
+            return Response(
+                {"message": "If the email exists, a verification link has been sent."},
+                status=status.HTTP_200_OK
+            )
+        
+        # Check if already verified
+        if user.is_email_verified:
+            return Response(
+                {"error": "Email is already verified"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Generate new token and send email
+        from accounts.services import AccountService
+        from notifications.services import NotificationService
+        
+        token = AccountService.generate_email_verification_token(user)
+        
+        NotificationService.send_notification(
+            recipient=user,
+            title="Email Verification Required",
+            message=f"Please verify your email using this token: {token}",
+            notification_type='email'
+        )
+        
+        return Response(
+            {"message": "Verification email sent successfully."},
+            status=status.HTTP_200_OK
+        )
