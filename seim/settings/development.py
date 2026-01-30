@@ -133,8 +133,38 @@ if env("EMAIL_BACKEND") == "django_ses.SESBackend":
 CELERY_BROKER_URL = env("CELERY_BROKER_URL")
 CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
 
-# CORS Configuration (permissive for development)
-CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins in development for easier testing
+# CORS Configuration for Vue.js SPA Development
+CORS_ALLOW_ALL_ORIGINS = False  # More secure - specify origins
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Vite dev server (Vue.js)
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",  # Alternative port
+    "http://127.0.0.1:3000",
+]
+CORS_ALLOW_CREDENTIALS = True
+
+# Allow all HTTP methods
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Allow common headers
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # Security Settings (relaxed for development)
 CSRF_COOKIE_SECURE = False

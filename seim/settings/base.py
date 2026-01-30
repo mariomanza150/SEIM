@@ -106,7 +106,10 @@ ROOT_URLCONF = "seim.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
+        "DIRS": [
+            BASE_DIR / "templates",  # Keep for Django admin/Wagtail
+            BASE_DIR / "frontend-vue" / "dist",  # Vue.js SPA build output
+        ],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -167,6 +170,8 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [
     BASE_DIR / "static",
+    # Vue.js assets - uncomment after first Vue build:
+    # BASE_DIR / "frontend-vue" / "dist" / "assets",
 ]
 
 STATICFILES_FINDERS = [

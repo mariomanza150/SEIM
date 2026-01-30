@@ -256,4 +256,19 @@ coverage.xml
 coverage/
 
 # Jest cache
-.jest-cache/ 
+.jest-cache/
+
+# ============================================
+# Vue.js Frontend (frontend-vue/)
+# ============================================
+frontend-vue/node_modules/
+frontend-vue/dist/
+frontend-vue/.vite/
+frontend-vue/.env.local
+frontend-vue/.env.*.local
+frontend-vue/coverage/
+frontend-vue/playwright-report/
+frontend-vue/test-results/
+frontend-vue/.eslintcache
+frontend-vue/dist-ssr/
+frontend-vue/*.local 
