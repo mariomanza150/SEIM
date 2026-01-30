@@ -53,9 +53,9 @@
             <router-link to="/applications" class="list-group-item list-group-item-action">
               <i class="bi bi-file-earmark-text me-2"></i>Applications
             </router-link>
-            <a href="#" class="list-group-item list-group-item-action">
+            <router-link to="/documents" class="list-group-item list-group-item-action">
               <i class="bi bi-folder me-2"></i>Documents
-            </a>
+            </router-link>
             <a href="#" class="list-group-item list-group-item-action">
               <i class="bi bi-bell me-2"></i>Notifications
             </a>
@@ -95,13 +95,15 @@
               </router-link>
             </div>
             <div class="col-md-3 mb-3">
-              <div class="card text-center">
-                <div class="card-body">
-                  <i class="bi bi-folder fs-1 text-success"></i>
-                  <h3 class="mt-2">{{ stats.documents }}</h3>
-                  <p class="text-muted mb-0">Documents</p>
+              <router-link to="/documents" class="text-decoration-none">
+                <div class="card text-center card-hover">
+                  <div class="card-body">
+                    <i class="bi bi-folder fs-1 text-success"></i>
+                    <h3 class="mt-2">{{ stats.documents }}</h3>
+                    <p class="text-muted mb-0">Documents</p>
+                  </div>
                 </div>
-              </div>
+              </router-link>
             </div>
             <div class="col-md-3 mb-3">
               <div class="card text-center">

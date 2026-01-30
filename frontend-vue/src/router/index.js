@@ -10,6 +10,8 @@ const Dashboard = () => import('@/views/Dashboard.vue')
 const Applications = () => import('@/views/Applications.vue')
 const ApplicationForm = () => import('@/views/ApplicationForm.vue')
 const ApplicationDetail = () => import('@/views/ApplicationDetail.vue')
+const Documents = () => import('@/views/Documents.vue')
+const DocumentDetail = () => import('@/views/DocumentDetail.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
 const routes = [
@@ -70,6 +72,24 @@ const routes = [
     meta: {
       requiresAuth: true,
       title: 'Application Details - SEIM',
+    },
+  },
+  {
+    path: '/documents',
+    name: 'Documents',
+    component: Documents,
+    meta: {
+      requiresAuth: true,
+      title: 'Documents - SEIM',
+    },
+  },
+  {
+    path: '/documents/:id',
+    name: 'DocumentDetail',
+    component: DocumentDetail,
+    meta: {
+      requiresAuth: true,
+      title: 'Document Details - SEIM',
     },
   },
   // Catch-all 404

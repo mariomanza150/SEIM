@@ -226,13 +226,44 @@
               </div>
             </div>
 
-            <!-- Documents (Placeholder) -->
+            <!-- Upload Document -->
+            <div v-if="application.status === 'draft' || application.status === 'submitted'" class="card mb-4">
+              <DocumentUpload
+                :application-id="application.id"
+                @uploaded="fetchApplicationDocuments"
+              />
+            </div>
+
+            <!-- Documents List -->
             <div class="card">
-              <div class="card-header">
+              <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">Documents</h6>
+                <router-link to="/documents" class="btn btn-sm btn-outline-primary">
+                  View All
+                </router-link>
               </div>
               <div class="card-body">
-                <p class="text-muted text-center small">
+                <div v-if="documentsLoading" class="text-center py-3">
+                  <div class="spinner-border spinner-border-sm text-primary"></div>
+                </div>
+                <div v-else-if="applicationDocuments.length > 0">
+                  <ul class="list-group list-group-flush">
+                    <li
+                      v-for="doc in applicationDocuments"
+                      :key="doc.id"
+                      class="list-group-item px-0 d-flex justify-content-between align-items-center"
+                    >
+                      <router-link :to="`/documents/${doc.id}`" class="text-decoration-none">
+                        <i class="bi bi-file-earmark me-2"></i>
+                        {{ doc.type?.name || doc.type }}
+                      </router-link>
+                      <span class="badge" :class="doc.is_valid ? 'bg-success' : 'bg-warning'">
+                        {{ doc.is_valid ? 'Validated' : 'Pending' }}
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+                <p v-else class="text-muted text-center small mb-0">
                   <i class="bi bi-info-circle me-1"></i>
                   No documents uploaded
                 </p>
@@ -249,6 +280,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
+import DocumentUpload from '@/components/DocumentUpload.vue'
 import api from '@/services/api'
 
 const route = useRoute()
@@ -256,6 +288,8 @@ const router = useRouter()
 const { success, error: errorToast } = useToast()
 
 const application = ref(null)
+const applicationDocuments = ref([])
+const documentsLoading = ref(false)
 const loading = ref(true)
 const error = ref(null)
 
@@ -266,12 +300,29 @@ async function fetchApplication() {
 
     const response = await api.get(`/api/applications/${route.params.id}/`)
     application.value = response.data
+    await fetchApplicationDocuments()
   } catch (err) {
     console.error('Failed to fetch application:', err)
     error.value = 'Failed to load application details. Please try again.'
     errorToast('Failed to load application')
   } finally {
     loading.value = false
+  }
+}
+
+async function fetchApplicationDocuments() {
+  if (!application.value?.id) return
+  try {
+    documentsLoading.value = true
+    const response = await api.get('/api/documents/', {
+      params: { application: application.value.id },
+    })
+    applicationDocuments.value = response.data.results || response.data
+  } catch (err) {
+    console.warn('Failed to fetch documents:', err)
+    applicationDocuments.value = []
+  } finally {
+    documentsLoading.value = false
   }
 }
 
