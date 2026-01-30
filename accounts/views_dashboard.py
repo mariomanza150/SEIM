@@ -26,15 +26,15 @@ class DashboardStatsView(APIView):
     def get(self, request):
         user = request.user
 
-        # Get counts based on user role
+        # Get counts based on user role (Application uses student FK)
         stats = {
-            "applications": Application.objects.filter(user=user).count(),
+            "applications": Application.objects.filter(student=user).count(),
             "documents": Document.objects.filter(uploaded_by=user).count(),
             "notifications": Notification.objects.filter(
                 recipient=user, is_read=False
             ).count(),
             "pending": Application.objects.filter(
-                user=user, status__name__in=["draft", "under_review"]
+                student=user, status__name__in=["draft", "under_review"]
             ).count(),
         }
 
