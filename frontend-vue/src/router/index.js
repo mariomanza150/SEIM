@@ -12,6 +12,7 @@ const Dashboard = () => import('@/views/Dashboard.vue')
 const Applications = () => import('@/views/Applications.vue')
 const CoordinatorReviewQueue = () => import('@/views/CoordinatorReviewQueue.vue')
 const CoordinatorWorkload = () => import('@/views/CoordinatorWorkload.vue')
+const NotificationRouting = () => import('@/views/NotificationRouting.vue')
 const StaffExchangeAgreements = () => import('@/views/StaffExchangeAgreements.vue')
 const StaffAgreementDocuments = () => import('@/views/StaffAgreementDocuments.vue')
 const ProgramCompare = () => import('@/views/ProgramCompare.vue')
@@ -76,6 +77,16 @@ const routes = [
       requiresAuth: true,
       staffReviewQueue: true,
       title: 'Coordinator workload - SEIM',
+    },
+  },
+  {
+    path: '/notification-routing',
+    name: 'NotificationRouting',
+    component: NotificationRouting,
+    meta: {
+      requiresAuth: true,
+      staffReviewQueue: true,
+      title: 'Notification routing - SEIM',
     },
   },
   {

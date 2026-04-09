@@ -74,6 +74,7 @@
       "Applications": "Solicitudes",
       "CoordinatorReviewQueue": "Cola de revisión",
       "CoordinatorWorkload": "Carga del coordinador",
+      "NotificationRouting": "Enrutado de notificaciones",
       "StaffExchangeAgreements": "Convenios de intercambio",
       "StaffAgreementDocuments": "Documentos de convenios",
       "ProgramCompare": "Comparar programas",
@@ -155,6 +156,28 @@
     "colCoordinator": "Coordinador",
     "colAssignedPending": "Asignadas pendientes",
     "emDash": "—"
+  },
+  "notificationRoutingPage": {
+    "breadcrumbAria": "Migas de pan",
+    "subtitle": "Mapa de solo lectura de grupos de notificación a campos de UserSettings, enrutado de resúmenes y categorías de recordatorios de plazos.",
+    "loading": "Cargando…",
+    "loadError": "No se pudo cargar la referencia de enrutado de notificaciones.",
+    "forbidden": "No tienes acceso a esta referencia.",
+    "schemaVersion": "Versión del esquema",
+    "categoriesTitle": "Categorías de ajustes → campos UserSettings",
+    "colCategory": "Categoría",
+    "colEmailField": "Campo del correo",
+    "colInappField": "Campo en la aplicación",
+    "colNotes": "Notas",
+    "emDash": "—",
+    "remindersTitle": "Tipos de evento de recordatorio → categoría de ajustes",
+    "colReminderEventType": "Tipo de evento de recordatorio",
+    "colSettingsCategory": "Categoría de ajustes",
+    "reminderDefault": "Predeterminado para tipos de recordatorio desconocidos",
+    "digestTitle": "Enrutado de resúmenes",
+    "digestCategory": "settings_category",
+    "digestEmailGates": "Condiciones de correo",
+    "digestInappField": "Campo en la aplicación"
   },
   "exchangeAgreementsPage": {
     "breadcrumbAria": "Migas de pan",
@@ -315,6 +338,7 @@
     "loggedOutToast": "Has cerrado sesión correctamente",
     "nav": {
       "workload": "Carga de trabajo",
+      "notificationRouting": "Enrutado de notificaciones",
       "deadlines": "Plazos",
       "agreementFiles": "Archivos de convenios"
     }

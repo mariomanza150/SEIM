@@ -74,6 +74,7 @@
       "Applications": "Applications",
       "CoordinatorReviewQueue": "Review queue",
       "CoordinatorWorkload": "Coordinator workload",
+      "NotificationRouting": "Notification routing",
       "StaffExchangeAgreements": "Exchange agreements",
       "StaffAgreementDocuments": "Agreement documents",
       "ProgramCompare": "Compare programs",
@@ -155,6 +156,28 @@
     "colCoordinator": "Coordinator",
     "colAssignedPending": "Assigned pending",
     "emDash": "—"
+  },
+  "notificationRoutingPage": {
+    "breadcrumbAria": "Breadcrumb",
+    "subtitle": "Read-only map of notification groups to UserSettings fields, digest routing, and deadline reminder categories.",
+    "loading": "Loading…",
+    "loadError": "Could not load notification routing reference.",
+    "forbidden": "You do not have access to this reference.",
+    "schemaVersion": "Schema version",
+    "categoriesTitle": "Settings categories → UserSettings fields",
+    "colCategory": "Category",
+    "colEmailField": "Email toggle field",
+    "colInappField": "In-app toggle field",
+    "colNotes": "Notes",
+    "emDash": "—",
+    "remindersTitle": "Reminder event types → settings category",
+    "colReminderEventType": "Reminder event type",
+    "colSettingsCategory": "Settings category",
+    "reminderDefault": "Default for unknown reminder types",
+    "digestTitle": "Digest routing",
+    "digestCategory": "settings_category",
+    "digestEmailGates": "Email gates",
+    "digestInappField": "In-app field"
   },
   "exchangeAgreementsPage": {
     "breadcrumbAria": "Breadcrumb",
@@ -315,6 +338,7 @@
     "loggedOutToast": "You have been logged out successfully",
     "nav": {
       "workload": "Workload",
+      "notificationRouting": "Notification routing",
       "deadlines": "Deadlines",
       "agreementFiles": "Agreement files"
     }

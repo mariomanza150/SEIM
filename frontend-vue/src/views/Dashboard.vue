@@ -88,6 +88,13 @@
             </router-link>
             <router-link
               v-if="authStore.canUseStaffReviewQueue"
+              :to="{ name: 'NotificationRouting' }"
+              class="list-group-item list-group-item-action"
+            >
+              <i class="bi bi-diagram-3 me-2"></i>{{ t('dashboard.nav.notificationRouting') }}
+            </router-link>
+            <router-link
+              v-if="authStore.canUseStaffReviewQueue"
               :to="{ name: 'StaffExchangeAgreements' }"
               class="list-group-item list-group-item-action"
             >
