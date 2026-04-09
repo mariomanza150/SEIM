@@ -70,7 +70,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None currently assigned_ |  |  |  |  |
+| Vue i18n: Login/NotFound + route `aria-live` announcements | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -103,7 +103,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **i18n foundation shipped** (see IMPLEMENTED row). Remaining: migrate more views to `$t` / `<i18n-t>`, vue-i18n per-view audits (forms, tables, modals), live regions where needed. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **i18n foundation shipped** (see IMPLEMENTED row). **In progress:** Login + NotFound strings, route `aria-live` announcer. Remaining: other views, tables/modals, broader live regions. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
