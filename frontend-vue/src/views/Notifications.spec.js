@@ -149,6 +149,9 @@ describe('Notifications', () => {
     expect(nav.exists()).toBe(true)
     expect(wrapper.text()).toContain(i18n.global.t('pagination.previous'))
     expect(wrapper.text()).toContain(i18n.global.t('pagination.next'))
+    const ariaLabels = nav.findAll('button').map((b) => b.attributes('aria-label'))
+    expect(ariaLabels).toContain(i18n.global.t('pagination.pageNumberAria', { n: 1 }))
+    expect(ariaLabels).toContain(i18n.global.t('pagination.pageNumberAria', { n: 2 }))
   })
 
   it('uses Spanish strings when locale is es', async () => {

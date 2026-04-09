@@ -68,6 +68,9 @@ describe('StaffExchangeAgreements', () => {
     await flushPromises()
     expect(wrapper.text()).toContain(i18n.global.t('pagination.previous'))
     expect(wrapper.text()).toContain(i18n.global.t('pagination.next'))
+    const ariaLabels = wrapper.find('ul.pagination').findAll('button').map((b) => b.attributes('aria-label'))
+    expect(ariaLabels).toContain(i18n.global.t('pagination.pageNumberAria', { n: 1 }))
+    expect(ariaLabels).toContain(i18n.global.t('pagination.pageNumberAria', { n: 2 }))
   })
 
   it('shows translated heading and empty state', async () => {

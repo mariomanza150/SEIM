@@ -197,7 +197,7 @@
               <button
                 type="button"
                 class="page-link"
-                :aria-label="t('notifications.pageNumberAria', { n: page })"
+                :aria-label="t('pagination.pageNumberAria', { n: page })"
                 :aria-current="page === pagination.currentPage ? 'page' : undefined"
                 @click="goToPage(page)"
               >

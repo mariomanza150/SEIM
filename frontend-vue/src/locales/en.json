@@ -4,7 +4,8 @@
   },
   "pagination": {
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "pageNumberAria": "Page {n}"
   },
   "notifications": {
     "breadcrumbAria": "Breadcrumb",
@@ -42,7 +43,6 @@
     "markAsRead": "Mark as read",
     "markAsReadAria": "Mark this notification as read",
     "paginationAria": "Notifications pagination",
-    "pageNumberAria": "Page {n}",
     "notAvailable": "N/A",
     "emptyTitle": "No notifications",
     "emptyBody": "You're all caught up. There is nothing to display.",

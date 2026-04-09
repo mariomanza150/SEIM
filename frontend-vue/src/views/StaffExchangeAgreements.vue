@@ -227,7 +227,13 @@
       >
         <ul class="pagination justify-content-center">
           <li class="page-item" :class="{ disabled: !pagination.previous }">
-            <button type="button" class="page-link" @click="goToPage(pagination.currentPage - 1)">
+            <button
+              type="button"
+              class="page-link"
+              :disabled="!pagination.previous"
+              :aria-label="t('pagination.previous')"
+              @click="goToPage(pagination.currentPage - 1)"
+            >
               {{ t('pagination.previous') }}
             </button>
           </li>
@@ -237,10 +243,24 @@
             class="page-item"
             :class="{ active: page === pagination.currentPage }"
           >
-            <button type="button" class="page-link" @click="goToPage(page)">{{ page }}</button>
+            <button
+              type="button"
+              class="page-link"
+              :aria-label="t('pagination.pageNumberAria', { n: page })"
+              :aria-current="page === pagination.currentPage ? 'page' : undefined"
+              @click="goToPage(page)"
+            >
+              {{ page }}
+            </button>
           </li>
           <li class="page-item" :class="{ disabled: !pagination.next }">
-            <button type="button" class="page-link" @click="goToPage(pagination.currentPage + 1)">
+            <button
+              type="button"
+              class="page-link"
+              :disabled="!pagination.next"
+              :aria-label="t('pagination.next')"
+              @click="goToPage(pagination.currentPage + 1)"
+            >
               {{ t('pagination.next') }}
             </button>
           </li>

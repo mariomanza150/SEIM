@@ -4,7 +4,8 @@
   },
   "pagination": {
     "previous": "Anterior",
-    "next": "Siguiente"
+    "next": "Siguiente",
+    "pageNumberAria": "Página {n}"
   },
   "notifications": {
     "breadcrumbAria": "Migas de pan",
@@ -42,7 +43,6 @@
     "markAsRead": "Marcar como leída",
     "markAsReadAria": "Marcar esta notificación como leída",
     "paginationAria": "Paginación de notificaciones",
-    "pageNumberAria": "Página {n}",
     "notAvailable": "N/D",
     "emptyTitle": "Sin notificaciones",
     "emptyBody": "Todo al día. No hay nada que mostrar.",
