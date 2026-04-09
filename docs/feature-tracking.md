@@ -126,11 +126,12 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue **CoordinatorWorkload**: empty coordinator distribution table (admin) | `frontend-vue` | Implemented | 2026-04-09 | `workloadPage.distributionEmpty` (en/es); single placeholder row when `distribution` is empty; Vitest `CoordinatorWorkload.spec.js`. |
 | Vue i18n: **HelloWorld** starter (Vite default component) | `frontend-vue` | Implemented | 2026-04-09 | `helloWorld.*` keys en/es; `useI18n` in `HelloWorld.vue`; external links keep `rel="noopener noreferrer"`. Vitest: `HelloWorld.spec.js`. |
 | Vue i18n: localized HTML `meta[name=description]` | `frontend-vue` | Implemented | 2026-04-09 | `appMeta.metaDescription` en/es; `syncAppMetaDescription` in `documentTitle.js`; `App.vue` on mount + `watch(locale)`. Vitest: `documentTitle.spec.js`, `App.spec.js`. |
+| Vue shell: bilingual static `noscript` fallback | `frontend-vue` | Implemented | 2026-04-09 | `index.html`: EN+ES copy, `role="alert"`, `lang` on paragraphs (no-JS users). Vitest (node): `src/indexHtml.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue shell: bilingual `noscript` fallback in `index.html` | `frontend-vue` | In progress | 2026-04-09 | — |
+| _None_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -164,7 +165,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue`, `templates/frontend` | Routed views + tab titles + **`document.documentElement.lang`** (i18n init) + **`meta[name=description]`** (`appMeta.metaDescription`) + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** (`reviewQueuePage.*`) + **Staff exchange agreements** (`exchangeAgreementsPage.*`) + **Staff agreement documents** (`staffAgreementDocumentsPage.*`) + **list `pagination.*`** + **`pagination.pageNumberAria`** + document list/detail file downloads **`rel="noopener noreferrer"`** on `target="_blank"` (Vue + legacy Django document links) + **HelloWorld** starter (`helloWorld.*`). **Remaining:** full manual a11y audit; static `index.html` / **noscript** still English-only. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue`, `templates/frontend` | Routed views + tab titles + **`document.documentElement.lang`** (i18n init) + **`meta[name=description]`** (`appMeta.metaDescription`) + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** (`reviewQueuePage.*`) + **Staff exchange agreements** (`exchangeAgreementsPage.*`) + **Staff agreement documents** (`staffAgreementDocumentsPage.*`) + **list `pagination.*`** + **`pagination.pageNumberAria`** + document list/detail file downloads **`rel="noopener noreferrer"`** on `target="_blank"` (Vue + legacy Django document links) + **HelloWorld** starter (`helloWorld.*`) + static **`noscript`** EN/ES in `index.html`. **Remaining:** full manual a11y audit; static `index.html` `<title>` / default meta still English before SPA hydration. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -204,5 +205,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (localized `meta[name=description]`; HelloWorld i18n; CoordinatorWorkload; **MQ-011**). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (bilingual `noscript`; localized `meta[name=description]`; HelloWorld; **MQ-011**). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

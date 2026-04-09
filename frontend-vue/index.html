@@ -20,11 +20,17 @@
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
     
-    <!-- Fallback for browsers without JavaScript -->
+    <!-- Fallback when JavaScript is disabled (static; EN + ES — SPA i18n does not run) -->
     <noscript>
-      <div style="text-align: center; padding: 50px;">
-        <h1>JavaScript Required</h1>
-        <p>Please enable JavaScript to use SEIM.</p>
+      <div
+        role="alert"
+        style="text-align: center; padding: 50px; max-width: 36rem; margin: 0 auto; font-family: system-ui, sans-serif"
+      >
+        <h1 style="margin-bottom: 0.75rem; font-size: 1.25rem">
+          JavaScript required / Se requiere JavaScript
+        </h1>
+        <p lang="en" style="margin: 0.35rem 0">Please enable JavaScript to use SEIM.</p>
+        <p lang="es" style="margin: 0.35rem 0">Activa JavaScript para utilizar SEIM.</p>
       </div>
     </noscript>
   </body>
