@@ -257,4 +257,51 @@ describe('ApplicationForm', () => {
     expect(wrapper.text()).toContain('Applications closed')
     expect(api.post).not.toHaveBeenCalled()
   })
+
+  it('uses applicationFormPage.notAvailable for missing program dates and duration', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-no-dates',
+                name: 'Open Program',
+                description: 'No fixed dates',
+                start_date: null,
+                end_date: null,
+                application_open_date: null,
+                application_deadline: null,
+                application_form: 'form-1',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/application-forms/form-types/form-1/form_schema/') {
+        return Promise.resolve({
+          data: {
+            id: 'form-1',
+            name: 'Questions',
+            description: '',
+            schema: { properties: {}, required: [] },
+            ui_schema: {},
+            required_fields: [],
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="program-select"]').setValue('program-no-dates')
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('Program information')
+    })
+    const na = i18n.global.t('applicationFormPage.notAvailable')
+    expect(wrapper.text().split(na).length - 1).toBeGreaterThanOrEqual(3)
+  })
 })

@@ -818,6 +818,7 @@
     "programInformation": "Program information",
     "startDate": "Start date",
     "endDate": "End date",
+    "notAvailable": "N/A",
     "applicationsOpen": "Applications open",
     "applyBy": "Apply by",
     "requirements": "Requirements",

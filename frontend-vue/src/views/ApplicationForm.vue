@@ -1446,7 +1446,7 @@ async function saveDraft() {
 }
 
 function formatDate(dateString) {
-  if (!dateString) return t('applicationsPage.notAvailable')
+  if (!dateString) return t('applicationFormPage.notAvailable')
   const loc = locale.value === 'es' ? 'es' : 'en-US'
   const date = new Date(dateString)
   return date.toLocaleDateString(loc, {
@@ -1457,7 +1457,7 @@ function formatDate(dateString) {
 }
 
 function calculateDuration(startDate, endDate) {
-  if (!startDate || !endDate) return t('applicationsPage.notAvailable')
+  if (!startDate || !endDate) return t('applicationFormPage.notAvailable')
 
   const start = new Date(startDate)
   const end = new Date(endDate)

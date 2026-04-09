@@ -81,6 +81,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue i18n: Application detail view | `frontend-vue` | Implemented | 2026-04-09 | `applicationDetailPage.*` + reuse `applicationsPage.status` / `readinessLabel` / `notAvailable`; `ApplicationDetail.vue` program/checklist/timeline/comments/sidebar/docs/coordinator review; locale dates; translated confirms/toasts. Vitest: `ApplicationDetail.spec.js` (+ i18n, timeline mock). |
 | Vue i18n: Application form (new + edit) | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.*` in locales; `ApplicationForm.vue` breadcrumbs/headers, program filters & presets UI, window messages, dynamic form chrome, sidebar tips/requirements, actions; locale `formatDate` / duration; translated validation + toasts. Vitest: `ApplicationForm.spec.js` + i18n. |
 | Vue i18n: Application form program filter search placeholder | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.programSearchPlaceholder` (en/es); program filter search input in `ApplicationForm.vue` (was `applicationsPage.searchPlaceholder`). Vitest: `ApplicationForm.spec.js`. |
+| Vue i18n: Application form notAvailable for dates | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.notAvailable` (en/es); `formatDate` / `calculateDuration` in `ApplicationForm.vue` (was `applicationsPage.notAvailable`). Vitest: `ApplicationForm.spec.js` (missing program dates). |
 | Vue i18n: `useStaffSavedPresets` (shared staff presets) | `frontend-vue` | Implemented | 2026-04-09 | `savedPresets.*` in locales; composable uses `useI18n` for save/remove/default toasts, errors, and `confirmRemove`. Vitest: `useStaffSavedPresets.spec.js`. |
 | Vue i18n: Coordinator review queue | `frontend-vue` | Implemented | 2026-04-09 | `reviewQueuePage.*` (incl. saved-search preset UI + pagination `previous`/`next`) + reuse `applicationsPage` (status, sort, clear) / `savedPresets` / `route.names`; `CoordinatorReviewQueue.vue` filters, presets, table, pagination, locale dates + `formatStatus`. Vitest: `CoordinatorReviewQueue.spec.js`. |
 | Vue i18n: Coordinator workload view | `frontend-vue` | Implemented | 2026-04-09 | `workloadPage.*` (incl. `pageSubtitleStatusSubmitted` / `pageSubtitleStatusUnderReview`) + `route.names`; `CoordinatorWorkload.vue` breadcrumbs, subtitle, cards, admin table, loading/error. Vitest: `CoordinatorWorkload.spec.js` (en + es subtitle highlights). |
@@ -110,7 +111,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Application form date N/A key | `frontend-vue` | In progress | 2026-04-09 | — |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -184,5 +185,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Coordinator workload subtitle i18n — completed)*  
+*Last updated: 2026-04-09 (loop: Application form notAvailable i18n — completed)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

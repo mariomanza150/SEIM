@@ -818,6 +818,7 @@
     "programInformation": "Información del programa",
     "startDate": "Fecha de inicio",
     "endDate": "Fecha de fin",
+    "notAvailable": "N/D",
     "applicationsOpen": "Apertura de solicitudes",
     "applyBy": "Solicitar antes del",
     "requirements": "Requisitos",
