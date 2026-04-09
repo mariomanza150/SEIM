@@ -67,6 +67,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     student_display_name = serializers.SerializerMethodField()
     student_email = serializers.SerializerMethodField()
     program_name = serializers.SerializerMethodField()
+    readiness = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -74,6 +75,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "dynamic_form_submission",
             "dynamic_form_layout",
             "document_checklist",
+            "readiness",
             "assigned_coordinator_name",
             "effective_coordinator",
             "student_display_name",
@@ -121,6 +123,13 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
     def get_program_name(self, obj):
         return obj.program.name
+
+    def get_readiness(self, obj):
+        from exchange.readiness import compute_application_readiness
+
+        view = self.context.get("view")
+        for_list = bool(view and getattr(view, "action", None) == "list")
+        return compute_application_readiness(obj, include_dynamic_form=not for_list)
 
     def get_dynamic_form_layout(self, obj):
         ft = obj.program.application_form

@@ -2,20 +2,29 @@
   <div class="applications-page">
     <!-- Header -->
     <div class="container-fluid mt-4">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
+          </li>
+          <li class="breadcrumb-item active">Applications</li>
+        </ol>
+      </nav>
       <div class="row mb-4">
         <div class="col-md-8">
           <h2><i class="bi bi-file-earmark-text me-2"></i>My Applications</h2>
           <p class="text-muted">Manage your exchange program applications</p>
         </div>
         <div class="col-md-4 text-end">
-          <router-link to="/applications/new" class="btn btn-primary">
+          <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary">
             <i class="bi bi-plus-circle me-2"></i>New Application
           </router-link>
         </div>
       </div>
 
       <!-- Filters -->
-      <div class="card mb-4">
+      <div class="card mb-4" data-testid="applications-filters">
         <div class="card-body">
           <div class="row g-3">
             <div class="col-md-4">
@@ -26,11 +35,12 @@
                 class="form-control"
                 placeholder="Search programs..."
                 @input="debouncedSearch"
+                data-testid="applications-search"
               />
             </div>
             <div class="col-md-3">
               <label class="form-label">Status</label>
-              <select v-model="filters.status" class="form-select" @change="fetchApplications">
+              <select v-model="filters.status" class="form-select" @change="fetchApplications" data-testid="applications-filter-status">
                 <option value="">All Statuses</option>
                 <option value="draft">Draft</option>
                 <option value="submitted">Submitted</option>
@@ -42,7 +52,7 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">Sort By</label>
-              <select v-model="filters.ordering" class="form-select" @change="fetchApplications">
+              <select v-model="filters.ordering" class="form-select" @change="fetchApplications" data-testid="applications-filter-ordering">
                 <option value="-created_at">Newest First</option>
                 <option value="created_at">Oldest First</option>
                 <option value="-submitted_at">Recently Submitted</option>
@@ -84,6 +94,20 @@
                   </span>
                 </div>
 
+                <div
+                  v-if="application.readiness && application.status === 'draft'"
+                  class="mb-3"
+                  data-testid="application-readiness-summary"
+                >
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span class="small text-muted">Readiness</span>
+                    <span class="badge" :class="readinessLevelBadgeClass(application.readiness.level)">
+                      {{ application.readiness.score }}%
+                    </span>
+                  </div>
+                  <p class="small text-muted mb-0 mt-1">{{ application.readiness.headline }}</p>
+                </div>
+
                 <p class="card-text text-muted small mb-3">
                   <i class="bi bi-building me-1"></i>
                   {{ application.program?.institution || 'N/A' }}
@@ -102,8 +126,9 @@
 
                 <div class="d-flex justify-content-between align-items-center">
                   <router-link
-                    :to="`/applications/${application.id}`"
+                    :to="{ name: 'ApplicationDetail', params: { id: application.id } }"
                     class="btn btn-sm btn-outline-primary"
+                    data-testid="application-detail-link"
                   >
                     <i class="bi bi-eye me-1"></i>View Details
                   </router-link>
@@ -111,7 +136,7 @@
                   <div>
                     <router-link
                       v-if="application.status === 'draft'"
-                      :to="`/applications/${application.id}/edit`"
+                      :to="{ name: 'ApplicationEdit', params: { id: application.id } }"
                       class="btn btn-sm btn-outline-secondary me-2"
                     >
                       <i class="bi bi-pencil"></i>
@@ -161,7 +186,7 @@
           <i class="bi bi-inbox display-1 text-muted"></i>
           <h4 class="mt-3">No Applications Yet</h4>
           <p class="text-muted">Start your exchange journey by creating your first application!</p>
-          <router-link to="/applications/new" class="btn btn-primary mt-3">
+          <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary mt-3">
             <i class="bi bi-plus-circle me-2"></i>Create Application
           </router-link>
         </div>
@@ -175,6 +200,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
+import { readinessLevelBadgeClass } from '@/utils/applicationReadiness'
 
 const router = useRouter()
 const { success, error: errorToast } = useToast()

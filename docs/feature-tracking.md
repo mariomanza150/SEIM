@@ -43,11 +43,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Action-oriented dashboard with next steps | `frontend-vue`, `accounts`, `exchange`, `documents`, `notifications` | Implemented | 2026-04-08 | Dashboard replaces placeholder activity with “What needs your attention” (unread notifications, student drafts and open document resubmissions, staff assigned/pending review and resubmit-queue links). Stats API is role-aware for coordinator/admin. Listens for `seim-application-sync` to refresh stats and next steps. Tests: `tests/integration/api/test_dashboard_stats_api.py`, `frontend-vue/src/utils/dashboardNextSteps.spec.js`. |
 | Saved searches in Vue review queue | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-08 | Coordinator review queue loads `search_type=application` presets from `/api/saved-searches/`, applies default on open, save/delete/set-default in UI; filters serialized in `reviewQueuePresets.js`. Broader presets for agreements/document queues remain P2. Tests: `frontend-vue/src/utils/reviewQueuePresets.spec.js`. |
 | Saved searches for staff agreement registry and document lists | `frontend-vue`, `exchange`, `documents`, `api` | Implemented | 2026-04-08 | New staff routes `/exchange-agreements` and `/agreement-documents` with filters + saved presets (`exchange_agreement`, `agreement_document`); staff document list presets on `/documents` (`document`). `SavedSearch` model allows new `search_type` values. `DocumentFilter` + ordering on `DocumentViewSet`. Shared `useStaffSavedPresets` composable and `staffListSearchPresets.js`. Tests: `staffListSearchPresets.spec.js`, `tests/integration/api/test_documents_list_filters.py`. |
+| Student application readiness scoring | `exchange`, `documents`, `frontend-vue`, `api` | Implemented | 2026-04-08 | `ApplicationSerializer.readiness` via `exchange.readiness.compute_application_readiness`: document checklist progress (prefetch-aware), program application window, optional dynamic form on detail only; list omits form DB lookups. Vue applications cards + application detail banner with score/level/headline. Tests: `tests/unit/exchange/test_application_readiness.py`, `frontend-vue/src/utils/applicationReadiness.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Student application readiness scoring | `exchange`, `documents`, `frontend-vue`, `api` | In progress | 2026-04-08 | — |
+| _None currently assigned_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -66,11 +67,9 @@ _All Priority 1 items in this subsection are implemented above._
 #### Applications, Forms, and Eligibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| _Readiness scoring:_ **IN PROGRESS** (see IN PROGRESS table). |
 | Multi-document requirements per application step | `application_forms`, `documents`, `frontend-vue` | Support uploading and validating multiple required documents within each step of an application workflow. |
 | Dynamic step builder with reusable templates | `application_forms`, `admin UI`, `exchange` | Let admins compose application flows from reusable step/field templates instead of configuring each application type from scratch. |
 | Conditional application logic and branching | `application_forms`, `exchange`, `frontend-vue` | Support conditional fields and step branching based on program type, student answers, or coordinator decisions. |
-| Student application readiness scoring | `exchange`, `documents`, `analytics` | Provide a readiness indicator based on missing requirements, document validation state, and deadline proximity. |
 
 #### Programs, Agreements, and Planning
 | Feature | Module | Notes |
@@ -126,5 +125,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (staff agreements / document list saved presets)*  
+*Last updated: 2026-04-08 (student application readiness scoring)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

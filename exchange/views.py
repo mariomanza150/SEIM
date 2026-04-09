@@ -217,6 +217,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             'status'             # ForeignKey
         ).prefetch_related(
             'program__coordinators',
+            'program__required_document_types',
             'student__roles',    # ManyToMany through student
             'comment_set',       # Reverse ForeignKey (comments for this application)
             'comment_set__author',  # And the authors of those comments

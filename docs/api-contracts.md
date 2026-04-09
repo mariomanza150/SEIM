@@ -135,6 +135,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `GET /api/applications/` - List applications (filtered by user role)
   - **Staff / coordinator queue filters (query params, combinable):** `pending_review=true` (status `submitted` or `under_review`), `needs_document_resubmit=true` (open `DocumentResubmissionRequest` on any application document), `assigned_to_me=true` (assigned coordinator is the current user). Existing filters such as `search`, `status`, and `ordering` still apply.
   - **List/detail extras:** `student_display_name`, `student_email`, `program_name` on each application for display in staff views.
+  - **`readiness`** (each item): `{ score, level, headline, window_open, deadline_days, document_counts }`. Levels: `done` (non-draft), `blocked` (draft + window closed), `ready`, `attention`, `ok`. List responses omit dynamic-form DB lookups (`include_dynamic_form=False`); detail includes program form completion in the score.
 - `GET /api/applications/{id}/` - Get application details
 - `POST /api/applications/` - Create application (students only)
   - Validates eligibility before creation

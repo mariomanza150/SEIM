@@ -59,6 +59,32 @@
           </div>
         </div>
 
+        <div v-if="application.readiness" class="row mb-3" data-testid="readiness-banner">
+          <div class="col-12">
+            <div class="card border-0 shadow-sm">
+              <div class="card-body py-3 d-flex flex-wrap align-items-center gap-3">
+                <div>
+                  <span class="text-muted small d-block">Readiness</span>
+                  <span class="badge fs-6" :class="readinessLevelBadgeClass(application.readiness.level)">
+                    {{ application.readiness.score }}%
+                  </span>
+                </div>
+                <div class="flex-grow-1" style="min-width: 220px">
+                  <p class="small mb-2">{{ application.readiness.headline }}</p>
+                  <div v-if="application.status === 'draft'" class="progress" style="height: 6px">
+                    <div
+                      class="progress-bar"
+                      :class="readinessScoreBarClass(application.readiness.score)"
+                      role="progressbar"
+                      :style="{ width: Math.min(100, application.readiness.score) + '%' }"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="row">
           <!-- Main Content -->
           <div class="col-lg-8">
@@ -459,6 +485,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import DocumentUpload from '@/components/DocumentUpload.vue'
 import api from '@/services/api'
+import { readinessLevelBadgeClass, readinessScoreBarClass } from '@/utils/applicationReadiness'
 
 const route = useRoute()
 const router = useRouter()
