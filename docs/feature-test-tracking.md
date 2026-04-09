@@ -71,4 +71,4 @@ _Use these as hints when filling the **Browser** column; replace with exact `tes
 
 ---
 
-*Last updated: 2026-04-09 — Staff list + notifications Vitest assert shared `pagination.*` (review queue, agreements, agreement docs, notifications). Prior: **`notifications`** `test_websocket_notifications.py`.*
+*Last updated: 2026-04-09 — **`data-management`:** CSV student import pytest slice (2; `-k` + `-e DATABASE_URL=`). Prior: Staff list + notifications Vitest `pagination.*`; **`notifications`** WebSocket integration.*
