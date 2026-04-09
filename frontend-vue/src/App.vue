@@ -21,7 +21,8 @@ import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import { useNotificationWebSocket } from '@/services/websocket'
 import { applyUiPreferences, clearUiPreferences, readStoredUiPreferences } from '@/services/uiPreferences'
-import { syncAppMetaDescription } from '@/utils/documentTitle'
+import router from '@/router'
+import { syncAppMetaDescription, syncAppSocialMeta } from '@/utils/documentTitle'
 import ToastContainer from '@/components/ToastContainer.vue'
 
 const { t, locale } = useI18n()
@@ -50,6 +51,7 @@ async function loadUiPreferences() {
 
 onMounted(async () => {
   syncAppMetaDescription(t)
+  syncAppSocialMeta(t, router.currentRoute.value)
   applyUiPreferences(readStoredUiPreferences() || undefined)
   await authStore.checkAuth()
   connectIfAuthenticated()
@@ -71,6 +73,7 @@ onMounted(async () => {
 
 watch(locale, () => {
   syncAppMetaDescription(t)
+  syncAppSocialMeta(t, router.currentRoute.value)
 })
 
 watch(() => authStore.isAuthenticated, async (isAuth) => {

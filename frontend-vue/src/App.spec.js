@@ -49,6 +49,9 @@ describe('App shell accessibility', () => {
   afterEach(() => {
     setAppLocale('en')
     localStorage.clear()
+    document.head
+      .querySelectorAll('meta[property^="og:"], meta[name^="twitter:"]')
+      .forEach((el) => el.remove())
   })
 
   it('renders skip link targeting main landmark', () => {
@@ -109,9 +112,15 @@ describe('App shell accessibility', () => {
     })
     await flushPromises()
     expect(meta.getAttribute('content')).toContain('Student Exchange')
+    expect(document.querySelector('meta[property="og:description"]')?.getAttribute('content')).toContain(
+      'Student Exchange',
+    )
     setAppLocale('es')
     await wrapper.vm.$nextTick()
     expect(meta.getAttribute('content')).toContain('intercambio')
+    expect(document.querySelector('meta[property="og:description"]')?.getAttribute('content')).toContain(
+      'intercambio',
+    )
     document.head.removeChild(meta)
   })
 })

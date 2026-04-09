@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- Default EN; inline script below aligns with vue-i18n before module load. Keep in sync with src/locales/{en,es}.json appMeta.metaDescription. -->
+    <!-- Default EN; shell script aligns with vue-i18n before module load. Keep in sync with src/locales/{en,es}.json appMeta (metaDescription, socialTitle). -->
     <meta
       name="description"
       content="SEIM — Student Exchange Information Management: applications, documents, deadlines, and notifications for exchange programs."
@@ -56,6 +56,30 @@
         document.title = 'SEIM'
         var m = document.querySelector('meta[name="description"]')
         if (m) m.setAttribute('content', META[loc] || META.en)
+
+        var OG_TITLE = {
+          en: 'SEIM — Student Exchange Information Management',
+          es: 'SEIM — Gestión de información de intercambio estudiantil',
+        }
+        function upsertMeta(by, key, content) {
+          var el = document.head.querySelector('meta[' + by + '="' + key + '"]')
+          if (!el) {
+            el = document.createElement('meta')
+            el.setAttribute(by, key)
+            document.head.appendChild(el)
+          }
+          el.setAttribute('content', content)
+        }
+        var ogDesc = META[loc] || META.en
+        var ogTi = OG_TITLE[loc] || OG_TITLE.en
+        upsertMeta('property', 'og:title', ogTi)
+        upsertMeta('property', 'og:description', ogDesc)
+        upsertMeta('property', 'og:locale', loc === 'es' ? 'es_ES' : 'en_US')
+        upsertMeta('property', 'og:locale:alternate', loc === 'es' ? 'en_US' : 'es_ES')
+        upsertMeta('property', 'og:site_name', 'SEIM')
+        upsertMeta('name', 'twitter:card', 'summary')
+        upsertMeta('name', 'twitter:title', ogTi)
+        upsertMeta('name', 'twitter:description', ogDesc)
 
         var themePref = 'auto'
         try {

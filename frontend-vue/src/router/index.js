@@ -5,7 +5,8 @@ import { nextTick } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { announceRouteNavigation, focusMainContent } from '@/utils/a11y'
-import { resolveDocumentTitle } from '@/utils/documentTitle'
+import i18n from '@/i18n'
+import { resolveDocumentTitle, syncAppSocialMeta } from '@/utils/documentTitle'
 
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
@@ -218,6 +219,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   document.title = resolveDocumentTitle(to)
+  syncAppSocialMeta((k) => i18n.global.t(k), to)
 
   // Check if route requires authentication
   if (to.meta.requiresAuth) {

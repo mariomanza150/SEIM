@@ -3,7 +3,10 @@
     "skipToMain": "Skip to main content"
   },
   "appMeta": {
-    "metaDescription": "SEIM — Student Exchange Information Management: applications, documents, deadlines, and notifications for exchange programs."
+    "metaDescription": "SEIM — Student Exchange Information Management: applications, documents, deadlines, and notifications for exchange programs.",
+    "socialTitle": "SEIM — Student Exchange Information Management",
+    "ogLocale": "en_US",
+    "ogLocaleAlternate": "es_ES"
   },
   "helloWorld": {
     "countLabel": "count is {count}",

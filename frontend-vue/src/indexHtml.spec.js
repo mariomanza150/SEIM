@@ -29,6 +29,8 @@ describe('frontend-vue/index.html', () => {
     const html = readFileSync(indexPath, 'utf8')
     expect(html).toContain(en.appMeta.metaDescription)
     expect(html).toContain(es.appMeta.metaDescription)
+    expect(html).toContain(en.appMeta.socialTitle)
+    expect(html).toContain(es.appMeta.socialTitle)
     expect(html).toContain('id="seim-shell-bootstrap"')
     expect(html).toContain("var LOCALE_KEY = 'seim.ui_locale'")
     expect(html).toContain("var PREFS_KEY = 'seim_ui_preferences'")
@@ -80,5 +82,20 @@ describe('frontend-vue/index.html', () => {
     expect(dom.window.document.querySelector('meta[name="theme-color"]').getAttribute('content')).toBe(
       THEME_COLOR_LIGHT,
     )
+  })
+
+  it('shell bootstrap adds localized Open Graph and Twitter meta', () => {
+    const html = readFileSync(indexPath, 'utf8')
+    const dom = new JSDOM(html, {
+      runScripts: 'dangerously',
+      url: 'http://localhost/',
+      beforeParse(window) {
+        window.localStorage.setItem('seim.ui_locale', 'es')
+      },
+    })
+    const doc = dom.window.document
+    expect(doc.querySelector('meta[property="og:title"]').getAttribute('content')).toBe(es.appMeta.socialTitle)
+    expect(doc.querySelector('meta[property="og:locale"]').getAttribute('content')).toBe('es_ES')
+    expect(doc.querySelector('meta[name="twitter:card"]').getAttribute('content')).toBe('summary')
   })
 })
