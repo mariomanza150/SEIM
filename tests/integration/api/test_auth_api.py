@@ -6,8 +6,12 @@ ensuring proper JWT token handling, user registration, and login functionality.
 """
 
 import uuid
+from copy import deepcopy
+
 import pytest
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -310,6 +314,34 @@ class TestAuthenticationAPI(APITestCase):
         profile_response = unauth_client.get(profile_url)
         self.assert_response_unauthorized(profile_response)
 
+    def test_logout_post_json_succeeds_with_django_session_and_jwt_header(self):
+        """MQ-008: Logout POST must not return 403 from Session CSRF when session + JWT exist."""
+        uid = self.unique_id
+        user = TestUtils.create_test_user(
+            username=f"logout_{uid}",
+            email=f"logout_{uid}@example.com",
+            password="pass789",
+        )
+
+        rf = deepcopy(settings.REST_FRAMEWORK)
+        rf["DEFAULT_AUTHENTICATION_CLASSES"] = [
+            "rest_framework_simplejwt.authentication.JWTAuthentication",
+            "rest_framework.authentication.SessionAuthentication",
+        ]
+
+        with override_settings(REST_FRAMEWORK=rf):
+            self.client.force_login(user)
+            refresh = RefreshToken.for_user(user)
+            access = str(refresh.access_token)
+            self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+            response = self.client.post(
+                reverse("accounts:logout"),
+                {"refresh": str(refresh)},
+                format="json",
+            )
+
+        self.assert_response_success(response, status.HTTP_200_OK)
+
     def test_frontend_login_with_username_and_email(self):
         """Test frontend login flow using /api/accounts/login/ with both username and email."""
         username = f"frontenduser_{self.unique_id}"
@@ -551,3 +583,29 @@ class TestAuthenticationSecurity(APITestCase):
         # Should not fail due to CSRF (API endpoints are typically exempt)
         # The response should be 401 (unauthorized) not 403 (forbidden)
         self.assertNotEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_login_switch_user_with_existing_django_session(self):
+        """MQ-007: Login POST must succeed when another user is already in the session (no opaque 403)."""
+        uid = self.unique_id
+        user_a = TestUtils.create_test_user(
+            username=f"a_{uid}", email=f"a_{uid}@example.com", password="pass123"
+        )
+        user_b = TestUtils.create_test_user(
+            username=f"b_{uid}", email=f"b_{uid}@example.com", password="pass456"
+        )
+
+        rf = deepcopy(settings.REST_FRAMEWORK)
+        rf["DEFAULT_AUTHENTICATION_CLASSES"] = [
+            "rest_framework_simplejwt.authentication.JWTAuthentication",
+            "rest_framework.authentication.SessionAuthentication",
+        ]
+
+        with override_settings(REST_FRAMEWORK=rf):
+            self.client.force_login(user_a)
+            response = self.client.post(
+                self.login_url,
+                {"login": user_b.email, "password": "pass456"},
+                format="json",
+            )
+
+        self.assert_response_success(response, status.HTTP_200_OK)

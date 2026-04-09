@@ -7,6 +7,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.throttling import BurstRateThrottle
@@ -100,6 +101,10 @@ class LoginView(generics.GenericAPIView):
     """Login endpoint with burst rate limiting to prevent brute force attacks."""
 
     serializer_class = LoginSerializer
+    # Do not run Session/JWT auth before validating credentials. Otherwise a prior Django
+    # session triggers SessionAuthentication CSRF enforcement and account-switch POSTs
+    # return 403 while the SPA sends JSON without CSRF headers (MQ-007).
+    authentication_classes = []
     permission_classes = []
     throttle_classes = [BurstRateThrottle]  # Strict limit to prevent brute force
 
@@ -264,6 +269,11 @@ class ProfileUpdateView(generics.GenericAPIView):
 
 class LogoutView(generics.GenericAPIView):
     """API view for logging out users."""
+
+    # JWT only: default SessionAuthentication on this POST triggers CSRF when the client
+    # also holds a Django session from login(), causing 403 and blocking the next JSON
+    # login (same class as MQ-007 on LoginView) — MQ-008.
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     serializer_class = LogoutSerializer
 
