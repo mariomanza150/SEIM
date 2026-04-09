@@ -47,7 +47,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None currently assigned_ |  |  |  |  |
+| Student application readiness scoring | `exchange`, `documents`, `frontend-vue`, `api` | In progress | 2026-04-08 | — |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -66,6 +66,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Applications, Forms, and Eligibility
 | Feature | Module | Notes |
 |---------|--------|-------|
+| _Readiness scoring:_ **IN PROGRESS** (see IN PROGRESS table). |
 | Multi-document requirements per application step | `application_forms`, `documents`, `frontend-vue` | Support uploading and validating multiple required documents within each step of an application workflow. |
 | Dynamic step builder with reusable templates | `application_forms`, `admin UI`, `exchange` | Let admins compose application flows from reusable step/field templates instead of configuring each application type from scratch. |
 | Conditional application logic and branching | `application_forms`, `exchange`, `frontend-vue` | Support conditional fields and step branching based on program type, student answers, or coordinator decisions. |
