@@ -415,6 +415,17 @@
       "notificationRouting": "Notification routing",
       "deadlines": "Deadlines",
       "agreementFiles": "Agreement files"
+    },
+    "nextSteps": {
+      "programFallback": "Program",
+      "studentFallback": "Student",
+      "finishDraftTitle": "Finish draft application",
+      "documentResubmitTitle": "Document resubmission requested",
+      "documentResubmitSubtitle": "Upload a new version from the document page",
+      "reviewAssignedTitle": "Review assigned application",
+      "reviewPendingTitle": "Application awaiting review",
+      "resubmitQueueTitle": "Open document resubmission",
+      "staffLine": "{who} · {program}"
     }
   },
   "applicationsPage": {

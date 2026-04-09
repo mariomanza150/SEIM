@@ -71,4 +71,4 @@ _Use these as hints when filling the **Browser** column; replace with exact `tes
 
 ---
 
-*Last updated: 2026-04-09 — **`vue-portal`:** matrix lists `Profile.spec.js` + `test_profile_additional_languages.py` (green re-run). Prior: `core` contact URLs.*
+*Last updated: 2026-04-09 — Dashboard **next-steps i18n** (`dashboardNextSteps.spec.js`). Prior: `vue-portal` Profile matrix; `core` contact URLs.*

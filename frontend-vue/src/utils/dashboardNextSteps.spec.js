@@ -1,5 +1,6 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mergeDashboardNextSteps, normalizePaginated, fetchDashboardNextSteps } from './dashboardNextSteps'
+import i18n, { setAppLocale } from '@/i18n'
 
 describe('normalizePaginated', () => {
   it('handles DRF page shape', () => {
@@ -11,6 +12,16 @@ describe('normalizePaginated', () => {
 })
 
 describe('mergeDashboardNextSteps', () => {
+  const t = (key, params) => i18n.global.t(key, params)
+
+  beforeEach(() => {
+    setAppLocale('en')
+  })
+
+  afterEach(() => {
+    setAppLocale('en')
+  })
+
   it('prioritizes notifications and dedupes assigned from pending review', () => {
     const rows = mergeDashboardNextSteps({
       notifications: [{ id: 'a', title: 'N1', message: 'm', sent_at: '2026-01-02T00:00:00Z', action_url: null }],
@@ -39,6 +50,7 @@ describe('mergeDashboardNextSteps', () => {
       resubmitApps: [],
       isStudent: false,
       isStaff: true,
+      t,
     })
     const kinds = rows.map((r) => r.kind)
     expect(kinds[0]).toBe('notification')
@@ -59,18 +71,46 @@ describe('mergeDashboardNextSteps', () => {
       ],
       isStudent: true,
       isStaff: false,
+      t,
     })
     expect(rows.some((r) => r.kind === 'draft')).toBe(true)
     expect(rows.some((r) => r.kind === 'document_resubmit')).toBe(true)
   })
+
+  it('uses Spanish copy when locale is es', () => {
+    setAppLocale('es')
+    const rows = mergeDashboardNextSteps({
+      notifications: [],
+      drafts: [{ id: 'd1', program_name: 'España', created_at: '2026-01-01T00:00:00Z' }],
+      documents: [],
+      isStudent: true,
+      isStaff: false,
+      t,
+    })
+    const draft = rows.find((r) => r.kind === 'draft')
+    expect(draft.title).toBe('Terminar borrador de solicitud')
+    expect(draft.subtitle).toBe('España')
+  })
+
+  it('throws without translate function', () => {
+    expect(() =>
+      mergeDashboardNextSteps({
+        notifications: [],
+        isStudent: false,
+        isStaff: false,
+      }),
+    ).toThrow(/t \(i18n translate\) is required/)
+  })
 })
 
 describe('fetchDashboardNextSteps', () => {
+  const t = (key, params) => i18n.global.t(key, params)
+
   it('loads notifications only for non-student non-staff', async () => {
     const api = {
       get: vi.fn().mockResolvedValue({ data: { results: [{ id: 1, sent_at: '2026-01-01T00:00:00Z' }] } }),
     }
-    const rows = await fetchDashboardNextSteps(api, { userRole: null, canUseStaffReviewQueue: false })
+    const rows = await fetchDashboardNextSteps(api, { userRole: null, canUseStaffReviewQueue: false, t })
     expect(api.get).toHaveBeenCalledTimes(1)
     expect(rows.length).toBeGreaterThan(0)
   })

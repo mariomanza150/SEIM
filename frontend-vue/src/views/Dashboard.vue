@@ -314,6 +314,7 @@ async function loadNextSteps() {
     nextSteps.value = await fetchDashboardNextSteps(api, {
       userRole: authStore.userRole,
       canUseStaffReviewQueue: authStore.canUseStaffReviewQueue,
+      t,
     })
   } catch {
     nextStepsError.value = t('dashboard.nextStepsLoadError')

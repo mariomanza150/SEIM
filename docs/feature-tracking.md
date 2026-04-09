@@ -90,6 +90,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: DocumentUpload component | `frontend-vue` | Implemented | 2026-04-09 | `documentUpload.*` + `documentDetailPage.labelDocumentType`; `DocumentUpload.vue` on application detail. Vitest: `DocumentUpload.spec.js`. |
 | Vue i18n: Browser tab titles (router) | `frontend-vue` | Implemented | 2026-04-09 | `resolveDocumentTitle` (`utils/documentTitle.js`): `route.names.*` + `route.notFoundBrowserTitle` + `route.fallbackTitle`; router `beforeEach`; Settings locale change refreshes tab title. Vitest: `documentTitle.spec.js`. |
 | Vue i18n: Settings page (full form + sidebar) | `frontend-vue` | Implemented | 2026-04-09 | `Settings.vue`: breadcrumbs, sections, theme/font/digest/privacy, `settings.notify.*` checkboxes, toasts; reuses `applicationFormPage.cancel`, `route.names`. Vitest: `Settings.spec.js`. |
+| Vue i18n: Dashboard “next steps” row copy | `frontend-vue` | Implemented | 2026-04-09 | `dashboardNextSteps.js`: `mergeDashboardNextSteps` / `fetchDashboardNextSteps` take `t`; strings under `dashboard.nextSteps.*` + `notifications.defaultTitle`; `Dashboard.vue` passes `t`. Vitest: `dashboardNextSteps.spec.js` (incl. `es` draft title). |
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-08 | Extended `notifications.*` + reuse `route.names`, `documentsPage` / `applicationsPage` / `applicationFormPage` / `reviewQueuePage`; `Notifications.vue` filters, list, empty/loading/error, pagination, mark-read + toasts, locale-relative dates (`timeDaysAgo`). Vitest: `Notifications.spec.js`. |
 | Staff notification routing reference API | `notifications`, `api`, `seim` | Implemented | 2026-04-09 | `GET /api/notifications/routing-reference/`: **`reminder_event_types_by_settings_category`**, **`transactional_route_keys_by_settings_category`**, plus matrix fields; **`schema_version` 12**. Tests: `test_notification_routing_reference_api.py`, `test_routing_reference.py`. |
 | Staff Vue read-only notification routing matrix | `frontend-vue`, `notifications`, `api` | Implemented | 2026-04-09 | SPA `/notification-routing`: **Reminder** + **transactional** index-by-group cards; detail tables; digest / API access; en/es. Vitest: `NotificationRouting.spec.js`. |
@@ -98,7 +99,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Dashboard next-steps row copy | `frontend-vue` | In progress | 2026-04-09 | loop |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -132,7 +133,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** full copy (`settings.*` including `notify` matrix). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** + **Dashboard next-steps** (`dashboard.nextSteps.*`). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -172,5 +173,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Vue Settings page i18n — completed)*  
+*Last updated: 2026-04-09 (loop: Vue dashboard next-steps i18n — completed)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

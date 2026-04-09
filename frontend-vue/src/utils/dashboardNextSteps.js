@@ -24,6 +24,7 @@ function ts(value) {
  * @param {object[]} params.resubmitApps
  * @param {boolean} params.isStudent
  * @param {boolean} params.isStaff
+ * @param {function(string, object=): string} params.t vue-i18n translate
  */
 export function mergeDashboardNextSteps({
   notifications = [],
@@ -34,7 +35,12 @@ export function mergeDashboardNextSteps({
   resubmitApps = [],
   isStudent,
   isStaff,
+  t,
 }) {
+  if (typeof t !== 'function') {
+    throw new TypeError('mergeDashboardNextSteps: t (i18n translate) is required')
+  }
+
   const rows = []
 
   for (const n of notifications) {
@@ -43,7 +49,7 @@ export function mergeDashboardNextSteps({
     rows.push({
       id: `n-${n.id}`,
       kind: 'notification',
-      title: n.title || 'Notification',
+      title: n.title || t('notifications.defaultTitle'),
       subtitle: (n.message || '').slice(0, 120),
       spaRoute: spa,
       href: actionUrl && !spa ? actionUrl : null,
@@ -53,11 +59,11 @@ export function mergeDashboardNextSteps({
 
   if (isStudent) {
     for (const d of drafts) {
-      const program = d.program_name || 'Program'
+      const program = d.program_name || t('dashboard.nextSteps.programFallback')
       rows.push({
         id: `draft-${d.id}`,
         kind: 'draft',
-        title: 'Finish draft application',
+        title: t('dashboard.nextSteps.finishDraftTitle'),
         subtitle: program,
         spaRoute: { name: 'ApplicationEdit', params: { id: d.id } },
         href: null,
@@ -71,8 +77,8 @@ export function mergeDashboardNextSteps({
       rows.push({
         id: `doc-${doc.id}`,
         kind: 'document_resubmit',
-        title: 'Document resubmission requested',
-        subtitle: 'Upload a new version from the document page',
+        title: t('dashboard.nextSteps.documentResubmitTitle'),
+        subtitle: t('dashboard.nextSteps.documentResubmitSubtitle'),
         spaRoute: { name: 'DocumentDetail', params: { id: doc.id } },
         href: null,
         sort: 3000_000_000_000 - ts(doc.updated_at || doc.created_at),
@@ -84,13 +90,13 @@ export function mergeDashboardNextSteps({
     const assignedIds = new Set(assignedPending.map((a) => a.id))
 
     for (const a of assignedPending) {
-      const who = a.student_display_name || a.student_email || 'Student'
-      const prog = a.program_name || 'Program'
+      const who = a.student_display_name || a.student_email || t('dashboard.nextSteps.studentFallback')
+      const prog = a.program_name || t('dashboard.nextSteps.programFallback')
       rows.push({
         id: `rv-a-${a.id}`,
         kind: 'review_assigned',
-        title: 'Review assigned application',
-        subtitle: `${who} · ${prog}`,
+        title: t('dashboard.nextSteps.reviewAssignedTitle'),
+        subtitle: t('dashboard.nextSteps.staffLine', { who, program: prog }),
         spaRoute: { name: 'ApplicationDetail', params: { id: a.id } },
         href: null,
         sort: 3000_000_000_000 - ts(a.submitted_at || a.created_at),
@@ -99,13 +105,13 @@ export function mergeDashboardNextSteps({
 
     for (const a of pendingReview) {
       if (assignedIds.has(a.id)) continue
-      const who = a.student_display_name || a.student_email || 'Student'
-      const prog = a.program_name || 'Program'
+      const who = a.student_display_name || a.student_email || t('dashboard.nextSteps.studentFallback')
+      const prog = a.program_name || t('dashboard.nextSteps.programFallback')
       rows.push({
         id: `rv-${a.id}`,
         kind: 'review',
-        title: 'Application awaiting review',
-        subtitle: `${who} · ${prog}`,
+        title: t('dashboard.nextSteps.reviewPendingTitle'),
+        subtitle: t('dashboard.nextSteps.staffLine', { who, program: prog }),
         spaRoute: { name: 'ApplicationDetail', params: { id: a.id } },
         href: null,
         sort: 4000_000_000_000 - ts(a.submitted_at || a.created_at),
@@ -113,13 +119,13 @@ export function mergeDashboardNextSteps({
     }
 
     for (const a of resubmitApps) {
-      const who = a.student_display_name || a.student_email || 'Student'
-      const prog = a.program_name || 'Program'
+      const who = a.student_display_name || a.student_email || t('dashboard.nextSteps.studentFallback')
+      const prog = a.program_name || t('dashboard.nextSteps.programFallback')
       rows.push({
         id: `rs-${a.id}`,
         kind: 'resubmit_queue',
-        title: 'Open document resubmission',
-        subtitle: `${who} · ${prog}`,
+        title: t('dashboard.nextSteps.resubmitQueueTitle'),
+        subtitle: t('dashboard.nextSteps.staffLine', { who, program: prog }),
         spaRoute: { name: 'ApplicationDetail', params: { id: a.id } },
         href: null,
         sort: 5000_000_000_000 - ts(a.submitted_at || a.created_at),
@@ -131,7 +137,7 @@ export function mergeDashboardNextSteps({
   return rows.slice(0, 14)
 }
 
-export async function fetchDashboardNextSteps(api, { userRole, canUseStaffReviewQueue }) {
+export async function fetchDashboardNextSteps(api, { userRole, canUseStaffReviewQueue, t }) {
   const isStudent = userRole === 'student'
   const isStaff = Boolean(canUseStaffReviewQueue)
 
@@ -201,6 +207,7 @@ export async function fetchDashboardNextSteps(api, { userRole, canUseStaffReview
       documents: docList,
       isStudent: true,
       isStaff: false,
+      t,
     })
   }
 
@@ -213,6 +220,7 @@ export async function fetchDashboardNextSteps(api, { userRole, canUseStaffReview
       resubmitApps,
       isStudent: false,
       isStaff: true,
+      t,
     })
   }
 
@@ -221,5 +229,6 @@ export async function fetchDashboardNextSteps(api, { userRole, canUseStaffReview
     notifications: notif,
     isStudent: false,
     isStaff: false,
+    t,
   })
 }

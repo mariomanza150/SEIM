@@ -415,6 +415,17 @@
       "notificationRouting": "Enrutado de notificaciones",
       "deadlines": "Plazos",
       "agreementFiles": "Archivos de convenios"
+    },
+    "nextSteps": {
+      "programFallback": "Programa",
+      "studentFallback": "Estudiante",
+      "finishDraftTitle": "Terminar borrador de solicitud",
+      "documentResubmitTitle": "Se solicitó una nueva versión del documento",
+      "documentResubmitSubtitle": "Sube una nueva versión desde la página del documento",
+      "reviewAssignedTitle": "Revisar solicitud asignada",
+      "reviewPendingTitle": "Solicitud pendiente de revisión",
+      "resubmitQueueTitle": "Reenvío de documento pendiente",
+      "staffLine": "{who} · {program}"
     }
   },
   "applicationsPage": {
