@@ -37,6 +37,7 @@ describe('Applications', () => {
       },
     })
     await flushPromises()
+    expect(wrapper.find('nav').attributes('aria-label')).toBe(i18n.global.t('applicationsPage.breadcrumbAria'))
     expect(wrapper.text()).toContain('No applications yet')
     expect(wrapper.text()).toContain('My applications')
   })

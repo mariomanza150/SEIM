@@ -71,4 +71,4 @@ _Use these as hints when filling the **Browser** column; replace with exact `tes
 
 ---
 
-*Last updated: 2026-04-08 — **`notifications`:** matrix cites `test_application_sync_broadcast.py`, `test_notification_digest.py`, `websocket.spec.js`; Docker pytest slice (6) + Vitest `websocket.spec.js` (4) green.*
+*Last updated: 2026-04-09 — **Applications/Documents** breadcrumb `aria-label` i18n (`Applications.spec.js`, `Documents.spec.js`). Prior: `notifications` matrix / websocket slice.*

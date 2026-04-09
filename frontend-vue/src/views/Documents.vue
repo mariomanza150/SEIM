@@ -2,7 +2,7 @@
   <div class="documents-page" data-testid="documents-page">
     <div class="container-fluid mt-4">
       <!-- Breadcrumb -->
-      <nav aria-label="breadcrumb">
+      <nav :aria-label="t('documentsPage.breadcrumbAria')">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
             <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>

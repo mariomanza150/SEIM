@@ -429,6 +429,7 @@
     }
   },
   "applicationsPage": {
+    "breadcrumbAria": "Migas de pan",
     "title": "Mis solicitudes",
     "tagline": "Gestiona tus solicitudes de intercambio",
     "comparePrograms": "Comparar programas",
@@ -475,6 +476,7 @@
     }
   },
   "documentsPage": {
+    "breadcrumbAria": "Migas de pan",
     "subtitleStudent": "Gestiona los documentos que subes para tus solicitudes",
     "subtitleStaff": "Archivos subidos en solicitudes (vista de personal)",
     "applicationLabel": "Solicitud",

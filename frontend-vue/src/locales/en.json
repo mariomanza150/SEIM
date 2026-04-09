@@ -429,6 +429,7 @@
     }
   },
   "applicationsPage": {
+    "breadcrumbAria": "Breadcrumb",
     "title": "My applications",
     "tagline": "Manage your exchange program applications",
     "comparePrograms": "Compare programs",
@@ -475,6 +476,7 @@
     }
   },
   "documentsPage": {
+    "breadcrumbAria": "Breadcrumb",
     "subtitleStudent": "Manage your uploaded documents for applications",
     "subtitleStaff": "Application uploads (all students, staff view)",
     "applicationLabel": "Application",

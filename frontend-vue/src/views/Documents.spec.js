@@ -57,9 +57,22 @@ describe('Documents', () => {
       },
     })
     await flushPromises()
+    expect(wrapper.find('nav').attributes('aria-label')).toBe(i18n.global.t('documentsPage.breadcrumbAria'))
     expect(wrapper.find('[data-testid="documents-heading"]').text()).toContain('Documents')
     expect(wrapper.text()).toContain('No documents yet')
     expect(wrapper.text()).toContain('Manage your uploaded documents for applications')
+  })
+
+  it('uses Spanish breadcrumb aria when locale is es', async () => {
+    setAppLocale('es')
+    const wrapper = mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('nav').attributes('aria-label')).toBe('Migas de pan')
   })
 
   it('renders document row with view link', async () => {
