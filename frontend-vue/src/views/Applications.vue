@@ -6,22 +6,22 @@
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
+            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
           </li>
-          <li class="breadcrumb-item active">Applications</li>
+          <li class="breadcrumb-item active">{{ t('route.names.Applications') }}</li>
         </ol>
       </nav>
       <div class="row mb-4">
         <div class="col-md-8">
-          <h2><i class="bi bi-file-earmark-text me-2"></i>My Applications</h2>
-          <p class="text-muted">Manage your exchange program applications</p>
+          <h2><i class="bi bi-file-earmark-text me-2"></i>{{ t('applicationsPage.title') }}</h2>
+          <p class="text-muted">{{ t('applicationsPage.tagline') }}</p>
         </div>
         <div class="col-md-4 text-end d-flex flex-wrap gap-2 justify-content-md-end">
           <router-link :to="{ name: 'ProgramCompare' }" class="btn btn-outline-secondary">
-            <i class="bi bi-columns-gap me-1"></i>Compare programs
+            <i class="bi bi-columns-gap me-1"></i>{{ t('applicationsPage.comparePrograms') }}
           </router-link>
           <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-2"></i>New Application
+            <i class="bi bi-plus-circle me-2"></i>{{ t('applicationsPage.newApplication') }}
           </router-link>
         </div>
       </div>
@@ -31,39 +31,39 @@
         <div class="card-body">
           <div class="row g-3">
             <div class="col-md-4">
-              <label class="form-label">Search</label>
+              <label class="form-label">{{ t('applicationsPage.searchLabel') }}</label>
               <input
                 v-model="filters.search"
                 type="text"
                 class="form-control"
-                placeholder="Search programs..."
+                :placeholder="t('applicationsPage.searchPlaceholder')"
                 @input="debouncedSearch"
                 data-testid="applications-search"
               />
             </div>
             <div class="col-md-3">
-              <label class="form-label">Status</label>
+              <label class="form-label">{{ t('applicationsPage.statusLabel') }}</label>
               <select v-model="filters.status" class="form-select" @change="fetchApplications" data-testid="applications-filter-status">
-                <option value="">All Statuses</option>
-                <option value="draft">Draft</option>
-                <option value="submitted">Submitted</option>
-                <option value="under_review">Under Review</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="completed">Completed</option>
+                <option value="">{{ t('applicationsPage.statusOptionAll') }}</option>
+                <option value="draft">{{ t('applicationsPage.status.draft') }}</option>
+                <option value="submitted">{{ t('applicationsPage.status.submitted') }}</option>
+                <option value="under_review">{{ t('applicationsPage.status.under_review') }}</option>
+                <option value="approved">{{ t('applicationsPage.status.approved') }}</option>
+                <option value="rejected">{{ t('applicationsPage.status.rejected') }}</option>
+                <option value="completed">{{ t('applicationsPage.status.completed') }}</option>
               </select>
             </div>
             <div class="col-md-3">
-              <label class="form-label">Sort By</label>
+              <label class="form-label">{{ t('applicationsPage.sortLabel') }}</label>
               <select v-model="filters.ordering" class="form-select" @change="fetchApplications" data-testid="applications-filter-ordering">
-                <option value="-created_at">Newest First</option>
-                <option value="created_at">Oldest First</option>
-                <option value="-submitted_at">Recently Submitted</option>
+                <option value="-created_at">{{ t('applicationsPage.sortNewest') }}</option>
+                <option value="created_at">{{ t('applicationsPage.sortOldest') }}</option>
+                <option value="-submitted_at">{{ t('applicationsPage.sortRecentlySubmitted') }}</option>
               </select>
             </div>
             <div class="col-md-2 d-flex align-items-end">
               <button class="btn btn-outline-secondary w-100" @click="clearFilters">
-                <i class="bi bi-x-circle me-1"></i>Clear
+                <i class="bi bi-x-circle me-1"></i>{{ t('applicationsPage.clearFilters') }}
               </button>
             </div>
           </div>
@@ -73,9 +73,9 @@
       <!-- Loading -->
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
+          <span class="visually-hidden">{{ t('applicationsPage.loadingSpinner') }}</span>
         </div>
-        <p class="mt-3 text-muted">Loading applications...</p>
+        <p class="mt-3 text-muted">{{ t('applicationsPage.loadingList') }}</p>
       </div>
 
       <!-- Error -->
@@ -91,7 +91,7 @@
             <div class="card application-card h-100">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                  <h5 class="card-title mb-0">{{ application.program?.name || 'Unknown Program' }}</h5>
+                  <h5 class="card-title mb-0">{{ application.program?.name || t('applicationsPage.unknownProgram') }}</h5>
                   <span class="badge" :class="statusClass(application.status)">
                     {{ formatStatus(application.status) }}
                   </span>
@@ -103,7 +103,7 @@
                   data-testid="application-readiness-summary"
                 >
                   <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="small text-muted">Readiness</span>
+                    <span class="small text-muted">{{ t('applicationsPage.readinessLabel') }}</span>
                     <span class="badge" :class="readinessLevelBadgeClass(application.readiness.level)">
                       {{ application.readiness.score }}%
                     </span>
@@ -113,17 +113,17 @@
 
                 <p class="card-text text-muted small mb-3">
                   <i class="bi bi-building me-1"></i>
-                  {{ application.program?.institution || 'N/A' }}
+                  {{ application.program?.institution || t('applicationsPage.notAvailable') }}
                 </p>
 
                 <div class="row small text-muted mb-3">
                   <div class="col-6">
                     <i class="bi bi-calendar me-1"></i>
-                    Created: {{ formatDate(application.created_at) }}
+                    {{ t('applicationsPage.created') }}: {{ formatDate(application.created_at) }}
                   </div>
                   <div v-if="application.submitted_at" class="col-6">
                     <i class="bi bi-send me-1"></i>
-                    Submitted: {{ formatDate(application.submitted_at) }}
+                    {{ t('applicationsPage.submitted') }}: {{ formatDate(application.submitted_at) }}
                   </div>
                 </div>
 
@@ -133,7 +133,7 @@
                     class="btn btn-sm btn-outline-primary"
                     data-testid="application-detail-link"
                   >
-                    <i class="bi bi-eye me-1"></i>View Details
+                    <i class="bi bi-eye me-1"></i>{{ t('applicationsPage.viewDetails') }}
                   </router-link>
                   
                   <div>
@@ -141,15 +141,18 @@
                       v-if="application.status === 'draft'"
                       :to="{ name: 'ApplicationEdit', params: { id: application.id } }"
                       class="btn btn-sm btn-outline-secondary me-2"
+                      :aria-label="t('applicationsPage.editAria')"
                     >
-                      <i class="bi bi-pencil"></i>
+                      <i class="bi bi-pencil" aria-hidden="true"></i>
                     </router-link>
                     <button
                       v-if="application.status === 'draft'"
+                      type="button"
                       class="btn btn-sm btn-outline-danger"
+                      :aria-label="t('applicationsPage.deleteAria')"
                       @click="confirmDelete(application)"
                     >
-                      <i class="bi bi-trash"></i>
+                      <i class="bi bi-trash" aria-hidden="true"></i>
                     </button>
                   </div>
                 </div>
@@ -159,11 +162,11 @@
         </div>
 
         <!-- Pagination -->
-        <nav v-if="pagination.count > pagination.pageSize" aria-label="Applications pagination">
+        <nav v-if="pagination.count > pagination.pageSize" :aria-label="t('applicationsPage.paginationAria')">
           <ul class="pagination justify-content-center">
             <li class="page-item" :class="{ disabled: !pagination.previous }">
-              <button class="page-link" @click="goToPage(pagination.currentPage - 1)">
-                Previous
+              <button type="button" class="page-link" @click="goToPage(pagination.currentPage - 1)">
+                {{ t('applicationsPage.previous') }}
               </button>
             </li>
             <li
@@ -172,11 +175,11 @@
               class="page-item"
               :class="{ active: page === pagination.currentPage }"
             >
-              <button class="page-link" @click="goToPage(page)">{{ page }}</button>
+              <button type="button" class="page-link" @click="goToPage(page)">{{ page }}</button>
             </li>
             <li class="page-item" :class="{ disabled: !pagination.next }">
-              <button class="page-link" @click="goToPage(pagination.currentPage + 1)">
-                Next
+              <button type="button" class="page-link" @click="goToPage(pagination.currentPage + 1)">
+                {{ t('applicationsPage.next') }}
               </button>
             </li>
           </ul>
@@ -187,10 +190,10 @@
       <div v-else class="card">
         <div class="card-body text-center py-5">
           <i class="bi bi-inbox display-1 text-muted"></i>
-          <h4 class="mt-3">No Applications Yet</h4>
-          <p class="text-muted">Start your exchange journey by creating your first application!</p>
+          <h4 class="mt-3">{{ t('applicationsPage.emptyTitle') }}</h4>
+          <p class="text-muted">{{ t('applicationsPage.emptyBody') }}</p>
           <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary mt-3">
-            <i class="bi bi-plus-circle me-2"></i>Create Application
+            <i class="bi bi-plus-circle me-2"></i>{{ t('applicationsPage.createApplication') }}
           </router-link>
         </div>
       </div>
@@ -200,12 +203,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import { readinessLevelBadgeClass } from '@/utils/applicationReadiness'
 
-const router = useRouter()
+const { t, te, locale } = useI18n()
 const { success, error: errorToast } = useToast()
 
 const applications = ref([])
@@ -268,8 +271,8 @@ async function fetchApplications(page = 1) {
     }
   } catch (err) {
     console.error('Failed to fetch applications:', err)
-    error.value = 'Failed to load applications. Please try again.'
-    errorToast('Failed to load applications')
+    error.value = t('applicationsPage.loadError')
+    errorToast(t('applicationsPage.loadToastError'))
   } finally {
     loading.value = false
   }
@@ -304,13 +307,17 @@ function statusClass(status) {
 }
 
 function formatStatus(status) {
-  return status ? status.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()) : 'Unknown'
+  if (!status) return t('applicationsPage.status.unknown')
+  const key = `applicationsPage.status.${status}`
+  if (te(key)) return t(key)
+  return String(status).replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
 function formatDate(dateString) {
-  if (!dateString) return 'N/A'
+  if (!dateString) return t('applicationsPage.notAvailable')
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
+  const localeTag = locale.value === 'es' ? 'es' : 'en-US'
+  return date.toLocaleDateString(localeTag, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -318,7 +325,8 @@ function formatDate(dateString) {
 }
 
 async function confirmDelete(application) {
-  if (confirm(`Are you sure you want to delete this application for "${application.program?.name}"?`)) {
+  const name = application.program?.name || t('applicationsPage.unknownProgram')
+  if (confirm(t('applicationsPage.deleteConfirm', { name }))) {
     await deleteApplication(application.id)
   }
 }
@@ -326,11 +334,11 @@ async function confirmDelete(application) {
 async function deleteApplication(id) {
   try {
     await api.delete(`/api/applications/${id}/`)
-    success('Application deleted successfully')
+    success(t('applicationsPage.deletedToast'))
     fetchApplications(pagination.value.currentPage)
   } catch (err) {
     console.error('Failed to delete application:', err)
-    errorToast('Failed to delete application')
+    errorToast(t('applicationsPage.deleteToastError'))
   }
 }
 
