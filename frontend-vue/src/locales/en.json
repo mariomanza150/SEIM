@@ -3,6 +3,7 @@
     "skipToMain": "Skip to main content"
   },
   "notifications": {
+    "breadcrumbAria": "Breadcrumb",
     "fallbackToast": "New notification",
     "dropdownAria": "Notifications menu",
     "dropdownHeader": "Notifications",

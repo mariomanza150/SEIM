@@ -3,6 +3,7 @@
     "skipToMain": "Saltar al contenido principal"
   },
   "notifications": {
+    "breadcrumbAria": "Migas de pan",
     "fallbackToast": "Nueva notificación",
     "dropdownAria": "Menú de notificaciones",
     "dropdownHeader": "Notificaciones",

@@ -2,7 +2,7 @@
   <div class="notifications-page" data-testid="notifications-page">
     <div class="container-fluid mt-4">
       <!-- Breadcrumb -->
-      <nav :aria-label="t('reviewQueuePage.breadcrumbAria')">
+      <nav :aria-label="t('notifications.breadcrumbAria')">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
             <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
