@@ -76,7 +76,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ |  |  |  |  |
+| Vue i18n: Application detail view | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -109,7 +109,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: Application detail/edit/form, tables/modals. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **In progress:** Application detail (`ApplicationDetail.vue`). Shipped: Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: Application edit/form, tables/modals. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -125,7 +125,7 @@ _All Priority 1 items in this subsection are implemented above._
 |---------|--------|-------|
 | Student nomination and matching workflow | `exchange`, `accounts`, `admin UI` | Support nomination cycles, ranking, partner allocations, and selection matching for institutions with limited slots. |
 | Visual workflow designer for applications | `application_forms`, `admin UI` | Give admins a low-code interface to design multi-step application flows, approval paths, and validation gates visually. |
-| Electronic signatures for agreements and approvals | `exchange`, `documents`, `admin UI` | Integrate digital signing for agreements, approval letters, and staff sign-off workflows to reduce manual paperwork. |
+
 | Automated eligibility and rules engine | `exchange`, `application_forms`, `accounts` | Evaluate eligibility using configurable academic, language, deadline, and documentation rules before submission or review. |
 | Scholarship and funding workflow tracking | `exchange`, `documents`, `analytics`, `frontend-vue` | Track scholarship opportunities, funding applications, required financial documents, and award outcomes alongside exchange applications. |
 
@@ -137,15 +137,16 @@ _All Priority 1 items in this subsection are implemented above._
 #### Intelligence, Analytics, and Institutional Reporting
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Advanced document intelligence and extraction | `documents`, `analytics`, `admin UI` | Extract metadata from uploaded documents, flag missing fields, and support smarter classification or duplicate detection. |
+
 | Predictive analytics for demand and bottlenecks | `analytics`, `exchange`, `notifications` | Forecast program demand, review bottlenecks, and likely missed deadlines using historical application and document activity. |
 | Institutional reporting warehouse and BI exports | `analytics`, `admin UI`, `api` | Build richer institutional reporting pipelines for trend analysis, accreditation reporting, and external BI tooling integrations. |
 ## 🔴 DEPRECATED / REJECTED ❌
 | Feature | Module | Removed | Reason |
 |---------|--------|---------|--------|
-| _None recorded_ |  |  |  |
+| Electronic signatures for agreements and approvals | `exchange`, `documents`, `admin UI` | Integrate digital signing for agreements, approval letters, and staff sign-off workflows to reduce manual paperwork. |
+| Advanced document intelligence and extraction | `documents`, `analytics`, `admin UI` | Extract metadata from uploaded documents, flag missing fields, and support smarter classification or duplicate detection. |
 
 ---
 
-*Last updated: 2026-04-09 (Vue i18n Document detail)*  
+*Last updated: 2026-04-09 (Vue i18n Application detail — in progress)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
