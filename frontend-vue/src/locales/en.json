@@ -72,6 +72,15 @@
     "notification": "Notification",
     "close": "Dismiss notification"
   },
+  "savedPresets": {
+    "toastSaved": "Preset saved",
+    "toastSaveError": "Could not save preset",
+    "confirmRemove": "Remove preset \"{name}\"?",
+    "toastRemoved": "Preset removed",
+    "toastRemoveError": "Could not remove preset",
+    "toastDefaultUpdated": "Default preset updated",
+    "toastDefaultError": "Could not update default"
+  },
   "dashboard": {
     "mainNavAria": "Main navigation",
     "toggleNav": "Toggle navigation",

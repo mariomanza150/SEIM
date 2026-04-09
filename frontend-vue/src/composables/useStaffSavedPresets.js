@@ -1,4 +1,5 @@
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 
@@ -6,6 +7,7 @@ import api from '@/services/api'
  * Load/save/delete/set-default for `/api/saved-searches/` rows of a given `search_type`.
  */
 export function useStaffSavedPresets(searchType) {
+  const { t } = useI18n()
   const savedPresets = ref([])
   const presetsLoading = ref(false)
   const newPresetName = ref('')
@@ -40,23 +42,23 @@ export function useStaffSavedPresets(searchType) {
       newPresetName.value = ''
       saveAsDefault.value = false
       await loadPresets()
-      success('Preset saved')
+      success(t('savedPresets.toastSaved'))
     } catch {
-      errorToast('Could not save preset')
+      errorToast(t('savedPresets.toastSaveError'))
     } finally {
       presetsLoading.value = false
     }
   }
 
   async function deletePreset(p) {
-    if (!window.confirm(`Remove preset "${p.name}"?`)) return
+    if (!window.confirm(t('savedPresets.confirmRemove', { name: p.name }))) return
     try {
       presetsLoading.value = true
       await api.delete(`/api/saved-searches/${p.id}/`)
       await loadPresets()
-      success('Preset removed')
+      success(t('savedPresets.toastRemoved'))
     } catch {
-      errorToast('Could not remove preset')
+      errorToast(t('savedPresets.toastRemoveError'))
     } finally {
       presetsLoading.value = false
     }
@@ -67,9 +69,9 @@ export function useStaffSavedPresets(searchType) {
       presetsLoading.value = true
       await api.post(`/api/saved-searches/${p.id}/set_default/`)
       await loadPresets()
-      success('Default preset updated')
+      success(t('savedPresets.toastDefaultUpdated'))
     } catch {
-      errorToast('Could not update default')
+      errorToast(t('savedPresets.toastDefaultError'))
     } finally {
       presetsLoading.value = false
     }

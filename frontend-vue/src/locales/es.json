@@ -72,6 +72,15 @@
     "notification": "Notificación",
     "close": "Cerrar notificación"
   },
+  "savedPresets": {
+    "toastSaved": "Preset guardado",
+    "toastSaveError": "No se pudo guardar el preset",
+    "confirmRemove": "¿Eliminar el preset \"{name}\"?",
+    "toastRemoved": "Preset eliminado",
+    "toastRemoveError": "No se pudo eliminar el preset",
+    "toastDefaultUpdated": "Preset predeterminado actualizado",
+    "toastDefaultError": "No se pudo actualizar el predeterminado"
+  },
   "dashboard": {
     "mainNavAria": "Navegación principal",
     "toggleNav": "Mostrar u ocultar menú",
