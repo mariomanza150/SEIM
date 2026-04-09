@@ -39,6 +39,37 @@ describe('StaffExchangeAgreements', () => {
     localStorage.clear()
   })
 
+  it('shows shared pagination.previous and pagination.next when list spans pages', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/programs/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/saved-searches/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/exchange-agreements/') {
+        return Promise.resolve({
+          data: {
+            results: [{ id: 1, partner_name: 'X', status: 'active' }],
+            count: 25,
+            next: 'http://test/api/exchange-agreements/?page=2',
+            previous: null,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+    const wrapper = mount(StaffExchangeAgreements, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain(i18n.global.t('pagination.previous'))
+    expect(wrapper.text()).toContain(i18n.global.t('pagination.next'))
+  })
+
   it('shows translated heading and empty state', async () => {
     const wrapper = mount(StaffExchangeAgreements, {
       global: {

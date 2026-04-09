@@ -147,8 +147,8 @@ describe('Notifications', () => {
     await flushPromises()
     const nav = wrapper.find('nav[aria-label="Notifications pagination"]')
     expect(nav.exists()).toBe(true)
-    expect(wrapper.text()).toContain('Previous')
-    expect(wrapper.text()).toContain('Next')
+    expect(wrapper.text()).toContain(i18n.global.t('pagination.previous'))
+    expect(wrapper.text()).toContain(i18n.global.t('pagination.next'))
   })
 
   it('uses Spanish strings when locale is es', async () => {

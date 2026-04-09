@@ -43,8 +43,6 @@
     "markAsReadAria": "Mark this notification as read",
     "paginationAria": "Notifications pagination",
     "pageNumberAria": "Page {n}",
-    "previous": "Previous",
-    "next": "Next",
     "notAvailable": "N/A",
     "emptyTitle": "No notifications",
     "emptyBody": "You're all caught up. There is nothing to display.",
@@ -222,8 +220,6 @@
     "presetSetDefaultAria": "Set as default",
     "presetRemoveTitle": "Remove preset",
     "presetRemoveAria": "Remove preset",
-    "previous": "Previous",
-    "next": "Next",
     "emDash": "—"
   },
   "workloadPage": {
@@ -344,8 +340,6 @@
     "presetSetDefaultAria": "Set as default",
     "presetRemoveTitle": "Remove preset",
     "presetRemoveAria": "Remove preset",
-    "previous": "Previous",
-    "next": "Next",
     "paginationAria": "Agreements pagination",
     "emDash": "—",
     "status": {
@@ -396,8 +390,6 @@
     "presetRemoveAria": "Remove preset",
     "loadingSpinner": "Loading",
     "downloadTitle": "Download",
-    "previous": "Previous",
-    "next": "Next",
     "paginationAria": "Agreement documents pagination",
     "emDash": "—",
     "category": {

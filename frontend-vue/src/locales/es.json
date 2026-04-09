@@ -43,8 +43,6 @@
     "markAsReadAria": "Marcar esta notificación como leída",
     "paginationAria": "Paginación de notificaciones",
     "pageNumberAria": "Página {n}",
-    "previous": "Anterior",
-    "next": "Siguiente",
     "notAvailable": "N/D",
     "emptyTitle": "Sin notificaciones",
     "emptyBody": "Todo al día. No hay nada que mostrar.",
@@ -222,8 +220,6 @@
     "presetSetDefaultAria": "Marcar como predeterminado",
     "presetRemoveTitle": "Eliminar preset",
     "presetRemoveAria": "Eliminar preset",
-    "previous": "Anterior",
-    "next": "Siguiente",
     "emDash": "—"
   },
   "workloadPage": {
@@ -344,8 +340,6 @@
     "presetSetDefaultAria": "Marcar como predeterminado",
     "presetRemoveTitle": "Eliminar preset",
     "presetRemoveAria": "Eliminar preset",
-    "previous": "Anterior",
-    "next": "Siguiente",
     "paginationAria": "Paginación de convenios",
     "emDash": "—",
     "status": {
@@ -396,8 +390,6 @@
     "presetRemoveAria": "Eliminar preset",
     "loadingSpinner": "Cargando",
     "downloadTitle": "Descargar",
-    "previous": "Anterior",
-    "next": "Siguiente",
     "paginationAria": "Paginación de documentos de convenios",
     "emDash": "—",
     "category": {

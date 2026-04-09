@@ -182,10 +182,10 @@
                 type="button"
                 class="page-link"
                 :disabled="!pagination.previous"
-                :aria-label="t('notifications.previous')"
+                :aria-label="t('pagination.previous')"
                 @click="goToPage(pagination.currentPage - 1)"
               >
-                {{ t('notifications.previous') }}
+                {{ t('pagination.previous') }}
               </button>
             </li>
             <li
@@ -209,10 +209,10 @@
                 type="button"
                 class="page-link"
                 :disabled="!pagination.next"
-                :aria-label="t('notifications.next')"
+                :aria-label="t('pagination.next')"
                 @click="goToPage(pagination.currentPage + 1)"
               >
-                {{ t('notifications.next') }}
+                {{ t('pagination.next') }}
               </button>
             </li>
           </ul>

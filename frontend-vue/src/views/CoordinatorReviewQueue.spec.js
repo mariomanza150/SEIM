@@ -70,6 +70,43 @@ describe('CoordinatorReviewQueue', () => {
     expect(wrapper.text()).toContain(i18n.global.t('reviewQueuePage.clearFilters'))
   })
 
+  it('shows shared pagination.previous and pagination.next when queue spans pages', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/saved-searches/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/applications/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 1,
+                status: 'submitted',
+                program_name: 'P',
+                student_display_name: 'S',
+                student_email: 's@test.com',
+                submitted_at: null,
+              },
+            ],
+            count: 25,
+            next: 'http://test/api/applications/?page=2',
+            previous: null,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+    const wrapper = mount(CoordinatorReviewQueue, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain(i18n.global.t('pagination.previous'))
+    expect(wrapper.text()).toContain(i18n.global.t('pagination.next'))
+  })
+
   it('uses Spanish reviewQueuePage status and clear strings', async () => {
     setAppLocale('es')
     const wrapper = mount(CoordinatorReviewQueue, {
