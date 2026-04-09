@@ -75,25 +75,25 @@
               <label class="form-label">{{ t('reviewQueuePage.statusLabel') }}</label>
               <select v-model="filters.status" class="form-select" @change="fetchApplications">
                 <option value="">{{ t('reviewQueuePage.statusAll') }}</option>
-                <option value="draft">{{ t('applicationsPage.status.draft') }}</option>
-                <option value="submitted">{{ t('applicationsPage.status.submitted') }}</option>
-                <option value="under_review">{{ t('applicationsPage.status.under_review') }}</option>
-                <option value="approved">{{ t('applicationsPage.status.approved') }}</option>
-                <option value="rejected">{{ t('applicationsPage.status.rejected') }}</option>
-                <option value="completed">{{ t('applicationsPage.status.completed') }}</option>
+                <option value="draft">{{ t('reviewQueuePage.status.draft') }}</option>
+                <option value="submitted">{{ t('reviewQueuePage.status.submitted') }}</option>
+                <option value="under_review">{{ t('reviewQueuePage.status.under_review') }}</option>
+                <option value="approved">{{ t('reviewQueuePage.status.approved') }}</option>
+                <option value="rejected">{{ t('reviewQueuePage.status.rejected') }}</option>
+                <option value="completed">{{ t('reviewQueuePage.status.completed') }}</option>
               </select>
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('reviewQueuePage.sortLabel') }}</label>
               <select v-model="filters.ordering" class="form-select" @change="fetchApplications">
-                <option value="-submitted_at">{{ t('applicationsPage.sortRecentlySubmitted') }}</option>
-                <option value="-created_at">{{ t('applicationsPage.sortNewest') }}</option>
-                <option value="created_at">{{ t('applicationsPage.sortOldest') }}</option>
+                <option value="-submitted_at">{{ t('reviewQueuePage.sortRecentlySubmitted') }}</option>
+                <option value="-created_at">{{ t('reviewQueuePage.sortNewest') }}</option>
+                <option value="created_at">{{ t('reviewQueuePage.sortOldest') }}</option>
               </select>
             </div>
             <div class="col-md-2">
               <button type="button" class="btn btn-outline-secondary w-100" @click="clearFilters">
-                {{ t('applicationsPage.clearFilters') }}
+                {{ t('reviewQueuePage.clearFilters') }}
               </button>
             </div>
             <div class="col-12 border-top pt-3 mt-2">
@@ -440,7 +440,7 @@ function statusClass(status) {
 
 function formatStatus(status) {
   if (!status) return t('reviewQueuePage.emDash')
-  const key = `applicationsPage.status.${status}`
+  const key = `reviewQueuePage.status.${status}`
   if (te(key)) return t(key)
   return String(status).replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 }

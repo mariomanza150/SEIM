@@ -52,4 +52,36 @@ describe('CoordinatorReviewQueue', () => {
       i18n.global.t('reviewQueuePage.presetNamePlaceholder'),
     )
   })
+
+  it('uses reviewQueuePage keys for status options, sort labels, and clear', async () => {
+    const wrapper = mount(CoordinatorReviewQueue, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const selects = wrapper.findAll('select.form-select')
+    expect(selects.length).toBeGreaterThanOrEqual(2)
+    const statusOpts = selects[0].findAll('option')
+    const draft = statusOpts.find((o) => o.element.value === 'draft')
+    expect(draft?.text()).toBe(i18n.global.t('reviewQueuePage.status.draft'))
+    expect(wrapper.text()).toContain(i18n.global.t('reviewQueuePage.sortRecentlySubmitted'))
+    expect(wrapper.text()).toContain(i18n.global.t('reviewQueuePage.clearFilters'))
+  })
+
+  it('uses Spanish reviewQueuePage status and clear strings', async () => {
+    setAppLocale('es')
+    const wrapper = mount(CoordinatorReviewQueue, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const selects = wrapper.findAll('select.form-select')
+    const draft = selects[0].findAll('option').find((o) => o.element.value === 'draft')
+    expect(draft?.text()).toBe(i18n.global.t('reviewQueuePage.status.draft'))
+    expect(wrapper.text()).toContain(i18n.global.t('reviewQueuePage.clearFilters'))
+  })
 })
