@@ -213,6 +213,8 @@
     "pageSubtitleBefore": "Queue depth for applications in ",
     "pageSubtitleOr": " or ",
     "pageSubtitleAfter": ", plus simple bottleneck signals.",
+    "pageSubtitleStatusSubmitted": "Submitted",
+    "pageSubtitleStatusUnderReview": "Under review",
     "loading": "Loading…",
     "loadError": "Could not load workload data.",
     "yourWorkload": "Your workload",

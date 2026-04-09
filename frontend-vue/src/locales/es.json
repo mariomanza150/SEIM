@@ -213,6 +213,8 @@
     "pageSubtitleBefore": "Profundidad de cola de solicitudes en ",
     "pageSubtitleOr": " o ",
     "pageSubtitleAfter": ", más señales simples de cuellos de botella.",
+    "pageSubtitleStatusSubmitted": "Enviada",
+    "pageSubtitleStatusUnderReview": "En revisión",
     "loading": "Cargando…",
     "loadError": "No se pudieron cargar los datos de carga de trabajo.",
     "yourWorkload": "Tu carga de trabajo",

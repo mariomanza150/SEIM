@@ -16,8 +16,8 @@
             <i class="bi bi-graph-up-arrow me-2"></i>{{ t('route.names.CoordinatorWorkload') }}
           </h2>
           <p class="text-muted mb-0">
-            {{ t('workloadPage.pageSubtitleBefore') }}<strong>{{ t('applicationsPage.status.submitted') }}</strong
-            >{{ t('workloadPage.pageSubtitleOr') }}<strong>{{ t('applicationsPage.status.under_review') }}</strong
+            {{ t('workloadPage.pageSubtitleBefore') }}<strong>{{ t('workloadPage.pageSubtitleStatusSubmitted') }}</strong
+            >{{ t('workloadPage.pageSubtitleOr') }}<strong>{{ t('workloadPage.pageSubtitleStatusUnderReview') }}</strong
             >{{ t('workloadPage.pageSubtitleAfter') }}
           </p>
         </div>

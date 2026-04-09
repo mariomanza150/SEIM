@@ -50,5 +50,20 @@ describe('CoordinatorWorkload', () => {
     expect(wrapper.text()).toContain('Coordinator workload')
     expect(wrapper.text()).toContain('Your workload')
     expect(wrapper.text()).toContain('Assigned to you')
+    expect(wrapper.text()).toContain('Submitted')
+    expect(wrapper.text()).toContain('Under review')
+  })
+
+  it('shows Spanish subtitle status highlights', async () => {
+    setAppLocale('es')
+    const wrapper = mount(CoordinatorWorkload, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Enviada')
+    expect(wrapper.text()).toContain('En revisión')
   })
 })
