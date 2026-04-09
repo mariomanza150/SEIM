@@ -21,9 +21,10 @@ import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import { useNotificationWebSocket } from '@/services/websocket'
 import { applyUiPreferences, clearUiPreferences, readStoredUiPreferences } from '@/services/uiPreferences'
+import { syncAppMetaDescription } from '@/utils/documentTitle'
 import ToastContainer from '@/components/ToastContainer.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const authStore = useAuthStore()
 const { info } = useToast()
 let mediaQuery = null
@@ -48,6 +49,7 @@ async function loadUiPreferences() {
 }
 
 onMounted(async () => {
+  syncAppMetaDescription(t)
   applyUiPreferences(readStoredUiPreferences() || undefined)
   await authStore.checkAuth()
   connectIfAuthenticated()
@@ -65,6 +67,10 @@ onMounted(async () => {
     }
     mediaQuery.addEventListener('change', mediaQueryListener)
   }
+})
+
+watch(locale, () => {
+  syncAppMetaDescription(t)
 })
 
 watch(() => authStore.isAuthenticated, async (isAuth) => {

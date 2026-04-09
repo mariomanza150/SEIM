@@ -2,6 +2,9 @@
   "a11y": {
     "skipToMain": "Skip to main content"
   },
+  "appMeta": {
+    "metaDescription": "SEIM — Student Exchange Information Management: applications, documents, deadlines, and notifications for exchange programs."
+  },
   "helloWorld": {
     "countLabel": "count is {count}",
     "editHintBefore": "Edit",

@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import App from './App.vue'
 import i18n, { setAppLocale } from '@/i18n'
@@ -91,5 +91,27 @@ describe('App shell accessibility', () => {
     setAppLocale('es')
     await wrapper.vm.$nextTick()
     expect(wrapper.find('a.seim-skip-link').text()).toContain('Saltar al contenido principal')
+  })
+
+  it('syncs HTML meta description on mount and when locale changes', async () => {
+    const meta = document.createElement('meta')
+    meta.setAttribute('name', 'description')
+    meta.setAttribute('content', 'old')
+    document.head.appendChild(meta)
+    const wrapper = mount(App, {
+      global: {
+        plugins: [createPinia(), i18n],
+        stubs: {
+          RouterView: { template: '<div data-testid="rv">page</div>' },
+          ToastContainer: { template: '<div />' },
+        },
+      },
+    })
+    await flushPromises()
+    expect(meta.getAttribute('content')).toContain('Student Exchange')
+    setAppLocale('es')
+    await wrapper.vm.$nextTick()
+    expect(meta.getAttribute('content')).toContain('intercambio')
+    document.head.removeChild(meta)
   })
 })

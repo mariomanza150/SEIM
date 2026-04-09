@@ -17,3 +17,14 @@ export function resolveDocumentTitle(routeLike) {
   }
   return t('route.fallbackTitle')
 }
+
+/**
+ * Set document meta description from the active i18n locale (SEO / sharing fallbacks).
+ * @param {(key: string) => string} t - vue-i18n translate function
+ */
+export function syncAppMetaDescription(t) {
+  if (typeof document === 'undefined') return
+  const el = document.querySelector('meta[name="description"]')
+  if (!el) return
+  el.setAttribute('content', t('appMeta.metaDescription'))
+}

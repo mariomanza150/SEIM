@@ -2,6 +2,9 @@
   "a11y": {
     "skipToMain": "Saltar al contenido principal"
   },
+  "appMeta": {
+    "metaDescription": "SEIM — Gestión de información de intercambio estudiantil: solicitudes, documentos, plazos y notificaciones para programas de intercambio."
+  },
   "helloWorld": {
     "countLabel": "el contador es {count}",
     "editHintBefore": "Edita",
