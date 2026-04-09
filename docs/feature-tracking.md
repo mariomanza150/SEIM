@@ -72,11 +72,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: Applications list view | `frontend-vue` | Implemented | 2026-04-09 | `applicationsPage.*` + nested `status.*` in locales; `Applications.vue` filters, cards, pagination, empty state, errors/toasts, delete confirm; `formatStatus` / `formatDate` locale-aware; icon-only edit/delete `aria-label`. Vitest: `Applications.spec.js`. |
 | Vue i18n: Documents list view | `frontend-vue` | Implemented | 2026-04-09 | `documentsPage.*` in locales; `Documents.vue` student/staff copy, filters, presets UI, table, pagination, errors/toasts; locale-aware dates; `aria-label` / download titles. Vitest: `Documents.spec.js`. |
 | Vue i18n: Document detail view | `frontend-vue` | Implemented | 2026-04-09 | `documentDetailPage.*` in locales; `DocumentDetail.vue` breadcrumbs via `route.names`, preview/review/comments/staff actions, quick actions, toasts; locale-aware `formatDateTime`; preview context lines translated. Vitest: `DocumentDetail.spec.js`. |
+| Vue i18n: Application detail view | `frontend-vue` | Implemented | 2026-04-09 | `applicationDetailPage.*` + reuse `applicationsPage.status` / `readinessLabel` / `notAvailable`; `ApplicationDetail.vue` program/checklist/timeline/comments/sidebar/docs/coordinator review; locale dates; translated confirms/toasts. Vitest: `ApplicationDetail.spec.js` (+ i18n, timeline mock). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Application detail view | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
+| _None_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -109,7 +110,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **In progress:** Application detail (`ApplicationDetail.vue`). Shipped: Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: Application edit/form, tables/modals. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: Application edit/form, tables/modals. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -139,14 +140,15 @@ _All Priority 1 items in this subsection are implemented above._
 |---------|--------|-------|
 
 | Predictive analytics for demand and bottlenecks | `analytics`, `exchange`, `notifications` | Forecast program demand, review bottlenecks, and likely missed deadlines using historical application and document activity. |
-| Institutional reporting warehouse and BI exports | `analytics`, `admin UI`, `api` | Build richer institutional reporting pipelines for trend analysis, accreditation reporting, and external BI tooling integrations. |
+
 ## 🔴 DEPRECATED / REJECTED ❌
 | Feature | Module | Removed | Reason |
 |---------|--------|---------|--------|
 | Electronic signatures for agreements and approvals | `exchange`, `documents`, `admin UI` | Integrate digital signing for agreements, approval letters, and staff sign-off workflows to reduce manual paperwork. |
 | Advanced document intelligence and extraction | `documents`, `analytics`, `admin UI` | Extract metadata from uploaded documents, flag missing fields, and support smarter classification or duplicate detection. |
+| Institutional reporting warehouse and BI exports | `analytics`, `admin UI`, `api` | Build richer institutional reporting pipelines for trend analysis, accreditation reporting, and external BI tooling integrations. |
 
 ---
 
-*Last updated: 2026-04-09 (Vue i18n Application detail — in progress)*  
+*Last updated: 2026-04-09 (Vue i18n Application detail)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

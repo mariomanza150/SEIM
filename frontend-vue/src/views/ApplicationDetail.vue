@@ -2,24 +2,26 @@
   <div class="application-detail">
     <div class="container-fluid mt-4">
       <!-- Breadcrumb -->
-      <nav aria-label="breadcrumb">
+      <nav :aria-label="t('applicationDetailPage.breadcrumbAria')">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
+            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
           </li>
           <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Applications' }">Applications</router-link>
+            <router-link :to="{ name: 'Applications' }">{{ t('route.names.Applications') }}</router-link>
           </li>
-          <li class="breadcrumb-item active">{{ application?.program?.name || 'Loading...' }}</li>
+          <li class="breadcrumb-item active">{{
+            application?.program?.name || t('applicationDetailPage.loadingProgram')
+          }}</li>
         </ol>
       </nav>
 
       <!-- Loading -->
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
+          <span class="visually-hidden">{{ t('applicationDetailPage.loadingSpinner') }}</span>
         </div>
-        <p class="mt-3 text-muted">Loading application details...</p>
+        <p class="mt-3 text-muted">{{ t('applicationDetailPage.loadingDetails') }}</p>
       </div>
 
       <!-- Error -->
@@ -27,7 +29,7 @@
         <i class="bi bi-exclamation-triangle me-2"></i>
         {{ error }}
         <router-link :to="{ name: 'Applications' }" class="btn btn-sm btn-outline-danger ms-3">
-          Back to Applications
+          {{ t('applicationDetailPage.backToApplications') }}
         </router-link>
       </div>
 
@@ -42,7 +44,7 @@
             </h2>
             <p class="text-muted">
               <i class="bi bi-building me-1"></i>
-              {{ application.program?.institution || 'N/A' }}
+              {{ application.program?.institution || t('applicationsPage.notAvailable') }}
             </p>
           </div>
           <div class="col-md-4 text-end">
@@ -54,7 +56,7 @@
               :to="{ name: 'ApplicationEdit', params: { id: application.id } }"
               class="btn btn-primary"
             >
-              <i class="bi bi-pencil me-1"></i>Edit
+              <i class="bi bi-pencil me-1"></i>{{ t('applicationDetailPage.edit') }}
             </router-link>
           </div>
         </div>
@@ -64,7 +66,7 @@
             <div class="card border-0 shadow-sm">
               <div class="card-body py-3 d-flex flex-wrap align-items-center gap-3">
                 <div>
-                  <span class="text-muted small d-block">Readiness</span>
+                  <span class="text-muted small d-block">{{ t('applicationsPage.readinessLabel') }}</span>
                   <span class="badge fs-6" :class="readinessLevelBadgeClass(application.readiness.level)">
                     {{ application.readiness.score }}%
                   </span>
@@ -91,31 +93,31 @@
             <!-- Program Information -->
             <div class="card mb-4">
               <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Program Information</h5>
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>{{ t('applicationDetailPage.programInfo') }}</h5>
               </div>
               <div class="card-body">
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <label class="text-muted small">Program Name</label>
+                    <label class="text-muted small">{{ t('applicationDetailPage.labelProgramName') }}</label>
                     <p class="fw-bold">{{ application.program?.name }}</p>
                   </div>
                   <div class="col-md-6">
-                    <label class="text-muted small">Institution</label>
+                    <label class="text-muted small">{{ t('applicationDetailPage.labelInstitution') }}</label>
                     <p class="fw-bold">{{ application.program?.institution }}</p>
                   </div>
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <label class="text-muted small">Country</label>
-                    <p class="fw-bold">{{ application.program?.country || 'N/A' }}</p>
+                    <label class="text-muted small">{{ t('applicationDetailPage.labelCountry') }}</label>
+                    <p class="fw-bold">{{ application.program?.country || t('applicationsPage.notAvailable') }}</p>
                   </div>
                   <div class="col-md-6">
-                    <label class="text-muted small">Duration</label>
-                    <p class="fw-bold">{{ application.program?.duration || 'N/A' }}</p>
+                    <label class="text-muted small">{{ t('applicationDetailPage.labelDuration') }}</label>
+                    <p class="fw-bold">{{ application.program?.duration || t('applicationsPage.notAvailable') }}</p>
                   </div>
                 </div>
                 <div v-if="application.program?.description">
-                  <label class="text-muted small">Description</label>
+                  <label class="text-muted small">{{ t('applicationDetailPage.labelDescription') }}</label>
                   <p>{{ application.program.description }}</p>
                 </div>
               </div>
@@ -129,19 +131,23 @@
             >
               <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
-                  <i class="bi bi-clipboard-check me-2"></i>Required documents
+                  <i class="bi bi-clipboard-check me-2"></i>{{ t('applicationDetailPage.requiredDocuments') }}
                 </h5>
                 <span
                   class="badge"
                   :class="application.document_checklist.complete ? 'bg-success' : 'bg-warning text-dark'"
                 >
-                  {{ application.document_checklist.approved_count }} /
-                  {{ application.document_checklist.required_count }} approved
+                  {{
+                    t('applicationDetailPage.approvedFraction', {
+                      approved: application.document_checklist.approved_count,
+                      required: application.document_checklist.required_count,
+                    })
+                  }}
                 </span>
               </div>
               <div class="card-body">
                 <p v-if="application.status === 'draft' && !application.document_checklist.complete" class="text-muted small">
-                  All listed documents must be uploaded and marked valid by staff before you can submit.
+                  {{ t('applicationDetailPage.checklistDraftHint') }}
                 </p>
                 <ul class="list-group list-group-flush">
                   <li
@@ -168,7 +174,7 @@
                         :to="{ name: 'DocumentDetail', params: { id: item.document_id } }"
                         class="btn btn-sm btn-outline-primary"
                       >
-                        View
+                        {{ t('applicationDetailPage.view') }}
                       </router-link>
                     </div>
                   </li>
@@ -179,12 +185,12 @@
             <!-- Activity timeline (server TimelineEvent rows + record start) -->
             <div class="card mb-4" data-testid="activity-timeline-card">
               <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Activity timeline</h5>
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>{{ t('applicationDetailPage.activityTimeline') }}</h5>
               </div>
               <div class="card-body">
                 <div v-if="timelineLoading" class="text-center py-3">
                   <div class="spinner-border spinner-border-sm text-primary" role="status">
-                    <span class="visually-hidden">Loading timeline...</span>
+                    <span class="visually-hidden">{{ t('applicationDetailPage.loadingTimeline') }}</span>
                   </div>
                 </div>
                 <div v-else-if="timelineError" class="alert alert-warning small mb-0">
@@ -196,7 +202,7 @@
                       <i class="bi bi-file-earmark-plus"></i>
                     </div>
                     <div class="timeline-content">
-                      <h6>Application record created</h6>
+                      <h6>{{ t('applicationDetailPage.timelineCreated') }}</h6>
                       <p class="text-muted small mb-0">{{ formatDateTime(application.created_at) }}</p>
                     </div>
                   </div>
@@ -224,12 +230,12 @@
             <!-- Comments Section -->
             <div class="card mb-4">
               <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Comments</h5>
+                <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>{{ t('applicationDetailPage.comments') }}</h5>
               </div>
               <div class="card-body">
                 <div v-if="commentsLoading" class="text-center py-3">
                   <div class="spinner-border spinner-border-sm text-primary" role="status">
-                    <span class="visually-hidden">Loading comments...</span>
+                    <span class="visually-hidden">{{ t('applicationDetailPage.loadingComments') }}</span>
                   </div>
                 </div>
                 <div v-else-if="commentsError" class="alert alert-warning mb-3">
@@ -247,7 +253,9 @@
                         <div class="fw-semibold d-flex align-items-center flex-wrap gap-2">
                           <span>{{ formatCommentAuthor(comment) }}</span>
                           <span class="badge text-bg-light">{{ formatRole(comment.author_role) }}</span>
-                          <span v-if="comment.is_private" class="badge text-bg-warning">Private</span>
+                          <span v-if="comment.is_private" class="badge text-bg-warning">{{
+                            t('applicationDetailPage.privateBadge')
+                          }}</span>
                         </div>
                         <p class="text-muted small mb-0">{{ formatDateTime(comment.created_at) }}</p>
                       </div>
@@ -257,19 +265,19 @@
                 </div>
                 <p v-else class="text-muted text-center py-3">
                   <i class="bi bi-info-circle me-1"></i>
-                  No comments yet
+                  {{ t('applicationDetailPage.noCommentsYet') }}
                 </p>
 
                 <form class="border-top pt-3" @submit.prevent="submitComment">
                   <div class="mb-3">
-                    <label class="form-label" for="commentText">Add comment</label>
+                    <label class="form-label" for="commentText">{{ t('applicationDetailPage.addCommentLabel') }}</label>
                     <textarea
                       id="commentText"
                       v-model="newCommentText"
                       class="form-control"
                       rows="3"
                       maxlength="2000"
-                      placeholder="Write a comment about this application"
+                      :placeholder="t('applicationDetailPage.commentPlaceholder')"
                     ></textarea>
                   </div>
                   <div
@@ -283,7 +291,7 @@
                       type="checkbox"
                     >
                     <label class="form-check-label" for="privateComment">
-                      Private comment (visible to coordinators/admins only)
+                      {{ t('applicationDetailPage.privateCommentCheckbox') }}
                     </label>
                   </div>
                   <div class="d-flex justify-content-end">
@@ -293,7 +301,7 @@
                       :disabled="submittingComment || !newCommentText.trim()"
                     >
                       <span v-if="submittingComment" class="spinner-border spinner-border-sm me-2"></span>
-                      Post Comment
+                      {{ t('applicationDetailPage.postComment') }}
                     </button>
                   </div>
                 </form>
@@ -309,17 +317,17 @@
               class="card mb-4"
             >
               <div class="card-header">
-                <h6 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Review Application</h6>
+                <h6 class="mb-0"><i class="bi bi-pencil-square me-2"></i>{{ t('applicationDetailPage.reviewApplication') }}</h6>
               </div>
               <div class="card-body">
                 <div class="mb-3">
-                  <label class="form-label small">Change status</label>
+                  <label class="form-label small">{{ t('applicationDetailPage.changeStatus') }}</label>
                   <select v-model="reviewStatus" class="form-select form-select-sm">
-                    <option value="">Select new status</option>
-                    <option value="under_review">Under review</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="completed">Completed</option>
+                    <option value="">{{ t('applicationDetailPage.selectNewStatus') }}</option>
+                    <option value="under_review">{{ t('applicationsPage.status.under_review') }}</option>
+                    <option value="approved">{{ t('applicationsPage.status.approved') }}</option>
+                    <option value="rejected">{{ t('applicationsPage.status.rejected') }}</option>
+                    <option value="completed">{{ t('applicationsPage.status.completed') }}</option>
                   </select>
                 </div>
                 <button
@@ -328,7 +336,7 @@
                   @click="updateApplicationStatus"
                 >
                   <span v-if="updatingStatus" class="spinner-border spinner-border-sm me-1"></span>
-                  Update status
+                  {{ t('applicationDetailPage.updateStatus') }}
                 </button>
               </div>
             </div>
@@ -336,7 +344,7 @@
             <!-- Quick Actions -->
             <div class="card mb-4">
               <div class="card-header">
-                <h6 class="mb-0">Quick Actions</h6>
+                <h6 class="mb-0">{{ t('applicationDetailPage.quickActions') }}</h6>
               </div>
               <div class="card-body">
                 <div class="d-grid gap-2">
@@ -346,27 +354,27 @@
                     class="btn btn-primary"
                     data-testid="edit-application-link"
                   >
-                    <i class="bi bi-pencil me-2"></i>Edit Application
+                    <i class="bi bi-pencil me-2"></i>{{ t('applicationDetailPage.editApplication') }}
                   </router-link>
                   <button
                     v-if="application.status === 'draft'"
                     class="btn btn-success"
                     :disabled="submitBlockedByDocuments"
-                    :title="submitBlockedByDocuments ? 'Required documents must be approved first' : ''"
+                    :title="submitBlockedByDocuments ? t('applicationDetailPage.submitBlockedTitle') : ''"
                     @click="submitApplication"
                     data-testid="submit-application-btn"
                   >
-                    <i class="bi bi-send me-2"></i>Submit Application
+                    <i class="bi bi-send me-2"></i>{{ t('applicationDetailPage.submitApplication') }}
                   </button>
                   <button
                     v-if="application.status === 'draft'"
                     class="btn btn-danger"
                     @click="confirmDelete"
                   >
-                    <i class="bi bi-trash me-2"></i>Delete Application
+                    <i class="bi bi-trash me-2"></i>{{ t('applicationDetailPage.deleteApplication') }}
                   </button>
                   <router-link :to="{ name: 'Applications' }" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>Back to List
+                    <i class="bi bi-arrow-left me-2"></i>{{ t('applicationDetailPage.backToList') }}
                   </router-link>
                 </div>
               </div>
@@ -375,15 +383,15 @@
             <!-- Application Details -->
             <div class="card mb-4">
               <div class="card-header">
-                <h6 class="mb-0">Application Details</h6>
+                <h6 class="mb-0">{{ t('applicationDetailPage.sidebarApplicationDetails') }}</h6>
               </div>
               <div class="card-body">
                 <div class="mb-3">
-                  <label class="text-muted small">Application ID</label>
+                  <label class="text-muted small">{{ t('applicationDetailPage.applicationId') }}</label>
                   <p class="small font-monospace">{{ application.id }}</p>
                 </div>
                 <div class="mb-3">
-                  <label class="text-muted small">Status</label>
+                  <label class="text-muted small">{{ t('applicationDetailPage.statusLabel') }}</label>
                   <p>
                     <span class="badge" :class="statusClass(application.status)">
                       {{ formatStatus(application.status) }}
@@ -391,15 +399,15 @@
                   </p>
                 </div>
                 <div class="mb-3">
-                  <label class="text-muted small">Created</label>
+                  <label class="text-muted small">{{ t('applicationDetailPage.created') }}</label>
                   <p>{{ formatDateTime(application.created_at) }}</p>
                 </div>
                 <div v-if="application.submitted_at" class="mb-3">
-                  <label class="text-muted small">Submitted</label>
+                  <label class="text-muted small">{{ t('applicationDetailPage.submitted') }}</label>
                   <p>{{ formatDateTime(application.submitted_at) }}</p>
                 </div>
                 <div class="mb-3">
-                  <label class="text-muted small">Last Updated</label>
+                  <label class="text-muted small">{{ t('applicationDetailPage.lastUpdated') }}</label>
                   <p>{{ formatDateTime(application.updated_at) }}</p>
                 </div>
               </div>
@@ -416,9 +424,9 @@
             <!-- Documents List -->
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center">
-                <h6 class="mb-0">Documents</h6>
+                <h6 class="mb-0">{{ t('applicationDetailPage.documentsHeading') }}</h6>
                 <router-link :to="{ name: 'Documents' }" class="btn btn-sm btn-outline-primary">
-                  View All
+                  {{ t('applicationDetailPage.viewAll') }}
                 </router-link>
               </div>
               <div class="card-body">
@@ -438,14 +446,20 @@
                       </router-link>
                       <span class="d-flex align-items-center gap-1">
                         <span class="badge" :class="doc.is_valid === true ? 'bg-success' : doc.is_valid === false ? 'bg-danger' : 'bg-warning'">
-                          {{ doc.is_valid === true ? 'Valid' : doc.is_valid === false ? 'Invalid' : 'Pending' }}
+                          {{
+                            doc.is_valid === true
+                              ? t('applicationDetailPage.docValid')
+                              : doc.is_valid === false
+                                ? t('applicationDetailPage.docInvalid')
+                                : t('applicationDetailPage.docPending')
+                          }}
                         </span>
                         <template v-if="isCoordinator">
                           <template v-if="docValidatingId !== doc.id">
                             <button
                               type="button"
                               class="btn btn-sm btn-outline-success"
-                              title="Mark valid"
+                              :title="t('applicationDetailPage.markValidTitle')"
                               @click="validateDocument(doc.id, 'valid')"
                             >
                               <i class="bi bi-check-lg"></i>
@@ -453,7 +467,7 @@
                             <button
                               type="button"
                               class="btn btn-sm btn-outline-danger"
-                              title="Mark invalid"
+                              :title="t('applicationDetailPage.markInvalidTitle')"
                               @click="validateDocument(doc.id, 'invalid')"
                             >
                               <i class="bi bi-x-lg"></i>
@@ -467,7 +481,7 @@
                 </div>
                 <p v-else class="text-muted text-center small mb-0">
                   <i class="bi bi-info-circle me-1"></i>
-                  No documents uploaded
+                  {{ t('applicationDetailPage.noDocumentsUploaded') }}
                 </p>
               </div>
             </div>
@@ -481,6 +495,7 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import DocumentUpload from '@/components/DocumentUpload.vue'
@@ -489,6 +504,7 @@ import { readinessLevelBadgeClass, readinessScoreBarClass } from '@/utils/applic
 
 const route = useRoute()
 const router = useRouter()
+const { t, te, locale } = useI18n()
 const authStore = useAuthStore()
 const { success, error: errorToast } = useToast()
 
@@ -533,8 +549,8 @@ async function fetchApplication() {
     await Promise.all([fetchApplicationDocuments(), fetchComments(), fetchTimelineEvents()])
   } catch (err) {
     console.error('Failed to fetch application:', err)
-    error.value = 'Failed to load application details. Please try again.'
-    errorToast('Failed to load application')
+    error.value = t('applicationDetailPage.loadError')
+    errorToast(t('applicationDetailPage.loadToastError'))
   } finally {
     loading.value = false
   }
@@ -573,7 +589,7 @@ async function fetchTimelineEvents() {
   } catch (err) {
     console.warn('Failed to fetch timeline events:', err)
     timelineEvents.value = []
-    timelineError.value = 'Could not load activity timeline.'
+    timelineError.value = t('applicationDetailPage.timelineLoadError')
   } finally {
     timelineLoading.value = false
   }
@@ -608,7 +624,7 @@ async function fetchComments() {
   } catch (err) {
     console.error('Failed to fetch comments:', err)
     comments.value = []
-    commentsError.value = 'Failed to load comments.'
+    commentsError.value = t('applicationDetailPage.commentsLoadError')
   } finally {
     commentsLoading.value = false
   }
@@ -627,13 +643,17 @@ function statusClass(status) {
 }
 
 function formatStatus(status) {
-  return status ? status.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()) : 'Unknown'
+  if (!status) return t('applicationsPage.status.unknown')
+  const key = `applicationsPage.status.${status}`
+  if (te(key)) return t(key)
+  return String(status).replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
 function formatDateTime(dateString) {
-  if (!dateString) return 'N/A'
+  if (!dateString) return t('applicationsPage.notAvailable')
+  const loc = locale.value === 'es' ? 'es' : 'en-US'
   const date = new Date(dateString)
-  return date.toLocaleString('en-US', {
+  return date.toLocaleString(loc, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -643,25 +663,23 @@ function formatDateTime(dateString) {
 }
 
 function formatRole(role) {
-  if (!role) return 'User'
-  return role.replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+  if (!role) return t('applicationDetailPage.roles.user')
+  const key = `applicationDetailPage.roles.${role}`
+  if (te(key)) return t(key)
+  return String(role).replace(/_/g, ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
 function formatCommentAuthor(comment) {
   if (comment.author && currentUserId.value && comment.author === currentUserId.value) {
-    return 'You'
+    return t('applicationDetailPage.commentAuthorYou')
   }
-  return comment.author_name || 'Unknown user'
+  return comment.author_name || t('applicationDetailPage.unknownUser')
 }
 
 function checklistStatusLabel(status) {
-  const labels = {
-    missing: 'Missing',
-    pending_review: 'Pending review',
-    resubmit_requested: 'Resubmission needed',
-    approved: 'Approved',
-  }
-  return labels[status] || status
+  const key = `applicationDetailPage.checklist.${status}`
+  if (te(key)) return t(key)
+  return status
 }
 
 function checklistBadgeClass(status) {
@@ -675,16 +693,22 @@ function checklistBadgeClass(status) {
 }
 
 function timelineEventHeading(event) {
-  const t = event.event_type || ''
-  if (t === 'submitted') return 'Application submitted'
-  if (t.startsWith('status_')) {
-    const rest = t.slice(7).replace(/_/g, ' ')
-    return `Status: ${rest.replace(/\b\w/g, (c) => c.toUpperCase())}`
+  const evtType = event.event_type || ''
+  if (evtType === 'submitted') return t('applicationDetailPage.timeline.applicationSubmitted')
+  if (evtType.startsWith('status_')) {
+    const code = evtType.slice(7)
+    const statusKey = `applicationsPage.status.${code}`
+    const label = te(statusKey)
+      ? t(statusKey)
+      : code.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    return t('applicationDetailPage.timeline.statusChanged', { status: label })
   }
-  if (t === 'form_submitted') return 'Program form activity'
-  if (t === 'withdrawn') return 'Application withdrawn'
-  if (t === 'comment') return 'Comment recorded'
-  return t.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'Event'
+  if (evtType === 'form_submitted') return t('applicationDetailPage.timeline.programFormActivity')
+  if (evtType === 'withdrawn') return t('applicationDetailPage.timeline.applicationWithdrawn')
+  if (evtType === 'comment') return t('applicationDetailPage.timeline.commentRecorded')
+  return (
+    evtType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || t('applicationsPage.status.unknown')
+  )
 }
 
 function timelineIconName(eventType) {
@@ -718,23 +742,23 @@ function timelineIconBg(eventType) {
 }
 
 async function submitApplication() {
-  if (!confirm('Are you sure you want to submit this application? You will not be able to edit it after submission.')) {
+  if (!confirm(t('applicationDetailPage.confirmSubmit'))) {
     return
   }
 
   try {
     await api.post(`/api/applications/${route.params.id}/submit/`)
-    success('Application submitted successfully!')
+    success(t('applicationDetailPage.toastSubmitted'))
     await fetchApplication()
   } catch (err) {
     console.error('Failed to submit application:', err)
-    const msg = err.response?.data?.error || 'Failed to submit application'
+    const msg = err.response?.data?.error || t('applicationDetailPage.toastSubmitFailed')
     errorToast(msg)
   }
 }
 
 async function confirmDelete() {
-  if (confirm('Are you sure you want to delete this application? This action cannot be undone.')) {
+  if (confirm(t('applicationDetailPage.confirmDelete'))) {
     await deleteApplication()
   }
 }
@@ -742,11 +766,11 @@ async function confirmDelete() {
 async function deleteApplication() {
   try {
     await api.delete(`/api/applications/${route.params.id}/`)
-    success('Application deleted successfully')
+    success(t('applicationDetailPage.toastDeleted'))
     router.push({ name: 'Applications' })
   } catch (err) {
     console.error('Failed to delete application:', err)
-    errorToast('Failed to delete application')
+    errorToast(t('applicationDetailPage.toastDeleteFailed'))
   }
 }
 
@@ -755,12 +779,15 @@ async function updateApplicationStatus() {
   try {
     updatingStatus.value = true
     await api.patch(`/api/applications/${route.params.id}/`, { status: reviewStatus.value })
-    success('Status updated')
+    success(t('applicationDetailPage.toastStatusUpdated'))
     reviewStatus.value = ''
     await fetchApplication()
   } catch (err) {
     console.error('Failed to update status:', err)
-    const msg = err.response?.data?.status?.[0] || err.response?.data?.detail || 'Failed to update status'
+    const msg =
+      err.response?.data?.status?.[0] ||
+      err.response?.data?.detail ||
+      t('applicationDetailPage.toastUpdateStatusFailed')
     errorToast(msg)
   } finally {
     updatingStatus.value = false
@@ -780,14 +807,14 @@ async function submitComment() {
     })
     newCommentText.value = ''
     newCommentPrivate.value = false
-    success('Comment posted successfully')
+    success(t('applicationDetailPage.toastCommentPosted'))
     await fetchComments()
   } catch (err) {
     console.error('Failed to submit comment:', err)
     const message =
       err.response?.data?.text?.[0] ||
       err.response?.data?.detail ||
-      'Failed to post comment'
+      t('applicationDetailPage.toastPostCommentFailed')
     errorToast(message)
   } finally {
     submittingComment.value = false
@@ -798,11 +825,15 @@ async function validateDocument(docId, result) {
   try {
     docValidatingId.value = docId
     await api.post(`/api/documents/${docId}/validate_document/`, { result, details: '' })
-    success(result === 'valid' ? 'Document marked valid' : 'Document marked invalid')
+    success(
+      result === 'valid'
+        ? t('applicationDetailPage.toastValidateValid')
+        : t('applicationDetailPage.toastValidateInvalid')
+    )
     await fetchApplication()
   } catch (err) {
     console.error('Failed to validate document:', err)
-    errorToast(err.response?.data?.detail || 'Failed to validate document')
+    errorToast(err.response?.data?.detail || t('applicationDetailPage.toastValidateFailed'))
   } finally {
     docValidatingId.value = null
   }
