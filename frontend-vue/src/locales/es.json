@@ -183,6 +183,7 @@
     "remindersTitle": "Tipos de evento de recordatorio → categoría de ajustes",
     "colReminderEventType": "Tipo de evento de recordatorio",
     "colSettingsCategory": "Categoría de ajustes",
+    "colReminderRecipientSummary": "Destinatarios (recordatorio)",
     "colReminderDescription": "Descripción",
     "reminderDefault": "Predeterminado para tipos de recordatorio desconocidos",
     "digestTitle": "Enrutado de resúmenes",

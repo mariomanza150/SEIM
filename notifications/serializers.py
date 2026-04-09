@@ -60,5 +60,6 @@ class NotificationRoutingReferenceSerializer(serializers.Serializer):
     transactional_routes = serializers.JSONField(read_only=True)
     reminder_event_type_to_settings_category = serializers.JSONField(read_only=True)
     reminder_event_type_descriptions = serializers.JSONField(read_only=True)
+    reminder_event_type_recipient_summaries = serializers.JSONField(read_only=True)
     reminder_default_settings_category = serializers.CharField(read_only=True)
     digest = serializers.JSONField(read_only=True)

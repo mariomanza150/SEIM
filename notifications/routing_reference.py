@@ -26,6 +26,22 @@ REMINDER_EVENT_TYPE_DESCRIPTIONS: dict[str, str] = {
     "program": "Legacy event_type value; uses the programs UserSettings group.",
 }
 
+# Who receives Celery deadline reminder notifications for each ``Reminder.event_type`` (always ``Reminder.user``).
+REMINDER_EVENT_TYPE_RECIPIENT_SUMMARIES: dict[str, str] = {
+    "application_deadline": (
+        "The reminder owner (`Reminder.user`) — usually the student or staff who scheduled it."
+    ),
+    "document_deadline": (
+        "The reminder owner (`Reminder.user`) — typically tracking a document due date."
+    ),
+    "program_start": "The reminder owner (`Reminder.user`).",
+    "program_end": "The reminder owner (`Reminder.user`).",
+    "custom": "The reminder owner (`Reminder.user`).",
+    "application": "The reminder owner (`Reminder.user`); legacy `application` event type.",
+    "document": "The reminder owner (`Reminder.user`); legacy `document` event type.",
+    "program": "The reminder owner (`Reminder.user`); legacy `program` event type.",
+}
+
 # Short staff-facing hints: what transactional sends usually flow through each group.
 SETTINGS_CATEGORY_TYPICAL_TRIGGERS: dict[str, str] = {
     "applications": (
@@ -236,13 +252,16 @@ def build_notification_routing_reference() -> dict:
         key=lambda row: row["route_key"],
     )
     return {
-        "schema_version": 9,
+        "schema_version": 10,
         "reference_api_access": dict(REFERENCE_API_ACCESS),
         "settings_categories": categories,
         "transactional_routes": transactional,
         "reminder_event_type_to_settings_category": reminder_map,
         "reminder_event_type_descriptions": {
             k: REMINDER_EVENT_TYPE_DESCRIPTIONS[k] for k in reminder_map
+        },
+        "reminder_event_type_recipient_summaries": {
+            k: REMINDER_EVENT_TYPE_RECIPIENT_SUMMARIES[k] for k in reminder_map
         },
         "reminder_default_settings_category": "programs",
         "digest": {

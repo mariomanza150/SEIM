@@ -2,6 +2,7 @@
 
 from notifications.routing_reference import (
     REMINDER_EVENT_TYPE_DESCRIPTIONS,
+    REMINDER_EVENT_TYPE_RECIPIENT_SUMMARIES,
     SETTINGS_CATEGORY_PRIMARY_RECIPIENTS,
     TRANSACTIONAL_NOTIFICATION_ROUTES,
     build_notification_routing_reference,
@@ -12,7 +13,7 @@ from notifications.tasks import REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
 
 def test_build_notification_routing_reference_shape():
     data = build_notification_routing_reference()
-    assert data["schema_version"] == 9
+    assert data["schema_version"] == 10
     access = data["reference_api_access"]
     assert access["superuser"] is True
     assert "coordinator" in access["roles_any"]
@@ -31,6 +32,9 @@ def test_build_notification_routing_reference_shape():
     rdesc = data["reminder_event_type_descriptions"]
     assert rdesc["application_deadline"]
     assert "Legacy" in rdesc["application"]
+    rrec = data["reminder_event_type_recipient_summaries"]
+    assert rrec.keys() == rdesc.keys()
+    assert "Reminder.user" in rrec["application_deadline"]
     digest = data["digest"]
     assert digest["settings_category"] == "system"
     assert "email_system" in digest["email_gates"]
@@ -47,6 +51,12 @@ def test_reminder_event_types_have_descriptions():
     for key in REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY:
         assert key in REMINDER_EVENT_TYPE_DESCRIPTIONS
         assert REMINDER_EVENT_TYPE_DESCRIPTIONS[key].strip()
+
+
+def test_reminder_event_types_have_recipient_summaries():
+    for key in REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY:
+        assert key in REMINDER_EVENT_TYPE_RECIPIENT_SUMMARIES
+        assert REMINDER_EVENT_TYPE_RECIPIENT_SUMMARIES[key].strip()
 
 
 def test_settings_category_primary_recipients_complete():

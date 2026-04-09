@@ -29,7 +29,7 @@ class TestNotificationRoutingReferenceAPI(APITestCase):
         self.authenticate_user(coordinator)
         response = self.client.get(self.url)
         self.assert_response_success(response)
-        self.assertEqual(response.data["schema_version"], 9)
+        self.assertEqual(response.data["schema_version"], 10)
         self.assertIn("coordinator", response.data["reference_api_access"]["roles_any"])
         cats = response.data["settings_categories"]
         self.assertIn("applications", cats)
@@ -49,6 +49,9 @@ class TestNotificationRoutingReferenceAPI(APITestCase):
             "application_deadline",
             response.data["reminder_event_type_to_settings_category"],
         )
+        rsum = response.data["reminder_event_type_recipient_summaries"]
+        self.assertIn("application_deadline", rsum)
+        self.assertIn("reminder owner", rsum["application_deadline"].lower())
         rdesc = response.data["reminder_event_type_descriptions"]
         self.assertIn("document_deadline", rdesc)
         self.assertTrue(len(rdesc["document_deadline"]) > 10)

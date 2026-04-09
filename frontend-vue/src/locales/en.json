@@ -183,6 +183,7 @@
     "remindersTitle": "Reminder event types → settings category",
     "colReminderEventType": "Reminder event type",
     "colSettingsCategory": "Settings category",
+    "colReminderRecipientSummary": "Recipients (reminder)",
     "colReminderDescription": "Description",
     "reminderDefault": "Default for unknown reminder types",
     "digestTitle": "Digest routing",

@@ -113,6 +113,7 @@
                 <tr>
                   <th scope="col">{{ t('notificationRoutingPage.colReminderEventType') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colSettingsCategory') }}</th>
+                  <th scope="col">{{ t('notificationRoutingPage.colReminderRecipientSummary') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colReminderDescription') }}</th>
                 </tr>
               </thead>
@@ -120,6 +121,7 @@
                 <tr v-for="row in reminderRows" :key="row.eventType">
                   <td><code>{{ row.eventType }}</code></td>
                   <td><code>{{ row.category }}</code></td>
+                  <td class="small text-muted">{{ row.recipientSummary || t('notificationRoutingPage.emDash') }}</td>
                   <td class="small text-muted">{{ row.description || t('notificationRoutingPage.emDash') }}</td>
                 </tr>
               </tbody>
@@ -216,11 +218,13 @@ const reminderRows = computed(() => {
   const m = payload.value?.reminder_event_type_to_settings_category
   if (!m || typeof m !== 'object') return []
   const desc = payload.value?.reminder_event_type_descriptions || {}
+  const rsum = payload.value?.reminder_event_type_recipient_summaries || {}
   return Object.keys(m)
     .sort((a, b) => a.localeCompare(b))
     .map((eventType) => ({
       eventType,
       category: m[eventType],
+      recipientSummary: rsum[eventType] || '',
       description: desc[eventType] || '',
     }))
 })
