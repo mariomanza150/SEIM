@@ -97,6 +97,10 @@ describe('frontend-vue/index.html', () => {
     expect(doc.querySelector('meta[property="og:url"]').getAttribute('content')).toBe(
       'http://localhost:8080/seim/login?ref=1',
     )
+    expect(doc.querySelector('meta[name="twitter:url"]').getAttribute('content')).toBe(
+      'http://localhost:8080/seim/login?ref=1',
+    )
+    expect(doc.querySelector('meta[property="og:type"]').getAttribute('content')).toBe('website')
   })
 
   it('shell bootstrap adds localized Open Graph and Twitter meta', () => {

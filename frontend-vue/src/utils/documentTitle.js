@@ -58,13 +58,14 @@ export function syncAppSocialMeta(t, routeLike = {}) {
   upsertHeadMeta('property', 'og:locale', t('appMeta.ogLocale'))
   upsertHeadMeta('property', 'og:locale:alternate', t('appMeta.ogLocaleAlternate'))
   upsertHeadMeta('property', 'og:site_name', site)
+  upsertHeadMeta('property', 'og:type', 'website')
   upsertHeadMeta('name', 'twitter:card', 'summary')
   upsertHeadMeta('name', 'twitter:title', shareTitle)
   upsertHeadMeta('name', 'twitter:description', desc)
 }
 
 /**
- * Absolute page URL for `<link rel="canonical">` and `og:url` (strip hash only).
+ * Absolute page URL for `<link rel="canonical">`, `og:url`, and `twitter:url` (strip hash only).
  * @param {string} absoluteHref - full https? URL
  */
 export function syncCanonicalLink(absoluteHref) {
@@ -78,4 +79,5 @@ export function syncCanonicalLink(absoluteHref) {
   }
   link.setAttribute('href', href)
   upsertHeadMeta('property', 'og:url', href)
+  upsertHeadMeta('name', 'twitter:url', href)
 }

@@ -132,6 +132,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Pre-hydration `theme-color` meta + runtime sync from UI preferences | `frontend-vue` | Implemented | 2026-04-09 | `THEME_COLOR_LIGHT` / `THEME_COLOR_DARK` in `uiPreferences.js`; `syncThemeColorMeta` from `applyUiPreferences` / `clearUiPreferences`. Shell script reads `seim_ui_preferences` + `prefers-color-scheme` for `theme: auto`. Vitest: `uiPreferences.spec.js`, `indexHtml.spec.js`. |
 | Localized Open Graph + Twitter Card meta (shell + navigation) | `frontend-vue` | Implemented | 2026-04-09 | `appMeta.socialTitle`, `ogLocale`, `ogLocaleAlternate` (en/es); `syncAppSocialMeta` in `documentTitle.js` (share title = tab title except generic fallback → `socialTitle`). Router `beforeEach`, `App.vue` mount + locale watch, `Settings` locale change. Shell bootstrap injects matching `og:*` + `twitter:*`. Vitest: `documentTitle.spec.js`, `indexHtml.spec.js`, `App.spec.js`. |
 | Canonical URL + `og:url` (shell + router + App) | `frontend-vue` | Implemented | 2026-04-09 | `syncCanonicalLink` in `documentTitle.js` (`<link rel="canonical">` + `property="og:url"`, hash stripped). Router `beforeEach` uses `new URL(router.resolve(to).href, origin)`; `App.vue` mount + locale `watch` for parity when guards do not run. Shell bootstrap uses `window.location.href` before Vue. Vitest: `documentTitle.spec.js`, `indexHtml.spec.js`; `App.spec.js` cleanup. |
+| Social meta: `og:type` + `twitter:url` | `frontend-vue` | Implemented | 2026-04-09 | `property="og:type"` `website` via `syncAppSocialMeta`; `name="twitter:url"` alongside `og:url` in `syncCanonicalLink` + shell bootstrap. Vitest: `documentTitle.spec.js`, `indexHtml.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
@@ -210,5 +211,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (canonical URL + `og:url` for SPA). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (`og:type` + `twitter:url`). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
