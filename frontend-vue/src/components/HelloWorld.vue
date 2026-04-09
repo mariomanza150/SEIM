@@ -21,7 +21,7 @@ const count = ref(0)
 
   <p>
     Check out
-    <a href="https://vuejs.org/guide/quick-start.html#local" target="_blank"
+    <a href="https://vuejs.org/guide/quick-start.html#local" target="_blank" rel="noopener noreferrer"
       >create-vue</a
     >, the official Vue + Vite starter
   </p>
@@ -30,6 +30,7 @@ const count = ref(0)
     <a
       href="https://vuejs.org/guide/scaling-up/tooling.html#ide-support"
       target="_blank"
+      rel="noopener noreferrer"
       >Vue Docs Scaling up Guide</a
     >.
   </p>

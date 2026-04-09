@@ -177,7 +177,7 @@
                     v-if="doc.file"
                     :href="resolveFileUrl(doc.file)"
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
                     class="btn btn-sm btn-outline-secondary"
                     :title="t('documentsPage.downloadTitle')"
                     :aria-label="t('documentsPage.downloadTitle')"

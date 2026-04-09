@@ -117,6 +117,9 @@ describe('Documents', () => {
     expect(wrapper.text()).toContain('Spring Abroad')
     expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.statusValidatedShort'))
     expect(wrapper.find('[data-testid="document-detail-link"]').exists()).toBe(true)
+    const fileLink = wrapper.find('a[target="_blank"]')
+    expect(fileLink.exists()).toBe(true)
+    expect(fileLink.attributes('rel')).toBe('noopener noreferrer')
   })
 
   it('uses documentDetailPage fallbacks for missing file, application, and upload date', async () => {

@@ -84,6 +84,9 @@ describe('DocumentDetail', () => {
     expect(wrapper.text()).toContain('Validated')
     expect(wrapper.text()).toContain('Preview')
     expect(wrapper.text()).toContain('Replace file')
+    for (const a of wrapper.findAll('a[target="_blank"]')) {
+      expect(a.attributes('rel')).toBe('noopener noreferrer')
+    }
   })
 
   it('shows translated error when document fetch fails', async () => {

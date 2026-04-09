@@ -141,7 +141,7 @@
                     v-if="document.file"
                     :href="resolveFileUrl(document.file)"
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
                     class="btn btn-primary"
                   >
                     <i class="bi bi-download me-2"></i>{{ t('documentDetailPage.downloadDocument') }}
@@ -305,7 +305,7 @@
                     v-if="document.file"
                     :href="resolveFileUrl(document.file)"
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
                     class="btn btn-outline-primary"
                   >
                     <i class="bi bi-download me-2"></i>{{ t('documentDetailPage.download') }}
