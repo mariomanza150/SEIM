@@ -122,7 +122,7 @@
                 <div class="row mb-3">
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('documentDetailPage.labelUploadedBy') }}</label>
-                    <p class="fw-bold">{{ document.uploaded_by || t('documentsPage.notAvailable') }}</p>
+                    <p class="fw-bold">{{ document.uploaded_by || t('documentDetailPage.notAvailable') }}</p>
                   </div>
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('documentDetailPage.labelUploadedAt') }}</label>
@@ -467,7 +467,7 @@ async function loadPreview() {
 }
 
 function fileName(fileUrl) {
-  if (!fileUrl) return t('documentsPage.fileUnknown')
+  if (!fileUrl) return t('documentDetailPage.fileUnknown')
   const parts = fileUrl.split('/')
   return decodeURIComponent(parts[parts.length - 1] || t('documentDetailPage.fileFallback'))
 }
@@ -475,11 +475,11 @@ function fileName(fileUrl) {
 function getApplicationName(appId) {
   if (typeof appId === 'object' && appId?.program?.name) return appId.program.name
   const app = applications.value.find(a => a.id === appId)
-  return app?.program?.name || appId || t('documentsPage.unknownApplication')
+  return app?.program?.name || appId || t('documentDetailPage.unknownApplication')
 }
 
 function formatDateTime(dateString) {
-  if (!dateString) return t('documentsPage.notAvailable')
+  if (!dateString) return t('documentDetailPage.notAvailable')
   const loc = locale.value === 'es' ? 'es' : 'en-US'
   return new Date(dateString).toLocaleString(loc, {
     year: 'numeric',

@@ -107,4 +107,43 @@ describe('DocumentDetail', () => {
     expect(wrapper.text()).toContain('Failed to load document')
     expect(wrapper.text()).toContain('Back to Documents')
   })
+
+  it('uses documentDetailPage fallbacks for missing file, uploader, dates, and application', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/') {
+        return Promise.resolve({ data: { results: [], count: 0 } })
+      }
+      if (url === '/api/documents/doc-1/') {
+        return Promise.resolve({
+          data: {
+            id: 'doc-1',
+            application: null,
+            file: null,
+            is_valid: false,
+            created_at: null,
+            updated_at: null,
+            validated_at: null,
+            type: { name: 'Transcript' },
+            uploaded_by: null,
+            validations: [],
+            resubmission_requests: [],
+            comments: [],
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.fileUnknown'))
+    expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.unknownApplication'))
+    const na = i18n.global.t('documentDetailPage.notAvailable')
+    expect(wrapper.text().split(na).length - 1).toBeGreaterThanOrEqual(2)
+  })
 })
