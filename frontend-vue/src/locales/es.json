@@ -8,5 +8,49 @@
   "settings": {
     "uiLanguage": "Idioma de la interfaz",
     "uiLanguageHelp": "Se guarda en este dispositivo. Las demás preferencias de la cuenta siguen sincronizándose con el servidor."
+  },
+  "login": {
+    "subtitle": "Inicia sesión para continuar",
+    "emailLabel": "Correo electrónico",
+    "emailPlaceholder": "Introduce tu correo",
+    "passwordLabel": "Contraseña",
+    "passwordPlaceholder": "Introduce tu contraseña",
+    "rememberMe": "Recordarme",
+    "signingIn": "Iniciando sesión...",
+    "signIn": "Entrar",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "versionLine": "SEIM Vue.js v{version}",
+    "welcomeBack": "¡Bienvenido de nuevo, {name}!",
+    "failedGeneric": "No se pudo iniciar sesión. Inténtalo de nuevo.",
+    "unexpectedError": "Ocurrió un error inesperado. Inténtalo de nuevo."
+  },
+  "notFound": {
+    "title": "Página no encontrada",
+    "body": "La página que buscas no existe.",
+    "goDashboard": "Ir al panel"
+  },
+  "route": {
+    "names": {
+      "Login": "Inicio de sesión",
+      "Home": "Inicio",
+      "Dashboard": "Panel",
+      "Applications": "Solicitudes",
+      "CoordinatorReviewQueue": "Cola de revisión",
+      "CoordinatorWorkload": "Carga del coordinador",
+      "StaffExchangeAgreements": "Convenios de intercambio",
+      "StaffAgreementDocuments": "Documentos de convenios",
+      "ProgramCompare": "Comparar programas",
+      "ApplicationNew": "Nueva solicitud",
+      "ApplicationEdit": "Editar solicitud",
+      "ApplicationDetail": "Detalle de la solicitud",
+      "Documents": "Documentos",
+      "DocumentDetail": "Detalle del documento",
+      "Notifications": "Notificaciones",
+      "Profile": "Perfil",
+      "Settings": "Ajustes",
+      "DeadlinesCalendar": "Plazos y calendario",
+      "NotFound": "Página no encontrada"
+    },
+    "fallbackTitle": "SEIM"
   }
 }

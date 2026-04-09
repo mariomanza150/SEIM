@@ -67,6 +67,10 @@ describe('App shell accessibility', () => {
     expect(skip.attributes('href')).toBe('#main-content')
     expect(skip.text()).toContain('Skip to main content')
 
+    const ann = wrapper.find('#seim-route-announce')
+    expect(ann.exists()).toBe(true)
+    expect(ann.attributes('aria-live')).toBe('polite')
+
     const main = wrapper.find('#main-content')
     expect(main.exists()).toBe(true)
     expect(main.attributes('tabindex')).toBe('-1')

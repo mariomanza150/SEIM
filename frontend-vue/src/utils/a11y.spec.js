@@ -2,7 +2,14 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { focusMainContent } from './a11y'
+import { announceRouteNavigation, focusMainContent, ROUTE_ANNOUNCE_ID } from './a11y'
+import i18n, { setAppLocale } from '@/i18n'
+
+function flushRaf() {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => resolve())
+  })
+}
 
 describe('focusMainContent', () => {
   beforeEach(() => {
@@ -23,5 +30,38 @@ describe('focusMainContent', () => {
 
   it('does not throw when landmark is missing', () => {
     expect(() => focusMainContent()).not.toThrow()
+  })
+})
+
+describe('announceRouteNavigation', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    setAppLocale('en')
+    document.body.innerHTML = `<div id="${ROUTE_ANNOUNCE_ID}"></div>`
+  })
+
+  afterEach(() => {
+    setAppLocale('en')
+    localStorage.clear()
+    document.body.innerHTML = ''
+  })
+
+  it('sets polite live region from route name translation', async () => {
+    announceRouteNavigation({ name: 'Dashboard', meta: {} })
+    await flushRaf()
+    expect(document.getElementById(ROUTE_ANNOUNCE_ID).textContent).toBe('Dashboard')
+  })
+
+  it('falls back to meta title without suffix when name unknown', async () => {
+    announceRouteNavigation({ name: 'UnknownX', meta: { title: 'Custom - SEIM' } })
+    await flushRaf()
+    expect(document.getElementById(ROUTE_ANNOUNCE_ID).textContent).toBe('Custom')
+  })
+
+  it('uses Spanish route label when locale is es', async () => {
+    setAppLocale('es')
+    announceRouteNavigation({ name: 'NotFound', meta: {} })
+    await flushRaf()
+    expect(document.getElementById(ROUTE_ANNOUNCE_ID).textContent).toBe('Página no encontrada')
   })
 })

@@ -1,5 +1,12 @@
 <template>
   <a class="seim-skip-link" href="#main-content">{{ t('a11y.skipToMain') }}</a>
+  <div
+    id="seim-route-announce"
+    class="visually-hidden"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+  />
   <main id="main-content" tabindex="-1">
     <router-view />
   </main>

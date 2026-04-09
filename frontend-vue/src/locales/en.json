@@ -8,5 +8,49 @@
   "settings": {
     "uiLanguage": "Interface language",
     "uiLanguageHelp": "Stored on this device. Account preferences below still sync to the server."
+  },
+  "login": {
+    "subtitle": "Sign in to continue",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "Enter your email",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "rememberMe": "Remember me",
+    "signingIn": "Signing in...",
+    "signIn": "Sign In",
+    "forgotPassword": "Forgot password?",
+    "versionLine": "SEIM Vue.js v{version}",
+    "welcomeBack": "Welcome back, {name}!",
+    "failedGeneric": "Login failed. Please try again.",
+    "unexpectedError": "An unexpected error occurred. Please try again."
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "body": "The page you're looking for doesn't exist.",
+    "goDashboard": "Go to Dashboard"
+  },
+  "route": {
+    "names": {
+      "Login": "Login",
+      "Home": "Home",
+      "Dashboard": "Dashboard",
+      "Applications": "Applications",
+      "CoordinatorReviewQueue": "Review queue",
+      "CoordinatorWorkload": "Coordinator workload",
+      "StaffExchangeAgreements": "Exchange agreements",
+      "StaffAgreementDocuments": "Agreement documents",
+      "ProgramCompare": "Compare programs",
+      "ApplicationNew": "New application",
+      "ApplicationEdit": "Edit application",
+      "ApplicationDetail": "Application details",
+      "Documents": "Documents",
+      "DocumentDetail": "Document details",
+      "Notifications": "Notifications",
+      "Profile": "Profile",
+      "Settings": "Settings",
+      "DeadlinesCalendar": "Deadlines and calendar",
+      "NotFound": "Page not found"
+    },
+    "fallbackTitle": "SEIM"
   }
 }

@@ -7,12 +7,12 @@
             <div class="card-body p-4">
               <div class="text-center mb-4">
                 <h1 class="h3 mb-3 fw-normal">SEIM</h1>
-                <p class="text-muted">Sign in to continue</p>
+                <p class="text-muted">{{ t('login.subtitle') }}</p>
               </div>
 
-              <form @submit.prevent="handleLogin">
+              <form @submit.prevent="handleLogin" data-testid="login-form">
                 <div class="mb-3">
-                  <label for="email" class="form-label">Email address</label>
+                  <label for="email" class="form-label">{{ t('login.emailLabel') }}</label>
                   <input
                     type="email"
                     class="form-control"
@@ -20,12 +20,13 @@
                     v-model="email"
                     required
                     :disabled="isLoading"
-                    placeholder="Enter your email"
+                    :placeholder="t('login.emailPlaceholder')"
+                    data-testid="login-email"
                   />
                 </div>
 
                 <div class="mb-3">
-                  <label for="password" class="form-label">Password</label>
+                  <label for="password" class="form-label">{{ t('login.passwordLabel') }}</label>
                   <input
                     type="password"
                     class="form-control"
@@ -33,7 +34,8 @@
                     v-model="password"
                     required
                     :disabled="isLoading"
-                    placeholder="Enter your password"
+                    :placeholder="t('login.passwordPlaceholder')"
+                    data-testid="login-password"
                   />
                 </div>
 
@@ -45,7 +47,7 @@
                     v-model="rememberMe"
                   />
                   <label class="form-check-label" for="remember">
-                    Remember me
+                    {{ t('login.rememberMe') }}
                   </label>
                 </div>
 
@@ -57,23 +59,24 @@
                   type="submit"
                   class="btn btn-primary w-100"
                   :disabled="isLoading"
+                  data-testid="login-submit"
                 >
                   <span v-if="isLoading">
                     <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Signing in...
+                    {{ t('login.signingIn') }}
                   </span>
-                  <span v-else>Sign In</span>
+                  <span v-else>{{ t('login.signIn') }}</span>
                 </button>
               </form>
 
               <div class="text-center mt-3">
-                <a href="#" class="text-decoration-none">Forgot password?</a>
+                <a href="/password-reset/" class="text-decoration-none">{{ t('login.forgotPassword') }}</a>
               </div>
             </div>
           </div>
 
           <div class="text-center mt-3 text-muted small">
-            <p>SEIM Vue.js v{{ appVersion }}</p>
+            <p>{{ t('login.versionLine', { version: appVersion }) }}</p>
           </div>
         </div>
       </div>
@@ -83,10 +86,12 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
@@ -107,16 +112,16 @@ async function handleLogin() {
     const success = await authStore.login(email.value, password.value)
 
     if (success) {
-      successToast(`Welcome back, ${authStore.userName}!`)
+      successToast(t('login.welcomeBack', { name: authStore.userName }))
       // Redirect to original destination or dashboard
-      const redirect = route.query.redirect || '/dashboard'
+      const redirect = route.query.redirect || { name: 'Dashboard' }
       router.push(redirect)
     } else {
-      error.value = authStore.error || 'Login failed. Please try again.'
+      error.value = authStore.error || t('login.failedGeneric')
       errorToast(error.value)
     }
   } catch (err) {
-    error.value = 'An unexpected error occurred. Please try again.'
+    error.value = t('login.unexpectedError')
     errorToast(error.value)
     console.error('Login error:', err)
   } finally {

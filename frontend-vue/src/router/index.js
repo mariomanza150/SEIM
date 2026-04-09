@@ -4,7 +4,7 @@
 import { nextTick } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import { focusMainContent } from '@/utils/a11y'
+import { announceRouteNavigation, focusMainContent } from '@/utils/a11y'
 
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
@@ -265,7 +265,8 @@ router.beforeEach(async (to, from, next) => {
   }
 })
 
-router.afterEach(() => {
+router.afterEach((to) => {
+  announceRouteNavigation(to)
   nextTick(() => {
     focusMainContent()
   })
