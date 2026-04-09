@@ -121,7 +121,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ | | | | |
+| Vue a11y: `noopener noreferrer` on document file links | `frontend-vue` | In progress | 2026-04-09 | — |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -195,5 +195,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: **MQ-008** resolved — `LogoutView` JWT-only auth + integration test). Open manual QA: [`manual-qa-issues.md`](manual-qa-issues.md). Coverage: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (**MQ-008** resolved: `LogoutView` JWT-only + Pinia `logout()` POST before token clear + `Authorization` header; integration + Vitest; rebuild `frontend-vue/dist` for deployed SPA). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
