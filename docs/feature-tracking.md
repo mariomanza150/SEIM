@@ -92,7 +92,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-09 | `Notifications.vue`: `notifications.*` (filters, empty, pagination, toasts) + `route.names`. Vitest: `Notifications.spec.js`. |
 | Vue i18n: DocumentUpload component | `frontend-vue` | Implemented | 2026-04-09 | `documentUpload.*` + `documentDetailPage.labelDocumentType`; `DocumentUpload.vue` on application detail. Vitest: `DocumentUpload.spec.js`. |
 | Vue i18n: Browser tab titles (router) | `frontend-vue` | Implemented | 2026-04-09 | `resolveDocumentTitle` (`utils/documentTitle.js`): `route.names.*` + `route.notFoundBrowserTitle` + `route.fallbackTitle`; router `beforeEach`; Settings locale change refreshes tab title. Vitest: `documentTitle.spec.js`. |
-| Vue i18n: Settings page (full form + sidebar) | `frontend-vue` | Implemented | 2026-04-09 | `Settings.vue`: breadcrumbs, sections, theme/font/digest/privacy, `settings.notify.*` checkboxes, toasts; reuses `applicationFormPage.cancel`, `route.names`. Vitest: `Settings.spec.js`. |
+| Vue i18n: Settings page (full form + sidebar) | `frontend-vue` | Implemented | 2026-04-09 | `Settings.vue`: breadcrumbs, sections, theme/font/digest/privacy, `settings.notify.*` checkboxes, `settings.cancel`, toasts; `route.names`. Vitest: `Settings.spec.js`. |
 | Vue i18n: Dashboard “next steps” row copy | `frontend-vue` | Implemented | 2026-04-09 | `dashboardNextSteps.js`: `mergeDashboardNextSteps` / `fetchDashboardNextSteps` take `t`; strings under `dashboard.nextSteps.*` + `notifications.defaultTitle`; `Dashboard.vue` passes `t`. Vitest: `dashboardNextSteps.spec.js` (incl. `es` draft title). |
 | Vue i18n/a11y: Breadcrumb nav aria (Applications, Documents) | `frontend-vue` | Implemented | 2026-04-09 | `applicationsPage.breadcrumbAria` / `documentsPage.breadcrumbAria` (en/es); `<nav :aria-label="t(...)">`. Vitest: `Applications.spec.js`, `Documents.spec.js` (incl. Spanish). |
 | Vue i18n/a11y: Profile breadcrumb aria (namespaced key) | `frontend-vue` | Implemented | 2026-04-09 | `Profile.vue` uses `profilePage.breadcrumbAria` (was `documentDetailPage.breadcrumbAria`). Vitest: `Profile.spec.js`. |
@@ -109,7 +109,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Settings cancel button key | `frontend-vue` | In progress | 2026-04-09 | loop |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -143,7 +143,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** (`profilePage.*`, no `applicationFormPage` leaks for placeholders/cancel) + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare**. **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare**. **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -183,5 +183,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Profile placeholders + cancel i18n — completed)*  
+*Last updated: 2026-04-09 (loop: Settings cancel i18n key — completed)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

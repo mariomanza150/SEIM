@@ -200,7 +200,7 @@
 
                 <div v-if="saveError" class="alert alert-danger">{{ saveError }}</div>
                 <div class="d-flex justify-content-between mt-4">
-                  <router-link :to="{ name: 'Dashboard' }" class="btn btn-outline-secondary">{{ t('applicationFormPage.cancel') }}</router-link>
+                  <router-link :to="{ name: 'Dashboard' }" class="btn btn-outline-secondary">{{ t('settings.cancel') }}</router-link>
                   <button
                     type="submit"
                     class="btn btn-primary"

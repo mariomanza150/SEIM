@@ -104,6 +104,7 @@ describe('Settings', () => {
     expect(wrapper.find('#share_analytics').element.checked).toBe(false)
     expect(wrapper.find('[data-testid="settings-digest-frequency"]').element.value).toBe('weekly')
     expect(wrapper.find('[data-testid="settings-email-digest"]').element.checked).toBe(true)
+    expect(wrapper.text()).toContain(i18n.global.t('settings.cancel'))
   })
 
   it('saves updated settings', async () => {
