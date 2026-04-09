@@ -24,7 +24,7 @@
           type="button"
           class="btn-close"
           @click="removeToast(toast.id)"
-          aria-label="Close"
+          :aria-label="t('toast.close')"
         ></button>
       </div>
       <div class="toast-body">
@@ -35,22 +35,24 @@
 </template>
 
 <script setup>
+import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 
+const { t } = useI18n()
 const { toasts, removeToast } = useToast()
 
 function toastTitle(type) {
   switch (type) {
     case 'success':
-      return 'Success'
+      return t('toast.success')
     case 'error':
-      return 'Error'
+      return t('toast.error')
     case 'warning':
-      return 'Warning'
+      return t('toast.warning')
     case 'info':
-      return 'Info'
+      return t('toast.info')
     default:
-      return 'Notification'
+      return t('toast.notification')
   }
 }
 </script>

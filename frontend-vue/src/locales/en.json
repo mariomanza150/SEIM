@@ -52,5 +52,39 @@
       "NotFound": "Page not found"
     },
     "fallbackTitle": "SEIM"
+  },
+  "toast": {
+    "success": "Success",
+    "error": "Error",
+    "warning": "Warning",
+    "info": "Info",
+    "notification": "Notification",
+    "close": "Dismiss notification"
+  },
+  "dashboard": {
+    "mainNavAria": "Main navigation",
+    "toggleNav": "Toggle navigation",
+    "djangoAdmin": "Django Admin",
+    "cmsAdmin": "CMS Admin",
+    "logout": "Logout",
+    "welcomeUser": "Welcome, {name}!",
+    "tagline": "Here's what's happening with your exchange program.",
+    "loadingSpinner": "Loading",
+    "loadingDashboard": "Loading dashboard...",
+    "statPending": "Pending tasks",
+    "nextStepsTitle": "What needs your attention",
+    "nextStepsUpdating": "Updating…",
+    "open": "Open",
+    "view": "View",
+    "allCaughtUp": "You are all caught up. New tasks will show here when you have draft applications, document actions, reviews, or unread notifications.",
+    "statsLoadError": "Failed to load dashboard statistics",
+    "statsToastError": "Unable to load dashboard statistics",
+    "nextStepsLoadError": "Could not load suggested next steps.",
+    "loggedOutToast": "You have been logged out successfully",
+    "nav": {
+      "workload": "Workload",
+      "deadlines": "Deadlines",
+      "agreementFiles": "Agreement files"
+    }
   }
 }

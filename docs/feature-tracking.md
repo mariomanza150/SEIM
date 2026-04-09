@@ -67,11 +67,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | UserSettings-aware notification delivery | `notifications`, `accounts`, `exchange`, `documents` | Implemented | 2026-04-09 | `NotificationService.send_notification(..., settings_category=...)` maps to `UserSettings` email/in-app flags (`applications`, `documents`, `comments`, `programs`, `system`). Wired: application submit/status/waitlist, document staff/student paths, public document comments, agreement expiration, Celery reminders. Optional `preference_key` gates on `NotificationPreference` / `is_enabled`. Digest and account-security emails unchanged (no category). Tests: `test_notifications_services.py` (UserSettings + preference_key cases). |
 | Vue i18n foundation (en/es) | `frontend-vue` | Implemented | 2026-04-09 | `vue-i18n` v11, `src/locales/en.json` + `es.json`, `src/i18n/index.js` (localStorage `seim.ui_locale`, browser `es*` default). Skip link + WS toast fallback translated; Settings **Interface language** control. Vitest: `i18n/index.spec.js`, `App.spec.js`, `Settings.spec.js`. `ApplicationForm.spec.js` `isoDateWithOffset` uses local calendar dates (avoids UTC `toISOString` flake vs `parseDateOnly`). |
 | Vue i18n: Login & NotFound + route screen-reader announcements | `frontend-vue` | Implemented | 2026-04-09 | `login.*` / `notFound.*` / `route.names.*` locale keys; `Login.vue` + `NotFound.vue` use `useI18n`. `#seim-route-announce` (`aria-live="polite"`) in `App.vue`; `announceRouteNavigation` in `utils/a11y.js` + `router.afterEach`. Vitest: `Login.spec.js`, `NotFound.spec.js`, `a11y.spec.js`, `App.spec.js`. |
+| Vue i18n: Dashboard layout + toast chrome | `frontend-vue` | Implemented | 2026-04-09 | `dashboard.*` + `toast.*` in locales; `Dashboard.vue` navbar/sidebar/stats/next-steps copy + logout/stats errors; `route.names.*` for shared labels; nav `aria-label` + toggler `aria-controls`; `ToastContainer.vue` translated headers + dismiss `aria-label`. Vitest: `Dashboard.spec.js`, `ToastContainer.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Dashboard shell, nav labels, toast titles | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
+| _None currently assigned_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -104,7 +105,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **In progress:** Dashboard navbar/sidebar + toast header i18n. Shipped: Login, NotFound, route announcer (see IMPLEMENTED). Remaining: other views, tables/modals. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **Dashboard + toast chrome shipped** (see IMPLEMENTED). Remaining: Applications/Documents/detail views, tables/modals, `NotificationDropdown` copy. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -142,5 +143,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (Vue i18n Login/NotFound + route announcements)*  
+*Last updated: 2026-04-09 (Vue i18n Dashboard + toast chrome)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

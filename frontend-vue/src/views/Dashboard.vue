@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard" data-testid="dashboard-page">
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary" :aria-label="t('dashboard.mainNavAria')">
       <div class="container-fluid">
         <router-link class="navbar-brand" :to="{ name: 'Dashboard' }">SEIM</router-link>
         <button
@@ -9,6 +9,8 @@
           type="button"
           data-bs-toggle="collapse"
           data-bs-target="#navbarNav"
+          :aria-label="t('dashboard.toggleNav')"
+          aria-controls="navbarNav"
         >
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -19,12 +21,12 @@
              <!-- Admin Buttons (only for admin users) -->
              <li class="nav-item" v-if="authStore.isAdmin">
                <a class="nav-link" href="/seim/admin/" target="_blank" rel="noopener noreferrer">
-                 <i class="bi bi-gear-wide-connected me-1"></i> Django Admin
+                 <i class="bi bi-gear-wide-connected me-1"></i> {{ t('dashboard.djangoAdmin') }}
                </a>
              </li>
              <li class="nav-item" v-if="authStore.isAdmin">
                <a class="nav-link" href="/cms/" target="_blank" rel="noopener noreferrer">
-                 <i class="bi bi-layout-wtf me-1"></i> CMS Admin
+                 <i class="bi bi-layout-wtf me-1"></i> {{ t('dashboard.cmsAdmin') }}
                </a>
              </li>
              
@@ -40,12 +42,12 @@
                 {{ userName }}
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
-                <li><router-link :to="{ name: 'Profile' }" class="dropdown-item">Profile</router-link></li>
-                <li><router-link :to="{ name: 'Settings' }" class="dropdown-item">Settings</router-link></li>
+                <li><router-link :to="{ name: 'Profile' }" class="dropdown-item">{{ t('route.names.Profile') }}</router-link></li>
+                <li><router-link :to="{ name: 'Settings' }" class="dropdown-item">{{ t('route.names.Settings') }}</router-link></li>
                 <li><hr class="dropdown-divider" /></li>
                 <li>
                   <a class="dropdown-item" href="#" @click.prevent="handleLogout" data-testid="logout-link">
-                    Logout
+                    {{ t('dashboard.logout') }}
                   </a>
                 </li>
               </ul>
@@ -60,52 +62,55 @@
       <div class="row">
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2">
-          <div class="list-group">
+          <div class="list-group" :aria-label="t('dashboard.mainNavAria')">
             <router-link :to="{ name: 'Dashboard' }" class="list-group-item list-group-item-action active">
-              <i class="bi bi-house-door me-2"></i>Dashboard
+              <i class="bi bi-house-door me-2"></i>{{ t('route.names.Dashboard') }}
             </router-link>
             <router-link :to="{ name: 'Applications' }" class="list-group-item list-group-item-action">
-              <i class="bi bi-file-earmark-text me-2"></i>Applications
+              <i class="bi bi-file-earmark-text me-2"></i>{{ t('route.names.Applications') }}
             </router-link>
             <router-link :to="{ name: 'ProgramCompare' }" class="list-group-item list-group-item-action">
-              <i class="bi bi-columns-gap me-2"></i>Compare programs
+              <i class="bi bi-columns-gap me-2"></i>{{ t('route.names.ProgramCompare') }}
             </router-link>
             <router-link
               v-if="authStore.canUseStaffReviewQueue"
               :to="{ name: 'CoordinatorReviewQueue' }"
               class="list-group-item list-group-item-action"
             >
-              <i class="bi bi-clipboard-check me-2"></i>Review queue
+              <i class="bi bi-clipboard-check me-2"></i>{{ t('route.names.CoordinatorReviewQueue') }}
             </router-link>
             <router-link
               v-if="authStore.canUseStaffReviewQueue"
               :to="{ name: 'CoordinatorWorkload' }"
               class="list-group-item list-group-item-action"
             >
-              <i class="bi bi-graph-up-arrow me-2"></i>Workload
+              <i class="bi bi-graph-up-arrow me-2"></i>{{ t('dashboard.nav.workload') }}
             </router-link>
             <router-link
               v-if="authStore.canUseStaffReviewQueue"
               :to="{ name: 'StaffExchangeAgreements' }"
               class="list-group-item list-group-item-action"
             >
-              <i class="bi bi-file-earmark-richtext me-2"></i>Agreements
+              <i class="bi bi-file-earmark-richtext me-2"></i>{{ t('route.names.StaffExchangeAgreements') }}
             </router-link>
             <router-link
               v-if="authStore.canUseStaffReviewQueue"
               :to="{ name: 'StaffAgreementDocuments' }"
               class="list-group-item list-group-item-action"
             >
-              <i class="bi bi-archive me-2"></i>Agreement files
+              <i class="bi bi-archive me-2"></i>{{ t('dashboard.nav.agreementFiles') }}
             </router-link>
             <router-link :to="{ name: 'Documents' }" class="list-group-item list-group-item-action">
-              <i class="bi bi-folder me-2"></i>Documents
+              <i class="bi bi-folder me-2"></i>{{ t('route.names.Documents') }}
+            </router-link>
+            <router-link :to="{ name: 'DeadlinesCalendar' }" class="list-group-item list-group-item-action">
+              <i class="bi bi-calendar3 me-2"></i>{{ t('dashboard.nav.deadlines') }}
             </router-link>
             <router-link :to="{ name: 'Notifications' }" class="list-group-item list-group-item-action">
-              <i class="bi bi-bell me-2"></i>Notifications
+              <i class="bi bi-bell me-2"></i>{{ t('route.names.Notifications') }}
             </router-link>
             <router-link :to="{ name: 'Settings' }" class="list-group-item list-group-item-action">
-              <i class="bi bi-gear me-2"></i>Settings
+              <i class="bi bi-gear me-2"></i>{{ t('route.names.Settings') }}
             </router-link>
           </div>
         </div>
@@ -114,17 +119,17 @@
         <div class="col-md-9 col-lg-10">
           <div class="row mb-4">
             <div class="col">
-              <h2>Welcome, {{ userName }}!</h2>
-              <p class="text-muted">Here's what's happening with your exchange program.</p>
+              <h2>{{ t('dashboard.welcomeUser', { name: userName }) }}</h2>
+              <p class="text-muted">{{ t('dashboard.tagline') }}</p>
             </div>
           </div>
 
           <!-- Stats Cards -->
           <div v-if="loading" class="text-center py-5">
             <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
+              <span class="visually-hidden">{{ t('dashboard.loadingSpinner') }}</span>
             </div>
-            <p class="mt-3 text-muted">Loading dashboard...</p>
+            <p class="mt-3 text-muted">{{ t('dashboard.loadingDashboard') }}</p>
           </div>
 
           <div v-else class="row mb-4">
@@ -134,7 +139,7 @@
                   <div class="card-body">
                     <i class="bi bi-file-earmark-text fs-1 text-primary"></i>
                     <h3 class="mt-2">{{ stats.applications }}</h3>
-                    <p class="text-muted mb-0">Applications</p>
+                    <p class="text-muted mb-0">{{ t('route.names.Applications') }}</p>
                   </div>
                 </div>
               </router-link>
@@ -145,7 +150,7 @@
                   <div class="card-body">
                     <i class="bi bi-folder fs-1 text-success"></i>
                     <h3 class="mt-2">{{ stats.documents }}</h3>
-                    <p class="text-muted mb-0">Documents</p>
+                    <p class="text-muted mb-0">{{ t('route.names.Documents') }}</p>
                   </div>
                 </div>
               </router-link>
@@ -156,7 +161,7 @@
                   <div class="card-body">
                     <i class="bi bi-bell fs-1 text-warning"></i>
                     <h3 class="mt-2">{{ stats.notifications }}</h3>
-                    <p class="text-muted mb-0">Notifications</p>
+                    <p class="text-muted mb-0">{{ t('route.names.Notifications') }}</p>
                   </div>
                 </div>
               </router-link>
@@ -174,7 +179,7 @@
                   <div class="card-body">
                     <i class="bi bi-clock-history fs-1 text-info"></i>
                     <h3 class="mt-2">{{ stats.pending }}</h3>
-                    <p class="text-muted mb-0">Pending Tasks</p>
+                    <p class="text-muted mb-0">{{ t('dashboard.statPending') }}</p>
                   </div>
                 </div>
               </component>
@@ -184,10 +189,10 @@
           <!-- Next steps -->
           <div v-if="!loading" class="card">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-              <h5 class="mb-0">What needs your attention</h5>
+              <h5 class="mb-0">{{ t('dashboard.nextStepsTitle') }}</h5>
               <span v-if="nextStepsLoading" class="text-muted small">
                 <span class="spinner-border spinner-border-sm me-1" role="status" />
-                Updating…
+                {{ t('dashboard.nextStepsUpdating') }}
               </span>
             </div>
             <div class="card-body">
@@ -213,24 +218,23 @@
                       :to="row.spaRoute"
                       class="btn btn-sm btn-primary"
                     >
-                      Open
+                      {{ t('dashboard.open') }}
                     </router-link>
                     <a
                       v-else-if="row.href"
                       :href="row.href"
                       class="btn btn-sm btn-outline-primary"
                     >
-                      Open
+                      {{ t('dashboard.open') }}
                     </a>
                     <router-link v-else :to="{ name: 'Notifications' }" class="btn btn-sm btn-outline-secondary">
-                      View
+                      {{ t('dashboard.view') }}
                     </router-link>
                   </div>
                 </li>
               </ul>
               <p v-else-if="!nextStepsLoading" class="text-muted mb-0">
-                You are all caught up. New tasks will show here when you have draft applications, document
-                actions, reviews, or unread notifications.
+                {{ t('dashboard.allCaughtUp') }}
               </p>
             </div>
           </div>
@@ -242,6 +246,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
@@ -249,6 +254,7 @@ import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import api from '@/services/api'
 import { fetchDashboardNextSteps } from '@/utils/dashboardNextSteps'
 
+const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
 const { success, error: errorToast } = useToast()
@@ -284,8 +290,8 @@ async function fetchDashboardStats(options = {}) {
     stats.value = response.data
   } catch (err) {
     if (!soft) {
-      error.value = 'Failed to load dashboard statistics'
-      errorToast('Unable to load dashboard statistics')
+      error.value = t('dashboard.statsLoadError')
+      errorToast(t('dashboard.statsToastError'))
     }
   } finally {
     if (!soft) {
@@ -303,7 +309,7 @@ async function loadNextSteps() {
       canUseStaffReviewQueue: authStore.canUseStaffReviewQueue,
     })
   } catch {
-    nextStepsError.value = 'Could not load suggested next steps.'
+    nextStepsError.value = t('dashboard.nextStepsLoadError')
   } finally {
     nextStepsLoading.value = false
   }
@@ -311,7 +317,7 @@ async function loadNextSteps() {
 
 async function handleLogout() {
   await authStore.logout()
-  success('You have been logged out successfully')
+  success(t('dashboard.loggedOutToast'))
   router.push({ name: 'Login' })
 }
 

@@ -52,5 +52,39 @@
       "NotFound": "Página no encontrada"
     },
     "fallbackTitle": "SEIM"
+  },
+  "toast": {
+    "success": "Correcto",
+    "error": "Error",
+    "warning": "Aviso",
+    "info": "Información",
+    "notification": "Notificación",
+    "close": "Cerrar notificación"
+  },
+  "dashboard": {
+    "mainNavAria": "Navegación principal",
+    "toggleNav": "Mostrar u ocultar menú",
+    "djangoAdmin": "Admin Django",
+    "cmsAdmin": "Admin CMS",
+    "logout": "Cerrar sesión",
+    "welcomeUser": "¡Hola, {name}!",
+    "tagline": "Así va tu programa de intercambio.",
+    "loadingSpinner": "Cargando",
+    "loadingDashboard": "Cargando el panel…",
+    "statPending": "Tareas pendientes",
+    "nextStepsTitle": "Qué requiere tu atención",
+    "nextStepsUpdating": "Actualizando…",
+    "open": "Abrir",
+    "view": "Ver",
+    "allCaughtUp": "Todo al día. Las nuevas tareas aparecerán aquí cuando tengas borradores, documentos, revisiones o notificaciones sin leer.",
+    "statsLoadError": "No se pudieron cargar las estadísticas del panel",
+    "statsToastError": "No se pueden cargar las estadísticas del panel",
+    "nextStepsLoadError": "No se pudieron cargar los siguientes pasos sugeridos.",
+    "loggedOutToast": "Has cerrado sesión correctamente",
+    "nav": {
+      "workload": "Carga de trabajo",
+      "deadlines": "Plazos",
+      "agreementFiles": "Archivos de convenios"
+    }
   }
 }
