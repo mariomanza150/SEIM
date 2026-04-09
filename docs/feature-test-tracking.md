@@ -71,4 +71,4 @@ _Use these as hints when filling the **Browser** column; replace with exact `tes
 
 ---
 
-*Last updated: 2026-04-09 — **`grades`:** `test_grades_api.py` integration slice (3 pytest). Prior: **`coord-review`** manual MCP; **`notifications`** Vue `websocket.spec.js`.*
+*Last updated: 2026-04-09 — **`auth-api`:** MQ-008 regression `test_logout_post_json_succeeds_with_django_session_and_jwt_header` in `test_auth_api.py` (Docker + `seim.settings.test`). Prior: **`grades`** `test_grades_api.py`.*

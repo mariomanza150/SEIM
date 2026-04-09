@@ -7,7 +7,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟢 IMPLEMENTED ✓
 | Feature | Module | Status | Last Updated | Notes |
 |---------|--------|--------|--------------|-------|
-| User authentication and account management | `accounts`, `api` | Implemented | 2026-04-08 | JWT login, registration, profile, permissions, password flows, and account dashboard stats are wired through the API. |
+| User authentication and account management | `accounts`, `api` | Implemented | 2026-04-09 | JWT login, registration, profile, permissions, password flows, and account dashboard stats are wired through the API. **MQ-007:** `LoginView.authentication_classes = []` for JSON login without CSRF when switching users. **MQ-008:** `LogoutView.authentication_classes = [JWTAuthentication]` so `POST /api/accounts/logout/` is not blocked by session CSRF; regression `test_logout_post_json_succeeds_with_django_session_and_jwt_header` in `test_auth_api.py`. |
 | Role management | `accounts` | Implemented | 2026-04-08 | Student, coordinator, and admin roles are modeled and used across permissions and UI flows. |
 | Exchange programs and application workflow | `exchange`, `api` | Implemented | 2026-04-08 | Program catalog, applications, state transitions, timeline events, and coordinator review endpoints exist. |
 | Document management | `documents`, `api` | Implemented | 2026-04-08 | Upload, validation, comments, and resubmission APIs are present and used by the application flow. |
@@ -121,7 +121,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| API logout without Session CSRF when session cookie present (MQ-008) | `accounts`, `api` | In progress | 2026-04-09 | — |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -195,5 +195,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (manual QA: `coord-review` — **MQ-008** logout/login 403; see [`manual-qa-issues.md`](manual-qa-issues.md) + [`feature-test-tracking.md`](feature-test-tracking.md)). Prior: list pagination a11y loop; **MQ-007** resolved.*  
+*Last updated: 2026-04-09 (loop: **MQ-008** resolved — `LogoutView` JWT-only auth + integration test). Open manual QA: [`manual-qa-issues.md`](manual-qa-issues.md). Coverage: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
