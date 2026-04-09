@@ -167,6 +167,9 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `GET /api/saved-searches/{id}/` - Get saved search
 - `PUT /api/saved-searches/{id}/` - Update saved search
 - `DELETE /api/saved-searches/{id}/` - Delete saved search
+- `POST /api/saved-searches/{id}/apply/` - Returns `{ search_type, filters, name }` for the client to apply (Vue review queue uses `filters` from the list/detail payload directly).
+- `POST /api/saved-searches/{id}/set_default/` - Marks this preset as default for its `search_type` (clears other defaults of that type for the same user).
+- **Review queue (`search_type=application`)** — `filters` keys used by the SPA: `search`, `status`, `ordering`, `pending_review`, `needs_document_resubmit`, `assigned_to_me` (booleans). Legacy `status_name` is accepted when loading.
 
 #### Calendar Events
 - `GET /api/calendar/events/` - List calendar events

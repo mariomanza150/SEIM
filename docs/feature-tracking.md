@@ -41,11 +41,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Inline document preview and review context | `frontend-vue`, `documents` | Implemented | 2026-04-08 | `GET /api/documents/{id}/preview/` streams the file with JWT; Vue document detail loads a blob preview (PDF iframe / image) and shows a short “Review context” list from open resubmissions and latest non-valid validation. `IsOwnerOrAdmin` updated so `Document` checks coordinator/admin role plus application student and uploader. Tests: `tests/integration/api/test_document_preview_api.py`. |
 | Live application and document status sync | `exchange`, `notifications`, `frontend-vue`, `documents` | Implemented | 2026-04-08 | `NotificationService.broadcast_application_sync` + `NotificationConsumer.application_sync` send `application.sync` over the existing `/ws/notifications/` channel to student, assigned coordinator, and program coordinators. Wired from comments, status/submit/withdraw, document upload/validate/resubmit/replace/comment. Vue `websocket.js` dispatches `seim-application-sync`; `ApplicationDetail` soft-refetches; `DocumentDetail` refetches when `application_id` or `document_id` matches. Tests: `test_application_sync_broadcast.py`, `test_websocket_consumer.py`, `websocket.spec.js`. |
 | Action-oriented dashboard with next steps | `frontend-vue`, `accounts`, `exchange`, `documents`, `notifications` | Implemented | 2026-04-08 | Dashboard replaces placeholder activity with “What needs your attention” (unread notifications, student drafts and open document resubmissions, staff assigned/pending review and resubmit-queue links). Stats API is role-aware for coordinator/admin. Listens for `seim-application-sync` to refresh stats and next steps. Tests: `tests/integration/api/test_dashboard_stats_api.py`, `frontend-vue/src/utils/dashboardNextSteps.spec.js`. |
+| Saved searches in Vue review queue | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-08 | Coordinator review queue loads `search_type=application` presets from `/api/saved-searches/`, applies default on open, save/delete/set-default in UI; filters serialized in `reviewQueuePresets.js`. Broader presets for agreements/document queues remain P2. Tests: `frontend-vue/src/utils/reviewQueuePresets.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Saved searches in Vue review queue | `frontend-vue`, `exchange`, `api` | In progress | 2026-04-08 | — |
+| _None currently assigned_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -123,5 +124,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (action-oriented dashboard next steps)*  
+*Last updated: 2026-04-08 (Vue review queue saved search presets)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

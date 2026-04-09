@@ -96,6 +96,82 @@
                 Clear
               </button>
             </div>
+            <div class="col-12 border-top pt-3 mt-2">
+              <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
+                <div class="flex-grow-1" style="min-width: 200px">
+                  <label class="form-label small text-muted mb-1">Save current filters as preset</label>
+                  <div class="input-group input-group-sm">
+                    <input
+                      v-model="newPresetName"
+                      type="text"
+                      class="form-control"
+                      placeholder="Preset name"
+                      data-testid="review-queue-preset-name"
+                    />
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary"
+                      :disabled="!newPresetName.trim() || presetsLoading"
+                      data-testid="review-queue-preset-save"
+                      @click="savePreset"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+                <div class="form-check mb-1">
+                  <input
+                    id="preset-default"
+                    v-model="saveAsDefault"
+                    class="form-check-input"
+                    type="checkbox"
+                  />
+                  <label class="form-check-label small" for="preset-default">Default when opening queue</label>
+                </div>
+              </div>
+              <div v-if="savedPresets.length" class="small">
+                <span class="text-muted me-2">Saved:</span>
+                <span
+                  v-for="p in savedPresets"
+                  :key="p.id"
+                  class="d-inline-flex align-items-center gap-1 me-3 mb-1"
+                >
+                  <button
+                    type="button"
+                    class="btn btn-link btn-sm p-0"
+                    data-testid="review-queue-preset-apply"
+                    @click="applyPreset(p)"
+                  >
+                    {{ p.name }}
+                  </button>
+                  <i
+                    v-if="p.is_default"
+                    class="bi bi-star-fill text-warning"
+                    title="Default preset"
+                    aria-label="Default preset"
+                  />
+                  <button
+                    v-else
+                    type="button"
+                    class="btn btn-link btn-sm p-0 text-secondary"
+                    title="Set as default"
+                    aria-label="Set as default"
+                    @click="setDefaultPreset(p)"
+                  >
+                    <i class="bi bi-star"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link btn-sm p-0 text-danger"
+                    title="Remove preset"
+                    aria-label="Remove preset"
+                    @click="deletePreset(p)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -183,12 +259,21 @@
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
+import {
+  REVIEW_QUEUE_SEARCH_TYPE,
+  deserializeReviewQueueFilters,
+  serializeReviewQueueFilters,
+} from '@/utils/reviewQueuePresets'
 
-const { error: errorToast } = useToast()
+const { success, error: errorToast } = useToast()
 
 const applications = ref([])
 const loading = ref(true)
 const error = ref(null)
+const savedPresets = ref([])
+const presetsLoading = ref(false)
+const newPresetName = ref('')
+const saveAsDefault = ref(false)
 
 const filters = ref({
   search: '',
@@ -241,7 +326,6 @@ async function fetchApplications(page = 1) {
       }
     }
   } catch (err) {
-    console.error(err)
     error.value = 'Failed to load applications.'
     errorToast(error.value)
   } finally {
@@ -266,6 +350,75 @@ function clearFilters() {
     assigned_to_me: false,
   }
   fetchApplications()
+}
+
+async function loadPresets() {
+  try {
+    presetsLoading.value = true
+    const { data } = await api.get('/api/saved-searches/', {
+      params: { search_type: REVIEW_QUEUE_SEARCH_TYPE, ordering: 'name', page_size: 100 },
+    })
+    savedPresets.value = data.results ?? data ?? []
+  } catch {
+    savedPresets.value = []
+  } finally {
+    presetsLoading.value = false
+  }
+}
+
+function applyPreset(p) {
+  filters.value = deserializeReviewQueueFilters(p.filters)
+  pagination.value.currentPage = 1
+  fetchApplications(1)
+}
+
+async function savePreset() {
+  const name = newPresetName.value.trim()
+  if (!name) return
+  try {
+    presetsLoading.value = true
+    await api.post('/api/saved-searches/', {
+      name,
+      search_type: REVIEW_QUEUE_SEARCH_TYPE,
+      filters: serializeReviewQueueFilters(filters.value),
+      is_default: saveAsDefault.value,
+    })
+    newPresetName.value = ''
+    saveAsDefault.value = false
+    await loadPresets()
+    success('Preset saved')
+  } catch {
+    errorToast('Could not save preset')
+  } finally {
+    presetsLoading.value = false
+  }
+}
+
+async function deletePreset(p) {
+  if (!window.confirm(`Remove preset "${p.name}"?`)) return
+  try {
+    presetsLoading.value = true
+    await api.delete(`/api/saved-searches/${p.id}/`)
+    await loadPresets()
+    success('Preset removed')
+  } catch {
+    errorToast('Could not remove preset')
+  } finally {
+    presetsLoading.value = false
+  }
+}
+
+async function setDefaultPreset(p) {
+  try {
+    presetsLoading.value = true
+    await api.post(`/api/saved-searches/${p.id}/set_default/`)
+    await loadPresets()
+    success('Default preset updated')
+  } catch {
+    errorToast('Could not update default')
+  } finally {
+    presetsLoading.value = false
+  }
 }
 
 function statusClass(status) {
@@ -293,7 +446,14 @@ function formatDate(dateString) {
   })
 }
 
-onMounted(() => fetchApplications())
+onMounted(async () => {
+  await loadPresets()
+  const defaultPreset = savedPresets.value.find((p) => p.is_default)
+  if (defaultPreset) {
+    filters.value = deserializeReviewQueueFilters(defaultPreset.filters)
+  }
+  await fetchApplications(1)
+})
 </script>
 
 <style scoped>
