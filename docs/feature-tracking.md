@@ -64,11 +64,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Analytics dashboard Excel export | `analytics`, `api`, `admin UI` | Implemented | 2026-04-09 | `GET /api/analytics/export/?export_format=xlsx` (default CSV; param is not `format`, which DRF reserves). Workbook sheets: Metrics, Application status, Program performance — same data as CSV. `analytics/dashboard_export.py`; dependency `openpyxl`. Admin analytics template: Export dropdown (CSV / Excel). Tests: `test_analytics_views_simple.py` (`test_export_api_returns_xlsx_attachment`). |
 | Analytics dashboard PDF export | `analytics`, `api`, `admin UI` | Implemented | 2026-04-09 | `GET /api/analytics/export/?export_format=pdf` — ReportLab landscape PDF, sections Metrics / Application status / Program performance. `render_dashboard_export_pdf` in `analytics/dashboard_export.py`. Admin Export menu includes PDF. Tests: `test_export_api_returns_pdf_attachment`. |
 | Vue SPA accessibility baseline | `frontend-vue` | Implemented | 2026-04-09 | Skip link → `#main-content`, `<main id="main-content" tabindex="-1">` wrapping `router-view`; `router.afterEach` + `focusMainContent()` (`utils/a11y.js`). Global `:focus-visible` rings (stronger in high-contrast). Vitest: `App.spec.js`, `a11y.spec.js`. Further i18n / full-audit work remains P2 below. |
+| UserSettings-aware notification delivery | `notifications`, `accounts`, `exchange`, `documents` | Implemented | 2026-04-09 | `NotificationService.send_notification(..., settings_category=...)` maps to `UserSettings` email/in-app flags (`applications`, `documents`, `comments`, `programs`, `system`). Wired: application submit/status/waitlist, document staff/student paths, public document comments, agreement expiration, Celery reminders. Optional `preference_key` gates on `NotificationPreference` / `is_enabled`. Digest and account-security emails unchanged (no category). Tests: `test_notifications_services.py` (UserSettings + preference_key cases). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| UserSettings-aware notification delivery | `notifications`, `accounts`, `exchange`, `documents` | Enforce email/in-app toggles on send path | 2026-04-09 | autonomous-agent |
+| Vue i18n foundation (en/es, shell + settings) | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -96,12 +97,12 @@ _All Priority 1 items in this subsection are implemented above._
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings matrix enforcement in progress** (see IN PROGRESS). Remaining: custom templates, richer per-event admin matrix, role routing beyond toggles. Digests unchanged. |
+| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings channel matrix enforced** on core transactional sends (see IMPLEMENTED row). Remaining: custom templates, admin-configurable per-event matrix UI, richer role routing. Digests unchanged. |
 | Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets if a dedicated **analytics** staff UI is added later (review queue, agreements, documents, programs, and **calendar** are covered). |
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **Baseline shipped** (skip link, main landmark, route focus, focus-visible). Remaining: vue-i18n / locales, per-view audits (forms, tables, modals), live regions where needed. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **In progress:** vue-i18n + `en`/`es` locale files, skip link + notification fallback + Settings language control (localStorage). Remaining: migrate more views, per-view audits (forms, tables, modals), live regions where needed. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -139,5 +140,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (Vue SPA accessibility baseline)*  
+*Last updated: 2026-04-09 (UserSettings-aware notification delivery)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
