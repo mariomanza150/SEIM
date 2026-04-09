@@ -84,8 +84,12 @@ describe('Login', () => {
     const passwordInput = wrapper.find('input#password')
 
     expect(emailInput.attributes('type')).toBe('email')
+    expect(emailInput.attributes('name')).toBe('username')
+    expect(emailInput.attributes('autocomplete')).toBe('username')
     expect(emailInput.attributes('placeholder')).toContain('email')
     expect(passwordInput.attributes('type')).toBe('password')
+    expect(passwordInput.attributes('name')).toBe('password')
+    expect(passwordInput.attributes('autocomplete')).toBe('current-password')
     expect(passwordInput.attributes('placeholder')).toContain('password')
   })
 })

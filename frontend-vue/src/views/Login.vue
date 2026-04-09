@@ -18,6 +18,8 @@
                     class="form-control"
                     id="email"
                     v-model="email"
+                    name="username"
+                    autocomplete="username"
                     required
                     :disabled="isLoading"
                     :placeholder="t('login.emailPlaceholder')"
@@ -34,6 +36,8 @@
                     class="form-control"
                     id="password"
                     v-model="password"
+                    name="password"
+                    autocomplete="current-password"
                     required
                     :disabled="isLoading"
                     :placeholder="t('login.passwordPlaceholder')"
