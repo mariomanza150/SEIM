@@ -104,6 +104,8 @@ urlpatterns += [
     # ============================================
     path('i18n/', include('django.conf.urls.i18n')),  # Internationalization
     path("jsreverse/", urls_js, name="js_reverse"),  # JavaScript reverse URLs
+    # Contact form (Django templates) — before Wagtail/frontend ``""`` includes so ``/contact/`` resolves
+    path("", include(("core.urls", "core"))),
 ]
 
 if _WAGTAIL:

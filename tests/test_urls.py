@@ -99,6 +99,12 @@ class UrlConfigurationTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers.get("Location"), "/seim/admin/")
 
+    def test_contact_form_route_not_vue_shell(self):
+        """Legacy Django contact form is mounted at ``/contact/`` (not the SPA)."""
+        response = self.client.get("/contact/")
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('id="app"', response.content.decode())
+
 
 class VueAppRoutingTests(TestCase):
     def test_vue_app_catch_all(self):
