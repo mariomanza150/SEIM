@@ -3,10 +3,16 @@ FilterSets for advanced search and filtering of programs and applications.
 """
 
 from django.contrib.postgres.search import SearchVector
-from django.db.models import Q
+from django.db.models import Exists, OuterRef, Q
 import django_filters
 
-from .models import Application, Program
+from datetime import timedelta
+
+from django.utils import timezone
+
+from documents.models import DocumentResubmissionRequest
+
+from .models import Application, ExchangeAgreement, Program
 
 
 class ProgramFilter(django_filters.FilterSet):
@@ -122,8 +128,9 @@ class ApplicationFilter(django_filters.FilterSet):
     program_name = django_filters.CharFilter(field_name='program__name', lookup_expr='icontains', label='Program Name')
     program_id = django_filters.UUIDFilter(field_name='program__id', label='Program ID')
     
-    # Status filters
-    status_name = django_filters.CharFilter(field_name='status__name', lookup_expr='iexact', label='Status')
+    # Status filters (status= for Vue compatibility, status_name= explicit)
+    status = django_filters.CharFilter(field_name='status__name', lookup_expr='iexact', label='Status')
+    status_name = django_filters.CharFilter(field_name='status__name', lookup_expr='iexact', label='Status Name')
     status_id = django_filters.NumberFilter(field_name='status__id', label='Status ID')
     
     # Date filters
@@ -138,6 +145,20 @@ class ApplicationFilter(django_filters.FilterSet):
     
     # Search across multiple fields
     search = django_filters.CharFilter(method='filter_search', label='Search')
+
+    # Coordinator / staff review queue (combine with other filters as needed)
+    pending_review = django_filters.BooleanFilter(
+        method="filter_pending_review",
+        label="Pending review (submitted or under_review)",
+    )
+    needs_document_resubmit = django_filters.BooleanFilter(
+        method="filter_needs_document_resubmit",
+        label="Has unresolved document resubmission request",
+    )
+    assigned_to_me = django_filters.BooleanFilter(
+        method="filter_assigned_to_me",
+        label="Assigned coordinator is the current user",
+    )
     
     # Ordering
     ordering = django_filters.OrderingFilter(
@@ -198,5 +219,78 @@ class ApplicationFilter(django_filters.FilterSet):
             Q(student__email__icontains=value) |
             Q(program__name__icontains=value) |
             Q(status__name__icontains=value)
+        )
+
+    def filter_pending_review(self, queryset, name, value):
+        if value is True:
+            return queryset.filter(status__name__in=["submitted", "under_review"])
+        return queryset
+
+    def filter_needs_document_resubmit(self, queryset, name, value):
+        if value is True:
+            open_resub = DocumentResubmissionRequest.objects.filter(
+                document__application=OuterRef("pk"),
+                resolved=False,
+            )
+            return queryset.filter(Exists(open_resub))
+        return queryset
+
+    def filter_assigned_to_me(self, queryset, name, value):
+        if value is True:
+            user = getattr(self.request, "user", None)
+            if not user or not user.is_authenticated:
+                return queryset.none()
+            return queryset.filter(assigned_coordinator=user)
+        return queryset
+
+
+class ExchangeAgreementFilter(django_filters.FilterSet):
+    """Filters for staff agreement registry (lifecycle / expiry views)."""
+
+    program = django_filters.UUIDFilter(field_name="programs__id", label="Program ID")
+    partner = django_filters.CharFilter(
+        field_name="partner_institution_name", lookup_expr="icontains"
+    )
+    end_date_before = django_filters.DateFilter(
+        field_name="end_date", lookup_expr="lte", label="End on or before"
+    )
+    end_date_after = django_filters.DateFilter(
+        field_name="end_date", lookup_expr="gte", label="End on or after"
+    )
+    expiring_within_days = django_filters.NumberFilter(
+        method="filter_expiring_within",
+        label="Active agreements ending within N days (from today)",
+    )
+
+    ordering = django_filters.OrderingFilter(
+        fields=(
+            ("end_date", "end_date"),
+            ("start_date", "start_date"),
+            ("created_at", "created_at"),
+            ("partner_institution_name", "partner_institution_name"),
+            ("status", "status"),
+        ),
+    )
+
+    class Meta:
+        model = ExchangeAgreement
+        fields = ["status", "agreement_type"]
+
+    def filter_expiring_within(self, queryset, name, value):
+        if value in (None, ""):
+            return queryset
+        try:
+            days = int(value)
+        except (TypeError, ValueError):
+            return queryset
+        if days < 0:
+            return queryset
+        today = timezone.localdate()
+        until = today + timedelta(days=days)
+        return queryset.filter(
+            status=ExchangeAgreement.Status.ACTIVE,
+            end_date__isnull=False,
+            end_date__gte=today,
+            end_date__lte=until,
         )
 

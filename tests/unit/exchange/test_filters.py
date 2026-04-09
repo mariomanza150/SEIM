@@ -2,10 +2,14 @@
 Tests for advanced search filters.
 """
 
-import pytest
-from django.utils import timezone
 from datetime import timedelta
+from unittest.mock import Mock
 
+import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
+
+from documents.models import Document, DocumentResubmissionRequest, DocumentType
 from exchange.filters import ApplicationFilter, ProgramFilter
 from exchange.models import Application, ApplicationStatus, Program
 from accounts.models import User
@@ -224,6 +228,100 @@ class TestApplicationFilter:
             not a.withdrawn
             for a in results
         )
+
+
+@pytest.mark.django_db
+class TestApplicationReviewQueueFilters:
+    """Coordinator queue filters on ApplicationFilter."""
+
+    def test_pending_review_true(self, db_with_roles, student_user):
+        program = Program.objects.create(
+            name="Queue Program",
+            description="Test",
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date() + timedelta(days=120),
+        )
+        st_sub = db_with_roles["statuses"]["submitted"]
+        st_draft = db_with_roles["statuses"]["draft"]
+        Application.objects.create(student=student_user, program=program, status=st_sub, submitted_at=timezone.now())
+        Application.objects.create(student=student_user, program=program, status=st_draft)
+
+        fs = ApplicationFilter(data={"pending_review": True}, queryset=Application.objects.all())
+        assert fs.is_valid()
+        assert fs.qs.count() == 1
+        assert fs.qs.first().status.name == "submitted"
+
+    def test_needs_document_resubmit(self, db_with_roles, student_user, coordinator_user):
+        program = Program.objects.create(
+            name="Doc Program",
+            description="Test",
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date() + timedelta(days=120),
+        )
+        st_sub = db_with_roles["statuses"]["submitted"]
+        app = Application.objects.create(
+            student=student_user, program=program, status=st_sub, submitted_at=timezone.now()
+        )
+        other = Application.objects.create(
+            student=student_user,
+            program=program,
+            status=st_sub,
+            submitted_at=timezone.now(),
+        )
+
+        dt = DocumentType.objects.create(name="passport_test_type")
+        doc = Document.objects.create(
+            application=app,
+            type=dt,
+            file=SimpleUploadedFile("a.pdf", b"x", content_type="application/pdf"),
+            uploaded_by=student_user,
+            is_valid=False,
+        )
+        DocumentResubmissionRequest.objects.create(
+            document=doc,
+            requested_by=coordinator_user,
+            reason="Unreadable",
+            resolved=False,
+        )
+
+        fs = ApplicationFilter(data={"needs_document_resubmit": True}, queryset=Application.objects.all())
+        assert fs.is_valid()
+        assert list(fs.qs.values_list("id", flat=True)) == [app.id]
+        assert not fs.qs.filter(id=other.id).exists()
+
+    def test_assigned_to_me(self, db_with_roles, student_user, coordinator_user):
+        program = Program.objects.create(
+            name="Assign Program",
+            description="Test",
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date() + timedelta(days=120),
+        )
+        st_sub = db_with_roles["statuses"]["submitted"]
+        mine = Application.objects.create(
+            student=student_user,
+            program=program,
+            status=st_sub,
+            submitted_at=timezone.now(),
+            assigned_coordinator=coordinator_user,
+        )
+        Application.objects.create(
+            student=student_user,
+            program=program,
+            status=st_sub,
+            submitted_at=timezone.now(),
+            assigned_coordinator=None,
+        )
+
+        request = Mock()
+        request.user = coordinator_user
+        fs = ApplicationFilter(
+            data={"assigned_to_me": True},
+            queryset=Application.objects.all(),
+            request=request,
+        )
+        assert fs.is_valid()
+        assert fs.qs.count() == 1
+        assert fs.qs.first().id == mine.id
 
 
 @pytest.fixture

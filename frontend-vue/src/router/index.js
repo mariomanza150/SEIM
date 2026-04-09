@@ -8,11 +8,14 @@ import { useAuthStore } from '@/stores/auth'
 const Login = () => import('@/views/Login.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
 const Applications = () => import('@/views/Applications.vue')
+const CoordinatorReviewQueue = () => import('@/views/CoordinatorReviewQueue.vue')
 const ApplicationForm = () => import('@/views/ApplicationForm.vue')
 const ApplicationDetail = () => import('@/views/ApplicationDetail.vue')
 const Documents = () => import('@/views/Documents.vue')
 const DocumentDetail = () => import('@/views/DocumentDetail.vue')
 const Notifications = () => import('@/views/Notifications.vue')
+const Profile = () => import('@/views/Profile.vue')
+const Settings = () => import('@/views/Settings.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
 const routes = [
@@ -28,7 +31,7 @@ const routes = [
   {
     path: '/',
     name: 'Home',
-    redirect: '/dashboard',
+    redirect: { name: 'Dashboard' },
   },
   {
     path: '/dashboard',
@@ -49,12 +52,28 @@ const routes = [
     },
   },
   {
+    path: '/review-queue',
+    name: 'CoordinatorReviewQueue',
+    component: CoordinatorReviewQueue,
+    meta: {
+      requiresAuth: true,
+      staffReviewQueue: true,
+      title: 'Review queue - SEIM',
+    },
+  },
+  {
     path: '/applications/new',
     name: 'ApplicationNew',
     component: ApplicationForm,
     meta: {
       requiresAuth: true,
       title: 'New Application - SEIM',
+    },
+  },
+  {
+    path: '/applications/create',
+    redirect: {
+      name: 'ApplicationNew',
     },
   },
   {
@@ -102,6 +121,30 @@ const routes = [
       title: 'Notifications - SEIM',
     },
   },
+  {
+    path: '/profile',
+    name: 'Profile',
+    component: Profile,
+    meta: {
+      requiresAuth: true,
+      title: 'Profile - SEIM',
+    },
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: Settings,
+    meta: {
+      requiresAuth: true,
+      title: 'Settings - SEIM',
+    },
+  },
+  {
+    path: '/preferences',
+    redirect: {
+      name: 'Settings',
+    },
+  },
   // Catch-all 404
   {
     path: '/:pathMatch(.*)*',
@@ -114,13 +157,19 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory('/seim/'),
   routes,
+  strict: false,
 })
 
 // Navigation Guards
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+
+  // Normalize trailing slashes - remove trailing slash for consistency
+  if (to.path !== '/' && to.path.endsWith('/')) {
+    return next({ path: to.path.slice(0, -1), query: to.query, hash: to.hash, replace: true })
+  }
 
   // Update page title
   document.title = to.meta.title || 'SEIM'
@@ -144,6 +193,10 @@ router.beforeEach(async (to, from, next) => {
         next({ name: 'Login', query: { redirect: to.fullPath } })
       }
     } else {
+      if (to.meta.staffReviewQueue && !authStore.canUseStaffReviewQueue) {
+        next({ name: 'Applications', replace: true })
+        return
+      }
       next()
     }
   } else {

@@ -37,11 +37,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Required document checklist and completion status | `documents`, `exchange`, `frontend-vue` | Implemented | 2026-04-08 | `Program.required_document_types` (M2M); `document_checklist` on application detail (omitted on list); statuses missing / pending_review / resubmit_requested / approved; submit blocked until all required types are approved; Vue checklist card and disabled submit when incomplete. |
 | Real workflow timeline in application detail | `exchange`, `frontend-vue` | Implemented | 2026-04-08 | Application detail loads `/api/timeline-events/?application=&ordering=created_at`; `TimelineEventSerializer` exposes `created_by_name`; default chronological ordering + `OrderingFilter`; list response no longer HTTP-cached so new events show up; Vue maps `event_type` to headings/icons. |
 | Rejected document feedback and response notifications | `documents`, `notifications`, `frontend-vue` | Implemented | 2026-04-08 | Resubmission API routes through `DocumentService.request_resubmission` (limits + notify application student); invalid validation and public staff comments notify the student; student file replacement notifies assigned/program coordinators; document detail API returns ordered validations, resubmission requests, and role-filtered comments; Vue document detail shows history, comments, staff actions, and replace-file flow. |
+| Coordinator review queue UI | `frontend-vue`, `exchange`, `documents` | Implemented | 2026-04-08 | Staff route `/review-queue` with table view, search/status/sort, and quick filters mapped to `GET /api/applications/?pending_review=true`, `needs_document_resubmit=true`, `assigned_to_me=true`. List serializer adds `student_display_name`, `student_email`, `program_name`. Dashboard link + router guard for coordinator/admin. Unit tests: `tests/unit/exchange/test_filters.py` (`TestApplicationReviewQueueFilters`). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Coordinator review queue UI | `frontend-vue`, `exchange`, `documents` | Implementation | 2026-04-08 | — |
+| _None currently assigned_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -124,5 +125,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (agreement expiration reminders)*  
+*Last updated: 2026-04-08 (coordinator review queue UI)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

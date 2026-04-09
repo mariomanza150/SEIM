@@ -6,18 +6,39 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
+const ACCESS_TOKEN_KEYS = ['access_token', 'seim_access_token']
+const REFRESH_TOKEN_KEYS = ['refresh_token', 'seim_refresh_token']
+
+function getStoredToken(keys) {
+  return keys.map(key => localStorage.getItem(key)).find(Boolean) || null
+}
+
+function persistToken(keys, value) {
+  keys.forEach((key) => {
+    if (value) {
+      localStorage.setItem(key, value)
+    } else {
+      localStorage.removeItem(key)
+    }
+  })
+}
 
 export const useAuthStore = defineStore('auth', () => {
   // State
   const user = ref(null)
-  const accessToken = ref(localStorage.getItem('access_token') || null)
-  const refreshToken = ref(localStorage.getItem('refresh_token') || null)
+  const accessToken = ref(getStoredToken(ACCESS_TOKEN_KEYS))
+  const refreshToken = ref(getStoredToken(REFRESH_TOKEN_KEYS))
   const isLoading = ref(false)
   const error = ref(null)
 
   // Getters
   const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
   const userRole = computed(() => user.value?.role || null)
+  const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.is_staff === true)
+  const isCoordinator = computed(() => user.value?.role === 'coordinator')
+  const canUseStaffReviewQueue = computed(
+    () => isAdmin.value || user.value?.role === 'coordinator' || user.value?.is_staff === true
+  )
   const userName = computed(() => {
     if (!user.value) return ''
     return user.value.full_name || user.value.email || 'User'
@@ -29,18 +50,17 @@ export const useAuthStore = defineStore('auth', () => {
     error.value = null
 
     try {
-      // Get JWT tokens from Django
-      const response = await axios.post(`${API_BASE_URL}/api/token/`, {
-        email,
+      // Create a Django session and JWTs together for cross-system navigation.
+      const response = await axios.post(`${API_BASE_URL}/api/accounts/login/`, {
+        login: email,
         password,
       })
 
       accessToken.value = response.data.access
       refreshToken.value = response.data.refresh
 
-      // Save tokens to localStorage
-      localStorage.setItem('access_token', accessToken.value)
-      localStorage.setItem('refresh_token', refreshToken.value)
+      persistToken(ACCESS_TOKEN_KEYS, accessToken.value)
+      persistToken(REFRESH_TOKEN_KEYS, refreshToken.value)
 
       // Fetch user profile
       await fetchUserProfile()
@@ -56,18 +76,19 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   async function logout() {
+    const refresh = refreshToken.value
+
     // Clear tokens
     accessToken.value = null
     refreshToken.value = null
     user.value = null
 
-    // Clear localStorage
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
+    persistToken(ACCESS_TOKEN_KEYS, null)
+    persistToken(REFRESH_TOKEN_KEYS, null)
 
-    // Optional: Call Django logout endpoint to invalidate session
+    // Clear both SPA and legacy token namespaces.
     try {
-      await axios.post(`${API_BASE_URL}/api/accounts/logout/`)
+      await axios.post(`${API_BASE_URL}/api/accounts/logout/`, refresh ? { refresh } : {})
     } catch (err) {
       console.warn('Logout endpoint error:', err)
     }
@@ -84,7 +105,7 @@ export const useAuthStore = defineStore('auth', () => {
       })
 
       accessToken.value = response.data.access
-      localStorage.setItem('access_token', accessToken.value)
+      persistToken(ACCESS_TOKEN_KEYS, accessToken.value)
 
       return accessToken.value
     } catch (err) {
@@ -118,6 +139,7 @@ export const useAuthStore = defineStore('auth', () => {
         secondary_email: profileData.secondary_email,
         gpa: profileData.gpa,
         language: profileData.language,
+        language_level: profileData.language_level,
       }
       
       return user.value
@@ -156,6 +178,9 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     userRole,
     userName,
+    isAdmin,
+    isCoordinator,
+    canUseStaffReviewQueue,
     // Actions
     login,
     logout,

@@ -1,9 +1,9 @@
 <template>
-  <div class="dashboard">
+  <div class="dashboard" data-testid="dashboard-page">
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
       <div class="container-fluid">
-        <a class="navbar-brand" href="#">SEIM</a>
+        <router-link class="navbar-brand" :to="{ name: 'Dashboard' }">SEIM</router-link>
         <button
           class="navbar-toggler"
           type="button"
@@ -14,8 +14,21 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto align-items-center">
-            <NotificationDropdown />
-            <li class="nav-item dropdown">
+             <NotificationDropdown />
+             
+             <!-- Admin Buttons (only for admin users) -->
+             <li class="nav-item" v-if="authStore.isAdmin">
+               <a class="nav-link" href="/seim/admin/" target="_blank" rel="noopener noreferrer">
+                 <i class="bi bi-gear-wide-connected me-1"></i> Django Admin
+               </a>
+             </li>
+             <li class="nav-item" v-if="authStore.isAdmin">
+               <a class="nav-link" href="/cms/" target="_blank" rel="noopener noreferrer">
+                 <i class="bi bi-layout-wtf me-1"></i> CMS Admin
+               </a>
+             </li>
+             
+             <li class="nav-item dropdown">
               <a
                 class="nav-link dropdown-toggle"
                 href="#"
@@ -27,11 +40,11 @@
                 {{ userName }}
               </a>
               <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="#">Profile</a></li>
-                <li><a class="dropdown-item" href="#">Settings</a></li>
+                <li><router-link :to="{ name: 'Profile' }" class="dropdown-item">Profile</router-link></li>
+                <li><router-link :to="{ name: 'Settings' }" class="dropdown-item">Settings</router-link></li>
                 <li><hr class="dropdown-divider" /></li>
                 <li>
-                  <a class="dropdown-item" href="#" @click.prevent="handleLogout">
+                  <a class="dropdown-item" href="#" @click.prevent="handleLogout" data-testid="logout-link">
                     Logout
                   </a>
                 </li>
@@ -48,21 +61,28 @@
         <!-- Sidebar -->
         <div class="col-md-3 col-lg-2">
           <div class="list-group">
-            <router-link to="/dashboard" class="list-group-item list-group-item-action active">
+            <router-link :to="{ name: 'Dashboard' }" class="list-group-item list-group-item-action active">
               <i class="bi bi-house-door me-2"></i>Dashboard
             </router-link>
-            <router-link to="/applications" class="list-group-item list-group-item-action">
+            <router-link :to="{ name: 'Applications' }" class="list-group-item list-group-item-action">
               <i class="bi bi-file-earmark-text me-2"></i>Applications
             </router-link>
-            <router-link to="/documents" class="list-group-item list-group-item-action">
+            <router-link
+              v-if="authStore.canUseStaffReviewQueue"
+              :to="{ name: 'CoordinatorReviewQueue' }"
+              class="list-group-item list-group-item-action"
+            >
+              <i class="bi bi-clipboard-check me-2"></i>Review queue
+            </router-link>
+            <router-link :to="{ name: 'Documents' }" class="list-group-item list-group-item-action">
               <i class="bi bi-folder me-2"></i>Documents
             </router-link>
-            <router-link to="/notifications" class="list-group-item list-group-item-action">
+            <router-link :to="{ name: 'Notifications' }" class="list-group-item list-group-item-action">
               <i class="bi bi-bell me-2"></i>Notifications
             </router-link>
-            <a href="#" class="list-group-item list-group-item-action">
+            <router-link :to="{ name: 'Settings' }" class="list-group-item list-group-item-action">
               <i class="bi bi-gear me-2"></i>Settings
-            </a>
+            </router-link>
           </div>
         </div>
 
@@ -85,7 +105,7 @@
 
           <div v-else class="row mb-4">
             <div class="col-md-3 mb-3">
-              <router-link to="/applications" class="text-decoration-none">
+              <router-link :to="{ name: 'Applications' }" class="text-decoration-none">
                 <div class="card text-center card-hover">
                   <div class="card-body">
                     <i class="bi bi-file-earmark-text fs-1 text-primary"></i>
@@ -96,7 +116,7 @@
               </router-link>
             </div>
             <div class="col-md-3 mb-3">
-              <router-link to="/documents" class="text-decoration-none">
+              <router-link :to="{ name: 'Documents' }" class="text-decoration-none">
                 <div class="card text-center card-hover">
                   <div class="card-body">
                     <i class="bi bi-folder fs-1 text-success"></i>
@@ -107,7 +127,7 @@
               </router-link>
             </div>
             <div class="col-md-3 mb-3">
-              <router-link to="/notifications" class="text-decoration-none">
+              <router-link :to="{ name: 'Notifications' }" class="text-decoration-none">
                 <div class="card text-center card-hover">
                   <div class="card-body">
                     <i class="bi bi-bell fs-1 text-warning"></i>
@@ -198,7 +218,7 @@ async function fetchDashboardStats() {
 async function handleLogout() {
   await authStore.logout()
   success('You have been logged out successfully')
-  router.push('/login')
+  router.push({ name: 'Login' })
 }
 
 onMounted(async () => {
