@@ -89,6 +89,102 @@ REFERENCE_API_ACCESS: dict[str, object] = {
     ),
 }
 
+# Documented transactional sends that use ``settings_category`` (or intentionally omit it).
+# Keep in sync with ``NotificationService.send_notification`` / bulk helpers in app code.
+TRANSACTIONAL_NOTIFICATION_ROUTES: list[dict[str, str | None]] = [
+    {
+        "route_key": "account_security_email",
+        "settings_category": None,
+        "summary": (
+            "Account lockout, email verification, password reset and change, registration welcome, "
+            "deactivation — email-only flows that intentionally omit ``settings_category`` "
+            "(not gated by notification-group toggles)."
+        ),
+        "source": "accounts.services.AccountService; accounts.views (resend verification)",
+    },
+    {
+        "route_key": "agreement_expiration_alert",
+        "settings_category": "system",
+        "summary": (
+            "Staff (admins / coordinators) notified when an agreement nears its end date; "
+            "also subject to the agreement-expiration ``NotificationType`` preference when set."
+        ),
+        "source": "exchange.agreement_expiration",
+    },
+    {
+        "route_key": "agreement_renewal_staff_bulk_in_app",
+        "settings_category": None,
+        "summary": (
+            "Bulk in-app notices to admins and coordinators for renewal workflow events; "
+            "no ``settings_category`` (not filtered by UserSettings notification groups)."
+        ),
+        "source": "exchange.agreement_renewal._notify_staff",
+    },
+    {
+        "route_key": "application_status_update",
+        "settings_category": "applications",
+        "summary": "Student notified when staff changes application status after submission.",
+        "source": "exchange.services.ApplicationService.transition_status",
+    },
+    {
+        "route_key": "application_submitted",
+        "settings_category": "applications",
+        "summary": "Student confirmation when a draft application is submitted successfully.",
+        "source": "exchange.services.ApplicationService.submit_application",
+    },
+    {
+        "route_key": "application_waitlist_received",
+        "settings_category": "applications",
+        "summary": "Student notified when submitted to a full program with waitlist enabled.",
+        "source": "exchange.services.ApplicationService.submit_application",
+    },
+    {
+        "route_key": "calendar_deadline_reminder",
+        "settings_category": None,
+        "summary": (
+            "Per-user calendar/deadline reminders; effective ``settings_category`` depends on "
+            "``Reminder.event_type`` (see reminder_event_type_to_settings_category)."
+        ),
+        "source": "notifications.tasks.send_deadline_reminders",
+    },
+    {
+        "route_key": "document_replaced_staff",
+        "settings_category": "documents",
+        "summary": (
+            "Assigned coordinator or program coordinators notified when a student replaces "
+            "a document file."
+        ),
+        "source": "documents.services.DocumentService.notify_coordinators_document_replaced",
+    },
+    {
+        "route_key": "document_resubmission_requested",
+        "settings_category": "documents",
+        "summary": "Student notified when staff requests a document resubmission.",
+        "source": "documents.services.DocumentService.request_resubmission",
+    },
+    {
+        "route_key": "document_staff_comment_public",
+        "settings_category": "comments",
+        "summary": "Student notified when staff adds a public comment on their document.",
+        "source": "documents.serializers.DocumentCommentSerializer.create",
+    },
+    {
+        "route_key": "document_validation_rejected",
+        "settings_category": "documents",
+        "summary": "Student notified when document validation result is invalid / not accepted.",
+        "source": "documents.services.DocumentService.validate_document",
+    },
+    {
+        "route_key": "notification_digest_unread_summary",
+        "settings_category": "system",
+        "summary": (
+            "Scheduled digest summarizing unread in-app notifications; respects system email/in-app "
+            "gates and digest frequency."
+        ),
+        "source": "notifications.digest.process_notification_digests",
+    },
+]
+
 
 def build_notification_routing_reference() -> dict:
     """Structured map for coordinators/admins (API + future UI)."""
@@ -112,10 +208,15 @@ def build_notification_routing_reference() -> dict:
         ),
     }
     reminder_map = dict(REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY)
+    transactional = sorted(
+        TRANSACTIONAL_NOTIFICATION_ROUTES,
+        key=lambda row: row["route_key"],
+    )
     return {
-        "schema_version": 6,
+        "schema_version": 7,
         "reference_api_access": dict(REFERENCE_API_ACCESS),
         "settings_categories": categories,
+        "transactional_routes": transactional,
         "reminder_event_type_to_settings_category": reminder_map,
         "reminder_event_type_descriptions": {
             k: REMINDER_EVENT_TYPE_DESCRIPTIONS[k] for k in reminder_map

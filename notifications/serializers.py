@@ -57,6 +57,7 @@ class NotificationRoutingReferenceSerializer(serializers.Serializer):
     schema_version = serializers.IntegerField(read_only=True)
     reference_api_access = serializers.JSONField(read_only=True)
     settings_categories = serializers.JSONField(read_only=True)
+    transactional_routes = serializers.JSONField(read_only=True)
     reminder_event_type_to_settings_category = serializers.JSONField(read_only=True)
     reminder_event_type_descriptions = serializers.JSONField(read_only=True)
     reminder_default_settings_category = serializers.CharField(read_only=True)

@@ -66,6 +66,41 @@
           </div>
         </div>
 
+        <div
+          v-if="payload.transactional_routes?.length"
+          class="card border-0 shadow-sm mb-4"
+        >
+          <div class="card-header bg-light">
+            <span class="fw-semibold">{{ t('notificationRoutingPage.transactionalRoutesTitle') }}</span>
+          </div>
+          <div class="card-body small text-muted border-bottom">
+            {{ t('notificationRoutingPage.transactionalRoutesIntro') }}
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">{{ t('notificationRoutingPage.colRouteKey') }}</th>
+                  <th scope="col">{{ t('notificationRoutingPage.colSettingsCategory') }}</th>
+                  <th scope="col">{{ t('notificationRoutingPage.colRouteSummary') }}</th>
+                  <th scope="col">{{ t('notificationRoutingPage.colRouteSource') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in transactionalRows" :key="row.route_key">
+                  <td><code>{{ row.route_key }}</code></td>
+                  <td>
+                    <code v-if="row.settings_category != null">{{ row.settings_category }}</code>
+                    <span v-else class="text-muted">{{ t('notificationRoutingPage.emDash') }}</span>
+                  </td>
+                  <td class="small text-muted">{{ row.summary }}</td>
+                  <td class="small text-muted font-monospace">{{ row.source }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <div class="card border-0 shadow-sm mb-4">
           <div class="card-header bg-light">
             <span class="fw-semibold">{{ t('notificationRoutingPage.remindersTitle') }}</span>
@@ -161,6 +196,14 @@ const categoryRows = computed(() => {
       primaryRecipients: cats[key].primary_recipients || '',
       notes: cats[key].notes || '',
     }))
+})
+
+const transactionalRows = computed(() => {
+  const rows = payload.value?.transactional_routes
+  if (!Array.isArray(rows)) return []
+  return [...rows].sort((a, b) =>
+    String(a.route_key).localeCompare(String(b.route_key)),
+  )
 })
 
 const reminderRows = computed(() => {

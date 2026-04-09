@@ -25,9 +25,9 @@ from .services import NotificationService
 @extend_schema(
     summary="Notification routing reference",
     description=(
-        "Read-only map of notification ``settings_category`` values, digest routing, "
-        "and deadline reminder event types to ``UserSettings`` field names. "
-        "Coordinators, admins, and superusers only."
+        "Read-only map of notification ``settings_category`` values, a catalog of main "
+        "transactional sends, digest routing, and deadline reminder event types to "
+        "``UserSettings`` field names. Coordinators, admins, and superusers only."
     ),
     responses={
         200: NotificationRoutingReferenceSerializer,
