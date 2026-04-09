@@ -95,6 +95,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n/a11y: Profile breadcrumb aria (namespaced key) | `frontend-vue` | Implemented | 2026-04-09 | `Profile.vue` uses `profilePage.breadcrumbAria` (was `documentDetailPage.breadcrumbAria`). Vitest: `Profile.spec.js`. |
 | Vue i18n/a11y: Notifications full-page breadcrumb aria | `frontend-vue` | Implemented | 2026-04-09 | `Notifications.vue` uses `notifications.breadcrumbAria` (was `reviewQueuePage.breadcrumbAria`). Vitest: `Notifications.spec.js`. |
 | Vue i18n/a11y: Profile loading spinner aria | `frontend-vue` | Implemented | 2026-04-09 | `profilePage.loadingSpinner` (en/es); `Profile.vue` spinner `aria-label` (was `documentsPage.loadingSpinner`). Vitest: `Profile.spec.js`. |
+| Vue i18n: Notifications clear filters (namespaced) | `frontend-vue` | Implemented | 2026-04-09 | `notifications.clearFilters` (en/es); `Notifications.vue` filter card button (was `applicationFormPage.clearFilters`). Vitest: `Notifications.spec.js`. |
 | Vue i18n: Notifications pagination + date fallback (namespaced) | `frontend-vue` | Implemented | 2026-04-09 | `notifications.previous`, `next`, `notAvailable` (en/es); `Notifications.vue` (was `applicationsPage.*`). Vitest: `Notifications.spec.js`. |
 | Vue i18n: Notifications filters + loading copy (namespaced) | `frontend-vue` | Implemented | 2026-04-09 | `notifications.filterReadStateLabel`, `filterAll`, `loadingSpinner` (en/es); `Notifications.vue` (was `documentsPage.*`). Vitest: `Notifications.spec.js`. |
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-08 | Extended `notifications.*` + reuse `route.names`, `documentsPage` / `applicationsPage` / `applicationFormPage` / `reviewQueuePage`; `Notifications.vue` filters, list, empty/loading/error, pagination, mark-read + toasts, locale-relative dates (`timeDaysAgo`). Vitest: `Notifications.spec.js`. |
@@ -105,7 +106,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Notifications clear-filters key | `frontend-vue` | In progress | 2026-04-09 | loop |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -139,7 +140,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** spinner + **Notifications** page strings under `notifications.*` (filters, loading, pagination, date fallback). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** spinner + **Notifications** page strings under `notifications.*` (filters, clear, loading, pagination, date fallback). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -179,5 +180,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Notifications pagination/date i18n keys — completed)*  
+*Last updated: 2026-04-09 (loop: Notifications clear-filters i18n key — completed)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

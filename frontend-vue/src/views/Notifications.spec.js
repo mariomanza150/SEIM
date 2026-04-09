@@ -68,6 +68,7 @@ describe('Notifications', () => {
     expect(wrapper.find('[data-testid="notifications-heading"]').text()).toContain('Notifications')
     expect(wrapper.text()).toContain('No notifications')
     expect(wrapper.text()).toContain('Manage your notifications')
+    expect(wrapper.text()).toContain('Clear filters')
   })
 
   it('shows load error when API fails', async () => {
@@ -163,5 +164,6 @@ describe('Notifications', () => {
     expect(wrapper.find('[data-testid="notifications-heading"]').text()).toContain('Notificaciones')
     expect(wrapper.text()).toContain('Sin notificaciones')
     expect(wrapper.text()).toContain('Gestiona tus notificaciones')
+    expect(wrapper.text()).toContain('Limpiar filtros')
   })
 })

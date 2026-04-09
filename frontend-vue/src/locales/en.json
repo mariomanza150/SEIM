@@ -19,6 +19,7 @@
     "timeDaysAgo": "{n}d ago",
     "pageSubtitle": "Manage your notifications",
     "filterCategory": "Category",
+    "clearFilters": "Clear filters",
     "filterReadStateLabel": "Status",
     "filterAll": "All",
     "loadingSpinner": "Loading",

@@ -78,10 +78,10 @@
               <button
                 type="button"
                 class="btn btn-outline-secondary w-100"
-                :aria-label="t('applicationFormPage.clearFilters')"
+                :aria-label="t('notifications.clearFilters')"
                 @click="clearFilters"
               >
-                <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{{ t('applicationFormPage.clearFilters') }}
+                <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{{ t('notifications.clearFilters') }}
               </button>
             </div>
           </div>
