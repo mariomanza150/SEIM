@@ -115,10 +115,15 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="row in data.distribution" :key="row.coordinator_id">
-                    <td>{{ row.display_name }}</td>
-                    <td class="text-end">{{ row.assigned_pending_review }}</td>
+                  <tr v-if="!data.distribution.length">
+                    <td colspan="2" class="text-muted small">{{ t('workloadPage.distributionEmpty') }}</td>
                   </tr>
+                  <template v-else>
+                    <tr v-for="row in data.distribution" :key="row.coordinator_id">
+                      <td>{{ row.display_name }}</td>
+                      <td class="text-end">{{ row.assigned_pending_review }}</td>
+                    </tr>
+                  </template>
                 </tbody>
               </table>
             </div>

@@ -26,6 +26,16 @@ const mockPayload = {
   distribution: [],
 }
 
+const mockAdminPayload = {
+  ...mockPayload,
+  global: {
+    pending_review_total: 0,
+    unassigned_pending_review: 0,
+    stale_under_review_14d: 0,
+  },
+  distribution: [],
+}
+
 describe('CoordinatorWorkload', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -65,5 +75,31 @@ describe('CoordinatorWorkload', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Enviada')
     expect(wrapper.text()).toContain('En revisión')
+  })
+
+  it('shows empty distribution message when admin global section has no rows', async () => {
+    api.get.mockResolvedValue({ data: mockAdminPayload })
+    const wrapper = mount(CoordinatorWorkload, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Institution overview')
+    expect(wrapper.text()).toContain('No assigned pending applications by coordinator.')
+  })
+
+  it('shows Spanish empty distribution message', async () => {
+    setAppLocale('es')
+    api.get.mockResolvedValue({ data: mockAdminPayload })
+    const wrapper = mount(CoordinatorWorkload, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('No hay solicitudes pendientes asignadas por coordinador.')
   })
 })

@@ -123,11 +123,12 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Manual QA **MQ-010**: new application eligibility preview + draft save UX | `frontend-vue`, `exchange` | Implemented | 2026-04-09 | `ApplicationForm.vue`: debounced `GET /api/programs/:id/check_eligibility/` on program change (new app); assertive alert merges preview + flattened `program` / `non_field_errors` from save; select `aria-describedby` / `aria-invalid`. Draft `POST` already skips eligibility in `ApplicationSerializer.validate` (submit still enforces). Tests: `test_create_draft_application_when_student_not_eligible`, `ApplicationForm.spec.js` (eligibility alert). |
 | Vue **ApplicationForm**: submit failure — shared server validation + scroll (parity with save draft) | `frontend-vue` | Implemented | 2026-04-09 | `applyServerValidationErrors` + `scrollToFirstValidationAlert`; string `response.data` → `{ program: [msg] }`; `dynamic_form` → `dynamicFormErrors`; submit `catch` matches draft save. Vitest: `ApplicationForm.spec.js` (create submit failure surfaces `program` message). |
 | Manual QA **MQ-011**: student documents list/detail + application document list — readable type + program (Vue + API) | `documents`, `frontend-vue`, `api` | Implemented | 2026-04-09 | `DocumentSerializer.to_representation` nests `type` and `application` (`program_name`). Vue `documentApi.js` + `Documents.vue` / `DocumentDetail.vue` / `ApplicationDetail.vue`. Tests: `test_documents_list_filters.py`, `documentApi.spec.js`. |
+| Vue **CoordinatorWorkload**: empty coordinator distribution table (admin) | `frontend-vue` | Implemented | 2026-04-09 | `workloadPage.distributionEmpty` (en/es); single placeholder row when `distribution` is empty; Vitest `CoordinatorWorkload.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue **CoordinatorWorkload**: empty coordinator distribution table copy (admin) | `frontend-vue` | In progress | 2026-04-09 | — |
+| _None_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -201,5 +202,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (**MQ-011** resolved — document API nested `type` / `application` + Vue labels). Prior: **MQ-009** / **MQ-010**. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (CoordinatorWorkload empty distribution UX; **MQ-011** document API + Vue labels). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

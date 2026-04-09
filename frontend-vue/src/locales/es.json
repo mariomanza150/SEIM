@@ -243,6 +243,7 @@
     "pendingByCoordinator": "Pendientes por coordinador asignado",
     "colCoordinator": "Coordinador",
     "colAssignedPending": "Asignadas pendientes",
+    "distributionEmpty": "No hay solicitudes pendientes asignadas por coordinador.",
     "emDash": "—"
   },
   "notificationRoutingPage": {

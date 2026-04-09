@@ -243,6 +243,7 @@
     "pendingByCoordinator": "Pending by assigned coordinator",
     "colCoordinator": "Coordinator",
     "colAssignedPending": "Assigned pending",
+    "distributionEmpty": "No assigned pending applications by coordinator.",
     "emDash": "—"
   },
   "notificationRoutingPage": {
