@@ -44,7 +44,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None currently assigned_ |  |  |  |  |
+| Action-oriented dashboard with next steps | `frontend-vue`, `accounts`, `exchange`, `documents`, `notifications` | In progress | 2026-04-08 | — |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -56,9 +56,7 @@ _All Priority 1 items in this subsection are implemented above._
 _All Priority 1 items in this subsection are implemented above._
 
 #### User Experience, Accessibility, and Engagement
-| Feature | Module | Notes |
-|---------|--------|-------|
-| Action-oriented dashboard with next steps | `frontend-vue`, `exchange`, `documents`, `notifications` | Evolve the dashboard beyond summary counts so students and staff immediately see drafts to finish, missing documents, pending reviews, and unread high-priority updates. |
+_The action-oriented dashboard (next steps) is **IN PROGRESS** (see IN PROGRESS table). No other open P1 UX items._
 
 ### Priority 2 / Expansion
 
