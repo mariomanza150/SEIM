@@ -42,7 +42,7 @@
             <div class="col-md-2">
               <label class="form-label">{{ t('staffAgreementDocumentsPage.categoryLabel') }}</label>
               <select v-model="filters.category" class="form-select" @change="fetchRows(1)">
-                <option value="">{{ t('documentsPage.statusOptionAll') }}</option>
+                <option value="">{{ t('staffAgreementDocumentsPage.filterOptionAll') }}</option>
                 <option v-for="c in categoryChoices" :key="c.value" :value="c.value">{{ c.label }}</option>
               </select>
             </div>
@@ -68,19 +68,20 @@
             </div>
             <div class="col-md-2">
               <button type="button" class="btn btn-outline-secondary w-100" @click="clearFilters">
-                {{ t('documentsPage.clearFilters') }}
+                {{ t('staffAgreementDocumentsPage.clearFilters') }}
               </button>
             </div>
             <div class="col-12 border-top pt-3 mt-2">
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
-                  <label class="form-label small text-muted mb-1">{{ t('documentsPage.presetSaveLabel') }}</label>
+                  <label class="form-label small text-muted mb-1">{{ t('staffAgreementDocumentsPage.presetSaveLabel') }}</label>
                   <div class="input-group input-group-sm">
                     <input
                       v-model="newPresetName"
                       type="text"
                       class="form-control"
-                      :placeholder="t('documentsPage.presetNamePlaceholder')"
+                      data-testid="agreement-docs-preset-name"
+                      :placeholder="t('staffAgreementDocumentsPage.presetNamePlaceholder')"
                     />
                     <button
                       type="button"
@@ -88,19 +89,19 @@
                       :disabled="!newPresetName.trim() || presetsLoading"
                       @click="savePreset(() => serializeAgreementDocumentFilters(filters))"
                     >
-                      {{ t('documentsPage.presetSave') }}
+                      {{ t('staffAgreementDocumentsPage.presetSave') }}
                     </button>
                   </div>
                 </div>
                 <div class="form-check mb-1">
                   <input id="adoc-preset-def" v-model="saveAsDefault" class="form-check-input" type="checkbox" />
                   <label class="form-check-label small" for="adoc-preset-def">{{
-                    t('documentsPage.presetDefaultCheckbox')
+                    t('staffAgreementDocumentsPage.presetDefaultCheckbox')
                   }}</label>
                 </div>
               </div>
               <div v-if="savedPresets.length" class="small">
-                <span class="text-muted me-2">{{ t('documentsPage.presetSavedPrefix') }}</span>
+                <span class="text-muted me-2">{{ t('staffAgreementDocumentsPage.presetSavedPrefix') }}</span>
                 <span
                   v-for="p in savedPresets"
                   :key="p.id"
@@ -110,15 +111,15 @@
                   <i
                     v-if="p.is_default"
                     class="bi bi-star-fill text-warning"
-                    :title="t('documentsPage.presetDefaultTitle')"
-                    :aria-label="t('documentsPage.presetDefaultAria')"
+                    :title="t('staffAgreementDocumentsPage.presetDefaultTitle')"
+                    :aria-label="t('staffAgreementDocumentsPage.presetDefaultAria')"
                   ></i>
                   <button
                     v-else
                     type="button"
                     class="btn btn-link btn-sm p-0 text-secondary"
-                    :title="t('documentsPage.presetSetDefaultTitle')"
-                    :aria-label="t('documentsPage.presetSetDefaultAria')"
+                    :title="t('staffAgreementDocumentsPage.presetSetDefaultTitle')"
+                    :aria-label="t('staffAgreementDocumentsPage.presetSetDefaultAria')"
                     @click="setDefaultPreset(p)"
                   >
                     <i class="bi bi-star"></i>
@@ -126,8 +127,8 @@
                   <button
                     type="button"
                     class="btn btn-link btn-sm p-0 text-danger"
-                    :title="t('documentsPage.presetRemoveTitle')"
-                    :aria-label="t('documentsPage.presetRemoveAria')"
+                    :title="t('staffAgreementDocumentsPage.presetRemoveTitle')"
+                    :aria-label="t('staffAgreementDocumentsPage.presetRemoveAria')"
                     @click="deletePreset(p)"
                   >
                     <i class="bi bi-trash"></i>
@@ -141,7 +142,7 @@
 
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('documentsPage.loadingSpinner') }}</span>
+          <span class="visually-hidden">{{ t('staffAgreementDocumentsPage.loadingSpinner') }}</span>
         </div>
       </div>
       <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
@@ -172,7 +173,7 @@
                   class="btn btn-sm btn-outline-secondary"
                   target="_blank"
                   rel="noopener noreferrer"
-                  :aria-label="t('documentsPage.downloadTitle')"
+                  :aria-label="t('staffAgreementDocumentsPage.downloadTitle')"
                 >
                   <i class="bi bi-download"></i>
                 </a>
@@ -190,7 +191,7 @@
         <ul class="pagination justify-content-center">
           <li class="page-item" :class="{ disabled: !pagination.previous }">
             <button type="button" class="page-link" @click="goToPage(pagination.currentPage - 1)">
-              {{ t('documentsPage.previous') }}
+              {{ t('staffAgreementDocumentsPage.previous') }}
             </button>
           </li>
           <li
@@ -203,7 +204,7 @@
           </li>
           <li class="page-item" :class="{ disabled: !pagination.next }">
             <button type="button" class="page-link" @click="goToPage(pagination.currentPage + 1)">
-              {{ t('documentsPage.next') }}
+              {{ t('staffAgreementDocumentsPage.next') }}
             </button>
           </li>
         </ul>

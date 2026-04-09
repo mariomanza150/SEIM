@@ -2,7 +2,7 @@
 
 _Reconciled into a single canonical tracker on 2026-04-08. Update this file as the source of truth for feature state and priorities._
 
-_Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](manual-qa-issues.md)._
+_Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](manual-qa-issues.md). Session log (manual workflow loop): [`manual-workflow-qa-session-log.md`](manual-workflow-qa-session-log.md)._
 
 ## 🟢 IMPLEMENTED ✓
 | Feature | Module | Status | Last Updated | Notes |
@@ -86,7 +86,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue i18n: Coordinator workload view | `frontend-vue` | Implemented | 2026-04-09 | `workloadPage.*` + reuse `applicationsPage.status` / `route.names`; `CoordinatorWorkload.vue` breadcrumbs, subtitle, cards, admin table, loading/error. Vitest: `CoordinatorWorkload.spec.js`. |
 | Vue i18n: Staff exchange agreements view | `frontend-vue` | Implemented | 2026-04-09 | `exchangeAgreementsPage.*` (incl. `filterOptionAll`, clear, preset UI, `previous`/`next`) + `route.names`; `StaffExchangeAgreements.vue` filters, enum labels, table, renewal actions (prompt/confirm/toasts). Vitest: `StaffExchangeAgreements.spec.js`. |
 | Vue i18n: Deadlines and calendar view | `frontend-vue` | Implemented | 2026-04-09 | `calendarPage.*` (incl. saved-view preset strings) + `route.names`; `DeadlinesCalendar.vue` ICS card, range/filters, saved views, locale-aware day headings (`toLocaleDateString`), load/copy toasts. Vitest: `DeadlinesCalendar.spec.js`. |
-| Vue i18n: Staff agreement documents view | `frontend-vue` | Implemented | 2026-04-08 | `staffAgreementDocumentsPage.*` + reuse `documentsPage` (presets, clear, pagination, loading spinner, download aria) + `exchangeAgreementsPage` (search/sort labels, agreement “Any”); `route.names.StaffAgreementDocuments`; category enum keys; locale dates. Vitest: `StaffAgreementDocuments.spec.js`. |
+| Vue i18n: Staff agreement documents view | `frontend-vue` | Implemented | 2026-04-09 | `staffAgreementDocumentsPage.*` (incl. `filterOptionAll`, clear, presets, `loadingSpinner`, `downloadTitle`, `previous`/`next`) + `route.names.StaffAgreementDocuments`; category enum keys; locale dates. Vitest: `StaffAgreementDocuments.spec.js`. |
 | Vue i18n: Program compare view | `frontend-vue` | Implemented | 2026-04-09 | `programComparePage.*` (incl. CTA `newApplication`, table `emDash`) + `route.names`; `ProgramCompare.vue`; locale `formatDate`. Vitest: `ProgramCompare.spec.js` (loading spinner aria). |
 | Vue i18n: Profile view | `frontend-vue` | Implemented | 2026-04-09 | `profilePage.*` in `en.json` / `es.json` (incl. `gpaPlaceholder`, `languagePlaceholder`, `language`, `cancel`); reuse `route.names.Profile` / `Dashboard`, `login.emailLabel`; `Profile.vue` breadcrumbs, form, tip card, save/load toasts. Vitest: `Profile.spec.js`. |
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-09 | `Notifications.vue`: `notifications.*` (filters, empty, pagination, toasts) + `route.names`. Vitest: `Notifications.spec.js`. |
@@ -143,7 +143,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** (`reviewQueuePage.*`) + **Staff exchange agreements** filter/preset/pagination under `exchangeAgreementsPage.*`. **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** (`reviewQueuePage.*`) + **Staff exchange agreements** (`exchangeAgreementsPage.*`) + **Staff agreement documents** (`staffAgreementDocumentsPage.*`). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -183,5 +183,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Staff exchange agreements i18n keys — completed)*  
+*Last updated: 2026-04-09 (loop: Staff agreement documents i18n keys — completed)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

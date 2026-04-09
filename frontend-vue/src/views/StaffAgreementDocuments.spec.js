@@ -51,5 +51,8 @@ describe('StaffAgreementDocuments', () => {
     expect(wrapper.find('[data-testid="agreement-docs-empty"]').text()).toContain(
       'No repository documents match these filters',
     )
+    expect(wrapper.find('[data-testid="agreement-docs-preset-name"]').attributes('placeholder')).toBe(
+      i18n.global.t('staffAgreementDocumentsPage.presetNamePlaceholder'),
+    )
   })
 })
