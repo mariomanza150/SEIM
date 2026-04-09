@@ -33,7 +33,7 @@ _Map each row to one or more rows in `docs/feature-tracking.md` § **IMPLEMENTED
 
 | Cluster ID | Feature / workflow (tracker reference) | Unit | Smoke | Browser | Last verified | Notes |
 |------------|----------------------------------------|------|-------|---------|---------------|-------|
-| `auth-api` | User authentication and account management | — | — | — | | JWT, registration, profile |
+| `auth-api` | User authentication and account management | Done | Partial | Partial | 2026-04-08 | **Unit:** `tests/integration/api/test_auth_api.py` (26 tests, `docker compose exec web … pytest -o addopts='--strict-markers --tb=short'` + `DJANGO_SETTINGS_MODULE=seim.settings.test`); `tests/unit/api/test_api_views.py` (`test_token_obtain_pair`, `test_token_refresh`); Vue `frontend-vue/src/stores/auth.spec.js` (`npm run test:run -- --run src/stores/auth.spec.js`). **Smoke/Browser:** Playwright `-m smoke` not re-run here: `Dockerfile.test` image lacks Chromium system libs after `playwright install`; use **host** `make e2e-smoke` with app at `BASE_URL` (see Makefile). Smoke markers include `test_smoke.py`, `test_auth_workflows.py::TestAuthenticationSmoke::test_login_logout_smoke` (needs Vue users + `BASE_URL` e.g. 5173). **Browser:** `test_auth_workflows.py` (registration/login/logout; `-m auth`). |
 | `roles` | Role management (student / coordinator / admin) | — | — | — | | Permissions across API + UI |
 | `programs-applications` | Exchange programs and application workflow | — | — | — | | Catalog, state transitions, timeline |
 | `documents-core` | Document management + checklist + preview | — | — | — | | Upload, validate, resubmit, preview API |
@@ -70,4 +70,4 @@ _Use these as hints when filling the **Browser** column; replace with exact `tes
 
 ---
 
-*Last updated: 2026-04-09 — notifications routing-ref unit coverage noted*
+*Last updated: 2026-04-08 — `auth-api` unit verified (Docker + Vitest); JWT integration tests aligned with `api:` URLs and email-based token view; Playwright smoke/browser Partial (host / browser system libs). Notifications row unchanged from prior routing-ref note.*

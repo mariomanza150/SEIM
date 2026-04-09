@@ -152,9 +152,9 @@ class TestAPIViews(TestCase):
         self.assertIn('results', response.data)
 
     def test_token_obtain_pair(self):
-        """Test JWT token obtain pair"""
+        """Test JWT token obtain pair (email + password)"""
         response = self.client.post('/api/token/', {
-            'username': 'testuser',
+            'email': 'testuser@example.com',
             'password': 'TestPass123!'
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)

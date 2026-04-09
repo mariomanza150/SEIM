@@ -26,7 +26,7 @@ class TestAuthenticationAPI(APITestCase):
         super().setUp()
         self.register_url = reverse("accounts:register")
         self.login_url = reverse("accounts:login")
-        self.refresh_url = reverse("token_refresh")
+        self.refresh_url = reverse("api:token_refresh")
         self.verify_email_url = reverse("accounts:verify-email")
         self.password_reset_url = reverse("accounts:password_reset_request")
         # Generate unique identifier for this test run
@@ -338,8 +338,8 @@ class TestAuthenticationAPI(APITestCase):
             self.assertIn("access", response_email.data)
             self.assertIn("refresh", response_email.data)
 
-    def test_token_obtain_pair_username_vs_email(self):
-        """Test /api/token/ only works with username, not email."""
+    def test_token_obtain_pair_email_vs_username_payload(self):
+        """Test /api/token/ accepts email+password (Vue); username field is not used."""
         username = f"tokenuser_{self.unique_id}"
         email = f"token_{self.unique_id}@example.com"
         TestUtils.create_test_user(
@@ -349,19 +349,18 @@ class TestAuthenticationAPI(APITestCase):
             is_email_verified=True,
             is_active=True,
         )
-        # Login with username (should succeed)
-        data_username = {"username": username, "password": "tokenpass123"}
-        response_username = self.client.post(
-            "/api/token/", data_username, format="json"
+        data_email = {"email": email, "password": "tokenpass123"}
+        response_ok = self.client.post(
+            "/api/token/", data_email, format="json"
         )
-        self.assert_response_success(response_username, status.HTTP_200_OK)
-        if hasattr(response_username, "data"):
-            self.assertIn("access", response_username.data)
-            self.assertIn("refresh", response_username.data)
-        # Login with email (should fail)
-        data_email = {"username": email, "password": "tokenpass123"}
-        response_email = self.client.post("/api/token/", data_email, format="json")
-        self.assert_response_error(response_email, status.HTTP_401_UNAUTHORIZED)
+        self.assert_response_success(response_ok, status.HTTP_200_OK)
+        if hasattr(response_ok, "data"):
+            self.assertIn("access", response_ok.data)
+            self.assertIn("refresh", response_ok.data)
+        # Legacy username+password payload is rejected by serializer (missing email)
+        data_username = {"username": username, "password": "tokenpass123"}
+        response_bad = self.client.post("/api/token/", data_username, format="json")
+        self.assert_response_error(response_bad, status.HTTP_400_BAD_REQUEST)
 
 
 class TestAuthenticationIntegration(APITestCase):
@@ -403,11 +402,11 @@ class TestAuthenticationIntegration(APITestCase):
         )
         self.assert_response_success(verify_response, status.HTTP_200_OK)
 
-        # 2. Login with new user
-        login_data = {"username": username, "password": "testpass123"}
+        # 2. Login with new user (JWT view uses email + password)
+        login_data = {"email": email, "password": "testpass123"}
 
         login_response = self.client.post(
-            reverse("token_obtain_pair"), login_data, format="json"
+            reverse("api:token_obtain_pair"), login_data, format="json"
         )
         self.assert_response_success(login_response, status.HTTP_200_OK)
 
@@ -422,7 +421,7 @@ class TestAuthenticationIntegration(APITestCase):
         # 4. Refresh token
         refresh_data = {"refresh": refresh_token}
         refresh_response = self.client.post(
-            reverse("token_refresh"), refresh_data, format="json"
+            reverse("api:token_refresh"), refresh_data, format="json"
         )
         self.assert_response_success(refresh_response, status.HTTP_200_OK)
 
@@ -547,7 +546,7 @@ class TestAuthenticationSecurity(APITestCase):
         # Test that endpoints accept JSON requests
         data = {"username": "testuser", "password": "testpass123"}
 
-        response = self.client.post(reverse("token_obtain_pair"), data, format="json")
+        response = self.client.post(reverse("api:token_obtain_pair"), data, format="json")
 
         # Should not fail due to CSRF (API endpoints are typically exempt)
         # The response should be 401 (unauthorized) not 403 (forbidden)
