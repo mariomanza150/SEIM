@@ -5,17 +5,17 @@
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
+            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
           </li>
-          <li class="breadcrumb-item active">Documents</li>
+          <li class="breadcrumb-item active">{{ t('route.names.Documents') }}</li>
         </ol>
       </nav>
       <!-- Header -->
       <div class="row mb-4">
         <div class="col-md-8">
-          <h2 data-testid="documents-heading"><i class="bi bi-folder me-2"></i>Documents</h2>
+          <h2 data-testid="documents-heading"><i class="bi bi-folder me-2"></i>{{ t('route.names.Documents') }}</h2>
           <p class="text-muted">
-            {{ isStaff ? 'Application uploads (all students, staff view)' : 'Manage your uploaded documents for applications' }}
+            {{ isStaff ? t('documentsPage.subtitleStaff') : t('documentsPage.subtitleStudent') }}
           </p>
         </div>
       </div>
@@ -25,59 +25,59 @@
         <div class="card-body">
           <div class="row g-3">
             <div class="col-md-4">
-              <label class="form-label">Application</label>
+              <label class="form-label">{{ t('documentsPage.applicationLabel') }}</label>
               <select v-model="filters.application" class="form-select" @change="fetchDocuments">
-                <option value="">All Applications</option>
+                <option value="">{{ t('documentsPage.applicationOptionAll') }}</option>
                 <option v-for="app in applications" :key="app.id" :value="app.id">
                   {{ app.program?.name || app.id }}
                 </option>
               </select>
             </div>
             <div class="col-md-3">
-              <label class="form-label">Document Type</label>
+              <label class="form-label">{{ t('documentsPage.documentTypeLabel') }}</label>
               <select v-model="filters.type" class="form-select" @change="fetchDocuments">
-                <option value="">All Types</option>
+                <option value="">{{ t('documentsPage.typeOptionAll') }}</option>
                 <option v-for="dt in documentTypes" :key="dt.id" :value="dt.id">
                   {{ dt.name }}
                 </option>
               </select>
             </div>
             <div class="col-md-3">
-              <label class="form-label">Status</label>
+              <label class="form-label">{{ t('documentsPage.statusLabel') }}</label>
               <select v-model="filters.valid" class="form-select" @change="fetchDocuments">
-                <option value="">All</option>
-                <option value="true">Validated</option>
-                <option value="false">Pending</option>
+                <option value="">{{ t('documentsPage.statusOptionAll') }}</option>
+                <option value="true">{{ t('documentsPage.statusValidated') }}</option>
+                <option value="false">{{ t('documentsPage.statusPending') }}</option>
               </select>
             </div>
             <div class="col-md-2 d-flex align-items-end">
-              <button class="btn btn-outline-secondary w-100" @click="clearFilters">
-                <i class="bi bi-x-circle me-1"></i>Clear
+              <button type="button" class="btn btn-outline-secondary w-100" @click="clearFilters">
+                <i class="bi bi-x-circle me-1"></i>{{ t('documentsPage.clearFilters') }}
               </button>
             </div>
             <div v-if="isStaff" class="col-12 border-top pt-3 mt-2">
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
-                  <label class="form-label small text-muted mb-1">Save filters as preset</label>
+                  <label class="form-label small text-muted mb-1">{{ t('documentsPage.presetSaveLabel') }}</label>
                   <div class="input-group input-group-sm">
-                    <input v-model="newPresetName" type="text" class="form-control" placeholder="Preset name" />
+                    <input v-model="newPresetName" type="text" class="form-control" :placeholder="t('documentsPage.presetNamePlaceholder')" />
                     <button
                       type="button"
                       class="btn btn-outline-primary"
                       :disabled="!newPresetName.trim() || presetsLoading"
                       @click="savePreset(() => serializeDocumentListFilters(filters))"
                     >
-                      Save
+                      {{ t('documentsPage.presetSave') }}
                     </button>
                   </div>
                 </div>
                 <div class="form-check mb-1">
                   <input id="doc-preset-def" v-model="saveAsDefault" class="form-check-input" type="checkbox" />
-                  <label class="form-check-label small" for="doc-preset-def">Default when opening this page</label>
+                  <label class="form-check-label small" for="doc-preset-def">{{ t('documentsPage.presetDefaultCheckbox') }}</label>
                 </div>
               </div>
               <div v-if="savedPresets.length" class="small">
-                <span class="text-muted me-2">Saved:</span>
+                <span class="text-muted me-2">{{ t('documentsPage.presetSavedPrefix') }}</span>
                 <span
                   v-for="p in savedPresets"
                   :key="p.id"
@@ -87,15 +87,15 @@
                   <i
                     v-if="p.is_default"
                     class="bi bi-star-fill text-warning"
-                    title="Default preset"
-                    aria-label="Default preset"
+                    :title="t('documentsPage.presetDefaultTitle')"
+                    :aria-label="t('documentsPage.presetDefaultAria')"
                   ></i>
                   <button
                     v-else
                     type="button"
                     class="btn btn-link btn-sm p-0 text-secondary"
-                    title="Set as default"
-                    aria-label="Set as default"
+                    :title="t('documentsPage.presetSetDefaultTitle')"
+                    :aria-label="t('documentsPage.presetSetDefaultAria')"
                     @click="setDefaultPreset(p)"
                   >
                     <i class="bi bi-star"></i>
@@ -103,8 +103,8 @@
                   <button
                     type="button"
                     class="btn btn-link btn-sm p-0 text-danger"
-                    title="Remove preset"
-                    aria-label="Remove preset"
+                    :title="t('documentsPage.presetRemoveTitle')"
+                    :aria-label="t('documentsPage.presetRemoveAria')"
                     @click="deletePreset(p)"
                   >
                     <i class="bi bi-trash"></i>
@@ -119,9 +119,9 @@
       <!-- Loading -->
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
+          <span class="visually-hidden">{{ t('documentsPage.loadingSpinner') }}</span>
         </div>
-        <p class="mt-3 text-muted">Loading documents...</p>
+        <p class="mt-3 text-muted">{{ t('documentsPage.loadingList') }}</p>
       </div>
 
       <!-- Error -->
@@ -136,12 +136,12 @@
           <table class="table table-hover align-middle">
             <thead class="table-light">
               <tr>
-                <th>Document</th>
-                <th>Type</th>
-                <th>Application</th>
-                <th>Status</th>
-                <th>Uploaded</th>
-                <th class="text-end">Actions</th>
+                <th>{{ t('documentsPage.colDocument') }}</th>
+                <th>{{ t('documentsPage.colType') }}</th>
+                <th>{{ t('documentsPage.colApplication') }}</th>
+                <th>{{ t('documentsPage.colStatus') }}</th>
+                <th>{{ t('documentsPage.colUploaded') }}</th>
+                <th class="text-end">{{ t('documentsPage.colActions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -160,7 +160,7 @@
                 </td>
                 <td>
                   <span class="badge" :class="doc.is_valid ? 'bg-success' : 'bg-warning'">
-                    {{ doc.is_valid ? 'Validated' : 'Pending' }}
+                    {{ doc.is_valid ? t('documentsPage.statusValidated') : t('documentsPage.statusPending') }}
                   </span>
                 </td>
                 <td class="text-muted small">{{ formatDate(doc.created_at) }}</td>
@@ -169,8 +169,9 @@
                     :to="{ name: 'DocumentDetail', params: { id: doc.id } }"
                     class="btn btn-sm btn-outline-primary me-1"
                     data-testid="document-detail-link"
+                    :aria-label="t('documentsPage.viewDetailAria')"
                   >
-                    <i class="bi bi-eye"></i>
+                    <i class="bi bi-eye" aria-hidden="true"></i>
                   </router-link>
                   <a
                     v-if="doc.file"
@@ -178,9 +179,10 @@
                     target="_blank"
                     rel="noopener"
                     class="btn btn-sm btn-outline-secondary"
-                    title="Download"
+                    :title="t('documentsPage.downloadTitle')"
+                    :aria-label="t('documentsPage.downloadTitle')"
                   >
-                    <i class="bi bi-download"></i>
+                    <i class="bi bi-download" aria-hidden="true"></i>
                   </a>
                 </td>
               </tr>
@@ -189,11 +191,11 @@
         </div>
 
         <!-- Pagination -->
-        <nav v-if="pagination.count > pagination.pageSize" aria-label="Documents pagination">
+        <nav v-if="pagination.count > pagination.pageSize" :aria-label="t('documentsPage.paginationAria')">
           <ul class="pagination justify-content-center mt-4">
             <li class="page-item" :class="{ disabled: !pagination.previous }">
-              <button class="page-link" @click="goToPage(pagination.currentPage - 1)">
-                Previous
+              <button type="button" class="page-link" @click="goToPage(pagination.currentPage - 1)">
+                {{ t('documentsPage.previous') }}
               </button>
             </li>
             <li
@@ -202,11 +204,11 @@
               class="page-item"
               :class="{ active: page === pagination.currentPage }"
             >
-              <button class="page-link" @click="goToPage(page)">{{ page }}</button>
+              <button type="button" class="page-link" @click="goToPage(page)">{{ page }}</button>
             </li>
             <li class="page-item" :class="{ disabled: !pagination.next }">
-              <button class="page-link" @click="goToPage(pagination.currentPage + 1)">
-                Next
+              <button type="button" class="page-link" @click="goToPage(pagination.currentPage + 1)">
+                {{ t('documentsPage.next') }}
               </button>
             </li>
           </ul>
@@ -217,10 +219,10 @@
       <div v-else class="card">
         <div class="card-body text-center py-5">
           <i class="bi bi-folder-x display-1 text-muted"></i>
-          <h4 class="mt-3">No Documents Yet</h4>
-          <p class="text-muted">Upload documents from your application detail page.</p>
+          <h4 class="mt-3">{{ t('documentsPage.emptyTitle') }}</h4>
+          <p class="text-muted">{{ t('documentsPage.emptyBody') }}</p>
           <router-link :to="{ name: 'Applications' }" class="btn btn-primary mt-3">
-            <i class="bi bi-file-earmark-text me-2"></i>Go to Applications
+            <i class="bi bi-file-earmark-text me-2"></i>{{ t('documentsPage.goToApplications') }}
           </router-link>
         </div>
       </div>
@@ -230,6 +232,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
 import { useAuthStore } from '@/stores/auth'
@@ -241,6 +244,7 @@ import {
   serializeDocumentListFilters,
 } from '@/utils/staffListSearchPresets'
 
+const { t, locale } = useI18n()
 const { error: errorToast } = useToast()
 const authStore = useAuthStore()
 const isStaff = computed(() => authStore.canUseStaffReviewQueue)
@@ -322,8 +326,8 @@ async function fetchDocuments(page = 1) {
       }
     }
   } catch {
-    error.value = 'Failed to load documents. Please try again.'
-    errorToast('Failed to load documents')
+    error.value = t('documentsPage.loadError')
+    errorToast(t('documentsPage.loadToastError'))
   } finally {
     loading.value = false
   }
@@ -348,7 +352,7 @@ function applyDocPreset(p) {
 }
 
 function fileName(fileUrl) {
-  if (!fileUrl) return 'Unknown'
+  if (!fileUrl) return t('documentsPage.fileUnknown')
   const parts = fileUrl.split('/')
   return decodeURIComponent(parts[parts.length - 1] || 'document')
 }
@@ -356,12 +360,14 @@ function fileName(fileUrl) {
 function getApplicationName(appId) {
   if (typeof appId === 'object' && appId?.program?.name) return appId.program.name
   const app = applications.value.find(a => a.id === appId)
-  return app?.program?.name || appId || 'Unknown'
+  return app?.program?.name || appId || t('documentsPage.unknownApplication')
 }
 
 function formatDate(dateString) {
-  if (!dateString) return 'N/A'
-  return new Date(dateString).toLocaleDateString('en-US', {
+  if (!dateString) return t('documentsPage.notAvailable')
+  const date = new Date(dateString)
+  const localeTag = locale.value === 'es' ? 'es' : 'en-US'
+  return date.toLocaleDateString(localeTag, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
