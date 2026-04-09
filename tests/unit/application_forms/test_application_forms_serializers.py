@@ -312,17 +312,15 @@ class TestFormSubmissionSerializer(TestCase):
         serializer = FormSubmissionSerializer(data=data)
         self.assertTrue(serializer.is_valid())
 
-    def test_validate_required_fields_missing(self):
-        """Test validation fails when required fields missing."""
+    def test_validate_responses_partial_payload_allowed_at_serializer(self):
+        """Serializer only checks JSON shape; required fields enforced in FormSubmissionService."""
         data = {
             'form_type': self.form_type.id,
-            'responses': {'email': 'jane@example.com'}  # Missing 'name'
+            'responses': {'email': 'jane@example.com'}  # Missing schema 'name'
         }
-        
+
         serializer = FormSubmissionSerializer(data=data)
-        self.assertFalse(serializer.is_valid())
-        self.assertIn('responses', serializer.errors)
-        self.assertIn('Missing required fields', str(serializer.errors['responses']))
+        self.assertTrue(serializer.is_valid())
 
     def test_validate_no_required_fields_defined(self):
         """Test validation passes when no required fields defined."""
