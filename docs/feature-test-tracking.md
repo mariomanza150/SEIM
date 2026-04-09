@@ -71,4 +71,4 @@ _Use these as hints when filling the **Browser** column; replace with exact `tes
 
 ---
 
-*Last updated: 2026-04-09 — **`documents-core`:** Vitest `Documents.spec.js` / `DocumentDetail.spec.js` assert `rel="noopener noreferrer"` on file `target="_blank"` links. Prior: **`coord-review`** `test_coordinator_workload_api.py`.*
+*Last updated: 2026-04-09 — **`coord-review`:** `test_saved_searches.py` (11 pytest). Prior: **`documents-core`** Vitest noopener on doc `target="_blank"` links; coordinator workload API slice.*
