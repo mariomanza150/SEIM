@@ -74,6 +74,20 @@
             >
               <i class="bi bi-clipboard-check me-2"></i>Review queue
             </router-link>
+            <router-link
+              v-if="authStore.canUseStaffReviewQueue"
+              :to="{ name: 'StaffExchangeAgreements' }"
+              class="list-group-item list-group-item-action"
+            >
+              <i class="bi bi-file-earmark-richtext me-2"></i>Agreements
+            </router-link>
+            <router-link
+              v-if="authStore.canUseStaffReviewQueue"
+              :to="{ name: 'StaffAgreementDocuments' }"
+              class="list-group-item list-group-item-action"
+            >
+              <i class="bi bi-archive me-2"></i>Agreement files
+            </router-link>
             <router-link :to="{ name: 'Documents' }" class="list-group-item list-group-item-action">
               <i class="bi bi-folder me-2"></i>Documents
             </router-link>

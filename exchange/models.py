@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from core.models import TimeStampedModel, UUIDModel
@@ -11,6 +12,16 @@ class Program(UUIDModel, TimeStampedModel):
     description = models.TextField()
     start_date = models.DateField()
     end_date = models.DateField()
+    application_open_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text=_("Date when students can begin submitting new applications."),
+    )
+    application_deadline = models.DateField(
+        null=True,
+        blank=True,
+        help_text=_("Last date students can create a new application for this program."),
+    )
     is_active = models.BooleanField(default=True)
     min_gpa = models.FloatField(
         null=True, blank=True, help_text=_("Minimum GPA required for eligibility.")
@@ -56,6 +67,20 @@ class Program(UUIDModel, TimeStampedModel):
         blank=True,
         help_text=_("Dynamic application form for this program")
     )
+    coordinators = models.ManyToManyField(
+        "accounts.User",
+        blank=True,
+        related_name="coordinated_programs",
+        help_text=_("Coordinators responsible for this program."),
+    )
+    required_document_types = models.ManyToManyField(
+        "documents.DocumentType",
+        blank=True,
+        related_name="programs_requiring",
+        help_text=_(
+            "Applicants must upload these document types and have them marked valid before submitting."
+        ),
+    )
 
     class Meta:
         ordering = ['name']
@@ -63,11 +88,193 @@ class Program(UUIDModel, TimeStampedModel):
     def __str__(self):
         return self.name
 
+    def get_application_window_status(self, on_date=None):
+        today = on_date or timezone.localdate()
+
+        if self.application_open_date and today < self.application_open_date:
+            return {
+                "is_open": False,
+                "reason": "not_open_yet",
+                "message": f"Applications open on {self.application_open_date:%B %d, %Y}.",
+            }
+
+        if self.application_deadline and today > self.application_deadline:
+            return {
+                "is_open": False,
+                "reason": "closed",
+                "message": f"Applications closed on {self.application_deadline:%B %d, %Y}.",
+            }
+
+        if self.application_open_date and self.application_deadline:
+            return {
+                "is_open": True,
+                "reason": "open",
+                "message": (
+                    f"Applications are open from {self.application_open_date:%B %d, %Y} "
+                    f"through {self.application_deadline:%B %d, %Y}."
+                ),
+            }
+
+        if self.application_deadline:
+            return {
+                "is_open": True,
+                "reason": "open",
+                "message": f"Applications are open until {self.application_deadline:%B %d, %Y}.",
+            }
+
+        if self.application_open_date:
+            return {
+                "is_open": True,
+                "reason": "open",
+                "message": f"Applications opened on {self.application_open_date:%B %d, %Y}.",
+            }
+
+        return {
+            "is_open": True,
+            "reason": "always_open",
+            "message": "Applications are currently open.",
+        }
+
+    def is_application_open(self, on_date=None):
+        return self.get_application_window_status(on_date)["is_open"]
+
+    @property
+    def application_window_message(self):
+        return self.get_application_window_status()["message"]
+
+    @property
+    def is_application_open_now(self):
+        return self.is_application_open()
+
     def clean(self):
         from django.core.exceptions import ValidationError
 
         if self.end_date and self.start_date and self.end_date <= self.start_date:
             raise ValidationError({"end_date": "End date must be after start date."})
+
+        if (
+            self.application_open_date
+            and self.application_deadline
+            and self.application_deadline < self.application_open_date
+        ):
+            raise ValidationError({
+                "application_deadline": "Application deadline must be on or after the application open date."
+            })
+
+        if self.application_open_date and self.application_open_date > self.start_date:
+            raise ValidationError({
+                "application_open_date": "Application open date must be on or before the program start date."
+            })
+
+        if self.application_deadline and self.application_deadline > self.start_date:
+            raise ValidationError({
+                "application_deadline": "Application deadline must be on or before the program start date."
+            })
+
+
+class ExchangeAgreement(UUIDModel, TimeStampedModel):
+    """Operational exchange / cooperation agreement (distinct from CMS marketing convenio pages)."""
+
+    class Status(models.TextChoices):
+        DRAFT = "draft", _("Draft")
+        ACTIVE = "active", _("Active")
+        SUSPENDED = "suspended", _("Suspended")
+        EXPIRED = "expired", _("Expired")
+        TERMINATED = "terminated", _("Terminated")
+        RENEWAL_PENDING = "renewal_pending", _("Renewal pending")
+
+    class AgreementType(models.TextChoices):
+        BILATERAL = "bilateral", _("Bilateral")
+        MULTILATERAL = "multilateral", _("Multilateral")
+        ERASMUS = "erasmus", _("Erasmus+")
+        SPECIFIC = "specific", _("Specific program")
+        OTHER = "other", _("Other")
+
+    title = models.CharField(
+        max_length=255,
+        help_text=_("Short title for staff (e.g. framework agreement name)."),
+    )
+    partner_institution_name = models.CharField(max_length=255)
+    partner_country = models.CharField(max_length=120, blank=True, default="")
+    partner_reference_id = models.CharField(
+        max_length=120,
+        blank=True,
+        default="",
+        help_text=_("Partner’s own agreement or contract reference, if any."),
+    )
+    internal_reference = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        db_index=True,
+        help_text=_("Optional internal tracking code."),
+    )
+    agreement_type = models.CharField(
+        max_length=32,
+        choices=AgreementType.choices,
+        default=AgreementType.BILATERAL,
+    )
+    programs = models.ManyToManyField(
+        "Program",
+        blank=True,
+        related_name="exchange_agreements",
+        help_text=_("Exchange programs governed or covered by this agreement."),
+    )
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text=_("Leave blank if no fixed end date."),
+    )
+    status = models.CharField(
+        max_length=32,
+        choices=Status.choices,
+        default=Status.DRAFT,
+        db_index=True,
+    )
+    notes = models.TextField(blank=True, default="")
+
+    class Meta:
+        ordering = ["-start_date", "partner_institution_name", "title"]
+        verbose_name = _("Exchange agreement")
+        verbose_name_plural = _("Exchange agreements")
+        indexes = [
+            models.Index(fields=["status", "end_date"], name="exagreement_status_end_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.title} — {self.partner_institution_name}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        if self.start_date and self.end_date and self.end_date < self.start_date:
+            raise ValidationError({"end_date": _("End date must be on or after the start date.")})
+
+
+class AgreementExpirationReminderLog(UUIDModel, TimeStampedModel):
+    """Records that a given pre-expiry milestone was notified (prevents duplicate sends)."""
+
+    agreement = models.ForeignKey(
+        "ExchangeAgreement",
+        on_delete=models.CASCADE,
+        related_name="expiration_reminder_logs",
+    )
+    days_before = models.PositiveIntegerField()
+    agreement_end_date = models.DateField()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["agreement", "days_before", "agreement_end_date"],
+                name="uniq_agreement_expiry_reminder_milestone",
+            )
+        ]
+        verbose_name = _("Agreement expiration reminder log")
+        verbose_name_plural = _("Agreement expiration reminder logs")
+
+    def __str__(self):
+        return f"{self.agreement_id} @ {self.days_before}d before {self.agreement_end_date}"
 
 
 class Application(UUIDModel, TimeStampedModel):
@@ -75,9 +282,26 @@ class Application(UUIDModel, TimeStampedModel):
 
     program = models.ForeignKey(Program, on_delete=models.CASCADE)
     student = models.ForeignKey("accounts.User", on_delete=models.CASCADE)
+    assigned_coordinator = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_applications",
+        help_text=_("Coordinator explicitly assigned to review this application."),
+    )
     status = models.ForeignKey("ApplicationStatus", on_delete=models.PROTECT)
     submitted_at = models.DateTimeField(null=True, blank=True)
     withdrawn = models.BooleanField(default=False)
+    dynamic_form_current_step = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True,
+        help_text=_(
+            "Current step key when the program uses a multi-step application form "
+            "(see FormType.step_definitions)."
+        ),
+    )
 
     class Meta:
         indexes = [
@@ -93,6 +317,18 @@ class Application(UUIDModel, TimeStampedModel):
 
     def __str__(self):
         return f"{self.student} - {self.program}"
+
+    @property
+    def effective_coordinator(self):
+        if self.assigned_coordinator_id:
+            return self.assigned_coordinator
+
+        if hasattr(self.program, "coordinators"):
+            program_coordinators = list(self.program.coordinators.all()[:2])
+            if len(program_coordinators) == 1:
+                return program_coordinators[0]
+
+        return None
 
 
 class ApplicationStatus(models.Model):
@@ -142,10 +378,13 @@ class SavedSearch(UUIDModel, TimeStampedModel):
     search_type = models.CharField(
         max_length=20,
         choices=[
-            ('program', 'Program Search'),
-            ('application', 'Application Search'),
+            ("program", "Program Search"),
+            ("application", "Application Search"),
+            ("exchange_agreement", "Exchange agreement registry"),
+            ("document", "Application document list"),
+            ("agreement_document", "Agreement document repository"),
         ],
-        help_text="Type of search (programs or applications)"
+        help_text="Type of search (programs, applications, or staff list views)",
     )
     filters = models.JSONField(
         default=dict,

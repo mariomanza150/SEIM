@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from core.cache import cache_api_response
 from core.permissions import IsCoordinatorOrAdmin, IsOwnerOrAdmin
 
-from .filters import ExchangeAgreementDocumentFilter
+from .filters import DocumentFilter, ExchangeAgreementDocumentFilter
 from .models import (
     Document,
     DocumentComment,
@@ -79,6 +79,9 @@ class DocumentViewSet(viewsets.ModelViewSet):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdmin]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_class = DocumentFilter
+    ordering_fields = ["created_at", "validated_at"]
 
     def get_queryset(self):
         """

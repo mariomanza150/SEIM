@@ -42,11 +42,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Live application and document status sync | `exchange`, `notifications`, `frontend-vue`, `documents` | Implemented | 2026-04-08 | `NotificationService.broadcast_application_sync` + `NotificationConsumer.application_sync` send `application.sync` over the existing `/ws/notifications/` channel to student, assigned coordinator, and program coordinators. Wired from comments, status/submit/withdraw, document upload/validate/resubmit/replace/comment. Vue `websocket.js` dispatches `seim-application-sync`; `ApplicationDetail` soft-refetches; `DocumentDetail` refetches when `application_id` or `document_id` matches. Tests: `test_application_sync_broadcast.py`, `test_websocket_consumer.py`, `websocket.spec.js`. |
 | Action-oriented dashboard with next steps | `frontend-vue`, `accounts`, `exchange`, `documents`, `notifications` | Implemented | 2026-04-08 | Dashboard replaces placeholder activity with “What needs your attention” (unread notifications, student drafts and open document resubmissions, staff assigned/pending review and resubmit-queue links). Stats API is role-aware for coordinator/admin. Listens for `seim-application-sync` to refresh stats and next steps. Tests: `tests/integration/api/test_dashboard_stats_api.py`, `frontend-vue/src/utils/dashboardNextSteps.spec.js`. |
 | Saved searches in Vue review queue | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-08 | Coordinator review queue loads `search_type=application` presets from `/api/saved-searches/`, applies default on open, save/delete/set-default in UI; filters serialized in `reviewQueuePresets.js`. Broader presets for agreements/document queues remain P2. Tests: `frontend-vue/src/utils/reviewQueuePresets.spec.js`. |
+| Saved searches for staff agreement registry and document lists | `frontend-vue`, `exchange`, `documents`, `api` | Implemented | 2026-04-08 | New staff routes `/exchange-agreements` and `/agreement-documents` with filters + saved presets (`exchange_agreement`, `agreement_document`); staff document list presets on `/documents` (`document`). `SavedSearch` model allows new `search_type` values. `DocumentFilter` + ordering on `DocumentViewSet`. Shared `useStaffSavedPresets` composable and `staffListSearchPresets.js`. Tests: `staffListSearchPresets.spec.js`, `tests/integration/api/test_documents_list_filters.py`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Saved searches (agreements / document lists) | `frontend-vue`, `exchange`, `documents`, `api` | In progress | 2026-04-08 | — |
+| _None currently assigned_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -83,7 +84,7 @@ _All Priority 1 items in this subsection are implemented above._
 |---------|--------|-------|
 | Coordinator workload dashboard and SLA tracking | `analytics`, `exchange`, `frontend-vue` | Show review volume, turnaround times, pending bottlenecks, and coordinator workload distribution for operational planning. |
 | Advanced notification rules, digests, and reminder scheduling | `notifications`, `accounts`, `admin UI` | Add configurable digest delivery, richer reminder cadences, and role-specific notification rules beyond the current event-based alerts. |
-| _Saved searches for agreement registry + document lists:_ **IN PROGRESS** (see IN PROGRESS table). |
+| Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets on program discovery, analytics slices, or other staff tables if added later. |
 | Export reports to PDF/Excel | `analytics`, `admin UI` | CSV export is now available through `/api/analytics/export/`; richer PDF/Excel export remains a planned enhancement. |
 | Calendar integration for deadlines and milestones | `exchange`, `notifications`, `frontend-vue` | Surface application deadlines, interview dates, and agreement expirations in a calendar view with export/sync options. |
 
@@ -124,5 +125,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (Vue review queue saved search presets)*  
+*Last updated: 2026-04-08 (staff agreements / document list saved presets)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

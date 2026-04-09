@@ -1,11 +1,22 @@
 <template>
-  <div class="documents-page">
+  <div class="documents-page" data-testid="documents-page">
     <div class="container-fluid mt-4">
+      <!-- Breadcrumb -->
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
+          </li>
+          <li class="breadcrumb-item active">Documents</li>
+        </ol>
+      </nav>
       <!-- Header -->
       <div class="row mb-4">
         <div class="col-md-8">
-          <h2><i class="bi bi-folder me-2"></i>My Documents</h2>
-          <p class="text-muted">Manage your uploaded documents for applications</p>
+          <h2 data-testid="documents-heading"><i class="bi bi-folder me-2"></i>Documents</h2>
+          <p class="text-muted">
+            {{ isStaff ? 'Application uploads (all students, staff view)' : 'Manage your uploaded documents for applications' }}
+          </p>
         </div>
       </div>
 
@@ -43,6 +54,63 @@
               <button class="btn btn-outline-secondary w-100" @click="clearFilters">
                 <i class="bi bi-x-circle me-1"></i>Clear
               </button>
+            </div>
+            <div v-if="isStaff" class="col-12 border-top pt-3 mt-2">
+              <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
+                <div class="flex-grow-1" style="min-width: 200px">
+                  <label class="form-label small text-muted mb-1">Save filters as preset</label>
+                  <div class="input-group input-group-sm">
+                    <input v-model="newPresetName" type="text" class="form-control" placeholder="Preset name" />
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary"
+                      :disabled="!newPresetName.trim() || presetsLoading"
+                      @click="savePreset(() => serializeDocumentListFilters(filters))"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+                <div class="form-check mb-1">
+                  <input id="doc-preset-def" v-model="saveAsDefault" class="form-check-input" type="checkbox" />
+                  <label class="form-check-label small" for="doc-preset-def">Default when opening this page</label>
+                </div>
+              </div>
+              <div v-if="savedPresets.length" class="small">
+                <span class="text-muted me-2">Saved:</span>
+                <span
+                  v-for="p in savedPresets"
+                  :key="p.id"
+                  class="d-inline-flex align-items-center gap-1 me-3 mb-1"
+                >
+                  <button type="button" class="btn btn-link btn-sm p-0" @click="applyDocPreset(p)">{{ p.name }}</button>
+                  <i
+                    v-if="p.is_default"
+                    class="bi bi-star-fill text-warning"
+                    title="Default preset"
+                    aria-label="Default preset"
+                  ></i>
+                  <button
+                    v-else
+                    type="button"
+                    class="btn btn-link btn-sm p-0 text-secondary"
+                    title="Set as default"
+                    aria-label="Set as default"
+                    @click="setDefaultPreset(p)"
+                  >
+                    <i class="bi bi-star"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-link btn-sm p-0 text-danger"
+                    title="Remove preset"
+                    aria-label="Remove preset"
+                    @click="deletePreset(p)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -86,7 +154,7 @@
                   <span class="badge bg-secondary">{{ doc.type?.name || doc.type }}</span>
                 </td>
                 <td>
-                  <router-link :to="`/applications/${doc.application}`" class="text-decoration-none">
+                  <router-link :to="{ name: 'ApplicationDetail', params: { id: doc.application } }" class="text-decoration-none">
                     {{ getApplicationName(doc.application) }}
                   </router-link>
                 </td>
@@ -98,8 +166,9 @@
                 <td class="text-muted small">{{ formatDate(doc.created_at) }}</td>
                 <td class="text-end">
                   <router-link
-                    :to="`/documents/${doc.id}`"
+                    :to="{ name: 'DocumentDetail', params: { id: doc.id } }"
                     class="btn btn-sm btn-outline-primary me-1"
+                    data-testid="document-detail-link"
                   >
                     <i class="bi bi-eye"></i>
                   </router-link>
@@ -150,7 +219,7 @@
           <i class="bi bi-folder-x display-1 text-muted"></i>
           <h4 class="mt-3">No Documents Yet</h4>
           <p class="text-muted">Upload documents from your application detail page.</p>
-          <router-link to="/applications" class="btn btn-primary mt-3">
+          <router-link :to="{ name: 'Applications' }" class="btn btn-primary mt-3">
             <i class="bi bi-file-earmark-text me-2"></i>Go to Applications
           </router-link>
         </div>
@@ -162,10 +231,30 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useToast } from '@/composables/useToast'
+import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
+import { useAuthStore } from '@/stores/auth'
 import { resolveFileUrl } from '@/utils/apiUrl'
 import api from '@/services/api'
+import {
+  STAFF_SAVED_SEARCH_TYPE,
+  deserializeDocumentListFilters,
+  serializeDocumentListFilters,
+} from '@/utils/staffListSearchPresets'
 
 const { error: errorToast } = useToast()
+const authStore = useAuthStore()
+const isStaff = computed(() => authStore.canUseStaffReviewQueue)
+
+const {
+  savedPresets,
+  newPresetName,
+  saveAsDefault,
+  presetsLoading,
+  loadPresets,
+  savePreset,
+  deletePreset,
+  setDefaultPreset,
+} = useStaffSavedPresets(STAFF_SAVED_SEARCH_TYPE.APPLICATION_DOCUMENT)
 
 const documents = ref([])
 const applications = ref([])
@@ -177,6 +266,7 @@ const filters = ref({
   application: '',
   type: '',
   valid: '',
+  ordering: '-created_at',
 })
 
 const pagination = ref({
@@ -191,10 +281,12 @@ const totalPages = computed(() => Math.ceil(pagination.value.count / pagination.
 
 async function fetchApplications() {
   try {
-    const response = await api.get('/api/applications/', { params: { page_size: 100 } })
+    const response = await api.get('/api/applications/', {
+      params: { page_size: isStaff.value ? 200 : 100 },
+    })
     applications.value = response.data.results || response.data
-  } catch (err) {
-    console.warn('Failed to fetch applications:', err)
+  } catch {
+    applications.value = []
   }
 }
 
@@ -202,8 +294,8 @@ async function fetchDocumentTypes() {
   try {
     const response = await api.get('/api/document-types/')
     documentTypes.value = response.data.results || response.data
-  } catch (err) {
-    console.warn('Failed to fetch document types:', err)
+  } catch {
+    documentTypes.value = []
   }
 }
 
@@ -212,7 +304,7 @@ async function fetchDocuments(page = 1) {
     loading.value = true
     error.value = null
 
-    const params = { page }
+    const params = { page, ordering: filters.value.ordering || '-created_at' }
     if (filters.value.application) params.application = filters.value.application
     if (filters.value.type) params.type = filters.value.type
     if (filters.value.valid !== '') params.is_valid = filters.value.valid
@@ -229,8 +321,7 @@ async function fetchDocuments(page = 1) {
         pageSize: pagination.value.pageSize,
       }
     }
-  } catch (err) {
-    console.error('Failed to fetch documents:', err)
+  } catch {
     error.value = 'Failed to load documents. Please try again.'
     errorToast('Failed to load documents')
   } finally {
@@ -246,8 +337,14 @@ function goToPage(page) {
 }
 
 function clearFilters() {
-  filters.value = { application: '', type: '', valid: '' }
+  filters.value = { application: '', type: '', valid: '', ordering: '-created_at' }
   fetchDocuments()
+}
+
+function applyDocPreset(p) {
+  filters.value = deserializeDocumentListFilters(p.filters)
+  pagination.value.currentPage = 1
+  fetchDocuments(1)
 }
 
 function fileName(fileUrl) {
@@ -273,6 +370,13 @@ function formatDate(dateString) {
 
 onMounted(async () => {
   await Promise.all([fetchApplications(), fetchDocumentTypes()])
+  if (isStaff.value) {
+    await loadPresets()
+    const def = savedPresets.value.find((p) => p.is_default)
+    if (def) {
+      filters.value = deserializeDocumentListFilters(def.filters)
+    }
+  }
   await fetchDocuments()
 })
 </script>

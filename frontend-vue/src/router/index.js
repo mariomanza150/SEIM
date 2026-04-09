@@ -9,6 +9,8 @@ const Login = () => import('@/views/Login.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
 const Applications = () => import('@/views/Applications.vue')
 const CoordinatorReviewQueue = () => import('@/views/CoordinatorReviewQueue.vue')
+const StaffExchangeAgreements = () => import('@/views/StaffExchangeAgreements.vue')
+const StaffAgreementDocuments = () => import('@/views/StaffAgreementDocuments.vue')
 const ApplicationForm = () => import('@/views/ApplicationForm.vue')
 const ApplicationDetail = () => import('@/views/ApplicationDetail.vue')
 const Documents = () => import('@/views/Documents.vue')
@@ -59,6 +61,26 @@ const routes = [
       requiresAuth: true,
       staffReviewQueue: true,
       title: 'Review queue - SEIM',
+    },
+  },
+  {
+    path: '/exchange-agreements',
+    name: 'StaffExchangeAgreements',
+    component: StaffExchangeAgreements,
+    meta: {
+      requiresAuth: true,
+      staffReviewQueue: true,
+      title: 'Exchange agreements - SEIM',
+    },
+  },
+  {
+    path: '/agreement-documents',
+    name: 'StaffAgreementDocuments',
+    component: StaffAgreementDocuments,
+    meta: {
+      requiresAuth: true,
+      staffReviewQueue: true,
+      title: 'Agreement documents - SEIM',
     },
   },
   {

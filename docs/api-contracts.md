@@ -144,6 +144,12 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `POST /api/applications/{id}/submit/` - Submit application (changes status to "submitted")
 - `POST /api/applications/{id}/withdraw/` - Withdraw application
 
+#### Exchange agreements (staff)
+- `GET /api/exchange-agreements/` - List operational agreements (coordinator/admin). **Filters:** `status`, `agreement_type`, `program` (UUID, linked program), `partner` (icontains on partner institution), `end_date_before`, `end_date_after`, `expiring_within_days` (active agreements with `end_date` within N days), `ordering`, plus `search` across title/partner/notes.
+- `POST /api/exchange-agreements/` - Create agreement
+- `GET /api/exchange-agreements/{id}/` - Retrieve
+- `PUT/PATCH/DELETE /api/exchange-agreements/{id}/` - Update/delete
+
 #### Application Statuses
 - `GET /api/application-statuses/` - List all application statuses
 - **Statuses:** draft, submitted, under_review, approved, rejected, completed, cancelled
@@ -162,7 +168,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 #### Saved Searches
 - `GET /api/saved-searches/` - List user's saved searches
 - `POST /api/saved-searches/` - Create saved search
-  - **Types:** `program`, `application`
+  - **Types:** `program`, `application`, `exchange_agreement`, `document`, `agreement_document`
   - **Body:** `{name, search_type, filters: {...}, is_default}`
 - `GET /api/saved-searches/{id}/` - Get saved search
 - `PUT /api/saved-searches/{id}/` - Update saved search
@@ -170,6 +176,9 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `POST /api/saved-searches/{id}/apply/` - Returns `{ search_type, filters, name }` for the client to apply (Vue review queue uses `filters` from the list/detail payload directly).
 - `POST /api/saved-searches/{id}/set_default/` - Marks this preset as default for its `search_type` (clears other defaults of that type for the same user).
 - **Review queue (`search_type=application`)** — `filters` keys used by the SPA: `search`, `status`, `ordering`, `pending_review`, `needs_document_resubmit`, `assigned_to_me` (booleans). Legacy `status_name` is accepted when loading.
+- **`search_type=exchange_agreement`** — SPA keys: `search`, `status`, `agreement_type`, `program`, `partner`, `end_date_before`, `end_date_after`, `expiring_within_days`, `ordering`.
+- **`search_type=document`** — application document list: `application`, `type` (document type id), `valid` (`""` | `"true"` | `"false"`, maps to `is_valid`), `ordering`.
+- **`search_type=agreement_document`** — agreement repository list: `search`, `agreement`, `category`, `current_only` (boolean), `ordering`.
 
 #### Calendar Events
 - `GET /api/calendar/events/` - List calendar events
@@ -186,7 +195,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `GET /api/document-types/{id}/` - Get document type details
 
 #### Documents
-- `GET /api/documents/` - List documents (filtered by user permissions)
+- `GET /api/documents/` - List documents (filtered by user permissions). **Query filters:** `application` (UUID), `type` (document type id), `is_valid` (boolean), `ordering` (`created_at`, `validated_at`).
 - `POST /api/documents/` - Upload document
   - **Body:** `{application, type, file, ...}`
   - Supports file upload with validation
@@ -194,6 +203,9 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `GET /api/documents/{id}/preview/` - Stream the stored file for inline preview (JWT/session auth; same access rules as detail; `Content-Disposition: inline`)
 - `PUT /api/documents/{id}/` - Update document
 - `DELETE /api/documents/{id}/` - Delete document
+
+#### Agreement documents (staff repository)
+- `GET /api/agreement-documents/` - List files linked to exchange agreements (coordinator/admin). **Filters:** `agreement`, `category`, `current_only=true` (exclude superseded), `ordering`, plus `search`.
 
 #### Document Validation
 - `GET /api/document-validations/` - List document validations

@@ -1,5 +1,7 @@
+import { STAFF_SAVED_SEARCH_TYPE } from '@/utils/staffListSearchPresets'
+
 /** Saved-search `search_type` for coordinator review queue filters. */
-export const REVIEW_QUEUE_SEARCH_TYPE = 'application'
+export const REVIEW_QUEUE_SEARCH_TYPE = STAFF_SAVED_SEARCH_TYPE.APPLICATION_REVIEW_QUEUE
 
 const DEFAULT_ORDERING = '-submitted_at'
 
