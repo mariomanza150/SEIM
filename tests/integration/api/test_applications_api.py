@@ -9,10 +9,10 @@ These tests validate the applications API that the frontend uses for:
 - Application filtering and search
 """
 
-import pytest
 from django.urls import reverse
 from rest_framework import status
 
+from application_forms.models import FormSubmission, FormType
 from exchange.models import ApplicationStatus
 from tests.utils import APITestCase, PerformanceTestCase, WorkflowTestCase
 
@@ -58,11 +58,94 @@ class TestApplicationsAPI(APITestCase):
         response = self.client.post(self.applications_url, data, format="json")
         self.assertEqual(response.status_code, 201)
 
-        # Try as admin (should succeed)
+    def test_create_application_with_dynamic_form_fields(self):
+        """Test that df_* payload fields create a linked dynamic form submission."""
+        student = self.create_user(role="student")
+        form_type = FormType.objects.create(
+            name="Exchange Questions",
+            form_type="application",
+            schema={
+                "properties": {
+                    "motivation": {"type": "string", "title": "Motivation"},
+                    "academic_goals": {"type": "string", "title": "Academic Goals"},
+                },
+                "required": ["motivation", "academic_goals"],
+            },
+        )
+        program = self.create_program()
+        program.application_form = form_type
+        program.save(update_fields=["application_form"])
+        self.authenticate_user(student)
+
+        response = self.client.post(
+            self.applications_url,
+            {
+                "program": program.id,
+                "df_motivation": "I want to study abroad.",
+                "df_academic_goals": "Learn from a partner university.",
+            },
+            format="json",
+        )
+
+        self.assert_response_success(response, status.HTTP_201_CREATED)
+        application_id = response.data["id"]
+
+        submission = FormSubmission.objects.get(application_id=application_id)
+        self.assertEqual(submission.form_type, form_type)
+        self.assertEqual(submission.responses["motivation"], "I want to study abroad.")
+
+        detail_response = self.client.get(reverse("api:application-detail", args=[application_id]))
+        self.assert_response_success(detail_response, status.HTTP_200_OK)
+        self.assertEqual(
+            detail_response.data["dynamic_form_submission"]["responses"]["academic_goals"],
+            "Learn from a partner university.",
+        )
+
+    def test_create_application_with_invalid_dynamic_form_returns_error(self):
+        """Test that missing required dynamic fields fail the API request."""
+        student = self.create_user(role="student")
+        form_type = FormType.objects.create(
+            name="Exchange Questions",
+            form_type="application",
+            schema={
+                "properties": {
+                    "motivation": {"type": "string", "title": "Motivation"},
+                    "academic_goals": {"type": "string", "title": "Academic Goals"},
+                },
+                "required": ["motivation", "academic_goals"],
+            },
+        )
+        program = self.create_program()
+        program.application_form = form_type
+        program.save(update_fields=["application_form"])
+        self.authenticate_user(student)
+
+        response = self.client.post(
+            self.applications_url,
+            {
+                "program": program.id,
+                "df_motivation": "I want to study abroad.",
+            },
+            format="json",
+        )
+
+        self.assert_response_error(response, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("dynamic_form", response.data)
+
+        # Try as admin with complete payload (should succeed)
         admin = self.create_user(role="admin")
         self.authenticate_user(admin)
 
-        response = self.client.post(self.applications_url, data, format="json")
+        response = self.client.post(
+            self.applications_url,
+            {
+                "program": program.id,
+                "student": student.id,
+                "df_motivation": "I want to study abroad.",
+                "df_academic_goals": "Learn from a partner university.",
+            },
+            format="json",
+        )
         self.assertEqual(response.status_code, 201)
 
     def test_list_applications_student(self):
@@ -250,9 +333,8 @@ class TestApplicationsAPI(APITestCase):
 
         self.authenticate_user(student)
 
-        # Filter by status (use status ID)
-        draft_status = ApplicationStatus.objects.get(name="draft")
-        response = self.client.get(f"{self.applications_url}?status={draft_status.id}")
+        # Filter by status (ApplicationFilter.status matches status__name, iexact)
+        response = self.client.get(f"{self.applications_url}?status=draft")
         if response.status_code != 200:
             print(f"Response status: {response.status_code}")
             print(f"Response data: {getattr(response, 'data', None)}")
@@ -450,7 +532,6 @@ class TestApplicationsIntegration(WorkflowTestCase):
 class TestApplicationsPerformance(PerformanceTestCase):
     """Test applications API performance."""
 
-    @pytest.mark.performance
     def test_large_application_list_performance(self):
         """Test performance with large number of applications."""
         # Create many applications
@@ -472,7 +553,6 @@ class TestApplicationsPerformance(PerformanceTestCase):
         self.assertIn("results", response.data)
         self.assertIn("next", response.data)
 
-    @pytest.mark.performance
     def test_application_search_performance(self):
         """Test search performance with large dataset."""
         # Create applications with searchable content
