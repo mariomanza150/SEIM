@@ -1,62 +1,119 @@
-name: CI/CD Pipeline
+# CI: single entry point (lint, security, typecheck, backend, frontends, docker scan, perf on PR).
+# CD: see deploy.yml (GHCR + environments). Playwright E2E: e2e-tests.yml. Scheduled Selenium: e2e-selenium-scheduled.yml.
+# Postgres/Redis (CI): DB seim_test, user seimuser, password seimpass — keep in sync across jobs.
+
+name: CI
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [main, master, develop, feature/vue-migration]
   pull_request:
-    branches: [ main, master, develop ]
+    branches: [main, master, develop]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 env:
   DJANGO_SETTINGS_MODULE: seim.settings.test
   DJANGO_ENV: test
-  DEBUG: false
+  DEBUG: "false"
+  SECRET_KEY: ci-not-a-secret-key-for-tests-only
 
 jobs:
-  # Code Quality Checks
-  quality-check:
+  lint:
+    name: Lint (Ruff)
     runs-on: ubuntu-latest
-    name: Code Quality & Security
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-        
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-          
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-        
-    - name: Run code formatting check (ruff)
-      run: |
-        ruff check . --output-format=github
-        ruff format --check .
-        
-    - name: Run security check (bandit)
-      run: |
-        bandit -r . -f json -o bandit-report.json || true
-        bandit -r . -f txt
-        
-    - name: Run type checking (mypy)
-      run: |
-        mypy . --ignore-missing-imports || true
+      - uses: actions/checkout@v4
 
-  # Backend Tests
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Ruff check and format
+        run: |
+          ruff check . --output-format=github
+          ruff format --check .
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## Lint" >> "$GITHUB_STEP_SUMMARY"
+          echo "Ruff check + format complete." >> "$GITHUB_STEP_SUMMARY"
+
+  security:
+    name: Security (Bandit + pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit pip-audit
+          pip install -r requirements.txt
+
+      - name: Bandit (report artifact)
+        run: bandit -r . -f json -o bandit-report.json || true
+        continue-on-error: true
+
+      - name: Bandit (enforcing)
+        run: bandit -r . -ll
+
+      - name: pip-audit
+        run: pip-audit -r requirements.txt --desc on
+
+      - name: Upload Bandit report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-report
+          path: bandit-report.json
+          retention-days: 30
+
+  typecheck:
+    name: Typecheck (mypy, non-blocking)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: mypy
+        run: mypy . --ignore-missing-imports
+
   backend-tests:
+    name: Backend tests
     runs-on: ubuntu-latest
-    name: Backend Tests
     services:
       postgres:
         image: postgres:15
@@ -64,251 +121,184 @@ jobs:
           POSTGRES_DB: seim_test
           POSTGRES_USER: seimuser
           POSTGRES_PASSWORD: seimpass
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          - 5432:5432
-          
+
       redis:
         image: redis:7.2-alpine
+        ports:
+          - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          - 6379:6379
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-        
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-          
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-test.txt
-        
-    - name: Run database migrations
-      env:
-        DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
-        REDIS_URL: redis://localhost:6379/0
-      run: |
-        python manage.py migrate --run-syncdb
-        
-    - name: Run backend tests with coverage
-      env:
-        DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
-        REDIS_URL: redis://localhost:6379/0
-      run: |
-        pytest --cov=. --cov-report=xml --cov-report=html --cov-fail-under=80 \
-               --junitxml=test-results.xml \
-               tests/unit/ tests/integration/ \
-               -v --tb=short
-               
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: backend
-        name: backend-coverage
-        
-    - name: Upload test results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: test-results
-        path: test-results.xml
 
-  # Frontend Tests
-  frontend-tests:
-    runs-on: ubuntu-latest
-    name: Frontend Tests
-    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Run ESLint
-      run: npx eslint static/js/ tests/frontend/ --format=github
-      
-    - name: Run Prettier check
-      run: npx prettier --check static/js/ tests/frontend/
-      
-    - name: Run Jest tests
-      run: npx jest --config=jest.config.js --coverage --ci --watchAll=false
-      
-    - name: Upload frontend coverage
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/lcov.info
-        flags: frontend
-        name: frontend-coverage
+      - uses: actions/checkout@v4
 
-  # End-to-End Tests
-  e2e-tests:
-    runs-on: ubuntu-latest
-    name: E2E Tests
-    needs: [backend-tests]
-    services:
-      postgres:
-        image: postgres:15
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-test.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-test.txt
+
+      - name: Migrate
         env:
-          POSTGRES_DB: seim_test
-          POSTGRES_USER: seimuser
-          POSTGRES_PASSWORD: seimpass
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-          
-      redis:
-        image: redis:7.2-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-        
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        
-    - name: Install Python dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-dev.txt
-        
-    - name: Install Node dependencies
-      run: npm ci
-      
-    - name: Install Chrome
-      uses: browser-actions/setup-chrome@v1
-      
-    - name: Run database migrations
-      env:
-        DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
-        REDIS_URL: redis://localhost:6379/0
-      run: |
-        python manage.py migrate --run-syncdb
-        python manage.py create_initial_data
-        
-    - name: Start Django server
-      env:
-        DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
-        REDIS_URL: redis://localhost:6379/0
-      run: |
-        python manage.py runserver 0.0.0.0:8000 &
-        sleep 10
-        
-    - name: Run Selenium E2E tests
-      run: |
-        python -m pytest tests/e2e/ tests/selenium/ \
-               --junitxml=e2e-test-results.xml \
-               -v --tb=short
-               
-    - name: Upload E2E test results
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: e2e-test-results
-        path: e2e-test-results.xml
+          DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
+          REDIS_URL: redis://localhost:6379/0
+        run: python manage.py migrate --noinput
 
-  # Docker Build & Security Scan
+      - name: Pytest (unit + integration)
+        env:
+          DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          pytest --cov=. --cov-report=xml --cov-report=html --cov-fail-under=80 \
+            --junitxml=test-results.xml \
+            tests/unit/ tests/integration/ \
+            -v --tb=short
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: backend
+          name: backend-coverage
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage-xml
+          path: coverage.xml
+          retention-days: 14
+
+      - name: Upload JUnit
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: test-results.xml
+          retention-days: 14
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## Backend tests" >> "$GITHUB_STEP_SUMMARY"
+          echo "JUnit: artifact **backend-test-results**. Coverage: Codecov + **backend-coverage-xml**." >> "$GITHUB_STEP_SUMMARY"
+
+  frontend-webpack:
+    name: Frontend (webpack / Jest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Prettier
+        run: npm run format:check
+
+      - name: Jest
+        run: npm run test:ci
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          flags: frontend-webpack
+          name: frontend-webpack-coverage
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## Webpack frontend" >> "$GITHUB_STEP_SUMMARY"
+          echo "ESLint, Prettier, Jest (CI) complete." >> "$GITHUB_STEP_SUMMARY"
+
+  frontend-vue:
+    name: Frontend (Vue / Vitest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend-vue
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: frontend-vue/package-lock.json
+
+      - run: npm ci
+
+      - name: Vitest
+        run: npm run test:run
+
+      - name: Vite build
+        run: npm run build
+
+      - name: Job summary
+        if: always()
+        run: |
+          echo "## Vue frontend" >> "$GITHUB_STEP_SUMMARY"
+          echo "Vitest + production build complete." >> "$GITHUB_STEP_SUMMARY"
+
   docker-security:
+    name: Docker image + Trivy
     runs-on: ubuntu-latest
-    name: Docker Security Scan
-    needs: [quality-check, backend-tests, frontend-tests]
-    
+    needs: [lint, security, backend-tests, frontend-webpack, frontend-vue]
+    permissions:
+      contents: read
+      security-events: write
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Build Docker image
-      run: docker build -t seim:test .
-      
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: 'seim:test'
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v2
-      with:
-        sarif_file: 'trivy-results.sarif'
+      - uses: actions/checkout@v4
 
-  # Deployment (only on main branch)
-  deploy:
-    runs-on: ubuntu-latest
-    name: Deploy to Production
-    needs: [quality-check, backend-tests, frontend-tests, e2e-tests, docker-security]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Deploy to production
-      run: |
-        echo "🚀 Deploying to production..."
-        # Add your deployment commands here
-        # Example: kubectl apply, docker-compose up, etc.
-        echo "✅ Deployment completed successfully!"
-        
-    - name: Notify deployment status
-      run: |
-        echo "📢 Production deployment notification"
-        # Add notification logic (Slack, email, etc.)
+      - name: Build image
+        run: docker build -t seim:ci .
 
-  # Performance Tests
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@v0.29.0
+        with:
+          image-ref: seim:ci
+          format: sarif
+          output: trivy-results.sarif
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
   performance-tests:
+    name: Performance (Locust, PR only)
     runs-on: ubuntu-latest
-    name: Performance Tests
     needs: [backend-tests]
     if: github.event_name == 'pull_request'
-    
     services:
       postgres:
         image: postgres:15
@@ -316,65 +306,66 @@ jobs:
           POSTGRES_DB: seim_test
           POSTGRES_USER: seimuser
           POSTGRES_PASSWORD: seimpass
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          - 5432:5432
-          
+
       redis:
         image: redis:7.2-alpine
+        ports:
+          - 6379:6379
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          - 6379:6379
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-        
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements-test.txt
-        pip install locust
-        
-    - name: Run database migrations
-      env:
-        DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
-        REDIS_URL: redis://localhost:6379/0
-      run: |
-        python manage.py migrate --run-syncdb
-        python manage.py create_initial_data
-        
-    - name: Start Django server
-      env:
-        DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
-        REDIS_URL: redis://localhost:6379/0
-      run: |
-        python manage.py runserver 0.0.0.0:8000 &
-        sleep 10
-        
-    - name: Run performance tests
-      run: |
-        locust -f tests/performance/locustfile.py \
-               --host=http://localhost:8000 \
-               --users=10 --spawn-rate=2 --run-time=30s \
-               --headless --html=performance-report.html
-               
-    - name: Upload performance report
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: performance-report
-        path: performance-report.html
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-test.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-test.txt
+          pip install locust
+
+      - name: Migrate and seed
+        env:
+          DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          python manage.py migrate --noinput
+          python manage.py create_initial_data
+
+      - name: Start server
+        env:
+          DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          python manage.py runserver 0.0.0.0:8000 &
+          sleep 10
+
+      - name: Locust
+        run: |
+          locust -f tests/performance/locustfile.py \
+            --host=http://localhost:8000 \
+            --users=10 --spawn-rate=2 --run-time=30s \
+            --headless --html=performance-report.html
+
+      - name: Upload report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: performance-report
+          path: performance-report.html
+          retention-days: 14
