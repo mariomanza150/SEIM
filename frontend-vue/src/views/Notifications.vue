@@ -182,10 +182,10 @@
                 type="button"
                 class="page-link"
                 :disabled="!pagination.previous"
-                :aria-label="t('applicationsPage.previous')"
+                :aria-label="t('notifications.previous')"
                 @click="goToPage(pagination.currentPage - 1)"
               >
-                {{ t('applicationsPage.previous') }}
+                {{ t('notifications.previous') }}
               </button>
             </li>
             <li
@@ -209,10 +209,10 @@
                 type="button"
                 class="page-link"
                 :disabled="!pagination.next"
-                :aria-label="t('applicationsPage.next')"
+                :aria-label="t('notifications.next')"
                 @click="goToPage(pagination.currentPage + 1)"
               >
-                {{ t('applicationsPage.next') }}
+                {{ t('notifications.next') }}
               </button>
             </li>
           </ul>
@@ -369,7 +369,7 @@ function formatCategory(category) {
 }
 
 function formatDate(dateString) {
-  if (!dateString) return t('applicationsPage.notAvailable')
+  if (!dateString) return t('notifications.notAvailable')
   const date = new Date(dateString)
   const now = new Date()
   const diffMs = now - date
