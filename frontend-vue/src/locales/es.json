@@ -725,6 +725,7 @@
     "filterPrograms": "Filtrar programas",
     "clearFilters": "Limpiar filtros",
     "search": "Buscar",
+    "programSearchPlaceholder": "Buscar programas…",
     "sortBy": "Ordenar por",
     "sortNameAZ": "Nombre (A–Z)",
     "sortStartNewest": "Fecha de inicio (más reciente primero)",

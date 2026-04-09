@@ -725,6 +725,7 @@
     "filterPrograms": "Filter programs",
     "clearFilters": "Clear filters",
     "search": "Search",
+    "programSearchPlaceholder": "Search programs…",
     "sortBy": "Sort by",
     "sortNameAZ": "Name (A–Z)",
     "sortStartNewest": "Start date (newest first)",

@@ -68,7 +68,7 @@
                             v-model="programFilters.search"
                             type="search"
                             class="form-control form-control-sm"
-                            :placeholder="t('applicationsPage.searchPlaceholder')"
+                            :placeholder="t('applicationFormPage.programSearchPlaceholder')"
                             autocomplete="off"
                           >
                         </div>

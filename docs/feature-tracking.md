@@ -78,6 +78,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: Document detail view | `frontend-vue` | Implemented | 2026-04-09 | `documentDetailPage.*` in locales; `DocumentDetail.vue` breadcrumbs via `route.names`, preview/review/comments/staff actions, quick actions, toasts; locale-aware `formatDateTime`; preview context lines translated. Vitest: `DocumentDetail.spec.js`. |
 | Vue i18n: Application detail view | `frontend-vue` | Implemented | 2026-04-09 | `applicationDetailPage.*` + reuse `applicationsPage.status` / `readinessLabel` / `notAvailable`; `ApplicationDetail.vue` program/checklist/timeline/comments/sidebar/docs/coordinator review; locale dates; translated confirms/toasts. Vitest: `ApplicationDetail.spec.js` (+ i18n, timeline mock). |
 | Vue i18n: Application form (new + edit) | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.*` in locales; `ApplicationForm.vue` breadcrumbs/headers, program filters & presets UI, window messages, dynamic form chrome, sidebar tips/requirements, actions; locale `formatDate` / duration; translated validation + toasts. Vitest: `ApplicationForm.spec.js` + i18n. |
+| Vue i18n: Application form program filter search placeholder | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.programSearchPlaceholder` (en/es); program filter search input in `ApplicationForm.vue` (was `applicationsPage.searchPlaceholder`). Vitest: `ApplicationForm.spec.js`. |
 | Vue i18n: `useStaffSavedPresets` (shared staff presets) | `frontend-vue` | Implemented | 2026-04-09 | `savedPresets.*` in locales; composable uses `useI18n` for save/remove/default toasts, errors, and `confirmRemove`. Vitest: `useStaffSavedPresets.spec.js`. |
 | Vue i18n: Coordinator review queue | `frontend-vue` | Implemented | 2026-04-09 | `reviewQueuePage.*` + reuse `applicationsPage` / `documentsPage` / `savedPresets` / `route.names`; `CoordinatorReviewQueue.vue` filters, presets, table, pagination, locale dates + `formatStatus`. Vitest: `CoordinatorReviewQueue.spec.js`. |
 | Vue i18n: Coordinator workload view | `frontend-vue` | Implemented | 2026-04-09 | `workloadPage.*` + reuse `applicationsPage.status` / `route.names`; `CoordinatorWorkload.vue` breadcrumbs, subtitle, cards, admin table, loading/error. Vitest: `CoordinatorWorkload.spec.js`. |
@@ -86,7 +87,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: Staff agreement documents view | `frontend-vue` | Implemented | 2026-04-08 | `staffAgreementDocumentsPage.*` + reuse `documentsPage` (presets, clear, pagination, loading spinner, download aria) + `exchangeAgreementsPage` (search/sort labels, agreement “Any”); `route.names.StaffAgreementDocuments`; category enum keys; locale dates. Vitest: `StaffAgreementDocuments.spec.js`. |
 | Vue i18n: Program compare view | `frontend-vue` | Implemented | 2026-04-09 | `programComparePage.*` + `route.names` + `applicationsPage.newApplication` (CTA); reuse `reviewQueuePage.emDash`; locale `formatDate`. Vitest: `ProgramCompare.spec.js` (loading spinner aria). |
 | Vue i18n: Profile view | `frontend-vue` | Implemented | 2026-04-09 | `profilePage.*` in `en.json` / `es.json`; reuse `route.names.Profile` / `Dashboard`, `login.emailLabel`, `applicationFormPage.cancel` / `language` / `gpaPlaceholder` / `languagePlaceholder`; `Profile.vue` breadcrumbs, form, tip card, save/load toasts. Vitest: `Profile.spec.js`. |
-| Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-09 | `Notifications.vue`: `notifications.*` (filters, empty, pagination, toasts) + reuse `route.names`, `applicationFormPage` / `applicationsPage` where applicable. Vitest: `Notifications.spec.js`. |
+| Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-09 | `Notifications.vue`: `notifications.*` (filters, empty, pagination, toasts) + `route.names`. Vitest: `Notifications.spec.js`. |
 | Vue i18n: DocumentUpload component | `frontend-vue` | Implemented | 2026-04-09 | `documentUpload.*` + `documentDetailPage.labelDocumentType`; `DocumentUpload.vue` on application detail. Vitest: `DocumentUpload.spec.js`. |
 | Vue i18n: Browser tab titles (router) | `frontend-vue` | Implemented | 2026-04-09 | `resolveDocumentTitle` (`utils/documentTitle.js`): `route.names.*` + `route.notFoundBrowserTitle` + `route.fallbackTitle`; router `beforeEach`; Settings locale change refreshes tab title. Vitest: `documentTitle.spec.js`. |
 | Vue i18n: Settings page (full form + sidebar) | `frontend-vue` | Implemented | 2026-04-09 | `Settings.vue`: breadcrumbs, sections, theme/font/digest/privacy, `settings.notify.*` checkboxes, toasts; reuses `applicationFormPage.cancel`, `route.names`. Vitest: `Settings.spec.js`. |
@@ -106,7 +107,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: ApplicationForm program filter search placeholder | `frontend-vue` | In progress | 2026-04-09 | loop |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -140,7 +141,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** spinner + **Notifications** page strings under `notifications.*` (filters, clear, loading, pagination, date fallback). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** spinner + **Notifications** (`notifications.*`) + **ApplicationForm** program filter placeholder under `applicationFormPage.*`. **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -180,5 +181,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Notifications clear-filters i18n key — completed)*  
+*Last updated: 2026-04-09 (loop: ApplicationForm programSearchPlaceholder i18n — completed)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
