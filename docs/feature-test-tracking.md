@@ -48,7 +48,7 @@ _Map each row to one or more rows in `docs/feature-tracking.md` § **IMPLEMENTED
 | `calendar-ics` | Calendar events + deadlines + ICS subscribe | Done | Partial | Partial | 2026-04-09 | **Unit (green):** `tests/unit/exchange/test_calendar_api.py` (21 tests: events list filters, subscribe token, `.ics` — Docker + `DJANGO_SETTINGS_MODULE=seim.settings.test`). Vue: `DeadlinesCalendar.spec.js`. Calendar saved-filter (de)serialization: `staffListSearchPresets.spec.js` (see `coord-review`). **Smoke/Browser:** host Playwright; Dashboard **Deadlines** / SPA `/calendar` via `test_vue_ui.py` or manual. |
 | `data-management` | Staff data management + bulk student import | — | — | — | | |
 | `settings-ui` | User settings (appearance, notifications, i18n) | Partial | — | — | 2026-04-09 | Vitest `frontend-vue/src/views/Settings.spec.js` (load/save, UI language, staff link to notification routing). Playwright not recorded. |
-| `readiness-compare` | Application readiness, program filters, compare | — | — | — | | |
+| `readiness-compare` | Application readiness, program filters, compare | Done | Partial | Partial | 2026-04-09 | **Unit (green):** `tests/unit/exchange/test_application_readiness.py` + `tests/unit/exchange/test_filters.py::TestProgramFilter` (11 tests, Docker); Vue `applicationReadiness.spec.js`, `applicationProgramFilterPresets.spec.js`, `programCompareQuery.spec.js`, `ProgramCompare.spec.js` (7 tests). Overlap: full `test_filters.py` / `ApplicationDetail` specs also listed under `coord-review` / `programs-applications`. **Smoke/Browser:** host Playwright `test_vue_ui.py` / new-application & compare flows. |
 
 _Add rows for any **IN PROGRESS** or high-risk **IMPLEMENTED** feature from the tracker that is not represented above._
 
@@ -70,4 +70,4 @@ _Use these as hints when filling the **Browser** column; replace with exact `tes
 
 ---
 
-*Last updated: 2026-04-09 — `vue-portal` Vitest bundle verified (31 tests). Prior: notification routing schema v8 note in matrix.*
+*Last updated: 2026-04-09 — `readiness-compare` verified (11 pytest + 7 Vitest). Prior: `vue-portal` bundle.*
