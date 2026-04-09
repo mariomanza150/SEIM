@@ -184,7 +184,7 @@
                                             <small class="text-muted">{{ document.document_type|title }} • {{ document.uploaded_at|date:"M d, Y H:i" }}</small>
                                         </div>
                                         <div class="btn-group btn-group-sm">
-                                            <a href="{{ document.file.url }}" class="btn btn-outline-primary" target="_blank">
+                                            <a href="{{ document.file.url }}" class="btn btn-outline-primary" target="_blank" rel="noopener noreferrer">
                                                 <i class="bi bi-eye"></i> View
                                             </a>
                                             <button class="btn btn-outline-danger" onclick="deleteDocument({{ document.id }})">

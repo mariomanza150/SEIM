@@ -89,4 +89,45 @@ describe('StaffAgreementDocuments', () => {
       i18n.global.t('staffAgreementDocumentsPage.presetNamePlaceholder'),
     )
   })
+
+  it('file download link uses noopener noreferrer', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/saved-searches/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/exchange-agreements/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/agreement-documents/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'ad-1',
+                title: 'Signed',
+                category: 'signed_copy',
+                file: '/media/agreements/signed.pdf',
+                created_at: '2026-01-01T00:00:00Z',
+                agreement: null,
+              },
+            ],
+            count: 1,
+            next: null,
+            previous: null,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+    const wrapper = mount(StaffAgreementDocuments, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const a = wrapper.find('a[target="_blank"]')
+    expect(a.exists()).toBe(true)
+    expect(a.attributes('rel')).toBe('noopener noreferrer')
+  })
 })

@@ -139,7 +139,8 @@
                                     <div class="btn-group" role="group">
                                         <a href="{{ document.file.url }}" 
                                            class="btn btn-outline-secondary btn-sm"
-                                           target="_blank">
+                                           target="_blank"
+                                           rel="noopener noreferrer">
                                             <i class="bi bi-download"></i> Download
                                         </a>
                                         {% if document.status == 'rejected' or document.status == 'resubmission_required' %}
@@ -437,7 +438,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <i class="bi bi-eye"></i> View Details
                                 </a>
                                 <div class="btn-group" role="group">
-                                    <a href="${document.file_url}" class="btn btn-outline-secondary btn-sm" target="_blank">
+                                    <a href="${document.file_url}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener noreferrer">
                                         <i class="bi bi-download"></i> Download
                                     </a>
                                     ${getDocumentActionButtons(document)}
