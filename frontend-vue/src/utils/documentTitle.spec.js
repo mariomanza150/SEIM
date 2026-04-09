@@ -96,6 +96,8 @@ describe('syncAppSocialMeta', () => {
       i18n.global.t('appMeta.socialTitle'),
     )
     expect(document.querySelector('meta[property="og:type"]').getAttribute('content')).toBe('website')
+    expect(document.querySelector('meta[property="og:image"]').getAttribute('content')).toMatch(/vite\.svg$/)
+    expect(document.querySelector('meta[name="twitter:image"]').getAttribute('content')).toMatch(/vite\.svg$/)
   })
 
   it('uses tab title for named routes', () => {

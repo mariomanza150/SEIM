@@ -95,6 +95,14 @@
 
         try {
           if (typeof window !== 'undefined' && window.location && window.location.href) {
+            var shareImg = new URL('vite.svg', window.location.href).href
+            upsertMeta('property', 'og:image', shareImg)
+            upsertMeta('name', 'twitter:image', shareImg)
+          }
+        } catch (e) {}
+
+        try {
+          if (typeof window !== 'undefined' && window.location && window.location.href) {
             var pageUrl = window.location.href.split('#')[0]
             upsertLinkRel('canonical', pageUrl)
             upsertMeta('property', 'og:url', pageUrl)

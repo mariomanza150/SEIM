@@ -29,6 +29,18 @@ export function syncAppMetaDescription(t) {
   el.setAttribute('content', t('appMeta.metaDescription'))
 }
 
+/** Absolute URL for default link-preview art (`/vite.svg` next to the current path). */
+function defaultShareImageAbsoluteUrl() {
+  if (typeof window === 'undefined' || !window.location?.href) return ''
+  try {
+    const href = window.location.href
+    if (href.startsWith('about:')) return ''
+    return new URL('vite.svg', href).href
+  } catch {
+    return ''
+  }
+}
+
 function upsertHeadMeta(byAttr, key, content) {
   if (typeof document === 'undefined') return
   let el = document.head.querySelector(`meta[${byAttr}="${key}"]`)
@@ -62,6 +74,12 @@ export function syncAppSocialMeta(t, routeLike = {}) {
   upsertHeadMeta('name', 'twitter:card', 'summary')
   upsertHeadMeta('name', 'twitter:title', shareTitle)
   upsertHeadMeta('name', 'twitter:description', desc)
+
+  const shareImg = defaultShareImageAbsoluteUrl()
+  if (shareImg) {
+    upsertHeadMeta('property', 'og:image', shareImg)
+    upsertHeadMeta('name', 'twitter:image', shareImg)
+  }
 }
 
 /**

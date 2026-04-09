@@ -141,5 +141,11 @@ describe('frontend-vue/index.html', () => {
     expect(doc.querySelector('meta[property="og:title"]').getAttribute('content')).toBe(es.appMeta.socialTitle)
     expect(doc.querySelector('meta[property="og:locale"]').getAttribute('content')).toBe('es_ES')
     expect(doc.querySelector('meta[name="twitter:card"]').getAttribute('content')).toBe('summary')
+    expect(doc.querySelector('meta[property="og:image"]').getAttribute('content')).toBe(
+      'http://localhost/vite.svg',
+    )
+    expect(doc.querySelector('meta[name="twitter:image"]').getAttribute('content')).toBe(
+      'http://localhost/vite.svg',
+    )
   })
 })
