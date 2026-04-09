@@ -181,16 +181,18 @@ class AnalyticsViewsTestCase(TestCase):
     @patch('analytics.views.AnalyticsService.get_program_statistics')
     def test_program_statistics_api(self, mock_get_stats):
         """Test program statistics API."""
-        mock_get_stats.return_value = {
-            'total_programs': 5,
-            'active_programs': 3,
-            'popular_programs': []
-        }
+        mock_get_stats.return_value = [
+            {"name": "Alpha", "total_applications": 2, "is_active": True},
+            {"name": "Beta", "total_applications": 0, "is_active": True},
+            {"name": "Gamma", "total_applications": 1, "is_active": False},
+        ]
 
         self.api_client.force_authenticate(user=self.coordinator)
         response = self.api_client.get(reverse('analytics:api_program_statistics'))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('total_programs', response.data)
+        self.assertEqual(response.data["total_programs"], 3)
+        self.assertEqual(response.data["active_programs"], 2)
+        self.assertEqual(len(response.data["program_performance"]), 3)
 
     @patch('analytics.views.AnalyticsService.get_user_activity')
     def test_user_activity_api(self, mock_get_activity):

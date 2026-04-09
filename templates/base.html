@@ -504,7 +504,7 @@ function updateConnectionStatus(status) {
         window.API_ENDPOINTS = {
             // Authentication
             token: '/api/accounts/login/',
-            refresh: '{% url "token_refresh" %}',
+            refresh: '{% url "api:token_refresh" %}',
             register: '{% url "accounts:register" %}',
             passwordReset: '{% url "accounts:password-reset" %}',
             logout: '{% url "accounts:logout" %}',

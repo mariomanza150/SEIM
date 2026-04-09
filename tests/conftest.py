@@ -441,6 +441,15 @@ def user_coordinator(coordinator_user):
 
 
 @pytest.fixture
+def another_user(db_with_roles):
+    """Second distinct user for distinct-count / multi-user tests."""
+    student_role = db_with_roles["roles"]["student"]
+    user = UserFactory()
+    user.roles.add(student_role)
+    return user
+
+
+@pytest.fixture
 def admin_client(api_client, admin_user):
     """API client authenticated as admin."""
     refresh = RefreshToken.for_user(admin_user)

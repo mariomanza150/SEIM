@@ -591,17 +591,18 @@ class TestAnalyticsService:
     
     def test_analytics_cache_timeout(self, applications):
         """Test that analytics cache has proper timeout."""
-        # Get stats (should cache for 30 min)
+        from django.conf import settings
+
+        if "DummyCache" in settings.CACHES["default"]["BACKEND"]:
+            pytest.skip("Test settings use DummyCache; persistence is not asserted.")
+
         AnalyticsService.get_application_statistics()
-        
-        # Cache key should exist
+
         from core.cache import generate_cache_key
-        cache_key = generate_cache_key('analytics', 'get_application_statistics')
-        
         from django.core.cache import cache
+
+        cache_key = generate_cache_key("analytics:get_application_statistics")
         cached_value = cache.get(cache_key)
-        
-        # Should be cached
         assert cached_value is not None
     
     def test_get_dashboard_metrics_structure(self, applications):

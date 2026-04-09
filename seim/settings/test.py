@@ -4,6 +4,7 @@ Test settings for SEIM project.
 This file contains settings specific to the test environment.
 """
 
+import copy
 import os
 import tempfile
 
@@ -69,6 +70,15 @@ DISABLED_APPS = [
 ]
 
 INSTALLED_APPS = [app for app in INSTALLED_APPS if app not in DISABLED_APPS and not app.startswith('wagtail')]
+
+# Wagtail is stripped from INSTALLED_APPS but base TEMPLATES still reference its context
+# processors; remove them so Django template rendering (e.g. admin dashboard) works in tests.
+TEMPLATES = copy.deepcopy(TEMPLATES)
+for _tpl in TEMPLATES:
+    processors = _tpl.get("OPTIONS", {}).get("context_processors", [])
+    _tpl.setdefault("OPTIONS", {})["context_processors"] = [
+        p for p in processors if not p.startswith("wagtail.")
+    ]
 
 # Use console email backend for tests
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
