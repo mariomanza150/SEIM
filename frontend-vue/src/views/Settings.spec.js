@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import Settings from './Settings.vue'
 import api from '@/services/api'
@@ -65,6 +65,45 @@ describe('Settings', () => {
   afterEach(() => {
     setAppLocale('en')
     localStorage.clear()
+  })
+
+  it('exposes accessible loading spinner label while fetching', async () => {
+    let resolveGet
+    api.get.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveGet = resolve
+        }),
+    )
+    const wrapper = mountView()
+    const spinner = wrapper.find('.spinner-border')
+    expect(spinner.exists()).toBe(true)
+    expect(spinner.attributes('role')).toBe('status')
+    expect(spinner.attributes('aria-label')).toBe(i18n.global.t('settings.loading'))
+    resolveGet({ data: defaultSettingsPayload })
+    await flushPromises()
+    expect(wrapper.find('.spinner-border').exists()).toBe(false)
+  })
+
+  it('binds label[for], name, and autocomplete on appearance and digest selects', async () => {
+    api.get.mockResolvedValue({ data: defaultSettingsPayload })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="settings-theme"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('label[for="ui_language"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="settings-ui-language"]').attributes('name')).toBe('ui_language')
+    expect(wrapper.find('[data-testid="settings-ui-language"]').attributes('autocomplete')).toBe('off')
+    expect(wrapper.find('label[for="settings-theme"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="settings-theme"]').attributes('name')).toBe('theme')
+    expect(wrapper.find('[data-testid="settings-theme"]').attributes('autocomplete')).toBe('off')
+    expect(wrapper.find('label[for="settings-font-size"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="settings-font-size"]').attributes('name')).toBe('font_size')
+    expect(wrapper.find('label[for="notification_digest_frequency"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="settings-digest-frequency"]').attributes('name')).toBe(
+      'notification_digest_frequency',
+    )
+    expect(wrapper.find('[data-testid="settings-digest-frequency"]').attributes('autocomplete')).toBe('off')
   })
 
   it('loads user settings into the form', async () => {

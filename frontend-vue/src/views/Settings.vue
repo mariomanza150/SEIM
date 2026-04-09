@@ -18,7 +18,11 @@
       </div>
 
       <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status"></div>
+        <div
+          class="spinner-border text-primary"
+          role="status"
+          :aria-label="t('settings.loading')"
+        ></div>
         <p class="mt-3 text-muted">{{ t('settings.loading') }}</p>
       </div>
 
@@ -35,6 +39,8 @@
                       id="ui_language"
                       v-model="locale"
                       class="form-select"
+                      name="ui_language"
+                      autocomplete="off"
                       data-testid="settings-ui-language"
                       @change="onLocaleChange"
                     >
@@ -46,16 +52,30 @@
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <label class="form-label">{{ t('settings.theme') }}</label>
-                    <select v-model="form.theme" class="form-select" data-testid="settings-theme">
+                    <label class="form-label" for="settings-theme">{{ t('settings.theme') }}</label>
+                    <select
+                      id="settings-theme"
+                      v-model="form.theme"
+                      class="form-select"
+                      name="theme"
+                      autocomplete="off"
+                      data-testid="settings-theme"
+                    >
                       <option value="light">{{ t('settings.themeLight') }}</option>
                       <option value="dark">{{ t('settings.themeDark') }}</option>
                       <option value="auto">{{ t('settings.themeAuto') }}</option>
                     </select>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label">{{ t('settings.fontSize') }}</label>
-                    <select v-model="form.font_size" class="form-select" data-testid="settings-font-size">
+                    <label class="form-label" for="settings-font-size">{{ t('settings.fontSize') }}</label>
+                    <select
+                      id="settings-font-size"
+                      v-model="form.font_size"
+                      class="form-select"
+                      name="font_size"
+                      autocomplete="off"
+                      data-testid="settings-font-size"
+                    >
                       <option value="normal">{{ t('settings.fontNormal') }}</option>
                       <option value="large">{{ t('settings.fontLarge') }}</option>
                       <option value="x-large">{{ t('settings.fontXLarge') }}</option>
@@ -136,6 +156,8 @@
                       id="notification_digest_frequency"
                       v-model="form.notification_digest_frequency"
                       class="form-select"
+                      name="notification_digest_frequency"
+                      autocomplete="off"
                       data-testid="settings-digest-frequency"
                     >
                       <option value="off">{{ t('settings.digestOff') }}</option>
@@ -207,7 +229,10 @@
                     :disabled="saving"
                     data-testid="save-settings-btn"
                   >
-                    <span v-if="saving"><span class="spinner-border spinner-border-sm me-2"></span>{{ t('settings.saving') }}</span>
+                    <span v-if="saving">
+                      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                      {{ t('settings.saving') }}
+                    </span>
                     <span v-else><i class="bi bi-check-circle me-2"></i>{{ t('settings.saveButton') }}</span>
                   </button>
                 </div>
