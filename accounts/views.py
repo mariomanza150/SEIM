@@ -108,6 +108,14 @@ class LoginView(generics.GenericAPIView):
     permission_classes = []
     throttle_classes = [BurstRateThrottle]  # Strict limit to prevent brute force
 
+    def get_authenticate_header(self, request):
+        """Return a JWT challenge so ``AuthenticationFailed`` stays HTTP 401.
+
+        With ``authentication_classes = []``, DRF's default has no challenge header and
+        coerces ``AuthenticationFailed`` to 403; wrong password must be 401 for clients/tests.
+        """
+        return JWTAuthentication().authenticate_header(request)
+
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
