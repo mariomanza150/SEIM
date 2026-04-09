@@ -29,10 +29,11 @@ class TestNotificationRoutingReferenceAPI(APITestCase):
         self.authenticate_user(coordinator)
         response = self.client.get(self.url)
         self.assert_response_success(response)
-        self.assertEqual(response.data["schema_version"], 1)
+        self.assertEqual(response.data["schema_version"], 2)
         cats = response.data["settings_categories"]
         self.assertIn("applications", cats)
         self.assertIn("system", cats)
+        self.assertIn("typical_triggers", cats["documents"])
         self.assertEqual(
             cats["applications"]["email_user_settings_field"],
             "email_applications",

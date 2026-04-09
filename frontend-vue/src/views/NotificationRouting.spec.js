@@ -16,11 +16,12 @@ vi.mock('@/composables/useToast', () => ({
 }))
 
 const mockPayload = {
-  schema_version: 1,
+  schema_version: 2,
   settings_categories: {
     applications: {
       email_user_settings_field: 'email_applications',
       inapp_user_settings_field: 'inapp_applications',
+      typical_triggers: 'Application lifecycle (mock).',
     },
     system: {
       email_user_settings_field: 'email_system',
@@ -66,5 +67,6 @@ describe('NotificationRouting', () => {
     expect(wrapper.text()).toContain('email_applications')
     expect(wrapper.text()).toContain('application_deadline')
     expect(wrapper.text()).toContain('Digest routing')
+    expect(wrapper.text()).toContain('Application lifecycle (mock).')
   })
 })
