@@ -1,8 +1,10 @@
 /**
  * Vue Router Configuration
  */
+import { nextTick } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { focusMainContent } from '@/utils/a11y'
 
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
@@ -20,6 +22,7 @@ const DocumentDetail = () => import('@/views/DocumentDetail.vue')
 const Notifications = () => import('@/views/Notifications.vue')
 const Profile = () => import('@/views/Profile.vue')
 const Settings = () => import('@/views/Settings.vue')
+const DeadlinesCalendar = () => import('@/views/DeadlinesCalendar.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
 const routes = [
@@ -183,6 +186,15 @@ const routes = [
     },
   },
   {
+    path: '/calendar',
+    name: 'DeadlinesCalendar',
+    component: DeadlinesCalendar,
+    meta: {
+      requiresAuth: true,
+      title: 'Deadlines & milestones - SEIM',
+    },
+  },
+  {
     path: '/preferences',
     redirect: {
       name: 'Settings',
@@ -251,6 +263,12 @@ router.beforeEach(async (to, from, next) => {
       next()
     }
   }
+})
+
+router.afterEach(() => {
+  nextTick(() => {
+    focusMainContent()
+  })
 })
 
 export default router
