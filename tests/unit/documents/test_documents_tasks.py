@@ -4,15 +4,18 @@ Comprehensive tests for document tasks.
 Tests for virus scanning and document processing Celery tasks.
 """
 
-import pytest
+from datetime import date
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import MagicMock, Mock, patch
+
+import pytest
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 
-from documents.models import Document, DocumentValidation
+from documents.models import Document, DocumentType, DocumentValidation
 from documents.tasks import scan_document_virus
+from exchange.models import Application, ApplicationStatus, Program
 
 User = get_user_model()
 
@@ -30,20 +33,41 @@ def user(db):
 @pytest.fixture
 def document(user, db):
     """Create a test document."""
+    program = Program.objects.create(
+        name="Task Test Program",
+        description="x",
+        start_date=date(2024, 1, 1),
+        end_date=date(2024, 6, 30),
+        is_active=True,
+    )
+    status, _ = ApplicationStatus.objects.get_or_create(
+        name="draft", defaults={"order": 1}
+    )
+    application = Application.objects.create(
+        student=user, program=program, status=status
+    )
+    doc_type = DocumentType.objects.create(name="ScanTestDoc", description="")
     file = SimpleUploadedFile(
         "test.pdf",
         b"PDF file content",
-        content_type="application/pdf"
+        content_type="application/pdf",
     )
-    
-    doc = Document.objects.create(
-        name="Test Document",
+    return Document.objects.create(
+        application=application,
+        type=doc_type,
         file=file,
-        file_type="application/pdf",
         uploaded_by=user,
-        is_valid=False
+        is_valid=False,
     )
-    return doc
+
+
+@pytest.fixture
+def validator_user(db):
+    return User.objects.create_user(
+        username="validatoruser",
+        email="validator@example.com",
+        password="testpass123",
+    )
 
 
 @pytest.mark.django_db
@@ -51,11 +75,11 @@ def document(user, db):
 class TestScanDocumentVirusTask:
     """Test virus scanning Celery task."""
     
-    def test_scan_document_virus_clean_file(self, document):
+    def test_scan_document_virus_clean_file(self, document, validator_user):
         """Test scanning a clean file."""
-        validator_id = "validator_001"
+        validator_id = str(validator_user.id)
         
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             # Mock clean scan result
             mock_scan.return_value = (True, None)
             
@@ -79,12 +103,12 @@ class TestScanDocumentVirusTask:
             assert validation.result == "valid"
             assert "Scanned by async task" in validation.details
     
-    def test_scan_document_virus_infected_file(self, document):
+    def test_scan_document_virus_infected_file(self, document, validator_user):
         """Test scanning an infected file."""
-        validator_id = "validator_002"
+        validator_id = str(validator_user.id)
         threat_name = "EICAR-Test-File"
         
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             # Mock infected file result
             mock_scan.return_value = (False, threat_name)
             
@@ -108,14 +132,13 @@ class TestScanDocumentVirusTask:
             assert validation.result == "infected"
             assert threat_name in validation.details
     
-    def test_scan_document_virus_file_not_found(self, document):
+    def test_scan_document_virus_file_not_found(self, document, validator_user):
         """Test scanning when file doesn't exist."""
-        validator_id = "validator_003"
-        
-        # Remove the file
-        document.file = None
-        document.save()
-        
+        validator_id = str(validator_user.id)
+
+        Document.objects.filter(pk=document.pk).update(file="")
+        document.refresh_from_db()
+
         result = scan_document_virus(str(document.id), validator_id)
         
         # Verify error handled
@@ -131,11 +154,11 @@ class TestScanDocumentVirusTask:
         assert validation.result == "error"
         assert "File not found" in validation.details
     
-    def test_scan_document_virus_scan_error(self, document):
+    def test_scan_document_virus_scan_error(self, document, validator_user):
         """Test handling of scan failures."""
-        validator_id = "validator_004"
+        validator_id = str(validator_user.id)
         
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             # Mock scan error
             mock_scan.side_effect = Exception("Scanner unavailable")
             
@@ -164,11 +187,11 @@ class TestScanDocumentVirusTask:
         # Verify error message returned
         assert "not found" in result
     
-    def test_scan_document_virus_task_exception(self, document):
+    def test_scan_document_virus_task_exception(self, document, validator_user):
         """Test task handles unexpected exceptions."""
-        validator_id = "validator_006"
+        validator_id = str(validator_user.id)
         
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             # Mock unexpected exception
             mock_scan.side_effect = RuntimeError("Unexpected error")
             
@@ -181,9 +204,9 @@ class TestScanDocumentVirusTask:
             document.refresh_from_db()
             assert document.validated_at is not None
     
-    def test_scan_document_virus_updates_existing_validation(self, document):
+    def test_scan_document_virus_updates_existing_validation(self, document, validator_user):
         """Test that scanning updates document status."""
-        validator_id = "validator_007"
+        validator_id = str(validator_user.id)
         
         # Create initial validation
         DocumentValidation.objects.create(
@@ -194,7 +217,7 @@ class TestScanDocumentVirusTask:
             validated_at=timezone.now()
         )
         
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             mock_scan.return_value = (True, None)
             
             scan_document_virus(str(document.id), validator_id)
@@ -208,12 +231,17 @@ class TestScanDocumentVirusTask:
             # Should have 2 validations now
             assert validations.count() == 2
     
-    def test_scan_document_virus_multiple_concurrent_scans(self, document):
+    def test_scan_document_virus_multiple_concurrent_scans(self, document, validator_user, db):
         """Test multiple concurrent scans of same document."""
-        validator_id_1 = "validator_008"
-        validator_id_2 = "validator_009"
+        v2 = User.objects.create_user(
+            username="validatoruser2",
+            email="validator2@example.com",
+            password="testpass123",
+        )
+        validator_id_1 = str(validator_user.id)
+        validator_id_2 = str(v2.id)
         
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             mock_scan.return_value = (True, None)
             
             # Simulate concurrent scans
@@ -235,11 +263,11 @@ class TestScanDocumentVirusTask:
                 validator_id=validator_id_2
             ).exists()
     
-    def test_scan_document_virus_with_file_path(self, document):
+    def test_scan_document_virus_with_file_path(self, document, validator_user):
         """Test scanning actually calls scan function with correct path."""
-        validator_id = "validator_010"
+        validator_id = str(validator_user.id)
         
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             mock_scan.return_value = (True, None)
             
             scan_document_virus(str(document.id), validator_id)
@@ -251,12 +279,12 @@ class TestScanDocumentVirusTask:
             # The path should be the document's file path
             assert str(call_args[0]) == str(document.file.path)
     
-    def test_scan_document_virus_validation_timestamp(self, document):
+    def test_scan_document_virus_validation_timestamp(self, document, validator_user):
         """Test that validation timestamp is set correctly."""
-        validator_id = "validator_011"
+        validator_id = str(validator_user.id)
         start_time = timezone.now()
         
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             mock_scan.return_value = (True, None)
             
             scan_document_virus(str(document.id), validator_id)
@@ -275,31 +303,30 @@ class TestScanDocumentVirusTask:
             document.refresh_from_db()
             assert start_time <= document.validated_at <= end_time
     
-    def test_scan_document_virus_preserves_document_metadata(self, document):
+    def test_scan_document_virus_preserves_document_metadata(self, document, validator_user):
         """Test that scanning doesn't affect document metadata."""
-        validator_id = "validator_012"
-        original_name = document.name
-        original_type = document.file_type
+        validator_id = str(validator_user.id)
+        original_type_id = document.type_id
+        original_file = document.file.name
         original_uploaded_by = document.uploaded_by
         original_created_at = document.created_at
-        
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             mock_scan.return_value = (True, None)
-            
+
             scan_document_virus(str(document.id), validator_id)
-            
-            # Verify metadata unchanged
+
             document.refresh_from_db()
-            assert document.name == original_name
-            assert document.file_type == original_type
+            assert document.type_id == original_type_id
+            assert document.file.name == original_file
             assert document.uploaded_by == original_uploaded_by
             assert document.created_at == original_created_at
     
-    def test_scan_document_virus_secondary_error_handling(self, document):
+    def test_scan_document_virus_secondary_error_handling(self, document, validator_user):
         """Test secondary error handling when validation creation fails."""
-        validator_id = "validator_013"
+        validator_id = str(validator_user.id)
         
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             # First call succeeds
             mock_scan.return_value = (True, None)
             
@@ -313,11 +340,11 @@ class TestScanDocumentVirusTask:
                 # Should still return a result (not crash)
                 assert isinstance(result, str)
     
-    def test_scan_document_virus_result_format(self, document):
+    def test_scan_document_virus_result_format(self, document, validator_user):
         """Test that task returns proper result format."""
-        validator_id = "validator_014"
+        validator_id = str(validator_user.id)
         
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             mock_scan.return_value = (True, None)
             
             result = scan_document_virus(str(document.id), validator_id)
@@ -327,16 +354,15 @@ class TestScanDocumentVirusTask:
             assert str(document.id) in result
             assert "scanned" in result.lower() or "scan" in result.lower()
     
-    def test_scan_document_virus_idempotency(self, document):
+    def test_scan_document_virus_idempotency(self, document, validator_user):
         """Test that scanning same document multiple times is safe."""
-        validator_id = "validator_015"
-        
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        validator_id = str(validator_user.id)
+
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             mock_scan.return_value = (True, None)
-            
-            # Scan multiple times
-            for i in range(3):
-                result = scan_document_virus(str(document.id), f"{validator_id}_{i}")
+
+            for _ in range(3):
+                result = scan_document_virus(str(document.id), validator_id)
                 assert "scanned" in result.lower()
             
             # Document should still be in valid state
@@ -353,15 +379,15 @@ class TestScanDocumentVirusTask:
 class TestDocumentTaskIntegration:
     """Integration tests for document tasks with real objects."""
     
-    def test_full_scan_workflow(self, document):
+    def test_full_scan_workflow(self, document, validator_user):
         """Test complete scan workflow from start to finish."""
-        validator_id = "integration_validator"
+        validator_id = str(validator_user.id)
         
         # Verify initial state
         assert document.is_valid is False
         assert document.validated_at is None
         
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             mock_scan.return_value = (True, None)
             
             # Run scan task
@@ -383,11 +409,11 @@ class TestDocumentTaskIntegration:
             assert validation.result == "valid"
             assert validation.validated_at is not None
     
-    def test_infected_file_workflow(self, document):
+    def test_infected_file_workflow(self, document, validator_user):
         """Test workflow for infected file detection."""
-        validator_id = "infected_validator"
+        validator_id = str(validator_user.id)
         
-        with patch('documents.tasks.scan_file_for_viruses') as mock_scan:
+        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
             mock_scan.return_value = (False, "Trojan.Generic")
             
             # Run scan task

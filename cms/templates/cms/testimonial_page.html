@@ -99,9 +99,15 @@
                 <i class="bi bi-info-circle me-2"></i>Sobre el Programa
             </a>
             {% endif %}
-            <a href="/seim/register/" class="btn btn-outline-light btn-lg px-5 py-3">
+            {% if user.is_authenticated %}
+            <a href="/seim/applications/new?program={{ page.program.id }}" class="btn btn-outline-light btn-lg px-5 py-3">
                 <i class="bi bi-person-plus me-2"></i>Aplicar Ahora
             </a>
+            {% else %}
+            <a href="/seim/login?redirect=%2Fapplications%2Fnew%3Fprogram%3D{{ page.program.id }}" class="btn btn-outline-light btn-lg px-5 py-3">
+                <i class="bi bi-person-plus me-2"></i>Aplicar Ahora
+            </a>
+            {% endif %}
         </div>
     </div>
 </section>

@@ -22,6 +22,8 @@
                     :disabled="isLoading"
                     :placeholder="t('login.emailPlaceholder')"
                     data-testid="login-email"
+                    :aria-invalid="!!error"
+                    :aria-describedby="error ? 'login-form-error' : undefined"
                   />
                 </div>
 
@@ -36,6 +38,8 @@
                     :disabled="isLoading"
                     :placeholder="t('login.passwordPlaceholder')"
                     data-testid="login-password"
+                    :aria-invalid="!!error"
+                    :aria-describedby="error ? 'login-form-error' : undefined"
                   />
                 </div>
 
@@ -51,7 +55,13 @@
                   </label>
                 </div>
 
-                <div v-if="error" class="alert alert-danger" role="alert">
+                <div
+                  v-if="error"
+                  id="login-form-error"
+                  class="alert alert-danger"
+                  role="alert"
+                  aria-live="assertive"
+                >
                   {{ error }}
                 </div>
 

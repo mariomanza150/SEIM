@@ -58,6 +58,18 @@
                     </a>
                 </li>
                 <li class="nav-item admin-nav" {% if user.is_authenticated and user.is_admin %}style="display:block;"{% else %}style="display:none;"{% endif %}>
+                    <a class="nav-link" href="/seim/admin/" target="_blank" rel="noopener noreferrer" aria-label="{% trans 'System Admin' %}">
+                        <i class="bi bi-gear-wide-connected" aria-hidden="true"></i> 
+                        <span>{% trans "System Admin" %}</span>
+                    </a>
+                </li>
+                <li class="nav-item admin-nav" {% if user.is_authenticated and user.is_admin %}style="display:block;"{% else %}style="display:none;"{% endif %}>
+                    <a class="nav-link" href="/cms/" target="_blank" rel="noopener noreferrer" aria-label="{% trans 'CMS Admin' %}">
+                        <i class="bi bi-layout-wtf" aria-hidden="true"></i> 
+                        <span>{% trans "CMS Admin" %}</span>
+                    </a>
+                </li>
+                <li class="nav-item admin-nav" {% if user.is_authenticated and user.is_admin %}style="display:block;"{% else %}style="display:none;"{% endif %}>
                     <a class="nav-link" href="{% url 'application_forms:form-list' %}" aria-label="{% trans 'Dynamic Form Builder' %}">
                         <i class="bi bi-ui-checks" aria-hidden="true"></i>
                         <span>{% trans "Form Builder" %}</span>

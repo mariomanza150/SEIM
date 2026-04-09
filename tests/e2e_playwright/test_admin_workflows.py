@@ -6,7 +6,7 @@ Tests admin-specific workflows for system management.
 
 import pytest
 from playwright.sync_api import Page, expect
-from tests.e2e_playwright.utils.auth_helpers import login_as_admin
+from tests.e2e_playwright.utils.auth_helpers import login_as_admin, VueAppNotAvailable
 import time
 
 
@@ -19,7 +19,10 @@ class TestAdminWorkflows:
     
     def test_admin_dashboard_access(self, page: Page, base_url: str):
         """Test that admin can access admin dashboard."""
-        login_as_admin(page, base_url)
+        try:
+            login_as_admin(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         page.goto(f"{base_url}/seim/admin-dashboard/")
         page.wait_for_load_state("networkidle")
@@ -43,8 +46,10 @@ class TestAdminWorkflows:
     
     def test_access_all_features(self, page: Page, base_url: str):
         """Test that admin can access all features (student, coordinator, admin)."""
-        login_as_admin(page, base_url)
-        
+        try:
+            login_as_admin(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         # Admin should have access to all pages
         all_pages = [
             ("student dashboard", "/seim/dashboard/"),
@@ -74,7 +79,10 @@ class TestAdminWorkflows:
     
     def test_program_management(self, page: Page, base_url: str):
         """Test that admin can access program management."""
-        login_as_admin(page, base_url)
+        try:
+            login_as_admin(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         # Try to access program creation
         page.goto(f"{base_url}/seim/programs/create/")
@@ -94,8 +102,10 @@ class TestAdminWorkflows:
     
     def test_user_management(self, page: Page, base_url: str):
         """Test that admin can access user management."""
-        login_as_admin(page, base_url)
-        
+        try:
+            login_as_admin(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         page.goto(f"{base_url}/seim/user-management/")
         page.wait_for_load_state("networkidle")
         
@@ -113,8 +123,10 @@ class TestAdminWorkflows:
     
     def test_analytics_access(self, page: Page, base_url: str):
         """Test that admin can access full analytics."""
-        login_as_admin(page, base_url)
-        
+        try:
+            login_as_admin(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         page.goto(f"{base_url}/seim/analytics/")
         page.wait_for_load_state("networkidle")
         
@@ -132,8 +144,10 @@ class TestAdminWorkflows:
     
     def test_django_admin_access(self, page: Page, base_url: str):
         """Test that admin can access Django admin interface."""
-        login_as_admin(page, base_url)
-        
+        try:
+            login_as_admin(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         # Try to access Django admin
         page.goto(f"{base_url}/seim/admin/")
         page.wait_for_load_state("networkidle")

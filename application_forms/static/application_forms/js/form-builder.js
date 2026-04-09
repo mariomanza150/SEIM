@@ -55,6 +55,9 @@ class FormBuilder {
                     <div class="builder-toolbar">
                         <h2><i class="bi bi-file-earmark-text"></i> Form Builder</h2>
                         <div class="builder-actions">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="btn-apply-step-template" title="Merge a reusable step template into this form">
+                                <i class="bi bi-layers"></i> Step template
+                            </button>
                             <button class="btn btn-outline-secondary btn-sm" id="btn-preview">
                                 <i class="bi bi-eye"></i> Preview
                             </button>
@@ -167,6 +170,16 @@ class FormBuilder {
                 btnPreview.addEventListener('click', () => this.togglePreview());
             } else {
                 console.error('FormBuilder: btn-preview not found');
+            }
+
+            const btnApplyTpl = document.getElementById('btn-apply-step-template');
+            if (btnApplyTpl) {
+                btnApplyTpl.addEventListener('click', () => this.openStepTemplateModal());
+            }
+
+            const btnConfirmApplyTpl = document.getElementById('btnConfirmApplyStepTemplate');
+            if (btnConfirmApplyTpl) {
+                btnConfirmApplyTpl.addEventListener('click', () => this.applyStepTemplateFromModal());
             }
             
             if (btnSaveFieldConfig) {
@@ -743,6 +756,148 @@ class FormBuilder {
             }
         }
         return '';
+    }
+
+    escapeHtml(str) {
+        if (str === null || str === undefined) return '';
+        const d = document.createElement('div');
+        d.textContent = String(str);
+        return d.innerHTML;
+    }
+
+    openStepTemplateModal() {
+        if (!this.options.formId) {
+            this.showMessage('Save the form first, then you can apply a step template.', 'error');
+            return;
+        }
+        const errEl = document.getElementById('stepTemplateApplyError');
+        if (errEl) {
+            errEl.classList.add('d-none');
+            errEl.textContent = '';
+        }
+        const keyInput = document.getElementById('stepTemplateKeyOverride');
+        if (keyInput) keyInput.value = '';
+        this.refreshStepTemplateOptions().then(() => {
+            const el = document.getElementById('stepTemplateModal');
+            if (!el || typeof bootstrap === 'undefined') return;
+            const modal = bootstrap.Modal.getOrCreateInstance(el);
+            modal.show();
+        });
+    }
+
+    async refreshStepTemplateOptions() {
+        const sel = document.getElementById('stepTemplateSelect');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Loading…</option>';
+        try {
+            let url = `${this.options.apiUrl}step-templates/`;
+            const items = [];
+            while (url) {
+                const response = await fetch(url, { credentials: 'include' });
+                if (!response.ok) {
+                    sel.innerHTML = '<option value="">Could not load templates</option>';
+                    return;
+                }
+                const data = await response.json();
+                const chunk = Array.isArray(data) ? data : data.results || [];
+                items.push(...chunk);
+                url = data.next || null;
+            }
+            const active = items.filter((t) => t.is_active === true);
+            if (active.length === 0) {
+                sel.innerHTML = '<option value="">No active templates</option>';
+                return;
+            }
+            sel.innerHTML =
+                '<option value="">— Select template —</option>' +
+                active
+                    .map(
+                        (t) =>
+                            `<option value="${t.id}">${this.escapeHtml(t.name)} (${this.escapeHtml(t.default_step_key || '')})</option>`
+                    )
+                    .join('');
+        } catch (e) {
+            console.error(e);
+            sel.innerHTML = '<option value="">Error loading templates</option>';
+        }
+    }
+
+    async applyStepTemplateFromModal() {
+        const errEl = document.getElementById('stepTemplateApplyError');
+        if (errEl) {
+            errEl.classList.add('d-none');
+            errEl.textContent = '';
+        }
+        if (!this.options.formId) {
+            this.showMessage('Save the form first.', 'error');
+            return;
+        }
+        const sel = document.getElementById('stepTemplateSelect');
+        const tid = sel && sel.value ? parseInt(sel.value, 10) : NaN;
+        if (!tid) {
+            if (errEl) {
+                errEl.textContent = 'Choose a template.';
+                errEl.classList.remove('d-none');
+            }
+            return;
+        }
+        const keyInput = document.getElementById('stepTemplateKeyOverride');
+        const stepKey = keyInput && keyInput.value ? keyInput.value.trim() : '';
+        const body = { template_id: tid };
+        if (stepKey) body.step_key = stepKey;
+
+        try {
+            const response = await fetch(
+                `${this.options.apiUrl}form-types/${this.options.formId}/apply-step-template/`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': this.getCSRFToken(),
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(body),
+                }
+            );
+            const modalEl = document.getElementById('stepTemplateModal');
+            if (response.ok) {
+                if (modalEl && typeof bootstrap !== 'undefined') {
+                    bootstrap.Modal.getInstance(modalEl)?.hide();
+                }
+                this.showMessage('Step template applied. Reloading form…', 'success');
+                this.loadForm(this.options.formId);
+                return;
+            }
+            let msg = 'Could not apply template.';
+            try {
+                const err = await response.json();
+                if (typeof err.detail === 'string') msg = err.detail;
+                else if (Array.isArray(err.detail)) msg = err.detail.join(' ');
+                else if (err.detail && typeof err.detail === 'object') {
+                    msg = Object.entries(err.detail)
+                        .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`)
+                        .join('; ');
+                } else if (typeof err === 'object') {
+                    const parts = [];
+                    for (const [k, v] of Object.entries(err)) {
+                        if (Array.isArray(v)) parts.push(`${k}: ${v.join(', ')}`);
+                        else if (typeof v === 'string') parts.push(v);
+                    }
+                    if (parts.length) msg = parts.join('; ');
+                }
+            } catch (_) {
+                /* use default msg */
+            }
+            if (errEl) {
+                errEl.textContent = msg;
+                errEl.classList.remove('d-none');
+            } else {
+                this.showMessage(msg, 'error');
+            }
+        } catch (error) {
+            console.error(error);
+            this.showMessage('Network error while applying template', 'error');
+        }
     }
     
     showMessage(message, type = 'info') {

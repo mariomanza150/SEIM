@@ -4,6 +4,8 @@
 **Decision:** Migrate from Django Templates + jQuery to Vue.js SPA  
 **Strategy:** Keep Django backend, admin, and useful components
 
+> Historical planning document. Keep this file for migration rationale only. It supersedes the narrower working-note files that previously lived alongside it: `docs/VUE_MIGRATION_EXECUTION_PLAN.md`, `docs/VUE_DAY2_TEST_GUIDE.md`, `docs/VUE_DAY3_TESTING.md`, and `docs/VUE_WEEK1_TASKS.md`. For the current implementation state, use `frontend-vue/README.md` and `docs/VUE_TEST_RESULTS.md`.
+
 ---
 
 ## 🎯 Migration Strategy Overview

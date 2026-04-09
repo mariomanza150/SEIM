@@ -137,6 +137,8 @@ class TestAdminPageRendering(TestCase):
         response = self.client.get(reverse('frontend:admin_dashboard'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'frontend/admin/dashboard.html')
+        self.assertContains(response, 'Export JSON')
+        self.assertNotContains(response, 'System information export feature coming soon!')
 
     def test_analytics_page_renders_for_admin(self):
         """Test analytics page renders for admin users."""
@@ -144,6 +146,8 @@ class TestAdminPageRendering(TestCase):
         response = self.client.get(reverse('frontend:analytics'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'frontend/admin/analytics.html')
+        self.assertContains(response, 'Download CSV')
+        self.assertNotContains(response, 'PDF download feature coming soon!')
 
     def test_analytics_page_renders_for_coordinator(self):
         """Test analytics page renders for coordinator users."""

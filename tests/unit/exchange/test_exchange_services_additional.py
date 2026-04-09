@@ -595,3 +595,93 @@ class TestCanWithdrawApplication(TestCase):
         
         self.assertFalse(result)
 
+
+@pytest.mark.django_db
+class TestProcessDynamicFormStepVisibleWhen(TestCase):
+    """Multi-step save advances over the visible step sequence only."""
+
+    def setUp(self):
+        self.student_role, _ = Role.objects.get_or_create(name="student")
+        self.student = User.objects.create_user(
+            username="vw_student",
+            email="vw_student@test.com",
+            password="testpass123",
+        )
+        self.student.roles.add(self.student_role)
+
+        self.form_type = FormType.objects.create(
+            name="Visible When Form",
+            form_type="application",
+            schema={
+                "type": "object",
+                "properties": {
+                    "branch": {"type": "string"},
+                    "a": {"type": "string"},
+                    "b": {"type": "string"},
+                },
+                "required": ["branch", "a", "b"],
+            },
+            step_definitions=[
+                {"key": "s1", "title": "One", "field_names": ["branch"]},
+                {
+                    "key": "s2",
+                    "title": "Two",
+                    "field_names": ["a"],
+                    "visible_when": {"field": "branch", "equals": "extra"},
+                },
+                {"key": "s3", "title": "Three", "field_names": ["b"]},
+            ],
+        )
+        today = date.today()
+        self.program = Program.objects.create(
+            name="VW Program",
+            description="Test",
+            start_date=today,
+            end_date=today + timedelta(days=365),
+            is_active=True,
+            application_form=self.form_type,
+        )
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft",
+            defaults={"order": 1},
+        )
+        self.application = Application.objects.create(
+            student=self.student,
+            program=self.program,
+            status=status,
+        )
+
+    def test_advances_s1_to_s3_when_s2_hidden(self):
+        ApplicationService.process_dynamic_form_submission(
+            application=self.application,
+            form_data={
+                "df_branch": "skip",
+                "dynamic_form_current_step": "s1",
+            },
+            user=self.student,
+        )
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.dynamic_form_current_step, "s1")
+
+        ApplicationService.process_dynamic_form_submission(
+            application=self.application,
+            form_data={
+                "df_branch": "skip",
+                "dynamic_form_current_step": "s1",
+            },
+            user=self.student,
+        )
+        self.application.refresh_from_db()
+        self.assertEqual(self.application.dynamic_form_current_step, "s3")
+
+    def test_rejects_step_not_visible(self):
+        with self.assertRaises(ValidationError):
+            ApplicationService.process_dynamic_form_submission(
+                application=self.application,
+                form_data={
+                    "df_a": "x",
+                    "dynamic_form_current_step": "s2",
+                },
+                user=self.student,
+            )
+

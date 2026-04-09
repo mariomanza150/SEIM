@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SEIM — Vue build required</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+    code, pre { background: #f4f4f5; padding: 0.15em 0.35em; border-radius: 4px; font-size: 0.95em; }
+    pre { padding: 1rem; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Vue SPA assets missing</h1>
+  <p>There is no <code>frontend-vue/dist/index.html</code> on this machine. Django serves this page instead of raising <code>TemplateDoesNotExist</code>.</p>
+  <p><strong>Local (host):</strong></p>
+  <pre><code>cd frontend-vue
+npm ci
+npm run build</code></pre>
+  <p><strong>Docker Compose:</strong> rebuild the <code>web</code> image so the multi-stage build runs Vite, then recreate the container. If <code>frontend-vue/dist</code> still looks empty, remove the named volume that masks the host (see <code>docker-compose.yml</code>) and bring the stack up again.</p>
+  <p><strong>Alternative:</strong> run <code>npm run dev</code> in <code>frontend-vue</code> and open <a href="http://localhost:5173">http://localhost:5173</a> (API CORS is configured for that origin in development).</p>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">
+<link rel="stylesheet" href="{% static 'admin/css/dashboard.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans "Home" %}</a> &rsaquo;
+    {% trans "Data Cleanup" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h2>{% trans "Data Cleanup" %}</h2>
+    <div class="module-content">
+        <p>{% trans "Clean up your data by removing orphaned records, duplicates, and invalid data." %}</p>
+
+        {% if messages %}
+        <ul class="messagelist">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <div class="module">
+            <h3>{% trans "Cleanup Operations" %}</h3>
+            <div class="module-content">
+                <form method="post" action="{% url 'data_management:execute_data_cleanup' %}">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <label><input type="checkbox" name="clean_orphaned"> {% trans "Clean orphaned records" %}</label>
+                    </div>
+                    <div class="form-row">
+                        <label><input type="checkbox" name="clean_duplicates"> {% trans "Clean duplicate records" %}</label>
+                    </div>
+                    <div class="form-row">
+                        <label><input type="checkbox" name="clean_invalid"> {% trans "Clean invalid data" %}</label>
+                    </div>
+                    <div class="submit-row">
+                        <button type="submit" class="button">{% trans "Clean Data" %}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

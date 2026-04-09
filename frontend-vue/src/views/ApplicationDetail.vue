@@ -87,6 +87,79 @@
           </div>
         </div>
 
+        <div
+          v-if="isCoordinator && application.scholarship_allocation_score"
+          class="row mb-3"
+          data-testid="scholarship-score-panel"
+        >
+          <div class="col-12">
+            <div class="card border-secondary shadow-sm">
+              <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h5 class="mb-0">
+                  <i class="bi bi-calculator me-2"></i>{{ t('applicationDetailPage.scholarshipScoring.title') }}
+                </h5>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  :disabled="scholarshipExportLoading"
+                  @click="downloadScholarshipCohortExport"
+                >
+                  <span
+                    v-if="scholarshipExportLoading"
+                    class="spinner-border spinner-border-sm me-1"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  <i v-else class="bi bi-download me-1"></i>
+                  {{ t('applicationDetailPage.scholarshipScoring.exportCohortCsv') }}
+                </button>
+              </div>
+              <div class="card-body">
+                <p class="small text-muted mb-2">
+                  {{ application.scholarship_allocation_score.ruleset_label }} ({{ application.scholarship_allocation_score.ruleset_id }})
+                </p>
+                <div class="d-flex flex-wrap align-items-baseline gap-3 mb-3">
+                  <div>
+                    <span class="text-muted small d-block">{{ t('applicationDetailPage.scholarshipScoring.totalLabel') }}</span>
+                    <span class="fs-4 fw-semibold">
+                      {{ application.scholarship_allocation_score.total_points }}
+                      <span class="text-muted fs-6">/ {{ application.scholarship_allocation_score.max_points }}</span>
+                    </span>
+                  </div>
+                  <p v-if="application.scholarship_allocation_score.flags?.withdrawn" class="small text-warning mb-0">
+                    <i class="bi bi-exclamation-triangle me-1"></i>{{ t('applicationDetailPage.scholarshipScoring.withdrawnNote') }}
+                  </p>
+                </div>
+                <div class="table-responsive">
+                  <table class="table table-sm table-bordered mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th scope="col">{{ t('applicationDetailPage.scholarshipScoring.colFactor') }}</th>
+                        <th scope="col" class="text-end">{{ t('applicationDetailPage.scholarshipScoring.colPoints') }}</th>
+                        <th scope="col">{{ t('applicationDetailPage.scholarshipScoring.colDetail') }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="row in application.scholarship_allocation_score.factors" :key="row.id">
+                        <td>{{ row.label }}</td>
+                        <td class="text-end text-nowrap">{{ row.points }} / {{ row.max_points }}</td>
+                        <td class="small">{{ row.detail }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="small text-muted mt-3 mb-1">
+                  <strong>{{ t('applicationDetailPage.scholarshipScoring.tieBreakers') }}</strong>
+                  {{ (application.scholarship_allocation_score.tie_breakers || []).join(', ') }}
+                </p>
+                <p class="small text-muted mb-0 fst-italic">
+                  {{ application.scholarship_allocation_score.disclaimer }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="row">
           <!-- Main Content -->
           <div class="col-lg-8">
@@ -544,6 +617,38 @@ const timelineLoading = ref(false)
 const timelineError = ref(null)
 const loading = ref(true)
 const error = ref(null)
+const scholarshipExportLoading = ref(false)
+
+async function downloadScholarshipCohortExport() {
+  const programId = application.value?.program
+  if (!programId) {
+    errorToast(t('applicationDetailPage.scholarshipScoring.exportMissingProgram'))
+    return
+  }
+  scholarshipExportLoading.value = true
+  try {
+    const response = await api.get('/api/applications/scholarship-scores-export/', {
+      params: { program: programId },
+      responseType: 'blob',
+    })
+    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `scholarship-scores-${programId}.csv`
+    a.rel = 'noopener noreferrer'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+    success(t('applicationDetailPage.scholarshipScoring.exportSuccess'))
+  } catch (err) {
+    console.error('Scholarship export failed:', err)
+    errorToast(t('applicationDetailPage.scholarshipScoring.exportError'))
+  } finally {
+    scholarshipExportLoading.value = false
+  }
+}
 
 async function fetchApplication() {
   try {

@@ -27,11 +27,11 @@ class ApplicationsPage(BasePage):
     
     def navigate_to_applications(self) -> None:
         """Navigate to applications page."""
-        self.navigate('applications/')
+        self.navigate('seim/applications/')
     
     def navigate_to_application_create(self) -> None:
         """Navigate to application creation page."""
-        self.navigate('applications/create/')
+        self.navigate('seim/applications/new/')
     
     def assert_applications_page_loaded(self) -> None:
         """Assert that applications page is loaded."""

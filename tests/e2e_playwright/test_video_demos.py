@@ -8,10 +8,18 @@ Each test follows a complete user story path and records the entire journey.
 import pytest
 from playwright.sync_api import Page, expect
 from tests.e2e_playwright.utils.auth_helpers import (
+    VueAppNotAvailable,
     login_as_student,
     login_as_coordinator,
     login_as_admin,
 )
+
+
+def _login_or_skip(page, base_url, login_fn):
+    try:
+        return login_fn(page, base_url)
+    except VueAppNotAvailable as e:
+        pytest.skip(str(e))
 import time
 
 
@@ -42,16 +50,16 @@ class TestStudentVideoDemos:
         
         # Step 3: Complete registration form (if registration page exists)
         # Note: For demo, we'll skip to login since registration might require email verification
-        page.goto(f"{base_url}/seim/login/")
+        page.goto(f"{base_url}/login")
         page.wait_for_load_state("networkidle")
         time.sleep(1)
         
         # Step 4-5: Login (simulating verified user)
-        login_as_student(page, base_url)
+        _login_or_skip(page, base_url, login_as_student)
         time.sleep(1)
         
         # Step 6: View dashboard
-        page.goto(f"{base_url}/seim/dashboard/")
+        page.goto(f"{base_url}/dashboard")
         page.wait_for_load_state("networkidle")
         time.sleep(2)  # Show dashboard
         
@@ -68,7 +76,7 @@ class TestStudentVideoDemos:
             time.sleep(1)
         
         # Step 9: Start new application
-        page.goto(f"{base_url}/seim/applications/create/")
+        page.goto(f"{base_url}/seim/applications/new")
         page.wait_for_load_state("networkidle")
         time.sleep(2)  # Show application form
         
@@ -111,11 +119,11 @@ class TestStudentVideoDemos:
         Path: Login → Dashboard → View Applications → Check Status → Update Profile
         """
         # Step 1: Login as existing student
-        login_as_student(page, base_url)
+        _login_or_skip(page, base_url, login_as_student)
         time.sleep(1)
         
         # Step 2: View dashboard with applications
-        page.goto(f"{base_url}/seim/dashboard/")
+        page.goto(f"{base_url}/dashboard")
         page.wait_for_load_state("networkidle")
         time.sleep(2)  # Show dashboard
         
@@ -167,7 +175,7 @@ class TestStudentVideoDemos:
                 pass  # Save button might not be visible, continue
         
         # Step 9: Return to dashboard
-        page.goto(f"{base_url}/seim/dashboard/")
+        page.goto(f"{base_url}/dashboard")
         page.wait_for_load_state("networkidle")
         time.sleep(1)
         
@@ -180,11 +188,11 @@ class TestStudentVideoDemos:
         Path: Login → Dashboard → View Draft Application → Withdraw Application
         """
         # Step 1: Login as student
-        login_as_student(page, base_url)
+        _login_or_skip(page, base_url, login_as_student)
         time.sleep(1)
         
         # Step 2: View dashboard
-        page.goto(f"{base_url}/seim/dashboard/")
+        page.goto(f"{base_url}/dashboard")
         page.wait_for_load_state("networkidle")
         time.sleep(1)
         
@@ -228,7 +236,7 @@ class TestCoordinatorVideoDemos:
               Review Application → Add Comment → Change Status
         """
         # Step 1: Login as coordinator
-        login_as_coordinator(page, base_url)
+        _login_or_skip(page, base_url, login_as_coordinator)
         time.sleep(1)
         
         # Step 2: Access coordinator dashboard
@@ -310,7 +318,7 @@ class TestCoordinatorVideoDemos:
               View Documents → Request Resubmission → Add Comment
         """
         # Step 1: Login as coordinator
-        login_as_coordinator(page, base_url)
+        _login_or_skip(page, base_url, login_as_coordinator)
         time.sleep(1)
         
         # Step 2: Access coordinator dashboard
@@ -374,7 +382,7 @@ class TestCoordinatorVideoDemos:
               Validate Documents → Approve Application
         """
         # Step 1: Login as coordinator
-        login_as_coordinator(page, base_url)
+        _login_or_skip(page, base_url, login_as_coordinator)
         time.sleep(1)
         
         # Step 2: Access coordinator dashboard
@@ -435,7 +443,7 @@ class TestAdminVideoDemos:
               Configure Settings → Publish Program
         """
         # Step 1: Login as admin
-        login_as_admin(page, base_url)
+        _login_or_skip(page, base_url, login_as_admin)
         time.sleep(1)
         
         # Step 2: Access admin dashboard
@@ -499,7 +507,7 @@ class TestAdminVideoDemos:
               Assign Roles → Update Permissions
         """
         # Step 1: Login as admin
-        login_as_admin(page, base_url)
+        _login_or_skip(page, base_url, login_as_admin)
         time.sleep(1)
         
         # Step 2: Access admin dashboard
@@ -554,7 +562,7 @@ class TestAdminVideoDemos:
         Path: Login → Admin Dashboard → Analytics → View Metrics → Export Data → Generate Report
         """
         # Step 1: Login as admin
-        login_as_admin(page, base_url)
+        _login_or_skip(page, base_url, login_as_admin)
         time.sleep(1)
         
         # Step 2: Access admin dashboard
@@ -620,7 +628,7 @@ class TestAdminVideoDemos:
         Path: Login → Admin Dashboard → Settings → Configure System → Update Settings → Verify Changes
         """
         # Step 1: Login as admin
-        login_as_admin(page, base_url)
+        _login_or_skip(page, base_url, login_as_admin)
         time.sleep(1)
         
         # Step 2: Access admin dashboard
@@ -683,10 +691,10 @@ class TestCrossRoleVideoDemos:
               Student Updates → Coordinator Approves
         """
         # Part 1: Student creates application
-        login_as_student(page, base_url)
+        _login_or_skip(page, base_url, login_as_student)
         time.sleep(1)
         
-        page.goto(f"{base_url}/seim/applications/create/")
+        page.goto(f"{base_url}/seim/applications/new")
         try:
             page.wait_for_load_state("networkidle", timeout=10000)
         except:
@@ -695,11 +703,10 @@ class TestCrossRoleVideoDemos:
         
         # Part 2: Switch to coordinator view (logout first, then login as coordinator)
         # Clear tokens to simulate logout - login_via_api will navigate to login page itself
-        page.evaluate("localStorage.removeItem('seim_access_token'); localStorage.removeItem('seim_refresh_token');")
+        page.evaluate("localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token');")
         time.sleep(1)
         
-        # login_as_coordinator will handle navigation to login page
-        login_as_coordinator(page, base_url)
+        _login_or_skip(page, base_url, login_as_coordinator)
         time.sleep(1)
         
         page.goto(f"{base_url}/seim/applications/")
@@ -728,7 +735,7 @@ class TestCrossRoleVideoDemos:
         Path: Multiple Students Apply → Coordinator Reviews All → Admin Views Analytics
         """
         # Show student application view
-        login_as_student(page, base_url)
+        _login_or_skip(page, base_url, login_as_student)
         time.sleep(1)
         
         page.goto(f"{base_url}/seim/applications/")
@@ -740,11 +747,10 @@ class TestCrossRoleVideoDemos:
         
         # Show coordinator review view (logout first)
         # Clear tokens to simulate logout - login functions will navigate to login page
-        page.evaluate("localStorage.removeItem('seim_access_token'); localStorage.removeItem('seim_refresh_token');")
+        page.evaluate("localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token');")
         time.sleep(1)
         
-        # login_as_coordinator will handle navigation to login page
-        login_as_coordinator(page, base_url)
+        _login_or_skip(page, base_url, login_as_coordinator)
         time.sleep(1)
         
         page.goto(f"{base_url}/seim/coordinator-dashboard/")
@@ -756,11 +762,11 @@ class TestCrossRoleVideoDemos:
         
         # Show admin analytics view (logout first)
         # Clear tokens to simulate logout - login functions will navigate to login page
-        page.evaluate("localStorage.removeItem('seim_access_token'); localStorage.removeItem('seim_refresh_token');")
+        page.evaluate("localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token');")
         time.sleep(1)
         
         # login_as_admin will handle navigation to login page
-        login_as_admin(page, base_url)
+        _login_or_skip(page, base_url, login_as_admin)
         time.sleep(1)
         
         page.goto(f"{base_url}/seim/analytics/")

@@ -105,7 +105,7 @@ SEIM is a comprehensive Django-based web application for managing student exchan
 - **Grade Translation**: International grade scale conversion system
 
 ### **Technology Stack:**
-- **Backend**: Django 5.2+ with PostgreSQL
+- **Backend**: Django 5.1.4 with PostgreSQL
 - **Frontend**: Bootstrap 5 with modern JavaScript
 - **Caching**: Redis for performance optimization
 - **Background Tasks**: Celery for async processing
@@ -127,9 +127,9 @@ docker-compose exec web python manage.py migrate
 docker-compose exec web python manage.py create_initial_data
 
 # Access the application
-# Web: http://localhost:8000/
-# Admin: http://localhost:8000/admin/
-# API Docs: http://localhost:8000/api/docs/
+# Web: http://localhost:8001/
+# Admin: http://localhost:8001/seim/admin/
+# API Docs: http://localhost:8001/api/docs/
 ```
 
 **Default Admin Access:**

@@ -266,6 +266,8 @@ class TestApplicationSubmissionWorkflow:
             print(f"Response status: {response.status_code}")
             print(f"Response data: {response.data}")
         assert response.status_code == status.HTTP_201_CREATED
+        assert response.data["author_name"] == self.coordinator.username
+        assert response.data["author_role"] == "coordinator"
 
         comment = Comment.objects.get(id=response.data["id"])
         assert comment.application == application

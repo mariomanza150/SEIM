@@ -53,7 +53,7 @@ The Student Exchange Information Management system for:
 2. **Apply to a Program**
    - Click "Iniciar Sesión" (Login)
    - Login at `/seim/login/`
-   - Go to `/seim/applications/create/`
+   - Go to `/seim/applications/new`
    - Or click "Aplicar Ahora" on any program page
 
 3. **Track Applications**
@@ -89,6 +89,8 @@ Located at the top of all CMS pages:
   - Dashboard
   - Mis Solicitudes (My Applications)
   - Mi Perfil (My Profile)
+  - Configuración (Settings)
+  - Calendario
   - CMS Admin (staff only)
   - Django Admin (staff only)
 
@@ -96,7 +98,8 @@ Located at the top of all CMS pages:
 Once logged in to SEIM, use the dashboard to access:
 - Applications management
 - Profile settings
-- Calendar
+- Settings in the Vue SPA at `/seim/settings/`
+- Legacy calendar view at `/seim/calendar/`
 - Analytics (admins)
 
 ## 🔧 Common Tasks
@@ -177,8 +180,8 @@ Navigation is automatically generated from:
 ## 📚 Additional Resources
 
 - **URL Structure Guide:** `docs/url-structure.md`
-- **Architecture Documentation:** `docs/architecture.md`
-- **API Documentation:** `http://localhost:8000/api/docs/`
+- **Architecture Documentation:** `documentation/architecture.md`
+- **API Documentation:** `http://localhost:8001/api/docs/`
 
 ## 🎯 Next Steps
 

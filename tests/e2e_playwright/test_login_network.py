@@ -29,23 +29,13 @@ def test_login_api_call(page: Page, base_url: str):
     
     page.on("response", handle_response)
     
-    # Navigate to login page
-    page.goto(f"{base_url}/seim/login/")
-    page.wait_for_load_state("networkidle")
-    
-    # Fill login form
-    login_form = page.locator('#loginForm')
-    username_field = login_form.locator('input[type="text"]').first
-    if username_field.count() == 0:
-        username_field = login_form.locator('input[name="username"], input[name="email"]').first
-    username_field.fill("student1")
-    
-    password_field = login_form.locator('input[type="password"]').first
-    password_field.fill("student123")
-    
-    # Click submit
-    sign_in_button = login_form.locator('button:has-text("Sign In"), input[type="submit"]:has-text("Sign In")').first
-    sign_in_button.click()
+    page.goto(f"{base_url}/login", wait_until="domcontentloaded")
+    page.wait_for_load_state("networkidle", timeout=15000)
+    if page.title() and "not found" in page.title().lower():
+        pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
+    page.locator("input#email, input[type='email']").first.fill("student1@example.com")
+    page.locator("input#password, input[type='password']").first.fill("student123")
+    page.locator('button:has-text("Sign In"), [data-testid="login-submit"]').first.click()
     
     # Wait for API call
     page.wait_for_load_state("networkidle")

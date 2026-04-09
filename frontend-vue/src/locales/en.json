@@ -700,6 +700,19 @@
     "labelDuration": "Duration",
     "notAvailable": "N/A",
     "readinessLabel": "Readiness",
+    "scholarshipScoring": {
+      "title": "Scholarship allocation score",
+      "exportCohortCsv": "Download program cohort (CSV)",
+      "totalLabel": "Total points",
+      "colFactor": "Factor",
+      "colPoints": "Points",
+      "colDetail": "How we scored",
+      "tieBreakers": "Suggested tie-break order:",
+      "withdrawnNote": "Withdrawn application — score shown for reference only.",
+      "exportMissingProgram": "Cannot export: program id missing.",
+      "exportSuccess": "Cohort export downloaded.",
+      "exportError": "Could not download cohort export."
+    },
     "status": {
       "unknown": "Unknown",
       "draft": "Draft",

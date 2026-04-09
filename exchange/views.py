@@ -1,5 +1,11 @@
 import hashlib
+from datetime import timedelta
+
+from django.contrib.auth import get_user_model
 from django.db.models import Count, Prefetch, Q
+from django.http import HttpResponse
+from django.urls import reverse
+from django.utils import timezone as dj_tz
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
@@ -12,13 +18,6 @@ from core.permissions import (
     IsStudentOrReadOnly,
 )
 
-from datetime import timedelta
-
-from django.contrib.auth import get_user_model
-from django.http import HttpResponse
-from django.urls import reverse
-from django.utils import timezone as dj_tz
-
 from .agreement_renewal import AgreementRenewalService
 from .calendar_events import build_calendar_event_dicts
 from .calendar_ics import (
@@ -29,15 +28,16 @@ from .calendar_ics import (
 )
 from .filters import ApplicationFilter, ExchangeAgreementFilter, ProgramFilter
 from .models import (
+    SEAT_HOLDING_APPLICATION_STATUS_NAMES,
     Application,
     ApplicationStatus,
     Comment,
     ExchangeAgreement,
     Program,
     SavedSearch,
-    SEAT_HOLDING_APPLICATION_STATUS_NAMES,
     TimelineEvent,
 )
+from .scholarship_scoring import scholarship_scores_csv_response
 from .serializers import (
     ApplicationSerializer,
     ApplicationStatusSerializer,
@@ -361,11 +361,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             'program__coordinators',
             'program__required_document_types',
             'student__roles',    # ManyToMany through student
-            'comment_set',       # Reverse ForeignKey (comments for this application)
-            'comment_set__author',  # And the authors of those comments
-            'comment_set__author__roles',  # And their roles
-            'timelineevent_set',    # Reverse ForeignKey (events for this application)
-            'timelineevent_set__created_by',  # And who created those events
+            "comments",
+            "comments__author",
+            "comments__author__roles",
+            "timeline_events",  # Reverse FK: events for this application
+            "timeline_events__created_by",
             'document_set',         # Reverse ForeignKey (documents)
             'document_set__type',   # Document types
             'document_set__uploaded_by'  # Who uploaded them
@@ -390,6 +390,35 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         """Retrieve a specific application with caching."""
         return super().retrieve(request, *args, **kwargs)
+
+    @action(detail=False, methods=["get"], url_path="scholarship-scores-export")
+    def scholarship_scores_export(self, request):
+        """CSV export of scholarship allocation scores for all applications in a program (staff)."""
+        user = request.user
+        if not user.is_authenticated or not user.has_any_role(["coordinator", "admin"]):
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        program_id = request.query_params.get("program")
+        if not program_id:
+            return Response(
+                {"error": "Query parameter 'program' is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        from .models import Program
+
+        if not Program.objects.filter(pk=program_id).exists():
+            return Response({"error": "Program not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        qs = (
+            Application.objects.filter(program_id=program_id)
+            .select_related("program", "student", "status", "student__profile")
+            .prefetch_related(
+                "program__required_document_types",
+                "document_set",
+                "document_set__type",
+            )
+            .order_by("created_at")
+        )
+        return scholarship_scores_csv_response(program_id, qs)
 
     @action(detail=True, methods=["post"])
     def submit(self, request, pk=None):
@@ -539,27 +568,27 @@ class TimelineEventViewSet(viewsets.ReadOnlyModelViewSet):
 
 class SavedSearchViewSet(viewsets.ModelViewSet):
     """ViewSet for saved searches (coordinators/admins only)."""
-    
+
     queryset = SavedSearch.objects.all()
     serializer_class = SavedSearchSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ['search_type', 'is_default']
     ordering_fields = ['created_at', 'name']
-    
+
     def get_queryset(self):
         """Users can only see their own saved searches."""
         return SavedSearch.objects.filter(user=self.request.user)
-    
+
     def perform_create(self, serializer):
         """Set user from request."""
         serializer.save(user=self.request.user)
-    
+
     @action(detail=True, methods=['post'])
     def apply(self, request, pk=None):
         """
         Apply a saved search and return the filters.
-        
+
         Returns the filter parameters that can be used to filter
         programs or applications.
         """
@@ -569,7 +598,7 @@ class SavedSearchViewSet(viewsets.ModelViewSet):
             'filters': saved_search.filters,
             'name': saved_search.name
         })
-    
+
     @action(detail=True, methods=['post'])
     def set_default(self, request, pk=None):
         """Set this search as the default for its type."""

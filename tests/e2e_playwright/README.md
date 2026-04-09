@@ -4,7 +4,7 @@
 
 ### Run All Tests
 ```bash
-make test-e2e-playwright-docker
+make e2e-docker
 ```
 
 ### Run Specific Test Suite

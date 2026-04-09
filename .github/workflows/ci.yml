@@ -159,6 +159,9 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
         run: python manage.py migrate --noinput
 
+      - name: Compile translation messages
+        run: python manage.py compilemessages
+
       - name: Pytest (unit + integration)
         env:
           DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test

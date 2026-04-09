@@ -6,7 +6,7 @@ Tests the complete student journey from login to application submission.
 
 import pytest
 from playwright.sync_api import Page, expect
-from tests.e2e_playwright.utils.auth_helpers import login_as_student
+from tests.e2e_playwright.utils.auth_helpers import login_as_student, VueAppNotAvailable
 import time
 
 
@@ -19,7 +19,10 @@ class TestStudentWorkflows:
     
     def test_student_dashboard_access(self, page: Page, base_url: str):
         """Test that student can access dashboard after login."""
-        login_as_student(page, base_url)
+        try:
+            login_as_student(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         page.goto(f"{base_url}/seim/dashboard/")
         page.wait_for_load_state("networkidle")
@@ -37,7 +40,10 @@ class TestStudentWorkflows:
     
     def test_browse_programs(self, page: Page, base_url: str):
         """Test that student can browse available programs."""
-        login_as_student(page, base_url)
+        try:
+            login_as_student(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         page.goto(f"{base_url}/seim/programs/")
         page.wait_for_load_state("networkidle")
@@ -59,7 +65,10 @@ class TestStudentWorkflows:
     
     def test_view_applications_list(self, page: Page, base_url: str):
         """Test that student can view their applications."""
-        login_as_student(page, base_url)
+        try:
+            login_as_student(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         page.goto(f"{base_url}/seim/applications/")
         page.wait_for_load_state("networkidle")
@@ -80,9 +89,12 @@ class TestStudentWorkflows:
     
     def test_create_application_page(self, page: Page, base_url: str):
         """Test that student can access application creation page."""
-        login_as_student(page, base_url)
+        try:
+            login_as_student(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
-        page.goto(f"{base_url}/seim/applications/create/")
+        page.goto(f"{base_url}/seim/applications/new")
         page.wait_for_load_state("networkidle")
         
         # Verify we're on create application page
@@ -102,7 +114,10 @@ class TestStudentWorkflows:
     
     def test_view_profile(self, page: Page, base_url: str):
         """Test that student can view their profile."""
-        login_as_student(page, base_url)
+        try:
+            login_as_student(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         page.goto(f"{base_url}/seim/profile/")
         page.wait_for_load_state("networkidle")
@@ -123,7 +138,10 @@ class TestStudentWorkflows:
     
     def test_view_settings(self, page: Page, base_url: str):
         """Test that student can access settings page."""
-        login_as_student(page, base_url)
+        try:
+            login_as_student(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         page.goto(f"{base_url}/seim/settings/")
         page.wait_for_load_state("networkidle")
@@ -138,7 +156,10 @@ class TestStudentWorkflows:
     
     def test_navigation_links(self, page: Page, base_url: str):
         """Test that student can navigate between pages."""
-        login_as_student(page, base_url)
+        try:
+            login_as_student(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         # Start at dashboard
         page.goto(f"{base_url}/seim/dashboard/")

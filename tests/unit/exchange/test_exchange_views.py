@@ -160,13 +160,13 @@ class TestApplicationViews:
         client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
         response = client.get(reverse('api:application-detail', kwargs={'pk': application.pk}))
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['program'] == program.pk
+        assert str(response.data["program"]) == str(program.pk)
         # Session Auth
         client = APIClient()
         client.force_authenticate(user=user)
         response = client.get(reverse('api:application-detail', kwargs={'pk': application.pk}))
         assert response.status_code == status.HTTP_200_OK
-        assert response.data['program'] == program.pk
+        assert str(response.data["program"]) == str(program.pk)
 
     def test_application_create_view(self):
         client = APIClient()

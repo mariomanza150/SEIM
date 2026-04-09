@@ -8,6 +8,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from .models import FormSubmission
+from .visibility import field_effective_visible
 
 
 class DynamicFormFromSchema(forms.Form):
@@ -130,6 +131,36 @@ class FormSubmissionService:
     """
 
     @staticmethod
+    def _is_missing_or_empty(field_config, value):
+        if value is None:
+            return True
+        field_type = field_config.get('type', 'string')
+        if field_type == 'boolean':
+            return False
+        if field_type == 'array':
+            return not isinstance(value, list) or len(value) == 0
+        if field_type in ('number', 'integer'):
+            return value == ''
+        if isinstance(value, str):
+            return value.strip() == ''
+        return False
+
+    @staticmethod
+    def _validate_response_field_type(field_name, field_config, value):
+        field_type = field_config.get('type')
+
+        if field_type == 'string' and not isinstance(value, str):
+            raise ValidationError(f'{field_name} must be a string')
+        if field_type == 'number' and not isinstance(value, (int, float)):
+            raise ValidationError(f'{field_name} must be a number')
+        if field_type == 'integer' and not isinstance(value, int):
+            raise ValidationError(f'{field_name} must be an integer')
+        if field_type == 'boolean' and not isinstance(value, bool):
+            raise ValidationError(f'{field_name} must be a boolean')
+        if field_type == 'array' and not isinstance(value, list):
+            raise ValidationError(f'{field_name} must be an array')
+
+    @staticmethod
     def create_submission(form_type, submitted_by, responses, program=None, application=None):
         """
         Create a new form submission.
@@ -162,13 +193,14 @@ class FormSubmissionService:
         return submission
 
     @staticmethod
-    def validate_responses(form_type, responses):
+    def validate_responses(form_type, responses, *, visibility_context=None):
         """
         Validate form responses against the schema.
 
         Args:
             form_type: FormType instance
             responses: Dict of responses to validate
+            visibility_context: Optional dict (program_id, has_assigned_coordinator) for rules
 
         Returns:
             True if valid
@@ -182,31 +214,83 @@ class FormSubmissionService:
         schema = form_type.schema
         properties = schema.get('properties', {})
         required_fields = schema.get('required', [])
+        vctx = visibility_context
 
-        # Check required fields
-        missing_fields = [field for field in required_fields if field not in responses]
+        missing_fields = []
+        for field in required_fields:
+            if field not in properties:
+                continue
+            if not field_effective_visible(form_type, field, responses, vctx):
+                continue
+            if field not in responses or FormSubmissionService._is_missing_or_empty(
+                properties[field], responses[field]
+            ):
+                missing_fields.append(field)
         if missing_fields:
             raise ValidationError(f'Missing required fields: {", ".join(missing_fields)}')
 
-        # Validate field types (basic validation)
         for field_name, value in responses.items():
             if field_name not in properties:
-                continue  # Allow extra fields
+                continue
 
             field_config = properties[field_name]
-            field_type = field_config.get('type')
+            if not field_effective_visible(form_type, field_name, responses, vctx):
+                continue
+            FormSubmissionService._validate_response_field_type(field_name, field_config, value)
 
-            # Type validation
-            if field_type == 'string' and not isinstance(value, str):
-                raise ValidationError(f'{field_name} must be a string')
-            elif field_type == 'number' and not isinstance(value, (int, float)):
-                raise ValidationError(f'{field_name} must be a number')
-            elif field_type == 'integer' and not isinstance(value, int):
-                raise ValidationError(f'{field_name} must be an integer')
-            elif field_type == 'boolean' and not isinstance(value, bool):
-                raise ValidationError(f'{field_name} must be a boolean')
-            elif field_type == 'array' and not isinstance(value, list):
-                raise ValidationError(f'{field_name} must be an array')
+        return True
+
+    @staticmethod
+    def validate_step_patch(
+        form_type,
+        patch_dict,
+        step_field_names,
+        *,
+        merged_responses=None,
+        visibility_context=None,
+    ):
+        """
+        Validate a partial update for one step: keys must belong to the step, types must match,
+        and schema-required fields for that step must be present in patch_dict with non-empty values.
+        ``merged_responses`` is the full response object (existing + patch) for visibility rules.
+        """
+        if not form_type.schema:
+            return True
+
+        schema = form_type.schema
+        properties = schema.get('properties', {})
+        required_fields = set(schema.get('required', []))
+        step_set = set(step_field_names)
+        merged = merged_responses if merged_responses is not None else patch_dict
+        vctx = visibility_context
+
+        for field_name in patch_dict:
+            if field_name not in step_set:
+                raise ValidationError(f'Field "{field_name}" is not part of this step.')
+            if field_name not in properties:
+                raise ValidationError(f'Unknown field "{field_name}".')
+
+        for field_name, value in patch_dict.items():
+            field_config = properties[field_name]
+            if field_effective_visible(form_type, field_name, merged, vctx):
+                FormSubmissionService._validate_response_field_type(field_name, field_config, value)
+
+        step_required = []
+        for f in step_field_names:
+            if f not in required_fields or f not in properties:
+                continue
+            if not field_effective_visible(form_type, f, merged, vctx):
+                continue
+            step_required.append(f)
+        missing = []
+        for field_name in step_required:
+            if field_name not in patch_dict:
+                missing.append(field_name)
+                continue
+            if FormSubmissionService._is_missing_or_empty(properties[field_name], patch_dict[field_name]):
+                missing.append(field_name)
+        if missing:
+            raise ValidationError(f'Missing required fields for this step: {", ".join(missing)}')
 
         return True
 

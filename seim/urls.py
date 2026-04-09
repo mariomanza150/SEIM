@@ -7,11 +7,11 @@ This configuration separates:
 - User-facing routes - Handled by Vue.js SPA
 """
 from django.apps import apps
-from django.contrib import admin
-from django.urls import include, path, re_path
-from django.shortcuts import redirect
 from django.conf import settings
 from django.conf.urls.static import static
+from django.contrib import admin
+from django.shortcuts import redirect
+from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 from django_js_reverse.views import urls_js
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
@@ -22,13 +22,13 @@ from frontend import views as frontend_views
 _WAGTAIL = apps.is_installed("wagtail")
 
 if _WAGTAIL:
-    from wagtail.admin import urls as wagtailadmin_urls
     from wagtail import urls as wagtail_urls
-    from wagtail.documents import urls as wagtaildocs_urls
-    from wagtail.api.v2.views import PagesAPIViewSet
-    from wagtail.images.api.v2.views import ImagesAPIViewSet
-    from wagtail.documents.api.v2.views import DocumentsAPIViewSet
+    from wagtail.admin import urls as wagtailadmin_urls
     from wagtail.api.v2.router import WagtailAPIRouter
+    from wagtail.api.v2.views import PagesAPIViewSet
+    from wagtail.documents import urls as wagtaildocs_urls
+    from wagtail.documents.api.v2.views import DocumentsAPIViewSet
+    from wagtail.images.api.v2.views import ImagesAPIViewSet
 
     wagtail_api_router = WagtailAPIRouter("wagtailapi")
     wagtail_api_router.register_endpoint("pages", PagesAPIViewSet)
@@ -71,7 +71,7 @@ urlpatterns += [
 
     # Application Forms API
     path('api/application-forms/', include(('application_forms.urls', 'application_forms'), namespace='application_forms')),
-    
+
     # API Documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
@@ -110,19 +110,22 @@ urlpatterns += [
 
 if _WAGTAIL:
     urlpatterns.append(
+        path("admin-dashboard/", frontend_views.admin_dashboard_view),
+    )
+
+# Django template frontend routes must be registered *before* Wagtail's ``""`` catch-all
+# so paths like ``/``, ``/programs/``, and ``/dashboard/analytics/`` resolve here.
+urlpatterns += [
+    path("", include(("frontend.urls", "frontend"), namespace="frontend")),
+]
+
+if _WAGTAIL:
+    urlpatterns.append(
         path(
             "",
             include(wagtail_urls),
         ),
     )
-
-urlpatterns += [
-    # ============================================
-    # ROOT - LEGACY DJANGO FRONTEND ROUTES
-    # ============================================
-    # Keep these available outside /seim/ so public auth and legacy redirects still work.
-    path("", include(("frontend.urls", "frontend"), namespace="frontend")),
-]
 
 # ============================================
 # DEVELOPMENT: Serve media and static files

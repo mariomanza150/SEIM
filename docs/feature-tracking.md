@@ -137,11 +137,12 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Default link-preview image (`og:image` / `twitter:image`) | `frontend-vue` | Implemented | 2026-04-09 | Absolute URL for `vite.svg` via `new URL('vite.svg', location.href)` in `syncAppSocialMeta` (`documentTitle.js`) and shell bootstrap; skips `about:` pages. Vitest: `documentTitle.spec.js`, `indexHtml.spec.js`. |
 | Manual QA **MQ-014:** staff-only routes after cold JWT restore | `frontend-vue` | Implemented | 2026-04-09 | `router/authNavigation.js` — `resolveAuthenticatedNavigation` runs `checkAuth()` then enforces `meta.staffReviewQueue` / `canUseStaffReviewQueue`; wired from `router/index.js` `beforeEach`. Vitest: `authNavigation.spec.js`, `router/index.spec.js` (guard integration). |
 | Django admin **UserSettings**: notification routing reference links | `accounts`, `notifications` | Implemented | 2026-04-09 | Collapsible fieldset + read-only `notification_routing_documentation` → `/seim/notification-routing` + `/api/docs/` (`rel="noopener noreferrer"`). Tests: `tests/unit/accounts/test_usersettings_admin.py`. |
+| Scholarship allocation scoring (default rubric v1) | `exchange`, `grades`, `accounts`, `frontend-vue`, `api` | Implemented | 2026-04-09 | **Phase 1:** `exchange.scholarship_scoring.compute_scholarship_allocation_score` — factors: academic (GPA / translation), language (CEFR vs program min + `additional_languages`), program language fit, document+form quality (reuses readiness internals), timeliness vs apply window. Staff-only `scholarship_allocation_score` on application retrieve; `GET /api/applications/scholarship-scores-export/?program=` cohort export (**CSV** default; **`export_format=xlsx` / `pdf`**). Vue application detail: staff panel + cohort downloads. Tests: `tests/unit/exchange/test_scholarship_scoring.py`, `tests/integration/api/test_scholarship_scores_api.py`, `ApplicationDetail.spec.js`. **Backlog:** admin ruleset editor, student-facing estimate, workflow hooks (see funding tracking row). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ |  |  |  |  |
+| Scholarship cohort export (Excel / PDF) | `exchange`, `api`, `frontend-vue` | In progress | 2026-04-09 | Extend `scholarship-scores-export` with `export_format=xlsx` / `pdf` (CSV default); Vue staff actions. |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -192,8 +193,7 @@ _All Priority 1 items in this subsection are implemented above._
 | Student nomination and matching workflow | `exchange`, `accounts`, `admin UI` | Support nomination cycles, ranking, partner allocations, and selection matching for institutions with limited slots. |
 | Visual workflow designer for applications | `application_forms`, `admin UI` | Give admins a low-code interface to design multi-step application flows, approval paths, and validation gates visually. |
 | Automated eligibility and rules engine | `exchange`, `application_forms`, `accounts` | Evaluate eligibility using configurable academic, language, deadline, and documentation rules before submission or review. |
-| Scholarship and funding workflow tracking | `exchange`, `documents`, `analytics`, `frontend-vue` | Track scholarship opportunities, internal funding requests, required financial documents, disbursement milestones, and award outcomes alongside exchange applications. **Pairs with** the scholarship allocation scoring row below: once awards exist, scores can drive shortlists and committee packets. |
-| **Scholarship allocation scoring (points engine)** | `exchange`, `grades`, `accounts`, `application_forms`, `analytics`, `admin UI`, `frontend-vue` | **Admin need:** rank and compare applicants for limited scholarships using a **transparent point system** built from data already in SEIM (and optional extra fields). **Proposed inputs (weighted, toggled per ruleset):** **GPA / academic record** (student profile + `grades` translation where applicable); **language level** (primary `language` / `language_level` and `Profile.additional_languages` vs program minima); **program fit** (e.g. destination/partner weighting via programs, agreements, or nominated host); **application quality signals** (readiness score, document checklist, dynamic form completeness); **timeliness** (submit date vs window); optional **need or merit essays** via `application_forms` schema. **Outputs:** staff **ranked list** with **per-applicant breakdown** (factor → points → subtotal) for audit and appeals; configurable **caps/floors** and **tie-breaker** chain; **export** (CSV/Excel/PDF) for committees. **UX phasing:** (1) server-side calculator + read-only panel on staff application detail + export; (2) admin UI to define **rulesets** (global / per program / per award cycle), version history, dry-run on cohort; (3) optional student-facing **non-binding “estimated score band”** with clear disclaimers; (4) workflow hooks when scholarship states and notifications exist (see row above). |
+| Scholarship and funding workflow tracking | `exchange`, `documents`, `analytics`, `frontend-vue` | Track scholarship opportunities, internal funding requests, required financial documents, disbursement milestones, and award outcomes alongside exchange applications. **Pairs with** implemented **default_v1** scoring (see Implemented row): extend with award state + notifications when this workflow ships. |
 
 #### External calendars
 | Feature | Module | Notes |
@@ -215,5 +215,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 — **UserSettings** admin routing-reference links; tests `test_usersettings_admin.py`. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 — **Scholarship allocation scoring** (`default_v1` rubric, staff detail + CSV export). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

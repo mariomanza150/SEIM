@@ -27,53 +27,51 @@ class TestHomeView(TestCase):
 
     def test_home_view_anonymous_user(self):
         """Test home view for anonymous user displays welcome page."""
-        response = self.client.get('/')
-        
+        response = self.client.get("/")
+
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'frontend/home.html')
+        self.assertTemplateUsed(response, "frontend/home.html")
 
     def test_home_view_authenticated_user_redirects(self):
         """Test home view redirects authenticated users to dashboard."""
         user = User.objects.create_user(
             username="testuser",
             email="test@test.com",
-            password="testpass123"
+            password="testpass123",
         )
-        self.client.login(username='testuser', password='testpass123')
-        
-        response = self.client.get('/')
-        
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.get("/")
+
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/dashboard/', response.url)
+        self.assertIn("/dashboard/", response.url)
 
     def test_home_view_displays_stats(self):
         """Test home view displays program and application stats."""
-        # Create some programs and applications
-        program = Program.objects.create(
+        Program.objects.create(
             name="Test Program",
             description="Test",
             start_date=timezone.now().date(),
             end_date=timezone.now().date() + timezone.timedelta(days=365),
-            is_active=True
+            is_active=True,
         )
-        
-        response = self.client.get('/')
-        
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('total_programs', response.context)
-        self.assertIn('total_applications', response.context)
 
-    @patch('frontend.views.Program.objects.filter')
+        response = self.client.get("/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("total_programs", response.context)
+        self.assertIn("total_applications", response.context)
+
+    @patch("frontend.views.Program.objects.filter")
     def test_home_view_handles_stats_error(self, mock_filter):
         """Test home view handles errors when fetching stats."""
         mock_filter.side_effect = Exception("Database error")
-        
-        response = self.client.get('/')
-        
-        # Should still render with default values
+
+        response = self.client.get("/")
+
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['total_programs'], 0)
-        self.assertEqual(response.context['total_applications'], 0)
+        self.assertEqual(response.context["total_programs"], 0)
+        self.assertEqual(response.context["total_applications"], 0)
 
 
 @pytest.mark.django_db
@@ -194,53 +192,51 @@ class TestProgramsView(TestCase):
         self.user = User.objects.create_user(
             username="testuser",
             email="test@test.com",
-            password="testpass123"
+            password="testpass123",
         )
 
     def test_programs_view_requires_login(self):
         """Test programs view requires authentication."""
-        response = self.client.get('/programs/')
-        
-        # Should redirect to login
+        response = self.client.get("/programs/")
+
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn("/login/", response.url)
 
     def test_programs_view_authenticated(self):
         """Test programs view displays for authenticated users."""
-        self.client.login(username='testuser', password='testpass123')
-        
-        response = self.client.get('/programs/')
-        
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.get("/programs/")
+
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'frontend/programs/list.html')
+        self.assertTemplateUsed(response, "frontend/programs/list.html")
 
     def test_programs_view_displays_active_programs(self):
         """Test programs view only displays active programs."""
-        self.client.login(username='testuser', password='testpass123')
-        
+        self.client.login(username="testuser", password="testpass123")
+
         active_program = Program.objects.create(
             name="Active Program",
             description="Test",
             start_date=timezone.now().date(),
             end_date=timezone.now().date() + timezone.timedelta(days=365),
-            is_active=True
+            is_active=True,
         )
-        
-        inactive_program = Program.objects.create(
+
+        Program.objects.create(
             name="Inactive Program",
             description="Test",
             start_date=timezone.now().date(),
             end_date=timezone.now().date() + timezone.timedelta(days=365),
-            is_active=False
+            is_active=False,
         )
-        
-        response = self.client.get('/programs/')
-        
+
+        response = self.client.get("/programs/")
+
         self.assertEqual(response.status_code, 200)
-        self.assertIn('programs', response.context)
-        
-        # Should only include active program
-        programs = list(response.context['programs'])
+        self.assertIn("programs", response.context)
+
+        programs = list(response.context["programs"])
         self.assertEqual(len(programs), 1)
         self.assertEqual(programs[0].id, active_program.id)
 
@@ -252,7 +248,7 @@ class TestApplicationsView(TestCase):
     def setUp(self):
         """Set up test data."""
         self.client = Client()
-        
+
         self.student_role, _ = Role.objects.get_or_create(name="student")
         self.coordinator_role, _ = Role.objects.get_or_create(name="coordinator")
         
@@ -272,14 +268,14 @@ class TestApplicationsView(TestCase):
 
     def test_applications_view_requires_login(self):
         """Test applications view requires authentication."""
-        response = self.client.get('/applications/')
-        
+        response = self.client.get("/applications/")
+
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn("/login/", response.url)
 
     def test_applications_view_student_sees_own(self):
         """Test student only sees their own applications."""
-        self.client.login(username='student', password='testpass123')
+        self.client.login(username="student", password="testpass123")
         
         program = Program.objects.create(
             name="Test Program",
@@ -315,18 +311,17 @@ class TestApplicationsView(TestCase):
             status=status
         )
         
-        response = self.client.get('/applications/')
-        
+        response = self.client.get("/applications/")
+
         self.assertEqual(response.status_code, 200)
-        applications = list(response.context['applications'])
-        
-        # Should only see own application
+        applications = list(response.context["applications"])
+
         self.assertEqual(len(applications), 1)
         self.assertEqual(applications[0].id, student_app.id)
 
     def test_applications_view_coordinator_sees_all(self):
         """Test coordinator sees all applications."""
-        self.client.login(username='coordinator', password='testpass123')
+        self.client.login(username="coordinator", password="testpass123")
         
         program = Program.objects.create(
             name="Test Program",
@@ -361,12 +356,11 @@ class TestApplicationsView(TestCase):
             status=status
         )
         
-        response = self.client.get('/applications/')
-        
+        response = self.client.get("/applications/")
+
         self.assertEqual(response.status_code, 200)
-        applications = list(response.context['applications'])
-        
-        # Should see all applications
+        applications = list(response.context["applications"])
+
         self.assertEqual(len(applications), 2)
 
 
@@ -398,7 +392,7 @@ class TestAnalyticsView(TestCase):
 
     def test_analytics_view_requires_login(self):
         """Test analytics view requires authentication."""
-        response = self.client.get('/analytics/')
+        response = self.client.get('/dashboard/analytics/')
         
         self.assertEqual(response.status_code, 302)
 
@@ -406,7 +400,7 @@ class TestAnalyticsView(TestCase):
         """Test admin can access analytics."""
         self.client.login(username='admin', password='testpass123')
         
-        response = self.client.get('/analytics/')
+        response = self.client.get('/dashboard/analytics/')
         
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'frontend/admin/analytics.html')
@@ -415,7 +409,7 @@ class TestAnalyticsView(TestCase):
         """Test student cannot access analytics."""
         self.client.login(username='student', password='testpass123')
         
-        response = self.client.get('/analytics/')
+        response = self.client.get('/dashboard/analytics/')
         
         # Should be denied (403 or redirect)
         self.assertIn(response.status_code, [302, 403])
@@ -430,7 +424,7 @@ class TestAnalyticsView(TestCase):
             'total_programs': 5
         }
         
-        response = self.client.get('/analytics/')
+        response = self.client.get('/dashboard/analytics/')
         
         self.assertEqual(response.status_code, 200)
         self.assertIn('metrics', response.context)
@@ -442,7 +436,7 @@ class TestAnalyticsView(TestCase):
         
         mock_metrics.side_effect = Exception("Service error")
         
-        response = self.client.get('/analytics/')
+        response = self.client.get('/dashboard/analytics/')
         
         # Should still render with empty metrics
         self.assertEqual(response.status_code, 200)

@@ -191,7 +191,7 @@ Redirects to /seim/register/ or /seim/login/
     ↓
 User authenticates
     ↓
-Redirects to /seim/applications/create/
+Redirects to /seim/applications/new
     ↓
 User completes application in SEIM system
     ↓

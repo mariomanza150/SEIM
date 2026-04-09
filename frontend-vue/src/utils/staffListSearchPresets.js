@@ -4,6 +4,7 @@ export const STAFF_SAVED_SEARCH_TYPE = Object.freeze({
   EXCHANGE_AGREEMENT: 'exchange_agreement',
   APPLICATION_DOCUMENT: 'document',
   AGREEMENT_REPOSITORY_DOC: 'agreement_document',
+  DEADLINES_CALENDAR: 'calendar',
 })
 
 const AG_ORDER_DEFAULT = '-end_date'
@@ -82,5 +83,32 @@ export function deserializeAgreementDocumentFilters(raw) {
     category: f.category ?? '',
     current_only: Boolean(f.current_only),
     ordering: f.ordering || ADOC_ORDER_DEFAULT,
+  }
+}
+
+/** Calendar / deadlines list: date range + visibility toggles (see DeadlinesCalendar.vue). */
+export function serializeCalendarFilters(state) {
+  const show = state.show && typeof state.show === 'object' ? state.show : {}
+  return {
+    range_start: state.rangeStart || '',
+    range_end: state.rangeEnd || '',
+    show_program: Boolean(show.program),
+    show_deadline: Boolean(show.deadline),
+    show_application: Boolean(show.application),
+    show_agreement: Boolean(show.agreement),
+  }
+}
+
+export function deserializeCalendarFilters(raw) {
+  const f = raw && typeof raw === 'object' ? raw : {}
+  return {
+    rangeStart: f.range_start ?? '',
+    rangeEnd: f.range_end ?? '',
+    show: {
+      program: f.show_program !== false,
+      deadline: f.show_deadline !== false,
+      application: f.show_application !== false,
+      agreement: f.show_agreement !== false,
+    },
   }
 }

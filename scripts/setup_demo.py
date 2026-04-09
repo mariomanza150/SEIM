@@ -26,38 +26,22 @@ def setup_demo():
     print("🚀 Setting up SEIM Demo Environment...")
 
     try:
-        # 1. Run initial data creation
-        print("\n📋 Creating initial system data...")
-        call_command("create_initial_data")
-
-        # 2. Create comprehensive demo data
-        print("\n👥 Creating demo users, programs, and applications...")
-        call_command(
-            "create_demo_data",
-            users=25,  # 25 users total
-            programs=8,  # 8 diverse programs
-            applications=75,
-        )  # 75 applications
-
-        # 3. Assign roles to any existing users
-        print("\n🔐 Assigning roles to users...")
-        call_command("assign_user_roles")
-
-        # 4. Create missing profiles
-        print("\n👤 Creating missing user profiles...")
-        call_command("create_missing_profiles")
+        # 1. Seed deterministic demo-ready data
+        print("\n📋 Creating demo-ready users, programs, applications, and supporting records...")
+        call_command("seed_demo_readiness")
 
         print("\n✅ Demo setup completed successfully!")
         print("\n📊 Demo Data Summary:")
-        print("   • 25 users (2 admins, 3 coordinators, 20 students)")
-        print("   • 8 exchange programs")
-        print("   • 75 applications with various statuses")
-        print("   • Documents, comments, and notifications")
+        print("   • Canonical admin, coordinator, and student demo accounts")
+        print("   • Active exchange programs ready for browsing")
+        print("   • Applications in every workflow status")
+        print("   • Supporting documents, comments, timeline events, and notifications")
+        print("   • Exchange agreements (active, draft, renewal pending, expired) for the staff registry")
 
         print("\n🔑 Demo Login Credentials:")
-        print("   Admin: admin1 / admin123")
-        print("   Coordinator: coordinator1 / coordinator123")
-        print("   Student: student1 / student123")
+        print("   Admin: admin@test.com / admin123")
+        print("   Coordinator: coordinator@test.com / coordinator123")
+        print("   Student: student@test.com / student123")
 
         print("\n🌐 Access the application at: http://localhost:8000")
 

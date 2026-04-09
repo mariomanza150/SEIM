@@ -44,6 +44,7 @@ All SEIM application features are under `/seim/`:
 - `/seim/programs/` - SEIM programs management (admin)
 - `/seim/review-queue/` - Staff application review queue (Vue)
 - `/seim/coordinator-workload/` - Staff workload / queue metrics (Vue)
+- `/seim/calendar/` - Deadlines & milestones (Vue; uses `/api/calendar/events/`)
 
 Legacy server-rendered application creation also remains available at `/applications/create/`.
 

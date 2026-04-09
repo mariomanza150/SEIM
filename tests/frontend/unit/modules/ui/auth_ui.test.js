@@ -25,14 +25,14 @@ describe('auth_ui.js', () => {
     expect(document.querySelector('.unauth-only').style.display).toBe('block');
   });
 
-  test('updateUserInterface updates user info and calls updateRoleBasedUI', () => {
+  test('updateUserInterface updates user info and applies role-based visibility', () => {
     const userData = { username: 'test', role: 'student', email: 'test@example.com' };
-    const spy = jest.spyOn(authUI, 'updateRoleBasedUI');
     authUI.updateUserInterface(userData);
     expect(document.querySelector('.user-username').textContent).toBe('test');
     expect(document.querySelector('.user-role').textContent).toBe('student');
     expect(document.querySelector('.user-email').textContent).toBe('test@example.com');
-    expect(spy).toHaveBeenCalledWith('student');
+    expect(document.querySelector('[data-role="student"]').style.display).toBe('block');
+    expect(document.querySelector('[data-role="admin"]').style.display).toBe('none');
   });
 
   test('updateRoleBasedUI shows only elements for the current role', () => {

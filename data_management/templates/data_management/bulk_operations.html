@@ -1,0 +1,66 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">
+<link rel="stylesheet" href="{% static 'admin/css/dashboard.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans "Home" %}</a> &rsaquo;
+    {% trans "Bulk Operations" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h2>{% trans "Bulk Operations" %}</h2>
+    <div class="module-content">
+        <p>{% trans "Perform bulk operations on your data." %}</p>
+
+        {% if messages %}
+        <ul class="messagelist">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <div class="module">
+            <h3>{% trans "Available Operations" %}</h3>
+            <div class="module-content">
+                {% if operations %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{% trans "Name" %}</th>
+                            <th>{% trans "Type" %}</th>
+                            <th>{% trans "Description" %}</th>
+                            <th>{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for operation in operations %}
+                        <tr>
+                            <td>{{ operation.name }}</td>
+                            <td>{{ operation.get_operation_type_display }}</td>
+                            <td>{{ operation.description }}</td>
+                            <td>
+                                <form method="post" action="{% url 'data_management:execute_bulk_operation' operation.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="button">{% trans "Execute" %}</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>{% trans "No bulk operations available." %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

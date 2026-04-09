@@ -1,0 +1,71 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">
+<link rel="stylesheet" href="{% static 'admin/css/dashboard.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans "Home" %}</a> &rsaquo;
+    {% trans "Data Imports" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h2>{% trans "Data Imports" %}</h2>
+    <div class="module-content">
+        <p>{% trans "Import data from various formats." %}</p>
+        <div class="help">
+            <p><strong>{% trans "Student CSV format:" %}</strong> <code>email,username,first_name,last_name,password,language,language_level,gpa</code></p>
+            <p>{% trans "The student import workflow creates or updates accounts by email, ensures the student role is assigned, and updates profile fields when those columns are present." %}</p>
+        </div>
+
+        {% if messages %}
+        <ul class="messagelist">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <div class="module">
+            <h3>{% trans "Available Imports" %}</h3>
+            <div class="module-content">
+                {% if imports %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{% trans "Name" %}</th>
+                            <th>{% trans "Model" %}</th>
+                            <th>{% trans "Format" %}</th>
+                            <th>{% trans "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for import_config in imports %}
+                        <tr>
+                            <td>{{ import_config.name }}</td>
+                            <td>{{ import_config.model_name }}</td>
+                            <td>{{ import_config.get_format_display }}</td>
+                            <td>
+                                <form method="post" action="{% url 'data_management:execute_import' import_config.id %}" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <input type="file" name="file" required>
+                                    <button type="submit" class="button">{% trans "Import" %}</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p>{% trans "No data imports available." %}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

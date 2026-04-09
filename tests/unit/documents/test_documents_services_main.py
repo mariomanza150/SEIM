@@ -187,12 +187,15 @@ class TestDocumentService(TestCase):
             uploaded_by=self.user
         )
 
-        result = DocumentService.validate_document(
-            document,
-            self.user,
-            "valid",
-            "Document is valid"
-        )
+        with patch("notifications.services.NotificationService.send_notification") as mock_notify:
+            result = DocumentService.validate_document(
+                document,
+                self.user,
+                "valid",
+                "Document is valid",
+            )
+
+        mock_notify.assert_not_called()
 
         self.assertIsInstance(result, DocumentValidation)
         self.assertEqual(result.document, document)
@@ -211,12 +214,15 @@ class TestDocumentService(TestCase):
             uploaded_by=self.user
         )
 
-        DocumentService.validate_document(
-            document,
-            self.user,
-            "invalid",
-            "Document is invalid"
-        )
+        with patch("notifications.services.NotificationService.send_notification") as mock_notify:
+            DocumentService.validate_document(
+                document,
+                self.user,
+                "invalid",
+                "Document is invalid",
+            )
+
+        mock_notify.assert_called_once()
 
         document.refresh_from_db()
         self.assertFalse(document.is_valid)

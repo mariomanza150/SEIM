@@ -48,7 +48,7 @@ class TestTranslationLoading(TestCase):
     def test_german_translation(self):
         """Test that German translations load correctly."""
         with translation.override('de'):
-            self.assertEqual(str(translation), 'de')
+            self.assertEqual(translation.get_language(), 'de')
             translated = _("Dashboard")
             self.assertEqual(str(translated), "Übersicht")
             

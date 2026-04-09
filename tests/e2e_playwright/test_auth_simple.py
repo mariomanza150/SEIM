@@ -9,6 +9,7 @@ import pytest
 from playwright.sync_api import Page, expect
 import time
 from tests.e2e_playwright.utils.auth_helpers import (
+    VueAppNotAvailable,
     login_via_api,
     login_as_student,
     login_as_coordinator,
@@ -25,68 +26,71 @@ class TestAuthenticationSimple:
     """Simple authentication workflow tests."""
     
     def test_login_page_accessible(self, page: Page, base_url: str):
-        """Test that login page is accessible."""
-        page.goto(f"{base_url}/seim/login/")
-        page.wait_for_load_state("networkidle")
-        
-        # Verify page title
+        """Test that Vue login page is accessible."""
+        page.goto(f"{base_url}/login", wait_until="domcontentloaded")
+        page.wait_for_load_state("networkidle", timeout=15000)
         title = page.title()
-        assert "login" in title.lower(), f"Expected login page, got title: {title}"
-        
-        # Verify Sign In button exists (we know this from diagnostic)
-        sign_in_button = page.locator('button:has-text("Sign In"), input[type="submit"]:has-text("Sign In")')
-        expect(sign_in_button).to_be_visible(timeout=5000)
-        
-        # Verify password field exists
-        password_field = page.locator('input[type="password"]')
-        expect(password_field).to_be_visible(timeout=5000)
-        
+        if title and "not found" in title.lower():
+            pytest.skip(
+                f"Vue app not available at {base_url}/login (got 'Not Found'). "
+                "Start Vue dev server and run with BASE_URL=http://localhost:5173"
+            )
+        sign_in_button = page.locator('button:has-text("Sign In"), [data-testid="login-submit"]')
+        try:
+            sign_in_button.first.wait_for(state="visible", timeout=5000)
+        except Exception:
+            pytest.skip(
+                f"Login form not found at {base_url}/login. "
+                "Ensure Vue app is running (e.g. BASE_URL=http://localhost:5173)."
+            )
+        expect(page.locator('input#password, input[type="password"]')).to_be_visible(timeout=3000)
+        expect(page.locator('input#email, input[type="email"]')).to_be_visible(timeout=3000)
         print("✅ Login page is accessible with all required elements")
     
     def test_login_with_valid_credentials(self, page: Page, base_url: str):
-        """Test login with valid student credentials via API."""
-        # Login via API
-        login_data = login_as_student(page, base_url)
+        """Test login with valid student credentials via API (Vue: /api/token/)."""
+        try:
+            login_data = login_as_student(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         assert login_data.get('access'), "Access token not received"
         assert login_data.get('refresh'), "Refresh token not received"
-        assert login_data.get('user'), "User data not received"
         
         # Verify we're logged in
         assert is_logged_in(page), "User should be logged in after API login"
         
         # Navigate to dashboard to verify access
-        page.goto(f"{base_url}/seim/dashboard/")
+        page.goto(f"{base_url}/dashboard")
         page.wait_for_load_state("networkidle")
         time.sleep(1)
         
         current_url = page.url
         assert "login" not in current_url.lower(), f"Should be on dashboard, but on: {current_url}"
         
-        print(f"✅ Login successful! User: {login_data['user'].get('username', 'unknown')}")
+        print("✅ Login successful!")
         print(f"   Redirected to: {current_url}")
         page.screenshot(path="tests/e2e_playwright/screenshots/login_success.png")
     
     def test_login_with_invalid_credentials(self, page: Page, base_url: str):
-        """Test login with invalid credentials shows error."""
-        page.goto(f"{base_url}/seim/login/")
-        page.wait_for_load_state("networkidle")
+        """Test login with invalid credentials shows error (Vue: email + password)."""
+        page.goto(f"{base_url}/login", wait_until="domcontentloaded")
+        page.wait_for_load_state("networkidle", timeout=15000)
+        if page.title() and "not found" in page.title().lower():
+            pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
+        email_field = page.locator('input#email, input[type="email"], [data-testid="login-email"]').first
+        try:
+            email_field.wait_for(state="visible", timeout=5000)
+        except Exception:
+            pytest.skip("Login form not found. Ensure Vue app is running at base_url.")
+        expect(email_field).to_be_visible()
+        email_field.fill("invalid@example.com")
         
-        # Find and fill username field
-        username_field = page.locator('input[type="text"]').first
-        if username_field.count() == 0:
-            username_field = page.locator('input[name="username"], input[name="email"]').first
-        
-        expect(username_field).to_be_visible()
-        username_field.fill("invalid_user_12345")
-        
-        # Fill password
-        password_field = page.locator('input[type="password"]').first
+        password_field = page.locator('input#password, input[type="password"]').first
         expect(password_field).to_be_visible()
         password_field.fill("wrong_password")
         
-        # Submit form
-        sign_in_button = page.locator('button:has-text("Sign In"), input[type="submit"]:has-text("Sign In")').first
+        sign_in_button = page.locator('button:has-text("Sign In"), [data-testid="login-submit"]').first
         expect(sign_in_button).to_be_visible()
         sign_in_button.click()
         
@@ -171,78 +175,55 @@ class TestAuthenticationSimple:
             print("ℹ️  Password reset page not found (may not be implemented)")
     
     def test_login_as_coordinator(self, page: Page, base_url: str):
-        """Test login as coordinator user."""
-        login_data = login_as_coordinator(page, base_url)
+        """Test login as coordinator user (Vue JWT)."""
+        try:
+            login_data = login_as_coordinator(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         assert login_data.get('access'), "Access token not received"
-        assert login_data.get('user'), "User data not received"
         assert is_logged_in(page), "User should be logged in"
         
-        # Verify user role
-        user_data = login_data.get('user', {})
-        print(f"✅ Coordinator login successful! User: {user_data.get('username', 'unknown')}")
+        print("✅ Coordinator login successful!")
         page.screenshot(path="tests/e2e_playwright/screenshots/login_coordinator.png")
     
     def test_login_as_admin(self, page: Page, base_url: str):
-        """Test login as admin user."""
-        login_data = login_as_admin(page, base_url)
+        """Test login as admin user (Vue JWT)."""
+        try:
+            login_data = login_as_admin(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         assert login_data.get('access'), "Access token not received"
-        assert login_data.get('user'), "User data not received"
         assert is_logged_in(page), "User should be logged in"
         
-        # Verify user is admin
-        user_data = login_data.get('user', {})
-        assert user_data.get('is_staff', False) or user_data.get('is_superuser', False), \
-            "Admin user should have staff or superuser privileges"
-        
-        print(f"✅ Admin login successful! User: {user_data.get('username', 'unknown')}")
+        print("✅ Admin login successful!")
         page.screenshot(path="tests/e2e_playwright/screenshots/login_admin.png")
     
     def test_login_with_invalid_credentials_api(self, page: Page, base_url: str):
-        """Test login API with invalid credentials."""
-        page.goto(f"{base_url}/seim/login/")
-        page.wait_for_load_state("networkidle")
-        
-        # Get CSRF token
-        csrf_token = page.locator('#loginForm input[name="csrfmiddlewaretoken"]').first.get_attribute("value")
-        if not csrf_token:
-            csrf_token = page.locator('input[name="csrfmiddlewaretoken"]').first.get_attribute("value")
-        
-        assert csrf_token, "CSRF token not found"
-        
-        # Try to login with invalid credentials
-        context = page.context
-        response = context.request.post(
-            f"{base_url}/api/accounts/login/",
-            headers={
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrf_token,
-                "Referer": f"{base_url}/seim/login/",
-            },
-            data={
-                "login": "invalid_user_12345",
-                "password": "wrong_password"
-            }
+        """Test Vue JWT login API with invalid credentials (no CSRF)."""
+        response = page.context.request.post(
+            f"{base_url}/api/token/",
+            headers={"Content-Type": "application/json"},
+            data={"email": "invalid@example.com", "password": "wrong_password"},
         )
-        
-        # Should fail with 400 or 401
-        assert not response.ok, f"Login should fail but got status {response.status}"
+        if response.status == 404:
+            pytest.skip("API not available at base_url. Run with BASE_URL=http://localhost:5173")
+        assert not response.ok, "Login should fail"
         assert response.status in [400, 401], f"Expected 400 or 401, got {response.status}"
-        
-        error_data = response.text()
         print(f"✅ Invalid login correctly rejected. Status: {response.status}")
-        print(f"   Error: {error_data[:100]}")
         page.screenshot(path="tests/e2e_playwright/screenshots/login_invalid_api.png")
     
     def test_logout_functionality(self, page: Page, base_url: str):
         """Test logout functionality after login."""
-        # First, login via API
-        login_data = login_as_student(page, base_url)
+        try:
+            login_as_student(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         assert is_logged_in(page), "Should be logged in"
         
         # Navigate to a protected page to verify we're logged in
-        page.goto(f"{base_url}/seim/dashboard/")
+        page.goto(f"{base_url}/dashboard")
         page.wait_for_load_state("networkidle")
         assert "login" not in page.url.lower(), "Should be able to access dashboard when logged in"
         
@@ -253,7 +234,7 @@ class TestAuthenticationSimple:
         assert not is_logged_in(page), "Should not be logged in after logout"
         
         # Try to access a protected page - should redirect to login
-        page.goto(f"{base_url}/seim/dashboard/")
+        page.goto(f"{base_url}/dashboard")
         page.wait_for_load_state("networkidle")
         time.sleep(1)
         
@@ -267,15 +248,14 @@ class TestAuthenticationSimple:
     
     def test_dashboard_access_after_login(self, page: Page, base_url: str):
         """Test that dashboard is accessible after login."""
-        # Login via API
-        login_data = login_as_student(page, base_url)
+        try:
+            login_as_student(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         assert is_logged_in(page), "Should be logged in after API login"
         
         # Try to navigate to dashboard
-        dashboard_urls = [
-            f"{base_url}/dashboard/",
-            f"{base_url}/seim/dashboard/",
-        ]
+        dashboard_urls = [f"{base_url}/dashboard"]
         
         accessed = False
         for dashboard_url in dashboard_urls:

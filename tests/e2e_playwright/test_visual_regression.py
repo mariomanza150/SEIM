@@ -2,9 +2,11 @@
 Visual regression tests using Playwright screenshots.
 
 Tests compare current page screenshots with baseline images to detect unintended UI changes.
+Requires: pixelmatch, PIL
 """
 
 import pytest
+
 from tests.e2e_playwright.pages.auth_page import AuthPage
 from tests.e2e_playwright.pages.dashboard_page import DashboardPage
 from tests.e2e_playwright.pages.programs_page import ProgramsPage

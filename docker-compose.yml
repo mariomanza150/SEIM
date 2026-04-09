@@ -33,9 +33,13 @@ services:
   web:
     build: .
     # Use Daphne (ASGI server) for production-like WebSocket support
-    command: bash -c "python manage.py collectstatic --noinput && daphne -b 0.0.0.0 -p 8000 seim.asgi:application"
+    command: bash -c "/app/scripts/ensure_vue_dist.sh && python manage.py collectstatic --noinput && daphne -b 0.0.0.0 -p 8000 seim.asgi:application"
     volumes:
       - .:/app
+      # Bind mount hides image-built ``frontend-vue/dist``. Named volume can initialize empty; on start
+      # ``scripts/ensure_vue_dist.sh`` copies from ``/opt/seim-vue-dist`` (see Dockerfile). After Vue changes:
+      # ``docker compose build web`` then ``docker compose up`` (or ``docker volume rm`` that volume to re-seed).
+      - vue_frontend_dist:/app/frontend-vue/dist
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     ports:
@@ -51,6 +55,7 @@ services:
       - DJANGO_SETTINGS_MODULE=seim.settings.development
       - DJANGO_ENV=dev
       - DEBUG=true
+      - DISABLE_THROTTLE_E2E=1
 
   celery:
     build: .
@@ -102,6 +107,7 @@ services:
 
 volumes:
   postgres_data:
+  vue_frontend_dist:
   static_volume:
   media_volume:
   test_coverage:

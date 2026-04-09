@@ -8,10 +8,10 @@ from .base_page import BasePage
 class AuthPage(BasePage):
     """Page object for authentication pages."""
     
-    # Login page locators
-    LOGIN_USERNAME_INPUT = '[name="username"]'
-    LOGIN_PASSWORD_INPUT = '[name="password"]'
-    LOGIN_SUBMIT_BUTTON = 'button[type="submit"]'
+    # Login page locators (Vue: email + password, id="email" / id="password")
+    LOGIN_USERNAME_INPUT = '#email, [data-testid="login-email"], input[type="email"]'
+    LOGIN_PASSWORD_INPUT = '#password, [data-testid="login-password"], input[type="password"]'
+    LOGIN_SUBMIT_BUTTON = 'button[type="submit"], [data-testid="login-submit"]'
     LOGIN_ERROR_MESSAGE = '.alert-danger, .error-message'
     
     # Register page locators
@@ -31,22 +31,21 @@ class AuthPage(BasePage):
     USER_MENU = '[data-testid="user-menu"]'
     
     def navigate_to_login(self) -> None:
-        """Navigate to login page."""
-        self.navigate('login/')
+        """Navigate to Vue login page."""
+        self.navigate('login')
     
     def navigate_to_register(self) -> None:
         """Navigate to register page."""
         self.navigate('register/')
     
-    def login(self, username: str, password: str) -> None:
+    def login(self, username_or_email: str, password: str) -> None:
         """
-        Login with credentials.
-        
+        Login with credentials (Vue: email in first field).
         Args:
-            username: Username
+            username_or_email: Email or username
             password: Password
         """
-        self.fill(self.LOGIN_USERNAME_INPUT, username)
+        self.fill(self.LOGIN_USERNAME_INPUT, username_or_email)
         self.fill(self.LOGIN_PASSWORD_INPUT, password)
         self.click(self.LOGIN_SUBMIT_BUTTON)
         self.wait_for_no_loading_indicators()
@@ -135,10 +134,10 @@ class AuthPage(BasePage):
         return self.get_text(self.REGISTER_ERROR_MESSAGE)
     
     def assert_login_page_loaded(self) -> None:
-        """Assert that login page is loaded."""
+        """Assert that Vue login page is loaded."""
         self.assert_url_contains('login')
-        self.assert_element_visible(self.LOGIN_USERNAME_INPUT)
         self.assert_element_visible(self.LOGIN_PASSWORD_INPUT)
+        self.assert_element_visible(self.LOGIN_USERNAME_INPUT)
     
     def assert_register_page_loaded(self) -> None:
         """Assert that register page is loaded."""

@@ -12,8 +12,10 @@ from playwright.sync_api import Page
 @pytest.mark.nondestructive
 def test_inspect_login_page(page: Page, base_url: str):
     """Inspect the login page structure."""
-    page.goto(f"{base_url}/seim/login/")
-    page.wait_for_load_state("networkidle")
+    page.goto(f"{base_url}/login", wait_until="domcontentloaded")
+    page.wait_for_load_state("networkidle", timeout=15000)
+    if page.title() and "not found" in page.title().lower():
+        pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
     
     # Take screenshot
     page.screenshot(path="tests/e2e_playwright/screenshots/login_page_inspect.png", full_page=True)

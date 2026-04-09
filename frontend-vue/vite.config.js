@@ -39,6 +39,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/ws': {
+        target: 'http://localhost:8001',
+        ws: true,
+        changeOrigin: true,
+      },
     }
   },
   
@@ -60,4 +65,17 @@ export default defineConfig({
   
   // Environment variable prefix
   envPrefix: 'VITE_',
+
+  // Vitest
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    include: ['src/**/*.{spec,test}.{js,ts}'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      include: ['src/stores/**', 'src/services/**'],
+      exclude: ['**/*.spec.js', '**/*.test.js', 'node_modules'],
+    },
+  },
 })

@@ -46,6 +46,7 @@ THIRD_PARTY_APPS = [
     "wagtail.contrib.settings",
     "wagtail.contrib.table_block",
     "wagtail.contrib.routable_page",
+    "wagtail.api.v2",
     "wagtailseo",
     "wagtailmarkdown",
     "modelcluster",
@@ -74,6 +75,7 @@ LOCAL_APPS = [
     "frontend",
     "grades",
     "application_forms",  # Custom form types and submissions (separate from dynforms package)
+    "data_management",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS + [
@@ -82,6 +84,7 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS + [
     'crisp_modals',
     'itemlist',
     'dynforms',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -312,7 +315,12 @@ SPECTACULAR_SETTINGS = {
         "url": "http://localhost:8000/documentation/",
     },
     "SERVERS": [
-        {"url": "http://localhost:8000", "description": "Development server"},
+        {
+            "url": "/",
+            "description": "This host (Try it out uses the same origin as the docs page)",
+        },
+        {"url": "http://localhost:8001", "description": "Local Docker Compose (default web port)"},
+        {"url": "http://localhost:8000", "description": "Alternate local port"},
         {"url": "https://api.seim.local", "description": "Production server"},
     ],
     "SECURITY": [{"jwtAuth": []}],
@@ -391,9 +399,32 @@ FEATURE_FLAGS = {
     'NOTIFICATION_CENTER': env.bool('FEATURE_NOTIFICATION_CENTER', default=True),
 }
 
+# Exchange agreement expiry: notify staff when end_date is exactly N days away (comma-separated).
+_AGREEMENT_EXP_DAYS = env.str("AGREEMENT_EXPIRATION_REMINDER_DAYS", default="90,30,7")
+AGREEMENT_EXPIRATION_REMINDER_DAYS = [
+    int(x.strip())
+    for x in _AGREEMENT_EXP_DAYS.split(",")
+    if x.strip().isdigit()
+] or [90, 30, 7]
+
+_AGREEMENT_EXP_STATUSES = env.str(
+    "AGREEMENT_EXPIRATION_REMINDER_STATUSES",
+    default="active,renewal_pending",
+)
+AGREEMENT_EXPIRATION_REMINDER_STATUSES = [
+    s.strip()
+    for s in _AGREEMENT_EXP_STATUSES.split(",")
+    if s.strip()
+] or ["active", "renewal_pending"]
+
 # Wagtail CMS Configuration
 WAGTAIL_SITE_NAME = "SEIM - Student Exchange Information Manager"
 WAGTAILADMIN_BASE_URL = env("WAGTAILADMIN_BASE_URL", default="http://localhost:8000")
+
+# Wagtail API Configuration
+WAGTAILAPI_BASE_URL = env("WAGTAILADMIN_BASE_URL", default="http://localhost:8000")
+WAGTAILAPI_LIMIT_MAX = 100
+WAGTAILAPI_SEARCH_ENABLED = True
 
 # Media files configuration for Wagtail
 MEDIA_ROOT = BASE_DIR / "media"

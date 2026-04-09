@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-  # PostgreSQL Database
   db:
     image: postgres:15-alpine
     container_name: seim-db-local-prod
@@ -20,7 +17,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Redis Cache & Message Broker
   redis:
     image: redis:7.2-alpine
     container_name: seim-redis-local-prod
@@ -36,7 +32,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # Django Web Application
   web:
     build:
       context: .
@@ -60,7 +55,7 @@ services:
           --log-level info
       "
     ports:
-      - "8001:8000"
+      - "8002:8000"
     volumes:
       - static_prod_volume:/app/staticfiles
       - media_prod_volume:/app/media
@@ -81,14 +76,12 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
-      # Relaxed security for local testing
       - SECURE_SSL_REDIRECT=False
       - SESSION_COOKIE_SECURE=False
       - CSRF_COOKIE_SECURE=False
-      - CORS_ALLOWED_ORIGINS=http://localhost:8001,http://127.0.0.1:8001
-      - CSRF_TRUSTED_ORIGINS=http://localhost:8001,http://127.0.0.1:8001
+      - CORS_ALLOWED_ORIGINS=http://localhost:8002,http://127.0.0.1:8002
+      - CSRF_TRUSTED_ORIGINS=http://localhost:8002,http://127.0.0.1:8002
 
-  # Celery Worker
   celery:
     build:
       context: .
@@ -105,6 +98,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery inspect ping -d celery@$$HOSTNAME"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     environment:
       - DJANGO_SETTINGS_MODULE=seim.settings.production
       - DJANGO_ENV=production
@@ -115,7 +114,6 @@ services:
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
 
-  # Celery Beat Scheduler
   celery-beat:
     build:
       context: .
@@ -130,6 +128,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery status > /dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 45s
     environment:
       - DJANGO_SETTINGS_MODULE=seim.settings.production
       - DJANGO_ENV=production
@@ -153,4 +157,3 @@ volumes:
 networks:
   seim-prod-network:
     driver: bridge
-

@@ -13,15 +13,15 @@
                 <p class="lead text-white mb-4" style="font-size: 1.5rem;">{{ page.hero_subtitle }}</p>
                 
                 {% if user.is_authenticated %}
-                    <a href="/seim/applications/" class="btn btn-secondary btn-lg px-5 py-3 shadow">
+                    <a href="/seim/dashboard" class="btn btn-secondary btn-lg px-5 py-3 shadow">
                         <i class="bi bi-speedometer2 me-2"></i>Mi Panel
                     </a>
                 {% else %}
                     <div class="d-flex gap-3 flex-wrap">
-                        <a href="/seim/register/" class="btn btn-secondary btn-lg px-5 py-3 shadow">
+                        <a href="/register/" class="btn btn-secondary btn-lg px-5 py-3 shadow">
                             <i class="bi bi-person-plus me-2"></i>Crear Cuenta
                         </a>
-                        <a href="/seim/login/" class="btn btn-outline-light btn-lg px-4 py-3 shadow">
+                        <a href="/seim/login" class="btn btn-outline-light btn-lg px-4 py-3 shadow">
                             <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
                         </a>
                     </div>
@@ -126,7 +126,7 @@
                             <i class="bi bi-arrow-right me-1"></i>Ver Detalles
                         </a>
                         {% else %}
-                        <a href="/seim/programs/{{ program.id }}/" class="btn btn-primary btn-sm">
+                        <a href="{% if program.cms_page %}{% pageurl program.cms_page %}{% else %}/programs/{% endif %}" class="btn btn-primary btn-sm">
                             <i class="bi bi-arrow-right me-1"></i>Ver Detalles
                         </a>
                         {% endif %}
@@ -199,11 +199,11 @@
             {% endif %}
         </p>
         {% if user.is_authenticated %}
-            <a href="/seim/applications/create/" class="btn btn-primary btn-lg px-5 py-3 shadow">
+            <a href="/seim/applications/new" class="btn btn-primary btn-lg px-5 py-3 shadow">
                 <i class="bi bi-file-earmark-plus me-2"></i>{{ page.application_cta_text }}
             </a>
         {% else %}
-            <a href="/seim/register/" class="btn btn-primary btn-lg px-5 py-3 shadow">
+            <a href="/register/" class="btn btn-primary btn-lg px-5 py-3 shadow">
                 <i class="bi bi-person-plus me-2"></i>{{ page.application_cta_text }}
             </a>
         {% endif %}

@@ -34,9 +34,9 @@ class ApplicationFormPage(BasePage):
             application_id: Optional application ID for editing
         """
         if application_id:
-            self.navigate(f'applications/{application_id}/edit/')
+            self.navigate(f'seim/applications/{application_id}/edit/')
         else:
-            self.navigate('applications/create/')
+            self.navigate('seim/applications/new/')
     
     def assert_form_loaded(self) -> None:
         """Assert that application form is loaded."""

@@ -15,6 +15,18 @@ class ProgramForm(forms.ModelForm):
         help_text="End date of the exchange program"
     )
 
+    application_open_date = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        required=False,
+        help_text="Optional date when applications open"
+    )
+
+    application_deadline = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        required=False,
+        help_text="Optional deadline for new applications"
+    )
+
     name = forms.CharField(
         widget=forms.TextInput(attrs={'class': 'form-control'}),
         help_text="Name of the exchange program"
@@ -58,6 +70,13 @@ class ProgramForm(forms.ModelForm):
         help_text="Select a dynamic application form for this program (optional)"
     )
 
+    coordinators = forms.ModelMultipleChoiceField(
+        queryset=None,
+        required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'form-select', 'size': 6}),
+        help_text="Assign one or more coordinators to this program"
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Import here to avoid circular imports
@@ -76,9 +95,20 @@ class ProgramForm(forms.ModelForm):
             if 'application_form' in self.fields:
                 del self.fields['application_form']
 
+        try:
+            from accounts.models import User
+            self.fields['coordinators'].queryset = User.objects.filter(
+                roles__name='coordinator'
+            ).distinct().order_by('username')
+        except Exception as e:
+            print(f"Error loading coordinators: {e}")
+            if 'coordinators' in self.fields:
+                del self.fields['coordinators']
+
     class Meta:
         model = Program
         fields = [
-            'name', 'description', 'start_date', 'end_date', 'is_active',
+            'name', 'description', 'application_open_date', 'application_deadline',
+            'start_date', 'end_date', 'is_active', 'coordinators',
             'min_gpa', 'required_language', 'recurring', 'application_form'
         ]

@@ -7,11 +7,17 @@ screenshot management, and test data setup.
 
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 from typing import Any, Dict, Generator
 
 import pytest
 from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
+
+# Repo root (conftest is in tests/e2e_playwright/)
+_E2E_DIR = Path(__file__).resolve().parent
+_REPO_ROOT = _E2E_DIR.parent.parent
 
 # Note: Django imports removed for E2E tests
 # E2E tests should interact with the application via HTTP/API, not direct ORM
@@ -32,6 +38,12 @@ BROWSER_CONFIG = {
 CONTEXT_CONFIG = {
     "viewport": {"width": 1920, "height": 1080},
     "ignore_https_errors": True,
+}
+
+# Screenshot configuration
+SCREENSHOT_CONFIG = {
+    "path": "tests/e2e_playwright/screenshots",
+    "full_page": True,
 }
 
 # Test data configuration
@@ -61,7 +73,8 @@ def get_browser_config():
 def get_context_config():
     return CONTEXT_CONFIG.copy()
 
-def get_mobile_context_config():
+def get_mobile_context_config(device=None):
+    """Return mobile context config. device (e.g. 'iPhone 12', 'iPad Pro') is optional."""
     return {
         "viewport": {"width": 375, "height": 667},
         "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)",
@@ -74,20 +87,40 @@ def get_mobile_context_config():
 # Session-scoped fixtures
 # ============================================================================
 
+@pytest.fixture(scope="session", autouse=True)
+def vue_e2e_seed_if_requested():
+    """
+    When RUN_SEED_VUE_E2E=1, run manage.py seed_vue_e2e once per session
+    so Vue E2E tests have programs, draft application, document, and unread notifications.
+    Reduces skips for tests that need this data.
+    """
+    if os.environ.get("RUN_SEED_VUE_E2E") != "1":
+        return
+    manage_py = _REPO_ROOT / "manage.py"
+    if not manage_py.exists():
+        return
+    subprocess.run(
+        [sys.executable, "manage.py", "seed_vue_e2e"],
+        cwd=str(_REPO_ROOT),
+        env={**os.environ},
+        capture_output=True,
+        timeout=120,
+    )
+
+
 @pytest.fixture(scope="session")
 def django_db_setup(django_db_setup, django_db_blocker):
     """Set up test database with initial data."""
+    from accounts.models import Role
+    from exchange.models import ApplicationStatus
+    from django.core.management import call_command
+
     with django_db_blocker.unblock():
-        # Create roles
         for role_name in ['student', 'coordinator', 'admin']:
             Role.objects.get_or_create(name=role_name)
-        
-        # Create application statuses
         statuses = ['draft', 'submitted', 'under_review', 'approved', 'rejected', 'completed', 'cancelled']
         for i, status_name in enumerate(statuses):
             ApplicationStatus.objects.get_or_create(name=status_name, defaults={'order': i})
-        
-        # Load test data
         call_command('create_test_users')
         call_command('populate_test_data')
 
@@ -188,41 +221,50 @@ def page(context: BrowserContext) -> Generator[Page, None, None]:
 @pytest.fixture
 def login_as_student(page: Page, base_url: str) -> Generator[Page, None, None]:
     """Login as a student user."""
-    from tests.e2e_playwright.utils.auth_helpers import login
+    from tests.e2e_playwright.utils.auth_helpers import login, VueAppNotAvailable
     credentials = TEST_DATA_CONFIG['users']['student1']
-    login(page, base_url, credentials['username'], credentials['password'])
+    try:
+        login(page, base_url, credentials['username'], credentials['password'])
+    except VueAppNotAvailable as e:
+        pytest.skip(str(e))
     yield page
 
 
 @pytest.fixture
 def login_as_coordinator(page: Page, base_url: str) -> Generator[Page, None, None]:
     """Login as a coordinator user."""
-    from tests.e2e_playwright.utils.auth_helpers import login
+    from tests.e2e_playwright.utils.auth_helpers import login, VueAppNotAvailable
     credentials = TEST_DATA_CONFIG['users']['coordinator']
-    login(page, base_url, credentials['username'], credentials['password'])
+    try:
+        login(page, base_url, credentials['username'], credentials['password'])
+    except VueAppNotAvailable as e:
+        pytest.skip(str(e))
     yield page
 
 
 @pytest.fixture
 def login_as_admin(page: Page, base_url: str) -> Generator[Page, None, None]:
     """Login as an admin user."""
-    from tests.e2e_playwright.utils.auth_helpers import login
+    from tests.e2e_playwright.utils.auth_helpers import login, VueAppNotAvailable
     credentials = TEST_DATA_CONFIG['users']['admin']
-    login(page, base_url, credentials['username'], credentials['password'])
+    try:
+        login(page, base_url, credentials['username'], credentials['password'])
+    except VueAppNotAvailable as e:
+        pytest.skip(str(e))
     yield page
 
 
 @pytest.fixture
 def authenticated_student_context(browser: Browser, base_url: str) -> Generator[BrowserContext, None, None]:
     """Create an authenticated context as a student."""
-    from tests.e2e_playwright.utils.auth_helpers import create_authenticated_context
+    from tests.e2e_playwright.utils.auth_helpers import create_authenticated_context, VueAppNotAvailable
     credentials = TEST_DATA_CONFIG['users']['student1']
-    context = create_authenticated_context(
-        browser, 
-        base_url, 
-        credentials['username'], 
-        credentials['password']
-    )
+    try:
+        context = create_authenticated_context(
+            browser, base_url, credentials['username'], credentials['password']
+        )
+    except VueAppNotAvailable as e:
+        pytest.skip(str(e))
     yield context
     context.close()
 
@@ -230,14 +272,14 @@ def authenticated_student_context(browser: Browser, base_url: str) -> Generator[
 @pytest.fixture
 def authenticated_coordinator_context(browser: Browser, base_url: str) -> Generator[BrowserContext, None, None]:
     """Create an authenticated context as a coordinator."""
-    from tests.e2e_playwright.utils.auth_helpers import create_authenticated_context
+    from tests.e2e_playwright.utils.auth_helpers import create_authenticated_context, VueAppNotAvailable
     credentials = TEST_DATA_CONFIG['users']['coordinator']
-    context = create_authenticated_context(
-        browser, 
-        base_url, 
-        credentials['username'], 
-        credentials['password']
-    )
+    try:
+        context = create_authenticated_context(
+            browser, base_url, credentials['username'], credentials['password']
+        )
+    except VueAppNotAvailable as e:
+        pytest.skip(str(e))
     yield context
     context.close()
 
@@ -245,14 +287,14 @@ def authenticated_coordinator_context(browser: Browser, base_url: str) -> Genera
 @pytest.fixture
 def authenticated_admin_context(browser: Browser, base_url: str) -> Generator[BrowserContext, None, None]:
     """Create an authenticated context as an admin."""
-    from tests.e2e_playwright.utils.auth_helpers import create_authenticated_context
+    from tests.e2e_playwright.utils.auth_helpers import create_authenticated_context, VueAppNotAvailable
     credentials = TEST_DATA_CONFIG['users']['admin']
-    context = create_authenticated_context(
-        browser, 
-        base_url, 
-        credentials['username'], 
-        credentials['password']
-    )
+    try:
+        context = create_authenticated_context(
+            browser, base_url, credentials['username'], credentials['password']
+        )
+    except VueAppNotAvailable as e:
+        pytest.skip(str(e))
     yield context
     context.close()
 
@@ -290,7 +332,10 @@ def take_screenshot(page: Page):
 @pytest.fixture
 def assert_visual_match(page: Page):
     """Fixture for visual regression testing."""
-    from tests.e2e_playwright.utils.visual_regression import compare_screenshot
+    try:
+        from tests.e2e_playwright.utils.visual_regression import compare_screenshot
+    except ImportError as e:
+        pytest.skip(f"Visual regression requires pixelmatch/PIL: {e}")
     
     def _assert_visual_match(name: str, threshold: float = None):
         """Compare current page with baseline screenshot."""

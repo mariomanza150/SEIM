@@ -348,7 +348,7 @@ scripts/
 | Need | Location |
 |------|----------|
 | API documentation | `docs/api-contracts.md` (generated) or `documentation/api_documentation.md` (manual) |
-| Architecture | `docs/architecture.md` (generated) or `documentation/architecture.md` (manual) |
+| Architecture | `documentation/architecture.md` |
 | Developer guide | `documentation/developer_guide.md` |
 | Installation | `documentation/installation.md` |
 | Deployment | `documentation/deployment.md` |

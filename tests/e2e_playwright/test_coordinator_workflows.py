@@ -6,7 +6,7 @@ Tests coordinator-specific workflows for reviewing and managing applications.
 
 import pytest
 from playwright.sync_api import Page, expect
-from tests.e2e_playwright.utils.auth_helpers import login_as_coordinator
+from tests.e2e_playwright.utils.auth_helpers import login_as_coordinator, VueAppNotAvailable
 import time
 
 
@@ -19,7 +19,10 @@ class TestCoordinatorWorkflows:
     
     def test_coordinator_dashboard_access(self, page: Page, base_url: str):
         """Test that coordinator can access coordinator dashboard."""
-        login_as_coordinator(page, base_url)
+        try:
+            login_as_coordinator(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         page.goto(f"{base_url}/seim/coordinator-dashboard/")
         page.wait_for_load_state("networkidle")
@@ -43,7 +46,10 @@ class TestCoordinatorWorkflows:
     
     def test_view_all_applications(self, page: Page, base_url: str):
         """Test that coordinator can view all applications (not just own)."""
-        login_as_coordinator(page, base_url)
+        try:
+            login_as_coordinator(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         page.goto(f"{base_url}/seim/applications/")
         page.wait_for_load_state("networkidle")
@@ -63,7 +69,10 @@ class TestCoordinatorWorkflows:
     
     def test_access_student_dashboard_features(self, page: Page, base_url: str):
         """Test that coordinator can access student features (they have student role too)."""
-        login_as_coordinator(page, base_url)
+        try:
+            login_as_coordinator(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         # Coordinators should be able to access student features
         student_pages = [
@@ -84,7 +93,10 @@ class TestCoordinatorWorkflows:
     
     def test_user_management_access(self, page: Page, base_url: str):
         """Test that coordinator can access user management."""
-        login_as_coordinator(page, base_url)
+        try:
+            login_as_coordinator(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         page.goto(f"{base_url}/seim/user-management/")
         page.wait_for_load_state("networkidle")
@@ -102,7 +114,10 @@ class TestCoordinatorWorkflows:
     
     def test_analytics_access(self, page: Page, base_url: str):
         """Test that coordinator can access analytics (limited)."""
-        login_as_coordinator(page, base_url)
+        try:
+            login_as_coordinator(page, base_url)
+        except VueAppNotAvailable as e:
+            pytest.skip(str(e))
         
         page.goto(f"{base_url}/seim/analytics/")
         page.wait_for_load_state("networkidle")

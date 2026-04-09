@@ -11,8 +11,10 @@ import time
 @pytest.mark.nondestructive
 def test_inspect_login_form_submission(page: Page, base_url: str):
     """Inspect what happens when we submit the login form."""
-    page.goto(f"{base_url}/seim/login/")
-    page.wait_for_load_state("networkidle")
+    page.goto(f"{base_url}/login", wait_until="domcontentloaded")
+    page.wait_for_load_state("networkidle", timeout=15000)
+    if page.title() and "not found" in page.title().lower():
+        pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
     
     # Take screenshot before
     page.screenshot(path="tests/e2e_playwright/screenshots/login_before_submit.png")
@@ -26,34 +28,19 @@ def test_inspect_login_form_submission(page: Page, base_url: str):
         form_id = form.get_attribute("id") or "no-id"
         print(f"  Form {i+1}: action={form_action}, method={form_method}, id={form_id}")
     
-    # Find username field
-    username_field = page.locator('input[type="text"]').first
-    if username_field.count() == 0:
-        username_field = page.locator('input[name="username"], input[name="email"]').first
+    email_field = page.locator('input#email, input[type="email"]').first
+    print(f"\n👤 Email field found: {email_field.count() > 0}")
+    if email_field.count() > 0:
+        email_field.fill("student1@example.com")
+        print("  ✅ Filled email: student1@example.com")
     
-    print(f"\n👤 Username field found: {username_field.count() > 0}")
-    if username_field.count() > 0:
-        username_field.fill("student1")
-        print("  ✅ Filled username: student1")
-    
-    # Find password field
     password_field = page.locator('input[type="password"]').first
     print(f"\n🔒 Password field found: {password_field.count() > 0}")
     if password_field.count() > 0:
         password_field.fill("student123")
         print("  ✅ Filled password")
     
-    # Check for CSRF token in login form
-    login_form = page.locator('#loginForm')
-    if login_form.count() > 0:
-        csrf_token = login_form.locator('input[name="csrfmiddlewaretoken"]').first
-        if csrf_token.count() > 0:
-            token_value = csrf_token.get_attribute("value")
-            print(f"\n🔐 CSRF token in login form found: {token_value[:20] if token_value else 'None'}...")
-        else:
-            print("\n⚠️  No CSRF token in login form")
-    else:
-        print("\n⚠️  Login form not found")
+    print("\n🔐 Vue login: no CSRF (JWT /api/token/)")
     
     # Take screenshot after filling
     page.screenshot(path="tests/e2e_playwright/screenshots/login_after_fill.png")

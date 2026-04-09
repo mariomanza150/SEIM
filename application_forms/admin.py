@@ -7,7 +7,7 @@ Provides Django admin interface for managing custom form types and submissions.
 from django import forms
 from django.contrib import admin
 
-from .models import FormSubmission, FormType
+from .models import FormStepTemplate, FormSubmission, FormType
 
 
 class FormTypeAdminForm(forms.ModelForm):
@@ -47,6 +47,23 @@ class FormTypeAdminForm(forms.ModelForm):
         help_text="Optional UI schema for form rendering"
     )
 
+    step_definitions = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'rows': 6,
+            'cols': 80,
+            'placeholder': '''Optional multi-step layout (JSON array), e.g.:
+[
+  {"key": "basics", "title": "About you", "field_names": ["name", "email"]},
+  {"key": "docs", "title": "Documents", "field_names": ["motivation"], "required_document_type_ids": [1, 2]},
+  {"key": "extra", "title": "Extra", "field_names": ["essay"], "visible_when": {"field": "track", "equals": "honors"}}
+]
+visible_when: optional; same as x-seim-visibleWhen plus program_id, program_id_in, has_assigned_coordinator, staff_only (bool), roles_any (role name strings).
+Leave empty [] for a single-step form.'''
+        }),
+        required=False,
+        help_text="JSON list of steps with key, title, and field_names (must match schema properties).",
+    )
+
     class Meta:
         model = FormType
         fields = '__all__'
@@ -65,6 +82,33 @@ class FormSubmissionInline(admin.TabularInline):
         return False
 
 
+@admin.register(FormStepTemplate)
+class FormStepTemplateAdmin(admin.ModelAdmin):
+    list_display = ["name", "slug", "default_step_key", "is_active", "updated_at"]
+    list_filter = ["is_active"]
+    search_fields = ["name", "slug", "description"]
+    readonly_fields = ["slug", "created_at", "updated_at"]
+    fieldsets = (
+        (None, {"fields": ("name", "slug", "description", "is_active")}),
+        (
+            "Step defaults",
+            {"fields": ("step_title", "default_step_key")},
+        ),
+        (
+            "Schema / UI",
+            {
+                "fields": (
+                    "schema_properties",
+                    "required_field_names",
+                    "ui_schema_fragment",
+                    "required_document_type_ids",
+                )
+            },
+        ),
+        ("Metadata", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+    )
+
+
 @admin.register(FormType)
 class FormTypeAdmin(admin.ModelAdmin):
     """Admin interface for Form Types"""
@@ -79,7 +123,7 @@ class FormTypeAdmin(admin.ModelAdmin):
             'fields': ('name', 'form_type', 'description', 'is_active')
         }),
         ('Form Structure', {
-            'fields': ('schema', 'ui_schema', 'get_field_count', 'get_required_fields'),
+            'fields': ('schema', 'ui_schema', 'step_definitions', 'get_field_count', 'get_required_fields'),
             'classes': ('collapse',)
         }),
         ('Metadata', {

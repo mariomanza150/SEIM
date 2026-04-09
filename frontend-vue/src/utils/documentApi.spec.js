@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  applicationSelectLabel,
   documentApplicationId,
   documentApplicationProgramName,
   documentTypeLabel,
@@ -34,5 +35,29 @@ describe('documentApi', () => {
     expect(documentApplicationId(appRaw)).toBe('app-1')
     const typeRaw = JSON.stringify({ id: 3, name: 'Transcript' })
     expect(documentTypeLabel(typeRaw, '')).toBe('Transcript')
+  })
+
+  it('unwraps double-encoded JSON strings for application and type', () => {
+    const once = JSON.stringify({ id: 'app-2', program_name: 'Double' })
+    const twice = JSON.stringify(once)
+    expect(documentApplicationProgramName(twice, [], '')).toBe('Double')
+    expect(documentApplicationId(twice)).toBe('app-2')
+    const typeOnce = JSON.stringify({ id: 9, name: 'Passport' })
+    const typeTwice = JSON.stringify(typeOnce)
+    expect(documentTypeLabel(typeTwice, '')).toBe('Passport')
+  })
+
+  it('extracts application fields from malformed JSON-like strings', () => {
+    const broken = '{broken,"id":"app-z","program_name":"Loose \\"Name\\""}'
+    expect(documentApplicationId(broken)).toBe('app-z')
+    expect(documentApplicationProgramName(broken, [], 'Unknown')).toBe('Loose "Name"')
+  })
+
+  it('applicationSelectLabel prefers program_name then nested program name', () => {
+    expect(applicationSelectLabel({ id: 'i', program_name: 'From API' })).toBe('From API')
+    expect(applicationSelectLabel({ id: 'i', program: { name: 'Nested' } })).toBe('Nested')
+    expect(applicationSelectLabel({ id: '550e8400-e29b-41d4-a716-446655440000' })).toBe(
+      '550e8400-e29b-41d4-a716-446655440000',
+    )
   })
 })

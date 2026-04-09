@@ -4,13 +4,27 @@ Development settings for SEIM project.
 This file contains settings specific to the development environment.
 """
 
+import os
 import sys
 import warnings
+from copy import deepcopy
 
 from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+# ``/seim/*`` uses ``TemplateView`` + ``index.html`` from ``frontend-vue/dist``. If dist was never built
+# (common on host without ``npm run build``), serve a help page instead of ``TemplateDoesNotExist``.
+_vue_dist_index = BASE_DIR / "frontend-vue" / "dist" / "index.html"
+if not _vue_dist_index.is_file():
+    _dev_templates = deepcopy(TEMPLATES)
+    for _tpl in _dev_templates:
+        _tpl["DIRS"] = [
+            BASE_DIR / "templates" / "vue_spa_missing_dist",
+            *list(_tpl.get("DIRS", [])),
+        ]
+    TEMPLATES = _dev_templates
 
 ALLOWED_HOSTS = ["*"]
 
@@ -175,13 +189,20 @@ SECURE_SSL_REDIRECT = False
 # Use simple storage backend that doesn't require manifest files
 STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
-# Logging for development
+# Logging for development (container-friendly: stdout, formatted)
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+    "formatters": {
+        "console": {
+            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
+        },
+    },
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
+            "formatter": "console",
         },
     },
     "root": {
@@ -194,5 +215,24 @@ LOGGING = {
             "level": "INFO",
             "propagate": False,
         },
+        "django.request": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "django.security": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "django.server": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
+
+# Disable throttle for E2E (set DISABLE_THROTTLE_E2E=1 when running API for Playwright)
+if os.environ.get("DISABLE_THROTTLE_E2E"):
+    REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []

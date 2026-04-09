@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from core.models import TimeStampedModel, UUIDModel
 
@@ -61,3 +62,65 @@ class DocumentComment(UUIDModel, TimeStampedModel):
     text = models.TextField()
     is_private = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class ExchangeAgreementDocument(UUIDModel, TimeStampedModel):
+    """File stored against an operational exchange agreement (not student application uploads)."""
+
+    class Category(models.TextChoices):
+        SIGNED_COPY = "signed_copy", _("Signed copy")
+        AMENDMENT = "amendment", _("Amendment / addendum")
+        MOU = "mou", _("Memorandum of understanding")
+        ANNEX = "annex", _("Annex / schedule")
+        CORRESPONDENCE = "correspondence", _("Correspondence")
+        OTHER = "other", _("Other")
+
+    agreement = models.ForeignKey(
+        "exchange.ExchangeAgreement",
+        on_delete=models.CASCADE,
+        related_name="repository_documents",
+    )
+    category = models.CharField(
+        max_length=32,
+        choices=Category.choices,
+        default=Category.OTHER,
+        db_index=True,
+    )
+    title = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text=_("Optional label shown in lists (defaults to filename if empty)."),
+    )
+    file = models.FileField(upload_to="agreement_repository/%Y/%m/")
+    notes = models.TextField(blank=True, default="")
+    uploaded_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    supersedes = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="successors",
+        help_text=_("Prior upload this file replaces (keeps history). Same agreement and category."),
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = _("Agreement repository document")
+        verbose_name_plural = _("Agreement repository documents")
+        indexes = [
+            models.Index(
+                fields=["agreement", "category", "-created_at"],
+                name="agrdoc_agr_cat_crt_idx",
+            ),
+        ]
+
+    def __str__(self):
+        label = self.title.strip() or self.file.name
+        return f"{label} ({self.get_category_display()})"

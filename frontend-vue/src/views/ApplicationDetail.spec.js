@@ -249,4 +249,54 @@ describe('ApplicationDetail', () => {
     })
     expect(wrapper.text()).not.toContain('Exchange Program')
   })
+
+  it('shows scholarship scoring panel for coordinators when API returns score', async () => {
+    const scholarshipScore = {
+      ruleset_id: 'default_v1',
+      ruleset_label: 'Default rubric',
+      total_points: 88.5,
+      max_points: 100,
+      factors: [
+        {
+          id: 'academic',
+          label: 'Academic record',
+          points: 20,
+          max_points: 25,
+          detail: 'GPA (institutional scale): 3.50',
+        },
+      ],
+      tie_breakers: ['total_points_desc', 'gpa_equivalent_desc'],
+      flags: { withdrawn: false },
+      disclaimer: 'Staff comparison tool only.',
+    }
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            program: '11111111-1111-1111-1111-111111111111',
+            program_name: 'Exchange Program',
+            scholarship_allocation_score: scholarshipScore,
+          },
+        })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/comments/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/timeline-events/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="scholarship-score-panel"]').exists()).toBe(true)
+    })
+    expect(wrapper.text()).toContain('88.5')
+    expect(wrapper.text()).toContain('Staff comparison tool only.')
+  })
 })

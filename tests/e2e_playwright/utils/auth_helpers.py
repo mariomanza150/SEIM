@@ -1,209 +1,132 @@
 """
 Authentication helpers for E2E tests.
 
-These helpers use API login for reliable and fast authentication.
+Uses Vue SPA: /login page, /api/token/ (email + password), access_token/refresh_token in localStorage.
 """
 
-from playwright.sync_api import Page
+from playwright.sync_api import Page, Browser, BrowserContext
 from typing import Optional
 import time
 
 
-def login_via_api(page: Page, base_url: str, username: str, password: str) -> dict:
+class VueAppNotAvailable(Exception):
+    """Raised when Vue app or API at base_url is not available (e.g. 404)."""
+    pass
+
+# Username -> email for /api/token/ (Vue backend accepts email)
+_USER_EMAIL = {
+    "student1": "student1@example.com",
+    "coordinator": "coordinator@example.com",
+    "admin": "admin@example.com",
+}
+
+
+def login_via_api(page: Page, base_url: str, email: str, password: str) -> dict:
     """
-    Login via API and store tokens in localStorage.
-    
-    Args:
-        page: Playwright page object
-        base_url: Base URL of the application
-        username: Username to login with
-        password: Password for the user
-        
-    Returns:
-        dict: Response data with access token, refresh token, and user info
-        
-    Raises:
-        AssertionError: If login fails
+    Login via JWT API and store tokens in localStorage (Vue app keys).
+    Uses POST /api/token/ with email + password; no CSRF.
     """
-    # First, get CSRF token by visiting the login page
-    page.goto(f"{base_url}/seim/login/")
-    try:
-        page.wait_for_load_state("networkidle", timeout=15000)
-    except:
-        # If networkidle times out, try domcontentloaded
-        try:
-            page.wait_for_load_state("domcontentloaded", timeout=10000)
-        except:
-            pass  # Continue anyway
-    
-    # Wait for login form to be present
-    try:
-        page.wait_for_selector('#loginForm, form', timeout=10000)
-    except:
-        pass  # Continue anyway
-    
-    # Get CSRF token from the page
-    csrf_token = None
-    try:
-        csrf_token = page.locator('#loginForm input[name="csrfmiddlewaretoken"]').first.get_attribute("value", timeout=10000)
-    except:
-        pass
-    
-    if not csrf_token:
-        # Try alternative selector
-        try:
-            csrf_token = page.locator('input[name="csrfmiddlewaretoken"]').first.get_attribute("value", timeout=10000)
-        except:
-            pass
-    
-    assert csrf_token, "CSRF token not found on login page"
-    
-    # Make API call directly using Playwright's request context
-    # Add retry logic for rate limiting (429 errors)
     max_retries = 3
-    retry_delay = 2  # seconds
-    
+    retry_delay = 2
+    response = None
     for attempt in range(max_retries):
-        context = page.context
-        response = context.request.post(
-            f"{base_url}/api/accounts/login/",
-            headers={
-                "Content-Type": "application/json",
-                "X-CSRFToken": csrf_token,
-                "Referer": f"{base_url}/seim/login/",
-            },
-            data={
-                "login": username,
-                "password": password
-            }
+        response = page.context.request.post(
+            f"{base_url}/api/token/",
+            headers={"Content-Type": "application/json"},
+            data={"email": email, "password": password},
         )
-        
         if response.ok:
             break
-        elif response.status == 429 and attempt < max_retries - 1:
-            # Rate limited - wait and retry
-            error_data = response.json() if response.headers.get("content-type", "").startswith("application/json") else {}
-            wait_time = error_data.get("detail", "").lower()
-            if "seconds" in wait_time:
-                # Extract wait time from error message if available
-                try:
-                    import re
-                    seconds = int(re.search(r'(\d+)', wait_time).group(1))
-                    retry_delay = max(seconds, retry_delay)
-                except:
-                    pass
-            
+        if response.status == 404:
+            raise VueAppNotAvailable(
+                f"API not available at {base_url}/api/token/ (404). "
+                "Start Vue dev server and Django API; run with BASE_URL=http://localhost:5173"
+            )
+        if response.status == 429 and attempt < max_retries - 1:
             time.sleep(retry_delay)
-            retry_delay *= 2  # Exponential backoff
+            retry_delay *= 2
             continue
-        else:
-            # Other error or final attempt failed
-            assert False, f"Login API failed with status {response.status}: {response.text()[:200]}"
-    
+        assert response.ok, f"Login API failed: {response.status} {response.text()[:200]}"
     data = response.json()
-    
-    # Store tokens in localStorage (as the JavaScript would)
-    page.evaluate(f"""
-        localStorage.setItem('seim_access_token', '{data.get('access', '')}');
-        localStorage.setItem('seim_refresh_token', '{data.get('refresh', '')}');
-    """)
-    
+    access = data.get("access", "")
+    refresh = data.get("refresh", "")
+    page.goto(base_url)
+    page.wait_for_load_state("domcontentloaded")
+    page.evaluate(
+        """
+        (args) => {
+            localStorage.setItem('access_token', args.access);
+            localStorage.setItem('refresh_token', args.refresh || '');
+        }
+        """,
+        {"access": access, "refresh": refresh},
+    )
     return data
+
+
+def login(page: Page, base_url: str, username: str, password: str) -> dict:
+    """Login with username (mapped to email) and password. Used by conftest fixtures."""
+    email = _USER_EMAIL.get(username, f"{username}@example.com")
+    return login_via_api(page, base_url, email, password)
 
 
 def login_as_student(page: Page, base_url: str) -> dict:
     """Login as student1 user."""
-    return login_via_api(page, base_url, "student1", "student123")
+    return login_via_api(page, base_url, "student1@example.com", "student123")
 
 
 def login_as_coordinator(page: Page, base_url: str) -> dict:
     """Login as coordinator user."""
-    return login_via_api(page, base_url, "coordinator", "coord123")
+    return login_via_api(page, base_url, "coordinator@example.com", "coord123")
 
 
 def login_as_admin(page: Page, base_url: str) -> dict:
     """Login as admin user."""
-    return login_via_api(page, base_url, "admin", "admin123")
+    return login_via_api(page, base_url, "admin@example.com", "admin123")
+
+
+def create_authenticated_context(
+    browser: Browser, base_url: str, username: str, password: str
+) -> BrowserContext:
+    """Create a browser context with tokens set so new pages are logged in."""
+    context = browser.new_context()
+    page = context.new_page()
+    login(page, base_url, username, password)
+    page.close()
+    return context
 
 
 def logout(page: Page, base_url: str) -> None:
-    """
-    Logout by clearing tokens and session.
-    
-    Args:
-        page: Playwright page object
-        base_url: Base URL of the application
-    """
-    # Clear localStorage tokens
+    """Clear tokens and navigate to Vue login page."""
     page.evaluate("""
-        localStorage.removeItem('seim_access_token');
-        localStorage.removeItem('seim_refresh_token');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
     """)
-    
-    # Try to call logout API if we have a token
-    try:
-        access_token = page.evaluate("localStorage.getItem('seim_access_token')")
-        if access_token:
-            # Get refresh token
-            refresh_token = page.evaluate("localStorage.getItem('seim_refresh_token')")
-            
-            context = page.context
-            response = context.request.post(
-                f"{base_url}/api/accounts/logout/",
-                headers={
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {access_token}",
-                },
-                data={
-                    "refresh": refresh_token
-                } if refresh_token else {}
-            )
-    except:
-        pass  # Ignore errors - tokens are cleared anyway
-    
-    # Navigate to login page to clear session
-    page.goto(f"{base_url}/seim/login/")
+    page.goto(f"{base_url}/login")
     page.wait_for_load_state("networkidle")
 
 
 def is_logged_in(page: Page) -> bool:
-    """
-    Check if user is logged in by checking for access token.
-    
-    Args:
-        page: Playwright page object
-        
-    Returns:
-        bool: True if logged in, False otherwise
-    """
-    return page.evaluate("localStorage.getItem('seim_access_token') !== null")
+    """True if access_token is present (Vue app)."""
+    return page.evaluate("localStorage.getItem('access_token') !== null")
 
 
-def ensure_logged_in(page: Page, base_url: str, username: str = "student1", password: str = "student123") -> dict:
-    """
-    Ensure user is logged in. If not, login via API.
-    
-    Args:
-        page: Playwright page object
-        base_url: Base URL of the application
-        username: Username to login with (default: student1)
-        password: Password for the user (default: student123)
-        
-    Returns:
-        dict: Login response data
-    """
+def ensure_logged_in(
+    page: Page,
+    base_url: str,
+    username: str = "student1",
+    password: str = "student123",
+) -> dict:
+    """Ensure user is logged in; login via API if not."""
     if not is_logged_in(page):
-        return login_via_api(page, base_url, username, password)
-    else:
-        # Verify token is still valid by checking if we can access a protected page
-        try:
-            page.goto(f"{base_url}/seim/dashboard/")
-            page.wait_for_load_state("networkidle", timeout=5000)
-            if "login" not in page.url.lower():
-                # Still logged in
-                return {"status": "already_logged_in"}
-        except:
-            pass
-        
-        # Token might be invalid, login again
-        return login_via_api(page, base_url, username, password)
+        email = _USER_EMAIL.get(username, f"{username}@example.com")
+        return login_via_api(page, base_url, email, password)
+    try:
+        page.goto(f"{base_url}/dashboard")
+        page.wait_for_load_state("networkidle", timeout=5000)
+        if "login" not in page.url.lower():
+            return {"status": "already_logged_in"}
+    except Exception:
+        pass
+    email = _USER_EMAIL.get(username, f"{username}@example.com")
+    return login_via_api(page, base_url, email, password)

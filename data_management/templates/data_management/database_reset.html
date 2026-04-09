@@ -1,0 +1,47 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">
+<link rel="stylesheet" href="{% static 'admin/css/dashboard.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans "Home" %}</a> &rsaquo;
+    {% trans "Database Reset" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h2>{% trans "Database Reset" %}</h2>
+    <div class="module-content">
+        <p class="errornote">{% trans "WARNING: This will delete ALL data in the system. This action is irreversible!" %}</p>
+
+        {% if messages %}
+        <ul class="messagelist">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        <div class="module">
+            <h3>{% trans "Reset Options" %}</h3>
+            <div class="module-content">
+                <form method="post" action="{% url 'data_management:execute_database_reset' %}">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <label for="confirm">{% trans "Confirm reset by typing 'RESET'" %}</label>
+                        <input type="text" name="confirm" required>
+                    </div>
+                    <div class="submit-row">
+                        <button type="submit" class="button" style="background-color: #ba2121;">{% trans "Reset Database" %}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

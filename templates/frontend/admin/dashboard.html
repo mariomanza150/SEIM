@@ -330,7 +330,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" onclick="exportSystemInfo()">
-                    <i class="bi bi-download"></i> Export
+                    <i class="bi bi-download"></i> Export JSON
                 </button>
             </div>
         </div>
@@ -340,6 +340,8 @@
 
 {% block extra_js %}
 <script>
+let currentSystemInfo = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     loadDashboardData();
     loadRecentActivity();
@@ -667,6 +669,7 @@ async function loadSystemInfo() {
         
         if (response.ok) {
             const info = await response.json();
+            currentSystemInfo = info;
             renderSystemInfo(info);
         } else {
             document.getElementById('system-info-content').innerHTML = 
@@ -758,8 +761,24 @@ function showToast(message, type = 'info') {
 }
 
 function exportSystemInfo() {
-    // Implementation for exporting system info
-    showToast('System information export feature coming soon!', 'info');
+    if (!currentSystemInfo) {
+        showToast('Load system information before exporting it.', 'warning');
+        return;
+    }
+
+    const blob = new Blob([JSON.stringify(currentSystemInfo, null, 2)], {
+        type: 'application/json;charset=utf-8;'
+    });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = 'system-info.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+
+    showToast('System information exported successfully!', 'success');
 }
 </script>
 {% endblock %} 

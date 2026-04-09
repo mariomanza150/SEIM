@@ -66,7 +66,7 @@ docker-compose ps
 docker-compose logs -f web
 ```
 
-Django will be available at: `http://localhost:8000`
+Django will be available at: `http://localhost:8001`
 
 ### 3. Start Vue Dev Server
 
@@ -78,10 +78,10 @@ npm run dev
 Vue dev server will be available at: `http://localhost:5173`
 
 The Vite dev server automatically proxies API calls to Django:
-- `/api/*` → `http://localhost:8000/api/*`
-- `/media/*` → `http://localhost:8000/media/*`
-- `/seim/admin/*` → `http://localhost:8000/seim/admin/*`
-- `/cms/*` → `http://localhost:8000/cms/*`
+- `/api/*` → `http://localhost:8001/api/*`
+- `/media/*` → `http://localhost:8001/media/*`
+- `/seim/admin/*` → `http://localhost:8001/seim/admin/*`
+- `/cms/*` → `http://localhost:8001/cms/*`
 
 ### 4. Access the Application
 
@@ -103,11 +103,11 @@ npm run build
 # Preview production build
 npm run preview
 
-# Run linter
-npm run lint
+# Run tests in watch mode
+npm run test
 
-# Format code
-npm run format
+# Run tests once
+npm run test:run
 ```
 
 ## 🔗 API Integration
@@ -146,7 +146,16 @@ Routes are defined in `src/router/index.js`:
 | `/login` | Login | No | Login page |
 | `/` | - | Yes | Redirects to dashboard |
 | `/dashboard` | Dashboard | Yes | Main dashboard |
-| `*` | NotFound | No | 404 page |
+| `/applications` | Applications | Yes | Application list |
+| `/applications/new` | ApplicationForm | Yes | Create application |
+| `/applications/:id/edit` | ApplicationForm | Yes | Edit application |
+| `/applications/:id` | ApplicationDetail | Yes | Application details |
+| `/documents` | Documents | Yes | Documents list |
+| `/documents/:id` | DocumentDetail | Yes | Document details |
+| `/notifications` | Notifications | Yes | Notifications list |
+| `/profile` | Profile | Yes | User profile |
+| `/settings` | - | Yes | Redirects to profile |
+| `/:pathMatch(.*)*` | NotFound | No | 404 page |
 
 ### Route Guards
 
@@ -163,8 +172,8 @@ The router automatically:
 Set in `.env.development`:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000
-VITE_WS_BASE_URL=ws://localhost:8000
+VITE_API_BASE_URL=http://localhost:8001
+VITE_WS_BASE_URL=ws://localhost:8001
 VITE_APP_NAME=SEIM
 VITE_APP_VERSION=2.0.0-vue
 VITE_DEBUG=true
@@ -182,7 +191,7 @@ Configured in `vite.config.js` to forward requests to Django:
 ```javascript
 proxy: {
   '/api': {
-    target: 'http://localhost:8000',
+    target: 'http://localhost:8001',
     changeOrigin: true,
   }
 }
@@ -219,25 +228,26 @@ Django will serve the Vue app from `frontend-vue/dist/` and static assets from `
 - JWT authentication with automatic refresh
 - Login page with form validation
 - Dashboard with user info and navigation
+- Applications list, detail, create, and edit flows
+- Documents list and detail views
+- Notifications center
+- User profile view
+- WebSocket notification service integration
 - API service with interceptors
 - Auth state management (Pinia)
 - Route guards
 - Responsive design (Bootstrap 5)
 - Error handling
+- Unit tests with Vitest for services, stores, and login flow
 
-### 🚧 To Be Implemented
+### 🚧 In Progress / Follow-up Work
 
-- Application forms module
-- Document management
-- Notifications center
-- WebSocket integration
-- User profile page
-- Settings page
+- Settings page currently redirects to profile
 - Analytics dashboard
 - Multi-language support
 - Accessibility features
-- Unit tests (Vitest)
-- E2E tests (Playwright)
+- Broader component and route coverage in Vitest
+- Expanded Playwright coverage
 
 ## 🐛 Troubleshooting
 
@@ -257,7 +267,7 @@ CORS_ALLOWED_ORIGINS = [
 
 1. Check Django is running: `docker-compose ps`
 2. Check Django logs: `docker-compose logs web`
-3. Verify API endpoints: `http://localhost:8000/api/docs/`
+3. Verify API endpoints: `http://localhost:8001/api/docs/`
 
 ### Authentication Loop
 

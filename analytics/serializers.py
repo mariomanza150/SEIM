@@ -80,16 +80,23 @@ class SystemInfoSerializer(serializers.Serializer):
 class ApplicationStatisticsSerializer(serializers.Serializer):
     """Serializer for application statistics."""
     total_applications = serializers.IntegerField()
+    total_users = serializers.IntegerField(required=False)
+    total_programs = serializers.IntegerField(required=False)
+    applications_by_status = serializers.DictField(required=False)
 
 
 class ProgramStatisticsSerializer(serializers.Serializer):
     """Serializer for program statistics."""
     total_programs = serializers.IntegerField()
+    active_programs = serializers.IntegerField(required=False)
+    program_performance = serializers.ListField(child=serializers.DictField(), required=False)
 
 
 class UserActivitySerializer(serializers.Serializer):
     """Serializer for user activity statistics."""
     total_users = serializers.IntegerField()
+    active_users = serializers.IntegerField(required=False)
+    user_activity = serializers.ListField(child=serializers.DictField(), required=False)
 
 
 class TrackEventRequestSerializer(serializers.Serializer):
@@ -98,14 +105,14 @@ class TrackEventRequestSerializer(serializers.Serializer):
 
 
 class GenericAnalyticsSerializer(serializers.Serializer):
-    """Generic serializer for analytics stub responses."""
-    metrics = serializers.CharField(required=False)
-    reports = serializers.CharField(required=False)
-    application_analytics = serializers.CharField(required=False)
-    document_analytics = serializers.CharField(required=False)
-    notification_analytics = serializers.CharField(required=False)
-    program_analytics = serializers.CharField(required=False)
-    user_analytics = serializers.CharField(required=False)
+    """Generic serializer for analytics responses."""
+    metrics = serializers.DictField(required=False)
+    reports = serializers.ListField(child=serializers.DictField(), required=False)
+    application_analytics = serializers.DictField(required=False)
+    document_analytics = serializers.DictField(required=False)
+    notification_analytics = serializers.DictField(required=False)
+    program_analytics = serializers.ListField(child=serializers.DictField(), required=False)
+    user_analytics = serializers.DictField(required=False)
 
 
 class ErrorResponseSerializer(serializers.Serializer):

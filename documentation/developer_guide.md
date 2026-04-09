@@ -54,8 +54,8 @@ docker-compose up -d
 # Run migrations
 docker-compose exec web python manage.py migrate
 
-# Create demo data
-docker-compose exec web python manage.py create_demo_data
+# Create demo-ready data
+docker-compose exec web python manage.py seed_demo_readiness
 
 # Access the application
 # Web: http://localhost:8000/
@@ -64,9 +64,9 @@ docker-compose exec web python manage.py create_demo_data
 ```
 
 ### **Admin Access:**
-- **Username**: `admin`
-- **Password**: `admin123`
-- **Email**: `admin@seim.local`
+- **Admin**: `admin@test.com` / `admin123`
+- **Coordinator**: `coordinator@test.com` / `coordinator123`
+- **Student**: `student@test.com` / `student123`
 
 ---
 

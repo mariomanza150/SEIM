@@ -72,9 +72,9 @@ docker-compose exec web python manage.py import_cms --clear
 **📖 See [docs/CMS_RESTORE_GUIDE.md](docs/CMS_RESTORE_GUIDE.md) for complete documentation**
 
 ### CMS Access
-- **Public Landing Page**: http://localhost:8000/
-- **CMS Admin**: http://localhost:8000/cms/
-- **Django Admin**: http://localhost:8000/seim/admin/
+- **Public Landing Page**: http://localhost:8001/
+- **CMS Admin**: http://localhost:8001/cms/
+- **Django Admin**: http://localhost:8001/seim/admin/
 
 ---
 
@@ -181,6 +181,9 @@ docker-compose exec web python manage.py migrate
 # Create initial data
 docker-compose exec web python manage.py create_initial_data
 
+# Create deterministic demo-ready data
+docker-compose exec web python manage.py seed_demo_readiness
+
 # Restore CMS content (Wagtail landing page)
 docker-compose exec web python manage.py restore_cms
 
@@ -188,9 +191,9 @@ docker-compose exec web python manage.py restore_cms
 docker-compose exec web python manage.py collectstatic --noinput
 
 # Access the application
-# Web: http://localhost:8000/
-# Admin: http://localhost:8000/admin/
-# API Docs: http://localhost:8000/api/docs/
+# Web: http://localhost:8001/
+# Admin: http://localhost:8001/seim/admin/  # /admin/ redirects here
+# API Docs: http://localhost:8001/api/docs/
 ```
 
 ### **Virtual Environment Setup (E2E Testing & Local Development)**
@@ -246,15 +249,18 @@ python -c "import selenium; print(f'Selenium {selenium.__version__}')"
 
 > **Manual/host-based development (virtualenv, pip, SQLite, etc.) is not supported for core development. All contributors must use Docker Compose and PostgreSQL as described above.**
 
-### **Default Admin User**
-- **Username**: `admin`
-- **Password**: `admin123`
-- **Email**: `admin@seim.local`
+### **Demo-Ready Credentials**
+These accounts are created by `docker-compose exec web python manage.py seed_demo_readiness`.
 
-### **Demo Student User**
-- **Username**: `student`
-- **Password**: `student123`
-- **Email**: `student@university.edu`
+- **Admin**
+  - Email: `admin@test.com`
+  - Password: `admin123`
+- **Coordinator**
+  - Email: `coordinator@test.com`
+  - Password: `coordinator123`
+- **Student**
+  - Email: `student@test.com`
+  - Password: `student123`
 
 ---
 
@@ -473,7 +479,6 @@ SEIM documentation is organized into two main directories:
 
 - **[Documentation Index](docs/index.md)** - Index of generated documentation
 - **[Project Structure Guide](docs/PROJECT_STRUCTURE.md)** - Comprehensive project structure guide
-- **[Architecture](docs/architecture.md)** - Auto-generated technical architecture
 - **[API Contracts](docs/api-contracts.md)** - Auto-generated API documentation
 - **[Data Models](docs/data-models.md)** - Auto-generated database schema
 - **[Component Inventory](docs/component-inventory.md)** - Auto-generated component catalog
@@ -481,7 +486,7 @@ SEIM documentation is organized into two main directories:
 - **[Quick Guides](docs/guides/)** - Quick reference guides
 
 ### **API Documentation**
-- **[Interactive API Docs](http://localhost:8000/api/docs/)** - Swagger UI (auto-generated, Docker)
+- **[Interactive API Docs](http://localhost:8001/api/docs/)** - Swagger UI (auto-generated, Docker)
 - **OpenAPI Schema**: `/api/schema/` (auto-generated, Docker)
 
 ### **Sphinx HTML Documentation**
@@ -546,7 +551,7 @@ SEIM follows a modular, service-oriented architecture with a Django frontend:
 ## 🔧 Technology Stack
 
 ### **Backend**
-- **Django 5.2.3** - Web framework
+- **Django 5.1.4** - Web framework
 - **Django REST Framework** - API framework
 - **PostgreSQL** - Database (production)
 - **Redis** - Caching and background tasks

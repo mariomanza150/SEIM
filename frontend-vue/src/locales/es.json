@@ -700,6 +700,19 @@
     "labelDuration": "Duración",
     "notAvailable": "N/D",
     "readinessLabel": "Preparación",
+    "scholarshipScoring": {
+      "title": "Puntuación para asignación de becas",
+      "exportCohortCsv": "Descargar cohorte del programa (CSV)",
+      "totalLabel": "Puntos totales",
+      "colFactor": "Factor",
+      "colPoints": "Puntos",
+      "colDetail": "Criterio aplicado",
+      "tieBreakers": "Orden sugerido de desempate:",
+      "withdrawnNote": "Solicitud retirada — la puntuación es solo de referencia.",
+      "exportMissingProgram": "No se puede exportar: falta el id del programa.",
+      "exportSuccess": "Exportación de la cohorte descargada.",
+      "exportError": "No se pudo descargar la exportación."
+    },
     "status": {
       "unknown": "Desconocido",
       "draft": "Borrador",

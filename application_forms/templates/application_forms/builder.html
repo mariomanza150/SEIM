@@ -82,6 +82,39 @@
         </div>
     </div>
 </div>
+
+<!-- Apply reusable step template -->
+<div class="modal fade" id="stepTemplateModal" tabindex="-1" aria-labelledby="stepTemplateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="stepTemplateModalLabel">Apply step template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">
+                    Merges the template&rsquo;s fields into this form&rsquo;s schema and appends one step.
+                    Field names must not already exist on the form.
+                </p>
+                <div class="mb-3">
+                    <label class="form-label" for="stepTemplateSelect">Template</label>
+                    <select class="form-select" id="stepTemplateSelect">
+                        <option value="">Loading&hellip;</option>
+                    </select>
+                </div>
+                <div class="mb-0">
+                    <label class="form-label" for="stepTemplateKeyOverride">Override step key <span class="text-muted fw-normal">(optional)</span></label>
+                    <input type="text" class="form-control" id="stepTemplateKeyOverride" maxlength="80" placeholder="Leave blank to use template default">
+                </div>
+                <p class="text-danger small mt-2 mb-0 d-none" id="stepTemplateApplyError"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="btnConfirmApplyStepTemplate">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}

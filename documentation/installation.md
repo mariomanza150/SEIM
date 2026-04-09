@@ -26,8 +26,8 @@ docker-compose exec web python manage.py migrate
 # Create initial data
 docker-compose exec web python manage.py create_initial_data
 
-# Create demo data (optional)
-docker-compose exec web python manage.py create_demo_data
+# Create demo-ready data (optional)
+docker-compose exec web python manage.py seed_demo_readiness
 ```
 
 ### **3. Access the Application:**
@@ -35,27 +35,26 @@ docker-compose exec web python manage.py create_demo_data
 - **Admin Interface**: http://localhost:8000/admin/
 - **API Documentation**: http://localhost:8000/api/docs/
 
-### **4. Default Admin User:**
-- **Username**: `admin`
-- **Password**: `admin123`
-- **Email**: `admin@seim.local`
+### **4. Demo-Ready Credentials:**
+These accounts are created by `seed_demo_readiness`.
+
+- **Admin**: `admin@test.com` / `admin123`
+- **Coordinator**: `coordinator@test.com` / `coordinator123`
+- **Student**: `student@test.com` / `student123`
 
 ### **5. Demo Data (Optional):**
 For demonstration and testing purposes, you can populate the system with sample data:
 
 ```bash
-# Create comprehensive demo data
-docker-compose exec web python manage.py create_demo_data
-
-# Or with custom parameters
-docker-compose exec web python manage.py create_demo_data --users 10 --programs 5 --applications 25
+# Create deterministic demo data
+docker-compose exec web python manage.py seed_demo_readiness
 ```
 
 This creates:
-- Sample users (admins, coordinators, students)
-- Exchange programs
-- Applications with various statuses
-- Documents, comments, and notifications
+- Canonical admin, coordinator, and student demo users
+- Active exchange programs
+- Applications in every major workflow status
+- Documents, comments, timeline events, and notifications
 
 ### **6. Cleanup Demo Data (Optional):**
 To remove all demo data:

@@ -11,6 +11,7 @@ Wagtail page models for content management, including:
 """
 
 from django.db import models
+from django.db.models import Q
 from django.shortcuts import render
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 
@@ -888,10 +889,61 @@ class ProgramIndexPage(SeoMixin, Page):
     
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
-        
-        # Get all published program pages
-        programs = ProgramPage.objects.live().public().order_by('-first_published_at')
-        
+
+        search_query = request.GET.get("q", "").strip()
+        selected_location = request.GET.get("location", "").strip()
+        selected_language = request.GET.get("language", "").strip()
+        active_only = request.GET.get("active_only") == "1"
+
+        programs = (
+            ProgramPage.objects.child_of(self)
+            .live()
+            .public()
+            .select_related("program")
+            .order_by("-first_published_at")
+        )
+
+        if search_query:
+            programs = programs.filter(
+                Q(title__icontains=search_query)
+                | Q(introduction__icontains=search_query)
+                | Q(location__icontains=search_query)
+                | Q(language__icontains=search_query)
+                | Q(program__name__icontains=search_query)
+                | Q(program__description__icontains=search_query)
+            )
+
+        if selected_location:
+            programs = programs.filter(location__iexact=selected_location)
+
+        if selected_language:
+            programs = programs.filter(
+                Q(language__iexact=selected_language)
+                | Q(program__required_language__iexact=selected_language)
+            )
+
+        if active_only:
+            programs = programs.filter(program__is_active=True)
+
+        available_locations = (
+            ProgramPage.objects.child_of(self)
+            .live()
+            .public()
+            .exclude(location="")
+            .values_list("location", flat=True)
+            .distinct()
+            .order_by("location")
+        )
+        available_languages = (
+            ProgramPage.objects.child_of(self)
+            .live()
+            .public()
+            .exclude(language="")
+            .values_list("language", flat=True)
+            .distinct()
+            .order_by("language")
+        )
+
         # Pagination
         page = request.GET.get('page', 1)
         paginator = Paginator(programs, 12)  # Show 12 programs per page
@@ -904,7 +956,13 @@ class ProgramIndexPage(SeoMixin, Page):
             program_pages = paginator.page(paginator.num_pages)
         
         context['programs'] = program_pages
-        
+        context['search_query'] = search_query
+        context['selected_location'] = selected_location
+        context['selected_language'] = selected_language
+        context['active_only'] = active_only
+        context['available_locations'] = list(available_locations)
+        context['available_languages'] = list(available_languages)
+
         return context
     
     class Meta:

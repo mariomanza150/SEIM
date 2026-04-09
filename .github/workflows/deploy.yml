@@ -1,109 +1,120 @@
+# CD: build production image and push to GitHub Container Registry (GHCR).
+# Configure GitHub Environments "staging" / "production" (optional reviewers for production).
+# Replace placeholder deploy steps with real SSH / runner commands that pull from GHCR.
+
 name: Deploy
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Deployment environment'
+        description: "Deployment environment"
         required: true
-        default: 'staging'
+        default: staging
         type: choice
         options:
           - staging
           - production
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   build:
+    name: Build and push image
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+
+      - name: Image name (lowercase for GHCR)
+        run: |
+          echo "IMAGE_NAME=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_ENV"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-        if: github.event_name != 'pull_request'
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+      - name: Build and push
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile.prod
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/seim:latest
-            ${{ secrets.DOCKER_USERNAME }}/seim:${{ github.sha }}
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/seim:latest
-          cache-to: type=inline
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Job summary
+        run: |
+          echo "## Container image" >> "$GITHUB_STEP_SUMMARY"
+          echo "Pushed \`${{ env.IMAGE_NAME }}:latest\` and \`:${{ github.sha }}\`" >> "$GITHUB_STEP_SUMMARY"
 
   deploy-staging:
+    name: Deploy staging
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'staging'
+    if: |
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')) ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
     environment:
       name: staging
       url: https://staging.seim.example.com
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Deploy to staging
         run: |
-          echo "Deploying to staging environment..."
-          # Add your deployment commands here
-          # Example: SSH into server and pull latest image
-          # ssh user@staging-server 'cd /app && docker-compose pull && docker-compose up -d'
+          echo "Deploy staging: pull image and restart stack (example)."
+          echo "IMAGE: ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]'):${{ github.sha }}"
+          echo "Example: ssh deploy@staging 'docker compose pull && docker compose up -d'"
 
       - name: Run migrations
         run: |
-          echo "Running database migrations..."
-          # Example: docker-compose exec web python manage.py migrate
+          echo "Example: docker compose exec web python manage.py migrate --noinput"
 
       - name: Health check
         run: |
-          echo "Performing health check..."
-          # curl -f https://staging.seim.example.com/health/ || exit 1
+          echo "Example: curl -fsS https://staging.seim.example.com/health/"
 
   deploy-production:
+    name: Deploy production
     needs: build
     runs-on: ubuntu-latest
-    if: github.event.inputs.environment == 'production'
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
     environment:
       name: production
       url: https://seim.example.com
-    
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Deploy to production
         run: |
-          echo "Deploying to production environment..."
-          # Add your production deployment commands here
-          # Requires manual approval in GitHub environments
+          echo "Deploy production: requires environment approval in GitHub."
+          echo "IMAGE: ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]'):${{ github.sha }}"
 
       - name: Run migrations
         run: |
-          echo "Running database migrations..."
-          # Example: docker-compose exec web python manage.py migrate --noinput
+          echo "Example: docker compose exec web python manage.py migrate --noinput"
 
       - name: Health check
         run: |
-          echo "Performing health check..."
-          # curl -f https://seim.example.com/health/ || exit 1
+          echo "Example: curl -fsS https://seim.example.com/health/"
 
       - name: Rollback on failure
         if: failure()
         run: |
-          echo "Deployment failed, initiating rollback..."
-          # Add rollback logic here
-
+          echo "Deployment failed — run rollback playbook (revert to previous image digest)."

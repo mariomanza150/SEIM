@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="alert alert-{{ alert_variant }}" role="alert">
+                <h2 class="h5 alert-heading">{{ page_title }}</h2>
+                <p class="mb-0">{{ message }}</p>
+            </div>
+            <p><a href="/" class="btn btn-outline-secondary">Back to home</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

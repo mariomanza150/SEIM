@@ -29,7 +29,7 @@
               <select v-model="filters.application" class="form-select" @change="fetchDocuments">
                 <option value="">{{ t('documentsPage.applicationOptionAll') }}</option>
                 <option v-for="app in applications" :key="app.id" :value="app.id">
-                  {{ app.program_name || app.program?.name || app.id }}
+                  {{ applicationSelectLabel(app) }}
                 </option>
               </select>
             </div>
@@ -270,6 +270,7 @@ import { useAuthStore } from '@/stores/auth'
 import { resolveFileUrl } from '@/utils/apiUrl'
 import api from '@/services/api'
 import {
+  applicationSelectLabel,
   documentApplicationId,
   documentApplicationProgramName,
   documentTypeLabel,

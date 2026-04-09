@@ -1,0 +1,52 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="{% static 'admin/css/forms.css' %}">
+<link rel="stylesheet" href="{% static 'admin/css/dashboard.css' %}">
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans "Home" %}</a> &rsaquo;
+    {% trans "Data management" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h2>{% trans "Data management" %}</h2>
+    <div class="module-content">
+        <p>{% trans "Staff tools for imports, exports, demo data, and maintenance." %}</p>
+
+        {% if messages %}
+        <ul class="messagelist">
+            {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if sections %}
+        <table>
+            <thead>
+                <tr>
+                    <th>{% trans "Tool" %}</th>
+                    <th>{% trans "Description" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for section in sections %}
+                <tr>
+                    <th scope="row"><a href="{{ section.url }}">{{ section.title }}</a></th>
+                    <td>{{ section.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="help">{% trans "You do not have permission to use any data management tools." %}</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

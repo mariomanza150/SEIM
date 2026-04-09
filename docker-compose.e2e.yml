@@ -38,9 +38,10 @@ services:
 
   web:
     build: .
-    command: bash -c "python manage.py collectstatic --noinput && python manage.py migrate && daphne -b 0.0.0.0 -p 8000 seim.asgi:application"
+    command: bash -c "/app/scripts/ensure_vue_dist.sh && python manage.py collectstatic --noinput && python manage.py migrate && daphne -b 0.0.0.0 -p 8000 seim.asgi:application"
     volumes:
       - .:/app
+      - vue_frontend_dist_e2e:/app/frontend-vue/dist
       - static_e2e_volume:/app/staticfiles
       - media_e2e_volume:/app/media
     ports:
@@ -121,6 +122,7 @@ networks:
 volumes:
   postgres_e2e_data:
   redis_e2e_data:
+  vue_frontend_dist_e2e:
   static_e2e_volume:
   media_e2e_volume:
   e2e_screenshots:

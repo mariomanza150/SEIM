@@ -3,15 +3,15 @@
 # =============================================================================
 # STAGE 1: Build Vue.js Frontend
 # =============================================================================
-FROM node:18-alpine AS frontend-builder
+FROM node:22-alpine AS frontend-builder
 
 WORKDIR /app/frontend-vue
 
 # Copy package files
 COPY frontend-vue/package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Full install: Vite and @vitejs/plugin-vue are devDependencies but required for ``npm run build``.
+RUN npm ci
 
 # Copy frontend source
 COPY frontend-vue/ ./
@@ -35,6 +35,7 @@ RUN apt-get update && \
     build-essential \
     libpq-dev \
     gcc \
+    gettext \
     libmagic1 \
     libjpeg-dev \
     libpng-dev \
@@ -56,15 +57,20 @@ COPY . .
 
 # Copy Vue.js build from frontend-builder stage
 COPY --from=frontend-builder /app/frontend-vue/dist /app/frontend-vue/dist
+# Stash outside /app so bind-mounting the repo in docker-compose does not hide the baked dist; see scripts/ensure_vue_dist.sh
+COPY --from=frontend-builder /app/frontend-vue/dist /opt/seim-vue-dist
 
 # Create media directory for Wagtail uploads
 RUN mkdir -p /app/media
+
+# gettext binary catalogs (.mo) are gitignored; compile from locale/*.po for runtime/tests
+RUN python manage.py compilemessages
 
 # Collect static files (includes Vue.js assets)
 RUN python manage.py collectstatic --noinput --clear
 
 # Make the wait-for-db script executable
-RUN chmod +x /app/scripts/wait-for-db.sh
+RUN chmod +x /app/scripts/wait-for-db.sh /app/scripts/ensure_vue_dist.sh
 
 # Expose port for Django
 EXPOSE 8000

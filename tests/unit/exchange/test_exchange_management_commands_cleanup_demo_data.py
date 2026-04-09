@@ -305,3 +305,60 @@ class TestCleanupDemoDataCommand(TestCase):
         self.assertEqual(Comment.objects.count(), 1)  # Only the regular comment remains
         self.assertEqual(TimelineEvent.objects.count(), 1)  # Only the regular event remains
         self.assertEqual(Document.objects.count(), 1)  # Only the regular document remains
+
+
+class TestCleanupDemoDataCommandSafety(TestCase):
+    """Ensure cleanup targets seeded demo accounts, not arbitrary prefix matches."""
+
+    def setUp(self):
+        self.student_role, _ = Role.objects.get_or_create(name="student")
+        self.status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft",
+            defaults={"order": 1},
+        )
+
+        self.student_like_user = User.objects.create_user(
+            username="student_real",
+            email="student.real@company.com",
+            password="real123",
+            first_name="Real",
+            last_name="Student",
+            is_email_verified=True,
+            is_active=True,
+        )
+        self.student_like_user.roles.add(self.student_role)
+
+        self.program = Program.objects.create(
+            name="Regular Safety Program",
+            description="Program that should survive cleanup.",
+            start_date=date(2024, 1, 1),
+            end_date=date(2024, 12, 31),
+            min_gpa=3.0,
+            required_language="English",
+            recurring=True,
+        )
+
+        self.application = Application.objects.create(
+            student=self.student_like_user,
+            program=self.program,
+            status=self.status,
+            created_at=timezone.now(),
+        )
+
+        self.notification = Notification.objects.create(
+            recipient=self.student_like_user,
+            title="Real user notification",
+            message="This should remain after cleanup.",
+            notification_type="in_app",
+        )
+
+    def test_cleanup_demo_data_preserves_non_demo_prefix_users(self):
+        call_command("cleanup_demo_data")
+
+        self.assertTrue(User.objects.filter(username="student_real").exists())
+        self.assertTrue(
+            Application.objects.filter(student__username="student_real").exists()
+        )
+        self.assertTrue(
+            Notification.objects.filter(recipient__username="student_real").exists()
+        )

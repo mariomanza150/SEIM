@@ -276,6 +276,16 @@ class ExchangeAgreementFilter(django_filters.FilterSet):
         method="filter_expiring_within",
         label="Active agreements ending within N days (from today)",
     )
+    renewal_follow_up_before = django_filters.DateFilter(
+        field_name="renewal_follow_up_due",
+        lookup_expr="lte",
+        label="Renewal follow-up on or before",
+    )
+    renewal_follow_up_after = django_filters.DateFilter(
+        field_name="renewal_follow_up_due",
+        lookup_expr="gte",
+        label="Renewal follow-up on or after",
+    )
 
     ordering = django_filters.OrderingFilter(
         fields=(

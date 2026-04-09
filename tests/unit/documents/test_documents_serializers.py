@@ -337,10 +337,13 @@ class TestDocumentResubmissionRequestSerializer:
         request_obj = factory.post('/api/document-resubmissions/', data)
         request_obj.user = user
 
-        serializer = serializers.DocumentResubmissionRequestSerializer(data=data, context={'request': request_obj})
-        assert serializer.is_valid()
+        with patch('documents.services.NotificationService.send_notification'):
+            serializer = serializers.DocumentResubmissionRequestSerializer(
+                data=data, context={'request': request_obj}
+            )
+            assert serializer.is_valid()
 
-        request = serializer.save()
+            request = serializer.save()
         assert request.document == document
         assert request.requested_by == user
         assert request.reason == 'Document is unclear and needs to be resubmitted'
@@ -430,3 +433,51 @@ class TestDocumentCommentSerializer:
 
         comment = serializer.save()
         assert comment.is_private
+
+    def test_coordinator_public_comment_notifies_student(self):
+        """Staff public comments trigger a student notification."""
+        from accounts.models import Role
+
+        factory = APIRequestFactory()
+        student = User.objects.create_user(username='student1', email='student1@example.com')
+        coordinator = User.objects.create_user(username='coord1', email='coord1@example.com')
+        role, _ = Role.objects.get_or_create(name='coordinator')
+        coordinator.roles.add(role)
+
+        document_type = DocumentType.objects.create(name='Test Document')
+        program = Program.objects.create(
+            name='Test Program',
+            description='A test program',
+            start_date='2023-01-01',
+            end_date='2023-12-31',
+        )
+        status = ApplicationStatus.objects.get_or_create(name='submitted')[0]
+        application = Application.objects.create(
+            program=program,
+            student=student,
+            status=status,
+        )
+        document = Document.objects.create(
+            application=application,
+            type=document_type,
+            file=SimpleUploadedFile('test.pdf', b'test content'),
+            uploaded_by=student,
+        )
+
+        data = {
+            'document': document.id,
+            'text': 'Please upload a clearer scan.',
+            'is_private': False,
+        }
+        request_obj = factory.post('/api/document-comments/', data)
+        request_obj.user = coordinator
+
+        serializer = serializers.DocumentCommentSerializer(data=data, context={'request': request_obj})
+        assert serializer.is_valid()
+
+        with patch('notifications.services.NotificationService.send_notification') as mock_send:
+            serializer.save(author=coordinator)
+            mock_send.assert_called_once()
+            args, kwargs = mock_send.call_args
+            assert args[0] == student
+            assert 'Feedback' in args[1]

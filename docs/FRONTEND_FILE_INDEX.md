@@ -236,26 +236,17 @@
 
 ## 🧪 Test Files
 
-### Frontend Tests (TODO: Create these)
+### Current Frontend Test Coverage
 
-```
-tests/frontend/
-  ├── unit/
-  │   ├── auth-service.test.js         # ❌ Missing
-  │   ├── api-client.test.js           # ❌ Missing
-  │   ├── validators.test.js           # ❌ Missing
-  │   ├── error-handler.test.js        # ❌ Missing
-  │   └── security.test.js             # ❌ Missing
-  │
-  ├── integration/
-  │   ├── auth-flow.test.js            # ❌ Missing
-  │   ├── api-integration.test.js      # ❌ Missing
-  │   └── websocket.test.js            # ❌ Missing
-  │
-  └── e2e/
-      ├── login.test.js                # ❌ Missing
-      ├── application-flow.test.js     # ❌ Missing
-      └── dashboard.test.js            # ❌ Missing
+```text
+frontend-vue/src/
+  ├── services/api.spec.js             # API client tests
+  ├── services/websocket.spec.js       # WebSocket URL/service tests
+  ├── stores/auth.spec.js              # Pinia auth store tests
+  └── views/Login.spec.js              # Login view tests
+
+tests/e2e_playwright/
+  └── test_vue_ui.py                   # Vue SPA UI workflow coverage
 ```
 
 ---

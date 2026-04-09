@@ -12,7 +12,7 @@ module.exports = {
     },
     extends: [
         'eslint:recommended',
-        'plugin:security/recommended',
+        // Avoid plugin:security/recommended — it triggers ESLint config validation bugs (circular JSON) on some versions.
         'plugin:jsdoc/recommended',
         'plugin:prettier/recommended'
     ],

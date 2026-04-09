@@ -21,13 +21,13 @@ def navigate_to_programs(page: Page, base_url: str) -> None:
 
 def navigate_to_applications(page: Page, base_url: str) -> None:
     """Navigate to the applications listing page."""
-    page.goto(f"{base_url}/applications/")
+    page.goto(f"{base_url}/seim/applications/")
     page.wait_for_load_state('networkidle')
 
 
 def navigate_to_application_create(page: Page, base_url: str) -> None:
     """Navigate to the application creation page."""
-    page.goto(f"{base_url}/applications/create/")
+    page.goto(f"{base_url}/seim/applications/new")
     page.wait_for_load_state('networkidle')
 
 
@@ -69,7 +69,7 @@ def navigate_to_user_management(page: Page, base_url: str) -> None:
 
 def navigate_to_analytics(page: Page, base_url: str) -> None:
     """Navigate to the analytics page."""
-    page.goto(f"{base_url}/analytics/")
+    page.goto(f"{base_url}/dashboard/analytics/")
     page.wait_for_load_state('networkidle')
 
 

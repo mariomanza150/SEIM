@@ -4,6 +4,8 @@
 **Status**: ✅ **PRODUCTION READY**  
 **Overall Grade**: **A (92%)**
 
+> This document is the canonical November 2025 project-status summary and supersedes the older action-oriented snapshot previously kept in `docs/WHAT_NEXT.md`.
+
 ---
 
 ## 📊 Executive Summary
@@ -81,7 +83,7 @@ exit
 
 ```bash
 # 1. View the enhanced documentation page
-# Open: http://localhost:8000/internacional/movilidad-estudiantil/documentacion/
+# Open: http://localhost:8001/internacional/movilidad-estudiantil/documentacion/
 
 # 2. Test each PDF download link
 
@@ -124,7 +126,7 @@ docker-compose exec web pytest tests/e2e/ --driver Chrome --headless
 **Process** (from `docs/PDF_FORMS_LOGOS_STATUS.md`):
 1. Collect official logos from partner institutions
 2. Resize to 200x100px (maintain aspect ratio)
-3. Upload via Wagtail admin: http://localhost:8000/cms/images/
+3. Upload via Wagtail admin: http://localhost:8001/cms/images/
 4. Edit each `ConvenioPage` and assign the logo
 
 **When to do**: When official logos are available and time permits.
@@ -236,7 +238,7 @@ cd documents && rm test*.pdf new*.pdf old*.pdf
 # - Add: CMS Enhancements section
 
 # 3. Verify CMS
-# Browse to: http://localhost:8000/internacional/movilidad-estudiantil/documentacion/
+# Browse to: http://localhost:8001/internacional/movilidad-estudiantil/documentacion/
 
 # ✅ Done! Project is polished and ready.
 ```
@@ -324,7 +326,7 @@ cd documents && rm test*.pdf new*.pdf old*.pdf
 - Actual technical debt: ~10% (3 items)
 
 **Technical Debt Items**:
-1. `seim/urls.py:98` - TODO about form deprecation
+1. `seim/urls_OLD_BACKUP.py:98` - TODO about form deprecation
    - Impact: Low
    - Action: Remove after Wagtail forms fully migrated
    - Timeline: Next refactor cycle
@@ -440,7 +442,7 @@ cd documents && rm test*.pdf new*.pdf old*.pdf
 3. ✅ `docs/PDF_FORMS_AND_LOGOS_PLAN.md` - Enhancement roadmap
 4. ✅ `docs/PDF_FORMS_LOGOS_STATUS.md` - Implementation status
 5. ✅ `docs/ENHANCEMENTS_SUMMARY.md` - Recent work summary
-6. ✅ `docs/WHAT_NEXT.md` - Future recommendations
+6. ✅ Future recommendations merged into `docs/PROJECT_PRIORITIES_ASSESSMENT.md`
 7. ✅ `docs/PROJECT_PRIORITIES_ASSESSMENT.md` - This file
 
 ### Tools:
@@ -464,7 +466,7 @@ cd documents && rm test*.pdf new*.pdf old*.pdf
 
 ```bash
 # View enhanced CMS documentation page
-open http://localhost:8000/internacional/movilidad-estudiantil/documentacion/
+open http://localhost:8001/internacional/movilidad-estudiantil/documentacion/
 
 # Clean test files
 cd documents && rm test*.pdf new*.pdf old*.pdf && cd ..
@@ -479,10 +481,10 @@ docker-compose exec web python manage.py check --deploy
 docker-compose exec web pytest tests/integration/ -v
 
 # Access admin panel
-open http://localhost:8000/admin/  # admin / admin123
+open http://localhost:8001/seim/admin/  # admin / admin123
 
 # Access Wagtail CMS
-open http://localhost:8000/cms/  # admin / admin123
+open http://localhost:8001/cms/  # admin / admin123
 
 # View test coverage report
 open htmlcov/index.html

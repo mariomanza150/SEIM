@@ -12,7 +12,6 @@ This command adds or improves docstrings for:
 import os
 
 from django.apps import apps
-from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 
@@ -58,21 +57,19 @@ class Command(BaseCommand):
         elif options["directory"]:
             self.enhance_directory_docstrings(options["directory"], options)
         else:
-            # Default behavior: enhance all apps
-            target_apps = settings.INSTALLED_APPS
+            # Default: walk concrete AppConfigs (INSTALLED_APPS entries are module paths, not labels).
+            skip_prefixes = (
+                "django.",
+                "rest_framework",
+                "drf_spectacular",
+                "rest_framework_simplejwt",
+            )
 
-            for app_name in target_apps:
-                if (app_name.startswith("django.") or
-                    app_name.startswith("rest_framework") or
-                    app_name.startswith("drf_spectacular") or
-                    app_name.startswith("rest_framework_simplejwt")):
+            for app_config in apps.get_app_configs():
+                if any(app_config.name.startswith(p) for p in skip_prefixes):
                     continue
 
-                app_config = apps.get_app_config(app_name)
-                if not app_config:
-                    continue
-
-                self.stdout.write(f"📝 Processing app: {app_name}")
+                self.stdout.write(f"📝 Processing app: {app_config.label}")
 
                 # Enhance models
                 self.enhance_models_docstrings(app_config, options)

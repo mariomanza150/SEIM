@@ -1,21 +1,23 @@
-# CMS Quick Start Guide - UAdeC Landing Page
+# CMS Quick Start Guide
+
+> Keep this as the short operational reference for day-to-day CMS usage. For full restore/export workflows, use `docs/CMS_RESTORE_GUIDE.md`. For broader CMS architecture and content guidance, use `documentation/cms_guide.md`.
 
 ## 🚀 Accessing the Landing Page
 
 ### View the Public Site
 ```
-URL: http://localhost:8000/
+URL: http://localhost:8001/
 ```
 
 ### Access the CMS Admin
 ```
-URL: http://localhost:8000/cms/
+URL: http://localhost:8001/cms/
 Login with your staff account
 ```
 
 ### Access Django Admin
 ```
-URL: http://localhost:8000/seim/admin/
+URL: http://localhost:8001/seim/admin/
 For system configuration and data management
 ```
 
@@ -23,12 +25,10 @@ For system configuration and data management
 
 ## ✅ Current Status
 
-**✅ CMS Populated**: All UAdeC content loaded
-**✅ Homepage Enhanced**: 7 content blocks active
-**✅ Programs**: 3 exchange programs published
-**✅ Blog**: 3 posts published
-**✅ FAQs**: 5 questions answered
-**✅ Pages**: 17 total pages live
+- CMS restore/export/import workflow is available and documented.
+- Public CMS pages are served from the root site.
+- Wagtail admin remains the primary editing interface for CMS content.
+- Use `show_cms_content` for the current page and content counts instead of relying on static numbers in this file.
 
 ---
 
@@ -40,7 +40,7 @@ For system configuration and data management
 docker-compose up -d
 
 # Open browser to:
-http://localhost:8000/
+http://localhost:8001/
 ```
 
 ### 2. Edit Content via CMS Admin
@@ -90,17 +90,11 @@ docker-compose exec web python manage.py enhance_homepage
 | **FAQs** | `/preguntas-frecuentes/` | Get quick answers |
 | **Contact** | `/contacto/` | Contact information |
 | **About** | `/sobre-nosotros/` | Department info |
-| **Process** | `/proceso-aplicacion/` | Application guide |
+| **Application Guide** | CMS-managed page | Application guide content |
 
-### Individual Programs
-- `/salamanca-espana/` - Universidad de Salamanca
-- `/texas-am-usa/` - Texas A&M University
-- `/bologna-italia/` - Università di Bologna
-
-### Blog Posts
-- `/semestre-salamanca/` - Student experience in Spain
-- `/convocatoria-primavera-2026/` - Spring 2026 call
-- `/consejos-preparar-intercambio/` - 10 preparation tips
+### Notes
+- Exact program, blog, and FAQ slugs may change over time as content editors update the CMS.
+- Use the CMS page tree or `show_cms_content` for the current published structure.
 
 ---
 
@@ -303,8 +297,8 @@ docker-compose exec web python manage.py shell
 ## 📚 Documentation References
 
 - **Full CMS Guide**: `documentation/cms_guide.md`
-- **Landing Page Overview**: `docs/CMS_LANDING_PAGE_OVERVIEW.md`
-- **Content Map**: `docs/CMS_HOMEPAGE_CONTENT_MAP.md`
+- **CMS Restore Workflow**: `docs/CMS_RESTORE_GUIDE.md`
+- **Full CMS Guide**: `documentation/cms_guide.md`
 - **Architecture**: `documentation/architecture.md`
 - **Wagtail Docs**: https://docs.wagtail.org/
 
@@ -313,7 +307,7 @@ docker-compose exec web python manage.py shell
 ## 🎯 Next Steps
 
 ### Immediate Actions
-- [ ] Visit http://localhost:8000/ to view landing page
+- [ ] Visit http://localhost:8001/ to view landing page
 - [ ] Login to /cms/ to explore admin interface
 - [ ] Review all published pages
 - [ ] Test navigation and links

@@ -18,7 +18,8 @@ class TestAccessibility:
         
         auth_page = AuthPage(page, base_url)
         auth_page.navigate_to_login()
-        
+        if page.title() and "not found" in page.title().lower():
+            pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
         # Run axe accessibility scan
         try:
             from axe_playwright_python.sync_playwright import Axe
@@ -81,15 +82,14 @@ class TestAccessibility:
         
         auth_page = AuthPage(page, base_url)
         auth_page.navigate_to_login()
-        
-        # Test Tab navigation
-        page.keyboard.press('Tab')  # Focus username
-        page.keyboard.press('Tab')  # Focus password
-        page.keyboard.press('Tab')  # Focus submit button
-        
-        # Verify focus is on submit button
-        focused_element = page.evaluate("document.activeElement.type")
-        assert focused_element == 'submit'
+        if page.title() and "not found" in page.title().lower():
+            pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
+        # Test Tab navigation (Vue: email, password, submit)
+        page.keyboard.press('Tab')
+        page.keyboard.press('Tab')
+        page.keyboard.press('Tab')
+        focused = page.evaluate("() => document.activeElement?.type || document.activeElement?.getAttribute('type')")
+        assert focused == 'submit', f"Expected focus on submit button, got type: {focused}"
     
     def test_screen_reader_labels(self, page, base_url):
         """Test that form inputs have proper labels for screen readers."""
@@ -97,8 +97,9 @@ class TestAccessibility:
         
         auth_page = AuthPage(page, base_url)
         auth_page.navigate_to_login()
-        
-        # Check username input has label or aria-label
+        if page.title() and "not found" in page.title().lower():
+            pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
+        # Check email/username input has label or aria-label
         username_input = page.locator(auth_page.LOGIN_USERNAME_INPUT)
         has_label = (
             username_input.get_attribute('aria-label') or
@@ -113,7 +114,8 @@ class TestAccessibility:
         
         auth_page = AuthPage(page, base_url)
         auth_page.navigate_to_login()
-        
+        if page.title() and "not found" in page.title().lower():
+            pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
         try:
             from axe_playwright_python.sync_playwright import Axe
             axe = Axe()

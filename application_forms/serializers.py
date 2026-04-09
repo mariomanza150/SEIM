@@ -6,7 +6,7 @@ DRF serializers for FormType and FormSubmission models.
 
 from rest_framework import serializers
 
-from .models import FormSubmission, FormType
+from .models import FormStepTemplate, FormSubmission, FormType
 
 
 class FormTypeSerializer(serializers.ModelSerializer):
@@ -29,6 +29,7 @@ class FormTypeSerializer(serializers.ModelSerializer):
         model = FormType
         fields = [
             'id', 'name', 'form_type', 'description', 'schema', 'ui_schema',
+            'step_definitions',
             'is_active', 'created_by', 'created_by_username', 'created_at',
             'updated_at', 'field_count', 'required_fields'
         ]
@@ -44,6 +45,13 @@ class FormTypeSerializer(serializers.ModelSerializer):
         """Validate that ui_schema is a valid dict"""
         if value and not isinstance(value, dict):
             raise serializers.ValidationError('UI Schema must be a valid JSON object')
+        return value
+
+    def validate_step_definitions(self, value):
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            raise serializers.ValidationError('step_definitions must be a list.')
         return value
 
 
@@ -83,21 +91,6 @@ class FormSubmissionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Responses must be a valid JSON object')
         return value
 
-    def validate(self, data):
-        """Validate that required fields are present in responses"""
-        form_type = data.get('form_type')
-        responses = data.get('responses', {})
-
-        if form_type and form_type.schema:
-            required_fields = form_type.get_required_fields()
-            missing_fields = [field for field in required_fields if field not in responses]
-            if missing_fields:
-                raise serializers.ValidationError({
-                    'responses': f'Missing required fields: {", ".join(missing_fields)}'
-                })
-
-        return data
-
     def create(self, validated_data):
         """Auto-assign submitted_by from request user"""
         request = self.context.get('request')
@@ -118,6 +111,63 @@ class FormTypeListSerializer(serializers.ModelSerializer):
         model = FormType
         fields = ['id', 'name', 'form_type', 'description', 'is_active', 'field_count', 'created_at']
         read_only_fields = fields
+
+
+class FormStepTemplateSerializer(serializers.ModelSerializer):
+    """Reusable step template (admin-managed; merge into FormType via apply action)."""
+
+    class Meta:
+        model = FormStepTemplate
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "description",
+            "step_title",
+            "default_step_key",
+            "schema_properties",
+            "required_field_names",
+            "ui_schema_fragment",
+            "required_document_type_ids",
+            "is_active",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "slug", "created_at", "updated_at"]
+
+
+class FormStepTemplateListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FormStepTemplate
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "step_title",
+            "default_step_key",
+            "is_active",
+            "created_at",
+        ]
+        read_only_fields = fields
+
+
+class ApplyStepTemplateSerializer(serializers.Serializer):
+    template_id = serializers.IntegerField(required=False)
+    slug = serializers.SlugField(required=False, allow_blank=False, max_length=80)
+    step_key = serializers.CharField(required=False, allow_blank=True, max_length=80)
+
+    def validate(self, attrs):
+        has_id = attrs.get("template_id") is not None
+        has_slug = bool(attrs.get("slug"))
+        if has_id == has_slug:
+            raise serializers.ValidationError(
+                "Provide exactly one of template_id or slug."
+            )
+        if has_id and not FormStepTemplate.objects.filter(pk=attrs["template_id"]).exists():
+            raise serializers.ValidationError({"template_id": "Unknown step template."})
+        if has_slug and not FormStepTemplate.objects.filter(slug=attrs["slug"]).exists():
+            raise serializers.ValidationError({"slug": "Unknown step template slug."})
+        return attrs
 
 
 class FormSubmissionListSerializer(serializers.ModelSerializer):

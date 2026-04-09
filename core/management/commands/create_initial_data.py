@@ -26,6 +26,7 @@ class Command(BaseCommand):
             ("rejected", 5),
             ("completed", 6),
             ("cancelled", 7),
+            ("waitlist", 15),
         ]
         for name, order in statuses:
             ApplicationStatus.objects.get_or_create(

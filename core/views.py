@@ -5,7 +5,7 @@ from django import forms
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import render
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
@@ -14,6 +14,19 @@ from django.views.decorators.http import require_http_methods
 from application_forms.models import FormType
 
 logger = logging.getLogger(__name__)
+
+
+def _render_contact_message(request, *, page_title, message, alert_variant="warning"):
+    """Full HTML page for contact-related status (unconfigured form, errors, thanks)."""
+    return render(
+        request,
+        "core/contact_message.html",
+        {
+            "page_title": page_title,
+            "message": message,
+            "alert_variant": alert_variant,
+        },
+    )
 
 
 class DynamicFormFromSchema(forms.Form):
@@ -177,7 +190,12 @@ class ContactFormView(View):
             ).first()
 
             if not form_type:
-                return HttpResponse("No contact form configured. Please create a dynamic form in the admin.")
+                return _render_contact_message(
+                    request,
+                    page_title="Contact",
+                    message="No contact form configured. Please create a dynamic form in the admin.",
+                    alert_variant="warning",
+                )
 
             # Create the dynamic form instance
             form = DynamicFormFromSchema(form_type)
@@ -190,7 +208,12 @@ class ContactFormView(View):
 
         except Exception as e:
             logger.error(f"Error loading contact form: {e}")
-            return HttpResponse("Error loading contact form. Please try again later.")
+            return _render_contact_message(
+                request,
+                page_title="Contact",
+                message="Error loading contact form. Please try again later.",
+                alert_variant="danger",
+            )
 
 
 class ContactFormSubmitView(View):
@@ -208,7 +231,12 @@ class ContactFormSubmitView(View):
             ).first()
 
             if not form_type:
-                return HttpResponse("No contact form configured.")
+                return _render_contact_message(
+                    request,
+                    page_title="Contact",
+                    message="No contact form configured.",
+                    alert_variant="warning",
+                )
 
             # Create the dynamic form instance with POST data
             form = DynamicFormFromSchema(form_type, request.POST)
@@ -235,8 +263,12 @@ class ContactFormSubmitView(View):
                     # Still log the submission even if save fails
                     logger.info(f"Contact form submission: {cleaned_data}")
 
-                # Return thank you message
-                return HttpResponse("Thank you for your submission! We'll get back to you soon.")
+                return _render_contact_message(
+                    request,
+                    page_title="Thank you",
+                    message="Thank you for your submission! We'll get back to you soon.",
+                    alert_variant="success",
+                )
             else:
                 # Form is invalid, re-render with errors
                 context = {
@@ -247,4 +279,9 @@ class ContactFormSubmitView(View):
 
         except Exception as e:
             logger.error(f"Error processing contact form submission: {e}")
-            return HttpResponse("Error processing your submission. Please try again later.")
+            return _render_contact_message(
+                request,
+                page_title="Contact",
+                message="Error processing your submission. Please try again later.",
+                alert_variant="danger",
+            )

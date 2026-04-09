@@ -8,6 +8,8 @@ app_name = "frontend"
 urlpatterns = [
     # Main pages
     path("", views.home_view, name="home"),
+    # Registered before ``dashboard/`` so ``dashboard/analytics/`` is not swallowed by the dashboard view.
+    path("dashboard/analytics/", views.AnalyticsView.as_view(), name="analytics"),
     path("dashboard/", views.dashboard_view, name="dashboard"),
     # Authentication pages
     path("login/", views.login_view, name="login"),
@@ -40,7 +42,6 @@ urlpatterns = [
     # Admin pages
     path("admin-dashboard/", views.admin_dashboard_view, name="admin_dashboard"),
     path("coordinator-dashboard/", views.coordinator_dashboard_view, name="coordinator_dashboard"),
-    path("analytics/", views.AnalyticsView.as_view(), name="analytics"),
     path("programs/create/", program_create_view, name="program_create"),
     # Cache management
     path("cache/invalidate/", views.invalidate_user_cache, name="invalidate_cache"),

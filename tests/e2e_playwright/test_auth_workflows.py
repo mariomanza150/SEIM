@@ -20,8 +20,9 @@ class TestAuthenticationWorkflows:
         auth_page = AuthPage(page, base_url)
         user_data = generate_user_data()
         
-        # Navigate to registration page
         auth_page.navigate_to_register()
+        if page.title() and "not found" in page.title().lower():
+            pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
         auth_page.assert_register_page_loaded()
         
         # Fill and submit registration form
@@ -44,6 +45,8 @@ class TestAuthenticationWorkflows:
         user_data = generate_user_data()
         
         auth_page.navigate_to_register()
+        if page.title() and "not found" in page.title().lower():
+            pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
         auth_page.register(
             username=user_data['username'],
             email=user_data['email'],
@@ -59,13 +62,12 @@ class TestAuthenticationWorkflows:
         auth_page = AuthPage(page, base_url)
         dashboard_page = DashboardPage(page, base_url)
         
-        # Navigate to login page
         auth_page.navigate_to_login()
+        if page.title() and "not found" in page.title().lower():
+            pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
         auth_page.assert_login_page_loaded()
-        
-        # Login with student credentials
         student_creds = test_users['student1']
-        auth_page.login(student_creds['username'], student_creds['password'])
+        auth_page.login(student_creds['email'], student_creds['password'])  # Vue uses email
         
         # Verify redirect to dashboard
         assert 'dashboard' in page.url or 'login' not in page.url
@@ -76,8 +78,9 @@ class TestAuthenticationWorkflows:
         auth_page = AuthPage(page, base_url)
         
         auth_page.navigate_to_login()
-        auth_page.login('nonexistent_user', 'wrong_password')
-        
+        if page.title() and "not found" in page.title().lower():
+            pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
+        auth_page.login('nonexistent@example.com', 'wrong_password')
         # Should show error and stay on login page
         assert 'login' in page.url
     
@@ -99,12 +102,11 @@ class TestAuthenticationWorkflows:
         auth_page = AuthPage(page, base_url)
         dashboard_page = DashboardPage(page, base_url)
         
-        # Login
         auth_page.navigate_to_login()
+        if page.title() and "not found" in page.title().lower():
+            pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
         student_creds = test_users['student1']
-        auth_page.login(student_creds['username'], student_creds['password'])
-        
-        # Navigate to different pages
+        auth_page.login(student_creds['email'], student_creds['password'])
         dashboard_page.navigate_to_dashboard()
         assert auth_page.is_logged_in()
         
@@ -116,10 +118,9 @@ class TestAuthenticationWorkflows:
         """Test that protected pages redirect to login."""
         dashboard_page = DashboardPage(page, base_url)
         
-        # Try to access dashboard without login
         dashboard_page.navigate_to_dashboard()
-        
-        # Should redirect to login or show access denied
+        if page.title() and "not found" in page.title().lower():
+            pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
         assert 'login' in page.url or 'dashboard' not in page.url
 
 
@@ -133,10 +134,11 @@ class TestAuthenticationSmoke:
         """Smoke test for basic login/logout flow."""
         auth_page = AuthPage(page, base_url)
         
-        # Login
         auth_page.navigate_to_login()
+        if page.title() and "not found" in page.title().lower():
+            pytest.skip("Vue app not available at base_url. Run with BASE_URL=http://localhost:5173")
         student_creds = test_users['student1']
-        auth_page.login(student_creds['username'], student_creds['password'])
+        auth_page.login(student_creds['email'], student_creds['password'])
         assert auth_page.is_logged_in()
         
         # Logout

@@ -38,6 +38,8 @@ help:
 	@echo "  e2e-test           - Run E2E tests (headless)"
 	@echo "  e2e-test-headed    - Run E2E tests (visible browser)"
 	@echo "  e2e-docker         - Run E2E tests in Docker"
+	@echo "  vue-e2e-seed       - Seed Vue E2E data inside web container"
+	@echo "  vue-e2e            - Seed in container + run Vue UI E2E tests (BASE_URL=5173, API_URL=8001)"
 	@echo "  e2e-video-demos    - Generate video demo walkthroughs"
 	@echo "  e2e-visual         - Run visual regression tests"
 	@echo "  e2e-accessibility  - Run accessibility tests"
@@ -387,7 +389,7 @@ docker-setup:
 	docker-compose up -d --build
 	@echo "⏳ Waiting for services to be ready..."
 	@echo "📋 Check logs with: make docker-logs"
-	@echo "🌐 Application will be available at: http://localhost:8000"
+	@echo "🌐 Application will be available at: http://localhost:8001"
 
 docker-reset:
 	@echo "🔄 Resetting Docker environment (WARNING: This will delete all data)..."
@@ -410,7 +412,7 @@ setup:
 	docker-compose exec web python manage.py migrate
 	docker-compose exec web python manage.py create_initial_data
 	docker-compose exec web python manage.py collectstatic --noinput
-	@echo "✅ Setup complete! Access the application at http://localhost:8000"
+	@echo "✅ Setup complete! Access the application at http://localhost:8001"
 
 setup-test-env:
 	@echo "🔧 Setting up SEIM test environment..."
@@ -441,9 +443,9 @@ test-all: test test-frontend test-selenium
 # Full development workflow
 dev-workflow: docker-up migrate collectstatic docs-workflow cache-workflow test-workflow
 	@echo "✅ Development workflow completed!"
-	@echo "🌐 Application available at: http://localhost:8000"
-	@echo "📚 API docs available at: http://localhost:8000/api/docs/"
-	@echo "🔧 Admin interface at: http://localhost:8000/admin/" 
+	@echo "🌐 Application available at: http://localhost:8001"
+	@echo "📚 API docs available at: http://localhost:8001/api/docs/"
+	@echo "🔧 Admin interface at: http://localhost:8001/seim/admin/" 
 
 # Host OS test setup
 setup-selenium-host:
@@ -604,21 +606,31 @@ e2e-setup:
 
 e2e-test:
 	@echo "🎭 Running E2E tests (headless)..."
-	pytest tests/e2e_playwright/ -v --headed=false --base-url=http://localhost:8000
+	pytest tests/e2e_playwright/ -v --headed=false --base-url=http://localhost:8001
 
 e2e-test-headed:
 	@echo "🎭 Running E2E tests (headed - visible browser)..."
-	pytest tests/e2e_playwright/ -v --headed=true --slowmo=100 --base-url=http://localhost:8000
+	pytest tests/e2e_playwright/ -v --headed=true --slowmo=100 --base-url=http://localhost:8001
 
 e2e-test-slow:
 	@echo "🎭 Running E2E tests (slow motion for debugging)..."
-	pytest tests/e2e_playwright/ -v --headed=true --slowmo=500 --base-url=http://localhost:8000
+	pytest tests/e2e_playwright/ -v --headed=true --slowmo=500 --base-url=http://localhost:8001
 
 e2e-docker:
 	@echo "🎭 Running E2E tests in Docker..."
 	docker-compose -f docker-compose.e2e.yml --profile e2e up --build --abort-on-container-exit e2e_playwright
 	docker-compose -f docker-compose.e2e.yml --profile e2e down
 	@echo "✅ E2E tests completed!"
+
+vue-e2e-seed:
+	@echo "🌱 Seeding Vue E2E data (draft, document, notifications) in web container..."
+	docker compose exec web python manage.py seed_vue_e2e
+	@echo "✅ Vue E2E seed done."
+
+vue-e2e: vue-e2e-seed
+	@echo "🎭 Running Vue UI E2E tests (expect Vue at localhost:5173, API at localhost:8001)..."
+	BASE_URL=http://localhost:5173 API_URL=http://localhost:8001 pytest tests/e2e_playwright/test_vue_ui.py -v -m vue --browser=chromium
+	@echo "✅ Vue E2E tests done."
 
 e2e-video-demos:
 	@echo "🎬 Generating video demo walkthroughs..."
@@ -633,39 +645,39 @@ e2e-docker-shell:
 
 e2e-visual:
 	@echo "🎭 Running visual regression tests..."
-	pytest tests/e2e_playwright/test_visual_regression.py -v --base-url=http://localhost:8000
+	pytest tests/e2e_playwright/test_visual_regression.py -v --base-url=http://localhost:8001
 
 e2e-visual-update:
 	@echo "🎭 Updating visual regression baselines..."
-	pytest tests/e2e_playwright/test_visual_regression.py -v --update-baseline --base-url=http://localhost:8000
+	pytest tests/e2e_playwright/test_visual_regression.py -v --update-baseline --base-url=http://localhost:8001
 
 e2e-accessibility:
 	@echo "🎭 Running accessibility tests..."
-	pytest tests/e2e_playwright/test_accessibility.py -v --base-url=http://localhost:8000
+	pytest tests/e2e_playwright/test_accessibility.py -v --base-url=http://localhost:8001
 
 e2e-auth:
 	@echo "🎭 Running authentication workflow tests..."
-	pytest tests/e2e_playwright/test_auth_workflows.py -v --base-url=http://localhost:8000
+	pytest tests/e2e_playwright/test_auth_workflows.py -v --base-url=http://localhost:8001
 
 e2e-student:
 	@echo "🎭 Running student workflow tests..."
-	pytest tests/e2e_playwright/test_student_workflows.py -v --base-url=http://localhost:8000
+	pytest tests/e2e_playwright/test_student_workflows.py -v --base-url=http://localhost:8001
 
 e2e-coordinator:
 	@echo "🎭 Running coordinator workflow tests..."
-	pytest tests/e2e_playwright/test_coordinator_workflows.py -v --base-url=http://localhost:8000
+	pytest tests/e2e_playwright/test_coordinator_workflows.py -v --base-url=http://localhost:8001
 
 e2e-admin:
 	@echo "🎭 Running admin workflow tests..."
-	pytest tests/e2e_playwright/test_admin_workflows.py -v --base-url=http://localhost:8000
+	pytest tests/e2e_playwright/test_admin_workflows.py -v --base-url=http://localhost:8001
 
 e2e-parallel:
 	@echo "🎭 Running E2E tests in parallel..."
-	pytest tests/e2e_playwright/ -v -n auto --base-url=http://localhost:8000
+	pytest tests/e2e_playwright/ -v -n auto --base-url=http://localhost:8001
 
 e2e-smoke:
 	@echo "🎭 Running E2E smoke tests..."
-	pytest tests/e2e_playwright/ -v -m smoke --base-url=http://localhost:8000
+	pytest tests/e2e_playwright/ -v -m smoke --base-url=http://localhost:8001
 
 e2e-report:
 	@echo "📊 Opening E2E test report..."

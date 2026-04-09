@@ -13,6 +13,7 @@ app_name = 'application_forms'
 
 router = DefaultRouter()
 router.register(r'form-types', views.FormTypeViewSet, basename='formtype')
+router.register(r'step-templates', views.FormStepTemplateViewSet, basename='formsteptemplate')
 router.register(r'submissions', views.FormSubmissionViewSet, basename='formsubmission')
 
 urlpatterns = [

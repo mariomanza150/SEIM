@@ -23,6 +23,27 @@ function persistToken(keys, value) {
   })
 }
 
+/** Normalize DRF / Django error payloads for display (MQ-006). */
+function formatLoginErrorResponse(data) {
+  if (data == null || typeof data !== 'object') return null
+  if (typeof data.detail === 'string') return data.detail
+  if (Array.isArray(data.detail)) return data.detail.map(String).join(' ')
+  if (Array.isArray(data.non_field_errors)) return data.non_field_errors.join(' ')
+  const parts = []
+  for (const [key, val] of Object.entries(data)) {
+    if (key === 'detail' && val && typeof val === 'object' && !Array.isArray(val)) {
+      for (const inner of Object.values(val)) {
+        if (Array.isArray(inner)) parts.push(...inner.map(String))
+        else if (inner != null) parts.push(String(inner))
+      }
+      continue
+    }
+    if (Array.isArray(val)) parts.push(...val.map(String))
+    else if (typeof val === 'string') parts.push(val)
+  }
+  return parts.length ? parts.join(' ') : null
+}
+
 export const useAuthStore = defineStore('auth', () => {
   // State
   const user = ref(null)
@@ -67,7 +88,11 @@ export const useAuthStore = defineStore('auth', () => {
 
       return true
     } catch (err) {
-      error.value = err.response?.data?.detail || 'Login failed. Please check your credentials.'
+      const body = err.response?.data
+      error.value =
+        formatLoginErrorResponse(body) ||
+        (typeof body === 'string' ? body : null) ||
+        'Login failed. Please check your credentials.'
       console.error('Login error:', err)
       return false
     } finally {
@@ -77,20 +102,26 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     const refresh = refreshToken.value
+    const access = accessToken.value
 
-    // Clear tokens
-    accessToken.value = null
-    refreshToken.value = null
-    user.value = null
-
-    persistToken(ACCESS_TOKEN_KEYS, null)
-    persistToken(REFRESH_TOKEN_KEYS, null)
-
-    // Clear both SPA and legacy token namespaces.
+    // Call API while access token is still available (LogoutView is JWT-only — MQ-008).
     try {
-      await axios.post(`${API_BASE_URL}/api/accounts/logout/`, refresh ? { refresh } : {})
+      await axios.post(
+        `${API_BASE_URL}/api/accounts/logout/`,
+        refresh ? { refresh } : {},
+        {
+          withCredentials: true,
+          headers: access ? { Authorization: `Bearer ${access}` } : {},
+        },
+      )
     } catch (err) {
       console.warn('Logout endpoint error:', err)
+    } finally {
+      accessToken.value = null
+      refreshToken.value = null
+      user.value = null
+      persistToken(ACCESS_TOKEN_KEYS, null)
+      persistToken(REFRESH_TOKEN_KEYS, null)
     }
   }
 

@@ -83,6 +83,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     student_email = serializers.SerializerMethodField()
     program_name = serializers.SerializerMethodField()
     readiness = serializers.SerializerMethodField()
+    scholarship_allocation_score = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -91,6 +92,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "dynamic_form_layout",
             "document_checklist",
             "readiness",
+            "scholarship_allocation_score",
             "assigned_coordinator_name",
             "effective_coordinator",
             "student_display_name",
@@ -145,6 +147,20 @@ class ApplicationSerializer(serializers.ModelSerializer):
         view = self.context.get("view")
         for_list = bool(view and getattr(view, "action", None) == "list")
         return compute_application_readiness(obj, include_dynamic_form=not for_list)
+
+    def get_scholarship_allocation_score(self, obj):
+        request = self.context.get("request")
+        view = self.context.get("view")
+        if not request or not request.user.is_authenticated:
+            return None
+        user = request.user
+        if not hasattr(user, "has_any_role") or not user.has_any_role(["coordinator", "admin"]):
+            return None
+        if view and getattr(view, "action", None) == "list":
+            return None
+        from exchange.scholarship_scoring import compute_scholarship_allocation_score
+
+        return compute_scholarship_allocation_score(obj)
 
     def get_dynamic_form_layout(self, obj):
         from documents.services import DocumentService

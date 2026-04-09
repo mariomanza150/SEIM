@@ -3,7 +3,7 @@
 **Type:** Monolith  
 **Primary Language:** Python, JavaScript  
 **Architecture:** Service-Oriented Layered Architecture (Clean Architecture principles)  
-**Last Updated:** 2025-01-27
+**Last Updated:** 2026-04-08
 
 ## Project Overview
 
@@ -25,9 +25,9 @@ SEIM (Student Exchange Information Manager) is a comprehensive Django-based web 
 
 - [Project Overview](./project-overview.md) - Executive summary and high-level architecture
 - [Source Tree Analysis](./source-tree-analysis.md) - Annotated directory structure
-- [Architecture](./architecture.md) - Detailed technical architecture
+- [Architecture](../documentation/architecture.md) - Maintained system architecture guide
 - [Component Inventory](./component-inventory.md) - Catalog of major components and UI elements
-- [Development Guide](./development-guide.md) - Local setup and development workflow
+- [Development Guide](../documentation/developer_guide.md) - Maintained development workflow and setup guide
 - [API Contracts](./api-contracts.md) - API endpoints and schemas
 - [Data Models](./data-models.md) - Database schema and models
 - [Project Structure](./PROJECT_STRUCTURE.md) - Comprehensive project structure guide
@@ -38,12 +38,18 @@ SEIM (Student Exchange Information Manager) is a comprehensive Django-based web 
 - [System Status](./status/system-status.md) - Current system status
 - [E2E Expansion Progress](./status/e2e-expansion-progress.md) - E2E testing progress
 - [E2E Test Implementation Status](./status/e2e-test-implementation-status.md) - E2E implementation status
+- [Video Demos Ready](./status/video-demos-ready.md) - Video demos status
 
 ### Quick Guides
 
 - [Video Demos Guide](./guides/video-demos-guide.md) - How to generate video demos
 - [Video Review Checklist](./guides/video-review-checklist.md) - Video review checklist
 - [E2E Quick Fix Guide](./guides/e2e-quick-fix-guide.md) - E2E testing quick fixes
+
+### Frontend Migration Notes
+
+- [Vue Migration Plan](./VUE_MIGRATION_PLAN.md) - Historical migration rationale and scope
+- [Vue Test Results](./VUE_TEST_RESULTS.md) - Current Vue testing status and rerun instructions
 
 ## Manual Documentation
 
@@ -54,46 +60,6 @@ SEIM (Student Exchange Information Manager) is a comprehensive Django-based web 
 - Implementation details
 
 See [documentation/README.md](../documentation/README.md) for the complete index.
-
-### Core Documentation
-
-### Core Documentation
-- [README](../documentation/README.md) - Documentation index
-- [Architecture](../documentation/architecture.md) - System architecture
-- [Developer Guide](../documentation/developer_guide.md) - Development guide
-- [API Documentation](../documentation/api_documentation.md) - API reference
-- [Installation](../documentation/installation.md) - Installation instructions
-- [Deployment](../documentation/deployment.md) - Deployment guide
-
-### Feature Guides
-- [Form Builder Guide](../documentation/form_builder_guide.md) - Dynamic form builder
-- [CMS Guide](../documentation/cms_guide.md) - Wagtail CMS guide
-- [Grade Translation Guide](../documentation/grade_translation_user_guide.md) - Grade scale conversion
-- [Internationalization Guide](../documentation/internationalization_guide.md) - i18n setup
-- [WebSocket Notifications Guide](../documentation/websocket_notifications_guide.md) - Real-time notifications
-
-### Testing & Quality
-- [Testing Guide](../documentation/testing.md) - Testing strategies
-- [E2E Testing Guide](../documentation/e2e_testing_guide.md) - End-to-end testing
-- [E2E Test IDs Guide](../documentation/e2e_test_ids_guide.md) - Test ID conventions
-
-### Planning & Project Management
-- [Architectural Decisions](../documentation/architectural_decisions.md) - Design decisions
-- [Roadmap](../documentation/roadmap.md) - Development roadmap
-- [Backlog](../documentation/backlog.md) - Current tasks
-- [User Stories](../documentation/user_stories.md) - User requirements
-- [Business Rules](../documentation/business_rules.md) - Business logic
-
-### Operational
-- [Admin Guide](../documentation/admin_guide.md) - Administration guide
-- [Troubleshooting](../documentation/troubleshooting.md) - Issue resolution
-- [Environment Variables](../documentation/environment_variables.md) - Configuration
-- [Caching](../documentation/caching.md) - Cache configuration
-
-### Additional Resources
-- [Wireframes](../documentation/wireframes/) - UI/UX wireframes
-- [Implementation Plans](../documentation/implementation_plans/) - Feature implementation plans
-- [Archive](../documentation/archive/) - Historical documentation
 
 ## Getting Started
 
@@ -139,10 +105,10 @@ docker-compose up -d
 docker-compose logs -f
 
 # Access application
-# Web: http://localhost:8000/
-# Admin: http://localhost:8000/seim/admin/
-# CMS Admin: http://localhost:8000/cms/
-# API Docs: http://localhost:8000/api/docs/
+# Web: http://localhost:8001/
+# Admin: http://localhost:8001/seim/admin/
+# CMS Admin: http://localhost:8001/cms/
+# API Docs: http://localhost:8001/api/docs/
 ```
 
 ### Run Tests
@@ -169,22 +135,22 @@ This documentation was generated specifically to enable AI agents to understand 
 ### When Planning New Features:
 
 **UI-only features:**
-→ Reference: `architecture.md`, `component-inventory.md`
+→ Reference: `documentation/architecture.md`, `component-inventory.md`
 
 **API/Backend features:**
-→ Reference: `architecture.md`, `api-contracts.md`, `data-models.md`
+→ Reference: `documentation/architecture.md`, `api-contracts.md`, `data-models.md`
 
 **Full-stack features:**
 → Reference: All architecture docs
 
 **Deployment changes:**
-→ Reference: `development-guide.md` (deployment section) and existing `documentation/deployment.md`
+→ Reference: `documentation/developer_guide.md` and `documentation/deployment.md`
 
 ### Key Documentation for AI Development:
 
 1. **Understanding the System:**
    - Start with `project-overview.md` for high-level understanding
-   - Review `architecture.md` for technical architecture
+   - Review `documentation/architecture.md` for technical architecture
    - Check `data-models.md` for database structure
 
 2. **Working with APIs:**

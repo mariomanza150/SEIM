@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth'
 import { announceRouteNavigation, focusMainContent } from '@/utils/a11y'
 import i18n from '@/i18n'
 import { resolveDocumentTitle, syncAppSocialMeta, syncCanonicalLink } from '@/utils/documentTitle'
+import { resolveAuthenticatedNavigation } from '@/router/authNavigation'
 
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
@@ -227,37 +228,24 @@ router.beforeEach(async (to, from, next) => {
 
   // Check if route requires authentication
   if (to.meta.requiresAuth) {
-    if (!authStore.isAuthenticated) {
-      // Check if we have a stored token
-      if (authStore.accessToken) {
-        try {
-          await authStore.checkAuth()
-          if (authStore.isAuthenticated) {
-            next()
-          } else {
-            next({ name: 'Login', query: { redirect: to.fullPath } })
-          }
-        } catch (err) {
-          next({ name: 'Login', query: { redirect: to.fullPath } })
-        }
-      } else {
-        next({ name: 'Login', query: { redirect: to.fullPath } })
-      }
-    } else {
-      if (to.meta.staffReviewQueue && !authStore.canUseStaffReviewQueue) {
-        next({ name: 'Applications', replace: true })
-        return
-      }
-      next()
+    const outcome = await resolveAuthenticatedNavigation(to, authStore)
+    if (outcome === 'login') {
+      next({ name: 'Login', query: { redirect: to.fullPath } })
+      return
     }
+    if (outcome === 'applications') {
+      next({ name: 'Applications', replace: true })
+      return
+    }
+    next()
+    return
+  }
+
+  // Route doesn't require auth
+  if (to.name === 'Login' && authStore.isAuthenticated) {
+    next({ name: 'Dashboard' })
   } else {
-    // Route doesn't require auth
-    if (to.name === 'Login' && authStore.isAuthenticated) {
-      // Already logged in, redirect to dashboard
-      next({ name: 'Dashboard' })
-    } else {
-      next()
-    }
+    next()
   }
 })
 

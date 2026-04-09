@@ -55,7 +55,7 @@
             {% if page.institution_website %}
             <div class="col-md-3">
                 <div class="p-2">
-                    <a href="{{ page.institution_website }}" target="_blank" rel="noopener" class="btn btn-sm btn-primary">
+                    <a href="{{ page.institution_website }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary">
                         <i class="bi bi-globe me-2"></i>Sitio Web
                     </a>
                 </div>
@@ -120,7 +120,7 @@
                         <ul class="list-unstyled mb-0">
                             {% for program in page.related_programs.all %}
                             <li class="mb-2 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
-                                <a href="/seim/programs/{{ program.id }}/" class="text-decoration-none">
+                                <a href="{% if program.cms_page %}{% pageurl program.cms_page %}{% else %}/programs/{% endif %}" class="text-decoration-none">
                                     <i class="bi bi-arrow-right-circle me-2"></i>{{ program.name }}
                                 </a>
                             </li>

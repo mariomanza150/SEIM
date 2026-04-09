@@ -25,9 +25,11 @@ if not sys.platform.startswith('win'):
         magic = None
         MAGIC_AVAILABLE = False
 
+from django.core.exceptions import ValidationError
+
 from notifications.services import NotificationService
 
-from .models import Document, DocumentResubmissionRequest, DocumentValidation
+from .models import Document, DocumentResubmissionRequest, DocumentType, DocumentValidation
 from .tasks import scan_document_virus
 
 
@@ -156,6 +158,7 @@ class DocumentService:
             action_url=f"/documents/{document.id}/",
             action_text="View document",
             category="warning",
+            settings_category="documents",
         )
 
     @staticmethod
@@ -183,6 +186,7 @@ class DocumentService:
                 action_url=f"/documents/{document.id}/",
                 action_text="Review document",
                 category="info",
+                settings_category="documents",
             )
         NotificationService.broadcast_application_sync(
             str(app.id), "document_replaced", str(document.id)
@@ -215,6 +219,7 @@ class DocumentService:
             action_url=f"/documents/{document.id}/",
             action_text="View document",
             category="warning",
+            settings_category="documents",
         )
         NotificationService.broadcast_application_sync(
             str(document.application_id), "document_resubmission_requested", str(document.id)
@@ -329,3 +334,88 @@ class DocumentService:
         raise ValueError(
             "Required documents are not all approved yet: " + "; ".join(problems)
         )
+
+    @staticmethod
+    def intersect_program_required_document_type_ids(program, candidate_ids):
+        """
+        Document types listed on a form step that are also required for the program,
+        preserving step order.
+        """
+        if not candidate_ids:
+            return []
+        required_set = set(program.required_document_types.values_list("id", flat=True))
+        out = []
+        for x in candidate_ids:
+            try:
+                pk = int(x)
+            except (TypeError, ValueError):
+                continue
+            if pk in required_set:
+                out.append(pk)
+        return out
+
+    @staticmethod
+    def step_required_document_types_meta(program, step_layout_entry):
+        """Resolved document types for a step (intersection with program requirements)."""
+        ids = step_layout_entry.get("required_document_type_ids") or []
+        eff = DocumentService.intersect_program_required_document_type_ids(program, ids)
+        if not eff:
+            return []
+        return list(
+            DocumentType.objects.filter(pk__in=eff)
+            .order_by("name")
+            .values("id", "name", "description")
+        )
+
+    @staticmethod
+    def enrich_form_steps_for_program(form_type, program):
+        """Attach required_document_types metadata to each step for API consumers."""
+        steps = form_type.get_multi_step_layout()
+        out = []
+        for s in steps:
+            meta = DocumentService.step_required_document_types_meta(program, s)
+            row = {**s, "required_document_types": meta}
+            out.append(row)
+        return out
+
+    @staticmethod
+    def ensure_step_documents_approved(application, form_type, completed_step_key: str):
+        """
+        Before advancing past a multi-step form step, ensure that document types
+        configured on that step (and required by the program) are approved uploads.
+        """
+        if not form_type.is_multi_step():
+            return
+        step_def = None
+        for s in form_type.step_definitions or []:
+            if str(s.get("key", "")) == str(completed_step_key):
+                step_def = s
+                break
+        if not step_def:
+            return
+        raw_ids = step_def.get("required_document_type_ids") or []
+        if not isinstance(raw_ids, list) or not raw_ids:
+            return
+        try:
+            candidate = [int(x) for x in raw_ids]
+        except (TypeError, ValueError):
+            raise ValidationError("Invalid required_document_type_ids on form step.") from None
+        effective = DocumentService.intersect_program_required_document_type_ids(
+            application.program, candidate
+        )
+        if not effective:
+            return
+        summary = DocumentService.build_application_document_checklist(application)
+        by_id = {item["document_type_id"]: item for item in summary["items"]}
+        problems = []
+        for dt_id in effective:
+            item = by_id.get(dt_id)
+            if not item or item["status"] != "approved":
+                name = item["name"] if item else f"Document type #{dt_id}"
+                st = item["status"] if item else "missing"
+                problems.append(f"{name} ({st})")
+        if problems:
+            raise ValidationError(
+                "Upload and get approval for required documents before continuing: "
+                + "; ".join(problems)
+            )
