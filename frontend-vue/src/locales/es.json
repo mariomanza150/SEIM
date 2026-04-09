@@ -595,10 +595,7 @@
     "next": "Siguiente",
     "emptyTitle": "Aún no hay documentos",
     "emptyBody": "Sube documentos desde el detalle de tu solicitud.",
-    "goToApplications": "Ir a solicitudes",
-    "fileUnknown": "Desconocido",
-    "unknownApplication": "Desconocida",
-    "notAvailable": "N/D"
+    "goToApplications": "Ir a solicitudes"
   },
   "documentDetailPage": {
     "breadcrumbAria": "Migas de pan",

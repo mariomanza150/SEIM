@@ -595,10 +595,7 @@
     "next": "Next",
     "emptyTitle": "No documents yet",
     "emptyBody": "Upload documents from your application detail page.",
-    "goToApplications": "Go to applications",
-    "fileUnknown": "Unknown",
-    "unknownApplication": "Unknown",
-    "notAvailable": "N/A"
+    "goToApplications": "Go to applications"
   },
   "documentDetailPage": {
     "breadcrumbAria": "Breadcrumb",

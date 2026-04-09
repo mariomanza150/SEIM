@@ -118,4 +118,46 @@ describe('Documents', () => {
     expect(wrapper.text()).toContain('Validated')
     expect(wrapper.find('[data-testid="document-detail-link"]').exists()).toBe(true)
   })
+
+  it('uses documentDetailPage fallbacks for missing file, application, and upload date', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/') {
+        return Promise.resolve({ data: { results: [], count: 0 } })
+      }
+      if (url === '/api/document-types/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'doc-sparse',
+                application: null,
+                file: null,
+                is_valid: false,
+                created_at: null,
+                type: { name: 'Other' },
+              },
+            ],
+            count: 1,
+            next: null,
+            previous: null,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+
+    const wrapper = mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.fileUnknown'))
+    expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.unknownApplication'))
+    expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.notAvailable'))
+  })
 })

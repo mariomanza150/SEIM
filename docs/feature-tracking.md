@@ -76,7 +76,8 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue i18n: Dashboard layout + toast chrome | `frontend-vue` | Implemented | 2026-04-09 | `dashboard.*` + `toast.*` in locales; `Dashboard.vue` navbar/sidebar/stats/next-steps copy + logout/stats errors; `route.names.*` for shared labels; nav `aria-label` + toggler `aria-controls`; `ToastContainer.vue` translated headers + dismiss `aria-label`. Vitest: `Dashboard.spec.js`, `ToastContainer.spec.js`. |
 | Vue i18n: NotificationDropdown | `frontend-vue` | Implemented | 2026-04-09 | Extended `notifications.*` locale keys; `NotificationDropdown.vue` header/empty/loading/footer + default title/action fallbacks; relative `formatTime` via `t()` + `toLocaleDateString` by active locale; toggle `aria-label`. Vitest: `NotificationDropdown.spec.js`. |
 | Vue i18n: Applications list view | `frontend-vue` | Implemented | 2026-04-09 | `applicationsPage.*` + nested `status.*` in locales; `Applications.vue` filters, cards, pagination, empty state, errors/toasts, delete confirm; `formatStatus` / `formatDate` locale-aware; icon-only edit/delete `aria-label`. Vitest: `Applications.spec.js`. |
-| Vue i18n: Documents list view | `frontend-vue` | Implemented | 2026-04-09 | `documentsPage.*` in locales; `Documents.vue` student/staff copy, filters, presets UI, table, pagination, errors/toasts; locale-aware dates; `aria-label` / download titles. Vitest: `Documents.spec.js`. |
+| Vue i18n: Documents list view | `frontend-vue` | Implemented | 2026-04-09 | `documentsPage.*` in locales; `Documents.vue` student/staff copy, filters, presets UI, table, pagination, errors/toasts; list `fileName` / `getApplicationName` / `formatDate` use `documentDetailPage` fallbacks; `aria-label` / download titles. Vitest: `Documents.spec.js` (incl. sparse row). |
+| Vue i18n: Documents list shared documentDetailPage fallbacks | `frontend-vue` | Implemented | 2026-04-09 | Removed duplicate `fileUnknown` / `unknownApplication` / `notAvailable` from `documentsPage` JSON; aligned with document detail. |
 | Vue i18n: Document detail view | `frontend-vue` | Implemented | 2026-04-09 | `documentDetailPage.*` (incl. `notAvailable`, `fileUnknown`, `unknownApplication`) in locales; `DocumentDetail.vue` breadcrumbs via `route.names`, preview/review/comments/staff actions, quick actions, toasts; locale-aware `formatDateTime`; preview context lines translated. Vitest: `DocumentDetail.spec.js` (loaded doc + fallbacks). |
 | Vue i18n: Document detail fallback strings namespaced | `frontend-vue` | Implemented | 2026-04-09 | `DocumentDetail.vue` uses `documentDetailPage` for N/A, unknown file name, and unknown application (was `documentsPage`). |
 | Vue i18n: Application detail view | `frontend-vue` | Implemented | 2026-04-09 | `applicationDetailPage.*` (incl. nested `status.*`, `readinessLabel`, `notAvailable`); `ApplicationDetail.vue` program/checklist/timeline/comments/sidebar/docs/coordinator review; locale dates; translated confirms/toasts. Vitest: `ApplicationDetail.spec.js` (+ i18n, sparse program `notAvailable`). |
@@ -114,7 +115,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Documents list shared detail fallbacks | `frontend-vue` | In progress | 2026-04-09 | — |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -188,5 +189,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Document detail i18n fallbacks — completed)*  
+*Last updated: 2026-04-09 (loop: Documents list documentDetailPage fallbacks — completed)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

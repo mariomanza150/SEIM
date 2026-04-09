@@ -352,7 +352,7 @@ function applyDocPreset(p) {
 }
 
 function fileName(fileUrl) {
-  if (!fileUrl) return t('documentsPage.fileUnknown')
+  if (!fileUrl) return t('documentDetailPage.fileUnknown')
   const parts = fileUrl.split('/')
   return decodeURIComponent(parts[parts.length - 1] || 'document')
 }
@@ -360,11 +360,11 @@ function fileName(fileUrl) {
 function getApplicationName(appId) {
   if (typeof appId === 'object' && appId?.program?.name) return appId.program.name
   const app = applications.value.find(a => a.id === appId)
-  return app?.program?.name || appId || t('documentsPage.unknownApplication')
+  return app?.program?.name || appId || t('documentDetailPage.unknownApplication')
 }
 
 function formatDate(dateString) {
-  if (!dateString) return t('documentsPage.notAvailable')
+  if (!dateString) return t('documentDetailPage.notAvailable')
   const date = new Date(dateString)
   const localeTag = locale.value === 'es' ? 'es' : 'en-US'
   return date.toLocaleDateString(localeTag, {
