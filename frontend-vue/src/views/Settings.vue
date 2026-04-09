@@ -1,25 +1,25 @@
 <template>
   <div class="settings-page">
     <div class="container-fluid mt-4">
-      <nav aria-label="breadcrumb">
+      <nav :aria-label="t('settings.breadcrumbAria')">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
+            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
           </li>
-          <li class="breadcrumb-item active">Settings</li>
+          <li class="breadcrumb-item active">{{ t('route.names.Settings') }}</li>
         </ol>
       </nav>
 
       <div class="row mb-4">
         <div class="col-md-8">
-          <h2><i class="bi bi-gear me-2"></i>Settings</h2>
-          <p class="text-muted">Manage your appearance, notification, and privacy preferences.</p>
+          <h2><i class="bi bi-gear me-2"></i>{{ t('route.names.Settings') }}</h2>
+          <p class="text-muted">{{ t('settings.pageSubtitle') }}</p>
         </div>
       </div>
 
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-3 text-muted">Loading settings...</p>
+        <p class="mt-3 text-muted">{{ t('settings.loading') }}</p>
       </div>
 
       <div v-else class="row">
@@ -27,7 +27,7 @@
           <div class="card">
             <div class="card-body">
               <form @submit.prevent="handleSubmit">
-                <h6 class="text-muted mb-3">Appearance</h6>
+                <h6 class="text-muted mb-3">{{ t('settings.sectionAppearance') }}</h6>
                 <div class="row mb-3">
                   <div class="col-md-6">
                     <label class="form-label" for="ui_language">{{ t('settings.uiLanguage') }}</label>
@@ -38,27 +38,27 @@
                       data-testid="settings-ui-language"
                       @change="onLocaleChange"
                     >
-                      <option value="en">English</option>
-                      <option value="es">Español</option>
+                      <option value="en">{{ t('settings.langOptionEn') }}</option>
+                      <option value="es">{{ t('settings.langOptionEs') }}</option>
                     </select>
                     <div class="form-text">{{ t('settings.uiLanguageHelp') }}</div>
                   </div>
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <label class="form-label">Theme</label>
+                    <label class="form-label">{{ t('settings.theme') }}</label>
                     <select v-model="form.theme" class="form-select" data-testid="settings-theme">
-                      <option value="light">Light</option>
-                      <option value="dark">Dark</option>
-                      <option value="auto">Auto</option>
+                      <option value="light">{{ t('settings.themeLight') }}</option>
+                      <option value="dark">{{ t('settings.themeDark') }}</option>
+                      <option value="auto">{{ t('settings.themeAuto') }}</option>
                     </select>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label">Font size</label>
+                    <label class="form-label">{{ t('settings.fontSize') }}</label>
                     <select v-model="form.font_size" class="form-select" data-testid="settings-font-size">
-                      <option value="normal">Normal</option>
-                      <option value="large">Large</option>
-                      <option value="x-large">Extra large</option>
+                      <option value="normal">{{ t('settings.fontNormal') }}</option>
+                      <option value="large">{{ t('settings.fontLarge') }}</option>
+                      <option value="x-large">{{ t('settings.fontXLarge') }}</option>
                     </select>
                   </div>
                 </div>
@@ -72,7 +72,7 @@
                         type="checkbox"
                       >
                       <label class="form-check-label" for="high_contrast">
-                        Enable high contrast mode
+                        {{ t('settings.highContrast') }}
                       </label>
                     </div>
                   </div>
@@ -85,14 +85,14 @@
                         type="checkbox"
                       >
                       <label class="form-check-label" for="reduce_motion">
-                        Reduce motion and animations
+                        {{ t('settings.reduceMotion') }}
                       </label>
                     </div>
                   </div>
                 </div>
 
                 <hr class="my-4" />
-                <h6 class="text-muted mb-3">Notifications</h6>
+                <h6 class="text-muted mb-3">{{ t('settings.sectionNotifications') }}</h6>
                 <div class="row">
                   <div class="col-md-6">
                     <div
@@ -131,18 +131,18 @@
                 </div>
                 <div class="row mt-2">
                   <div class="col-md-6">
-                    <label class="form-label" for="notification_digest_frequency">Notification digest</label>
+                    <label class="form-label" for="notification_digest_frequency">{{ t('settings.digestLabel') }}</label>
                     <select
                       id="notification_digest_frequency"
                       v-model="form.notification_digest_frequency"
                       class="form-select"
                       data-testid="settings-digest-frequency"
                     >
-                      <option value="off">Off</option>
-                      <option value="daily">Daily summary</option>
-                      <option value="weekly">Weekly summary</option>
+                      <option value="off">{{ t('settings.digestOff') }}</option>
+                      <option value="daily">{{ t('settings.digestDaily') }}</option>
+                      <option value="weekly">{{ t('settings.digestWeekly') }}</option>
                     </select>
-                    <div class="form-text">Unread in-app notifications summarized on a schedule.</div>
+                    <div class="form-text">{{ t('settings.digestHelp') }}</div>
                   </div>
                   <div class="col-md-6 d-flex align-items-end">
                     <div class="form-check mb-3">
@@ -155,7 +155,7 @@
                         data-testid="settings-email-digest"
                       >
                       <label class="form-check-label" for="email_notification_digest">
-                        Email digest (requires system email above)
+                        {{ t('settings.emailDigest') }}
                       </label>
                     </div>
                   </div>
@@ -174,7 +174,7 @@
                 </div>
 
                 <hr class="my-4" />
-                <h6 class="text-muted mb-3">Privacy</h6>
+                <h6 class="text-muted mb-3">{{ t('settings.sectionPrivacy') }}</h6>
                 <div class="form-check mb-3">
                   <input
                     id="profile_public"
@@ -183,7 +183,7 @@
                     type="checkbox"
                   >
                   <label class="form-check-label" for="profile_public">
-                    Make my profile visible to other users
+                    {{ t('settings.profilePublic') }}
                   </label>
                 </div>
                 <div class="form-check mb-3">
@@ -194,21 +194,21 @@
                     type="checkbox"
                   >
                   <label class="form-check-label" for="share_analytics">
-                    Share anonymous usage analytics
+                    {{ t('settings.shareAnalytics') }}
                   </label>
                 </div>
 
                 <div v-if="saveError" class="alert alert-danger">{{ saveError }}</div>
                 <div class="d-flex justify-content-between mt-4">
-                  <router-link :to="{ name: 'Dashboard' }" class="btn btn-outline-secondary">Cancel</router-link>
+                  <router-link :to="{ name: 'Dashboard' }" class="btn btn-outline-secondary">{{ t('applicationFormPage.cancel') }}</router-link>
                   <button
                     type="submit"
                     class="btn btn-primary"
                     :disabled="saving"
                     data-testid="save-settings-btn"
                   >
-                    <span v-if="saving"><span class="spinner-border spinner-border-sm me-2"></span>Saving...</span>
-                    <span v-else><i class="bi bi-check-circle me-2"></i>Save settings</span>
+                    <span v-if="saving"><span class="spinner-border spinner-border-sm me-2"></span>{{ t('settings.saving') }}</span>
+                    <span v-else><i class="bi bi-check-circle me-2"></i>{{ t('settings.saveButton') }}</span>
                   </button>
                 </div>
               </form>
@@ -218,18 +218,18 @@
 
         <div class="col-lg-4">
           <div class="card mb-4">
-            <div class="card-header"><h6 class="mb-0"><i class="bi bi-person me-2"></i>Profile</h6></div>
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-person me-2"></i>{{ t('settings.sidebarProfileTitle') }}</h6></div>
             <div class="card-body small">
-              <p class="mb-3">Need to update your account details or eligibility data instead?</p>
+              <p class="mb-3">{{ t('settings.sidebarProfileBody') }}</p>
               <router-link :to="{ name: 'Profile' }" class="btn btn-outline-primary btn-sm">
-                Go to Profile
+                {{ t('settings.sidebarProfileCta') }}
               </router-link>
             </div>
           </div>
           <div class="card">
-            <div class="card-header"><h6 class="mb-0"><i class="bi bi-shield-check me-2"></i>Note</h6></div>
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-shield-check me-2"></i>{{ t('settings.sidebarNoteTitle') }}</h6></div>
             <div class="card-body small">
-              These settings are saved to your account and apply across the SEIM portal.
+              {{ t('settings.sidebarNoteBody') }}
             </div>
           </div>
         </div>
@@ -239,7 +239,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
@@ -285,18 +285,25 @@ const defaultForm = () => ({
 
 const form = ref(defaultForm())
 
-const notificationFields = [
-  { key: 'email_applications', label: 'Email me about application updates' },
-  { key: 'email_documents', label: 'Email me about document updates' },
-  { key: 'email_comments', label: 'Email me about comments on applications and documents' },
-  { key: 'email_programs', label: 'Email me about new programs' },
-  { key: 'email_system', label: 'Email me about system messages' },
-  { key: 'inapp_applications', label: 'Show in-app application notifications' },
-  { key: 'inapp_documents', label: 'Show in-app document notifications' },
-  { key: 'inapp_comments', label: 'Show in-app comment notifications' },
-  { key: 'inapp_programs', label: 'Show in-app program announcements' },
-  { key: 'inapp_system', label: 'Show in-app system notifications' },
+const NOTIFICATION_FIELD_KEYS = [
+  'email_applications',
+  'email_documents',
+  'email_comments',
+  'email_programs',
+  'email_system',
+  'inapp_applications',
+  'inapp_documents',
+  'inapp_comments',
+  'inapp_programs',
+  'inapp_system',
 ]
+
+const notificationFields = computed(() =>
+  NOTIFICATION_FIELD_KEYS.map((key) => ({
+    key,
+    label: t(`settings.notify.${key}`),
+  })),
+)
 
 async function fetchSettings() {
   try {
@@ -308,7 +315,7 @@ async function fetchSettings() {
     applyUiPreferences(form.value)
   } catch (err) {
     console.error('Failed to fetch settings:', err)
-    errorToast('Failed to load settings')
+    errorToast(t('settings.toastLoadError'))
   } finally {
     loading.value = false
   }
@@ -320,15 +327,15 @@ async function handleSubmit() {
   try {
     await api.patch('/api/accounts/user-settings/', { ...form.value })
     applyUiPreferences(form.value)
-    success('Settings saved.')
+    success(t('settings.toastSaved'))
   } catch (err) {
     const msg =
       err.response?.data?.detail ||
       err.response?.data?.theme?.[0] ||
       err.response?.data?.font_size?.[0] ||
-      'Failed to save settings.'
+      t('settings.saveFailedGeneric')
     saveError.value = typeof msg === 'string' ? msg : JSON.stringify(msg)
-    errorToast('Could not save settings')
+    errorToast(t('settings.toastSaveError'))
   } finally {
     saving.value = false
   }

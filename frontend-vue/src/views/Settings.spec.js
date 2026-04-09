@@ -148,7 +148,7 @@ describe('Settings', () => {
       email_programs: true,
       share_analytics: false,
     }))
-    expect(mockSuccessToast).toHaveBeenCalledWith('Settings saved.')
+    expect(mockSuccessToast).toHaveBeenCalledWith(i18n.global.t('settings.toastSaved'))
   })
 
   it('persists interface language selection locally', async () => {
