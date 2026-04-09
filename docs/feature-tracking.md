@@ -81,6 +81,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue i18n: Documents list view | `frontend-vue` | Implemented | 2026-04-09 | `documentsPage.*` in locales; `Documents.vue` student/staff copy, filters, presets UI, table, `pagination.previous` / `next`, errors/toasts; validation filter + badge use `documentDetailPage.statusValidatedShort` / `statusPendingShort`; list `fileName` / `getApplicationName` / `formatDate` use `documentDetailPage` fallbacks; `aria-label` / download titles. Vitest: `Documents.spec.js` (incl. sparse row + multi-page). |
 | Vue i18n: Shared list pagination labels | `frontend-vue` | Implemented | 2026-04-09 | Root `pagination.previous` / `next` (en/es); `Applications.vue` + `Documents.vue` (removed duplicates from `applicationsPage` / `documentsPage`). |
 | Vue i18n: Shared list pagination for staff queues + notifications | `frontend-vue` | Implemented | 2026-04-09 | `CoordinatorReviewQueue`, `StaffExchangeAgreements`, `StaffAgreementDocuments`, `Notifications` use root `pagination.*`; removed duplicate `previous`/`next` from `reviewQueuePage`, `exchangeAgreementsPage`, `staffAgreementDocumentsPage`, `notifications` in `en.json`/`es.json`. Vitest: multi-page cases in those view specs. |
+| Vue i18n/a11y: List pagination `pageNumberAria` + control labels | `frontend-vue` | Implemented | 2026-04-09 | Root `pagination.pageNumberAria` (`Page {n}` / `Página {n}`); list views (`Applications`, `Documents`, review queue, agreements, agreement docs, `Notifications`) use `:disabled` + `aria-label` on prev/next, `aria-label` + `aria-current` on numbered page buttons. Removed `notifications.pageNumberAria`. Vitest: multi-page specs assert labels via `ul.pagination` buttons. |
 | Vue i18n: Documents list validation labels namespaced | `frontend-vue` | Implemented | 2026-04-09 | Removed `documentsPage.statusValidated` / `statusPending`; reuse document detail short status strings. |
 | Vue i18n: Documents list shared documentDetailPage fallbacks | `frontend-vue` | Implemented | 2026-04-09 | Removed duplicate `fileUnknown` / `unknownApplication` / `notAvailable` from `documentsPage` JSON; aligned with document detail. |
 | Vue i18n: Document detail view | `frontend-vue` | Implemented | 2026-04-09 | `documentDetailPage.*` (incl. `notAvailable`, `fileUnknown`, `unknownApplication`) in locales; `DocumentDetail.vue` breadcrumbs via `route.names`, preview/review/comments/staff actions, quick actions, toasts; locale-aware `formatDateTime`; preview context lines translated. Vitest: `DocumentDetail.spec.js` (loaded doc + fallbacks). |
@@ -120,7 +121,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n/a11y: list pagination shared `pageNumberAria` + button labels | `frontend-vue` | In progress | 2026-04-09 | — |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -154,7 +155,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** (`reviewQueuePage.*`) + **Staff exchange agreements** (`exchangeAgreementsPage.*`) + **Staff agreement documents** (`staffAgreementDocumentsPage.*`) + **list `pagination.*`** (Applications/Documents + review queue + agreements + agreement docs + notifications). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** (`reviewQueuePage.*`) + **Staff exchange agreements** (`exchangeAgreementsPage.*`) + **Staff agreement documents** (`staffAgreementDocumentsPage.*`) + **list `pagination.*`** + **`pagination.pageNumberAria`** on page-index controls (same surfaces). **Remaining:** full manual a11y audit, non-routed `HelloWorld.vue` (skip). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -194,5 +195,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Shared `pagination.*` for staff lists + notifications — completed). Prior: **MQ-007** — [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (loop: List pagination `pageNumberAria` + prev/next/page button a11y — completed). Prior: **MQ-007** — [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
