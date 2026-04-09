@@ -1,0 +1,12 @@
+{
+  "a11y": {
+    "skipToMain": "Saltar al contenido principal"
+  },
+  "notifications": {
+    "fallbackToast": "Nueva notificación"
+  },
+  "settings": {
+    "uiLanguage": "Idioma de la interfaz",
+    "uiLanguageHelp": "Se guarda en este dispositivo. Las demás preferencias de la cuenta siguen sincronizándose con el servidor."
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "a11y": {
+    "skipToMain": "Skip to main content"
+  },
+  "notifications": {
+    "fallbackToast": "New notification"
+  },
+  "settings": {
+    "uiLanguage": "Interface language",
+    "uiLanguageHelp": "Stored on this device. Account preferences below still sync to the server."
+  }
+}

@@ -65,11 +65,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Analytics dashboard PDF export | `analytics`, `api`, `admin UI` | Implemented | 2026-04-09 | `GET /api/analytics/export/?export_format=pdf` — ReportLab landscape PDF, sections Metrics / Application status / Program performance. `render_dashboard_export_pdf` in `analytics/dashboard_export.py`. Admin Export menu includes PDF. Tests: `test_export_api_returns_pdf_attachment`. |
 | Vue SPA accessibility baseline | `frontend-vue` | Implemented | 2026-04-09 | Skip link → `#main-content`, `<main id="main-content" tabindex="-1">` wrapping `router-view`; `router.afterEach` + `focusMainContent()` (`utils/a11y.js`). Global `:focus-visible` rings (stronger in high-contrast). Vitest: `App.spec.js`, `a11y.spec.js`. Further i18n / full-audit work remains P2 below. |
 | UserSettings-aware notification delivery | `notifications`, `accounts`, `exchange`, `documents` | Implemented | 2026-04-09 | `NotificationService.send_notification(..., settings_category=...)` maps to `UserSettings` email/in-app flags (`applications`, `documents`, `comments`, `programs`, `system`). Wired: application submit/status/waitlist, document staff/student paths, public document comments, agreement expiration, Celery reminders. Optional `preference_key` gates on `NotificationPreference` / `is_enabled`. Digest and account-security emails unchanged (no category). Tests: `test_notifications_services.py` (UserSettings + preference_key cases). |
+| Vue i18n foundation (en/es) | `frontend-vue` | Implemented | 2026-04-09 | `vue-i18n` v11, `src/locales/en.json` + `es.json`, `src/i18n/index.js` (localStorage `seim.ui_locale`, browser `es*` default). Skip link + WS toast fallback translated; Settings **Interface language** control. Vitest: `i18n/index.spec.js`, `App.spec.js`, `Settings.spec.js`. `ApplicationForm.spec.js` `isoDateWithOffset` uses local calendar dates (avoids UTC `toISOString` flake vs `parseDateOnly`). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n foundation (en/es, shell + settings) | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
+| _None currently assigned_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -102,7 +103,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **In progress:** vue-i18n + `en`/`es` locale files, skip link + notification fallback + Settings language control (localStorage). Remaining: migrate more views, per-view audits (forms, tables, modals), live regions where needed. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **i18n foundation shipped** (see IMPLEMENTED row). Remaining: migrate more views to `$t` / `<i18n-t>`, vue-i18n per-view audits (forms, tables, modals), live regions where needed. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -140,5 +141,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (UserSettings-aware notification delivery)*  
+*Last updated: 2026-04-09 (Vue i18n foundation en/es)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

@@ -5,6 +5,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
+import i18n from './i18n'
 
 // Bootstrap CSS and JS
 import 'bootstrap/dist/css/bootstrap.min.css'
@@ -22,6 +23,8 @@ app.use(pinia)
 
 // Install Vue Router
 app.use(router)
+
+app.use(i18n)
 
 // Mount app
 app.mount('#app')

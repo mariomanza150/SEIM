@@ -1,5 +1,5 @@
 <template>
-  <a class="seim-skip-link" href="#main-content">Skip to main content</a>
+  <a class="seim-skip-link" href="#main-content">{{ t('a11y.skipToMain') }}</a>
   <main id="main-content" tabindex="-1">
     <router-view />
   </main>
@@ -8,6 +8,7 @@
 
 <script setup>
 import { onBeforeUnmount, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
@@ -15,6 +16,7 @@ import { useNotificationWebSocket } from '@/services/websocket'
 import { applyUiPreferences, clearUiPreferences, readStoredUiPreferences } from '@/services/uiPreferences'
 import ToastContainer from '@/components/ToastContainer.vue'
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const { info } = useToast()
 let mediaQuery = null
@@ -22,7 +24,7 @@ let mediaQueryListener = null
 
 const { connectIfAuthenticated, disconnect } = useNotificationWebSocket(authStore, {
   onNotification(notification) {
-    const message = notification.message || notification.title || 'New notification'
+    const message = notification.message || notification.title || t('notifications.fallbackToast')
     info(message, 6000)
     window.dispatchEvent(new CustomEvent('notification-new', { detail: notification }))
   },
