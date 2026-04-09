@@ -85,6 +85,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue i18n: Documents list validation labels namespaced | `frontend-vue` | Implemented | 2026-04-09 | Removed `documentsPage.statusValidated` / `statusPending`; reuse document detail short status strings. |
 | Vue i18n: Documents list shared documentDetailPage fallbacks | `frontend-vue` | Implemented | 2026-04-09 | Removed duplicate `fileUnknown` / `unknownApplication` / `notAvailable` from `documentsPage` JSON; aligned with document detail. |
 | Vue i18n: Document detail view | `frontend-vue` | Implemented | 2026-04-09 | `documentDetailPage.*` (incl. `notAvailable`, `fileUnknown`, `unknownApplication`) in locales; `DocumentDetail.vue` breadcrumbs via `route.names`, preview/review/comments/staff actions, quick actions, toasts; locale-aware `formatDateTime`; preview context lines translated. Vitest: `DocumentDetail.spec.js` (loaded doc + fallbacks). |
+| Vue a11y: `noopener noreferrer` on document file + starter links | `frontend-vue` | Implemented | 2026-04-09 | `Documents.vue` list download + `DocumentDetail.vue` file anchors use `rel="noopener noreferrer"` with `target="_blank"`; `HelloWorld.vue` external doc links aligned. Vitest: `Documents.spec.js`, `DocumentDetail.spec.js` assert `rel` on `a[target="_blank"]`. |
 | Vue i18n: Document detail fallback strings namespaced | `frontend-vue` | Implemented | 2026-04-09 | `DocumentDetail.vue` uses `documentDetailPage` for N/A, unknown file name, and unknown application (was `documentsPage`). |
 | Vue i18n: Application detail view | `frontend-vue` | Implemented | 2026-04-09 | `applicationDetailPage.*` (incl. nested `status.*`, `readinessLabel`, `notAvailable`); `ApplicationDetail.vue` program/checklist/timeline/comments/sidebar/docs/coordinator review; locale dates; translated confirms/toasts. Vitest: `ApplicationDetail.spec.js` (+ i18n, sparse program `notAvailable`). |
 | Vue i18n: Application detail status and N/A namespaced | `frontend-vue` | Implemented | 2026-04-09 | Detail page no longer uses `applicationsPage` for status labels, readiness label, dates N/A, or coordinator status options (all under `applicationDetailPage`). |
@@ -121,7 +122,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue a11y: `noopener noreferrer` on document file links | `frontend-vue` | In progress | 2026-04-09 | — |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -155,7 +156,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** (`reviewQueuePage.*`) + **Staff exchange agreements** (`exchangeAgreementsPage.*`) + **Staff agreement documents** (`staffAgreementDocumentsPage.*`) + **list `pagination.*`** + **`pagination.pageNumberAria`** on page-index controls (same surfaces). **Remaining:** full manual a11y audit, non-routed `HelloWorld.vue` (skip). |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** (`reviewQueuePage.*`) + **Staff exchange agreements** (`exchangeAgreementsPage.*`) + **Staff agreement documents** (`staffAgreementDocumentsPage.*`) + **list `pagination.*`** + **`pagination.pageNumberAria`** + document list/detail file downloads **`rel="noopener noreferrer"`** on `target="_blank"`. **Remaining:** full manual a11y audit; `HelloWorld.vue` is Vite starter only (external links now carry `rel`). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -195,5 +196,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (**MQ-008** resolved: `LogoutView` JWT-only + Pinia `logout()` POST before token clear + `Authorization` header; integration + Vitest; rebuild `frontend-vue/dist` for deployed SPA). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (loop: document file links `rel="noopener noreferrer"`). Prior: **MQ-008** (`LogoutView` / Pinia logout). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
