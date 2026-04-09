@@ -83,7 +83,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ |  |  |  |  |
+| Vue i18n: Staff agreement documents view | `frontend-vue` | In progress | 2026-04-08 | — |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -117,7 +117,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Deadlines/calendar, Staff exchange agreements, Coordinator workload, review queue, `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: compare, …, Notifications/Profile, stragglers. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Deadlines/calendar, Staff exchange agreements, Coordinator workload, review queue, `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: compare, …, Notifications/Profile, stragglers. **In progress:** Staff agreement documents (`StaffAgreementDocuments.vue`). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
