@@ -73,6 +73,35 @@ describe('Applications', () => {
     expect(wrapper.find('[data-testid="application-detail-link"]').exists()).toBe(true)
   })
 
+  it('renders program_name when API returns program id without nested object', async () => {
+    api.get.mockResolvedValue({
+      data: {
+        results: [
+          {
+            id: '1',
+            status: 'draft',
+            created_at: '2026-01-10T12:00:00Z',
+            submitted_at: null,
+            program: '00000000-0000-0000-0000-000000000001',
+            program_name: 'DAAD Exchange',
+          },
+        ],
+        count: 1,
+        next: null,
+        previous: null,
+      },
+    })
+    const wrapper = mount(Applications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('DAAD Exchange')
+    expect(wrapper.text()).not.toContain(i18n.global.t('applicationDetailPage.unknownProgram'))
+  })
+
   it('uses applicationDetailPage fallbacks for sparse program and missing dates', async () => {
     api.get.mockResolvedValue({
       data: {

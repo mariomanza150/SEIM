@@ -167,6 +167,20 @@ class TestApplicationsAPI(APITestCase):
         self.assertEqual(len(response.data["results"]), 1)
         self.assertEqual(response.data["results"][0]["id"], str(app1.id))
 
+    def test_list_applications_includes_program_name(self):
+        """List rows expose program_name for SPA list cards (program field is FK id only)."""
+        student = self.create_user(role="student")
+        program = self.create_program(name="Erasmus Spain List Name")
+        self.create_application(student=student, program=program)
+        self.authenticate_user(student)
+
+        response = self.client.get(self.applications_url)
+
+        self.assert_response_success(response, status.HTTP_200_OK)
+        row = response.data["results"][0]
+        self.assertEqual(row["program_name"], "Erasmus Spain List Name")
+        self.assertEqual(str(row["program"]), str(program.id))
+
     def test_list_applications_coordinator(self):
         """Test that coordinators can see all applications."""
         student1 = self.create_user(role="student")

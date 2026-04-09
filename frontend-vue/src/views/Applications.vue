@@ -91,7 +91,7 @@
             <div class="card application-card h-100">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                  <h5 class="card-title mb-0">{{ application.program?.name || t('applicationDetailPage.unknownProgram') }}</h5>
+                  <h5 class="card-title mb-0">{{ programDisplayName(application) || t('applicationDetailPage.unknownProgram') }}</h5>
                   <span class="badge" :class="statusClass(application.status)">
                     {{ formatStatus(application.status) }}
                   </span>
@@ -344,8 +344,13 @@ function formatDate(dateString) {
   })
 }
 
+function programDisplayName(app) {
+  if (!app) return ''
+  return (app.program_name || app.program?.name || '').trim()
+}
+
 async function confirmDelete(application) {
-  const name = application.program?.name || t('applicationDetailPage.unknownProgram')
+  const name = programDisplayName(application) || t('applicationDetailPage.unknownProgram')
   if (confirm(t('applicationsPage.deleteConfirm', { name }))) {
     await deleteApplication(application.id)
   }

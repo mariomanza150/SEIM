@@ -1,10 +1,11 @@
+import hashlib
 from django.db.models import Count, Prefetch, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from core.cache import cache_api_response
+from core.cache import CacheManager, cache_api_response
 from core.permissions import (
     IsAdminOrReadOnly,
     IsCoordinatorOrAdmin,
@@ -307,6 +308,25 @@ class ProgramViewSet(viewsets.ModelViewSet):
             )
 
 
+def _application_list_cache_key(*args, **kwargs):
+    """Scope cached list per user and full path (default decorator key omitted request user)."""
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    identity = f"ApplicationViewSet.list:{user_key}:{request.get_full_path()}"
+    digest = hashlib.sha256(identity.encode()).hexdigest()[:48]
+    return CacheManager.get_cache_key("api_response", digest)
+
+
+def _application_retrieve_cache_key(*args, **kwargs):
+    """Scope cached detail per user and application id."""
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    pk = kwargs.get("pk", "")
+    identity = f"ApplicationViewSet.retrieve:{user_key}:{pk}"
+    digest = hashlib.sha256(identity.encode()).hexdigest()[:48]
+    return CacheManager.get_cache_key("api_response", digest)
+
+
 class ApplicationViewSet(viewsets.ModelViewSet):
     """ViewSet for applications with student-only write permissions."""
 
@@ -361,12 +381,12 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         """Set student to current user on creation."""
         serializer.save(student=self.request.user)
 
-    @cache_api_response(timeout=300)  # Cache for 5 minutes
+    @cache_api_response(timeout=300, key_func=_application_list_cache_key)
     def list(self, request, *args, **kwargs):
         """List applications with caching."""
         return super().list(request, *args, **kwargs)
 
-    @cache_api_response(timeout=300)  # Cache for 5 minutes
+    @cache_api_response(timeout=300, key_func=_application_retrieve_cache_key)
     def retrieve(self, request, *args, **kwargs):
         """Retrieve a specific application with caching."""
         return super().retrieve(request, *args, **kwargs)

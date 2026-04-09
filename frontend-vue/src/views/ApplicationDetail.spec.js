@@ -219,4 +219,34 @@ describe('ApplicationDetail', () => {
     const na = i18n.global.t('applicationDetailPage.notAvailable')
     expect(wrapper.text().split(na).length - 1).toBeGreaterThanOrEqual(3)
   })
+
+  it('uses program_name when program is only a FK id', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            program: '11111111-1111-1111-1111-111111111111',
+            program_name: 'API Program Label',
+          },
+        })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/comments/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/timeline-events/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('API Program Label')
+    })
+    expect(wrapper.text()).not.toContain('Exchange Program')
+  })
 })

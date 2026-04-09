@@ -11,7 +11,7 @@
             <router-link :to="{ name: 'Applications' }">{{ t('route.names.Applications') }}</router-link>
           </li>
           <li class="breadcrumb-item active">{{
-            application?.program?.name || t('applicationDetailPage.loadingProgram')
+            programDisplayName(application) || t('applicationDetailPage.loadingProgram')
           }}</li>
         </ol>
       </nav>
@@ -40,7 +40,7 @@
           <div class="col-md-8">
             <h2>
               <i class="bi bi-file-earmark-text me-2"></i>
-              {{ application.program?.name }}
+              {{ programDisplayName(application) }}
             </h2>
             <p class="text-muted">
               <i class="bi bi-building me-1"></i>
@@ -99,7 +99,7 @@
                 <div class="row mb-3">
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('applicationDetailPage.labelProgramName') }}</label>
-                    <p class="fw-bold">{{ application.program?.name }}</p>
+                    <p class="fw-bold">{{ programDisplayName(application) }}</p>
                   </div>
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('applicationDetailPage.labelInstitution') }}</label>
@@ -507,6 +507,11 @@ const router = useRouter()
 const { t, te, locale } = useI18n()
 const authStore = useAuthStore()
 const { success, error: errorToast } = useToast()
+
+function programDisplayName(app) {
+  if (!app) return ''
+  return (app.program_name || app.program?.name || '').trim()
+}
 
 const isCoordinator = computed(() =>
   authStore.userRole === 'coordinator' || authStore.userRole === 'admin'
