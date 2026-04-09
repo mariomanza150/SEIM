@@ -42,7 +42,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None currently assigned_ |  |  |  |  |
+| Inline document preview and review context | `frontend-vue`, `documents` | Implementation | 2026-04-08 | — |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -53,7 +53,6 @@ _All Priority 1 items in this subsection are implemented above._
 #### Applications, Documents, and Review Workflow
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Inline document preview and review context | `frontend-vue`, `documents` | Let students and coordinators preview uploaded files in-app and see validation/rejection context without depending on a download-first flow. |
 | Live application and document status sync | `exchange`, `notifications`, `frontend-vue`, `documents` | Build application-specific live status UX on top of existing WebSockets so open views refresh and surface status, comments, and document changes without manual reloads. |
 
 #### User Experience, Accessibility, and Engagement
