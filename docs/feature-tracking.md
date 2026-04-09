@@ -116,7 +116,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ | | | | |
+| Vue i18n: Applications list Created/Submitted labels | `frontend-vue` | In progress | 2026-04-09 | — |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
