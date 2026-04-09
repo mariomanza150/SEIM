@@ -6,7 +6,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { announceRouteNavigation, focusMainContent } from '@/utils/a11y'
 import i18n from '@/i18n'
-import { resolveDocumentTitle, syncAppSocialMeta } from '@/utils/documentTitle'
+import { resolveDocumentTitle, syncAppSocialMeta, syncCanonicalLink } from '@/utils/documentTitle'
 
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
@@ -220,6 +220,10 @@ router.beforeEach(async (to, from, next) => {
 
   document.title = resolveDocumentTitle(to)
   syncAppSocialMeta((k) => i18n.global.t(k), to)
+  if (typeof window !== 'undefined') {
+    const canonicalHref = new URL(router.resolve(to).href, window.location.origin).href
+    syncCanonicalLink(canonicalHref)
+  }
 
   // Check if route requires authentication
   if (to.meta.requiresAuth) {

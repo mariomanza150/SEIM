@@ -62,3 +62,20 @@ export function syncAppSocialMeta(t, routeLike = {}) {
   upsertHeadMeta('name', 'twitter:title', shareTitle)
   upsertHeadMeta('name', 'twitter:description', desc)
 }
+
+/**
+ * Absolute page URL for `<link rel="canonical">` and `og:url` (strip hash only).
+ * @param {string} absoluteHref - full https? URL
+ */
+export function syncCanonicalLink(absoluteHref) {
+  if (typeof document === 'undefined' || !absoluteHref) return
+  const href = absoluteHref.split('#')[0]
+  let link = document.head.querySelector('link[rel="canonical"]')
+  if (!link) {
+    link = document.createElement('link')
+    link.setAttribute('rel', 'canonical')
+    document.head.appendChild(link)
+  }
+  link.setAttribute('href', href)
+  upsertHeadMeta('property', 'og:url', href)
+}

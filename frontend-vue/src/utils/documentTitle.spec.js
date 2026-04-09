@@ -3,7 +3,12 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import i18n, { setAppLocale } from '@/i18n'
-import { resolveDocumentTitle, syncAppMetaDescription, syncAppSocialMeta } from './documentTitle'
+import {
+  resolveDocumentTitle,
+  syncAppMetaDescription,
+  syncAppSocialMeta,
+  syncCanonicalLink,
+} from './documentTitle'
 
 function removeSocialMetas() {
   document.head
@@ -104,5 +109,22 @@ describe('syncAppSocialMeta', () => {
       'intercambio',
     )
     expect(document.querySelector('meta[property="og:locale"]').getAttribute('content')).toBe('es_ES')
+  })
+})
+
+describe('syncCanonicalLink', () => {
+  afterEach(() => {
+    document.head.querySelector('link[rel="canonical"]')?.remove()
+    document.head.querySelector('meta[property="og:url"]')?.remove()
+  })
+
+  it('sets canonical link href and og:url, stripping hash', () => {
+    syncCanonicalLink('https://example.org/seim/app?q=1#frag')
+    expect(document.head.querySelector('link[rel="canonical"]').getAttribute('href')).toBe(
+      'https://example.org/seim/app?q=1',
+    )
+    expect(document.querySelector('meta[property="og:url"]').getAttribute('content')).toBe(
+      'https://example.org/seim/app?q=1',
+    )
   })
 })

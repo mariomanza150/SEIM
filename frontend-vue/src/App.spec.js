@@ -52,6 +52,8 @@ describe('App shell accessibility', () => {
     document.head
       .querySelectorAll('meta[property^="og:"], meta[name^="twitter:"]')
       .forEach((el) => el.remove())
+    document.head.querySelector('link[rel="canonical"]')?.remove()
+    document.head.querySelector('meta[property="og:url"]')?.remove()
   })
 
   it('renders skip link targeting main landmark', () => {

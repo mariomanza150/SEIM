@@ -22,7 +22,7 @@ import api from '@/services/api'
 import { useNotificationWebSocket } from '@/services/websocket'
 import { applyUiPreferences, clearUiPreferences, readStoredUiPreferences } from '@/services/uiPreferences'
 import router from '@/router'
-import { syncAppMetaDescription, syncAppSocialMeta } from '@/utils/documentTitle'
+import { syncAppMetaDescription, syncAppSocialMeta, syncCanonicalLink } from '@/utils/documentTitle'
 import ToastContainer from '@/components/ToastContainer.vue'
 
 const { t, locale } = useI18n()
@@ -52,6 +52,10 @@ async function loadUiPreferences() {
 onMounted(async () => {
   syncAppMetaDescription(t)
   syncAppSocialMeta(t, router.currentRoute.value)
+  if (typeof window !== 'undefined') {
+    const href = new URL(router.resolve(router.currentRoute.value).href, window.location.origin).href
+    syncCanonicalLink(href)
+  }
   applyUiPreferences(readStoredUiPreferences() || undefined)
   await authStore.checkAuth()
   connectIfAuthenticated()
@@ -74,6 +78,10 @@ onMounted(async () => {
 watch(locale, () => {
   syncAppMetaDescription(t)
   syncAppSocialMeta(t, router.currentRoute.value)
+  if (typeof window !== 'undefined') {
+    const href = new URL(router.resolve(router.currentRoute.value).href, window.location.origin).href
+    syncCanonicalLink(href)
+  }
 })
 
 watch(() => authStore.isAuthenticated, async (isAuth) => {

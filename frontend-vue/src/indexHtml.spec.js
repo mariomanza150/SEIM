@@ -84,6 +84,21 @@ describe('frontend-vue/index.html', () => {
     )
   })
 
+  it('shell bootstrap sets canonical and og:url from window.location', () => {
+    const html = readFileSync(indexPath, 'utf8')
+    const dom = new JSDOM(html, {
+      runScripts: 'dangerously',
+      url: 'http://localhost:8080/seim/login?ref=1#section',
+    })
+    const doc = dom.window.document
+    expect(doc.querySelector('link[rel="canonical"]').getAttribute('href')).toBe(
+      'http://localhost:8080/seim/login?ref=1',
+    )
+    expect(doc.querySelector('meta[property="og:url"]').getAttribute('content')).toBe(
+      'http://localhost:8080/seim/login?ref=1',
+    )
+  })
+
   it('shell bootstrap adds localized Open Graph and Twitter meta', () => {
     const html = readFileSync(indexPath, 'utf8')
     const dom = new JSDOM(html, {
