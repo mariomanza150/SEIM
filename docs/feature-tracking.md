@@ -65,6 +65,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Analytics dashboard PDF export | `analytics`, `api`, `admin UI` | Implemented | 2026-04-09 | `GET /api/analytics/export/?export_format=pdf` — ReportLab landscape PDF, sections Metrics / Application status / Program performance. `render_dashboard_export_pdf` in `analytics/dashboard_export.py`. Admin Export menu includes PDF. Tests: `test_export_api_returns_pdf_attachment`. |
 | Vue SPA accessibility baseline | `frontend-vue` | Implemented | 2026-04-09 | Skip link → `#main-content`, `<main id="main-content" tabindex="-1">` wrapping `router-view`; `router.afterEach` + `focusMainContent()` (`utils/a11y.js`). Global `:focus-visible` rings (stronger in high-contrast). Vitest: `App.spec.js`, `a11y.spec.js`. Further i18n / full-audit work remains P2 below. |
 | UserSettings-aware notification delivery | `notifications`, `accounts`, `exchange`, `documents` | Implemented | 2026-04-09 | `NotificationService.send_notification(..., settings_category=...)` maps to `UserSettings` email/in-app flags (`applications`, `documents`, `comments`, `programs`, `system`). Wired: application submit/status/waitlist, document staff/student paths, public document comments, agreement expiration, Celery reminders. Optional `preference_key` gates on `NotificationPreference` / `is_enabled`. Digest and account-security emails unchanged (no category). Tests: `test_notifications_services.py` (UserSettings + preference_key cases). |
+| Separate email toggle for comment-thread notifications | `accounts`, `notifications`, `frontend-vue`, `api` | Implemented | 2026-04-08 | `UserSettings.email_comments` (migration syncs from prior `email_documents`); `settings_category="comments"` uses `email_comments` + `inapp_comments` (no longer tied to document email). API serializers, Django admin, Settings.vue checkbox column. Tests: `test_notifications_services.py` (comment channel cases), serializers + model defaults. |
 | Vue i18n foundation (en/es) | `frontend-vue` | Implemented | 2026-04-09 | `vue-i18n` v11, `src/locales/en.json` + `es.json`, `src/i18n/index.js` (localStorage `seim.ui_locale`, browser `es*` default). Skip link + WS toast fallback translated; Settings **Interface language** control. Vitest: `i18n/index.spec.js`, `App.spec.js`, `Settings.spec.js`. `ApplicationForm.spec.js` `isoDateWithOffset` uses local calendar dates (avoids UTC `toISOString` flake vs `parseDateOnly`). |
 | Vue i18n: Login & NotFound + route screen-reader announcements | `frontend-vue` | Implemented | 2026-04-09 | `login.*` / `notFound.*` / `route.names.*` locale keys; `Login.vue` + `NotFound.vue` use `useI18n`. `#seim-route-announce` (`aria-live="polite"`) in `App.vue`; `announceRouteNavigation` in `utils/a11y.js` + `router.afterEach`. Vitest: `Login.spec.js`, `NotFound.spec.js`, `a11y.spec.js`, `App.spec.js`. |
 | Vue i18n: Dashboard layout + toast chrome | `frontend-vue` | Implemented | 2026-04-09 | `dashboard.*` + `toast.*` in locales; `Dashboard.vue` navbar/sidebar/stats/next-steps copy + logout/stats errors; `route.names.*` for shared labels; nav `aria-label` + toggler `aria-controls`; `ToastContainer.vue` translated headers + dismiss `aria-label`. Vitest: `Dashboard.spec.js`, `ToastContainer.spec.js`. |
@@ -89,7 +90,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| UserSettings email channel for comments (separate from documents) | `accounts`, `notifications`, `frontend-vue`, `api` | In progress | 2026-04-08 | Autonomous loop |
+| _None_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -118,7 +119,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings channel matrix enforced** on core transactional sends (see IMPLEMENTED row). Remaining: custom templates, admin-configurable per-event matrix UI, richer role routing. Digests unchanged. |
+| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings channel matrix enforced** on core transactional sends; comment vs document **email** split shipped (`email_comments`). Remaining: custom templates, admin-configurable per-event matrix UI, richer role routing. Digests unchanged. |
 | Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets if a dedicated **analytics** staff UI is added later (review queue, agreements, documents, programs, and **calendar** are covered). |
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
@@ -163,5 +164,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (Vue i18n DocumentUpload + Program compare CTA note)*  
+*Last updated: 2026-04-09 (loop: `email_comments` channel; i18n deferred)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

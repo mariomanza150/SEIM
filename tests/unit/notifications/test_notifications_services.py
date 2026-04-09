@@ -221,6 +221,140 @@ class TestNotificationService(TestCase):
         
         self.assertIn("Invalid notification type", str(context.exception))
 
+    @patch("notifications.services.send_notification_by_id.delay")
+    def test_send_notification_usersettings_applications_email_only(self, mock_task):
+        """Both requested but in-app disabled → stored as email, Celery email queued."""
+        from accounts.models import UserSettings
+
+        s, _ = UserSettings.objects.get_or_create(user=self.user1)
+        s.email_applications = True
+        s.inapp_applications = False
+        s.save()
+
+        notification = NotificationService.send_notification(
+            recipient=self.user1,
+            title="App",
+            message="Body",
+            notification_type="both",
+            settings_category="applications",
+        )
+        self.assertIsNotNone(notification)
+        self.assertEqual(notification.notification_type, "email")
+        mock_task.assert_called_once_with(notification.id)
+
+    @patch("notifications.services.send_notification_by_id.delay")
+    def test_send_notification_usersettings_applications_inapp_only(self, mock_task):
+        from accounts.models import UserSettings
+
+        s, _ = UserSettings.objects.get_or_create(user=self.user1)
+        s.email_applications = False
+        s.inapp_applications = True
+        s.save()
+
+        notification = NotificationService.send_notification(
+            recipient=self.user1,
+            title="App",
+            message="Body",
+            notification_type="both",
+            settings_category="applications",
+        )
+        self.assertIsNotNone(notification)
+        self.assertEqual(notification.notification_type, "in_app")
+        mock_task.assert_not_called()
+
+    @patch("notifications.services.send_notification_by_id.delay")
+    def test_send_notification_usersettings_all_channels_off(self, mock_task):
+        from accounts.models import UserSettings
+
+        s, _ = UserSettings.objects.get_or_create(user=self.user1)
+        s.email_applications = False
+        s.inapp_applications = False
+        s.save()
+
+        self.assertIsNone(
+            NotificationService.send_notification(
+                recipient=self.user1,
+                title="App",
+                message="Body",
+                notification_type="both",
+                settings_category="applications",
+            )
+        )
+        mock_task.assert_not_called()
+
+    @patch("notifications.services.send_notification_by_id.delay")
+    def test_send_notification_usersettings_comments_uses_email_comments_not_documents(self, mock_task):
+        """Comment category email follows email_comments; can differ from email_documents."""
+        from accounts.models import UserSettings
+
+        s, _ = UserSettings.objects.get_or_create(user=self.user1)
+        s.email_documents = True
+        s.email_comments = False
+        s.inapp_comments = True
+        s.save()
+
+        notification = NotificationService.send_notification(
+            recipient=self.user1,
+            title="Comment",
+            message="Body",
+            notification_type="both",
+            settings_category="comments",
+        )
+        self.assertIsNotNone(notification)
+        self.assertEqual(notification.notification_type, "in_app")
+        mock_task.assert_not_called()
+
+    @patch("notifications.services.send_notification_by_id.delay")
+    def test_send_notification_usersettings_comments_email_when_inapp_off(self, mock_task):
+        from accounts.models import UserSettings
+
+        s, _ = UserSettings.objects.get_or_create(user=self.user1)
+        s.email_comments = True
+        s.inapp_comments = False
+        s.save()
+
+        notification = NotificationService.send_notification(
+            recipient=self.user1,
+            title="Comment",
+            message="Body",
+            notification_type="both",
+            settings_category="comments",
+        )
+        self.assertIsNotNone(notification)
+        self.assertEqual(notification.notification_type, "email")
+        mock_task.assert_called_once_with(notification.id)
+
+    @patch.object(NotificationService, "_broadcast_notification")
+    @patch("notifications.services.send_notification_by_id.delay")
+    def test_send_notification_email_only_skips_websocket(self, mock_task, mock_broadcast):
+        from accounts.models import UserSettings
+
+        s, _ = UserSettings.objects.get_or_create(user=self.user1)
+        s.email_applications = True
+        s.inapp_applications = False
+        s.save()
+
+        NotificationService.send_notification(
+            recipient=self.user1,
+            title="App",
+            message="Body",
+            notification_type="both",
+            settings_category="applications",
+        )
+        mock_broadcast.assert_not_called()
+
+    def test_send_notification_preference_key_suppresses(self):
+        NotificationService.set_preference(self.user1, "custom_opt_out", enabled=False)
+        self.assertIsNone(
+            NotificationService.send_notification(
+                recipient=self.user1,
+                title="x",
+                message="y",
+                notification_type="in_app",
+                preference_key="custom_opt_out",
+            )
+        )
+
     def test_send_bulk_notifications(self):
         """Test sending notifications to multiple recipients."""
         user3 = User.objects.create_user(

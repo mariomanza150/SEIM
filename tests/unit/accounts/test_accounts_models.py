@@ -376,6 +376,7 @@ class TestUserSettingsModel:
         assert settings.font_size == 'normal'
         assert settings.email_applications is True
         assert settings.email_documents is True
+        assert settings.email_comments is True
         assert settings.email_programs is False
         assert settings.email_system is True
         assert settings.inapp_applications is True

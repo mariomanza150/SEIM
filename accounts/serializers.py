@@ -23,6 +23,9 @@ class UserSerializer(serializers.ModelSerializer):
         )
 
 
+_CEFR_LEVELS = frozenset({"A1", "A2", "B1", "B2", "C1", "C2"})
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     first_name = serializers.CharField(source="user.first_name")
@@ -32,6 +35,13 @@ class ProfileSerializer(serializers.ModelSerializer):
     role = serializers.CharField(source="user.primary_role", read_only=True)
     gpa = serializers.FloatField(required=False, allow_null=True)
     language = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    language_level = serializers.ChoiceField(
+        choices=[('A1', 'A1'), ('A2', 'A2'), ('B1', 'B1'), ('B2', 'B2'), ('C1', 'C1'), ('C2', 'C2')],
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    additional_languages = serializers.JSONField(required=False, default=list)
 
     class Meta:
         model = Profile
@@ -45,7 +55,33 @@ class ProfileSerializer(serializers.ModelSerializer):
             "role",
             "gpa",
             "language",
+            "language_level",
+            "additional_languages",
         )
+
+    def validate_additional_languages(self, value):
+        if value is None:
+            return []
+        if not isinstance(value, list):
+            raise serializers.ValidationError("Must be a list.")
+        if len(value) > 20:
+            raise serializers.ValidationError("At most 20 additional languages.")
+        cleaned = []
+        for i, item in enumerate(value):
+            if not isinstance(item, dict):
+                raise serializers.ValidationError(f"Entry {i + 1} must be an object with name and optional level.")
+            name = str(item.get("name", "")).strip()
+            if not name:
+                raise serializers.ValidationError(f"Entry {i + 1}: language name is required.")
+            if len(name) > 64:
+                raise serializers.ValidationError(f"Entry {i + 1}: language name is too long.")
+            level = str(item.get("level", "")).strip() or ""
+            if level and level not in _CEFR_LEVELS:
+                raise serializers.ValidationError(
+                    f"Entry {i + 1}: level must be one of {', '.join(sorted(_CEFR_LEVELS))} or empty."
+                )
+            cleaned.append({"name": name, "level": level})
+        return cleaned
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", {})
@@ -300,10 +336,22 @@ class UserSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserSettings
         fields = [
-            'theme', 'font_size',
-            'email_applications', 'email_documents', 'email_programs', 'email_system',
-            'inapp_applications', 'inapp_documents', 'inapp_comments',
-            'profile_public', 'share_analytics'
+            "theme",
+            "font_size",
+            "high_contrast",
+            "reduce_motion",
+            "email_applications",
+            "email_documents",
+            "email_comments",
+            "email_programs",
+            "email_system",
+            "inapp_applications",
+            "inapp_documents",
+            "inapp_comments",
+            "notification_digest_frequency",
+            "email_notification_digest",
+            "profile_public",
+            "share_analytics",
         ]
 
     def create(self, validated_data):
@@ -345,8 +393,16 @@ class NotificationSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserSettings
         fields = [
-            'email_applications', 'email_documents', 'email_programs', 'email_system',
-            'inapp_applications', 'inapp_documents', 'inapp_comments'
+            "email_applications",
+            "email_documents",
+            "email_comments",
+            "email_programs",
+            "email_system",
+            "inapp_applications",
+            "inapp_documents",
+            "inapp_comments",
+            "notification_digest_frequency",
+            "email_notification_digest",
         ]
 
     def create(self, validated_data):

@@ -96,7 +96,7 @@
                 <div class="row">
                   <div class="col-md-6">
                     <div
-                      v-for="field in notificationFields.slice(0, 4)"
+                      v-for="field in notificationFields.slice(0, 5)"
                       :key="field.key"
                       class="form-check mb-3"
                     >
@@ -113,7 +113,7 @@
                   </div>
                   <div class="col-md-6">
                     <div
-                      v-for="field in notificationFields.slice(4)"
+                      v-for="field in notificationFields.slice(5)"
                       :key="field.key"
                       class="form-check mb-3"
                     >
@@ -252,6 +252,7 @@ const defaultForm = () => ({
   reduce_motion: false,
   email_applications: true,
   email_documents: true,
+  email_comments: true,
   email_programs: false,
   email_system: true,
   inapp_applications: true,
@@ -268,6 +269,7 @@ const form = ref(defaultForm())
 const notificationFields = [
   { key: 'email_applications', label: 'Email me about application updates' },
   { key: 'email_documents', label: 'Email me about document updates' },
+  { key: 'email_comments', label: 'Email me about comments on applications and documents' },
   { key: 'email_programs', label: 'Email me about new programs' },
   { key: 'email_system', label: 'Email me about system messages' },
   { key: 'inapp_applications', label: 'Show in-app application notifications' },

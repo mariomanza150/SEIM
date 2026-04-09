@@ -159,6 +159,11 @@ class User(AbstractUser, UUIDModel, TimeStampedModel):
 class UserSettings(TimeStampedModel):
     """User settings and preferences."""
 
+    class NotificationDigestFrequency(models.TextChoices):
+        OFF = "off", "Off"
+        DAILY = "daily", "Daily"
+        WEEKLY = "weekly", "Weekly"
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='settings')
 
     # Appearance settings
@@ -196,11 +201,31 @@ class UserSettings(TimeStampedModel):
     # Notification settings
     email_applications = models.BooleanField(default=True, help_text="Email notifications for application updates")
     email_documents = models.BooleanField(default=True, help_text="Email notifications for document uploads")
+    email_comments = models.BooleanField(
+        default=True,
+        help_text="Email notifications for comments (application/document threads)",
+    )
     email_programs = models.BooleanField(default=False, help_text="Email notifications for new programs")
     email_system = models.BooleanField(default=True, help_text="Email notifications for system messages")
     inapp_applications = models.BooleanField(default=True, help_text="In-app notifications for application updates")
     inapp_documents = models.BooleanField(default=True, help_text="In-app notifications for document uploads")
     inapp_comments = models.BooleanField(default=True, help_text="In-app notifications for comments")
+    notification_digest_frequency = models.CharField(
+        max_length=16,
+        choices=NotificationDigestFrequency.choices,
+        default=NotificationDigestFrequency.OFF,
+        help_text="Summarize unread in-app notifications on a schedule.",
+    )
+    email_notification_digest = models.BooleanField(
+        default=False,
+        help_text="Also email the digest when system email is enabled.",
+    )
+    notification_digest_last_sent_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        editable=False,
+        help_text="Last digest sent (managed by the digest task).",
+    )
 
     # Privacy settings
     profile_public = models.BooleanField(default=False, help_text="Make profile visible to other users")
@@ -233,6 +258,10 @@ class UserSession(TimeStampedModel):
 
     def __str__(self):
         return f"Session for {self.user.username} - {self.device}"
+
+
+def _default_additional_languages():
+    return []
 
 
 class Profile(UUIDModel, TimeStampedModel):
@@ -273,7 +302,11 @@ class Profile(UUIDModel, TimeStampedModel):
         blank=True,
         help_text="Student's date of birth for age verification"
     )
-    # Add more profile fields as needed
+    additional_languages = models.JSONField(
+        default=_default_additional_languages,
+        blank=True,
+        help_text='Other languages and CEFR levels, e.g. [{"name": "German", "level": "B2"}].',
+    )
 
     class Meta:
         ordering = ['user__username']

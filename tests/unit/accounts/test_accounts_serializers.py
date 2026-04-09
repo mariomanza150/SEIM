@@ -590,6 +590,7 @@ class TestUserSettingsSerializer:
         assert "font_size" in data
         assert "email_applications" in data
         assert "email_documents" in data
+        assert "email_comments" in data
         assert "email_programs" in data
         assert "email_system" in data
         assert "inapp_applications" in data
@@ -688,6 +689,7 @@ class TestNotificationSettingsSerializer:
 
         assert "email_applications" in data
         assert "email_documents" in data
+        assert "email_comments" in data
         assert "email_programs" in data
         assert "email_system" in data
         assert "inapp_applications" in data

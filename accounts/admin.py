@@ -35,19 +35,21 @@ class UserSettingsAdmin(admin.ModelAdmin):
     list_display = ['user', 'theme', 'font_size', 'profile_public', 'share_analytics']
     list_filter = ['theme', 'font_size', 'profile_public', 'share_analytics']
     search_fields = ['user__username', 'user__email']
-    readonly_fields = ['user']
+    readonly_fields = ['user', 'notification_digest_last_sent_at']
 
     fieldsets = (
         ('User', {
             'fields': ('user',)
         }),
         ('Appearance', {
-            'fields': ('theme', 'font_size')
+            'fields': ('theme', 'font_size', 'high_contrast', 'reduce_motion')
         }),
         ('Notifications', {
             'fields': (
-                'email_applications', 'email_documents', 'email_programs', 'email_system',
-                'inapp_applications', 'inapp_documents', 'inapp_comments'
+                'email_applications', 'email_documents', 'email_comments', 'email_programs', 'email_system',
+                'inapp_applications', 'inapp_documents', 'inapp_comments',
+                'notification_digest_frequency', 'email_notification_digest',
+                'notification_digest_last_sent_at',
             )
         }),
         ('Privacy', {

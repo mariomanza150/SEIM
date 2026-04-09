@@ -15,10 +15,11 @@ from .tasks import (
 logger = logging.getLogger(__name__)
 
 # Maps send_notification(settings_category=...) to UserSettings boolean fields (email, in-app).
+# ``comments`` uses ``email_comments`` + ``inapp_comments`` (not document email).
 _SETTINGS_CATEGORY_CHANNELS = {
     "applications": ("email_applications", "inapp_applications"),
     "documents": ("email_documents", "inapp_documents"),
-    "comments": ("email_documents", "inapp_comments"),
+    "comments": ("email_comments", "inapp_comments"),
     "programs": ("email_programs", "inapp_applications"),
 }
 
@@ -112,8 +113,8 @@ class NotificationService:
             action_text: Text for the action button (default: "View Details")
             category: Notification category ('info', 'success', 'warning', 'error')
             settings_category: Optional UserSettings group: ``applications``, ``documents``,
-                ``comments``, ``programs``, or ``system`` — narrows email/in-app using
-                the user's saved preferences (Settings page).
+                ``comments`` (uses ``email_comments`` / ``inapp_comments``), ``programs``, or
+                ``system`` — narrows email/in-app using the user's saved preferences (Settings page).
             preference_key: Optional ``NotificationType`` name; when set, ``is_enabled``
                 must be true or the send is skipped (legacy per-type opt-out).
 
