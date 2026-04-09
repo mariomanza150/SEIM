@@ -68,7 +68,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None currently assigned_ |  |  |  |  |
+| UserSettings-aware notification delivery | `notifications`, `accounts`, `exchange`, `documents` | Enforce email/in-app toggles on send path | 2026-04-09 | autonomous-agent |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -96,7 +96,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | Per-event-type rules matrix, custom reminder templates, role-targeted routing beyond event hooks; digests for **unread summaries** are implemented separately above. |
+| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings matrix enforcement in progress** (see IN PROGRESS). Remaining: custom templates, richer per-event admin matrix, role routing beyond toggles. Digests unchanged. |
 | Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets if a dedicated **analytics** staff UI is added later (review queue, agreements, documents, programs, and **calendar** are covered). |
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
