@@ -1,30 +1,30 @@
 <template>
   <div class="document-detail">
     <div class="container-fluid mt-4">
-      <nav aria-label="breadcrumb">
+      <nav :aria-label="t('documentDetailPage.breadcrumbAria')">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
+            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
           </li>
           <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Documents' }">Documents</router-link>
+            <router-link :to="{ name: 'Documents' }">{{ t('route.names.Documents') }}</router-link>
           </li>
-          <li class="breadcrumb-item active">{{ document?.type?.name || 'Loading...' }}</li>
+          <li class="breadcrumb-item active">{{ document?.type?.name || t('documentDetailPage.loadingType') }}</li>
         </ol>
       </nav>
 
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading...</span>
+          <span class="visually-hidden">{{ t('documentDetailPage.loadingSpinner') }}</span>
         </div>
-        <p class="mt-3 text-muted">Loading document...</p>
+        <p class="mt-3 text-muted">{{ t('documentDetailPage.loadingDocument') }}</p>
       </div>
 
       <div v-else-if="error" class="alert alert-danger">
         <i class="bi bi-exclamation-triangle me-2"></i>
         {{ error }}
         <router-link :to="{ name: 'Documents' }" class="btn btn-sm btn-outline-danger ms-3">
-          Back to Documents
+          {{ t('documentDetailPage.backToDocuments') }}
         </router-link>
       </div>
 
@@ -36,9 +36,11 @@
           role="alert"
         >
           <div>
-            <strong>Resubmission requested</strong>
+            <strong>{{ t('documentDetailPage.resubmissionTitle') }}</strong>
             <p class="mb-0 mt-1 small">{{ req.reason }}</p>
-            <span class="text-muted small">Requested by {{ req.requested_by }}</span>
+            <span class="text-muted small">{{
+              t('documentDetailPage.requestedBy', { name: req.requested_by || '—' })
+            }}</span>
           </div>
           <button
             v-if="isStaff"
@@ -47,7 +49,7 @@
             :disabled="actionBusy"
             @click="resolveResubmission(req)"
           >
-            Mark addressed
+            {{ t('documentDetailPage.markAddressed') }}
           </button>
         </div>
 
@@ -55,30 +57,32 @@
           <div class="col-lg-8">
             <div v-if="document.file" class="card mb-4" data-testid="document-preview-card">
               <div class="card-header">
-                <h6 class="mb-0"><i class="bi bi-eye me-2"></i>Preview</h6>
+                <h6 class="mb-0"><i class="bi bi-eye me-2"></i>{{ t('documentDetailPage.previewHeading') }}</h6>
               </div>
               <div class="card-body">
                 <p v-if="previewKind === 'none'" class="text-muted small mb-0">
-                  Inline preview supports PDF and common images. Use Download to open this file.
+                  {{ t('documentDetailPage.previewNoneHint') }}
                 </p>
-                <div v-else-if="previewLoading" class="text-center py-5 text-muted">Loading preview…</div>
+                <div v-else-if="previewLoading" class="text-center py-5 text-muted">
+                  {{ t('documentDetailPage.previewLoading') }}
+                </div>
                 <div v-else-if="previewError" class="alert alert-warning small mb-0">{{ previewError }}</div>
                 <template v-else-if="previewObjectUrl">
                   <iframe
                     v-if="previewKind === 'pdf'"
                     :src="previewObjectUrl"
-                    title="Document preview"
+                    :title="t('documentDetailPage.previewIframeTitle')"
                     class="w-100 border rounded preview-frame"
                   />
                   <img
                     v-else-if="previewKind === 'image'"
                     :src="previewObjectUrl"
-                    alt="Document preview"
+                    :alt="t('documentDetailPage.previewImageAlt')"
                     class="img-fluid border rounded"
                   />
                 </template>
                 <div v-if="previewContextLines.length" class="mt-3 pt-3 border-top small">
-                  <div class="fw-semibold mb-2">Review context</div>
+                  <div class="fw-semibold mb-2">{{ t('documentDetailPage.reviewContext') }}</div>
                   <ul class="mb-0 ps-3">
                     <li v-for="(line, i) in previewContextLines" :key="i">{{ line }}</li>
                   </ul>
@@ -93,17 +97,21 @@
                   {{ fileName(document.file) }}
                 </h5>
                 <span class="badge fs-6" :class="document.is_valid ? 'bg-success' : 'bg-warning'">
-                  {{ document.is_valid ? 'Validated' : 'Pending Validation' }}
+                  {{
+                    document.is_valid
+                      ? t('documentDetailPage.validated')
+                      : t('documentDetailPage.pendingValidation')
+                  }}
                 </span>
               </div>
               <div class="card-body">
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <label class="text-muted small">Document Type</label>
+                    <label class="text-muted small">{{ t('documentDetailPage.labelDocumentType') }}</label>
                     <p class="fw-bold">{{ document.type?.name || document.type }}</p>
                   </div>
                   <div class="col-md-6">
-                    <label class="text-muted small">Application</label>
+                    <label class="text-muted small">{{ t('documentDetailPage.labelApplication') }}</label>
                     <p>
                       <router-link :to="{ name: 'ApplicationDetail', params: { id: document.application } }">
                         {{ getApplicationName(document.application) }}
@@ -113,17 +121,17 @@
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <label class="text-muted small">Uploaded By</label>
-                    <p class="fw-bold">{{ document.uploaded_by || 'N/A' }}</p>
+                    <label class="text-muted small">{{ t('documentDetailPage.labelUploadedBy') }}</label>
+                    <p class="fw-bold">{{ document.uploaded_by || t('documentsPage.notAvailable') }}</p>
                   </div>
                   <div class="col-md-6">
-                    <label class="text-muted small">Uploaded At</label>
+                    <label class="text-muted small">{{ t('documentDetailPage.labelUploadedAt') }}</label>
                     <p class="fw-bold">{{ formatDateTime(document.created_at) }}</p>
                   </div>
                 </div>
                 <div v-if="document.validated_at" class="row mb-3">
                   <div class="col-md-6">
-                    <label class="text-muted small">Validated At</label>
+                    <label class="text-muted small">{{ t('documentDetailPage.labelValidatedAt') }}</label>
                     <p class="fw-bold">{{ formatDateTime(document.validated_at) }}</p>
                   </div>
                 </div>
@@ -136,14 +144,14 @@
                     rel="noopener"
                     class="btn btn-primary"
                   >
-                    <i class="bi bi-download me-2"></i>Download Document
+                    <i class="bi bi-download me-2"></i>{{ t('documentDetailPage.downloadDocument') }}
                   </a>
                 </div>
 
                 <div v-if="isStudent" class="mt-4 pt-3 border-top">
-                  <h6 class="mb-2">Replace file</h6>
+                  <h6 class="mb-2">{{ t('documentDetailPage.replaceFileHeading') }}</h6>
                   <p class="small text-muted mb-2">
-                    Upload a new file when staff asked for a resubmission or your application is still in draft.
+                    {{ t('documentDetailPage.replaceFileHint') }}
                   </p>
                   <input
                     ref="replaceInput"
@@ -157,7 +165,7 @@
                     :disabled="actionBusy"
                     @click="submitReplaceFile"
                   >
-                    Upload replacement
+                    {{ t('documentDetailPage.uploadReplacement') }}
                   </button>
                 </div>
               </div>
@@ -165,10 +173,12 @@
 
             <div class="card mb-4">
               <div class="card-header">
-                <h6 class="mb-0">Review history</h6>
+                <h6 class="mb-0">{{ t('documentDetailPage.reviewHistory') }}</h6>
               </div>
               <div class="card-body">
-                <p v-if="!orderedValidations.length" class="text-muted small mb-0">No validation records yet.</p>
+                <p v-if="!orderedValidations.length" class="text-muted small mb-0">
+                  {{ t('documentDetailPage.noValidationsYet') }}
+                </p>
                 <ul v-else class="list-group list-group-flush">
                   <li
                     v-for="v in orderedValidations"
@@ -181,7 +191,9 @@
                       </span>
                       <span class="small text-muted">{{ formatDateTime(v.validated_at || v.created_at) }}</span>
                     </div>
-                    <div v-if="v.validator_name" class="small text-muted mt-1">By {{ v.validator_name }}</div>
+                    <div v-if="v.validator_name" class="small text-muted mt-1">
+                      {{ t('documentDetailPage.byValidator', { name: v.validator_name }) }}
+                    </div>
                     <div v-if="v.details" class="small mt-1">{{ v.details }}</div>
                   </li>
                 </ul>
@@ -190,29 +202,35 @@
 
             <div class="card mb-4">
               <div class="card-header">
-                <h6 class="mb-0">Comments</h6>
+                <h6 class="mb-0">{{ t('documentDetailPage.commentsHeading') }}</h6>
               </div>
               <div class="card-body">
-                <div v-if="!document.comments?.length" class="text-muted small mb-3">No comments yet.</div>
+                <div v-if="!document.comments?.length" class="text-muted small mb-3">
+                  {{ t('documentDetailPage.noCommentsYet') }}
+                </div>
                 <div v-for="c in document.comments" :key="c.id" class="border-bottom pb-2 mb-2">
                   <div class="d-flex justify-content-between">
                     <strong class="small">{{ c.author }}</strong>
                     <span class="small text-muted">{{ formatDateTime(c.created_at) }}</span>
                   </div>
-                  <span v-if="c.is_private" class="badge bg-secondary small">Staff only</span>
+                  <span v-if="c.is_private" class="badge bg-secondary small">{{
+                    t('documentDetailPage.staffOnlyBadge')
+                  }}</span>
                   <p class="small mb-0 mt-1">{{ c.text }}</p>
                 </div>
                 <div class="mt-3">
-                  <label class="form-label small">Add a comment</label>
+                  <label class="form-label small">{{ t('documentDetailPage.addCommentLabel') }}</label>
                   <textarea
                     v-model="newComment"
                     class="form-control form-control-sm mb-2"
                     rows="3"
-                    placeholder="Reply or leave a note…"
+                    :placeholder="t('documentDetailPage.commentPlaceholder')"
                   />
                   <div v-if="isStaff" class="form-check mb-2">
                     <input id="privComment" v-model="commentPrivate" class="form-check-input" type="checkbox" />
-                    <label class="form-check-label small" for="privComment">Private (staff only)</label>
+                    <label class="form-check-label small" for="privComment">{{
+                      t('documentDetailPage.privateStaffCheckbox')
+                    }}</label>
                   </div>
                   <button
                     type="button"
@@ -220,7 +238,7 @@
                     :disabled="actionBusy || !newComment.trim()"
                     @click="postComment"
                   >
-                    Post comment
+                    {{ t('documentDetailPage.postComment') }}
                   </button>
                 </div>
               </div>
@@ -230,15 +248,15 @@
           <div class="col-lg-4">
             <div v-if="isStaff" class="card mb-4">
               <div class="card-header">
-                <h6 class="mb-0">Coordinator actions</h6>
+                <h6 class="mb-0">{{ t('documentDetailPage.coordinatorActions') }}</h6>
               </div>
               <div class="card-body">
-                <label class="form-label small">Request resubmission</label>
+                <label class="form-label small">{{ t('documentDetailPage.requestResubmissionLabel') }}</label>
                 <textarea
                   v-model="resubmitReason"
                   class="form-control form-control-sm mb-2"
                   rows="2"
-                  placeholder="Reason shown to the student"
+                  :placeholder="t('documentDetailPage.resubmitReasonPlaceholder')"
                 />
                 <button
                   type="button"
@@ -246,15 +264,15 @@
                   :disabled="actionBusy || !resubmitReason.trim()"
                   @click="requestResubmission"
                 >
-                  Request resubmission
+                  {{ t('documentDetailPage.requestResubmission') }}
                 </button>
 
-                <label class="form-label small">Validation</label>
+                <label class="form-label small">{{ t('documentDetailPage.validationLabel') }}</label>
                 <textarea
                   v-model="validationNote"
                   class="form-control form-control-sm mb-2"
                   rows="2"
-                  placeholder="Optional note (recommended if marking invalid)"
+                  :placeholder="t('documentDetailPage.validationNotePlaceholder')"
                 />
                 <div class="d-grid gap-2">
                   <button
@@ -263,7 +281,7 @@
                     :disabled="actionBusy"
                     @click="validateDoc('valid')"
                   >
-                    Mark valid
+                    {{ t('documentDetailPage.markValid') }}
                   </button>
                   <button
                     type="button"
@@ -271,7 +289,7 @@
                     :disabled="actionBusy"
                     @click="validateDoc('invalid')"
                   >
-                    Mark invalid / needs update
+                    {{ t('documentDetailPage.markInvalid') }}
                   </button>
                 </div>
               </div>
@@ -279,7 +297,7 @@
 
             <div class="card mb-4">
               <div class="card-header">
-                <h6 class="mb-0">Quick Actions</h6>
+                <h6 class="mb-0">{{ t('documentDetailPage.quickActions') }}</h6>
               </div>
               <div class="card-body">
                 <div class="d-grid gap-2">
@@ -290,16 +308,16 @@
                     rel="noopener"
                     class="btn btn-outline-primary"
                   >
-                    <i class="bi bi-download me-2"></i>Download
+                    <i class="bi bi-download me-2"></i>{{ t('documentDetailPage.download') }}
                   </a>
                   <router-link
                     :to="{ name: 'ApplicationDetail', params: { id: document.application } }"
                     class="btn btn-outline-secondary"
                   >
-                    <i class="bi bi-file-earmark-text me-2"></i>View Application
+                    <i class="bi bi-file-earmark-text me-2"></i>{{ t('documentDetailPage.viewApplication') }}
                   </router-link>
                   <router-link :to="{ name: 'Documents' }" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>Back to Documents
+                    <i class="bi bi-arrow-left me-2"></i>{{ t('documentDetailPage.backToDocumentsShort') }}
                   </router-link>
                 </div>
               </div>
@@ -307,23 +325,27 @@
 
             <div class="card">
               <div class="card-header">
-                <h6 class="mb-0">Document Info</h6>
+                <h6 class="mb-0">{{ t('documentDetailPage.documentInfo') }}</h6>
               </div>
               <div class="card-body">
                 <div class="mb-3">
-                  <label class="text-muted small">Document ID</label>
+                  <label class="text-muted small">{{ t('documentDetailPage.documentId') }}</label>
                   <p class="small font-monospace">{{ document.id }}</p>
                 </div>
                 <div class="mb-3">
-                  <label class="text-muted small">Status</label>
+                  <label class="text-muted small">{{ t('documentDetailPage.statusLabel') }}</label>
                   <p>
                     <span class="badge" :class="document.is_valid ? 'bg-success' : 'bg-warning'">
-                      {{ document.is_valid ? 'Validated' : 'Pending' }}
+                      {{
+                        document.is_valid
+                          ? t('documentDetailPage.statusValidatedShort')
+                          : t('documentDetailPage.statusPendingShort')
+                      }}
                     </span>
                   </p>
                 </div>
                 <div class="mb-3">
-                  <label class="text-muted small">Last Updated</label>
+                  <label class="text-muted small">{{ t('documentDetailPage.lastUpdated') }}</label>
                   <p>{{ formatDateTime(document.updated_at) }}</p>
                 </div>
               </div>
@@ -338,12 +360,14 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { resolveFileUrl } from '@/utils/apiUrl'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
 const route = useRoute()
+const { t, locale } = useI18n()
 const authStore = useAuthStore()
 const toast = useToast()
 
@@ -403,13 +427,13 @@ const previewKind = computed(() => {
 const previewContextLines = computed(() => {
   const lines = []
   for (const req of openResubmissions.value) {
-    lines.push(`Resubmission requested: ${req.reason}`)
+    lines.push(t('documentDetailPage.previewContextResubmission', { reason: req.reason || '' }))
   }
   const inv = latestInvalidValidation.value
   if (inv?.details) {
-    lines.push(`Latest review note: ${inv.details}`)
+    lines.push(t('documentDetailPage.previewContextReviewNote', { note: inv.details }))
   } else if (inv && String(inv.result || '').toLowerCase() !== 'valid') {
-    lines.push(`Latest validation: ${inv.result}`)
+    lines.push(t('documentDetailPage.previewContextValidation', { result: inv.result }))
   }
   return lines
 })
@@ -436,27 +460,28 @@ async function loadPreview() {
     previewObjectUrl.value = URL.createObjectURL(res.data)
   } catch (e) {
     console.error(e)
-    previewError.value = 'Preview could not be loaded. Use Download instead.'
+    previewError.value = t('documentDetailPage.previewError')
   } finally {
     previewLoading.value = false
   }
 }
 
 function fileName(fileUrl) {
-  if (!fileUrl) return 'Unknown'
+  if (!fileUrl) return t('documentsPage.fileUnknown')
   const parts = fileUrl.split('/')
-  return decodeURIComponent(parts[parts.length - 1] || 'document')
+  return decodeURIComponent(parts[parts.length - 1] || t('documentDetailPage.fileFallback'))
 }
 
 function getApplicationName(appId) {
   if (typeof appId === 'object' && appId?.program?.name) return appId.program.name
   const app = applications.value.find(a => a.id === appId)
-  return app?.program?.name || appId || 'Unknown'
+  return app?.program?.name || appId || t('documentsPage.unknownApplication')
 }
 
 function formatDateTime(dateString) {
-  if (!dateString) return 'N/A'
-  return new Date(dateString).toLocaleString('en-US', {
+  if (!dateString) return t('documentsPage.notAvailable')
+  const loc = locale.value === 'es' ? 'es' : 'en-US'
+  return new Date(dateString).toLocaleString(loc, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -474,8 +499,8 @@ async function fetchDocument() {
     await loadPreview()
   } catch (err) {
     console.error('Failed to fetch document:', err)
-    error.value = 'Failed to load document. Please try again.'
-    toast.error('Failed to load document')
+    error.value = t('documentDetailPage.loadError')
+    toast.error(t('documentDetailPage.loadToastError'))
   } finally {
     loading.value = false
   }
@@ -501,11 +526,11 @@ async function postComment() {
     })
     newComment.value = ''
     commentPrivate.value = false
-    toast.success('Comment posted')
+    toast.success(t('documentDetailPage.toastCommentPosted'))
     await fetchDocument()
   } catch (err) {
     console.error(err)
-    toast.error(err.response?.data?.detail || 'Could not post comment')
+    toast.error(err.response?.data?.detail || t('documentDetailPage.toastCommentError'))
   } finally {
     actionBusy.value = false
   }
@@ -521,14 +546,14 @@ async function requestResubmission() {
       resolved: false,
     })
     resubmitReason.value = ''
-    toast.success('Resubmission requested')
+    toast.success(t('documentDetailPage.toastResubmitRequested'))
     await fetchDocument()
   } catch (err) {
     console.error(err)
     const msg =
       err.response?.data?.detail ||
       (typeof err.response?.data === 'string' ? err.response.data : null) ||
-      'Could not create resubmission request'
+      t('documentDetailPage.toastResubmitError')
     toast.error(msg)
   } finally {
     actionBusy.value = false
@@ -539,11 +564,11 @@ async function resolveResubmission(req) {
   actionBusy.value = true
   try {
     await api.patch(`/api/document-resubmissions/${req.id}/`, { resolved: true })
-    toast.success('Marked as addressed')
+    toast.success(t('documentDetailPage.toastMarkedAddressed'))
     await fetchDocument()
   } catch (err) {
     console.error(err)
-    toast.error(err.response?.data?.detail || 'Could not update request')
+    toast.error(err.response?.data?.detail || t('documentDetailPage.toastUpdateRequestError'))
   } finally {
     actionBusy.value = false
   }
@@ -558,11 +583,15 @@ async function validateDoc(result) {
       details: validationNote.value.trim(),
     })
     validationNote.value = ''
-    toast.success(result === 'valid' ? 'Marked valid' : 'Marked invalid; student notified')
+    toast.success(
+      result === 'valid'
+        ? t('documentDetailPage.toastMarkedValid')
+        : t('documentDetailPage.toastMarkedInvalid')
+    )
     await fetchDocument()
   } catch (err) {
     console.error(err)
-    toast.error(err.response?.data?.detail || 'Validation failed')
+    toast.error(err.response?.data?.detail || t('documentDetailPage.toastValidationFailed'))
   } finally {
     actionBusy.value = false
   }
@@ -570,7 +599,7 @@ async function validateDoc(result) {
 
 async function submitReplaceFile() {
   if (!document.value || !replaceInput.value?.files?.length) {
-    toast.error('Choose a file first')
+    toast.error(t('documentDetailPage.toastChooseFile'))
     return
   }
   const fd = new FormData()
@@ -579,7 +608,7 @@ async function submitReplaceFile() {
   try {
     await api.patch(`/api/documents/${document.value.id}/`, fd)
     replaceInput.value.value = ''
-    toast.success('File updated')
+    toast.success(t('documentDetailPage.toastFileUpdated'))
     await fetchDocument()
   } catch (err) {
     console.error(err)
@@ -587,7 +616,7 @@ async function submitReplaceFile() {
     const msg =
       (typeof d === 'object' && d && (d.detail || d.file?.[0])) ||
       (typeof d === 'string' ? d : null) ||
-      'Could not replace file'
+      t('documentDetailPage.toastReplaceError')
     toast.error(msg)
   } finally {
     actionBusy.value = false

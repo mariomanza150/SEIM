@@ -71,11 +71,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: NotificationDropdown | `frontend-vue` | Implemented | 2026-04-09 | Extended `notifications.*` locale keys; `NotificationDropdown.vue` header/empty/loading/footer + default title/action fallbacks; relative `formatTime` via `t()` + `toLocaleDateString` by active locale; toggle `aria-label`. Vitest: `NotificationDropdown.spec.js`. |
 | Vue i18n: Applications list view | `frontend-vue` | Implemented | 2026-04-09 | `applicationsPage.*` + nested `status.*` in locales; `Applications.vue` filters, cards, pagination, empty state, errors/toasts, delete confirm; `formatStatus` / `formatDate` locale-aware; icon-only edit/delete `aria-label`. Vitest: `Applications.spec.js`. |
 | Vue i18n: Documents list view | `frontend-vue` | Implemented | 2026-04-09 | `documentsPage.*` in locales; `Documents.vue` student/staff copy, filters, presets UI, table, pagination, errors/toasts; locale-aware dates; `aria-label` / download titles. Vitest: `Documents.spec.js`. |
+| Vue i18n: Document detail view | `frontend-vue` | Implemented | 2026-04-09 | `documentDetailPage.*` in locales; `DocumentDetail.vue` breadcrumbs via `route.names`, preview/review/comments/staff actions, quick actions, toasts; locale-aware `formatDateTime`; preview context lines translated. Vitest: `DocumentDetail.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Document detail view | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
+| _None_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -108,7 +109,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **In progress:** Document detail (`DocumentDetail.vue`). Shipped: Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: Application detail/edit/form, tables/modals. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: Application detail/edit/form, tables/modals. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -146,5 +147,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (Vue i18n Document detail — in progress)*  
+*Last updated: 2026-04-09 (Vue i18n Document detail)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
