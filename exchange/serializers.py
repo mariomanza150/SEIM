@@ -24,12 +24,27 @@ class ProgramSerializer(serializers.ModelSerializer):
     application_window_open = serializers.SerializerMethodField()
     application_window_message = serializers.SerializerMethodField()
     coordinator_details = serializers.SerializerMethodField()
+    enrollment_slots_remaining = serializers.SerializerMethodField()
+    enrollment_seats_occupied = serializers.SerializerMethodField()
 
     def get_application_window_open(self, obj):
         return obj.is_application_open()
 
     def get_application_window_message(self, obj):
         return obj.application_window_message
+
+    def get_enrollment_slots_remaining(self, obj):
+        used = getattr(obj, "_seat_holding_count", None)
+        if used is None:
+            return obj.enrollment_slots_remaining()
+        if obj.enrollment_capacity is None:
+            return None
+        return max(0, obj.enrollment_capacity - used)
+
+    def get_enrollment_seats_occupied(self, obj):
+        if getattr(obj, "_seat_holding_count", None) is not None:
+            return obj._seat_holding_count
+        return obj.count_seat_holding_applications()
 
     def get_coordinator_details(self, obj):
         return [
@@ -132,17 +147,42 @@ class ApplicationSerializer(serializers.ModelSerializer):
         return compute_application_readiness(obj, include_dynamic_form=not for_list)
 
     def get_dynamic_form_layout(self, obj):
+        from documents.services import DocumentService
+
         ft = obj.program.application_form
         if not ft:
             return {
                 "multi_step": False,
                 "steps": [],
                 "current_step": obj.dynamic_form_current_step,
+                "current_step_documents": None,
             }
+        steps = DocumentService.enrich_form_steps_for_program(ft, obj.program)
+        current_step_documents = None
+        if ft.is_multi_step():
+            current_key = obj.dynamic_form_current_step
+            eff_ids = []
+            if current_key:
+                for s in ft.get_multi_step_layout():
+                    if str(s.get("key")) == str(current_key):
+                        eff_ids = DocumentService.intersect_program_required_document_type_ids(
+                            obj.program, s.get("required_document_type_ids") or []
+                        )
+                        break
+            if eff_ids:
+                full = DocumentService.build_application_document_checklist(obj)
+                sub_items = [it for it in full["items"] if it["document_type_id"] in eff_ids]
+                current_step_documents = {
+                    "complete": all(it["status"] == "approved" for it in sub_items),
+                    "items": sub_items,
+                }
+            else:
+                current_step_documents = {"complete": True, "items": []}
         return {
             "multi_step": ft.is_multi_step(),
-            "steps": ft.get_multi_step_layout(),
+            "steps": steps,
             "current_step": obj.dynamic_form_current_step,
+            "current_step_documents": current_step_documents,
         }
 
     def get_document_checklist(self, obj):
@@ -187,6 +227,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         user = self.instance.student if self.instance else (request.user if request else None)
         program = data.get("program")
+        if self.instance is not None and program is None:
+            program = self.instance.program
 
         if not self.instance and program:
             try:
@@ -194,17 +236,22 @@ class ApplicationSerializer(serializers.ModelSerializer):
             except ValueError as e:
                 raise serializers.ValidationError({"program": str(e)})
 
-        # Only check eligibility for students creating applications
+        # Eligibility is enforced on submit (ApplicationService.submit_application).
+        # Drafts may be created or edited while the student updates their profile or explores programs.
         if user and program and user.has_role("student"):
-            try:
-                ApplicationService.check_eligibility(user, program)
-            except ValueError as e:
-                raise serializers.ValidationError(
-                    {"program": str(e).replace("Eligibility requirements not met:\n- ", "").split("\n- ")}
-                    if "\n- " in str(e)
-                    else {"program": str(e)}
-                )
-            if not ApplicationService.can_submit_application(user, program):
+            is_draft = self.instance is None or self.instance.status.name == "draft"
+            if not is_draft:
+                try:
+                    ApplicationService.check_eligibility(user, program)
+                except ValueError as e:
+                    raise serializers.ValidationError(
+                        {"program": str(e).replace("Eligibility requirements not met:\n- ", "").split("\n- ")}
+                        if "\n- " in str(e)
+                        else {"program": str(e)}
+                    )
+            if not ApplicationService.can_submit_application(
+                user, program, exclude_application=self.instance
+            ):
                 raise serializers.ValidationError(
                     {"program": "Active application already exists for this program."}
                 )
@@ -351,10 +398,22 @@ class ExchangeAgreementSerializer(serializers.ModelSerializer):
     programs = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Program.objects.all(), required=False
     )
+    renewal_draft_successor_id = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ExchangeAgreement
         fields = "__all__"
+
+    def get_renewal_draft_successor_id(self, obj):
+        prefetched = getattr(obj, "_draft_renewal_successors", None)
+        if prefetched is not None:
+            return str(prefetched[0].id) if prefetched else None
+        sid = (
+            obj.renewal_successors.filter(status=ExchangeAgreement.Status.DRAFT)
+            .values_list("id", flat=True)
+            .first()
+        )
+        return str(sid) if sid else None
 
     def create(self, validated_data):
         programs = validated_data.pop("programs", None)
@@ -375,12 +434,13 @@ class ExchangeAgreementSerializer(serializers.ModelSerializer):
 
 class CalendarEventSerializer(serializers.Serializer):
     """Serializer for calendar events in FullCalendar format."""
-    
+
     id = serializers.CharField()
     title = serializers.CharField()
     start = serializers.DateTimeField()
     end = serializers.DateTimeField(required=False, allow_null=True)
-    url = serializers.URLField(required=False, allow_null=True)
+    url = serializers.CharField(required=False, allow_null=True, allow_blank=True)
+    spa_path = serializers.CharField(required=False, allow_null=True, allow_blank=True)
     className = serializers.CharField(required=False, allow_null=True)
     backgroundColor = serializers.CharField(required=False, allow_null=True)
     borderColor = serializers.CharField(required=False, allow_null=True)

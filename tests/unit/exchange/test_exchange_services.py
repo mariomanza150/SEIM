@@ -218,6 +218,115 @@ class TestApplicationService:
         result = ApplicationService.can_submit_application(test_data['user'], test_data['program'])
         assert result is False  # Submitted applications block new submissions
 
+    def test_can_submit_application_excludes_current_application(self, test_data):
+        """Excluding the instance allows PATCH/update validation for that same application."""
+        app = Application.objects.create(
+            student=test_data["user"],
+            program=test_data["program"],
+            status=test_data["submitted_status"],
+        )
+        assert (
+            ApplicationService.can_submit_application(
+                test_data["user"], test_data["program"], exclude_application=app
+            )
+            is True
+        )
+
+    def test_can_submit_application_existing_waitlist(self, test_data):
+        """Waitlisted applications block creating another for the same program."""
+        waitlist_status, _ = ApplicationStatus.objects.get_or_create(
+            name="waitlist", defaults={"order": 15}
+        )
+        Application.objects.create(
+            student=test_data['user'],
+            program=test_data['program'],
+            status=waitlist_status,
+        )
+        assert ApplicationService.can_submit_application(test_data['user'], test_data['program']) is False
+
+    def test_submit_application_waitlist_when_at_capacity(self, test_data):
+        """When capacity is full and waitlist is enabled, submit places the app on the waitlist."""
+        waitlist_status, _ = ApplicationStatus.objects.get_or_create(
+            name="waitlist", defaults={"order": 15}
+        )
+        from accounts.models import Profile
+
+        other = User.objects.create(
+            username="other_student",
+            email="other@example.com",
+            password="testpass123",
+        )
+        from accounts.models import Role
+
+        student_role, _ = Role.objects.get_or_create(name="student")
+        other.roles.add(student_role)
+        Profile.objects.update_or_create(
+            user=other,
+            defaults={"gpa": 3.5, "language": "English"},
+        )
+        Profile.objects.update_or_create(
+            user=test_data['user'],
+            defaults={"gpa": 3.5, "language": "English"},
+        )
+
+        test_data["program"].enrollment_capacity = 1
+        test_data["program"].waitlist_when_full = True
+        test_data["program"].save(update_fields=["enrollment_capacity", "waitlist_when_full"])
+
+        Application.objects.create(
+            student=other,
+            program=test_data["program"],
+            status=test_data["submitted_status"],
+        )
+
+        with patch("exchange.services.NotificationService.send_notification"), patch(
+            "exchange.services.NotificationService.broadcast_application_sync"
+        ):
+            result = ApplicationService.submit_application(
+                test_data["application"], test_data["user"]
+            )
+
+        result.refresh_from_db()
+        assert result.status == waitlist_status
+        assert result.submitted_at is not None
+
+    def test_submit_application_raises_when_at_capacity_no_waitlist(self, test_data):
+        from accounts.models import Profile
+
+        other = User.objects.create(
+            username="other_student2",
+            email="other2@example.com",
+            password="testpass123",
+        )
+        from accounts.models import Role
+
+        student_role, _ = Role.objects.get_or_create(name="student")
+        other.roles.add(student_role)
+        Profile.objects.update_or_create(
+            user=other,
+            defaults={"gpa": 3.5, "language": "English"},
+        )
+        Profile.objects.update_or_create(
+            user=test_data['user'],
+            defaults={"gpa": 3.5, "language": "English"},
+        )
+
+        test_data["program"].enrollment_capacity = 1
+        test_data["program"].waitlist_when_full = False
+        test_data["program"].save(update_fields=["enrollment_capacity", "waitlist_when_full"])
+
+        Application.objects.create(
+            student=other,
+            program=test_data["program"],
+            status=test_data["submitted_status"],
+        )
+
+        with pytest.raises(ValueError, match="enrollment capacity"):
+            with patch("exchange.services.NotificationService.send_notification"):
+                ApplicationService.submit_application(
+                    test_data["application"], test_data["user"]
+                )
+
     def test_submit_application_success(self, test_data):
         """Test successful application submission."""
         from accounts.models import Profile

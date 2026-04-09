@@ -6,7 +6,14 @@ from django.utils import timezone
 from accounts.models import User
 from notifications.services import NotificationService
 
-from .models import Application, ApplicationStatus, Comment, TimelineEvent, Program
+from .models import (
+    Application,
+    ApplicationStatus,
+    Comment,
+    Program,
+    SEAT_HOLDING_APPLICATION_STATUS_NAMES,
+    TimelineEvent,
+)
 
 
 class ApplicationService:
@@ -135,14 +142,25 @@ class ApplicationService:
         return window_status
 
     @staticmethod
-    def can_submit_application(user: User, program: Program) -> bool:
-        """Check if user has another active application for this program."""
-        return not Application.objects.filter(
+    def can_submit_application(
+        user: User,
+        program: Program,
+        exclude_application: Optional[Application] = None,
+    ) -> bool:
+        """Check if user has another active application for this program.
+
+        When updating an existing application via the API, pass ``exclude_application``
+        so the row being edited does not count as a duplicate of itself.
+        """
+        qs = Application.objects.filter(
             student=user,
             program=program,
             withdrawn=False,
-            status__name__in=["submitted", "under_review"],
-        ).exists()
+            status__name__in=["submitted", "under_review", "waitlist"],
+        )
+        if exclude_application is not None:
+            qs = qs.exclude(pk=exclude_application.pk)
+        return not qs.exists()
 
     @staticmethod
     def get_default_coordinator(program: Program) -> Optional[User]:
@@ -153,7 +171,30 @@ class ApplicationService:
         return program.coordinators.get(id=coordinator_ids[0])
 
     @staticmethod
-    def _ensure_application_form_complete(application: Application) -> None:
+    def _viewer_roles_for_user(user: Optional[User]) -> List[str]:
+        """Role names for dynamic-form visibility (``staff_only`` / ``roles_any``)."""
+        if not user or not getattr(user, "is_authenticated", False):
+            return []
+        names = list(user.get_all_roles())
+        if getattr(user, "is_superuser", False) and "admin" not in names:
+            names = [*names, "admin"]
+        return names
+
+    @staticmethod
+    def _visibility_context_for_application(
+        application: Application, user: Optional[User] = None
+    ) -> dict:
+        """Context for ``visible_when`` / ``x-seim-visibleWhen`` (program, coordinator, viewer roles)."""
+        return {
+            "program_id": application.program_id,
+            "has_assigned_coordinator": bool(application.assigned_coordinator_id),
+            "viewer_roles": ApplicationService._viewer_roles_for_user(user),
+        }
+
+    @staticmethod
+    def _ensure_application_form_complete(
+        application: Application, user: Optional[User] = None
+    ) -> None:
         """Raise ValueError if the program's dynamic form exists but responses are incomplete."""
         ft = application.program.application_form
         if not ft:
@@ -163,16 +204,17 @@ class ApplicationService:
             raise ValueError("Complete the program application form before submitting.")
         from application_forms.services import FormSubmissionService
 
+        vctx = ApplicationService._visibility_context_for_application(application, user)
         try:
-            FormSubmissionService.validate_responses(ft, sub.responses)
+            FormSubmissionService.validate_responses(ft, sub.responses, visibility_context=vctx)
         except ValidationError as exc:
             msgs = list(exc.messages) if hasattr(exc, "messages") else [str(exc)]
             raise ValueError("; ".join(msgs)) from exc
 
     @staticmethod
-    def _ensure_submission_requirements(application: Application) -> None:
+    def _ensure_submission_requirements(application: Application, user: User) -> None:
         """Dynamic form completeness and required documents (if configured)."""
-        ApplicationService._ensure_application_form_complete(application)
+        ApplicationService._ensure_application_form_complete(application, user)
         from documents.services import DocumentService
 
         DocumentService.ensure_required_documents_approved(application)
@@ -186,7 +228,50 @@ class ApplicationService:
         ApplicationService.check_eligibility(user, application.program)
         if not ApplicationService.can_submit_application(user, application.program):
             raise ValueError("You already have an active application for this program.")
-        ApplicationService._ensure_submission_requirements(application)
+        ApplicationService._ensure_submission_requirements(application, user)
+
+        program = Program.objects.select_for_update().get(pk=application.program_id)
+        seat_count = Application.objects.filter(
+            program_id=program.pk,
+            withdrawn=False,
+            status__name__in=SEAT_HOLDING_APPLICATION_STATUS_NAMES,
+        ).count()
+        capacity_full = (
+            program.enrollment_capacity is not None
+            and seat_count >= program.enrollment_capacity
+        )
+
+        if capacity_full:
+            if program.waitlist_when_full:
+                application.status = ApplicationStatus.objects.get(name="waitlist")
+                application.submitted_at = timezone.now()
+                application.save()
+                TimelineEvent.objects.create(
+                    application=application,
+                    event_type="waitlisted",
+                    description=(
+                        "Application received; the program is at capacity — placed on the waitlist."
+                    ),
+                    created_by=user,
+                )
+                NotificationService.broadcast_application_sync(
+                    str(application.id), "application_waitlisted"
+                )
+                NotificationService.send_notification(
+                    user,
+                    "Application received (waitlist)",
+                    (
+                        f"Your application for {program.name} was received. The program is at "
+                        "capacity; you are on the waitlist and will be notified if a seat opens."
+                    ),
+                    notification_type="both",
+                    action_url=f"/applications/{application.id}/",
+                    action_text="View Application",
+                    settings_category="applications",
+                )
+                return application
+            raise ValueError("This program has reached enrollment capacity.")
+
         application.status = ApplicationStatus.objects.get(name="submitted")
         application.submitted_at = timezone.now()
         application.save()
@@ -206,7 +291,8 @@ class ApplicationService:
             f"Your application for {application.program.name} has been submitted successfully.",
             notification_type="both",
             action_url=f"/applications/{application.id}/",
-            action_text="View Application"
+            action_text="View Application",
+            settings_category="applications",
         )
 
         return application
@@ -250,7 +336,7 @@ class ApplicationService:
             raise ValueError("You do not have permission to perform this transition.")
 
         if new_status_name == "submitted":
-            ApplicationService._ensure_submission_requirements(application)
+            ApplicationService._ensure_submission_requirements(application, user)
 
         application.status = new_status
         
@@ -275,7 +361,8 @@ class ApplicationService:
             f"Your application for {application.program.name} status has changed to {new_status_name}.",
             notification_type="both",
             action_url=f"/applications/{application.id}/",
-            action_text="View Application"
+            action_text="View Application",
+            settings_category="applications",
         )
 
         return application
@@ -376,30 +463,61 @@ class ApplicationService:
                 **responses_patch,
             }
 
+            vctx = ApplicationService._visibility_context_for_application(application, user)
+
             if form_type.is_multi_step():
                 if current_step_key is None or str(current_step_key).strip() == "":
                     raise ValidationError(
                         "dynamic_form_current_step is required when saving a multi-step application form."
                     )
-                step_field_names = form_type.get_step_field_names(str(current_step_key))
+                from application_forms.visibility import iter_visible_steps_from_form_type
+
+                visible_steps = list(iter_visible_steps_from_form_type(form_type, merged, vctx))
+                if not visible_steps:
+                    raise ValidationError(
+                        "No form steps apply to the current answers; check form configuration."
+                    )
+                step_keys = [s["key"] for s in visible_steps]
+                sk = str(current_step_key)
+                if sk not in step_keys:
+                    raise ValidationError(
+                        f"This form step is not available for your current answers: {sk}"
+                    )
+                step_field_names = form_type.get_step_field_names(sk)
                 if step_field_names is None:
                     raise ValidationError(f"Unknown form step: {current_step_key}")
                 FormSubmissionService.validate_step_patch(
-                    form_type, responses_patch, step_field_names
+                    form_type,
+                    responses_patch,
+                    step_field_names,
+                    merged_responses=merged,
+                    visibility_context=vctx,
                 )
-                step_keys = [s["key"] for s in form_type.get_multi_step_layout()]
+                is_first_multistep_save = existing_submission is None
                 try:
-                    idx = step_keys.index(str(current_step_key))
+                    idx = step_keys.index(sk)
                 except ValueError:
-                    application.dynamic_form_current_step = str(current_step_key)
+                    application.dynamic_form_current_step = sk
                 else:
-                    if idx + 1 < len(step_keys):
-                        application.dynamic_form_current_step = step_keys[idx + 1]
-                    else:
+                    if is_first_multistep_save:
+                        # Keep user on the same step until an application exists; step-level
+                        # document rules run on subsequent saves before advancing.
                         application.dynamic_form_current_step = step_keys[idx]
+                    else:
+                        from documents.services import DocumentService
+
+                        DocumentService.ensure_step_documents_approved(
+                            application, form_type, sk
+                        )
+                        if idx + 1 < len(step_keys):
+                            application.dynamic_form_current_step = step_keys[idx + 1]
+                        else:
+                            application.dynamic_form_current_step = step_keys[idx]
                 application.save(update_fields=["dynamic_form_current_step", "updated_at"])
             else:
-                FormSubmissionService.validate_responses(form_type, merged)
+                FormSubmissionService.validate_responses(
+                    form_type, merged, visibility_context=vctx
+                )
 
             is_update = existing_submission is not None
             if existing_submission:
