@@ -19,7 +19,7 @@
         </div>
         <div class="col-lg-4 text-lg-end mt-2 mt-lg-0">
           <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-1"></i>{{ t('applicationsPage.newApplication') }}
+            <i class="bi bi-plus-circle me-1"></i>{{ t('programComparePage.newApplication') }}
           </router-link>
         </div>
       </div>
@@ -128,7 +128,7 @@
                   <tr>
                     <th scope="row" class="small text-muted">{{ t('programComparePage.rowMinGpa') }}</th>
                     <td v-for="p in selectedPrograms" :key="`${p.id}-gpa`">
-                      {{ p.min_gpa != null ? p.min_gpa : t('reviewQueuePage.emDash') }}
+                      {{ p.min_gpa != null ? p.min_gpa : t('programComparePage.emDash') }}
                     </td>
                   </tr>
                   <tr>
@@ -138,18 +138,18 @@
                         {{ p.required_language }}
                         <span v-if="p.min_language_level" class="badge bg-secondary">{{ p.min_language_level }}</span>
                       </template>
-                      <span v-else class="text-muted">{{ t('reviewQueuePage.emDash') }}</span>
+                      <span v-else class="text-muted">{{ t('programComparePage.emDash') }}</span>
                     </td>
                   </tr>
                   <tr>
                     <th scope="row" class="small text-muted">{{ t('programComparePage.rowAgeRange') }}</th>
                     <td v-for="p in selectedPrograms" :key="`${p.id}-age`" class="small">
                       <template v-if="p.min_age != null || p.max_age != null">
-                        {{ p.min_age != null ? p.min_age : t('reviewQueuePage.emDash') }}
+                        {{ p.min_age != null ? p.min_age : t('programComparePage.emDash') }}
                         {{ t('programComparePage.dateRangeSeparator') }}
-                        {{ p.max_age != null ? p.max_age : t('reviewQueuePage.emDash') }}
+                        {{ p.max_age != null ? p.max_age : t('programComparePage.emDash') }}
                       </template>
-                      <span v-else class="text-muted">{{ t('reviewQueuePage.emDash') }}</span>
+                      <span v-else class="text-muted">{{ t('programComparePage.emDash') }}</span>
                     </td>
                   </tr>
                   <tr>
@@ -206,7 +206,7 @@ const selectedPrograms = computed(() => {
 })
 
 function formatDate(d) {
-  if (!d) return t('reviewQueuePage.emDash')
+  if (!d) return t('programComparePage.emDash')
   const loc = locale.value === 'es' ? 'es' : 'en-US'
   return new Date(d).toLocaleDateString(loc, {
     year: 'numeric',
@@ -216,7 +216,7 @@ function formatDate(d) {
 }
 
 function truncate(text, len) {
-  if (!text) return t('reviewQueuePage.emDash')
+  if (!text) return t('programComparePage.emDash')
   const s = String(text).trim()
   if (s.length <= len) return s
   return `${s.slice(0, len)}…`

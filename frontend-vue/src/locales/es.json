@@ -396,7 +396,9 @@
     "recurringYes": "Sí",
     "recurringNo": "No",
     "rowDescription": "Descripción",
-    "dateRangeSeparator": "–"
+    "dateRangeSeparator": "–",
+    "newApplication": "Nueva solicitud",
+    "emDash": "—"
   },
   "dashboard": {
     "mainNavAria": "Navegación principal",

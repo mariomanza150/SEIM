@@ -58,6 +58,7 @@ describe('ProgramCompare', () => {
     expect(wrapper.find('[data-testid="program-compare-hint"]').text()).toContain(
       'Choose at least two programs',
     )
+    expect(wrapper.text()).toContain('New application')
   })
 
   it('uses locale-aware loading spinner label before fetch completes', async () => {

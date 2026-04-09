@@ -396,7 +396,9 @@
     "recurringYes": "Yes",
     "recurringNo": "No",
     "rowDescription": "Description",
-    "dateRangeSeparator": "–"
+    "dateRangeSeparator": "–",
+    "newApplication": "New application",
+    "emDash": "—"
   },
   "dashboard": {
     "mainNavAria": "Main navigation",
