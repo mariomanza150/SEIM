@@ -44,6 +44,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Saved searches in Vue review queue | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-08 | Coordinator review queue loads `search_type=application` presets from `/api/saved-searches/`, applies default on open, save/delete/set-default in UI; filters serialized in `reviewQueuePresets.js`. Broader presets for agreements/document queues remain P2. Tests: `frontend-vue/src/utils/reviewQueuePresets.spec.js`. |
 | Saved searches for staff agreement registry and document lists | `frontend-vue`, `exchange`, `documents`, `api` | Implemented | 2026-04-08 | New staff routes `/exchange-agreements` and `/agreement-documents` with filters + saved presets (`exchange_agreement`, `agreement_document`); staff document list presets on `/documents` (`document`). `SavedSearch` model allows new `search_type` values. `DocumentFilter` + ordering on `DocumentViewSet`. Shared `useStaffSavedPresets` composable and `staffListSearchPresets.js`. Tests: `staffListSearchPresets.spec.js`, `tests/integration/api/test_documents_list_filters.py`. |
 | Student application readiness scoring | `exchange`, `documents`, `frontend-vue`, `api` | Implemented | 2026-04-08 | `ApplicationSerializer.readiness` via `exchange.readiness.compute_application_readiness`: document checklist progress (prefetch-aware), program application window, optional dynamic form on detail only; list omits form DB lookups. Vue applications cards + application detail banner with score/level/headline. Tests: `tests/unit/exchange/test_application_readiness.py`, `frontend-vue/src/utils/applicationReadiness.spec.js`. |
+| Advanced program filtering UX | `exchange`, `frontend-vue`, `api` | Implemented | 2026-04-08 | New application flow exposes program filters (search, language/CEFR, start dates, “my GPA”, accepting-applications-now, sort) backed by `ProgramFilter`; `accepting_applications=true` filter on `GET /api/programs/`. Edit mode still loads full active list. Tests: `tests/unit/exchange/test_filters.py` (`TestProgramFilter.test_filter_accepting_applications`). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
@@ -77,7 +78,6 @@ _All Priority 1 items in this subsection are implemented above._
 | Program capacity, quotas, and waitlist management | `exchange`, `admin UI`, `frontend-vue` | Track available seats by program and automatically place eligible applicants on a waitlist when capacity is reached. |
 | Agreement renewal workflow | `exchange`, `documents`, `notifications`, `admin UI` | Extend agreement tracking with renewal stages, follow-up tasks, and document rollover support for expiring partnerships. |
 | Public program comparison experience | `cms`, `exchange`, `frontend-vue` | Let students compare programs side by side by country, dates, language requirements, and deadlines before applying. |
-| Advanced program filtering UX | `exchange`, `frontend-vue` | Expand current discovery/search UX once the core application flow is stable. |
 
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
@@ -125,5 +125,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (student application readiness scoring)*  
+*Last updated: 2026-04-08 (advanced program filtering UX)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

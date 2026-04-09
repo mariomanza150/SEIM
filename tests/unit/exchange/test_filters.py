@@ -103,6 +103,36 @@ class TestProgramFilter:
         dates = [p.start_date for p in results]
         assert dates == sorted(dates)
 
+    def test_filter_accepting_applications(self, programs):
+        """Programs with closed deadline or future open date are excluded when filter is true."""
+        today = timezone.localdate()
+        Program.objects.create(
+            name="Deadline Passed",
+            description="x",
+            start_date=today + timedelta(days=30),
+            end_date=today + timedelta(days=200),
+            is_active=True,
+            application_deadline=today - timedelta(days=1),
+        )
+        Program.objects.create(
+            name="Not Open Yet",
+            description="y",
+            start_date=today + timedelta(days=30),
+            end_date=today + timedelta(days=200),
+            is_active=True,
+            application_open_date=today + timedelta(days=5),
+            application_deadline=today + timedelta(days=100),
+        )
+        fs = ProgramFilter(
+            data={'accepting_applications': True},
+            queryset=Program.objects.all(),
+        )
+        assert fs.is_valid()
+        for p in fs.qs:
+            open_ok = p.application_open_date is None or p.application_open_date <= today
+            deadline_ok = p.application_deadline is None or p.application_deadline >= today
+            assert open_ok and deadline_ok
+
 
 @pytest.mark.django_db
 class TestApplicationFilter:

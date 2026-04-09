@@ -60,6 +60,10 @@ class ProgramFilter(django_filters.FilterSet):
     
     # Status filters
     is_active = django_filters.BooleanFilter(label='Active')
+    accepting_applications = django_filters.BooleanFilter(
+        method='filter_accepting_applications',
+        label='Application window open today',
+    )
     recurring = django_filters.BooleanFilter(label='Recurring')
     auto_reject_ineligible = django_filters.BooleanFilter(label='Auto-reject Ineligible')
     
@@ -105,6 +109,17 @@ class ProgramFilter(django_filters.FilterSet):
             return queryset.filter(
                 Q(name__icontains=value) | Q(description__icontains=value)
             )
+
+    def filter_accepting_applications(self, queryset, name, value):
+        """Programs whose application_open_date/deadline allow applying today."""
+        if value is not True:
+            return queryset
+        today = timezone.localdate()
+        return queryset.filter(
+            Q(application_open_date__isnull=True) | Q(application_open_date__lte=today),
+        ).filter(
+            Q(application_deadline__isnull=True) | Q(application_deadline__gte=today),
+        )
 
 
 class ApplicationFilter(django_filters.FilterSet):

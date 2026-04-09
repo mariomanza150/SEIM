@@ -118,8 +118,8 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 
 #### Programs
 - `GET /api/programs/` - List programs (cached 10min, supports filtering/search)
-  - **Filters:** `is_active`, `start_date`, `end_date`, etc.
-  - **Search:** `name`, `description`
+  - **Filters (django-filter):** `is_active`, `search` (name/description via `ProgramFilter`), `name`, `description`, `start_date_after`, `start_date_before`, `end_date_after`, `end_date_before`, `min_gpa_min`, `min_gpa_max` (match programs by required minimum GPA bounds), `required_language`, `min_language_level` (CEFR), `min_age_min`, `max_age_max`, `recurring`, `auto_reject_ineligible`, `accepting_applications=true` (open date null or ≤ today, deadline null or ≥ today), `ordering`.
+  - **Search (DRF):** `?search=` also matches `name` and `description` when used with list view.
   - **Ordering:** `name`, `start_date`, `end_date`, `created_at`
 - `GET /api/programs/{id}/` - Get program details (cached 10min)
 - `POST /api/programs/` - Create program (admin only)
@@ -322,7 +322,7 @@ GET /api/programs/?page=2&page_size=50
 
 Many endpoints support filtering using Django Filter Backend:
 - Use query parameters to filter results
-- Example: `GET /api/programs/?is_active=true&start_date__gte=2025-01-01`
+- Example: `GET /api/programs/?is_active=true&start_date_after=2025-01-01&accepting_applications=true`
 
 ## Search
 
