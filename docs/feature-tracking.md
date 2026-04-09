@@ -45,6 +45,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Saved searches for staff agreement registry and document lists | `frontend-vue`, `exchange`, `documents`, `api` | Implemented | 2026-04-08 | New staff routes `/exchange-agreements` and `/agreement-documents` with filters + saved presets (`exchange_agreement`, `agreement_document`); staff document list presets on `/documents` (`document`). `SavedSearch` model allows new `search_type` values. `DocumentFilter` + ordering on `DocumentViewSet`. Shared `useStaffSavedPresets` composable and `staffListSearchPresets.js`. Tests: `staffListSearchPresets.spec.js`, `tests/integration/api/test_documents_list_filters.py`. |
 | Student application readiness scoring | `exchange`, `documents`, `frontend-vue`, `api` | Implemented | 2026-04-08 | `ApplicationSerializer.readiness` via `exchange.readiness.compute_application_readiness`: document checklist progress (prefetch-aware), program application window, optional dynamic form on detail only; list omits form DB lookups. Vue applications cards + application detail banner with score/level/headline. Tests: `tests/unit/exchange/test_application_readiness.py`, `frontend-vue/src/utils/applicationReadiness.spec.js`. |
 | Advanced program filtering UX | `exchange`, `frontend-vue`, `api` | Implemented | 2026-04-08 | New application flow exposes program filters (search, language/CEFR, start dates, “my GPA”, accepting-applications-now, sort) backed by `ProgramFilter`; `accepting_applications=true` filter on `GET /api/programs/`. Edit mode still loads full active list. Tests: `tests/unit/exchange/test_filters.py` (`TestProgramFilter.test_filter_accepting_applications`). |
+| Saved program filter presets (new application) | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-08 | Reuses `SavedSearch` with `search_type=program` on the new-application program filter panel: save/apply/delete/set-default, optional default on open; `applicationProgramFilterPresets.js` + Vitest. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
@@ -84,7 +85,7 @@ _All Priority 1 items in this subsection are implemented above._
 |---------|--------|-------|
 | Coordinator workload dashboard and SLA tracking | `analytics`, `exchange`, `frontend-vue` | Show review volume, turnaround times, pending bottlenecks, and coordinator workload distribution for operational planning. |
 | Advanced notification rules, digests, and reminder scheduling | `notifications`, `accounts`, `admin UI` | Add configurable digest delivery, richer reminder cadences, and role-specific notification rules beyond the current event-based alerts. |
-| Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets on program discovery, analytics slices, or other staff tables if added later. |
+| Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets on analytics slices or other staff tables if added later. |
 | Export reports to PDF/Excel | `analytics`, `admin UI` | CSV export is now available through `/api/analytics/export/`; richer PDF/Excel export remains a planned enhancement. |
 | Calendar integration for deadlines and milestones | `exchange`, `notifications`, `frontend-vue` | Surface application deadlines, interview dates, and agreement expirations in a calendar view with export/sync options. |
 
@@ -125,5 +126,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (advanced program filtering UX)*  
+*Last updated: 2026-04-08 (saved program filter presets on new application)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

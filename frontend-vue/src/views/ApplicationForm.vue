@@ -163,6 +163,84 @@
                       <p v-else class="small text-muted mb-0 mt-2">
                         {{ programs.length }} program{{ programs.length === 1 ? '' : 's' }} match
                       </p>
+                      <div class="border-top pt-3 mt-3">
+                        <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
+                          <div class="flex-grow-1" style="min-width: 200px">
+                            <label class="form-label small text-muted mb-1">Save filters as preset</label>
+                            <div class="input-group input-group-sm">
+                              <input
+                                v-model="newPresetName"
+                                type="text"
+                                class="form-control"
+                                placeholder="Preset name"
+                                data-testid="program-filter-preset-name"
+                              >
+                              <button
+                                type="button"
+                                class="btn btn-outline-primary"
+                                :disabled="!newPresetName.trim() || presetsLoading"
+                                data-testid="program-filter-preset-save"
+                                @click="saveProgramFilterPreset"
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+                          <div class="form-check mb-1">
+                            <input
+                              id="program-preset-default"
+                              v-model="saveAsDefault"
+                              class="form-check-input"
+                              type="checkbox"
+                            >
+                            <label class="form-check-label small" for="program-preset-default">
+                              Default when starting a new application
+                            </label>
+                          </div>
+                        </div>
+                        <div v-if="savedPresets.length" class="small">
+                          <span class="text-muted me-2">Saved:</span>
+                          <span
+                            v-for="p in savedPresets"
+                            :key="p.id"
+                            class="d-inline-flex align-items-center gap-1 me-3 mb-1"
+                          >
+                            <button
+                              type="button"
+                              class="btn btn-link btn-sm p-0"
+                              data-testid="program-filter-preset-apply"
+                              @click="applyProgramFilterPreset(p)"
+                            >
+                              {{ p.name }}
+                            </button>
+                            <i
+                              v-if="p.is_default"
+                              class="bi bi-star-fill text-warning"
+                              title="Default preset"
+                              aria-label="Default preset"
+                            />
+                            <button
+                              v-else
+                              type="button"
+                              class="btn btn-link btn-sm p-0 text-secondary"
+                              title="Set as default"
+                              aria-label="Set as default"
+                              @click="setDefaultPreset(p)"
+                            >
+                              <i class="bi bi-star" />
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-link btn-sm p-0 text-danger"
+                              title="Remove preset"
+                              aria-label="Remove preset"
+                              @click="deletePreset(p)"
+                            >
+                              <i class="bi bi-trash" />
+                            </button>
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <select
@@ -536,11 +614,28 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
+import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
+import {
+  APPLICATION_PROGRAM_FILTER_SEARCH_TYPE,
+  serializeApplicationProgramFilters,
+  deserializeApplicationProgramFilters,
+} from '@/utils/applicationProgramFilterPresets'
 import api from '@/services/api'
 
 const route = useRoute()
 const router = useRouter()
 const { success, error: errorToast } = useToast()
+
+const {
+  savedPresets,
+  presetsLoading,
+  newPresetName,
+  saveAsDefault,
+  loadPresets,
+  savePreset: savePresetToApi,
+  deletePreset,
+  setDefaultPreset,
+} = useStaffSavedPresets(APPLICATION_PROGRAM_FILTER_SEARCH_TYPE)
 
 const isEditMode = computed(() => route.params.id !== undefined)
 const loading = ref(true)
@@ -779,16 +874,23 @@ function clearProgramFilters() {
     programFilterDebounce = null
   }
   suppressProgramFilterWatch = true
-  programFilters.value = {
-    search: '',
-    required_language: '',
-    min_language_level: '',
-    start_date_after: '',
-    start_date_before: '',
-    min_gpa_max: '',
-    accepting_applications: false,
-    ordering: 'name',
+  programFilters.value = deserializeApplicationProgramFilters({})
+  fetchPrograms().finally(() => {
+    suppressProgramFilterWatch = false
+  })
+}
+
+function saveProgramFilterPreset() {
+  savePresetToApi(() => serializeApplicationProgramFilters(programFilters.value))
+}
+
+function applyProgramFilterPreset(p) {
+  if (programFilterDebounce != null) {
+    clearTimeout(programFilterDebounce)
+    programFilterDebounce = null
   }
+  suppressProgramFilterWatch = true
+  programFilters.value = deserializeApplicationProgramFilters(p.filters)
   fetchPrograms().finally(() => {
     suppressProgramFilterWatch = false
   })
@@ -1168,14 +1270,22 @@ function calculateDuration(startDate, endDate) {
 
 onMounted(async () => {
   loading.value = true
-  
+
+  if (!isEditMode.value) {
+    await loadPresets()
+    const defaultPreset = savedPresets.value.find((preset) => preset.is_default)
+    if (defaultPreset) {
+      programFilters.value = deserializeApplicationProgramFilters(defaultPreset.filters)
+    }
+  }
+
   await fetchPrograms()
   applyProgramContext()
-  
+
   if (isEditMode.value) {
     await fetchApplication()
   }
-  
+
   loading.value = false
 })
 

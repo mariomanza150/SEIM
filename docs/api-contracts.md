@@ -180,6 +180,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - **`search_type=exchange_agreement`** — SPA keys: `search`, `status`, `agreement_type`, `program`, `partner`, `end_date_before`, `end_date_after`, `expiring_within_days`, `ordering`.
 - **`search_type=document`** — application document list: `application`, `type` (document type id), `valid` (`""` | `"true"` | `"false"`, maps to `is_valid`), `ordering`.
 - **`search_type=agreement_document`** — agreement repository list: `search`, `agreement`, `category`, `current_only` (boolean), `ordering`.
+- **`search_type=program`** — new-application program list filters: `search`, `required_language`, `min_language_level`, `start_date_after`, `start_date_before`, `min_gpa_max` (number or empty), `accepting_applications` (boolean), `ordering` (e.g. `name`, `-start_date`). Used by the Vue application form presets; same keys as `GET /api/programs/` filter params except `is_active` (always applied client-side).
 
 #### Calendar Events
 - `GET /api/calendar/events/` - List calendar events
