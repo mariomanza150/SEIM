@@ -1,19 +1,21 @@
 <template>
   <div class="staff-agreements-page">
     <div class="container-fluid mt-4">
-      <nav aria-label="breadcrumb">
+      <nav :aria-label="t('exchangeAgreementsPage.breadcrumbAria')">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
+            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
           </li>
-          <li class="breadcrumb-item active">Exchange agreements</li>
+          <li class="breadcrumb-item active">{{ t('route.names.StaffExchangeAgreements') }}</li>
         </ol>
       </nav>
 
       <div class="row mb-4">
         <div class="col">
-          <h2><i class="bi bi-file-earmark-richtext me-2"></i>Exchange agreements</h2>
-          <p class="text-muted">Operational agreement registry (staff)</p>
+          <h2>
+            <i class="bi bi-file-earmark-richtext me-2"></i>{{ t('route.names.StaffExchangeAgreements') }}
+          </h2>
+          <p class="text-muted">{{ t('exchangeAgreementsPage.pageSubtitle') }}</p>
         </div>
       </div>
 
@@ -21,38 +23,38 @@
         <div class="card-body">
           <div class="row g-3 align-items-end">
             <div class="col-md-4">
-              <label class="form-label">Search</label>
+              <label class="form-label">{{ t('exchangeAgreementsPage.searchLabel') }}</label>
               <input
                 v-model="filters.search"
                 type="text"
                 class="form-control"
-                placeholder="Title, partner, reference…"
+                :placeholder="t('exchangeAgreementsPage.searchPlaceholder')"
                 @input="debouncedFetch"
               />
             </div>
             <div class="col-md-2">
-              <label class="form-label">Status</label>
+              <label class="form-label">{{ t('documentsPage.statusLabel') }}</label>
               <select v-model="filters.status" class="form-select" @change="fetchAgreements(1)">
-                <option value="">All</option>
+                <option value="">{{ t('documentsPage.statusOptionAll') }}</option>
                 <option v-for="s in statusChoices" :key="s.value" :value="s.value">{{ s.label }}</option>
               </select>
             </div>
             <div class="col-md-2">
-              <label class="form-label">Type</label>
+              <label class="form-label">{{ t('exchangeAgreementsPage.typeLabel') }}</label>
               <select v-model="filters.agreement_type" class="form-select" @change="fetchAgreements(1)">
-                <option value="">All</option>
-                <option v-for="t in typeChoices" :key="t.value" :value="t.value">{{ t.label }}</option>
+                <option value="">{{ t('documentsPage.statusOptionAll') }}</option>
+                <option v-for="ty in typeChoices" :key="ty.value" :value="ty.value">{{ ty.label }}</option>
               </select>
             </div>
             <div class="col-md-4">
-              <label class="form-label">Linked program</label>
+              <label class="form-label">{{ t('exchangeAgreementsPage.linkedProgramLabel') }}</label>
               <select v-model="filters.program" class="form-select" @change="fetchAgreements(1)">
-                <option value="">Any</option>
+                <option value="">{{ t('exchangeAgreementsPage.programAny') }}</option>
                 <option v-for="p in programs" :key="p.id" :value="p.id">{{ p.name }}</option>
               </select>
             </div>
             <div class="col-md-3">
-              <label class="form-label">Partner contains</label>
+              <label class="form-label">{{ t('exchangeAgreementsPage.partnerContainsLabel') }}</label>
               <input
                 v-model="filters.partner"
                 type="text"
@@ -61,59 +63,68 @@
               />
             </div>
             <div class="col-md-2">
-              <label class="form-label">End after</label>
+              <label class="form-label">{{ t('exchangeAgreementsPage.endAfterLabel') }}</label>
               <input v-model="filters.end_date_after" type="date" class="form-control" @change="fetchAgreements(1)" />
             </div>
             <div class="col-md-2">
-              <label class="form-label">End before</label>
+              <label class="form-label">{{ t('exchangeAgreementsPage.endBeforeLabel') }}</label>
               <input v-model="filters.end_date_before" type="date" class="form-control" @change="fetchAgreements(1)" />
             </div>
             <div class="col-md-2">
-              <label class="form-label">Expiring (days)</label>
+              <label class="form-label">{{ t('exchangeAgreementsPage.expiringDaysLabel') }}</label>
               <input
                 v-model.number="filters.expiring_within_days"
                 type="number"
                 min="0"
                 class="form-control"
-                placeholder="—"
+                :placeholder="t('exchangeAgreementsPage.expiringPlaceholder')"
                 @change="fetchAgreements(1)"
               />
             </div>
             <div class="col-md-3">
-              <label class="form-label">Sort</label>
+              <label class="form-label">{{ t('exchangeAgreementsPage.sortLabel') }}</label>
               <select v-model="filters.ordering" class="form-select" @change="fetchAgreements(1)">
-                <option value="-end_date">End date (soonest first)</option>
-                <option value="end_date">End date (latest first)</option>
-                <option value="-created_at">Newest</option>
-                <option value="partner_institution_name">Partner A–Z</option>
+                <option value="-end_date">{{ t('exchangeAgreementsPage.sortEndSoonest') }}</option>
+                <option value="end_date">{{ t('exchangeAgreementsPage.sortEndLatest') }}</option>
+                <option value="-created_at">{{ t('exchangeAgreementsPage.sortNewest') }}</option>
+                <option value="partner_institution_name">{{ t('exchangeAgreementsPage.sortPartnerAz') }}</option>
               </select>
             </div>
             <div class="col-md-2">
-              <button type="button" class="btn btn-outline-secondary w-100" @click="clearFilters">Clear</button>
+              <button type="button" class="btn btn-outline-secondary w-100" @click="clearFilters">
+                {{ t('documentsPage.clearFilters') }}
+              </button>
             </div>
             <div class="col-12 border-top pt-3 mt-2">
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
-                  <label class="form-label small text-muted mb-1">Save filters as preset</label>
+                  <label class="form-label small text-muted mb-1">{{ t('documentsPage.presetSaveLabel') }}</label>
                   <div class="input-group input-group-sm">
-                    <input v-model="newPresetName" type="text" class="form-control" placeholder="Preset name" />
+                    <input
+                      v-model="newPresetName"
+                      type="text"
+                      class="form-control"
+                      :placeholder="t('documentsPage.presetNamePlaceholder')"
+                    />
                     <button
                       type="button"
                       class="btn btn-outline-primary"
                       :disabled="!newPresetName.trim() || presetsLoading"
                       @click="savePreset(() => serializeExchangeAgreementFilters(filters))"
                     >
-                      Save
+                      {{ t('documentsPage.presetSave') }}
                     </button>
                   </div>
                 </div>
                 <div class="form-check mb-1">
                   <input id="ag-preset-def" v-model="saveAsDefault" class="form-check-input" type="checkbox" />
-                  <label class="form-check-label small" for="ag-preset-def">Default when opening this page</label>
+                  <label class="form-check-label small" for="ag-preset-def">{{
+                    t('documentsPage.presetDefaultCheckbox')
+                  }}</label>
                 </div>
               </div>
               <div v-if="savedPresets.length" class="small">
-                <span class="text-muted me-2">Saved:</span>
+                <span class="text-muted me-2">{{ t('documentsPage.presetSavedPrefix') }}</span>
                 <span
                   v-for="p in savedPresets"
                   :key="p.id"
@@ -123,15 +134,15 @@
                   <i
                     v-if="p.is_default"
                     class="bi bi-star-fill text-warning"
-                    title="Default preset"
-                    aria-label="Default preset"
+                    :title="t('documentsPage.presetDefaultTitle')"
+                    :aria-label="t('documentsPage.presetDefaultAria')"
                   ></i>
                   <button
                     v-else
                     type="button"
                     class="btn btn-link btn-sm p-0 text-secondary"
-                    title="Set as default"
-                    aria-label="Set as default"
+                    :title="t('documentsPage.presetSetDefaultTitle')"
+                    :aria-label="t('documentsPage.presetSetDefaultAria')"
                     @click="setDefaultPreset(p)"
                   >
                     <i class="bi bi-star"></i>
@@ -139,8 +150,8 @@
                   <button
                     type="button"
                     class="btn btn-link btn-sm p-0 text-danger"
-                    title="Remove preset"
-                    aria-label="Remove preset"
+                    :title="t('documentsPage.presetRemoveTitle')"
+                    :aria-label="t('documentsPage.presetRemoveAria')"
                     @click="deletePreset(p)"
                   >
                     <i class="bi bi-trash"></i>
@@ -154,23 +165,24 @@
 
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading…</span>
+          <span class="visually-hidden">{{ t('exchangeAgreementsPage.loading') }}</span>
         </div>
       </div>
       <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-      <div v-else-if="rows.length === 0" class="card">
-        <div class="card-body text-center text-muted py-5">No agreements match these filters.</div>
+      <div v-else-if="rows.length === 0" class="card" data-testid="agreements-empty">
+        <div class="card-body text-center text-muted py-5">{{ t('exchangeAgreementsPage.emptyFiltered') }}</div>
       </div>
       <div v-else class="table-responsive card">
         <table class="table table-hover mb-0">
           <thead class="table-light">
             <tr>
-              <th>Title</th>
-              <th>Partner</th>
-              <th>Status</th>
-              <th>Type</th>
-              <th>End</th>
-              <th>Programs</th>
+              <th>{{ t('exchangeAgreementsPage.colTitle') }}</th>
+              <th>{{ t('exchangeAgreementsPage.colPartner') }}</th>
+              <th>{{ t('exchangeAgreementsPage.colStatus') }}</th>
+              <th>{{ t('exchangeAgreementsPage.colType') }}</th>
+              <th>{{ t('exchangeAgreementsPage.colEnd') }}</th>
+              <th>{{ t('exchangeAgreementsPage.colPrograms') }}</th>
+              <th class="text-end">{{ t('exchangeAgreementsPage.colRenewal') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -178,20 +190,45 @@
               <td class="fw-medium">{{ a.title }}</td>
               <td>{{ a.partner_institution_name }}</td>
               <td>
-                <span class="badge" :class="statusBadge(a.status)">{{ formatEnum(a.status) }}</span>
+                <span class="badge" :class="statusBadge(a.status)">{{ formatAgreementStatus(a.status) }}</span>
               </td>
-              <td class="small">{{ formatEnum(a.agreement_type) }}</td>
-              <td class="small text-muted">{{ a.end_date || '—' }}</td>
+              <td class="small">{{ formatAgreementType(a.agreement_type) }}</td>
+              <td class="small text-muted">{{ a.end_date || t('exchangeAgreementsPage.emDash') }}</td>
               <td class="small">{{ (a.programs && a.programs.length) || 0 }}</td>
+              <td class="text-end text-nowrap">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  :title="t('exchangeAgreementsPage.renewalPendingTitle')"
+                  @click="onMarkRenewalPending(a)"
+                >
+                  {{ t('exchangeAgreementsPage.renewalPendingShort') }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary ms-1"
+                  :title="t('exchangeAgreementsPage.renewalDraftTitle')"
+                  :disabled="!!a.renewal_draft_successor_id"
+                  @click="onCreateRenewalSuccessor(a)"
+                >
+                  {{ t('exchangeAgreementsPage.renewalDraftShort') }}
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <nav v-if="!loading && pagination.count > pagination.pageSize" class="mt-3" aria-label="Pagination">
+      <nav
+        v-if="!loading && pagination.count > pagination.pageSize"
+        class="mt-3"
+        :aria-label="t('exchangeAgreementsPage.paginationAria')"
+      >
         <ul class="pagination justify-content-center">
           <li class="page-item" :class="{ disabled: !pagination.previous }">
-            <button type="button" class="page-link" @click="goToPage(pagination.currentPage - 1)">Previous</button>
+            <button type="button" class="page-link" @click="goToPage(pagination.currentPage - 1)">
+              {{ t('documentsPage.previous') }}
+            </button>
           </li>
           <li
             v-for="page in totalPages"
@@ -202,7 +239,9 @@
             <button type="button" class="page-link" @click="goToPage(page)">{{ page }}</button>
           </li>
           <li class="page-item" :class="{ disabled: !pagination.next }">
-            <button type="button" class="page-link" @click="goToPage(pagination.currentPage + 1)">Next</button>
+            <button type="button" class="page-link" @click="goToPage(pagination.currentPage + 1)">
+              {{ t('documentsPage.next') }}
+            </button>
           </li>
         </ul>
       </nav>
@@ -212,6 +251,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
 import api from '@/services/api'
@@ -221,7 +261,8 @@ import {
   serializeExchangeAgreementFilters,
 } from '@/utils/staffListSearchPresets'
 
-const { error: errorToast } = useToast()
+const { t, te } = useI18n()
+const { error: errorToast, success: successToast } = useToast()
 
 const {
   savedPresets,
@@ -234,22 +275,22 @@ const {
   setDefaultPreset,
 } = useStaffSavedPresets(STAFF_SAVED_SEARCH_TYPE.EXCHANGE_AGREEMENT)
 
-const statusChoices = [
-  { value: 'draft', label: 'Draft' },
-  { value: 'active', label: 'Active' },
-  { value: 'suspended', label: 'Suspended' },
-  { value: 'expired', label: 'Expired' },
-  { value: 'terminated', label: 'Terminated' },
-  { value: 'renewal_pending', label: 'Renewal pending' },
-]
+const STATUS_VALUES = ['draft', 'active', 'suspended', 'expired', 'terminated', 'renewal_pending']
+const TYPE_VALUES = ['bilateral', 'multilateral', 'erasmus', 'specific', 'other']
 
-const typeChoices = [
-  { value: 'bilateral', label: 'Bilateral' },
-  { value: 'multilateral', label: 'Multilateral' },
-  { value: 'erasmus', label: 'Erasmus+' },
-  { value: 'specific', label: 'Specific program' },
-  { value: 'other', label: 'Other' },
-]
+const statusChoices = computed(() =>
+  STATUS_VALUES.map((value) => ({
+    value,
+    label: t(`exchangeAgreementsPage.status.${value}`),
+  })),
+)
+
+const typeChoices = computed(() =>
+  TYPE_VALUES.map((value) => ({
+    value,
+    label: t(`exchangeAgreementsPage.agreementType.${value}`),
+  })),
+)
 
 const programs = ref([])
 const rows = ref([])
@@ -282,6 +323,21 @@ let debounceTimer = null
 function debouncedFetch() {
   clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => fetchAgreements(1), 400)
+}
+
+function formatAgreementField(s, kind) {
+  if (!s) return t('exchangeAgreementsPage.emDash')
+  const key =
+    kind === 'status' ? `exchangeAgreementsPage.status.${s}` : `exchangeAgreementsPage.agreementType.${s}`
+  return te(key) ? t(key) : s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function formatAgreementStatus(s) {
+  return formatAgreementField(s, 'status')
+}
+
+function formatAgreementType(s) {
+  return formatAgreementField(s, 'type')
 }
 
 async function loadPrograms() {
@@ -321,7 +377,7 @@ async function fetchAgreements(page = 1) {
       }
     }
   } catch {
-    error.value = 'Failed to load agreements.'
+    error.value = t('exchangeAgreementsPage.loadError')
     errorToast(error.value)
   } finally {
     loading.value = false
@@ -368,9 +424,36 @@ function statusBadge(status) {
   return m[status] || 'bg-secondary'
 }
 
-function formatEnum(s) {
-  if (!s) return '—'
-  return s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+async function onMarkRenewalPending(a) {
+  const raw = window.prompt(t('exchangeAgreementsPage.markRenewalPrompt'))
+  if (raw === null) return
+  const body = {}
+  const trimmed = raw.trim()
+  if (trimmed) body.renewal_follow_up_due = trimmed
+  try {
+    await api.post(`/api/exchange-agreements/${a.id}/mark-renewal-pending/`, body)
+    successToast(t('exchangeAgreementsPage.markRenewalSuccessToast'))
+    await fetchAgreements(pagination.value.currentPage)
+  } catch (e) {
+    const msg = e.response?.data?.error || t('exchangeAgreementsPage.markRenewalErrorFallback')
+    errorToast(msg)
+  }
+}
+
+async function onCreateRenewalSuccessor(a) {
+  if (!window.confirm(t('exchangeAgreementsPage.createRenewalConfirm'))) {
+    return
+  }
+  try {
+    await api.post(`/api/exchange-agreements/${a.id}/create-renewal-successor/`, {
+      copy_documents: true,
+    })
+    successToast(t('exchangeAgreementsPage.createRenewalSuccessToast'))
+    await fetchAgreements(pagination.value.currentPage)
+  } catch (e) {
+    const msg = e.response?.data?.error || t('exchangeAgreementsPage.createRenewalErrorFallback')
+    errorToast(msg)
+  }
 }
 
 onMounted(async () => {

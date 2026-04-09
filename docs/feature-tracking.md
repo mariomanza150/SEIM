@@ -77,11 +77,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: `useStaffSavedPresets` (shared staff presets) | `frontend-vue` | Implemented | 2026-04-09 | `savedPresets.*` in locales; composable uses `useI18n` for save/remove/default toasts, errors, and `confirmRemove`. Vitest: `useStaffSavedPresets.spec.js`. |
 | Vue i18n: Coordinator review queue | `frontend-vue` | Implemented | 2026-04-09 | `reviewQueuePage.*` + reuse `applicationsPage` / `documentsPage` / `savedPresets` / `route.names`; `CoordinatorReviewQueue.vue` filters, presets, table, pagination, locale dates + `formatStatus`. Vitest: `CoordinatorReviewQueue.spec.js`. |
 | Vue i18n: Coordinator workload view | `frontend-vue` | Implemented | 2026-04-09 | `workloadPage.*` + reuse `applicationsPage.status` / `route.names`; `CoordinatorWorkload.vue` breadcrumbs, subtitle, cards, admin table, loading/error. Vitest: `CoordinatorWorkload.spec.js`. |
+| Vue i18n: Staff exchange agreements view | `frontend-vue` | Implemented | 2026-04-09 | `exchangeAgreementsPage.*` + reuse `documentsPage` preset/pagination/clear + `route.names`; `StaffExchangeAgreements.vue` filters, enum labels, table, renewal actions (prompt/confirm/toasts). Vitest: `StaffExchangeAgreements.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Staff exchange agreements view | `frontend-vue` | In progress | 2026-04-09 | — |
+| _None_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -115,7 +116,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Coordinator workload, review queue, `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. **In progress:** Staff exchange agreements. Remaining: calendar, compare, …, Notifications/Profile, stragglers. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Staff exchange agreements, Coordinator workload, review queue, `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: calendar, compare, …, Notifications/Profile, stragglers. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -155,5 +156,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (Vue i18n Staff exchange agreements — in progress)*  
+*Last updated: 2026-04-09 (Vue i18n Staff exchange agreements)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
