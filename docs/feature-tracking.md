@@ -74,7 +74,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None currently assigned_ |  |  |  |  |
+| Vue i18n: Documents list view | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -107,7 +107,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **Applications list shipped** (see IMPLEMENTED). Remaining: Documents list/detail, Application detail/edit/form, tables/modals. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **In progress:** Documents list (`Documents.vue`). Shipped: Applications list, NotificationDropdown, Dashboard, etc. Remaining: Document detail, Application detail/edit/form, tables/modals. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
