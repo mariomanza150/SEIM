@@ -79,6 +79,8 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: Coordinator workload view | `frontend-vue` | Implemented | 2026-04-09 | `workloadPage.*` + reuse `applicationsPage.status` / `route.names`; `CoordinatorWorkload.vue` breadcrumbs, subtitle, cards, admin table, loading/error. Vitest: `CoordinatorWorkload.spec.js`. |
 | Vue i18n: Staff exchange agreements view | `frontend-vue` | Implemented | 2026-04-09 | `exchangeAgreementsPage.*` + reuse `documentsPage` preset/pagination/clear + `route.names`; `StaffExchangeAgreements.vue` filters, enum labels, table, renewal actions (prompt/confirm/toasts). Vitest: `StaffExchangeAgreements.spec.js`. |
 | Vue i18n: Deadlines and calendar view | `frontend-vue` | Implemented | 2026-04-09 | `calendarPage.*` + reuse `documentsPage` preset chrome + `route.names`; `DeadlinesCalendar.vue` ICS card, range/filters, saved views, locale-aware day headings (`toLocaleDateString`), load/copy toasts. Vitest: `DeadlinesCalendar.spec.js`. |
+| Vue i18n: Staff agreement documents view | `frontend-vue` | Implemented | 2026-04-08 | `staffAgreementDocumentsPage.*` + reuse `documentsPage` (presets, clear, pagination, loading spinner, download aria) + `exchangeAgreementsPage` (search/sort labels, agreement “Any”); `route.names.StaffAgreementDocuments`; category enum keys; locale dates. Vitest: `StaffAgreementDocuments.spec.js`. |
+| Vue i18n: Program compare view | `frontend-vue` | Implemented | 2026-04-08 | `programComparePage.*` + `route.names` for breadcrumbs/title/new-application CTA; reuse `reviewQueuePage.emDash`; `formatDate` via active locale (`es` / `en-US`, short month). Load error + toast; table/hint/picker/buttons. Vitest: `ProgramCompare.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
@@ -118,7 +120,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Deadlines/calendar, Staff exchange agreements, Coordinator workload, review queue, `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. **In progress:** Notifications full page (`Notifications.vue`), Profile (`Profile.vue`). Remaining: program compare, Staff agreement documents, stragglers. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Deadlines/calendar, program compare, Staff exchange agreements, Staff agreement documents, Coordinator workload, review queue, `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. **In progress:** Notifications full page (`Notifications.vue`), Profile (`Profile.vue`). Remaining: stragglers after those. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -158,5 +160,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (Vue i18n Notifications page — in progress)*  
+*Last updated: 2026-04-08 (Vue i18n Staff agreement documents)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

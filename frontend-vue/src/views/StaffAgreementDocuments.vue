@@ -1,19 +1,21 @@
 <template>
   <div class="staff-agreement-docs-page">
     <div class="container-fluid mt-4">
-      <nav aria-label="breadcrumb">
+      <nav :aria-label="t('staffAgreementDocumentsPage.breadcrumbAria')">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
+            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
           </li>
-          <li class="breadcrumb-item active">Agreement documents</li>
+          <li class="breadcrumb-item active">{{ t('route.names.StaffAgreementDocuments') }}</li>
         </ol>
       </nav>
 
       <div class="row mb-4">
         <div class="col">
-          <h2><i class="bi bi-archive me-2"></i>Agreement document repository</h2>
-          <p class="text-muted">Files linked to exchange agreements (staff)</p>
+          <h2>
+            <i class="bi bi-archive me-2"></i>{{ t('route.names.StaffAgreementDocuments') }}
+          </h2>
+          <p class="text-muted">{{ t('staffAgreementDocumentsPage.pageSubtitle') }}</p>
         </div>
       </div>
 
@@ -21,26 +23,26 @@
         <div class="card-body">
           <div class="row g-3 align-items-end">
             <div class="col-md-4">
-              <label class="form-label">Search</label>
+              <label class="form-label">{{ t('exchangeAgreementsPage.searchLabel') }}</label>
               <input
                 v-model="filters.search"
                 type="text"
                 class="form-control"
-                placeholder="Title, notes, agreement…"
+                :placeholder="t('staffAgreementDocumentsPage.searchPlaceholder')"
                 @input="debouncedFetch"
               />
             </div>
             <div class="col-md-4">
-              <label class="form-label">Agreement</label>
+              <label class="form-label">{{ t('staffAgreementDocumentsPage.agreementLabel') }}</label>
               <select v-model="filters.agreement" class="form-select" @change="fetchRows(1)">
-                <option value="">Any</option>
+                <option value="">{{ t('exchangeAgreementsPage.programAny') }}</option>
                 <option v-for="a in agreements" :key="a.id" :value="a.id">{{ a.title }} — {{ a.partner_institution_name }}</option>
               </select>
             </div>
             <div class="col-md-2">
-              <label class="form-label">Category</label>
+              <label class="form-label">{{ t('staffAgreementDocumentsPage.categoryLabel') }}</label>
               <select v-model="filters.category" class="form-select" @change="fetchRows(1)">
-                <option value="">All</option>
+                <option value="">{{ t('documentsPage.statusOptionAll') }}</option>
                 <option v-for="c in categoryChoices" :key="c.value" :value="c.value">{{ c.label }}</option>
               </select>
             </div>
@@ -53,43 +55,52 @@
                   type="checkbox"
                   @change="fetchRows(1)"
                 />
-                <label class="form-check-label" for="cur-only">Current only</label>
+                <label class="form-check-label" for="cur-only">{{ t('staffAgreementDocumentsPage.currentOnly') }}</label>
               </div>
             </div>
             <div class="col-md-3">
-              <label class="form-label">Sort</label>
+              <label class="form-label">{{ t('exchangeAgreementsPage.sortLabel') }}</label>
               <select v-model="filters.ordering" class="form-select" @change="fetchRows(1)">
-                <option value="-created_at">Newest</option>
-                <option value="created_at">Oldest</option>
-                <option value="category">Category</option>
+                <option value="-created_at">{{ t('staffAgreementDocumentsPage.sortNewest') }}</option>
+                <option value="created_at">{{ t('staffAgreementDocumentsPage.sortOldest') }}</option>
+                <option value="category">{{ t('staffAgreementDocumentsPage.sortCategory') }}</option>
               </select>
             </div>
             <div class="col-md-2">
-              <button type="button" class="btn btn-outline-secondary w-100" @click="clearFilters">Clear</button>
+              <button type="button" class="btn btn-outline-secondary w-100" @click="clearFilters">
+                {{ t('documentsPage.clearFilters') }}
+              </button>
             </div>
             <div class="col-12 border-top pt-3 mt-2">
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
-                  <label class="form-label small text-muted mb-1">Save filters as preset</label>
+                  <label class="form-label small text-muted mb-1">{{ t('documentsPage.presetSaveLabel') }}</label>
                   <div class="input-group input-group-sm">
-                    <input v-model="newPresetName" type="text" class="form-control" placeholder="Preset name" />
+                    <input
+                      v-model="newPresetName"
+                      type="text"
+                      class="form-control"
+                      :placeholder="t('documentsPage.presetNamePlaceholder')"
+                    />
                     <button
                       type="button"
                       class="btn btn-outline-primary"
                       :disabled="!newPresetName.trim() || presetsLoading"
                       @click="savePreset(() => serializeAgreementDocumentFilters(filters))"
                     >
-                      Save
+                      {{ t('documentsPage.presetSave') }}
                     </button>
                   </div>
                 </div>
                 <div class="form-check mb-1">
                   <input id="adoc-preset-def" v-model="saveAsDefault" class="form-check-input" type="checkbox" />
-                  <label class="form-check-label small" for="adoc-preset-def">Default when opening this page</label>
+                  <label class="form-check-label small" for="adoc-preset-def">{{
+                    t('documentsPage.presetDefaultCheckbox')
+                  }}</label>
                 </div>
               </div>
               <div v-if="savedPresets.length" class="small">
-                <span class="text-muted me-2">Saved:</span>
+                <span class="text-muted me-2">{{ t('documentsPage.presetSavedPrefix') }}</span>
                 <span
                   v-for="p in savedPresets"
                   :key="p.id"
@@ -99,15 +110,15 @@
                   <i
                     v-if="p.is_default"
                     class="bi bi-star-fill text-warning"
-                    title="Default preset"
-                    aria-label="Default preset"
+                    :title="t('documentsPage.presetDefaultTitle')"
+                    :aria-label="t('documentsPage.presetDefaultAria')"
                   ></i>
                   <button
                     v-else
                     type="button"
                     class="btn btn-link btn-sm p-0 text-secondary"
-                    title="Set as default"
-                    aria-label="Set as default"
+                    :title="t('documentsPage.presetSetDefaultTitle')"
+                    :aria-label="t('documentsPage.presetSetDefaultAria')"
                     @click="setDefaultPreset(p)"
                   >
                     <i class="bi bi-star"></i>
@@ -115,8 +126,8 @@
                   <button
                     type="button"
                     class="btn btn-link btn-sm p-0 text-danger"
-                    title="Remove preset"
-                    aria-label="Remove preset"
+                    :title="t('documentsPage.presetRemoveTitle')"
+                    :aria-label="t('documentsPage.presetRemoveAria')"
                     @click="deletePreset(p)"
                   >
                     <i class="bi bi-trash"></i>
@@ -130,28 +141,28 @@
 
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading…</span>
+          <span class="visually-hidden">{{ t('documentsPage.loadingSpinner') }}</span>
         </div>
       </div>
       <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-      <div v-else-if="rows.length === 0" class="card">
-        <div class="card-body text-center text-muted py-5">No repository documents match these filters.</div>
+      <div v-else-if="rows.length === 0" class="card" data-testid="agreement-docs-empty">
+        <div class="card-body text-center text-muted py-5">{{ t('staffAgreementDocumentsPage.emptyFiltered') }}</div>
       </div>
       <div v-else class="table-responsive card">
         <table class="table table-hover mb-0">
           <thead class="table-light">
             <tr>
-              <th>Title</th>
-              <th>Category</th>
-              <th>Agreement</th>
-              <th>Uploaded</th>
-              <th class="text-end">File</th>
+              <th>{{ t('staffAgreementDocumentsPage.colTitle') }}</th>
+              <th>{{ t('staffAgreementDocumentsPage.colCategory') }}</th>
+              <th>{{ t('staffAgreementDocumentsPage.colAgreement') }}</th>
+              <th>{{ t('staffAgreementDocumentsPage.colUploaded') }}</th>
+              <th class="text-end">{{ t('staffAgreementDocumentsPage.colFile') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="d in rows" :key="d.id">
               <td class="fw-medium">{{ d.title || fileLabel(d.file) }}</td>
-              <td><span class="badge bg-secondary">{{ formatEnum(d.category) }}</span></td>
+              <td><span class="badge bg-secondary">{{ formatCategory(d.category) }}</span></td>
               <td class="small text-muted">{{ agreementLabel(d.agreement) }}</td>
               <td class="small text-muted">{{ formatDate(d.created_at) }}</td>
               <td class="text-end">
@@ -161,6 +172,7 @@
                   class="btn btn-sm btn-outline-secondary"
                   target="_blank"
                   rel="noopener noreferrer"
+                  :aria-label="t('documentsPage.downloadTitle')"
                 >
                   <i class="bi bi-download"></i>
                 </a>
@@ -170,10 +182,16 @@
         </table>
       </div>
 
-      <nav v-if="!loading && pagination.count > pagination.pageSize" class="mt-3" aria-label="Pagination">
+      <nav
+        v-if="!loading && pagination.count > pagination.pageSize"
+        class="mt-3"
+        :aria-label="t('staffAgreementDocumentsPage.paginationAria')"
+      >
         <ul class="pagination justify-content-center">
           <li class="page-item" :class="{ disabled: !pagination.previous }">
-            <button type="button" class="page-link" @click="goToPage(pagination.currentPage - 1)">Previous</button>
+            <button type="button" class="page-link" @click="goToPage(pagination.currentPage - 1)">
+              {{ t('documentsPage.previous') }}
+            </button>
           </li>
           <li
             v-for="page in totalPages"
@@ -184,7 +202,9 @@
             <button type="button" class="page-link" @click="goToPage(page)">{{ page }}</button>
           </li>
           <li class="page-item" :class="{ disabled: !pagination.next }">
-            <button type="button" class="page-link" @click="goToPage(pagination.currentPage + 1)">Next</button>
+            <button type="button" class="page-link" @click="goToPage(pagination.currentPage + 1)">
+              {{ t('documentsPage.next') }}
+            </button>
           </li>
         </ul>
       </nav>
@@ -194,6 +214,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
 import api from '@/services/api'
@@ -204,6 +225,7 @@ import {
   serializeAgreementDocumentFilters,
 } from '@/utils/staffListSearchPresets'
 
+const { t, te, locale } = useI18n()
 const { error: errorToast } = useToast()
 
 const {
@@ -217,14 +239,14 @@ const {
   setDefaultPreset,
 } = useStaffSavedPresets(STAFF_SAVED_SEARCH_TYPE.AGREEMENT_REPOSITORY_DOC)
 
-const categoryChoices = [
-  { value: 'signed_copy', label: 'Signed copy' },
-  { value: 'amendment', label: 'Amendment / addendum' },
-  { value: 'mou', label: 'Memorandum of understanding' },
-  { value: 'annex', label: 'Annex / schedule' },
-  { value: 'correspondence', label: 'Correspondence' },
-  { value: 'other', label: 'Other' },
-]
+const CATEGORY_VALUES = ['signed_copy', 'amendment', 'mou', 'annex', 'correspondence', 'other']
+
+const categoryChoices = computed(() =>
+  CATEGORY_VALUES.map((value) => ({
+    value,
+    label: t(`staffAgreementDocumentsPage.category.${value}`),
+  })),
+)
 
 const agreements = ref([])
 const agreementMap = ref({})
@@ -275,7 +297,7 @@ async function loadAgreements() {
 function agreementLabel(id) {
   const a = agreementMap.value[id]
   if (a) return `${a.title} — ${a.partner_institution_name}`
-  return id || '—'
+  return id || t('staffAgreementDocumentsPage.emDash')
 }
 
 async function fetchRows(page = 1) {
@@ -300,7 +322,7 @@ async function fetchRows(page = 1) {
       }
     }
   } catch {
-    error.value = 'Failed to load agreement documents.'
+    error.value = t('staffAgreementDocumentsPage.loadError')
     errorToast(error.value)
   } finally {
     loading.value = false
@@ -332,19 +354,23 @@ function applyPreset(p) {
 }
 
 function fileLabel(url) {
-  if (!url) return '—'
+  if (!url) return t('staffAgreementDocumentsPage.emDash')
   const parts = String(url).split('/')
   return decodeURIComponent(parts[parts.length - 1] || 'file')
 }
 
-function formatEnum(s) {
-  if (!s) return '—'
+function formatCategory(s) {
+  if (!s) return t('staffAgreementDocumentsPage.emDash')
+  const key = `staffAgreementDocumentsPage.category.${s}`
+  if (te(key)) return t(key)
   return s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function formatDate(dateString) {
-  if (!dateString) return '—'
-  return new Date(dateString).toLocaleDateString('en-US', {
+  if (!dateString) return t('staffAgreementDocumentsPage.emDash')
+  const date = new Date(dateString)
+  const localeTag = locale.value === 'es' ? 'es' : 'en-US'
+  return date.toLocaleDateString(localeTag, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

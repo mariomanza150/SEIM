@@ -186,6 +186,34 @@
       "other": "Otro"
     }
   },
+  "staffAgreementDocumentsPage": {
+    "breadcrumbAria": "Migas de pan",
+    "pageSubtitle": "Archivos vinculados a convenios de intercambio (personal)",
+    "searchPlaceholder": "Título, notas, convenio…",
+    "agreementLabel": "Convenio",
+    "categoryLabel": "Categoría",
+    "currentOnly": "Solo vigentes",
+    "sortNewest": "Más recientes",
+    "sortOldest": "Más antiguos",
+    "sortCategory": "Categoría",
+    "loadError": "No se pudieron cargar los documentos del convenio.",
+    "emptyFiltered": "Ningún documento del repositorio coincide con estos filtros.",
+    "colTitle": "Título",
+    "colCategory": "Categoría",
+    "colAgreement": "Convenio",
+    "colUploaded": "Subido",
+    "colFile": "Archivo",
+    "paginationAria": "Paginación de documentos de convenios",
+    "emDash": "—",
+    "category": {
+      "signed_copy": "Copia firmada",
+      "amendment": "Enmienda / adenda",
+      "mou": "Memorando de entendimiento",
+      "annex": "Anexo / anexo técnico",
+      "correspondence": "Correspondencia",
+      "other": "Otro"
+    }
+  },
   "calendarPage": {
     "breadcrumbAria": "Migas de pan",
     "pageSubtitle": "Fechas de programa, ventanas de solicitud, tus solicitudes y (para personal) fin de convenios desde la API de calendario de SEIM.",
@@ -211,6 +239,33 @@
     "emptyRange": "No hay eventos en este rango con los filtros actuales.",
     "copiedToast": "Copiado al portapapeles",
     "copyErrorToast": "No se pudo copiar"
+  },
+  "programComparePage": {
+    "breadcrumbAria": "Migas de pan",
+    "pageSubtitle": "Selecciona hasta cuatro programas activos para comparar fechas, requisitos lingüísticos y ventanas de solicitud en paralelo.",
+    "loadingSpinner": "Cargando",
+    "loadingPrograms": "Cargando programas…",
+    "loadError": "No se pudieron cargar los programas.",
+    "pickerLabel": "Programas a comparar ({current} / {max})",
+    "clearSelection": "Borrar selección",
+    "hintChooseTwo": "Elige al menos dos programas para ver la tabla comparativa.",
+    "colCriterion": "Criterio",
+    "apply": "Solicitar",
+    "rowProgramDates": "Fechas del programa",
+    "rowApplicationWindow": "Ventana de solicitud",
+    "windowOpens": "Apertura: {date}",
+    "windowDeadline": "Plazo: {date}",
+    "windowNotSet": "Sin definir",
+    "acceptingApplications": "Admite solicitudes",
+    "notOpen": "No abierta",
+    "rowMinGpa": "GPA mín.",
+    "rowLanguage": "Idioma",
+    "rowAgeRange": "Rango de edad",
+    "rowRecurring": "Recurrente",
+    "recurringYes": "Sí",
+    "recurringNo": "No",
+    "rowDescription": "Descripción",
+    "dateRangeSeparator": "–"
   },
   "dashboard": {
     "mainNavAria": "Navegación principal",
