@@ -119,6 +119,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Staff Vue read-only notification routing matrix | `frontend-vue`, `notifications`, `api` | Implemented | 2026-04-09 | SPA `/notification-routing`: **Reminder** + **transactional** index-by-group cards; detail tables; digest / API access; en/es. Vitest: `NotificationRouting.spec.js`. |
 | Notification routing reference: OpenAPI + Settings staff link | `notifications`, `frontend-vue`, `api` | Implemented | 2026-04-09 | `NotificationRoutingReferenceSerializer` + `@extend_schema` on `NotificationRoutingReferenceView` (200/403) for `/api/docs/`. Settings page: staff-only alert with link to `NotificationRouting` (`settings.notificationRoutingStaffLink` en/es). Tests: `tests/unit/notifications/test_routing_reference.py`, `Settings.spec.js` (show/hide link). |
 | Legacy Django templates: `rel="noopener noreferrer"` on document `target="_blank"` links | `templates/frontend` | Implemented | 2026-04-09 | Student/coordinator SSR views: `applications/detail.html`, `documents/detail.html`, `documents/list.html` (markup + JS row template), `coordinator/dashboard.html`. Parity with Vue document downloads. Vitest regression: `StaffAgreementDocuments.spec.js` (row with `file`). |
+| Manual QA **MQ-009**: applications list program title + API cache isolation | `frontend-vue`, `exchange` | Implemented | 2026-04-09 | SPA list/detail use `program_name || program?.name` (`ApplicationSerializer` exposes FK `program` + `program_name`). `ApplicationViewSet` `cache_api_response` uses `key_func` scoped by user + path (list) / user + pk (retrieve). Tests: `test_application_viewset_cache_keys.py`, `test_list_applications_includes_program_name`, Vitest `Applications.spec.js` / `ApplicationDetail.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
@@ -197,5 +198,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (**Open QA:** **MQ-009** / **MQ-010**; loop: legacy Django + staff agreement-doc download links `rel="noopener noreferrer"`). Prior: **MQ-008** (`LogoutView` / Pinia logout). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (**Open QA:** **MQ-010** only; loop: **MQ-009** resolved — list `program_name` + per-user application list/retrieve cache keys). Prior: **MQ-008** (`LogoutView` / Pinia logout). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
