@@ -98,7 +98,7 @@
                     v-model="newPresetName"
                     type="text"
                     class="form-control form-control-sm"
-                    :placeholder="t('documentsPage.presetNamePlaceholder')"
+                    :placeholder="t('calendarPage.presetNamePlaceholder')"
                     data-testid="calendar-preset-name"
                   >
                 </div>
@@ -114,12 +114,12 @@
                 <div class="form-check mb-0">
                   <input id="cal-preset-def" v-model="saveAsDefault" class="form-check-input" type="checkbox">
                   <label class="form-check-label small" for="cal-preset-def">{{
-                    t('documentsPage.presetDefaultCheckbox')
+                    t('calendarPage.presetDefaultCheckbox')
                   }}</label>
                 </div>
               </div>
               <div v-if="savedPresets.length" class="small">
-                <span class="text-muted me-2">{{ t('documentsPage.presetSavedPrefix') }}</span>
+                <span class="text-muted me-2">{{ t('calendarPage.presetSavedPrefix') }}</span>
                 <span
                   v-for="p in savedPresets"
                   :key="p.id"
@@ -129,15 +129,15 @@
                   <i
                     v-if="p.is_default"
                     class="bi bi-star-fill text-warning"
-                    :title="t('documentsPage.presetDefaultTitle')"
-                    :aria-label="t('documentsPage.presetDefaultAria')"
+                    :title="t('calendarPage.presetDefaultTitle')"
+                    :aria-label="t('calendarPage.presetDefaultAria')"
                   ></i>
                   <button
                     v-else
                     type="button"
                     class="btn btn-link btn-sm p-0 text-secondary"
-                    :title="t('documentsPage.presetSetDefaultTitle')"
-                    :aria-label="t('documentsPage.presetSetDefaultAria')"
+                    :title="t('calendarPage.presetSetDefaultTitle')"
+                    :aria-label="t('calendarPage.presetSetDefaultAria')"
                     @click="setDefaultPreset(p)"
                   >
                     <i class="bi bi-star"></i>
@@ -145,8 +145,8 @@
                   <button
                     type="button"
                     class="btn btn-link btn-sm p-0 text-danger"
-                    :title="t('documentsPage.presetRemoveTitle')"
-                    :aria-label="t('documentsPage.presetRemoveAria')"
+                    :title="t('calendarPage.presetRemoveTitle')"
+                    :aria-label="t('calendarPage.presetRemoveAria')"
                     @click="deletePreset(p)"
                   >
                     <i class="bi bi-trash"></i>

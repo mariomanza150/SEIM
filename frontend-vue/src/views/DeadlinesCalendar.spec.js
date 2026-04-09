@@ -62,5 +62,8 @@ describe('DeadlinesCalendar', () => {
     expect(wrapper.find('[data-testid="calendar-empty"]').text()).toContain(
       'No events in this range with the current filters',
     )
+    expect(wrapper.find('[data-testid="calendar-preset-name"]').attributes('placeholder')).toBe(
+      i18n.global.t('calendarPage.presetNamePlaceholder'),
+    )
   })
 })

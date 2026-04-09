@@ -370,7 +370,16 @@
     "loadError": "Could not load calendar events.",
     "emptyRange": "No events in this range with the current filters.",
     "copiedToast": "Copied to clipboard",
-    "copyErrorToast": "Could not copy"
+    "copyErrorToast": "Could not copy",
+    "presetNamePlaceholder": "Preset name",
+    "presetDefaultCheckbox": "Default when opening this page",
+    "presetSavedPrefix": "Saved:",
+    "presetDefaultTitle": "Default preset",
+    "presetDefaultAria": "Default preset",
+    "presetSetDefaultTitle": "Set as default",
+    "presetSetDefaultAria": "Set as default",
+    "presetRemoveTitle": "Remove preset",
+    "presetRemoveAria": "Remove preset"
   },
   "programComparePage": {
     "breadcrumbAria": "Breadcrumb",

@@ -370,7 +370,16 @@
     "loadError": "No se pudieron cargar los eventos del calendario.",
     "emptyRange": "No hay eventos en este rango con los filtros actuales.",
     "copiedToast": "Copiado al portapapeles",
-    "copyErrorToast": "No se pudo copiar"
+    "copyErrorToast": "No se pudo copiar",
+    "presetNamePlaceholder": "Nombre del preset",
+    "presetDefaultCheckbox": "Predeterminado al abrir esta página",
+    "presetSavedPrefix": "Guardados:",
+    "presetDefaultTitle": "Preset predeterminado",
+    "presetDefaultAria": "Preset predeterminado",
+    "presetSetDefaultTitle": "Marcar como predeterminado",
+    "presetSetDefaultAria": "Marcar como predeterminado",
+    "presetRemoveTitle": "Eliminar preset",
+    "presetRemoveAria": "Eliminar preset"
   },
   "programComparePage": {
     "breadcrumbAria": "Migas de pan",
