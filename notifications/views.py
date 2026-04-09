@@ -2,11 +2,14 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from core.cache import cache_api_response
 
 from .models import Notification, NotificationPreference, NotificationType, Reminder
+from .routing_reference import build_notification_routing_reference
 from .serializers import (
     NotificationPreferenceSerializer,
     NotificationSerializer,
@@ -16,6 +19,27 @@ from .serializers import (
 from .services import NotificationService
 
 # Create your views here.
+
+
+class NotificationRoutingReferenceView(APIView):
+    """
+    Read-only map of ``settings_category`` / digest / reminder routing to UserSettings fields.
+
+    Coordinators and admins only (for internal docs and future settings UI).
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        staff_ok = (
+            getattr(user, "is_superuser", False)
+            or user.has_role("coordinator")
+            or user.has_role("admin")
+        )
+        if not staff_ok:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        return Response(build_notification_routing_reference())
 
 
 class NotificationTypeViewSet(viewsets.ModelViewSet):

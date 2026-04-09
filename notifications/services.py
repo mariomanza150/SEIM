@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 # ``comments`` uses ``email_comments`` + ``inapp_comments`` (not document email).
 # ``programs`` uses ``email_programs`` + ``inapp_programs`` (not application in-app).
 # ``system`` uses ``email_system`` + ``inapp_system``.
-_SETTINGS_CATEGORY_CHANNELS = {
+# Maps ``settings_category`` to ``UserSettings`` field names (email, in-app).
+SETTINGS_CATEGORY_USER_FIELDS = {
     "applications": ("email_applications", "inapp_applications"),
     "documents": ("email_documents", "inapp_documents"),
     "comments": ("email_comments", "inapp_comments"),
@@ -42,7 +43,7 @@ def _resolve_notification_type_for_user_settings(
         s, _ = UserSettings.objects.get_or_create(user=user)
         email_ok, inapp_ok = s.email_system, s.inapp_system
     else:
-        fields = _SETTINGS_CATEGORY_CHANNELS.get(settings_category)
+        fields = SETTINGS_CATEGORY_USER_FIELDS.get(settings_category)
         if not fields:
             return requested
         from accounts.models import UserSettings

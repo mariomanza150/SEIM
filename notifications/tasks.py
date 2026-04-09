@@ -2,6 +2,19 @@ from celery import shared_task
 from django.core.mail import send_mail
 
 
+REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY = {
+    "application_deadline": "applications",
+    "document_deadline": "documents",
+    "program_start": "programs",
+    "program_end": "programs",
+    "custom": "programs",
+    # Legacy / shorthand values seen in older data or tests
+    "application": "applications",
+    "document": "documents",
+    "program": "programs",
+}
+
+
 def settings_category_for_reminder_event(event_type: str) -> str:
     """
     Map Reminder.event_type to NotificationService settings_category.
@@ -9,18 +22,7 @@ def settings_category_for_reminder_event(event_type: str) -> str:
     Uses the same UserSettings groups as other transactional sends so deadline
     reminders honor application vs document vs program toggles.
     """
-    mapping = {
-        "application_deadline": "applications",
-        "document_deadline": "documents",
-        "program_start": "programs",
-        "program_end": "programs",
-        "custom": "programs",
-        # Legacy / shorthand values seen in older data or tests
-        "application": "applications",
-        "document": "documents",
-        "program": "programs",
-    }
-    return mapping.get(event_type, "programs")
+    return REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY.get(event_type, "programs")
 
 
 def get_user_email(user):

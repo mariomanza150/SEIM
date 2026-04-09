@@ -89,6 +89,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-09 | `Notifications.vue`: `notifications.*` (filters, empty, pagination aria, toasts) + reuse `route.names`, `documentsPage` / `applicationFormPage` / `applicationsPage` where applicable. Vitest: `Notifications.spec.js`. |
 | Vue i18n: DocumentUpload component | `frontend-vue` | Implemented | 2026-04-09 | `documentUpload.*` + `documentDetailPage.labelDocumentType`; `DocumentUpload.vue` on application detail. Vitest: `DocumentUpload.spec.js`. |
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-08 | Extended `notifications.*` + reuse `route.names`, `documentsPage` / `applicationsPage` / `applicationFormPage` / `reviewQueuePage`; `Notifications.vue` filters, list, empty/loading/error, pagination, mark-read + toasts, locale-relative dates (`timeDaysAgo`). Vitest: `Notifications.spec.js`. |
+| Staff notification routing reference API | `notifications`, `api`, `seim` | Implemented | 2026-04-09 | Read-only `GET /api/notifications/routing-reference/` (`NotificationRoutingReferenceView`): JSON `settings_categories`, reminder `event_type` → category map, digest summary, `schema_version`; coordinator/admin/superuser only. `notifications/routing_reference.py` (`build_notification_routing_reference`). `SETTINGS_CATEGORY_USER_FIELDS` on `NotificationService`. Tests: `tests/integration/api/test_notification_routing_reference_api.py`. **`seim/urls.py`:** Wagtail URL imports are conditional on `apps.is_installed("wagtail")` so `seim.settings.test` (Wagtail stripped) can load the root URLconf and use `reverse()` for API integration tests. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
@@ -122,7 +123,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings channel matrix** on transactional sends and on **digests** (`settings_category=system`). Deadline reminders map `event_type` to the right group. Remaining: custom templates, admin per-event matrix UI, further role routing. |
+| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings channel matrix** on transactional sends and on **digests** (`settings_category=system`). Deadline reminders map `event_type` to the right group. Staff **read-only routing reference** JSON for UI/docs (`GET /api/notifications/routing-reference/`). Remaining: custom templates, **editable** admin per-event matrix UI, further role routing. |
 | Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets if a dedicated **analytics** staff UI is added later (review queue, agreements, documents, programs, and **calendar** are covered). |
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
@@ -167,5 +168,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: digests use system UserSettings channels)*  
+*Last updated: 2026-04-09 (loop: staff notification routing-reference API + conditional Wagtail URLs for test settings)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

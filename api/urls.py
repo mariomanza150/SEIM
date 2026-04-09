@@ -47,6 +47,7 @@ from exchange.views import (
 )
 from notifications.views import (
     NotificationPreferenceViewSet,
+    NotificationRoutingReferenceView,
     NotificationTypeViewSet,
     NotificationViewSet,
     ReminderViewSet,
@@ -104,6 +105,11 @@ urlpatterns = [
         "calendar/subscribe.ics",
         calendar_subscribe_ics,
         name="calendar-subscribe-ics",
+    ),
+    path(
+        "notifications/routing-reference/",
+        NotificationRoutingReferenceView.as_view(),
+        name="notification-routing-reference",
     ),
     path("", include(router.urls)),
     path("analytics/dashboard/", analytics_dashboard_api, name="analytics-dashboard"),
