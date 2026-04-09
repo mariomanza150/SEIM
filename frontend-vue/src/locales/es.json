@@ -526,8 +526,6 @@
     "loadingList": "Cargando solicitudes…",
     "loadError": "No se pudieron cargar las solicitudes. Inténtalo de nuevo.",
     "loadToastError": "Error al cargar las solicitudes",
-    "created": "Creada",
-    "submitted": "Enviada",
     "viewDetails": "Ver detalles",
     "paginationAria": "Paginación de solicitudes",
     "previous": "Anterior",

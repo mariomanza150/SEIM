@@ -50,6 +50,7 @@ describe('Applications', () => {
             id: '1',
             status: 'draft',
             created_at: '2026-01-10T12:00:00Z',
+            submitted_at: '2026-01-11T12:00:00Z',
             program: { name: 'Test Program', institution: 'Uni' },
           },
         ],
@@ -67,6 +68,7 @@ describe('Applications', () => {
     await flushPromises()
     expect(wrapper.text()).toContain('Test Program')
     expect(wrapper.text()).toContain('Draft')
+    expect(wrapper.text()).toContain(`${i18n.global.t('applicationDetailPage.submitted')}:`)
     expect(wrapper.text()).toContain('View details')
     expect(wrapper.find('[data-testid="application-detail-link"]').exists()).toBe(true)
   })
@@ -99,5 +101,6 @@ describe('Applications', () => {
     const na = i18n.global.t('applicationDetailPage.notAvailable')
     expect(wrapper.text().split(na).length - 1).toBeGreaterThanOrEqual(2)
     expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.status.submitted'))
+    expect(wrapper.text()).toContain(`${i18n.global.t('applicationDetailPage.created')}:`)
   })
 })

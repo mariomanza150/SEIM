@@ -526,8 +526,6 @@
     "loadingList": "Loading applications…",
     "loadError": "Failed to load applications. Please try again.",
     "loadToastError": "Failed to load applications",
-    "created": "Created",
-    "submitted": "Submitted",
     "viewDetails": "View details",
     "paginationAria": "Applications pagination",
     "previous": "Previous",

@@ -119,11 +119,11 @@
                 <div class="row small text-muted mb-3">
                   <div class="col-6">
                     <i class="bi bi-calendar me-1"></i>
-                    {{ t('applicationsPage.created') }}: {{ formatDate(application.created_at) }}
+                    {{ t('applicationDetailPage.created') }}: {{ formatDate(application.created_at) }}
                   </div>
                   <div v-if="application.submitted_at" class="col-6">
                     <i class="bi bi-send me-1"></i>
-                    {{ t('applicationsPage.submitted') }}: {{ formatDate(application.submitted_at) }}
+                    {{ t('applicationDetailPage.submitted') }}: {{ formatDate(application.submitted_at) }}
                   </div>
                 </div>
 
