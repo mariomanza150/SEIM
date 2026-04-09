@@ -186,6 +186,32 @@
       "other": "Otro"
     }
   },
+  "calendarPage": {
+    "breadcrumbAria": "Migas de pan",
+    "pageSubtitle": "Fechas de programa, ventanas de solicitud, tus solicitudes y (para personal) fin de convenios desde la API de calendario de SEIM.",
+    "subscribeHeading": "Suscribirse (ICS)",
+    "subscribeBody": "Enlace privado para Google Calendar, Apple Calendar, etc. Mismos eventos que «todos los tipos» aquí (~90 días atrás–730 días adelante). No comparta la URL.",
+    "subscribeLoading": "Cargando enlace…",
+    "subscribeLabelHttps": "HTTPS (pegar / importar por URL)",
+    "subscribeLabelWebcal": "Webcal (suscripción en un clic)",
+    "copy": "Copiar",
+    "subscribeLoadError": "No se pudo cargar el enlace de suscripción.",
+    "rangeFrom": "Desde",
+    "rangeTo": "Hasta",
+    "refresh": "Actualizar",
+    "showLabel": "Mostrar",
+    "showProgramRun": "Fechas de ejecución del programa",
+    "showApplyWindows": "Ventanas de solicitud / plazos",
+    "showApplications": "Solicitudes",
+    "showAgreementsStaff": "Convenios (personal)",
+    "savedViewsLabel": "Vistas guardadas",
+    "saveView": "Guardar vista",
+    "loading": "Cargando…",
+    "loadError": "No se pudieron cargar los eventos del calendario.",
+    "emptyRange": "No hay eventos en este rango con los filtros actuales.",
+    "copiedToast": "Copiado al portapapeles",
+    "copyErrorToast": "No se pudo copiar"
+  },
   "dashboard": {
     "mainNavAria": "Navegación principal",
     "toggleNav": "Mostrar u ocultar menú",

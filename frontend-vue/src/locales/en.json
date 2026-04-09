@@ -186,6 +186,32 @@
       "other": "Other"
     }
   },
+  "calendarPage": {
+    "breadcrumbAria": "Breadcrumb",
+    "pageSubtitle": "Program dates, application windows, your applications, and (for staff) agreement end dates from the SEIM calendar API.",
+    "subscribeHeading": "Subscribe (ICS)",
+    "subscribeBody": "Private link for Google Calendar, Apple Calendar, etc. Same events as “all types” here (~90d past–730d ahead). Do not share the URL.",
+    "subscribeLoading": "Loading link…",
+    "subscribeLabelHttps": "HTTPS (paste / import by URL)",
+    "subscribeLabelWebcal": "Webcal (one-click subscribe)",
+    "copy": "Copy",
+    "subscribeLoadError": "Could not load subscribe link.",
+    "rangeFrom": "From",
+    "rangeTo": "To",
+    "refresh": "Refresh",
+    "showLabel": "Show",
+    "showProgramRun": "Program run dates",
+    "showApplyWindows": "Apply windows / deadlines",
+    "showApplications": "Applications",
+    "showAgreementsStaff": "Agreements (staff)",
+    "savedViewsLabel": "Saved views",
+    "saveView": "Save view",
+    "loading": "Loading…",
+    "loadError": "Could not load calendar events.",
+    "emptyRange": "No events in this range with the current filters.",
+    "copiedToast": "Copied to clipboard",
+    "copyErrorToast": "Could not copy"
+  },
   "dashboard": {
     "mainNavAria": "Main navigation",
     "toggleNav": "Toggle navigation",
