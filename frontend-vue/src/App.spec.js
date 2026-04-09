@@ -79,6 +79,7 @@ describe('App shell accessibility', () => {
     const main = wrapper.find('#main-content')
     expect(main.exists()).toBe(true)
     expect(main.attributes('tabindex')).toBe('-1')
+    expect(main.attributes('aria-busy')).toBeUndefined()
     expect(main.find('[data-testid="rv"]').exists()).toBe(true)
   })
 

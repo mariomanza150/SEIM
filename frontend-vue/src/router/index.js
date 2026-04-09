@@ -8,6 +8,7 @@ import { announceRouteNavigation, focusMainContent } from '@/utils/a11y'
 import i18n from '@/i18n'
 import { resolveDocumentTitle, syncAppSocialMeta, syncCanonicalLink } from '@/utils/documentTitle'
 import { resolveAuthenticatedNavigation } from '@/router/authNavigation'
+import { routeBusy } from '@/router/routeBusy'
 
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
@@ -212,6 +213,7 @@ const router = createRouter({
 
 // Navigation Guards
 router.beforeEach(async (to, from, next) => {
+  routeBusy.value = true
   const authStore = useAuthStore()
 
   // Normalize trailing slashes - remove trailing slash for consistency
@@ -252,7 +254,14 @@ router.beforeEach(async (to, from, next) => {
 router.afterEach((to) => {
   announceRouteNavigation(to)
   nextTick(() => {
+    routeBusy.value = false
     focusMainContent()
+  })
+})
+
+router.onError(() => {
+  nextTick(() => {
+    routeBusy.value = false
   })
 })
 

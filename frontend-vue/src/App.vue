@@ -7,7 +7,7 @@
     aria-live="polite"
     aria-atomic="true"
   />
-  <main id="main-content" tabindex="-1">
+  <main id="main-content" tabindex="-1" :aria-busy="routeBusy ? 'true' : undefined">
     <router-view />
   </main>
   <ToastContainer />
@@ -22,6 +22,7 @@ import api from '@/services/api'
 import { useNotificationWebSocket } from '@/services/websocket'
 import { applyUiPreferences, clearUiPreferences, readStoredUiPreferences } from '@/services/uiPreferences'
 import router from '@/router'
+import { routeBusy } from '@/router/routeBusy'
 import { syncAppMetaDescription, syncAppSocialMeta, syncCanonicalLink } from '@/utils/documentTitle'
 import ToastContainer from '@/components/ToastContainer.vue'
 

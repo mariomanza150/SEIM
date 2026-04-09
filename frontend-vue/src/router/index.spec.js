@@ -4,6 +4,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import router from './index.js'
+import { routeBusy } from './routeBusy'
 
 const { mockAxios } = vi.hoisted(() => ({
   mockAxios: {
@@ -29,6 +30,7 @@ const profileStudent = {
 
 describe('router beforeEach + resolveAuthenticatedNavigation (MQ-014)', () => {
   beforeEach(async () => {
+    routeBusy.value = false
     mockAxios.get.mockResolvedValue({ data: profileStudent })
     localStorage.clear()
     localStorage.setItem('access_token', 'test-jwt')
@@ -39,6 +41,14 @@ describe('router beforeEach + resolveAuthenticatedNavigation (MQ-014)', () => {
   it('redirects student to Applications when cold-navigating to a staff-only route', async () => {
     await router.push({ name: 'NotificationRouting' })
     expect(router.currentRoute.value.name).toBe('Applications')
+  })
+
+  it('clears routeBusy after navigation completes', async () => {
+    expect(routeBusy.value).toBe(false)
+    const p = router.push({ name: 'Login' })
+    // During async navigation, busy may be true until afterEach runs
+    await p
+    expect(routeBusy.value).toBe(false)
   })
 
   it('allows coordinator to reach staff-only route after checkAuth', async () => {
