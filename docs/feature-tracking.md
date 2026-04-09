@@ -45,7 +45,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None currently assigned_ |  |  |  |  |
+| Saved searches in Vue review queue | `frontend-vue`, `exchange`, `api` | In progress | 2026-04-08 | — |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -82,7 +82,7 @@ _All Priority 1 items in this subsection are implemented above._
 |---------|--------|-------|
 | Coordinator workload dashboard and SLA tracking | `analytics`, `exchange`, `frontend-vue` | Show review volume, turnaround times, pending bottlenecks, and coordinator workload distribution for operational planning. |
 | Advanced notification rules, digests, and reminder scheduling | `notifications`, `accounts`, `admin UI` | Add configurable digest delivery, richer reminder cadences, and role-specific notification rules beyond the current event-based alerts. |
-| Saved searches and staff review presets | `frontend-vue`, `exchange`, `documents` | Allow coordinators and admins to save common filters for applications, agreements, and document review queues. |
+| Saved searches (agreements / document queues) | `frontend-vue`, `exchange`, `documents` | Extend preset saving beyond the Vue application review queue to agreements and document review UIs. |
 | Export reports to PDF/Excel | `analytics`, `admin UI` | CSV export is now available through `/api/analytics/export/`; richer PDF/Excel export remains a planned enhancement. |
 | Calendar integration for deadlines and milestones | `exchange`, `notifications`, `frontend-vue` | Surface application deadlines, interview dates, and agreement expirations in a calendar view with export/sync options. |
 
