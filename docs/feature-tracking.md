@@ -80,7 +80,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ |  |  |  |  |
+| Vue i18n: Coordinator workload view | `frontend-vue` | In progress | 2026-04-09 | — |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -114,7 +114,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Coordinator review queue, `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: other staff views (workload, agreements, calendar, compare, …), Notifications/Profile, stragglers. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Coordinator review queue, `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. **In progress:** Coordinator workload. Remaining: agreements, calendar, compare, …, Notifications/Profile, stragglers. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -154,5 +154,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (Vue i18n Coordinator review queue)*  
+*Last updated: 2026-04-09 (Vue i18n Coordinator workload — in progress)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
