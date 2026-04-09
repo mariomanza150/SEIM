@@ -86,7 +86,7 @@ class CacheManager:
 
                 # Compress data if it's large
                 if len(str(data)) > 1000:
-                    data = json.dumps(data, separators=(",", ":"))
+                    data = json.dumps(data, separators=(",", ":"), default=str)
 
             return cache.set(key, data, timeout)
         except Exception as e:

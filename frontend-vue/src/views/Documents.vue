@@ -29,7 +29,7 @@
               <select v-model="filters.application" class="form-select" @change="fetchDocuments">
                 <option value="">{{ t('documentsPage.applicationOptionAll') }}</option>
                 <option v-for="app in applications" :key="app.id" :value="app.id">
-                  {{ app.program?.name || app.id }}
+                  {{ app.program_name || app.program?.name || app.id }}
                 </option>
               </select>
             </div>
