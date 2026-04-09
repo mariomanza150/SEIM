@@ -82,7 +82,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: Staff agreement documents view | `frontend-vue` | Implemented | 2026-04-08 | `staffAgreementDocumentsPage.*` + reuse `documentsPage` (presets, clear, pagination, loading spinner, download aria) + `exchangeAgreementsPage` (search/sort labels, agreement “Any”); `route.names.StaffAgreementDocuments`; category enum keys; locale dates. Vitest: `StaffAgreementDocuments.spec.js`. |
 | Vue i18n: Program compare view | `frontend-vue` | Implemented | 2026-04-09 | `programComparePage.*` + `route.names` + `applicationsPage.newApplication` (CTA); reuse `reviewQueuePage.emDash`; locale `formatDate`. Vitest: `ProgramCompare.spec.js` (loading spinner aria). |
 | Vue i18n: Profile view | `frontend-vue` | Implemented | 2026-04-09 | `profilePage.*` in `en.json` / `es.json`; reuse `route.names.Profile` / `Dashboard`, `login.emailLabel`, `applicationFormPage.cancel` / `language` / `gpaPlaceholder` / `languagePlaceholder`, `documentDetailPage.breadcrumbAria`, `documentsPage.loadingSpinner`; `Profile.vue` breadcrumbs, form, tip card, save/load toasts, spinner `aria-label`. Vitest: `Profile.spec.js`. |
-| Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-09 | `Notifications.vue`: `notifications.*` (filters, empty, pagination aria, toasts) + reuse `route.names`, `documentsPage` / `applicationFormPage` / `applicationsPage` where applicable. Optional follow-up: dedicated `Notifications.spec.js`. |
+| Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-09 | `Notifications.vue`: `notifications.*` (filters, empty, pagination aria, toasts) + reuse `route.names`, `documentsPage` / `applicationFormPage` / `applicationsPage` where applicable. Vitest: `Notifications.spec.js`. |
 | Vue i18n: DocumentUpload component | `frontend-vue` | Implemented | 2026-04-09 | `documentUpload.*` + `documentDetailPage.labelDocumentType`; `DocumentUpload.vue` on application detail. Vitest: `DocumentUpload.spec.js`. |
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-08 | Extended `notifications.*` + reuse `route.names`, `documentsPage` / `applicationsPage` / `applicationFormPage` / `reviewQueuePage`; `Notifications.vue` filters, list, empty/loading/error, pagination, mark-read + toasts, locale-relative dates (`timeDaysAgo`). Vitest: `Notifications.spec.js`. |
 
@@ -123,7 +123,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Major routed views i18n’d, including Notifications page, Profile, DocumentUpload, compare, calendars, staff lists, application flows (see IMPLEMENTED rows). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). **Optional:** `Notifications.spec.js` for full-page regression. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Major routed views i18n’d, including Notifications page (`Notifications.spec.js`), Profile, DocumentUpload, compare, calendars, staff lists, application flows (see IMPLEMENTED rows). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -163,5 +163,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (Vue i18n Notifications full page)*  
+*Last updated: 2026-04-09 (Vue i18n DocumentUpload + Program compare CTA note)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

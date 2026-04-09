@@ -2,19 +2,20 @@
   <div class="document-upload">
     <div class="card">
       <div class="card-header">
-        <h6 class="mb-0"><i class="bi bi-cloud-upload me-2"></i>Upload Document</h6>
+        <h6 class="mb-0"><i class="bi bi-cloud-upload me-2" aria-hidden="true"></i>{{ t('documentUpload.cardTitle') }}</h6>
       </div>
       <div class="card-body">
         <form @submit.prevent="handleSubmit">
           <div class="mb-3">
-            <label class="form-label">Document Type <span class="text-danger">*</span></label>
+            <label class="form-label">{{ t('documentDetailPage.labelDocumentType') }} <span class="text-danger">*</span></label>
             <select
               v-model="form.type"
               class="form-select"
               :class="{ 'is-invalid': errors.type }"
               required
+              data-testid="document-type-select"
             >
-              <option value="">-- Select Type --</option>
+              <option value="">{{ t('documentUpload.selectTypePlaceholder') }}</option>
               <option v-for="dt in documentTypes" :key="dt.id" :value="dt.id">
                 {{ dt.name }}
               </option>
@@ -23,7 +24,7 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label">File <span class="text-danger">*</span></label>
+            <label class="form-label">{{ t('documentUpload.fileLabel') }} <span class="text-danger">*</span></label>
             <input
               ref="fileInput"
               type="file"
@@ -31,9 +32,10 @@
               :class="{ 'is-invalid': errors.file }"
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
               @change="onFileChange"
+              data-testid="document-file-input"
             />
             <div v-if="errors.file" class="invalid-feedback">{{ errors.file }}</div>
-            <div class="form-text">Accepted: PDF, DOC, DOCX, JPG, PNG (max 10MB)</div>
+            <div class="form-text">{{ t('documentUpload.acceptedHint') }}</div>
           </div>
 
           <div v-if="uploadError" class="alert alert-danger small">
@@ -44,13 +46,14 @@
             type="submit"
             class="btn btn-primary w-100"
             :disabled="uploading || !form.type || !form.file"
+            data-testid="document-upload-btn"
           >
             <span v-if="uploading">
-              <span class="spinner-border spinner-border-sm me-2"></span>
-              Uploading...
+              <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+              {{ t('documentUpload.uploading') }}
             </span>
             <span v-else>
-              <i class="bi bi-cloud-upload me-2"></i>Upload
+              <i class="bi bi-cloud-upload me-2" aria-hidden="true"></i>{{ t('documentUpload.submit') }}
             </span>
           </button>
         </form>
@@ -61,8 +64,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
+
+const { t } = useI18n()
 
 const props = defineProps({
   applicationId: {
@@ -91,7 +97,7 @@ async function fetchDocumentTypes() {
     documentTypes.value = response.data.results || response.data
   } catch (err) {
     console.error('Failed to fetch document types:', err)
-    errorToast('Failed to load document types')
+    errorToast(t('documentUpload.toastTypesError'))
   }
 }
 
@@ -107,11 +113,11 @@ async function handleSubmit() {
   uploadError.value = ''
 
   if (!form.value.type) {
-    errors.value.type = 'Please select a document type'
+    errors.value.type = t('documentUpload.typeRequired')
     return
   }
   if (!form.value.file) {
-    errors.value.file = 'Please select a file'
+    errors.value.file = t('documentUpload.fileRequired')
     return
   }
 
@@ -129,14 +135,15 @@ async function handleSubmit() {
       },
     })
 
-    success('Document uploaded successfully!')
+    success(t('documentUpload.toastSuccess'))
     form.value = { type: '', file: null }
     if (fileInput.value) fileInput.value.value = ''
     emit('uploaded')
   } catch (err) {
     console.error('Upload failed:', err)
-    uploadError.value = err.response?.data?.file?.[0] || err.response?.data?.detail || 'Upload failed. Please try again.'
-    errorToast('Upload failed')
+    uploadError.value =
+      err.response?.data?.file?.[0] || err.response?.data?.detail || t('documentUpload.uploadErrorGeneric')
+    errorToast(t('documentUpload.toastFailed'))
   } finally {
     uploading.value = false
   }

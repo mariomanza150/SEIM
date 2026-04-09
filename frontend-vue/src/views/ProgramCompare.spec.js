@@ -59,4 +59,24 @@ describe('ProgramCompare', () => {
       'Choose at least two programs',
     )
   })
+
+  it('uses locale-aware loading spinner label before fetch completes', async () => {
+    let resolveFetch
+    api.get.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveFetch = resolve
+        }),
+    )
+    const wrapper = mount(ProgramCompare, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    expect(wrapper.find('.spinner-border .visually-hidden').text()).toBe('Loading')
+    resolveFetch({ data: { results: [], next: null } })
+    await flushPromises()
+    expect(wrapper.find('.spinner-border').exists()).toBe(false)
+  })
 })
