@@ -189,6 +189,7 @@
     "digestCategory": "settings_category",
     "digestEmailGates": "Condiciones de correo",
     "digestInappField": "Campo en la aplicación",
+    "digestRecipientSummary": "Destinatarios (resumen)",
     "digestTypicalTriggers": "Comportamiento habitual",
     "apiAccessTitle": "Quién puede usar esta API",
     "apiAccessRoles": "Roles:",

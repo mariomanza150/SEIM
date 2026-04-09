@@ -189,6 +189,7 @@
     "digestCategory": "settings_category",
     "digestEmailGates": "Email gates",
     "digestInappField": "In-app field",
+    "digestRecipientSummary": "Recipients (digest)",
     "digestTypicalTriggers": "Typical behavior",
     "apiAccessTitle": "Who can call this API",
     "apiAccessRoles": "Roles:",

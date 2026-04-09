@@ -29,7 +29,7 @@ class TestNotificationRoutingReferenceAPI(APITestCase):
         self.authenticate_user(coordinator)
         response = self.client.get(self.url)
         self.assert_response_success(response)
-        self.assertEqual(response.data["schema_version"], 8)
+        self.assertEqual(response.data["schema_version"], 9)
         self.assertIn("coordinator", response.data["reference_api_access"]["roles_any"])
         cats = response.data["settings_categories"]
         self.assertIn("applications", cats)
@@ -55,6 +55,10 @@ class TestNotificationRoutingReferenceAPI(APITestCase):
         self.assertEqual(response.data["digest"]["settings_category"], "system")
         self.assertIn("typical_triggers", response.data["digest"])
         self.assertTrue(response.data["digest"]["typical_triggers"])
+        self.assertIn(
+            "digest job",
+            response.data["digest"]["recipient_summary"].lower(),
+        )
         routes = response.data["transactional_routes"]
         self.assertIsInstance(routes, list)
         self.assertGreaterEqual(len(routes), 10)

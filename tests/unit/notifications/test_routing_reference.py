@@ -12,7 +12,7 @@ from notifications.tasks import REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
 
 def test_build_notification_routing_reference_shape():
     data = build_notification_routing_reference()
-    assert data["schema_version"] == 8
+    assert data["schema_version"] == 9
     access = data["reference_api_access"]
     assert access["superuser"] is True
     assert "coordinator" in access["roles_any"]
@@ -35,6 +35,7 @@ def test_build_notification_routing_reference_shape():
     assert digest["settings_category"] == "system"
     assert "email_system" in digest["email_gates"]
     assert "Scheduled job" in digest["typical_triggers"]
+    assert "Each user individually" in digest["recipient_summary"]
     routes = data["transactional_routes"]
     assert len(routes) == len(TRANSACTIONAL_NOTIFICATION_ROUTES)
     keys = [r["route_key"] for r in routes]

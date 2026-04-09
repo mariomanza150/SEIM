@@ -79,6 +79,12 @@ DIGEST_TYPICAL_TRIGGERS = (
     "email requires email_system and email_notification_digest (and digest frequency not off)."
 )
 
+DIGEST_RECIPIENT_SUMMARY = (
+    "Each user individually when the digest job selects them: digest frequency not off, they have "
+    "unread in-app notifications to summarize, and at least one channel is allowed "
+    "(in-app via inapp_system; email via email_system plus email_notification_digest)."
+)
+
 # Mirrors ``NotificationRoutingReferenceView`` permission rules (for staff UI + API clients).
 REFERENCE_API_ACCESS: dict[str, object] = {
     "roles_any": ["coordinator", "admin"],
@@ -230,7 +236,7 @@ def build_notification_routing_reference() -> dict:
         key=lambda row: row["route_key"],
     )
     return {
-        "schema_version": 8,
+        "schema_version": 9,
         "reference_api_access": dict(REFERENCE_API_ACCESS),
         "settings_categories": categories,
         "transactional_routes": transactional,
@@ -244,5 +250,6 @@ def build_notification_routing_reference() -> dict:
             "email_gates": ["email_system", "email_notification_digest"],
             "inapp_user_settings_field": "inapp_system",
             "typical_triggers": DIGEST_TYPICAL_TRIGGERS,
+            "recipient_summary": DIGEST_RECIPIENT_SUMMARY,
         },
     }
