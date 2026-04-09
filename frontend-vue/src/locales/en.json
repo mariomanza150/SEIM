@@ -829,6 +829,7 @@
   "profilePage": {
     "breadcrumbAria": "Breadcrumb",
     "pageSubtitle": "Update your account and eligibility information for exchange programs.",
+    "loadingSpinner": "Loading",
     "loadingProfile": "Loading profile…",
     "accountSection": "Account",
     "firstName": "First name",

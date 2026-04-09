@@ -23,7 +23,7 @@
         <div
           class="spinner-border text-primary"
           role="status"
-          :aria-label="t('documentsPage.loadingSpinner')"
+          :aria-label="t('profilePage.loadingSpinner')"
         ></div>
         <p class="mt-3 text-muted">{{ t('profilePage.loadingProfile') }}</p>
       </div>

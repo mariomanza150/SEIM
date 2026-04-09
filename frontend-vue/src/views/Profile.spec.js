@@ -55,6 +55,28 @@ describe('Profile', () => {
     expect(wrapper.text()).toContain('Tip')
   })
 
+  it('uses profilePage.loadingSpinner on the loading state spinner', async () => {
+    let resolveGet
+    api.get.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveGet = resolve
+        }),
+    )
+    const wrapper = mount(Profile, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    const spinner = wrapper.find('.spinner-border')
+    expect(spinner.exists()).toBe(true)
+    expect(spinner.attributes('aria-label')).toBe(i18n.global.t('profilePage.loadingSpinner'))
+    resolveGet({ data: profilePayload })
+    await flushPromises()
+    expect(wrapper.find('.spinner-border').exists()).toBe(false)
+  })
+
   it('renders Spanish copy when locale is es', async () => {
     setAppLocale('es')
     const wrapper = mount(Profile, {

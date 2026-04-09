@@ -829,6 +829,7 @@
   "profilePage": {
     "breadcrumbAria": "Migas de pan",
     "pageSubtitle": "Actualiza los datos de tu cuenta y tu elegibilidad para programas de intercambio.",
+    "loadingSpinner": "Cargando",
     "loadingProfile": "Cargando perfil…",
     "accountSection": "Cuenta",
     "firstName": "Nombre",
