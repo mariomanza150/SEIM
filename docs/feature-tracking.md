@@ -78,7 +78,8 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue i18n: Applications list view | `frontend-vue` | Implemented | 2026-04-09 | `applicationsPage.*` + nested `status.*` in locales; `Applications.vue` filters, cards, pagination, empty state, errors/toasts, delete confirm; `formatStatus` / `formatDate` locale-aware; icon-only edit/delete `aria-label`. Vitest: `Applications.spec.js`. |
 | Vue i18n: Documents list view | `frontend-vue` | Implemented | 2026-04-09 | `documentsPage.*` in locales; `Documents.vue` student/staff copy, filters, presets UI, table, pagination, errors/toasts; locale-aware dates; `aria-label` / download titles. Vitest: `Documents.spec.js`. |
 | Vue i18n: Document detail view | `frontend-vue` | Implemented | 2026-04-09 | `documentDetailPage.*` in locales; `DocumentDetail.vue` breadcrumbs via `route.names`, preview/review/comments/staff actions, quick actions, toasts; locale-aware `formatDateTime`; preview context lines translated. Vitest: `DocumentDetail.spec.js`. |
-| Vue i18n: Application detail view | `frontend-vue` | Implemented | 2026-04-09 | `applicationDetailPage.*` + reuse `applicationsPage.status` / `readinessLabel` / `notAvailable`; `ApplicationDetail.vue` program/checklist/timeline/comments/sidebar/docs/coordinator review; locale dates; translated confirms/toasts. Vitest: `ApplicationDetail.spec.js` (+ i18n, timeline mock). |
+| Vue i18n: Application detail view | `frontend-vue` | Implemented | 2026-04-09 | `applicationDetailPage.*` (incl. nested `status.*`, `readinessLabel`, `notAvailable`); `ApplicationDetail.vue` program/checklist/timeline/comments/sidebar/docs/coordinator review; locale dates; translated confirms/toasts. Vitest: `ApplicationDetail.spec.js` (+ i18n, sparse program `notAvailable`). |
+| Vue i18n: Application detail status and N/A namespaced | `frontend-vue` | Implemented | 2026-04-09 | Detail page no longer uses `applicationsPage` for status labels, readiness label, dates N/A, or coordinator status options (all under `applicationDetailPage`). |
 | Vue i18n: Application form (new + edit) | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.*` in locales; `ApplicationForm.vue` breadcrumbs/headers, program filters & presets UI, window messages, dynamic form chrome, sidebar tips/requirements, actions; locale `formatDate` / duration; translated validation + toasts. Vitest: `ApplicationForm.spec.js` + i18n. |
 | Vue i18n: Application form program filter search placeholder | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.programSearchPlaceholder` (en/es); program filter search input in `ApplicationForm.vue` (was `applicationsPage.searchPlaceholder`). Vitest: `ApplicationForm.spec.js`. |
 | Vue i18n: Application form notAvailable for dates | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.notAvailable` (en/es); `formatDate` / `calculateDuration` in `ApplicationForm.vue` (was `applicationsPage.notAvailable`). Vitest: `ApplicationForm.spec.js` (missing program dates). |
@@ -112,7 +113,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Application detail namespaced status/N-A | `frontend-vue` | In progress | 2026-04-09 | — |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -186,5 +187,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Review queue filter i18n namespacing — completed)*  
+*Last updated: 2026-04-09 (loop: Application detail i18n namespacing — completed)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

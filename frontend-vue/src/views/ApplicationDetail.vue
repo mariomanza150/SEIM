@@ -44,7 +44,7 @@
             </h2>
             <p class="text-muted">
               <i class="bi bi-building me-1"></i>
-              {{ application.program?.institution || t('applicationsPage.notAvailable') }}
+              {{ application.program?.institution || t('applicationDetailPage.notAvailable') }}
             </p>
           </div>
           <div class="col-md-4 text-end">
@@ -66,7 +66,7 @@
             <div class="card border-0 shadow-sm">
               <div class="card-body py-3 d-flex flex-wrap align-items-center gap-3">
                 <div>
-                  <span class="text-muted small d-block">{{ t('applicationsPage.readinessLabel') }}</span>
+                  <span class="text-muted small d-block">{{ t('applicationDetailPage.readinessLabel') }}</span>
                   <span class="badge fs-6" :class="readinessLevelBadgeClass(application.readiness.level)">
                     {{ application.readiness.score }}%
                   </span>
@@ -109,11 +109,11 @@
                 <div class="row mb-3">
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('applicationDetailPage.labelCountry') }}</label>
-                    <p class="fw-bold">{{ application.program?.country || t('applicationsPage.notAvailable') }}</p>
+                    <p class="fw-bold">{{ application.program?.country || t('applicationDetailPage.notAvailable') }}</p>
                   </div>
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('applicationDetailPage.labelDuration') }}</label>
-                    <p class="fw-bold">{{ application.program?.duration || t('applicationsPage.notAvailable') }}</p>
+                    <p class="fw-bold">{{ application.program?.duration || t('applicationDetailPage.notAvailable') }}</p>
                   </div>
                 </div>
                 <div v-if="application.program?.description">
@@ -324,10 +324,10 @@
                   <label class="form-label small">{{ t('applicationDetailPage.changeStatus') }}</label>
                   <select v-model="reviewStatus" class="form-select form-select-sm">
                     <option value="">{{ t('applicationDetailPage.selectNewStatus') }}</option>
-                    <option value="under_review">{{ t('applicationsPage.status.under_review') }}</option>
-                    <option value="approved">{{ t('applicationsPage.status.approved') }}</option>
-                    <option value="rejected">{{ t('applicationsPage.status.rejected') }}</option>
-                    <option value="completed">{{ t('applicationsPage.status.completed') }}</option>
+                    <option value="under_review">{{ t('applicationDetailPage.status.under_review') }}</option>
+                    <option value="approved">{{ t('applicationDetailPage.status.approved') }}</option>
+                    <option value="rejected">{{ t('applicationDetailPage.status.rejected') }}</option>
+                    <option value="completed">{{ t('applicationDetailPage.status.completed') }}</option>
                   </select>
                 </div>
                 <button
@@ -643,14 +643,14 @@ function statusClass(status) {
 }
 
 function formatStatus(status) {
-  if (!status) return t('applicationsPage.status.unknown')
-  const key = `applicationsPage.status.${status}`
+  if (!status) return t('applicationDetailPage.status.unknown')
+  const key = `applicationDetailPage.status.${status}`
   if (te(key)) return t(key)
   return String(status).replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
 function formatDateTime(dateString) {
-  if (!dateString) return t('applicationsPage.notAvailable')
+  if (!dateString) return t('applicationDetailPage.notAvailable')
   const loc = locale.value === 'es' ? 'es' : 'en-US'
   const date = new Date(dateString)
   return date.toLocaleString(loc, {
@@ -697,7 +697,7 @@ function timelineEventHeading(event) {
   if (evtType === 'submitted') return t('applicationDetailPage.timeline.applicationSubmitted')
   if (evtType.startsWith('status_')) {
     const code = evtType.slice(7)
-    const statusKey = `applicationsPage.status.${code}`
+    const statusKey = `applicationDetailPage.status.${code}`
     const label = te(statusKey)
       ? t(statusKey)
       : code.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
@@ -707,7 +707,7 @@ function timelineEventHeading(event) {
   if (evtType === 'withdrawn') return t('applicationDetailPage.timeline.applicationWithdrawn')
   if (evtType === 'comment') return t('applicationDetailPage.timeline.commentRecorded')
   return (
-    evtType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || t('applicationsPage.status.unknown')
+    evtType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || t('applicationDetailPage.status.unknown')
   )
 }
 

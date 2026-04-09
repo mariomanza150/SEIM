@@ -702,6 +702,18 @@
     "labelInstitution": "Institution",
     "labelCountry": "Country",
     "labelDuration": "Duration",
+    "notAvailable": "N/A",
+    "readinessLabel": "Readiness",
+    "status": {
+      "unknown": "Unknown",
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "under_review": "Under review",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "completed": "Completed",
+      "waitlist": "Waitlist"
+    },
     "labelDescription": "Description",
     "requiredDocuments": "Required documents",
     "approvedFraction": "{approved} / {required} approved",

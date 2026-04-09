@@ -183,4 +183,40 @@ describe('ApplicationDetail', () => {
     expect(wrapper.text()).toContain('Internal note for reviewers')
     expect(wrapper.text()).toContain('Private')
   })
+
+  it('uses applicationDetailPage.notAvailable for missing program location fields', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            program: {
+              name: 'Sparse Program',
+              institution: '',
+              country: null,
+              duration: null,
+              description: 'Desc',
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/comments/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/timeline-events/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('Sparse Program')
+    })
+    const na = i18n.global.t('applicationDetailPage.notAvailable')
+    expect(wrapper.text().split(na).length - 1).toBeGreaterThanOrEqual(3)
+  })
 })
