@@ -24,6 +24,23 @@ export function syncThemeColorMeta(resolvedTheme) {
   )
 }
 
+/**
+ * `meta name="color-scheme"` — `auto` → `light dark`; forced light/dark match user setting.
+ * Keeps browser UI (scrollbars, form controls) aligned with theme preference.
+ */
+export function syncColorSchemeMeta(themePreference = 'auto') {
+  if (typeof document === 'undefined') return
+  let el = document.querySelector('meta[name="color-scheme"]')
+  if (!el) {
+    el = document.createElement('meta')
+    el.setAttribute('name', 'color-scheme')
+    document.head.appendChild(el)
+  }
+  const content =
+    themePreference === 'dark' ? 'dark' : themePreference === 'light' ? 'light' : 'light dark'
+  el.setAttribute('content', content)
+}
+
 export function readStoredUiPreferences() {
   if (typeof localStorage === 'undefined') return null
 
@@ -66,6 +83,7 @@ export function applyUiPreferences(settings = {}) {
   root.style.fontSize = FONT_SIZE_MAP[fontSize] || FONT_SIZE_MAP.normal
 
   syncThemeColorMeta(resolvedTheme)
+  syncColorSchemeMeta(themePreference)
 
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem(
@@ -104,4 +122,5 @@ export function clearUiPreferences() {
   }
 
   syncThemeColorMeta('light')
+  syncColorSchemeMeta('auto')
 }

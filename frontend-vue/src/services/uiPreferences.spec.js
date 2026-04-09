@@ -9,17 +9,23 @@ import {
 
 describe('uiPreferences', () => {
   let themeColorMeta
+  let colorSchemeMeta
 
   beforeEach(() => {
     themeColorMeta = document.createElement('meta')
     themeColorMeta.setAttribute('name', 'theme-color')
     themeColorMeta.setAttribute('content', THEME_COLOR_LIGHT)
     document.head.appendChild(themeColorMeta)
+    colorSchemeMeta = document.createElement('meta')
+    colorSchemeMeta.setAttribute('name', 'color-scheme')
+    colorSchemeMeta.setAttribute('content', 'light dark')
+    document.head.appendChild(colorSchemeMeta)
   })
 
   afterEach(() => {
     clearUiPreferences()
     themeColorMeta.remove()
+    colorSchemeMeta.remove()
   })
 
   it('applies theme, font size, and accessibility attributes to the document', () => {
@@ -62,5 +68,16 @@ describe('uiPreferences', () => {
     applyUiPreferences({ theme: 'dark', font_size: 'normal' })
     clearUiPreferences()
     expect(themeColorMeta.getAttribute('content')).toBe(THEME_COLOR_LIGHT)
+  })
+
+  it('syncs meta color-scheme with theme preference and resets on clear', () => {
+    applyUiPreferences({ theme: 'dark', font_size: 'normal' })
+    expect(colorSchemeMeta.getAttribute('content')).toBe('dark')
+    applyUiPreferences({ theme: 'light', font_size: 'normal' })
+    expect(colorSchemeMeta.getAttribute('content')).toBe('light')
+    applyUiPreferences({ theme: 'auto', font_size: 'normal' })
+    expect(colorSchemeMeta.getAttribute('content')).toBe('light dark')
+    clearUiPreferences()
+    expect(colorSchemeMeta.getAttribute('content')).toBe('light dark')
   })
 })

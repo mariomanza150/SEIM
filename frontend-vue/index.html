@@ -10,6 +10,8 @@
     />
     <!-- Default light chrome; shell script may switch for dark / stored theme. Match uiPreferences.js THEME_COLOR_*. -->
     <meta name="theme-color" content="#667eea" />
+    <!-- Hint scrollbars/form controls; shell + uiPreferences align with theme auto/light/dark. -->
+    <meta name="color-scheme" content="light dark" />
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -111,6 +113,9 @@
         var resolvedTheme = resolveShellTheme(themePref)
         var tc = document.querySelector('meta[name="theme-color"]')
         if (tc) tc.setAttribute('content', resolvedTheme === 'dark' ? THEME_DARK : THEME_LIGHT)
+        var cs =
+          themePref === 'dark' ? 'dark' : themePref === 'light' ? 'light' : 'light dark'
+        upsertMeta('name', 'color-scheme', cs)
       })()
     </script>
     

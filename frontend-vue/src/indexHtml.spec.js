@@ -34,6 +34,7 @@ describe('frontend-vue/index.html', () => {
     expect(html).toContain('id="seim-shell-bootstrap"')
     expect(html).toContain("var LOCALE_KEY = 'seim.ui_locale'")
     expect(html).toContain("var PREFS_KEY = 'seim_ui_preferences'")
+    expect(html).toContain('name="color-scheme"')
   })
 
   it('shell bootstrap sets lang and meta from localStorage before module loads', () => {
@@ -71,6 +72,7 @@ describe('frontend-vue/index.html', () => {
     expect(dom.window.document.querySelector('meta[name="theme-color"]').getAttribute('content')).toBe(
       THEME_COLOR_DARK,
     )
+    expect(dom.window.document.querySelector('meta[name="color-scheme"]').getAttribute('content')).toBe('dark')
   })
 
   it('shell bootstrap defaults theme-color to light when prefs absent', () => {
@@ -82,6 +84,29 @@ describe('frontend-vue/index.html', () => {
     expect(dom.window.document.querySelector('meta[name="theme-color"]').getAttribute('content')).toBe(
       THEME_COLOR_LIGHT,
     )
+    expect(dom.window.document.querySelector('meta[name="color-scheme"]').getAttribute('content')).toBe(
+      'light dark',
+    )
+  })
+
+  it('shell bootstrap sets color-scheme light when theme preference is light', () => {
+    const html = readFileSync(indexPath, 'utf8')
+    const dom = new JSDOM(html, {
+      runScripts: 'dangerously',
+      url: 'http://localhost/',
+      beforeParse(window) {
+        window.localStorage.setItem(
+          'seim_ui_preferences',
+          JSON.stringify({
+            theme: 'light',
+            font_size: 'normal',
+            high_contrast: false,
+            reduce_motion: false,
+          }),
+        )
+      },
+    })
+    expect(dom.window.document.querySelector('meta[name="color-scheme"]').getAttribute('content')).toBe('light')
   })
 
   it('shell bootstrap sets canonical and og:url from window.location', () => {
