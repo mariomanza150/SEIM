@@ -99,7 +99,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ | | | | |
+| Vue i18n/a11y: breadcrumb aria Applications + Documents | `frontend-vue` | In progress | 2026-04-09 | loop |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
