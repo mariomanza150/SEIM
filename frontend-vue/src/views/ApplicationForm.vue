@@ -1401,6 +1401,23 @@ function buildDynamicPayload(fieldList) {
   return payload
 }
 
+function applyServerValidationErrors(raw) {
+  if (raw === undefined || raw === null) return false
+  const data = raw
+  errors.value = typeof data === 'string' ? { program: [data] } : { ...data }
+  const df = typeof data === 'object' && data !== null ? data.dynamic_form : undefined
+  dynamicFormErrors.value = Array.isArray(df) ? df : (df ? [df] : [])
+  return true
+}
+
+async function scrollToFirstValidationAlert() {
+  await nextTick()
+  eligibilityAlertRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
+  if (!programIssueMessages.value.length) {
+    otherFieldErrorsRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
+  }
+}
+
 async function handleSubmit() {
   errors.value = {}
   dynamicFormErrors.value = []
@@ -1462,13 +1479,10 @@ async function handleSubmit() {
     }
   } catch (err) {
     console.error('Failed to save application:', err)
-    
-    if (err.response?.data) {
-      errors.value = err.response.data
-      dynamicFormErrors.value = Array.isArray(err.response.data.dynamic_form)
-        ? err.response.data.dynamic_form
-        : (err.response.data.dynamic_form ? [err.response.data.dynamic_form] : [])
+    const data = err.response?.data
+    if (applyServerValidationErrors(data)) {
       errorToast(t('applicationFormPage.toastFixErrors'))
+      await scrollToFirstValidationAlert()
     } else {
       errorToast(t('applicationFormPage.toastSaveFailed'))
     }
@@ -1523,17 +1537,9 @@ async function saveDraft() {
   } catch (err) {
     console.error('Failed to save draft:', err)
     const data = err.response?.data
-    if (data) {
-      errors.value = typeof data === 'string' ? { program: [data] } : { ...data }
-      dynamicFormErrors.value = Array.isArray(data.dynamic_form)
-        ? data.dynamic_form
-        : (data.dynamic_form ? [data.dynamic_form] : [])
+    if (applyServerValidationErrors(data)) {
       errorToast(t('applicationFormPage.toastFixErrors'))
-      await nextTick()
-      eligibilityAlertRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
-      if (!programIssueMessages.value.length) {
-        otherFieldErrorsRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
-      }
+      await scrollToFirstValidationAlert()
     } else {
       errorToast(t('applicationFormPage.toastDraftSaveFailed'))
     }

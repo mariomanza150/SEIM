@@ -151,6 +151,69 @@ describe('ApplicationForm', () => {
     expect(mockPush).toHaveBeenCalledWith({ name: 'ApplicationDetail', params: { id: 'application-1' } })
   })
 
+  it('surfaces API validation errors on create submit failure', async () => {
+    api.get.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({
+          data: { eligible: true, message: 'All eligibility requirements met' },
+        })
+      }
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-1',
+                name: 'Exchange Program',
+                description: 'A dynamic program',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+                application_form: 'form-1',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/application-forms/form-types/form-1/form_schema/') {
+        return Promise.resolve({
+          data: {
+            id: 'form-1',
+            name: 'Exchange Questions',
+            description: '',
+            schema: {
+              properties: {
+                motivation: { type: 'string', title: 'Motivation', maxLength: 500 },
+              },
+              required: ['motivation'],
+            },
+            ui_schema: {},
+            required_fields: ['motivation'],
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    api.post.mockRejectedValue({
+      response: { data: { program: 'You cannot submit yet.' } },
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="program-select"]').setValue('program-1')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="dynamic-field-motivation"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="dynamic-field-motivation"]').setValue('Motivation text here.')
+    await wrapper.find('[data-testid="application-form"]').trigger('submit.prevent')
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('You cannot submit yet.')
+    })
+    expect(mockErrorToast).toHaveBeenCalled()
+  })
+
   it('prefills dynamic form responses when editing an existing application', async () => {
     mockRoute.params = { id: 'application-1' }
 

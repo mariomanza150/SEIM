@@ -121,11 +121,12 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Legacy Django templates: `rel="noopener noreferrer"` on document `target="_blank"` links | `templates/frontend` | Implemented | 2026-04-09 | Student/coordinator SSR views: `applications/detail.html`, `documents/detail.html`, `documents/list.html` (markup + JS row template), `coordinator/dashboard.html`. Parity with Vue document downloads. Vitest regression: `StaffAgreementDocuments.spec.js` (row with `file`). |
 | Manual QA **MQ-009**: applications list program title + API cache isolation | `frontend-vue`, `exchange` | Implemented | 2026-04-09 | SPA list/detail use `program_name || program?.name` (`ApplicationSerializer` exposes FK `program` + `program_name`). `ApplicationViewSet` `cache_api_response` uses `key_func` scoped by user + path (list) / user + pk (retrieve). Tests: `test_application_viewset_cache_keys.py`, `test_list_applications_includes_program_name`, Vitest `Applications.spec.js` / `ApplicationDetail.spec.js`. |
 | Manual QA **MQ-010**: new application eligibility preview + draft save UX | `frontend-vue`, `exchange` | Implemented | 2026-04-09 | `ApplicationForm.vue`: debounced `GET /api/programs/:id/check_eligibility/` on program change (new app); assertive alert merges preview + flattened `program` / `non_field_errors` from save; select `aria-describedby` / `aria-invalid`. Draft `POST` already skips eligibility in `ApplicationSerializer.validate` (submit still enforces). Tests: `test_create_draft_application_when_student_not_eligible`, `ApplicationForm.spec.js` (eligibility alert). |
+| Vue **ApplicationForm**: submit failure — shared server validation + scroll (parity with save draft) | `frontend-vue` | Implemented | 2026-04-09 | `applyServerValidationErrors` + `scrollToFirstValidationAlert`; string `response.data` → `{ program: [msg] }`; `dynamic_form` → `dynamicFormErrors`; submit `catch` matches draft save. Vitest: `ApplicationForm.spec.js` (create submit failure surfaces `program` message). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ | | | | |
+| _None_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
