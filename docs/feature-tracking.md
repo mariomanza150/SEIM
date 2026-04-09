@@ -136,6 +136,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | `meta[name=color-scheme]` aligned with theme preference | `frontend-vue` | Implemented | 2026-04-09 | `syncColorSchemeMeta` in `uiPreferences.js`: `dark` / `light` / `light dark` for `auto`; wired from `applyUiPreferences` and `clearUiPreferences`. Default in `index.html`; shell bootstrap uses stored `theme` (not only resolved contrast). Vitest: `uiPreferences.spec.js`, `indexHtml.spec.js`. |
 | Default link-preview image (`og:image` / `twitter:image`) | `frontend-vue` | Implemented | 2026-04-09 | Absolute URL for `vite.svg` via `new URL('vite.svg', location.href)` in `syncAppSocialMeta` (`documentTitle.js`) and shell bootstrap; skips `about:` pages. Vitest: `documentTitle.spec.js`, `indexHtml.spec.js`. |
 | Manual QA **MQ-014:** staff-only routes after cold JWT restore | `frontend-vue` | Implemented | 2026-04-09 | `router/authNavigation.js` — `resolveAuthenticatedNavigation` runs `checkAuth()` then enforces `meta.staffReviewQueue` / `canUseStaffReviewQueue`; wired from `router/index.js` `beforeEach`. Vitest: `authNavigation.spec.js`, `router/index.spec.js` (guard integration). |
+| Django admin **UserSettings**: notification routing reference links | `accounts`, `notifications` | Implemented | 2026-04-09 | Collapsible fieldset + read-only `notification_routing_documentation` → `/seim/notification-routing` + `/api/docs/` (`rel="noopener noreferrer"`). Tests: `tests/unit/accounts/test_usersettings_admin.py`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
@@ -169,7 +170,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings channel matrix** on transactional sends and on **digests** (`settings_category=system`). Read-only API **`schema_version` 12** adds **`reminder_event_types_by_settings_category`** plus transactional grouped index, recipient-summary fields. Remaining: custom templates, **editable** admin per-event matrix UI. |
+| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings channel matrix** on transactional sends and on **digests** (`settings_category=system`). Read-only API **`schema_version` 12** adds **`reminder_event_types_by_settings_category`** plus transactional grouped index, recipient-summary fields. **Django admin:** `UserSettings` includes collapsed **Notification routing reference** links to SPA matrix + OpenAPI. Remaining: custom templates, **editable** admin per-event matrix UI. |
 | Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets if a dedicated **analytics** staff UI is added later (review queue, agreements, documents, programs, and **calendar** are covered). |
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
@@ -214,5 +215,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 — tracker sync: **MQ-014** documented under **IMPLEMENTED**; `router/index.spec.js` guard integration. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 — **UserSettings** admin routing-reference links; tests `test_usersettings_admin.py`. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
