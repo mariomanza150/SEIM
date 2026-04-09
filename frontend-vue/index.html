@@ -8,6 +8,7 @@
       name="description"
       content="SEIM — Student Exchange Information Management: applications, documents, deadlines, and notifications for exchange programs."
     />
+    <!-- Default light chrome; shell script may switch for dark / stored theme. Match uiPreferences.js THEME_COLOR_*. -->
     <meta name="theme-color" content="#667eea" />
     
     <!-- Favicon -->
@@ -15,22 +16,37 @@
     
     <!-- Default matches route.fallbackTitle / router before first navigation; script may set html[lang] + meta for es. -->
     <title>SEIM</title>
-    <script id="seim-shell-locale-bootstrap">
+    <script id="seim-shell-bootstrap">
       ;(function () {
-        var KEY = 'seim.ui_locale'
+        var LOCALE_KEY = 'seim.ui_locale'
+        var PREFS_KEY = 'seim_ui_preferences'
+        var THEME_LIGHT = '#667eea'
+        var THEME_DARK = '#111827'
         var META = {
           en:
             'SEIM — Student Exchange Information Management: applications, documents, deadlines, and notifications for exchange programs.',
           es:
             'SEIM — Gestión de información de intercambio estudiantil: solicitudes, documentos, plazos y notificaciones para programas de intercambio.',
         }
-        var stored = null
+        function resolveShellTheme(pref) {
+          if (pref === 'dark') return 'dark'
+          if (pref === 'light') return 'light'
+          if (
+            typeof window !== 'undefined'
+            && window.matchMedia
+            && window.matchMedia('(prefers-color-scheme: dark)').matches
+          ) {
+            return 'dark'
+          }
+          return 'light'
+        }
+        var storedLocale = null
         try {
-          stored = localStorage.getItem(KEY)
+          storedLocale = localStorage.getItem(LOCALE_KEY)
         } catch (e) {}
         var loc =
-          stored === 'es' || stored === 'en'
-            ? stored
+          storedLocale === 'es' || storedLocale === 'en'
+            ? storedLocale
             : (function () {
                 var lang = (typeof navigator !== 'undefined' && navigator.language ? navigator.language : '')
                   .toLowerCase()
@@ -40,6 +56,18 @@
         document.title = 'SEIM'
         var m = document.querySelector('meta[name="description"]')
         if (m) m.setAttribute('content', META[loc] || META.en)
+
+        var themePref = 'auto'
+        try {
+          var raw = localStorage.getItem(PREFS_KEY)
+          if (raw) {
+            var p = JSON.parse(raw)
+            if (p && (p.theme === 'dark' || p.theme === 'light' || p.theme === 'auto')) themePref = p.theme
+          }
+        } catch (e) {}
+        var resolvedTheme = resolveShellTheme(themePref)
+        var tc = document.querySelector('meta[name="theme-color"]')
+        if (tc) tc.setAttribute('content', resolvedTheme === 'dark' ? THEME_DARK : THEME_LIGHT)
       })()
     </script>
     
