@@ -2,7 +2,7 @@
 
 _Reconciled into a single canonical tracker on 2026-04-08. Update this file as the source of truth for feature state and priorities._
 
-_Manual browser QA defects and environment blockers: [`docs/manual-qa-issues.md`](manual-qa-issues.md)._
+_Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](manual-qa-issues.md)._
 
 ## 🟢 IMPLEMENTED ✓
 | Feature | Module | Status | Last Updated | Notes |
@@ -109,7 +109,7 @@ _Manual browser QA defects and environment blockers: [`docs/manual-qa-issues.md`
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ | | | | |
+| Vue i18n: Settings cancel button key | `frontend-vue` | In progress | 2026-04-09 | loop |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
