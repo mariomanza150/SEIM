@@ -484,6 +484,20 @@
     "toastFileUpdated": "Archivo actualizado",
     "toastReplaceError": "No se pudo reemplazar el archivo"
   },
+  "documentUpload": {
+    "cardTitle": "Subir documento",
+    "selectTypePlaceholder": "Seleccionar tipo",
+    "fileLabel": "Archivo",
+    "acceptedHint": "Aceptados: PDF, DOC, DOCX, JPG, PNG (máx. 10 MB)",
+    "uploading": "Subiendo…",
+    "submit": "Subir",
+    "toastTypesError": "No se pudieron cargar los tipos de documento",
+    "typeRequired": "Selecciona un tipo de documento",
+    "fileRequired": "Selecciona un archivo",
+    "toastSuccess": "Documento subido correctamente.",
+    "toastFailed": "Error al subir",
+    "uploadErrorGeneric": "Error al subir. Inténtalo de nuevo."
+  },
   "applicationDetailPage": {
     "breadcrumbAria": "Migas de pan",
     "loadingProgram": "Cargando…",
@@ -710,6 +724,7 @@
     "eligibilityIntro": "Algunos programas exigen un GPA mínimo y un nivel de idioma. Indícalos para poder solicitar plaza.",
     "gpaLabel": "GPA",
     "gpaScaleHelp": "Escala 0–4 (o equivalente de tu institución)",
+    "primaryLanguage": "Idioma principal",
     "primaryLanguageHelp": "Idioma principal que algunos programas usan para filtrar",
     "primaryLevelLabel": "Nivel del idioma principal (MCER)",
     "notSetOption": "— Sin definir —",

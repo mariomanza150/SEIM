@@ -484,6 +484,20 @@
     "toastFileUpdated": "File updated",
     "toastReplaceError": "Could not replace file"
   },
+  "documentUpload": {
+    "cardTitle": "Upload document",
+    "selectTypePlaceholder": "Select type",
+    "fileLabel": "File",
+    "acceptedHint": "Accepted: PDF, DOC, DOCX, JPG, PNG (max 10MB)",
+    "uploading": "Uploading…",
+    "submit": "Upload",
+    "toastTypesError": "Failed to load document types",
+    "typeRequired": "Please select a document type",
+    "fileRequired": "Please select a file",
+    "toastSuccess": "Document uploaded successfully.",
+    "toastFailed": "Upload failed",
+    "uploadErrorGeneric": "Upload failed. Please try again."
+  },
   "applicationDetailPage": {
     "breadcrumbAria": "Breadcrumb",
     "loadingProgram": "Loading…",
