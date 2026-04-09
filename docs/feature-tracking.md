@@ -79,7 +79,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ |  |  |  |  |
+| Vue i18n: Coordinator review queue | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -113,7 +113,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: `useStaffSavedPresets`, Application form (new + edit), Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: tables/modals, other stragglers. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **In progress:** Coordinator review queue (`CoordinatorReviewQueue.vue`). Shipped: `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: other staff tables/modals, stragglers. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -153,5 +153,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (Vue i18n useStaffSavedPresets)*  
+*Last updated: 2026-04-09 (Vue i18n Coordinator review queue — in progress)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
