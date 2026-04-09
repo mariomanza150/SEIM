@@ -12,7 +12,7 @@ from notifications.tasks import REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
 
 def test_build_notification_routing_reference_shape():
     data = build_notification_routing_reference()
-    assert data["schema_version"] == 7
+    assert data["schema_version"] == 8
     access = data["reference_api_access"]
     assert access["superuser"] is True
     assert "coordinator" in access["roles_any"]
@@ -71,3 +71,4 @@ def test_transactional_routes_settings_categories_valid():
         assert row["route_key"].strip()
         assert row["summary"].strip()
         assert row["source"].strip()
+        assert str(row["recipient_summary"]).strip()

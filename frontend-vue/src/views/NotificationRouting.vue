@@ -82,6 +82,7 @@
                 <tr>
                   <th scope="col">{{ t('notificationRoutingPage.colRouteKey') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colSettingsCategory') }}</th>
+                  <th scope="col">{{ t('notificationRoutingPage.colRecipientSummary') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colRouteSummary') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colRouteSource') }}</th>
                 </tr>
@@ -93,6 +94,7 @@
                     <code v-if="row.settings_category != null">{{ row.settings_category }}</code>
                     <span v-else class="text-muted">{{ t('notificationRoutingPage.emDash') }}</span>
                   </td>
+                  <td class="small text-muted">{{ row.recipient_summary || t('notificationRoutingPage.emDash') }}</td>
                   <td class="small text-muted">{{ row.summary }}</td>
                   <td class="small text-muted font-monospace">{{ row.source }}</td>
                 </tr>

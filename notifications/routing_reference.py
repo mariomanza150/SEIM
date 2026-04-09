@@ -91,10 +91,11 @@ REFERENCE_API_ACCESS: dict[str, object] = {
 
 # Documented transactional sends that use ``settings_category`` (or intentionally omit it).
 # Keep in sync with ``NotificationService.send_notification`` / bulk helpers in app code.
-TRANSACTIONAL_NOTIFICATION_ROUTES: list[dict[str, str | None]] = [
+TRANSACTIONAL_NOTIFICATION_ROUTES: list[dict[str, object]] = [
     {
         "route_key": "account_security_email",
         "settings_category": None,
+        "recipient_summary": "The affected end user only (email inbox).",
         "summary": (
             "Account lockout, email verification, password reset and change, registration welcome, "
             "deactivation — email-only flows that intentionally omit ``settings_category`` "
@@ -105,6 +106,10 @@ TRANSACTIONAL_NOTIFICATION_ROUTES: list[dict[str, str | None]] = [
     {
         "route_key": "agreement_expiration_alert",
         "settings_category": "system",
+        "recipient_summary": (
+            "Admins and coordinators (scoped to linked programs when configured; "
+            "otherwise all coordinators)."
+        ),
         "summary": (
             "Staff (admins / coordinators) notified when an agreement nears its end date; "
             "also subject to the agreement-expiration ``NotificationType`` preference when set."
@@ -114,6 +119,7 @@ TRANSACTIONAL_NOTIFICATION_ROUTES: list[dict[str, str | None]] = [
     {
         "route_key": "agreement_renewal_staff_bulk_in_app",
         "settings_category": None,
+        "recipient_summary": "All users with admin or coordinator role (in-app list).",
         "summary": (
             "Bulk in-app notices to admins and coordinators for renewal workflow events; "
             "no ``settings_category`` (not filtered by UserSettings notification groups)."
@@ -123,24 +129,28 @@ TRANSACTIONAL_NOTIFICATION_ROUTES: list[dict[str, str | None]] = [
     {
         "route_key": "application_status_update",
         "settings_category": "applications",
+        "recipient_summary": "The application student.",
         "summary": "Student notified when staff changes application status after submission.",
         "source": "exchange.services.ApplicationService.transition_status",
     },
     {
         "route_key": "application_submitted",
         "settings_category": "applications",
+        "recipient_summary": "The applicant (student) who submitted.",
         "summary": "Student confirmation when a draft application is submitted successfully.",
         "source": "exchange.services.ApplicationService.submit_application",
     },
     {
         "route_key": "application_waitlist_received",
         "settings_category": "applications",
+        "recipient_summary": "The applicant (student) placed on the waitlist.",
         "summary": "Student notified when submitted to a full program with waitlist enabled.",
         "source": "exchange.services.ApplicationService.submit_application",
     },
     {
         "route_key": "calendar_deadline_reminder",
         "settings_category": None,
+        "recipient_summary": "The user who owns the reminder (same user as ``Reminder.user``).",
         "summary": (
             "Per-user calendar/deadline reminders; effective ``settings_category`` depends on "
             "``Reminder.event_type`` (see reminder_event_type_to_settings_category)."
@@ -150,6 +160,9 @@ TRANSACTIONAL_NOTIFICATION_ROUTES: list[dict[str, str | None]] = [
     {
         "route_key": "document_replaced_staff",
         "settings_category": "documents",
+        "recipient_summary": (
+            "Assigned application coordinator, else up to ten program coordinators (no duplicate sends per user)."
+        ),
         "summary": (
             "Assigned coordinator or program coordinators notified when a student replaces "
             "a document file."
@@ -159,24 +172,28 @@ TRANSACTIONAL_NOTIFICATION_ROUTES: list[dict[str, str | None]] = [
     {
         "route_key": "document_resubmission_requested",
         "settings_category": "documents",
+        "recipient_summary": "The application student.",
         "summary": "Student notified when staff requests a document resubmission.",
         "source": "documents.services.DocumentService.request_resubmission",
     },
     {
         "route_key": "document_staff_comment_public",
         "settings_category": "comments",
+        "recipient_summary": "The application student (document owner context).",
         "summary": "Student notified when staff adds a public comment on their document.",
         "source": "documents.serializers.DocumentCommentSerializer.create",
     },
     {
         "route_key": "document_validation_rejected",
         "settings_category": "documents",
+        "recipient_summary": "The application student.",
         "summary": "Student notified when document validation result is invalid / not accepted.",
         "source": "documents.services.DocumentService.validate_document",
     },
     {
         "route_key": "notification_digest_unread_summary",
         "settings_category": "system",
+        "recipient_summary": "Each recipient user individually (digest run per user).",
         "summary": (
             "Scheduled digest summarizing unread in-app notifications; respects system email/in-app "
             "gates and digest frequency."
@@ -213,7 +230,7 @@ def build_notification_routing_reference() -> dict:
         key=lambda row: row["route_key"],
     )
     return {
-        "schema_version": 7,
+        "schema_version": 8,
         "reference_api_access": dict(REFERENCE_API_ACCESS),
         "settings_categories": categories,
         "transactional_routes": transactional,

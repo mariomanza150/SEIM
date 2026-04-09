@@ -175,6 +175,7 @@
     "transactionalRoutesTitle": "Transactional sends (catalog)",
     "transactionalRoutesIntro": "Stable keys for major notification paths in code. A null settings category means the send is not gated by the UserSettings notification groups (or the effective category is defined elsewhere, e.g. reminders).",
     "colRouteKey": "Route key",
+    "colRecipientSummary": "Recipients (this send)",
     "colRouteSummary": "Summary",
     "colRouteSource": "Code source",
     "colNotes": "Notes",

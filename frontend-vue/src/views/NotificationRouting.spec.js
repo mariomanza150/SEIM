@@ -16,7 +16,7 @@ vi.mock('@/composables/useToast', () => ({
 }))
 
 const mockPayload = {
-  schema_version: 7,
+  schema_version: 8,
   reference_api_access: {
     roles_any: ['coordinator', 'admin'],
     superuser: true,
@@ -39,6 +39,7 @@ const mockPayload = {
     {
       route_key: 'application_submitted',
       settings_category: 'applications',
+      recipient_summary: 'Mock: the student who submitted.',
       summary: 'Mock: student submit confirmation.',
       source: 'exchange.services.ApplicationService.submit_application',
     },
@@ -93,6 +94,8 @@ describe('NotificationRouting', () => {
     expect(wrapper.text()).toContain('Primarily the applicant (mock).')
     expect(wrapper.text()).toContain('Transactional sends (catalog)')
     expect(wrapper.text()).toContain('application_submitted')
+    expect(wrapper.text()).toContain('Recipients (this send)')
+    expect(wrapper.text()).toContain('Mock: the student who submitted.')
     expect(wrapper.text()).toContain('Mock: student submit confirmation.')
   })
 })
