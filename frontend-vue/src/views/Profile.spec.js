@@ -53,6 +53,10 @@ describe('Profile', () => {
     expect(wrapper.text()).toContain('Eligibility (for exchange programs)')
     expect(wrapper.text()).toContain('Additional languages')
     expect(wrapper.text()).toContain('Tip')
+    expect(wrapper.text()).toContain('Cancel')
+    expect(wrapper.find('input[type="number"]').attributes('placeholder')).toBe(
+      i18n.global.t('profilePage.gpaPlaceholder'),
+    )
   })
 
   it('uses profilePage.loadingSpinner on the loading state spinner', async () => {
@@ -90,6 +94,10 @@ describe('Profile', () => {
     expect(wrapper.text()).toContain('Actualiza los datos de tu cuenta y tu elegibilidad')
     expect(wrapper.text()).toContain('Idiomas adicionales')
     expect(wrapper.text()).toContain('Consejo')
+    expect(wrapper.text()).toContain('Cancelar')
+    expect(wrapper.find('input[type="number"]').attributes('placeholder')).toBe(
+      i18n.global.t('profilePage.gpaPlaceholder'),
+    )
   })
 
   it('shows primary CEFR labels from locale', async () => {

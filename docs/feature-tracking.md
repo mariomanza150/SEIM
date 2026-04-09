@@ -2,6 +2,8 @@
 
 _Reconciled into a single canonical tracker on 2026-04-08. Update this file as the source of truth for feature state and priorities._
 
+_Manual browser QA defects and environment blockers: [`docs/manual-qa-issues.md`](manual-qa-issues.md)._
+
 ## 🟢 IMPLEMENTED ✓
 | Feature | Module | Status | Last Updated | Notes |
 |---------|--------|--------|--------------|-------|
@@ -86,7 +88,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: Deadlines and calendar view | `frontend-vue` | Implemented | 2026-04-09 | `calendarPage.*` + reuse `documentsPage` preset chrome + `route.names`; `DeadlinesCalendar.vue` ICS card, range/filters, saved views, locale-aware day headings (`toLocaleDateString`), load/copy toasts. Vitest: `DeadlinesCalendar.spec.js`. |
 | Vue i18n: Staff agreement documents view | `frontend-vue` | Implemented | 2026-04-08 | `staffAgreementDocumentsPage.*` + reuse `documentsPage` (presets, clear, pagination, loading spinner, download aria) + `exchangeAgreementsPage` (search/sort labels, agreement “Any”); `route.names.StaffAgreementDocuments`; category enum keys; locale dates. Vitest: `StaffAgreementDocuments.spec.js`. |
 | Vue i18n: Program compare view | `frontend-vue` | Implemented | 2026-04-09 | `programComparePage.*` (incl. CTA `newApplication`, table `emDash`) + `route.names`; `ProgramCompare.vue`; locale `formatDate`. Vitest: `ProgramCompare.spec.js` (loading spinner aria). |
-| Vue i18n: Profile view | `frontend-vue` | Implemented | 2026-04-09 | `profilePage.*` in `en.json` / `es.json`; reuse `route.names.Profile` / `Dashboard`, `login.emailLabel`, `applicationFormPage.cancel` / `language` / `gpaPlaceholder` / `languagePlaceholder`; `Profile.vue` breadcrumbs, form, tip card, save/load toasts. Vitest: `Profile.spec.js`. |
+| Vue i18n: Profile view | `frontend-vue` | Implemented | 2026-04-09 | `profilePage.*` in `en.json` / `es.json` (incl. `gpaPlaceholder`, `languagePlaceholder`, `language`, `cancel`); reuse `route.names.Profile` / `Dashboard`, `login.emailLabel`; `Profile.vue` breadcrumbs, form, tip card, save/load toasts. Vitest: `Profile.spec.js`. |
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-09 | `Notifications.vue`: `notifications.*` (filters, empty, pagination, toasts) + `route.names`. Vitest: `Notifications.spec.js`. |
 | Vue i18n: DocumentUpload component | `frontend-vue` | Implemented | 2026-04-09 | `documentUpload.*` + `documentDetailPage.labelDocumentType`; `DocumentUpload.vue` on application detail. Vitest: `DocumentUpload.spec.js`. |
 | Vue i18n: Browser tab titles (router) | `frontend-vue` | Implemented | 2026-04-09 | `resolveDocumentTitle` (`utils/documentTitle.js`): `route.names.*` + `route.notFoundBrowserTitle` + `route.fallbackTitle`; router `beforeEach`; Settings locale change refreshes tab title. Vitest: `documentTitle.spec.js`. |
@@ -107,7 +109,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Profile placeholders + cancel (namespaced) | `frontend-vue` | In progress | 2026-04-09 | loop |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -141,7 +143,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** spinner + **Notifications** (`notifications.*`) + **ApplicationForm** program filter placeholder + **Program compare** (`programComparePage.*` without `applicationsPage` / `reviewQueuePage` leaks). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** (`profilePage.*`, no `applicationFormPage` leaks for placeholders/cancel) + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare**. **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -181,5 +183,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Program compare newApplication + emDash i18n — completed)*  
+*Last updated: 2026-04-09 (loop: Profile placeholders + cancel i18n — completed)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

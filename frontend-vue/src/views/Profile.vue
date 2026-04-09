@@ -64,7 +64,7 @@
                       min="0"
                       max="4"
                       class="form-control"
-                      :placeholder="t('applicationFormPage.gpaPlaceholder')"
+                      :placeholder="t('profilePage.gpaPlaceholder')"
                     />
                     <div class="form-text">{{ t('profilePage.gpaScaleHelp') }}</div>
                   </div>
@@ -76,7 +76,7 @@
                       v-model="form.language"
                       type="text"
                       class="form-control"
-                      :placeholder="t('applicationFormPage.languagePlaceholder')"
+                      :placeholder="t('profilePage.languagePlaceholder')"
                     />
                     <div class="form-text">{{ t('profilePage.primaryLanguageHelp') }}</div>
                   </div>
@@ -113,12 +113,12 @@
                   </div>
                   <div v-for="(row, idx) in form.additional_languages" :key="idx" class="row g-2 mb-2 align-items-end">
                     <div class="col-md-5">
-                      <label class="form-label small mb-0">{{ t('applicationFormPage.language') }}</label>
+                      <label class="form-label small mb-0">{{ t('profilePage.language') }}</label>
                       <input
                         v-model="row.name"
                         type="text"
                         class="form-control form-control-sm"
-                        :placeholder="t('applicationFormPage.languagePlaceholder')"
+                        :placeholder="t('profilePage.languagePlaceholder')"
                       />
                     </div>
                     <div class="col-md-5">
@@ -148,7 +148,7 @@
                 <div v-if="saveError" class="alert alert-danger">{{ saveError }}</div>
                 <div class="d-flex justify-content-between mt-4">
                   <router-link :to="{ name: 'Dashboard' }" class="btn btn-outline-secondary">{{
-                    t('applicationFormPage.cancel')
+                    t('profilePage.cancel')
                   }}</router-link>
                   <button type="submit" class="btn btn-primary" :disabled="saving">
                     <span v-if="saving"
