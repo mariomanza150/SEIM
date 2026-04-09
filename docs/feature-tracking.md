@@ -82,7 +82,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue i18n: Application form (new + edit) | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.*` in locales; `ApplicationForm.vue` breadcrumbs/headers, program filters & presets UI, window messages, dynamic form chrome, sidebar tips/requirements, actions; locale `formatDate` / duration; translated validation + toasts. Vitest: `ApplicationForm.spec.js` + i18n. |
 | Vue i18n: Application form program filter search placeholder | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.programSearchPlaceholder` (en/es); program filter search input in `ApplicationForm.vue` (was `applicationsPage.searchPlaceholder`). Vitest: `ApplicationForm.spec.js`. |
 | Vue i18n: `useStaffSavedPresets` (shared staff presets) | `frontend-vue` | Implemented | 2026-04-09 | `savedPresets.*` in locales; composable uses `useI18n` for save/remove/default toasts, errors, and `confirmRemove`. Vitest: `useStaffSavedPresets.spec.js`. |
-| Vue i18n: Coordinator review queue | `frontend-vue` | Implemented | 2026-04-09 | `reviewQueuePage.*` + reuse `applicationsPage` / `documentsPage` / `savedPresets` / `route.names`; `CoordinatorReviewQueue.vue` filters, presets, table, pagination, locale dates + `formatStatus`. Vitest: `CoordinatorReviewQueue.spec.js`. |
+| Vue i18n: Coordinator review queue | `frontend-vue` | Implemented | 2026-04-09 | `reviewQueuePage.*` (incl. saved-search preset UI + pagination `previous`/`next`) + reuse `applicationsPage` (status, sort, clear) / `savedPresets` / `route.names`; `CoordinatorReviewQueue.vue` filters, presets, table, pagination, locale dates + `formatStatus`. Vitest: `CoordinatorReviewQueue.spec.js`. |
 | Vue i18n: Coordinator workload view | `frontend-vue` | Implemented | 2026-04-09 | `workloadPage.*` + reuse `applicationsPage.status` / `route.names`; `CoordinatorWorkload.vue` breadcrumbs, subtitle, cards, admin table, loading/error. Vitest: `CoordinatorWorkload.spec.js`. |
 | Vue i18n: Staff exchange agreements view | `frontend-vue` | Implemented | 2026-04-09 | `exchangeAgreementsPage.*` + reuse `documentsPage` preset/pagination/clear + `route.names`; `StaffExchangeAgreements.vue` filters, enum labels, table, renewal actions (prompt/confirm/toasts). Vitest: `StaffExchangeAgreements.spec.js`. |
 | Vue i18n: Deadlines and calendar view | `frontend-vue` | Implemented | 2026-04-09 | `calendarPage.*` (incl. saved-view preset strings) + `route.names`; `DeadlinesCalendar.vue` ICS card, range/filters, saved views, locale-aware day headings (`toLocaleDateString`), load/copy toasts. Vitest: `DeadlinesCalendar.spec.js`. |
@@ -109,7 +109,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Review queue preset + pagination keys | `frontend-vue` | In progress | 2026-04-09 | loop |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -143,7 +143,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** preset UI under `calendarPage.*`. **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** preset/pagination under `reviewQueuePage.*`. **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -183,5 +183,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Calendar saved-view preset i18n keys — completed)*  
+*Last updated: 2026-04-09 (loop: Review queue preset + pagination i18n keys — completed)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

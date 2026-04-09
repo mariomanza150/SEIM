@@ -195,6 +195,17 @@
     "paginationAria": "Paginación de la cola de revisión",
     "presetSaveLabel": "Guardar filtros actuales como preset",
     "presetDefaultQueue": "Predeterminado al abrir la cola",
+    "presetNamePlaceholder": "Nombre del preset",
+    "presetSave": "Guardar",
+    "presetSavedPrefix": "Guardados:",
+    "presetDefaultTitle": "Preset predeterminado",
+    "presetDefaultAria": "Preset predeterminado",
+    "presetSetDefaultTitle": "Marcar como predeterminado",
+    "presetSetDefaultAria": "Marcar como predeterminado",
+    "presetRemoveTitle": "Eliminar preset",
+    "presetRemoveAria": "Eliminar preset",
+    "previous": "Anterior",
+    "next": "Siguiente",
     "emDash": "—"
   },
   "workloadPage": {

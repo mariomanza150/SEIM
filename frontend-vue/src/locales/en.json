@@ -195,6 +195,17 @@
     "paginationAria": "Review queue pagination",
     "presetSaveLabel": "Save current filters as preset",
     "presetDefaultQueue": "Default when opening queue",
+    "presetNamePlaceholder": "Preset name",
+    "presetSave": "Save",
+    "presetSavedPrefix": "Saved:",
+    "presetDefaultTitle": "Default preset",
+    "presetDefaultAria": "Default preset",
+    "presetSetDefaultTitle": "Set as default",
+    "presetSetDefaultAria": "Set as default",
+    "presetRemoveTitle": "Remove preset",
+    "presetRemoveAria": "Remove preset",
+    "previous": "Previous",
+    "next": "Next",
     "emDash": "—"
   },
   "workloadPage": {

@@ -48,5 +48,8 @@ describe('CoordinatorReviewQueue', () => {
       'No applications match these filters'
     )
     expect(wrapper.text()).toContain('Application review queue')
+    expect(wrapper.find('[data-testid="review-queue-preset-name"]').attributes('placeholder')).toBe(
+      i18n.global.t('reviewQueuePage.presetNamePlaceholder'),
+    )
   })
 })

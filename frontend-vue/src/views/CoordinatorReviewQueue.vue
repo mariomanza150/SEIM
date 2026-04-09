@@ -105,7 +105,7 @@
                       v-model="newPresetName"
                       type="text"
                       class="form-control"
-                      :placeholder="t('documentsPage.presetNamePlaceholder')"
+                      :placeholder="t('reviewQueuePage.presetNamePlaceholder')"
                       data-testid="review-queue-preset-name"
                     />
                     <button
@@ -115,7 +115,7 @@
                       data-testid="review-queue-preset-save"
                       @click="savePreset"
                     >
-                      {{ t('documentsPage.presetSave') }}
+                      {{ t('reviewQueuePage.presetSave') }}
                     </button>
                   </div>
                 </div>
@@ -130,7 +130,7 @@
                 </div>
               </div>
               <div v-if="savedPresets.length" class="small">
-                <span class="text-muted me-2">{{ t('documentsPage.presetSavedPrefix') }}</span>
+                <span class="text-muted me-2">{{ t('reviewQueuePage.presetSavedPrefix') }}</span>
                 <span
                   v-for="p in savedPresets"
                   :key="p.id"
@@ -147,15 +147,15 @@
                   <i
                     v-if="p.is_default"
                     class="bi bi-star-fill text-warning"
-                    :title="t('documentsPage.presetDefaultTitle')"
-                    :aria-label="t('documentsPage.presetDefaultAria')"
+                    :title="t('reviewQueuePage.presetDefaultTitle')"
+                    :aria-label="t('reviewQueuePage.presetDefaultAria')"
                   />
                   <button
                     v-else
                     type="button"
                     class="btn btn-link btn-sm p-0 text-secondary"
-                    :title="t('documentsPage.presetSetDefaultTitle')"
-                    :aria-label="t('documentsPage.presetSetDefaultAria')"
+                    :title="t('reviewQueuePage.presetSetDefaultTitle')"
+                    :aria-label="t('reviewQueuePage.presetSetDefaultAria')"
                     @click="setDefaultPreset(p)"
                   >
                     <i class="bi bi-star"></i>
@@ -163,8 +163,8 @@
                   <button
                     type="button"
                     class="btn btn-link btn-sm p-0 text-danger"
-                    :title="t('documentsPage.presetRemoveTitle')"
-                    :aria-label="t('documentsPage.presetRemoveAria')"
+                    :title="t('reviewQueuePage.presetRemoveTitle')"
+                    :aria-label="t('reviewQueuePage.presetRemoveAria')"
                     @click="deletePreset(p)"
                   >
                     <i class="bi bi-trash"></i>
@@ -235,7 +235,7 @@
         <ul class="pagination justify-content-center">
           <li class="page-item" :class="{ disabled: !pagination.previous }">
             <button type="button" class="page-link" @click="goToPage(pagination.currentPage - 1)">
-              {{ t('documentsPage.previous') }}
+              {{ t('reviewQueuePage.previous') }}
             </button>
           </li>
           <li
@@ -248,7 +248,7 @@
           </li>
           <li class="page-item" :class="{ disabled: !pagination.next }">
             <button type="button" class="page-link" @click="goToPage(pagination.currentPage + 1)">
-              {{ t('documentsPage.next') }}
+              {{ t('reviewQueuePage.next') }}
             </button>
           </li>
         </ul>
