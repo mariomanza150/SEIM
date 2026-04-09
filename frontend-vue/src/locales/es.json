@@ -488,6 +488,7 @@
   "dashboard": {
     "mainNavAria": "Navegación principal",
     "toggleNav": "Mostrar u ocultar menú",
+    "userMenuAria": "Menú de usuario para {name}",
     "djangoAdmin": "Admin Django",
     "cmsAdmin": "Admin CMS",
     "logout": "Cerrar sesión",
@@ -702,7 +703,10 @@
     "readinessLabel": "Preparación",
     "scholarshipScoring": {
       "title": "Puntuación para asignación de becas",
-      "exportCohortCsv": "Descargar cohorte del programa (CSV)",
+      "exportGroupAria": "Descargar exportación de puntuaciones de la cohorte",
+      "exportCohortCsv": "CSV",
+      "exportCohortXlsx": "Excel",
+      "exportCohortPdf": "PDF",
       "totalLabel": "Puntos totales",
       "colFactor": "Factor",
       "colPoints": "Puntos",

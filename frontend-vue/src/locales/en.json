@@ -488,6 +488,7 @@
   "dashboard": {
     "mainNavAria": "Main navigation",
     "toggleNav": "Toggle navigation",
+    "userMenuAria": "User menu for {name}",
     "djangoAdmin": "Django Admin",
     "cmsAdmin": "CMS Admin",
     "logout": "Logout",
@@ -702,7 +703,10 @@
     "readinessLabel": "Readiness",
     "scholarshipScoring": {
       "title": "Scholarship allocation score",
-      "exportCohortCsv": "Download program cohort (CSV)",
+      "exportGroupAria": "Download cohort score export",
+      "exportCohortCsv": "CSV",
+      "exportCohortXlsx": "Excel",
+      "exportCohortPdf": "PDF",
       "totalLabel": "Total points",
       "colFactor": "Factor",
       "colPoints": "Points",

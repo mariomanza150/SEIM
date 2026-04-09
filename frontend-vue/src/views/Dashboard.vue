@@ -37,11 +37,14 @@
                 id="userDropdown"
                 role="button"
                 data-bs-toggle="dropdown"
+                aria-expanded="false"
+                aria-haspopup="menu"
+                :aria-label="t('dashboard.userMenuAria', { name: userName })"
               >
                 <i class="bi bi-person-circle me-1"></i>
                 {{ userName }}
               </a>
-              <ul class="dropdown-menu dropdown-menu-end">
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                 <li><router-link :to="{ name: 'Profile' }" class="dropdown-item">{{ t('route.names.Profile') }}</router-link></li>
                 <li><router-link :to="{ name: 'Settings' }" class="dropdown-item">{{ t('route.names.Settings') }}</router-link></li>
                 <li><hr class="dropdown-divider" /></li>

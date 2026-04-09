@@ -66,5 +66,10 @@ describe('Dashboard', () => {
     expect(wrapper.text()).toContain('Applications')
     expect(wrapper.text()).toContain('Documents')
     expect(api.get).toHaveBeenCalledWith('/api/accounts/dashboard/stats/')
+
+    const userToggle = wrapper.find('#userDropdown')
+    expect(userToggle.attributes('aria-expanded')).toBe('false')
+    expect(userToggle.attributes('aria-haspopup')).toBe('menu')
+    expect(userToggle.attributes('aria-label')).toBe('User menu for Alex Student')
   })
 })

@@ -7,6 +7,7 @@
       role="button"
       data-bs-toggle="dropdown"
       aria-expanded="false"
+      aria-haspopup="menu"
       :aria-label="t('notifications.dropdownAria')"
     >
       <i class="bi bi-bell fs-5"></i>

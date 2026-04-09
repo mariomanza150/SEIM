@@ -38,7 +38,10 @@ describe('NotificationDropdown', () => {
       },
     })
     await flushPromises()
-    expect(wrapper.find('#notificationDropdown').attributes('aria-label')).toBe('Notifications menu')
+    const toggle = wrapper.find('#notificationDropdown')
+    expect(toggle.attributes('aria-label')).toBe('Notifications menu')
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    expect(toggle.attributes('aria-haspopup')).toBe('menu')
     expect(wrapper.text()).toContain('Notifications')
     expect(wrapper.text()).toContain('View all')
     expect(wrapper.text()).toContain('No notifications')
