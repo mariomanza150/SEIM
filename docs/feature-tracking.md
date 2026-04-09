@@ -75,11 +75,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: Application detail view | `frontend-vue` | Implemented | 2026-04-09 | `applicationDetailPage.*` + reuse `applicationsPage.status` / `readinessLabel` / `notAvailable`; `ApplicationDetail.vue` program/checklist/timeline/comments/sidebar/docs/coordinator review; locale dates; translated confirms/toasts. Vitest: `ApplicationDetail.spec.js` (+ i18n, timeline mock). |
 | Vue i18n: Application form (new + edit) | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.*` in locales; `ApplicationForm.vue` breadcrumbs/headers, program filters & presets UI, window messages, dynamic form chrome, sidebar tips/requirements, actions; locale `formatDate` / duration; translated validation + toasts. Vitest: `ApplicationForm.spec.js` + i18n. |
 | Vue i18n: `useStaffSavedPresets` (shared staff presets) | `frontend-vue` | Implemented | 2026-04-09 | `savedPresets.*` in locales; composable uses `useI18n` for save/remove/default toasts, errors, and `confirmRemove`. Vitest: `useStaffSavedPresets.spec.js`. |
+| Vue i18n: Coordinator review queue | `frontend-vue` | Implemented | 2026-04-09 | `reviewQueuePage.*` + reuse `applicationsPage` / `documentsPage` / `savedPresets` / `route.names`; `CoordinatorReviewQueue.vue` filters, presets, table, pagination, locale dates + `formatStatus`. Vitest: `CoordinatorReviewQueue.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Coordinator review queue | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
+| _None_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -113,7 +114,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **In progress:** Coordinator review queue (`CoordinatorReviewQueue.vue`). Shipped: `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: other staff tables/modals, stragglers. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Coordinator review queue, `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: other staff views (workload, agreements, calendar, compare, …), Notifications/Profile, stragglers. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -153,5 +154,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (Vue i18n Coordinator review queue — in progress)*  
+*Last updated: 2026-04-09 (Vue i18n Coordinator review queue)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

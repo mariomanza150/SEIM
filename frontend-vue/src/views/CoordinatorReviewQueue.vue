@@ -1,23 +1,23 @@
 <template>
   <div class="review-queue-page">
     <div class="container-fluid mt-4">
-      <nav aria-label="breadcrumb">
+      <nav :aria-label="t('reviewQueuePage.breadcrumbAria')">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
+            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
           </li>
-          <li class="breadcrumb-item active">Review queue</li>
+          <li class="breadcrumb-item active">{{ t('route.names.CoordinatorReviewQueue') }}</li>
         </ol>
       </nav>
 
       <div class="row mb-4">
         <div class="col-md-8">
-          <h2><i class="bi bi-clipboard-check me-2"></i>Application review queue</h2>
-          <p class="text-muted">Filter applications that need coordinator attention</p>
+          <h2><i class="bi bi-clipboard-check me-2"></i>{{ t('reviewQueuePage.pageHeading') }}</h2>
+          <p class="text-muted">{{ t('reviewQueuePage.pageSubtitle') }}</p>
         </div>
         <div class="col-md-4 text-end d-flex align-items-start justify-content-end gap-2">
           <router-link :to="{ name: 'Applications' }" class="btn btn-outline-secondary">
-            <i class="bi bi-person-lines-fill me-1"></i>My applications
+            <i class="bi bi-person-lines-fill me-1"></i>{{ t('reviewQueuePage.myApplications') }}
           </router-link>
         </div>
       </div>
@@ -26,18 +26,18 @@
         <div class="card-body">
           <div class="row g-3 align-items-end">
             <div class="col-md-4">
-              <label class="form-label">Search</label>
+              <label class="form-label">{{ t('reviewQueuePage.searchLabel') }}</label>
               <input
                 v-model="filters.search"
                 type="text"
                 class="form-control"
-                placeholder="Student, email, program, status…"
+                :placeholder="t('reviewQueuePage.searchPlaceholder')"
                 @input="debouncedSearch"
                 data-testid="review-queue-search"
               />
             </div>
             <div class="col-md-8">
-              <label class="form-label d-block">Quick filters</label>
+              <label class="form-label d-block">{{ t('reviewQueuePage.quickFilters') }}</label>
               <div class="d-flex flex-wrap gap-2">
                 <div class="form-check form-check-inline">
                   <input
@@ -47,7 +47,7 @@
                     type="checkbox"
                     @change="fetchApplications"
                   />
-                  <label class="form-check-label" for="fq-pending">Pending review</label>
+                  <label class="form-check-label" for="fq-pending">{{ t('reviewQueuePage.filterPendingReview') }}</label>
                 </div>
                 <div class="form-check form-check-inline">
                   <input
@@ -57,7 +57,7 @@
                     type="checkbox"
                     @change="fetchApplications"
                   />
-                  <label class="form-check-label" for="fq-resubmit">Document resubmit</label>
+                  <label class="form-check-label" for="fq-resubmit">{{ t('reviewQueuePage.filterDocumentResubmit') }}</label>
                 </div>
                 <div class="form-check form-check-inline">
                   <input
@@ -67,45 +67,45 @@
                     type="checkbox"
                     @change="fetchApplications"
                   />
-                  <label class="form-check-label" for="fq-assigned">Assigned to me</label>
+                  <label class="form-check-label" for="fq-assigned">{{ t('reviewQueuePage.filterAssignedToMe') }}</label>
                 </div>
               </div>
             </div>
             <div class="col-md-3">
-              <label class="form-label">Status</label>
+              <label class="form-label">{{ t('reviewQueuePage.statusLabel') }}</label>
               <select v-model="filters.status" class="form-select" @change="fetchApplications">
-                <option value="">All statuses</option>
-                <option value="draft">Draft</option>
-                <option value="submitted">Submitted</option>
-                <option value="under_review">Under review</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-                <option value="completed">Completed</option>
+                <option value="">{{ t('reviewQueuePage.statusAll') }}</option>
+                <option value="draft">{{ t('applicationsPage.status.draft') }}</option>
+                <option value="submitted">{{ t('applicationsPage.status.submitted') }}</option>
+                <option value="under_review">{{ t('applicationsPage.status.under_review') }}</option>
+                <option value="approved">{{ t('applicationsPage.status.approved') }}</option>
+                <option value="rejected">{{ t('applicationsPage.status.rejected') }}</option>
+                <option value="completed">{{ t('applicationsPage.status.completed') }}</option>
               </select>
             </div>
             <div class="col-md-3">
-              <label class="form-label">Sort</label>
+              <label class="form-label">{{ t('reviewQueuePage.sortLabel') }}</label>
               <select v-model="filters.ordering" class="form-select" @change="fetchApplications">
-                <option value="-submitted_at">Recently submitted</option>
-                <option value="-created_at">Newest</option>
-                <option value="created_at">Oldest</option>
+                <option value="-submitted_at">{{ t('applicationsPage.sortRecentlySubmitted') }}</option>
+                <option value="-created_at">{{ t('applicationsPage.sortNewest') }}</option>
+                <option value="created_at">{{ t('applicationsPage.sortOldest') }}</option>
               </select>
             </div>
             <div class="col-md-2">
               <button type="button" class="btn btn-outline-secondary w-100" @click="clearFilters">
-                Clear
+                {{ t('applicationsPage.clearFilters') }}
               </button>
             </div>
             <div class="col-12 border-top pt-3 mt-2">
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
-                  <label class="form-label small text-muted mb-1">Save current filters as preset</label>
+                  <label class="form-label small text-muted mb-1">{{ t('reviewQueuePage.presetSaveLabel') }}</label>
                   <div class="input-group input-group-sm">
                     <input
                       v-model="newPresetName"
                       type="text"
                       class="form-control"
-                      placeholder="Preset name"
+                      :placeholder="t('documentsPage.presetNamePlaceholder')"
                       data-testid="review-queue-preset-name"
                     />
                     <button
@@ -115,7 +115,7 @@
                       data-testid="review-queue-preset-save"
                       @click="savePreset"
                     >
-                      Save
+                      {{ t('documentsPage.presetSave') }}
                     </button>
                   </div>
                 </div>
@@ -126,11 +126,11 @@
                     class="form-check-input"
                     type="checkbox"
                   />
-                  <label class="form-check-label small" for="preset-default">Default when opening queue</label>
+                  <label class="form-check-label small" for="preset-default">{{ t('reviewQueuePage.presetDefaultQueue') }}</label>
                 </div>
               </div>
               <div v-if="savedPresets.length" class="small">
-                <span class="text-muted me-2">Saved:</span>
+                <span class="text-muted me-2">{{ t('documentsPage.presetSavedPrefix') }}</span>
                 <span
                   v-for="p in savedPresets"
                   :key="p.id"
@@ -147,15 +147,15 @@
                   <i
                     v-if="p.is_default"
                     class="bi bi-star-fill text-warning"
-                    title="Default preset"
-                    aria-label="Default preset"
+                    :title="t('documentsPage.presetDefaultTitle')"
+                    :aria-label="t('documentsPage.presetDefaultAria')"
                   />
                   <button
                     v-else
                     type="button"
                     class="btn btn-link btn-sm p-0 text-secondary"
-                    title="Set as default"
-                    aria-label="Set as default"
+                    :title="t('documentsPage.presetSetDefaultTitle')"
+                    :aria-label="t('documentsPage.presetSetDefaultAria')"
                     @click="setDefaultPreset(p)"
                   >
                     <i class="bi bi-star"></i>
@@ -163,8 +163,8 @@
                   <button
                     type="button"
                     class="btn btn-link btn-sm p-0 text-danger"
-                    title="Remove preset"
-                    aria-label="Remove preset"
+                    :title="t('documentsPage.presetRemoveTitle')"
+                    :aria-label="t('documentsPage.presetRemoveAria')"
                     @click="deletePreset(p)"
                   >
                     <i class="bi bi-trash"></i>
@@ -178,37 +178,39 @@
 
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading…</span>
+          <span class="visually-hidden">{{ t('reviewQueuePage.loading') }}</span>
         </div>
       </div>
       <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
       <div v-else-if="applications.length === 0" class="card">
-        <div class="card-body text-center py-5 text-muted">No applications match these filters.</div>
+        <div class="card-body text-center py-5 text-muted" data-testid="review-queue-empty">
+          {{ t('reviewQueuePage.empty') }}
+        </div>
       </div>
       <div v-else class="table-responsive card">
         <table class="table table-hover mb-0">
           <thead class="table-light">
             <tr>
-              <th>Student</th>
-              <th>Program</th>
-              <th>Status</th>
-              <th>Coordinator</th>
-              <th>Submitted</th>
+              <th>{{ t('reviewQueuePage.colStudent') }}</th>
+              <th>{{ t('reviewQueuePage.colProgram') }}</th>
+              <th>{{ t('reviewQueuePage.colStatus') }}</th>
+              <th>{{ t('reviewQueuePage.colCoordinator') }}</th>
+              <th>{{ t('reviewQueuePage.colSubmitted') }}</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="app in applications" :key="app.id">
               <td>
-                <div class="fw-medium">{{ app.student_display_name || '—' }}</div>
+                <div class="fw-medium">{{ app.student_display_name || t('reviewQueuePage.emDash') }}</div>
                 <div class="small text-muted">{{ app.student_email }}</div>
               </td>
-              <td>{{ app.program_name || app.program?.name || '—' }}</td>
+              <td>{{ app.program_name || app.program?.name || t('reviewQueuePage.emDash') }}</td>
               <td>
                 <span class="badge" :class="statusClass(app.status)">{{ formatStatus(app.status) }}</span>
               </td>
               <td class="small">
-                {{ app.assigned_coordinator_name || (app.effective_coordinator?.full_name) || '—' }}
+                {{ app.assigned_coordinator_name || (app.effective_coordinator?.full_name) || t('reviewQueuePage.emDash') }}
               </td>
               <td class="small text-muted">{{ formatDate(app.submitted_at) }}</td>
               <td class="text-end">
@@ -217,7 +219,7 @@
                   class="btn btn-sm btn-outline-primary"
                   data-testid="review-queue-open-detail"
                 >
-                  Open
+                  {{ t('reviewQueuePage.openDetail') }}
                 </router-link>
               </td>
             </tr>
@@ -228,12 +230,12 @@
       <nav
         v-if="!loading && pagination.count > pagination.pageSize"
         class="mt-3"
-        aria-label="Review queue pagination"
+        :aria-label="t('reviewQueuePage.paginationAria')"
       >
         <ul class="pagination justify-content-center">
           <li class="page-item" :class="{ disabled: !pagination.previous }">
             <button type="button" class="page-link" @click="goToPage(pagination.currentPage - 1)">
-              Previous
+              {{ t('documentsPage.previous') }}
             </button>
           </li>
           <li
@@ -246,7 +248,7 @@
           </li>
           <li class="page-item" :class="{ disabled: !pagination.next }">
             <button type="button" class="page-link" @click="goToPage(pagination.currentPage + 1)">
-              Next
+              {{ t('documentsPage.next') }}
             </button>
           </li>
         </ul>
@@ -257,6 +259,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import {
@@ -265,6 +268,7 @@ import {
   serializeReviewQueueFilters,
 } from '@/utils/reviewQueuePresets'
 
+const { t, te, locale } = useI18n()
 const { success, error: errorToast } = useToast()
 
 const applications = ref([])
@@ -326,8 +330,9 @@ async function fetchApplications(page = 1) {
       }
     }
   } catch (err) {
-    error.value = 'Failed to load applications.'
-    errorToast(error.value)
+    const msg = t('reviewQueuePage.loadError')
+    error.value = msg
+    errorToast(msg)
   } finally {
     loading.value = false
   }
@@ -386,23 +391,23 @@ async function savePreset() {
     newPresetName.value = ''
     saveAsDefault.value = false
     await loadPresets()
-    success('Preset saved')
+    success(t('savedPresets.toastSaved'))
   } catch {
-    errorToast('Could not save preset')
+    errorToast(t('savedPresets.toastSaveError'))
   } finally {
     presetsLoading.value = false
   }
 }
 
 async function deletePreset(p) {
-  if (!window.confirm(`Remove preset "${p.name}"?`)) return
+  if (!window.confirm(t('savedPresets.confirmRemove', { name: p.name }))) return
   try {
     presetsLoading.value = true
     await api.delete(`/api/saved-searches/${p.id}/`)
     await loadPresets()
-    success('Preset removed')
+    success(t('savedPresets.toastRemoved'))
   } catch {
-    errorToast('Could not remove preset')
+    errorToast(t('savedPresets.toastRemoveError'))
   } finally {
     presetsLoading.value = false
   }
@@ -413,9 +418,9 @@ async function setDefaultPreset(p) {
     presetsLoading.value = true
     await api.post(`/api/saved-searches/${p.id}/set_default/`)
     await loadPresets()
-    success('Default preset updated')
+    success(t('savedPresets.toastDefaultUpdated'))
   } catch {
-    errorToast('Could not update default')
+    errorToast(t('savedPresets.toastDefaultError'))
   } finally {
     presetsLoading.value = false
   }
@@ -434,12 +439,16 @@ function statusClass(status) {
 }
 
 function formatStatus(status) {
-  return status ? status.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()) : '—'
+  if (!status) return t('reviewQueuePage.emDash')
+  const key = `applicationsPage.status.${status}`
+  if (te(key)) return t(key)
+  return String(status).replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
 function formatDate(dateString) {
-  if (!dateString) return '—'
-  return new Date(dateString).toLocaleDateString('en-US', {
+  if (!dateString) return t('reviewQueuePage.emDash')
+  const loc = locale.value === 'es' ? 'es' : 'en-US'
+  return new Date(dateString).toLocaleDateString(loc, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
