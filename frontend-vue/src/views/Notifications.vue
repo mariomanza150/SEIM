@@ -45,15 +45,15 @@
         <div class="card-body">
           <div class="row g-3">
             <div class="col-md-4">
-              <label class="form-label" for="notifications-filter-status">{{ t('documentsPage.statusLabel') }}</label>
+              <label class="form-label" for="notifications-filter-status">{{ t('notifications.filterReadStateLabel') }}</label>
               <select
                 id="notifications-filter-status"
                 v-model="filters.is_read"
                 class="form-select"
-                :aria-label="t('documentsPage.statusLabel')"
+                :aria-label="t('notifications.filterReadStateLabel')"
                 @change="fetchNotifications"
               >
-                <option value="">{{ t('documentsPage.statusOptionAll') }}</option>
+                <option value="">{{ t('notifications.filterAll') }}</option>
                 <option value="false">{{ t('notifications.filterUnread') }}</option>
                 <option value="true">{{ t('notifications.filterRead') }}</option>
               </select>
@@ -67,7 +67,7 @@
                 :aria-label="t('notifications.filterCategory')"
                 @change="fetchNotifications"
               >
-                <option value="">{{ t('documentsPage.statusOptionAll') }}</option>
+                <option value="">{{ t('notifications.filterAll') }}</option>
                 <option value="info">{{ t('notifications.categoryInfo') }}</option>
                 <option value="success">{{ t('notifications.categorySuccess') }}</option>
                 <option value="warning">{{ t('notifications.categoryWarning') }}</option>
@@ -91,7 +91,7 @@
       <!-- Loading -->
       <div v-if="loading" class="text-center py-5" aria-live="polite">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('documentsPage.loadingSpinner') }}</span>
+          <span class="visually-hidden">{{ t('notifications.loadingSpinner') }}</span>
         </div>
         <p class="mt-3 text-muted">{{ t('notifications.pageLoadingHint') }}</p>
       </div>
