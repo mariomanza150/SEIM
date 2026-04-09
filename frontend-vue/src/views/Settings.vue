@@ -160,6 +160,18 @@
                     </div>
                   </div>
                 </div>
+                <div
+                  v-if="authStore.canUseStaffReviewQueue"
+                  class="alert alert-light border mt-3 mb-0 small"
+                >
+                  <router-link
+                    :to="{ name: 'NotificationRouting' }"
+                    data-testid="settings-notification-routing-link"
+                  >
+                    {{ t('settings.notificationRoutingStaffLink') }}
+                  </router-link>
+                  <span class="text-muted"> — {{ t('settings.notificationRoutingStaffHelp') }}</span>
+                </div>
 
                 <hr class="my-4" />
                 <h6 class="text-muted mb-3">Privacy</h6>
@@ -230,10 +242,12 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
+import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import { applyUiPreferences } from '@/services/uiPreferences'
 import { setAppLocale } from '@/i18n'
 
+const authStore = useAuthStore()
 const { t, locale } = useI18n()
 
 function onLocaleChange() {

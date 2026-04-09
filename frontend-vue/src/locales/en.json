@@ -44,7 +44,9 @@
   },
   "settings": {
     "uiLanguage": "Interface language",
-    "uiLanguageHelp": "Stored on this device. Account preferences below still sync to the server."
+    "uiLanguageHelp": "Stored on this device. Account preferences below still sync to the server.",
+    "notificationRoutingStaffLink": "How these toggles map to notification routing",
+    "notificationRoutingStaffHelp": "read-only reference for coordinators and admins."
   },
   "login": {
     "subtitle": "Sign in to continue",

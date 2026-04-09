@@ -4,6 +4,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import Settings from './Settings.vue'
 import api from '@/services/api'
 import i18n, { LOCALE_STORAGE_KEY, setAppLocale } from '@/i18n'
+import { useAuthStore } from '@/stores/auth'
 
 const mockSuccessToast = vi.fn()
 const mockErrorToast = vi.fn()
@@ -20,14 +21,37 @@ vi.mock('@/services/api', () => ({
 }))
 
 function mountView() {
+  const pinia = createPinia()
+  setActivePinia(pinia)
   return mount(Settings, {
     global: {
-      plugins: [createPinia(), i18n],
+      plugins: [pinia, i18n],
       stubs: {
         RouterLink: { template: '<a><slot /></a>' },
       },
     },
   })
+}
+
+const defaultSettingsPayload = {
+  theme: 'auto',
+  font_size: 'normal',
+  high_contrast: false,
+  reduce_motion: false,
+  email_applications: true,
+  email_documents: true,
+  email_comments: true,
+  email_programs: false,
+  email_system: true,
+  inapp_applications: true,
+  inapp_documents: true,
+  inapp_comments: true,
+  inapp_programs: true,
+  inapp_system: true,
+  notification_digest_frequency: 'off',
+  email_notification_digest: false,
+  profile_public: false,
+  share_analytics: true,
 }
 
 describe('Settings', () => {
@@ -158,5 +182,45 @@ describe('Settings', () => {
 
     await wrapper.find('[data-testid="settings-ui-language"]').setValue('es')
     expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe('es')
+  })
+
+  it('shows notification routing link for staff', async () => {
+    api.get.mockResolvedValue({ data: { ...defaultSettingsPayload } })
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const auth = useAuthStore()
+    auth.accessToken = 't'
+    auth.user = { role: 'coordinator', full_name: 'Coord' }
+    const wrapper = mount(Settings, {
+      global: {
+        plugins: [pinia, i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="settings-theme"]').exists()).toBe(true)
+    })
+    const link = wrapper.find('[data-testid="settings-notification-routing-link"]')
+    expect(link.exists()).toBe(true)
+    expect(link.text()).toContain('How these toggles map')
+  })
+
+  it('hides notification routing link for students', async () => {
+    api.get.mockResolvedValue({ data: { ...defaultSettingsPayload } })
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const auth = useAuthStore()
+    auth.accessToken = 't'
+    auth.user = { role: 'student', full_name: 'Stu' }
+    const wrapper = mount(Settings, {
+      global: {
+        plugins: [pinia, i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="settings-theme"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="settings-notification-routing-link"]').exists()).toBe(false)
   })
 })

@@ -1,5 +1,5 @@
-
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +12,7 @@ from .models import Notification, NotificationPreference, NotificationType, Remi
 from .routing_reference import build_notification_routing_reference
 from .serializers import (
     NotificationPreferenceSerializer,
+    NotificationRoutingReferenceSerializer,
     NotificationSerializer,
     NotificationTypeSerializer,
     ReminderSerializer,
@@ -21,6 +22,18 @@ from .services import NotificationService
 # Create your views here.
 
 
+@extend_schema(
+    summary="Notification routing reference",
+    description=(
+        "Read-only map of notification ``settings_category`` values, digest routing, "
+        "and deadline reminder event types to ``UserSettings`` field names. "
+        "Coordinators, admins, and superusers only."
+    ),
+    responses={
+        200: NotificationRoutingReferenceSerializer,
+        403: OpenApiResponse(description="Students and other roles without staff access."),
+    },
+)
 class NotificationRoutingReferenceView(APIView):
     """
     Read-only map of ``settings_category`` / digest / reminder routing to UserSettings fields.
