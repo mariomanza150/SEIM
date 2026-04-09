@@ -48,7 +48,8 @@ RUN apt-get update && \
 # Install Python dependencies
 COPY requirements*.txt .
 RUN pip install --upgrade pip && \
-    pip install -r requirements-dev.txt
+    pip install -r requirements-dev.txt && \
+    pip install --no-cache-dir "pytest==8.3.5" "pytest-django==4.7.0" "pytest-asyncio==0.25.3"
 
 # Copy project files
 COPY . .

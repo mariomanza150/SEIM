@@ -2,11 +2,15 @@
 Tests for Notification Center API and functionality.
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from django.utils import timezone
+from django.contrib.auth import get_user_model
 from rest_framework.test import APIClient
 
 from notifications.models import Notification
+
+User = get_user_model()
 
 
 @pytest.mark.django_db
@@ -212,7 +216,7 @@ def notifications(user_student):
             title=f"Test {category.title()} Notification",
             message=f"This is a {category} notification",
             category=category,
-            is_read=i % 2 == 0  # Alternate read/unread
+            is_read=i % 2 != 0  # i=0 unread; alternate for filter tests
         )
         notifications_list.append(notif)
     

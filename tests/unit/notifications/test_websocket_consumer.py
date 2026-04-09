@@ -6,14 +6,15 @@ import json
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from asgiref.sync import sync_to_async
 from channels.testing import WebsocketCommunicator
 from django.contrib.auth.models import AnonymousUser
 
-from accounts.models import User
 from notifications.consumers import NotificationConsumer
 from notifications.models import Notification
 
 
+@pytest.mark.django_db(transaction=True)
 @pytest.mark.asyncio
 class TestNotificationConsumer:
     """Test WebSocket notification consumer."""
@@ -70,21 +71,24 @@ class TestNotificationConsumer:
         assert response['notification_id'] == str(notification.id)
         
         # Verify notification is marked as read in database
-        notification.refresh_from_db()
+        await sync_to_async(notification.refresh_from_db)()
         assert notification.is_read
         
         await communicator.disconnect()
     
     async def test_receive_mark_all_read_message(self, user_student):
         """Test marking all notifications as read via WebSocket."""
-        # Create multiple notifications
-        for i in range(3):
-            Notification.objects.create(
-                recipient=user_student,
-                title=f"Test Notification {i}",
-                message="Test message",
-                is_read=False
-            )
+        # Create multiple notifications (ORM must not run in async context)
+        def _seed():
+            for i in range(3):
+                Notification.objects.create(
+                    recipient=user_student,
+                    title=f"Test Notification {i}",
+                    message="Test message",
+                    is_read=False,
+                )
+
+        await sync_to_async(_seed)()
         
         communicator = WebsocketCommunicator(
             NotificationConsumer.as_asgi(),
@@ -106,11 +110,12 @@ class TestNotificationConsumer:
         assert response['count'] == 3
         
         # Verify all notifications are marked as read
-        unread_count = Notification.objects.filter(
-            recipient=user_student,
-            is_read=False
-        ).count()
-        assert unread_count == 0
+        def _unread_count():
+            return Notification.objects.filter(
+                recipient=user_student, is_read=False
+            ).count()
+
+        assert await sync_to_async(_unread_count)() == 0
         
         await communicator.disconnect()
     
@@ -173,12 +178,12 @@ class TestNotificationConsumer:
         
         # Create notification (triggers broadcast)
         from notifications.services import NotificationService
-        
-        notification = NotificationService.send_notification(
+
+        notification = await sync_to_async(NotificationService.send_notification)(
             recipient=user_student,
             title="Test Notification",
             message="Test message",
-            category="info"
+            category="info",
         )
         
         # Should receive notification via WebSocket
@@ -206,11 +211,11 @@ class TestNotificationConsumer:
         
         # Try to send notification - should not reach user
         from notifications.services import NotificationService
-        
-        notification = NotificationService.send_notification(
+
+        await sync_to_async(NotificationService.send_notification)(
             recipient=user_student,
             title="Test Notification",
-            message="Test message"
+            message="Test message",
         )
         
         # No message should be received (connection closed)
