@@ -118,11 +118,12 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Staff notification routing reference API | `notifications`, `api`, `seim` | Implemented | 2026-04-09 | `GET /api/notifications/routing-reference/`: **`reminder_event_types_by_settings_category`**, **`transactional_route_keys_by_settings_category`**, plus matrix fields; **`schema_version` 12**. Tests: `test_notification_routing_reference_api.py`, `test_routing_reference.py`. |
 | Staff Vue read-only notification routing matrix | `frontend-vue`, `notifications`, `api` | Implemented | 2026-04-09 | SPA `/notification-routing`: **Reminder** + **transactional** index-by-group cards; detail tables; digest / API access; en/es. Vitest: `NotificationRouting.spec.js`. |
 | Notification routing reference: OpenAPI + Settings staff link | `notifications`, `frontend-vue`, `api` | Implemented | 2026-04-09 | `NotificationRoutingReferenceSerializer` + `@extend_schema` on `NotificationRoutingReferenceView` (200/403) for `/api/docs/`. Settings page: staff-only alert with link to `NotificationRouting` (`settings.notificationRoutingStaffLink` en/es). Tests: `tests/unit/notifications/test_routing_reference.py`, `Settings.spec.js` (show/hide link). |
+| Legacy Django templates: `rel="noopener noreferrer"` on document `target="_blank"` links | `templates/frontend` | Implemented | 2026-04-09 | Student/coordinator SSR views: `applications/detail.html`, `documents/detail.html`, `documents/list.html` (markup + JS row template), `coordinator/dashboard.html`. Parity with Vue document downloads. Vitest regression: `StaffAgreementDocuments.spec.js` (row with `file`). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Legacy Django templates: `rel` on document `target="_blank"` links | `templates/frontend`, `frontend-vue` | In progress | 2026-04-09 | — |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -156,7 +157,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** (`reviewQueuePage.*`) + **Staff exchange agreements** (`exchangeAgreementsPage.*`) + **Staff agreement documents** (`staffAgreementDocumentsPage.*`) + **list `pagination.*`** + **`pagination.pageNumberAria`** + document list/detail file downloads **`rel="noopener noreferrer"`** on `target="_blank"`. **Remaining:** full manual a11y audit; `HelloWorld.vue` is Vite starter only (external links now carry `rel`). |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue`, `templates/frontend` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** (`reviewQueuePage.*`) + **Staff exchange agreements** (`exchangeAgreementsPage.*`) + **Staff agreement documents** (`staffAgreementDocumentsPage.*`) + **list `pagination.*`** + **`pagination.pageNumberAria`** + document list/detail file downloads **`rel="noopener noreferrer"`** on `target="_blank"` (Vue + legacy Django document links). **Remaining:** full manual a11y audit; `HelloWorld.vue` is Vite starter only (external links now carry `rel`). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -196,5 +197,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (**Open QA:** **MQ-009** / **MQ-010**; loop: document file links `rel="noopener noreferrer"`). Prior: **MQ-008** (`LogoutView` / Pinia logout). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (**Open QA:** **MQ-009** / **MQ-010**; loop: legacy Django + staff agreement-doc download links `rel="noopener noreferrer"`). Prior: **MQ-008** (`LogoutView` / Pinia logout). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
