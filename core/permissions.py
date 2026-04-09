@@ -293,7 +293,17 @@ class IsOwnerOrAdmin(permissions.BasePermission):
         # Check if admin or staff
         if user.is_staff or (hasattr(user, 'is_admin') and user.is_admin):
             return True
-        
+
+        # Application uploads (DocumentViewSet uses this permission class)
+        if getattr(getattr(obj, '_meta', None), 'model_name', None) == 'document':
+            if hasattr(user, 'has_role') and (user.has_role('coordinator') or user.has_role('admin')):
+                return True
+            app = getattr(obj, 'application', None)
+            if app is not None and getattr(app, 'student_id', None) == user.id:
+                return True
+            if getattr(obj, 'uploaded_by_id', None) == user.id:
+                return True
+
         # Check ownership
         owner = getattr(obj, "student", None) or getattr(obj, "user", None)
         return owner == user

@@ -183,6 +183,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
   - **Body:** `{application, type, file, ...}`
   - Supports file upload with validation
 - `GET /api/documents/{id}/` - Get document details
+- `GET /api/documents/{id}/preview/` - Stream the stored file for inline preview (JWT/session auth; same access rules as detail; `Content-Disposition: inline`)
 - `PUT /api/documents/{id}/` - Update document
 - `DELETE /api/documents/{id}/` - Delete document
 
