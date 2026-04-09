@@ -189,12 +189,12 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - **`search_type=agreement_document`** — agreement repository list: `search`, `agreement`, `category`, `current_only` (boolean), `ordering`.
 - **`search_type=program`** — new-application program list filters: `search`, `required_language`, `min_language_level`, `start_date_after`, `start_date_before`, `min_gpa_max` (number or empty), `accepting_applications` (boolean), `ordering` (e.g. `name`, `-start_date`). Used by the Vue application form presets; same keys as `GET /api/programs/` filter params except `is_active` (always applied client-side).
 
-#### Calendar Events
-- `GET /api/calendar/events/` - List calendar events
-- `POST /api/calendar/events/` - Create calendar event
-- `GET /api/calendar/events/{id}/` - Get event details
-- `PUT /api/calendar/events/{id}/` - Update event
-- `DELETE /api/calendar/events/{id}/` - Delete event
+#### Calendar events (read-only)
+- `GET /api/calendar/events/` — Authenticated. Returns a JSON **array** of FullCalendar-style events: `id`, `title`, `start` (ISO datetime), optional `end`, `allDay`, `className`, `backgroundColor`, `borderColor`, optional `spa_path` (path for Vue `router.push`, e.g. `/applications/<uuid>/`).
+  - **Query:** `start`, `end` (ISO range). **`type`:** `program` (program run dates only), `deadline` (program application open/close dates), `application` (student’s apps, or all apps for staff; date uses program apply-by when status is draft/submitted/under_review and deadline exists, else program start), `agreement` (staff: agreement `end_date` in range; coordinators limited to agreements linked to their programs), `all` (union of applicable types).
+  - **Default** (omit `type`): `program` + `deadline` + `application` + `agreement` (staff only).
+- `GET /api/calendar/events/subscribe-token/` — Authenticated (JWT). Returns `{ ics_url, webcal_url }` absolute URLs embedding a signed `token` query param for the personal feed below.
+- `GET /api/calendar/subscribe.ics` — **No JWT.** Query `token` (from `subscribe-token`). Returns `text/calendar` (iCalendar) for ~90 days past through 730 days future with `type=all` visibility rules for that user. Treat the URL as a secret.
 
 ### Documents
 

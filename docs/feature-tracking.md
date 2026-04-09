@@ -48,6 +48,19 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Saved program filter presets (new application) | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-08 | Reuses `SavedSearch` with `search_type=program` on the new-application program filter panel: save/apply/delete/set-default, optional default on open; `applicationProgramFilterPresets.js` + Vitest. |
 | Public program comparison (SPA) | `frontend-vue`, `exchange`, `cms` | Implemented | 2026-04-08 | Authenticated route `/programs/compare`: multi-select up to four programs from paginated `GET /api/programs/?is_active=true`, comparison table (dates, window, GPA, language, age, recurring, description), Apply links to `ApplicationNew?program=`, shareable `?ids=` synced to the router; nav from Dashboard + Applications. CMS: program index CTA + program detail link (preselects operational program id) + account menu; anonymous users use login `redirect` to the SPA compare path. Vitest: `programCompareQuery.spec.js`. |
 | Coordinator workload dashboard (SLA-style signals) | `accounts`, `analytics`, `frontend-vue`, `api` | Implemented | 2026-04-08 | `GET /api/accounts/dashboard/coordinator-workload/`: per-user assigned + program-coordinated pending counts, open resubmit on assigned apps, avg days in queue; admins get global unassigned/stale-under-review (14d) and per-coordinator distribution. Vue `/coordinator-workload` (staff), Dashboard sidebar. Tests: `tests/integration/api/test_coordinator_workload_api.py`. |
+| Calendar integration for deadlines and milestones | `exchange`, `notifications`, `frontend-vue`, `api` | Implemented | 2026-04-08 | Expanded `GET /api/calendar/events/` with `type` filters (`program`, `deadline`, `application`, `agreement`, `all`), timezone-aware dates, `spa_path` for SPA navigation, program apply windows, improved application anchor dates, staff agreement end dates. Vue `/calendar` list view with range + toggles; Dashboard **Deadlines** link. `CalendarEventSerializer` `url` widened to `CharField`. Tests: `tests/unit/exchange/test_calendar_api.py`; `conftest` tolerates missing `freezegun`/`selenium` imports. |
+| Multi-document requirements per application step | `application_forms`, `documents`, `exchange`, `frontend-vue`, `api` | Implemented | 2026-04-08 | `FormType.step_definitions` entries may include `required_document_type_ids` (validated against `documents.DocumentType`). Effective types are the intersection with `Program.required_document_types`. First multi-step save keeps `dynamic_form_current_step` on the same step so an application exists before doc checks; later saves call `DocumentService.ensure_step_documents_approved` before advancing. `GET .../form_schema/?program=` enriches steps with `required_document_types`; application `dynamic_form_layout` adds `current_step_documents`. Vue wizard shows per-step document list + link to application detail. Tests: `tests/unit/exchange/test_application_dynamic_form_api.py`. |
+| Dynamic step builder with reusable templates | `application_forms`, `admin UI`, `api` | Implemented | 2026-04-08 | `FormStepTemplate` model; `apply_step_template_to_form_type` merges `schema_properties`, `ui_schema_fragment`, and appends a `step_definitions` row (optional `required_document_type_ids`). Admin REST: `GET/POST/PATCH/DELETE /api/application-forms/step-templates/` (writes admin-only); `POST /api/application-forms/form-types/{id}/apply-step-template/` with `template_id` or `slug` plus optional `step_key`. Django admin + **enhanced form builder** (`application_forms/builder.html`): **Step template** button loads active templates and applies via the same API, then reloads the form. Tests: `tests/unit/application_forms/test_step_templates.py`. |
+| Conditional dynamic form fields (schema-driven visibility) | `application_forms`, `exchange`, `frontend-vue` | Implemented | 2026-04-08 | JSON Schema property extension ``x-seim-visibleWhen`` on ``FormType.schema.properties`` entries: `equals`, `notEquals`, `in`, `truthy` / `truthy: false` against another field. `FormSubmissionService.validate_responses` / `validate_step_patch` (with `merged_responses`) only enforce required + type checks for visible fields. Vue `ApplicationForm` filters steps and full-form validation/payloads with `fieldMeetsVisibleWhen` (`dynamicFormVisibility.js`). Tests: `tests/unit/application_forms/test_conditional_visibility.py`, `dynamicFormVisibility.spec.js`. |
+| Multi-step form branching (step ``visible_when``) | `application_forms`, `exchange`, `frontend-vue` | Implemented | 2026-04-08 | Optional ``visible_when`` on each ``step_definitions`` row (same rule shape as field visibility). `get_multi_step_layout` exposes it to the API; `iter_visible_steps_from_form_type` drives save/advance in `ApplicationService.process_dynamic_form_submission` and `field_effective_visible` so required fields on skipped steps are not enforced. Vue wizard uses `visibleFormSteps` + `stepMeetsVisibleWhen`. Tests: `test_conditional_visibility.py`, `test_exchange_services_additional.py` (`TestProcessDynamicFormStepVisibleWhen`). |
+| Program / coordinator visibility context | `application_forms`, `exchange`, `frontend-vue` | Implemented | 2026-04-08 | Rules may include ``program_id``, ``program_id_in``, and ``has_assigned_coordinator`` (bool) alongside optional ``field`` conditions. Server builds context from `Application.program_id` and `assigned_coordinator_id` in `process_dynamic_form_submission` / submit validation; Vue uses selected program + `assigned_coordinator` from application API responses. |
+| Staff / role-based form branching | `application_forms`, `exchange`, `frontend-vue` | Implemented | 2026-04-08 | ``staff_only: true`` (coordinator or admin) and ``roles_any: [role names]`` on ``visible_when`` / ``x-seim-visibleWhen``. ``viewer_roles`` added to visibility context from the submitting user (`get_all_roles` + superuser → admin). Vue `ApplicationForm` passes roles from Pinia auth. Tests: `test_conditional_visibility.py`. |
+| Program enrollment capacity and waitlist | `exchange`, `admin UI`, `frontend-vue`, `api` | Implemented | 2026-04-08 | `Program.enrollment_capacity` (null = unlimited), `waitlist_when_full`; seat count = non-withdrawn apps in `submitted` / `under_review` / `approved` / `completed`. `ApplicationService.submit_application` waitlists or raises when full; `waitlist` status + migration + `create_initial_data`. API: annotated seat counts on program list/detail; readiness headline for waitlist. Vue program info panel shows occupancy. Tests: `test_exchange_services.py` (capacity / waitlist). |
+| Agreement renewal workflow (stages, follow-up, document rollover) | `exchange`, `documents`, `notifications`, `admin UI`, `frontend-vue`, `api` | Implemented | 2026-04-09 | `ExchangeAgreement.renewed_from`, `renewal_follow_up_due`; `AgreementRenewalService.mark_renewal_pending` / `create_renewal_successor` (copy `ExchangeAgreementDocument` files). REST: `POST .../mark-renewal-pending/`, `POST .../create-renewal-successor/`; serializer `renewal_draft_successor_id`; filters `renewal_follow_up_before` / `after`. Django admin fieldset + bulk actions. Staff Vue agreements table actions. In-app notify admins/coordinators. Tests: `test_agreement_renewal.py`, `test_exchange_agreements_api.py`. |
+| Notification digest scheduling (unread summaries) | `notifications`, `accounts`, `frontend-vue`, `admin UI` | Implemented | 2026-04-09 | `UserSettings.notification_digest_frequency` (off/daily/weekly), optional `email_notification_digest` + `email_system`; `process_notification_digests` + `notifications.tasks.send_notification_digests`; Celery beat (`0007_notification_digest_periodic_task`) + `seim/celery.py` schedule 08:30 UTC; `manage.py send_notification_digests`. Vue Settings + API `user-settings` / `NotificationSettingsSerializer`. Tests: `tests/unit/notifications/test_notification_digest.py`. |
+| Saved searches on deadlines / calendar view | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-09 | `SavedSearch.search_type` value `calendar`; `serializeCalendarFilters` / `deserializeCalendarFilters` in `staffListSearchPresets.js`; `DeadlinesCalendar.vue` uses `useStaffSavedPresets` (save / apply / default / delete). Migration `0016_alter_savedsearch_search_type_calendar`. Vitest: `staffListSearchPresets.spec.js`. |
+| Multi-language student profile (additional languages) | `accounts`, `frontend-vue`, `api` | Implemented | 2026-04-09 | `Profile.additional_languages` JSON list `{name, level}` (CEFR optional), max 20; `ProfileSerializer` validation; migration `0007_profile_additional_languages`. Vue `Profile.vue` add/remove rows; primary `language` / `language_level` unchanged for eligibility. Tests: `tests/unit/accounts/test_profile_additional_languages.py`. |
+| Per-user calendar (.ics) / webcal subscribe URL | `exchange`, `api`, `frontend-vue` | Implemented | 2026-04-09 | Signed token on `GET /api/calendar/subscribe.ics` (90d–730d horizon, `type=all`); `GET /api/calendar/events/subscribe-token/` for `ics_url` / `webcal_url`; shared `build_calendar_event_dicts` in `exchange/calendar_events.py`. Vue Deadlines page: copy links. Tests: `tests/unit/exchange/test_calendar_api.py` (`TestCalendarEventAPI` subscribe cases). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
@@ -71,27 +84,21 @@ _All Priority 1 items in this subsection are implemented above._
 #### Applications, Forms, and Eligibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Multi-document requirements per application step | `application_forms`, `documents`, `frontend-vue` | Support uploading and validating multiple required documents within each step of an application workflow. |
-| Dynamic step builder with reusable templates | `application_forms`, `admin UI`, `exchange` | Let admins compose application flows from reusable step/field templates instead of configuring each application type from scratch. |
-| Conditional application logic and branching | `application_forms`, `exchange`, `frontend-vue` | Support conditional fields and step branching based on program type, student answers, or coordinator decisions. |
+| _None pending in this subsection_ |  |  |
 
 #### Programs, Agreements, and Planning
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Program capacity, quotas, and waitlist management | `exchange`, `admin UI`, `frontend-vue` | Track available seats by program and automatically place eligible applicants on a waitlist when capacity is reached. |
-| Agreement renewal workflow | `exchange`, `documents`, `notifications`, `admin UI` | Extend agreement tracking with renewal stages, follow-up tasks, and document rollover support for expiring partnerships. |
+| _None pending in this subsection_ |  |  |
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Advanced notification rules, digests, and reminder scheduling | `notifications`, `accounts`, `admin UI` | Add configurable digest delivery, richer reminder cadences, and role-specific notification rules beyond the current event-based alerts. |
-| Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets on analytics slices or other staff tables if added later. |
+| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | Per-event-type rules matrix, custom reminder templates, role-targeted routing beyond event hooks; digests for **unread summaries** are implemented separately above. |
+| Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets if a dedicated **analytics** staff UI is added later (review queue, agreements, documents, programs, and **calendar** are covered). |
 | Export reports to PDF/Excel | `analytics`, `admin UI` | CSV export is now available through `/api/analytics/export/`; richer PDF/Excel export remains a planned enhancement. |
-| Calendar integration for deadlines and milestones | `exchange`, `notifications`, `frontend-vue` | Surface application deadlines, interview dates, and agreement expirations in a calendar view with export/sync options. |
-
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Multi-language student profile support | `accounts`, `frontend-vue`, `api` | Allow students to record multiple languages and proficiency details instead of a single language value. |
 | Internationalization and accessibility pass for Vue UI | `frontend-vue` | Expand language coverage, keyboard accessibility, and inclusive UI patterns across the SPA. |
 
 ## 🟠 DESIRED / BACKLOG 💡
@@ -112,6 +119,11 @@ _All Priority 1 items in this subsection are implemented above._
 | Automated eligibility and rules engine | `exchange`, `application_forms`, `accounts` | Evaluate eligibility using configurable academic, language, deadline, and documentation rules before submission or review. |
 | Scholarship and funding workflow tracking | `exchange`, `documents`, `analytics`, `frontend-vue` | Track scholarship opportunities, funding applications, required financial documents, and award outcomes alongside exchange applications. |
 
+#### External calendars
+| Feature | Module | Notes |
+|---------|--------|-------|
+| Google Calendar integration | `accounts`, `exchange`, `api`, `frontend-vue` | **Partial:** per-user signed **ICS / webcal** subscribe URL is implemented (import-by-URL in Google Calendar without OAuth). Backlog: OAuth2 / two-way sync or other providers. |
+
 #### Intelligence, Analytics, and Institutional Reporting
 | Feature | Module | Notes |
 |---------|--------|-------|
@@ -125,5 +137,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (coordinator workload dashboard)*  
+*Last updated: 2026-04-09 (calendar ICS / webcal subscribe feed)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

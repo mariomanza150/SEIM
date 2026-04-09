@@ -4,10 +4,14 @@ Tests for Calendar Events API.
 
 import pytest
 from datetime import timedelta
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework.test import APIClient
 
+from exchange.calendar_ics import sign_calendar_subscribe_token
 from exchange.models import Application, ApplicationStatus, Program
+
+User = get_user_model()
 
 
 @pytest.mark.django_db
@@ -35,9 +39,11 @@ class TestCalendarEventAPI:
             assert 'id' in event
             assert 'title' in event
             assert 'start' in event
-            # Optional fields
-            if 'url' in event:
-                assert isinstance(event['url'], str)
+            # Optional fields (DRF may include url as null)
+            if event.get("url") is not None:
+                assert isinstance(event["url"], str)
+            if event.get("spa_path") is not None:
+                assert isinstance(event["spa_path"], str)
     
     def test_filter_by_date_range(self, api_client_authenticated_student, calendar_programs):
         """Test filtering events by date range."""
@@ -109,6 +115,49 @@ class TestCalendarEventAPI:
         
         assert len(start_events) > 0
         assert len(end_events) > 0
+
+    def test_subscribe_token_authenticated(self, api_client_authenticated_student):
+        response = api_client_authenticated_student.get(
+            "/api/calendar/events/subscribe-token/"
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "ics_url" in data and "webcal_url" in data
+        assert "/api/calendar/subscribe.ics" in data["ics_url"]
+        assert "token=" in data["ics_url"]
+        assert data["webcal_url"].startswith("webcal://")
+
+    def test_subscribe_ics_valid_token(self, student_user, calendar_programs):
+        token = sign_calendar_subscribe_token(student_user.pk)
+        client = APIClient()
+        response = client.get("/api/calendar/subscribe.ics", {"token": token})
+        assert response.status_code == 200
+        assert response["Content-Type"].startswith("text/calendar")
+        body = response.content.decode()
+        assert "BEGIN:VCALENDAR" in body
+        assert "END:VCALENDAR" in body
+
+    def test_subscribe_ics_invalid_token(self):
+        client = APIClient()
+        response = client.get("/api/calendar/subscribe.ics", {"token": "not-valid"})
+        assert response.status_code == 403
+
+    def test_subscribe_ics_student_only_own_applications(
+        self,
+        student_user,
+        student_applications,
+        other_student_applications,
+        calendar_programs,
+    ):
+        token = sign_calendar_subscribe_token(student_user.pk)
+        client = APIClient()
+        response = client.get("/api/calendar/subscribe.ics", {"token": token})
+        assert response.status_code == 200
+        body = response.content.decode()
+        for app in student_applications:
+            assert f"application-{app.id}@seim-calendar" in body
+        for app in other_student_applications:
+            assert f"application-{app.id}@seim-calendar" not in body
 
 
 @pytest.mark.django_db
@@ -188,7 +237,7 @@ class TestReminderAPI:
 class TestReminderTask:
     """Test reminder sending task."""
     
-    def test_send_deadline_reminders_task(self, user_student, calendar_programs):
+    def test_send_deadline_reminders_task(self, student_user, calendar_programs):
         """Test the Celery task sends reminders."""
         from notifications.models import Reminder
         from notifications.tasks import send_deadline_reminders
@@ -196,7 +245,7 @@ class TestReminderTask:
         # Create a reminder that's due
         program = calendar_programs[0]
         reminder = Reminder.objects.create(
-            user=user_student,
+            user=student_user,
             event_type='program_start',
             event_id=program.id,
             event_title=f'Program Start: {program.name}',
@@ -214,7 +263,7 @@ class TestReminderTask:
         assert reminder.sent
         assert reminder.notification is not None
     
-    def test_only_sends_unsent_reminders(self, user_student, calendar_programs):
+    def test_only_sends_unsent_reminders(self, student_user, calendar_programs):
         """Test task only sends unsent reminders."""
         from notifications.models import Reminder
         from notifications.tasks import send_deadline_reminders
@@ -223,7 +272,7 @@ class TestReminderTask:
         
         # Create already sent reminder
         sent_reminder = Reminder.objects.create(
-            user=user_student,
+            user=student_user,
             event_type='program_start',
             event_id=program.id,
             event_title=f'Program Start: {program.name}',
@@ -237,7 +286,7 @@ class TestReminderTask:
         # Should not send again
         assert count == 0
     
-    def test_only_sends_due_reminders(self, user_student, calendar_programs):
+    def test_only_sends_due_reminders(self, student_user, calendar_programs):
         """Test task only sends reminders that are due."""
         from notifications.models import Reminder
         from notifications.tasks import send_deadline_reminders
@@ -246,7 +295,7 @@ class TestReminderTask:
         
         # Create future reminder
         future_reminder = Reminder.objects.create(
-            user=user_student,
+            user=student_user,
             event_type='program_start',
             event_id=program.id,
             event_title=f'Program Start: {program.name}',
@@ -289,14 +338,14 @@ def calendar_programs(db):
 
 
 @pytest.fixture
-def student_applications(user_student, calendar_programs):
+def student_applications(student_user, calendar_programs):
     """Create test applications for student."""
     apps = []
     status = ApplicationStatus.objects.get_or_create(name="submitted", defaults={'order': 1})[0]
     
     for program in calendar_programs:
         app = Application.objects.create(
-            student=user_student,
+            student=student_user,
             program=program,
             status=status,
             submitted_at=timezone.now()
@@ -335,7 +384,7 @@ def other_student_applications(db, calendar_programs):
 
 
 @pytest.fixture
-def reminders(user_student, calendar_programs):
+def reminders(student_user, calendar_programs):
     """Create test reminders."""
     from notifications.models import Reminder
     
@@ -343,7 +392,7 @@ def reminders(user_student, calendar_programs):
     
     for program in calendar_programs:
         reminder = Reminder.objects.create(
-            user=user_student,
+            user=student_user,
             event_type='program_start',
             event_id=program.id,
             event_title=f'Program Start: {program.name}',
@@ -384,24 +433,24 @@ def other_user_reminders(db, calendar_programs):
 
 
 @pytest.fixture
-def api_client_authenticated_coordinator(user_coordinator):
+def api_client_authenticated_coordinator(coordinator_user):
     """Create authenticated API client for coordinator."""
     from rest_framework_simplejwt.tokens import RefreshToken
     
     client = APIClient()
-    refresh = RefreshToken.for_user(user_coordinator)
+    refresh = RefreshToken.for_user(coordinator_user)
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
     
     return client
 
 
 @pytest.fixture
-def api_client_authenticated_student(user_student):
+def api_client_authenticated_student(student_user):
     """Create authenticated API client for student."""
     from rest_framework_simplejwt.tokens import RefreshToken
     
     client = APIClient()
-    refresh = RefreshToken.for_user(user_student)
+    refresh = RefreshToken.for_user(student_user)
     client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
     
     return client

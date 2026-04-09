@@ -22,6 +22,9 @@ from analytics.views import (
     DashboardConfigViewSet,
     MetricViewSet,
     ReportViewSet,
+    analytics_dashboard_api,
+    analytics_export_api,
+    analytics_report_detail_api,
 )
 from documents.views import (
     DocumentCommentViewSet,
@@ -29,15 +32,18 @@ from documents.views import (
     DocumentTypeViewSet,
     DocumentValidationViewSet,
     DocumentViewSet,
+    ExchangeAgreementDocumentViewSet,
 )
 from exchange.views import (
     ApplicationStatusViewSet,
     ApplicationViewSet,
     CalendarEventViewSet,
     CommentViewSet,
+    ExchangeAgreementViewSet,
     ProgramViewSet,
     SavedSearchViewSet,
     TimelineEventViewSet,
+    calendar_subscribe_ics,
 )
 from notifications.views import (
     NotificationPreferenceViewSet,
@@ -57,6 +63,11 @@ router.register(r"user-sessions", UserSessionViewSet, basename="user-sessions")
 
 # Exchange
 router.register(r"programs", ProgramViewSet)
+router.register(
+    r"exchange-agreements",
+    ExchangeAgreementViewSet,
+    basename="exchange-agreement",
+)
 router.register(r"applications", ApplicationViewSet, basename="application")
 router.register(r"application-statuses", ApplicationStatusViewSet)
 router.register(r"comments", CommentViewSet)
@@ -70,6 +81,11 @@ router.register(r"documents", DocumentViewSet)
 router.register(r"document-validations", DocumentValidationViewSet)
 router.register(r"document-resubmissions", DocumentResubmissionRequestViewSet)
 router.register(r"document-comments", DocumentCommentViewSet)
+router.register(
+    r"agreement-documents",
+    ExchangeAgreementDocumentViewSet,
+    basename="agreement-document",
+)
 
 # Notifications
 router.register(r"notification-types", NotificationTypeViewSet)
@@ -84,7 +100,15 @@ router.register(r"dashboard-configs", DashboardConfigViewSet)
 router.register(r"admin/dashboard", AdminDashboardViewSet, basename="admin-dashboard")
 
 urlpatterns = [
+    path(
+        "calendar/subscribe.ics",
+        calendar_subscribe_ics,
+        name="calendar-subscribe-ics",
+    ),
     path("", include(router.urls)),
+    path("analytics/dashboard/", analytics_dashboard_api, name="analytics-dashboard"),
+    path("analytics/export/", analytics_export_api, name="analytics-export"),
+    path("analytics/reports/<str:report_type>/", analytics_report_detail_api, name="analytics-report-detail"),
     path("accounts/", include(("accounts.urls", "accounts"), namespace="accounts")),
     path("login/", LoginView.as_view(), name="login"),
     path("register/", RegistrationView.as_view(), name="register"),

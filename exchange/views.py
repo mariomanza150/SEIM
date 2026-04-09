@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Count, Prefetch, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
@@ -11,8 +11,21 @@ from core.permissions import (
     IsStudentOrReadOnly,
 )
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
+from django.contrib.auth import get_user_model
+from django.http import HttpResponse
+from django.urls import reverse
+from django.utils import timezone as dj_tz
+
+from .agreement_renewal import AgreementRenewalService
+from .calendar_events import build_calendar_event_dicts
+from .calendar_ics import (
+    build_subscribe_query,
+    events_to_ics,
+    sign_calendar_subscribe_token,
+    unsign_calendar_subscribe_token,
+)
 from .filters import ApplicationFilter, ExchangeAgreementFilter, ProgramFilter
 from .models import (
     Application,
@@ -21,6 +34,7 @@ from .models import (
     ExchangeAgreement,
     Program,
     SavedSearch,
+    SEAT_HOLDING_APPLICATION_STATUS_NAMES,
     TimelineEvent,
 )
 from .serializers import (
@@ -38,10 +52,54 @@ from .services import ApplicationService
 # Create your views here.
 
 
+def calendar_subscribe_ics(request):
+    """
+    Public (token-authenticated) iCalendar feed for external calendar apps.
+
+    Query: token — HMAC-signed user id (see GET .../calendar/events/subscribe-token/).
+    Horizon: 90 days past through 730 days future, type=all (matches full staff/student rules).
+    """
+    token = request.GET.get("token", "")
+    uid = unsign_calendar_subscribe_token(token)
+    if uid is None:
+        return HttpResponse(
+            "Invalid subscription link.",
+            status=403,
+            content_type="text/plain; charset=utf-8",
+        )
+    User = get_user_model()
+    try:
+        user = User.objects.get(pk=uid)
+    except User.DoesNotExist:
+        return HttpResponse(
+            "Unknown user.",
+            status=404,
+            content_type="text/plain; charset=utf-8",
+        )
+    if not user.is_active:
+        return HttpResponse(
+            "Inactive user.",
+            status=403,
+            content_type="text/plain; charset=utf-8",
+        )
+
+    start_dt = dj_tz.now() - timedelta(days=90)
+    end_dt = dj_tz.now() + timedelta(days=730)
+    events = build_calendar_event_dicts(
+        user,
+        start_param=start_dt.isoformat(),
+        end_param=end_dt.isoformat(),
+        event_type="all",
+    )
+    body = events_to_ics(events, cal_name="SEIM deadlines & milestones")
+    resp = HttpResponse(body, content_type="text/calendar; charset=utf-8")
+    resp["Content-Disposition"] = 'inline; filename="seim-calendar.ics"'
+    return resp
+
+
 class ExchangeAgreementViewSet(viewsets.ModelViewSet):
     """Staff registry for exchange agreements (coordinators and admins)."""
 
-    queryset = ExchangeAgreement.objects.prefetch_related("programs").all()
     serializer_class = ExchangeAgreementSerializer
     permission_classes = [IsCoordinatorOrAdmin]
     filter_backends = [
@@ -67,6 +125,58 @@ class ExchangeAgreementViewSet(viewsets.ModelViewSet):
         "title",
     ]
 
+    def get_queryset(self):
+        draft_successors = ExchangeAgreement.objects.filter(
+            status=ExchangeAgreement.Status.DRAFT
+        )
+        return ExchangeAgreement.objects.prefetch_related(
+            "programs",
+            Prefetch("renewal_successors", queryset=draft_successors, to_attr="_draft_renewal_successors"),
+        ).all()
+
+    @action(detail=True, methods=["post"], url_path="mark-renewal-pending")
+    def mark_renewal_pending(self, request, pk=None):
+        agreement = self.get_object()
+        due_raw = request.data.get("renewal_follow_up_due")
+        parsed = None
+        if due_raw not in (None, ""):
+            from datetime import date as date_cls
+
+            try:
+                parsed = date_cls.fromisoformat(str(due_raw))
+            except ValueError:
+                return Response(
+                    {"error": "renewal_follow_up_due must be a YYYY-MM-DD date."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        try:
+            AgreementRenewalService.mark_renewal_pending(
+                agreement, renewal_follow_up_due=parsed
+            )
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        agreement.refresh_from_db()
+        return Response(self.get_serializer(agreement).data)
+
+    @action(detail=True, methods=["post"], url_path="create-renewal-successor")
+    def create_renewal_successor(self, request, pk=None):
+        agreement = self.get_object()
+        raw = request.data.get("copy_documents", True)
+        if isinstance(raw, str):
+            copy_documents = raw.strip().lower() in ("1", "true", "yes", "on")
+        else:
+            copy_documents = bool(raw)
+        try:
+            successor = AgreementRenewalService.create_renewal_successor(
+                agreement, request.user, copy_documents=copy_documents
+            )
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            self.get_serializer(successor).data,
+            status=status.HTTP_201_CREATED,
+        )
+
 
 class ProgramViewSet(viewsets.ModelViewSet):
     """ViewSet for exchange programs with admin-only write permissions."""
@@ -83,6 +193,16 @@ class ProgramViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "description"]
     ordering_fields = ["name", "start_date", "end_date", "created_at"]
 
+    def get_queryset(self):
+        seat_filter = Q(
+            application__withdrawn=False,
+            application__status__name__in=SEAT_HOLDING_APPLICATION_STATUS_NAMES,
+        )
+        return (
+            Program.objects.prefetch_related("coordinators")
+            .annotate(_seat_holding_count=Count("application", filter=seat_filter))
+        )
+
     @cache_api_response(timeout=600)  # Cache for 10 minutes
     def list(self, request, *args, **kwargs):
         """List all programs with caching."""
@@ -97,7 +217,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
     @cache_api_response(timeout=600)  # Cache for 10 minutes
     def active(self, request):
         """Get only active programs with caching."""
-        active_programs = self.queryset.filter(is_active=True)
+        active_programs = self.get_queryset().filter(is_active=True)
         serializer = self.get_serializer(active_programs, many=True)
         return Response(serializer.data)
 
@@ -134,6 +254,8 @@ class ProgramViewSet(viewsets.ModelViewSet):
             auto_reject_ineligible=original_program.auto_reject_ineligible,
             recurring=original_program.recurring,
             application_form=original_program.application_form,
+            enrollment_capacity=original_program.enrollment_capacity,
+            waitlist_when_full=original_program.waitlist_when_full,
         )
         cloned_program.coordinators.set(original_program.coordinators.all())
 
@@ -439,107 +561,38 @@ class SavedSearchViewSet(viewsets.ModelViewSet):
 
 class CalendarEventViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ViewSet for calendar events.
-    
-    Returns events in FullCalendar format:
-    - Program application deadlines
-    - Program start/end dates
-    - User-specific application deadlines
+    ViewSet for calendar events (FullCalendar-friendly JSON).
+
+    Query parameters:
+    - start, end: ISO datetimes bounding visible range (default ~30d past to 365d future)
+    - type: `program` | `deadline` | `application` | `agreement` | `all`
+      When omitted, returns program + deadline + application, and agreement ends for staff only.
     """
-    
+
     serializer_class = CalendarEventSerializer
     permission_classes = [permissions.IsAuthenticated]
-    
+
     def get_queryset(self):
-        """
-        Return calendar events based on query parameters.
-        
-        Query parameters:
-        - start: Start date filter (ISO format)
-        - end: End date filter (ISO format)
-        - type: Event type filter (program, application, deadline)
-        """
-        # Return an empty queryset since we're building events dynamically in list()
-        # Use Program as base model for schema generation
         return Program.objects.none()
-    
+
     def list(self, request, *args, **kwargs):
-        """Generate calendar events based on programs and applications."""
-        user = request.user
-        events = []
-        
-        # Get date range from query parameters
-        start_param = request.query_params.get('start')
-        end_param = request.query_params.get('end')
-        event_type = request.query_params.get('type')
-        
-        try:
-            start_date = datetime.fromisoformat(start_param.replace('Z', '+00:00')) if start_param else datetime.now() - timedelta(days=30)
-            end_date = datetime.fromisoformat(end_param.replace('Z', '+00:00')) if end_param else datetime.now() + timedelta(days=365)
-        except (ValueError, AttributeError):
-            start_date = datetime.now() - timedelta(days=30)
-            end_date = datetime.now() + timedelta(days=365)
-        
-        # Get programs within date range
-        programs = Program.objects.filter(
-            start_date__lte=end_date.date(),
-            end_date__gte=start_date.date()
+        events = build_calendar_event_dicts(
+            request.user,
+            start_param=request.query_params.get("start"),
+            end_param=request.query_params.get("end"),
+            event_type=request.query_params.get("type"),
         )
-        
-        if not event_type or event_type == 'program':
-            # Add program events
-            for program in programs:
-                # Program start event
-                events.append({
-                    'id': f'program-start-{program.id}',
-                    'title': f'{program.name} - Start',
-                    'start': datetime.combine(program.start_date, datetime.min.time()).isoformat(),
-                    'url': f'/programs/{program.id}/',
-                    'className': 'event-program-start',
-                    'backgroundColor': '#0d6efd',
-                    'borderColor': '#0d6efd',
-                    'allDay': True
-                })
-                
-                # Program end event
-                events.append({
-                    'id': f'program-end-{program.id}',
-                    'title': f'{program.name} - End',
-                    'start': datetime.combine(program.end_date, datetime.min.time()).isoformat(),
-                    'url': f'/programs/{program.id}/',
-                    'className': 'event-program-end',
-                    'backgroundColor': '#6c757d',
-                    'borderColor': '#6c757d',
-                    'allDay': True
-                })
-        
-        if not event_type or event_type == 'application':
-            # Get user's applications or all applications for coordinators
-            if user.has_role('coordinator') or user.has_role('admin'):
-                applications = Application.objects.filter(
-                    program__start_date__lte=end_date.date(),
-                    program__end_date__gte=start_date.date()
-                ).select_related('program', 'student', 'status')
-            else:
-                applications = Application.objects.filter(
-                    student=user,
-                    program__start_date__lte=end_date.date(),
-                    program__end_date__gte=start_date.date()
-                ).select_related('program', 'status')
-            
-            # Add application events
-            for application in applications:
-                # Application deadline (program start date as proxy)
-                events.append({
-                    'id': f'application-{application.id}',
-                    'title': f'Application: {application.program.name}',
-                    'start': datetime.combine(application.program.start_date, datetime.min.time()).isoformat(),
-                    'url': f'/applications/{application.id}/',
-                    'className': f'event-application event-status-{application.status.name}',
-                    'backgroundColor': '#198754' if application.status.name == 'approved' else '#ffc107',
-                    'borderColor': '#198754' if application.status.name == 'approved' else '#ffc107',
-                    'allDay': True
-                })
-        
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
+
+    @action(detail=False, methods=["get"], url_path="subscribe-token")
+    def subscribe_token(self, request):
+        """Return signed HTTPS and webcal URLs for the personal ICS feed (no JWT in calendar clients)."""
+        token = sign_calendar_subscribe_token(request.user.pk)
+        q = build_subscribe_query(token)
+        path = reverse("api:calendar-subscribe-ics")
+        ics_url = request.build_absolute_uri(f"{path}?{q}")
+        webcal_url = ics_url.replace("https://", "webcal://", 1).replace(
+            "http://", "webcal://", 1
+        )
+        return Response({"ics_url": ics_url, "webcal_url": webcal_url})
