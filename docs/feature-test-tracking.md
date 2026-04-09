@@ -71,4 +71,4 @@ _Use these as hints when filling the **Browser** column; replace with exact `tes
 
 ---
 
-*Last updated: 2026-04-09 — **`dynamic-forms`:** `dynamicFormVisibility.spec.js` traced + Vitest (7 green). Prior: `coord-review` review-queue preset i18n.*
+*Last updated: 2026-04-09 — **`agreements`:** `StaffExchangeAgreements.spec.js` + `exchangeAgreementsPage` preset/clear/pagination keys. Prior: `dynamic-forms` `dynamicFormVisibility` Vitest.*
