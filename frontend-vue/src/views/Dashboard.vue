@@ -138,20 +138,33 @@
               </router-link>
             </div>
             <div class="col-md-3 mb-3">
-              <div class="card text-center">
-                <div class="card-body">
-                  <i class="bi bi-clock-history fs-1 text-info"></i>
-                  <h3 class="mt-2">{{ stats.pending }}</h3>
-                  <p class="text-muted mb-0">Pending Tasks</p>
+              <component
+                :is="authStore.canUseStaffReviewQueue ? 'router-link' : 'div'"
+                v-bind="
+                  authStore.canUseStaffReviewQueue
+                    ? { to: { name: 'CoordinatorReviewQueue' }, class: 'text-decoration-none' }
+                    : {}
+                "
+              >
+                <div class="card text-center" :class="{ 'card-hover': authStore.canUseStaffReviewQueue }">
+                  <div class="card-body">
+                    <i class="bi bi-clock-history fs-1 text-info"></i>
+                    <h3 class="mt-2">{{ stats.pending }}</h3>
+                    <p class="text-muted mb-0">Pending Tasks</p>
+                  </div>
                 </div>
-              </div>
+              </component>
             </div>
           </div>
 
-          <!-- Recent Activity -->
+          <!-- Next steps -->
           <div v-if="!loading" class="card">
-            <div class="card-header">
-              <h5 class="mb-0">Recent Activity</h5>
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <h5 class="mb-0">What needs your attention</h5>
+              <span v-if="nextStepsLoading" class="text-muted small">
+                <span class="spinner-border spinner-border-sm me-1" role="status" />
+                Updating…
+              </span>
             </div>
             <div class="card-body">
               <div v-if="error" class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -159,10 +172,41 @@
                 {{ error }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
               </div>
-              <p class="text-muted">No recent activity to display.</p>
-              <p class="small">
-                <i class="bi bi-info-circle me-1"></i>
-                Your applications, documents, and notifications will appear here.
+              <p v-if="nextStepsError" class="text-warning small mb-3">{{ nextStepsError }}</p>
+              <ul v-if="nextSteps.length" class="list-group list-group-flush border rounded">
+                <li
+                  v-for="row in nextSteps"
+                  :key="row.id"
+                  class="list-group-item list-group-item-action d-flex justify-content-between align-items-start gap-3 py-3"
+                >
+                  <div class="min-w-0">
+                    <div class="fw-medium">{{ row.title }}</div>
+                    <div v-if="row.subtitle" class="text-muted small text-break">{{ row.subtitle }}</div>
+                  </div>
+                  <div class="flex-shrink-0">
+                    <router-link
+                      v-if="row.spaRoute"
+                      :to="row.spaRoute"
+                      class="btn btn-sm btn-primary"
+                    >
+                      Open
+                    </router-link>
+                    <a
+                      v-else-if="row.href"
+                      :href="row.href"
+                      class="btn btn-sm btn-outline-primary"
+                    >
+                      Open
+                    </a>
+                    <router-link v-else :to="{ name: 'Notifications' }" class="btn btn-sm btn-outline-secondary">
+                      View
+                    </router-link>
+                  </div>
+                </li>
+              </ul>
+              <p v-else-if="!nextStepsLoading" class="text-muted mb-0">
+                You are all caught up. New tasks will show here when you have draft applications, document
+                actions, reviews, or unread notifications.
               </p>
             </div>
           </div>
@@ -173,12 +217,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import api from '@/services/api'
+import { fetchDashboardNextSteps } from '@/utils/dashboardNextSteps'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -187,6 +232,9 @@ const { success, error: errorToast } = useToast()
 const userName = computed(() => authStore.userName)
 const loading = ref(true)
 const error = ref(null)
+const nextSteps = ref([])
+const nextStepsLoading = ref(false)
+const nextStepsError = ref(null)
 
 // Dashboard stats from API
 const stats = ref({
@@ -196,22 +244,44 @@ const stats = ref({
   pending: 0,
 })
 
-async function fetchDashboardStats() {
+function onApplicationSync() {
+  loadNextSteps()
+  fetchDashboardStats({ soft: true })
+}
+
+async function fetchDashboardStats(options = {}) {
+  const soft = options.soft === true
   try {
-    loading.value = true
-    error.value = null
-    
+    if (!soft) {
+      loading.value = true
+      error.value = null
+    }
     const response = await api.get('/api/accounts/dashboard/stats/')
     stats.value = response.data
-    
-    console.log('Dashboard stats loaded:', response.data)
   } catch (err) {
-    console.error('Failed to load dashboard stats:', err)
-    error.value = 'Failed to load dashboard statistics'
-    errorToast('Unable to load dashboard statistics')
-    // Don't block UI on stats error - show 0s
+    if (!soft) {
+      error.value = 'Failed to load dashboard statistics'
+      errorToast('Unable to load dashboard statistics')
+    }
   } finally {
-    loading.value = false
+    if (!soft) {
+      loading.value = false
+    }
+  }
+}
+
+async function loadNextSteps() {
+  try {
+    nextStepsLoading.value = true
+    nextStepsError.value = null
+    nextSteps.value = await fetchDashboardNextSteps(api, {
+      userRole: authStore.userRole,
+      canUseStaffReviewQueue: authStore.canUseStaffReviewQueue,
+    })
+  } catch {
+    nextStepsError.value = 'Could not load suggested next steps.'
+  } finally {
+    nextStepsLoading.value = false
   }
 }
 
@@ -222,8 +292,13 @@ async function handleLogout() {
 }
 
 onMounted(async () => {
-  console.log('Dashboard mounted. User:', authStore.user)
   await fetchDashboardStats()
+  await loadNextSteps()
+  window.addEventListener('seim-application-sync', onApplicationSync)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('seim-application-sync', onApplicationSync)
 })
 </script>
 

@@ -109,6 +109,11 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
   - Notification settings (email_*, inapp_*)
   - Privacy settings (profile_public, share_analytics)
 
+#### Dashboard stats
+- `GET /api/accounts/dashboard/stats/` - Authenticated. JSON: `{ applications, documents, notifications, pending }`.
+  - **Student:** `applications` / `pending` are scoped to the current user (`pending` counts `draft` and `under_review`). `documents` counts documents the student uploaded or that belong to their applications.
+  - **Coordinator or admin:** `applications` and `documents` are global totals; `notifications` is still unread for the current user; `pending` counts non-withdrawn applications that are `submitted` or `under_review`, or have at least one unresolved `DocumentResubmissionRequest`.
+
 ### Exchange Programs
 
 #### Programs
