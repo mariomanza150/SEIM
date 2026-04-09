@@ -5,6 +5,7 @@ import { nextTick } from 'vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { announceRouteNavigation, focusMainContent } from '@/utils/a11y'
+import { resolveDocumentTitle } from '@/utils/documentTitle'
 
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
@@ -33,7 +34,6 @@ const routes = [
     component: Login,
     meta: {
       requiresAuth: false,
-      title: 'Login - SEIM',
     },
   },
   {
@@ -47,7 +47,6 @@ const routes = [
     component: Dashboard,
     meta: {
       requiresAuth: true,
-      title: 'Dashboard - SEIM',
     },
   },
   {
@@ -56,7 +55,6 @@ const routes = [
     component: Applications,
     meta: {
       requiresAuth: true,
-      title: 'Applications - SEIM',
     },
   },
   {
@@ -66,7 +64,6 @@ const routes = [
     meta: {
       requiresAuth: true,
       staffReviewQueue: true,
-      title: 'Review queue - SEIM',
     },
   },
   {
@@ -76,7 +73,6 @@ const routes = [
     meta: {
       requiresAuth: true,
       staffReviewQueue: true,
-      title: 'Coordinator workload - SEIM',
     },
   },
   {
@@ -86,7 +82,6 @@ const routes = [
     meta: {
       requiresAuth: true,
       staffReviewQueue: true,
-      title: 'Notification routing - SEIM',
     },
   },
   {
@@ -96,7 +91,6 @@ const routes = [
     meta: {
       requiresAuth: true,
       staffReviewQueue: true,
-      title: 'Exchange agreements - SEIM',
     },
   },
   {
@@ -106,7 +100,6 @@ const routes = [
     meta: {
       requiresAuth: true,
       staffReviewQueue: true,
-      title: 'Agreement documents - SEIM',
     },
   },
   {
@@ -115,7 +108,6 @@ const routes = [
     component: ProgramCompare,
     meta: {
       requiresAuth: true,
-      title: 'Compare programs - SEIM',
     },
   },
   {
@@ -124,7 +116,6 @@ const routes = [
     component: ApplicationForm,
     meta: {
       requiresAuth: true,
-      title: 'New Application - SEIM',
     },
   },
   {
@@ -139,7 +130,6 @@ const routes = [
     component: ApplicationForm,
     meta: {
       requiresAuth: true,
-      title: 'Edit Application - SEIM',
     },
   },
   {
@@ -148,7 +138,6 @@ const routes = [
     component: ApplicationDetail,
     meta: {
       requiresAuth: true,
-      title: 'Application Details - SEIM',
     },
   },
   {
@@ -157,7 +146,6 @@ const routes = [
     component: Documents,
     meta: {
       requiresAuth: true,
-      title: 'Documents - SEIM',
     },
   },
   {
@@ -166,7 +154,6 @@ const routes = [
     component: DocumentDetail,
     meta: {
       requiresAuth: true,
-      title: 'Document Details - SEIM',
     },
   },
   {
@@ -175,7 +162,6 @@ const routes = [
     component: Notifications,
     meta: {
       requiresAuth: true,
-      title: 'Notifications - SEIM',
     },
   },
   {
@@ -184,7 +170,6 @@ const routes = [
     component: Profile,
     meta: {
       requiresAuth: true,
-      title: 'Profile - SEIM',
     },
   },
   {
@@ -193,7 +178,6 @@ const routes = [
     component: Settings,
     meta: {
       requiresAuth: true,
-      title: 'Settings - SEIM',
     },
   },
   {
@@ -202,7 +186,6 @@ const routes = [
     component: DeadlinesCalendar,
     meta: {
       requiresAuth: true,
-      title: 'Deadlines & milestones - SEIM',
     },
   },
   {
@@ -216,9 +199,6 @@ const routes = [
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: NotFound,
-    meta: {
-      title: '404 - Page Not Found',
-    },
   },
 ]
 
@@ -237,8 +217,7 @@ router.beforeEach(async (to, from, next) => {
     return next({ path: to.path.slice(0, -1), query: to.query, hash: to.hash, replace: true })
   }
 
-  // Update page title
-  document.title = to.meta.title || 'SEIM'
+  document.title = resolveDocumentTitle(to)
 
   // Check if route requires authentication
   if (to.meta.requiresAuth) {

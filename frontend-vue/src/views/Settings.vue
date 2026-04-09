@@ -246,12 +246,15 @@ import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import { applyUiPreferences } from '@/services/uiPreferences'
 import { setAppLocale } from '@/i18n'
+import router from '@/router'
+import { resolveDocumentTitle } from '@/utils/documentTitle'
 
 const authStore = useAuthStore()
 const { t, locale } = useI18n()
 
 function onLocaleChange() {
   setAppLocale(locale.value)
+  document.title = resolveDocumentTitle(router.currentRoute.value)
 }
 
 const { success, error: errorToast } = useToast()
