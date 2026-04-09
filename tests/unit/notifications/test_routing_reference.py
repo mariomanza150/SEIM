@@ -5,6 +5,7 @@ from notifications.routing_reference import (
     REMINDER_EVENT_TYPE_RECIPIENT_SUMMARIES,
     SETTINGS_CATEGORY_PRIMARY_RECIPIENTS,
     TRANSACTIONAL_NOTIFICATION_ROUTES,
+    UNGATED_SETTINGS_CATEGORY_BUCKET,
     build_notification_routing_reference,
 )
 from notifications.services import SETTINGS_CATEGORY_USER_FIELDS
@@ -13,7 +14,7 @@ from notifications.tasks import REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
 
 def test_build_notification_routing_reference_shape():
     data = build_notification_routing_reference()
-    assert data["schema_version"] == 10
+    assert data["schema_version"] == 11
     access = data["reference_api_access"]
     assert access["superuser"] is True
     assert "coordinator" in access["roles_any"]
@@ -45,6 +46,11 @@ def test_build_notification_routing_reference_shape():
     keys = [r["route_key"] for r in routes]
     assert keys == sorted(keys)
     assert keys == sorted({k["route_key"] for k in TRANSACTIONAL_NOTIFICATION_ROUTES})
+    tx_idx = data["transactional_route_keys_by_settings_category"]
+    assert UNGATED_SETTINGS_CATEGORY_BUCKET in tx_idx
+    assert "applications" in tx_idx
+    assert "application_submitted" in tx_idx["applications"]
+    assert sum(len(v) for v in tx_idx.values()) == len(TRANSACTIONAL_NOTIFICATION_ROUTES)
 
 
 def test_reminder_event_types_have_descriptions():

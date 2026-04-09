@@ -224,6 +224,19 @@ TRANSACTIONAL_NOTIFICATION_ROUTES: list[dict[str, object]] = [
     },
 ]
 
+# Bucket label when a transactional send omits ``settings_category`` (JSON object keys cannot be null).
+UNGATED_SETTINGS_CATEGORY_BUCKET = "ungated"
+
+
+def build_transactional_route_keys_by_settings_category() -> dict[str, list[str]]:
+    """Group ``route_key`` values by ``settings_category`` for quick staff lookup."""
+    buckets: dict[str, list[str]] = {}
+    for row in TRANSACTIONAL_NOTIFICATION_ROUTES:
+        raw_cat = row["settings_category"]
+        label = raw_cat if raw_cat is not None else UNGATED_SETTINGS_CATEGORY_BUCKET
+        buckets.setdefault(str(label), []).append(str(row["route_key"]))
+    return {k: sorted(v) for k, v in sorted(buckets.items(), key=lambda kv: kv[0])}
+
 
 def build_notification_routing_reference() -> dict:
     """Structured map for coordinators/admins (API + future UI)."""
@@ -251,11 +264,13 @@ def build_notification_routing_reference() -> dict:
         TRANSACTIONAL_NOTIFICATION_ROUTES,
         key=lambda row: row["route_key"],
     )
+    tx_by_cat = build_transactional_route_keys_by_settings_category()
     return {
-        "schema_version": 10,
+        "schema_version": 11,
         "reference_api_access": dict(REFERENCE_API_ACCESS),
         "settings_categories": categories,
         "transactional_routes": transactional,
+        "transactional_route_keys_by_settings_category": tx_by_cat,
         "reminder_event_type_to_settings_category": reminder_map,
         "reminder_event_type_descriptions": {
             k: REMINDER_EVENT_TYPE_DESCRIPTIONS[k] for k in reminder_map

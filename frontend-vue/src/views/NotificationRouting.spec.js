@@ -16,7 +16,7 @@ vi.mock('@/composables/useToast', () => ({
 }))
 
 const mockPayload = {
-  schema_version: 10,
+  schema_version: 11,
   reference_api_access: {
     roles_any: ['coordinator', 'admin'],
     superuser: true,
@@ -44,6 +44,10 @@ const mockPayload = {
       source: 'exchange.services.ApplicationService.submit_application',
     },
   ],
+  transactional_route_keys_by_settings_category: {
+    applications: ['application_submitted'],
+    ungated: ['account_security_email'],
+  },
   reminder_event_type_to_settings_category: {
     application_deadline: 'applications',
   },
@@ -100,6 +104,9 @@ describe('NotificationRouting', () => {
     expect(wrapper.text()).toContain('Who can call this API')
     expect(wrapper.text()).toContain('Mock: only staff roles')
     expect(wrapper.text()).toContain('Primarily the applicant (mock).')
+    expect(wrapper.text()).toContain('Transactional routes by UserSettings group')
+    expect(wrapper.text()).toContain('ungated')
+    expect(wrapper.text()).toContain('account_security_email')
     expect(wrapper.text()).toContain('Transactional sends (catalog)')
     expect(wrapper.text()).toContain('application_submitted')
     expect(wrapper.text()).toContain('Recipients (this send)')
