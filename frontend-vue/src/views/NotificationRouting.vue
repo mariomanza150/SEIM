@@ -133,6 +133,36 @@
           </div>
         </div>
 
+        <div
+          v-if="reminderTypesByCategory.length"
+          class="card border-0 shadow-sm mb-4"
+        >
+          <div class="card-header bg-light">
+            <span class="fw-semibold">{{ t('notificationRoutingPage.reminderByCategoryTitle') }}</span>
+          </div>
+          <div class="card-body small text-muted border-bottom">
+            {{ t('notificationRoutingPage.reminderByCategoryIntro') }}
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">{{ t('notificationRoutingPage.colCategoryBucket') }}</th>
+                  <th scope="col">{{ t('notificationRoutingPage.colEventTypeKeys') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in reminderTypesByCategory" :key="row.bucket">
+                  <td><code>{{ row.bucket }}</code></td>
+                  <td class="small">
+                    <code v-for="k in row.keys" :key="k" class="me-2 d-inline-block">{{ k }}</code>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <div class="card border-0 shadow-sm mb-4">
           <div class="card-header bg-light">
             <span class="fw-semibold">{{ t('notificationRoutingPage.remindersTitle') }}</span>
@@ -246,6 +276,17 @@ const transactionalRows = computed(() => {
 
 const transactionalRouteKeysByCategory = computed(() => {
   const idx = payload.value?.transactional_route_keys_by_settings_category
+  if (!idx || typeof idx !== 'object') return []
+  return Object.keys(idx)
+    .sort((a, b) => a.localeCompare(b))
+    .map((bucket) => ({
+      bucket,
+      keys: Array.isArray(idx[bucket]) ? idx[bucket] : [],
+    }))
+})
+
+const reminderTypesByCategory = computed(() => {
+  const idx = payload.value?.reminder_event_types_by_settings_category
   if (!idx || typeof idx !== 'object') return []
   return Object.keys(idx)
     .sort((a, b) => a.localeCompare(b))

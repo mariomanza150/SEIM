@@ -14,7 +14,7 @@ from notifications.tasks import REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
 
 def test_build_notification_routing_reference_shape():
     data = build_notification_routing_reference()
-    assert data["schema_version"] == 11
+    assert data["schema_version"] == 12
     access = data["reference_api_access"]
     assert access["superuser"] is True
     assert "coordinator" in access["roles_any"]
@@ -51,6 +51,10 @@ def test_build_notification_routing_reference_shape():
     assert "applications" in tx_idx
     assert "application_submitted" in tx_idx["applications"]
     assert sum(len(v) for v in tx_idx.values()) == len(TRANSACTIONAL_NOTIFICATION_ROUTES)
+    rem_idx = data["reminder_event_types_by_settings_category"]
+    assert "applications" in rem_idx
+    assert "application_deadline" in rem_idx["applications"]
+    assert sum(len(v) for v in rem_idx.values()) == len(data["reminder_event_type_to_settings_category"])
 
 
 def test_reminder_event_types_have_descriptions():

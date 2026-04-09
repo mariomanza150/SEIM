@@ -238,6 +238,16 @@ def build_transactional_route_keys_by_settings_category() -> dict[str, list[str]
     return {k: sorted(v) for k, v in sorted(buckets.items(), key=lambda kv: kv[0])}
 
 
+def build_reminder_event_types_by_settings_category(
+    reminder_map: dict[str, str],
+) -> dict[str, list[str]]:
+    """Group ``Reminder.event_type`` values by the UserSettings group used for delivery."""
+    buckets: dict[str, list[str]] = {}
+    for event_type, cat in reminder_map.items():
+        buckets.setdefault(str(cat), []).append(str(event_type))
+    return {k: sorted(v) for k, v in sorted(buckets.items(), key=lambda kv: kv[0])}
+
+
 def build_notification_routing_reference() -> dict:
     """Structured map for coordinators/admins (API + future UI)."""
     categories = {
@@ -260,18 +270,20 @@ def build_notification_routing_reference() -> dict:
         ),
     }
     reminder_map = dict(REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY)
+    reminder_by_cat = build_reminder_event_types_by_settings_category(reminder_map)
     transactional = sorted(
         TRANSACTIONAL_NOTIFICATION_ROUTES,
         key=lambda row: row["route_key"],
     )
     tx_by_cat = build_transactional_route_keys_by_settings_category()
     return {
-        "schema_version": 11,
+        "schema_version": 12,
         "reference_api_access": dict(REFERENCE_API_ACCESS),
         "settings_categories": categories,
         "transactional_routes": transactional,
         "transactional_route_keys_by_settings_category": tx_by_cat,
         "reminder_event_type_to_settings_category": reminder_map,
+        "reminder_event_types_by_settings_category": reminder_by_cat,
         "reminder_event_type_descriptions": {
             k: REMINDER_EVENT_TYPE_DESCRIPTIONS[k] for k in reminder_map
         },

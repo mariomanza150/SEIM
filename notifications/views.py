@@ -27,8 +27,9 @@ from .services import NotificationService
     description=(
         "Read-only map of notification ``settings_category`` values, a catalog of main "
         "transactional sends (with per-route recipient summaries and a grouped route-key index), "
-        "digest routing, and deadline reminder event types (with per-type recipient summaries) to "
-        "``UserSettings`` field names. Coordinators, admins, and superusers only."
+        "digest routing, and deadline reminder event types (per-type recipient summaries plus a "
+        "grouped event-type-by-category index) to ``UserSettings`` field names. Coordinators, admins, "
+        "and superusers only."
     ),
     responses={
         200: NotificationRoutingReferenceSerializer,

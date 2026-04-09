@@ -89,14 +89,14 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-09 | `Notifications.vue`: `notifications.*` (filters, empty, pagination aria, toasts) + reuse `route.names`, `documentsPage` / `applicationFormPage` / `applicationsPage` where applicable. Vitest: `Notifications.spec.js`. |
 | Vue i18n: DocumentUpload component | `frontend-vue` | Implemented | 2026-04-09 | `documentUpload.*` + `documentDetailPage.labelDocumentType`; `DocumentUpload.vue` on application detail. Vitest: `DocumentUpload.spec.js`. |
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-08 | Extended `notifications.*` + reuse `route.names`, `documentsPage` / `applicationsPage` / `applicationFormPage` / `reviewQueuePage`; `Notifications.vue` filters, list, empty/loading/error, pagination, mark-read + toasts, locale-relative dates (`timeDaysAgo`). Vitest: `Notifications.spec.js`. |
-| Staff notification routing reference API | `notifications`, `api`, `seim` | Implemented | 2026-04-09 | `GET /api/notifications/routing-reference/`: **`transactional_route_keys_by_settings_category`** (bucket **`ungated`** + category keys), plus existing matrix fields; **`schema_version` 11**. Tests: `test_notification_routing_reference_api.py`, `test_routing_reference.py`. |
-| Staff Vue read-only notification routing matrix | `frontend-vue`, `notifications`, `api` | Implemented | 2026-04-09 | SPA `/notification-routing`: **Transactional routes by UserSettings group** index card; category / transactional / reminder / digest / API access; en/es. Vitest: `NotificationRouting.spec.js`. |
+| Staff notification routing reference API | `notifications`, `api`, `seim` | Implemented | 2026-04-09 | `GET /api/notifications/routing-reference/`: **`reminder_event_types_by_settings_category`**, **`transactional_route_keys_by_settings_category`**, plus matrix fields; **`schema_version` 12**. Tests: `test_notification_routing_reference_api.py`, `test_routing_reference.py`. |
+| Staff Vue read-only notification routing matrix | `frontend-vue`, `notifications`, `api` | Implemented | 2026-04-09 | SPA `/notification-routing`: **Reminder** + **transactional** index-by-group cards; detail tables; digest / API access; en/es. Vitest: `NotificationRouting.spec.js`. |
 | Notification routing reference: OpenAPI + Settings staff link | `notifications`, `frontend-vue`, `api` | Implemented | 2026-04-09 | `NotificationRoutingReferenceSerializer` + `@extend_schema` on `NotificationRoutingReferenceView` (200/403) for `/api/docs/`. Settings page: staff-only alert with link to `NotificationRouting` (`settings.notificationRoutingStaffLink` en/es). Tests: `tests/unit/notifications/test_routing_reference.py`, `Settings.spec.js` (show/hide link). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Notification routing: reminder types index by category | `notifications`, `frontend-vue`, `api` | In progress | 2026-04-09 | loop |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -125,7 +125,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings channel matrix** on transactional sends and on **digests** (`settings_category=system`). Read-only API **`schema_version` 11** includes grouped **`transactional_route_keys_by_settings_category`**, per-type reminder recipient summaries, digest/transactional recipient text. Remaining: custom templates, **editable** admin per-event matrix UI. |
+| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings channel matrix** on transactional sends and on **digests** (`settings_category=system`). Read-only API **`schema_version` 12** adds **`reminder_event_types_by_settings_category`** plus transactional grouped index, recipient-summary fields. Remaining: custom templates, **editable** admin per-event matrix UI. |
 | Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets if a dedicated **analytics** staff UI is added later (review queue, agreements, documents, programs, and **calendar** are covered). |
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
@@ -170,5 +170,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: transactional routes index by category — completed, schema v11)*  
+*Last updated: 2026-04-09 (loop: reminder types index by category — completed, schema v12)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

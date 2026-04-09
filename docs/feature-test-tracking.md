@@ -70,4 +70,4 @@ _Use these as hints when filling the **Browser** column; replace with exact `tes
 
 ---
 
-*Last updated: 2026-04-09 — `settings-ui` unit **Done** (5 Vitest); smoke/browser **Partial** (student settings journey + POM; no smoke marker).*
+*Last updated: 2026-04-09 — Notification routing **schema v12** (`reminder_event_types_by_settings_category`). `settings-ui` unit **Done** (5 Vitest); smoke/browser **Partial** (student settings journey + POM; no smoke marker).*

@@ -16,7 +16,7 @@ vi.mock('@/composables/useToast', () => ({
 }))
 
 const mockPayload = {
-  schema_version: 11,
+  schema_version: 12,
   reference_api_access: {
     roles_any: ['coordinator', 'admin'],
     superuser: true,
@@ -50,6 +50,9 @@ const mockPayload = {
   },
   reminder_event_type_to_settings_category: {
     application_deadline: 'applications',
+  },
+  reminder_event_types_by_settings_category: {
+    applications: ['application_deadline'],
   },
   reminder_event_type_descriptions: {
     application_deadline: 'Deadline tied to application milestones.',
@@ -98,6 +101,7 @@ describe('NotificationRouting', () => {
     expect(wrapper.text()).toContain('Mock digest recipients line for tests.')
     expect(wrapper.text()).toContain('Digest mock summary line for tests.')
     expect(wrapper.text()).toContain('Application lifecycle (mock).')
+    expect(wrapper.text()).toContain('Reminder event types by UserSettings group')
     expect(wrapper.text()).toContain('Recipients (reminder)')
     expect(wrapper.text()).toContain('Mock: reminder owner receives the notification.')
     expect(wrapper.text()).toContain('Deadline tied to application milestones.')
