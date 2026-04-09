@@ -116,7 +116,7 @@ run_backend_tests() {
             ;;
         "unit")
             log_info "Running unit tests..."
-            if docker-compose exec -T web pytest tests/unit/ -v; then
+            if docker-compose exec -T web pytest tests/unit/ data_management/tests.py -v; then
                 test_results["backend_unit"]="passed"
                 log_success "Unit tests passed"
             else
