@@ -526,9 +526,6 @@
     "loadingList": "Loading applications…",
     "loadError": "Failed to load applications. Please try again.",
     "loadToastError": "Failed to load applications",
-    "unknownProgram": "Unknown program",
-    "readinessLabel": "Readiness",
-    "notAvailable": "N/A",
     "created": "Created",
     "submitted": "Submitted",
     "viewDetails": "View details",
@@ -542,17 +539,7 @@
     "deletedToast": "Application deleted successfully",
     "deleteToastError": "Failed to delete application",
     "editAria": "Edit application",
-    "deleteAria": "Delete application",
-    "status": {
-      "unknown": "Unknown",
-      "draft": "Draft",
-      "submitted": "Submitted",
-      "under_review": "Under review",
-      "approved": "Approved",
-      "rejected": "Rejected",
-      "completed": "Completed",
-      "waitlist": "Waitlist"
-    }
+    "deleteAria": "Delete application"
   },
   "documentsPage": {
     "breadcrumbAria": "Breadcrumb",
@@ -699,6 +686,7 @@
     "edit": "Edit",
     "programInfo": "Program information",
     "labelProgramName": "Program name",
+    "unknownProgram": "Unknown program",
     "labelInstitution": "Institution",
     "labelCountry": "Country",
     "labelDuration": "Duration",

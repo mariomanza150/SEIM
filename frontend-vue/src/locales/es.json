@@ -526,9 +526,6 @@
     "loadingList": "Cargando solicitudes…",
     "loadError": "No se pudieron cargar las solicitudes. Inténtalo de nuevo.",
     "loadToastError": "Error al cargar las solicitudes",
-    "unknownProgram": "Programa desconocido",
-    "readinessLabel": "Preparación",
-    "notAvailable": "N/D",
     "created": "Creada",
     "submitted": "Enviada",
     "viewDetails": "Ver detalles",
@@ -542,17 +539,7 @@
     "deletedToast": "Solicitud eliminada correctamente",
     "deleteToastError": "No se pudo eliminar la solicitud",
     "editAria": "Editar solicitud",
-    "deleteAria": "Eliminar solicitud",
-    "status": {
-      "unknown": "Desconocido",
-      "draft": "Borrador",
-      "submitted": "Enviada",
-      "under_review": "En revisión",
-      "approved": "Aprobada",
-      "rejected": "Rechazada",
-      "completed": "Completada",
-      "waitlist": "Lista de espera"
-    }
+    "deleteAria": "Eliminar solicitud"
   },
   "documentsPage": {
     "breadcrumbAria": "Migas de pan",
@@ -699,6 +686,7 @@
     "edit": "Editar",
     "programInfo": "Información del programa",
     "labelProgramName": "Nombre del programa",
+    "unknownProgram": "Programa desconocido",
     "labelInstitution": "Institución",
     "labelCountry": "País",
     "labelDuration": "Duración",

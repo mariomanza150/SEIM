@@ -45,12 +45,12 @@
               <label class="form-label">{{ t('applicationsPage.statusLabel') }}</label>
               <select v-model="filters.status" class="form-select" @change="fetchApplications" data-testid="applications-filter-status">
                 <option value="">{{ t('applicationsPage.statusOptionAll') }}</option>
-                <option value="draft">{{ t('applicationsPage.status.draft') }}</option>
-                <option value="submitted">{{ t('applicationsPage.status.submitted') }}</option>
-                <option value="under_review">{{ t('applicationsPage.status.under_review') }}</option>
-                <option value="approved">{{ t('applicationsPage.status.approved') }}</option>
-                <option value="rejected">{{ t('applicationsPage.status.rejected') }}</option>
-                <option value="completed">{{ t('applicationsPage.status.completed') }}</option>
+                <option value="draft">{{ t('applicationDetailPage.status.draft') }}</option>
+                <option value="submitted">{{ t('applicationDetailPage.status.submitted') }}</option>
+                <option value="under_review">{{ t('applicationDetailPage.status.under_review') }}</option>
+                <option value="approved">{{ t('applicationDetailPage.status.approved') }}</option>
+                <option value="rejected">{{ t('applicationDetailPage.status.rejected') }}</option>
+                <option value="completed">{{ t('applicationDetailPage.status.completed') }}</option>
               </select>
             </div>
             <div class="col-md-3">
@@ -91,7 +91,7 @@
             <div class="card application-card h-100">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                  <h5 class="card-title mb-0">{{ application.program?.name || t('applicationsPage.unknownProgram') }}</h5>
+                  <h5 class="card-title mb-0">{{ application.program?.name || t('applicationDetailPage.unknownProgram') }}</h5>
                   <span class="badge" :class="statusClass(application.status)">
                     {{ formatStatus(application.status) }}
                   </span>
@@ -103,7 +103,7 @@
                   data-testid="application-readiness-summary"
                 >
                   <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <span class="small text-muted">{{ t('applicationsPage.readinessLabel') }}</span>
+                    <span class="small text-muted">{{ t('applicationDetailPage.readinessLabel') }}</span>
                     <span class="badge" :class="readinessLevelBadgeClass(application.readiness.level)">
                       {{ application.readiness.score }}%
                     </span>
@@ -113,7 +113,7 @@
 
                 <p class="card-text text-muted small mb-3">
                   <i class="bi bi-building me-1"></i>
-                  {{ application.program?.institution || t('applicationsPage.notAvailable') }}
+                  {{ application.program?.institution || t('applicationDetailPage.notAvailable') }}
                 </p>
 
                 <div class="row small text-muted mb-3">
@@ -307,14 +307,14 @@ function statusClass(status) {
 }
 
 function formatStatus(status) {
-  if (!status) return t('applicationsPage.status.unknown')
-  const key = `applicationsPage.status.${status}`
+  if (!status) return t('applicationDetailPage.status.unknown')
+  const key = `applicationDetailPage.status.${status}`
   if (te(key)) return t(key)
   return String(status).replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
 }
 
 function formatDate(dateString) {
-  if (!dateString) return t('applicationsPage.notAvailable')
+  if (!dateString) return t('applicationDetailPage.notAvailable')
   const date = new Date(dateString)
   const localeTag = locale.value === 'es' ? 'es' : 'en-US'
   return date.toLocaleDateString(localeTag, {
@@ -325,7 +325,7 @@ function formatDate(dateString) {
 }
 
 async function confirmDelete(application) {
-  const name = application.program?.name || t('applicationsPage.unknownProgram')
+  const name = application.program?.name || t('applicationDetailPage.unknownProgram')
   if (confirm(t('applicationsPage.deleteConfirm', { name }))) {
     await deleteApplication(application.id)
   }

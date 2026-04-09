@@ -70,4 +70,34 @@ describe('Applications', () => {
     expect(wrapper.text()).toContain('View details')
     expect(wrapper.find('[data-testid="application-detail-link"]').exists()).toBe(true)
   })
+
+  it('uses applicationDetailPage fallbacks for sparse program and missing dates', async () => {
+    api.get.mockResolvedValue({
+      data: {
+        results: [
+          {
+            id: 'sparse',
+            status: 'submitted',
+            created_at: null,
+            submitted_at: null,
+            program: { name: '', institution: null },
+          },
+        ],
+        count: 1,
+        next: null,
+        previous: null,
+      },
+    })
+    const wrapper = mount(Applications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.unknownProgram'))
+    const na = i18n.global.t('applicationDetailPage.notAvailable')
+    expect(wrapper.text().split(na).length - 1).toBeGreaterThanOrEqual(2)
+    expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.status.submitted'))
+  })
 })
