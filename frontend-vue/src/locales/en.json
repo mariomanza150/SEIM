@@ -182,7 +182,10 @@
     "digestCategory": "settings_category",
     "digestEmailGates": "Email gates",
     "digestInappField": "In-app field",
-    "digestTypicalTriggers": "Typical behavior"
+    "digestTypicalTriggers": "Typical behavior",
+    "apiAccessTitle": "Who can call this API",
+    "apiAccessRoles": "Roles:",
+    "apiAccessSuperuser": "Superusers are always allowed."
   },
   "exchangeAgreementsPage": {
     "breadcrumbAria": "Breadcrumb",

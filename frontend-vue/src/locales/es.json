@@ -182,7 +182,10 @@
     "digestCategory": "settings_category",
     "digestEmailGates": "Condiciones de correo",
     "digestInappField": "Campo en la aplicación",
-    "digestTypicalTriggers": "Comportamiento habitual"
+    "digestTypicalTriggers": "Comportamiento habitual",
+    "apiAccessTitle": "Quién puede usar esta API",
+    "apiAccessRoles": "Roles:",
+    "apiAccessSuperuser": "Los superusuarios siempre tienen acceso."
   },
   "exchangeAgreementsPage": {
     "breadcrumbAria": "Migas de pan",

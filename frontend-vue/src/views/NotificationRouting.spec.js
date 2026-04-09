@@ -16,7 +16,12 @@ vi.mock('@/composables/useToast', () => ({
 }))
 
 const mockPayload = {
-  schema_version: 4,
+  schema_version: 5,
+  reference_api_access: {
+    roles_any: ['coordinator', 'admin'],
+    superuser: true,
+    description: 'Mock: only staff roles; others get HTTP 403.',
+  },
   settings_categories: {
     applications: {
       email_user_settings_field: 'email_applications',
@@ -74,5 +79,7 @@ describe('NotificationRouting', () => {
     expect(wrapper.text()).toContain('Digest mock summary line for tests.')
     expect(wrapper.text()).toContain('Application lifecycle (mock).')
     expect(wrapper.text()).toContain('Deadline tied to application milestones.')
+    expect(wrapper.text()).toContain('Who can call this API')
+    expect(wrapper.text()).toContain('Mock: only staff roles')
   })
 })

@@ -55,6 +55,16 @@ DIGEST_TYPICAL_TRIGGERS = (
     "email requires email_system and email_notification_digest (and digest frequency not off)."
 )
 
+# Mirrors ``NotificationRoutingReferenceView`` permission rules (for staff UI + API clients).
+REFERENCE_API_ACCESS: dict[str, object] = {
+    "roles_any": ["coordinator", "admin"],
+    "superuser": True,
+    "description": (
+        "GET /api/notifications/routing-reference/ returns this JSON only for authenticated "
+        "users who are Django superuser or have the coordinator or admin role; others get HTTP 403."
+    ),
+}
+
 
 def build_notification_routing_reference() -> dict:
     """Structured map for coordinators/admins (API + future UI)."""
@@ -77,7 +87,8 @@ def build_notification_routing_reference() -> dict:
     }
     reminder_map = dict(REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY)
     return {
-        "schema_version": 4,
+        "schema_version": 5,
+        "reference_api_access": dict(REFERENCE_API_ACCESS),
         "settings_categories": categories,
         "reminder_event_type_to_settings_category": reminder_map,
         "reminder_event_type_descriptions": {

@@ -9,7 +9,11 @@ from notifications.tasks import REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
 
 def test_build_notification_routing_reference_shape():
     data = build_notification_routing_reference()
-    assert data["schema_version"] == 4
+    assert data["schema_version"] == 5
+    access = data["reference_api_access"]
+    assert access["superuser"] is True
+    assert "coordinator" in access["roles_any"]
+    assert "403" in access["description"]
     cats = data["settings_categories"]
     assert "applications" in cats
     assert cats["applications"]["email_user_settings_field"] == "email_applications"

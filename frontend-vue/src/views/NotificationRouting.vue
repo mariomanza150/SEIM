@@ -113,6 +113,22 @@
             </dl>
           </div>
         </div>
+
+        <div v-if="payload.reference_api_access" class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-light">
+            <span class="fw-semibold">{{ t('notificationRoutingPage.apiAccessTitle') }}</span>
+          </div>
+          <div class="card-body small">
+            <p class="text-muted mb-2">{{ payload.reference_api_access.description }}</p>
+            <div v-if="payload.reference_api_access.roles_any?.length" class="mb-1">
+              <span class="text-muted me-2">{{ t('notificationRoutingPage.apiAccessRoles') }}</span>
+              <code v-for="r in payload.reference_api_access.roles_any" :key="r" class="me-1">{{ r }}</code>
+            </div>
+            <p v-if="payload.reference_api_access.superuser" class="mb-0 text-muted">
+              {{ t('notificationRoutingPage.apiAccessSuperuser') }}
+            </p>
+          </div>
+        </div>
       </template>
     </div>
   </div>
