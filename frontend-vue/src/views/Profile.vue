@@ -36,17 +36,41 @@
                 <h6 class="text-muted mb-3">{{ t('profilePage.accountSection') }}</h6>
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <label class="form-label">{{ t('profilePage.firstName') }}</label>
-                    <input v-model="form.first_name" type="text" class="form-control" />
+                    <label class="form-label" for="profile-first-name">{{ t('profilePage.firstName') }}</label>
+                    <input
+                      id="profile-first-name"
+                      v-model="form.first_name"
+                      type="text"
+                      class="form-control"
+                      name="given-name"
+                      autocomplete="given-name"
+                      data-testid="profile-first-name"
+                    />
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label">{{ t('profilePage.lastName') }}</label>
-                    <input v-model="form.last_name" type="text" class="form-control" />
+                    <label class="form-label" for="profile-last-name">{{ t('profilePage.lastName') }}</label>
+                    <input
+                      id="profile-last-name"
+                      v-model="form.last_name"
+                      type="text"
+                      class="form-control"
+                      name="family-name"
+                      autocomplete="family-name"
+                      data-testid="profile-last-name"
+                    />
                   </div>
                 </div>
                 <div class="mb-3">
-                  <label class="form-label">{{ t('login.emailLabel') }}</label>
-                  <input v-model="form.email" type="email" class="form-control" />
+                  <label class="form-label" for="profile-email">{{ t('login.emailLabel') }}</label>
+                  <input
+                    id="profile-email"
+                    v-model="form.email"
+                    type="email"
+                    class="form-control"
+                    name="email"
+                    autocomplete="email"
+                    data-testid="profile-email"
+                  />
                 </div>
 
                 <hr class="my-4" />
@@ -56,33 +80,48 @@
                 </p>
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <label class="form-label">{{ t('profilePage.gpaLabel') }}</label>
+                    <label class="form-label" for="profile-gpa">{{ t('profilePage.gpaLabel') }}</label>
                     <input
+                      id="profile-gpa"
                       v-model.number="form.gpa"
                       type="number"
                       step="0.01"
                       min="0"
                       max="4"
                       class="form-control"
+                      name="gpa"
+                      autocomplete="off"
                       :placeholder="t('profilePage.gpaPlaceholder')"
+                      data-testid="profile-gpa"
                     />
                     <div class="form-text">{{ t('profilePage.gpaScaleHelp') }}</div>
                   </div>
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-6">
-                    <label class="form-label">{{ t('profilePage.primaryLanguage') }}</label>
+                    <label class="form-label" for="profile-language">{{ t('profilePage.primaryLanguage') }}</label>
                     <input
+                      id="profile-language"
                       v-model="form.language"
                       type="text"
                       class="form-control"
+                      name="language"
+                      autocomplete="language"
                       :placeholder="t('profilePage.languagePlaceholder')"
+                      data-testid="profile-language"
                     />
                     <div class="form-text">{{ t('profilePage.primaryLanguageHelp') }}</div>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label">{{ t('profilePage.primaryLevelLabel') }}</label>
-                    <select v-model="form.language_level" class="form-select">
+                    <label class="form-label" for="profile-language-level">{{ t('profilePage.primaryLevelLabel') }}</label>
+                    <select
+                      id="profile-language-level"
+                      v-model="form.language_level"
+                      class="form-select"
+                      name="language-level"
+                      autocomplete="off"
+                      data-testid="profile-language-level"
+                    >
                       <option value="">{{ t('profilePage.notSetOption') }}</option>
                       <option value="A1">{{ t('profilePage.cefrA1') }}</option>
                       <option value="A2">{{ t('profilePage.cefrA2') }}</option>

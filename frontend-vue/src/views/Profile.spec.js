@@ -100,6 +100,24 @@ describe('Profile', () => {
     )
   })
 
+  it('sets autocomplete and label[for] on account, GPA, and primary language fields', async () => {
+    const wrapper = mount(Profile, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('label[for="profile-first-name"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="profile-first-name"]').attributes('autocomplete')).toBe('given-name')
+    expect(wrapper.find('[data-testid="profile-first-name"]').attributes('name')).toBe('given-name')
+    expect(wrapper.find('[data-testid="profile-last-name"]').attributes('autocomplete')).toBe('family-name')
+    expect(wrapper.find('[data-testid="profile-email"]').attributes('autocomplete')).toBe('email')
+    expect(wrapper.find('[data-testid="profile-gpa"]').attributes('autocomplete')).toBe('off')
+    expect(wrapper.find('[data-testid="profile-language"]').attributes('autocomplete')).toBe('language')
+    expect(wrapper.find('[data-testid="profile-language-level"]').attributes('autocomplete')).toBe('off')
+  })
+
   it('shows primary CEFR labels from locale', async () => {
     const wrapper = mount(Profile, {
       global: {
