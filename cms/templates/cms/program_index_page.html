@@ -6,17 +6,90 @@
 <section class="bg-primary text-white py-5">
     <div class="container">
         <h1 class="display-4 fw-bold">{{ page.title }}</h1>
-        {% if page.intro %}
-            <p class="lead">{{ page.intro|richtext }}</p>
+        {% if page.introduction %}
+            <div class="lead">{{ page.introduction|richtext }}</div>
         {% endif %}
+    </div>
+</section>
+
+<!-- Discovery Filters -->
+<section class="py-4 bg-light border-bottom">
+    <div class="container">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-lg-4">
+                <label for="program-search" class="form-label">Search Programs</label>
+                <input
+                    id="program-search"
+                    type="search"
+                    name="q"
+                    value="{{ search_query }}"
+                    class="form-control"
+                    placeholder="Search by name, location, language, or description"
+                >
+            </div>
+            <div class="col-md-3 col-lg-2">
+                <label for="program-location" class="form-label">Location</label>
+                <select id="program-location" name="location" class="form-select">
+                    <option value="">All locations</option>
+                    {% for location in available_locations %}
+                        <option value="{{ location }}" {% if selected_location == location %}selected{% endif %}>{{ location }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 col-lg-2">
+                <label for="program-language" class="form-label">Language</label>
+                <select id="program-language" name="language" class="form-select">
+                    <option value="">All languages</option>
+                    {% for language in available_languages %}
+                        <option value="{{ language }}" {% if selected_language == language %}selected{% endif %}>{{ language }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 col-lg-2">
+                <div class="form-check mt-4 pt-2">
+                    <input
+                        id="program-active-only"
+                        type="checkbox"
+                        name="active_only"
+                        value="1"
+                        class="form-check-input"
+                        {% if active_only %}checked{% endif %}
+                    >
+                    <label for="program-active-only" class="form-check-label">Active only</label>
+                </div>
+            </div>
+            <div class="col-md-3 col-lg-2">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">Apply Filters</button>
+                    <a href="{% pageurl page %}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </div>
+        </form>
     </div>
 </section>
 
 <!-- Programs Grid -->
 <section class="py-5">
     <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div>
+                <h2 class="h4 mb-1">Available Programs</h2>
+                <p class="text-muted mb-0">{{ programs.paginator.count }} program{{ programs.paginator.count|pluralize }} found</p>
+            </div>
+            <div>
+                {% if user.is_authenticated %}
+                    <a href="/seim/programs/compare" class="btn btn-outline-primary">
+                        <i class="bi bi-columns-gap me-1"></i> Compare programs (table)
+                    </a>
+                {% else %}
+                    <a href="/seim/login?redirect=%2Fprograms%2Fcompare" class="btn btn-outline-primary">
+                        <i class="bi bi-columns-gap me-1"></i> Compare programs (sign in)
+                    </a>
+                {% endif %}
+            </div>
+        </div>
         <div class="row g-4">
-            {% for program in page.get_children.live.specific %}
+            {% for program in programs %}
                 <div class="col-md-6 col-lg-4">
                     <div class="card h-100 shadow-sm">
                         {% if program.featured_image %}
@@ -30,33 +103,77 @@
                                     {{ program.title }}
                                 </a>
                             </h5>
-                            {% if program.institution %}
-                                <p class="text-muted mb-2">
-                                    <small><i class="bi bi-building"></i> {{ program.institution }}</small>
-                                </p>
-                            {% endif %}
                             {% if program.location %}
                                 <p class="text-muted mb-3">
                                     <small><i class="bi bi-geo-alt"></i> {{ program.location }}</small>
                                 </p>
                             {% endif %}
-                            {% if program.description %}
-                                <p class="card-text">{{ program.description|truncatewords:20 }}</p>
+                            {% if program.language %}
+                                <p class="text-muted mb-3">
+                                    <small><i class="bi bi-translate"></i> {{ program.language }}</small>
+                                </p>
                             {% endif %}
-                            <a href="{% pageurl program %}" class="btn btn-primary btn-sm">
-                                Learn More →
-                            </a>
+                            {% if program.program %}
+                                <div class="small text-muted mb-3">
+                                    <div><strong>Program Dates:</strong> {{ program.program.start_date|date:"M d, Y" }} - {{ program.program.end_date|date:"M d, Y" }}</div>
+                                    {% if program.program.application_deadline %}
+                                        <div><strong>Apply By:</strong> {{ program.program.application_deadline|date:"M d, Y" }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            {% if program.introduction %}
+                                <p class="card-text">{{ program.introduction|truncatewords:20 }}</p>
+                            {% endif %}
+                            <div class="d-flex flex-wrap gap-2">
+                                <a href="{% pageurl program %}" class="btn btn-outline-primary btn-sm">
+                                    Learn More
+                                </a>
+                                {% if program.program and program.program.is_application_open_now %}
+                                    {% if user.is_authenticated %}
+                                        <a href="/seim/applications/new?program={{ program.program.id }}" class="btn btn-primary btn-sm">
+                                            Apply Now
+                                        </a>
+                                    {% else %}
+                                        <a href="/seim/login?redirect=%2Fapplications%2Fnew%3Fprogram%3D{{ program.program.id }}" class="btn btn-primary btn-sm">
+                                            Sign In to Apply
+                                        </a>
+                                    {% endif %}
+                                {% elif program.program %}
+                                    <button type="button" class="btn btn-secondary btn-sm" disabled>
+                                        Apply Closed
+                                    </button>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
             {% empty %}
                 <div class="col-12">
                     <div class="alert alert-info">
-                        <p class="mb-0">No programs are currently available. Check back soon!</p>
+                        <p class="mb-0">No programs match the current filters. Try adjusting your search and filter options.</p>
                     </div>
                 </div>
             {% endfor %}
         </div>
+        {% if programs.paginator.num_pages > 1 %}
+            <nav class="mt-5" aria-label="Programs pagination">
+                <ul class="pagination justify-content-center">
+                    {% if programs.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ programs.previous_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if selected_location %}&location={{ selected_location|urlencode }}{% endif %}{% if selected_language %}&language={{ selected_language|urlencode }}{% endif %}{% if active_only %}&active_only=1{% endif %}">Previous</a>
+                        </li>
+                    {% endif %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Page {{ programs.number }} of {{ programs.paginator.num_pages }}</span>
+                    </li>
+                    {% if programs.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ programs.next_page_number }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if selected_location %}&location={{ selected_location|urlencode }}{% endif %}{% if selected_language %}&language={{ selected_language|urlencode }}{% endif %}{% if active_only %}&active_only=1{% endif %}">Next</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
     </div>
 </section>
 {% endblock %}

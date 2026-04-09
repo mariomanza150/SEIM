@@ -34,10 +34,10 @@
         <div class="row">
             <!-- Main Content -->
             <div class="col-lg-8">
-                {% if page.description %}
+                {% if page.introduction %}
                     <div class="mb-5">
                         <h2>About This Program</h2>
-                        <p class="lead">{{ page.description }}</p>
+                        <p class="lead">{{ page.introduction }}</p>
                     </div>
                 {% endif %}
                 
@@ -65,25 +65,45 @@
                                     <span class="ms-4">{{ page.duration }}</span>
                                 </li>
                             {% endif %}
-                            {% if page.start_date %}
+                            {% if page.program and page.program.start_date %}
                                 <li class="mb-3 pb-3 border-bottom">
                                     <i class="bi bi-calendar-event me-2" style="color: var(--uadec-gold);"></i>
                                     <strong>Fecha de Inicio:</strong><br>
-                                    <span class="ms-4">{{ page.start_date|date:"F Y" }}</span>
+                                    <span class="ms-4">{{ page.program.start_date|date:"F d, Y" }}</span>
                                 </li>
                             {% endif %}
-                            {% if page.application_deadline %}
+                            {% if page.program and page.program.end_date %}
+                                <li class="mb-3 pb-3 border-bottom">
+                                    <i class="bi bi-calendar2-check me-2" style="color: var(--uadec-gold);"></i>
+                                    <strong>Fecha de Finalización:</strong><br>
+                                    <span class="ms-4">{{ page.program.end_date|date:"F d, Y" }}</span>
+                                </li>
+                            {% endif %}
+                            {% if page.program and page.program.application_open_date %}
+                                <li class="mb-3 pb-3 border-bottom">
+                                    <i class="bi bi-calendar-check me-2" style="color: var(--uadec-gold);"></i>
+                                    <strong>Apertura de Solicitudes:</strong><br>
+                                    <span class="ms-4">{{ page.program.application_open_date|date:"F d, Y" }}</span>
+                                </li>
+                            {% endif %}
+                            {% if page.program and page.program.application_deadline %}
+                                <li class="mb-3 pb-3 border-bottom">
+                                    <i class="bi bi-calendar-x me-2" style="color: var(--uadec-orange);"></i>
+                                    <strong>Fecha Límite:</strong><br>
+                                    <span class="ms-4">{{ page.program.application_deadline|date:"F d, Y" }}</span>
+                                </li>
+                            {% elif page.application_deadline %}
                                 <li class="mb-3 pb-3 border-bottom">
                                     <i class="bi bi-calendar-x me-2" style="color: var(--uadec-orange);"></i>
                                     <strong>Fecha Límite:</strong><br>
                                     <span class="ms-4">{{ page.application_deadline|date:"F d, Y" }}</span>
                                 </li>
                             {% endif %}
-                            {% if page.available_spots %}
+                            {% if page.language %}
                                 <li class="mb-0">
-                                    <i class="bi bi-people me-2" style="color: var(--uadec-gold);"></i>
-                                    <strong>Cupos Disponibles:</strong><br>
-                                    <span class="ms-4">{{ page.available_spots }}</span>
+                                    <i class="bi bi-translate me-2" style="color: var(--uadec-gold);"></i>
+                                    <strong>Idioma:</strong><br>
+                                    <span class="ms-4">{{ page.language }}</span>
                                 </li>
                             {% endif %}
                         </ul>
@@ -94,15 +114,33 @@
                     <div class="card-body text-center text-white p-4">
                         <i class="bi bi-rocket-takeoff display-4 mb-3"></i>
                         <h5 class="card-title fw-bold mb-3">¿Listo para Aplicar?</h5>
-                        <p class="card-text mb-4">Comienza tu solicitud hoy</p>
-                        {% if user.is_authenticated %}
-                            <a href="/seim/applications/create/?program={{ page.slug }}" class="btn btn-primary btn-lg px-4 shadow">
+                        <p class="card-text mb-3">Comienza tu solicitud hoy</p>
+                        {% if page.program and not page.program.is_application_open_now %}
+                            <p class="small mb-4">{{ page.program.application_window_message }}</p>
+                            <button type="button" class="btn btn-secondary btn-lg px-4 shadow" disabled>
+                                <i class="bi bi-clock-history me-2"></i>Solicitudes No Disponibles
+                            </button>
+                        {% elif user.is_authenticated %}
+                            <a href="/seim/applications/new{% if page.program %}?program={{ page.program.id }}{% endif %}" class="btn btn-primary btn-lg px-4 shadow">
                                 <i class="bi bi-file-earmark-check me-2"></i>Aplicar Ahora
                             </a>
                         {% else %}
-                            <a href="/seim/login/?next=/seim/applications/create/?program={{ page.slug }}" class="btn btn-light btn-lg px-4 shadow">
+                            <a href="/seim/login?redirect=%2Fapplications%2Fnew{% if page.program %}%3Fprogram%3D{{ page.program.id }}{% endif %}" class="btn btn-light btn-lg px-4 shadow">
                                 <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
                             </a>
+                        {% endif %}
+                        {% if page.program %}
+                            <p class="small mt-3 mb-0 opacity-90">
+                                {% if user.is_authenticated %}
+                                    <a href="/seim/programs/compare?ids={{ page.program.id }}" class="link-light text-decoration-underline">
+                                        Comparar con otros programas en la tabla SEIM
+                                    </a>
+                                {% else %}
+                                    <a href="/seim/login?redirect=%2Fprograms%2Fcompare%3Fids%3D{{ page.program.id }}" class="link-light text-decoration-underline">
+                                        Comparar con otros programas (iniciar sesión)
+                                    </a>
+                                {% endif %}
+                            </p>
                         {% endif %}
                     </div>
                 </div>
@@ -112,7 +150,7 @@
 </section>
 
 <!-- Requirements Section -->
-{% if page.requirements %}
+{% if page.program and page.program.min_gpa or page.program and page.program.required_language or page.program and page.program.min_language_level or page.program and page.program.coordinators.exists %}
     <section class="bg-light py-5">
         <div class="container">
             <h2 class="mb-4 text-primary">
@@ -123,7 +161,25 @@
                     <i class="bi bi-list-check me-2"></i>Requisitos del Programa
                 </div>
                 <div class="card-body">
-                    {{ page.requirements|richtext }}
+                    <ul class="mb-0">
+                        {% if page.program.min_gpa %}
+                            <li>Promedio minimo requerido: {{ page.program.min_gpa }}</li>
+                        {% endif %}
+                        {% if page.program.required_language %}
+                            <li>Idioma requerido: {{ page.program.required_language }}</li>
+                        {% endif %}
+                        {% if page.program.min_language_level %}
+                            <li>Nivel minimo de idioma: {{ page.program.min_language_level }}</li>
+                        {% endif %}
+                        {% if page.program.coordinators.exists %}
+                            <li>
+                                Coordinacion asignada:
+                                {% for coordinator in page.program.coordinators.all %}
+                                    {{ coordinator.get_full_name|default:coordinator.username }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </li>
+                        {% endif %}
+                    </ul>
                 </div>
             </div>
         </div>

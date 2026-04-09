@@ -135,7 +135,8 @@ Templates have been updated to use the new URL structure:
 - CMS templates link to `/seim/` for application features
 - Spanish labels used in CMS navigation
 - Login/logout links point to `/seim/login/` and `/seim/logout/`
-- CMS account navigation now points to the SPA dashboard, applications, profile, and settings routes, while the calendar link remains on the legacy Django page
+- CMS account navigation now points to the SPA dashboard, applications, program comparison (`/seim/programs/compare`), profile, and settings routes, while the calendar link remains on the legacy Django page
+- Public program index and program detail pages link to the SPA comparison tool (signed-in users directly; others via `/seim/login?redirect=…` including optional `?ids=` preselection)
 
 ### Reverse URL Lookup
 When using `{% url %}` tags or `reverse()` in code:

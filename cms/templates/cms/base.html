@@ -67,16 +67,19 @@
                                 Mi Cuenta
                             </a>
                             <ul class="dropdown-menu" aria-labelledby="userDropdown">
-                                <li><a class="dropdown-item" href="/seim/dashboard/">Dashboard</a></li>
-                                <li><a class="dropdown-item" href="/seim/applications/">Mis Solicitudes</a></li>
-                                <li><a class="dropdown-item" href="/seim/profile/">Mi Perfil</a></li>
+                                <li><a class="dropdown-item cms-account-link" href="/seim/dashboard">Dashboard</a></li>
+                                <li><a class="dropdown-item cms-account-link" href="/seim/applications">Mis Solicitudes</a></li>
+                                <li><a class="dropdown-item cms-account-link" href="/seim/programs/compare">Comparar programas</a></li>
+                                <li><a class="dropdown-item cms-account-link" href="/seim/profile">Mi Perfil</a></li>
+                                <li><a class="dropdown-item cms-account-link" href="/seim/settings">Configuración</a></li>
+                                <li><a class="dropdown-item" href="/seim/calendar/">Calendario</a></li>
                                 {% if user.is_staff %}
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="/cms/">CMS Admin</a></li>
-                                    <li><a class="dropdown-item" href="/seim/admin/">Administración</a></li>
+                                    <li><a class="dropdown-item" href="/cms/" target="_blank" rel="noopener noreferrer">CMS Admin</a></li>
+                                    <li><a class="dropdown-item" href="/seim/admin/" target="_blank" rel="noopener noreferrer">Administración</a></li>
                                 {% endif %}
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="/seim/logout/">Cerrar Sesión</a></li>
+                                <li><a class="dropdown-item" href="/logout/" id="cmsLogoutLink">Cerrar Sesión</a></li>
                             </ul>
                         </li>
                     {% endif %}
@@ -113,18 +116,18 @@
                 <div class="col-md-4">
                     <h6 class="text-uppercase mb-3" style="color: var(--uadec-gold);">Síguenos</h6>
                     <div class="d-flex gap-3 mb-3">
-                        <a href="https://facebook.com/uadec" target="_blank" class="text-white-50" style="font-size: 1.5rem;">
+                        <a href="https://facebook.com/uadec" target="_blank" rel="noopener noreferrer" class="text-white-50" style="font-size: 1.5rem;">
                             <i class="bi bi-facebook"></i>
                         </a>
-                        <a href="https://twitter.com/uadec" target="_blank" class="text-white-50" style="font-size: 1.5rem;">
+                        <a href="https://twitter.com/uadec" target="_blank" rel="noopener noreferrer" class="text-white-50" style="font-size: 1.5rem;">
                             <i class="bi bi-twitter-x"></i>
                         </a>
-                        <a href="https://instagram.com/uadec" target="_blank" class="text-white-50" style="font-size: 1.5rem;">
+                        <a href="https://instagram.com/uadec" target="_blank" rel="noopener noreferrer" class="text-white-50" style="font-size: 1.5rem;">
                             <i class="bi bi-instagram"></i>
                         </a>
                     </div>
                     <p class="small mb-0">
-                        <a href="https://www.uadec.mx/" class="text-decoration-none" style="color: var(--uadec-gold);" target="_blank">
+                        <a href="https://www.uadec.mx/" class="text-decoration-none" style="color: var(--uadec-gold);" target="_blank" rel="noopener noreferrer">
                             <i class="bi bi-globe me-1"></i>www.uadec.mx
                         </a>
                     </p>
@@ -144,6 +147,27 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutLink = document.getElementById('cmsLogoutLink');
+            const accountLinks = document.querySelectorAll('.cms-account-link');
+
+            accountLinks.forEach((link) => {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    window.location.assign(this.href);
+                });
+            });
+
+            if (!logoutLink) return;
+
+            logoutLink.addEventListener('click', function() {
+                ['access_token', 'refresh_token', 'seim_access_token', 'seim_refresh_token'].forEach((key) => {
+                    localStorage.removeItem(key);
+                });
+            });
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
