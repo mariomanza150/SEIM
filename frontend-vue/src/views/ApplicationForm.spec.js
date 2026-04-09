@@ -67,6 +67,11 @@ describe('ApplicationForm', () => {
 
   it('renders dynamic form fields for the selected program and submits df payload keys', async () => {
     api.get.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({
+          data: { eligible: true, message: 'All eligibility requirements met' },
+        })
+      }
       if (url === '/api/programs/') {
         return Promise.resolve({
           data: {
@@ -150,6 +155,11 @@ describe('ApplicationForm', () => {
     mockRoute.params = { id: 'application-1' }
 
     api.get.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({
+          data: { eligible: true, message: 'All eligibility requirements met' },
+        })
+      }
       if (url === '/api/programs/') {
         return Promise.resolve({
           data: {
@@ -224,21 +234,28 @@ describe('ApplicationForm', () => {
   })
 
   it('disables new application creation when the application window is closed', async () => {
-    api.get.mockResolvedValue({
-      data: {
-        results: [
-          {
-            id: 'program-closed',
-            name: 'Closed Program',
-            description: 'No longer accepting applications',
-            start_date: isoDateWithOffset(30),
-            end_date: isoDateWithOffset(120),
-            application_deadline: isoDateWithOffset(-1),
-            application_window_open: false,
-            application_window_message: `Applications closed on ${isoDateWithOffset(-1)}.`,
-          },
-        ],
-      },
+    api.get.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({
+          data: { eligible: true, message: 'All eligibility requirements met' },
+        })
+      }
+      return Promise.resolve({
+        data: {
+          results: [
+            {
+              id: 'program-closed',
+              name: 'Closed Program',
+              description: 'No longer accepting applications',
+              start_date: isoDateWithOffset(30),
+              end_date: isoDateWithOffset(120),
+              application_deadline: isoDateWithOffset(-1),
+              application_window_open: false,
+              application_window_message: `Applications closed on ${isoDateWithOffset(-1)}.`,
+            },
+          ],
+        },
+      })
     })
 
     const wrapper = mountView()
@@ -260,6 +277,11 @@ describe('ApplicationForm', () => {
 
   it('uses applicationFormPage.notAvailable for missing program dates and duration', async () => {
     api.get.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({
+          data: { eligible: true, message: 'All eligibility requirements met' },
+        })
+      }
       if (url === '/api/programs/') {
         return Promise.resolve({
           data: {
@@ -303,5 +325,48 @@ describe('ApplicationForm', () => {
     })
     const na = i18n.global.t('applicationFormPage.notAvailable')
     expect(wrapper.text().split(na).length - 1).toBeGreaterThanOrEqual(3)
+  })
+
+  it('shows eligibility alert from check_eligibility when student is not yet eligible', async () => {
+    api.get.mockImplementation((url) => {
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({
+          data: {
+            eligible: false,
+            message:
+              'Eligibility requirements not met:\n- Language requirement not met. Required: German, Your language: English',
+          },
+        })
+      }
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'p-ineligible',
+                name: 'DAAD Munich',
+                description: 'Technical exchange',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+                required_language: 'German',
+                min_language_level: 'C1',
+              },
+            ],
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="program-select"]').setValue('p-ineligible')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="eligibility-alert"]').exists()).toBe(true)
+    })
+    expect(wrapper.text()).toContain('German')
+    expect(wrapper.text()).toContain('English')
   })
 })

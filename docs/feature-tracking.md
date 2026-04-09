@@ -120,11 +120,12 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Notification routing reference: OpenAPI + Settings staff link | `notifications`, `frontend-vue`, `api` | Implemented | 2026-04-09 | `NotificationRoutingReferenceSerializer` + `@extend_schema` on `NotificationRoutingReferenceView` (200/403) for `/api/docs/`. Settings page: staff-only alert with link to `NotificationRouting` (`settings.notificationRoutingStaffLink` en/es). Tests: `tests/unit/notifications/test_routing_reference.py`, `Settings.spec.js` (show/hide link). |
 | Legacy Django templates: `rel="noopener noreferrer"` on document `target="_blank"` links | `templates/frontend` | Implemented | 2026-04-09 | Student/coordinator SSR views: `applications/detail.html`, `documents/detail.html`, `documents/list.html` (markup + JS row template), `coordinator/dashboard.html`. Parity with Vue document downloads. Vitest regression: `StaffAgreementDocuments.spec.js` (row with `file`). |
 | Manual QA **MQ-009**: applications list program title + API cache isolation | `frontend-vue`, `exchange` | Implemented | 2026-04-09 | SPA list/detail use `program_name || program?.name` (`ApplicationSerializer` exposes FK `program` + `program_name`). `ApplicationViewSet` `cache_api_response` uses `key_func` scoped by user + path (list) / user + pk (retrieve). Tests: `test_application_viewset_cache_keys.py`, `test_list_applications_includes_program_name`, Vitest `Applications.spec.js` / `ApplicationDetail.spec.js`. |
+| Manual QA **MQ-010**: new application eligibility preview + draft save UX | `frontend-vue`, `exchange` | Implemented | 2026-04-09 | `ApplicationForm.vue`: debounced `GET /api/programs/:id/check_eligibility/` on program change (new app); assertive alert merges preview + flattened `program` / `non_field_errors` from save; select `aria-describedby` / `aria-invalid`. Draft `POST` already skips eligibility in `ApplicationSerializer.validate` (submit still enforces). Tests: `test_create_draft_application_when_student_not_eligible`, `ApplicationForm.spec.js` (eligibility alert). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Manual QA **MQ-010**: draft save + eligibility UX (`check_eligibility` preview, normalized API errors) | `frontend-vue`, `exchange`, `tests` | In progress | 2026-04-09 | — |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP

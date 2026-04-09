@@ -251,7 +251,9 @@
                     id="program"
                     v-model="form.program"
                     class="form-select"
-                    :class="{ 'is-invalid': programErrors.length }"
+                    :class="{ 'is-invalid': programIssueMessages.length }"
+                    :aria-invalid="programIssueMessages.length ? 'true' : 'false'"
+                    :aria-describedby="programIssueMessages.length ? 'application-form-program-feedback' : undefined"
                     required
                     :disabled="isEditMode"
                     data-testid="program-select"
@@ -261,12 +263,20 @@
                       {{ program.name }}
                     </option>
                   </select>
-                  <div v-if="programErrors.length" class="alert alert-danger mt-2 mb-0" role="alert" data-testid="eligibility-alert">
+                  <div
+                    v-if="programIssueMessages.length"
+                    id="application-form-program-feedback"
+                    ref="eligibilityAlertRef"
+                    class="alert alert-danger mt-2 mb-0"
+                    role="alert"
+                    aria-live="assertive"
+                    data-testid="eligibility-alert"
+                  >
                     <h6 class="alert-heading mb-2">
                       <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ t('applicationFormPage.eligibilityHeading') }}
                     </h6>
                     <ul class="mb-0 ps-3">
-                      <li v-for="(msg, i) in programErrors" :key="i">{{ msg }}</li>
+                      <li v-for="(msg, i) in programIssueMessages" :key="i">{{ msg }}</li>
                     </ul>
                   </div>
                   <div v-else class="form-text">
@@ -561,7 +571,14 @@
                 </div>
 
                 <!-- Other field errors -->
-                <div v-if="otherErrors.length" class="alert alert-danger">
+                <div
+                  v-if="otherErrors.length"
+                  ref="otherFieldErrorsRef"
+                  class="alert alert-danger"
+                  role="alert"
+                  aria-live="assertive"
+                  data-testid="other-field-errors"
+                >
                   <h6 class="alert-heading">{{ t('applicationFormPage.fixFollowingHeading') }}</h6>
                   <ul class="mb-0 ps-3">
                     <li v-for="(text, i) in otherErrors" :key="i">{{ text }}</li>
@@ -677,7 +694,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
@@ -739,6 +756,12 @@ const applicationVisibilityContext = ref({
   has_assigned_coordinator: false,
 })
 const errors = ref({})
+/** Lines from `GET /api/programs/:id/check_eligibility/` when student is not yet eligible (draft save still allowed). */
+const eligibilityPreviewMessages = ref([])
+let eligibilityCheckTimer = null
+let eligibilityCheckSeq = 0
+const eligibilityAlertRef = ref(null)
+const otherFieldErrorsRef = ref(null)
 const dynamicForm = ref({
   id: null,
   name: '',
@@ -758,17 +781,54 @@ const pendingDynamicResponses = ref(null)
 const applicationDynamicLayout = ref(null)
 const currentStepIndex = ref(0)
 
-// Normalize program errors: backend may return string or array
-const programErrors = computed(() => {
-  const raw = errors.value?.program
-  if (!raw) return []
-  return Array.isArray(raw) ? raw : [raw]
+function flattenFieldMessages(raw) {
+  if (raw == null) return []
+  if (typeof raw === 'string') return [raw]
+  if (Array.isArray(raw)) {
+    return raw.flatMap((item) => flattenFieldMessages(item))
+  }
+  if (typeof raw === 'object') {
+    return Object.values(raw).flatMap((v) => flattenFieldMessages(v))
+  }
+  return [String(raw)]
+}
+
+function parseEligibilityApiMessage(message) {
+  if (!message || typeof message !== 'string') return []
+  const trimmed = message.trim()
+  if (!trimmed) return []
+  if (trimmed.includes('\n- ')) {
+    const parts = trimmed.split('\n- ').map((s) => s.trim()).filter(Boolean)
+    const prefix = 'Eligibility requirements not met:'
+    if (parts[0]?.startsWith(prefix)) {
+      const rest = parts[0].slice(prefix.length).trim()
+      if (rest) {
+        parts[0] = rest
+      } else {
+        parts.shift()
+      }
+    }
+    return parts
+  }
+  return [trimmed]
+}
+
+/** Eligibility preview (API) + save validation on `program` / `non_field_errors`, deduped for assertive alert + `aria-describedby`. */
+const programIssueMessages = computed(() => {
+  const fromProg = flattenFieldMessages(errors.value?.program)
+  const nf = errors.value?.non_field_errors
+  const fromNf = flattenFieldMessages(nf)
+  const merged = []
+  for (const x of [...eligibilityPreviewMessages.value, ...fromProg, ...fromNf]) {
+    if (x && !merged.includes(x)) merged.push(x)
+  }
+  return merged
 })
 
 // Errors for other fields (exclude program and dynamic-form specific messages) as list of strings
 const otherErrors = computed(() => {
   const list = []
-  const omit = ['program', 'dynamic_form']
+  const omit = ['program', 'dynamic_form', 'non_field_errors']
   for (const [field, value] of Object.entries(errors.value || {})) {
     if (omit.includes(field)) continue
     const texts = Array.isArray(value) ? value : [value]
@@ -860,6 +920,37 @@ const applicationWindowState = computed(() => {
 const createBlockedByWindow = computed(() => (
   !isEditMode.value && Boolean(applicationWindowState.value && !applicationWindowState.value.canApply)
 ))
+
+watch(
+  () => form.value.program,
+  (pid) => {
+    eligibilityPreviewMessages.value = []
+    const next = { ...errors.value }
+    delete next.program
+    delete next.non_field_errors
+    errors.value = next
+
+    if (eligibilityCheckTimer) clearTimeout(eligibilityCheckTimer)
+    if (!pid || isEditMode.value) return
+
+    const seq = ++eligibilityCheckSeq
+    eligibilityCheckTimer = setTimeout(async () => {
+      eligibilityCheckTimer = null
+      try {
+        const { data } = await api.get(`/api/programs/${pid}/check_eligibility/`)
+        if (seq !== eligibilityCheckSeq) return
+        if (data.eligible === false && data.message) {
+          eligibilityPreviewMessages.value = parseEligibilityApiMessage(data.message)
+        } else {
+          eligibilityPreviewMessages.value = []
+        }
+      } catch {
+        if (seq !== eligibilityCheckSeq) return
+        eligibilityPreviewMessages.value = []
+      }
+    }, 250)
+  },
+)
 
 const dynamicFields = computed(() => (
   Object.entries(dynamicForm.value.schema?.properties || {}).map(([name, config]) => ({
@@ -1431,12 +1522,18 @@ async function saveDraft() {
     }
   } catch (err) {
     console.error('Failed to save draft:', err)
-    if (err.response?.data) {
-      errors.value = err.response.data
-      dynamicFormErrors.value = Array.isArray(err.response.data.dynamic_form)
-        ? err.response.data.dynamic_form
-        : (err.response.data.dynamic_form ? [err.response.data.dynamic_form] : [])
+    const data = err.response?.data
+    if (data) {
+      errors.value = typeof data === 'string' ? { program: [data] } : { ...data }
+      dynamicFormErrors.value = Array.isArray(data.dynamic_form)
+        ? data.dynamic_form
+        : (data.dynamic_form ? [data.dynamic_form] : [])
       errorToast(t('applicationFormPage.toastFixErrors'))
+      await nextTick()
+      eligibilityAlertRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
+      if (!programIssueMessages.value.length) {
+        otherFieldErrorsRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
+      }
     } else {
       errorToast(t('applicationFormPage.toastDraftSaveFailed'))
     }

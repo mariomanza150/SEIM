@@ -181,6 +181,27 @@ class TestApplicationsAPI(APITestCase):
         self.assertEqual(row["program_name"], "Erasmus Spain List Name")
         self.assertEqual(str(row["program"]), str(program.id))
 
+    def test_create_draft_application_when_student_not_eligible(self):
+        """Draft POST must succeed without eligibility; submit still enforces requirements (MQ-010)."""
+        student = self.create_user(role="student")
+        student.profile.language = "English"
+        student.profile.language_level = "A1"
+        student.profile.save(update_fields=["language", "language_level"])
+        program = self.create_program(
+            name="German C1 Program",
+            required_language="German",
+            min_language_level="C1",
+        )
+        self.authenticate_user(student)
+
+        response = self.client.post(
+            self.applications_url,
+            {"program": str(program.id)},
+            format="json",
+        )
+        self.assert_response_success(response, status.HTTP_201_CREATED)
+        self.assertEqual(str(response.data["program"]), str(program.id))
+
     def test_list_applications_coordinator(self):
         """Test that coordinators can see all applications."""
         student1 = self.create_user(role="student")
