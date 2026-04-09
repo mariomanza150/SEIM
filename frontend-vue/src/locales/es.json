@@ -2,6 +2,19 @@
   "a11y": {
     "skipToMain": "Saltar al contenido principal"
   },
+  "helloWorld": {
+    "countLabel": "el contador es {count}",
+    "editHintBefore": "Edita",
+    "editHintAfter": "para probar HMR",
+    "editHintFile": "components/HelloWorld.vue",
+    "starterLineBefore": "Consulta",
+    "starterLineAfter": ", el proyecto inicial oficial de Vue + Vite",
+    "createVueLink": "create-vue",
+    "ideLineBefore": "Más información sobre el soporte IDE para Vue en la",
+    "ideLineAfter": ".",
+    "ideGuideLink": "Guía de escalado de Vue (herramientas)",
+    "footerHint": "Haz clic en los logotipos de Vite y Vue para saber más"
+  },
   "pagination": {
     "previous": "Anterior",
     "next": "Siguiente",

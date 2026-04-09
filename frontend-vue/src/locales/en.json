@@ -2,6 +2,19 @@
   "a11y": {
     "skipToMain": "Skip to main content"
   },
+  "helloWorld": {
+    "countLabel": "count is {count}",
+    "editHintBefore": "Edit",
+    "editHintAfter": "to test HMR",
+    "editHintFile": "components/HelloWorld.vue",
+    "starterLineBefore": "Check out",
+    "starterLineAfter": ", the official Vue + Vite starter",
+    "createVueLink": "create-vue",
+    "ideLineBefore": "Learn more about IDE Support for Vue in the",
+    "ideLineAfter": ".",
+    "ideGuideLink": "Vue Docs Scaling up Guide",
+    "footerHint": "Click on the Vite and Vue logos to learn more"
+  },
   "pagination": {
     "previous": "Previous",
     "next": "Next",
