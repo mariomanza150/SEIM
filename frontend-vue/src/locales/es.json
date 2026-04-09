@@ -549,8 +549,6 @@
     "typeOptionAll": "Todos los tipos",
     "statusLabel": "Estado",
     "statusOptionAll": "Todos",
-    "statusValidated": "Validado",
-    "statusPending": "Pendiente",
     "clearFilters": "Limpiar",
     "presetSaveLabel": "Guardar filtros como preset",
     "presetNamePlaceholder": "Nombre del preset",

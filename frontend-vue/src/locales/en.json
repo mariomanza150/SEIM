@@ -549,8 +549,6 @@
     "typeOptionAll": "All types",
     "statusLabel": "Status",
     "statusOptionAll": "All",
-    "statusValidated": "Validated",
-    "statusPending": "Pending",
     "clearFilters": "Clear",
     "presetSaveLabel": "Save filters as preset",
     "presetNamePlaceholder": "Preset name",

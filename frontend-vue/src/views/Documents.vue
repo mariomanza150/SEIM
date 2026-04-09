@@ -46,8 +46,8 @@
               <label class="form-label">{{ t('documentsPage.statusLabel') }}</label>
               <select v-model="filters.valid" class="form-select" @change="fetchDocuments">
                 <option value="">{{ t('documentsPage.statusOptionAll') }}</option>
-                <option value="true">{{ t('documentsPage.statusValidated') }}</option>
-                <option value="false">{{ t('documentsPage.statusPending') }}</option>
+                <option value="true">{{ t('documentDetailPage.statusValidatedShort') }}</option>
+                <option value="false">{{ t('documentDetailPage.statusPendingShort') }}</option>
               </select>
             </div>
             <div class="col-md-2 d-flex align-items-end">
@@ -160,7 +160,7 @@
                 </td>
                 <td>
                   <span class="badge" :class="doc.is_valid ? 'bg-success' : 'bg-warning'">
-                    {{ doc.is_valid ? t('documentsPage.statusValidated') : t('documentsPage.statusPending') }}
+                    {{ doc.is_valid ? t('documentDetailPage.statusValidatedShort') : t('documentDetailPage.statusPendingShort') }}
                   </span>
                 </td>
                 <td class="text-muted small">{{ formatDate(doc.created_at) }}</td>

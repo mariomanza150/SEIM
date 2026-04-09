@@ -78,7 +78,8 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue i18n: Applications list view | `frontend-vue` | Implemented | 2026-04-09 | `applicationsPage.*` for list chrome; card date labels `created` / `submitted` + status filter, program fallbacks, readiness, `formatStatus` / `formatDate` use `applicationDetailPage`; pagination, empty state, errors/toasts, delete confirm; icon-only edit/delete `aria-label`. Vitest: `Applications.spec.js` (incl. sparse card + submitted row). |
 | Vue i18n: Applications list Created/Submitted from detail page | `frontend-vue` | Implemented | 2026-04-09 | Card lines use `applicationDetailPage.created` / `submitted` (removed duplicates from `applicationsPage` JSON). |
 | Vue i18n: Applications list shared applicationDetailPage strings | `frontend-vue` | Implemented | 2026-04-09 | Dropped duplicate `applicationsPage.status` / `notAvailable` / `readinessLabel` / `unknownProgram` from locale JSON; added `applicationDetailPage.unknownProgram`. |
-| Vue i18n: Documents list view | `frontend-vue` | Implemented | 2026-04-09 | `documentsPage.*` in locales; `Documents.vue` student/staff copy, filters, presets UI, table, pagination, errors/toasts; list `fileName` / `getApplicationName` / `formatDate` use `documentDetailPage` fallbacks; `aria-label` / download titles. Vitest: `Documents.spec.js` (incl. sparse row). |
+| Vue i18n: Documents list view | `frontend-vue` | Implemented | 2026-04-09 | `documentsPage.*` in locales; `Documents.vue` student/staff copy, filters, presets UI, table, pagination, errors/toasts; validation filter + badge use `documentDetailPage.statusValidatedShort` / `statusPendingShort`; list `fileName` / `getApplicationName` / `formatDate` use `documentDetailPage` fallbacks; `aria-label` / download titles. Vitest: `Documents.spec.js` (incl. sparse row). |
+| Vue i18n: Documents list validation labels namespaced | `frontend-vue` | Implemented | 2026-04-09 | Removed `documentsPage.statusValidated` / `statusPending`; reuse document detail short status strings. |
 | Vue i18n: Documents list shared documentDetailPage fallbacks | `frontend-vue` | Implemented | 2026-04-09 | Removed duplicate `fileUnknown` / `unknownApplication` / `notAvailable` from `documentsPage` JSON; aligned with document detail. |
 | Vue i18n: Document detail view | `frontend-vue` | Implemented | 2026-04-09 | `documentDetailPage.*` (incl. `notAvailable`, `fileUnknown`, `unknownApplication`) in locales; `DocumentDetail.vue` breadcrumbs via `route.names`, preview/review/comments/staff actions, quick actions, toasts; locale-aware `formatDateTime`; preview context lines translated. Vitest: `DocumentDetail.spec.js` (loaded doc + fallbacks). |
 | Vue i18n: Document detail fallback strings namespaced | `frontend-vue` | Implemented | 2026-04-09 | `DocumentDetail.vue` uses `documentDetailPage` for N/A, unknown file name, and unknown application (was `documentsPage`). |
@@ -117,7 +118,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Documents list validation status keys | `frontend-vue` | In progress | 2026-04-09 | — |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -191,5 +192,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Applications list date labels → `applicationDetailPage` — completed). Prior: MQ-006 / `auth-api` / `url-routing` — [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (loop: Documents list validation status i18n — completed). Prior: **MQ-007** / matrix pass — [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

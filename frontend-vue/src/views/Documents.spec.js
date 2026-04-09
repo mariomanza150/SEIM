@@ -115,7 +115,7 @@ describe('Documents', () => {
     })
     await flushPromises()
     expect(wrapper.text()).toContain('Spring Abroad')
-    expect(wrapper.text()).toContain('Validated')
+    expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.statusValidatedShort'))
     expect(wrapper.find('[data-testid="document-detail-link"]').exists()).toBe(true)
   })
 
@@ -159,5 +159,6 @@ describe('Documents', () => {
     expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.fileUnknown'))
     expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.unknownApplication'))
     expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.notAvailable'))
+    expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.statusPendingShort'))
   })
 })
