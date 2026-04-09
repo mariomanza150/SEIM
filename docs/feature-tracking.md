@@ -115,7 +115,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ | | | | |
+| Vue i18n: Applications list shared applicationDetailPage strings | `frontend-vue` | In progress | 2026-04-09 | — |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -189,5 +189,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Documents list documentDetailPage fallbacks — completed)*  
+*Last updated: 2026-04-09 (manual QA session: [`manual-qa-issues.md`](manual-qa-issues.md) **MQ-006**; [`feature-test-tracking.md`](feature-test-tracking.md) `auth-api` / `url-routing` Notes.)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
