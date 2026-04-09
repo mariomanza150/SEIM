@@ -79,6 +79,13 @@
             </router-link>
             <router-link
               v-if="authStore.canUseStaffReviewQueue"
+              :to="{ name: 'CoordinatorWorkload' }"
+              class="list-group-item list-group-item-action"
+            >
+              <i class="bi bi-graph-up-arrow me-2"></i>Workload
+            </router-link>
+            <router-link
+              v-if="authStore.canUseStaffReviewQueue"
               :to="{ name: 'StaffExchangeAgreements' }"
               class="list-group-item list-group-item-action"
             >

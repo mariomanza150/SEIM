@@ -47,6 +47,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Advanced program filtering UX | `exchange`, `frontend-vue`, `api` | Implemented | 2026-04-08 | New application flow exposes program filters (search, language/CEFR, start dates, “my GPA”, accepting-applications-now, sort) backed by `ProgramFilter`; `accepting_applications=true` filter on `GET /api/programs/`. Edit mode still loads full active list. Tests: `tests/unit/exchange/test_filters.py` (`TestProgramFilter.test_filter_accepting_applications`). |
 | Saved program filter presets (new application) | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-08 | Reuses `SavedSearch` with `search_type=program` on the new-application program filter panel: save/apply/delete/set-default, optional default on open; `applicationProgramFilterPresets.js` + Vitest. |
 | Public program comparison (SPA) | `frontend-vue`, `exchange`, `cms` | Implemented | 2026-04-08 | Authenticated route `/programs/compare`: multi-select up to four programs from paginated `GET /api/programs/?is_active=true`, comparison table (dates, window, GPA, language, age, recurring, description), Apply links to `ApplicationNew?program=`, shareable `?ids=` synced to the router; nav from Dashboard + Applications. CMS: program index CTA + program detail link (preselects operational program id) + account menu; anonymous users use login `redirect` to the SPA compare path. Vitest: `programCompareQuery.spec.js`. |
+| Coordinator workload dashboard (SLA-style signals) | `accounts`, `analytics`, `frontend-vue`, `api` | Implemented | 2026-04-08 | `GET /api/accounts/dashboard/coordinator-workload/`: per-user assigned + program-coordinated pending counts, open resubmit on assigned apps, avg days in queue; admins get global unassigned/stale-under-review (14d) and per-coordinator distribution. Vue `/coordinator-workload` (staff), Dashboard sidebar. Tests: `tests/integration/api/test_coordinator_workload_api.py`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
@@ -82,7 +83,6 @@ _All Priority 1 items in this subsection are implemented above._
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Coordinator workload dashboard and SLA tracking | `analytics`, `exchange`, `frontend-vue` | Show review volume, turnaround times, pending bottlenecks, and coordinator workload distribution for operational planning. |
 | Advanced notification rules, digests, and reminder scheduling | `notifications`, `accounts`, `admin UI` | Add configurable digest delivery, richer reminder cadences, and role-specific notification rules beyond the current event-based alerts. |
 | Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets on analytics slices or other staff tables if added later. |
 | Export reports to PDF/Excel | `analytics`, `admin UI` | CSV export is now available through `/api/analytics/export/`; richer PDF/Excel export remains a planned enhancement. |
@@ -125,5 +125,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (CMS links to program comparison)*  
+*Last updated: 2026-04-08 (coordinator workload dashboard)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

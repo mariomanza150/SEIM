@@ -9,6 +9,7 @@ const Login = () => import('@/views/Login.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
 const Applications = () => import('@/views/Applications.vue')
 const CoordinatorReviewQueue = () => import('@/views/CoordinatorReviewQueue.vue')
+const CoordinatorWorkload = () => import('@/views/CoordinatorWorkload.vue')
 const StaffExchangeAgreements = () => import('@/views/StaffExchangeAgreements.vue')
 const StaffAgreementDocuments = () => import('@/views/StaffAgreementDocuments.vue')
 const ProgramCompare = () => import('@/views/ProgramCompare.vue')
@@ -62,6 +63,16 @@ const routes = [
       requiresAuth: true,
       staffReviewQueue: true,
       title: 'Review queue - SEIM',
+    },
+  },
+  {
+    path: '/coordinator-workload',
+    name: 'CoordinatorWorkload',
+    component: CoordinatorWorkload,
+    meta: {
+      requiresAuth: true,
+      staffReviewQueue: true,
+      title: 'Coordinator workload - SEIM',
     },
   },
   {

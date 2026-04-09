@@ -114,6 +114,12 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
   - **Student:** `applications` / `pending` are scoped to the current user (`pending` counts `draft` and `under_review`). `documents` counts documents the student uploaded or that belong to their applications.
   - **Coordinator or admin:** `applications` and `documents` are global totals; `notifications` is still unread for the current user; `pending` counts non-withdrawn applications that are `submitted` or `under_review`, or have at least one unresolved `DocumentResubmissionRequest`.
 
+#### Coordinator workload (staff)
+- `GET /api/accounts/dashboard/coordinator-workload/` — **Coordinator or admin** only. JSON:
+  - **`you`:** `assigned_pending_review`, `coordinated_programs_pending` (submitted/under_review on programs the user coordinates), `assigned_with_open_resubmit`, `avg_days_in_queue_assigned` (mean days since `submitted_at` for assigned pending apps, or `null`).
+  - **`global`** (admins only): `pending_review_total`, `unassigned_pending_review`, `stale_under_review_14d` (still `under_review` with `updated_at` older than 14 days).
+  - **`distribution`** (admins only): list of `{ coordinator_id, display_name, assigned_pending_review }` for users with the coordinator role (up to 40, sorted by load).
+
 ### Exchange Programs
 
 #### Programs

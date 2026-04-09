@@ -42,6 +42,8 @@ All SEIM application features are under `/seim/`:
 - `/seim/applications/<uuid>/` - View application details
 - `/seim/applications/<uuid>/edit/` - Edit application
 - `/seim/programs/` - SEIM programs management (admin)
+- `/seim/review-queue/` - Staff application review queue (Vue)
+- `/seim/coordinator-workload/` - Staff workload / queue metrics (Vue)
 
 Legacy server-rendered application creation also remains available at `/applications/create/`.
 

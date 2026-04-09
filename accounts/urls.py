@@ -28,7 +28,7 @@ from .views import (
     UserSettingsView,
     UserViewSet,
 )
-from .views_dashboard import DashboardStatsView
+from .views_dashboard import CoordinatorWorkloadView, DashboardStatsView
 
 app_name = "accounts"
 
@@ -61,6 +61,11 @@ urlpatterns = [
     path("profile/", ProfileView.as_view(), name="profile"),
     path("profile/update/", ProfileUpdateView.as_view(), name="profile_update"),
     path("dashboard/stats/", DashboardStatsView.as_view(), name="dashboard_stats"),
+    path(
+        "dashboard/coordinator-workload/",
+        CoordinatorWorkloadView.as_view(),
+        name="coordinator_workload",
+    ),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("change-password/", ChangePasswordView.as_view(), name="change_password"),
     path("password-reset/", password_reset_view, name="password-reset"),
