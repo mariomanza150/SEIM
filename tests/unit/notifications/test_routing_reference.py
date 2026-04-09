@@ -2,14 +2,16 @@
 
 from notifications.routing_reference import (
     REMINDER_EVENT_TYPE_DESCRIPTIONS,
+    SETTINGS_CATEGORY_PRIMARY_RECIPIENTS,
     build_notification_routing_reference,
 )
+from notifications.services import SETTINGS_CATEGORY_USER_FIELDS
 from notifications.tasks import REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
 
 
 def test_build_notification_routing_reference_shape():
     data = build_notification_routing_reference()
-    assert data["schema_version"] == 5
+    assert data["schema_version"] == 6
     access = data["reference_api_access"]
     assert access["superuser"] is True
     assert "coordinator" in access["roles_any"]
@@ -20,6 +22,7 @@ def test_build_notification_routing_reference_shape():
     assert cats["applications"]["inapp_user_settings_field"] == "inapp_applications"
     assert "typical_triggers" in cats["applications"]
     assert "Application lifecycle" in cats["applications"]["typical_triggers"]
+    assert "applicant" in cats["applications"]["primary_recipients"].lower()
     assert "system" in cats
     assert "notes" in cats["system"]
     assert data["reminder_default_settings_category"] == "programs"
@@ -37,3 +40,17 @@ def test_reminder_event_types_have_descriptions():
     for key in REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY:
         assert key in REMINDER_EVENT_TYPE_DESCRIPTIONS
         assert REMINDER_EVENT_TYPE_DESCRIPTIONS[key].strip()
+
+
+def test_settings_category_primary_recipients_complete():
+    for key in SETTINGS_CATEGORY_USER_FIELDS:
+        assert key in SETTINGS_CATEGORY_PRIMARY_RECIPIENTS
+        assert SETTINGS_CATEGORY_PRIMARY_RECIPIENTS[key].strip()
+    assert "system" in SETTINGS_CATEGORY_PRIMARY_RECIPIENTS
+
+
+def test_build_includes_primary_recipients_on_each_category():
+    cats = build_notification_routing_reference()["settings_categories"]
+    for key, row in cats.items():
+        assert "primary_recipients" in row
+        assert row["primary_recipients"].strip()

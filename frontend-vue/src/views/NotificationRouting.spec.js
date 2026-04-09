@@ -16,7 +16,7 @@ vi.mock('@/composables/useToast', () => ({
 }))
 
 const mockPayload = {
-  schema_version: 5,
+  schema_version: 6,
   reference_api_access: {
     roles_any: ['coordinator', 'admin'],
     superuser: true,
@@ -27,6 +27,7 @@ const mockPayload = {
       email_user_settings_field: 'email_applications',
       inapp_user_settings_field: 'inapp_applications',
       typical_triggers: 'Application lifecycle (mock).',
+      primary_recipients: 'Primarily the applicant (mock).',
     },
     system: {
       email_user_settings_field: 'email_system',
@@ -81,5 +82,6 @@ describe('NotificationRouting', () => {
     expect(wrapper.text()).toContain('Deadline tied to application milestones.')
     expect(wrapper.text()).toContain('Who can call this API')
     expect(wrapper.text()).toContain('Mock: only staff roles')
+    expect(wrapper.text()).toContain('Primarily the applicant (mock).')
   })
 })

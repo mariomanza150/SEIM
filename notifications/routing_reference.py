@@ -49,6 +49,30 @@ SETTINGS_CATEGORY_TYPICAL_TRIGGERS: dict[str, str] = {
     ),
 }
 
+# Who usually receives notifications gated by each group (high-level; actual routing is code-driven).
+SETTINGS_CATEGORY_PRIMARY_RECIPIENTS: dict[str, str] = {
+    "applications": (
+        "Primarily the applicant; coordinators may receive parallel review or sync notices "
+        "for the same application."
+    ),
+    "documents": (
+        "The application student and/or document uploader; coordinators when staff actions "
+        "generate student-facing document alerts."
+    ),
+    "comments": (
+        "The other party on the thread (student ↔ coordinator/staff), depending on who authored "
+        "the latest comment."
+    ),
+    "programs": (
+        "Most often students for program announcements; reminder event types may target the "
+        "reminder owner (see calendar/deadline features)."
+    ),
+    "system": (
+        "Varies by alert: e.g. agreement expiration → staff; notification digest → each user "
+        "who enabled digests and passes system gates."
+    ),
+}
+
 DIGEST_TYPICAL_TRIGGERS = (
     "Scheduled job summarizes unread in-app notifications for users who enabled a digest "
     "frequency. Sends use settings_category=system: in-app delivery respects inapp_system; "
@@ -73,6 +97,7 @@ def build_notification_routing_reference() -> dict:
             "email_user_settings_field": email_f,
             "inapp_user_settings_field": inapp_f,
             "typical_triggers": SETTINGS_CATEGORY_TYPICAL_TRIGGERS[key],
+            "primary_recipients": SETTINGS_CATEGORY_PRIMARY_RECIPIENTS[key],
         }
         for key, (email_f, inapp_f) in SETTINGS_CATEGORY_USER_FIELDS.items()
     }
@@ -80,6 +105,7 @@ def build_notification_routing_reference() -> dict:
         "email_user_settings_field": "email_system",
         "inapp_user_settings_field": "inapp_system",
         "typical_triggers": SETTINGS_CATEGORY_TYPICAL_TRIGGERS["system"],
+        "primary_recipients": SETTINGS_CATEGORY_PRIMARY_RECIPIENTS["system"],
         "notes": (
             "Agreement expiration alerts, notification digests, and similar. "
             "For digest email, email_notification_digest must also be enabled."
@@ -87,7 +113,7 @@ def build_notification_routing_reference() -> dict:
     }
     reminder_map = dict(REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY)
     return {
-        "schema_version": 5,
+        "schema_version": 6,
         "reference_api_access": dict(REFERENCE_API_ACCESS),
         "settings_categories": categories,
         "reminder_event_type_to_settings_category": reminder_map,

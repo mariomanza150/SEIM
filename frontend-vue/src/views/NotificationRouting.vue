@@ -48,6 +48,7 @@
                   <th scope="col">{{ t('notificationRoutingPage.colEmailField') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colInappField') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colTypicalTriggers') }}</th>
+                  <th scope="col">{{ t('notificationRoutingPage.colPrimaryRecipients') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colNotes') }}</th>
                 </tr>
               </thead>
@@ -57,6 +58,7 @@
                   <td><code>{{ row.email_user_settings_field }}</code></td>
                   <td><code>{{ row.inapp_user_settings_field }}</code></td>
                   <td class="small text-muted">{{ row.typicalTriggers || t('notificationRoutingPage.emDash') }}</td>
+                  <td class="small text-muted">{{ row.primaryRecipients || t('notificationRoutingPage.emDash') }}</td>
                   <td class="small text-muted">{{ row.notes || t('notificationRoutingPage.emDash') }}</td>
                 </tr>
               </tbody>
@@ -156,6 +158,7 @@ const categoryRows = computed(() => {
       email_user_settings_field: cats[key].email_user_settings_field,
       inapp_user_settings_field: cats[key].inapp_user_settings_field,
       typicalTriggers: cats[key].typical_triggers || '',
+      primaryRecipients: cats[key].primary_recipients || '',
       notes: cats[key].notes || '',
     }))
 })

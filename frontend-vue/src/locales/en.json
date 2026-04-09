@@ -171,6 +171,7 @@
     "colEmailField": "Email toggle field",
     "colInappField": "In-app toggle field",
     "colTypicalTriggers": "Typical triggers (summary)",
+    "colPrimaryRecipients": "Primary recipients (summary)",
     "colNotes": "Notes",
     "emDash": "—",
     "remindersTitle": "Reminder event types → settings category",
