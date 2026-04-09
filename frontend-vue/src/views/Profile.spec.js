@@ -47,6 +47,7 @@ describe('Profile', () => {
       },
     })
     await flushPromises()
+    expect(wrapper.find('nav').attributes('aria-label')).toBe(i18n.global.t('profilePage.breadcrumbAria'))
     expect(wrapper.find('[data-testid="profile-page-heading"]').text()).toContain('Profile')
     expect(wrapper.text()).toContain('Update your account and eligibility information for exchange programs.')
     expect(wrapper.text()).toContain('Eligibility (for exchange programs)')

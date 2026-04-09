@@ -826,6 +826,7 @@
     }
   },
   "profilePage": {
+    "breadcrumbAria": "Breadcrumb",
     "pageSubtitle": "Update your account and eligibility information for exchange programs.",
     "loadingProfile": "Loading profile…",
     "accountSection": "Account",

@@ -1,7 +1,7 @@
 <template>
   <div class="profile-page">
     <div class="container-fluid mt-4">
-      <nav :aria-label="t('documentDetailPage.breadcrumbAria')">
+      <nav :aria-label="t('profilePage.breadcrumbAria')">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
             <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>

@@ -92,6 +92,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: Settings page (full form + sidebar) | `frontend-vue` | Implemented | 2026-04-09 | `Settings.vue`: breadcrumbs, sections, theme/font/digest/privacy, `settings.notify.*` checkboxes, toasts; reuses `applicationFormPage.cancel`, `route.names`. Vitest: `Settings.spec.js`. |
 | Vue i18n: Dashboard “next steps” row copy | `frontend-vue` | Implemented | 2026-04-09 | `dashboardNextSteps.js`: `mergeDashboardNextSteps` / `fetchDashboardNextSteps` take `t`; strings under `dashboard.nextSteps.*` + `notifications.defaultTitle`; `Dashboard.vue` passes `t`. Vitest: `dashboardNextSteps.spec.js` (incl. `es` draft title). |
 | Vue i18n/a11y: Breadcrumb nav aria (Applications, Documents) | `frontend-vue` | Implemented | 2026-04-09 | `applicationsPage.breadcrumbAria` / `documentsPage.breadcrumbAria` (en/es); `<nav :aria-label="t(...)">`. Vitest: `Applications.spec.js`, `Documents.spec.js` (incl. Spanish). |
+| Vue i18n/a11y: Profile breadcrumb aria (namespaced key) | `frontend-vue` | Implemented | 2026-04-09 | `Profile.vue` uses `profilePage.breadcrumbAria` (was `documentDetailPage.breadcrumbAria`). Vitest: `Profile.spec.js`. |
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-08 | Extended `notifications.*` + reuse `route.names`, `documentsPage` / `applicationsPage` / `applicationFormPage` / `reviewQueuePage`; `Notifications.vue` filters, list, empty/loading/error, pagination, mark-read + toasts, locale-relative dates (`timeDaysAgo`). Vitest: `Notifications.spec.js`. |
 | Staff notification routing reference API | `notifications`, `api`, `seim` | Implemented | 2026-04-09 | `GET /api/notifications/routing-reference/`: **`reminder_event_types_by_settings_category`**, **`transactional_route_keys_by_settings_category`**, plus matrix fields; **`schema_version` 12**. Tests: `test_notification_routing_reference_api.py`, `test_routing_reference.py`. |
 | Staff Vue read-only notification routing matrix | `frontend-vue`, `notifications`, `api` | Implemented | 2026-04-09 | SPA `/notification-routing`: **Reminder** + **transactional** index-by-group cards; detail tables; digest / API access; en/es. Vitest: `NotificationRouting.spec.js`. |
@@ -100,7 +101,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n/a11y: Profile breadcrumb aria key | `frontend-vue` | In progress | 2026-04-09 | loop |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -134,7 +135,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** + **Dashboard next-steps** + list **breadcrumb** `aria-label` on Applications/Documents. **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** + **Dashboard next-steps** + **breadcrumb** `aria-label` (Applications/Documents/Profile). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -174,5 +175,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Applications/Documents breadcrumb aria i18n — completed)*  
+*Last updated: 2026-04-09 (loop: Profile breadcrumb aria key — completed)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
