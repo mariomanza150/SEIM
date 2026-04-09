@@ -16,7 +16,10 @@
           <h2><i class="bi bi-file-earmark-text me-2"></i>My Applications</h2>
           <p class="text-muted">Manage your exchange program applications</p>
         </div>
-        <div class="col-md-4 text-end">
+        <div class="col-md-4 text-end d-flex flex-wrap gap-2 justify-content-md-end">
+          <router-link :to="{ name: 'ProgramCompare' }" class="btn btn-outline-secondary">
+            <i class="bi bi-columns-gap me-1"></i>Compare programs
+          </router-link>
           <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary">
             <i class="bi bi-plus-circle me-2"></i>New Application
           </router-link>

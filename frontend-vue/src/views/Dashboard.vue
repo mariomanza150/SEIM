@@ -67,6 +67,9 @@
             <router-link :to="{ name: 'Applications' }" class="list-group-item list-group-item-action">
               <i class="bi bi-file-earmark-text me-2"></i>Applications
             </router-link>
+            <router-link :to="{ name: 'ProgramCompare' }" class="list-group-item list-group-item-action">
+              <i class="bi bi-columns-gap me-2"></i>Compare programs
+            </router-link>
             <router-link
               v-if="authStore.canUseStaffReviewQueue"
               :to="{ name: 'CoordinatorReviewQueue' }"

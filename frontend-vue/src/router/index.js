@@ -11,6 +11,7 @@ const Applications = () => import('@/views/Applications.vue')
 const CoordinatorReviewQueue = () => import('@/views/CoordinatorReviewQueue.vue')
 const StaffExchangeAgreements = () => import('@/views/StaffExchangeAgreements.vue')
 const StaffAgreementDocuments = () => import('@/views/StaffAgreementDocuments.vue')
+const ProgramCompare = () => import('@/views/ProgramCompare.vue')
 const ApplicationForm = () => import('@/views/ApplicationForm.vue')
 const ApplicationDetail = () => import('@/views/ApplicationDetail.vue')
 const Documents = () => import('@/views/Documents.vue')
@@ -81,6 +82,15 @@ const routes = [
       requiresAuth: true,
       staffReviewQueue: true,
       title: 'Agreement documents - SEIM',
+    },
+  },
+  {
+    path: '/programs/compare',
+    name: 'ProgramCompare',
+    component: ProgramCompare,
+    meta: {
+      requiresAuth: true,
+      title: 'Compare programs - SEIM',
     },
   },
   {

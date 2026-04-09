@@ -46,6 +46,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Student application readiness scoring | `exchange`, `documents`, `frontend-vue`, `api` | Implemented | 2026-04-08 | `ApplicationSerializer.readiness` via `exchange.readiness.compute_application_readiness`: document checklist progress (prefetch-aware), program application window, optional dynamic form on detail only; list omits form DB lookups. Vue applications cards + application detail banner with score/level/headline. Tests: `tests/unit/exchange/test_application_readiness.py`, `frontend-vue/src/utils/applicationReadiness.spec.js`. |
 | Advanced program filtering UX | `exchange`, `frontend-vue`, `api` | Implemented | 2026-04-08 | New application flow exposes program filters (search, language/CEFR, start dates, “my GPA”, accepting-applications-now, sort) backed by `ProgramFilter`; `accepting_applications=true` filter on `GET /api/programs/`. Edit mode still loads full active list. Tests: `tests/unit/exchange/test_filters.py` (`TestProgramFilter.test_filter_accepting_applications`). |
 | Saved program filter presets (new application) | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-08 | Reuses `SavedSearch` with `search_type=program` on the new-application program filter panel: save/apply/delete/set-default, optional default on open; `applicationProgramFilterPresets.js` + Vitest. |
+| Public program comparison (SPA) | `frontend-vue`, `exchange` | Implemented | 2026-04-08 | Authenticated route `/programs/compare`: multi-select up to four programs from paginated `GET /api/programs/?is_active=true`, comparison table (dates, window, GPA, language, age, recurring, description), Apply links to `ApplicationNew?program=`, shareable `?ids=` synced to the router; nav from Dashboard + Applications. Vitest: `programCompareQuery.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
@@ -78,7 +79,7 @@ _All Priority 1 items in this subsection are implemented above._
 |---------|--------|-------|
 | Program capacity, quotas, and waitlist management | `exchange`, `admin UI`, `frontend-vue` | Track available seats by program and automatically place eligible applicants on a waitlist when capacity is reached. |
 | Agreement renewal workflow | `exchange`, `documents`, `notifications`, `admin UI` | Extend agreement tracking with renewal stages, follow-up tasks, and document rollover support for expiring partnerships. |
-| Public program comparison experience | `cms`, `exchange`, `frontend-vue` | Let students compare programs side by side by country, dates, language requirements, and deadlines before applying. |
+| Public program comparison (CMS + unauthenticated) | `cms`, `frontend-vue` | Optional follow-up: embed or link comparison from public CMS program pages for anonymous visitors; SPA comparison is available to logged-in users. |
 
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
@@ -126,5 +127,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (saved program filter presets on new application)*  
+*Last updated: 2026-04-08 (SPA program comparison)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

@@ -31,16 +31,19 @@ All SEIM application features are under `/seim/`:
 #### Student Dashboard
 - `/seim/dashboard/` - Main dashboard
 - `/seim/profile/` - User profile
-- `/seim/settings/` - User settings
-- `/seim/preferences/` - User preferences
-- `/seim/calendar/` - Calendar view
+- `/seim/settings/` - User settings in the Vue SPA
+- `/seim/preferences/` - Legacy compatibility path that now redirects to `/seim/settings/` inside the SPA
+- `/seim/calendar/` - Legacy server-rendered calendar page
 
 #### Applications
 - `/seim/applications/` - List user's applications
-- `/seim/applications/create/` - Create new application
+- `/seim/programs/compare` - Vue SPA: compare up to four active programs side by side; optional query `?ids=<uuid>,<uuid>` to preselect and share
+- `/seim/applications/new` - Create new application in the Vue SPA
 - `/seim/applications/<uuid>/` - View application details
 - `/seim/applications/<uuid>/edit/` - Edit application
 - `/seim/programs/` - SEIM programs management (admin)
+
+Legacy server-rendered application creation also remains available at `/applications/create/`.
 
 #### Exchange Management
 - `/seim/exchange/` - Exchange module URLs
@@ -97,9 +100,10 @@ API endpoints remain at the root for consistency:
 ### For Authenticated Students
 1. Login at `/seim/login/`
 2. Access dashboard at `/seim/dashboard/`
-3. Apply to programs at `/seim/applications/create/`
-4. Can still browse CMS content at `/`, `/programas/`, etc.
-5. Navigation includes dropdown to access SEIM features
+3. Apply to programs at `/seim/applications/new`
+4. Manage account settings at `/seim/settings/`
+5. Can still browse CMS content at `/`, `/programas/`, etc.
+6. Navigation includes dropdown to access SEIM features
 
 ### For Staff/Administrators
 1. Login at `/seim/login/` or `/cms/` (Wagtail login)
@@ -131,6 +135,7 @@ Templates have been updated to use the new URL structure:
 - CMS templates link to `/seim/` for application features
 - Spanish labels used in CMS navigation
 - Login/logout links point to `/seim/login/` and `/seim/logout/`
+- CMS account navigation now points to the SPA dashboard, applications, profile, and settings routes, while the calendar link remains on the legacy Django page
 
 ### Reverse URL Lookup
 When using `{% url %}` tags or `reverse()` in code:

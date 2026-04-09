@@ -130,6 +130,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
   - Creates copy with " (Copy)" appended to name, marked inactive
 - `GET /api/programs/{id}/check_eligibility/` - Check if current user is eligible
   - Returns detailed eligibility status with requirement checks
+- **Vue program comparison:** the SPA route `/programs/compare` aggregates fields from repeated list calls (`is_active=true`, paginated) for side-by-side display; no separate comparison API.
 
 #### Applications
 - `GET /api/applications/` - List applications (filtered by user role)
