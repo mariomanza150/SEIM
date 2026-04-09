@@ -47,7 +47,7 @@ class UserSettingsAdmin(admin.ModelAdmin):
         ('Notifications', {
             'fields': (
                 'email_applications', 'email_documents', 'email_comments', 'email_programs', 'email_system',
-                'inapp_applications', 'inapp_documents', 'inapp_comments',
+                'inapp_applications', 'inapp_documents', 'inapp_comments', 'inapp_programs',
                 'notification_digest_frequency', 'email_notification_digest',
                 'notification_digest_last_sent_at',
             )

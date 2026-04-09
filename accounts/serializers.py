@@ -348,6 +348,7 @@ class UserSettingsSerializer(serializers.ModelSerializer):
             "inapp_applications",
             "inapp_documents",
             "inapp_comments",
+            "inapp_programs",
             "notification_digest_frequency",
             "email_notification_digest",
             "profile_public",
@@ -401,6 +402,7 @@ class NotificationSettingsSerializer(serializers.ModelSerializer):
             "inapp_applications",
             "inapp_documents",
             "inapp_comments",
+            "inapp_programs",
             "notification_digest_frequency",
             "email_notification_digest",
         ]

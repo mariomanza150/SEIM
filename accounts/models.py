@@ -207,6 +207,10 @@ class UserSettings(TimeStampedModel):
     )
     email_programs = models.BooleanField(default=False, help_text="Email notifications for new programs")
     email_system = models.BooleanField(default=True, help_text="Email notifications for system messages")
+    inapp_programs = models.BooleanField(
+        default=True,
+        help_text="In-app notifications for new programs and program announcements",
+    )
     inapp_applications = models.BooleanField(default=True, help_text="In-app notifications for application updates")
     inapp_documents = models.BooleanField(default=True, help_text="In-app notifications for document uploads")
     inapp_comments = models.BooleanField(default=True, help_text="In-app notifications for comments")

@@ -258,6 +258,7 @@ const defaultForm = () => ({
   inapp_applications: true,
   inapp_documents: true,
   inapp_comments: true,
+  inapp_programs: true,
   notification_digest_frequency: 'off',
   email_notification_digest: false,
   profile_public: false,
@@ -275,6 +276,7 @@ const notificationFields = [
   { key: 'inapp_applications', label: 'Show in-app application notifications' },
   { key: 'inapp_documents', label: 'Show in-app document notifications' },
   { key: 'inapp_comments', label: 'Show in-app comment notifications' },
+  { key: 'inapp_programs', label: 'Show in-app program announcements' },
 ]
 
 async function fetchSettings() {

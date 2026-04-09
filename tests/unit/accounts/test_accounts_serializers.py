@@ -596,6 +596,7 @@ class TestUserSettingsSerializer:
         assert "inapp_applications" in data
         assert "inapp_documents" in data
         assert "inapp_comments" in data
+        assert "inapp_programs" in data
         assert "profile_public" in data
         assert "share_analytics" in data
 
@@ -695,6 +696,7 @@ class TestNotificationSettingsSerializer:
         assert "inapp_applications" in data
         assert "inapp_documents" in data
         assert "inapp_comments" in data
+        assert "inapp_programs" in data
 
     def test_notification_settings_serializer_create(self):
         """Test NotificationSettingsSerializer create method."""

@@ -324,6 +324,50 @@ class TestNotificationService(TestCase):
         self.assertEqual(notification.notification_type, "email")
         mock_task.assert_called_once_with(notification.id)
 
+    @patch("notifications.services.send_notification_by_id.delay")
+    def test_send_notification_usersettings_programs_uses_inapp_programs_not_applications(
+        self, mock_task,
+    ):
+        """Program category in-app follows inapp_programs, not inapp_applications."""
+        from accounts.models import UserSettings
+
+        s, _ = UserSettings.objects.get_or_create(user=self.user1)
+        s.inapp_applications = False
+        s.inapp_programs = True
+        s.email_programs = False
+        s.save()
+
+        notification = NotificationService.send_notification(
+            recipient=self.user1,
+            title="Program",
+            message="Body",
+            notification_type="both",
+            settings_category="programs",
+        )
+        self.assertIsNotNone(notification)
+        self.assertEqual(notification.notification_type, "in_app")
+        mock_task.assert_not_called()
+
+    @patch("notifications.services.send_notification_by_id.delay")
+    def test_send_notification_usersettings_programs_email_when_inapp_off(self, mock_task):
+        from accounts.models import UserSettings
+
+        s, _ = UserSettings.objects.get_or_create(user=self.user1)
+        s.email_programs = True
+        s.inapp_programs = False
+        s.save()
+
+        notification = NotificationService.send_notification(
+            recipient=self.user1,
+            title="Program",
+            message="Body",
+            notification_type="both",
+            settings_category="programs",
+        )
+        self.assertIsNotNone(notification)
+        self.assertEqual(notification.notification_type, "email")
+        mock_task.assert_called_once_with(notification.id)
+
     @patch.object(NotificationService, "_broadcast_notification")
     @patch("notifications.services.send_notification_by_id.delay")
     def test_send_notification_email_only_skips_websocket(self, mock_task, mock_broadcast):
