@@ -77,7 +77,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ |  |  |  |  |
+| Vue i18n: Application form (new + edit) | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -102,6 +102,7 @@ _All Priority 1 items in this subsection are implemented above._
 | Feature | Module | Notes |
 |---------|--------|-------|
 | _None pending in this subsection_ |  |  |
+
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
 |---------|--------|-------|
@@ -110,7 +111,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: Application edit/form, tables/modals. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **In progress:** Application form (`ApplicationForm.vue`, new + edit routes). Shipped: Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: tables/modals and any stragglers. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -126,9 +127,9 @@ _All Priority 1 items in this subsection are implemented above._
 |---------|--------|-------|
 | Student nomination and matching workflow | `exchange`, `accounts`, `admin UI` | Support nomination cycles, ranking, partner allocations, and selection matching for institutions with limited slots. |
 | Visual workflow designer for applications | `application_forms`, `admin UI` | Give admins a low-code interface to design multi-step application flows, approval paths, and validation gates visually. |
-
 | Automated eligibility and rules engine | `exchange`, `application_forms`, `accounts` | Evaluate eligibility using configurable academic, language, deadline, and documentation rules before submission or review. |
-| Scholarship and funding workflow tracking | `exchange`, `documents`, `analytics`, `frontend-vue` | Track scholarship opportunities, funding applications, required financial documents, and award outcomes alongside exchange applications. |
+| Scholarship and funding workflow tracking | `exchange`, `documents`, `analytics`, `frontend-vue` | Track scholarship opportunities, internal funding requests, required financial documents, disbursement milestones, and award outcomes alongside exchange applications. **Pairs with** the scholarship allocation scoring row below: once awards exist, scores can drive shortlists and committee packets. |
+| **Scholarship allocation scoring (points engine)** | `exchange`, `grades`, `accounts`, `application_forms`, `analytics`, `admin UI`, `frontend-vue` | **Admin need:** rank and compare applicants for limited scholarships using a **transparent point system** built from data already in SEIM (and optional extra fields). **Proposed inputs (weighted, toggled per ruleset):** **GPA / academic record** (student profile + `grades` translation where applicable); **language level** (primary `language` / `language_level` and `Profile.additional_languages` vs program minima); **program fit** (e.g. destination/partner weighting via programs, agreements, or nominated host); **application quality signals** (readiness score, document checklist, dynamic form completeness); **timeliness** (submit date vs window); optional **need or merit essays** via `application_forms` schema. **Outputs:** staff **ranked list** with **per-applicant breakdown** (factor → points → subtotal) for audit and appeals; configurable **caps/floors** and **tie-breaker** chain; **export** (CSV/Excel/PDF) for committees. **UX phasing:** (1) server-side calculator + read-only panel on staff application detail + export; (2) admin UI to define **rulesets** (global / per program / per award cycle), version history, dry-run on cohort; (3) optional student-facing **non-binding “estimated score band”** with clear disclaimers; (4) workflow hooks when scholarship states and notifications exist (see row above). |
 
 #### External calendars
 | Feature | Module | Notes |
@@ -150,5 +151,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (Vue i18n Application detail)*  
+*Last updated: 2026-04-09 (Vue i18n Application form — in progress)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
