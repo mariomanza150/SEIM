@@ -9,6 +9,23 @@ from __future__ import annotations
 from notifications.services import SETTINGS_CATEGORY_USER_FIELDS
 from notifications.tasks import REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
 
+# Staff-facing text for each ``Reminder.event_type`` key in the routing map.
+REMINDER_EVENT_TYPE_DESCRIPTIONS: dict[str, str] = {
+    "application_deadline": (
+        "Deadline reminder tied to an application milestone (e.g. submission or review cutoff)."
+    ),
+    "document_deadline": "Reminder for a required document due date.",
+    "program_start": "Reminder anchored to the operational program start date.",
+    "program_end": "Reminder anchored to the program end date.",
+    "custom": (
+        "User-defined reminder; delivery uses the programs notification group unless the "
+        "event type is extended elsewhere."
+    ),
+    "application": "Legacy event_type value; uses the applications UserSettings group.",
+    "document": "Legacy event_type value; uses the documents UserSettings group.",
+    "program": "Legacy event_type value; uses the programs UserSettings group.",
+}
+
 # Short staff-facing hints: what transactional sends usually flow through each group.
 SETTINGS_CATEGORY_TYPICAL_TRIGGERS: dict[str, str] = {
     "applications": (
@@ -52,12 +69,14 @@ def build_notification_routing_reference() -> dict:
             "For digest email, email_notification_digest must also be enabled."
         ),
     }
+    reminder_map = dict(REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY)
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "settings_categories": categories,
-        "reminder_event_type_to_settings_category": dict(
-            REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
-        ),
+        "reminder_event_type_to_settings_category": reminder_map,
+        "reminder_event_type_descriptions": {
+            k: REMINDER_EVENT_TYPE_DESCRIPTIONS[k] for k in reminder_map
+        },
         "reminder_default_settings_category": "programs",
         "digest": {
             "settings_category": "system",

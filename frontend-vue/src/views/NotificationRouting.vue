@@ -74,12 +74,14 @@
                 <tr>
                   <th scope="col">{{ t('notificationRoutingPage.colReminderEventType') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colSettingsCategory') }}</th>
+                  <th scope="col">{{ t('notificationRoutingPage.colReminderDescription') }}</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="row in reminderRows" :key="row.eventType">
                   <td><code>{{ row.eventType }}</code></td>
                   <td><code>{{ row.category }}</code></td>
+                  <td class="small text-muted">{{ row.description || t('notificationRoutingPage.emDash') }}</td>
                 </tr>
               </tbody>
             </table>
@@ -141,9 +143,14 @@ const categoryRows = computed(() => {
 const reminderRows = computed(() => {
   const m = payload.value?.reminder_event_type_to_settings_category
   if (!m || typeof m !== 'object') return []
+  const desc = payload.value?.reminder_event_type_descriptions || {}
   return Object.keys(m)
     .sort((a, b) => a.localeCompare(b))
-    .map((eventType) => ({ eventType, category: m[eventType] }))
+    .map((eventType) => ({
+      eventType,
+      category: m[eventType],
+      description: desc[eventType] || '',
+    }))
 })
 
 onMounted(async () => {
