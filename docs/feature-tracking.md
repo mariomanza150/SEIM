@@ -66,7 +66,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None currently assigned_ |  |  |  |  |
+| Analytics dashboard PDF export | `analytics`, `api`, `admin UI` | `export_format=pdf` on `/api/analytics/export/` | 2026-04-09 | autonomous-agent |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -96,7 +96,7 @@ _All Priority 1 items in this subsection are implemented above._
 |---------|--------|-------|
 | Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | Per-event-type rules matrix, custom reminder templates, role-targeted routing beyond event hooks; digests for **unread summaries** are implemented separately above. |
 | Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets if a dedicated **analytics** staff UI is added later (review queue, agreements, documents, programs, and **calendar** are covered). |
-| Export reports to PDF | `analytics`, `admin UI` | CSV and **Excel** (`?export_format=xlsx`) are available at `/api/analytics/export/`. PDF generation still planned. |
+| Export reports to PDF | `analytics`, `admin UI` | **In progress** — see IN PROGRESS row. CSV and Excel remain at `/api/analytics/export/`. |
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
