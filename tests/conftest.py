@@ -11,15 +11,26 @@ from datetime import timedelta
 
 import factory
 import pytest
+from contextlib import contextmanager
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from faker import Faker
-from freezegun import freeze_time
 from rest_framework.test import APIClient
+
+try:
+    from freezegun import freeze_time
+except ImportError:
+
+    @contextmanager
+    def freeze_time(_when=None):
+        yield
 from rest_framework_simplejwt.tokens import RefreshToken
 
-# Selenium imports for E2E tests
-from selenium.webdriver.chrome.options import Options
+# Selenium imports for E2E tests (optional in minimal images)
+try:
+    from selenium.webdriver.chrome.options import Options
+except ImportError:
+    Options = None
 
 from accounts.models import Permission, Profile, Role, User
 from documents.models import Document
@@ -44,6 +55,14 @@ User = get_user_model()
 @pytest.fixture(scope="session")
 def chrome_options():
     """Configure Chrome options for testing to disable unnecessary services."""
+    if Options is None:
+
+        class _MissingSeleniumOptions:
+            def add_argument(self, *_args, **_kwargs):
+                pass
+
+        return _MissingSeleniumOptions()
+
     options = Options()
 
     # Disable Google API calls and background services
@@ -407,6 +426,18 @@ def student_user(db_with_roles):
     user = UserFactory()
     user.roles.add(student_role)
     return user
+
+
+@pytest.fixture
+def user_student(student_user):
+    """Alias for unit tests that parametrize on ``user_student``."""
+    return student_user
+
+
+@pytest.fixture
+def user_coordinator(coordinator_user):
+    """Alias for unit tests that parametrize on ``user_coordinator``."""
+    return coordinator_user
 
 
 @pytest.fixture

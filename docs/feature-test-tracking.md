@@ -43,7 +43,7 @@ _Map each row to one or more rows in `docs/feature-tracking.md` § **IMPLEMENTED
 | `analytics` | Analytics dashboard + exports (CSV/XLSX/PDF) | — | — | — | | |
 | `vue-portal` | Vue student/coordinator portal (shell, routing, a11y) | — | — | — | | Dashboard, nav, i18n baseline |
 | `cms-public` | Wagtail CMS public site | — | — | — | | Often manual or separate checks |
-| `coord-review` | Coordinator review queue + workload + saved searches | — | — | — | | |
+| `coord-review` | Coordinator review queue + workload + saved searches | Done | Partial | Partial | 2026-04-09 | **Unit (green):** `tests/unit/exchange/test_filters.py` (program + application + review-queue filters), `tests/integration/api/test_coordinator_workload_api.py`, `tests/unit/exchange/test_saved_searches.py` (34 tests, Docker + `DJANGO_SETTINGS_MODULE=seim.settings.test`, `pytest -o addopts='--strict-markers --tb=short'`). Shared fixtures: `tests/conftest.py` adds `user_student` / `user_coordinator` aliases → `student_user` / `coordinator_user`. Vue: `reviewQueuePresets.spec.js`, `CoordinatorReviewQueue.spec.js`, `CoordinatorWorkload.spec.js`, `useStaffSavedPresets.spec.js`, `staffListSearchPresets.spec.js` (11 tests). **Smoke/Browser:** host Playwright; `test_coordinator_workflows.py` (`-m coordinator` `-m workflow`). |
 | `agreements` | Exchange agreements + documents + renewal + expiration reminders | — | — | — | | |
 | `calendar-ics` | Calendar events + deadlines + ICS subscribe | — | — | — | | |
 | `data-management` | Staff data management + bulk student import | — | — | — | | |
@@ -70,4 +70,4 @@ _Use these as hints when filling the **Browser** column; replace with exact `tes
 
 ---
 
-*Last updated: 2026-04-09 — Notification routing reference **schema v6** (`primary_recipients`); matrix `notifications` row updated. Prior: `dynamic-forms` unit verified (152 pytest + Vue specs); `FormType.created_by` `blank=True` + `0005` migration.*
+*Last updated: 2026-04-09 — `coord-review` unit verified (34 pytest + 11 Vue); `user_student` / `user_coordinator` pytest aliases in `tests/conftest.py`. Smoke/browser Partial (host Playwright).*
