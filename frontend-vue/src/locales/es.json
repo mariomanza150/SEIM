@@ -109,6 +109,27 @@
     "presetDefaultQueue": "Predeterminado al abrir la cola",
     "emDash": "—"
   },
+  "workloadPage": {
+    "breadcrumbAria": "Migas de pan",
+    "pageSubtitleBefore": "Profundidad de cola de solicitudes en ",
+    "pageSubtitleOr": " o ",
+    "pageSubtitleAfter": ", más señales simples de cuellos de botella.",
+    "loading": "Cargando…",
+    "loadError": "No se pudieron cargar los datos de carga de trabajo.",
+    "yourWorkload": "Tu carga de trabajo",
+    "assignedToYou": "Asignadas a ti",
+    "yourProgramsAnyCoordinator": "Tus programas (cualquier coordinador)",
+    "assignedOpenResubmit": "Asignadas + reenvío abierto",
+    "avgDaysInQueue": "Días prom. en cola (asignadas)",
+    "institutionOverview": "Vista institucional (admin)",
+    "totalPendingReview": "Total pendiente de revisión",
+    "unassignedCoordinator": "Sin coordinador asignado",
+    "staleUnderReview14d": "En revisión obsoletas (>14 días)",
+    "pendingByCoordinator": "Pendientes por coordinador asignado",
+    "colCoordinator": "Coordinador",
+    "colAssignedPending": "Asignadas pendientes",
+    "emDash": "—"
+  },
   "dashboard": {
     "mainNavAria": "Navegación principal",
     "toggleNav": "Mostrar u ocultar menú",

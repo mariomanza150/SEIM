@@ -109,6 +109,27 @@
     "presetDefaultQueue": "Default when opening queue",
     "emDash": "—"
   },
+  "workloadPage": {
+    "breadcrumbAria": "Breadcrumb",
+    "pageSubtitleBefore": "Queue depth for applications in ",
+    "pageSubtitleOr": " or ",
+    "pageSubtitleAfter": ", plus simple bottleneck signals.",
+    "loading": "Loading…",
+    "loadError": "Could not load workload data.",
+    "yourWorkload": "Your workload",
+    "assignedToYou": "Assigned to you",
+    "yourProgramsAnyCoordinator": "Your programs (any coordinator)",
+    "assignedOpenResubmit": "Assigned + open resubmit",
+    "avgDaysInQueue": "Avg. days in queue (assigned)",
+    "institutionOverview": "Institution overview (admin)",
+    "totalPendingReview": "Total pending review",
+    "unassignedCoordinator": "Unassigned coordinator",
+    "staleUnderReview14d": "Stale under review (>14 days)",
+    "pendingByCoordinator": "Pending by assigned coordinator",
+    "colCoordinator": "Coordinator",
+    "colAssignedPending": "Assigned pending",
+    "emDash": "—"
+  },
   "dashboard": {
     "mainNavAria": "Main navigation",
     "toggleNav": "Toggle navigation",
