@@ -2,6 +2,27 @@ from celery import shared_task
 from django.core.mail import send_mail
 
 
+def settings_category_for_reminder_event(event_type: str) -> str:
+    """
+    Map Reminder.event_type to NotificationService settings_category.
+
+    Uses the same UserSettings groups as other transactional sends so deadline
+    reminders honor application vs document vs program toggles.
+    """
+    mapping = {
+        "application_deadline": "applications",
+        "document_deadline": "documents",
+        "program_start": "programs",
+        "program_end": "programs",
+        "custom": "programs",
+        # Legacy / shorthand values seen in older data or tests
+        "application": "applications",
+        "document": "documents",
+        "program": "programs",
+    }
+    return mapping.get(event_type, "programs")
+
+
 def get_user_email(user):
     # Replace with actual logic to get user email
     return user.email
@@ -83,7 +104,10 @@ def send_deadline_reminders():
                 data={
                     'event_type': reminder.event_type,
                     'event_id': str(reminder.event_id),
-                }
+                },
+                settings_category=settings_category_for_reminder_event(
+                    reminder.event_type
+                ),
             )
             
             # Mark reminder as sent
@@ -98,3 +122,24 @@ def send_deadline_reminders():
             print(f"Error sending reminder {reminder.id}: {e}")
     
     return sent_count
+
+
+@shared_task
+def send_notification_digests():
+    """
+    Daily Celery Beat job: send unread summary notifications per user settings.
+    """
+    from .digest import process_notification_digests
+
+    return process_notification_digests()
+
+
+@shared_task
+def send_agreement_expiration_reminders():
+    """
+    Notify admins/coordinators on configured days before agreement end_date.
+    Scheduled daily via Celery Beat (seim.celery beat_schedule + django_celery_beat migration).
+    """
+    from exchange.agreement_expiration import process_agreement_expiration_reminders
+
+    return process_agreement_expiration_reminders()

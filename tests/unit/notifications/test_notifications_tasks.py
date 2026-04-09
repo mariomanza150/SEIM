@@ -4,6 +4,8 @@ Comprehensive tests for notification tasks.
 Tests for email sending and reminder Celery tasks.
 """
 
+import uuid
+
 import pytest
 from datetime import timedelta
 from unittest.mock import Mock, patch, MagicMock, call
@@ -17,7 +19,8 @@ from notifications.tasks import (
     send_email_notification,
     send_notification_by_id,
     send_deadline_reminders,
-    get_user_email
+    get_user_email,
+    settings_category_for_reminder_event,
 )
 
 User = get_user_model()
@@ -316,6 +319,24 @@ class TestSendNotificationByIdTask:
         assert len(mail.outbox) == 3
 
 
+@pytest.mark.parametrize(
+    "event_type,expected",
+    [
+        ("application_deadline", "applications"),
+        ("document_deadline", "documents"),
+        ("program_start", "programs"),
+        ("program_end", "programs"),
+        ("custom", "programs"),
+        ("application", "applications"),
+        ("document", "documents"),
+        ("program", "programs"),
+        ("unknown_future_type", "programs"),
+    ],
+)
+def test_settings_category_for_reminder_event(event_type, expected):
+    assert settings_category_for_reminder_event(event_type) == expected
+
+
 @pytest.mark.django_db
 @pytest.mark.celery
 class TestSendDeadlineRemindersTask:
@@ -334,7 +355,7 @@ class TestSendDeadlineRemindersTask:
             user=user,
             event_title="Application Deadline",
             event_type="application",
-            event_id="app-123",
+            event_id=uuid.UUID("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"),
             remind_at=timezone.now() - timedelta(minutes=5),
             sent=False
         )
@@ -360,7 +381,7 @@ class TestSendDeadlineRemindersTask:
             user=user,
             event_title="Deadline 1",
             event_type="application",
-            event_id="app-1",
+            event_id=uuid.UUID("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"),
             remind_at=timezone.now() - timedelta(hours=1),
             sent=False
         )
@@ -369,7 +390,7 @@ class TestSendDeadlineRemindersTask:
             user=another_user,
             event_title="Deadline 2",
             event_type="document",
-            event_id="doc-1",
+            event_id=uuid.UUID("cccccccc-cccc-4ccc-8ccc-cccccccccccc"),
             remind_at=timezone.now() - timedelta(minutes=30),
             sent=False
         )
@@ -389,7 +410,7 @@ class TestSendDeadlineRemindersTask:
             user=user,
             event_title="Future Deadline",
             event_type="application",
-            event_id="app-future",
+            event_id=uuid.UUID("dddddddd-dddd-4ddd-8ddd-dddddddddddd"),
             remind_at=timezone.now() + timedelta(hours=1),
             sent=False
         )
@@ -406,7 +427,7 @@ class TestSendDeadlineRemindersTask:
             user=user,
             event_title="Already Sent",
             event_type="application",
-            event_id="app-sent",
+            event_id=uuid.UUID("eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee"),
             remind_at=timezone.now() - timedelta(hours=1),
             sent=True
         )
@@ -422,12 +443,14 @@ class TestSendDeadlineRemindersTask:
             user=user,
             event_title="Test Deadline",
             event_type="application",
-            event_id="app-test",
+            event_id=uuid.UUID("ffffffff-ffff-4fff-8fff-ffffffffffff"),
             remind_at=timezone.now() - timedelta(minutes=5),
             sent=False
         )
         
-        with patch('notifications.tasks.NotificationService.send_notification') as mock_send:
+        with patch(
+            "notifications.services.NotificationService.send_notification"
+        ) as mock_send:
             mock_send.return_value = Notification.objects.create(
                 recipient=user,
                 title="Test",
@@ -442,11 +465,12 @@ class TestSendDeadlineRemindersTask:
             call_kwargs = mock_send.call_args[1]
             assert call_kwargs['notification_type'] == "both"
             assert call_kwargs['category'] == "warning"
+            assert call_kwargs["settings_category"] == "applications"
     
     def test_send_deadline_reminders_includes_event_data(self, user):
         """Test that reminder notification includes event data."""
         event_type = "document"
-        event_id = "doc-12345"
+        event_id = uuid.UUID("12121212-1212-4121-8121-121212121212")
         
         reminder = Reminder.objects.create(
             user=user,
@@ -457,7 +481,9 @@ class TestSendDeadlineRemindersTask:
             sent=False
         )
         
-        with patch('notifications.tasks.NotificationService.send_notification') as mock_send:
+        with patch(
+            "notifications.services.NotificationService.send_notification"
+        ) as mock_send:
             mock_send.return_value = Notification.objects.create(
                 recipient=user,
                 title="Test",
@@ -471,7 +497,8 @@ class TestSendDeadlineRemindersTask:
             call_kwargs = mock_send.call_args[1]
             assert 'data' in call_kwargs
             assert call_kwargs['data']['event_type'] == event_type
-            assert call_kwargs['data']['event_id'] == event_id
+            assert call_kwargs['data']['event_id'] == str(event_id)
+            assert call_kwargs["settings_category"] == "documents"
     
     def test_send_deadline_reminders_error_handling(self, user):
         """Test that task continues despite errors."""
@@ -480,7 +507,7 @@ class TestSendDeadlineRemindersTask:
             user=user,
             event_title="Reminder 1",
             event_type="application",
-            event_id="app-1",
+            event_id=uuid.UUID("13131313-1313-4131-8131-131313131313"),
             remind_at=timezone.now() - timedelta(minutes=5),
             sent=False
         )
@@ -489,12 +516,14 @@ class TestSendDeadlineRemindersTask:
             user=user,
             event_title="Reminder 2",
             event_type="application",
-            event_id="app-2",
+            event_id=uuid.UUID("14141414-1414-4141-8141-141414141414"),
             remind_at=timezone.now() - timedelta(minutes=3),
             sent=False
         )
         
-        with patch('notifications.tasks.NotificationService.send_notification') as mock_send:
+        with patch(
+            "notifications.services.NotificationService.send_notification"
+        ) as mock_send:
             # First call fails, second succeeds
             mock_send.side_effect = [
                 Exception("Error sending notification"),
@@ -517,7 +546,7 @@ class TestSendDeadlineRemindersTask:
             user=user,
             event_title="Link Test",
             event_type="application",
-            event_id="app-link",
+            event_id=uuid.UUID("15151515-1515-4151-8151-151515151515"),
             remind_at=timezone.now() - timedelta(minutes=5),
             sent=False
         )
@@ -537,7 +566,7 @@ class TestSendDeadlineRemindersTask:
             user=user,
             event_title="Boundary Test",
             event_type="application",
-            event_id="app-boundary",
+            event_id=uuid.UUID("16161616-1616-4161-8161-161616161616"),
             remind_at=now,
             sent=False
         )
@@ -556,7 +585,7 @@ class TestSendDeadlineRemindersTask:
             user=user,
             event_title="Performance Test",
             event_type="application",
-            event_id="app-perf",
+            event_id=uuid.UUID("17171717-1717-4171-8171-171717171717"),
             remind_at=timezone.now() - timedelta(minutes=5),
             sent=False
         )
@@ -580,7 +609,7 @@ class TestSendDeadlineRemindersTask:
                 user=user,
                 event_title=f"Reminder {i}",
                 event_type="application",
-                event_id=f"app-{i}",
+                event_id=uuid.UUID(int=i + 0xA000000000000000),
                 remind_at=timezone.now() - timedelta(minutes=5+i),
                 sent=False
             )
@@ -621,7 +650,7 @@ class TestNotificationTaskIntegration:
             user=user,
             event_title="Complete Workflow",
             event_type="application",
-            event_id="app-workflow",
+            event_id=uuid.UUID("18181818-1818-4181-8181-181818181818"),
             remind_at=timezone.now() - timedelta(minutes=5),
             sent=False
         )
@@ -640,12 +669,13 @@ class TestNotificationTaskIntegration:
     
     def test_multiple_reminders_different_times(self, user):
         """Test processing reminders with different timestamps."""
+        future_eid = uuid.UUID("19191919-1919-4191-8191-191919191919")
         # Create reminders at different times
         Reminder.objects.create(
             user=user,
             event_title="Old Reminder",
             event_type="application",
-            event_id="app-old",
+            event_id=uuid.UUID("1a1a1a1a-1a1a-41a1-81a1-1a1a1a1a1a1a"),
             remind_at=timezone.now() - timedelta(days=1),
             sent=False
         )
@@ -654,7 +684,7 @@ class TestNotificationTaskIntegration:
             user=user,
             event_title="Recent Reminder",
             event_type="application",
-            event_id="app-recent",
+            event_id=uuid.UUID("1b1b1b1b-1b1b-41b1-81b1-1b1b1b1b1b1b"),
             remind_at=timezone.now() - timedelta(minutes=5),
             sent=False
         )
@@ -663,7 +693,7 @@ class TestNotificationTaskIntegration:
             user=user,
             event_title="Future Reminder",
             event_type="application",
-            event_id="app-future",
+            event_id=future_eid,
             remind_at=timezone.now() + timedelta(hours=1),
             sent=False
         )
@@ -674,6 +704,6 @@ class TestNotificationTaskIntegration:
         assert count == 2
         
         # Future one should not be sent
-        future_reminder = Reminder.objects.get(event_id="app-future")
+        future_reminder = Reminder.objects.get(event_id=future_eid)
         assert future_reminder.sent is False
 
