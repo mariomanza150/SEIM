@@ -603,7 +603,7 @@ class TestAuthenticationSecurity(APITestCase):
         with override_settings(REST_FRAMEWORK=rf):
             self.client.force_login(user_a)
             response = self.client.post(
-                self.login_url,
+                reverse("accounts:login"),
                 {"login": user_b.email, "password": "pass456"},
                 format="json",
             )
