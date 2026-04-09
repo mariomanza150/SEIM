@@ -127,11 +127,12 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue i18n: **HelloWorld** starter (Vite default component) | `frontend-vue` | Implemented | 2026-04-09 | `helloWorld.*` keys en/es; `useI18n` in `HelloWorld.vue`; external links keep `rel="noopener noreferrer"`. Vitest: `HelloWorld.spec.js`. |
 | Vue i18n: localized HTML `meta[name=description]` | `frontend-vue` | Implemented | 2026-04-09 | `appMeta.metaDescription` en/es; `syncAppMetaDescription` in `documentTitle.js`; `App.vue` on mount + `watch(locale)`. Vitest: `documentTitle.spec.js`, `App.spec.js`. |
 | Vue shell: bilingual static `noscript` fallback | `frontend-vue` | Implemented | 2026-04-09 | `index.html`: EN+ES copy, `role="alert"`, `lang` on paragraphs (no-JS users). Vitest (node): `src/indexHtml.spec.js`. |
+| Manual QA **MQ-012**: documents list/detail — stringified `application` + filter labels | `frontend-vue`, `core` | Implemented | 2026-04-09 | `documentApi.js` JSON-string coercion for `application`/`type`; `Documents.vue` `program_name` in filter options; `CacheManager.set_cache` `json.dumps(..., default=str)`. Vitest: `documentApi.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Manual QA **MQ-012**: documents UI — coerce stringified `application` / filter `program_name` | `frontend-vue` | In progress | 2026-04-09 | — |
+| _None_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -205,5 +206,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (manual QA **MQ-012** logged; documents UI). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (**MQ-012** resolved — documents `application` coercion + cache `default=str`). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

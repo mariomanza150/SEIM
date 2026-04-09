@@ -27,4 +27,12 @@ describe('documentApi', () => {
     expect(documentTypeLabel(2, 'N/A')).toBe('2')
     expect(documentTypeLabel(null, 'N/A')).toBe('N/A')
   })
+
+  it('coerces stringified JSON application and type (MQ-012)', () => {
+    const appRaw = JSON.stringify({ id: 'app-1', program_name: 'Exchange A' })
+    expect(documentApplicationProgramName(appRaw, [], '')).toBe('Exchange A')
+    expect(documentApplicationId(appRaw)).toBe('app-1')
+    const typeRaw = JSON.stringify({ id: 3, name: 'Transcript' })
+    expect(documentTypeLabel(typeRaw, '')).toBe('Transcript')
+  })
 })

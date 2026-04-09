@@ -1,31 +1,46 @@
 /**
- * Helpers for /api/documents/ payloads: `application` may be a UUID string (legacy)
- * or `{ id, program_name }`; `type` may be a PK or `{ id, name, description }`.
+ * Helpers for /api/documents/ payloads: `application` may be a UUID string (legacy),
+ * `{ id, program_name }`, or (defensive) a **JSON string** of that object when an upstream
+ * layer double-encodes. `type` may be a PK or `{ id, name, description }` (or stringified).
  */
 
-export function documentApplicationId(application) {
-  if (application == null || application === '') return ''
-  if (typeof application === 'object' && application !== null && application.id != null) {
-    return String(application.id)
+function coerceDocumentNested(value) {
+  if (typeof value !== 'string') return value
+  const s = value.trim()
+  if (!(s.startsWith('{') || s.startsWith('['))) return value
+  try {
+    return JSON.parse(s)
+  } catch {
+    return value
   }
-  return String(application)
+}
+
+export function documentApplicationId(application) {
+  const app = coerceDocumentNested(application)
+  if (app == null || app === '') return ''
+  if (typeof app === 'object' && app !== null && app.id != null) {
+    return String(app.id)
+  }
+  return String(app)
 }
 
 export function documentApplicationProgramName(application, applicationsList = [], fallback = '') {
-  if (application == null || application === '') return fallback
-  if (typeof application === 'object' && application !== null && application.program_name) {
-    return application.program_name
+  const app = coerceDocumentNested(application)
+  if (app == null || app === '') return fallback
+  if (typeof app === 'object' && app !== null && app.program_name) {
+    return app.program_name
   }
-  const id = documentApplicationId(application)
-  const app = applicationsList.find((a) => String(a.id) === id)
-  const name = app?.program_name || app?.program?.name
+  const id = documentApplicationId(app)
+  const row = applicationsList.find((a) => String(a.id) === id)
+  const name = row?.program_name || row?.program?.name
   if (name) return name
   return fallback || id
 }
 
 export function documentTypeLabel(type, fallback = '') {
-  if (type == null || type === '') return fallback
-  if (typeof type === 'object' && type !== null && type.name) return String(type.name)
-  if (typeof type === 'number' || typeof type === 'string') return String(type)
+  const t = coerceDocumentNested(type)
+  if (t == null || t === '') return fallback
+  if (typeof t === 'object' && t !== null && t.name) return String(t.name)
+  if (typeof t === 'number' || typeof t === 'string') return String(t)
   return fallback
 }
