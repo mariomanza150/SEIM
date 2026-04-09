@@ -96,7 +96,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ |  |  |  |  |
+| Notification routing: reminder event descriptions | `notifications`, `frontend-vue`, `api` | In progress | 2026-04-09 | loop |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -170,5 +170,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: notification routing typical_triggers, schema v2)*  
+*Last updated: 2026-04-09 (loop: reminder event descriptions — in progress)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
