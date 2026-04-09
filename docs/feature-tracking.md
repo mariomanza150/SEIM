@@ -121,7 +121,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ | | | | |
+| API logout without Session CSRF when session cookie present (MQ-008) | `accounts`, `api` | In progress | 2026-04-09 | — |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -195,5 +195,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: List pagination `pageNumberAria` + prev/next/page button a11y — completed). Prior: **MQ-007** — [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (manual QA: `coord-review` — **MQ-008** logout/login 403; see [`manual-qa-issues.md`](manual-qa-issues.md) + [`feature-test-tracking.md`](feature-test-tracking.md)). Prior: list pagination a11y loop; **MQ-007** resolved.*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
