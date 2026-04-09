@@ -214,6 +214,10 @@ class UserSettings(TimeStampedModel):
     inapp_applications = models.BooleanField(default=True, help_text="In-app notifications for application updates")
     inapp_documents = models.BooleanField(default=True, help_text="In-app notifications for document uploads")
     inapp_comments = models.BooleanField(default=True, help_text="In-app notifications for comments")
+    inapp_system = models.BooleanField(
+        default=True,
+        help_text="In-app notifications for system messages (e.g. agreement reminders)",
+    )
     notification_digest_frequency = models.CharField(
         max_length=16,
         choices=NotificationDigestFrequency.choices,

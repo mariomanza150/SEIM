@@ -383,6 +383,7 @@ class TestUserSettingsModel:
         assert settings.inapp_documents is True
         assert settings.inapp_comments is True
         assert settings.inapp_programs is True
+        assert settings.inapp_system is True
         assert settings.profile_public is False
         assert settings.share_analytics is True
 

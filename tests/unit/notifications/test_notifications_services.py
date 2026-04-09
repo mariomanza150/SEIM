@@ -368,6 +368,46 @@ class TestNotificationService(TestCase):
         self.assertEqual(notification.notification_type, "email")
         mock_task.assert_called_once_with(notification.id)
 
+    @patch("notifications.services.send_notification_by_id.delay")
+    def test_send_notification_usersettings_system_inapp_off_email_on(self, mock_task):
+        from accounts.models import UserSettings
+
+        s, _ = UserSettings.objects.get_or_create(user=self.user1)
+        s.email_system = True
+        s.inapp_system = False
+        s.save()
+
+        notification = NotificationService.send_notification(
+            recipient=self.user1,
+            title="System",
+            message="Body",
+            notification_type="both",
+            settings_category="system",
+        )
+        self.assertIsNotNone(notification)
+        self.assertEqual(notification.notification_type, "email")
+        mock_task.assert_called_once_with(notification.id)
+
+    @patch("notifications.services.send_notification_by_id.delay")
+    def test_send_notification_usersettings_system_inapp_on_email_off(self, mock_task):
+        from accounts.models import UserSettings
+
+        s, _ = UserSettings.objects.get_or_create(user=self.user1)
+        s.email_system = False
+        s.inapp_system = True
+        s.save()
+
+        notification = NotificationService.send_notification(
+            recipient=self.user1,
+            title="System",
+            message="Body",
+            notification_type="both",
+            settings_category="system",
+        )
+        self.assertIsNotNone(notification)
+        self.assertEqual(notification.notification_type, "in_app")
+        mock_task.assert_not_called()
+
     @patch.object(NotificationService, "_broadcast_notification")
     @patch("notifications.services.send_notification_by_id.delay")
     def test_send_notification_email_only_skips_websocket(self, mock_task, mock_broadcast):
