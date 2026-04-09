@@ -33,7 +33,11 @@ from .serializers import (
     TrackEventRequestSerializer,
     UserActivitySerializer,
 )
-from .dashboard_export import render_dashboard_export_csv, render_dashboard_export_xlsx
+from .dashboard_export import (
+    render_dashboard_export_csv,
+    render_dashboard_export_pdf,
+    render_dashboard_export_xlsx,
+)
 from .services import AnalyticsService
 
 # Create your views here.
@@ -236,6 +240,12 @@ def _build_export_response(request):
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         response["Content-Disposition"] = 'attachment; filename="analytics-report.xlsx"'
+        return response
+
+    if fmt == "pdf":
+        body = render_dashboard_export_pdf(dashboard_payload)
+        response = HttpResponse(body, content_type="application/pdf")
+        response["Content-Disposition"] = 'attachment; filename="analytics-report.pdf"'
         return response
 
     body = render_dashboard_export_csv(dashboard_payload)
@@ -760,5 +770,5 @@ def analytics_report_detail_api(request, report_type):
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def analytics_export_api(request):
-    """Export current analytics dashboard data as CSV (default) or Excel (`export_format=xlsx`)."""
+    """Export dashboard as CSV (default), Excel (`export_format=xlsx`), or PDF (`export_format=pdf`)."""
     return _build_export_response(request)

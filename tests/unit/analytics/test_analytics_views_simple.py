@@ -480,3 +480,12 @@ class TestAdvancedAnalyticsAPIViews(APITestCase):
         self.assertEqual(wb.sheetnames[0], 'Metrics')
         self.assertIn('Application status', wb.sheetnames)
         self.assertIn('Program performance', wb.sheetnames)
+
+    def test_export_api_returns_pdf_attachment(self):
+        url = reverse('api:analytics-export')
+        response = self.client.get(url, {'export_format': 'pdf'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('application/pdf', response['Content-Type'])
+        self.assertIn('attachment; filename="analytics-report.pdf"', response['Content-Disposition'])
+        self.assertTrue(response.content.startswith(b'%PDF'))

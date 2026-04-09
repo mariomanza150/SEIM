@@ -29,6 +29,9 @@
                             <li>
                                 <button type="button" class="dropdown-item" onclick="exportReportXlsx()">Download Excel (.xlsx)</button>
                             </li>
+                            <li>
+                                <button type="button" class="dropdown-item" onclick="exportReportPdf()">Download PDF</button>
+                            </li>
                         </ul>
                     </div>
                     <a href="{% url 'frontend:admin_dashboard' %}" class="btn btn-outline-info">
@@ -613,6 +616,19 @@ function exportReportXlsx() {
     link.click();
     document.body.removeChild(link);
     showToast('Excel export started.', 'success');
+}
+
+function exportReportPdf() {
+    const formData = new FormData(document.getElementById('dateRangeForm'));
+    const params = new URLSearchParams(formData);
+    params.set('export_format', 'pdf');
+    const link = document.createElement('a');
+    link.href = `/api/analytics/export/?${params}`;
+    link.download = 'analytics-report.pdf';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('PDF export started.', 'success');
 }
 
 function generateReport(type) {
