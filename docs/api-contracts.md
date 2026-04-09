@@ -106,7 +106,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `GET /api/accounts/user-settings/` - Get current user settings
 - `PATCH /api/accounts/user-settings/` - Update user settings
   - Appearance settings (theme, font_size, high_contrast, reduce_motion)
-  - Notification settings (email_*, inapp_*)
+  - Notification settings (`email_*`, `inapp_*`) — these gates are enforced server-side for transactional notifications (applications, documents, public document comments, program reminders, agreement-expiration staff alerts). Account-security and verification emails and notification digests do not use this matrix.
   - Privacy settings (profile_public, share_analytics)
 
 #### Dashboard stats
@@ -265,6 +265,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `GET /api/notification-preferences/` - List user's notification preferences
 - `POST /api/notification-preferences/` - Create/update preference
 - `PUT /api/notification-preferences/{id}/` - Update preference
+- **Optional opt-out by type name:** internal sends may pass a `NotificationType` key (`preference_key`) so `enabled=false` suppresses that category entirely (in addition to the UserSettings email/in-app matrix).
 
 #### Reminders
 - `GET /api/reminders/` - List user's reminders

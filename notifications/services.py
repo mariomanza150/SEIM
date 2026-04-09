@@ -14,6 +14,54 @@ from .tasks import (
 
 logger = logging.getLogger(__name__)
 
+# Maps send_notification(settings_category=...) to UserSettings boolean fields (email, in-app).
+_SETTINGS_CATEGORY_CHANNELS = {
+    "applications": ("email_applications", "inapp_applications"),
+    "documents": ("email_documents", "inapp_documents"),
+    "comments": ("email_documents", "inapp_comments"),
+    "programs": ("email_programs", "inapp_applications"),
+}
+
+
+def _resolve_notification_type_for_user_settings(
+    user, requested: str, settings_category: str | None
+) -> str | None:
+    """
+    Apply UserSettings email / in-app toggles to the requested delivery mode.
+
+    Returns None if the user has disabled all channels for this category.
+    """
+    if settings_category is None:
+        return requested
+    if settings_category == "system":
+        from accounts.models import UserSettings
+
+        s, _ = UserSettings.objects.get_or_create(user=user)
+        email_ok, inapp_ok = s.email_system, True
+    else:
+        fields = _SETTINGS_CATEGORY_CHANNELS.get(settings_category)
+        if not fields:
+            return requested
+        from accounts.models import UserSettings
+
+        s, _ = UserSettings.objects.get_or_create(user=user)
+        e_attr, i_attr = fields
+        email_ok, inapp_ok = getattr(s, e_attr), getattr(s, i_attr)
+
+    if requested == "in_app":
+        return "in_app" if inapp_ok else None
+    if requested == "email":
+        return "email" if email_ok else None
+    if requested == "both":
+        if email_ok and inapp_ok:
+            return "both"
+        if email_ok:
+            return "email"
+        if inapp_ok:
+            return "in_app"
+        return None
+    return requested
+
 
 class NotificationService:
     """
@@ -38,8 +86,19 @@ class NotificationService:
         return pref
 
     @staticmethod
-    def send_notification(recipient, title, message, notification_type="in_app", data=None,
-                         action_url=None, action_text="View Details", category="info"):
+    def send_notification(
+        recipient,
+        title,
+        message,
+        notification_type="in_app",
+        data=None,
+        action_url=None,
+        action_text="View Details",
+        category="info",
+        *,
+        settings_category=None,
+        preference_key=None,
+    ):
         """
         Send a notification to a user with optional action link.
 
@@ -52,20 +111,34 @@ class NotificationService:
             action_url: Direct link to related resource (e.g., '/applications/123/')
             action_text: Text for the action button (default: "View Details")
             category: Notification category ('info', 'success', 'warning', 'error')
+            settings_category: Optional UserSettings group: ``applications``, ``documents``,
+                ``comments``, ``programs``, or ``system`` — narrows email/in-app using
+                the user's saved preferences (Settings page).
+            preference_key: Optional ``NotificationType`` name; when set, ``is_enabled``
+                must be true or the send is skipped (legacy per-type opt-out).
 
         Returns:
-            Notification instance
+            Notification instance, or None if suppressed by preferences.
         """
         # Validate notification type
         valid_types = ['in_app', 'email', 'both']
         if notification_type not in valid_types:
             raise ValueError(f"Invalid notification type: {notification_type}. Must be one of {valid_types}")
 
+        if preference_key and not NotificationService.is_enabled(recipient, preference_key):
+            return None
+
+        effective_type = _resolve_notification_type_for_user_settings(
+            recipient, notification_type, settings_category
+        )
+        if effective_type is None:
+            return None
+
         notification = Notification.objects.create(
             recipient=recipient,
             title=title,
             message=message,
-            notification_type=notification_type,
+            notification_type=effective_type,
             action_url=action_url,
             action_text=action_text,
             data=data or {},
@@ -73,11 +146,12 @@ class NotificationService:
         )
 
         # Send email notification if type is email or both
-        if notification_type in ['email', 'both']:
+        if effective_type in ['email', 'both']:
             send_notification_by_id.delay(notification.id)
 
         # Send real-time notification via WebSocket
-        NotificationService._broadcast_notification(recipient, notification)
+        if effective_type in ('in_app', 'both'):
+            NotificationService._broadcast_notification(recipient, notification)
 
         return notification
     
@@ -177,7 +251,7 @@ class NotificationService:
             logger.debug("broadcast_application_sync skipped: %s", e, exc_info=True)
 
     @staticmethod
-    def send_bulk_notifications(recipients, title, message, notification_type="in_app"):
+    def send_bulk_notifications(recipients, title, message, notification_type="in_app", **kwargs):
         """Send notifications to multiple recipients."""
         notifications = []
         for recipient in recipients:
@@ -185,13 +259,15 @@ class NotificationService:
                 recipient=recipient,
                 title=title,
                 message=message,
-                notification_type=notification_type
+                notification_type=notification_type,
+                **kwargs,
             )
-            notifications.append(notification)
+            if notification is not None:
+                notifications.append(notification)
         return notifications
 
     @staticmethod
-    def send_notification_to_role(role_name, title, message, notification_type="in_app"):
+    def send_notification_to_role(role_name, title, message, notification_type="in_app", **kwargs):
         """Send notification to all users with a specific role."""
         from accounts.models import User
 
@@ -200,10 +276,11 @@ class NotificationService:
             raise ValueError(f"No users found with role: {role_name}")
 
         return NotificationService.send_bulk_notifications(
-            recipients=users_with_role,
+            users_with_role,
             title=title,
             message=message,
-            notification_type=notification_type
+            notification_type=notification_type,
+            **kwargs,
         )
 
     @staticmethod
