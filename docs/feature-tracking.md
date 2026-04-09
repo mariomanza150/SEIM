@@ -67,7 +67,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None currently assigned_ |  |  |  |  |
+| Vue SPA accessibility baseline | `frontend-vue` | Skip link, `<main>`, route focus, `:focus-visible` | 2026-04-09 | autonomous-agent |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -100,7 +100,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Expand language coverage, keyboard accessibility, and inclusive UI patterns across the SPA. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **Baseline in progress** (see IN PROGRESS). Remaining: vue-i18n / multi-locale copy, deeper component audits. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
