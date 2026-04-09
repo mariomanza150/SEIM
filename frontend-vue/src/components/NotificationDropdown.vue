@@ -7,6 +7,7 @@
       role="button"
       data-bs-toggle="dropdown"
       aria-expanded="false"
+      :aria-label="t('notifications.dropdownAria')"
     >
       <i class="bi bi-bell fs-5"></i>
       <span
@@ -19,17 +20,17 @@
     </a>
     <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown">
       <li class="dropdown-header d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-        <span class="fw-bold">Notifications</span>
-        <router-link to="/notifications" class="btn btn-sm btn-link p-0" @click="closeDropdown">
-          View all
+        <span class="fw-bold">{{ t('notifications.dropdownHeader') }}</span>
+        <router-link :to="{ name: 'Notifications' }" class="btn btn-sm btn-link p-0" @click="closeDropdown">
+          {{ t('notifications.viewAll') }}
         </router-link>
       </li>
       <li v-if="loading" class="px-3 py-4 text-center text-muted small">
         <div class="spinner-border spinner-border-sm me-2"></div>
-        Loading...
+        {{ t('notifications.dropdownLoading') }}
       </li>
       <li v-else-if="recent.length === 0" class="px-3 py-4 text-center text-muted small">
-        No notifications
+        {{ t('notifications.dropdownEmpty') }}
       </li>
       <template v-else>
         <li
@@ -41,7 +42,7 @@
           <div class="d-flex w-100 justify-content-between align-items-start">
             <div class="flex-grow-1 min-w-0">
               <span class="d-block text-truncate fw-medium" :class="{ 'fw-bold': !notification.is_read }">
-                {{ notification.title || 'Notification' }}
+                {{ notification.title || t('notifications.defaultTitle') }}
               </span>
               <span class="d-block text-muted small text-truncate">{{ notification.message }}</span>
               <span class="d-block text-muted small mt-1">{{ formatTime(notification.sent_at) }}</span>
@@ -49,29 +50,29 @@
           </div>
           <div class="mt-2">
             <router-link
-              v-if="notification.action_url && isInternalUrl(notification.action_url)"
-              :to="notification.action_url"
+              v-if="notification.action_url && isSpaUrl(notification.action_url)"
+              :to="normalizeSpaLocation(notification.action_url)"
               class="btn btn-sm btn-outline-primary btn-sm"
               @click="markAsRead(notification); closeDropdown()"
             >
-              {{ notification.action_text || 'View' }}
+              {{ notification.action_text || t('notifications.viewAction') }}
             </router-link>
             <a
               v-else-if="notification.action_url"
               :href="notification.action_url"
-              target="_blank"
-              rel="noopener"
+              :target="isNewTabUrl(notification.action_url) ? '_blank' : null"
+              :rel="isNewTabUrl(notification.action_url) ? 'noopener noreferrer' : null"
               class="btn btn-sm btn-outline-primary"
               @click="markAsRead(notification); closeDropdown()"
             >
-              {{ notification.action_text || 'View' }}
+              {{ notification.action_text || t('notifications.viewAction') }}
             </a>
           </div>
         </li>
       </template>
       <li class="dropdown-footer border-top">
-        <router-link to="/notifications" class="dropdown-item text-center py-2" @click="closeDropdown">
-          <i class="bi bi-bell me-2"></i>All Notifications
+        <router-link :to="{ name: 'Notifications' }" class="dropdown-item text-center py-2" @click="closeDropdown">
+          <i class="bi bi-bell me-2"></i>{{ t('notifications.allNotificationsLink') }}
         </router-link>
       </li>
     </ul>
@@ -79,8 +80,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
+import { isNewTabUrl, isSpaUrl, normalizeSpaLocation } from '@/utils/navigation'
+
+const { t, locale } = useI18n()
 
 const recent = ref([])
 const unreadCount = ref(0)
@@ -123,15 +128,12 @@ function formatTime(dateString) {
   const now = new Date()
   const diffMs = now - date
   const diffMins = Math.floor(diffMs / 60000)
-  if (diffMins < 1) return 'Just now'
-  if (diffMins < 60) return `${diffMins}m ago`
+  if (diffMins < 1) return t('notifications.timeJustNow')
+  if (diffMins < 60) return t('notifications.timeMinutesAgo', { n: diffMins })
   const diffHours = Math.floor(diffMins / 60)
-  if (diffHours < 24) return `${diffHours}h ago`
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
-function isInternalUrl(url) {
-  return url && url.startsWith('/') && !url.startsWith('//')
+  if (diffHours < 24) return t('notifications.timeHoursAgo', { n: diffHours })
+  const localeTag = locale.value === 'es' ? 'es' : 'en-US'
+  return date.toLocaleDateString(localeTag, { month: 'short', day: 'numeric' })
 }
 
 function closeDropdown() {
@@ -140,6 +142,11 @@ function closeDropdown() {
 
 onMounted(() => {
   fetchRecent()
+  window.addEventListener('notification-new', fetchRecent)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('notification-new', fetchRecent)
 })
 
 defineExpose({ refresh: fetchRecent })

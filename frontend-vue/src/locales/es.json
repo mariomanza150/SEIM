@@ -3,7 +3,18 @@
     "skipToMain": "Saltar al contenido principal"
   },
   "notifications": {
-    "fallbackToast": "Nueva notificación"
+    "fallbackToast": "Nueva notificación",
+    "dropdownAria": "Menú de notificaciones",
+    "dropdownHeader": "Notificaciones",
+    "viewAll": "Ver todas",
+    "dropdownLoading": "Cargando…",
+    "dropdownEmpty": "Sin notificaciones",
+    "allNotificationsLink": "Todas las notificaciones",
+    "defaultTitle": "Notificación",
+    "viewAction": "Ver",
+    "timeJustNow": "Ahora mismo",
+    "timeMinutesAgo": "Hace {n} min",
+    "timeHoursAgo": "Hace {n} h"
   },
   "settings": {
     "uiLanguage": "Idioma de la interfaz",
