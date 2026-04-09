@@ -1,6 +1,11 @@
 from datetime import timedelta
 
+import pytest
+from django.conf import settings
 from django.test import RequestFactory, TestCase
+
+if "wagtail" not in settings.INSTALLED_APPS:
+    pytest.skip("Wagtail disabled in test settings", allow_module_level=True)
 from django.utils import timezone
 from wagtail.models import Page
 
