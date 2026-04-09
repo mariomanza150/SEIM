@@ -151,11 +151,22 @@
                   <span class="fw-medium">{{ fileName(doc.file) }}</span>
                 </td>
                 <td>
-                  <span class="badge bg-secondary">{{ doc.type?.name || doc.type }}</span>
+                  <span class="badge bg-secondary">{{
+                    documentTypeLabel(doc.type, t('documentDetailPage.notAvailable'))
+                  }}</span>
                 </td>
                 <td>
-                  <router-link :to="{ name: 'ApplicationDetail', params: { id: doc.application } }" class="text-decoration-none">
-                    {{ getApplicationName(doc.application) }}
+                  <router-link
+                    :to="{ name: 'ApplicationDetail', params: { id: documentApplicationId(doc.application) } }"
+                    class="text-decoration-none"
+                  >
+                    {{
+                      documentApplicationProgramName(
+                        doc.application,
+                        applications,
+                        t('documentDetailPage.unknownApplication'),
+                      )
+                    }}
                   </router-link>
                 </td>
                 <td>
@@ -258,6 +269,11 @@ import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
 import { useAuthStore } from '@/stores/auth'
 import { resolveFileUrl } from '@/utils/apiUrl'
 import api from '@/services/api'
+import {
+  documentApplicationId,
+  documentApplicationProgramName,
+  documentTypeLabel,
+} from '@/utils/documentApi'
 import {
   STAFF_SAVED_SEARCH_TYPE,
   deserializeDocumentListFilters,
@@ -375,12 +391,6 @@ function fileName(fileUrl) {
   if (!fileUrl) return t('documentDetailPage.fileUnknown')
   const parts = fileUrl.split('/')
   return decodeURIComponent(parts[parts.length - 1] || 'document')
-}
-
-function getApplicationName(appId) {
-  if (typeof appId === 'object' && appId?.program?.name) return appId.program.name
-  const app = applications.value.find(a => a.id === appId)
-  return app?.program?.name || appId || t('documentDetailPage.unknownApplication')
 }
 
 function formatDate(dateString) {

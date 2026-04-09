@@ -442,7 +442,7 @@
                     >
                       <router-link :to="{ name: 'DocumentDetail', params: { id: doc.id } }" class="text-decoration-none">
                         <i class="bi bi-file-earmark me-2"></i>
-                        {{ doc.type?.name || doc.type }}
+                        {{ documentTypeLabel(doc.type, t('documentDetailPage.notAvailable')) }}
                       </router-link>
                       <span class="d-flex align-items-center gap-1">
                         <span class="badge" :class="doc.is_valid === true ? 'bg-success' : doc.is_valid === false ? 'bg-danger' : 'bg-warning'">
@@ -501,6 +501,7 @@ import { useToast } from '@/composables/useToast'
 import DocumentUpload from '@/components/DocumentUpload.vue'
 import api from '@/services/api'
 import { readinessLevelBadgeClass, readinessScoreBarClass } from '@/utils/applicationReadiness'
+import { documentTypeLabel } from '@/utils/documentApi'
 
 const route = useRoute()
 const router = useRouter()

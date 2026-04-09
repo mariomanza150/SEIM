@@ -9,7 +9,15 @@
           <li class="breadcrumb-item">
             <router-link :to="{ name: 'Documents' }">{{ t('route.names.Documents') }}</router-link>
           </li>
-          <li class="breadcrumb-item active">{{ document?.type?.name || t('documentDetailPage.loadingType') }}</li>
+          <li class="breadcrumb-item active" aria-current="page">
+            {{
+              loading
+                ? t('documentDetailPage.loadingType')
+                : documentTypeLabel(document?.type, '') ||
+                  fileName(document?.file) ||
+                  t('documentDetailPage.fileUnknown')
+            }}
+          </li>
         </ol>
       </nav>
 
@@ -108,13 +116,21 @@
                 <div class="row mb-3">
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('documentDetailPage.labelDocumentType') }}</label>
-                    <p class="fw-bold">{{ document.type?.name || document.type }}</p>
+                    <p class="fw-bold">{{ documentTypeLabel(document.type, t('documentDetailPage.notAvailable')) }}</p>
                   </div>
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('documentDetailPage.labelApplication') }}</label>
                     <p>
-                      <router-link :to="{ name: 'ApplicationDetail', params: { id: document.application } }">
-                        {{ getApplicationName(document.application) }}
+                      <router-link
+                        :to="{ name: 'ApplicationDetail', params: { id: documentApplicationId(document.application) } }"
+                      >
+                        {{
+                          documentApplicationProgramName(
+                            document.application,
+                            applications,
+                            t('documentDetailPage.unknownApplication'),
+                          )
+                        }}
                       </router-link>
                     </p>
                   </div>
@@ -311,7 +327,7 @@
                     <i class="bi bi-download me-2"></i>{{ t('documentDetailPage.download') }}
                   </a>
                   <router-link
-                    :to="{ name: 'ApplicationDetail', params: { id: document.application } }"
+                    :to="{ name: 'ApplicationDetail', params: { id: documentApplicationId(document.application) } }"
                     class="btn btn-outline-secondary"
                   >
                     <i class="bi bi-file-earmark-text me-2"></i>{{ t('documentDetailPage.viewApplication') }}
@@ -363,6 +379,11 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { resolveFileUrl } from '@/utils/apiUrl'
+import {
+  documentApplicationId,
+  documentApplicationProgramName,
+  documentTypeLabel,
+} from '@/utils/documentApi'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 
@@ -470,12 +491,6 @@ function fileName(fileUrl) {
   if (!fileUrl) return t('documentDetailPage.fileUnknown')
   const parts = fileUrl.split('/')
   return decodeURIComponent(parts[parts.length - 1] || t('documentDetailPage.fileFallback'))
-}
-
-function getApplicationName(appId) {
-  if (typeof appId === 'object' && appId?.program?.name) return appId.program.name
-  const app = applications.value.find(a => a.id === appId)
-  return app?.program?.name || appId || t('documentDetailPage.unknownApplication')
 }
 
 function formatDateTime(dateString) {
@@ -627,7 +642,7 @@ function onApplicationSyncEvent(ev) {
   const d = ev.detail
   if (!document.value?.id || !d?.applicationId) return
   const targetApp = String(d.applicationId)
-  const thisApp = String(document.value.application)
+  const thisApp = documentApplicationId(document.value.application)
   const thisDoc = String(document.value.id)
   if (d.documentId && String(d.documentId) === thisDoc) {
     fetchDocument()

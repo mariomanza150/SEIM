@@ -12,7 +12,9 @@ _Logged during [manual feature & workflow test loop](prompts/manual-feature-work
 
 ## Open
 
-No open defects.
+| ID | Date found | Summary | Cluster / area |
+|----|------------|---------|----------------|
+| _None_ |  |  |  |
 
 ---
 
@@ -31,7 +33,8 @@ No open defects.
 | **MQ-2026-04-09-008** | 2026-04-09 | `LogoutView.authentication_classes = [JWTAuthentication]` (no Session CSRF on JSON POST). **`frontend-vue/src/stores/auth.js`:** call `POST /api/accounts/logout/` with `Authorization: Bearer <access>` **before** clearing tokens (JWT-only view needs header; prior order caused **401**). Regression: `test_logout_post_json_succeeds_with_django_session_and_jwt_header` in `tests/integration/api/test_auth_api.py`; Vitest `auth.spec.js` (logout `axios.post` third-arg headers). Rebuild/serve updated `frontend-vue/dist` for manual verify. |
 | **MQ-2026-04-09-009** | 2026-04-09 | Applications list uses API `program_name` (`programDisplayName` in `Applications.vue`). Deploy: rebuild `frontend-vue/dist` + `collectstatic` (or `docker compose cp` dist into `web` + restart). Integration: `test_list_applications_includes_program_name`; Vitest `Applications.spec.js`. |
 | **MQ-2026-04-09-010** | 2026-04-09 | **`exchange/serializers.py`:** `ApplicationSerializer.validate` skips `check_eligibility` for **draft** create/update; eligibility enforced on `submit_application`. **`ApplicationForm.vue`:** debounced `GET /api/programs/:id/check_eligibility/` on program change (new app); assertive program alert merges preview + flattened `program` / `non_field_errors`; select `aria-describedby` / `aria-invalid`. Tests: `test_draft_create_skips_eligibility_check` (`test_exchange_serializers.py`), `test_create_draft_application_when_student_not_eligible` (`test_applications_api.py`), Vitest eligibility alert in `ApplicationForm.spec.js`. |
+| **MQ-2026-04-09-011** | 2026-04-09 | **`DocumentSerializer.to_representation`:** nested `type` (`id`, `name`, `description`) and `application` (`id`, `program_name`) for list/detail JSON. **Vue:** `documentApi.js` helpers; `Documents.vue`, `DocumentDetail.vue` (breadcrumb uses type name or filename, not stale “Loading…”); `ApplicationDetail.vue` document list uses type label. Integration: `test_documents_list_filters.py`; Vitest: `documentApi.spec.js`. Rebuild `frontend-vue/dist` for static deploys. |
 
 ---
 
-*Last updated: 2026-04-09 — **MQ-009** / **MQ-010** resolved (draft eligibility + list `program_name` + form error a11y). Prior: **MQ-008** resolved.*
+*Last updated: 2026-04-09 — **MQ-011** resolved. Open queue empty.*

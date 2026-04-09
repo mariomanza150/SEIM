@@ -49,6 +49,10 @@ class TestDocumentsListFiltersAPI(APITestCase):
         results = r.data.get("results", r.data)
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]["id"], str(doc1.id))
+        self.assertEqual(results[0]["type"]["name"], "Type A")
+        self.assertEqual(results[0]["type"]["id"], dt1.id)
+        self.assertEqual(results[0]["application"]["id"], str(app1.id))
+        self.assertEqual(results[0]["application"]["program_name"], program.name)
 
     def test_filter_is_valid(self):
         student = self.create_user(role="student")

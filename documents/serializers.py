@@ -20,6 +20,14 @@ class DocumentTypeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class DocumentTypeSummarySerializer(serializers.ModelSerializer):
+    """Compact type payload for nested document responses (list/detail)."""
+
+    class Meta:
+        model = DocumentType
+        fields = ("id", "name", "description")
+
+
 class DocumentValidationSerializer(serializers.ModelSerializer):
     validator_name = serializers.SerializerMethodField()
 
@@ -84,6 +92,7 @@ class DocumentCommentSerializer(serializers.ModelSerializer):
                     action_url=f"/documents/{doc.id}/",
                     action_text="View document",
                     category="info",
+                    settings_category="comments",
                 )
         NotificationService.broadcast_application_sync(
             str(doc.application_id), "document_comment_added", str(doc.id)
@@ -121,6 +130,17 @@ class DocumentSerializer(serializers.ModelSerializer):
             if not staff:
                 qs = qs.filter(Q(is_private=False) | Q(author=u))
         return DocumentCommentSerializer(qs, many=True).data
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret["type"] = DocumentTypeSummarySerializer(
+            instance.type, context=self.context
+        ).data
+        ret["application"] = {
+            "id": str(instance.application_id),
+            "program_name": instance.application.program.name,
+        }
+        return ret
 
     def validate_file(self, file):
         DocumentService.validate_file_type_and_size(file)
