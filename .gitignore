@@ -188,6 +188,7 @@ staticfiles/
 .env.development
 .env.test
 .env.production
+.env.local-prod
 
 # IDE files
 .vscode/
@@ -272,3 +273,8 @@ frontend-vue/test-results/
 frontend-vue/.eslintcache
 frontend-vue/dist-ssr/
 frontend-vue/*.local 
+
+# Playwright-generated artifacts
+tests/e2e_playwright/screenshots/
+tests/e2e_playwright/videos/
+tests/e2e_playwright/reports/

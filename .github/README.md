@@ -1,176 +1,77 @@
 # GitHub Actions CI/CD Workflows
 
-This directory contains automated workflows for testing, linting, and deploying the SEIM application.
+Automated workflows for SEIM: quality gates, tests, container scan, E2E, and deploy.
 
 ## Workflows
 
-### 1. Test Suite (`test.yml`)
-Runs on: Push and Pull Request to `main`, `master`, `develop`
+### 1. CI (`ci.yml`)
 
-**What it does:**
-- Sets up PostgreSQL and Redis services
-- Installs Python dependencies
-- Runs database migrations
-- Executes full test suite with coverage
-- Uploads coverage to Codecov
-- Validates test count (minimum 1000 tests)
+Runs on: **push** to `main`, `master`, `develop`, `feature/vue-migration`; **pull request** targeting `main`, `master`, `develop`
 
-**Environment variables required:**
-- `CODECOV_TOKEN` (secret, optional)
+**Jobs:** Ruff · Bandit + `pip-audit` · mypy (non-blocking) · backend pytest (unit + integration) · webpack ESLint/Prettier/Jest · Vue Vitest + Vite build · Docker build + Trivy SARIF · Locust on pull requests only.
 
-### 2. Code Quality (`lint.yml`)
-Runs on: Push and Pull Request to `main`, `master`, `develop`
+**Secrets (optional):** `CODECOV_TOKEN`
 
-**What it does:**
-- Runs Ruff linter
-- Runs Flake8 with complexity checks
-- Performs Bandit security scanning
-- Checks for dependency vulnerabilities with Safety
+### 2. Deploy (`deploy.yml`)
 
-### 3. Deploy (`deploy.yml`)
-Runs on: Push to `main`/`master`, or manual trigger
+Runs on: push to `main` / `master`, or `workflow_dispatch`
 
-**What it does:**
-- Builds and pushes Docker images
-- Deploys to staging automatically
-- Deploys to production with manual approval
-- Runs migrations
-- Performs health checks
-- Rollback on failure
+**What it does:** Build `Dockerfile.prod`, push to **GHCR** (`ghcr.io/<owner>/<repo>`) as `latest` and `:sha`. Staging job runs on push to default branches; production only via manual workflow with environment `production`.
 
-**Secrets required:**
-- `DOCKER_USERNAME` - Docker Hub username
-- `DOCKER_PASSWORD` - Docker Hub password/token
+**Secrets:** uses `GITHUB_TOKEN` for GHCR (no Docker Hub required).
 
-**Environments:**
-- `staging` - Auto-deploy from main
-- `production` - Manual approval required
+**Environments:** `staging`, `production` (configure reviewers in repo settings).
 
-### 4. Docker Compose Test (`docker-compose-test.yml`)
-Runs on: Push and Pull Request to `main`, `master`, `develop`
+### 3. E2E — Playwright (`e2e-tests.yml`)
 
-**What it does:**
-- Builds Docker images using docker-compose
-- Starts all services (web, db, redis)
-- Waits for services to be healthy
-- Runs migrations
-- Executes test suite
-- Cleans up containers
+Runs on: **push** to `main`, `develop`, `master`, `feature/vue-migration`; **PR** targeting `main`, `develop`, `master`; plus manual dispatch.
 
-## Running Workflows Locally
+Playwright against Django on port 8000; `RUN_SEED_VUE_E2E=1` enables session seed via `tests/e2e_playwright/conftest.py`.
 
-You can test GitHub Actions workflows locally using [act](https://github.com/nektos/act).
+### 4. E2E — Selenium (`e2e-selenium-scheduled.yml`)
 
-### Install act
+Weekly schedule + manual. Legacy `tests/e2e/` and `tests/selenium/` (not on every PR).
 
-**Windows (with Chocolatey):**
-```powershell
-choco install act-cli
-```
+### 5. Docker Compose Test (`docker-compose-test.yml`)
 
-**macOS (with Homebrew):**
-```bash
-brew install act
-```
+Runs on: **push** to `main`, `master`, `develop`, `feature/vue-migration`; **PR** targeting `main`, `master`, `develop`
 
-**Linux:**
-```bash
-curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
-```
+Uses **`docker compose`** (v2): build, up, migrate, `pytest tests/` in the web container.
 
-### Run Workflows
+### 6. Secret scan (`secret-scan.yml`)
 
-**List all workflows:**
+Gitleaks on **push** to `main`, `master`, `develop`, `feature/vue-migration`; **PR** targeting `main`, `master`, `develop`.
+
+## One-time setup (repository Settings)
+
+Do these in [github.com/mariomanza150/SEIM](https://github.com/mariomanza150/SEIM) (requires admin on the repo).
+
+1. **Deploy environments** — [Settings → Environments](https://github.com/mariomanza150/SEIM/settings/environments): create **`staging`** and **`production`**. Optionally add **required reviewers** or **wait timer** on `production` so `deploy.yml` manual production deploys are gated.
+2. **Codecov (optional)** — [Settings → Secrets and variables → Actions](https://github.com/mariomanza150/SEIM/settings/secrets/actions): add **`CODECOV_TOKEN`** from [codecov.io](https://codecov.io) after linking the repo. CI still runs if this secret is missing (`fail_ci_if_error: false` on upload steps).
+3. **Merge line of work into `main`** — Open a PR from `feature/vue-migration` into `main` ([compare](https://github.com/mariomanza150/SEIM/compare/main...feature/vue-migration?expand=1)). If GitHub reports unrelated histories, merge via the UI using a merge commit or align `main` to this branch using a one-time strategy your team agrees on (replacing the old `main` history is destructive).
+
+## Other automation
+
+- **Dependabot:** [.github/dependabot.yml](dependabot.yml) (pip, npm root + `frontend-vue`, GitHub Actions).
+
+## Running with act
+
 ```bash
 act -l
-```
-
-**Run test workflow:**
-```bash
-act push -W .github/workflows/test.yml
-```
-
-**Run lint workflow:**
-```bash
-act push -W .github/workflows/lint.yml
-```
-
-**Run docker-compose test workflow:**
-```bash
+act push -W .github/workflows/ci.yml
 act push -W .github/workflows/docker-compose-test.yml
 ```
 
-**Run with specific event:**
-```bash
-act pull_request -W .github/workflows/test.yml
-```
+Optional `.secrets` file: `CODECOV_TOKEN=...` then `act --secret-file .secrets push`.
 
-### Using Secrets Locally
+## Practices
 
-Create `.secrets` file in project root (add to `.gitignore`):
-```
-CODECOV_TOKEN=your-token-here
-DOCKER_USERNAME=your-username
-DOCKER_PASSWORD=your-password
-```
+1. CI green before merge.
+2. Target coverage policy: see `pytest.ini` / `pyproject.toml` (`--cov-fail-under=80` for scoped backend jobs).
+3. Staging deploy follows push to `main`/`master`; production uses protected environment + manual workflow.
 
-Run with secrets:
-```bash
-act -s-file .secrets push
-```
+## References
 
-## Manual Workflow Triggers
-
-Some workflows can be triggered manually from GitHub Actions tab:
-
-1. **Deploy workflow** - Choose environment (staging/production)
-
-## CI/CD Best Practices
-
-1. **All tests must pass** before merging PRs
-2. **Code quality checks** should have no critical issues
-3. **Coverage should be ≥ 80%** for new code
-4. **Test count should be ≥ 1000** tests
-5. **Security scans** should have no high-severity vulnerabilities
-6. **Staging deployment** happens automatically on merge to main
-7. **Production deployment** requires manual approval
-
-## Troubleshooting
-
-### Tests failing locally but passing in CI
-- Check Python version (should be 3.12)
-- Verify all dependencies are installed
-- Ensure PostgreSQL and Redis are running
-- Check environment variables
-
-### Docker build failures
-- Clear Docker cache: `docker system prune -a`
-- Rebuild from scratch: `docker-compose build --no-cache`
-- Check Dockerfile syntax
-
-### Act not working
-- Update act: `choco upgrade act-cli` (Windows)
-- Use Docker Desktop or equivalent
-- Check act documentation: https://github.com/nektos/act
-
-## Continuous Improvement
-
-### Adding New Workflows
-1. Create new `.yml` file in `.github/workflows/`
-2. Test locally with `act`
-3. Commit and push
-4. Monitor first run in GitHub Actions tab
-
-### Updating Workflows
-1. Modify existing workflow file
-2. Test locally: `act -W .github/workflows/your-workflow.yml`
-3. Commit changes
-4. Verify in GitHub Actions
-
-## Additional Resources
-
-- [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [act Documentation](https://github.com/nektos/act)
-- [Docker Compose Documentation](https://docs.docker.com/compose/)
-- [Codecov Documentation](https://docs.codecov.com/)
-
+- [GitHub Actions](https://docs.github.com/en/actions)
+- [GHCR](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+- [act](https://github.com/nektos/act)
