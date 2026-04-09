@@ -9,7 +9,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 |---------|--------|--------|--------------|-------|
 | User authentication and account management | `accounts`, `api` | Implemented | 2026-04-09 | JWT login, registration, profile, permissions, password flows, and account dashboard stats are wired through the API. **MQ-007:** `LoginView.authentication_classes = []` for JSON login without CSRF when switching users. **MQ-008:** `LogoutView.authentication_classes = [JWTAuthentication]` so `POST /api/accounts/logout/` is not blocked by session CSRF; regression `test_logout_post_json_succeeds_with_django_session_and_jwt_header` in `test_auth_api.py`. |
 | Role management | `accounts` | Implemented | 2026-04-08 | Student, coordinator, and admin roles are modeled and used across permissions and UI flows. |
-| Exchange programs and application workflow | `exchange`, `api` | Implemented | 2026-04-09 | Program catalog, applications, state transitions, timeline events, and coordinator review endpoints exist. **Manual QA (2026-04-09):** open defects **MQ-009** / **MQ-010** — applications list **Unknown program** vs detail OK; new-application **Save as draft** **400** when eligibility fails + console-only error ([`manual-qa-issues.md`](manual-qa-issues.md)). |
+| Exchange programs and application workflow | `exchange`, `api` | Implemented | 2026-04-09 | Program catalog, applications, state transitions, timeline events, and coordinator review endpoints exist. **MQ-009** / **MQ-010** resolved (2026-04-09): list uses `program_name`; drafts skip serializer eligibility (submit still checks); see [`manual-qa-issues.md`](manual-qa-issues.md). |
 | Document management | `documents`, `api` | Implemented | 2026-04-08 | Upload, validation, comments, and resubmission APIs are present and used by the application flow. |
 | Application comments on detail page | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-08 | The Vue detail page now shows live comments and can post new comments with author metadata. |
 | Notifications center and preferences | `notifications`, `api` | Implemented | 2026-04-08 | Email/in-app notifications, preferences, reminders endpoints, and read-state actions are available. |
@@ -124,7 +124,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ | | | | |
+| Manual QA **MQ-010**: draft save + eligibility UX (`check_eligibility` preview, normalized API errors) | `frontend-vue`, `exchange`, `tests` | In progress | 2026-04-09 | — |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -198,5 +198,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (**Open QA:** **MQ-010** only; loop: **MQ-009** resolved — list `program_name` + per-user application list/retrieve cache keys). Prior: **MQ-008** (`LogoutView` / Pinia logout). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (**MQ-009** / **MQ-010** resolved — draft eligibility + list `program_name` + form error a11y). Prior: **MQ-008** (`LogoutView` / Pinia logout). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
