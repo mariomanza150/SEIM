@@ -84,6 +84,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
 | Vue i18n: Notifications full page | `frontend-vue` | In progress | 2026-04-08 | Autonomous loop |
+| Vue i18n: Profile view | `frontend-vue` | In progress | 2026-04-09 | — |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -117,7 +118,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Deadlines/calendar, Staff exchange agreements, Coordinator workload, review queue, `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. **In progress:** Notifications full page (`Notifications.vue`). Remaining: program compare, Staff agreement documents, Profile, stragglers. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Deadlines/calendar, Staff exchange agreements, Coordinator workload, review queue, `useStaffSavedPresets`, Application form, Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. **In progress:** Notifications full page (`Notifications.vue`), Profile (`Profile.vue`). Remaining: program compare, Staff agreement documents, stragglers. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
