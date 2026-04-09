@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ApplicationForm from './ApplicationForm.vue'
 import api from '@/services/api'
+import i18n, { setAppLocale } from '@/i18n'
 
 const mockPush = vi.fn()
 const mockSuccessToast = vi.fn()
@@ -32,7 +33,7 @@ vi.mock('@/services/api', () => ({
 function mountView() {
   return mount(ApplicationForm, {
     global: {
-      plugins: [createPinia()],
+      plugins: [createPinia(), i18n],
       stubs: {
         RouterLink: { template: '<a><slot /></a>' },
       },
@@ -51,10 +52,17 @@ function isoDateWithOffset(days) {
 
 describe('ApplicationForm', () => {
   beforeEach(() => {
+    localStorage.clear()
+    setAppLocale('en')
     setActivePinia(createPinia())
     vi.clearAllMocks()
     mockRoute.params = {}
     mockRoute.query = {}
+  })
+
+  afterEach(() => {
+    setAppLocale('en')
+    localStorage.clear()
   })
 
   it('renders dynamic form fields for the selected program and submits df payload keys', async () => {

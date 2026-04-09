@@ -73,11 +73,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: Documents list view | `frontend-vue` | Implemented | 2026-04-09 | `documentsPage.*` in locales; `Documents.vue` student/staff copy, filters, presets UI, table, pagination, errors/toasts; locale-aware dates; `aria-label` / download titles. Vitest: `Documents.spec.js`. |
 | Vue i18n: Document detail view | `frontend-vue` | Implemented | 2026-04-09 | `documentDetailPage.*` in locales; `DocumentDetail.vue` breadcrumbs via `route.names`, preview/review/comments/staff actions, quick actions, toasts; locale-aware `formatDateTime`; preview context lines translated. Vitest: `DocumentDetail.spec.js`. |
 | Vue i18n: Application detail view | `frontend-vue` | Implemented | 2026-04-09 | `applicationDetailPage.*` + reuse `applicationsPage.status` / `readinessLabel` / `notAvailable`; `ApplicationDetail.vue` program/checklist/timeline/comments/sidebar/docs/coordinator review; locale dates; translated confirms/toasts. Vitest: `ApplicationDetail.spec.js` (+ i18n, timeline mock). |
+| Vue i18n: Application form (new + edit) | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.*` in locales; `ApplicationForm.vue` breadcrumbs/headers, program filters & presets UI, window messages, dynamic form chrome, sidebar tips/requirements, actions; locale `formatDate` / duration; translated validation + toasts. Preset save toasts still from `useStaffSavedPresets` (English). Vitest: `ApplicationForm.spec.js` + i18n. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Application form (new + edit) | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
+| _None_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -111,7 +112,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **In progress:** Application form (`ApplicationForm.vue`, new + edit routes). Shipped: Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: tables/modals and any stragglers. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Shipped: Application form (new + edit), Application detail, Document detail, Documents list, Applications list, NotificationDropdown, Dashboard, etc. Remaining: tables/modals, shared preset composable toasts, other stragglers. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -151,5 +152,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (Vue i18n Application form — in progress)*  
+*Last updated: 2026-04-09 (Vue i18n Application form)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
