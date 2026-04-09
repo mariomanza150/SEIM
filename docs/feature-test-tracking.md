@@ -71,4 +71,4 @@ _Use these as hints when filling the **Browser** column; replace with exact `tes
 
 ---
 
-*Last updated: 2026-04-09 — **`agreements`:** `StaffAgreementDocuments` `staffAgreementDocumentsPage` preset placeholder in matrix. Prior: `notifications` digest slice.*
+*Last updated: 2026-04-09 — **`vue-portal`:** `services/api.spec.js` Vitest (3 green). Prior: `agreements` StaffAgreementDocuments matrix note.*
