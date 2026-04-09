@@ -1,6 +1,9 @@
 from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from django.db.models import Count
 from django.shortcuts import render
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from drf_spectacular.utils import extend_schema, extend_schema_view
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
@@ -9,7 +12,9 @@ from rest_framework.response import Response
 
 from accounts.models import User
 from core.cache import cache_api_response
+from documents.models import Document
 from exchange.models import Application, Program
+from notifications.models import Notification
 
 from .models import DashboardConfig, Metric, Report
 from .serializers import (
@@ -28,9 +33,215 @@ from .serializers import (
     TrackEventRequestSerializer,
     UserActivitySerializer,
 )
+from .dashboard_export import render_dashboard_export_csv, render_dashboard_export_xlsx
 from .services import AnalyticsService
 
 # Create your views here.
+
+
+def _request_params(request):
+    return getattr(request, "query_params", request.GET)
+
+
+def _parse_analytics_filters(request):
+    params = _request_params(request)
+    start_date = parse_date(params.get("date_start") or "")
+    end_date = parse_date(params.get("date_end") or "")
+    program_id = params.get("program")
+    return start_date, end_date, program_id
+
+
+def _filter_by_date_range(queryset, field_name, start_date=None, end_date=None):
+    if start_date:
+        queryset = queryset.filter(**{f"{field_name}__date__gte": start_date})
+    if end_date:
+        queryset = queryset.filter(**{f"{field_name}__date__lte": end_date})
+    return queryset
+
+
+def _get_filtered_applications(request):
+    start_date, end_date, program_id = _parse_analytics_filters(request)
+    applications = Application.objects.select_related("program", "status", "student")
+    applications = _filter_by_date_range(applications, "created_at", start_date, end_date)
+
+    if program_id:
+        applications = applications.filter(program_id=program_id)
+
+    return applications, start_date, end_date, program_id
+
+
+def _days_from_filters(start_date, end_date, default_days=30):
+    if start_date and end_date and end_date >= start_date:
+        return max((end_date - start_date).days + 1, 1)
+    return default_days
+
+
+def _status_breakdown(queryset):
+    return {
+        item["status__name"] or "unknown": item["count"]
+        for item in queryset.values("status__name").annotate(count=Count("id")).order_by("status__name")
+    }
+
+
+def _average_processing_time_days(queryset):
+    processed = list(
+        queryset.filter(status__name__in=["approved", "rejected", "completed"])
+    )
+    if not processed:
+        return 0
+
+    total_days = 0
+    now = timezone.now()
+    for application in processed:
+        reference_time = application.submitted_at or application.created_at or now
+        total_days += max((now - reference_time).total_seconds(), 0) / 86400
+
+    return round(total_days / len(processed), 1)
+
+
+def _build_monthly_trend(queryset):
+    trend = (
+        queryset.extra(select={"day": "date(created_at)"})
+        .values("day")
+        .annotate(total=Count("id"))
+        .order_by("day")
+    )
+    return {
+        "labels": [str(item["day"]) for item in trend],
+        "values": [item["total"] for item in trend],
+    }
+
+
+def _build_user_activity_payload(days):
+    activity = AnalyticsService.get_user_activity(days=days)
+    return {
+        "labels": [str(item["day"]) for item in activity],
+        "values": [item.get("logins", 0) for item in activity],
+    }
+
+
+def _build_program_performance(queryset, program_id=None):
+    programs = Program.objects.all().order_by("name")
+    if program_id:
+        programs = programs.filter(id=program_id)
+
+    performance = []
+    for program in programs:
+        program_applications = queryset.filter(program=program)
+        processed_count = program_applications.filter(
+            status__name__in=["approved", "rejected", "completed"],
+            withdrawn=False,
+        ).count()
+        approved_count = program_applications.filter(
+            status__name="approved",
+            withdrawn=False,
+        ).count()
+        approval_rate = round((approved_count / processed_count) * 100) if processed_count else 0
+
+        performance.append(
+            {
+                "name": program.name,
+                "institution": "N/A",
+                "applications": program_applications.count(),
+                "approval_rate": approval_rate,
+                "avg_processing_time": _average_processing_time_days(program_applications),
+            }
+        )
+
+    max_applications = max((item["applications"] for item in performance), default=0)
+    for item in performance:
+        item["popularity_score"] = (
+            round((item["applications"] / max_applications) * 100)
+            if max_applications
+            else 0
+        )
+
+    return performance
+
+
+def _build_dashboard_payload(request):
+    applications, start_date, end_date, program_id = _get_filtered_applications(request)
+    days = _days_from_filters(start_date, end_date)
+    application_status = _status_breakdown(applications)
+    total_applications = applications.count()
+    approved_count = applications.filter(status__name="approved", withdrawn=False).count()
+    processed_count = applications.filter(
+        status__name__in=["approved", "rejected", "completed"],
+        withdrawn=False,
+    ).count()
+    active_programs = Program.objects.filter(is_active=True)
+    if program_id:
+        active_programs = active_programs.filter(id=program_id)
+
+    return {
+        "metrics": {
+            "total_applications": total_applications,
+            "approval_rate": round((approved_count / processed_count) * 100) if processed_count else 0,
+            "avg_processing_time": _average_processing_time_days(applications),
+            "active_programs": active_programs.count(),
+        },
+        "application_status": application_status,
+        "monthly_trend": _build_monthly_trend(applications),
+        "user_activity": _build_user_activity_payload(days),
+        "demographics": AnalyticsService.get_user_demographics().get("users_by_role", {}),
+        "program_performance": _build_program_performance(applications, program_id=program_id),
+    }
+
+
+def _build_detailed_report(report_type, request):
+    applications, _, _, program_id = _get_filtered_applications(request)
+
+    if report_type == "applications":
+        status_rows = _status_breakdown(applications)
+        data = [
+            {"status": status_name, "applications": count}
+            for status_name, count in status_rows.items()
+        ]
+        summary = f"{applications.count()} applications grouped into {len(data)} status buckets."
+    elif report_type == "programs":
+        data = _build_program_performance(applications, program_id=program_id)
+        summary = f"{len(data)} program performance rows generated from current analytics filters."
+    elif report_type == "users":
+        data = list(
+            applications.values("student__username")
+            .annotate(total_applications=Count("id"))
+            .order_by("-total_applications", "student__username")
+        )
+        data = [
+            {
+                "username": item["student__username"],
+                "total_applications": item["total_applications"],
+            }
+            for item in data
+        ]
+        summary = f"{len(data)} user activity rows generated from application ownership."
+    else:
+        return None
+
+    return {
+        "report_type": report_type,
+        "summary": summary,
+        "data": data,
+    }
+
+
+def _build_export_response(request):
+    dashboard_payload = _build_dashboard_payload(request)
+    # Avoid query param name `format` — DRF uses it for content negotiation and can 404 unknown values.
+    fmt = (_request_params(request).get("export_format") or "csv").strip().lower()
+    if fmt in ("xlsx", "excel"):
+        body = render_dashboard_export_xlsx(dashboard_payload)
+        response = HttpResponse(
+            body,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = 'attachment; filename="analytics-report.xlsx"'
+        return response
+
+    body = render_dashboard_export_csv(dashboard_payload)
+    response = HttpResponse(body, content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = 'attachment; filename="analytics-report.csv"'
+    return response
 
 
 class ReportViewSet(viewsets.ModelViewSet):
@@ -312,7 +523,10 @@ def export_data_view(request):
 @permission_classes([IsAuthenticated])
 def api_application_statistics(request):
     """Get application statistics."""
-    return Response({"total_applications": 0}, status=status.HTTP_200_OK)
+    return Response(
+        AnalyticsService.get_application_statistics(),
+        status=status.HTTP_200_OK,
+    )
 
 
 @extend_schema(
@@ -322,7 +536,15 @@ def api_application_statistics(request):
 @permission_classes([IsAuthenticated])
 def api_program_statistics(request):
     """Get program statistics."""
-    return Response({"total_programs": 0}, status=status.HTTP_200_OK)
+    program_stats = AnalyticsService.get_program_statistics()
+    return Response(
+        {
+            "total_programs": len(program_stats),
+            "active_programs": sum(1 for program in program_stats if program.get("is_active")),
+            "program_performance": program_stats,
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
 @extend_schema(
@@ -332,7 +554,20 @@ def api_program_statistics(request):
 @permission_classes([IsAuthenticated])
 def api_user_activity(request):
     """Get user activity statistics."""
-    return Response({"total_users": 0}, status=status.HTTP_200_OK)
+    start_date, end_date, _ = _parse_analytics_filters(request)
+    days = _days_from_filters(start_date, end_date)
+    user_activity = AnalyticsService.get_user_activity(days=days)
+    active_users = User.objects.filter(
+        sessions__created_at__gte=timezone.now() - timezone.timedelta(days=days)
+    ).distinct().count()
+    return Response(
+        {
+            "total_users": User.objects.count(),
+            "active_users": active_users,
+            "user_activity": user_activity,
+        },
+        status=status.HTTP_200_OK,
+    )
 
 
 @extend_schema(
@@ -354,60 +589,176 @@ def track_event(request):
     responses={200: GenericAnalyticsSerializer}
 )
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def metrics_view(request):
-    """Get metrics stub."""
-    return Response({'metrics': 'stub'}, status=200)
+    """Get aggregated analytics metrics for the admin analytics UI."""
+    return Response(_build_dashboard_payload(request), status=200)
 
 
 @extend_schema(
     responses={200: GenericAnalyticsSerializer}
 )
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def reports_view(request):
-    """Get reports stub."""
-    return Response({'reports': 'stub'}, status=200)
+    """List available detailed analytics reports."""
+    return Response(
+        {
+            "reports": [
+                {"type": "applications", "label": "Applications", "endpoint": "/api/analytics/reports/applications/"},
+                {"type": "programs", "label": "Programs", "endpoint": "/api/analytics/reports/programs/"},
+                {"type": "users", "label": "Users", "endpoint": "/api/analytics/reports/users/"},
+            ]
+        },
+        status=200,
+    )
 
 
 @extend_schema(
     responses={200: GenericAnalyticsSerializer}
 )
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def application_analytics_view(request):
-    """Get application analytics stub."""
-    return Response({'application_analytics': 'stub'}, status=200)
+    """Get application-focused analytics."""
+    applications, start_date, end_date, _ = _get_filtered_applications(request)
+    days = _days_from_filters(start_date, end_date)
+    return Response(
+        {
+            "application_analytics": {
+                "summary": AnalyticsService.get_application_statistics(),
+                "conversion_rates": AnalyticsService.get_conversion_rates(),
+                "trend": _build_monthly_trend(applications),
+                "time_window_days": days,
+            }
+        },
+        status=200,
+    )
 
 
 @extend_schema(
     responses={200: GenericAnalyticsSerializer}
 )
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def document_analytics_view(request):
-    """Get document analytics stub."""
-    return Response({'document_analytics': 'stub'}, status=200)
+    """Get document-focused analytics."""
+    start_date, end_date, _ = _parse_analytics_filters(request)
+    documents = Document.objects.select_related("application", "type")
+    documents = _filter_by_date_range(documents, "created_at", start_date, end_date)
+    by_type = {
+        item["type__name"]: item["count"]
+        for item in documents.values("type__name").annotate(count=Count("id")).order_by("type__name")
+    }
+    return Response(
+        {
+            "document_analytics": {
+                "total_documents": documents.count(),
+                "valid_documents": documents.filter(is_valid=True).count(),
+                "pending_documents": documents.filter(is_valid=False).count(),
+                "documents_by_type": by_type,
+            }
+        },
+        status=200,
+    )
 
 
 @extend_schema(
     responses={200: GenericAnalyticsSerializer}
 )
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def notification_analytics_view(request):
-    """Get notification analytics stub."""
-    return Response({'notification_analytics': 'stub'}, status=200)
+    """Get notification-focused analytics."""
+    start_date, end_date, _ = _parse_analytics_filters(request)
+    notifications = Notification.objects.all()
+    notifications = _filter_by_date_range(notifications, "sent_at", start_date, end_date)
+    by_category = {
+        item["category"]: item["count"]
+        for item in notifications.values("category").annotate(count=Count("id")).order_by("category")
+    }
+    by_channel = {
+        item["notification_type"]: item["count"]
+        for item in notifications.values("notification_type").annotate(count=Count("id")).order_by("notification_type")
+    }
+    return Response(
+        {
+            "notification_analytics": {
+                "total_notifications": notifications.count(),
+                "unread_notifications": notifications.filter(is_read=False).count(),
+                "notifications_by_category": by_category,
+                "notifications_by_channel": by_channel,
+            }
+        },
+        status=200,
+    )
 
 
 @extend_schema(
     responses={200: GenericAnalyticsSerializer}
 )
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def program_analytics_view(request):
-    """Get program analytics stub."""
-    return Response({'program_analytics': 'stub'}, status=200)
+    """Get program-focused analytics."""
+    applications, _, _, program_id = _get_filtered_applications(request)
+    return Response(
+        {
+            "program_analytics": _build_program_performance(
+                applications,
+                program_id=program_id,
+            )
+        },
+        status=200,
+    )
 
 
 @extend_schema(
     responses={200: GenericAnalyticsSerializer}
 )
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def user_analytics_view(request):
-    """Get user analytics stub."""
-    return Response({'user_analytics': 'stub'}, status=200)
+    """Get user-focused analytics."""
+    start_date, end_date, _ = _parse_analytics_filters(request)
+    days = _days_from_filters(start_date, end_date)
+    return Response(
+        {
+            "user_analytics": {
+                "demographics": AnalyticsService.get_user_demographics(),
+                "engagement": AnalyticsService.get_user_engagement_metrics(),
+                "activity": AnalyticsService.get_user_activity(days=days),
+            }
+        },
+        status=200,
+    )
+
+
+@extend_schema(
+    responses={200: GenericAnalyticsSerializer, 401: ErrorResponseSerializer}
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def analytics_dashboard_api(request):
+    """Get the analytics dashboard payload expected by the admin analytics page."""
+    return Response(_build_dashboard_payload(request), status=status.HTTP_200_OK)
+
+
+@extend_schema(
+    responses={200: GenericAnalyticsSerializer, 401: ErrorResponseSerializer, 404: ErrorResponseSerializer}
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def analytics_report_detail_api(request, report_type):
+    """Get a detailed analytics report by type."""
+    report = _build_detailed_report(report_type, request)
+    if report is None:
+        return Response({"error": "Unknown report type"}, status=status.HTTP_404_NOT_FOUND)
+    return Response(report, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def analytics_export_api(request):
+    """Export current analytics dashboard data as CSV (default) or Excel (`export_format=xlsx`)."""
+    return _build_export_response(request)

@@ -120,6 +120,9 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
   - **`global`** (admins only): `pending_review_total`, `unassigned_pending_review`, `stale_under_review_14d` (still `under_review` with `updated_at` older than 14 days).
   - **`distribution`** (admins only): list of `{ coordinator_id, display_name, assigned_pending_review }` for users with the coordinator role (up to 40, sorted by load).
 
+#### Analytics exports (authenticated)
+- `GET /api/analytics/export/` — Download dashboard export. **Query:** same date/program filters as `GET /api/analytics/dashboard/` (`date_start`, `date_end`, `program`). **`export_format`:** omit or `csv` → `text/csv; charset=utf-8` (`analytics-report.csv`); `xlsx` or `excel` → Excel workbook (`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`, `analytics-report.xlsx`) with sheets *Metrics*, *Application status*, *Program performance*. (Do not use query name `format` — reserved by DRF.)
+
 ### Exchange Programs
 
 #### Programs

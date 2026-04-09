@@ -313,18 +313,20 @@ class APICacheMiddleware:
 
         response = self.get_response(request)
 
-        # Cache successful GET API responses
+        # Cache successful JSON GET API responses only (skip CSV, Excel, file streams, etc.)
         if (
             request.method == "GET"
             and request.path.startswith("/api/")
             and response.status_code == 200
         ):
-            try:
-                data = json.loads(response.content)
-                cache_key = self._generate_cache_key(request)
-                CacheManager.set_cache(cache_key, data, cache_type="api_response")
-            except (json.JSONDecodeError, AttributeError):
-                pass
+            ctype = (response.get("Content-Type") or "").lower()
+            if "application/json" in ctype:
+                try:
+                    data = json.loads(response.content)
+                    cache_key = self._generate_cache_key(request)
+                    CacheManager.set_cache(cache_key, data, cache_type="api_response")
+                except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
+                    pass
 
         return response
 

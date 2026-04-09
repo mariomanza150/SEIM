@@ -18,9 +18,19 @@
                     <button type="button" class="btn btn-outline-primary" onclick="refreshAnalytics()">
                         <i class="bi bi-arrow-clockwise"></i> Refresh
                     </button>
-                    <button type="button" class="btn btn-outline-secondary" onclick="exportReport()">
-                        <i class="bi bi-download"></i> Export
-                    </button>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-download"></i> Export
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <button type="button" class="dropdown-item" onclick="exportReportCsv()">Download CSV</button>
+                            </li>
+                            <li>
+                                <button type="button" class="dropdown-item" onclick="exportReportXlsx()">Download Excel (.xlsx)</button>
+                            </li>
+                        </ul>
+                    </div>
                     <a href="{% url 'frontend:admin_dashboard' %}" class="btn btn-outline-info">
                         <i class="bi bi-speedometer2"></i> Dashboard
                     </a>
@@ -310,7 +320,7 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 <button type="button" class="btn btn-primary" onclick="downloadReport()">
-                    <i class="bi bi-download"></i> Download PDF
+                    <i class="bi bi-download"></i> Download CSV
                 </button>
             </div>
         </div>
@@ -322,6 +332,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 let charts = {};
+let currentDetailedReport = null;
+let currentDetailedReportType = '';
 
 document.addEventListener('DOMContentLoaded', function() {
     loadAnalytics();
@@ -578,22 +590,34 @@ function refreshAnalytics() {
     showToast('Analytics refreshed!', 'success');
 }
 
-function exportReport() {
+function exportReportCsv() {
     const formData = new FormData(document.getElementById('dateRangeForm'));
     const params = new URLSearchParams(formData);
-    
-    // Create download link
     const link = document.createElement('a');
     link.href = `/api/analytics/export/?${params}`;
     link.download = 'analytics-report.csv';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    showToast('Report exported successfully!', 'success');
+    showToast('CSV export started.', 'success');
+}
+
+function exportReportXlsx() {
+    const formData = new FormData(document.getElementById('dateRangeForm'));
+    const params = new URLSearchParams(formData);
+    params.set('export_format', 'xlsx');
+    const link = document.createElement('a');
+    link.href = `/api/analytics/export/?${params}`;
+    link.download = 'analytics-report.xlsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Excel export started.', 'success');
 }
 
 function generateReport(type) {
+    currentDetailedReport = null;
+    currentDetailedReportType = type;
     const modal = new bootstrap.Modal(document.getElementById('reportModal'));
     modal.show();
     
@@ -616,6 +640,7 @@ async function loadDetailedReport(type) {
         
         if (response.ok) {
             const report = await response.json();
+            currentDetailedReport = report;
             renderDetailedReport(report);
         } else {
             document.getElementById('reportContent').innerHTML = 
@@ -667,8 +692,40 @@ function renderDetailedReport(report) {
 }
 
 function downloadReport() {
-    // Implementation for downloading PDF report
-    showToast('PDF download feature coming soon!', 'info');
+    if (!currentDetailedReport || !currentDetailedReport.data) {
+        showToast('Generate a report before downloading it.', 'warning');
+        return;
+    }
+
+    const reportRows = currentDetailedReport.data;
+    if (reportRows.length === 0) {
+        showToast('No report data available to export.', 'warning');
+        return;
+    }
+
+    const headers = Object.keys(reportRows[0]);
+    const csvLines = [
+        headers.join(','),
+        ...reportRows.map(row =>
+            headers.map(header => {
+                const value = row[header] ?? '';
+                const escaped = String(value).replace(/"/g, '""');
+                return `"${escaped}"`;
+            }).join(',')
+        ),
+    ];
+
+    const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `${currentDetailedReportType || 'analytics-report'}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(downloadUrl);
+
+    showToast('Detailed report downloaded successfully!', 'success');
 }
 </script>
 {% endblock %} 

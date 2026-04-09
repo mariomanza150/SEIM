@@ -61,11 +61,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Saved searches on deadlines / calendar view | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-09 | `SavedSearch.search_type` value `calendar`; `serializeCalendarFilters` / `deserializeCalendarFilters` in `staffListSearchPresets.js`; `DeadlinesCalendar.vue` uses `useStaffSavedPresets` (save / apply / default / delete). Migration `0016_alter_savedsearch_search_type_calendar`. Vitest: `staffListSearchPresets.spec.js`. |
 | Multi-language student profile (additional languages) | `accounts`, `frontend-vue`, `api` | Implemented | 2026-04-09 | `Profile.additional_languages` JSON list `{name, level}` (CEFR optional), max 20; `ProfileSerializer` validation; migration `0007_profile_additional_languages`. Vue `Profile.vue` add/remove rows; primary `language` / `language_level` unchanged for eligibility. Tests: `tests/unit/accounts/test_profile_additional_languages.py`. |
 | Per-user calendar (.ics) / webcal subscribe URL | `exchange`, `api`, `frontend-vue` | Implemented | 2026-04-09 | Signed token on `GET /api/calendar/subscribe.ics` (90d–730d horizon, `type=all`); `GET /api/calendar/events/subscribe-token/` for `ics_url` / `webcal_url`; shared `build_calendar_event_dicts` in `exchange/calendar_events.py`. Vue Deadlines page: copy links. Tests: `tests/unit/exchange/test_calendar_api.py` (`TestCalendarEventAPI` subscribe cases). |
+| Analytics dashboard Excel export | `analytics`, `api`, `admin UI` | Implemented | 2026-04-09 | `GET /api/analytics/export/?export_format=xlsx` (default CSV; param is not `format`, which DRF reserves). Workbook sheets: Metrics, Application status, Program performance — same data as CSV. `analytics/dashboard_export.py`; dependency `openpyxl`. Admin analytics template: Export dropdown (CSV / Excel). Tests: `test_analytics_views_simple.py` (`test_export_api_returns_xlsx_attachment`). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Analytics dashboard Excel export | `analytics`, `api`, `admin UI` | Implementing `format=xlsx` on `/api/analytics/export/` | 2026-04-09 | autonomous-agent |
+| _None currently assigned_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -95,7 +96,7 @@ _All Priority 1 items in this subsection are implemented above._
 |---------|--------|-------|
 | Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | Per-event-type rules matrix, custom reminder templates, role-targeted routing beyond event hooks; digests for **unread summaries** are implemented separately above. |
 | Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets if a dedicated **analytics** staff UI is added later (review queue, agreements, documents, programs, and **calendar** are covered). |
-| Export reports to PDF | `analytics`, `admin UI` | **Excel in progress** (see IN PROGRESS). CSV remains default at `/api/analytics/export/`. PDF generation still planned. |
+| Export reports to PDF | `analytics`, `admin UI` | CSV and **Excel** (`?export_format=xlsx`) are available at `/api/analytics/export/`. PDF generation still planned. |
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
@@ -137,5 +138,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (calendar ICS / webcal subscribe feed)*  
+*Last updated: 2026-04-09 (analytics Excel export)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

@@ -383,3 +383,100 @@ class TestAnalyticsAPIViewsSimple(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, {})
+
+
+class TestAdvancedAnalyticsAPIViews(APITestCase):
+    """Tests for the richer analytics API endpoints under /api/analytics/."""
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='analytics-user',
+            email='analytics@example.com',
+            password='testpass123'
+        )
+        self.client.force_authenticate(user=self.user)
+
+        self.program = Program.objects.create(
+            name="Analytics Program",
+            description="Analytics test program",
+            start_date=timezone.now().date(),
+            end_date=timezone.now().date() + timedelta(days=120),
+            is_active=True,
+        )
+        self.approved_status, _ = ApplicationStatus.objects.get_or_create(
+            name="approved",
+            defaults={"order": 1},
+        )
+        self.rejected_status, _ = ApplicationStatus.objects.get_or_create(
+            name="rejected",
+            defaults={"order": 2},
+        )
+
+        Application.objects.create(
+            program=self.program,
+            student=self.user,
+            status=self.approved_status,
+        )
+        Application.objects.create(
+            program=self.program,
+            student=self.user,
+            status=self.rejected_status,
+        )
+
+    def test_dashboard_api_returns_expected_sections(self):
+        url = reverse('api:analytics-dashboard')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('metrics', response.data)
+        self.assertIn('application_status', response.data)
+        self.assertIn('monthly_trend', response.data)
+        self.assertIn('user_activity', response.data)
+        self.assertIn('demographics', response.data)
+        self.assertIn('program_performance', response.data)
+        self.assertEqual(response.data['metrics']['total_applications'], 2)
+
+    def test_report_detail_api_returns_application_report(self):
+        url = reverse('api:analytics-report-detail', kwargs={'report_type': 'applications'})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['report_type'], 'applications')
+        self.assertIn('summary', response.data)
+        self.assertTrue(len(response.data['data']) >= 1)
+
+    def test_report_detail_api_unknown_type(self):
+        url = reverse('api:analytics-report-detail', kwargs={'report_type': 'unknown'})
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn('error', response.data)
+
+    def test_export_api_returns_csv_attachment(self):
+        url = reverse('api:analytics-export')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('text/csv', response['Content-Type'])
+        self.assertIn('attachment; filename="analytics-report.csv"', response['Content-Disposition'])
+        self.assertIn('Metric,Value', response.content.decode('utf-8'))
+
+    def test_export_api_returns_xlsx_attachment(self):
+        from io import BytesIO
+
+        from openpyxl import load_workbook
+
+        url = reverse('api:analytics-export')
+        response = self.client.get(url, {'export_format': 'xlsx'})
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn(
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            response['Content-Type'],
+        )
+        self.assertIn('attachment; filename="analytics-report.xlsx"', response['Content-Disposition'])
+        wb = load_workbook(BytesIO(response.content))
+        self.assertEqual(wb.sheetnames[0], 'Metrics')
+        self.assertIn('Application status', wb.sheetnames)
+        self.assertIn('Program performance', wb.sheetnames)
