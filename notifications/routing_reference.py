@@ -49,6 +49,12 @@ SETTINGS_CATEGORY_TYPICAL_TRIGGERS: dict[str, str] = {
     ),
 }
 
+DIGEST_TYPICAL_TRIGGERS = (
+    "Scheduled job summarizes unread in-app notifications for users who enabled a digest "
+    "frequency. Sends use settings_category=system: in-app delivery respects inapp_system; "
+    "email requires email_system and email_notification_digest (and digest frequency not off)."
+)
+
 
 def build_notification_routing_reference() -> dict:
     """Structured map for coordinators/admins (API + future UI)."""
@@ -71,7 +77,7 @@ def build_notification_routing_reference() -> dict:
     }
     reminder_map = dict(REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY)
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "settings_categories": categories,
         "reminder_event_type_to_settings_category": reminder_map,
         "reminder_event_type_descriptions": {
@@ -82,5 +88,6 @@ def build_notification_routing_reference() -> dict:
             "settings_category": "system",
             "email_gates": ["email_system", "email_notification_digest"],
             "inapp_user_settings_field": "inapp_system",
+            "typical_triggers": DIGEST_TYPICAL_TRIGGERS,
         },
     }

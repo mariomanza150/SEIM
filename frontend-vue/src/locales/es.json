@@ -181,7 +181,8 @@
     "digestTitle": "Enrutado de resúmenes",
     "digestCategory": "settings_category",
     "digestEmailGates": "Condiciones de correo",
-    "digestInappField": "Campo en la aplicación"
+    "digestInappField": "Campo en la aplicación",
+    "digestTypicalTriggers": "Comportamiento habitual"
   },
   "exchangeAgreementsPage": {
     "breadcrumbAria": "Migas de pan",

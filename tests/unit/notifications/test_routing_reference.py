@@ -9,7 +9,7 @@ from notifications.tasks import REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
 
 def test_build_notification_routing_reference_shape():
     data = build_notification_routing_reference()
-    assert data["schema_version"] == 3
+    assert data["schema_version"] == 4
     cats = data["settings_categories"]
     assert "applications" in cats
     assert cats["applications"]["email_user_settings_field"] == "email_applications"
@@ -26,6 +26,7 @@ def test_build_notification_routing_reference_shape():
     digest = data["digest"]
     assert digest["settings_category"] == "system"
     assert "email_system" in digest["email_gates"]
+    assert "Scheduled job" in digest["typical_triggers"]
 
 
 def test_reminder_event_types_have_descriptions():

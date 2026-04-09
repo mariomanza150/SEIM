@@ -16,7 +16,7 @@ vi.mock('@/composables/useToast', () => ({
 }))
 
 const mockPayload = {
-  schema_version: 3,
+  schema_version: 4,
   settings_categories: {
     applications: {
       email_user_settings_field: 'email_applications',
@@ -40,6 +40,7 @@ const mockPayload = {
     settings_category: 'system',
     email_gates: ['email_system', 'email_notification_digest'],
     inapp_user_settings_field: 'inapp_system',
+    typical_triggers: 'Digest mock summary line for tests.',
   },
 }
 
@@ -70,6 +71,7 @@ describe('NotificationRouting', () => {
     expect(wrapper.text()).toContain('email_applications')
     expect(wrapper.text()).toContain('application_deadline')
     expect(wrapper.text()).toContain('Digest routing')
+    expect(wrapper.text()).toContain('Digest mock summary line for tests.')
     expect(wrapper.text()).toContain('Application lifecycle (mock).')
     expect(wrapper.text()).toContain('Deadline tied to application milestones.')
   })

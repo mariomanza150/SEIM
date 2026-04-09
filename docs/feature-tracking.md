@@ -89,14 +89,14 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-09 | `Notifications.vue`: `notifications.*` (filters, empty, pagination aria, toasts) + reuse `route.names`, `documentsPage` / `applicationFormPage` / `applicationsPage` where applicable. Vitest: `Notifications.spec.js`. |
 | Vue i18n: DocumentUpload component | `frontend-vue` | Implemented | 2026-04-09 | `documentUpload.*` + `documentDetailPage.labelDocumentType`; `DocumentUpload.vue` on application detail. Vitest: `DocumentUpload.spec.js`. |
 | Vue i18n: Notifications full page | `frontend-vue` | Implemented | 2026-04-08 | Extended `notifications.*` + reuse `route.names`, `documentsPage` / `applicationsPage` / `applicationFormPage` / `reviewQueuePage`; `Notifications.vue` filters, list, empty/loading/error, pagination, mark-read + toasts, locale-relative dates (`timeDaysAgo`). Vitest: `Notifications.spec.js`. |
-| Staff notification routing reference API | `notifications`, `api`, `seim` | Implemented | 2026-04-09 | Read-only `GET /api/notifications/routing-reference/`: `settings_categories` (`typical_triggers`, optional `notes`), `reminder_event_type_to_settings_category`, **`reminder_event_type_descriptions`**, digest; **`schema_version` 3**. `REMINDER_EVENT_TYPE_DESCRIPTIONS` + `SETTINGS_CATEGORY_TYPICAL_TRIGGERS` in `routing_reference.py`. Tests: `test_notification_routing_reference_api.py`, `test_routing_reference.py`. |
-| Staff Vue read-only notification routing matrix | `frontend-vue`, `notifications`, `api` | Implemented | 2026-04-09 | SPA `/notification-routing`: category + **reminder** tables (reminder **Description** column from API); digest; staff sidebar; en/es. Vitest: `NotificationRouting.spec.js`. |
+| Staff notification routing reference API | `notifications`, `api`, `seim` | Implemented | 2026-04-09 | Read-only `GET /api/notifications/routing-reference/`: `settings_categories`, reminder map + **descriptions**, **`digest.typical_triggers`** (`DIGEST_TYPICAL_TRIGGERS`); **`schema_version` 4**. Tests: `test_notification_routing_reference_api.py`, `test_routing_reference.py`. |
+| Staff Vue read-only notification routing matrix | `frontend-vue`, `notifications`, `api` | Implemented | 2026-04-09 | SPA `/notification-routing`: category + reminder tables; **digest** card shows **Typical behavior** (`digest.typical_triggers`); staff sidebar; en/es. Vitest: `NotificationRouting.spec.js`. |
 | Notification routing reference: OpenAPI + Settings staff link | `notifications`, `frontend-vue`, `api` | Implemented | 2026-04-09 | `NotificationRoutingReferenceSerializer` + `@extend_schema` on `NotificationRoutingReferenceView` (200/403) for `/api/docs/`. Settings page: staff-only alert with link to `NotificationRouting` (`settings.notificationRoutingStaffLink` en/es). Tests: `tests/unit/notifications/test_routing_reference.py`, `Settings.spec.js` (show/hide link). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Notification routing: digest typical_triggers + test matrix settings-ui | `notifications`, `frontend-vue`, `docs` | In progress | 2026-04-09 | loop |
+| _None_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -125,7 +125,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings channel matrix** on transactional sends and on **digests** (`settings_category=system`). Deadline reminders map `event_type` to the right group. Staff **read-only** API (`schema_version` 3: **typical_triggers** + **reminder_event_type_descriptions**) + OpenAPI + Vue matrix + Settings link. Remaining: custom templates, **editable** admin per-event matrix UI, deeper per-notification-type role routing. |
+| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings channel matrix** on transactional sends and on **digests** (`settings_category=system`). Deadline reminders map `event_type` to the right group. Staff **read-only** API (`schema_version` 4: category + reminder docs + **digest typical_triggers**) + OpenAPI + Vue matrix + Settings link. Remaining: custom templates, **editable** admin per-event matrix UI, deeper per-notification-type role routing. |
 | Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets if a dedicated **analytics** staff UI is added later (review queue, agreements, documents, programs, and **calendar** are covered). |
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
@@ -170,5 +170,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: digest routing notes — in progress)*  
+*Last updated: 2026-04-09 (loop: digest typical_triggers, schema v4 + test matrix settings-ui)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

@@ -181,7 +181,8 @@
     "digestTitle": "Digest routing",
     "digestCategory": "settings_category",
     "digestEmailGates": "Email gates",
-    "digestInappField": "In-app field"
+    "digestInappField": "In-app field",
+    "digestTypicalTriggers": "Typical behavior"
   },
   "exchangeAgreementsPage": {
     "breadcrumbAria": "Breadcrumb",

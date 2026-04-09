@@ -38,7 +38,7 @@ _Map each row to one or more rows in `docs/feature-tracking.md` § **IMPLEMENTED
 | `programs-applications` | Exchange programs and application workflow | — | — | — | | Catalog, state transitions, timeline |
 | `documents-core` | Document management + checklist + preview | — | — | — | | Upload, validate, resubmit, preview API |
 | `dynamic-forms` | Dynamic form builder + Vue consumption + steps / branching | — | — | — | | `application_forms`, `df_*`, visibility |
-| `notifications` | Notifications center, real-time, digests, routing reference | Partial | — | — | 2026-04-09 | Routing ref: `tests/unit/notifications/test_routing_reference.py`, `test_notifications_tasks.py`, `tests/integration/api/test_notification_routing_reference_api.py`; Vue `NotificationRouting.spec.js`, `Settings.spec.js` (staff link). WebSocket / inbox E2E still open. |
+| `notifications` | Notifications center, real-time, digests, routing reference | Partial | — | — | 2026-04-09 | Routing ref (schema v4): `test_routing_reference.py`, `test_notification_routing_reference_api.py`, `test_notifications_tasks.py`; Vue `NotificationRouting.spec.js`, `Settings.spec.js`. WebSocket / inbox E2E still open. |
 | `grades` | Grade translation | — | — | — | | |
 | `analytics` | Analytics dashboard + exports (CSV/XLSX/PDF) | — | — | — | | |
 | `vue-portal` | Vue student/coordinator portal (shell, routing, a11y) | — | — | — | | Dashboard, nav, i18n baseline |
@@ -47,7 +47,7 @@ _Map each row to one or more rows in `docs/feature-tracking.md` § **IMPLEMENTED
 | `agreements` | Exchange agreements + documents + renewal + expiration reminders | — | — | — | | |
 | `calendar-ics` | Calendar events + deadlines + ICS subscribe | — | — | — | | |
 | `data-management` | Staff data management + bulk student import | — | — | — | | |
-| `settings-ui` | User settings (appearance, notifications, i18n) | — | — | — | | |
+| `settings-ui` | User settings (appearance, notifications, i18n) | Partial | — | — | 2026-04-09 | Vitest `frontend-vue/src/views/Settings.spec.js` (load/save, UI language, staff link to notification routing). Playwright not recorded. |
 | `readiness-compare` | Application readiness, program filters, compare | — | — | — | | |
 
 _Add rows for any **IN PROGRESS** or high-risk **IMPLEMENTED** feature from the tracker that is not represented above._
@@ -70,4 +70,4 @@ _Use these as hints when filling the **Browser** column; replace with exact `tes
 
 ---
 
-*Last updated: 2026-04-08 — `auth-api` unit verified (Docker + Vitest); JWT integration tests aligned with `api:` URLs and email-based token view; Playwright smoke/browser Partial (host / browser system libs). Notifications row unchanged from prior routing-ref note.*
+*Last updated: 2026-04-09 — Notification routing reference schema v4 (digest `typical_triggers`); `settings-ui` Vitest paths recorded (`Settings.spec.js`). See `auth-api` row for prior auth verification notes.*

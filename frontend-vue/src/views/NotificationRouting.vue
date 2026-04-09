@@ -106,6 +106,10 @@
               </dd>
               <dt class="col-sm-3">{{ t('notificationRoutingPage.digestInappField') }}</dt>
               <dd class="col-sm-9"><code>{{ payload.digest.inapp_user_settings_field }}</code></dd>
+              <template v-if="payload.digest.typical_triggers">
+                <dt class="col-sm-3">{{ t('notificationRoutingPage.digestTypicalTriggers') }}</dt>
+                <dd class="col-sm-9 text-muted">{{ payload.digest.typical_triggers }}</dd>
+              </template>
             </dl>
           </div>
         </div>
