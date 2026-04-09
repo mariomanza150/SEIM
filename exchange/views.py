@@ -5,15 +5,20 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from core.cache import cache_api_response
-from core.permissions import IsAdminOrReadOnly, IsStudentOrReadOnly
+from core.permissions import (
+    IsAdminOrReadOnly,
+    IsCoordinatorOrAdmin,
+    IsStudentOrReadOnly,
+)
 
 from datetime import datetime, timedelta
 
-from .filters import ApplicationFilter, ProgramFilter
+from .filters import ApplicationFilter, ExchangeAgreementFilter, ProgramFilter
 from .models import (
     Application,
     ApplicationStatus,
     Comment,
+    ExchangeAgreement,
     Program,
     SavedSearch,
     TimelineEvent,
@@ -23,6 +28,7 @@ from .serializers import (
     ApplicationStatusSerializer,
     CalendarEventSerializer,
     CommentSerializer,
+    ExchangeAgreementSerializer,
     ProgramSerializer,
     SavedSearchSerializer,
     TimelineEventSerializer,
@@ -32,10 +38,40 @@ from .services import ApplicationService
 # Create your views here.
 
 
+class ExchangeAgreementViewSet(viewsets.ModelViewSet):
+    """Staff registry for exchange agreements (coordinators and admins)."""
+
+    queryset = ExchangeAgreement.objects.prefetch_related("programs").all()
+    serializer_class = ExchangeAgreementSerializer
+    permission_classes = [IsCoordinatorOrAdmin]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_class = ExchangeAgreementFilter
+    search_fields = [
+        "title",
+        "partner_institution_name",
+        "partner_country",
+        "internal_reference",
+        "partner_reference_id",
+        "notes",
+    ]
+    ordering_fields = [
+        "start_date",
+        "end_date",
+        "created_at",
+        "partner_institution_name",
+        "status",
+        "title",
+    ]
+
+
 class ProgramViewSet(viewsets.ModelViewSet):
     """ViewSet for exchange programs with admin-only write permissions."""
 
-    queryset = Program.objects.all()
+    queryset = Program.objects.prefetch_related("coordinators")
     serializer_class = ProgramSerializer
     permission_classes = [IsAdminOrReadOnly]  # Use custom permission class
     filter_backends = [
@@ -85,6 +121,8 @@ class ProgramViewSet(viewsets.ModelViewSet):
         cloned_program = Program.objects.create(
             name=f"{original_program.name} (Copy)",
             description=original_program.description,
+            application_open_date=original_program.application_open_date,
+            application_deadline=original_program.application_deadline,
             start_date=original_program.start_date,
             end_date=original_program.end_date,
             is_active=False,  # Start as inactive, admin must activate
@@ -97,6 +135,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
             recurring=original_program.recurring,
             application_form=original_program.application_form,
         )
+        cloned_program.coordinators.set(original_program.coordinators.all())
 
         # Invalidate program cache
         from core.cache import invalidate_cache_pattern
@@ -174,8 +213,10 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         base_qs = Application.objects.select_related(
             'program',           # ForeignKey - use select_related
             'student',           # ForeignKey
+            'assigned_coordinator',
             'status'             # ForeignKey
         ).prefetch_related(
+            'program__coordinators',
             'student__roles',    # ManyToMany through student
             'comment_set',       # Reverse ForeignKey (comments for this application)
             'comment_set__author',  # And the authors of those comments
@@ -310,6 +351,11 @@ class CommentViewSet(viewsets.ModelViewSet):
                 from core.cache import invalidate_cache_pattern
 
                 invalidate_cache_pattern(f"api:CommentViewSet:*{application_id}*")
+                from notifications.services import NotificationService
+
+                NotificationService.broadcast_application_sync(
+                    str(application_id), "comment_added"
+                )
         return response
 
 
@@ -317,8 +363,10 @@ class TimelineEventViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = TimelineEvent.objects.all()
     serializer_class = TimelineEventSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["application", "event_type", "created_by"]
+    ordering_fields = ["created_at", "updated_at"]
+    ordering = ["created_at"]
 
     def get_queryset(self):
         """
@@ -328,7 +376,7 @@ class TimelineEventViewSet(viewsets.ReadOnlyModelViewSet):
         """
         user = self.request.user
 
-        # Base queryset with optimizations
+        # Base queryset with optimizations (default chronological for timelines)
         base_qs = TimelineEvent.objects.select_related(
             'application',              # ForeignKey
             'application__program',     # Through application
@@ -337,18 +385,13 @@ class TimelineEventViewSet(viewsets.ReadOnlyModelViewSet):
             'created_by',               # ForeignKey (nullable)
         ).prefetch_related(
             'created_by__roles'        # Creator's roles (if exists)
-        ).order_by('-created_at')      # Most recent first
+        )
 
         if user.has_role("coordinator") or user.has_role("admin"):
             return base_qs
         else:
             # Students can only see events for their own applications
             return base_qs.filter(application__student=user)
-
-    @cache_api_response(timeout=300)  # Cache for 5 minutes
-    def list(self, request, *args, **kwargs):
-        """List timeline events with caching."""
-        return super().list(request, *args, **kwargs)
 
 
 class SavedSearchViewSet(viewsets.ModelViewSet):

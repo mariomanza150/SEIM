@@ -137,7 +137,16 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             'type': 'notification.update',
             'notification': event['notification']
         }))
-    
+
+    async def application_sync(self, event):
+        """Notify SPA to refetch application / document detail (no DB notification row)."""
+        await self.send(text_data=json.dumps({
+            'type': 'application.sync',
+            'application_id': event['application_id'],
+            'change_type': event['change_type'],
+            'document_id': event.get('document_id'),
+        }))
+
     @database_sync_to_async
     def mark_notification_read(self, notification_id):
         """

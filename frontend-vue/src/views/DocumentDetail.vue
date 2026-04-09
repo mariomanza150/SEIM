@@ -594,14 +594,35 @@ async function submitReplaceFile() {
   }
 }
 
+function onApplicationSyncEvent(ev) {
+  const d = ev.detail
+  if (!document.value?.id || !d?.applicationId) return
+  const targetApp = String(d.applicationId)
+  const thisApp = String(document.value.application)
+  const thisDoc = String(document.value.id)
+  if (d.documentId && String(d.documentId) === thisDoc) {
+    fetchDocument()
+    return
+  }
+  if (targetApp === thisApp) {
+    fetchDocument()
+  }
+}
+
 onMounted(async () => {
   await authStore.checkAuth()
   await fetchApplications()
   await fetchDocument()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('seim-application-sync', onApplicationSyncEvent)
+  }
 })
 
 onUnmounted(() => {
   revokePreviewUrl()
+  if (typeof window !== 'undefined') {
+    window.removeEventListener('seim-application-sync', onApplicationSyncEvent)
+  }
 })
 </script>
 

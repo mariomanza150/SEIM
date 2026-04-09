@@ -114,6 +114,7 @@ class NotificationService:
                     'action_text': notification.action_text,
                     'sent_at': notification.sent_at.isoformat(),
                     'is_read': notification.is_read,
+                    'data': notification.data or {},
                 }
             }
             
@@ -134,6 +135,46 @@ class NotificationService:
                 f"Failed to broadcast notification {notification.id} via WebSocket: {e}",
                 exc_info=True
             )
+
+    @staticmethod
+    def broadcast_application_sync(application_id, change_type, document_id=None):
+        """
+        Push a lightweight sync hint to all stakeholders (student, assigned coordinator,
+        program coordinators) so SPA detail views can refetch without a new notification row.
+        """
+        try:
+            channel_layer = get_channel_layer()
+            if not channel_layer:
+                return
+            from exchange.models import Application
+
+            app = (
+                Application.objects.select_related("student", "assigned_coordinator")
+                .prefetch_related("program__coordinators")
+                .filter(pk=application_id)
+                .first()
+            )
+            if not app:
+                return
+            user_ids = set()
+            if app.student_id:
+                user_ids.add(app.student_id)
+            if app.assigned_coordinator_id:
+                user_ids.add(app.assigned_coordinator_id)
+            user_ids.update(app.program.coordinators.values_list("id", flat=True))
+            doc_part = str(document_id) if document_id is not None else None
+            for uid in user_ids:
+                async_to_sync(channel_layer.group_send)(
+                    f"notifications_{uid}",
+                    {
+                        "type": "application.sync",
+                        "application_id": str(application_id),
+                        "change_type": change_type,
+                        "document_id": doc_part,
+                    },
+                )
+        except Exception as e:
+            logger.debug("broadcast_application_sync skipped: %s", e, exc_info=True)
 
     @staticmethod
     def send_bulk_notifications(recipients, title, message, notification_type="in_app"):

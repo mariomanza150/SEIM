@@ -216,6 +216,25 @@ class TestNotificationConsumer:
         # No message should be received (connection closed)
         # This test verifies the consumer properly cleans up on disconnect
 
+    async def test_application_sync_forwards_to_client(self, user_student):
+        from unittest.mock import AsyncMock
+
+        consumer = NotificationConsumer()
+        consumer.send = AsyncMock()
+        await consumer.application_sync(
+            {
+                "type": "application.sync",
+                "application_id": "00000000-0000-0000-0000-000000000001",
+                "change_type": "comment_added",
+                "document_id": None,
+            }
+        )
+        consumer.send.assert_called_once()
+        payload = json.loads(consumer.send.call_args.kwargs["text_data"])
+        assert payload["type"] == "application.sync"
+        assert payload["change_type"] == "comment_added"
+        assert payload["document_id"] is None
+
 
 @pytest.fixture
 def notification(user_student):

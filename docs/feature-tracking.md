@@ -39,11 +39,12 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 | Rejected document feedback and response notifications | `documents`, `notifications`, `frontend-vue` | Implemented | 2026-04-08 | Resubmission API routes through `DocumentService.request_resubmission` (limits + notify application student); invalid validation and public staff comments notify the student; student file replacement notifies assigned/program coordinators; document detail API returns ordered validations, resubmission requests, and role-filtered comments; Vue document detail shows history, comments, staff actions, and replace-file flow. |
 | Coordinator review queue UI | `frontend-vue`, `exchange`, `documents` | Implemented | 2026-04-08 | Staff route `/review-queue` with table view, search/status/sort, and quick filters mapped to `GET /api/applications/?pending_review=true`, `needs_document_resubmit=true`, `assigned_to_me=true`. List serializer adds `student_display_name`, `student_email`, `program_name`. Dashboard link + router guard for coordinator/admin. Unit tests: `tests/unit/exchange/test_filters.py` (`TestApplicationReviewQueueFilters`). |
 | Inline document preview and review context | `frontend-vue`, `documents` | Implemented | 2026-04-08 | `GET /api/documents/{id}/preview/` streams the file with JWT; Vue document detail loads a blob preview (PDF iframe / image) and shows a short “Review context” list from open resubmissions and latest non-valid validation. `IsOwnerOrAdmin` updated so `Document` checks coordinator/admin role plus application student and uploader. Tests: `tests/integration/api/test_document_preview_api.py`. |
+| Live application and document status sync | `exchange`, `notifications`, `frontend-vue`, `documents` | Implemented | 2026-04-08 | `NotificationService.broadcast_application_sync` + `NotificationConsumer.application_sync` send `application.sync` over the existing `/ws/notifications/` channel to student, assigned coordinator, and program coordinators. Wired from comments, status/submit/withdraw, document upload/validate/resubmit/replace/comment. Vue `websocket.js` dispatches `seim-application-sync`; `ApplicationDetail` soft-refetches; `DocumentDetail` refetches when `application_id` or `document_id` matches. Tests: `test_application_sync_broadcast.py`, `test_websocket_consumer.py`, `websocket.spec.js`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Live application and document status sync | `exchange`, `notifications`, `frontend-vue`, `documents` | Implementation | 2026-04-08 | — |
+| _None currently assigned_ |  |  |  |  |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -52,8 +53,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 _All Priority 1 items in this subsection are implemented above._
 
 #### Applications, Documents, and Review Workflow
-| Feature | Module | Notes |
-|---------|--------|-------|
+_All Priority 1 items in this subsection are implemented above._
 
 #### User Experience, Accessibility, and Engagement
 | Feature | Module | Notes |
@@ -124,5 +124,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (inline document preview)*  
+*Last updated: 2026-04-08 (live application/document WebSocket sync)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

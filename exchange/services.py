@@ -122,6 +122,19 @@ class ApplicationService:
         }
 
     @staticmethod
+    def check_application_window(program: Program, on_date=None) -> Dict[str, Any]:
+        """
+        Validate whether a program is currently accepting new applications.
+
+        Raises:
+            ValueError: If the application window is not currently open.
+        """
+        window_status = program.get_application_window_status(on_date=on_date)
+        if not window_status["is_open"]:
+            raise ValueError(window_status["message"])
+        return window_status
+
+    @staticmethod
     def can_submit_application(user: User, program: Program) -> bool:
         """Check if user has another active application for this program."""
         return not Application.objects.filter(
@@ -132,6 +145,39 @@ class ApplicationService:
         ).exists()
 
     @staticmethod
+    def get_default_coordinator(program: Program) -> Optional[User]:
+        """Return the sole program coordinator when exactly one is assigned."""
+        coordinator_ids = list(program.coordinators.values_list("id", flat=True)[:2])
+        if len(coordinator_ids) != 1:
+            return None
+        return program.coordinators.get(id=coordinator_ids[0])
+
+    @staticmethod
+    def _ensure_application_form_complete(application: Application) -> None:
+        """Raise ValueError if the program's dynamic form exists but responses are incomplete."""
+        ft = application.program.application_form
+        if not ft:
+            return
+        sub = ApplicationService.get_dynamic_form_submission(application)
+        if not sub:
+            raise ValueError("Complete the program application form before submitting.")
+        from application_forms.services import FormSubmissionService
+
+        try:
+            FormSubmissionService.validate_responses(ft, sub.responses)
+        except ValidationError as exc:
+            msgs = list(exc.messages) if hasattr(exc, "messages") else [str(exc)]
+            raise ValueError("; ".join(msgs)) from exc
+
+    @staticmethod
+    def _ensure_submission_requirements(application: Application) -> None:
+        """Dynamic form completeness and required documents (if configured)."""
+        ApplicationService._ensure_application_form_complete(application)
+        from documents.services import DocumentService
+
+        DocumentService.ensure_required_documents_approved(application)
+
+    @staticmethod
     @transaction.atomic
     def submit_application(application: Application, user: User) -> Application:
         """Submit an application (draft -> submitted) with eligibility and single active check."""
@@ -140,6 +186,7 @@ class ApplicationService:
         ApplicationService.check_eligibility(user, application.program)
         if not ApplicationService.can_submit_application(user, application.program):
             raise ValueError("You already have an active application for this program.")
+        ApplicationService._ensure_submission_requirements(application)
         application.status = ApplicationStatus.objects.get(name="submitted")
         application.submitted_at = timezone.now()
         application.save()
@@ -149,6 +196,8 @@ class ApplicationService:
             description="Application submitted.",
             created_by=user,
         )
+
+        NotificationService.broadcast_application_sync(str(application.id), "application_submitted")
 
         # Notify student that submission was successful with link to application
         NotificationService.send_notification(
@@ -199,7 +248,10 @@ class ApplicationService:
             user, application, new_status_name
         ):
             raise ValueError("You do not have permission to perform this transition.")
-        
+
+        if new_status_name == "submitted":
+            ApplicationService._ensure_submission_requirements(application)
+
         application.status = new_status
         
         # Set submitted_at timestamp when transitioning to submitted status
@@ -213,6 +265,8 @@ class ApplicationService:
             description=f"Status changed to {new_status_name}.",
             created_by=user,
         )
+
+        NotificationService.broadcast_application_sync(str(application.id), "application_status_changed")
 
         # Notify student about status change with link to application
         NotificationService.send_notification(
@@ -252,6 +306,7 @@ class ApplicationService:
             description="Application withdrawn.",
             created_by=user,
         )
+        NotificationService.broadcast_application_sync(str(application.id), "application_withdrawn")
         return application
 
     @staticmethod
@@ -272,6 +327,7 @@ class ApplicationService:
             description="Comment added.",
             created_by=author,
         )
+        NotificationService.broadcast_application_sync(str(application.id), "comment_added")
         return comment
 
     @staticmethod
@@ -282,7 +338,7 @@ class ApplicationService:
 
         Args:
             application: Application instance
-            form_data: Dict of form field responses (keys starting with 'df_')
+            form_data: Dict with keys ``df_*`` and optional ``dynamic_form_current_step``
             user: User submitting the form
 
         Returns:
@@ -291,64 +347,86 @@ class ApplicationService:
         Raises:
             ValidationError: If form validation fails
         """
-        # Check if the program has a dynamic form
         if not application.program.application_form:
             return None
 
         form_type = application.program.application_form
 
-        # Extract dynamic form fields (prefixed with 'df_')
-        responses = {}
-        for key, value in form_data.items():
-            if key.startswith('df_'):
-                field_name = key[3:]  # Remove 'df_' prefix
-                responses[field_name] = value
+        responses_patch = {}
+        current_step_key = form_data.get("dynamic_form_current_step")
 
-        # If no dynamic form data was submitted, skip
-        if not responses:
+        for key, value in form_data.items():
+            if key.startswith("df_"):
+                responses_patch[key[3:]] = value
+
+        if not responses_patch:
             return None
 
-        # Import FormSubmission here to avoid circular imports
         try:
             from application_forms.models import FormSubmission
             from application_forms.services import FormSubmissionService
 
-            # Validate responses against schema
-            FormSubmissionService.validate_responses(form_type, responses)
-
-            # Check if there's an existing submission for this application
             existing_submission = FormSubmission.objects.filter(
                 application=application,
-                form_type=form_type
+                form_type=form_type,
             ).first()
 
+            merged = {
+                **(existing_submission.responses if existing_submission else {}),
+                **responses_patch,
+            }
+
+            if form_type.is_multi_step():
+                if current_step_key is None or str(current_step_key).strip() == "":
+                    raise ValidationError(
+                        "dynamic_form_current_step is required when saving a multi-step application form."
+                    )
+                step_field_names = form_type.get_step_field_names(str(current_step_key))
+                if step_field_names is None:
+                    raise ValidationError(f"Unknown form step: {current_step_key}")
+                FormSubmissionService.validate_step_patch(
+                    form_type, responses_patch, step_field_names
+                )
+                step_keys = [s["key"] for s in form_type.get_multi_step_layout()]
+                try:
+                    idx = step_keys.index(str(current_step_key))
+                except ValueError:
+                    application.dynamic_form_current_step = str(current_step_key)
+                else:
+                    if idx + 1 < len(step_keys):
+                        application.dynamic_form_current_step = step_keys[idx + 1]
+                    else:
+                        application.dynamic_form_current_step = step_keys[idx]
+                application.save(update_fields=["dynamic_form_current_step", "updated_at"])
+            else:
+                FormSubmissionService.validate_responses(form_type, merged)
+
+            is_update = existing_submission is not None
             if existing_submission:
-                # Update existing submission
-                existing_submission.responses = responses
+                existing_submission.responses = merged
                 existing_submission.save()
                 submission = existing_submission
             else:
-                # Create new submission
                 submission = FormSubmissionService.create_submission(
                     form_type=form_type,
                     submitted_by=user,
-                    responses=responses,
+                    responses=merged,
                     program=application.program,
-                    application=application
+                    application=application,
                 )
 
-            # Log the form submission in timeline
-            TimelineEvent.objects.create(
-                application=application,
-                event_type="form_submitted",
-                description=f"Dynamic form '{form_type.name}' submitted.",
-                created_by=user,
-            )
+            should_log_timeline = (not form_type.is_multi_step()) or (not is_update)
+            if should_log_timeline:
+                TimelineEvent.objects.create(
+                    application=application,
+                    event_type="form_submitted",
+                    description=f"Dynamic form '{form_type.name}' submitted.",
+                    created_by=user,
+                )
 
             return submission
 
         except ImportError:
-            # application_forms not available
             return None
         except ValidationError as e:
             raise ValidationError(f"Dynamic form validation failed: {str(e)}")

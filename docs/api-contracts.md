@@ -346,6 +346,9 @@ Real-time notifications via WebSocket:
 - Connection: `ws://localhost:8000/ws/notifications/`
 - Requires JWT authentication in connection header
 - Sends notification updates in real-time
+- **Server → client message types:**
+  - `notification.new` — `{ notification: { id, title, message, category, action_url, action_text, sent_at, is_read, data? } }`
+  - `application.sync` — `{ application_id, change_type, document_id? }` — hints the SPA to refetch the open application/document detail (no DB row); used for comments, status changes, document validation, etc.
 
 ---
 
