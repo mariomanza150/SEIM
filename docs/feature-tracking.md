@@ -72,7 +72,7 @@ _Reconciled into a single canonical tracker on 2026-04-08. Update this file as t
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None currently assigned_ |  |  |  |  |
+| Vue i18n: NotificationDropdown | `frontend-vue` | In progress | 2026-04-09 | Autonomous loop |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -105,7 +105,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **Dashboard + toast chrome shipped** (see IMPLEMENTED). Remaining: Applications/Documents/detail views, tables/modals, `NotificationDropdown` copy. |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | **In progress:** `NotificationDropdown` i18n. Shipped: Dashboard, toast, Login, NotFound, route announcer. Remaining: Applications/Documents/detail views, tables/modals. |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
