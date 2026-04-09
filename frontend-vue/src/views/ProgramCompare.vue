@@ -1,34 +1,34 @@
 <template>
   <div class="program-compare-page" data-testid="program-compare-page">
     <div class="container-fluid mt-4">
-      <nav aria-label="breadcrumb">
+      <nav :aria-label="t('programComparePage.breadcrumbAria')">
         <ol class="breadcrumb">
           <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">Dashboard</router-link>
+            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
           </li>
-          <li class="breadcrumb-item active">Compare programs</li>
+          <li class="breadcrumb-item active">{{ t('route.names.ProgramCompare') }}</li>
         </ol>
       </nav>
 
       <div class="row mb-4">
         <div class="col-lg-8">
-          <h2><i class="bi bi-columns-gap me-2"></i>Compare programs</h2>
+          <h2><i class="bi bi-columns-gap me-2"></i>{{ t('route.names.ProgramCompare') }}</h2>
           <p class="text-muted mb-0">
-            Select up to four active programs to compare dates, language requirements, and application windows side by side.
+            {{ t('programComparePage.pageSubtitle') }}
           </p>
         </div>
         <div class="col-lg-4 text-lg-end mt-2 mt-lg-0">
           <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-1"></i>New application
+            <i class="bi bi-plus-circle me-1"></i>{{ t('applicationsPage.newApplication') }}
           </router-link>
         </div>
       </div>
 
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading…</span>
+          <span class="visually-hidden">{{ t('programComparePage.loadingSpinner') }}</span>
         </div>
-        <p class="mt-3 text-muted">Loading programs…</p>
+        <p class="mt-3 text-muted">{{ t('programComparePage.loadingPrograms') }}</p>
       </div>
 
       <div v-else-if="loadError" class="alert alert-danger">{{ loadError }}</div>
@@ -36,7 +36,9 @@
       <template v-else>
         <div class="card mb-4">
           <div class="card-body">
-            <label class="form-label fw-semibold">Programs to compare ({{ selectedIds.length }} / {{ maxCompare }})</label>
+            <label class="form-label fw-semibold">{{
+              t('programComparePage.pickerLabel', { current: selectedIds.length, max: maxCompare })
+            }}</label>
             <div class="row g-2 program-picker-scroll">
               <div
                 v-for="p in programs"
@@ -58,7 +60,7 @@
             </div>
             <div class="mt-3 d-flex flex-wrap gap-2">
               <button type="button" class="btn btn-outline-secondary btn-sm" @click="clearSelection">
-                Clear selection
+                {{ t('programComparePage.clearSelection') }}
               </button>
             </div>
           </div>
@@ -69,7 +71,7 @@
           class="alert alert-info"
           data-testid="program-compare-hint"
         >
-          Choose at least two programs to see a comparison table.
+          {{ t('programComparePage.hintChooseTwo') }}
         </div>
 
         <div v-else class="card">
@@ -78,76 +80,86 @@
               <table class="table table-bordered table-hover mb-0 align-middle" data-testid="program-compare-table">
                 <thead class="table-light">
                   <tr>
-                    <th scope="col" class="text-muted small" style="min-width: 9rem">Criterion</th>
+                    <th scope="col" class="text-muted small" style="min-width: 9rem">{{ t('programComparePage.colCriterion') }}</th>
                     <th v-for="p in selectedPrograms" :key="p.id" scope="col">
                       <div class="fw-semibold">{{ p.name }}</div>
                       <router-link
                         class="btn btn-sm btn-outline-primary mt-1"
                         :to="{ name: 'ApplicationNew', query: { program: p.id } }"
                       >
-                        Apply
+                        {{ t('programComparePage.apply') }}
                       </router-link>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <th scope="row" class="small text-muted">Program dates</th>
+                    <th scope="row" class="small text-muted">{{ t('programComparePage.rowProgramDates') }}</th>
                     <td v-for="p in selectedPrograms" :key="`${p.id}-dates`" class="small">
-                      {{ formatDate(p.start_date) }} – {{ formatDate(p.end_date) }}
+                      {{ formatDate(p.start_date) }}{{ t('programComparePage.dateRangeSeparator') }}{{ formatDate(p.end_date) }}
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row" class="small text-muted">Application window</th>
+                    <th scope="row" class="small text-muted">{{ t('programComparePage.rowApplicationWindow') }}</th>
                     <td v-for="p in selectedPrograms" :key="`${p.id}-win`" class="small">
                       <div v-if="p.application_open_date || p.application_deadline">
-                        <div v-if="p.application_open_date">Opens: {{ formatDate(p.application_open_date) }}</div>
-                        <div v-if="p.application_deadline">Deadline: {{ formatDate(p.application_deadline) }}</div>
+                        <div v-if="p.application_open_date">
+                          {{ t('programComparePage.windowOpens', { date: formatDate(p.application_open_date) }) }}
+                        </div>
+                        <div v-if="p.application_deadline">
+                          {{ t('programComparePage.windowDeadline', { date: formatDate(p.application_deadline) }) }}
+                        </div>
                       </div>
-                      <span v-else class="text-muted">Not set</span>
+                      <span v-else class="text-muted">{{ t('programComparePage.windowNotSet') }}</span>
                       <div class="mt-1">
                         <span
                           class="badge"
                           :class="p.application_window_open ? 'bg-success' : 'bg-secondary'"
                         >
-                          {{ p.application_window_open ? 'Accepting applications' : 'Not open' }}
+                          {{
+                            p.application_window_open
+                              ? t('programComparePage.acceptingApplications')
+                              : t('programComparePage.notOpen')
+                          }}
                         </span>
                       </div>
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row" class="small text-muted">Min. GPA</th>
+                    <th scope="row" class="small text-muted">{{ t('programComparePage.rowMinGpa') }}</th>
                     <td v-for="p in selectedPrograms" :key="`${p.id}-gpa`">
-                      {{ p.min_gpa != null ? p.min_gpa : '—' }}
+                      {{ p.min_gpa != null ? p.min_gpa : t('reviewQueuePage.emDash') }}
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row" class="small text-muted">Language</th>
+                    <th scope="row" class="small text-muted">{{ t('programComparePage.rowLanguage') }}</th>
                     <td v-for="p in selectedPrograms" :key="`${p.id}-lang`" class="small">
                       <template v-if="p.required_language">
                         {{ p.required_language }}
                         <span v-if="p.min_language_level" class="badge bg-secondary">{{ p.min_language_level }}</span>
                       </template>
-                      <span v-else class="text-muted">—</span>
+                      <span v-else class="text-muted">{{ t('reviewQueuePage.emDash') }}</span>
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row" class="small text-muted">Age range</th>
+                    <th scope="row" class="small text-muted">{{ t('programComparePage.rowAgeRange') }}</th>
                     <td v-for="p in selectedPrograms" :key="`${p.id}-age`" class="small">
                       <template v-if="p.min_age != null || p.max_age != null">
-                        {{ p.min_age ?? '—' }} – {{ p.max_age ?? '—' }}
+                        {{ p.min_age != null ? p.min_age : t('reviewQueuePage.emDash') }}
+                        {{ t('programComparePage.dateRangeSeparator') }}
+                        {{ p.max_age != null ? p.max_age : t('reviewQueuePage.emDash') }}
                       </template>
-                      <span v-else class="text-muted">—</span>
+                      <span v-else class="text-muted">{{ t('reviewQueuePage.emDash') }}</span>
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row" class="small text-muted">Recurring</th>
+                    <th scope="row" class="small text-muted">{{ t('programComparePage.rowRecurring') }}</th>
                     <td v-for="p in selectedPrograms" :key="`${p.id}-rec`">
-                      {{ p.recurring ? 'Yes' : 'No' }}
+                      {{ p.recurring ? t('programComparePage.recurringYes') : t('programComparePage.recurringNo') }}
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row" class="small text-muted align-top">Description</th>
+                    <th scope="row" class="small text-muted align-top">{{ t('programComparePage.rowDescription') }}</th>
                     <td v-for="p in selectedPrograms" :key="`${p.id}-desc`" class="small text-muted">
                       {{ truncate(p.description, 280) }}
                     </td>
@@ -165,6 +177,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import {
@@ -175,6 +188,7 @@ import {
 
 const route = useRoute()
 const router = useRouter()
+const { t, locale } = useI18n()
 const { error: errorToast } = useToast()
 
 const maxCompare = MAX_COMPARE_PROGRAMS
@@ -192,8 +206,9 @@ const selectedPrograms = computed(() => {
 })
 
 function formatDate(d) {
-  if (!d) return '—'
-  return new Date(d).toLocaleDateString(undefined, {
+  if (!d) return t('reviewQueuePage.emDash')
+  const loc = locale.value === 'es' ? 'es' : 'en-US'
+  return new Date(d).toLocaleDateString(loc, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -201,7 +216,7 @@ function formatDate(d) {
 }
 
 function truncate(text, len) {
-  if (!text) return '—'
+  if (!text) return t('reviewQueuePage.emDash')
   const s = String(text).trim()
   if (s.length <= len) return s
   return `${s.slice(0, len)}…`
@@ -253,7 +268,7 @@ onMounted(async () => {
     selectedIds.value = fromQuery.filter((id) => valid.has(id))
   } catch (e) {
     console.error(e)
-    loadError.value = 'Could not load programs.'
+    loadError.value = t('programComparePage.loadError')
     errorToast(loadError.value)
   } finally {
     loading.value = false

@@ -160,5 +160,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-08 (Vue i18n Staff agreement documents)*  
+*Last updated: 2026-04-08 (Vue i18n Program compare)*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*
