@@ -2,6 +2,10 @@
   "a11y": {
     "skipToMain": "Skip to main content"
   },
+  "pagination": {
+    "previous": "Previous",
+    "next": "Next"
+  },
   "notifications": {
     "breadcrumbAria": "Breadcrumb",
     "fallbackToast": "New notification",
@@ -528,8 +532,6 @@
     "loadToastError": "Failed to load applications",
     "viewDetails": "View details",
     "paginationAria": "Applications pagination",
-    "previous": "Previous",
-    "next": "Next",
     "emptyTitle": "No applications yet",
     "emptyBody": "Start your exchange journey by creating your first application!",
     "createApplication": "Create application",
@@ -574,8 +576,6 @@
     "viewDetailAria": "View document details",
     "downloadTitle": "Download",
     "paginationAria": "Documents pagination",
-    "previous": "Previous",
-    "next": "Next",
     "emptyTitle": "No documents yet",
     "emptyBody": "Upload documents from your application detail page.",
     "goToApplications": "Go to applications"

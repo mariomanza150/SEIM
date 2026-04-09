@@ -161,4 +161,46 @@ describe('Documents', () => {
     expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.notAvailable'))
     expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.statusPendingShort'))
   })
+
+  it('shows shared pagination.previous and pagination.next when list spans pages', async () => {
+    const results = Array.from({ length: 10 }, (_, i) => ({
+      id: `doc-${i}`,
+      application: 'app-1',
+      file: `/media/f${i}.pdf`,
+      is_valid: true,
+      created_at: '2026-01-01T00:00:00Z',
+      type: { name: 'CV' },
+    }))
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/') {
+        return Promise.resolve({
+          data: { results: [{ id: 'app-1', program: { name: 'Spring Abroad' } }], count: 1 },
+        })
+      }
+      if (url === '/api/document-types/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({
+          data: {
+            results,
+            count: 11,
+            next: 'http://test/api/documents/?page=2',
+            previous: null,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+
+    const wrapper = mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain(i18n.global.t('pagination.previous'))
+    expect(wrapper.text()).toContain(i18n.global.t('pagination.next'))
+  })
 })

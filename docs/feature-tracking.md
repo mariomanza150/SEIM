@@ -75,10 +75,11 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue i18n: Login & NotFound + route screen-reader announcements | `frontend-vue` | Implemented | 2026-04-09 | `login.*` / `notFound.*` / `route.names.*` locale keys; `Login.vue` + `NotFound.vue` use `useI18n`. `#seim-route-announce` (`aria-live="polite"`) in `App.vue`; `announceRouteNavigation` in `utils/a11y.js` + `router.afterEach`. Vitest: `Login.spec.js`, `NotFound.spec.js`, `a11y.spec.js`, `App.spec.js`. |
 | Vue i18n: Dashboard layout + toast chrome | `frontend-vue` | Implemented | 2026-04-09 | `dashboard.*` + `toast.*` in locales; `Dashboard.vue` navbar/sidebar/stats/next-steps copy + logout/stats errors; `route.names.*` for shared labels; nav `aria-label` + toggler `aria-controls`; `ToastContainer.vue` translated headers + dismiss `aria-label`. Vitest: `Dashboard.spec.js`, `ToastContainer.spec.js`. |
 | Vue i18n: NotificationDropdown | `frontend-vue` | Implemented | 2026-04-09 | Extended `notifications.*` locale keys; `NotificationDropdown.vue` header/empty/loading/footer + default title/action fallbacks; relative `formatTime` via `t()` + `toLocaleDateString` by active locale; toggle `aria-label`. Vitest: `NotificationDropdown.spec.js`. |
-| Vue i18n: Applications list view | `frontend-vue` | Implemented | 2026-04-09 | `applicationsPage.*` for list chrome; card date labels `created` / `submitted` + status filter, program fallbacks, readiness, `formatStatus` / `formatDate` use `applicationDetailPage`; pagination, empty state, errors/toasts, delete confirm; icon-only edit/delete `aria-label`. Vitest: `Applications.spec.js` (incl. sparse card + submitted row). |
+| Vue i18n: Applications list view | `frontend-vue` | Implemented | 2026-04-09 | `applicationsPage.*` for list chrome; card date labels `created` / `submitted` + status filter, program fallbacks, readiness, `formatStatus` / `formatDate` use `applicationDetailPage`; `pagination.previous` / `next`; empty state, errors/toasts, delete confirm; icon-only edit/delete `aria-label`. Vitest: `Applications.spec.js` (incl. sparse card + submitted row + multi-page). |
 | Vue i18n: Applications list Created/Submitted from detail page | `frontend-vue` | Implemented | 2026-04-09 | Card lines use `applicationDetailPage.created` / `submitted` (removed duplicates from `applicationsPage` JSON). |
 | Vue i18n: Applications list shared applicationDetailPage strings | `frontend-vue` | Implemented | 2026-04-09 | Dropped duplicate `applicationsPage.status` / `notAvailable` / `readinessLabel` / `unknownProgram` from locale JSON; added `applicationDetailPage.unknownProgram`. |
-| Vue i18n: Documents list view | `frontend-vue` | Implemented | 2026-04-09 | `documentsPage.*` in locales; `Documents.vue` student/staff copy, filters, presets UI, table, pagination, errors/toasts; validation filter + badge use `documentDetailPage.statusValidatedShort` / `statusPendingShort`; list `fileName` / `getApplicationName` / `formatDate` use `documentDetailPage` fallbacks; `aria-label` / download titles. Vitest: `Documents.spec.js` (incl. sparse row). |
+| Vue i18n: Documents list view | `frontend-vue` | Implemented | 2026-04-09 | `documentsPage.*` in locales; `Documents.vue` student/staff copy, filters, presets UI, table, `pagination.previous` / `next`, errors/toasts; validation filter + badge use `documentDetailPage.statusValidatedShort` / `statusPendingShort`; list `fileName` / `getApplicationName` / `formatDate` use `documentDetailPage` fallbacks; `aria-label` / download titles. Vitest: `Documents.spec.js` (incl. sparse row + multi-page). |
+| Vue i18n: Shared list pagination labels | `frontend-vue` | Implemented | 2026-04-09 | Root `pagination.previous` / `next` (en/es); `Applications.vue` + `Documents.vue` (removed duplicates from `applicationsPage` / `documentsPage`). |
 | Vue i18n: Documents list validation labels namespaced | `frontend-vue` | Implemented | 2026-04-09 | Removed `documentsPage.statusValidated` / `statusPending`; reuse document detail short status strings. |
 | Vue i18n: Documents list shared documentDetailPage fallbacks | `frontend-vue` | Implemented | 2026-04-09 | Removed duplicate `fileUnknown` / `unknownApplication` / `notAvailable` from `documentsPage` JSON; aligned with document detail. |
 | Vue i18n: Document detail view | `frontend-vue` | Implemented | 2026-04-09 | `documentDetailPage.*` (incl. `notAvailable`, `fileUnknown`, `unknownApplication`) in locales; `DocumentDetail.vue` breadcrumbs via `route.names`, preview/review/comments/staff actions, quick actions, toasts; locale-aware `formatDateTime`; preview context lines translated. Vitest: `DocumentDetail.spec.js` (loaded doc + fallbacks). |
@@ -118,7 +119,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Shared list pagination labels | `frontend-vue` | In progress | 2026-04-09 | — |
+| _None_ | | | | |
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
 ### Priority 1 / MVP
@@ -152,7 +153,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** (`reviewQueuePage.*`) + **Staff exchange agreements** (`exchangeAgreementsPage.*`) + **Staff agreement documents** (`staffAgreementDocumentsPage.*`). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
+| Internationalization and accessibility pass for Vue UI | `frontend-vue` | Routed views + tab titles + **Settings** (`settings.*`, incl. cancel) + **Dashboard next-steps** + **breadcrumb** `aria-label` + **Profile** + **Notifications** + **ApplicationForm** program filter placeholder + **Program compare** + **Deadlines/calendar** (`calendarPage.*`) + **Review queue** (`reviewQueuePage.*`) + **Staff exchange agreements** (`exchangeAgreementsPage.*`) + **Staff agreement documents** (`staffAgreementDocumentsPage.*`) + **list `pagination.*`** (Applications/Documents). **Non-routed:** `HelloWorld.vue` (Vite starter; skip). |
 
 ## 🟠 DESIRED / BACKLOG 💡
 ### Priority 3 / Advanced Backlog
@@ -192,5 +193,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-09 (loop: Documents list validation status i18n — completed). Prior: **MQ-007** / matrix pass — [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-09 (loop: Shared `pagination.*` for Applications/Documents lists — completed). Prior: **MQ-007** — [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*

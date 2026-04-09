@@ -103,4 +103,30 @@ describe('Applications', () => {
     expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.status.submitted'))
     expect(wrapper.text()).toContain(`${i18n.global.t('applicationDetailPage.created')}:`)
   })
+
+  it('shows shared pagination.previous and pagination.next when list spans pages', async () => {
+    const results = Array.from({ length: 10 }, (_, i) => ({
+      id: String(i),
+      status: 'draft',
+      created_at: '2026-01-10T12:00:00Z',
+      program: { name: `Program ${i}`, institution: 'Uni' },
+    }))
+    api.get.mockResolvedValue({
+      data: {
+        results,
+        count: 11,
+        next: 'http://test/api/applications/?page=2',
+        previous: null,
+      },
+    })
+    const wrapper = mount(Applications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain(i18n.global.t('pagination.previous'))
+    expect(wrapper.text()).toContain(i18n.global.t('pagination.next'))
+  })
 })

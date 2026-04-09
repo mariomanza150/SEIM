@@ -2,6 +2,10 @@
   "a11y": {
     "skipToMain": "Saltar al contenido principal"
   },
+  "pagination": {
+    "previous": "Anterior",
+    "next": "Siguiente"
+  },
   "notifications": {
     "breadcrumbAria": "Migas de pan",
     "fallbackToast": "Nueva notificación",
@@ -528,8 +532,6 @@
     "loadToastError": "Error al cargar las solicitudes",
     "viewDetails": "Ver detalles",
     "paginationAria": "Paginación de solicitudes",
-    "previous": "Anterior",
-    "next": "Siguiente",
     "emptyTitle": "Aún no hay solicitudes",
     "emptyBody": "¡Empieza creando tu primera solicitud de intercambio!",
     "createApplication": "Crear solicitud",
@@ -574,8 +576,6 @@
     "viewDetailAria": "Ver detalle del documento",
     "downloadTitle": "Descargar",
     "paginationAria": "Paginación de documentos",
-    "previous": "Anterior",
-    "next": "Siguiente",
     "emptyTitle": "Aún no hay documentos",
     "emptyBody": "Sube documentos desde el detalle de tu solicitud.",
     "goToApplications": "Ir a solicitudes"

@@ -166,7 +166,7 @@
           <ul class="pagination justify-content-center">
             <li class="page-item" :class="{ disabled: !pagination.previous }">
               <button type="button" class="page-link" @click="goToPage(pagination.currentPage - 1)">
-                {{ t('applicationsPage.previous') }}
+                {{ t('pagination.previous') }}
               </button>
             </li>
             <li
@@ -179,7 +179,7 @@
             </li>
             <li class="page-item" :class="{ disabled: !pagination.next }">
               <button type="button" class="page-link" @click="goToPage(pagination.currentPage + 1)">
-                {{ t('applicationsPage.next') }}
+                {{ t('pagination.next') }}
               </button>
             </li>
           </ul>
