@@ -152,7 +152,3 @@ msgstr "Competente (C2)"
 # Model verbose names
 msgid "Application"
 msgstr "Solicitud"
-
-msgid "Applications"
-msgstr "Solicitudes"
-

@@ -111,7 +111,3 @@ msgstr "Niveau minimum de compétence linguistique (échelle CECR)."
 
 msgid "Application"
 msgstr "Candidature"
-
-msgid "Applications"
-msgstr "Candidatures"
-

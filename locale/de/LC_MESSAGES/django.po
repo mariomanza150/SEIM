@@ -111,7 +111,3 @@ msgstr "Mindestsprachniveau (GER-Skala)."
 
 msgid "Application"
 msgstr "Bewerbung"
-
-msgid "Applications"
-msgstr "Bewerbungen"
-
