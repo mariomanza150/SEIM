@@ -98,21 +98,42 @@
                 <h5 class="mb-0">
                   <i class="bi bi-calculator me-2"></i>{{ t('applicationDetailPage.scholarshipScoring.title') }}
                 </h5>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-secondary"
-                  :disabled="scholarshipExportLoading"
-                  @click="downloadScholarshipCohortExport"
+                <div
+                  class="btn-group btn-group-sm"
+                  role="group"
+                  :aria-label="t('applicationDetailPage.scholarshipScoring.exportGroupAria')"
                 >
-                  <span
-                    v-if="scholarshipExportLoading"
-                    class="spinner-border spinner-border-sm me-1"
-                    role="status"
-                    aria-hidden="true"
-                  ></span>
-                  <i v-else class="bi bi-download me-1"></i>
-                  {{ t('applicationDetailPage.scholarshipScoring.exportCohortCsv') }}
-                </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    :disabled="scholarshipExportLoading"
+                    @click="downloadScholarshipCohortExport('csv')"
+                  >
+                    <span
+                      v-if="scholarshipExportLoading"
+                      class="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    <template v-else>{{ t('applicationDetailPage.scholarshipScoring.exportCohortCsv') }}</template>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    :disabled="scholarshipExportLoading"
+                    @click="downloadScholarshipCohortExport('xlsx')"
+                  >
+                    {{ t('applicationDetailPage.scholarshipScoring.exportCohortXlsx') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    :disabled="scholarshipExportLoading"
+                    @click="downloadScholarshipCohortExport('pdf')"
+                  >
+                    {{ t('applicationDetailPage.scholarshipScoring.exportCohortPdf') }}
+                  </button>
+                </div>
               </div>
               <div class="card-body">
                 <p class="small text-muted mb-2">
@@ -619,23 +640,30 @@ const loading = ref(true)
 const error = ref(null)
 const scholarshipExportLoading = ref(false)
 
-async function downloadScholarshipCohortExport() {
+const SCHOLARSHIP_EXPORT_MIME = {
+  csv: 'text/csv;charset=utf-8',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  pdf: 'application/pdf',
+}
+
+async function downloadScholarshipCohortExport(format = 'csv') {
   const programId = application.value?.program
   if (!programId) {
     errorToast(t('applicationDetailPage.scholarshipScoring.exportMissingProgram'))
     return
   }
+  const fmt = format === 'xlsx' || format === 'pdf' ? format : 'csv'
   scholarshipExportLoading.value = true
   try {
     const response = await api.get('/api/applications/scholarship-scores-export/', {
-      params: { program: programId },
+      params: { program: programId, export_format: fmt },
       responseType: 'blob',
     })
-    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' })
+    const blob = new Blob([response.data], { type: SCHOLARSHIP_EXPORT_MIME[fmt] })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `scholarship-scores-${programId}.csv`
+    a.download = `scholarship-scores-${programId}.${fmt}`
     a.rel = 'noopener noreferrer'
     document.body.appendChild(a)
     a.click()

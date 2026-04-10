@@ -922,8 +922,12 @@ const createBlockedByWindow = computed(() => (
 ))
 
 watch(
-  () => form.value.program,
-  (pid) => {
+  () => ({
+    pid: form.value.program,
+    edit: isEditMode.value,
+    appId: route.params.id,
+  }),
+  ({ pid, edit, appId }) => {
     eligibilityPreviewMessages.value = []
     const next = { ...errors.value }
     delete next.program
@@ -931,13 +935,19 @@ watch(
     errors.value = next
 
     if (eligibilityCheckTimer) clearTimeout(eligibilityCheckTimer)
-    if (!pid || isEditMode.value) return
+    if (!pid) return
+    if (edit && !appId) return
 
     const seq = ++eligibilityCheckSeq
     eligibilityCheckTimer = setTimeout(async () => {
       eligibilityCheckTimer = null
       try {
-        const { data } = await api.get(`/api/programs/${pid}/check_eligibility/`)
+        let url = `/api/programs/${pid}/check_eligibility/`
+        if (edit && appId) {
+          const q = new URLSearchParams({ application: String(appId) })
+          url += `?${q.toString()}`
+        }
+        const { data } = await api.get(url)
         if (seq !== eligibilityCheckSeq) return
         if (data.eligible === false && data.message) {
           eligibilityPreviewMessages.value = parseEligibilityApiMessage(data.message)
