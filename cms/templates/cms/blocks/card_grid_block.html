@@ -12,7 +12,7 @@
     
     <div class="row g-4">
         {% for card in value.cards %}
-        <div class="col-md-{{ 12|divisibleby:value.columns }}">
+        <div class="{% if value.columns == '2' %}col-md-6{% elif value.columns == '4' %}col-md-3{% else %}col-md-4{% endif %}">
             <div class="card h-100 shadow-sm" style="transition: all 0.3s ease;">
                 <div class="card-body text-center p-4">
                     {% if card.icon %}

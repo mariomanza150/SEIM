@@ -661,10 +661,25 @@ class StandardPage(SeoMixin, Page):
     Flexible page for general information and content.
     """
     
+    subtitle = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text="Optional subtitle below the title"
+    )
+    
     introduction = models.TextField(
         max_length=500,
         blank=True,
         help_text="Page introduction/summary"
+    )
+    
+    featured_image = models.ForeignKey(
+        'wagtailimages.Image',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='+',
+        help_text="Optional image in the page header"
     )
     
     body = StreamField(
@@ -690,7 +705,9 @@ class StandardPage(SeoMixin, Page):
     ]
     
     content_panels = Page.content_panels + [
+        FieldPanel('subtitle'),
         FieldPanel('introduction'),
+        FieldPanel('featured_image'),
         FieldPanel('body'),
         MultiFieldPanel([
             FieldPanel('show_sidebar'),
@@ -856,16 +873,21 @@ class BlogPostPage(SeoMixin, Page):
         verbose_name = "Blog Post"
         ordering = ['-first_published_at']
     
+    def get_related_posts(self, limit=3):
+        """Live posts sharing a category with this post (template helper)."""
+        if not self.pk:
+            return BlogPostPage.objects.none()
+        return (
+            BlogPostPage.objects.live()
+            .public()
+            .filter(categories__in=self.categories.all())
+            .exclude(pk=self.pk)
+            .distinct()[:limit]
+        )
+    
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
-        
-        # Get related posts (same category, excluding current)
-        related_posts = BlogPostPage.objects.live().public().filter(
-            categories__in=self.categories.all()
-        ).exclude(pk=self.pk).distinct()[:3]
-        
-        context['related_posts'] = related_posts
-        
+        context['related_posts'] = self.get_related_posts()
         return context
 
 

@@ -4,7 +4,7 @@
         <p class="mb-4">"{{ value.quote }}"</p>
         <footer class="blockquote-footer">
             {% if value.author_image %}
-            {% image value.author_image fill-80x80 class="rounded-circle mb-2" %}
+            {% image value.author_image fill-80x80 class="rounded-circle mb-2" loading="lazy" decoding="async" %}
             <br>
             {% endif %}
             <strong>{{ value.author }}</strong>

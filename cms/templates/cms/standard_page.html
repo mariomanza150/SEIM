@@ -2,31 +2,53 @@
 {% load wagtailcore_tags wagtailimages_tags %}
 
 {% block content %}
+{% include "cms/includes/breadcrumbs.html" %}
 <!-- Page Header -->
-<section class="section-blue py-5">
+<section class="section-blue text-white py-5">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-10 mx-auto text-center">
-                <h1 class="display-4 fw-bold text-white mb-3">{{ page.title }}</h1>
-                {% if page.introduction %}
-                    <p class="lead text-white-75">{{ page.introduction }}</p>
+            <div class="col-lg-{% if page.featured_image %}8{% else %}12{% endif %}">
+                <h1 class="display-4 fw-bold text-white mb-3 cms-page-heading-shadow">
+                    {{ page.title }}
+                </h1>
+                {% if page.subtitle %}
+                    <p class="lead text-white mb-0 cms-hero-subtitle-lead">{{ page.subtitle }}</p>
                 {% endif %}
+            </div>
+            {% if page.featured_image %}
+                <div class="col-lg-4 mt-4 mt-lg-0">
+                    {% image page.featured_image fill-400x400 class="img-fluid rounded shadow-lg" %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+{% if page.introduction %}
+<section class="py-4 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <p class="lead text-center mb-0">{{ page.introduction }}</p>
             </div>
         </div>
     </div>
 </section>
+{% endif %}
 
 <!-- Page Content -->
 <section class="py-5">
     <div class="container">
         <div class="row">
-            <div class="col-lg-10 mx-auto">
+            <div class="col-lg-{% if page.show_sidebar %}8{% else %}10 mx-auto{% endif %}">
                 {% if page.body %}
-                    {% for block in page.body %}
-                        <div class="mb-4 fade-in-up">
-                            {% include_block block %}
-                        </div>
-                    {% endfor %}
+                    <div class="cms-prose">
+                        {% for block in page.body %}
+                            <div class="mb-4 fade-in-up">
+                                {% include_block block %}
+                            </div>
+                        {% endfor %}
+                    </div>
                 {% else %}
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle me-2"></i>
@@ -34,7 +56,54 @@
                     </div>
                 {% endif %}
             </div>
+
+            {% if page.show_sidebar %}
+            <div class="col-lg-4 mt-5 mt-lg-0">
+                <div class="card shadow-sm sticky-lg-top cms-sticky-sidebar">
+                    <div class="card-header cms-card-header-primary">
+                        <i class="bi bi-info-circle me-2" aria-hidden="true"></i>Más información
+                    </div>
+                    <div class="card-body cms-prose">
+                        {% if page.sidebar_content %}
+                            {{ page.sidebar_content|richtext }}
+                        {% else %}
+                            <p class="text-muted small mb-0">Sin contenido en la barra lateral.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
     </div>
 </section>
+
+{% if page.related_pages.all %}
+<section class="py-5 bg-light border-top">
+    <div class="container">
+        <h2 class="h4 fw-bold mb-4 cms-section-heading-blue">Te puede interesar</h2>
+        <div class="row g-4">
+            {% for related in page.related_pages.all %}
+                {% if related.live %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body">
+                            <h3 class="h6 card-title fw-bold mb-2">
+                                <a href="{% pageurl related %}" class="text-decoration-none stretched-link cms-related-card-link">
+                                    {{ related.title }}
+                                </a>
+                            </h3>
+                            {% if related.specific.introduction %}
+                                <p class="card-text small text-muted mb-0">{{ related.specific.introduction|truncatewords:20 }}</p>
+                            {% elif related.specific.search_description %}
+                                <p class="card-text small text-muted mb-0">{{ related.specific.search_description|truncatewords:20 }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
 {% endblock %}

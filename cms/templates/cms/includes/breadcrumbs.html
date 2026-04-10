@@ -1,0 +1,17 @@
+{% load wagtailcore_tags %}
+{# Optional template variable: active_label — override text for the current crumb #}
+<section class="cms-breadcrumb-bar py-2 bg-light border-bottom">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0 small">
+                <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                {% for ancestor in page.get_ancestors %}
+                    {% if ancestor.depth > 2 %}
+                        <li class="breadcrumb-item"><a href="{% pageurl ancestor %}">{{ ancestor.title }}</a></li>
+                    {% endif %}
+                {% endfor %}
+                <li class="breadcrumb-item active" aria-current="page">{{ active_label|default:page.title }}</li>
+            </ol>
+        </nav>
+    </div>
+</section>

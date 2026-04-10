@@ -2,15 +2,21 @@
 {% load wagtailcore_tags wagtailimages_tags %}
 
 {% block content %}
-<!-- Hero/Featured Image -->
+{% include "cms/includes/breadcrumbs.html" %}
 {% if page.featured_image %}
-    <section class="position-relative" style="height: 400px; overflow: hidden;">
+    <section class="blog-post-hero">
         {% image page.featured_image fill-1920x400 as hero_image %}
-        <div style="background-image: url('{{ hero_image.url }}'); background-size: cover; background-position: center; height: 100%; filter: brightness(0.7);"></div>
-        <div class="position-absolute top-50 start-50 translate-middle text-white text-center w-100">
+        <div class="blog-post-hero-bg" style="background-image: url('{{ hero_image.url }}');" aria-hidden="true"></div>
+        <div class="position-absolute top-50 start-50 translate-middle text-white text-center w-100 px-3">
             <div class="container">
-                <h1 class="display-4 fw-bold">{{ page.title }}</h1>
+                <h1 class="display-4 fw-bold cms-hero-title-overlay">{{ page.title }}</h1>
             </div>
+        </div>
+    </section>
+{% else %}
+    <section class="section-blue text-white py-5">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold text-white mb-0 cms-page-heading-shadow">{{ page.title }}</h1>
         </div>
     </section>
 {% endif %}
@@ -20,7 +26,6 @@
     <div class="container">
         <div class="row">
             <div class="col-lg-8 mx-auto">
-                <!-- Article Meta -->
                 <div class="mb-4 pb-4 border-bottom">
                     <div class="d-flex align-items-center mb-3">
                         <div class="flex-grow-1">
@@ -31,39 +36,31 @@
                             </div>
                             <div class="text-muted">
                                 <small>
-                                    Published on {{ page.date|date:"F d, Y" }}
+                                    Publicado el {{ page.published_date|date:"d M Y" }}
                                     {% if page.author %}
-                                        by {{ page.author }}
+                                        · {{ page.author.get_full_name|default:page.author }}
                                     {% endif %}
                                 </small>
                             </div>
                         </div>
                     </div>
-                    
-                    {% if page.excerpt %}
-                        <p class="lead">{{ page.excerpt }}</p>
+
+                    {% if page.introduction %}
+                        <p class="lead mb-0">{{ page.introduction }}</p>
                     {% endif %}
                 </div>
-                
-                <!-- Article Body -->
-                <div class="article-content">
-                    {% if page.intro %}
-                        <div class="mb-4">
-                            {{ page.intro|richtext }}
-                        </div>
-                    {% endif %}
-                    
+
+                <div class="article-content cms-prose">
                     {% if page.body %}
                         {% for block in page.body %}
                             {% include_block block %}
                         {% endfor %}
                     {% endif %}
                 </div>
-                
-                <!-- Tags -->
+
                 {% if page.tags.all %}
                     <div class="mt-5 pt-4 border-top">
-                        <h6 class="text-muted mb-3">Tags:</h6>
+                        <h6 class="text-muted mb-3">Etiquetas</h6>
                         <div class="d-flex flex-wrap gap-2">
                             {% for tag in page.tags.all %}
                                 <a href="{% slugurl 'blog' %}?tag={{ tag.slug }}" class="badge bg-secondary text-decoration-none">
@@ -73,8 +70,7 @@
                         </div>
                     </div>
                 {% endif %}
-                
-                <!-- Navigation -->
+
                 <div class="mt-5 pt-4 border-top">
                     <div class="row">
                         {% with page.get_prev_sibling as prev_post %}
@@ -83,7 +79,7 @@
                                     <a href="{% pageurl prev_post %}" class="text-decoration-none">
                                         <div class="card h-100 shadow-sm">
                                             <div class="card-body">
-                                                <small class="text-muted">← Previous Post</small>
+                                                <small class="text-muted">← Anterior</small>
                                                 <h6 class="card-title mt-2">{{ prev_post.title }}</h6>
                                             </div>
                                         </div>
@@ -91,14 +87,14 @@
                                 </div>
                             {% endif %}
                         {% endwith %}
-                        
+
                         {% with page.get_next_sibling as next_post %}
                             {% if next_post %}
                                 <div class="col-md-6 mb-3">
                                     <a href="{% pageurl next_post %}" class="text-decoration-none">
                                         <div class="card h-100 shadow-sm">
-                                            <div class="card-body text-end">
-                                                <small class="text-muted">Next Post →</small>
+                                            <div class="card-body text-md-end">
+                                                <small class="text-muted">Siguiente →</small>
                                                 <h6 class="card-title mt-2">{{ next_post.title }}</h6>
                                             </div>
                                         </div>
@@ -113,27 +109,27 @@
     </div>
 </article>
 
-<!-- Related Posts -->
-<section class="bg-light py-5">
+{% if page.get_related_posts %}
+<section class="bg-light py-5 border-top">
     <div class="container">
-        <h3 class="mb-4">Related Posts</h3>
+        <h2 class="h4 fw-bold mb-4 cms-section-heading-blue">Publicaciones relacionadas</h2>
         <div class="row g-4">
-            {% for related_post in page.get_related_posts|slice:":3" %}
+            {% for related_post in page.get_related_posts %}
                 <div class="col-md-4">
                     <div class="card h-100 shadow-sm">
                         {% if related_post.featured_image %}
                             <a href="{% pageurl related_post %}">
-                                {% image related_post.featured_image fill-400x250 class="card-img-top" %}
+                                {% image related_post.featured_image fill-400x250 class="card-img-top" loading="lazy" decoding="async" %}
                             </a>
                         {% endif %}
                         <div class="card-body">
-                            <h5 class="card-title">
+                            <h3 class="h6 card-title">
                                 <a href="{% pageurl related_post %}" class="text-decoration-none text-dark">
                                     {{ related_post.title }}
                                 </a>
-                            </h5>
-                            <p class="card-text">
-                                <small class="text-muted">{{ related_post.date|date:"M d, Y" }}</small>
+                            </h3>
+                            <p class="card-text mb-0">
+                                <small class="text-muted">{{ related_post.published_date|date:"d M Y" }}</small>
                             </p>
                         </div>
                     </div>
@@ -142,29 +138,21 @@
         </div>
     </div>
 </section>
+{% endif %}
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    .article-content {
-        font-size: 1.1rem;
-        line-height: 1.8;
-    }
-    
     .article-content h2, .article-content h3 {
         margin-top: 2rem;
         margin-bottom: 1rem;
     }
-    
+
     .article-content img {
         max-width: 100%;
         height: auto;
         border-radius: 8px;
         margin: 2rem 0;
-    }
-    
-    .article-content p {
-        margin-bottom: 1.5rem;
     }
 </style>
 {% endblock %}

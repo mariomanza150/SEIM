@@ -2,6 +2,7 @@
 {% load wagtailcore_tags wagtailimages_tags %}
 
 {% block content %}
+{% include "cms/includes/breadcrumbs.html" with active_label=page.institution_name %}
 <!-- Page Header -->
 <section class="section-blue text-white py-5">
     <div class="container">
@@ -12,7 +13,7 @@
                     {% image page.institution_logo fill-80x80 class="rounded me-3 bg-white p-2" %}
                     {% endif %}
                     <div>
-                        <h1 class="display-5 fw-bold text-white mb-2" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
+                        <h1 class="display-5 fw-bold text-white mb-2 cms-page-heading-shadow">
                             {{ page.institution_name }}
                         </h1>
                         <p class="lead mb-0">
@@ -89,8 +90,8 @@
             <div class="col-lg-4">
                 <!-- Availability Card -->
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header" style="background: var(--uadec-blue); color: white; font-weight: 600;">
-                        <i class="bi bi-info-circle me-2"></i>Disponibilidad
+                    <div class="card-header cms-card-header-primary">
+                        <i class="bi bi-info-circle me-2" aria-hidden="true"></i>Disponibilidad
                     </div>
                     <div class="card-body">
                         <ul class="list-unstyled mb-0">
@@ -113,8 +114,8 @@
                 <!-- Related Programs -->
                 {% if page.related_programs.all %}
                 <div class="card shadow-sm mb-4">
-                    <div class="card-header" style="background: var(--uadec-gold); color: white; font-weight: 600;">
-                        <i class="bi bi-journal-text me-2"></i>Programas Relacionados
+                    <div class="card-header cms-card-header-gold">
+                        <i class="bi bi-journal-text me-2" aria-hidden="true"></i>Programas Relacionados
                     </div>
                     <div class="card-body">
                         <ul class="list-unstyled mb-0">
@@ -148,21 +149,5 @@
     </div>
 </section>
 
-<!-- Breadcrumb -->
-<section class="py-3 bg-light border-top">
-    <div class="container">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="/">Inicio</a></li>
-                {% for ancestor in page.get_ancestors %}
-                    {% if ancestor.depth > 2 %}
-                    <li class="breadcrumb-item"><a href="{% pageurl ancestor %}">{{ ancestor.title }}</a></li>
-                    {% endif %}
-                {% endfor %}
-                <li class="breadcrumb-item active" aria-current="page">{{ page.institution_name }}</li>
-            </ol>
-        </nav>
-    </div>
-</section>
 {% endblock %}
 

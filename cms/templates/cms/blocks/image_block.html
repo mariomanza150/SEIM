@@ -1,8 +1,21 @@
 {% load wagtailimages_tags %}
-
-<figure class="image-block my-4">
-    {% image value.image width-800 class="img-fluid rounded" %}
-    {% if value.caption %}
-        <figcaption class="text-muted mt-2">{{ value.caption }}</figcaption>
+{% image value.image width-1200 as img %}
+<figure class="image-block my-4 {% if value.alignment == 'left' %}text-start{% elif value.alignment == 'right' %}text-end{% elif value.alignment == 'full' %}w-100{% else %}text-center{% endif %}">
+    <img src="{{ img.url }}"
+         alt="{% firstof img.alt '' %}"
+         width="{{ img.width }}"
+         height="{{ img.height }}"
+         class="img-fluid rounded {% if value.alignment == 'full' %}w-100{% endif %}"
+         loading="lazy"
+         decoding="async">
+    {% if value.caption or value.attribution %}
+        <figcaption class="text-muted mt-2 small">
+            {% if value.caption %}{{ value.caption }}{% endif %}
+            {% if value.attribution %}
+                <span class="d-block {% if value.caption %}mt-1{% endif %} fst-italic">
+                    {% if value.caption %}— {% endif %}{{ value.attribution }}
+                </span>
+            {% endif %}
+        </figcaption>
     {% endif %}
 </figure>

@@ -1,13 +1,21 @@
 {% load static wagtailcore_tags wagtailuserbar %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es-MX">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}{{ page.title }}{% endblock %} | UAdeC - Intercambio Académico</title>
-    
     {% block meta_tags %}
-        <meta name="description" content="{{ page.search_description }}">
+        {% if page %}
+            {% include "wagtailseo/meta.html" with self=page %}
+        {% endif %}
+        {% if page and not page.seo_pagetitle %}
+            <title>{{ page.title }} | UAdeC - Intercambio Académico</title>
+            {% if page.search_description %}
+                <meta name="description" content="{{ page.search_description }}">
+            {% endif %}
+        {% elif not page %}
+            <title>UAdeC - Intercambio Académico</title>
+        {% endif %}
     {% endblock %}
     
     <!-- Bootstrap CSS -->
@@ -27,16 +35,17 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+    <a class="cms-skip-link" href="#main-content">Ir al contenido</a>
     {% wagtailuserbar %}
     
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm" aria-label="Principal">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center" href="/">
-                <i class="bi bi-mortarboard-fill me-2" style="font-size: 1.5rem;"></i>
+                <i class="bi bi-mortarboard-fill me-2 navbar-brand-icon" aria-hidden="true"></i>
                 <span>UAdeC Intercambio Académico</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Abrir menú">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -88,15 +97,17 @@
         </div>
     </nav>
     
-    {% block content %}{% endblock %}
+    <main id="main-content">
+        {% block content %}{% endblock %}
+    </main>
     
     <!-- Footer -->
     <footer class="bg-dark text-white mt-5 py-5">
         <div class="container">
             <div class="row">
                 <div class="col-md-4 mb-4 mb-md-0">
-                    <h5 class="text-uppercase mb-3" style="color: var(--uadec-gold);">
-                        <i class="bi bi-mortarboard-fill me-2"></i>UAdeC
+                    <h5 class="text-uppercase mb-3 cms-footer-heading-gold">
+                        <i class="bi bi-mortarboard-fill me-2" aria-hidden="true"></i>UAdeC
                     </h5>
                     <p class="mb-1"><strong>Universidad Autónoma de Coahuila</strong></p>
                     <p class="mb-3 small">Dirección de Intercambio Académico</p>
@@ -105,7 +116,7 @@
                     </p>
                 </div>
                 <div class="col-md-4 mb-4 mb-md-0">
-                    <h6 class="text-uppercase mb-3" style="color: var(--uadec-gold);">Enlaces Rápidos</h6>
+                    <h6 class="text-uppercase mb-3 cms-footer-heading-gold">Enlaces Rápidos</h6>
                     <ul class="list-unstyled small">
                         <li class="mb-2"><a href="/programas/" class="text-white-50 text-decoration-none"><i class="bi bi-chevron-right me-1"></i>Programas</a></li>
                         <li class="mb-2"><a href="/como-aplicar/" class="text-white-50 text-decoration-none"><i class="bi bi-chevron-right me-1"></i>¿Cómo Aplicar?</a></li>
@@ -114,26 +125,26 @@
                     </ul>
                 </div>
                 <div class="col-md-4">
-                    <h6 class="text-uppercase mb-3" style="color: var(--uadec-gold);">Síguenos</h6>
+                    <h6 class="text-uppercase mb-3 cms-footer-heading-gold">Síguenos</h6>
                     <div class="d-flex gap-3 mb-3">
-                        <a href="https://facebook.com/uadec" target="_blank" rel="noopener noreferrer" class="text-white-50" style="font-size: 1.5rem;">
-                            <i class="bi bi-facebook"></i>
+                        <a href="https://facebook.com/uadec" target="_blank" rel="noopener noreferrer" class="text-white-50 cms-footer-social-icon" aria-label="Facebook">
+                            <i class="bi bi-facebook" aria-hidden="true"></i>
                         </a>
-                        <a href="https://twitter.com/uadec" target="_blank" rel="noopener noreferrer" class="text-white-50" style="font-size: 1.5rem;">
-                            <i class="bi bi-twitter-x"></i>
+                        <a href="https://twitter.com/uadec" target="_blank" rel="noopener noreferrer" class="text-white-50 cms-footer-social-icon" aria-label="X (Twitter)">
+                            <i class="bi bi-twitter-x" aria-hidden="true"></i>
                         </a>
-                        <a href="https://instagram.com/uadec" target="_blank" rel="noopener noreferrer" class="text-white-50" style="font-size: 1.5rem;">
-                            <i class="bi bi-instagram"></i>
+                        <a href="https://instagram.com/uadec" target="_blank" rel="noopener noreferrer" class="text-white-50 cms-footer-social-icon" aria-label="Instagram">
+                            <i class="bi bi-instagram" aria-hidden="true"></i>
                         </a>
                     </div>
                     <p class="small mb-0">
-                        <a href="https://www.uadec.mx/" class="text-decoration-none" style="color: var(--uadec-gold);" target="_blank" rel="noopener noreferrer">
+                        <a href="https://www.uadec.mx/" class="text-decoration-none cms-footer-site-link" target="_blank" rel="noopener noreferrer">
                             <i class="bi bi-globe me-1"></i>www.uadec.mx
                         </a>
                     </p>
                 </div>
             </div>
-            <hr class="my-4" style="border-color: var(--uadec-gold); opacity: 0.3;">
+            <hr class="my-4 cms-footer-rule">
             <div class="row">
                 <div class="col-12 text-center">
                     <p class="mb-0 small text-white-50">
