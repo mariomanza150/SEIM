@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 
 from . import views
 from .views import program_create_view
@@ -6,13 +7,20 @@ from .views import program_create_view
 app_name = "frontend"
 
 urlpatterns = [
-    # Main pages
-    path("", views.home_view, name="home"),
-    # Registered before ``dashboard/`` so ``dashboard/analytics/`` is not swallowed by the dashboard view.
+    # Site root is served by Wagtail (see ``seim.urls``); app shell lives under ``/seim/``.
+    # Registered before ``dashboard/`` so ``dashboard/analytics/`` is not swallowed.
     path("dashboard/analytics/", views.AnalyticsView.as_view(), name="analytics"),
-    path("dashboard/", views.dashboard_view, name="dashboard"),
+    path(
+        "dashboard/",
+        RedirectView.as_view(url="/seim/dashboard/", permanent=False),
+        name="dashboard",
+    ),
     # Authentication pages
-    path("login/", views.login_view, name="login"),
+    path(
+        "login/",
+        RedirectView.as_view(url="/seim/login/", permanent=False),
+        name="login",
+    ),
     path("register/", views.register_view, name="register"),
     path("logout/", views.logout_view, name="logout"),
     path("password-reset/", views.password_reset_view, name="password_reset"),

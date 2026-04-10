@@ -75,16 +75,16 @@ class FrontendViewsTestCase(TestCase):
 
     def test_home_view_authenticated_user(self):
         self.client.force_login(self.student_user)
-        response = self.client.get(reverse('frontend:home'))
+        response = self.client.get("/")
         self.assertEqual(response.status_code, 302)
-        self.assertIn('dashboard', response.url)
+        self.assertIn("/seim/dashboard", response.url)
 
     @patch('frontend.views.Program.objects.filter')
     @patch('frontend.views.Application.objects.count')
     def test_home_view_unauthenticated_user(self, mock_app_count, mock_program_filter):
         mock_program_filter.return_value.count.return_value = 5
         mock_app_count.return_value = 10
-        response = self.client.get(reverse('frontend:home'))
+        response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['total_programs'], 5)
         self.assertEqual(response.context['total_applications'], 10)
@@ -94,7 +94,7 @@ class FrontendViewsTestCase(TestCase):
     def test_home_view_exception_handling(self, mock_app_count, mock_program_filter):
         mock_program_filter.side_effect = Exception("Database error")
         mock_app_count.side_effect = Exception("Database error")
-        response = self.client.get(reverse('frontend:home'))
+        response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context['total_programs'], 0)
         self.assertEqual(response.context['total_applications'], 0)
@@ -103,17 +103,18 @@ class FrontendViewsTestCase(TestCase):
         self.client.force_login(self.student_user)
         response = self.client.get(reverse('frontend:login'))
         self.assertEqual(response.status_code, 302)
-        self.assertIn('dashboard', response.url)
+        self.assertEqual(response.headers.get("Location"), "/seim/login/")
 
     def test_login_view_unauthenticated_user(self):
         response = self.client.get(reverse('frontend:login'))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/login/")
 
     def test_register_view_authenticated_user(self):
         self.client.force_login(self.student_user)
         response = self.client.get(reverse('frontend:register'))
         self.assertEqual(response.status_code, 302)
-        self.assertIn('dashboard', response.url)
+        self.assertIn('/seim/dashboard', response.url)
 
     def test_register_view_unauthenticated_user(self):
         response = self.client.get(reverse('frontend:register'))
@@ -123,13 +124,14 @@ class FrontendViewsTestCase(TestCase):
         self.client.force_login(self.student_user)
         response = self.client.get(reverse('frontend:logout'))
         self.assertEqual(response.status_code, 302)
-        self.assertIn('login', response.url)
+        self.assertIn('/seim/login', response.url)
         self.assertEqual(response.cookies['clear_jwt_tokens'].value, 'true')
 
     def test_dashboard_view(self):
         self.client.force_login(self.student_user)
         response = self.client.get(reverse('frontend:dashboard'))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/dashboard/")
 
     def test_programs_view_authenticated(self):
         self.client.force_login(self.student_user)
@@ -182,12 +184,12 @@ class FrontendViewsTestCase(TestCase):
         self.client.force_login(self.student_user)
         response = self.client.get(reverse('frontend:admin_dashboard'))
         self.assertEqual(response.status_code, 302)
-        self.assertIn('dashboard', response.url)
+        self.assertIn('/seim/dashboard', response.url)
 
     def test_admin_dashboard_view_unauthenticated_redirect(self):
         response = self.client.get(reverse('frontend:admin_dashboard'))
         self.assertEqual(response.status_code, 302)
-        self.assertIn('dashboard', response.url)
+        self.assertIn('/seim/dashboard', response.url)
 
     def test_invalidate_user_cache_authenticated(self):
         self.client.force_login(self.student_user)

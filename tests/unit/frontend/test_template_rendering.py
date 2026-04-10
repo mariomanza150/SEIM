@@ -5,10 +5,18 @@ These tests verify that all Django templates render correctly without syntax err
 have proper static tag loading, and display expected content.
 """
 
-from django.test import Client, TestCase
+from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
 
+from frontend import views as frontend_views
 from tests.utils import TestUtils
+
+
+def _render_legacy_dashboard(request_factory, user):
+    """Exercise ``dashboard_view`` directly; ``/dashboard/`` URL redirects to Vue in urlconf."""
+    request = request_factory.get("/dashboard/")
+    request.user = user
+    return frontend_views.dashboard_view(request)
 
 
 class TestPublicPageRendering(TestCase):
@@ -19,18 +27,17 @@ class TestPublicPageRendering(TestCase):
         self.client = Client()
 
     def test_home_page_renders(self):
-        """Test home page renders without errors."""
-        response = self.client.get(reverse('frontend:home'))
+        """Marketing home renders when Wagtail is off (default test settings)."""
+        response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'frontend/home.html')
         self.assertContains(response, 'SEIM')
 
     def test_login_page_renders(self):
-        """Test login page renders without errors."""
+        """Legacy login URL redirects to the Vue login shell."""
         response = self.client.get(reverse('frontend:login'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'frontend/auth/login.html')
-        self.assertContains(response, 'Login')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/login/")
 
     def test_register_page_renders(self):
         """Test register page renders without errors."""
@@ -52,31 +59,28 @@ class TestAuthenticatedPageRendering(TestCase):
     def setUp(self):
         """Set up test case."""
         self.client = Client()
+        self.factory = RequestFactory()
         self.student = TestUtils.create_test_user(role='student')
         self.coordinator = TestUtils.create_test_user(role='coordinator')
         self.admin = TestUtils.create_test_user(role='admin')
 
     def test_dashboard_renders_for_student(self):
         """Test dashboard renders for student users."""
-        self.client.force_login(self.student)
-        response = self.client.get(reverse('frontend:dashboard'))
+        response = _render_legacy_dashboard(self.factory, self.student)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'frontend/dashboard.html')
-        self.assertContains(response, 'dashboard-content')
+        self.assertContains(response, "dashboard-content")
 
     def test_dashboard_renders_for_coordinator(self):
         """Test dashboard renders for coordinator users."""
-        self.client.force_login(self.coordinator)
-        response = self.client.get(reverse('frontend:dashboard'))
+        response = _render_legacy_dashboard(self.factory, self.coordinator)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'frontend/dashboard.html')
+        self.assertContains(response, "dashboard-content")
 
     def test_dashboard_renders_for_admin(self):
         """Test dashboard renders for admin users."""
-        self.client.force_login(self.admin)
-        response = self.client.get(reverse('frontend:dashboard'))
+        response = _render_legacy_dashboard(self.factory, self.admin)
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'frontend/dashboard.html')
+        self.assertContains(response, "dashboard-content")
 
     def test_profile_page_renders(self):
         """Test profile page renders without errors."""
@@ -170,12 +174,13 @@ class TestTemplateStaticTagLoading(TestCase):
     def setUp(self):
         """Set up test case."""
         self.client = Client()
+        self.factory = RequestFactory()
         self.user = TestUtils.create_test_user(role='student')
         self.client.force_login(self.user)
 
     def test_dashboard_has_static_tag(self):
         """Test dashboard template loads static tag properly."""
-        response = self.client.get(reverse('frontend:dashboard'))
+        response = _render_legacy_dashboard(self.factory, self.user)
         self.assertEqual(response.status_code, 200)
         # If static tag is missing, response would be 500
         # The fact we get 200 proves static tag works
@@ -183,7 +188,6 @@ class TestTemplateStaticTagLoading(TestCase):
     def test_all_authenticated_pages_have_static_access(self):
         """Test all authenticated pages can load static files."""
         pages = [
-            'frontend:dashboard',
             'frontend:profile',
             'frontend:applications',
             'frontend:programs',
@@ -269,24 +273,24 @@ class TestUnauthenticatedAccessRedirects(TestCase):
         self.client = Client()
 
     def test_dashboard_redirects_when_not_authenticated(self):
-        """Test dashboard redirects unauthenticated users."""
+        """Legacy ``/dashboard/`` always redirects to the Vue app (auth handled client-side)."""
         response = self.client.get(reverse('frontend:dashboard'))
-        # Should be accessible (JS-protected page)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/dashboard/")
 
     def test_profile_requires_authentication(self):
         """Test profile page requires authentication."""
         response = self.client.get(reverse('frontend:profile'))
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.url.startswith('/login'))
+        self.assertTrue(response.url.startswith('/seim/login'))
 
     def test_applications_requires_authentication(self):
         """Test applications page requires authentication."""
         response = self.client.get(reverse('frontend:applications'))
         # Should redirect to login
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response.url.startswith('/login'))
+        self.assertTrue(response.url.startswith('/seim/login'))
 
 
 class TestErrorPageHandling(TestCase):
@@ -326,12 +330,13 @@ class TestTemplateContextData(TestCase):
     def setUp(self):
         """Set up test case."""
         self.client = Client()
+        self.factory = RequestFactory()
         self.user = TestUtils.create_test_user(role='student')
         self.client.force_login(self.user)
 
     def test_dashboard_has_user_context(self):
         """Test dashboard template receives user context."""
-        response = self.client.get(reverse('frontend:dashboard'))
+        response = _render_legacy_dashboard(self.factory, self.user)
         self.assertEqual(response.status_code, 200)
         # Template should render successfully with user context
 
@@ -364,18 +369,19 @@ class TestTemplateInheritance(TestCase):
     def setUp(self):
         """Set up test case."""
         self.client = Client()
+        self.factory = RequestFactory()
         self.user = TestUtils.create_test_user()
         self.client.force_login(self.user)
 
     def test_base_template_elements_present(self):
         """Test that all pages include base template elements."""
-        pages = [
-            'frontend:dashboard',
-            'frontend:profile',
-            'frontend:applications',
-        ]
-        
-        for page_name in pages:
+        response = _render_legacy_dashboard(self.factory, self.user)
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode("utf-8")
+        self.assertNotIn("TemplateSyntaxError", content)
+        self.assertNotIn("Invalid block tag", content)
+
+        for page_name in ("frontend:profile", "frontend:applications"):
             with self.subTest(page=page_name):
                 response = self.client.get(reverse(page_name))
                 self.assertEqual(response.status_code, 200)
@@ -396,12 +402,13 @@ class TestStaticFileReferences(TestCase):
     def setUp(self):
         """Set up test case."""
         self.client = Client()
+        self.factory = RequestFactory()
         self.user = TestUtils.create_test_user()
         self.client.force_login(self.user)
 
     def test_dashboard_static_files_referenced(self):
         """Test dashboard can reference static files without errors."""
-        response = self.client.get(reverse('frontend:dashboard'))
+        response = _render_legacy_dashboard(self.factory, self.user)
         self.assertEqual(response.status_code, 200)
         
         content = response.content.decode('utf-8')
@@ -416,7 +423,7 @@ class TestStaticFileReferences(TestCase):
         """Test home page can reference static files without errors."""
         # Use unauthenticated client to actually see home page
         unauthenticated_client = Client()
-        response = unauthenticated_client.get(reverse('frontend:home'))
+        response = unauthenticated_client.get("/")
         self.assertEqual(response.status_code, 200)
         
         content = response.content.decode('utf-8')
@@ -566,6 +573,8 @@ class TestAllFrontendPagesIntegrity(TestCase):
         for page_name in pages:
             with self.subTest(page=page_name):
                 response = self.client.get(reverse(page_name))
+                if response.status_code == 302:
+                    continue
                 content = response.content.decode('utf-8')
                 
                 # Check for common template errors

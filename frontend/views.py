@@ -22,11 +22,10 @@ from exchange.models import Application, Program
 
 
 def home_view(request):
-    """Home page with caching."""
+    """Marketing home when Wagtail is not installed (e.g. default unit test settings)."""
     if request.user.is_authenticated:
-        return redirect("frontend:dashboard")
+        return redirect("/seim/dashboard/")
 
-    # Get some public stats for the home page
     try:
         total_programs = Program.objects.filter(is_active=True).count()
         total_applications = Application.objects.count()
@@ -41,18 +40,10 @@ def home_view(request):
     )
 
 
-def login_view(request):
-    """Login page."""
-    if request.user.is_authenticated:
-        return redirect("frontend:dashboard")
-
-    return render(request, "frontend/auth/login.html")
-
-
 def register_view(request):
     """Registration page."""
     if request.user.is_authenticated:
-        return redirect("frontend:dashboard")
+        return redirect("/seim/dashboard/")
 
     return render(request, "frontend/auth/register.html")
 
@@ -63,7 +54,7 @@ def logout_view(request):
     logout(request)
 
     # Return a response that will clear JWT tokens via JavaScript
-    response = redirect("frontend:login")
+    response = redirect("/seim/login/")
     response.set_cookie('clear_jwt_tokens', 'true', max_age=1)  # Short-lived cookie to signal JS
     messages.success(request, "You have been logged out successfully.")
     return response
@@ -144,7 +135,7 @@ def admin_dashboard_view(request):
         not request.user.is_authenticated
         or not request.user.is_admin
     ):
-        return redirect("frontend:dashboard")
+        return redirect("/seim/dashboard/")
 
     # Get cached analytics data
     try:
@@ -176,7 +167,7 @@ def coordinator_dashboard_view(request):
         not request.user.is_authenticated
         or not request.user.has_any_role(['coordinator', 'admin'])
     ):
-        return redirect("frontend:dashboard")
+        return redirect("/seim/dashboard/")
 
     # Get pending applications and documents
     try:
@@ -280,7 +271,7 @@ def user_management_view(request):
     # Check permission
     if not request.user.has_any_role(['coordinator', 'admin']):
         messages.error(request, "You don't have permission to access this page.")
-        return redirect("frontend:dashboard")
+        return redirect("/seim/dashboard/")
     
     from django.contrib.auth import get_user_model
     from accounts.models import UserSession
@@ -458,7 +449,7 @@ def password_reset_view(request):
             status=status.HTTP_200_OK,
         )
     if request.user.is_authenticated:
-        return redirect("frontend:dashboard")
+        return redirect("/seim/dashboard/")
 
     return render(request, "frontend/auth/password_reset.html")
 

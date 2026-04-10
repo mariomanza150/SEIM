@@ -30,9 +30,10 @@ class TestBasicCoverage(TestCase):
         self.assertIn(response.status_code, [200, 302])
 
     def test_login_page(self):
-        """Test login page loads"""
+        """Legacy ``/login/`` redirects to the Vue app."""
         response = self.client.get('/login/')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/login/")
 
     def test_register_page(self):
         """Test register page loads"""
@@ -40,15 +41,17 @@ class TestBasicCoverage(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_dashboard_page_authenticated(self):
-        """Test dashboard page with authenticated user"""
+        """Legacy ``/dashboard/`` redirects to the Vue app."""
         self.client.force_login(self.user)
         response = self.client.get('/dashboard/')
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/dashboard/")
 
     def test_dashboard_page_unauthenticated(self):
-        """Test dashboard page with unauthenticated user"""
+        """Legacy ``/dashboard/`` redirects to the Vue app."""
         response = self.client.get('/dashboard/')
-        self.assertIn(response.status_code, [200, 302])
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/dashboard/")
 
     @patch('documents.services.magic')
     def test_document_service_without_magic(self, mock_magic):

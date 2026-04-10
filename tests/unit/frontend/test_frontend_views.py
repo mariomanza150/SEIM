@@ -33,7 +33,7 @@ class TestHomeView(TestCase):
         self.assertTemplateUsed(response, "frontend/home.html")
 
     def test_home_view_authenticated_user_redirects(self):
-        """Test home view redirects authenticated users to dashboard."""
+        """Test home view redirects authenticated users to the Vue app dashboard."""
         user = User.objects.create_user(
             username="testuser",
             email="test@test.com",
@@ -44,7 +44,7 @@ class TestHomeView(TestCase):
         response = self.client.get("/")
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn("/dashboard/", response.url)
+        self.assertIn("/seim/dashboard", response.url)
 
     def test_home_view_displays_stats(self):
         """Test home view displays program and application stats."""
@@ -83,14 +83,14 @@ class TestLoginView(TestCase):
         self.client = Client()
 
     def test_login_view_anonymous(self):
-        """Test login view displays for anonymous users."""
+        """Legacy ``/login/`` redirects anonymous users to the Vue login shell."""
         response = self.client.get('/login/')
         
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'frontend/auth/login.html')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/login/")
 
     def test_login_view_authenticated_redirects(self):
-        """Test login view redirects authenticated users."""
+        """Legacy ``/login/`` sends everyone to the Vue login shell."""
         user = User.objects.create_user(
             username="testuser",
             email="test@test.com",
@@ -101,7 +101,7 @@ class TestLoginView(TestCase):
         response = self.client.get('/login/')
         
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/dashboard/', response.url)
+        self.assertEqual(response.headers.get("Location"), "/seim/login/")
 
 
 @pytest.mark.django_db
@@ -131,7 +131,7 @@ class TestRegisterView(TestCase):
         response = self.client.get('/register/')
         
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/dashboard/', response.url)
+        self.assertIn('/seim/dashboard', response.url)
 
 
 @pytest.mark.django_db
@@ -154,7 +154,7 @@ class TestLogoutView(TestCase):
         response = self.client.get('/logout/')
         
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertEqual(response.headers.get("Location"), "/seim/login/")
         
         # Verify cookie is set to clear JWT
         self.assertIn('clear_jwt_tokens', response.cookies)
@@ -175,11 +175,11 @@ class TestDashboardView(TestCase):
         self.client = Client()
 
     def test_dashboard_view(self):
-        """Test dashboard view renders for all users."""
+        """Legacy ``/dashboard/`` redirects to the Vue dashboard."""
         response = self.client.get('/dashboard/')
         
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'frontend/dashboard.html')
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/dashboard/")
 
 
 @pytest.mark.django_db
@@ -200,7 +200,7 @@ class TestProgramsView(TestCase):
         response = self.client.get("/programs/")
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn("/login/", response.url)
+        self.assertIn("/seim/login", response.url)
 
     def test_programs_view_authenticated(self):
         """Test programs view displays for authenticated users."""
@@ -271,7 +271,7 @@ class TestApplicationsView(TestCase):
         response = self.client.get("/applications/")
 
         self.assertEqual(response.status_code, 302)
-        self.assertIn("/login/", response.url)
+        self.assertIn("/seim/login", response.url)
 
     def test_applications_view_student_sees_own(self):
         """Test student only sees their own applications."""
@@ -482,7 +482,7 @@ class TestAdminDashboardView(TestCase):
         
         # Non-admin should be redirected
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/dashboard/', response.url)
+        self.assertIn('/seim/dashboard', response.url)
 
     def test_admin_dashboard_admin_access(self):
         """Test admin can access admin dashboard."""
@@ -648,7 +648,7 @@ class TestProfileView(TestCase):
         response = self.client.get('/profile/')
         
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/login/', response.url)
+        self.assertIn('/seim/login', response.url)
 
     def test_profile_view_authenticated(self):
         """Test profile view displays for authenticated users."""

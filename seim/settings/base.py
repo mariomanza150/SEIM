@@ -192,9 +192,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "accounts.User"
 
 # Authentication settings
-LOGIN_URL = "/login/"
-LOGIN_REDIRECT_URL = "/dashboard/"
-LOGOUT_REDIRECT_URL = "/"
+LOGIN_URL = "/seim/login/"
+LOGIN_REDIRECT_URL = "/seim/dashboard/"
+LOGOUT_REDIRECT_URL = "/seim/login/"
 
 # REST Framework Configuration
 REST_FRAMEWORK = {

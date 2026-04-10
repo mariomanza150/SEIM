@@ -5,6 +5,8 @@ from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 
+from tests.wagtail_site import ensure_wagtail_site_root_live
+
 User = get_user_model()
 
 
@@ -16,9 +18,10 @@ class UrlConfigurationTests(TestCase):
             email="test@example.com",
             password="testpass123",
         )
+        ensure_wagtail_site_root_live()
 
     def test_root_url_public_home_or_wagtail(self):
-        """Site root is public content (Wagtail or Django marketing), not the ``/seim/`` SPA shell."""
+        """Site root is public CMS (Wagtail when installed), not the ``/seim/`` SPA shell."""
         response = self.client.get("/")
         self.assertEqual(response.status_code, 200)
         body = response.content.decode()
@@ -52,23 +55,26 @@ class UrlConfigurationTests(TestCase):
         self.assertIn(response.status_code, (200, 401))
 
     def test_root_auth_routes_are_registered(self):
-        """Public auth routes exist outside the SPA base path."""
-        routes = [
-            "/dashboard/",
-            "/login/",
-            "/register/",
-            "/password-reset/",
-        ]
-
-        for route in routes:
+        """Legacy paths outside ``/seim/``: login/dashboard redirect to Vue; register/password stay Django."""
+        self.assertEqual(self.client.get("/dashboard/", follow=False).status_code, 302)
+        self.assertEqual(
+            self.client.get("/dashboard/", follow=False).headers.get("Location"),
+            "/seim/dashboard/",
+        )
+        self.assertEqual(self.client.get("/login/", follow=False).status_code, 302)
+        self.assertEqual(
+            self.client.get("/login/", follow=False).headers.get("Location"),
+            "/seim/login/",
+        )
+        for route in ("/register/", "/password-reset/"):
             with self.subTest(route=route):
-                response = self.client.get(route)
-                self.assertEqual(response.status_code, 200)
+                self.assertEqual(self.client.get(route).status_code, 200)
 
     def test_root_logout_route_redirects(self):
-        """The public logout route is registered."""
+        """The public logout route clears session and sends users to the Vue login shell."""
         response = self.client.get("/logout/")
         self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/login/")
 
     def test_jsreverse_route_is_registered(self):
         """JavaScript reverse URL endpoint is registered."""
