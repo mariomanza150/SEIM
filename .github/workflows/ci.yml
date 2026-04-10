@@ -160,14 +160,20 @@ jobs:
         run: python manage.py migrate --noinput
 
       - name: Compile translation messages
-        run: python manage.py compilemessages
+        run: python manage.py compilemessages -l de -l es -l fr
 
       - name: Pytest (unit + integration)
         env:
           DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
           REDIS_URL: redis://localhost:6379/0
         run: |
-          pytest --cov=. --cov-report=xml --cov-report=html --cov-fail-under=80 \
+          pytest \
+            --cov=accounts --cov=analytics --cov=api --cov=application_forms --cov=core \
+            --cov=dashboard --cov=data_management --cov=documents --cov=exchange \
+            --cov=frontend --cov=grades --cov=internacional --cov=notifications \
+            --cov=plugins --cov=seim \
+            --cov-config=pyproject.toml \
+            --cov-report=xml --cov-report=html --cov-fail-under=80 \
             --junitxml=test-results.xml \
             tests/unit/ tests/integration/ \
             -v --tb=short

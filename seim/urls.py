@@ -72,6 +72,13 @@ urlpatterns += [
     # Application Forms API
     path('api/application-forms/', include(('application_forms.urls', 'application_forms'), namespace='application_forms')),
 
+    # django-dynforms builder (admin-only); see core/dynforms_urls.py
+    *(
+        [path("dynforms/", include("core.dynforms_urls"))]
+        if apps.is_installed("dynforms")
+        else []
+    ),
+
     # API Documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
@@ -90,16 +97,6 @@ urlpatterns += [
     re_path(r"^seim(?:/.*)?/?$", TemplateView.as_view(template_name='index.html'), name='vue-app'),
 
     # ============================================
-    # ROOT AUTH ROUTES
-    # ============================================
-    # Public CMS content and legacy auth redirects use these pages without the /seim/ prefix.
-    path("dashboard/", frontend_views.dashboard_view, name="root_dashboard"),
-    path("login/", frontend_views.login_view, name="root_login"),
-    path("register/", frontend_views.register_view, name="root_register"),
-    path("logout/", frontend_views.logout_view, name="root_logout"),
-    path("password-reset/", frontend_views.password_reset_view, name="root_password_reset"),
-
-    # ============================================
     # UTILITIES
     # ============================================
     path('i18n/', include('django.conf.urls.i18n')),  # Internationalization
@@ -113,8 +110,9 @@ if _WAGTAIL:
         path("admin-dashboard/", frontend_views.admin_dashboard_view),
     )
 
-# Django template frontend routes must be registered *before* Wagtail's ``""`` catch-all
-# so paths like ``/``, ``/programs/``, and ``/dashboard/analytics/`` resolve here.
+# Django template frontend routes (non-root) must be registered *before* Wagtail's ``""``
+# catch-all so paths like ``/programs/`` and ``/dashboard/analytics/`` resolve here; ``/`` is
+# served by Wagtail when a root page exists.
 urlpatterns += [
     path("", include(("frontend.urls", "frontend"), namespace="frontend")),
 ]
@@ -126,6 +124,9 @@ if _WAGTAIL:
             include(wagtail_urls),
         ),
     )
+else:
+    # Unit tests and minimal installs disable Wagtail; keep a template marketing root.
+    urlpatterns.append(path("", frontend_views.home_view, name="marketing_home"))
 
 # ============================================
 # DEVELOPMENT: Serve media and static files

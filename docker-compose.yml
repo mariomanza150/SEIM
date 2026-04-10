@@ -87,7 +87,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.test
-    command: bash -c "/app/scripts/wait-for-db.sh && pytest --cov=. --cov-report=html:htmlcov --cov-report=term-missing --cov-fail-under=80"
+    # Coverage scope matches CI: pytest.ini addopts + pyproject.toml [tool.coverage.run] (excludes cms / Wagtail-stripped code).
+    command: bash -c "/app/scripts/wait-for-db.sh && pytest tests/unit/ tests/integration/"
     volumes:
       - .:/app
       - test_coverage:/app/htmlcov

@@ -7,11 +7,11 @@ that are used across all test modules.
 
 import os
 import tempfile
+from contextlib import contextmanager
 from datetime import timedelta
 
 import factory
 import pytest
-from contextlib import contextmanager
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from faker import Faker
@@ -32,7 +32,7 @@ try:
 except ImportError:
     Options = None
 
-from accounts.models import Permission, Profile, Role, User
+from accounts.models import Permission, Profile, Role
 from documents.models import Document
 from exchange.models import (
     Application,
@@ -607,3 +607,39 @@ def create_application_workflow(student, program, status_name):
         application.save()
 
     return application
+
+
+def pytest_sessionstart(session):
+    """Build project gettext catalogs when GNU gettext is available.
+
+    ``*.mo`` is gitignored; Docker bind-mounts hide image-baked ``locale/*/LC_MESSAGES``.
+    Compiling here keeps i18n tests accurate in dev/CI without committing binaries.
+    """
+    import shutil
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    if not shutil.which("msgfmt"):
+        return
+    root = Path(__file__).resolve().parents[1]
+    manage = root / "manage.py"
+    if not manage.is_file():
+        return
+    subprocess.run(
+        [
+            sys.executable,
+            str(manage),
+            "compilemessages",
+            "-l",
+            "de",
+            "-l",
+            "es",
+            "-l",
+            "fr",
+        ],
+        cwd=str(root),
+        check=False,
+        capture_output=True,
+        text=True,
+    )

@@ -63,8 +63,8 @@ COPY --from=frontend-builder /app/frontend-vue/dist /opt/seim-vue-dist
 # Create media directory for Wagtail uploads
 RUN mkdir -p /app/media
 
-# gettext binary catalogs (.mo) are gitignored; compile from locale/*.po for runtime/tests
-RUN python manage.py compilemessages
+# gettext binary catalogs (.mo) are gitignored; compile project locales only
+RUN python manage.py compilemessages -l de -l es -l fr
 
 # Collect static files (includes Vue.js assets)
 RUN python manage.py collectstatic --noinput --clear
