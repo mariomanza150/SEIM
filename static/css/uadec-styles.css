@@ -424,10 +424,180 @@ a:hover {
 }
 
 /* ============================================
+   CMS / WAGTAIL STREAMFIELD PROSE
+   ============================================ */
+.cms-prose {
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: var(--uadec-text);
+    max-width: 48rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cms-prose > *:first-child {
+    margin-top: 0;
+}
+
+.cms-prose h2,
+.cms-prose h3,
+.cms-prose h4 {
+    color: var(--uadec-blue-dark);
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+}
+
+.cms-prose h2 {
+    font-size: 1.65rem;
+}
+
+.cms-prose h3 {
+    font-size: 1.35rem;
+}
+
+.cms-prose p,
+.cms-prose ul,
+.cms-prose ol {
+    margin-bottom: 1.25rem;
+}
+
+.cms-prose ul,
+.cms-prose ol {
+    padding-left: 1.25rem;
+}
+
+.cms-prose blockquote {
+    border-left: 4px solid var(--uadec-gold);
+    padding-left: 1rem;
+    margin: 1.5rem 0;
+    color: var(--uadec-text-muted, #5c5c5c);
+    font-style: italic;
+}
+
+.cms-prose .rich-text-block a {
+    font-weight: 600;
+}
+
+.cms-prose .image-block img {
+    border-radius: 0.375rem;
+}
+
+/* Wider prose when already inside a main column */
+.col-lg-8 .cms-prose,
+.col-lg-10 .cms-prose,
+.col-md-6 .cms-prose {
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* ============================================
+   CMS PUBLIC PAGES (a11y + shared layout)
+   ============================================ */
+.cms-skip-link {
+    position: absolute;
+    left: -10000px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+.cms-skip-link:focus {
+    position: fixed;
+    left: 0.75rem;
+    top: 0.75rem;
+    z-index: 1080;
+    width: auto;
+    height: auto;
+    padding: 0.5rem 1rem;
+    overflow: visible;
+    clip: auto;
+    background: var(--uadec-blue);
+    color: var(--uadec-white);
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 0.25rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
+}
+
+.navbar-brand-icon {
+    font-size: 1.5rem;
+}
+
+.cms-page-heading-shadow {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.cms-hero-title-overlay {
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.cms-hero-subtitle-lead {
+    font-size: 1.25rem;
+}
+
+.cms-sticky-sidebar {
+    top: 100px;
+}
+
+.cms-card-header-primary {
+    background: var(--uadec-blue);
+    color: var(--uadec-white);
+    font-weight: 600;
+}
+
+.cms-card-header-gold {
+    background: var(--uadec-gold);
+    color: var(--uadec-white);
+    font-weight: 600;
+}
+
+.cms-section-heading-blue {
+    color: var(--uadec-blue);
+}
+
+.cms-related-card-link {
+    color: var(--uadec-blue);
+}
+
+.blog-post-hero {
+    position: relative;
+    height: 400px;
+    overflow: hidden;
+}
+
+.blog-post-hero-bg {
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.7);
+}
+
+.cms-footer-heading-gold {
+    color: var(--uadec-gold);
+}
+
+.cms-footer-social-icon {
+    font-size: 1.5rem;
+}
+
+.cms-footer-rule {
+    border-color: var(--uadec-gold);
+    opacity: 0.3;
+}
+
+.cms-footer-site-link {
+    color: var(--uadec-gold);
+}
+
+/* ============================================
    PRINT STYLES
    ============================================ */
 @media print {
     .navbar,
+    .cms-skip-link,
     footer,
     .btn {
         display: none;

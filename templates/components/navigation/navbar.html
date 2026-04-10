@@ -5,7 +5,7 @@
 <nav class="navbar navbar-expand-lg">
     <div class="container">
         <!-- Brand -->
-        <a class="navbar-brand" href="{% url 'frontend:home' %}">
+        <a class="navbar-brand" href="/">
             <i class="bi bi-globe"></i> SEIM
         </a>
         
@@ -19,7 +19,7 @@
             <!-- Authenticated Navigation -->
             <ul class="navbar-nav me-auto authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'frontend:dashboard' %}" aria-label="{% trans 'Dashboard' %}">
+                    <a class="nav-link" href="/seim/dashboard/" aria-label="{% trans 'Dashboard' %}">
                         <i class="bi bi-speedometer2" aria-hidden="true"></i> 
                         <span>{% trans "Dashboard" %}</span>
                     </a>
@@ -139,7 +139,7 @@
             <!-- Unauthenticated Navigation -->
             <ul class="navbar-nav ms-auto unauth-nav" {% if not user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'frontend:login' %}" aria-label="{% trans 'Login' %}">
+                    <a class="nav-link" href="/seim/login/" aria-label="{% trans 'Login' %}">
                         <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> {% trans "Login" %}
                     </a>
                 </li>
