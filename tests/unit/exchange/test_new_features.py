@@ -381,6 +381,33 @@ class TestEnhancedEligibilityCriteria:
         assert "GPA below program minimum" in response.data['message']
         assert 'program' in response.data
 
+    def test_check_eligibility_application_query_includes_document_rule(
+        self, setup_eligibility_data,
+    ):
+        from documents.models import DocumentType
+
+        client = APIClient()
+        student = setup_eligibility_data['student']
+        program = setup_eligibility_data['program']
+        dt = DocumentType.objects.create(name="ID Scan", description="")
+        program.required_document_types.add(dt)
+        draft_status, _ = ApplicationStatus.objects.get_or_create(name="draft")
+        app = Application.objects.create(
+            student=student,
+            program=program,
+            status=draft_status,
+        )
+        refresh = RefreshToken.for_user(student)
+        client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        url = reverse('api:program-check-eligibility', kwargs={'pk': program.id})
+        response = client.get(url, {'application': str(app.id)})
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['eligible'] is False
+        assert 'Required documents' in response.data['message']
+        assert response.data.get('schema_version') == 3
+        rule_ids = [r['id'] for r in response.data['rules']]
+        assert 'required_documents' in rule_ids
+
 
 @pytest.mark.django_db
 class TestNotificationLinks:

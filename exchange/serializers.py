@@ -258,7 +258,11 @@ class ApplicationSerializer(serializers.ModelSerializer):
             is_draft = self.instance is None or self.instance.status.name == "draft"
             if not is_draft:
                 try:
-                    ApplicationService.check_eligibility(user, program)
+                    ApplicationService.check_eligibility(
+                        user,
+                        program,
+                        application=self.instance,
+                    )
                 except ValueError as e:
                     raise serializers.ValidationError(
                         {"program": str(e).replace("Eligibility requirements not met:\n- ", "").split("\n- ")}

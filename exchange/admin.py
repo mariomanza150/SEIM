@@ -518,7 +518,9 @@ class ApplicationAdmin(admin.ModelAdmin):
         """Show eligibility status with visual indicator."""
         try:
             from exchange.services import ApplicationService
-            result = ApplicationService.check_eligibility(obj.student, obj.program)
+            result = ApplicationService.check_eligibility(
+                obj.student, obj.program, application=obj
+            )
             return format_html(
                 '<span style="color: green; font-weight: bold;">✓ Eligible</span>'
             )
@@ -537,7 +539,9 @@ class ApplicationAdmin(admin.ModelAdmin):
         """Display detailed eligibility check results."""
         try:
             from exchange.services import ApplicationService
-            result = ApplicationService.check_eligibility(obj.student, obj.program)
+            result = ApplicationService.check_eligibility(
+                obj.student, obj.program, application=obj
+            )
 
             html = '<div style="padding: 10px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px;">'
             html += '<strong style="color: #155724;">✓ Student meets all eligibility requirements</strong><br><br>'
@@ -593,7 +597,11 @@ class ApplicationAdmin(admin.ModelAdmin):
         for application in queryset:
             try:
                 from exchange.services import ApplicationService
-                ApplicationService.check_eligibility(application.student, application.program)
+                ApplicationService.check_eligibility(
+                    application.student,
+                    application.program,
+                    application=application,
+                )
                 eligible_count += 1
             except ValueError:
                 ineligible_count += 1
