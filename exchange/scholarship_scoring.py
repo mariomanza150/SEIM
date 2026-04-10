@@ -9,6 +9,7 @@ from __future__ import annotations
 import csv
 import io
 from dataclasses import dataclass
+from io import BytesIO
 from typing import Any, Iterable
 
 from django.http import HttpResponse
@@ -27,6 +28,14 @@ CEFR_RANK: dict[str, int] = {
 
 RULESET_ID = "default_v1"
 RULESET_LABEL = "Default scholarship rubric (v1)"
+
+FACTOR_IDS: tuple[str, ...] = (
+    "academic",
+    "language",
+    "program_fit",
+    "application_quality",
+    "timeliness",
+)
 
 MAX_ACADEMIC = 25.0
 MAX_LANGUAGE = 20.0
@@ -339,11 +348,12 @@ def rank_applications_for_scholarship(
     return items
 
 
-def build_scholarship_scores_csv(applications_queryset) -> str:
-    """CSV text for a program cohort (includes rank and factor columns)."""
+def build_scholarship_scores_table(
+    applications_queryset,
+) -> tuple[list[str], list[list[Any]]]:
+    """Headers and row values for CSV / Excel / PDF exports."""
     ranked = rank_applications_for_scholarship(applications_queryset)
-    buffer = io.StringIO()
-    base_headers = [
+    headers = [
         "rank",
         "application_id",
         "student_email",
@@ -353,11 +363,8 @@ def build_scholarship_scores_csv(applications_queryset) -> str:
         "total_points",
         "max_points",
         "ruleset_id",
-    ]
-    factor_ids = ["academic", "language", "program_fit", "application_quality", "timeliness"]
-    writer = csv.writer(buffer)
-    writer.writerow(base_headers + [f"factor_{fid}" for fid in factor_ids] + ["factor_details_json"])
-
+    ] + [f"factor_{fid}" for fid in FACTOR_IDS] + ["factor_details_json"]
+    rows: list[list[Any]] = []
     for row in ranked:
         app = row.application
         sc = row.score
@@ -365,7 +372,7 @@ def build_scholarship_scores_csv(applications_queryset) -> str:
         student = app.student
         name = student.get_full_name().strip() or student.username
         status_name = app.status.name if app.status else ""
-        writer.writerow(
+        rows.append(
             [
                 row.rank,
                 str(app.id),
@@ -377,15 +384,132 @@ def build_scholarship_scores_csv(applications_queryset) -> str:
                 sc["max_points"],
                 sc["ruleset_id"],
             ]
-            + [round(by_id[fid]["points"], 2) for fid in factor_ids]
-            + [str({fid: by_id[fid]["detail"] for fid in factor_ids})],
+            + [round(by_id[fid]["points"], 2) for fid in FACTOR_IDS]
+            + [str({fid: by_id[fid]["detail"] for fid in FACTOR_IDS})],
         )
+    return headers, rows
+
+
+def build_scholarship_scores_csv(applications_queryset) -> str:
+    """CSV text for a program cohort (includes rank and factor columns)."""
+    headers, rows = build_scholarship_scores_table(applications_queryset)
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow(headers)
+    for r in rows:
+        writer.writerow(r)
     return buffer.getvalue()
 
 
-def scholarship_scores_csv_response(program_id, applications_queryset, filename: str | None = None) -> HttpResponse:
-    csv_text = build_scholarship_scores_csv(applications_queryset)
-    name = filename or f"scholarship-scores-{program_id}.csv"
-    resp = HttpResponse(csv_text, content_type="text/csv; charset=utf-8")
-    resp["Content-Disposition"] = f'attachment; filename="{name}"'
-    return resp
+def render_scholarship_scores_xlsx(applications_queryset) -> bytes:
+    from openpyxl import Workbook
+
+    headers, rows = build_scholarship_scores_table(applications_queryset)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Scores"
+    ws.append(headers)
+    for r in rows:
+        ws.append(list(r))
+    bio = BytesIO()
+    wb.save(bio)
+    return bio.getvalue()
+
+
+def render_scholarship_scores_pdf(
+    applications_queryset,
+    *,
+    program_name: str = "",
+) -> bytes:
+    """Landscape PDF with scores table (omits long JSON column; use CSV/XLSX for full text)."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import landscape, letter
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    headers, rows = build_scholarship_scores_table(applications_queryset)
+    pdf_headers = headers[:-1]
+    pdf_rows = [r[:-1] for r in rows]
+    data = [pdf_headers] + [[str(c) for c in r] for r in pdf_rows]
+
+    buffer = BytesIO()
+    page = landscape(letter)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=page,
+        rightMargin=28,
+        leftMargin=28,
+        topMargin=36,
+        bottomMargin=32,
+    )
+    styles = getSampleStyleSheet()
+    story = []
+    title = "Scholarship allocation scores"
+    if program_name:
+        title += f" — {program_name}"
+    story.append(Paragraph(title, styles["Title"]))
+    story.append(
+        Paragraph(
+            f"Ruleset <b>{RULESET_ID}</b>. Per-factor narrative text: export CSV or Excel "
+            "(column <i>factor_details_json</i>).",
+            styles["Normal"],
+        )
+    )
+    story.append(Spacer(1, 8))
+
+    tw = page[0] - 56
+    nc = len(pdf_headers)
+    col_w = tw / nc
+    col_widths = [col_w] * nc
+
+    tbl = Table(data, colWidths=col_widths, repeatRows=1)
+    tbl.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0d6efd")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 6),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
+            ]
+        )
+    )
+    story.append(tbl)
+    doc.build(story)
+    return buffer.getvalue()
+
+
+def scholarship_scores_export_response(
+    program_id,
+    applications_queryset,
+    *,
+    export_format: str = "csv",
+    program_name: str = "",
+) -> HttpResponse:
+    """Attachment response: ``csv`` (default), ``xlsx``, or ``pdf``."""
+    fmt = (export_format or "csv").lower().strip()
+    base = f"scholarship-scores-{program_id}"
+    if fmt == "csv":
+        csv_text = build_scholarship_scores_csv(applications_queryset)
+        resp = HttpResponse(csv_text, content_type="text/csv; charset=utf-8")
+        resp["Content-Disposition"] = f'attachment; filename="{base}.csv"'
+        return resp
+    if fmt == "xlsx":
+        body = render_scholarship_scores_xlsx(applications_queryset)
+        resp = HttpResponse(
+            body,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        resp["Content-Disposition"] = f'attachment; filename="{base}.xlsx"'
+        return resp
+    if fmt == "pdf":
+        body = render_scholarship_scores_pdf(
+            applications_queryset, program_name=program_name or ""
+        )
+        resp = HttpResponse(body, content_type="application/pdf")
+        resp["Content-Disposition"] = f'attachment; filename="{base}.pdf"'
+        return resp
+    raise ValueError(f"Unsupported export_format: {export_format!r} (use csv, xlsx, or pdf).")

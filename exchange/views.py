@@ -1,4 +1,5 @@
 import hashlib
+import uuid
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
@@ -26,6 +27,7 @@ from .calendar_ics import (
     sign_calendar_subscribe_token,
     unsign_calendar_subscribe_token,
 )
+from .eligibility_rules import checks_passed_labels, evaluate_eligibility
 from .filters import ApplicationFilter, ExchangeAgreementFilter, ProgramFilter
 from .models import (
     SEAT_HOLDING_APPLICATION_STATUS_NAMES,
@@ -37,7 +39,7 @@ from .models import (
     SavedSearch,
     TimelineEvent,
 )
-from .scholarship_scoring import scholarship_scores_csv_response
+from .scholarship_scoring import scholarship_scores_export_response
 from .serializers import (
     ApplicationSerializer,
     ApplicationStatusSerializer,
@@ -284,28 +286,82 @@ class ProgramViewSet(viewsets.ModelViewSet):
         - Detailed error messages if ineligible
 
         Useful for showing eligibility warnings before students start applications.
+
+        Optional query: ``application=<uuid>`` — when the draft belongs to the current
+        student and matches this program, includes the **required_documents** rule
+        (program required document types vs uploads).
         """
         program = self.get_object()
 
-        try:
-            result = ApplicationService.check_eligibility(request.user, program)
-            return Response(result)
-        except ValueError as e:
+        application_obj = None
+        raw_app = request.query_params.get("application")
+        if raw_app:
+            try:
+                aid = uuid.UUID(str(raw_app))
+            except (ValueError, TypeError, AttributeError):
+                return Response(
+                    {"detail": "Invalid application id."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            application_obj = (
+                Application.objects.filter(pk=aid)
+                .only("id", "student_id", "program_id")
+                .first()
+            )
+            if not application_obj:
+                return Response(
+                    {"detail": "Application not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            if application_obj.student_id != request.user.pk:
+                return Response(
+                    {"detail": "You do not have access to this application."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            if application_obj.program_id != program.pk:
+                return Response(
+                    {"detail": "Application does not belong to this program."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        ev = evaluate_eligibility(request.user, program, application=application_obj)
+        program_snapshot = {
+            "name": program.name,
+            "min_gpa": program.min_gpa,
+            "required_language": program.required_language,
+            "min_language_level": program.min_language_level,
+            "min_age": program.min_age,
+            "max_age": program.max_age,
+        }
+        if ev.eligible:
             return Response(
                 {
-                    "eligible": False,
-                    "message": str(e),
-                    "program": {
-                        "name": program.name,
-                        "min_gpa": program.min_gpa,
-                        "required_language": program.required_language,
-                        "min_language_level": program.min_language_level,
-                        "min_age": program.min_age,
-                        "max_age": program.max_age,
-                    }
-                },
-                status=status.HTTP_200_OK  # Not an error, just ineligible
+                    "eligible": True,
+                    "message": "All eligibility requirements met",
+                    "checks_passed": checks_passed_labels(program),
+                    "rules": ev.rules_as_dicts(),
+                    "schema_version": 3,
+                }
             )
+        message = (
+            ev.failures[0]
+            if len(ev.failures) == 1 and ev.failures[0] == "Student profile is missing."
+            else (
+                "Eligibility requirements not met:\n- " + "\n- ".join(ev.failures)
+                if ev.failures
+                else "Not eligible."
+            )
+        )
+        return Response(
+            {
+                "eligible": False,
+                "message": message,
+                "rules": ev.rules_as_dicts(),
+                "program": program_snapshot,
+                "schema_version": 3,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 def _application_list_cache_key(*args, **kwargs):
@@ -393,7 +449,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="scholarship-scores-export")
     def scholarship_scores_export(self, request):
-        """CSV export of scholarship allocation scores for all applications in a program (staff)."""
+        """Export scholarship scores for a program cohort: CSV (default), XLSX, or PDF (staff)."""
         user = request.user
         if not user.is_authenticated or not user.has_any_role(["coordinator", "admin"]):
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
@@ -405,7 +461,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             )
         from .models import Program
 
-        if not Program.objects.filter(pk=program_id).exists():
+        program = Program.objects.filter(pk=program_id).first()
+        if not program:
             return Response({"error": "Program not found."}, status=status.HTTP_404_NOT_FOUND)
 
         qs = (
@@ -418,7 +475,16 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             )
             .order_by("created_at")
         )
-        return scholarship_scores_csv_response(program_id, qs)
+        export_format = request.query_params.get("export_format", "csv")
+        try:
+            return scholarship_scores_export_response(
+                program_id,
+                qs,
+                export_format=export_format,
+                program_name=program.name,
+            )
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=["post"])
     def submit(self, request, pk=None):

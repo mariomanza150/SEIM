@@ -10,6 +10,8 @@ from exchange.scholarship_scoring import (
     build_scholarship_scores_csv,
     compute_scholarship_allocation_score,
     rank_applications_for_scholarship,
+    render_scholarship_scores_xlsx,
+    scholarship_scores_export_response,
 )
 from tests.utils import TestUtils
 
@@ -110,3 +112,17 @@ class TestScholarshipScoringCohort:
         assert "ruleset_id" in lines[0]
         assert len(lines) >= 2
         assert RULESET_ID in lines[1]
+
+    def test_xlsx_starts_with_zip_signature(self):
+        program = TestUtils.create_test_program()
+        student = TestUtils.create_test_user(role="student")
+        TestUtils.create_test_application(student=student, program=program, status_name="submitted")
+        raw = render_scholarship_scores_xlsx(program.application_set.all())
+        assert raw[:2] == b"PK"
+
+    def test_export_response_rejects_bad_format(self):
+        program = TestUtils.create_test_program()
+        with pytest.raises(ValueError):
+            scholarship_scores_export_response(
+                program.id, program.application_set.all(), export_format="rtf"
+            )

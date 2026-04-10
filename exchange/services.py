@@ -6,6 +6,8 @@ from django.utils import timezone
 from accounts.models import User
 from notifications.services import NotificationService
 
+from exchange.eligibility_rules import checks_passed_labels, evaluate_eligibility
+
 from .models import (
     Application,
     ApplicationStatus,
@@ -22,110 +24,38 @@ class ApplicationService:
     """
 
     @staticmethod
-    def check_eligibility(student: User, program: Program) -> Dict[str, Any]:
+    def check_eligibility(
+        student: User,
+        program: Program,
+        application: Optional[Application] = None,
+    ) -> Dict[str, Any]:
         """
         Comprehensive eligibility check for student applying to program.
 
-        Checks:
-        - GPA requirement (with grade translation support)
-        - Language requirement
-        - Language proficiency level (CEFR scale)
-        - Age requirements (min/max)
+        Delegates to :func:`exchange.eligibility_rules.evaluate_eligibility` (structured rules;
+        ``rules`` + ``schema_version`` in the success payload for API clients
+        (``schema_version`` increments when rule set or order changes).
+
+        When ``application`` is provided (same program/student), required document types
+        are evaluated against that application's uploads (submit parity).
 
         Raises:
             ValueError: With detailed message if any requirement is not met
 
         Returns:
-            dict: Detailed eligibility result with status and messages
+            dict: Detailed eligibility result with status, ``rules``, and legacy ``checks_passed``.
         """
-        profile = getattr(student, "profile", None)
-        if not profile:
-            raise ValueError("Student profile is missing.")
-
-        eligibility_issues = []
-
-        # Check GPA requirement with grade translation support
-        if hasattr(program, "min_gpa") and program.min_gpa and profile.gpa is not None:
-            # If student has a grade scale, use translation
-            if profile.grade_scale:
-                # Get the GPA equivalent of student's grade
-                student_gpa_equivalent = profile.get_gpa_equivalent()
-
-                # Compare using GPA equivalents (normalized to 4.0 scale)
-                if student_gpa_equivalent < program.min_gpa:
-                    eligibility_issues.append(
-                        f"GPA below program minimum. Your GPA equivalent: {student_gpa_equivalent:.2f}, "
-                        f"Required: {program.min_gpa:.2f}"
-                    )
-            else:
-                # No grade scale specified, use direct comparison (legacy behavior)
-                if profile.gpa < program.min_gpa:
-                    eligibility_issues.append(
-                        f"GPA below program minimum. Your GPA: {profile.gpa:.2f}, "
-                        f"Required: {program.min_gpa:.2f}"
-                    )
-
-        # Check language requirement
-        if (
-            hasattr(program, "required_language")
-            and program.required_language
-            and profile.language != program.required_language
-        ):
-            eligibility_issues.append(
-                f"Language requirement not met. Required: {program.required_language}, "
-                f"Your language: {profile.language or 'Not specified'}"
-            )
-
-        # Check language proficiency level (CEFR scale)
-        if hasattr(program, "min_language_level") and program.min_language_level:
-            cefr_levels = {'A1': 1, 'A2': 2, 'B1': 3, 'B2': 4, 'C1': 5, 'C2': 6}
-
-            if hasattr(profile, "language_level") and profile.language_level:
-                student_level = cefr_levels.get(profile.language_level, 0)
-                required_level = cefr_levels.get(program.min_language_level, 0)
-
-                if student_level < required_level:
-                    eligibility_issues.append(
-                        f"Language proficiency below requirement. "
-                        f"Required: {program.min_language_level}, "
-                        f"Your level: {profile.language_level}"
-                    )
-            else:
-                eligibility_issues.append(
-                    f"Language proficiency not specified. Required: {program.min_language_level}"
-                )
-
-        # Check age requirements
-        if hasattr(profile, "date_of_birth") and profile.date_of_birth:
-            from datetime import date
-            today = date.today()
-            age = today.year - profile.date_of_birth.year - (
-                (today.month, today.day) < (profile.date_of_birth.month, profile.date_of_birth.day)
-            )
-
-            if hasattr(program, "min_age") and program.min_age and age < program.min_age:
-                eligibility_issues.append(
-                    f"Age below minimum requirement. Your age: {age}, Required: {program.min_age}+"
-                )
-
-            if hasattr(program, "max_age") and program.max_age and age > program.max_age:
-                eligibility_issues.append(
-                    f"Age above maximum requirement. Your age: {age}, Maximum: {program.max_age}"
-                )
-
-        # If there are any eligibility issues, raise error with all details
-        if eligibility_issues:
-            raise ValueError("Eligibility requirements not met:\n- " + "\n- ".join(eligibility_issues))
-
+        ev = evaluate_eligibility(student, program, application=application)
+        if not ev.eligible:
+            if len(ev.failures) == 1 and ev.failures[0] == "Student profile is missing.":
+                raise ValueError("Student profile is missing.")
+            raise ValueError("Eligibility requirements not met:\n- " + "\n- ".join(ev.failures))
         return {
             "eligible": True,
             "message": "All eligibility requirements met",
-            "checks_passed": [
-                "GPA requirement" if program.min_gpa else None,
-                "Language requirement" if program.required_language else None,
-                "Language proficiency" if program.min_language_level else None,
-                "Age requirements" if (program.min_age or program.max_age) else None,
-            ]
+            "checks_passed": checks_passed_labels(program),
+            "rules": ev.rules_as_dicts(),
+            "schema_version": 3,
         }
 
     @staticmethod
@@ -213,11 +143,8 @@ class ApplicationService:
 
     @staticmethod
     def _ensure_submission_requirements(application: Application, user: User) -> None:
-        """Dynamic form completeness and required documents (if configured)."""
+        """Dynamic form completeness (required documents enforced in ``check_eligibility``)."""
         ApplicationService._ensure_application_form_complete(application, user)
-        from documents.services import DocumentService
-
-        DocumentService.ensure_required_documents_approved(application)
 
     @staticmethod
     @transaction.atomic
@@ -225,7 +152,7 @@ class ApplicationService:
         """Submit an application (draft -> submitted) with eligibility and single active check."""
         if application.status.name != "draft":
             raise ValueError("Only draft applications can be submitted.")
-        ApplicationService.check_eligibility(user, application.program)
+        ApplicationService.check_eligibility(user, application.program, application=application)
         if not ApplicationService.can_submit_application(user, application.program):
             raise ValueError("You already have an active application for this program.")
         ApplicationService._ensure_submission_requirements(application, user)

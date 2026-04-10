@@ -145,6 +145,7 @@ class TestApplicationService:
         assert isinstance(result, dict)
         assert result['eligible'] is True
         assert result['message'] == "All eligibility requirements met"
+        assert result.get("schema_version") == 3
 
     def test_check_eligibility_missing_profile(self, test_data_no_profile):
         """Test eligibility check with missing profile."""
@@ -357,6 +358,20 @@ class TestApplicationService:
         """Test submitting application with eligibility failure."""
         with pytest.raises(ValueError, match="Student profile is missing"):
             ApplicationService.submit_application(test_data_no_profile['application'], test_data_no_profile['user'])
+
+    def test_submit_application_fails_when_application_window_closed(self, test_data):
+        from accounts.models import Profile
+
+        Profile.objects.update_or_create(
+            user=test_data["user"],
+            defaults={"gpa": 3.5, "language": "English"},
+        )
+        program = test_data["program"]
+        program.application_open_date = date.today() - timedelta(days=20)
+        program.application_deadline = date.today() - timedelta(days=1)
+        program.save(update_fields=["application_open_date", "application_deadline"])
+        with pytest.raises(ValueError, match="Applications closed on"):
+            ApplicationService.submit_application(test_data["application"], test_data["user"])
 
     def test_submit_application_existing_active(self, test_data):
         """Test submitting application when existing active application."""
