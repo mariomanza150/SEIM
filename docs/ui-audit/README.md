@@ -27,27 +27,27 @@ Legend:
 
 | Page | Status | Top priority | Next action | Owner | Updated |
 | --- | --- | --- | --- | --- | --- |
-| `pages\dashboard.md` | In progress |  | Fill **Observed/Issues** + top P0/P1/P2; capture 1 screenshot per theme |  | 2026-04-10 |
-| `pages\programs.md` | In progress |  | Audit `/programs/` and `/seim/programs/compare`; capture breadcrumb + layout notes |  | 2026-04-10 |
-| `pages\applications-list.md` | In progress |  | Audit both Django + Vue list; note table density + responsive behavior |  | 2026-04-10 |
-| `pages\application-detail.md` | Not started |  |  |  |  |
-| `pages\application-form.md` | Not started |  |  |  |  |
-| `pages\documents-list.md` | Not started |  |  |  |  |
-| `pages\document-detail.md` | Not started |  |  |  |  |
-| `pages\calendar.md` | Not started |  |  |  |  |
-| `pages\notifications.md` | Not started |  |  |  |  |
-| `pages\profile.md` | Not started |  |  |  |  |
-| `pages\settings.md` | Not started |  |  |  |  |
-| `pages\preferences.md` | Not started |  |  |  |  |
-| `pages\sessions.md` | Not started |  |  |  |  |
-| `pages\admin-dashboard.md` | Not started |  |  |  |  |
-| `pages\admin-analytics.md` | Not started |  |  |  |  |
-| `pages\coordinator-dashboard.md` | Not started |  |  |  |  |
-| `pages\coordinator-review-queue.md` | Not started |  |  |  |  |
-| `pages\coordinator-workload.md` | Not started |  |  |  |  |
-| `pages\notification-routing.md` | Not started |  |  |  |  |
-| `pages\exchange-agreements.md` | Not started |  |  |  |  |
-| `pages\agreement-documents.md` | Not started |  |  |  |  |
+| `pages\dashboard.md` | Complete | P1 | Verify theme application + nav breakpoints during P0 fix sweep |  | 2026-04-15 |
+| `pages\programs.md` | Complete | P1 | Decide SSR vs SPA theme parity expectations; align nav/wayfinding |  | 2026-04-15 |
+| `pages\applications-list.md` | Complete | P1 | Standardize breadcrumb + light/dark surfaces; compact filter layout |  | 2026-04-15 |
+| `pages\application-detail.md` | Complete | P1 | Breadcrumb truncation + theme surface consistency; de-emphasize N/A fields |  | 2026-04-15 |
+| `pages\application-form.md` | Complete | P1 | Reduce above-the-fold density (collapse advanced filters) + theme parity |  | 2026-04-15 |
+| `pages\documents-list.md` | Complete | P1 | Theme parity + compact filters; verify table behavior on narrow widths |  | 2026-04-15 |
+| `pages\document-detail.md` | Complete | P0 | Fix inline PDF preview failing; then improve error-state recovery actions |  | 2026-04-15 |
+| `pages\calendar.md` | Complete | P1 | Align Dark mode parity across SPA pages; consider sticky/compact filters |  | 2026-04-15 |
+| `pages\notifications.md` | Complete | P1 | Theme parity + compact filters; clarify action hierarchy (bulk vs item) |  | 2026-04-15 |
+| `pages\profile.md` | Complete | P1 | Theme parity; verify long-form mobile ergonomics |  | 2026-04-15 |
+| `pages\settings.md` | Complete | P1 | Fix theme application consistency across routes; consider sticky actions on mobile |  | 2026-04-15 |
+| `pages\preferences.md` | Complete | P1 | Decide SSR Preferences vs SPA Settings consolidation/redirect |  | 2026-04-15 |
+| `pages\sessions.md` | Complete | P1 | Decide SSR vs SPA ownership; align breadcrumb/theme conventions |  | 2026-04-15 |
+| `pages\admin-dashboard.md` | Complete | P1 | Decide SSR vs SPA admin surface; align nav/theme conventions |  | 2026-04-15 |
+| `pages\admin-analytics.md` | Complete | P1 | Decide SSR vs SPA analytics surface; verify responsive behavior |  | 2026-04-15 |
+| `pages\coordinator-dashboard.md` | Complete | P1 | Decide SSR vs SPA coordinator overview; align wayfinding/theme |  | 2026-04-15 |
+| `pages\coordinator-review-queue.md` | Complete | P1 | Compact filters + fix theme parity/background consistency |  | 2026-04-15 |
+| `pages\coordinator-workload.md` | Complete | P1 | Align theme parity across staff pages; add empty-state guidance |  | 2026-04-15 |
+| `pages\notification-routing.md` | Complete | P1 | Verify responsive table behavior; add anchors/TOC if needed |  | 2026-04-15 |
+| `pages\exchange-agreements.md` | Complete | P1 | Collapse advanced filters; fix theme parity/background consistency |  | 2026-04-15 |
+| `pages\agreement-documents.md` | Complete | P1 | Compact filters; fix theme parity/background consistency |  | 2026-04-15 |
 
 ## Page index (files)
 - `pages\dashboard.md`

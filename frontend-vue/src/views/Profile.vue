@@ -314,6 +314,6 @@ onMounted(fetchProfile)
 </script>
 
 <style scoped>
-.profile-page { min-height: 100vh; background-color: #f8f9fa; }
+.profile-page { min-height: 100vh; background-color: var(--seim-app-bg); }
 .card { border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
 </style>

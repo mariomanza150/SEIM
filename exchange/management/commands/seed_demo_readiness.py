@@ -355,9 +355,20 @@ class Command(BaseCommand):
         return "info"
 
     def _build_pdf_bytes(self, application, doc_type_name):
-        content = (
-            "%PDF-1.4\n"
-            f"% Demo {doc_type_name} for {application.student.username}\n"
-            f"% Program: {application.program.name}\n"
-        )
-        return content.encode("utf-8")
+        # Build a small *valid* PDF so browser previews work (Chrome/PDF.js rejects header-only stubs).
+        text = f"Demo {doc_type_name} — {application.student.username} — {application.program.name}"
+        try:
+            from io import BytesIO
+
+            from reportlab.pdfgen import canvas
+
+            buf = BytesIO()
+            c = canvas.Canvas(buf, pagesize=(300, 200))
+            c.setFont("Helvetica", 12)
+            c.drawString(24, 140, text)
+            c.showPage()
+            c.save()
+            return buf.getvalue()
+        except Exception:
+            # Fallback: very small handcrafted PDF (best-effort).
+            return (b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n" + text.encode("utf-8") + b"\n%%EOF\n")

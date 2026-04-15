@@ -491,6 +491,6 @@ onMounted(async () => {
 <style scoped>
 .staff-agreements-page {
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: var(--seim-app-bg);
 }
 </style>

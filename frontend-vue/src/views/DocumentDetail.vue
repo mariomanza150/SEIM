@@ -478,7 +478,23 @@ async function loadPreview() {
     const res = await api.get(`/api/documents/${document.value.id}/preview/`, {
       responseType: 'blob',
     })
-    previewObjectUrl.value = URL.createObjectURL(res.data)
+    const contentType = String(res?.headers?.['content-type'] || res?.headers?.['Content-Type'] || '')
+    const rawBlob = res?.data instanceof Blob ? res.data : new Blob([res?.data])
+
+    if (previewKind.value === 'pdf') {
+      // Common failure mode: server returns HTML/JSON (e.g., auth redirect / error) as a blob.
+      if (contentType && !contentType.toLowerCase().includes('pdf')) {
+        previewError.value = t('documentDetailPage.previewError')
+        return
+      }
+    }
+
+    const expectedType =
+      previewKind.value === 'pdf'
+        ? 'application/pdf'
+        : contentType || rawBlob.type || 'application/octet-stream'
+    const blob = rawBlob.type && rawBlob.type !== expectedType ? new Blob([rawBlob], { type: expectedType }) : rawBlob
+    previewObjectUrl.value = URL.createObjectURL(blob)
   } catch (e) {
     console.error(e)
     previewError.value = t('documentDetailPage.previewError')
@@ -673,7 +689,7 @@ onUnmounted(() => {
 <style scoped>
 .document-detail {
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: var(--seim-app-bg);
 }
 
 .card {

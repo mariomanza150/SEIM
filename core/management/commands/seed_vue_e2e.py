@@ -66,22 +66,41 @@ class Command(BaseCommand):
             name="transcript",
             defaults={"description": "Academic transcript"},
         )
-        if not Document.objects.filter(application=application, type=doc_type).exists():
-            fake_file = SimpleUploadedFile(
-                "e2e_transcript.pdf",
-                b"%PDF-1.4 E2E test document content",
-                content_type="application/pdf",
-            )
-            Document.objects.create(
-                application=application,
-                type=doc_type,
-                file=fake_file,
-                uploaded_by=student,
-                is_valid=False,
-            )
-            self.stdout.write(self.style.SUCCESS("  ✓ Created document for application"))
+        # Build a minimal valid PDF so inline previews work in browser-based tests.
+        def build_pdf_bytes(text: str) -> bytes:
+            try:
+                from io import BytesIO
+
+                from reportlab.pdfgen import canvas
+
+                buf = BytesIO()
+                c = canvas.Canvas(buf, pagesize=(300, 200))
+                c.setFont("Helvetica", 12)
+                c.drawString(24, 140, text)
+                c.showPage()
+                c.save()
+                return buf.getvalue()
+            except Exception:
+                return b"%PDF-1.4\n" + text.encode("utf-8") + b"\n%%EOF\n"
+
+        fake_file = SimpleUploadedFile(
+            "e2e_transcript.pdf",
+            build_pdf_bytes(f"Vue E2E transcript for {student.email}"),
+            content_type="application/pdf",
+        )
+        doc, created_doc = Document.objects.get_or_create(
+            application=application,
+            type=doc_type,
+            uploaded_by=student,
+            defaults={"file": fake_file, "is_valid": False},
+        )
+        if not created_doc:
+            doc.file = fake_file
+            doc.is_valid = False
+            doc.save()
+            self.stdout.write("  ✓ Updated existing document for application")
         else:
-            self.stdout.write("  ✓ Document already exists for application")
+            self.stdout.write(self.style.SUCCESS("  ✓ Created document for application"))
 
         unread = Notification.objects.filter(recipient=student, is_read=False).count()
         if unread < 2:

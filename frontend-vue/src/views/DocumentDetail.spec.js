@@ -51,7 +51,10 @@ function mockSuccessFlow() {
       })
     }
     if (String(url).includes('/api/documents/doc-1/preview/')) {
-      return Promise.resolve({ data: new Blob(['%PDF'], { type: 'application/pdf' }) })
+      return Promise.resolve({
+        data: new Blob(['%PDF'], { type: '' }),
+        headers: { 'content-type': 'application/pdf' },
+      })
     }
     return Promise.reject(new Error(`Unexpected GET ${url}`))
   })

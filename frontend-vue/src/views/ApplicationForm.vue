@@ -1654,7 +1654,7 @@ watch(
 <style scoped>
 .application-form-page {
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: var(--seim-app-bg);
 }
 
 .form-label {

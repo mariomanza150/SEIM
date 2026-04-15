@@ -421,11 +421,11 @@ onMounted(async () => {
 <style scoped>
 .documents-page {
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: var(--seim-app-bg);
 }
 
 .table {
-  background: white;
+  background: var(--seim-surface-bg);
   border-radius: 0.5rem;
   overflow: hidden;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
