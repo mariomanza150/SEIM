@@ -96,7 +96,18 @@
                 {{ t('reviewQueuePage.clearFilters') }}
               </button>
             </div>
-            <div class="col-12 border-top pt-3 mt-2">
+            <div class="col-12 d-flex justify-content-end pt-1">
+              <button
+                type="button"
+                class="btn btn-link btn-sm px-0"
+                :aria-expanded="advancedFiltersOpen ? 'true' : 'false'"
+                @click="advancedFiltersOpen = !advancedFiltersOpen"
+              >
+                <i class="bi" :class="advancedFiltersOpen ? 'bi-chevron-up' : 'bi-chevron-down'" aria-hidden="true"></i>
+                <span class="ms-1">Advanced filters</span>
+              </button>
+            </div>
+            <div v-if="advancedFiltersOpen" class="col-12 border-top pt-3 mt-2">
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
                   <label class="form-label small text-muted mb-1">{{ t('reviewQueuePage.presetSaveLabel') }}</label>
@@ -294,6 +305,7 @@ const { success, error: errorToast } = useToast()
 const applications = ref([])
 const loading = ref(true)
 const error = ref(null)
+const advancedFiltersOpen = ref(false)
 const savedPresets = ref([])
 const presetsLoading = ref(false)
 const newPresetName = ref('')

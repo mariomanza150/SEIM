@@ -55,7 +55,18 @@
                 <i class="bi bi-x-circle me-1"></i>{{ t('documentsPage.clearFilters') }}
               </button>
             </div>
-            <div v-if="isStaff" class="col-12 border-top pt-3 mt-2">
+            <div v-if="isStaff" class="col-12 d-flex justify-content-end pt-1">
+              <button
+                type="button"
+                class="btn btn-link btn-sm px-0"
+                :aria-expanded="advancedFiltersOpen ? 'true' : 'false'"
+                @click="advancedFiltersOpen = !advancedFiltersOpen"
+              >
+                <i class="bi" :class="advancedFiltersOpen ? 'bi-chevron-up' : 'bi-chevron-down'" aria-hidden="true"></i>
+                <span class="ms-1">Advanced filters</span>
+              </button>
+            </div>
+            <div v-if="isStaff && advancedFiltersOpen" class="col-12 border-top pt-3 mt-2">
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
                   <label class="form-label small text-muted mb-1">{{ t('documentsPage.presetSaveLabel') }}</label>
@@ -285,6 +296,7 @@ const { t, locale } = useI18n()
 const { error: errorToast } = useToast()
 const authStore = useAuthStore()
 const isStaff = computed(() => authStore.canUseStaffReviewQueue)
+const advancedFiltersOpen = ref(false)
 
 const {
   savedPresets,
