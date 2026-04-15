@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Image name (lowercase for GHCR)
         run: |
@@ -73,7 +73,7 @@ jobs:
       url: https://staging.seim.example.com
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Deploy to staging
         run: |
@@ -99,7 +99,7 @@ jobs:
       url: https://seim.example.com
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Deploy to production
         run: |
