@@ -145,7 +145,7 @@ class TestApplicationService:
         assert isinstance(result, dict)
         assert result['eligible'] is True
         assert result['message'] == "All eligibility requirements met"
-        assert result.get("schema_version") == 3
+        assert result.get("schema_version") == 4
 
     def test_check_eligibility_missing_profile(self, test_data_no_profile):
         """Test eligibility check with missing profile."""

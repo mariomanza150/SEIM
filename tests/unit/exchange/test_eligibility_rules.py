@@ -8,6 +8,7 @@ from django.db.models.signals import post_save
 
 from accounts.models import Profile, Role
 from accounts.signals import create_user_profile
+from application_forms.models import FormSubmission, FormType
 from documents.models import DocumentType
 
 from exchange.eligibility_rules import evaluate_eligibility
@@ -178,6 +179,124 @@ class TestEligibilityRulesEngine:
         rd = next(r for r in ev.rules if r.rule_id == "required_documents")
         assert rd.passed is False
         assert rd.skipped is False
+
+    def test_dynamic_form_skipped_when_program_has_no_form(self):
+        user = self._student_with_profile(
+            gpa=3.5,
+            language="English",
+            language_level="B2",
+        )
+        program = Program.objects.create(
+            name="NoDyn",
+            description="d",
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=120),
+        )
+        draft, _ = ApplicationStatus.objects.get_or_create(name="draft")
+        app = Application.objects.create(
+            student=user,
+            program=program,
+            status=draft,
+        )
+        ev = evaluate_eligibility(user, program, application=app)
+        assert "dynamic_form" not in [r.rule_id for r in ev.rules]
+
+    def test_dynamic_form_skipped_without_application(self):
+        user = self._student_with_profile(
+            gpa=3.5,
+            language="English",
+            language_level="B2",
+        )
+        ft = FormType.objects.create(
+            name="DynForm",
+            form_type="application",
+            schema={"type": "object", "properties": {}},
+        )
+        program = Program.objects.create(
+            name="DynProg",
+            description="d",
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=120),
+            application_form=ft,
+        )
+        ev = evaluate_eligibility(user, program)
+        df = next(r for r in ev.rules if r.rule_id == "dynamic_form")
+        assert df.skipped is True
+
+    def test_dynamic_form_fail_missing_submission(self):
+        user = self._student_with_profile(
+            gpa=3.5,
+            language="English",
+            language_level="B2",
+        )
+        ft = FormType.objects.create(
+            name="DynForm2",
+            form_type="application",
+            schema={
+                "type": "object",
+                "properties": {"motivation": {"type": "string", "title": "Motivation"}},
+                "required": ["motivation"],
+            },
+        )
+        program = Program.objects.create(
+            name="DynProg2",
+            description="d",
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=120),
+            application_form=ft,
+        )
+        draft, _ = ApplicationStatus.objects.get_or_create(name="draft")
+        app = Application.objects.create(
+            student=user,
+            program=program,
+            status=draft,
+        )
+        ev = evaluate_eligibility(user, program, application=app)
+        assert ev.eligible is False
+        assert any(
+            "Complete the program application form before submitting" in f
+            for f in ev.failures
+        )
+
+    def test_dynamic_form_pass_with_valid_submission(self):
+        user = self._student_with_profile(
+            gpa=3.5,
+            language="English",
+            language_level="B2",
+        )
+        ft = FormType.objects.create(
+            name="DynForm3",
+            form_type="application",
+            schema={
+                "type": "object",
+                "properties": {"motivation": {"type": "string", "title": "Motivation"}},
+                "required": ["motivation"],
+            },
+        )
+        program = Program.objects.create(
+            name="DynProg3",
+            description="d",
+            start_date=date.today(),
+            end_date=date.today() + timedelta(days=120),
+            application_form=ft,
+        )
+        draft, _ = ApplicationStatus.objects.get_or_create(name="draft")
+        app = Application.objects.create(
+            student=user,
+            program=program,
+            status=draft,
+        )
+        FormSubmission.objects.create(
+            application=app,
+            form_type=ft,
+            responses={"motivation": "Study abroad."},
+            submitted_by=user,
+        )
+        ev = evaluate_eligibility(user, program, application=app)
+        assert ev.eligible is True
+        df = next(r for r in ev.rules if r.rule_id == "dynamic_form")
+        assert df.passed is True
+        assert df.skipped is False
 
     def test_missing_profile_single_failure(self):
         post_save.disconnect(create_user_profile, sender=User)

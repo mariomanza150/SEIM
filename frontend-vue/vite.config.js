@@ -4,6 +4,9 @@ import { fileURLToPath, URL } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // In production we serve assets via Django/WhiteNoise under `/static/`.
+  // This ensures the built SPA requests `/static/assets/...` instead of `/assets/...`.
+  base: '/static/',
   plugins: [vue()],
   
   resolve: {

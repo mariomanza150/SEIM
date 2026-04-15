@@ -171,11 +171,15 @@ LOCALE_PATHS = [
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-    # Vue.js assets - uncomment after first Vue build:
-    # BASE_DIR / "frontend-vue" / "dist" / "assets",
-]
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# If the Vue SPA has been built, include its compiled assets so `collectstatic`
+# can serve them via WhiteNoise in production(-like) containers.
+_vue_dist_dir = BASE_DIR / "frontend-vue" / "dist"
+if _vue_dist_dir.is_dir():
+    # Include dist (not dist/assets) so collected files keep the `assets/` path
+    # Vite emits in production HTML.
+    STATICFILES_DIRS.append(_vue_dist_dir)
 
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -467,10 +471,10 @@ WAGTAILADMIN_NOTIFICATION_USE_HTML = True
 WAGTAIL_ENABLE_UPDATE_CHECK = False  # Disable update check in production
 WAGTAIL_GRAVATAR_PROVIDER_URL = None  # Disable Gravatar
 
-# Wagtail user settings - uses Django's AUTH_USER_MODEL (accounts.User)
-WAGTAIL_USER_EDIT_FORM = 'wagtail.users.forms.UserEditForm'
-WAGTAIL_USER_CREATION_FORM = 'wagtail.users.forms.UserCreationForm'
-WAGTAIL_USER_CUSTOM_FIELDS = []
+# Wagtail user admin uses Django's AUTH_USER_MODEL (accounts.User) with the
+# default UserEditForm / UserCreationForm. Do not set WAGTAIL_USER_* (deprecated
+# in Wagtail 6.x, removed in 7); for custom fields/forms, subclass UserViewSet
+# and set user_viewset on the Wagtail users app config.
 
 # Wagtail automatically uses the AUTH_USER_MODEL specified above
 # Both Django admin and Wagtail admin share the same authentication

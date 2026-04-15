@@ -78,23 +78,26 @@ services:
       dockerfile: Dockerfile.prod
     container_name: seim-web-prod
     restart: unless-stopped
-    command: >
-      sh -c "
-        python manage.py migrate &&
-        python manage.py collectstatic --noinput &&
-        gunicorn seim.wsgi:application 
-          --bind 0.0.0.0:8000 
-          --workers ${GUNICORN_WORKERS:-3} 
-          --worker-class ${GUNICORN_WORKER_CLASS:-sync} 
-          --worker-connections ${GUNICORN_WORKER_CONNECTIONS:-1000} 
-          --max-requests ${GUNICORN_MAX_REQUESTS:-1000} 
-          --max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-100} 
-          --timeout ${GUNICORN_TIMEOUT:-30} 
-          --keep-alive ${GUNICORN_KEEP_ALIVE:-2} 
-          --access-logfile - 
-          --error-logfile - 
-          --log-level ${GUNICORN_LOG_LEVEL:-info}
-      "
+    # Single shell script so gunicorn receives all flags (multiline sh -c drops --bind et al.).
+    command:
+      - sh
+      - -c
+      - |
+          set -e
+          python manage.py migrate
+          python manage.py collectstatic --noinput
+          exec gunicorn seim.wsgi:application \
+            --bind 0.0.0.0:8000 \
+            --workers ${GUNICORN_WORKERS:-3} \
+            --worker-class ${GUNICORN_WORKER_CLASS:-sync} \
+            --worker-connections ${GUNICORN_WORKER_CONNECTIONS:-1000} \
+            --max-requests ${GUNICORN_MAX_REQUESTS:-1000} \
+            --max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-100} \
+            --timeout ${GUNICORN_TIMEOUT:-30} \
+            --keep-alive ${GUNICORN_KEEP_ALIVE:-2} \
+            --access-logfile - \
+            --error-logfile - \
+            --log-level ${GUNICORN_LOG_LEVEL:-info}
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media

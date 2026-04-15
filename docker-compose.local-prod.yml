@@ -38,22 +38,25 @@ services:
       dockerfile: Dockerfile.prod
     container_name: seim-web-local-prod
     restart: unless-stopped
-    command: >
-      sh -c "
-        echo 'Waiting for database...' &&
-        python manage.py migrate &&
-        echo 'Collecting static files...' &&
-        python manage.py collectstatic --noinput &&
-        echo 'Starting Gunicorn...' &&
-        gunicorn seim.wsgi:application 
-          --bind 0.0.0.0:8000 
-          --workers 2
-          --worker-class sync
-          --timeout 30
-          --access-logfile -
-          --error-logfile -
-          --log-level info
-      "
+    # One shell command line so gunicorn receives --bind (multiline sh -c breaks the arg list).
+    command:
+      - sh
+      - -c
+      - |
+          set -e
+          echo 'Waiting for database...'
+          python manage.py migrate
+          echo 'Collecting static files...'
+          python manage.py collectstatic --noinput
+          echo 'Starting Gunicorn...'
+          exec gunicorn seim.wsgi:application \
+            --bind 0.0.0.0:8000 \
+            --workers 2 \
+            --worker-class sync \
+            --timeout 30 \
+            --access-logfile - \
+            --error-logfile - \
+            --log-level info
     ports:
       - "8002:8000"
     volumes:
@@ -79,6 +82,7 @@ services:
       - SECURE_SSL_REDIRECT=False
       - SESSION_COOKIE_SECURE=False
       - CSRF_COOKIE_SECURE=False
+      - SECURE_HSTS_SECONDS=0
       - CORS_ALLOWED_ORIGINS=http://localhost:8002,http://127.0.0.1:8002
       - CSRF_TRUSTED_ORIGINS=http://localhost:8002,http://127.0.0.1:8002
 

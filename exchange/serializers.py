@@ -258,8 +258,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
             is_draft = self.instance is None or self.instance.status.name == "draft"
             if not is_draft:
                 try:
+                    elig_user = self.instance.student if self.instance else user
                     ApplicationService.check_eligibility(
-                        user,
+                        elig_user,
                         program,
                         application=self.instance,
                     )
@@ -450,6 +451,40 @@ class ExchangeAgreementSerializer(serializers.ModelSerializer):
         if programs is not None:
             instance.programs.set(programs)
         return instance
+
+
+class EligibilityRuleOutcomeSchemaSerializer(serializers.Serializer):
+    """OpenAPI shape for one row in ``GET .../check_eligibility/`` ``rules`` (``schema_version`` 4+)."""
+
+    id = serializers.CharField()
+    passed = serializers.BooleanField()
+    skipped = serializers.BooleanField()
+    message = serializers.CharField(required=False, allow_blank=True)
+
+
+class ProgramEligibilitySnapshotSerializer(serializers.Serializer):
+    """Program fields included when the user is not eligible (preview context)."""
+
+    name = serializers.CharField()
+    min_gpa = serializers.FloatField(allow_null=True)
+    required_language = serializers.CharField(allow_null=True, allow_blank=True)
+    min_language_level = serializers.CharField(allow_null=True, allow_blank=True)
+    min_age = serializers.IntegerField(allow_null=True)
+    max_age = serializers.IntegerField(allow_null=True)
+
+
+class ProgramCheckEligibilityResponseSerializer(serializers.Serializer):
+    """Response for ``GET /api/programs/{id}/check_eligibility/`` (always HTTP 200 for rule outcome)."""
+
+    eligible = serializers.BooleanField()
+    message = serializers.CharField()
+    checks_passed = serializers.ListField(
+        child=serializers.CharField(allow_null=True),
+        required=False,
+    )
+    rules = EligibilityRuleOutcomeSchemaSerializer(many=True)
+    schema_version = serializers.IntegerField()
+    program = ProgramEligibilitySnapshotSerializer(required=False, allow_null=True)
 
 
 class CalendarEventSerializer(serializers.Serializer):

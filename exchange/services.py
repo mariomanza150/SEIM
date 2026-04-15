@@ -55,7 +55,7 @@ class ApplicationService:
             "message": "All eligibility requirements met",
             "checks_passed": checks_passed_labels(program),
             "rules": ev.rules_as_dicts(),
-            "schema_version": 3,
+            "schema_version": 4,
         }
 
     @staticmethod
@@ -122,40 +122,18 @@ class ApplicationService:
         }
 
     @staticmethod
-    def _ensure_application_form_complete(
-        application: Application, user: Optional[User] = None
-    ) -> None:
-        """Raise ValueError if the program's dynamic form exists but responses are incomplete."""
-        ft = application.program.application_form
-        if not ft:
-            return
-        sub = ApplicationService.get_dynamic_form_submission(application)
-        if not sub:
-            raise ValueError("Complete the program application form before submitting.")
-        from application_forms.services import FormSubmissionService
-
-        vctx = ApplicationService._visibility_context_for_application(application, user)
-        try:
-            FormSubmissionService.validate_responses(ft, sub.responses, visibility_context=vctx)
-        except ValidationError as exc:
-            msgs = list(exc.messages) if hasattr(exc, "messages") else [str(exc)]
-            raise ValueError("; ".join(msgs)) from exc
-
-    @staticmethod
-    def _ensure_submission_requirements(application: Application, user: User) -> None:
-        """Dynamic form completeness (required documents enforced in ``check_eligibility``)."""
-        ApplicationService._ensure_application_form_complete(application, user)
-
-    @staticmethod
     @transaction.atomic
     def submit_application(application: Application, user: User) -> Application:
         """Submit an application (draft -> submitted) with eligibility and single active check."""
         if application.status.name != "draft":
             raise ValueError("Only draft applications can be submitted.")
-        ApplicationService.check_eligibility(user, application.program, application=application)
+        ApplicationService.check_eligibility(
+            application.student,
+            application.program,
+            application=application,
+        )
         if not ApplicationService.can_submit_application(user, application.program):
             raise ValueError("You already have an active application for this program.")
-        ApplicationService._ensure_submission_requirements(application, user)
 
         program = Program.objects.select_for_update().get(pk=application.program_id)
         seat_count = Application.objects.filter(
@@ -263,7 +241,11 @@ class ApplicationService:
             raise ValueError("You do not have permission to perform this transition.")
 
         if new_status_name == "submitted":
-            ApplicationService._ensure_submission_requirements(application, user)
+            ApplicationService.check_eligibility(
+                application.student,
+                application.program,
+                application=application,
+            )
 
         application.status = new_status
         

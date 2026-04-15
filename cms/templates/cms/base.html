@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     {% block meta_tags %}
         {% if page %}
-            {% include "wagtailseo/meta.html" with self=page %}
+            {% include "wagtailseo/meta.html" %}
         {% endif %}
         {% if page and not page.seo_pagetitle %}
             <title>{{ page.title }} | UAdeC - Intercambio Académico</title>

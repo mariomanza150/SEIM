@@ -13,7 +13,14 @@ from pathlib import Path
 from typing import Any, Dict, Generator
 
 import pytest
-from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
+try:
+    from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
+except ModuleNotFoundError:  # pragma: no cover
+    pytest.skip(
+        "Playwright is not installed; skipping e2e_playwright collection. "
+        "Install test deps (requirements-test.txt) to run these tests.",
+        allow_module_level=True,
+    )
 
 # Repo root (conftest is in tests/e2e_playwright/)
 _E2E_DIR = Path(__file__).resolve().parent

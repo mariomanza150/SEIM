@@ -8,6 +8,8 @@ from django.http import HttpResponse
 from django.urls import reverse
 from django.utils import timezone as dj_tz
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -46,6 +48,7 @@ from .serializers import (
     CalendarEventSerializer,
     CommentSerializer,
     ExchangeAgreementSerializer,
+    ProgramCheckEligibilityResponseSerializer,
     ProgramSerializer,
     SavedSearchSerializer,
     TimelineEventSerializer,
@@ -275,6 +278,40 @@ class ProgramViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
         )
 
+    @extend_schema(
+        summary="Check eligibility for this program",
+        description=(
+            "Evaluates code-defined rules for the **authenticated user** (profile, window, etc.). "
+            "Optional query ``application`` (UUID): must be owned by the caller and belong to this "
+            "program; when set, **required_documents** and **dynamic_form** rules run when configured. "
+            "Successful rule outcome uses HTTP 200 with ``eligible: true|false``; "
+            "``schema_version`` increments when rule set or shape changes."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="application",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description=(
+                    "Application id for per-application rules (documents, dynamic form). "
+                    "Must match this program and the current user."
+                ),
+            ),
+        ],
+        responses={
+            200: ProgramCheckEligibilityResponseSerializer,
+            400: OpenApiResponse(
+                description="Invalid `application` id or application not for this program (`detail`).",
+            ),
+            403: OpenApiResponse(
+                description="`application` belongs to another user (`detail`).",
+            ),
+            404: OpenApiResponse(
+                description="`application` not found (`detail`).",
+            ),
+        },
+    )
     @action(detail=True, methods=["get"])
     def check_eligibility(self, request, pk=None):
         """
@@ -287,9 +324,9 @@ class ProgramViewSet(viewsets.ModelViewSet):
 
         Useful for showing eligibility warnings before students start applications.
 
-        Optional query: ``application=<uuid>`` — when the draft belongs to the current
-        student and matches this program, includes the **required_documents** rule
-        (program required document types vs uploads).
+        Optional query: ``application=<uuid>`` — when the row belongs to the current
+        student and matches this program, evaluates **required_documents** and
+        **dynamic_form** (when configured) against that application.
         """
         program = self.get_object()
 
@@ -340,7 +377,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
                     "message": "All eligibility requirements met",
                     "checks_passed": checks_passed_labels(program),
                     "rules": ev.rules_as_dicts(),
-                    "schema_version": 3,
+                    "schema_version": 4,
                 }
             )
         message = (
@@ -358,7 +395,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 "message": message,
                 "rules": ev.rules_as_dicts(),
                 "program": program_snapshot,
-                "schema_version": 3,
+                "schema_version": 4,
             },
             status=status.HTTP_200_OK,
         )

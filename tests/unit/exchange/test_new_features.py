@@ -404,7 +404,7 @@ class TestEnhancedEligibilityCriteria:
         assert response.status_code == status.HTTP_200_OK
         assert response.data['eligible'] is False
         assert 'Required documents' in response.data['message']
-        assert response.data.get('schema_version') == 3
+        assert response.data.get('schema_version') == 4
         rule_ids = [r['id'] for r in response.data['rules']]
         assert 'required_documents' in rule_ids
 

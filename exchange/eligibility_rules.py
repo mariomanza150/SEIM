@@ -15,6 +15,8 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
+from django.core.exceptions import ValidationError as DjangoValidationError
+
 from accounts.models import Profile, User
 from exchange.models import Application, Program
 
@@ -24,6 +26,15 @@ def _norm(s: str | None) -> str:
 
 
 CEFR_ORDER = {"A1": 1, "A2": 2, "B1": 3, "B2": 4, "C1": 5, "C2": 6}
+
+
+def _viewer_roles_for_user(user: User | None) -> list[str]:
+    if not user or not getattr(user, "is_authenticated", False):
+        return []
+    names = list(user.get_all_roles())
+    if getattr(user, "is_superuser", False) and "admin" not in names:
+        names = [*names, "admin"]
+    return names
 
 
 @dataclass
@@ -94,7 +105,7 @@ def _effective_language_level_for_program(profile, program: Program) -> str | No
     return (profile.language_level or "").strip() or None
 
 
-def _rule_application_window(_profile, program: Program, application=None) -> RuleOutcome:
+def _rule_application_window(_profile, program: Program, application, _student: User) -> RuleOutcome:
     """Gate on ``Program.application_open_date`` / ``application_deadline`` when either is set."""
     if not program.application_open_date and not program.application_deadline:
         return RuleOutcome("application_window", passed=True, skipped=True)
@@ -108,7 +119,7 @@ def _rule_application_window(_profile, program: Program, application=None) -> Ru
     )
 
 
-def _rule_gpa(profile, program: Program, application=None) -> RuleOutcome:
+def _rule_gpa(profile, program: Program, application, _student: User) -> RuleOutcome:
     if not (hasattr(program, "min_gpa") and program.min_gpa):
         return RuleOutcome("gpa", passed=True, skipped=True)
     # Legacy parity: if student has no GPA value, the minimum-GPA rule is not applied.
@@ -137,7 +148,7 @@ def _rule_gpa(profile, program: Program, application=None) -> RuleOutcome:
     return RuleOutcome("gpa", passed=True)
 
 
-def _rule_required_language(profile, program: Program, application=None) -> RuleOutcome:
+def _rule_required_language(profile, program: Program, application, _student: User) -> RuleOutcome:
     if not (program.required_language or "").strip():
         return RuleOutcome("required_language", passed=True, skipped=True)
     if _student_speaks_required_language(profile, program.required_language):
@@ -152,7 +163,7 @@ def _rule_required_language(profile, program: Program, application=None) -> Rule
     )
 
 
-def _rule_language_proficiency(profile, program: Program, application=None) -> RuleOutcome:
+def _rule_language_proficiency(profile, program: Program, application, _student: User) -> RuleOutcome:
     if not (program.min_language_level or "").strip():
         return RuleOutcome("language_proficiency", passed=True, skipped=True)
     level = _effective_language_level_for_program(profile, program)
@@ -178,7 +189,7 @@ def _rule_language_proficiency(profile, program: Program, application=None) -> R
     return RuleOutcome("language_proficiency", passed=True)
 
 
-def _rule_age(profile, program: Program, application=None) -> RuleOutcome:
+def _rule_age(profile, program: Program, application, _student: User) -> RuleOutcome:
     if not (program.min_age or program.max_age):
         return RuleOutcome("age", passed=True, skipped=True)
     # Legacy parity: age rules only run when date_of_birth is set (otherwise silently ignored).
@@ -203,7 +214,7 @@ def _rule_age(profile, program: Program, application=None) -> RuleOutcome:
 
 
 def _rule_required_documents(
-    _profile, program: Program, application: Application | None
+    _profile, program: Program, application: Application | None, _student: User
 ) -> RuleOutcome:
     """Program required document types must be approved on the given application (submit parity)."""
     if not program.required_document_types.exists():
@@ -228,6 +239,48 @@ def _rule_required_documents(
         passed=False,
         message="Required documents are not all approved yet: " + "; ".join(problems),
     )
+
+
+def _rule_dynamic_form_complete(
+    _profile, program: Program, application: Application | None, _student: User
+) -> RuleOutcome:
+    """Program-linked dynamic form must have a submission that passes full validation (submit parity)."""
+    if not getattr(program, "application_form_id", None):
+        return RuleOutcome("dynamic_form", passed=True, skipped=True)
+    if application is None:
+        return RuleOutcome("dynamic_form", passed=True, skipped=True)
+    if application.program_id != program.pk:
+        return RuleOutcome("dynamic_form", passed=True, skipped=True)
+
+    try:
+        from application_forms.models import FormSubmission
+        from application_forms.services import FormSubmissionService
+    except ImportError:
+        return RuleOutcome("dynamic_form", passed=True, skipped=True)
+
+    ft = program.application_form
+    sub = FormSubmission.objects.filter(application=application, form_type=ft).first()
+    if not sub:
+        return RuleOutcome(
+            "dynamic_form",
+            passed=False,
+            message="Complete the program application form before submitting.",
+        )
+    vctx = {
+        "program_id": application.program_id,
+        "has_assigned_coordinator": bool(application.assigned_coordinator_id),
+        "viewer_roles": _viewer_roles_for_user(application.student),
+    }
+    try:
+        FormSubmissionService.validate_responses(ft, sub.responses, visibility_context=vctx)
+    except DjangoValidationError as exc:
+        msgs = list(exc.messages) if hasattr(exc, "messages") else [str(exc)]
+        return RuleOutcome(
+            "dynamic_form",
+            passed=False,
+            message="; ".join(msgs),
+        )
+    return RuleOutcome("dynamic_form", passed=True)
 
 
 def evaluate_eligibility(
@@ -261,11 +314,13 @@ def evaluate_eligibility(
     ]
     if program.required_document_types.exists():
         runners.append(_rule_required_documents)
+    if getattr(program, "application_form_id", None):
+        runners.append(_rule_dynamic_form_complete)
 
     rules: list[RuleOutcome] = []
     failures: list[str] = []
     for fn in runners:
-        out = fn(profile, program, application)
+        out = fn(profile, program, application, student)
         rules.append(out)
         if not out.skipped and not out.passed and out.message:
             failures.append(out.message)
@@ -286,4 +341,6 @@ def checks_passed_labels(program: Program) -> list[str | None]:
     ]
     if getattr(program, "pk", None) and program.required_document_types.exists():
         labels.append("Required documents")
+    if getattr(program, "pk", None) and getattr(program, "application_form_id", None):
+        labels.append("Dynamic application form")
     return labels
