@@ -52,6 +52,9 @@ WORKDIR /app
 
 # Install Python dependencies
 COPY requirements.txt requirements-dev.txt ./
+# Some environments/branches include nested requirement includes like `-r requirements/dev.txt`.
+# Copy the folder early so pip can resolve those includes during `pip install -r requirements.txt`.
+COPY requirements/ requirements/
 RUN pip install --upgrade pip && \
     pip install gunicorn[gevent] && \
     pip install -r requirements.txt
