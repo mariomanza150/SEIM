@@ -16,7 +16,7 @@ flake8-django==1.4
 mypy==1.18.2
 django-stubs==5.2.7
 types-requests==2.31.0.20240106
-types-PyYAML==6.0.12.12
+types-PyYAML==6.0.12.20260408
 
 # Code complexity and quality
 radon==6.0.1
