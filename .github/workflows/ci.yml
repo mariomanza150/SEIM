@@ -291,7 +291,7 @@ jobs:
         run: docker build -t seim:ci .
 
       - name: Trivy scan
-        uses: aquasecurity/trivy-action@v0.29.0
+        uses: aquasecurity/trivy-action@0.35.0
         with:
           image-ref: seim:ci
           format: sarif
