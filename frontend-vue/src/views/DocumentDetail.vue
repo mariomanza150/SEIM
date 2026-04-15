@@ -74,7 +74,31 @@
                 <div v-else-if="previewLoading" class="text-center py-5 text-muted">
                   {{ t('documentDetailPage.previewLoading') }}
                 </div>
-                <div v-else-if="previewError" class="alert alert-warning small mb-0">{{ previewError }}</div>
+                <div
+                  v-else-if="previewError"
+                  class="preview-error-recovery"
+                  data-testid="preview-error-recovery"
+                >
+                  <p class="alert alert-warning small mb-2 mb-md-3">{{ previewError }}</p>
+                  <div v-if="document.file" class="d-flex flex-wrap gap-2">
+                    <a
+                      :href="resolveFileUrl(document.file)"
+                      download
+                      class="btn btn-sm btn-primary"
+                      rel="noopener noreferrer"
+                    >
+                      <i class="bi bi-download me-1"></i>{{ t('documentDetailPage.download') }}
+                    </a>
+                    <a
+                      :href="resolveFileUrl(document.file)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="btn btn-sm btn-outline-primary"
+                    >
+                      <i class="bi bi-box-arrow-up-right me-1"></i>{{ t('documentDetailPage.previewOpenInNewTab') }}
+                    </a>
+                  </div>
+                </div>
                 <template v-else-if="previewObjectUrl">
                   <iframe
                     v-if="previewKind === 'pdf'"
