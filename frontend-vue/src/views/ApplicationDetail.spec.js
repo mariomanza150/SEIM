@@ -299,4 +299,51 @@ describe('ApplicationDetail', () => {
     expect(wrapper.text()).toContain('88.5')
     expect(wrapper.text()).toContain('Staff comparison tool only.')
   })
+
+  it('shows scholarship estimate for students without cohort export buttons', async () => {
+    mockAuthStore.userRole = 'student'
+    const scholarshipScore = {
+      ruleset_id: 'default_v1',
+      ruleset_label: 'Default rubric',
+      total_points: 70,
+      max_points: 100,
+      factors: [{ id: 'academic', label: 'Academic', points: 20, max_points: 25, detail: 'GPA' }],
+      tie_breakers: ['total_points_desc'],
+      flags: { withdrawn: false },
+      disclaimer: 'Student disclaimer.',
+    }
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            program: '11111111-1111-1111-1111-111111111111',
+            program_name: 'Exchange Program',
+            scholarship_allocation_score: scholarshipScore,
+          },
+        })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/comments/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/timeline-events/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="scholarship-score-panel"]').exists()).toBe(true)
+    })
+    expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.scholarshipScoring.studentTitle'))
+    expect(wrapper.text()).toContain('70')
+    expect(wrapper.text()).not.toContain(
+      i18n.global.t('applicationDetailPage.scholarshipScoring.exportCohortCsv'),
+    )
+    mockAuthStore.userRole = 'coordinator'
+  })
 })

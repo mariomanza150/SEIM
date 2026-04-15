@@ -88,7 +88,7 @@
         </div>
 
         <div
-          v-if="isCoordinator && application.scholarship_allocation_score"
+          v-if="(isCoordinator || isStudent) && application.scholarship_allocation_score"
           class="row mb-3"
           data-testid="scholarship-score-panel"
         >
@@ -96,9 +96,14 @@
             <div class="card border-secondary shadow-sm">
               <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                 <h5 class="mb-0">
-                  <i class="bi bi-calculator me-2"></i>{{ t('applicationDetailPage.scholarshipScoring.title') }}
+                  <i class="bi bi-calculator me-2"></i>{{
+                    isStudent
+                      ? t('applicationDetailPage.scholarshipScoring.studentTitle')
+                      : t('applicationDetailPage.scholarshipScoring.title')
+                  }}
                 </h5>
                 <div
+                  v-if="isCoordinator"
                   class="btn-group btn-group-sm"
                   role="group"
                   :aria-label="t('applicationDetailPage.scholarshipScoring.exportGroupAria')"
@@ -169,7 +174,7 @@
                     </tbody>
                   </table>
                 </div>
-                <p class="small text-muted mt-3 mb-1">
+                <p v-if="isCoordinator" class="small text-muted mt-3 mb-1">
                   <strong>{{ t('applicationDetailPage.scholarshipScoring.tieBreakers') }}</strong>
                   {{ (application.scholarship_allocation_score.tie_breakers || []).join(', ') }}
                 </p>
@@ -611,6 +616,7 @@ function programDisplayName(app) {
 const isCoordinator = computed(() =>
   authStore.userRole === 'coordinator' || authStore.userRole === 'admin'
 )
+const isStudent = computed(() => authStore.userRole === 'student')
 
 const submitBlockedByDocuments = computed(() => {
   const c = application.value?.document_checklist

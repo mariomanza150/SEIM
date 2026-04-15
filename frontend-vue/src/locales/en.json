@@ -704,6 +704,7 @@
     "readinessLabel": "Readiness",
     "scholarshipScoring": {
       "title": "Scholarship allocation score",
+      "studentTitle": "Scholarship score estimate",
       "exportGroupAria": "Download cohort score export",
       "exportCohortCsv": "CSV",
       "exportCohortXlsx": "Excel",

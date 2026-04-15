@@ -154,13 +154,21 @@ class ApplicationSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             return None
         user = request.user
-        if not hasattr(user, "has_any_role") or not user.has_any_role(["coordinator", "admin"]):
-            return None
         if view and getattr(view, "action", None) == "list":
             return None
-        from exchange.scholarship_scoring import compute_scholarship_allocation_score
+        is_staff = hasattr(user, "has_any_role") and user.has_any_role(["coordinator", "admin"])
+        is_owner = user.pk == obj.student_id
+        if not is_staff and not is_owner:
+            return None
+        from exchange.scholarship_scoring import (
+            STUDENT_SCHOLARSHIP_DISCLAIMER,
+            compute_scholarship_allocation_score,
+        )
 
-        return compute_scholarship_allocation_score(obj)
+        payload = compute_scholarship_allocation_score(obj)
+        if is_owner and not is_staff:
+            return {**payload, "disclaimer": STUDENT_SCHOLARSHIP_DISCLAIMER}
+        return payload
 
     def get_dynamic_form_layout(self, obj):
         from documents.services import DocumentService

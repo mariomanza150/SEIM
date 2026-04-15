@@ -704,6 +704,7 @@
     "readinessLabel": "Preparación",
     "scholarshipScoring": {
       "title": "Puntuación para asignación de becas",
+      "studentTitle": "Estimación de puntuación de beca",
       "exportGroupAria": "Descargar exportación de puntuaciones de la cohorte",
       "exportCohortCsv": "CSV",
       "exportCohortXlsx": "Excel",
