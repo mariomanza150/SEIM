@@ -343,7 +343,11 @@
     "overrideCreatedToast": "Routing override created.",
     "overrideUpdatedToast": "Routing override updated.",
     "overrideDeletedToast": "Routing override deleted.",
-    "overrideSaveError": "Could not save routing override."
+    "overrideSaveError": "Could not save routing override.",
+    "editOverrideAria": "Edit routing override for key {key}",
+    "activateOverrideAria": "Activate routing override for key {key}",
+    "deactivateOverrideAria": "Deactivate routing override for key {key}",
+    "deleteOverrideAria": "Delete routing override for key {key}"
   },
   "exchangeAgreementsPage": {
     "breadcrumbAria": "Breadcrumb",

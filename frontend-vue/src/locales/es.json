@@ -343,7 +343,11 @@
     "overrideCreatedToast": "Anulación de enrutado creada.",
     "overrideUpdatedToast": "Anulación de enrutado actualizada.",
     "overrideDeletedToast": "Anulación de enrutado eliminada.",
-    "overrideSaveError": "No se pudo guardar la anulación de enrutado."
+    "overrideSaveError": "No se pudo guardar la anulación de enrutado.",
+    "editOverrideAria": "Editar anulación de enrutado para la clave {key}",
+    "activateOverrideAria": "Activar anulación de enrutado para la clave {key}",
+    "deactivateOverrideAria": "Desactivar anulación de enrutado para la clave {key}",
+    "deleteOverrideAria": "Eliminar anulación de enrutado para la clave {key}"
   },
   "exchangeAgreementsPage": {
     "breadcrumbAria": "Migas de pan",

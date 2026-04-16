@@ -134,13 +134,23 @@
                     <span v-else class="badge bg-secondary">{{ t('notificationRoutingPage.statusInactive') }}</span>
                   </td>
                   <td class="text-end text-nowrap">
-                    <button type="button" class="btn btn-link btn-sm py-0" @click="startEditOverride(row)">
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm py-0"
+                      :aria-label="t('notificationRoutingPage.editOverrideAria', { key: row.key })"
+                      @click="startEditOverride(row)"
+                    >
                       {{ t('notificationRoutingPage.editOverride') }}
                     </button>
                     <button
                       type="button"
                       class="btn btn-link btn-sm py-0"
                       :disabled="overrideSaving"
+                      :aria-label="
+                        row.is_active
+                          ? t('notificationRoutingPage.deactivateOverrideAria', { key: row.key })
+                          : t('notificationRoutingPage.activateOverrideAria', { key: row.key })
+                      "
                       @click="toggleOverrideActive(row)"
                     >
                       {{
@@ -153,6 +163,7 @@
                       type="button"
                       class="btn btn-link btn-sm py-0 text-danger"
                       :disabled="overrideSaving"
+                      :aria-label="t('notificationRoutingPage.deleteOverrideAria', { key: row.key })"
                       @click="deleteOverride(row)"
                     >
                       {{ t('notificationRoutingPage.deleteOverride') }}
