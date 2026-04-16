@@ -146,11 +146,13 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Scholarship allocation scoring (default rubric v1) | `exchange`, `grades`, `accounts`, `frontend-vue`, `api` | Implemented | 2026-04-09 | **Phase 1:** `compute_scholarship_allocation_score` + staff detail field + `GET /api/applications/scholarship-scores-export/?program=` with **`export_format`** `csv` (default), `xlsx`, or `pdf` (`build_scholarship_scores_table` / `scholarship_scores_export_response`). **PDF** table omits long `factor_details_json` (note in doc points staff to CSV/XLSX). Vue: **CSV / Excel / PDF** button group on application detail. Tests: `test_scholarship_scoring.py`, `test_scholarship_scores_api.py`, `ApplicationDetail.spec.js`. **Backlog:** admin ruleset editor, workflow hooks. |
 | Student-facing scholarship score estimate (application detail) | `exchange`, `frontend-vue`, `api` | Implemented | 2026-04-15 | `ApplicationSerializer.get_scholarship_allocation_score`: owning **student** receives same rubric payload with `STUDENT_SCHOLARSHIP_DISCLAIMER` (`scholarship_scoring.py`). List view still omits score. Vue: estimate card for students (`studentTitle`), no cohort export, tie-breakers staff-only. Tests: `test_scholarship_scores_api.py`, `ApplicationDetail.spec.js`. |
 | Document detail: preview error recovery (download + open in new tab) | `frontend-vue` | Implemented | 2026-04-15 | Preview card: primary **Download** + **Open in new tab** when inline preview fails (`DocumentDetail.vue`); i18n `previewOpenInNewTab` (en/es). Vitest: `DocumentDetail.spec.js` (non-PDF response for `.pdf` file). |
+| Editable notification routing matrix (admin overrides) | `notifications`, `accounts`, `admin UI`, `api` | Implemented | 2026-04-16 | Added `NotificationRoutingOverride` (kinds: reminder event type + transactional route key) with Django admin UI. Reminder routing consults overrides (supports `ungated` → bypass UserSettings group gating). Staff routing-reference API reflects effective overrides in reminder + transactional indexes. Tests: `tests/unit/notifications/test_notifications_tasks.py`, `tests/unit/notifications/test_routing_reference.py`, `tests/integration/api/test_notification_routing_reference_api.py`. |
+| Staff API for notification routing overrides | `notifications`, `api` | Implemented | 2026-04-16 | Added staff-only CRUD endpoint `GET/POST/PATCH/DELETE /api/notification-routing-overrides/` (coordinator/admin). Tests: `tests/integration/api/test_notification_routing_overrides_api.py`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ |  |  |  |  |
+| Staff SPA UI for notification routing overrides | `frontend-vue`, `notifications` | In progress | 2026-04-16 |  |
 
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
@@ -180,7 +182,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Staff Operations, Reporting, and Notifications
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Advanced notification rules and reminder cadences | `notifications`, `accounts`, `admin UI` | **UserSettings channel matrix** on transactional sends and on **digests** (`settings_category=system`). Read-only API **`schema_version` 12** adds **`reminder_event_types_by_settings_category`** plus transactional grouped index, recipient-summary fields. **Django admin:** `UserSettings` includes collapsed **Notification routing reference** links to SPA matrix + OpenAPI. Remaining: custom templates, **editable** admin per-event matrix UI. |
+| _None pending in this subsection_ |  |  |
 | Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets if a dedicated **analytics** staff UI is added later (review queue, agreements, documents, programs, and **calendar** are covered). |
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
@@ -224,5 +226,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-15 — Student-facing scholarship score estimate on application detail. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-16 — Editable notification routing matrix (admin overrides). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*  
