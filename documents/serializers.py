@@ -93,6 +93,7 @@ class DocumentCommentSerializer(serializers.ModelSerializer):
                     action_text="View document",
                     category="info",
                     settings_category="comments",
+                    transactional_route_key="document_staff_comment_public",
                 )
         NotificationService.broadcast_application_sync(
             str(doc.application_id), "document_comment_added", str(doc.id)

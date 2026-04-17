@@ -12,8 +12,12 @@ from datetime import timedelta
 
 import factory
 import pytest
+from asgiref.sync import async_to_sync
+from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db import connections, close_old_connections
+from django.utils import timezone
 from faker import Faker
 from rest_framework.test import APIClient
 
@@ -251,7 +255,8 @@ class ApplicationFactory(factory.django.DjangoModelFactory):
             return
 
         if extracted:
-            self.submitted_at = fake.date_time_this_year()
+            # Use timezone-aware datetimes to avoid RuntimeWarnings in Django TZ mode.
+            self.submitted_at = timezone.now()
             self.save()
 
 
@@ -565,6 +570,35 @@ def enable_db_access_for_all_tests(db):
     pass
 
 
+@pytest.fixture(autouse=True)
+def close_db_connections_after_async_tests(request):
+    """
+    Close DB connections after async tests to avoid lingering sessions.
+
+    This addresses intermittent teardown warnings like:
+    "database \"test_seim\" is being accessed by other users".
+    """
+    yield
+
+    if request.node.get_closest_marker("asyncio") is None:
+        return
+
+    close_old_connections()
+
+    # Close connections that may have been opened via async threadpools.
+    try:
+        async_to_sync(database_sync_to_async(connections.close_all))()
+    except Exception:
+        pass
+
+    for conn in connections.all():
+        try:
+            conn.close()
+        except Exception:
+            # Best-effort: we don't want teardown to mask test failures.
+            pass
+
+
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
@@ -643,3 +677,70 @@ def pytest_sessionstart(session):
         capture_output=True,
         text=True,
     )
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Best-effort cleanup to avoid lingering DB sessions at teardown."""
+    # If any background threadpool task left a Postgres session open, Django's DB teardown
+    # can fail to drop the test database. Try to terminate any other connections first.
+    try:
+        from django.db import connection
+
+        if getattr(connection, "vendor", "") == "postgresql":
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT pg_terminate_backend(pid)
+                    FROM pg_stat_activity
+                    WHERE datname = current_database()
+                      AND pid <> pg_backend_pid();
+                    """
+                )
+    except Exception:
+        pass
+
+    close_old_connections()
+    try:
+        async_to_sync(database_sync_to_async(connections.close_all))()
+    except Exception:
+        pass
+    for conn in connections.all():
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
+def pytest_unconfigure(config):
+    """
+    Final cleanup hook.
+
+    pytest-django tears down the test DB during unconfigure; attempt to terminate any
+    remaining Postgres sessions before that happens.
+    """
+    try:
+        from django.db import connection
+
+        if getattr(connection, "vendor", "") == "postgresql":
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT pg_terminate_backend(pid)
+                    FROM pg_stat_activity
+                    WHERE datname = current_database()
+                      AND pid <> pg_backend_pid();
+                    """
+                )
+    except Exception:
+        pass
+
+    close_old_connections()
+    try:
+        async_to_sync(database_sync_to_async(connections.close_all))()
+    except Exception:
+        pass
+    for conn in connections.all():
+        try:
+            conn.close()
+        except Exception:
+            pass

@@ -1,25 +1,24 @@
 <template>
   <div class="document-detail">
-    <div class="container-fluid mt-4">
-      <nav :aria-label="t('documentDetailPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Documents' }">{{ t('route.names.Documents') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active" aria-current="page">
-            {{
-              loading
-                ? t('documentDetailPage.loadingType')
-                : documentTypeLabel(document?.type, '') ||
-                  fileName(document?.file) ||
-                  t('documentDetailPage.fileUnknown')
-            }}
-          </li>
-        </ol>
-      </nav>
+    <nav :aria-label="t('documentDetailPage.breadcrumbAria')">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+        </li>
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Documents' }">{{ t('route.names.Documents') }}</router-link>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+          {{
+            loading
+              ? t('documentDetailPage.loadingType')
+              : documentTypeLabel(document?.type, '') ||
+                fileName(document?.file) ||
+                t('documentDetailPage.fileUnknown')
+          }}
+        </li>
+      </ol>
+    </nav>
 
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
@@ -74,7 +73,31 @@
                 <div v-else-if="previewLoading" class="text-center py-5 text-muted">
                   {{ t('documentDetailPage.previewLoading') }}
                 </div>
-                <div v-else-if="previewError" class="alert alert-warning small mb-0">{{ previewError }}</div>
+                <div
+                  v-else-if="previewError"
+                  class="preview-error-recovery"
+                  data-testid="preview-error-recovery"
+                >
+                  <p class="alert alert-warning small mb-2 mb-md-3">{{ previewError }}</p>
+                  <div v-if="document.file" class="d-flex flex-wrap gap-2">
+                    <a
+                      :href="resolveFileUrl(document.file)"
+                      download
+                      class="btn btn-sm btn-primary"
+                      rel="noopener noreferrer"
+                    >
+                      <i class="bi bi-download me-1"></i>{{ t('documentDetailPage.download') }}
+                    </a>
+                    <a
+                      :href="resolveFileUrl(document.file)"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="btn btn-sm btn-outline-primary"
+                    >
+                      <i class="bi bi-box-arrow-up-right me-1"></i>{{ t('documentDetailPage.previewOpenInNewTab') }}
+                    </a>
+                  </div>
+                </div>
                 <template v-else-if="previewObjectUrl">
                   <iframe
                     v-if="previewKind === 'pdf'"
@@ -369,7 +392,6 @@
           </div>
         </div>
       </div>
-    </div>
   </div>
 </template>
 

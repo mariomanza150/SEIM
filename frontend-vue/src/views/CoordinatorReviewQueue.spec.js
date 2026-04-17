@@ -48,6 +48,8 @@ describe('CoordinatorReviewQueue', () => {
       'No applications match these filters'
     )
     expect(wrapper.text()).toContain('Application review queue')
+    const advancedToggle = wrapper.find('button.btn-link')
+    await advancedToggle.trigger('click')
     expect(wrapper.find('[data-testid="review-queue-preset-name"]').attributes('placeholder')).toBe(
       i18n.global.t('reviewQueuePage.presetNamePlaceholder'),
     )

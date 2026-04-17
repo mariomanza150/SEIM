@@ -1,14 +1,13 @@
 <template>
   <div class="profile-page">
-    <div class="container-fluid mt-4">
-      <nav :aria-label="t('profilePage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{ t('route.names.Profile') }}</li>
-        </ol>
-      </nav>
+    <nav :aria-label="t('profilePage.breadcrumbAria')">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+        </li>
+        <li class="breadcrumb-item active">{{ t('route.names.Profile') }}</li>
+      </ol>
+    </nav>
 
       <div class="row mb-4">
         <div class="col-md-8">
@@ -216,7 +215,6 @@
           </div>
         </div>
       </div>
-    </div>
   </div>
 </template>
 

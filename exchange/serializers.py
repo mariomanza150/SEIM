@@ -6,6 +6,7 @@ from .models import (
     Application,
     ApplicationStatus,
     Comment,
+    EligibilityRuleSet,
     ExchangeAgreement,
     Program,
     SavedSearch,
@@ -68,6 +69,21 @@ class ProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = Program
         fields = "__all__"
+
+
+class EligibilityRuleSetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EligibilityRuleSet
+        fields = (
+            "id",
+            "name",
+            "description",
+            "schema_version",
+            "rules_json",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
 
 
 class ApplicationSerializer(serializers.ModelSerializer):
@@ -154,13 +170,21 @@ class ApplicationSerializer(serializers.ModelSerializer):
         if not request or not request.user.is_authenticated:
             return None
         user = request.user
-        if not hasattr(user, "has_any_role") or not user.has_any_role(["coordinator", "admin"]):
-            return None
         if view and getattr(view, "action", None) == "list":
             return None
-        from exchange.scholarship_scoring import compute_scholarship_allocation_score
+        is_staff = hasattr(user, "has_any_role") and user.has_any_role(["coordinator", "admin"])
+        is_owner = user.pk == obj.student_id
+        if not is_staff and not is_owner:
+            return None
+        from exchange.scholarship_scoring import (
+            STUDENT_SCHOLARSHIP_DISCLAIMER,
+            compute_scholarship_allocation_score,
+        )
 
-        return compute_scholarship_allocation_score(obj)
+        payload = compute_scholarship_allocation_score(obj)
+        if is_owner and not is_staff:
+            return {**payload, "disclaimer": STUDENT_SCHOLARSHIP_DISCLAIMER}
+        return payload
 
     def get_dynamic_form_layout(self, obj):
         from documents.services import DocumentService
@@ -319,6 +343,16 @@ class ApplicationSerializer(serializers.ModelSerializer):
                     dynamic_form_data=dynamic_form_data,
                 )
 
+            # Initialize runtime workflow instance when configured on the program.
+            if getattr(application.program, "workflow_version_id", None):
+                try:
+                    from workflows.runtime import WorkflowRuntimeService
+
+                    WorkflowRuntimeService.ensure_instance(application, user=request.user if request else None)
+                except Exception:
+                    # Keep application creation resilient; workflow enforcement happens on actions.
+                    pass
+
         return application
 
     def update(self, instance, validated_data):
@@ -473,6 +507,12 @@ class ProgramEligibilitySnapshotSerializer(serializers.Serializer):
     max_age = serializers.IntegerField(allow_null=True)
 
 
+class EligibilityRuleSetSnapshotSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+    schema_version = serializers.IntegerField()
+
+
 class ProgramCheckEligibilityResponseSerializer(serializers.Serializer):
     """Response for ``GET /api/programs/{id}/check_eligibility/`` (always HTTP 200 for rule outcome)."""
 
@@ -485,6 +525,9 @@ class ProgramCheckEligibilityResponseSerializer(serializers.Serializer):
     rules = EligibilityRuleOutcomeSchemaSerializer(many=True)
     schema_version = serializers.IntegerField()
     program = ProgramEligibilitySnapshotSerializer(required=False, allow_null=True)
+    application_context = serializers.DictField(required=False)
+    ruleset = EligibilityRuleSetSnapshotSerializer(required=False, allow_null=True)
+    using_ruleset = serializers.BooleanField(required=False)
 
 
 class CalendarEventSerializer(serializers.Serializer):

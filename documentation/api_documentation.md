@@ -301,6 +301,40 @@ Create a new notification.
 #### GET /api/notifications/{id}/
 Get notification details.
 
+#### GET /api/notifications/routing-reference/
+Read-only matrix mapping **reminder event types** and **transactional notification routes** to `UserSettings` notification groups (`settings_category`), including digest routing metadata. Used by the staff SPA **Notification routing** page and internal documentation.
+
+**Permissions:** Coordinator, admin, or superuser. Other roles receive **403**.
+
+#### GET /api/notification-routing-overrides/
+List configurable routing overrides (paginated).
+
+**Query parameters:** `kind` (`reminder_event_type` \| `transactional_route_key`), `key`, `settings_category`, `is_active`; `search` (matches `key`); `ordering` (e.g. `updated_at`, `created_at`, `kind`, `key`).
+
+**Permissions:** Coordinator or admin.
+
+#### POST /api/notification-routing-overrides/
+Create an override. Body fields include `kind`, `key` (e.g. reminder `event_type` or transactional route key), `settings_category` (one of `applications`, `documents`, `comments`, `programs`, `system`, or `ungated` to bypass user preference gating), and `is_active`.
+
+**Constraints:** Unique on (`kind`, `key`).
+
+**Permissions:** Coordinator or admin.
+
+#### GET /api/notification-routing-overrides/{id}/
+Retrieve one override.
+
+**Permissions:** Coordinator or admin.
+
+#### PATCH /api/notification-routing-overrides/{id}/
+Partial update (e.g. `settings_category`, `is_active`).
+
+**Permissions:** Coordinator or admin.
+
+#### DELETE /api/notification-routing-overrides/{id}/
+Remove an override.
+
+**Permissions:** Coordinator or admin.
+
 ### Analytics
 
 #### GET /api/reports/
@@ -469,83 +503,7 @@ This documentation is automatically generated and updated. For the most current 
 
 **Note:** Generated documentation files are created via management commands and are not stored in the repository.
 
-# API Namespace URL Configuration Update
-
-**Date:** [YYYY-MM-DD]
-
-## Change Summary
-
-- The main Django URL configuration (`seim/urls.py`) now includes the API URLs with the namespace `'api'`:
-
-```python
-path('api/', include(('api.urls', 'api'), namespace='api')),
-```
-
-## Impact
-
-- All API endpoints are now accessible under the `/api/` path and can be referenced in code and tests using the `api:` namespace (e.g., `reverse('api:register')`).
-- This change ensures that integration and API tests using namespaced reverse lookups will work as expected.
-
-## Testing
-
-- Confirmed that `reverse('api:register')` and similar calls resolve correctly in tests and application code.
-- This fix unblocks API integration tests and improves maintainability.
-
----
-
-# [YYYY-MM-DD] API Accounts Endpoints Namespacing Update
-
-## Change Summary
-- The API router now includes `accounts/` endpoints under the `api` namespace by including `accounts.urls` in `api/urls.py`.
-- This enables reverse lookups such as `reverse('api:register')`, `reverse('api:login')`, etc., to work in tests and code.
-
-## Impact
-- All authentication and profile endpoints are now accessible as `/api/accounts/register/`, `/api/accounts/login/`, etc., and can be referenced as `api:register`, `api:login`, etc.
-- This resolves previous test failures due to missing named routes in the API namespace.
-
-## Testing
-- Confirmed that reverse lookups for registration, login, logout, profile, and token refresh now resolve correctly in tests and application code.
-- API integration tests for authentication and user management are now unblocked.
-
----
-
-
-
-
-
-## Generated Documentation
-
-Last updated: 2025-07-11 04:40:55
-
-- [API Schema](generated/api_schema.yaml)
-- [API Endpoints](generated/api_endpoints.md)
-- [Code Documentation](generated/code_documentation.md)
-- [Database Schema](generated/database_schema.md)
-
-
-## Generated Documentation
-
-Last updated: 2025-07-11 04:41:37
-
-- [API Schema](generated/api_schema.yaml)
-- [API Endpoints](generated/api_endpoints.md)
-- [Code Documentation](generated/code_documentation.md)
-- [Database Schema](generated/database_schema.md)
-
-
-## Generated Documentation
-
-Last updated: 2025-07-11 04:42:16
-
-- [API Schema](generated/api_schema.yaml)
-- [API Endpoints](generated/api_endpoints.md)
-- [Code Documentation](generated/code_documentation.md)
-- [Database Schema](generated/database_schema.md)
-
-
-## Generated Documentation
-
-Last updated: 2025-07-11 04:42:40
+Last updated: 2026-04-16 12:16:50
 
 - [API Schema](generated/api_schema.yaml)
 - [API Endpoints](generated/api_endpoints.md)
@@ -9045,7 +9003,7 @@ Last updated: 2026-04-10 07:57:57
 
 ## Generated Documentation
 
-Last updated: 2026-04-10 07:57:57
+Last updated: 2026-04-16 12:16:50
 
 - [API Schema](generated/api_schema.yaml)
 - [API Endpoints](generated/api_endpoints.md)
@@ -9055,7 +9013,7 @@ Last updated: 2026-04-10 07:57:57
 
 ## Generated Documentation
 
-Last updated: 2026-04-10 07:57:57
+Last updated: 2026-04-16 12:33:49
 
 - [API Schema](generated/api_schema.yaml)
 - [API Endpoints](generated/api_endpoints.md)
@@ -9065,7 +9023,7 @@ Last updated: 2026-04-10 07:57:57
 
 ## Generated Documentation
 
-Last updated: 2026-04-10 07:57:57
+Last updated: 2026-04-16 12:33:49
 
 - [API Schema](generated/api_schema.yaml)
 - [API Endpoints](generated/api_endpoints.md)
@@ -9075,7 +9033,7 @@ Last updated: 2026-04-10 07:57:57
 
 ## Generated Documentation
 
-Last updated: 2026-04-10 07:57:57
+Last updated: 2026-04-16 12:33:49
 
 - [API Schema](generated/api_schema.yaml)
 - [API Endpoints](generated/api_endpoints.md)
@@ -9085,7 +9043,207 @@ Last updated: 2026-04-10 07:57:57
 
 ## Generated Documentation
 
-Last updated: 2026-04-10 07:57:57
+Last updated: 2026-04-16 12:33:48
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-16 12:33:48
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-16 12:33:48
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-16 12:33:48
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-16 12:33:48
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-16 12:38:27
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-16 12:38:27
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-16 12:38:27
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-16 12:38:27
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-16 12:38:27
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-16 12:38:28
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-16 12:38:28
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-16 12:38:28
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-17 01:13:09
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-17 01:13:09
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-17 01:13:09
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-17 01:13:10
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-17 01:13:10
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-17 01:13:10
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-17 01:13:10
+
+- [API Schema](generated/api_schema.yaml)
+- [API Endpoints](generated/api_endpoints.md)
+- [Code Documentation](generated/code_documentation.md)
+- [Database Schema](generated/database_schema.md)
+
+
+## Generated Documentation
+
+Last updated: 2026-04-17 01:13:10
 
 - [API Schema](generated/api_schema.yaml)
 - [API Endpoints](generated/api_endpoints.md)

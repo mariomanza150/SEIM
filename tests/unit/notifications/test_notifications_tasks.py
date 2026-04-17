@@ -9,6 +9,7 @@ import uuid
 import pytest
 from datetime import timedelta
 from unittest.mock import Mock, patch, MagicMock, call
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.utils import timezone
@@ -128,8 +129,8 @@ class TestSendNotificationEmailTask:
         send_notification_email(str(user.id), "Subject", "Message")
         
         assert len(mail.outbox) == 1
-        assert mail.outbox[0].from_email == "noreply@seim.local"
-    
+        assert mail.outbox[0].from_email == settings.DEFAULT_FROM_EMAIL
+
     def test_send_notification_email_user_not_found(self):
         """Test sending email to non-existent user."""
         fake_id = "00000000-0000-0000-0000-000000000000"
@@ -255,8 +256,8 @@ class TestSendNotificationByIdTask:
         send_notification_by_id(str(notification.id))
         
         assert len(mail.outbox) == 1
-        assert mail.outbox[0].from_email == "noreply@seim.local"
-    
+        assert mail.outbox[0].from_email == settings.DEFAULT_FROM_EMAIL
+
     def test_send_notification_by_id_multiple_notifications(self, user, another_user):
         """Test sending multiple notifications by ID."""
         notif1 = Notification.objects.create(
@@ -466,6 +467,36 @@ class TestSendDeadlineRemindersTask:
             assert call_kwargs['notification_type'] == "both"
             assert call_kwargs['category'] == "warning"
             assert call_kwargs["settings_category"] == "applications"
+
+    def test_send_deadline_reminders_uses_routing_override(self, user):
+        from notifications.models import NotificationRoutingOverride
+
+        NotificationRoutingOverride.objects.create(
+            kind=NotificationRoutingOverride.KIND_REMINDER_EVENT_TYPE,
+            key="application",
+            settings_category="documents",
+            is_active=True,
+        )
+        Reminder.objects.create(
+            user=user,
+            event_title="Test Deadline",
+            event_type="application",
+            event_id=uuid.UUID("f1f1f1f1-f1f1-4f1f-8f1f-f1f1f1f1f1f1"),
+            remind_at=timezone.now() - timedelta(minutes=5),
+            sent=False,
+        )
+        with patch(
+            "notifications.services.NotificationService.send_notification"
+        ) as mock_send:
+            mock_send.return_value = Notification.objects.create(
+                recipient=user,
+                title="Test",
+                message="Test",
+                category="warning",
+            )
+            send_deadline_reminders()
+            call_kwargs = mock_send.call_args[1]
+            assert call_kwargs["settings_category"] == "documents"
     
     def test_send_deadline_reminders_includes_event_data(self, user):
         """Test that reminder notification includes event data."""

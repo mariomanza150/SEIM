@@ -3,18 +3,23 @@
 from django.urls import reverse
 from rest_framework import status
 
+from exchange.scholarship_scoring import STUDENT_SCHOLARSHIP_DISCLAIMER
 from tests.utils import APITestCase
 
 
 class TestScholarshipScoresAPI(APITestCase):
-    def test_student_detail_omits_scholarship_score(self):
+    def test_student_detail_includes_estimate_with_student_disclaimer(self):
         student = self.create_user(role="student")
         app = self.create_application(student=student, status_name="submitted")
         self.authenticate_user(student)
         url = reverse("api:application-detail", args=[app.id])
         response = self.client.get(url)
         self.assert_response_success(response, status.HTTP_200_OK)
-        self.assertIsNone(response.data.get("scholarship_allocation_score"))
+        sc = response.data.get("scholarship_allocation_score")
+        self.assertIsNotNone(sc)
+        self.assertEqual(sc["ruleset_id"], "default_v1")
+        self.assertEqual(len(sc["factors"]), 5)
+        self.assertEqual(sc["disclaimer"], STUDENT_SCHOLARSHIP_DISCLAIMER)
 
     def test_coordinator_detail_includes_score(self):
         student = self.create_user(role="student")

@@ -8,8 +8,77 @@ import os
 import sys
 import warnings
 from copy import deepcopy
+from urllib.parse import urlunparse, urlparse
 
 from .base import *
+
+
+def _docker_compose_redis_host_to_localhost(url: str) -> str:
+    """Map Compose service hostname *redis* to loopback when the process runs on the host OS.
+
+    The name ``redis`` is only resolvable on Docker's embedded DNS. Using *env.example* on the
+    host with ``redis://redis:...`` causes ``Name or service not known`` unless we rewrite.
+    """
+    if not url or os.path.exists("/.dockerenv"):
+        return url
+    u = urlparse(url)
+    if (u.scheme or "").lower() not in ("redis", "rediss"):
+        return url
+    if u.hostname != "redis":
+        return url
+    port = u.port or 6379
+    auth = ""
+    if u.username or u.password:
+        if u.username:
+            auth = u.username
+            if u.password:
+                auth += f":{u.password}"
+        else:
+            auth = f":{u.password}"
+        auth += "@"
+    return urlunparse(
+        (u.scheme, f"{auth}127.0.0.1:{port}", u.path, u.params, u.query, u.fragment)
+    )
+
+
+def _docker_compose_postgres_service_to_localhost(url: str) -> str:
+    """Map Compose Postgres hostname *db* to loopback when the process runs on the host OS.
+
+    Same pattern as Redis: ``db`` only resolves on Docker's network. ``docker-compose.yml``
+    publishes Postgres as host port 5434 → container 5432; use ``DATABASE_PUBLISHED_PORT``
+    if your mapping differs.
+    """
+    if not url or os.path.exists("/.dockerenv"):
+        return url
+    u = urlparse(url)
+    scheme = (u.scheme or "").lower()
+    if scheme not in ("postgres", "postgresql", "pgsql", "postgis"):
+        return url
+    if u.hostname != "db":
+        return url
+    published = env.int("DATABASE_PUBLISHED_PORT", default=5434)
+    inner_port = u.port or 5432
+    port_on_host = published if inner_port == 5432 else inner_port
+    auth = ""
+    if u.username or u.password:
+        if u.username:
+            auth = u.username
+            if u.password:
+                auth += f":{u.password}"
+        else:
+            auth = f":{u.password}"
+        auth += "@"
+    return urlunparse(
+        (
+            u.scheme,
+            f"{auth}127.0.0.1:{port_on_host}",
+            u.path,
+            u.params,
+            u.query,
+            u.fragment,
+        )
+    )
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -28,8 +97,12 @@ if not _vue_dist_index.is_file():
 
 ALLOWED_HOSTS = ["*"]
 
-# Database
-DATABASES = {"default": env.db("DATABASE_URL")}
+# Database (rewrite Docker service hostname when running on the host; see env.example)
+DATABASES = {
+    "default": env.db_url_config(
+        _docker_compose_postgres_service_to_localhost(env("DATABASE_URL"))
+    )
+}
 
 # Enforce PostgreSQL for development
 if "sqlite" in DATABASES["default"]["ENGINE"]:
@@ -43,10 +116,8 @@ if "sqlite" in DATABASES["default"]["ENGINE"]:
     )
     sys.exit(1)
 
-# Redis/Celery config
-REDIS_URL = env("REDIS_URL")
-CELERY_BROKER_URL = REDIS_URL
-CELERY_RESULT_BACKEND = REDIS_URL
+# Redis/Celery — broker/backends set after email block (see Celery Configuration).
+REDIS_URL = _docker_compose_redis_host_to_localhost(env("REDIS_URL"))
 
 # Django Caching Configuration
 CACHES = {
@@ -96,6 +167,9 @@ CACHES = {
     },
 }
 
+# ``base`` set ``CHANNEL_LAYERS`` while importing; align with rewritten ``REDIS_URL``.
+CHANNEL_LAYERS["default"]["CONFIG"]["hosts"] = [REDIS_URL]
+
 # Session Configuration with Redis
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "sessions"
@@ -144,8 +218,8 @@ if env("EMAIL_BACKEND") == "django_ses.SESBackend":
     DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
 # Celery Configuration
-CELERY_BROKER_URL = env("CELERY_BROKER_URL")
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
+CELERY_BROKER_URL = _docker_compose_redis_host_to_localhost(env("CELERY_BROKER_URL"))
+CELERY_RESULT_BACKEND = _docker_compose_redis_host_to_localhost(env("CELERY_RESULT_BACKEND"))
 
 # CORS Configuration for Vue.js SPA Development
 CORS_ALLOW_ALL_ORIGINS = False  # More secure - specify origins

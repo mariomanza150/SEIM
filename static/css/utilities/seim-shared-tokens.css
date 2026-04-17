@@ -1,0 +1,40 @@
+/* SEIM Shared UI Tokens
+   Single source of truth for brand + cross-surface semantic tokens.
+
+   Used by:
+   - Django templates/static CSS (via static/css/main.css import)
+   - Vue SPA (via <link> in frontend-vue/index.html, plus Vite dev proxy for /static)
+*/
+
+:root {
+    /* Brand */
+    --seim-brand-primary: #667eea;
+    --seim-brand-secondary: #764ba2;
+
+    /* Bootstrap-compatible theme variables (applies to both Django + SPA) */
+    --bs-primary: var(--seim-brand-primary);
+    --bs-primary-rgb: 102, 126, 234;
+    --bs-link-color: var(--seim-brand-primary);
+    --bs-link-hover-color: #5468d9;
+
+    /* Map project-wide primitives to brand (Django utilities consume these) */
+    --primary-color: var(--seim-brand-primary);
+    --primary-hover: #5468d9;
+    --primary-dark: #4557c6;
+    --primary-light: rgba(102, 126, 234, 0.12);
+}
+
+/* Cross-surface semantic surface tokens (SPA uses --seim-*, Django uses --bg-*/--text-*) */
+:root {
+    --seim-app-bg: var(--bg-secondary);
+    --seim-surface-bg: var(--bg-primary);
+    --seim-surface-text: var(--text-primary);
+    --seim-border-color: var(--border-color);
+    --seim-muted: var(--text-muted);
+}
+
+/* Ensure dark mode sets browser chrome for form controls/scrollbars */
+html[data-theme="dark"] {
+    color-scheme: dark;
+}
+

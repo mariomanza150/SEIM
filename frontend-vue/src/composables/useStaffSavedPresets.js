@@ -2,12 +2,14 @@ import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
+import { useConfirm } from '@/composables/useConfirm'
 
 /**
  * Load/save/delete/set-default for `/api/saved-searches/` rows of a given `search_type`.
  */
 export function useStaffSavedPresets(searchType) {
   const { t } = useI18n()
+  const { confirm } = useConfirm()
   const savedPresets = ref([])
   const presetsLoading = ref(false)
   const newPresetName = ref('')
@@ -51,7 +53,14 @@ export function useStaffSavedPresets(searchType) {
   }
 
   async function deletePreset(p) {
-    if (!window.confirm(t('savedPresets.confirmRemove', { name: p.name }))) return
+    const ok = await confirm({
+      title: t('savedPresets.removeTitle'),
+      message: t('savedPresets.confirmRemove', { name: p.name }),
+      confirmText: t('savedPresets.removeConfirm'),
+      cancelText: t('settings.cancel'),
+      variant: 'danger',
+    })
+    if (!ok) return
     try {
       presetsLoading.value = true
       await api.delete(`/api/saved-searches/${p.id}/`)

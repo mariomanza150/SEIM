@@ -114,6 +114,56 @@ describe('DocumentDetail', () => {
     expect(wrapper.text()).toContain('Back to Documents')
   })
 
+  it('when preview returns non-PDF body for a PDF, shows recovery download and open-in-new-tab actions', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/') {
+        return Promise.resolve({
+          data: { results: [{ id: 'app-1', program: { name: 'Spring Program' } }], count: 1 },
+        })
+      }
+      if (url === '/api/documents/doc-1/') {
+        return Promise.resolve({
+          data: {
+            id: 'doc-1',
+            application: 'app-1',
+            file: '/media/student/transcript.pdf',
+            is_valid: true,
+            created_at: '2026-01-01T12:00:00Z',
+            updated_at: '2026-01-02T12:00:00Z',
+            type: { name: 'Transcript' },
+            uploaded_by: 'student@test.edu',
+            validations: [],
+            resubmission_requests: [],
+            comments: [],
+          },
+        })
+      }
+      if (String(url).includes('/api/documents/doc-1/preview/')) {
+        return Promise.resolve({
+          data: new Blob(['<html></html>'], { type: 'text/html' }),
+          headers: { 'content-type': 'text/html; charset=utf-8' },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const recovery = wrapper.find('[data-testid="preview-error-recovery"]')
+    expect(recovery.exists()).toBe(true)
+    expect(recovery.text()).toContain(i18n.global.t('documentDetailPage.previewError'))
+    const links = recovery.findAll('a')
+    expect(links.length).toBe(2)
+    expect(links[0].attributes('download')).toBeDefined()
+    expect(links[1].attributes('target')).toBe('_blank')
+    expect(links[1].attributes('rel')).toBe('noopener noreferrer')
+  })
+
   it('uses documentDetailPage fallbacks for missing file, uploader, dates, and application', async () => {
     api.get.mockImplementation((url) => {
       if (url === '/api/applications/') {

@@ -1,3 +1,7 @@
+# Dedicated project name so this file does not share the default ``seim`` project with
+# docker-compose.yml (avoids orphan warnings and accidental mixing with dev/test profiles).
+name: seim-localprod
+
 services:
   db:
     image: postgres:15-alpine
@@ -22,12 +26,14 @@ services:
     container_name: seim-redis-local-prod
     restart: unless-stopped
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis123}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123}
     volumes:
       - redis_prod_data:/data
     networks:
       - seim-prod-network
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -37,28 +43,15 @@ services:
       context: .
       dockerfile: Dockerfile.prod
     container_name: seim-web-local-prod
+    env_file:
+      - .env.local-prod
     restart: unless-stopped
-    # One shell command line so gunicorn receives --bind (multiline sh -c breaks the arg list).
-    command:
-      - sh
-      - -c
-      - |
-          set -e
-          echo 'Waiting for database...'
-          python manage.py migrate
-          echo 'Collecting static files...'
-          python manage.py collectstatic --noinput
-          echo 'Starting Gunicorn...'
-          exec gunicorn seim.wsgi:application \
-            --bind 0.0.0.0:8000 \
-            --workers 2 \
-            --worker-class sync \
-            --timeout 30 \
-            --access-logfile - \
-            --error-logfile - \
-            --log-level info
+    # See scripts/local-prod-web-entry.sh — waits for Compose DNS + Postgres TCP before migrate.
+    command: ["bash", "/app/scripts/local-prod-web-entry.sh"]
+    # Published ports avoid clashing with dev compose (``web`` uses host 8001). Use 8020/8021 for local-prod.
     ports:
-      - "8002:8000"
+      - "8020:8000"
+      - "8021:8000"
     volumes:
       - static_prod_volume:/app/staticfiles
       - media_prod_volume:/app/media
@@ -73,6 +66,7 @@ services:
       - DJANGO_SETTINGS_MODULE=seim.settings.production
       - DJANGO_ENV=production
       - DEBUG=False
+      - DISABLE_PAGE_CACHE_MIDDLEWARE=1
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
       - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0
       - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
@@ -83,14 +77,16 @@ services:
       - SESSION_COOKIE_SECURE=False
       - CSRF_COOKIE_SECURE=False
       - SECURE_HSTS_SECONDS=0
-      - CORS_ALLOWED_ORIGINS=http://localhost:8002,http://127.0.0.1:8002
-      - CSRF_TRUSTED_ORIGINS=http://localhost:8002,http://127.0.0.1:8002
+      - CORS_ALLOWED_ORIGINS=http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021
+      - CSRF_TRUSTED_ORIGINS=http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021
 
   celery:
     build:
       context: .
       dockerfile: Dockerfile.prod
     container_name: seim-celery-local-prod
+    env_file:
+      - .env.local-prod
     restart: unless-stopped
     command: celery -A seim worker --loglevel=info --concurrency=2
     volumes:
@@ -123,6 +119,8 @@ services:
       context: .
       dockerfile: Dockerfile.prod
     container_name: seim-celery-beat-local-prod
+    env_file:
+      - .env.local-prod
     restart: unless-stopped
     command: celery -A seim beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
     networks:

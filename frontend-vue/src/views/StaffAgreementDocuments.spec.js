@@ -7,12 +7,20 @@ import StaffAgreementDocuments from './StaffAgreementDocuments.vue'
 import api from '@/services/api'
 import i18n, { setAppLocale } from '@/i18n'
 
+vi.mock('vue-router', () => ({
+  useRoute: () => ({ params: { agreementId: 'agr-test-1' } }),
+}))
+
 vi.mock('@/services/api', () => ({
-  default: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
+  default: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
 }))
 
 vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ success: vi.fn(), error: vi.fn() }),
+}))
+
+vi.mock('@/composables/useConfirm', () => ({
+  useConfirm: () => ({ confirm: vi.fn().mockResolvedValue(false) }),
 }))
 
 describe('StaffAgreementDocuments', () => {
@@ -24,8 +32,14 @@ describe('StaffAgreementDocuments', () => {
       if (url === '/api/saved-searches/') {
         return Promise.resolve({ data: { results: [] } })
       }
-      if (url === '/api/exchange-agreements/') {
-        return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/exchange-agreements/agr-test-1/') {
+        return Promise.resolve({
+          data: {
+            id: 'agr-test-1',
+            title: 'Test agreement',
+            partner_institution_name: 'Partner U',
+          },
+        })
       }
       if (url === '/api/agreement-documents/') {
         return Promise.resolve({ data: { results: [], count: 0 } })
@@ -44,8 +58,10 @@ describe('StaffAgreementDocuments', () => {
       if (url === '/api/saved-searches/') {
         return Promise.resolve({ data: { results: [] } })
       }
-      if (url === '/api/exchange-agreements/') {
-        return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/exchange-agreements/agr-test-1/') {
+        return Promise.resolve({
+          data: { id: 'agr-test-1', title: 'A', partner_institution_name: 'P' },
+        })
       }
       if (url === '/api/agreement-documents/') {
         return Promise.resolve({
@@ -81,7 +97,7 @@ describe('StaffAgreementDocuments', () => {
       },
     })
     await flushPromises()
-    expect(wrapper.text()).toContain('Agreement documents')
+    expect(wrapper.text()).toContain('Agreement repository')
     expect(wrapper.find('[data-testid="agreement-docs-empty"]').text()).toContain(
       'No repository documents match these filters',
     )
@@ -95,8 +111,10 @@ describe('StaffAgreementDocuments', () => {
       if (url === '/api/saved-searches/') {
         return Promise.resolve({ data: { results: [] } })
       }
-      if (url === '/api/exchange-agreements/') {
-        return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/exchange-agreements/agr-test-1/') {
+        return Promise.resolve({
+          data: { id: 'agr-test-1', title: 'A', partner_institution_name: 'P' },
+        })
       }
       if (url === '/api/agreement-documents/') {
         return Promise.resolve({
@@ -108,7 +126,7 @@ describe('StaffAgreementDocuments', () => {
                 category: 'signed_copy',
                 file: '/media/agreements/signed.pdf',
                 created_at: '2026-01-01T00:00:00Z',
-                agreement: null,
+                agreement: 'agr-test-1',
               },
             ],
             count: 1,

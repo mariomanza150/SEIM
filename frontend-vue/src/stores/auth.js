@@ -55,10 +55,19 @@ export const useAuthStore = defineStore('auth', () => {
   // Getters
   const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
   const userRole = computed(() => user.value?.role || null)
-  const isAdmin = computed(() => user.value?.role === 'admin' || user.value?.is_staff === true)
+  const isAdmin = computed(() => {
+    const u = user.value
+    if (!u) return false
+    if (typeof u.is_admin === 'boolean') return u.is_admin
+    return (
+      u.role === 'admin' ||
+      u.is_staff === true ||
+      u.is_superuser === true
+    )
+  })
   const isCoordinator = computed(() => user.value?.role === 'coordinator')
   const canUseStaffReviewQueue = computed(
-    () => isAdmin.value || user.value?.role === 'coordinator' || user.value?.is_staff === true
+    () => isAdmin.value || user.value?.role === 'coordinator',
   )
   const userName = computed(() => {
     if (!user.value) return ''
@@ -166,6 +175,9 @@ export const useAuthStore = defineStore('auth', () => {
         full_name: profileData.full_name,
         role: profileData.role,
         username: profileData.username,
+        is_admin: typeof profileData.is_admin === 'boolean' ? profileData.is_admin : undefined,
+        is_staff: Boolean(profileData.is_staff),
+        is_superuser: Boolean(profileData.is_superuser),
         // Add other profile fields
         secondary_email: profileData.secondary_email,
         gpa: profileData.gpa,

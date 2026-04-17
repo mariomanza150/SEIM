@@ -1,14 +1,13 @@
 <template>
   <div class="coordinator-workload-page">
-    <div class="container-fluid mt-4">
-      <nav :aria-label="t('workloadPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{ t('route.names.CoordinatorWorkload') }}</li>
-        </ol>
-      </nav>
+    <nav :aria-label="t('workloadPage.breadcrumbAria')">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+        </li>
+        <li class="breadcrumb-item active">{{ t('route.names.CoordinatorWorkload') }}</li>
+      </ol>
+    </nav>
 
       <div class="row mb-4">
         <div class="col-md-8">
@@ -130,7 +129,6 @@
           </div>
         </template>
       </template>
-    </div>
   </div>
 </template>
 

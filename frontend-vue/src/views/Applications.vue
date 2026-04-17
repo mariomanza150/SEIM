@@ -1,30 +1,25 @@
 <template>
   <div class="applications-page">
-    <!-- Header -->
-    <div class="container-fluid mt-4">
-      <!-- Breadcrumb -->
-      <nav :aria-label="t('applicationsPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{ t('route.names.Applications') }}</li>
-        </ol>
-      </nav>
-      <div class="row mb-4">
-        <div class="col-md-8">
-          <h2><i class="bi bi-file-earmark-text me-2"></i>{{ t('applicationsPage.title') }}</h2>
-          <p class="text-muted">{{ t('applicationsPage.tagline') }}</p>
-        </div>
-        <div class="col-md-4 text-end d-flex flex-wrap gap-2 justify-content-md-end">
-          <router-link :to="{ name: 'ProgramCompare' }" class="btn btn-outline-secondary">
-            <i class="bi bi-columns-gap me-1"></i>{{ t('applicationsPage.comparePrograms') }}
-          </router-link>
-          <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-2"></i>{{ t('applicationsPage.newApplication') }}
-          </router-link>
-        </div>
-      </div>
+    <PageHeader :title="t('applicationsPage.title')" :subtitle="t('applicationsPage.tagline')" icon-class="bi bi-file-earmark-text">
+      <template #breadcrumb>
+        <nav :aria-label="t('applicationsPage.breadcrumbAria')">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+            </li>
+            <li class="breadcrumb-item active">{{ t('route.names.Applications') }}</li>
+          </ol>
+        </nav>
+      </template>
+      <template #actions>
+        <router-link :to="{ name: 'ProgramCompare' }" class="btn btn-outline-secondary">
+          <i class="bi bi-columns-gap me-1" aria-hidden="true"></i>{{ t('applicationsPage.comparePrograms') }}
+        </router-link>
+        <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary">
+          <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>{{ t('applicationsPage.newApplication') }}
+        </router-link>
+      </template>
+    </PageHeader>
 
       <!-- Filters -->
       <div class="card mb-4" data-testid="applications-filters">
@@ -72,10 +67,38 @@
 
       <!-- Loading -->
       <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('applicationsPage.loadingSpinner') }}</span>
+        <div class="visually-hidden" role="status" aria-live="polite">
+          {{ t('applicationsPage.loadingList') }}
         </div>
-        <p class="mt-3 text-muted">{{ t('applicationsPage.loadingList') }}</p>
+        <div class="row" aria-hidden="true">
+          <div v-for="n in 6" :key="n" class="col-md-6 mb-4">
+            <div class="card h-100">
+              <div class="card-body placeholder-glow">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <span class="placeholder col-7"></span>
+                  <span class="placeholder col-3"></span>
+                </div>
+                <div class="mb-3">
+                  <span class="placeholder col-4"></span>
+                  <div class="mt-2">
+                    <span class="placeholder col-9"></span>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <span class="placeholder col-6"></span>
+                </div>
+                <div class="row mb-3">
+                  <div class="col-6"><span class="placeholder col-10"></span></div>
+                  <div class="col-6"><span class="placeholder col-10"></span></div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="placeholder col-4"></span>
+                  <span class="placeholder col-3"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Error -->
@@ -119,11 +142,11 @@
                 <div class="row small text-muted mb-3">
                   <div class="col-6">
                     <i class="bi bi-calendar me-1"></i>
-                    {{ t('applicationDetailPage.created') }}: {{ formatDate(application.created_at) }}
+                    {{ t('applicationDetailPage.created') }}: {{ formatDateLabel(application.created_at) }}
                   </div>
                   <div v-if="application.submitted_at" class="col-6">
                     <i class="bi bi-send me-1"></i>
-                    {{ t('applicationDetailPage.submitted') }}: {{ formatDate(application.submitted_at) }}
+                    {{ t('applicationDetailPage.submitted') }}: {{ formatDateLabel(application.submitted_at) }}
                   </div>
                 </div>
 
@@ -162,48 +185,15 @@
         </div>
 
         <!-- Pagination -->
-        <nav v-if="pagination.count > pagination.pageSize" :aria-label="t('applicationsPage.paginationAria')">
-          <ul class="pagination justify-content-center">
-            <li class="page-item" :class="{ disabled: !pagination.previous }">
-              <button
-                type="button"
-                class="page-link"
-                :disabled="!pagination.previous"
-                :aria-label="t('pagination.previous')"
-                @click="goToPage(pagination.currentPage - 1)"
-              >
-                {{ t('pagination.previous') }}
-              </button>
-            </li>
-            <li
-              v-for="page in totalPages"
-              :key="page"
-              class="page-item"
-              :class="{ active: page === pagination.currentPage }"
-            >
-              <button
-                type="button"
-                class="page-link"
-                :aria-label="t('pagination.pageNumberAria', { n: page })"
-                :aria-current="page === pagination.currentPage ? 'page' : undefined"
-                @click="goToPage(page)"
-              >
-                {{ page }}
-              </button>
-            </li>
-            <li class="page-item" :class="{ disabled: !pagination.next }">
-              <button
-                type="button"
-                class="page-link"
-                :disabled="!pagination.next"
-                :aria-label="t('pagination.next')"
-                @click="goToPage(pagination.currentPage + 1)"
-              >
-                {{ t('pagination.next') }}
-              </button>
-            </li>
-          </ul>
-        </nav>
+        <Pagination
+          :count="pagination.count"
+          :page-size="pagination.pageSize"
+          :current-page="pagination.currentPage"
+          :can-go-previous="!!pagination.previous"
+          :can-go-next="!!pagination.next"
+          :aria-label="t('applicationsPage.paginationAria')"
+          @page-change="goToPage"
+        />
       </div>
 
       <!-- Empty State -->
@@ -217,19 +207,28 @@
           </router-link>
         </div>
       </div>
-    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import { readinessLevelBadgeClass } from '@/utils/applicationReadiness'
+import PageHeader from '@/components/PageHeader.vue'
+import Pagination from '@/components/Pagination.vue'
+import { useConfirm } from '@/composables/useConfirm'
+import {
+  applicationProgramDisplayName,
+  applicationStatusBadgeClass,
+  formatApplicationStatus,
+  formatDate,
+} from '@/utils/formatters'
 
 const { t, te, locale } = useI18n()
 const { success, error: errorToast } = useToast()
+const { confirm } = useConfirm()
 
 const applications = ref([])
 const loading = ref(true)
@@ -248,8 +247,6 @@ const pagination = ref({
   currentPage: 1,
   pageSize: 10,
 })
-
-const totalPages = computed(() => Math.ceil(pagination.value.count / pagination.value.pageSize))
 
 let searchTimeout = null
 function debouncedSearch() {
@@ -299,10 +296,8 @@ async function fetchApplications(page = 1) {
 }
 
 function goToPage(page) {
-  if (page >= 1 && page <= totalPages.value) {
-    fetchApplications(page)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+  fetchApplications(page)
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function clearFilters() {
@@ -315,45 +310,36 @@ function clearFilters() {
 }
 
 function statusClass(status) {
-  const classes = {
-    draft: 'bg-secondary',
-    submitted: 'bg-info',
-    under_review: 'bg-warning',
-    approved: 'bg-success',
-    rejected: 'bg-danger',
-    completed: 'bg-primary',
-  }
-  return classes[status] || 'bg-secondary'
+  return applicationStatusBadgeClass(status)
 }
 
 function formatStatus(status) {
-  if (!status) return t('applicationDetailPage.status.unknown')
-  const key = `applicationDetailPage.status.${status}`
-  if (te(key)) return t(key)
-  return String(status).replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+  return formatApplicationStatus({ status, t, te })
 }
 
-function formatDate(dateString) {
-  if (!dateString) return t('applicationDetailPage.notAvailable')
-  const date = new Date(dateString)
-  const localeTag = locale.value === 'es' ? 'es' : 'en-US'
-  return date.toLocaleDateString(localeTag, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+function formatDateLabel(dateString) {
+  return formatDate({
+    dateString,
+    locale: locale.value,
+    fallback: t('applicationDetailPage.notAvailable'),
   })
 }
 
 function programDisplayName(app) {
-  if (!app) return ''
-  return (app.program_name || app.program?.name || '').trim()
+  return applicationProgramDisplayName(app)
 }
 
 async function confirmDelete(application) {
   const name = programDisplayName(application) || t('applicationDetailPage.unknownProgram')
-  if (confirm(t('applicationsPage.deleteConfirm', { name }))) {
-    await deleteApplication(application.id)
-  }
+  const ok = await confirm({
+    title: t('applicationsPage.deleteAria'),
+    message: t('applicationsPage.deleteConfirm', { name }),
+    confirmText: t('applicationsPage.deleteAria'),
+    cancelText: t('settings.cancel'),
+    variant: 'danger',
+  })
+  if (!ok) return
+  await deleteApplication(application.id)
 }
 
 async function deleteApplication(id) {

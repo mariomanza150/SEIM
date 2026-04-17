@@ -12,6 +12,7 @@ import { routeBusy } from '@/router/routeBusy'
 
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
+const AppShell = () => import('@/layouts/AppShell.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
 const Applications = () => import('@/views/Applications.vue')
 const CoordinatorReviewQueue = () => import('@/views/CoordinatorReviewQueue.vue')
@@ -28,6 +29,11 @@ const Notifications = () => import('@/views/Notifications.vue')
 const Profile = () => import('@/views/Profile.vue')
 const Settings = () => import('@/views/Settings.vue')
 const DeadlinesCalendar = () => import('@/views/DeadlinesCalendar.vue')
+const AdminPrograms = () => import('@/views/admin/AdminPrograms.vue')
+const AdminForms = () => import('@/views/admin/AdminForms.vue')
+const AdminWorkflows = () => import('@/views/admin/AdminWorkflows.vue')
+const AdminWorkflowEditor = () => import('@/views/admin/AdminWorkflowEditor.vue')
+const AdminApplicationEdit = () => import('@/views/admin/AdminApplicationEdit.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
 const routes = [
@@ -41,161 +47,91 @@ const routes = [
   },
   {
     path: '/',
-    name: 'Home',
-    redirect: { name: 'Dashboard' },
-  },
-  {
-    path: '/dashboard',
-    name: 'Dashboard',
-    component: Dashboard,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/applications',
-    name: 'Applications',
-    component: Applications,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/review-queue',
-    name: 'CoordinatorReviewQueue',
-    component: CoordinatorReviewQueue,
-    meta: {
-      requiresAuth: true,
-      staffReviewQueue: true,
-    },
-  },
-  {
-    path: '/coordinator-workload',
-    name: 'CoordinatorWorkload',
-    component: CoordinatorWorkload,
-    meta: {
-      requiresAuth: true,
-      staffReviewQueue: true,
-    },
-  },
-  {
-    path: '/notification-routing',
-    name: 'NotificationRouting',
-    component: NotificationRouting,
-    meta: {
-      requiresAuth: true,
-      staffReviewQueue: true,
-    },
-  },
-  {
-    path: '/exchange-agreements',
-    name: 'StaffExchangeAgreements',
-    component: StaffExchangeAgreements,
-    meta: {
-      requiresAuth: true,
-      staffReviewQueue: true,
-    },
-  },
-  {
-    path: '/agreement-documents',
-    name: 'StaffAgreementDocuments',
-    component: StaffAgreementDocuments,
-    meta: {
-      requiresAuth: true,
-      staffReviewQueue: true,
-    },
-  },
-  {
-    path: '/programs/compare',
-    name: 'ProgramCompare',
-    component: ProgramCompare,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/applications/new',
-    name: 'ApplicationNew',
-    component: ApplicationForm,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/applications/create',
-    redirect: {
-      name: 'ApplicationNew',
-    },
-  },
-  {
-    path: '/applications/:id/edit',
-    name: 'ApplicationEdit',
-    component: ApplicationForm,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/applications/:id',
-    name: 'ApplicationDetail',
-    component: ApplicationDetail,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/documents',
-    name: 'Documents',
-    component: Documents,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/documents/:id',
-    name: 'DocumentDetail',
-    component: DocumentDetail,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/notifications',
-    name: 'Notifications',
-    component: Notifications,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/profile',
-    name: 'Profile',
-    component: Profile,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/settings',
-    name: 'Settings',
-    component: Settings,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/calendar',
-    name: 'DeadlinesCalendar',
-    component: DeadlinesCalendar,
-    meta: {
-      requiresAuth: true,
-    },
-  },
-  {
-    path: '/preferences',
-    redirect: {
-      name: 'Settings',
-    },
+    component: AppShell,
+    meta: { requiresAuth: true },
+    children: [
+      { path: '', redirect: { name: 'Dashboard' } },
+      { path: 'dashboard', name: 'Dashboard', component: Dashboard },
+      { path: 'applications', name: 'Applications', component: Applications },
+      {
+        path: 'review-queue',
+        name: 'CoordinatorReviewQueue',
+        component: CoordinatorReviewQueue,
+        meta: { staffReviewQueue: true },
+      },
+      {
+        path: 'coordinator-workload',
+        name: 'CoordinatorWorkload',
+        component: CoordinatorWorkload,
+        meta: { staffReviewQueue: true },
+      },
+      {
+        path: 'notification-routing',
+        name: 'NotificationRouting',
+        component: NotificationRouting,
+        meta: { staffReviewQueue: true },
+      },
+      {
+        path: 'exchange-agreements/:agreementId/documents',
+        name: 'StaffAgreementDocuments',
+        component: StaffAgreementDocuments,
+        meta: { staffReviewQueue: true },
+      },
+      {
+        path: 'exchange-agreements',
+        name: 'StaffExchangeAgreements',
+        component: StaffExchangeAgreements,
+        meta: { staffReviewQueue: true },
+      },
+      {
+        path: 'agreement-documents',
+        redirect: { name: 'StaffExchangeAgreements' },
+      },
+      { path: 'programs/compare', name: 'ProgramCompare', component: ProgramCompare },
+      { path: 'applications/new', name: 'ApplicationNew', component: ApplicationForm },
+      { path: 'applications/create', redirect: { name: 'ApplicationNew' } },
+      { path: 'applications/:id/edit', name: 'ApplicationEdit', component: ApplicationForm },
+      { path: 'applications/:id', name: 'ApplicationDetail', component: ApplicationDetail },
+      { path: 'documents', name: 'Documents', component: Documents },
+      { path: 'documents/:id', name: 'DocumentDetail', component: DocumentDetail },
+      { path: 'notifications', name: 'Notifications', component: Notifications },
+      { path: 'profile', name: 'Profile', component: Profile },
+      { path: 'settings', name: 'Settings', component: Settings },
+      { path: 'calendar', name: 'DeadlinesCalendar', component: DeadlinesCalendar },
+      { path: 'preferences', redirect: { name: 'Settings' } },
+
+      // SPA admin console (admin-only)
+      {
+        path: 'admin/programs',
+        name: 'AdminPrograms',
+        component: AdminPrograms,
+        meta: { adminOnly: true },
+      },
+      {
+        path: 'admin/forms',
+        name: 'AdminForms',
+        component: AdminForms,
+        meta: { adminOnly: true },
+      },
+      {
+        path: 'admin/workflows',
+        name: 'AdminWorkflows',
+        component: AdminWorkflows,
+        meta: { adminOnly: true },
+      },
+      {
+        path: 'admin/workflows/:id',
+        name: 'AdminWorkflowEditor',
+        component: AdminWorkflowEditor,
+        meta: { adminOnly: true },
+      },
+      {
+        path: 'admin/applications/:id',
+        name: 'AdminApplicationEdit',
+        component: AdminApplicationEdit,
+        meta: { adminOnly: true },
+      },
+    ],
   },
   // Catch-all 404
   {
@@ -228,8 +164,8 @@ router.beforeEach(async (to, from, next) => {
     syncCanonicalLink(canonicalHref)
   }
 
-  // Check if route requires authentication
-  if (to.meta.requiresAuth) {
+  const requiresAuth = to.matched.some((r) => r.meta && r.meta.requiresAuth)
+  if (requiresAuth) {
     const outcome = await resolveAuthenticatedNavigation(to, authStore)
     if (outcome === 'login') {
       next({ name: 'Login', query: { redirect: to.fullPath } })

@@ -13,8 +13,16 @@ const { mockSuccess, mockErrorToast } = vi.hoisted(() => ({
   mockErrorToast: vi.fn(),
 }))
 
+const { mockConfirm } = vi.hoisted(() => ({
+  mockConfirm: vi.fn(),
+}))
+
 vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ success: mockSuccess, error: mockErrorToast }),
+}))
+
+vi.mock('@/composables/useConfirm', () => ({
+  useConfirm: () => ({ confirm: mockConfirm }),
 }))
 
 vi.mock('@/services/api', () => ({
@@ -42,7 +50,7 @@ describe('useStaffSavedPresets', () => {
     localStorage.clear()
     setAppLocale('en')
     vi.clearAllMocks()
-    global.confirm = vi.fn(() => true)
+    mockConfirm.mockResolvedValue(true)
     api.get.mockResolvedValue({ data: { results: [] } })
   })
 
@@ -62,10 +70,17 @@ describe('useStaffSavedPresets', () => {
   })
 
   it('confirmRemove uses preset name from locale', async () => {
-    global.confirm = vi.fn(() => false)
+    mockConfirm.mockResolvedValue(false)
     const p = mountComposable()
     await p.deletePreset({ id: '1', name: 'My preset' })
-    expect(global.confirm).toHaveBeenCalledWith('Remove preset "My preset"?')
+    expect(mockConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'Remove preset',
+        message: 'Remove preset "My preset"?',
+        confirmText: 'Remove',
+        cancelText: 'Cancel',
+      }),
+    )
     expect(api.delete).not.toHaveBeenCalled()
   })
 

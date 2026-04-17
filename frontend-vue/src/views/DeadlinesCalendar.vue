@@ -1,14 +1,13 @@
 <template>
   <div class="deadlines-calendar-page" data-testid="deadlines-calendar-page">
-    <div class="container-fluid mt-4">
-      <nav :aria-label="t('calendarPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{ t('route.names.DeadlinesCalendar') }}</li>
-        </ol>
-      </nav>
+    <nav :aria-label="t('calendarPage.breadcrumbAria')">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+        </li>
+        <li class="breadcrumb-item active">{{ t('route.names.DeadlinesCalendar') }}</li>
+      </ol>
+    </nav>
 
       <div class="row mb-4">
         <div class="col-lg-8">
@@ -186,7 +185,6 @@
           </li>
         </ul>
       </div>
-    </div>
   </div>
 </template>
 

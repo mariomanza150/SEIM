@@ -1,21 +1,90 @@
 <template>
   <div class="staff-agreement-docs-page">
-    <div class="container-fluid mt-4">
-      <nav :aria-label="t('staffAgreementDocumentsPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{ t('route.names.StaffAgreementDocuments') }}</li>
-        </ol>
-      </nav>
+    <nav :aria-label="t('staffAgreementDocumentsPage.breadcrumbAria')">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+        </li>
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'StaffExchangeAgreements' }">{{
+            t('route.names.StaffExchangeAgreements')
+          }}</router-link>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+          {{ agreement?.title || t('route.names.StaffAgreementDocuments') }}
+        </li>
+      </ol>
+    </nav>
 
+    <div v-if="routeInvalid" class="alert alert-warning">
+      {{ t('staffAgreementDocumentsPage.invalidRoute') }}
+      <router-link :to="{ name: 'StaffExchangeAgreements' }">{{ t('route.names.StaffExchangeAgreements') }}</router-link>
+    </div>
+
+    <template v-else>
       <div class="row mb-4">
         <div class="col">
           <h2>
             <i class="bi bi-archive me-2"></i>{{ t('route.names.StaffAgreementDocuments') }}
           </h2>
-          <p class="text-muted">{{ t('staffAgreementDocumentsPage.pageSubtitle') }}</p>
+          <p v-if="agreement" class="text-muted mb-0">
+            <span class="fw-medium">{{ agreement.title }}</span>
+            <span class="mx-1">·</span>
+            <span>{{ agreement.partner_institution_name }}</span>
+          </p>
+          <p v-else-if="!agreementLoading" class="text-muted">{{ t('staffAgreementDocumentsPage.pageSubtitle') }}</p>
+        </div>
+      </div>
+
+      <div v-if="agreementError" class="alert alert-danger">{{ agreementError }}</div>
+
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <span class="fw-medium">{{ t('staffAgreementDocumentsPage.addSectionTitle') }}</span>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label">{{ t('staffAgreementDocumentsPage.categoryLabel') }}</label>
+              <select v-model="createForm.category" class="form-select" @change="onCreateCategoryChange">
+                <option v-for="c in categoryChoices" :key="c.value" :value="c.value">{{ c.label }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">{{ t('staffAgreementDocumentsPage.colTitle') }}</label>
+              <input v-model="createForm.title" type="text" class="form-control" />
+            </div>
+            <div class="col-md-5">
+              <label class="form-label">{{ t('staffAgreementDocumentsPage.fileLabel') }}</label>
+              <input
+                ref="createFileInput"
+                type="file"
+                class="form-control"
+                @change="onCreateFile"
+              />
+            </div>
+            <div class="col-12">
+              <label class="form-label">{{ t('staffAgreementDocumentsPage.notesLabel') }}</label>
+              <textarea v-model="createForm.notes" class="form-control" rows="2"></textarea>
+            </div>
+            <div v-if="supersedesChoices.length" class="col-md-6">
+              <label class="form-label">{{ t('staffAgreementDocumentsPage.supersedesLabel') }}</label>
+              <select v-model="createForm.supersedes" class="form-select">
+                <option value="">{{ t('staffAgreementDocumentsPage.supersedesNone') }}</option>
+                <option v-for="o in supersedesChoices" :key="o.id" :value="o.id">{{ o.label }}</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <button
+                type="button"
+                class="btn btn-primary"
+                :disabled="createSubmitting || !createForm.file || agreementLoading"
+                @click="submitCreate"
+              >
+                {{ t('staffAgreementDocumentsPage.addSubmit') }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -31,13 +100,6 @@
                 :placeholder="t('staffAgreementDocumentsPage.searchPlaceholder')"
                 @input="debouncedFetch"
               />
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">{{ t('staffAgreementDocumentsPage.agreementLabel') }}</label>
-              <select v-model="filters.agreement" class="form-select" @change="fetchRows(1)">
-                <option value="">{{ t('exchangeAgreementsPage.programAny') }}</option>
-                <option v-for="a in agreements" :key="a.id" :value="a.id">{{ a.title }} — {{ a.partner_institution_name }}</option>
-              </select>
             </div>
             <div class="col-md-2">
               <label class="form-label">{{ t('staffAgreementDocumentsPage.categoryLabel') }}</label>
@@ -155,28 +217,56 @@
             <tr>
               <th>{{ t('staffAgreementDocumentsPage.colTitle') }}</th>
               <th>{{ t('staffAgreementDocumentsPage.colCategory') }}</th>
-              <th>{{ t('staffAgreementDocumentsPage.colAgreement') }}</th>
               <th>{{ t('staffAgreementDocumentsPage.colUploaded') }}</th>
-              <th class="text-end">{{ t('staffAgreementDocumentsPage.colFile') }}</th>
+              <th class="text-end">{{ t('staffAgreementDocumentsPage.colActions') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="d in rows" :key="d.id">
               <td class="fw-medium">{{ d.title || fileLabel(d.file) }}</td>
               <td><span class="badge bg-secondary">{{ formatCategory(d.category) }}</span></td>
-              <td class="small text-muted">{{ agreementLabel(d.agreement) }}</td>
               <td class="small text-muted">{{ formatDate(d.created_at) }}</td>
-              <td class="text-end">
-                <a
-                  v-if="d.file"
-                  :href="resolveFileUrl(d.file)"
-                  class="btn btn-sm btn-outline-secondary"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  :aria-label="t('staffAgreementDocumentsPage.downloadTitle')"
-                >
-                  <i class="bi bi-download"></i>
-                </a>
+              <td class="text-end text-nowrap">
+                <div class="btn-group btn-group-sm" role="group">
+                  <button
+                    v-if="d.file"
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    :title="t('staffAgreementDocumentsPage.previewTitle')"
+                    :aria-label="t('staffAgreementDocumentsPage.previewTitle')"
+                    @click="openPreview(d)"
+                  >
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    :title="t('staffAgreementDocumentsPage.editTitle')"
+                    :aria-label="t('staffAgreementDocumentsPage.editTitle')"
+                    @click="openEdit(d)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <a
+                    v-if="d.file"
+                    :href="resolveFileUrl(d.file)"
+                    class="btn btn-outline-secondary"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    :aria-label="t('staffAgreementDocumentsPage.downloadTitle')"
+                  >
+                    <i class="bi bi-download"></i>
+                  </a>
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger"
+                    :title="t('staffAgreementDocumentsPage.deleteTitle')"
+                    :aria-label="t('staffAgreementDocumentsPage.deleteTitle')"
+                    @click="onDelete(d)"
+                  >
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -229,15 +319,109 @@
           </li>
         </ul>
       </nav>
+    </template>
+
+    <div
+      v-if="previewDoc"
+      class="modal fade show d-block"
+      tabindex="-1"
+      style="background: rgba(0, 0, 0, 0.45)"
+      role="dialog"
+      aria-modal="true"
+      @click.self="previewDoc = null"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-scrollable" @click.stop>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ previewDoc.title || fileLabel(previewDoc.file) }}</h5>
+            <button type="button" class="btn-close" :aria-label="t('settings.cancel')" @click="previewDoc = null"></button>
+          </div>
+          <div class="modal-body p-0" style="min-height: 60vh">
+            <iframe
+              v-if="previewKind === 'pdf'"
+              class="w-100 border-0"
+              style="min-height: 70vh"
+              :title="t('staffAgreementDocumentsPage.previewTitle')"
+              :src="resolveFileUrl(previewDoc.file)"
+            />
+            <div v-else-if="previewKind === 'image'" class="p-3 text-center">
+              <img
+                class="img-fluid"
+                :src="resolveFileUrl(previewDoc.file)"
+                :alt="previewDoc.title || ''"
+              />
+            </div>
+            <div v-else class="p-4 text-center text-muted">
+              <p>{{ t('staffAgreementDocumentsPage.previewUnavailable') }}</p>
+              <a
+                v-if="previewDoc.file"
+                :href="resolveFileUrl(previewDoc.file)"
+                class="btn btn-primary"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ t('staffAgreementDocumentsPage.downloadTitle') }}
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      v-if="editDoc"
+      class="modal fade show d-block"
+      tabindex="-1"
+      style="background: rgba(0, 0, 0, 0.45)"
+      role="dialog"
+      aria-modal="true"
+      @click.self="editDoc = null"
+    >
+      <div class="modal-dialog" @click.stop>
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ t('staffAgreementDocumentsPage.editTitle') }}</h5>
+            <button type="button" class="btn-close" :aria-label="t('settings.cancel')" @click="editDoc = null"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">{{ t('staffAgreementDocumentsPage.colTitle') }}</label>
+              <input v-model="editForm.title" type="text" class="form-control" />
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ t('staffAgreementDocumentsPage.categoryLabel') }}</label>
+              <select v-model="editForm.category" class="form-select">
+                <option v-for="c in categoryChoices" :key="c.value" :value="c.value">{{ c.label }}</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ t('staffAgreementDocumentsPage.notesLabel') }}</label>
+              <textarea v-model="editForm.notes" class="form-control" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">{{ t('staffAgreementDocumentsPage.replaceFileLabel') }}</label>
+              <input type="file" class="form-control" @change="onEditFile" />
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="editDoc = null">{{ t('settings.cancel') }}</button>
+            <button type="button" class="btn btn-primary" :disabled="editSubmitting" @click="submitEdit">
+              {{ t('staffAgreementDocumentsPage.saveEdit') }}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
+import { useConfirm } from '@/composables/useConfirm'
 import api from '@/services/api'
 import { resolveFileUrl } from '@/utils/apiUrl'
 import {
@@ -246,8 +430,10 @@ import {
   serializeAgreementDocumentFilters,
 } from '@/utils/staffListSearchPresets'
 
+const route = useRoute()
 const { t, te, locale } = useI18n()
-const { error: errorToast } = useToast()
+const { error: errorToast, success: successToast } = useToast()
+const { confirm } = useConfirm()
 
 const {
   savedPresets,
@@ -269,11 +455,46 @@ const categoryChoices = computed(() =>
   })),
 )
 
-const agreements = ref([])
-const agreementMap = ref({})
+const agreementId = computed(() => {
+  const raw = route.params.agreementId
+  return raw != null && String(raw).trim() !== '' ? String(raw) : ''
+})
+
+const routeInvalid = computed(() => !agreementId.value)
+
+const agreement = ref(null)
+const agreementLoading = ref(false)
+const agreementError = ref(null)
+
 const rows = ref([])
 const loading = ref(true)
 const error = ref(null)
+
+const createFileInput = ref(null)
+const createForm = ref({
+  category: 'other',
+  title: '',
+  notes: '',
+  file: null,
+  supersedes: '',
+})
+const supersedesChoices = ref([])
+const createSubmitting = ref(false)
+
+const previewDoc = ref(null)
+const editDoc = ref(null)
+const editForm = ref({ title: '', notes: '', category: 'other' })
+const editFile = ref(null)
+const editSubmitting = ref(false)
+
+const previewKind = computed(() => {
+  const f = previewDoc.value?.file
+  if (!f) return 'other'
+  const s = String(f).toLowerCase()
+  if (s.includes('.pdf') || s.endsWith('pdf')) return 'pdf'
+  if (/\.(png|jpe?g|gif|webp|svg)(\?|$)/i.test(s)) return 'image'
+  return 'other'
+})
 
 const filters = ref({
   search: '',
@@ -299,35 +520,185 @@ function debouncedFetch() {
   debounceTimer = setTimeout(() => fetchRows(1), 400)
 }
 
-async function loadAgreements() {
-  try {
-    const { data } = await api.get('/api/exchange-agreements/', { params: { page_size: 200, ordering: 'title' } })
-    const list = data.results ?? data ?? []
-    agreements.value = list
-    const m = {}
-    for (const a of list) {
-      m[a.id] = a
-    }
-    agreementMap.value = m
-  } catch {
-    agreements.value = []
-    agreementMap.value = {}
+function syncAgreementFilter() {
+  if (agreementId.value) {
+    filters.value.agreement = agreementId.value
   }
 }
 
-function agreementLabel(id) {
-  const a = agreementMap.value[id]
-  if (a) return `${a.title} — ${a.partner_institution_name}`
-  return id || t('staffAgreementDocumentsPage.emDash')
+async function loadAgreement() {
+  if (!agreementId.value) {
+    agreement.value = null
+    return
+  }
+  agreementLoading.value = true
+  agreementError.value = null
+  try {
+    const { data } = await api.get(`/api/exchange-agreements/${agreementId.value}/`)
+    agreement.value = data
+  } catch {
+    agreement.value = null
+    agreementError.value = t('staffAgreementDocumentsPage.agreementLoadError')
+    errorToast(agreementError.value)
+  } finally {
+    agreementLoading.value = false
+  }
+}
+
+async function loadSupersedesOptions() {
+  if (!agreementId.value || !createForm.value.category) {
+    supersedesChoices.value = []
+    return
+  }
+  try {
+    const { data } = await api.get('/api/agreement-documents/', {
+      params: {
+        agreement: agreementId.value,
+        category: createForm.value.category,
+        current_only: 'true',
+        page_size: 200,
+      },
+    })
+    const list = data.results ?? data ?? []
+    supersedesChoices.value = list.map((row) => ({
+      id: row.id,
+      label: row.title?.trim() ? row.title : fileLabel(row.file),
+    }))
+  } catch {
+    supersedesChoices.value = []
+  }
+}
+
+function onCreateCategoryChange() {
+  createForm.value.supersedes = ''
+  loadSupersedesOptions()
+}
+
+function onCreateFile(e) {
+  const f = e.target.files?.[0]
+  createForm.value.file = f || null
+}
+
+function onEditFile(e) {
+  editFile.value = e.target.files?.[0] || null
+}
+
+async function submitCreate() {
+  if (!agreementId.value || !createForm.value.file) return
+  createSubmitting.value = true
+  try {
+    const fd = new FormData()
+    fd.append('agreement', agreementId.value)
+    fd.append('category', createForm.value.category)
+    if (createForm.value.title?.trim()) fd.append('title', createForm.value.title.trim())
+    fd.append('file', createForm.value.file)
+    if (createForm.value.notes?.trim()) fd.append('notes', createForm.value.notes.trim())
+    if (createForm.value.supersedes) fd.append('supersedes', createForm.value.supersedes)
+
+    await api.post('/api/agreement-documents/', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    successToast(t('staffAgreementDocumentsPage.createSuccess'))
+    createForm.value = {
+      category: createForm.value.category,
+      title: '',
+      notes: '',
+      file: null,
+      supersedes: '',
+    }
+    if (createFileInput.value) createFileInput.value.value = ''
+    await loadSupersedesOptions()
+    await fetchRows(1)
+  } catch (e) {
+    const msg =
+      e.response?.data?.file?.[0] ||
+      e.response?.data?.detail ||
+      e.response?.data?.non_field_errors?.[0] ||
+      t('staffAgreementDocumentsPage.createError')
+    errorToast(msg)
+  } finally {
+    createSubmitting.value = false
+  }
+}
+
+function openPreview(d) {
+  previewDoc.value = d
+}
+
+function openEdit(d) {
+  editDoc.value = d
+  editForm.value = {
+    title: d.title || '',
+    notes: d.notes || '',
+    category: d.category || 'other',
+  }
+  editFile.value = null
+}
+
+async function submitEdit() {
+  if (!editDoc.value) return
+  editSubmitting.value = true
+  const id = editDoc.value.id
+  try {
+    if (editFile.value) {
+      const fd = new FormData()
+      fd.append('title', editForm.value.title || '')
+      fd.append('notes', editForm.value.notes || '')
+      fd.append('category', editForm.value.category)
+      fd.append('file', editFile.value)
+      await api.patch(`/api/agreement-documents/${id}/`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    } else {
+      await api.patch(`/api/agreement-documents/${id}/`, {
+        title: editForm.value.title || '',
+        notes: editForm.value.notes || '',
+        category: editForm.value.category,
+      })
+    }
+    successToast(t('staffAgreementDocumentsPage.editSuccess'))
+    editDoc.value = null
+    await loadSupersedesOptions()
+    await fetchRows(pagination.value.currentPage)
+  } catch (e) {
+    const msg = e.response?.data?.detail || e.response?.data?.file?.[0] || t('staffAgreementDocumentsPage.editError')
+    errorToast(msg)
+  } finally {
+    editSubmitting.value = false
+  }
+}
+
+async function onDelete(d) {
+  const ok = await confirm({
+    title: t('staffAgreementDocumentsPage.deleteTitle'),
+    message: t('staffAgreementDocumentsPage.deleteConfirm'),
+    confirmText: t('staffAgreementDocumentsPage.deleteTitle'),
+    cancelText: t('settings.cancel'),
+    variant: 'danger',
+  })
+  if (!ok) return
+  try {
+    await api.delete(`/api/agreement-documents/${d.id}/`)
+    successToast(t('staffAgreementDocumentsPage.deleteSuccess'))
+    await loadSupersedesOptions()
+    await fetchRows(pagination.value.currentPage)
+  } catch {
+    errorToast(t('staffAgreementDocumentsPage.deleteError'))
+  }
 }
 
 async function fetchRows(page = 1) {
+  if (!agreementId.value) {
+    loading.value = false
+    rows.value = []
+    return
+  }
   try {
     loading.value = true
     error.value = null
-    const params = { page, ordering: filters.value.ordering }
+    syncAgreementFilter()
+    const params = { page, ordering: filters.value.ordering, agreement: filters.value.agreement }
     if (filters.value.search) params.search = filters.value.search
-    if (filters.value.agreement) params.agreement = filters.value.agreement
     if (filters.value.category) params.category = filters.value.category
     if (filters.value.current_only) params.current_only = 'true'
 
@@ -360,7 +731,7 @@ function goToPage(page) {
 function clearFilters() {
   filters.value = {
     search: '',
-    agreement: '',
+    agreement: agreementId.value || '',
     category: '',
     current_only: false,
     ordering: '-created_at',
@@ -370,6 +741,7 @@ function clearFilters() {
 
 function applyPreset(p) {
   filters.value = deserializeAgreementDocumentFilters(p.filters)
+  syncAgreementFilter()
   pagination.value.currentPage = 1
   fetchRows(1)
 }
@@ -398,13 +770,34 @@ function formatDate(dateString) {
   })
 }
 
+watch(agreementId, async () => {
+  syncAgreementFilter()
+  if (!agreementId.value) {
+    loading.value = false
+    rows.value = []
+    agreement.value = null
+    agreementError.value = null
+    return
+  }
+  await loadAgreement()
+  await loadSupersedesOptions()
+  await fetchRows(1)
+})
+
 onMounted(async () => {
-  await loadAgreements()
+  syncAgreementFilter()
+  if (!agreementId.value) {
+    loading.value = false
+    return
+  }
+  await loadAgreement()
   await loadPresets()
   const def = savedPresets.value.find((p) => p.is_default)
   if (def) {
     filters.value = deserializeAgreementDocumentFilters(def.filters)
+    syncAgreementFilter()
   }
+  await loadSupersedesOptions()
   await fetchRows(1)
 })
 </script>

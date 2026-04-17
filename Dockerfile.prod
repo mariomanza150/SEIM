@@ -70,14 +70,15 @@ RUN mkdir -p /var/log/seim /app/staticfiles /app/media && \
     chown -R seim:seim /app /var/log/seim
 
 # Make scripts executable
-RUN chmod +x /app/scripts/wait-for-db.sh
+RUN chmod +x /app/scripts/wait-for-db.sh /app/scripts/local-prod-web-entry.sh && \
+    sed -i 's/\r$//' /app/scripts/local-prod-web-entry.sh /app/scripts/wait_for_db_tcp.py
 
 # Switch to non-root user
 USER seim
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health/ || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
+    CMD curl -fsS http://localhost:8000/health/live/ || exit 1
 
 # Expose port
 EXPOSE 8000

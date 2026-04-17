@@ -275,6 +275,14 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `PUT /api/reminders/{id}/` - Update reminder
 - `DELETE /api/reminders/{id}/` - Delete reminder
 
+#### Staff notification routing (coordinator / admin)
+- `GET /api/notifications/routing-reference/` - Read-only reference: reminder and transactional routing indices, digest metadata, mapping to `UserSettings` groups. **403** for non-staff.
+- `GET /api/notification-routing-overrides/` - List routing overrides (paginated). **Filters:** `kind`, `key`, `settings_category`, `is_active`; **search:** `key`; **ordering:** e.g. `updated_at`, `kind`, `key`.
+- `POST /api/notification-routing-overrides/` - Create override (`kind`, `key`, `settings_category`, `is_active`). **Unique** on (`kind`, `key`). `settings_category` includes `ungated` to bypass user preference gating.
+- `GET /api/notification-routing-overrides/{id}/` - Retrieve one override
+- `PATCH /api/notification-routing-overrides/{id}/` - Partial update
+- `DELETE /api/notification-routing-overrides/{id}/` - Delete override
+
 ### Analytics
 
 #### Reports

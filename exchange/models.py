@@ -10,6 +10,27 @@ SEAT_HOLDING_APPLICATION_STATUS_NAMES = frozenset(
 )
 
 
+class EligibilityRuleSet(UUIDModel, TimeStampedModel):
+    """
+    Persisted eligibility ruleset (future: admin-configurable evaluation).
+
+    Initial use is bookkeeping and admin editing; runtime evaluation continues to use
+    code-defined rules derived from program fields unless explicitly wired elsewhere.
+    """
+
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, default="")
+    schema_version = models.PositiveIntegerField(default=1)
+    rules_json = models.JSONField(default=dict, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["name", "-created_at"]
+
+    def __str__(self):
+        return self.name
+
+
 class Program(UUIDModel, TimeStampedModel):
     """Represents an exchange program (e.g., Erasmus, semester abroad)."""
 
@@ -72,6 +93,14 @@ class Program(UUIDModel, TimeStampedModel):
         blank=True,
         help_text=_("Dynamic application form for this program")
     )
+    workflow_version = models.ForeignKey(
+        "workflows.WorkflowVersion",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="programs",
+        help_text=_("Published workflow version governing application behavior for this program."),
+    )
     coordinators = models.ManyToManyField(
         "accounts.User",
         blank=True,
@@ -98,6 +127,17 @@ class Program(UUIDModel, TimeStampedModel):
         default=True,
         help_text=_(
             "When capacity is full, new submissions are placed on the waitlist instead of being rejected."
+        ),
+    )
+    eligibility_ruleset = models.ForeignKey(
+        "exchange.EligibilityRuleSet",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="programs",
+        help_text=_(
+            "Optional: persisted eligibility rule set used for previews/validation when enabled. "
+            "When unset, eligibility rules are derived from program fields."
         ),
     )
 

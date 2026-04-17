@@ -1,24 +1,22 @@
 <template>
   <div class="documents-page" data-testid="documents-page">
-    <div class="container-fluid mt-4">
-      <!-- Breadcrumb -->
-      <nav :aria-label="t('documentsPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{ t('route.names.Documents') }}</li>
-        </ol>
-      </nav>
-      <!-- Header -->
-      <div class="row mb-4">
-        <div class="col-md-8">
-          <h2 data-testid="documents-heading"><i class="bi bi-folder me-2"></i>{{ t('route.names.Documents') }}</h2>
-          <p class="text-muted">
-            {{ isStaff ? t('documentsPage.subtitleStaff') : t('documentsPage.subtitleStudent') }}
-          </p>
-        </div>
-      </div>
+    <PageHeader
+      :title="t('route.names.Documents')"
+      :subtitle="isStaff ? t('documentsPage.subtitleStaff') : t('documentsPage.subtitleStudent')"
+      icon-class="bi bi-folder"
+      test-id="documents-heading"
+    >
+      <template #breadcrumb>
+        <nav :aria-label="t('documentsPage.breadcrumbAria')">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+            </li>
+            <li class="breadcrumb-item active">{{ t('route.names.Documents') }}</li>
+          </ol>
+        </nav>
+      </template>
+    </PageHeader>
 
       <!-- Filters -->
       <div class="card mb-4">
@@ -55,7 +53,18 @@
                 <i class="bi bi-x-circle me-1"></i>{{ t('documentsPage.clearFilters') }}
               </button>
             </div>
-            <div v-if="isStaff" class="col-12 border-top pt-3 mt-2">
+            <div v-if="isStaff" class="col-12 d-flex justify-content-end pt-1">
+              <button
+                type="button"
+                class="btn btn-link btn-sm px-0"
+                :aria-expanded="advancedFiltersOpen ? 'true' : 'false'"
+                @click="advancedFiltersOpen = !advancedFiltersOpen"
+              >
+                <i class="bi" :class="advancedFiltersOpen ? 'bi-chevron-up' : 'bi-chevron-down'" aria-hidden="true"></i>
+                <span class="ms-1">{{ t('documentsPage.advancedFiltersToggle') }}</span>
+              </button>
+            </div>
+            <div v-if="isStaff && advancedFiltersOpen" class="col-12 border-top pt-3 mt-2">
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
                   <label class="form-label small text-muted mb-1">{{ t('documentsPage.presetSaveLabel') }}</label>
@@ -117,18 +126,14 @@
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('documentsPage.loadingSpinner') }}</span>
-        </div>
-        <p class="mt-3 text-muted">{{ t('documentsPage.loadingList') }}</p>
-      </div>
+      <LoadingState
+        v-if="loading"
+        :spinner-label="t('documentsPage.loadingSpinner')"
+        :hint="t('documentsPage.loadingList')"
+      />
 
       <!-- Error -->
-      <div v-else-if="error" class="alert alert-danger">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        {{ error }}
-      </div>
+      <ErrorAlert v-else-if="error" :message="error" />
 
       <!-- Documents List -->
       <div v-else-if="documents.length > 0">
@@ -202,62 +207,31 @@
         </div>
 
         <!-- Pagination -->
-        <nav v-if="pagination.count > pagination.pageSize" :aria-label="t('documentsPage.paginationAria')">
-          <ul class="pagination justify-content-center mt-4">
-            <li class="page-item" :class="{ disabled: !pagination.previous }">
-              <button
-                type="button"
-                class="page-link"
-                :disabled="!pagination.previous"
-                :aria-label="t('pagination.previous')"
-                @click="goToPage(pagination.currentPage - 1)"
-              >
-                {{ t('pagination.previous') }}
-              </button>
-            </li>
-            <li
-              v-for="page in totalPages"
-              :key="page"
-              class="page-item"
-              :class="{ active: page === pagination.currentPage }"
-            >
-              <button
-                type="button"
-                class="page-link"
-                :aria-label="t('pagination.pageNumberAria', { n: page })"
-                :aria-current="page === pagination.currentPage ? 'page' : undefined"
-                @click="goToPage(page)"
-              >
-                {{ page }}
-              </button>
-            </li>
-            <li class="page-item" :class="{ disabled: !pagination.next }">
-              <button
-                type="button"
-                class="page-link"
-                :disabled="!pagination.next"
-                :aria-label="t('pagination.next')"
-                @click="goToPage(pagination.currentPage + 1)"
-              >
-                {{ t('pagination.next') }}
-              </button>
-            </li>
-          </ul>
-        </nav>
+        <Pagination
+          :count="pagination.count"
+          :page-size="pagination.pageSize"
+          :current-page="pagination.currentPage"
+          :can-go-previous="!!pagination.previous"
+          :can-go-next="!!pagination.next"
+          :aria-label="t('documentsPage.paginationAria')"
+          ul-class="mt-4"
+          @page-change="goToPage"
+        />
       </div>
 
       <!-- Empty State -->
-      <div v-else class="card">
-        <div class="card-body text-center py-5">
-          <i class="bi bi-folder-x display-1 text-muted"></i>
-          <h4 class="mt-3">{{ t('documentsPage.emptyTitle') }}</h4>
-          <p class="text-muted">{{ t('documentsPage.emptyBody') }}</p>
-          <router-link :to="{ name: 'Applications' }" class="btn btn-primary mt-3">
-            <i class="bi bi-file-earmark-text me-2"></i>{{ t('documentsPage.goToApplications') }}
+      <EmptyState
+        v-else
+        icon-class="bi bi-folder-x"
+        :title="t('documentsPage.emptyTitle')"
+        :body="t('documentsPage.emptyBody')"
+      >
+        <template #actions>
+          <router-link :to="{ name: 'Applications' }" class="btn btn-primary">
+            <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>{{ t('documentsPage.goToApplications') }}
           </router-link>
-        </div>
-      </div>
-    </div>
+        </template>
+      </EmptyState>
   </div>
 </template>
 
@@ -269,6 +243,11 @@ import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
 import { useAuthStore } from '@/stores/auth'
 import { resolveFileUrl } from '@/utils/apiUrl'
 import api from '@/services/api'
+import PageHeader from '@/components/PageHeader.vue'
+import Pagination from '@/components/Pagination.vue'
+import LoadingState from '@/components/State/LoadingState.vue'
+import ErrorAlert from '@/components/State/ErrorAlert.vue'
+import EmptyState from '@/components/State/EmptyState.vue'
 import {
   applicationSelectLabel,
   documentApplicationId,
@@ -285,6 +264,7 @@ const { t, locale } = useI18n()
 const { error: errorToast } = useToast()
 const authStore = useAuthStore()
 const isStaff = computed(() => authStore.canUseStaffReviewQueue)
+const advancedFiltersOpen = ref(false)
 
 const {
   savedPresets,
@@ -317,8 +297,6 @@ const pagination = ref({
   currentPage: 1,
   pageSize: 10,
 })
-
-const totalPages = computed(() => Math.ceil(pagination.value.count / pagination.value.pageSize))
 
 async function fetchApplications() {
   try {
@@ -371,10 +349,8 @@ async function fetchDocuments(page = 1) {
 }
 
 function goToPage(page) {
-  if (page >= 1 && page <= totalPages.value) {
-    fetchDocuments(page)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+  fetchDocuments(page)
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function clearFilters() {

@@ -1,0 +1,10 @@
+services:
+  # This override is intended for local, isolated test runs (e.g. `-p seimtest`).
+  # It avoids host port collisions and hardcoded container name conflicts.
+  db:
+    ports: !reset []
+
+  redis:
+    container_name: seimtest-redis
+    ports: !reset []
+

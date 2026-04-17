@@ -1,20 +1,19 @@
 <template>
   <div class="application-form-page">
-    <div class="container-fluid mt-4">
-      <!-- Breadcrumb -->
-      <nav :aria-label="t('applicationFormPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Applications' }">{{ t('route.names.Applications') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">
-            {{ isEditMode ? t('applicationFormPage.breadcrumbEdit') : t('applicationFormPage.breadcrumbNew') }}
-          </li>
-        </ol>
-      </nav>
+    <!-- Breadcrumb -->
+    <nav :aria-label="t('applicationFormPage.breadcrumbAria')">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+        </li>
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Applications' }">{{ t('route.names.Applications') }}</router-link>
+        </li>
+        <li class="breadcrumb-item active">
+          {{ isEditMode ? t('applicationFormPage.breadcrumbEdit') : t('applicationFormPage.breadcrumbNew') }}
+        </li>
+      </ol>
+    </nav>
 
       <!-- Header -->
       <div class="row mb-4">
@@ -689,7 +688,6 @@
           </div>
         </div>
       </div>
-    </div>
   </div>
 </template>
 
@@ -942,11 +940,12 @@ watch(
     eligibilityCheckTimer = setTimeout(async () => {
       eligibilityCheckTimer = null
       try {
-        let url = `/api/programs/${pid}/check_eligibility/`
-        if (edit && appId) {
-          const q = new URLSearchParams({ application: String(appId) })
-          url += `?${q.toString()}`
-        }
+        const prog = programs.value.find(p => String(p.id) === String(pid))
+        const params = new URLSearchParams()
+        if (edit && appId) params.set('application', String(appId))
+        if (prog?.eligibility_ruleset) params.set('use_ruleset', 'true')
+        const qs = params.toString()
+        const url = `/api/programs/${pid}/check_eligibility/${qs ? `?${qs}` : ''}`
         const { data } = await api.get(url)
         if (seq !== eligibilityCheckSeq) return
         if (data.eligible === false && data.message) {

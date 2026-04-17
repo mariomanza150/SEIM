@@ -11,12 +11,23 @@ function staffRoute() {
   }
 }
 
+function adminRoute() {
+  return {
+    meta: { requiresAuth: true, adminOnly: true },
+    fullPath: '/admin/programs',
+  }
+}
+
 function studentStoreAfterCheckAuth() {
   let user = null
   return {
     accessToken: 'jwt',
     get isAuthenticated() {
       return !!(this.accessToken && user)
+    },
+    get isAdmin() {
+      if (!user) return false
+      return user.role === 'admin' || user.is_staff === true
     },
     get canUseStaffReviewQueue() {
       if (!user) return false
@@ -40,12 +51,23 @@ describe('resolveAuthenticatedNavigation', () => {
     expect(authStore.checkAuth).toHaveBeenCalledOnce()
   })
 
+  it('returns applications for adminOnly route after checkAuth when user is student', async () => {
+    const authStore = studentStoreAfterCheckAuth()
+    const outcome = await resolveAuthenticatedNavigation(adminRoute(), authStore)
+    expect(outcome).toBe('applications')
+    expect(authStore.checkAuth).toHaveBeenCalledOnce()
+  })
+
   it('returns next for staff route after checkAuth when user is coordinator', async () => {
     let user = null
     const authStore = {
       accessToken: 'jwt',
       get isAuthenticated() {
         return !!(this.accessToken && user)
+      },
+      get isAdmin() {
+        if (!user) return false
+        return user.role === 'admin' || user.is_staff === true
       },
       get canUseStaffReviewQueue() {
         if (!user) return false
@@ -67,6 +89,7 @@ describe('resolveAuthenticatedNavigation', () => {
     const authStore = {
       accessToken: null,
       isAuthenticated: false,
+      isAdmin: false,
       canUseStaffReviewQueue: false,
       checkAuth: vi.fn(),
     }
@@ -79,6 +102,7 @@ describe('resolveAuthenticatedNavigation', () => {
     const authStore = {
       accessToken: 'jwt',
       isAuthenticated: false,
+      isAdmin: false,
       canUseStaffReviewQueue: false,
       checkAuth: vi.fn(async () => {
         throw new Error('network')
@@ -91,6 +115,7 @@ describe('resolveAuthenticatedNavigation', () => {
     const authStore = {
       accessToken: 'jwt',
       isAuthenticated: true,
+      isAdmin: false,
       canUseStaffReviewQueue: false,
       checkAuth: vi.fn(),
     }
@@ -103,9 +128,21 @@ describe('resolveAuthenticatedNavigation', () => {
     const authStore = {
       accessToken: 'jwt',
       isAuthenticated: true,
+      isAdmin: false,
       canUseStaffReviewQueue: false,
       checkAuth: vi.fn(),
     }
     expect(await resolveAuthenticatedNavigation(staffRoute(), authStore)).toBe('applications')
+  })
+
+  it('returns next when authenticated admin targets adminOnly route', async () => {
+    const authStore = {
+      accessToken: 'jwt',
+      isAuthenticated: true,
+      isAdmin: true,
+      canUseStaffReviewQueue: true,
+      checkAuth: vi.fn(),
+    }
+    expect(await resolveAuthenticatedNavigation(adminRoute(), authStore)).toBe('next')
   })
 })

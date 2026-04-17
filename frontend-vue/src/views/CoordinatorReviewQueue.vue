@@ -1,26 +1,27 @@
 <template>
   <div class="review-queue-page">
-    <div class="container-fluid mt-4">
-      <nav :aria-label="t('reviewQueuePage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{ t('route.names.CoordinatorReviewQueue') }}</li>
-        </ol>
-      </nav>
-
-      <div class="row mb-4">
-        <div class="col-md-8">
-          <h2><i class="bi bi-clipboard-check me-2"></i>{{ t('reviewQueuePage.pageHeading') }}</h2>
-          <p class="text-muted">{{ t('reviewQueuePage.pageSubtitle') }}</p>
-        </div>
-        <div class="col-md-4 text-end d-flex align-items-start justify-content-end gap-2">
-          <router-link :to="{ name: 'Applications' }" class="btn btn-outline-secondary">
-            <i class="bi bi-person-lines-fill me-1"></i>{{ t('reviewQueuePage.myApplications') }}
-          </router-link>
-        </div>
-      </div>
+    <PageHeader
+      :title="t('reviewQueuePage.pageHeading')"
+      :subtitle="t('reviewQueuePage.pageSubtitle')"
+      icon-class="bi bi-clipboard-check"
+      test-id="review-queue-heading"
+    >
+      <template #breadcrumb>
+        <nav :aria-label="t('reviewQueuePage.breadcrumbAria')">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+            </li>
+            <li class="breadcrumb-item active">{{ t('route.names.CoordinatorReviewQueue') }}</li>
+          </ol>
+        </nav>
+      </template>
+      <template #actions>
+        <router-link :to="{ name: 'Applications' }" class="btn btn-outline-secondary">
+          <i class="bi bi-person-lines-fill me-1" aria-hidden="true"></i>{{ t('reviewQueuePage.myApplications') }}
+        </router-link>
+      </template>
+    </PageHeader>
 
       <div class="card mb-4" data-testid="review-queue-filters">
         <div class="card-body">
@@ -96,7 +97,18 @@
                 {{ t('reviewQueuePage.clearFilters') }}
               </button>
             </div>
-            <div class="col-12 border-top pt-3 mt-2">
+            <div class="col-12 d-flex justify-content-end pt-1">
+              <button
+                type="button"
+                class="btn btn-link btn-sm px-0"
+                :aria-expanded="advancedFiltersOpen ? 'true' : 'false'"
+                @click="advancedFiltersOpen = !advancedFiltersOpen"
+              >
+                <i class="bi" :class="advancedFiltersOpen ? 'bi-chevron-up' : 'bi-chevron-down'" aria-hidden="true"></i>
+                <span class="ms-1">{{ t('reviewQueuePage.advancedFiltersToggle') }}</span>
+              </button>
+            </div>
+            <div v-if="advancedFiltersOpen" class="col-12 border-top pt-3 mt-2">
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
                   <label class="form-label small text-muted mb-1">{{ t('reviewQueuePage.presetSaveLabel') }}</label>
@@ -176,17 +188,13 @@
         </div>
       </div>
 
-      <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('reviewQueuePage.loading') }}</span>
-        </div>
-      </div>
-      <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-      <div v-else-if="applications.length === 0" class="card">
-        <div class="card-body text-center py-5 text-muted" data-testid="review-queue-empty">
-          {{ t('reviewQueuePage.empty') }}
-        </div>
-      </div>
+      <LoadingState v-if="loading" :spinner-label="t('reviewQueuePage.loading')" />
+      <ErrorAlert v-else-if="error" :message="error" />
+      <EmptyState
+        v-else-if="applications.length === 0"
+        test-id="review-queue-empty"
+        :body="t('reviewQueuePage.empty')"
+      />
       <div v-else class="table-responsive card">
         <table class="table table-hover mb-0">
           <thead class="table-light">
@@ -227,61 +235,31 @@
         </table>
       </div>
 
-      <nav
-        v-if="!loading && pagination.count > pagination.pageSize"
-        class="mt-3"
+      <Pagination
+        v-if="!loading"
+        :count="pagination.count"
+        :page-size="pagination.pageSize"
+        :current-page="pagination.currentPage"
+        :can-go-previous="!!pagination.previous"
+        :can-go-next="!!pagination.next"
         :aria-label="t('reviewQueuePage.paginationAria')"
-      >
-        <ul class="pagination justify-content-center">
-          <li class="page-item" :class="{ disabled: !pagination.previous }">
-            <button
-              type="button"
-              class="page-link"
-              :disabled="!pagination.previous"
-              :aria-label="t('pagination.previous')"
-              @click="goToPage(pagination.currentPage - 1)"
-            >
-              {{ t('pagination.previous') }}
-            </button>
-          </li>
-          <li
-            v-for="page in totalPages"
-            :key="page"
-            class="page-item"
-            :class="{ active: page === pagination.currentPage }"
-          >
-            <button
-              type="button"
-              class="page-link"
-              :aria-label="t('pagination.pageNumberAria', { n: page })"
-              :aria-current="page === pagination.currentPage ? 'page' : undefined"
-              @click="goToPage(page)"
-            >
-              {{ page }}
-            </button>
-          </li>
-          <li class="page-item" :class="{ disabled: !pagination.next }">
-            <button
-              type="button"
-              class="page-link"
-              :disabled="!pagination.next"
-              :aria-label="t('pagination.next')"
-              @click="goToPage(pagination.currentPage + 1)"
-            >
-              {{ t('pagination.next') }}
-            </button>
-          </li>
-        </ul>
-      </nav>
-    </div>
+        ul-class="mt-3"
+        @page-change="goToPage"
+      />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import api from '@/services/api'
+import PageHeader from '@/components/PageHeader.vue'
+import Pagination from '@/components/Pagination.vue'
+import LoadingState from '@/components/State/LoadingState.vue'
+import ErrorAlert from '@/components/State/ErrorAlert.vue'
+import EmptyState from '@/components/State/EmptyState.vue'
 import {
   REVIEW_QUEUE_SEARCH_TYPE,
   deserializeReviewQueueFilters,
@@ -290,10 +268,12 @@ import {
 
 const { t, te, locale } = useI18n()
 const { success, error: errorToast } = useToast()
+const { confirm } = useConfirm()
 
 const applications = ref([])
 const loading = ref(true)
 const error = ref(null)
+const advancedFiltersOpen = ref(false)
 const savedPresets = ref([])
 const presetsLoading = ref(false)
 const newPresetName = ref('')
@@ -315,8 +295,6 @@ const pagination = ref({
   currentPage: 1,
   pageSize: 20,
 })
-
-const totalPages = computed(() => Math.ceil(pagination.value.count / pagination.value.pageSize) || 1)
 
 let searchTimeout = null
 function debouncedSearch() {
@@ -359,10 +337,8 @@ async function fetchApplications(page = 1) {
 }
 
 function goToPage(page) {
-  if (page >= 1 && page <= totalPages.value) {
-    fetchApplications(page)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+  fetchApplications(page)
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function clearFilters() {
@@ -420,7 +396,14 @@ async function savePreset() {
 }
 
 async function deletePreset(p) {
-  if (!window.confirm(t('savedPresets.confirmRemove', { name: p.name }))) return
+  const ok = await confirm({
+    title: t('savedPresets.removeTitle'),
+    message: t('savedPresets.confirmRemove', { name: p.name }),
+    confirmText: t('savedPresets.removeConfirm'),
+    cancelText: t('settings.cancel'),
+    variant: 'danger',
+  })
+  if (!ok) return
   try {
     presetsLoading.value = true
     await api.delete(`/api/saved-searches/${p.id}/`)
