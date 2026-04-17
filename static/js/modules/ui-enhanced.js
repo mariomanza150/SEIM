@@ -3,8 +3,8 @@
  * Provides advanced loading states, error handling, and mobile experience improvements
  */
 
-import { SEIM_LOGGER } from './logger.js';
-import { SEIM_ERROR_HANDLER } from './error-handler.js';
+import { logger } from './logger.js';
+import { errorHandler } from './error-handler.js';
 
 class EnhancedUI {
     constructor() {
@@ -32,7 +32,7 @@ class EnhancedUI {
         this.setupErrorRecovery();
         this.setupProgressiveLoading();
         
-        SEIM_LOGGER.info('Enhanced UI initialized');
+        logger.info('Enhanced UI initialized');
     }
     
     /**
@@ -306,7 +306,7 @@ class EnhancedUI {
         
         const template = this.skeletonTemplates.get(type);
         if (!template) {
-            SEIM_LOGGER.warn('Skeleton template not found', { type });
+            logger.warn('Skeleton template not found', { type });
             return;
         }
         
@@ -362,7 +362,7 @@ class EnhancedUI {
         this.loadingStates.delete(skeletonId);
         
         const duration = Date.now() - loadingState.startTime;
-        SEIM_LOGGER.debug('Skeleton loading completed', { skeletonId, duration });
+        logger.debug('Skeleton loading completed', { skeletonId, duration });
     }
     
     /**
@@ -413,10 +413,10 @@ class EnhancedUI {
             // Hide loading overlay
             this.hideProgressiveLoading(element);
             
-            SEIM_LOGGER.debug('Progressive content loaded', { url: loadUrl });
+            logger.debug('Progressive content loaded', { url: loadUrl });
             
         } catch (error) {
-            SEIM_ERROR_HANDLER.handleError(error, { context: 'Progressive Loading', url: loadUrl });
+            errorHandler.handleError(error, { context: 'Progressive Loading', url: loadUrl });
             this.showErrorState(element, 'Failed to load content', error);
         }
     }
@@ -475,7 +475,7 @@ class EnhancedUI {
      * Handle global errors
      */
     handleGlobalError(event) {
-        SEIM_LOGGER.error('Global error occurred', event.error);
+        logger.error('Global error occurred', event.error);
         
         // Show user-friendly error message
         this.showGlobalError('An unexpected error occurred. Please refresh the page or try again later.');
@@ -485,7 +485,7 @@ class EnhancedUI {
      * Handle promise rejections
      */
     handlePromiseRejection(event) {
-        SEIM_LOGGER.error('Unhandled promise rejection', event.reason);
+        logger.error('Unhandled promise rejection', event.reason);
         
         // Show user-friendly error message
         this.showGlobalError('A network error occurred. Please check your connection and try again.');
@@ -567,7 +567,7 @@ class EnhancedUI {
         // Show error state
         element.innerHTML = errorHTML;
         
-        SEIM_LOGGER.warn('Error state shown', { errorId, title, error: error.message });
+        logger.warn('Error state shown', { errorId, title, error: error.message });
         
         return errorId;
     }
@@ -612,10 +612,10 @@ class EnhancedUI {
             element.innerHTML = errorState.originalContent;
             this.errorStates.delete(errorId);
             
-            SEIM_LOGGER.info('Error retry successful', { errorId, retryCount: retryCount + 1 });
+            logger.info('Error retry successful', { errorId, retryCount: retryCount + 1 });
             
         } catch (retryError) {
-            SEIM_LOGGER.error('Error retry failed', { errorId, retryError });
+            logger.error('Error retry failed', { errorId, retryError });
             
             // Show updated error state
             this.showErrorState(element, 'Retry failed', retryError, {
@@ -644,7 +644,7 @@ class EnhancedUI {
         // Optimize images for mobile
         this.optimizeImagesForMobile();
         
-        SEIM_LOGGER.info('Mobile optimizations applied');
+        logger.info('Mobile optimizations applied');
     }
     
     /**

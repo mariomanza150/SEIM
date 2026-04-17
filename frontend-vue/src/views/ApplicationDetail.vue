@@ -10,9 +10,15 @@
           <li class="breadcrumb-item">
             <router-link :to="{ name: 'Applications' }">{{ t('route.names.Applications') }}</router-link>
           </li>
-          <li class="breadcrumb-item active">{{
-            programDisplayName(application) || t('applicationDetailPage.loadingProgram')
-          }}</li>
+          <li
+            class="breadcrumb-item active seim-breadcrumb-truncate"
+            aria-current="page"
+            :title="programDisplayName(application) || t('applicationDetailPage.loadingProgram')"
+          >
+            <span class="seim-breadcrumb-truncate__text">
+              {{ programDisplayName(application) || t('applicationDetailPage.loadingProgram') }}
+            </span>
+          </li>
         </ol>
       </nav>
 
@@ -996,6 +1002,20 @@ onBeforeUnmount(() => {
 .application-detail {
   min-height: 100vh;
   background-color: var(--seim-app-bg);
+}
+
+.seim-breadcrumb-truncate {
+  max-width: min(520px, 70vw);
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+.seim-breadcrumb-truncate__text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .timeline {
