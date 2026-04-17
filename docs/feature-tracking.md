@@ -151,6 +151,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Staff SPA UI for notification routing overrides | `frontend-vue`, `notifications` | Implemented | 2026-04-16 | `/notification-routing`: list/create/edit/toggle/delete against `/api/notification-routing-overrides/` with pagination fetch; refreshes routing-reference after mutations. i18n en/es. Vitest: `NotificationRouting.spec.js`. |
 | Manual API docs: staff notification routing endpoints | `documentation`, `notifications`, `api` | Implemented | 2026-04-16 | `documentation/api_documentation.md`: `GET /api/notifications/routing-reference/`, CRUD `/api/notification-routing-overrides/` (permissions, filters, constraints). No new automated tests (documentation-only). |
 | API contracts doc: staff notification routing endpoints | `docs`, `notifications`, `api` | Implemented | 2026-04-16 | `docs/api-contracts.md` **Staff notification routing** subsection (parity with manual API doc + OpenAPI). No new automated tests (documentation-only). |
+| Notification Celery email tests: `DEFAULT_FROM_EMAIL` portability | `notifications`, `tests` | Implemented | 2026-04-16 | `test_notifications_tasks` from-address assertions compare `mail.outbox[0].from_email` to `settings.DEFAULT_FROM_EMAIL` (matches `send_mail` in `notifications/tasks.py`) so runs succeed when `.env` overrides the default sender. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
@@ -229,5 +230,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-16 — `docs/api-contracts.md` staff notification routing subsection (reference + overrides CRUD). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-16 — feature loop: notification task tests aligned with `DEFAULT_FROM_EMAIL`; prior: `docs/api-contracts.md` staff notification routing. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*  
