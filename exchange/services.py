@@ -173,6 +173,7 @@ class ApplicationService:
                     action_url=f"/applications/{application.id}/",
                     action_text="View Application",
                     settings_category="applications",
+                    transactional_route_key="application_waitlist_received",
                 )
                 return application
             raise ValueError("This program has reached enrollment capacity.")
@@ -198,6 +199,7 @@ class ApplicationService:
             action_url=f"/applications/{application.id}/",
             action_text="View Application",
             settings_category="applications",
+            transactional_route_key="application_submitted",
         )
 
         return application
@@ -272,6 +274,7 @@ class ApplicationService:
             action_url=f"/applications/{application.id}/",
             action_text="View Application",
             settings_category="applications",
+            transactional_route_key="application_status_update",
         )
 
         return application

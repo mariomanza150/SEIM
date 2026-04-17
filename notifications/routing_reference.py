@@ -7,7 +7,7 @@ Used by the staff API and kept in sync with ``NotificationService`` routing.
 from __future__ import annotations
 
 from notifications.services import SETTINGS_CATEGORY_USER_FIELDS
-from notifications.tasks import REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
+from notifications.tasks import get_reminder_event_type_routing_map
 
 # Staff-facing text for each ``Reminder.event_type`` key in the routing map.
 REMINDER_EVENT_TYPE_DESCRIPTIONS: dict[str, str] = {
@@ -238,6 +238,44 @@ def build_transactional_route_keys_by_settings_category() -> dict[str, list[str]
     return {k: sorted(v) for k, v in sorted(buckets.items(), key=lambda kv: kv[0])}
 
 
+def _apply_transactional_overrides(
+    transactional_rows: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """
+    Apply admin-configured overrides to the staff reference list.
+
+    Runtime sends pass ``transactional_route_key`` into ``NotificationService.send_notification``;
+    ``resolve_transactional_route_settings_category`` applies the same active overrides so the
+    staff matrix matches live gating.
+    """
+    try:
+        from .models import NotificationRoutingOverride
+
+        overrides = dict(
+            NotificationRoutingOverride.objects.filter(
+                kind=NotificationRoutingOverride.KIND_TRANSACTIONAL_ROUTE_KEY,
+                is_active=True,
+            ).values_list("key", "settings_category")
+        )
+    except Exception:
+        overrides = {}
+
+    if not overrides:
+        return transactional_rows
+
+    patched: list[dict[str, object]] = []
+    for row in transactional_rows:
+        route_key = str(row.get("route_key", "")).strip()
+        if not route_key or route_key not in overrides:
+            patched.append(row)
+            continue
+        cat = str(overrides[route_key])
+        updated = dict(row)
+        updated["settings_category"] = None if cat == "ungated" else cat
+        patched.append(updated)
+    return patched
+
+
 def build_reminder_event_types_by_settings_category(
     reminder_map: dict[str, str],
 ) -> dict[str, list[str]]:
@@ -269,13 +307,18 @@ def build_notification_routing_reference() -> dict:
             "For digest email, email_notification_digest must also be enabled."
         ),
     }
-    reminder_map = dict(REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY)
+    reminder_map = get_reminder_event_type_routing_map()
     reminder_by_cat = build_reminder_event_types_by_settings_category(reminder_map)
     transactional = sorted(
-        TRANSACTIONAL_NOTIFICATION_ROUTES,
+        _apply_transactional_overrides(list(TRANSACTIONAL_NOTIFICATION_ROUTES)),
         key=lambda row: row["route_key"],
     )
-    tx_by_cat = build_transactional_route_keys_by_settings_category()
+    tx_by_cat: dict[str, list[str]] = {}
+    for row in transactional:
+        raw_cat = row.get("settings_category")
+        label = raw_cat if raw_cat is not None else UNGATED_SETTINGS_CATEGORY_BUCKET
+        tx_by_cat.setdefault(str(label), []).append(str(row["route_key"]))
+    tx_by_cat = {k: sorted(v) for k, v in sorted(tx_by_cat.items(), key=lambda kv: kv[0])}
     return {
         "schema_version": 12,
         "reference_api_access": dict(REFERENCE_API_ACCESS),

@@ -15,7 +15,10 @@ from unittest.mock import patch
 
 from accounts.models import Role
 from notifications.models import Notification, NotificationPreference, NotificationType
-from notifications.services import NotificationService
+from notifications.services import (
+    NotificationService,
+    resolve_transactional_route_settings_category,
+)
 
 User = get_user_model()
 
@@ -824,3 +827,80 @@ class TestNotificationService(TestCase):
         deleted_count = NotificationService.delete_old_notifications(days=30)
         
         self.assertEqual(deleted_count, 5)
+
+    def test_resolve_transactional_route_empty_key_returns_fallback(self):
+        self.assertEqual(
+            resolve_transactional_route_settings_category(None, "applications"),
+            "applications",
+        )
+        self.assertEqual(
+            resolve_transactional_route_settings_category("", "documents"),
+            "documents",
+        )
+
+    def test_resolve_transactional_route_fallback_without_override_row(self):
+        self.assertEqual(
+            resolve_transactional_route_settings_category(
+                "application_submitted", "applications"
+            ),
+            "applications",
+        )
+
+    def test_resolve_transactional_route_applies_active_override(self):
+        from notifications.models import NotificationRoutingOverride
+
+        NotificationRoutingOverride.objects.create(
+            kind=NotificationRoutingOverride.KIND_TRANSACTIONAL_ROUTE_KEY,
+            key="application_submitted",
+            settings_category=NotificationRoutingOverride.SETTINGS_CATEGORY_SYSTEM,
+            is_active=True,
+        )
+        self.assertEqual(
+            resolve_transactional_route_settings_category(
+                "application_submitted", "applications"
+            ),
+            "system",
+        )
+
+    def test_resolve_transactional_route_ungated(self):
+        from notifications.models import NotificationRoutingOverride
+
+        NotificationRoutingOverride.objects.create(
+            kind=NotificationRoutingOverride.KIND_TRANSACTIONAL_ROUTE_KEY,
+            key="document_replaced_staff",
+            settings_category=NotificationRoutingOverride.SETTINGS_CATEGORY_UNGATED,
+            is_active=True,
+        )
+        self.assertIsNone(
+            resolve_transactional_route_settings_category(
+                "document_replaced_staff", "documents"
+            )
+        )
+
+    def test_send_notification_transactional_override_changes_gating(self):
+        """Override maps application_submitted → system; respects system toggles, not applications."""
+        from accounts.models import UserSettings
+        from notifications.models import NotificationRoutingOverride
+
+        NotificationRoutingOverride.objects.create(
+            kind=NotificationRoutingOverride.KIND_TRANSACTIONAL_ROUTE_KEY,
+            key="application_submitted",
+            settings_category=NotificationRoutingOverride.SETTINGS_CATEGORY_SYSTEM,
+            is_active=True,
+        )
+        s, _ = UserSettings.objects.get_or_create(user=self.user1)
+        s.email_applications = False
+        s.inapp_applications = False
+        s.email_system = True
+        s.inapp_system = True
+        s.save()
+
+        n = NotificationService.send_notification(
+            recipient=self.user1,
+            title="Submitted",
+            message="ok",
+            notification_type="both",
+            settings_category="applications",
+            transactional_route_key="application_submitted",
+        )
+        self.assertIsNotNone(n)

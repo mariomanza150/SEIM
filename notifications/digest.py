@@ -120,6 +120,7 @@ def process_notification_digests(now=None) -> dict[str, int]:
                 action_text="Open notifications",
                 data={"is_digest": True},
                 settings_category="system",
+                transactional_route_key="notification_digest_unread_summary",
             )
             locked.notification_digest_last_sent_at = now
             locked.save(update_fields=["notification_digest_last_sent_at", "updated_at"])

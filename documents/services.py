@@ -159,6 +159,7 @@ class DocumentService:
             action_text="View document",
             category="warning",
             settings_category="documents",
+            transactional_route_key="document_validation_rejected",
         )
 
     @staticmethod
@@ -187,6 +188,7 @@ class DocumentService:
                 action_text="Review document",
                 category="info",
                 settings_category="documents",
+                transactional_route_key="document_replaced_staff",
             )
         NotificationService.broadcast_application_sync(
             str(app.id), "document_replaced", str(document.id)
@@ -220,6 +222,7 @@ class DocumentService:
             action_text="View document",
             category="warning",
             settings_category="documents",
+            transactional_route_key="document_resubmission_requested",
         )
         NotificationService.broadcast_application_sync(
             str(document.application_id), "document_resubmission_requested", str(document.id)

@@ -29,6 +29,7 @@ def _notify_staff(title: str, message: str) -> None:
         title,
         message,
         notification_type="in_app",
+        transactional_route_key="agreement_renewal_staff_bulk_in_app",
     )
 
 

@@ -154,11 +154,12 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Manual API docs: staff notification routing endpoints | `documentation`, `notifications`, `api` | Implemented | 2026-04-16 | `documentation/api_documentation.md`: `GET /api/notifications/routing-reference/`, CRUD `/api/notification-routing-overrides/` (permissions, filters, constraints). No new automated tests (documentation-only). |
 | API contracts doc: staff notification routing endpoints | `docs`, `notifications`, `api` | Implemented | 2026-04-16 | `docs/api-contracts.md` **Staff notification routing** subsection (parity with manual API doc + OpenAPI). No new automated tests (documentation-only). |
 | Notification Celery email tests: `DEFAULT_FROM_EMAIL` portability | `notifications`, `tests` | Implemented | 2026-04-16 | `test_notifications_tasks` from-address assertions compare `mail.outbox[0].from_email` to `settings.DEFAULT_FROM_EMAIL` (matches `send_mail` in `notifications/tasks.py`) so runs succeed when `.env` overrides the default sender. |
+| Transactional notification route overrides at runtime send | `notifications`, `exchange`, `documents`, `accounts` | Implemented | 2026-04-16 | `resolve_transactional_route_settings_category` + optional `transactional_route_key` on `NotificationService.send_notification`; documented transactional routes (account security, application/document/agreement flows, digest, calendar reminders) pass keys so admin overrides match live UserSettings gating. Tests: `tests/unit/notifications/test_notifications_services.py`. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Transactional notification route overrides apply at send time | `notifications`, `exchange`, `documents`, `accounts` | In progress | 2026-04-16 | Agent |
+| _None_ |  |  |  |  |
 
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
@@ -232,5 +233,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-16 — feature loop: **transactional route overrides** runtime wiring (in progress). Prior: Vue i18n Advanced filters; OpenAPI overrides ViewSet. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-16 — feature loop: **transactional route overrides** runtime wiring (implemented). Prior: Vue i18n Advanced filters; OpenAPI overrides ViewSet. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*  

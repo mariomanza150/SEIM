@@ -574,7 +574,8 @@ class ResendVerificationEmailView(APIView):
             recipient=user,
             title="Email Verification Required",
             message=f"Please verify your email using this token: {token}",
-            notification_type='email'
+            notification_type='email',
+            transactional_route_key="account_security_email",
         )
         
         return Response(
