@@ -4,20 +4,86 @@ Production settings for SEIM project.
 This file contains settings specific to the production environment.
 """
 
+import os
+from urllib.parse import urlparse, urlunparse
+
 from .base import *
+
+
+def _docker_compose_redis_host_to_localhost(url: str) -> str:
+    """Map Compose hostname *redis* to loopback when the process runs on the host OS (not in a container)."""
+    if not url or os.path.exists("/.dockerenv"):
+        return url
+    u = urlparse(url)
+    if (u.scheme or "").lower() not in ("redis", "rediss"):
+        return url
+    if u.hostname != "redis":
+        return url
+    port = u.port or 6379
+    auth = ""
+    if u.username or u.password:
+        if u.username:
+            auth = u.username
+            if u.password:
+                auth += f":{u.password}"
+        else:
+            auth = f":{u.password}"
+        auth += "@"
+    return urlunparse(
+        (u.scheme, f"{auth}127.0.0.1:{port}", u.path, u.params, u.query, u.fragment)
+    )
+
+
+def _docker_compose_postgres_service_to_localhost(url: str) -> str:
+    """Map Compose hostname *db* to loopback when the process runs on the host OS (not in a container)."""
+    if not url or os.path.exists("/.dockerenv"):
+        return url
+    u = urlparse(url)
+    scheme = (u.scheme or "").lower()
+    if scheme not in ("postgres", "postgresql", "pgsql", "postgis"):
+        return url
+    if u.hostname != "db":
+        return url
+    published = env.int("DATABASE_PUBLISHED_PORT", default=5434)
+    inner_port = u.port or 5432
+    port_on_host = published if inner_port == 5432 else inner_port
+    auth = ""
+    if u.username or u.password:
+        if u.username:
+            auth = u.username
+            if u.password:
+                auth += f":{u.password}"
+        else:
+            auth = f":{u.password}"
+        auth += "@"
+    return urlunparse(
+        (
+            u.scheme,
+            f"{auth}127.0.0.1:{port_on_host}",
+            u.path,
+            u.params,
+            u.query,
+            u.fragment,
+        )
+    )
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
 
-# Database
-DATABASES = {"default": env.db("DATABASE_URL")}
+# Database (rewrite Docker service hostname when running on the host; see env.example)
+DATABASES = {
+    "default": env.db_url_config(
+        _docker_compose_postgres_service_to_localhost(env("DATABASE_URL"))
+    )
+}
 
 # Redis/Celery config
-REDIS_URL = env("REDIS_URL")
-CELERY_BROKER_URL = REDIS_URL
-CELERY_RESULT_BACKEND = REDIS_URL
+REDIS_URL = _docker_compose_redis_host_to_localhost(env("REDIS_URL"))
+CELERY_BROKER_URL = _docker_compose_redis_host_to_localhost(env("CELERY_BROKER_URL"))
+CELERY_RESULT_BACKEND = _docker_compose_redis_host_to_localhost(env("CELERY_RESULT_BACKEND"))
 
 # Django Caching Configuration (django_redis — matches dev; Django's RedisCache
 # does not accept the same OPTIONS shape as django_redis.)
@@ -79,16 +145,17 @@ CACHE_MIDDLEWARE_SECONDS = 300  # 5 minutes
 CACHE_MIDDLEWARE_KEY_PREFIX = "seim"
 CACHE_MIDDLEWARE_ALIAS = "default"
 
-# Add cache middleware to the beginning of middleware stack
-MIDDLEWARE = (
-    [
-        "django.middleware.cache.UpdateCacheMiddleware",  # Must be first
-    ]
-    + MIDDLEWARE
-    + [
-        "django.middleware.cache.FetchFromCacheMiddleware",  # Must be last
-    ]
-)
+# Full-page cache (optional). Disable for docker-compose.local-prod to avoid stale HTML during dev.
+if not env.bool("DISABLE_PAGE_CACHE_MIDDLEWARE", default=False):
+    MIDDLEWARE = (
+        [
+            "django.middleware.cache.UpdateCacheMiddleware",  # Must be first
+        ]
+        + MIDDLEWARE
+        + [
+            "django.middleware.cache.FetchFromCacheMiddleware",  # Must be last
+        ]
+    )
 
 # AWS S3 config
 AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
@@ -112,10 +179,6 @@ if EMAIL_BACKEND == "django_ses.SESBackend":
     AWS_SES_ACCESS_KEY_ID = env("AWS_SES_ACCESS_KEY_ID")
     AWS_SES_SECRET_ACCESS_KEY = env("AWS_SES_SECRET_ACCESS_KEY")
     DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
-
-# Celery Configuration
-CELERY_BROKER_URL = env("CELERY_BROKER_URL")
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND")
 
 # CORS Configuration (strict for production)
 CORS_ALLOW_ALL_ORIGINS = False  # Never allow all origins in production!

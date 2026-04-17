@@ -1,7 +1,8 @@
 """
-Staff-facing scholarship allocation scoring (transparent default rubric).
+Scholarship allocation scoring (transparent default rubric).
 
 Phase 1: deterministic default ruleset (``default_v1``); admin-editable rulesets are future work.
+Staff use exports and full disclaimer; owning students receive the same numeric breakdown with a student-facing disclaimer on application detail.
 """
 
 from __future__ import annotations
@@ -28,6 +29,11 @@ CEFR_RANK: dict[str, int] = {
 
 RULESET_ID = "default_v1"
 RULESET_LABEL = "Default scholarship rubric (v1)"
+
+STUDENT_SCHOLARSHIP_DISCLAIMER = (
+    "This is an informational estimate from the current default rubric. "
+    "It is not a guarantee of funding; staff make final decisions."
+)
 
 FACTOR_IDS: tuple[str, ...] = (
     "academic",

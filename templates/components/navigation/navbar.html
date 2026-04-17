@@ -2,6 +2,7 @@
 {% load i18n %}
 
 <!-- Navigation Component -->
+{% with url_name=request.resolver_match.url_name %}
 <nav class="navbar navbar-expand-lg">
     <div class="container">
         <!-- Brand -->
@@ -19,32 +20,32 @@
             <!-- Authenticated Navigation -->
             <ul class="navbar-nav me-auto authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
                 <li class="nav-item">
-                    <a class="nav-link" href="/seim/dashboard/" aria-label="{% trans 'Dashboard' %}">
+                    <a class="nav-link{% if url_name == 'dashboard' %} active{% endif %}" href="/seim/dashboard/" aria-label="{% trans 'Dashboard' %}" {% if url_name == 'dashboard' %}aria-current="page"{% endif %}>
                         <i class="bi bi-speedometer2" aria-hidden="true"></i> 
                         <span>{% trans "Dashboard" %}</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'frontend:programs' %}" aria-label="{% trans 'Programs' %}">
+                    <a class="nav-link{% if url_name == 'programs' %} active{% endif %}" href="{% url 'frontend:programs' %}" aria-label="{% trans 'Programs' %}" {% if url_name == 'programs' %}aria-current="page"{% endif %}>
                         <i class="bi bi-calendar-event" aria-hidden="true"></i> 
                         <span>{% trans "Programs" %}</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'frontend:applications' %}" aria-label="{% trans 'Applications' %}">
+                    <a class="nav-link{% if url_name == 'applications' %} active{% endif %}" href="{% url 'frontend:applications' %}" aria-label="{% trans 'Applications' %}" {% if url_name == 'applications' %}aria-current="page"{% endif %}>
                         <i class="bi bi-file-earmark-text" aria-hidden="true"></i> 
                         <span>{% trans "Applications" %}</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'frontend:calendar' %}" aria-label="{% trans 'Calendar' %}">
+                    <a class="nav-link{% if url_name == 'calendar' %} active{% endif %}" href="{% url 'frontend:calendar' %}" aria-label="{% trans 'Calendar' %}" {% if url_name == 'calendar' %}aria-current="page"{% endif %}>
                         <i class="bi bi-calendar3" aria-hidden="true"></i> 
                         <span>{% trans "Calendar" %}</span>
                     </a>
                 </li>
                 <!-- Coordinator Navigation -->
                 <li class="nav-item coordinator-nav" {% if user.is_authenticated and user.is_coordinator %}style="display:block;"{% else %}style="display:none;"{% endif %}>
-                    <a class="nav-link" href="{% url 'frontend:coordinator_dashboard' %}" aria-label="{% trans 'Coordinator Dashboard' %}">
+                    <a class="nav-link{% if url_name == 'coordinator_dashboard' %} active{% endif %}" href="{% url 'frontend:coordinator_dashboard' %}" aria-label="{% trans 'Coordinator Dashboard' %}" {% if url_name == 'coordinator_dashboard' %}aria-current="page"{% endif %}>
                         <i class="bi bi-kanban" aria-hidden="true"></i> 
                         <span>{% trans "Reviews" %}</span>
                     </a>
@@ -52,7 +53,7 @@
                 
                 <!-- Admin Navigation -->
                 <li class="nav-item admin-nav" {% if user.is_authenticated and user.is_admin %}style="display:block;"{% else %}style="display:none;"{% endif %}>
-                    <a class="nav-link" href="{% url 'frontend:admin_dashboard' %}" aria-label="{% trans 'Admin Dashboard' %}">
+                    <a class="nav-link{% if url_name == 'admin_dashboard' %} active{% endif %}" href="{% url 'frontend:admin_dashboard' %}" aria-label="{% trans 'Admin Dashboard' %}" {% if url_name == 'admin_dashboard' %}aria-current="page"{% endif %}>
                         <i class="bi bi-gear" aria-hidden="true"></i> 
                         <span>{% trans "Admin" %}</span>
                     </a>
@@ -77,33 +78,48 @@
                 </li>
             </ul>
             
-            <!-- User Menu -->
-            <ul class="navbar-nav ms-auto authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
-                <!-- WebSocket Connection Status -->
-                <li class="nav-item">
+            <!-- Right-side utilities (single #theme-toggle; authed vs guest items) -->
+            <ul class="navbar-nav ms-auto align-items-center">
+                <!-- Authenticated: status, notifications, language, user -->
+                <li class="nav-item authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
                     <span class="nav-link" id="wsConnectionStatus" title="Real-time notifications status">
                         <i class="bi bi-wifi" id="wsStatusIcon" aria-hidden="true"></i>
                         <span class="visually-hidden">WebSocket connection status</span>
                     </span>
                 </li>
-                <!-- Notification Bell -->
-                <li class="nav-item">
+                <li class="nav-item authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
                     <button class="nav-link btn btn-link position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#notificationCenter" aria-controls="notificationCenter" aria-label="Notifications">
                         <i class="bi bi-bell" aria-hidden="true"></i>
                         <span class="notification-badge position-absolute">0</span>
                     </button>
                 </li>
-                <!-- Language Switcher -->
-                <li class="nav-item">
+                <li class="nav-item authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
                     {% include 'components/language-switcher.html' %}
                 </li>
-                <!-- Theme Toggle -->
-                <li class="nav-item">
-                    <button class="nav-link btn btn-link theme-toggle" id="themeToggle" aria-label="{% trans 'Toggle theme' %}">
-                        <i class="bi bi-moon-fill" id="themeIcon" aria-hidden="true"></i>
-                    </button>
+
+                <!-- Unauthenticated (before theme so primary actions come first) -->
+                <li class="nav-item unauth-nav" {% if not user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
+                    <a class="nav-link{% if url_name == 'login' %} active{% endif %}" href="/seim/login/" aria-label="{% trans 'Login' %}" {% if url_name == 'login' %}aria-current="page"{% endif %}>
+                        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> {% trans "Login" %}
+                    </a>
                 </li>
-                <li class="nav-item dropdown">
+                <li class="nav-item unauth-nav" {% if not user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
+                    <a class="nav-link{% if url_name == 'register' %} active{% endif %}" href="{% url 'frontend:register' %}" aria-label="{% trans 'Register' %}" {% if url_name == 'register' %}aria-current="page"{% endif %}>
+                        <i class="bi bi-person-plus" aria-hidden="true"></i> {% trans "Register" %}
+                    </a>
+                </li>
+
+                <!-- Theme (one control for all users; inside collapse for mobile) -->
+                <li class="nav-item">
+                    <div class="theme-toggle-wrapper d-flex align-items-center">
+                        <button id="theme-toggle" class="btn btn-outline-secondary btn-sm theme-toggle" type="button" aria-label="{% trans 'Switch to dark mode' %}" title="{% trans 'Switch to dark mode' %}">
+                            <i class="bi bi-moon-fill" aria-hidden="true"></i>
+                        </button>
+                        <div id="theme-feedback" class="theme-feedback" style="display: none;" role="status" aria-live="polite"></div>
+                    </div>
+                </li>
+
+                <li class="nav-item dropdown authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
                     <a class="nav-link dropdown-toggle user-username" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="User menu">
                         <i class="bi bi-person-circle" aria-hidden="true"></i> 
                         <span class="user-username">
@@ -112,53 +128,30 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                         <li>
-                            <a class="dropdown-item" href="{% url 'frontend:profile' %}" aria-label="{% trans 'Profile' %}">
+                            <a class="dropdown-item{% if url_name == 'profile' %} active{% endif %}" href="{% url 'frontend:profile' %}" aria-label="{% trans 'Profile' %}" {% if url_name == 'profile' %}aria-current="page"{% endif %}>
                                 <i class="bi bi-person" aria-hidden="true"></i> {% trans "Profile" %}
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="{% url 'frontend:settings' %}" aria-label="{% trans 'Settings' %}">
+                            <a class="dropdown-item{% if url_name == 'settings' %} active{% endif %}" href="{% url 'frontend:settings' %}" aria-label="{% trans 'Settings' %}" {% if url_name == 'settings' %}aria-current="page"{% endif %}>
                                 <i class="bi bi-gear" aria-hidden="true"></i> {% trans "Settings" %}
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item" href="{% url 'frontend:preferences' %}" aria-label="{% trans 'Preferences' %}">
+                            <a class="dropdown-item{% if url_name == 'preferences' %} active{% endif %}" href="{% url 'frontend:preferences' %}" aria-label="{% trans 'Preferences' %}" {% if url_name == 'preferences' %}aria-current="page"{% endif %}>
                                 <i class="bi bi-sliders" aria-hidden="true"></i> {% trans "Preferences" %}
                             </a>
                         </li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
-                            <a class="dropdown-item" href="#" id="logoutLink" aria-label="{% trans 'Logout' %}">
+                            <button class="dropdown-item" type="button" id="logoutLink" aria-label="{% trans 'Logout' %}">
                                 <i class="bi bi-box-arrow-right" aria-hidden="true"></i> {% trans "Logout" %}
-                            </a>
+                            </button>
                         </li>
                     </ul>
                 </li>
             </ul>
-            
-            <!-- Unauthenticated Navigation -->
-            <ul class="navbar-nav ms-auto unauth-nav" {% if not user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
-                <li class="nav-item">
-                    <a class="nav-link" href="/seim/login/" aria-label="{% trans 'Login' %}">
-                        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> {% trans "Login" %}
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'frontend:register' %}" aria-label="{% trans 'Register' %}">
-                        <i class="bi bi-person-plus" aria-hidden="true"></i> {% trans "Register" %}
-                    </a>
-                </li>
-            </ul>
-        </div>
-        
-        <!-- Theme Toggle Container - Always Visible -->
-        <div class="navbar-nav ms-auto theme-container">
-            <div class="theme-toggle-wrapper">
-                <button id="theme-toggle" class="btn btn-outline-secondary btn-sm theme-toggle" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
-                    <i class="bi bi-moon-fill"></i>
-                </button>
-                <div id="theme-feedback" class="theme-feedback" style="display: none;"></div>
-            </div>
         </div>
     </div>
-</nav> 
+</nav>
+{% endwith %}

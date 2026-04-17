@@ -148,7 +148,13 @@ class ApplicationService:
 
         if capacity_full:
             if program.waitlist_when_full:
-                application.status = ApplicationStatus.objects.get(name="waitlist")
+                # Workflow-aware transition: prefer workflow action if configured.
+                if getattr(program, "workflow_version_id", None):
+                    from workflows.runtime import WorkflowRuntimeService
+
+                    WorkflowRuntimeService.trigger_action(application, "waitlist", user=user)
+                else:
+                    application.status = ApplicationStatus.objects.get(name="waitlist")
                 application.submitted_at = timezone.now()
                 application.save()
                 TimelineEvent.objects.create(
@@ -173,11 +179,18 @@ class ApplicationService:
                     action_url=f"/applications/{application.id}/",
                     action_text="View Application",
                     settings_category="applications",
+                    transactional_route_key="application_waitlist_received",
                 )
                 return application
             raise ValueError("This program has reached enrollment capacity.")
 
-        application.status = ApplicationStatus.objects.get(name="submitted")
+        # Workflow-aware transition: prefer workflow action if configured.
+        if getattr(program, "workflow_version_id", None):
+            from workflows.runtime import WorkflowRuntimeService
+
+            WorkflowRuntimeService.trigger_action(application, "submitted", user=user)
+        else:
+            application.status = ApplicationStatus.objects.get(name="submitted")
         application.submitted_at = timezone.now()
         application.save()
         TimelineEvent.objects.create(
@@ -198,6 +211,7 @@ class ApplicationService:
             action_url=f"/applications/{application.id}/",
             action_text="View Application",
             settings_category="applications",
+            transactional_route_key="application_submitted",
         )
 
         return application
@@ -231,6 +245,14 @@ class ApplicationService:
         """Transition application status with role validation."""
         from django.utils import timezone
         
+        # Workflow-aware: if the program has a workflow, route through runtime actions.
+        if getattr(application.program, "workflow_version_id", None):
+            from workflows.runtime import WorkflowRuntimeService
+
+            WorkflowRuntimeService.trigger_action(application, new_status_name, user=user)
+            application.refresh_from_db()
+            return application
+
         # Check if status exists first (will raise DoesNotExist if not)
         new_status = ApplicationStatus.objects.get(name=new_status_name)
         
@@ -272,6 +294,7 @@ class ApplicationService:
             action_url=f"/applications/{application.id}/",
             action_text="View Application",
             settings_category="applications",
+            transactional_route_key="application_status_update",
         )
 
         return application

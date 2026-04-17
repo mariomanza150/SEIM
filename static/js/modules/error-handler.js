@@ -13,6 +13,30 @@ class ErrorHandler {
     }
 
     /**
+     * Handle generic errors
+     */
+    handleError(error, context = {}) {
+        this.errorCount++;
+
+        const errorInfo = {
+            type: 'ERROR',
+            message: error?.message || String(error),
+            context,
+            timestamp: new Date().toISOString()
+        };
+
+        logger.error('Error occurred', errorInfo);
+        this.trackErrorType(errorInfo.type);
+
+        if (this.errorCount > this.maxErrors) {
+            logger.warn('Too many errors, stopping error reporting');
+            return;
+        }
+
+        return errorInfo;
+    }
+
+    /**
      * Handle API errors
      */
     handleApiError(error, context = {}) {

@@ -4,13 +4,14 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema, extend_schema_field
 from rest_framework import generics, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.throttling import BurstRateThrottle
+from core.permissions import CanManageRoles
 
 from .models import Permission, Profile, Role, UserSession, UserSettings
 from .serializers import (
@@ -44,7 +45,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """ViewSet for User model operations."""
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAdminUser]  # Only admins can manage users
+    permission_classes = [CanManageRoles]  # SEIM admins (role-based) can manage users
 
 
 class ProfileViewSet(viewsets.ModelViewSet):
@@ -574,7 +575,8 @@ class ResendVerificationEmailView(APIView):
             recipient=user,
             title="Email Verification Required",
             message=f"Please verify your email using this token: {token}",
-            notification_type='email'
+            notification_type='email',
+            transactional_route_key="account_security_email",
         )
         
         return Response(

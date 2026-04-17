@@ -27,6 +27,43 @@ SETTINGS_CATEGORY_USER_FIELDS = {
 }
 
 
+def resolve_transactional_route_settings_category(
+    route_key: str | None, fallback: str | None
+) -> str | None:
+    """
+    If an active admin override exists for ``route_key``, return its ``settings_category``
+    (``None`` when mapped to ungated). Otherwise return ``fallback``.
+    """
+    if not route_key or not str(route_key).strip():
+        return fallback
+    try:
+        from .models import NotificationRoutingOverride
+
+        override = (
+            NotificationRoutingOverride.objects.filter(
+                kind=NotificationRoutingOverride.KIND_TRANSACTIONAL_ROUTE_KEY,
+                key=str(route_key).strip(),
+                is_active=True,
+            )
+            .only("settings_category")
+            .first()
+        )
+        if override:
+            if (
+                override.settings_category
+                == NotificationRoutingOverride.SETTINGS_CATEGORY_UNGATED
+            ):
+                return None
+            return override.settings_category
+    except Exception:
+        logger.debug(
+            "Transactional route override lookup failed for key=%r",
+            route_key,
+            exc_info=True,
+        )
+    return fallback
+
+
 def _resolve_notification_type_for_user_settings(
     user, requested: str, settings_category: str | None
 ) -> str | None:
@@ -102,6 +139,7 @@ class NotificationService:
         *,
         settings_category=None,
         preference_key=None,
+        transactional_route_key=None,
     ):
         """
         Send a notification to a user with optional action link.
@@ -122,6 +160,9 @@ class NotificationService:
                 saved preferences (Settings page).
             preference_key: Optional ``NotificationType`` name; when set, ``is_enabled``
                 must be true or the send is skipped (legacy per-type opt-out).
+            transactional_route_key: Optional stable key matching ``TRANSACTIONAL_NOTIFICATION_ROUTES``
+                in ``routing_reference``; when an admin ``NotificationRoutingOverride`` exists for
+                this key, it replaces ``settings_category`` for gating (including ungated).
 
         Returns:
             Notification instance, or None if suppressed by preferences.
@@ -133,6 +174,10 @@ class NotificationService:
 
         if preference_key and not NotificationService.is_enabled(recipient, preference_key):
             return None
+
+        settings_category = resolve_transactional_route_settings_category(
+            transactional_route_key, settings_category
+        )
 
         effective_type = _resolve_notification_type_for_user_settings(
             recipient, notification_type, settings_category

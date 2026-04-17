@@ -78,7 +78,8 @@ class AccountService:
                 title="Account Locked",
                 message=f"Your account has been locked due to too many failed login attempts. "
                        f"It will be unlocked in {AccountService.LOCKOUT_DURATION_MINUTES} minutes.",
-                notification_type='email'
+                notification_type='email',
+                transactional_route_key="account_security_email",
             )
 
         user.save()
@@ -171,7 +172,8 @@ class AccountService:
             recipient=user,
             title="Email Verified",
             message="Your email has been successfully verified. Welcome to SEIM!",
-            notification_type='email'
+            notification_type='email',
+            transactional_route_key="account_security_email",
         )
 
         return user
@@ -209,7 +211,8 @@ class AccountService:
             title="Password Reset Request",
             message=f"Your password reset token: {token}\n\n"
                    f"This token will expire in 1 hour. If you didn't request this, please ignore this message.",
-            notification_type='email'
+            notification_type='email',
+            transactional_route_key="account_security_email",
         )
 
         return user
@@ -249,7 +252,8 @@ class AccountService:
             recipient=user,
             title="Password Changed",
             message="Your password has been successfully changed. If you didn't make this change, please contact support immediately.",
-            notification_type='email'
+            notification_type='email',
+            transactional_route_key="account_security_email",
         )
 
         return user
@@ -319,7 +323,8 @@ class AccountService:
             recipient=user,
             title="Email Verification Required",
             message=f"Welcome to SEIM! Please verify your email using this token: {token}",
-            notification_type='email'
+            notification_type='email',
+            transactional_route_key="account_security_email",
         )
 
         return user
@@ -415,7 +420,8 @@ class AccountService:
             recipient=user,
             title="Password Changed",
             message="Your password has been successfully changed.",
-            notification_type='email'
+            notification_type='email',
+            transactional_route_key="account_security_email",
         )
 
         return user
@@ -440,7 +446,8 @@ class AccountService:
             recipient=user,
             title="Account Deactivated",
             message="Your account has been deactivated. Contact support if this was a mistake.",
-            notification_type='email'
+            notification_type='email',
+            transactional_route_key="account_security_email",
         )
 
         return user

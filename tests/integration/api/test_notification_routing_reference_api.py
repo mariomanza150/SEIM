@@ -3,6 +3,7 @@
 from django.urls import reverse
 from rest_framework import status
 
+from notifications.models import NotificationRoutingOverride
 from tests.utils import APITestCase
 
 
@@ -27,6 +28,20 @@ class TestNotificationRoutingReferenceAPI(APITestCase):
     def test_coordinator_receives_matrix(self):
         coordinator = self.create_user(role="coordinator")
         self.authenticate_user(coordinator)
+
+        NotificationRoutingOverride.objects.create(
+            kind=NotificationRoutingOverride.KIND_REMINDER_EVENT_TYPE,
+            key="application_deadline",
+            settings_category="documents",
+            is_active=True,
+        )
+        NotificationRoutingOverride.objects.create(
+            kind=NotificationRoutingOverride.KIND_TRANSACTIONAL_ROUTE_KEY,
+            key="application_submitted",
+            settings_category="system",
+            is_active=True,
+        )
+
         response = self.client.get(self.url)
         self.assert_response_success(response)
         self.assertEqual(response.data["schema_version"], 12)
@@ -49,14 +64,18 @@ class TestNotificationRoutingReferenceAPI(APITestCase):
             "application_deadline",
             response.data["reminder_event_type_to_settings_category"],
         )
+        self.assertEqual(
+            response.data["reminder_event_type_to_settings_category"]["application_deadline"],
+            "documents",
+        )
         rsum = response.data["reminder_event_type_recipient_summaries"]
         self.assertIn("application_deadline", rsum)
         self.assertIn("reminder owner", rsum["application_deadline"].lower())
         tx_idx = response.data["transactional_route_keys_by_settings_category"]
         self.assertIn("ungated", tx_idx)
-        self.assertIn("application_submitted", tx_idx["applications"])
+        self.assertIn("application_submitted", tx_idx["system"])
         rem_idx = response.data["reminder_event_types_by_settings_category"]
-        self.assertIn("application_deadline", rem_idx["applications"])
+        self.assertIn("application_deadline", rem_idx["documents"])
         rdesc = response.data["reminder_event_type_descriptions"]
         self.assertIn("document_deadline", rdesc)
         self.assertTrue(len(rdesc["document_deadline"]) > 10)

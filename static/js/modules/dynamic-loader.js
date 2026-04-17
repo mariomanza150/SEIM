@@ -3,8 +3,8 @@
  * Handles code splitting, lazy loading, and bundle optimization
  */
 
-import { SEIM_LOGGER } from './logger.js';
-import { SEIM_ERROR_HANDLER } from './error-handler.js';
+import { logger } from './logger.js';
+import { errorHandler } from './error-handler.js';
 import SEIM_PERFORMANCE from './performance.js';
 
 class DynamicLoader {
@@ -27,7 +27,7 @@ class DynamicLoader {
     init() {
         this.setupIntersectionObserver();
         this.setupModuleConfigs();
-        SEIM_LOGGER.info('Dynamic Loader initialized');
+        logger.info('Dynamic Loader initialized');
     }
     
     /**
@@ -35,7 +35,7 @@ class DynamicLoader {
      */
     setupIntersectionObserver() {
         if (!this.config.enableIntersectionObserver || !window.IntersectionObserver) {
-            SEIM_LOGGER.warn('IntersectionObserver not available, falling back to manual loading');
+            logger.warn('IntersectionObserver not available, falling back to manual loading');
             return;
         }
         
@@ -112,13 +112,13 @@ class DynamicLoader {
         
         // Check if already loaded
         if (this.loadedModules.has(moduleName) && !force) {
-            SEIM_LOGGER.debug('Module already loaded', { moduleName });
+            logger.debug('Module already loaded', { moduleName });
             return this.loadedModules.get(moduleName);
         }
         
         // Check if currently loading
         if (this.loadingModules.has(moduleName) && !force) {
-            SEIM_LOGGER.debug('Module already loading', { moduleName });
+            logger.debug('Module already loading', { moduleName });
             return this.loadingModules.get(moduleName);
         }
         
@@ -156,7 +156,7 @@ class DynamicLoader {
                 this.hideLoadingIndicator(moduleName);
             }
             
-            SEIM_LOGGER.info('Module loaded successfully', { 
+            logger.info('Module loaded successfully', { 
                 moduleName, 
                 duration: `${(endTime - startTime).toFixed(2)}ms` 
             });
@@ -170,7 +170,7 @@ class DynamicLoader {
                 this.hideLoadingIndicator(moduleName);
             }
             
-            SEIM_ERROR_HANDLER.handleError(error, {
+            errorHandler.handleError(error, {
                 context: 'Dynamic Loader',
                 moduleName,
                 config
@@ -229,7 +229,7 @@ class DynamicLoader {
         } catch (error) {
             // Retry logic
             if (retryCount < this.config.retryAttempts) {
-                SEIM_LOGGER.warn('Retrying module load', { moduleName, retryCount: retryCount + 1 });
+                logger.warn('Retrying module load', { moduleName, retryCount: retryCount + 1 });
                 
                 await this.delay(1000 * Math.pow(2, retryCount));
                 
@@ -268,12 +268,12 @@ class DynamicLoader {
             return;
         }
         
-        SEIM_LOGGER.debug('Preloading module', { moduleName });
+        logger.debug('Preloading module', { moduleName });
         
         try {
             await this.loadModule(moduleName, { showLoading: false });
         } catch (error) {
-            SEIM_LOGGER.warn('Failed to preload module', { moduleName, error: error.message });
+            logger.warn('Failed to preload module', { moduleName, error: error.message });
         }
     }
     
@@ -305,7 +305,7 @@ class DynamicLoader {
             
             return module;
         } catch (error) {
-            SEIM_LOGGER.error('Failed to load module on demand', { moduleName, error: error.message });
+            logger.error('Failed to load module on demand', { moduleName, error: error.message });
             throw error;
         }
     }
@@ -384,7 +384,7 @@ class DynamicLoader {
             script.remove();
         }
         
-        SEIM_LOGGER.info('Module unloaded', { moduleName });
+        logger.info('Module unloaded', { moduleName });
     }
     
     /**
@@ -399,7 +399,7 @@ class DynamicLoader {
             script.remove();
         });
         
-        SEIM_LOGGER.info('All modules cleared');
+        logger.info('All modules cleared');
     }
     
     /**

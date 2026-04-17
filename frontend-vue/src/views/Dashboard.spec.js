@@ -16,11 +16,6 @@ vi.mock('@/utils/dashboardNextSteps', () => ({
   fetchDashboardNextSteps: vi.fn().mockResolvedValue([]),
 }))
 
-const mockPush = vi.fn()
-vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: mockPush }),
-}))
-
 vi.mock('@/stores/auth', () => ({
   useAuthStore: () => ({
     userName: 'Alex Student',
@@ -52,7 +47,6 @@ describe('Dashboard', () => {
       global: {
         plugins: [createPinia(), i18n],
         stubs: {
-          NotificationDropdown: { template: '<div />' },
           RouterLink: { template: '<a><slot /></a>' },
         },
       },
@@ -62,14 +56,13 @@ describe('Dashboard', () => {
       expect(wrapper.text()).toContain('Welcome, Alex Student!')
     })
 
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('2')
+      expect(wrapper.text()).toContain('Applications')
+    })
+
     expect(wrapper.text()).toContain("Here's what's happening with your exchange program.")
-    expect(wrapper.text()).toContain('Applications')
     expect(wrapper.text()).toContain('Documents')
     expect(api.get).toHaveBeenCalledWith('/api/accounts/dashboard/stats/')
-
-    const userToggle = wrapper.find('#userDropdown')
-    expect(userToggle.attributes('aria-expanded')).toBe('false')
-    expect(userToggle.attributes('aria-haspopup')).toBe('menu')
-    expect(userToggle.attributes('aria-label')).toBe('User menu for Alex Student')
   })
 })

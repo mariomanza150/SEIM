@@ -1,4 +1,6 @@
 const STORAGE_KEY = 'seim_ui_preferences'
+/** Keeps Django `theme-manager.js` (server-rendered pages) aligned with SPA theme preference. */
+const LEGACY_THEME_KEY = 'seim-theme'
 
 /** Browser chrome / PWA status bar; keep in sync with `index.html` shell bootstrap. */
 export const THEME_COLOR_LIGHT = '#667eea'
@@ -95,6 +97,11 @@ export function applyUiPreferences(settings = {}) {
         reduce_motion: reduceMotion,
       }),
     )
+    if (themePreference === 'light' || themePreference === 'dark') {
+      localStorage.setItem(LEGACY_THEME_KEY, themePreference)
+    } else {
+      localStorage.removeItem(LEGACY_THEME_KEY)
+    }
   }
 
   return {
@@ -119,6 +126,7 @@ export function clearUiPreferences() {
 
   if (typeof localStorage !== 'undefined') {
     localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(LEGACY_THEME_KEY)
   }
 
   syncThemeColorMeta('light')

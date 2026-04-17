@@ -115,6 +115,23 @@ class DynamicFormFromSchema(forms.Form):
 
 @csrf_exempt
 @require_http_methods(["GET"])
+def health_live(request):
+    """
+    Liveness probe: process is up; does not query Postgres/Redis.
+    Use for Docker HEALTHCHECK so transient dependency failures do not fail the probe (curl -f exits 22 on HTTP error).
+    """
+    return JsonResponse(
+        {
+            "status": "live",
+            "version": getattr(settings, "VERSION", "unknown"),
+            "environment": getattr(settings, "DJANGO_ENV", "unknown"),
+        },
+        status=200,
+    )
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
 def health_check(request):
     """
     Health check endpoint for monitoring and load balancer health checks.

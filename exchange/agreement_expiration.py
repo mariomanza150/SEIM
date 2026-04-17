@@ -132,6 +132,7 @@ def process_agreement_expiration_reminders(today: date | None = None) -> dict:
                             "end_date": agreement.end_date.isoformat(),
                         },
                         settings_category="system",
+                        transactional_route_key="agreement_expiration_alert",
                     )
                     sent_for_milestone += 1
                     notifications_sent += 1

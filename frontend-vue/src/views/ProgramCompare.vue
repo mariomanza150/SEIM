@@ -1,14 +1,13 @@
 <template>
   <div class="program-compare-page" data-testid="program-compare-page">
-    <div class="container-fluid mt-4">
-      <nav :aria-label="t('programComparePage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{ t('route.names.ProgramCompare') }}</li>
-        </ol>
-      </nav>
+    <nav :aria-label="t('programComparePage.breadcrumbAria')">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+        </li>
+        <li class="breadcrumb-item active">{{ t('route.names.ProgramCompare') }}</li>
+      </ol>
+    </nav>
 
       <div class="row mb-4">
         <div class="col-lg-8">
@@ -170,7 +169,6 @@
           </div>
         </div>
       </template>
-    </div>
   </div>
 </template>
 

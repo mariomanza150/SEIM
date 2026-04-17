@@ -62,6 +62,10 @@ py-dateutil==2.2
 pycryptodome==3.23.0
 pyparsing==3.2.5
 
+# Workflow Engine (BPMN)
+SpiffWorkflow==3.1.2
+lxml==6.0.4
+
 # WebSocket Support
 channels==4.3.1
 channels-redis==4.3.0

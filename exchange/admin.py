@@ -11,6 +11,7 @@ from .models import (
     Application,
     ApplicationStatus,
     Comment,
+    EligibilityRuleSet,
     ExchangeAgreement,
     Program,
     SavedSearch,
@@ -204,6 +205,7 @@ class ProgramAdmin(admin.ModelAdmin):
         "auto_reject_ineligible",
         "required_language",
         "min_language_level",
+        "eligibility_ruleset",
     )
     list_editable = ("is_active",)
     readonly_fields = (
@@ -234,7 +236,14 @@ class ProgramAdmin(admin.ModelAdmin):
             "description": "Optional seat limit; waitlist applies when full and enabled.",
         }),
         ("Academic Requirements", {
-            "fields": ("min_gpa", "application_form", "coordinators", "required_document_types"),
+            "fields": (
+                "min_gpa",
+                "application_form",
+                "workflow_version",
+                "eligibility_ruleset",
+                "coordinators",
+                "required_document_types",
+            ),
             "description": "Academic eligibility criteria for applicants"
         }),
         ("Language Requirements", {
@@ -689,3 +698,11 @@ class SavedSearchAdmin(admin.ModelAdmin):
         )
     
     filter_preview.short_description = "Filter Parameters"
+
+
+@admin.register(EligibilityRuleSet)
+class EligibilityRuleSetAdmin(admin.ModelAdmin):
+    list_display = ("name", "schema_version", "is_active", "created_at", "updated_at")
+    list_filter = ("is_active", "schema_version")
+    search_fields = ("name", "description")
+    readonly_fields = ("created_at", "updated_at")

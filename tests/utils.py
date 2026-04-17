@@ -14,6 +14,7 @@ from typing import Any
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.utils import timezone
 from faker import Faker
 from rest_framework.test import APIClient
 
@@ -100,7 +101,7 @@ class TestUtils:
             "status": status_obj,
             "submitted_at": None
             if status_name == "draft"
-            else fake.date_time_this_year(),
+            else timezone.now(),
         }
         defaults.update(kwargs)
 
@@ -268,7 +269,7 @@ class WorkflowTestCase(APITestCase):
     def submit_application(self, application: Application) -> Application:
         """Submit an application."""
         application.status = ApplicationStatus.objects.get(name="submitted")
-        application.submitted_at = datetime.now()
+        application.submitted_at = timezone.now()
         application.save()
         return application
 

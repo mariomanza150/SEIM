@@ -1,14 +1,13 @@
 <template>
   <div class="staff-agreements-page">
-    <div class="container-fluid mt-4">
-      <nav :aria-label="t('exchangeAgreementsPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{ t('route.names.StaffExchangeAgreements') }}</li>
-        </ol>
-      </nav>
+    <nav :aria-label="t('exchangeAgreementsPage.breadcrumbAria')">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+        </li>
+        <li class="breadcrumb-item active">{{ t('route.names.StaffExchangeAgreements') }}</li>
+      </ol>
+    </nav>
 
       <div class="row mb-4">
         <div class="col">
@@ -183,6 +182,7 @@
               <th>{{ t('exchangeAgreementsPage.colType') }}</th>
               <th>{{ t('exchangeAgreementsPage.colEnd') }}</th>
               <th>{{ t('exchangeAgreementsPage.colPrograms') }}</th>
+              <th>{{ t('exchangeAgreementsPage.colRepository') }}</th>
               <th class="text-end">{{ t('exchangeAgreementsPage.colRenewal') }}</th>
             </tr>
           </thead>
@@ -196,6 +196,14 @@
               <td class="small">{{ formatAgreementType(a.agreement_type) }}</td>
               <td class="small text-muted">{{ a.end_date || t('exchangeAgreementsPage.emDash') }}</td>
               <td class="small">{{ (a.programs && a.programs.length) || 0 }}</td>
+              <td>
+                <router-link
+                  class="btn btn-sm btn-outline-primary"
+                  :to="{ name: 'StaffAgreementDocuments', params: { agreementId: String(a.id) } }"
+                >
+                  {{ t('exchangeAgreementsPage.openRepository') }}
+                </router-link>
+              </td>
               <td class="text-end text-nowrap">
                 <button
                   type="button"
@@ -266,7 +274,6 @@
           </li>
         </ul>
       </nav>
-    </div>
   </div>
 </template>
 
@@ -275,6 +282,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
+import { useConfirm } from '@/composables/useConfirm'
 import api from '@/services/api'
 import {
   STAFF_SAVED_SEARCH_TYPE,
@@ -284,6 +292,7 @@ import {
 
 const { t, te } = useI18n()
 const { error: errorToast, success: successToast } = useToast()
+const { confirm } = useConfirm()
 
 const {
   savedPresets,
@@ -462,9 +471,14 @@ async function onMarkRenewalPending(a) {
 }
 
 async function onCreateRenewalSuccessor(a) {
-  if (!window.confirm(t('exchangeAgreementsPage.createRenewalConfirm'))) {
-    return
-  }
+  const ok = await confirm({
+    title: t('exchangeAgreementsPage.renewalDraftShort'),
+    message: t('exchangeAgreementsPage.createRenewalConfirm'),
+    confirmText: t('exchangeAgreementsPage.renewalDraftShort'),
+    cancelText: t('settings.cancel'),
+    variant: 'primary',
+  })
+  if (!ok) return
   try {
     await api.post(`/api/exchange-agreements/${a.id}/create-renewal-successor/`, {
       copy_documents: true,

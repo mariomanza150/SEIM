@@ -39,6 +39,7 @@ from exchange.views import (
     ApplicationViewSet,
     CalendarEventViewSet,
     CommentViewSet,
+    EligibilityRuleSetViewSet,
     ExchangeAgreementViewSet,
     ProgramViewSet,
     SavedSearchViewSet,
@@ -48,10 +49,12 @@ from exchange.views import (
 from notifications.views import (
     NotificationPreferenceViewSet,
     NotificationRoutingReferenceView,
+    NotificationRoutingOverrideViewSet,
     NotificationTypeViewSet,
     NotificationViewSet,
     ReminderViewSet,
 )
+from workflows.views import WorkflowDefinitionViewSet, WorkflowVersionViewSet
 
 router = routers.DefaultRouter()
 
@@ -64,6 +67,7 @@ router.register(r"user-sessions", UserSessionViewSet, basename="user-sessions")
 
 # Exchange
 router.register(r"programs", ProgramViewSet)
+router.register(r"eligibility-rulesets", EligibilityRuleSetViewSet, basename="eligibility-ruleset")
 router.register(
     r"exchange-agreements",
     ExchangeAgreementViewSet,
@@ -93,12 +97,21 @@ router.register(r"notification-types", NotificationTypeViewSet)
 router.register(r"notifications", NotificationViewSet)
 router.register(r"notification-preferences", NotificationPreferenceViewSet)
 router.register(r"reminders", ReminderViewSet, basename="reminder")
+router.register(
+    r"notification-routing-overrides",
+    NotificationRoutingOverrideViewSet,
+    basename="notification-routing-override",
+)
 
 # Analytics
 router.register(r"reports", ReportViewSet)
 router.register(r"metrics", MetricViewSet)
 router.register(r"dashboard-configs", DashboardConfigViewSet)
 router.register(r"admin/dashboard", AdminDashboardViewSet, basename="admin-dashboard")
+
+# Workflows (SPA-configurable application workflow definitions)
+router.register(r"workflows", WorkflowDefinitionViewSet, basename="workflow-definition")
+router.register(r"workflow-versions", WorkflowVersionViewSet, basename="workflow-version")
 
 urlpatterns = [
     path(

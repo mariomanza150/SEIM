@@ -1,21 +1,17 @@
 <template>
   <div class="settings-page">
-    <div class="container-fluid mt-4">
-      <nav :aria-label="t('settings.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{ t('route.names.Settings') }}</li>
-        </ol>
-      </nav>
-
-      <div class="row mb-4">
-        <div class="col-md-8">
-          <h2><i class="bi bi-gear me-2"></i>{{ t('route.names.Settings') }}</h2>
-          <p class="text-muted">{{ t('settings.pageSubtitle') }}</p>
-        </div>
-      </div>
+    <PageHeader :title="t('route.names.Settings')" :subtitle="t('settings.pageSubtitle')" icon-class="bi bi-gear">
+      <template #breadcrumb>
+        <nav :aria-label="t('settings.breadcrumbAria')">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+            </li>
+            <li class="breadcrumb-item active">{{ t('route.names.Settings') }}</li>
+          </ol>
+        </nav>
+      </template>
+    </PageHeader>
 
       <div v-if="loading" class="text-center py-5">
         <div
@@ -259,7 +255,6 @@
           </div>
         </div>
       </div>
-    </div>
   </div>
 </template>
 
@@ -269,6 +264,7 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
+import PageHeader from '@/components/PageHeader.vue'
 import { applyUiPreferences } from '@/services/uiPreferences'
 import { setAppLocale } from '@/i18n'
 import router from '@/router'

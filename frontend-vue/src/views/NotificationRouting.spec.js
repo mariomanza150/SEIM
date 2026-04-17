@@ -8,7 +8,7 @@ import api from '@/services/api'
 import i18n, { setAppLocale } from '@/i18n'
 
 vi.mock('@/services/api', () => ({
-  default: { get: vi.fn() },
+  default: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
 }))
 
 vi.mock('@/composables/useToast', () => ({
@@ -75,7 +75,12 @@ describe('NotificationRouting', () => {
     localStorage.clear()
     setAppLocale('en')
     vi.clearAllMocks()
-    api.get.mockResolvedValue({ data: mockPayload })
+    api.get.mockImplementation((url) => {
+      if (String(url).includes('notification-routing-overrides')) {
+        return Promise.resolve({ data: { results: [], next: null } })
+      }
+      return Promise.resolve({ data: mockPayload })
+    })
   })
 
   afterEach(() => {
@@ -92,7 +97,10 @@ describe('NotificationRouting', () => {
     })
     await flushPromises()
     expect(api.get).toHaveBeenCalledWith('/api/notifications/routing-reference/')
+    expect(api.get).toHaveBeenCalledWith('/api/notification-routing-overrides/')
     expect(wrapper.text()).toContain('Notification routing')
+    expect(wrapper.text()).toContain('Routing overrides')
+    expect(wrapper.text()).toContain('No overrides yet')
     expect(wrapper.text()).toContain('applications')
     expect(wrapper.text()).toContain('email_applications')
     expect(wrapper.text()).toContain('application_deadline')
@@ -116,5 +124,31 @@ describe('NotificationRouting', () => {
     expect(wrapper.text()).toContain('Recipients (this send)')
     expect(wrapper.text()).toContain('Mock: the student who submitted.')
     expect(wrapper.text()).toContain('Mock: student submit confirmation.')
+  })
+
+  it('lists routing overrides returned by the overrides API', async () => {
+    const ov = {
+      id: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+      kind: 'reminder_event_type',
+      key: 'application_deadline',
+      settings_category: 'documents',
+      is_active: true,
+    }
+    api.get.mockImplementation((url) => {
+      if (String(url).includes('notification-routing-overrides')) {
+        return Promise.resolve({ data: { results: [ov], next: null } })
+      }
+      return Promise.resolve({ data: mockPayload })
+    })
+    const wrapper = mount(NotificationRouting, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('application_deadline')
+    expect(wrapper.text()).toContain('documents')
+    expect(wrapper.text()).toContain('reminder_event_type')
   })
 })

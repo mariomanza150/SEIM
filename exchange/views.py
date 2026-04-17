@@ -30,12 +30,14 @@ from .calendar_ics import (
     unsign_calendar_subscribe_token,
 )
 from .eligibility_rules import checks_passed_labels, evaluate_eligibility
+from .eligibility_rulesets import ProgramEligibilityProxy, parse_ruleset_overrides
 from .filters import ApplicationFilter, ExchangeAgreementFilter, ProgramFilter
 from .models import (
     SEAT_HOLDING_APPLICATION_STATUS_NAMES,
     Application,
     ApplicationStatus,
     Comment,
+    EligibilityRuleSet,
     ExchangeAgreement,
     Program,
     SavedSearch,
@@ -47,6 +49,7 @@ from .serializers import (
     ApplicationStatusSerializer,
     CalendarEventSerializer,
     CommentSerializer,
+    EligibilityRuleSetSerializer,
     ExchangeAgreementSerializer,
     ProgramCheckEligibilityResponseSerializer,
     ProgramSerializer,
@@ -184,6 +187,21 @@ class ExchangeAgreementViewSet(viewsets.ModelViewSet):
         )
 
 
+class EligibilityRuleSetViewSet(viewsets.ReadOnlyModelViewSet):
+    """Staff read-only API for persisted eligibility rule sets."""
+
+    queryset = EligibilityRuleSet.objects.all()
+    serializer_class = EligibilityRuleSetSerializer
+    permission_classes = [IsCoordinatorOrAdmin]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["name", "description"]
+    ordering_fields = ["name", "schema_version", "created_at", "updated_at", "is_active"]
+
+
 class ProgramViewSet(viewsets.ModelViewSet):
     """ViewSet for exchange programs with admin-only write permissions."""
 
@@ -260,6 +278,8 @@ class ProgramViewSet(viewsets.ModelViewSet):
             auto_reject_ineligible=original_program.auto_reject_ineligible,
             recurring=original_program.recurring,
             application_form=original_program.application_form,
+            workflow_version=original_program.workflow_version,
+            eligibility_ruleset=original_program.eligibility_ruleset,
             enrollment_capacity=original_program.enrollment_capacity,
             waitlist_when_full=original_program.waitlist_when_full,
         )
@@ -284,6 +304,8 @@ class ProgramViewSet(viewsets.ModelViewSet):
             "Evaluates code-defined rules for the **authenticated user** (profile, window, etc.). "
             "Optional query ``application`` (UUID): must be owned by the caller and belong to this "
             "program; when set, **required_documents** and **dynamic_form** rules run when configured. "
+            "Optional ``use_ruleset=true`` when the program has a linked **EligibilityRuleSet**: applies "
+            "``rules_json.program_overrides`` on top of program fields for this check only. "
             "Successful rule outcome uses HTTP 200 with ``eligible: true|false``; "
             "``schema_version`` increments when rule set or shape changes."
         ),
@@ -296,6 +318,16 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 description=(
                     "Application id for per-application rules (documents, dynamic form). "
                     "Must match this program and the current user."
+                ),
+            ),
+            OpenApiParameter(
+                name="use_ruleset",
+                type=OpenApiTypes.BOOL,
+                location=OpenApiParameter.QUERY,
+                required=False,
+                description=(
+                    "When true and the program has an active linked eligibility ruleset, evaluate using "
+                    "ruleset scalar overrides (``rules_json.program_overrides``)."
                 ),
             ),
         ],
@@ -329,8 +361,28 @@ class ProgramViewSet(viewsets.ModelViewSet):
         **dynamic_form** (when configured) against that application.
         """
         program = self.get_object()
+        ruleset_snapshot = None
+        rs = getattr(program, "eligibility_ruleset", None)
+        if rs is not None and getattr(rs, "is_active", True):
+            ruleset_snapshot = {
+                "id": rs.id,
+                "name": rs.name,
+                "schema_version": rs.schema_version,
+            }
+        use_ruleset_raw = request.query_params.get("use_ruleset")
+        use_ruleset = (
+            bool(ruleset_snapshot)
+            and use_ruleset_raw is not None
+            and str(use_ruleset_raw).strip().lower() in ("1", "true", "yes", "on")
+        )
+        eval_program = (
+            ProgramEligibilityProxy(program, parse_ruleset_overrides(rs))
+            if use_ruleset and rs is not None
+            else program
+        )
 
         application_obj = None
+        application_context = None
         raw_app = request.query_params.get("application")
         if raw_app:
             try:
@@ -361,7 +413,51 @@ class ProgramViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
-        ev = evaluate_eligibility(request.user, program, application=application_obj)
+            # When an application is provided, return step-level context to support
+            # multi-step document gates and UX parity with the application detail layout.
+            try:
+                from documents.services import DocumentService
+
+                full_app = (
+                    Application.objects.select_related("program", "student")
+                    .only("id", "program_id", "student_id", "dynamic_form_current_step")
+                    .get(pk=application_obj.pk)
+                )
+                checklist = DocumentService.build_application_document_checklist(full_app)
+                current_step_documents = None
+                ft = getattr(program, "application_form", None)
+                if ft and ft.is_multi_step():
+                    current_key = full_app.dynamic_form_current_step
+                    eff_ids = []
+                    if current_key:
+                        for s in ft.get_multi_step_layout():
+                            if str(s.get("key")) == str(current_key):
+                                eff_ids = DocumentService.intersect_program_required_document_type_ids(
+                                    program, s.get("required_document_type_ids") or []
+                                )
+                                break
+                    if eff_ids:
+                        sub_items = [
+                            it
+                            for it in (checklist.get("items") or [])
+                            if it.get("document_type_id") in eff_ids
+                        ]
+                        current_step_documents = {
+                            "complete": all(it.get("status") == "approved" for it in sub_items),
+                            "items": sub_items,
+                        }
+                    else:
+                        current_step_documents = {"complete": True, "items": []}
+                application_context = {
+                    "application_id": str(full_app.id),
+                    "dynamic_form_current_step": full_app.dynamic_form_current_step,
+                    "document_checklist": checklist,
+                    "current_step_documents": current_step_documents,
+                }
+            except Exception:
+                application_context = None
+
+        ev = evaluate_eligibility(request.user, eval_program, application=application_obj)
         program_snapshot = {
             "name": program.name,
             "min_gpa": program.min_gpa,
@@ -377,7 +473,10 @@ class ProgramViewSet(viewsets.ModelViewSet):
                     "message": "All eligibility requirements met",
                     "checks_passed": checks_passed_labels(program),
                     "rules": ev.rules_as_dicts(),
-                    "schema_version": 4,
+                    "schema_version": 6,
+                    **({"ruleset": ruleset_snapshot} if ruleset_snapshot else {}),
+                    **({"using_ruleset": True} if use_ruleset else {}),
+                    **({"application_context": application_context} if application_context else {}),
                 }
             )
         message = (
@@ -395,7 +494,10 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 "message": message,
                 "rules": ev.rules_as_dicts(),
                 "program": program_snapshot,
-                "schema_version": 4,
+                "schema_version": 6,
+                **({"ruleset": ruleset_snapshot} if ruleset_snapshot else {}),
+                **({"using_ruleset": True} if use_ruleset else {}),
+                **({"application_context": application_context} if application_context else {}),
             },
             status=status.HTTP_200_OK,
         )
@@ -534,6 +636,61 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             return Response({"status": "Application submitted successfully"})
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=["get"], url_path="workflow")
+    def workflow_snapshot(self, request, pk=None):
+        """Return workflow instance snapshot and available actions (admin-configurable workflow)."""
+        application = self.get_object()
+        if not getattr(application.program, "workflow_version_id", None):
+            return Response(
+                {"detail": "No workflow configured for this program."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        from workflows.runtime import WorkflowRuntimeService
+        from workflows.serializers import WorkflowInstanceSerializer
+
+        snap = WorkflowRuntimeService.get_snapshot(application, user=request.user)
+        return Response(
+            {
+                "instance": WorkflowInstanceSerializer(snap.instance).data,
+                "available_actions": snap.available_actions,
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="workflow/action")
+    def workflow_action(self, request, pk=None):
+        """Trigger a workflow action (completes a ready manual task by id/spec_id/name)."""
+        application = self.get_object()
+        if not getattr(application.program, "workflow_version_id", None):
+            return Response(
+                {"detail": "No workflow configured for this program."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        action_name = request.data.get("action")
+        payload = request.data.get("payload") if isinstance(request.data, dict) else None
+        user = request.user
+
+        # Minimal role guard in MVP: students can only submit/cancel-like actions.
+        if hasattr(user, "has_role") and user.has_role("student"):
+            allowed = {"submitted", "cancelled", "withdrawn"}
+            if str(action_name or "") not in allowed:
+                return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+
+        from workflows.runtime import WorkflowRuntimeService
+        from workflows.serializers import WorkflowInstanceSerializer
+
+        try:
+            snap = WorkflowRuntimeService.trigger_action(
+                application, action=str(action_name or ""), user=user, payload=payload
+            )
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {
+                "instance": WorkflowInstanceSerializer(snap.instance).data,
+                "available_actions": snap.available_actions,
+            }
+        )
 
     @action(detail=True, methods=["post"])
     def withdraw(self, request, pk=None):

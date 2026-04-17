@@ -20,6 +20,10 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
 
+# Used by django.core.mail.send_mail and Celery notification tasks (From: header).
+# SMTP/SES settings files may override this when those backends are selected.
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@seim.local")
+
 # Application definition
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -75,6 +79,7 @@ LOCAL_APPS = [
     "frontend",
     "grades",
     "application_forms",  # Custom form types and submissions (separate from dynforms package)
+    "workflows",
     "data_management",
 ]
 

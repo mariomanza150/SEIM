@@ -38,7 +38,7 @@
           v-for="notification in recent"
           :key="notification.id"
           class="dropdown-item notification-item py-2"
-          :class="{ 'bg-light': notification.is_read }"
+          :class="{ 'seim-notification-unread': !notification.is_read }"
         >
           <div class="d-flex w-100 justify-content-between align-items-start">
             <div class="flex-grow-1 min-w-0">
@@ -46,7 +46,7 @@
                 {{ notification.title || t('notifications.defaultTitle') }}
               </span>
               <span class="d-block text-muted small text-truncate">{{ notification.message }}</span>
-              <span class="d-block text-muted small mt-1">{{ formatTime(notification.sent_at) }}</span>
+              <span class="d-block text-muted small mt-1">{{ formatTimestampDropdown(notification.sent_at) }}</span>
             </div>
           </div>
           <div class="mt-2">
@@ -83,10 +83,12 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import api from '@/services/api'
 import { isNewTabUrl, isSpaUrl, normalizeSpaLocation } from '@/utils/navigation'
+import { Dropdown } from 'bootstrap'
+import { useNotifications } from '@/composables/useNotifications'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
+const { fetchNotifications, fetchUnreadCount, markAsRead: apiMarkAsRead, formatTimestampDropdown } = useNotifications()
 
 const recent = ref([])
 const unreadCount = ref(0)
@@ -95,16 +97,12 @@ const loading = ref(false)
 async function fetchRecent() {
   try {
     loading.value = true
-    const [listRes, countRes] = await Promise.all([
-      api.get('/api/notifications/', {
-        params: { page_size: 5, ordering: '-sent_at' },
-      }),
-      api.get('/api/notifications/', {
-        params: { is_read: false, page_size: 1 },
-      }),
+    const [list, count] = await Promise.all([
+      fetchNotifications({ pageSize: 5, ordering: '-sent_at' }),
+      fetchUnreadCount(),
     ])
-    recent.value = listRes.data.results || listRes.data
-    unreadCount.value = countRes.data.count ?? 0
+    recent.value = list.results
+    unreadCount.value = count
   } catch (err) {
     console.warn('Failed to fetch notifications:', err)
   } finally {
@@ -115,7 +113,7 @@ async function fetchRecent() {
 async function markAsRead(notification) {
   if (notification.is_read) return
   try {
-    await api.post(`/api/notifications/${notification.id}/mark_read/`)
+    await apiMarkAsRead(notification.id)
     notification.is_read = true
     unreadCount.value = Math.max(0, unreadCount.value - 1)
   } catch (err) {
@@ -123,22 +121,11 @@ async function markAsRead(notification) {
   }
 }
 
-function formatTime(dateString) {
-  if (!dateString) return ''
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now - date
-  const diffMins = Math.floor(diffMs / 60000)
-  if (diffMins < 1) return t('notifications.timeJustNow')
-  if (diffMins < 60) return t('notifications.timeMinutesAgo', { n: diffMins })
-  const diffHours = Math.floor(diffMins / 60)
-  if (diffHours < 24) return t('notifications.timeHoursAgo', { n: diffHours })
-  const localeTag = locale.value === 'es' ? 'es' : 'en-US'
-  return date.toLocaleDateString(localeTag, { month: 'short', day: 'numeric' })
-}
-
 function closeDropdown() {
-  document.querySelector('#notificationDropdown')?.click()
+  const toggle = document.getElementById('notificationDropdown')
+  if (!toggle) return
+  const instance = Dropdown.getInstance(toggle) || new Dropdown(toggle)
+  instance.hide()
 }
 
 onMounted(() => {
@@ -167,5 +154,9 @@ defineExpose({ refresh: fetchRecent })
 
 .dropdown-item.notification-item:hover {
   background-color: rgba(0, 0, 0, 0.05);
+}
+
+html[data-theme='dark'] .dropdown-item.notification-item:hover {
+  background-color: rgba(255, 255, 255, 0.06);
 }
 </style>

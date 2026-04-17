@@ -1,14 +1,13 @@
 <template>
   <div class="notification-routing-page">
-    <div class="container-fluid mt-4">
-      <nav :aria-label="t('notificationRoutingPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{ t('route.names.NotificationRouting') }}</li>
-        </ol>
-      </nav>
+    <nav :aria-label="t('notificationRoutingPage.breadcrumbAria')">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+        </li>
+        <li class="breadcrumb-item active">{{ t('route.names.NotificationRouting') }}</li>
+      </ol>
+    </nav>
 
       <div class="row mb-4">
         <div class="col-md-8">
@@ -35,6 +34,145 @@
           {{ t('notificationRoutingPage.schemaVersion') }}:
           <span class="badge bg-secondary">{{ payload.schema_version }}</span>
         </p>
+
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span class="fw-semibold">{{ t('notificationRoutingPage.overridesTitle') }}</span>
+            <span v-if="overridesLoading" class="spinner-border spinner-border-sm text-primary" role="status">
+              <span class="visually-hidden">{{ t('notificationRoutingPage.overridesLoading') }}</span>
+            </span>
+          </div>
+          <div class="card-body border-bottom">
+            <p class="small text-muted mb-3">{{ t('notificationRoutingPage.overridesIntro') }}</p>
+            <div v-if="overridesError" class="alert alert-warning">{{ overridesError }}</div>
+            <form class="row g-3 align-items-end" @submit.prevent="submitOverrideForm">
+              <div class="col-md-3">
+                <label class="form-label" for="nr-override-kind">{{ t('notificationRoutingPage.formKind') }}</label>
+                <select id="nr-override-kind" v-model="overrideForm.kind" class="form-select" required>
+                  <option value="reminder_event_type">{{ t('notificationRoutingPage.kindReminderEventType') }}</option>
+                  <option value="transactional_route_key">{{ t('notificationRoutingPage.kindTransactionalRouteKey') }}</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label" for="nr-override-key">{{ t('notificationRoutingPage.formKey') }}</label>
+                <input
+                  id="nr-override-key"
+                  v-model.trim="overrideForm.key"
+                  type="text"
+                  class="form-control"
+                  required
+                  maxlength="128"
+                  :disabled="!!editingOverrideId"
+                  autocomplete="off"
+                />
+              </div>
+              <div class="col-md-3">
+                <label class="form-label" for="nr-override-cat">{{ t('notificationRoutingPage.formCategory') }}</label>
+                <select id="nr-override-cat" v-model="overrideForm.settings_category" class="form-select" required>
+                  <option value="applications">{{ t('notificationRoutingPage.categoryApplications') }}</option>
+                  <option value="documents">{{ t('notificationRoutingPage.categoryDocuments') }}</option>
+                  <option value="comments">{{ t('notificationRoutingPage.categoryComments') }}</option>
+                  <option value="programs">{{ t('notificationRoutingPage.categoryPrograms') }}</option>
+                  <option value="system">{{ t('notificationRoutingPage.categorySystem') }}</option>
+                  <option value="ungated">{{ t('notificationRoutingPage.categoryUngated') }}</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <div class="form-check mt-4">
+                  <input id="nr-override-active" v-model="overrideForm.is_active" class="form-check-input" type="checkbox" />
+                  <label class="form-check-label" for="nr-override-active">{{ t('notificationRoutingPage.formActive') }}</label>
+                </div>
+              </div>
+              <div class="col-md-12 d-flex flex-wrap gap-2">
+                <button type="submit" class="btn btn-primary" :disabled="overrideSaving">
+                  <span
+                    v-if="overrideSaving"
+                    class="spinner-border spinner-border-sm me-1"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  {{
+                    editingOverrideId
+                      ? t('notificationRoutingPage.saveOverride')
+                      : t('notificationRoutingPage.createOverride')
+                  }}
+                </button>
+                <button
+                  v-if="editingOverrideId"
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  :disabled="overrideSaving"
+                  @click="cancelOverrideEdit"
+                >
+                  {{ t('notificationRoutingPage.cancelEdit') }}
+                </button>
+              </div>
+            </form>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">{{ t('notificationRoutingPage.colOverrideKind') }}</th>
+                  <th scope="col">{{ t('notificationRoutingPage.colOverrideKey') }}</th>
+                  <th scope="col">{{ t('notificationRoutingPage.colOverrideCategory') }}</th>
+                  <th scope="col">{{ t('notificationRoutingPage.colOverrideActive') }}</th>
+                  <th scope="col" class="text-end">{{ t('notificationRoutingPage.colOverrideActions') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="!overridesLoading && !routingOverrides.length">
+                  <td colspan="5" class="text-muted small px-3 py-3">{{ t('notificationRoutingPage.overridesEmpty') }}</td>
+                </tr>
+                <tr v-for="row in routingOverrides" :key="row.id">
+                  <td class="small"><code>{{ row.kind }}</code></td>
+                  <td class="small"><code>{{ row.key }}</code></td>
+                  <td class="small"><code>{{ row.settings_category }}</code></td>
+                  <td>
+                    <span v-if="row.is_active" class="badge bg-success">{{ t('notificationRoutingPage.statusActive') }}</span>
+                    <span v-else class="badge bg-secondary">{{ t('notificationRoutingPage.statusInactive') }}</span>
+                  </td>
+                  <td class="text-end text-nowrap">
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm py-0"
+                      :aria-label="t('notificationRoutingPage.editOverrideAria', { key: row.key })"
+                      @click="startEditOverride(row)"
+                    >
+                      {{ t('notificationRoutingPage.editOverride') }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm py-0"
+                      :disabled="overrideSaving"
+                      :aria-label="
+                        row.is_active
+                          ? t('notificationRoutingPage.deactivateOverrideAria', { key: row.key })
+                          : t('notificationRoutingPage.activateOverrideAria', { key: row.key })
+                      "
+                      @click="toggleOverrideActive(row)"
+                    >
+                      {{
+                        row.is_active
+                          ? t('notificationRoutingPage.deactivateOverride')
+                          : t('notificationRoutingPage.activateOverride')
+                      }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-link btn-sm py-0 text-danger"
+                      :disabled="overrideSaving"
+                      :aria-label="t('notificationRoutingPage.deleteOverrideAria', { key: row.key })"
+                      @click="deleteOverride(row)"
+                    >
+                      {{ t('notificationRoutingPage.deleteOverride') }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
         <div class="card border-0 shadow-sm mb-4">
           <div class="card-header bg-light">
@@ -235,7 +373,6 @@
           </div>
         </div>
       </template>
-    </div>
   </div>
 </template>
 
@@ -244,12 +381,166 @@ import { computed, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 
 const { t } = useI18n()
-const { error: errorToast } = useToast()
+const { error: errorToast, success: successToast } = useToast()
+const { confirm } = useConfirm()
 const loading = ref(true)
 const error = ref('')
 const payload = ref(null)
+
+const routingOverrides = ref([])
+const overridesLoading = ref(false)
+const overridesError = ref('')
+const overrideSaving = ref(false)
+const editingOverrideId = ref(null)
+const overrideForm = ref({
+  kind: 'reminder_event_type',
+  key: '',
+  settings_category: 'applications',
+  is_active: true,
+})
+
+function defaultOverrideForm() {
+  return {
+    kind: 'reminder_event_type',
+    key: '',
+    settings_category: 'applications',
+    is_active: true,
+  }
+}
+
+async function fetchAllRoutingOverrides() {
+  const all = []
+  let url = '/api/notification-routing-overrides/'
+  while (url) {
+    const { data } = await api.get(url)
+    const chunk = data.results ?? data
+    if (Array.isArray(chunk)) {
+      all.push(...chunk)
+    }
+    url = data.next || null
+  }
+  return all.sort((a, b) => {
+    const k = String(a.kind).localeCompare(String(b.kind))
+    if (k !== 0) return k
+    return String(a.key).localeCompare(String(b.key))
+  })
+}
+
+async function refreshRoutingReference() {
+  const { data } = await api.get('/api/notifications/routing-reference/')
+  payload.value = data
+}
+
+async function loadRoutingOverrides() {
+  overridesLoading.value = true
+  overridesError.value = ''
+  try {
+    routingOverrides.value = await fetchAllRoutingOverrides()
+  } catch (e) {
+    console.error(e)
+    overridesError.value = t('notificationRoutingPage.overridesLoadError')
+    errorToast(overridesError.value)
+  } finally {
+    overridesLoading.value = false
+  }
+}
+
+function startEditOverride(row) {
+  editingOverrideId.value = row.id
+  overrideForm.value = {
+    kind: row.kind,
+    key: row.key,
+    settings_category: row.settings_category,
+    is_active: row.is_active,
+  }
+}
+
+function cancelOverrideEdit() {
+  editingOverrideId.value = null
+  overrideForm.value = defaultOverrideForm()
+}
+
+function formatOverrideApiError(err) {
+  const d = err?.response?.data
+  if (!d || typeof d !== 'object') return t('notificationRoutingPage.overrideSaveError')
+  const first = Object.values(d).find((v) => v != null)
+  if (Array.isArray(first) && first.length) return String(first[0])
+  if (typeof first === 'string') return first
+  return t('notificationRoutingPage.overrideSaveError')
+}
+
+async function submitOverrideForm() {
+  overrideSaving.value = true
+  try {
+    const body = {
+      kind: overrideForm.value.kind,
+      key: overrideForm.value.key,
+      settings_category: overrideForm.value.settings_category,
+      is_active: overrideForm.value.is_active,
+    }
+    if (editingOverrideId.value) {
+      await api.patch(`/api/notification-routing-overrides/${editingOverrideId.value}/`, body)
+      successToast(t('notificationRoutingPage.overrideUpdatedToast'))
+    } else {
+      await api.post('/api/notification-routing-overrides/', body)
+      successToast(t('notificationRoutingPage.overrideCreatedToast'))
+    }
+    cancelOverrideEdit()
+    await loadRoutingOverrides()
+    await refreshRoutingReference()
+  } catch (e) {
+    console.error(e)
+    errorToast(formatOverrideApiError(e))
+  } finally {
+    overrideSaving.value = false
+  }
+}
+
+async function toggleOverrideActive(row) {
+  overrideSaving.value = true
+  try {
+    await api.patch(`/api/notification-routing-overrides/${row.id}/`, {
+      is_active: !row.is_active,
+    })
+    successToast(t('notificationRoutingPage.overrideUpdatedToast'))
+    await loadRoutingOverrides()
+    await refreshRoutingReference()
+  } catch (e) {
+    console.error(e)
+    errorToast(formatOverrideApiError(e))
+  } finally {
+    overrideSaving.value = false
+  }
+}
+
+async function deleteOverride(row) {
+  const ok = await confirm({
+    title: t('notificationRoutingPage.deleteOverride'),
+    message: t('notificationRoutingPage.deleteOverrideConfirm', { key: row.key }),
+    confirmText: t('notificationRoutingPage.deleteOverride'),
+    cancelText: t('settings.cancel'),
+    variant: 'danger',
+  })
+  if (!ok) return
+  overrideSaving.value = true
+  try {
+    await api.delete(`/api/notification-routing-overrides/${row.id}/`)
+    successToast(t('notificationRoutingPage.overrideDeletedToast'))
+    if (editingOverrideId.value === row.id) {
+      cancelOverrideEdit()
+    }
+    await loadRoutingOverrides()
+    await refreshRoutingReference()
+  } catch (e) {
+    console.error(e)
+    errorToast(formatOverrideApiError(e))
+  } finally {
+    overrideSaving.value = false
+  }
+}
 
 const categoryRows = computed(() => {
   const cats = payload.value?.settings_categories
@@ -315,6 +606,7 @@ onMounted(async () => {
   try {
     const { data } = await api.get('/api/notifications/routing-reference/')
     payload.value = data
+    await loadRoutingOverrides()
   } catch (e) {
     const status = e?.response?.status
     if (status === 403) {

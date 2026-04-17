@@ -16,7 +16,7 @@ from django.views.generic import TemplateView
 from django_js_reverse.views import urls_js
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from core.views import health_check
+from core.views import health_check, health_live
 from frontend import views as frontend_views
 
 _WAGTAIL = apps.is_installed("wagtail")
@@ -39,18 +39,19 @@ urlpatterns = [
     # ============================================
     # HEALTH CHECK
     # ============================================
+    path("health/live/", health_live, name="health_live"),
     path("health/", health_check, name="health_check"),
 
-    # Redirect /admin/ to unified admin interface
-    path("admin/", lambda request: redirect("/seim/admin/"), name="admin_redirect"),
-    # Redirect legacy /django/admin/ to unified path
-    path("django/admin/", lambda request: redirect("/seim/admin/"), name="django_admin_redirect"),
+    # Redirect /admin/ to Django admin (moved to avoid SPA route collisions under /seim/admin/*)
+    path("admin/", lambda request: redirect("/seim/django-admin/"), name="admin_redirect"),
+    # Redirect legacy /django/admin/ to the new Django admin path
+    path("django/admin/", lambda request: redirect("/seim/django-admin/"), name="django_admin_redirect"),
     # Redirect /cms/admin/ to proper CMS admin
     path("cms/admin/", lambda request: redirect("/cms/"), name="cms_admin_redirect"),
     # ============================================
     # ADMIN INTERFACES (Server-side Django/Wagtail)
     # ============================================
-    path("seim/admin/", admin.site.urls),  # Unified Admin Interface
+    path("seim/django-admin/", admin.site.urls),
     path("data-management/", include("data_management.urls")),  # Data Management
 ]
 
@@ -134,8 +135,9 @@ else:
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    # Vue build artifacts are referenced as absolute /assets/* paths in dist/index.html
-    # Serve them directly in local development to avoid SPA catch-all returning index.html.
+    # Vite ``base`` is ``/static/`` (see ``frontend-vue/vite.config.js``); built HTML loads
+    # ``/static/assets/*.js``. Django's staticfiles finder serves those from ``frontend-vue/dist``.
+    # Legacy fallback: older builds used ``/assets/*`` without the ``static`` prefix.
     urlpatterns += static(
         "/assets/",
         document_root=settings.BASE_DIR / "frontend-vue" / "dist" / "assets",

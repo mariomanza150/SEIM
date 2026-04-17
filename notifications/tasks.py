@@ -1,4 +1,5 @@
 from celery import shared_task
+from django.conf import settings
 from django.core.mail import send_mail
 
 
@@ -22,7 +23,46 @@ def settings_category_for_reminder_event(event_type: str) -> str:
     Uses the same UserSettings groups as other transactional sends so deadline
     reminders honor application vs document vs program toggles.
     """
+    try:
+        from .models import NotificationRoutingOverride
+
+        override = (
+            NotificationRoutingOverride.objects.filter(
+                kind=NotificationRoutingOverride.KIND_REMINDER_EVENT_TYPE,
+                key=event_type,
+                is_active=True,
+            )
+            .only("settings_category")
+            .first()
+        )
+        if override:
+            return override.settings_category
+    except Exception:
+        # Never fail reminder sends due to admin routing config / DB issues.
+        pass
     return REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY.get(event_type, "programs")
+
+
+def get_reminder_event_type_routing_map() -> dict[str, str]:
+    """
+    Build the effective Reminder.event_type → settings_category map including active overrides.
+
+    Keys not in the base map can be introduced via overrides.
+    """
+    base = dict(REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY)
+    try:
+        from .models import NotificationRoutingOverride
+
+        overrides = NotificationRoutingOverride.objects.filter(
+            kind=NotificationRoutingOverride.KIND_REMINDER_EVENT_TYPE,
+            is_active=True,
+        ).values_list("key", "settings_category")
+        for key, cat in overrides:
+            if key:
+                base[str(key)] = str(cat)
+    except Exception:
+        pass
+    return base
 
 
 def get_user_email(user):
@@ -39,7 +79,7 @@ def send_notification_email(user_id, subject, message):
     send_mail(
         subject,
         message,
-        "noreply@seim.local",
+        settings.DEFAULT_FROM_EMAIL,
         [email],
         fail_silently=False,
     )
@@ -62,7 +102,7 @@ def send_notification_by_id(notification_id):
         send_mail(
             notification.title,
             notification.message,
-            "noreply@seim.local",
+            settings.DEFAULT_FROM_EMAIL,
             [email],
             fail_silently=False,
         )
@@ -96,6 +136,7 @@ def send_deadline_reminders():
     
     for reminder in due_reminders:
         try:
+            cat = settings_category_for_reminder_event(reminder.event_type)
             # Create notification for this reminder
             notification = NotificationService.send_notification(
                 recipient=reminder.user,
@@ -107,9 +148,8 @@ def send_deadline_reminders():
                     'event_type': reminder.event_type,
                     'event_id': str(reminder.event_id),
                 },
-                settings_category=settings_category_for_reminder_event(
-                    reminder.event_type
-                ),
+                settings_category=None if cat == "ungated" else cat,
+                transactional_route_key="calendar_deadline_reminder",
             )
             
             # Mark reminder as sent

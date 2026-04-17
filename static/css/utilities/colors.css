@@ -3,15 +3,15 @@
 
 :root {
     /* Primary Colors */
-    --primary-color: #0d6efd;
-    --primary-hover: #0b5ed7;
-    --primary-light: rgba(13, 110, 253, 0.1);
-    --primary-dark: #0a58ca;
+    --primary-color: var(--seim-brand-primary, #0d6efd);
+    --primary-hover: #5468d9;
+    --primary-light: rgba(102, 126, 234, 0.12);
+    --primary-dark: #4557c6;
     
     /* Secondary Colors */
-    --secondary-color: #6c757d;
-    --secondary-hover: #5c636a;
-    --secondary-light: rgba(108, 117, 125, 0.1);
+    --secondary-color: var(--seim-brand-secondary, #6c757d);
+    --secondary-hover: #6a4191;
+    --secondary-light: rgba(118, 75, 162, 0.12);
     
     /* Semantic Colors */
     --success-color: #198754;
@@ -102,8 +102,8 @@
         --shadow-color-light: rgba(0, 0, 0, 0.2);
         
         /* Adjust semantic colors for dark mode */
-        --primary-light: rgba(13, 110, 253, 0.2);
-        --secondary-light: rgba(108, 117, 125, 0.2);
+        --primary-light: rgba(102, 126, 234, 0.18);
+        --secondary-light: rgba(118, 75, 162, 0.18);
         --success-light: rgba(25, 135, 84, 0.2);
         --danger-light: rgba(220, 53, 69, 0.2);
         --warning-light: rgba(255, 193, 7, 0.2);
@@ -143,8 +143,8 @@
     --shadow-color-light: rgba(0, 0, 0, 0.05);
     
     /* Adjust semantic colors for light mode */
-    --primary-light: rgba(13, 110, 253, 0.1);
-    --secondary-light: rgba(108, 117, 125, 0.1);
+    --primary-light: rgba(102, 126, 234, 0.12);
+    --secondary-light: rgba(118, 75, 162, 0.12);
     --success-light: rgba(25, 135, 84, 0.1);
     --danger-light: rgba(220, 53, 69, 0.1);
     --warning-light: rgba(255, 193, 7, 0.1);
@@ -183,8 +183,8 @@
     --shadow-color-light: rgba(0, 0, 0, 0.2);
     
     /* Adjust semantic colors for dark mode */
-    --primary-light: rgba(13, 110, 253, 0.2);
-    --secondary-light: rgba(108, 117, 125, 0.2);
+    --primary-light: rgba(102, 126, 234, 0.18);
+    --secondary-light: rgba(118, 75, 162, 0.18);
     --success-light: rgba(25, 135, 84, 0.2);
     --danger-light: rgba(220, 53, 69, 0.2);
     --warning-light: rgba(255, 193, 7, 0.2);

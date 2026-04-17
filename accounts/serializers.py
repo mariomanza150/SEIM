@@ -33,6 +33,9 @@ class ProfileSerializer(serializers.ModelSerializer):
     full_name = serializers.CharField(source="user.get_full_name", read_only=True)
     email = serializers.EmailField(source="user.email")
     role = serializers.CharField(source="user.primary_role", read_only=True)
+    is_admin = serializers.BooleanField(source="user.is_admin", read_only=True)
+    is_staff = serializers.BooleanField(source="user.is_staff", read_only=True)
+    is_superuser = serializers.BooleanField(source="user.is_superuser", read_only=True)
     gpa = serializers.FloatField(required=False, allow_null=True)
     language = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     language_level = serializers.ChoiceField(
@@ -53,6 +56,9 @@ class ProfileSerializer(serializers.ModelSerializer):
             "full_name",
             "email",
             "role",
+            "is_admin",
+            "is_staff",
+            "is_superuser",
             "gpa",
             "language",
             "language_level",

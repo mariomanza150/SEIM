@@ -12,9 +12,8 @@ import SEIM_DYNAMIC_LOADER from './modules/dynamic-loader.js';
 import SEIM_ACCESSIBILITY from './modules/accessibility.js';
 import SEIM_ACCESSIBILITY_TESTER from './modules/accessibility-tester.js';
 import SEIM_UI_ENHANCED from './modules/ui-enhanced.js';
-import { initializeTooltips, initializeModals, showPageLoading, hidePageLoading } from './modules/ui.js';
+import { initializeTooltips, initializeModals } from './modules/ui.js';
 import { initializeFileUpload } from './modules/file_upload.js';
-import { showSuccessAlert, showErrorAlert } from './modules/notifications.js';
 
 let initialized = false;
 
