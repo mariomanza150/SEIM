@@ -1,5 +1,5 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import OpenApiResponse, extend_schema
+from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -7,12 +7,20 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.cache import cache_api_response
+from core.permissions import IsCoordinatorOrAdmin
 
-from .models import Notification, NotificationPreference, NotificationType, Reminder
+from .models import (
+    Notification,
+    NotificationPreference,
+    NotificationRoutingOverride,
+    NotificationType,
+    Reminder,
+)
 from .routing_reference import build_notification_routing_reference
 from .serializers import (
     NotificationPreferenceSerializer,
     NotificationRoutingReferenceSerializer,
+    NotificationRoutingOverrideSerializer,
     NotificationSerializer,
     NotificationTypeSerializer,
     ReminderSerializer,
@@ -135,6 +143,82 @@ class NotificationViewSet(viewsets.ModelViewSet):
 class NotificationPreferenceViewSet(viewsets.ModelViewSet):
     queryset = NotificationPreference.objects.all()
     serializer_class = NotificationPreferenceSerializer
+
+
+@extend_schema_view(
+    list=extend_schema(
+        tags=["notifications"],
+        summary="List notification routing overrides",
+        description=(
+            "Staff-only. Paginated list of admin-configurable routing overrides (reminder event types "
+            "and transactional route keys). Affects live reminder dispatch and the routing-reference API. "
+            "**Filters:** ``kind``, ``key``, ``settings_category``, ``is_active``. **Search:** ``key``. "
+            "**Ordering:** ``updated_at``, ``created_at``, ``kind``, ``key`` (default: ``kind``, ``key``)."
+        ),
+    ),
+    create=extend_schema(
+        tags=["notifications"],
+        summary="Create notification routing override",
+        description=(
+            "Create an override. **Unique** on (``kind``, ``key``). "
+            "``settings_category`` may be ``ungated`` so matching reminders bypass user preference gating."
+        ),
+        responses={
+            201: NotificationRoutingOverrideSerializer,
+            400: OpenApiResponse(description="Validation error."),
+            403: OpenApiResponse(description="Forbidden without coordinator or admin role."),
+        },
+    ),
+    retrieve=extend_schema(
+        tags=["notifications"],
+        summary="Retrieve notification routing override",
+        responses={
+            200: NotificationRoutingOverrideSerializer,
+            403: OpenApiResponse(description="Forbidden without coordinator or admin role."),
+        },
+    ),
+    update=extend_schema(
+        tags=["notifications"],
+        summary="Replace notification routing override",
+        responses={
+            200: NotificationRoutingOverrideSerializer,
+            400: OpenApiResponse(description="Validation error."),
+            403: OpenApiResponse(description="Forbidden without coordinator or admin role."),
+        },
+    ),
+    partial_update=extend_schema(
+        tags=["notifications"],
+        summary="Update notification routing override",
+        responses={
+            200: NotificationRoutingOverrideSerializer,
+            400: OpenApiResponse(description="Validation error."),
+            403: OpenApiResponse(description="Forbidden without coordinator or admin role."),
+        },
+    ),
+    destroy=extend_schema(
+        tags=["notifications"],
+        summary="Delete notification routing override",
+        responses={
+            204: OpenApiResponse(description="No content."),
+            403: OpenApiResponse(description="Forbidden without coordinator or admin role."),
+        },
+    ),
+)
+class NotificationRoutingOverrideViewSet(viewsets.ModelViewSet):
+    """
+    Staff-only CRUD for admin-configurable notification routing overrides.
+
+    These overrides affect reminder event-type routing and staff documentation indices.
+    """
+
+    queryset = NotificationRoutingOverride.objects.all()
+    serializer_class = NotificationRoutingOverrideSerializer
+    permission_classes = [IsAuthenticated, IsCoordinatorOrAdmin]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ["kind", "key", "settings_category", "is_active"]
+    search_fields = ["key"]
+    ordering_fields = ["updated_at", "created_at", "kind", "key"]
+    ordering = ["kind", "key"]
 
 
 class ReminderViewSet(viewsets.ModelViewSet):
