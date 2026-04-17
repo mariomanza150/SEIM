@@ -157,7 +157,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ |  |  |  |  |
+| Vue i18n: Advanced filters toggle (review queue + staff documents) | `frontend-vue` | In progress | 2026-04-16 | agent |
 
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
