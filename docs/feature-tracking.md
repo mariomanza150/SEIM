@@ -158,7 +158,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ |  |  |  |  |
+| Transactional notification route overrides apply at send time | `notifications`, `exchange`, `documents`, `accounts` | In progress | 2026-04-16 | Agent |
 
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
@@ -232,5 +232,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-16 — feature loop: Vue i18n **Advanced filters** toggle (review queue + staff documents); prior: OpenAPI overrides ViewSet. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-16 — feature loop: **transactional route overrides** runtime wiring (in progress). Prior: Vue i18n Advanced filters; OpenAPI overrides ViewSet. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*  
