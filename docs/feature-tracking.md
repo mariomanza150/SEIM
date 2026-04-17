@@ -149,6 +149,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Editable notification routing matrix (admin overrides) | `notifications`, `accounts`, `admin UI`, `api` | Implemented | 2026-04-16 | Added `NotificationRoutingOverride` (kinds: reminder event type + transactional route key) with Django admin UI. Reminder routing consults overrides (supports `ungated` → bypass UserSettings group gating). Staff routing-reference API reflects effective overrides in reminder + transactional indexes. Tests: `tests/unit/notifications/test_notifications_tasks.py`, `tests/unit/notifications/test_routing_reference.py`, `tests/integration/api/test_notification_routing_reference_api.py`. |
 | Staff API for notification routing overrides | `notifications`, `api` | Implemented | 2026-04-16 | Added staff-only CRUD endpoint `GET/POST/PATCH/DELETE /api/notification-routing-overrides/` (coordinator/admin). Tests: `tests/integration/api/test_notification_routing_overrides_api.py`. |
 | Staff SPA UI for notification routing overrides | `frontend-vue`, `notifications` | Implemented | 2026-04-16 | `/notification-routing`: list/create/edit/toggle/delete against `/api/notification-routing-overrides/` with pagination fetch; refreshes routing-reference after mutations. i18n en/es. Vitest: `NotificationRouting.spec.js`. |
+| Manual API docs: staff notification routing endpoints | `documentation`, `notifications`, `api` | Implemented | 2026-04-16 | `documentation/api_documentation.md`: `GET /api/notifications/routing-reference/`, CRUD `/api/notification-routing-overrides/` (permissions, filters, constraints). No new automated tests (documentation-only). |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
@@ -227,5 +228,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-16 — Staff SPA CRUD for notification routing overrides on `/notification-routing`. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-16 — Manual API documentation for staff notification routing reference + routing overrides (`documentation/api_documentation.md`). QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*  
