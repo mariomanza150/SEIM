@@ -194,11 +194,11 @@
     {# <script src="{% static 'js/auth.js' %}"></script> #}
     {# Dynamically include the correct Webpack bundle for auth pages #}
     {% if request.resolver_match and request.resolver_match.url_name == 'login' %}
-      <script src="{% static 'dist/auth_entry.363836a3f6e7533568b7.js' %}"></script>
+      <script src="{% static 'dist/auth_entry.974a6aafd9851b093f74.js' %}"></script>
     {% elif request.resolver_match and request.resolver_match.url_name == 'register' %}
-      <script src="{% static 'dist/auth_entry.363836a3f6e7533568b7.js' %}"></script>
+      <script src="{% static 'dist/auth_entry.974a6aafd9851b093f74.js' %}"></script>
     {% elif request.resolver_match and request.resolver_match.url_name == 'password_reset' %}
-      <script src="{% static 'dist/auth_entry.363836a3f6e7533568b7.js' %}"></script>
+      <script src="{% static 'dist/auth_entry.974a6aafd9851b093f74.js' %}"></script>
     {% endif %}
     <script src="{% url 'js_reverse' %}"></script>
     {% block pre_js %}{% endblock %}
