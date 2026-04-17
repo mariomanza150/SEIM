@@ -4,8 +4,8 @@
  * keyboard navigation, focus handling, and screen reader support
  */
 
-import { SEIM_LOGGER } from './logger.js';
-import { SEIM_ERROR_HANDLER } from './error-handler.js';
+import { logger } from './logger.js';
+import { errorHandler } from './error-handler.js';
 
 class AccessibilityManager {
     constructor() {
@@ -38,7 +38,7 @@ class AccessibilityManager {
         this.setupReducedMotion();
         this.setupFormAccessibility();
         
-        SEIM_LOGGER.info('Accessibility Manager initialized');
+        logger.info('Accessibility Manager initialized');
     }
     
     /**
