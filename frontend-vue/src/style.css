@@ -1,14 +1,11 @@
 /* Global Custom Styles for SEIM Vue.js App */
 
 :root {
-  --primary-color: #667eea;
-  --secondary-color: #764ba2;
-  --success-color: #28a745;
-  --danger-color: #dc3545;
-  --warning-color: #ffc107;
-  --info-color: #17a2b8;
-  --light-color: #f8f9fa;
-  --dark-color: #343a40;
+  --bs-primary: var(--seim-brand-primary, #667eea);
+  --bs-primary-rgb: 102, 126, 234;
+  --bs-link-color: var(--seim-brand-primary, #667eea);
+  --bs-link-hover-color: #5468d9;
+  --primary-color: var(--seim-brand-primary, #667eea);
 }
 
 * {
@@ -40,6 +37,30 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+html[data-theme='dark'] ::-webkit-scrollbar-track {
+  background: #0b1220;
+}
+
+html[data-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+html[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}
+
+/* Bootstrap surfaces that need explicit dark adjustments */
+html[data-theme='dark'] .table-light {
+  --bs-table-bg: #111827;
+  --bs-table-color: var(--seim-surface-text);
+}
+
+html[data-theme='dark'] .text-bg-light {
+  background-color: #1f2937 !important;
+  color: var(--seim-surface-text) !important;
+  border: 1px solid var(--seim-border-color);
 }
 
 /* Animation utilities */
@@ -109,6 +130,17 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Shared notification emphasis (unread items) */
+.seim-notification-unread {
+  background-color: rgba(var(--bs-primary-rgb), 0.08);
+  border-color: rgba(var(--bs-primary-rgb), 0.22) !important;
+}
+
+html[data-theme='dark'] .seim-notification-unread {
+  background-color: rgba(var(--bs-primary-rgb), 0.16);
+  border-color: rgba(var(--bs-primary-rgb), 0.32) !important;
 }
 
 /* Responsive utilities */

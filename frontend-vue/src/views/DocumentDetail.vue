@@ -1,25 +1,24 @@
 <template>
   <div class="document-detail">
-    <div class="container-fluid mt-4">
-      <nav :aria-label="t('documentDetailPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Documents' }">{{ t('route.names.Documents') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active" aria-current="page">
-            {{
-              loading
-                ? t('documentDetailPage.loadingType')
-                : documentTypeLabel(document?.type, '') ||
-                  fileName(document?.file) ||
-                  t('documentDetailPage.fileUnknown')
-            }}
-          </li>
-        </ol>
-      </nav>
+    <nav :aria-label="t('documentDetailPage.breadcrumbAria')">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+        </li>
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Documents' }">{{ t('route.names.Documents') }}</router-link>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">
+          {{
+            loading
+              ? t('documentDetailPage.loadingType')
+              : documentTypeLabel(document?.type, '') ||
+                fileName(document?.file) ||
+                t('documentDetailPage.fileUnknown')
+          }}
+        </li>
+      </ol>
+    </nav>
 
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
@@ -393,7 +392,6 @@
           </div>
         </div>
       </div>
-    </div>
   </div>
 </template>
 

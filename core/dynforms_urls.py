@@ -16,7 +16,7 @@ class _DynformsAdminRequired(UserPassesTestMixin):
         user = self.request.user
         if not user.is_authenticated:
             return False
-        return user.is_superuser or user.has_role("admin")
+        return bool(getattr(user, "is_admin", False))
 
 
 def _wrap(view_cls):

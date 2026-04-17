@@ -62,7 +62,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Notification digest scheduling (unread summaries) | `notifications`, `accounts`, `frontend-vue`, `admin UI` | Implemented | 2026-04-09 | `UserSettings.notification_digest_frequency` (off/daily/weekly), optional `email_notification_digest` + `email_system`; digest sends use `settings_category="system"` so `email_system` / `inapp_system` apply; `skipped_suppressed` when no channel delivers (timestamp still advances). `process_notification_digests` + `notifications.tasks.send_notification_digests`; Celery beat + `manage.py send_notification_digests`. Vue Settings + API. Tests: `test_notification_digest.py`. |
 | Saved searches on deadlines / calendar view | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-09 | `SavedSearch.search_type` value `calendar`; `serializeCalendarFilters` / `deserializeCalendarFilters` in `staffListSearchPresets.js`; `DeadlinesCalendar.vue` uses `useStaffSavedPresets` (save / apply / default / delete). Migration `0016_alter_savedsearch_search_type_calendar`. Vitest: `staffListSearchPresets.spec.js`. |
 | Multi-language student profile (additional languages) | `accounts`, `frontend-vue`, `api` | Implemented | 2026-04-09 | `Profile.additional_languages` JSON list `{name, level}` (CEFR optional), max 20; `ProfileSerializer` validation; migration `0007_profile_additional_languages`. Vue `Profile.vue` add/remove rows; primary `language` / `language_level` unchanged for eligibility. Tests: `tests/unit/accounts/test_profile_additional_languages.py`. |
-| Structured eligibility rules engine | `exchange`, `accounts`, `api`, `documents`, `application_forms`, `frontend-vue` | Implemented | 2026-04-10 | `evaluate_eligibility`: **`application_window`**, GPA, language + `additional_languages`, CEFR, age; optional **`required_documents`** / **`dynamic_form`** when configured on the program (skipped without `application`; evaluated with `application=`). Dynamic-form validation uses **applicant** `viewer_roles` (parity with student submit). **`submit_application`** / **`transition_status` → submitted** use `check_eligibility(application.student, …, application=)`; removed `_ensure_application_form_complete` / `_ensure_submission_requirements`. API **`schema_version` 4**. **OpenAPI:** `@extend_schema` on `ProgramViewSet.check_eligibility` + `ProgramCheckEligibilityResponseSerializer` / rule row serializers (`exchange/views.py`, `exchange/serializers.py`). Tests: `test_eligibility_rules.py` (incl. dynamic form cases), `test_new_features.py` (document query + schema). |
+| Structured eligibility rules engine | `exchange`, `accounts`, `api`, `documents`, `application_forms`, `frontend-vue` | Implemented | 2026-04-17 | `evaluate_eligibility`: **`application_window`**, GPA, language + `additional_languages`, CEFR, age; optional **`required_documents`** / **`dynamic_form`** when configured on the program (skipped without `application`; evaluated with `application=`). Dynamic-form validation uses **applicant** `viewer_roles` (parity with student submit). **`submit_application`** / **`transition_status` → submitted** use `check_eligibility(application.student, …, application=)`; removed `_ensure_application_form_complete` / `_ensure_submission_requirements`. API **`schema_version` 6**: `application_context` (when `application=`), `ruleset` snapshot (when linked), and `using_ruleset` when `use_ruleset=true` is supplied. **OpenAPI:** `@extend_schema` on `ProgramViewSet.check_eligibility` + `ProgramCheckEligibilityResponseSerializer` / rule row serializers (`exchange/views.py`, `exchange/serializers.py`). Tests: `test_eligibility_rules.py` (incl. dynamic form cases), `test_new_features.py` (document query + schema), `test_api_views.py` (application_context), `test_eligibility_rulesets_api.py` (ruleset snapshot + toggle). |
 | Per-user calendar (.ics) / webcal subscribe URL | `exchange`, `api`, `frontend-vue` | Implemented | 2026-04-09 | Signed token on `GET /api/calendar/subscribe.ics` (90d–730d horizon, `type=all`); `GET /api/calendar/events/subscribe-token/` for `ics_url` / `webcal_url`; shared `build_calendar_event_dicts` in `exchange/calendar_events.py`. Vue Deadlines page: copy links. Tests: `tests/unit/exchange/test_calendar_api.py` (`TestCalendarEventAPI` subscribe cases). |
 | Analytics dashboard Excel export | `analytics`, `api`, `admin UI` | Implemented | 2026-04-09 | `GET /api/analytics/export/?export_format=xlsx` (default CSV; param is not `format`, which DRF reserves). Workbook sheets: Metrics, Application status, Program performance — same data as CSV. `analytics/dashboard_export.py`; dependency `openpyxl`. Admin analytics template: Export dropdown (CSV / Excel). Tests: `test_analytics_views_simple.py` (`test_export_api_returns_xlsx_attachment`). |
 | Analytics dashboard PDF export | `analytics`, `api`, `admin UI` | Implemented | 2026-04-09 | `GET /api/analytics/export/?export_format=pdf` — ReportLab landscape PDF, sections Metrics / Application status / Program performance. `render_dashboard_export_pdf` in `analytics/dashboard_export.py`. Admin Export menu includes PDF. Tests: `test_export_api_returns_pdf_attachment`. |
@@ -159,7 +159,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ |  |  |  |  |
+| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | In progress | 2026-04-17 | Cursor agent (DB model + migration + admin + staff read API `/api/eligibility-rulesets/`; `check_eligibility` ruleset snapshot + `use_ruleset` scalar overrides; Vue `ApplicationForm` sends `use_ruleset=true` when program has `eligibility_ruleset`; program clone copies `workflow_version` + `eligibility_ruleset`) |
 
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
@@ -179,7 +179,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Applications, Forms, and Eligibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| _None pending in this subsection_ |  |  |
+| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Promoted from P3: eligibility is implemented, but rules are code-defined. **Progress:** `EligibilityRuleSet` model + migration + admin; staff read API `/api/eligibility-rulesets/` (coordinator/admin) with integration test. **Next:** program evaluation wiring (feature-flagged), ruleset JSON schema + versioning, localized per-rule client copy, and step-level document gates in preview payload (if not already sufficient). |
 
 #### Programs, Agreements, and Planning
 | Feature | Module | Notes |
@@ -191,6 +191,16 @@ _All Priority 1 items in this subsection are implemented above._
 |---------|--------|-------|
 | _None pending in this subsection_ |  |  |
 | Saved searches (other staff surfaces) | `frontend-vue`, `exchange`, `documents` | Optional: presets if a dedicated **analytics** staff UI is added later (review queue, agreements, documents, programs, and **calendar** are covered). |
+
+#### Scholarships and funding
+| Feature | Module | Notes |
+|---------|--------|-------|
+| Scholarship award workflow tracking (award state + notifications + evidence docs) | `exchange`, `documents`, `notifications`, `analytics`, `frontend-vue`, `api` | Promoted from P3: scoring exists; next: award decision state machine, required financial docs/categories, disbursement milestones, staff actions + exports, and student-facing status. |
+
+#### External calendars
+| Feature | Module | Notes |
+|---------|--------|-------|
+| Google Calendar OAuth2 / two-way sync (beyond ICS subscribe) | `accounts`, `exchange`, `api`, `frontend-vue` | Promoted from P3: ICS/webcal subscribe is implemented; next: OAuth2 linking, push sync (or polling), conflict rules, and provider abstraction (Google-first). |
 #### User Profile, Localization, and Accessibility
 | Feature | Module | Notes |
 |---------|--------|-------|
@@ -210,13 +220,12 @@ _All Priority 1 items in this subsection are implemented above._
 |---------|--------|-------|
 | Student nomination and matching workflow | `exchange`, `accounts`, `admin UI` | Support nomination cycles, ranking, partner allocations, and selection matching for institutions with limited slots. |
 | Visual workflow designer for applications | `application_forms`, `admin UI` | Give admins a low-code interface to design multi-step application flows, approval paths, and validation gates visually. |
-| Automated eligibility and rules engine | `exchange`, `application_forms`, `accounts` | **Partial:** window, profile, documents, dynamic form, OpenAPI for `check_eligibility` (see Implemented row). **Remaining:** admin/DB-configurable rule sets, step-level document gates in preview payload, localized per-rule client copy. |
-| Scholarship and funding workflow tracking | `exchange`, `documents`, `analytics`, `frontend-vue` | Track scholarship opportunities, internal funding requests, required financial documents, disbursement milestones, and award outcomes alongside exchange applications. **Pairs with** implemented **default_v1** scoring (see Implemented row): extend with award state + notifications when this workflow ships. |
+| Automated eligibility and rules engine | `exchange`, `application_forms`, `accounts` | **Partial:** window, profile, documents, dynamic form, OpenAPI for `check_eligibility` (see Implemented row). **Remaining:** step-level document gates in preview payload, localized per-rule client copy. |
 
 #### External calendars
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Google Calendar integration | `accounts`, `exchange`, `api`, `frontend-vue` | **Partial:** per-user signed **ICS / webcal** subscribe URL is implemented (import-by-URL in Google Calendar without OAuth). Backlog: OAuth2 / two-way sync or other providers. |
+| Google Calendar integration | `accounts`, `exchange`, `api`, `frontend-vue` | **Partial:** per-user signed **ICS / webcal** subscribe URL is implemented (import-by-URL in Google Calendar without OAuth). Backlog: OAuth2 / two-way sync or other providers. (See promoted PENDING item.) |
 
 #### Intelligence, Analytics, and Institutional Reporting
 | Feature | Module | Notes |
@@ -233,5 +242,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-16 — feature loop: **transactional route overrides** runtime wiring (implemented). Prior: Vue i18n Advanced filters; OpenAPI overrides ViewSet. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-17 — feature loop: **check_eligibility application_context** (schema v5) for step-level document gates. Prior: transactional route overrides runtime wiring. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*  

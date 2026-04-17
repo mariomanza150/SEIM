@@ -58,6 +58,7 @@ PERMISSION_REGISTRY = {
     'access_django_admin': ['admin'],
     'manage_cache': ['admin'],
     'manage_forms': ['admin'],
+    'manage_workflows': ['admin'],
     'view_system_logs': ['admin'],
     'manage_settings': ['admin'],
     
@@ -118,16 +119,20 @@ class PermissionManager:
         # Superusers have all permissions
         if user.is_superuser:
             return True
-        
+
         # Get permission from registry
         allowed_roles = PERMISSION_REGISTRY.get(permission_name, [])
         if not allowed_roles:
             # Permission doesn't exist in registry
             return False
-        
+
+        # Django staff: same registry entries as the SEIM admin role (e.g. manage_workflows)
+        if getattr(user, "is_staff", False) and "admin" in allowed_roles:
+            return True
+
         # Get user's roles
         user_roles = user.get_all_roles()
-        
+
         # Check if any user role has the permission
         return any(role in allowed_roles for role in user_roles)
     
@@ -147,14 +152,19 @@ class PermissionManager:
         
         if user.is_superuser:
             return sorted(PERMISSION_REGISTRY.keys())
-        
+
         user_roles = user.get_all_roles()
         permissions = set()
-        
+
+        if getattr(user, "is_staff", False):
+            for perm_name, allowed_roles in PERMISSION_REGISTRY.items():
+                if "admin" in allowed_roles:
+                    permissions.add(perm_name)
+
         for perm_name, allowed_roles in PERMISSION_REGISTRY.items():
             if any(role in allowed_roles for role in user_roles):
                 permissions.add(perm_name)
-        
+
         return sorted(permissions)
     
     @staticmethod
@@ -268,6 +278,12 @@ class HasPermission(permissions.BasePermission):
             request.user,
             self.permission_name
         )
+
+
+class CanManageRoles(HasPermission):
+    """Allow access to users who can manage roles (SEIM admin)."""
+
+    permission_name = "manage_roles"
 
 
 # ============================================================================

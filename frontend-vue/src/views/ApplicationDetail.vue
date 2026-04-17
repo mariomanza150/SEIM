@@ -1,27 +1,66 @@
 <template>
   <div class="application-detail">
-    <div class="container-fluid mt-4">
-      <!-- Breadcrumb -->
-      <nav :aria-label="t('applicationDetailPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Applications' }">{{ t('route.names.Applications') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{
-            programDisplayName(application) || t('applicationDetailPage.loadingProgram')
-          }}</li>
-        </ol>
-      </nav>
+    <!-- Breadcrumb -->
+    <nav :aria-label="t('applicationDetailPage.breadcrumbAria')">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+        </li>
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Applications' }">{{ t('route.names.Applications') }}</router-link>
+        </li>
+        <li class="breadcrumb-item active">{{
+          programDisplayName(application) || t('applicationDetailPage.loadingProgram')
+        }}</li>
+      </ol>
+    </nav>
 
       <!-- Loading -->
       <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('applicationDetailPage.loadingSpinner') }}</span>
+        <div class="visually-hidden" role="status" aria-live="polite">
+          {{ t('applicationDetailPage.loadingDetails') }}
         </div>
-        <p class="mt-3 text-muted">{{ t('applicationDetailPage.loadingDetails') }}</p>
+        <div class="placeholder-glow text-start" aria-hidden="true">
+          <div class="mb-4">
+            <h2 class="mb-1"><span class="placeholder col-6"></span></h2>
+            <p class="text-muted mb-0"><span class="placeholder col-4"></span></p>
+          </div>
+          <div class="row">
+            <div class="col-lg-8">
+              <div class="card mb-4">
+                <div class="card-header"><span class="placeholder col-4"></span></div>
+                <div class="card-body">
+                  <p><span class="placeholder col-8"></span></p>
+                  <p><span class="placeholder col-6"></span></p>
+                  <p class="mb-0"><span class="placeholder col-7"></span></p>
+                </div>
+              </div>
+              <div class="card mb-4">
+                <div class="card-header"><span class="placeholder col-5"></span></div>
+                <div class="card-body">
+                  <p><span class="placeholder col-9"></span></p>
+                  <p class="mb-0"><span class="placeholder col-7"></span></p>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-4">
+              <div class="card mb-4">
+                <div class="card-header"><span class="placeholder col-6"></span></div>
+                <div class="card-body">
+                  <p><span class="placeholder col-9"></span></p>
+                  <p class="mb-0"><span class="placeholder col-8"></span></p>
+                </div>
+              </div>
+              <div class="card">
+                <div class="card-header"><span class="placeholder col-6"></span></div>
+                <div class="card-body">
+                  <p><span class="placeholder col-10"></span></p>
+                  <p class="mb-0"><span class="placeholder col-7"></span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Error -->
@@ -35,20 +74,13 @@
 
       <!-- Application Details -->
       <div v-else-if="application" data-testid="application-detail-page">
-        <!-- Header -->
-        <div class="row mb-4">
-          <div class="col-md-8">
-            <h2>
-              <i class="bi bi-file-earmark-text me-2"></i>
-              {{ programDisplayName(application) }}
-            </h2>
-            <p class="text-muted">
-              <i class="bi bi-building me-1"></i>
-              {{ application.program?.institution || t('applicationDetailPage.notAvailable') }}
-            </p>
-          </div>
-          <div class="col-md-4 text-end">
-            <span class="badge fs-6 me-2" :class="statusClass(application.status)">
+        <PageHeader
+          :title="programDisplayName(application)"
+          :subtitle="application.program?.institution || t('applicationDetailPage.notAvailable')"
+          icon-class="bi bi-file-earmark-text"
+        >
+          <template #actions>
+            <span class="badge fs-6" :class="statusClass(application.status)">
               {{ formatStatus(application.status) }}
             </span>
             <router-link
@@ -56,10 +88,10 @@
               :to="{ name: 'ApplicationEdit', params: { id: application.id } }"
               class="btn btn-primary"
             >
-              <i class="bi bi-pencil me-1"></i>{{ t('applicationDetailPage.edit') }}
+              <i class="bi bi-pencil me-1" aria-hidden="true"></i>{{ t('applicationDetailPage.edit') }}
             </router-link>
-          </div>
-        </div>
+          </template>
+        </PageHeader>
 
         <div v-if="application.readiness" class="row mb-3" data-testid="readiness-banner">
           <div class="col-12">
@@ -587,7 +619,6 @@
           </div>
         </div>
       </div>
-    </div>
   </div>
 </template>
 
@@ -597,20 +628,28 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import DocumentUpload from '@/components/DocumentUpload.vue'
+import PageHeader from '@/components/PageHeader.vue'
 import api from '@/services/api'
 import { readinessLevelBadgeClass, readinessScoreBarClass } from '@/utils/applicationReadiness'
 import { documentTypeLabel } from '@/utils/documentApi'
+import {
+  applicationProgramDisplayName,
+  applicationStatusBadgeClass,
+  formatApplicationStatus,
+  formatDateTime as formatDateTimeUtil,
+} from '@/utils/formatters'
 
 const route = useRoute()
 const router = useRouter()
 const { t, te, locale } = useI18n()
 const authStore = useAuthStore()
 const { success, error: errorToast } = useToast()
+const { confirm } = useConfirm()
 
 function programDisplayName(app) {
-  if (!app) return ''
-  return (app.program_name || app.program?.name || '').trim()
+  return applicationProgramDisplayName(app)
 }
 
 const isCoordinator = computed(() =>
@@ -776,34 +815,18 @@ async function fetchComments() {
 }
 
 function statusClass(status) {
-  const classes = {
-    draft: 'bg-secondary',
-    submitted: 'bg-info',
-    under_review: 'bg-warning',
-    approved: 'bg-success',
-    rejected: 'bg-danger',
-    completed: 'bg-primary',
-  }
-  return classes[status] || 'bg-secondary'
+  return applicationStatusBadgeClass(status)
 }
 
 function formatStatus(status) {
-  if (!status) return t('applicationDetailPage.status.unknown')
-  const key = `applicationDetailPage.status.${status}`
-  if (te(key)) return t(key)
-  return String(status).replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+  return formatApplicationStatus({ status, t, te })
 }
 
 function formatDateTime(dateString) {
-  if (!dateString) return t('applicationDetailPage.notAvailable')
-  const loc = locale.value === 'es' ? 'es' : 'en-US'
-  const date = new Date(dateString)
-  return date.toLocaleString(loc, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
+  return formatDateTimeUtil({
+    dateString,
+    locale: locale.value,
+    fallback: t('applicationDetailPage.notAvailable'),
   })
 }
 
@@ -887,9 +910,14 @@ function timelineIconBg(eventType) {
 }
 
 async function submitApplication() {
-  if (!confirm(t('applicationDetailPage.confirmSubmit'))) {
-    return
-  }
+  const ok = await confirm({
+    title: t('applicationDetailPage.submitApplication'),
+    message: t('applicationDetailPage.confirmSubmit'),
+    confirmText: t('applicationDetailPage.submitApplication'),
+    cancelText: t('settings.cancel'),
+    variant: 'primary',
+  })
+  if (!ok) return
 
   try {
     await api.post(`/api/applications/${route.params.id}/submit/`)
@@ -903,9 +931,15 @@ async function submitApplication() {
 }
 
 async function confirmDelete() {
-  if (confirm(t('applicationDetailPage.confirmDelete'))) {
-    await deleteApplication()
-  }
+  const ok = await confirm({
+    title: t('applicationDetailPage.deleteApplication'),
+    message: t('applicationDetailPage.confirmDelete'),
+    confirmText: t('applicationDetailPage.deleteApplication'),
+    cancelText: t('settings.cancel'),
+    variant: 'danger',
+  })
+  if (!ok) return
+  await deleteApplication()
 }
 
 async function deleteApplication() {

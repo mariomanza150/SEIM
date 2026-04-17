@@ -1,6 +1,12 @@
 from rest_framework import serializers
 
-from .models import Notification, NotificationPreference, NotificationType, Reminder
+from .models import (
+    Notification,
+    NotificationPreference,
+    NotificationRoutingOverride,
+    NotificationType,
+    Reminder,
+)
 from .services import NotificationService
 
 
@@ -65,3 +71,9 @@ class NotificationRoutingReferenceSerializer(serializers.Serializer):
     reminder_event_type_recipient_summaries = serializers.JSONField(read_only=True)
     reminder_default_settings_category = serializers.CharField(read_only=True)
     digest = serializers.JSONField(read_only=True)
+
+
+class NotificationRoutingOverrideSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NotificationRoutingOverride
+        fields = "__all__"

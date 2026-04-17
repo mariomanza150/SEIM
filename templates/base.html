@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE|default:'en' }}">
 <head>
         <!-- Critical CSS for immediate rendering -->
         <style>
             /* Basic critical styles for immediate rendering */
             :root {
-                --primary-color: #0d6efd;
-                --secondary-color: #6c757d;
+                --primary-color: #667eea;
+                --secondary-color: #764ba2;
                 --success-color: #198754;
                 --danger-color: #dc3545;
                 --warning-color: #ffc107;
@@ -75,26 +77,35 @@
             }
         </style>
         
-        <!-- Theme Initialization Script - Run before page load -->
+        <!-- Theme Initialization Script - Run before page load (keep in sync with static/js/theme-manager.js resolveInitialResolvedTheme) -->
         <script>
-            // Immediate theme initialization to prevent flash
             (function() {
                 try {
-                    // Get stored theme preference
-                    const storedTheme = localStorage.getItem('seim-theme');
-                    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    const theme = storedTheme || (systemPrefersDark ? 'dark' : 'light');
-                    
-                    // Apply theme immediately to prevent flash
-                    if (theme === 'dark') {
-                        document.documentElement.setAttribute('data-theme', 'dark');
-                    } else {
-                        document.documentElement.removeAttribute('data-theme');
+                    function systemResolved() {
+                        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                     }
-                    
-                    console.log('ThemeManager: Pre-initialized theme:', theme);
+                    var explicit = localStorage.getItem('seim-theme');
+                    var theme;
+                    if (explicit === 'light' || explicit === 'dark') {
+                        theme = explicit;
+                    } else {
+                        var vueTheme = null;
+                        try {
+                            var raw = localStorage.getItem('seim_ui_preferences');
+                            if (raw) {
+                                var p = JSON.parse(raw);
+                                if (p && typeof p.theme === 'string') vueTheme = p.theme;
+                            }
+                        } catch (e) { /* ignore */ }
+                        if (vueTheme === 'light' || vueTheme === 'dark') {
+                            theme = vueTheme;
+                        } else {
+                            theme = systemResolved();
+                        }
+                    }
+                    document.documentElement.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
                 } catch (error) {
-                    console.warn('ThemeManager: Pre-initialization failed:', error);
+                    document.documentElement.setAttribute('data-theme', 'light');
                 }
             })();
         </script>

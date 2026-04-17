@@ -90,7 +90,7 @@
           </div>
 
           <div class="text-center mt-3 text-muted small">
-            <p>{{ t('login.versionLine', { version: appVersion }) }}</p>
+            <p>{{ versionCaption }}</p>
           </div>
         </div>
       </div>
@@ -99,7 +99,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { version as vueRuntimeVersion } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -116,7 +117,16 @@ const password = ref('')
 const rememberMe = ref(false)
 const isLoading = ref(false)
 const error = ref(null)
-const appVersion = import.meta.env.VITE_APP_VERSION || '2.0.0'
+/** Optional CI/build tag (e.g. git or release id). Not the Vue major version. */
+const buildTag = import.meta.env.VITE_APP_VERSION || ''
+
+const versionCaption = computed(() => {
+  const vue = vueRuntimeVersion
+  if (buildTag) {
+    return t('login.versionLineWithBuild', { build: buildTag, vue })
+  }
+  return t('login.versionLine', { vue })
+})
 
 async function handleLogin() {
   isLoading.value = true

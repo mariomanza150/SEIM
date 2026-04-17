@@ -98,6 +98,7 @@ services:
       - DJANGO_ENV=test
       - DEBUG=false
       - TESTING=true
+      - PYTHONWARNINGS=ignore:datetime\\.datetime\\.utcfromtimestamp\\(\\) is deprecated.*:DeprecationWarning
     depends_on:
       db:
         condition: service_healthy

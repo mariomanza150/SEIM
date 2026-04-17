@@ -46,6 +46,10 @@ SEIM (Student Exchange Information Manager) is a comprehensive Django-based web 
 - [Video Review Checklist](./guides/video-review-checklist.md) - Video review checklist
 - [E2E Quick Fix Guide](./guides/e2e-quick-fix-guide.md) - E2E testing quick fixes
 
+### Operations
+
+- [Production target matrix](./production-target-matrix.md) - Host sizing, Light/Standard/High tiers, coordination-office scenario, cloud patterns, AWS/GCP/Azure calculator BOM, backups, legacy migration, on-premises + cloud DR
+
 ### Frontend Migration Notes
 
 - [Vue Migration Plan](./VUE_MIGRATION_PLAN.md) - Historical migration rationale and scope

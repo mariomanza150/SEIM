@@ -1,7 +1,13 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Notification, NotificationPreference, NotificationType, Reminder
+from .models import (
+    Notification,
+    NotificationPreference,
+    NotificationRoutingOverride,
+    NotificationType,
+    Reminder,
+)
 
 
 @admin.register(NotificationType)
@@ -83,3 +89,11 @@ class ReminderAdmin(admin.ModelAdmin):
                 )
     
     sent_status.short_description = "Status"
+
+
+@admin.register(NotificationRoutingOverride)
+class NotificationRoutingOverrideAdmin(admin.ModelAdmin):
+    list_display = ("kind", "key", "settings_category", "is_active", "updated_at")
+    list_filter = ("kind", "settings_category", "is_active")
+    search_fields = ("key",)
+    ordering = ("kind", "key")

@@ -31,12 +31,10 @@ from .step_template_service import apply_step_template_to_form_type
 
 
 def is_admin(user):
-    """Check if user is admin - either has admin role OR is superuser"""
-    if not user.is_authenticated:
+    """Matches User.is_admin (role, staff, or superuser)."""
+    if not getattr(user, "is_authenticated", False):
         return False
-    if user.is_superuser:
-        return True
-    return user.has_role('admin')
+    return bool(getattr(user, "is_admin", False))
 
 
 class AdminOnlyMixin(UserPassesTestMixin):
@@ -99,7 +97,7 @@ class FormTypeViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Admin users see all forms
-        if user.has_role('admin'):
+        if is_admin(user):
             return queryset
 
         # Non-admin users see only active forms
@@ -150,7 +148,7 @@ class FormTypeViewSet(viewsets.ModelViewSet):
         submissions = form_type.submissions.all()
 
         # Filter by user if not admin
-        if not request.user.has_role('admin'):
+        if not is_admin(request.user):
             submissions = submissions.filter(submitted_by=request.user)
 
         serializer = FormSubmissionListSerializer(submissions, many=True)
@@ -245,7 +243,7 @@ class FormSubmissionViewSet(viewsets.ModelViewSet):
         user = self.request.user
 
         # Admin users see all submissions
-        if user.has_role('admin'):
+        if is_admin(user):
             return queryset
 
         # Coordinator users see all submissions (no program-coordinator association in model)

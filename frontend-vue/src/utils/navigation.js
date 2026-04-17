@@ -64,6 +64,20 @@ export function normalizeSpaLocation(url) {
     return { name: 'DocumentDetail', params: { id: documentDetailMatch[1] } }
   }
 
+  if (spaPath === '/agreement-documents') {
+    return { name: 'StaffExchangeAgreements' }
+  }
+  if (spaPath === '/exchange-agreements') {
+    return { name: 'StaffExchangeAgreements' }
+  }
+  const agreementRepositoryMatch = spaPath.match(/^\/exchange-agreements\/([^/]+)\/documents$/)
+  if (agreementRepositoryMatch) {
+    return {
+      name: 'StaffAgreementDocuments',
+      params: { agreementId: agreementRepositoryMatch[1] },
+    }
+  }
+
   return null
 }
 

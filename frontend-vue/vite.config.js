@@ -27,6 +27,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/static': {
+        target: 'http://localhost:8001',
+        changeOrigin: true,
+        secure: false,
+      },
       '/media': {
         target: 'http://localhost:8001',
         changeOrigin: true,

@@ -1,44 +1,42 @@
 <template>
   <div class="notifications-page" data-testid="notifications-page">
-    <div class="container-fluid mt-4">
-      <!-- Breadcrumb -->
-      <nav :aria-label="t('notifications.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active" aria-current="page">{{ t('route.names.Notifications') }}</li>
-        </ol>
-      </nav>
-      <!-- Header -->
-      <div class="row mb-4">
-        <div class="col-md-8">
-          <h2 data-testid="notifications-heading">
-            <i class="bi bi-bell me-2" aria-hidden="true"></i>{{ t('notifications.dropdownHeader') }}
-          </h2>
-          <p class="text-muted">{{ t('notifications.pageSubtitle') }}</p>
-        </div>
-        <div class="col-md-4 text-end">
-          <button
-            v-if="unreadCount > 0"
-            type="button"
-            class="btn btn-outline-primary"
-            :disabled="markingAllRead"
-            :aria-busy="markingAllRead ? 'true' : 'false'"
-            :aria-label="t('notifications.markAllReadAria')"
-            @click="markAllRead"
-            data-testid="mark-all-read-btn"
-          >
-            <span v-if="markingAllRead">
-              <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
-              {{ t('notifications.markingAllRead') }}
-            </span>
-            <span v-else>
-              <i class="bi bi-check-all me-2" aria-hidden="true"></i>{{ t('notifications.markAllRead') }}
-            </span>
-          </button>
-        </div>
-      </div>
+    <PageHeader
+      :title="t('notifications.dropdownHeader')"
+      :subtitle="t('notifications.pageSubtitle')"
+      icon-class="bi bi-bell"
+      test-id="notifications-heading"
+    >
+      <template #breadcrumb>
+        <nav :aria-label="t('notifications.breadcrumbAria')">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">{{ t('route.names.Notifications') }}</li>
+          </ol>
+        </nav>
+      </template>
+      <template #actions>
+        <button
+          v-if="unreadCount > 0"
+          type="button"
+          class="btn btn-outline-primary"
+          :disabled="markingAllRead"
+          :aria-busy="markingAllRead ? 'true' : 'false'"
+          :aria-label="t('notifications.markAllReadAria')"
+          @click="markAllRead"
+          data-testid="mark-all-read-btn"
+        >
+          <span v-if="markingAllRead">
+            <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+            {{ t('notifications.markingAllRead') }}
+          </span>
+          <span v-else>
+            <i class="bi bi-check-all me-2" aria-hidden="true"></i>{{ t('notifications.markAllRead') }}
+          </span>
+        </button>
+      </template>
+    </PageHeader>
 
       <!-- Filters -->
       <div class="card mb-4">
@@ -89,18 +87,14 @@
       </div>
 
       <!-- Loading -->
-      <div v-if="loading" class="text-center py-5" aria-live="polite">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('notifications.loadingSpinner') }}</span>
-        </div>
-        <p class="mt-3 text-muted">{{ t('notifications.pageLoadingHint') }}</p>
-      </div>
+      <LoadingState
+        v-if="loading"
+        :spinner-label="t('notifications.loadingSpinner')"
+        :hint="t('notifications.pageLoadingHint')"
+      />
 
       <!-- Error -->
-      <div v-else-if="error" class="alert alert-danger" role="alert">
-        <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
-        {{ error }}
-      </div>
+      <ErrorAlert v-else-if="error" :message="error" />
 
       <!-- Notifications List -->
       <div v-else-if="notifications.length > 0">
@@ -110,7 +104,7 @@
             :key="notification.id"
             role="listitem"
             class="list-group-item list-group-item-action"
-            :class="{ 'bg-light': notification.is_read }"
+            :class="{ 'seim-notification-unread': !notification.is_read }"
           >
             <div class="d-flex w-100 justify-content-between align-items-start">
               <div class="flex-grow-1">
@@ -175,71 +169,49 @@
         </div>
 
         <!-- Pagination -->
-        <nav v-if="pagination.count > pagination.pageSize" :aria-label="t('notifications.paginationAria')">
-          <ul class="pagination justify-content-center mt-4">
-            <li class="page-item" :class="{ disabled: !pagination.previous }">
-              <button
-                type="button"
-                class="page-link"
-                :disabled="!pagination.previous"
-                :aria-label="t('pagination.previous')"
-                @click="goToPage(pagination.currentPage - 1)"
-              >
-                {{ t('pagination.previous') }}
-              </button>
-            </li>
-            <li
-              v-for="page in totalPages"
-              :key="page"
-              class="page-item"
-              :class="{ active: page === pagination.currentPage }"
-            >
-              <button
-                type="button"
-                class="page-link"
-                :aria-label="t('pagination.pageNumberAria', { n: page })"
-                :aria-current="page === pagination.currentPage ? 'page' : undefined"
-                @click="goToPage(page)"
-              >
-                {{ page }}
-              </button>
-            </li>
-            <li class="page-item" :class="{ disabled: !pagination.next }">
-              <button
-                type="button"
-                class="page-link"
-                :disabled="!pagination.next"
-                :aria-label="t('pagination.next')"
-                @click="goToPage(pagination.currentPage + 1)"
-              >
-                {{ t('pagination.next') }}
-              </button>
-            </li>
-          </ul>
-        </nav>
+        <Pagination
+          :count="pagination.count"
+          :page-size="pagination.pageSize"
+          :current-page="pagination.currentPage"
+          :can-go-previous="!!pagination.previous"
+          :can-go-next="!!pagination.next"
+          :aria-label="t('notifications.paginationAria')"
+          ul-class="mt-4"
+          @page-change="goToPage"
+        />
       </div>
 
       <!-- Empty State -->
-      <div v-else class="card">
-        <div class="card-body text-center py-5">
-          <i class="bi bi-bell-slash display-1 text-muted" aria-hidden="true"></i>
-          <h4 class="mt-3">{{ t('notifications.emptyTitle') }}</h4>
-          <p class="text-muted">{{ t('notifications.emptyBody') }}</p>
-        </div>
-      </div>
-    </div>
+      <EmptyState
+        v-else
+        icon-class="bi bi-bell-slash"
+        :title="t('notifications.emptyTitle')"
+        :body="t('notifications.emptyBody')"
+      />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
-import api from '@/services/api'
 import { isNewTabUrl, isSpaUrl, normalizeSpaLocation } from '@/utils/navigation'
+import PageHeader from '@/components/PageHeader.vue'
+import { useNotifications } from '@/composables/useNotifications'
+import Pagination from '@/components/Pagination.vue'
+import LoadingState from '@/components/State/LoadingState.vue'
+import ErrorAlert from '@/components/State/ErrorAlert.vue'
+import EmptyState from '@/components/State/EmptyState.vue'
 
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const { success, error: errorToast } = useToast()
+const {
+  fetchNotifications: apiFetchNotifications,
+  fetchUnreadCount: apiFetchUnreadCount,
+  markAsRead: apiMarkAsRead,
+  markAllRead: apiMarkAllRead,
+  formatTimestampPage,
+} = useNotifications()
 
 const notifications = ref([])
 const loading = ref(true)
@@ -261,28 +233,26 @@ const pagination = ref({
   pageSize: 20,
 })
 
-const totalPages = computed(() => Math.ceil(pagination.value.count / pagination.value.pageSize))
-
 async function fetchNotifications(page = 1) {
   try {
     loading.value = true
     error.value = null
+    const list = await apiFetchNotifications({
+      page,
+      ordering: '-sent_at',
+      filters: {
+        ...(filters.value.is_read !== '' ? { is_read: filters.value.is_read } : {}),
+        ...(filters.value.category ? { category: filters.value.category } : {}),
+      },
+    })
 
-    const params = { page, ordering: '-sent_at' }
-    if (filters.value.is_read !== '') params.is_read = filters.value.is_read
-    if (filters.value.category) params.category = filters.value.category
-
-    const response = await api.get('/api/notifications/', { params })
-    notifications.value = response.data.results || response.data
-
-    if (response.data.count !== undefined) {
-      pagination.value = {
-        count: response.data.count,
-        next: response.data.next,
-        previous: response.data.previous,
-        currentPage: page,
-        pageSize: pagination.value.pageSize,
-      }
+    notifications.value = list.results
+    pagination.value = {
+      count: list.count,
+      next: list.next,
+      previous: list.previous,
+      currentPage: page,
+      pageSize: pagination.value.pageSize,
     }
   } catch (err) {
     console.error('Failed to fetch notifications:', err)
@@ -295,10 +265,7 @@ async function fetchNotifications(page = 1) {
 
 async function fetchUnreadCount() {
   try {
-    const response = await api.get('/api/notifications/', {
-      params: { is_read: false, page_size: 1 },
-    })
-    unreadCount.value = response.data.count ?? 0
+    unreadCount.value = await apiFetchUnreadCount()
   } catch (err) {
     console.warn('Failed to fetch unread count:', err)
   }
@@ -308,7 +275,7 @@ async function markAsRead(notification) {
   if (notification.is_read) return
   try {
     markingId.value = notification.id
-    await api.post(`/api/notifications/${notification.id}/mark_read/`)
+    await apiMarkAsRead(notification.id)
     notification.is_read = true
     unreadCount.value = Math.max(0, unreadCount.value - 1)
     success(t('notifications.toastMarkedRead'))
@@ -323,7 +290,7 @@ async function markAsRead(notification) {
 async function markAllRead() {
   try {
     markingAllRead.value = true
-    await api.post('/api/notifications/mark_all_read/')
+    await apiMarkAllRead()
     notifications.value.forEach(n => { n.is_read = true })
     unreadCount.value = 0
     success(t('notifications.toastAllMarkedRead'))
@@ -336,10 +303,8 @@ async function markAllRead() {
 }
 
 function goToPage(page) {
-  if (page >= 1 && page <= totalPages.value) {
-    fetchNotifications(page)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
+  fetchNotifications(page)
+  window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
 function clearFilters() {
@@ -369,23 +334,7 @@ function formatCategory(category) {
 }
 
 function formatDate(dateString) {
-  if (!dateString) return t('notifications.notAvailable')
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now - date
-  const diffMins = Math.floor(diffMs / 60000)
-  if (diffMins < 1) return t('notifications.timeJustNow')
-  if (diffMins < 60) return t('notifications.timeMinutesAgo', { n: diffMins })
-  const diffHours = Math.floor(diffMins / 60)
-  if (diffHours < 24) return t('notifications.timeHoursAgo', { n: diffHours })
-  const diffDays = Math.floor(diffHours / 24)
-  if (diffDays < 7) return t('notifications.timeDaysAgo', { n: diffDays })
-  const localeTag = locale.value === 'es' ? 'es' : 'en-US'
-  return date.toLocaleDateString(localeTag, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  return formatTimestampPage(dateString)
 }
 
 function onNotificationNew() {
@@ -416,7 +365,7 @@ onUnmounted(() => {
   border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
-.list-group-item.bg-light {
-  opacity: 0.9;
+.list-group-item.seim-notification-unread {
+  border-width: 2px;
 }
 </style>

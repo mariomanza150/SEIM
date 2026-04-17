@@ -1,5 +1,7 @@
 """Unit tests for ``notifications.routing_reference``."""
 
+import pytest
+
 from notifications.routing_reference import (
     REMINDER_EVENT_TYPE_DESCRIPTIONS,
     REMINDER_EVENT_TYPE_RECIPIENT_SUMMARIES,
@@ -12,6 +14,7 @@ from notifications.services import SETTINGS_CATEGORY_USER_FIELDS
 from notifications.tasks import REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
 
 
+@pytest.mark.django_db
 def test_build_notification_routing_reference_shape():
     data = build_notification_routing_reference()
     assert data["schema_version"] == 12
@@ -76,6 +79,7 @@ def test_settings_category_primary_recipients_complete():
     assert "system" in SETTINGS_CATEGORY_PRIMARY_RECIPIENTS
 
 
+@pytest.mark.django_db
 def test_build_includes_primary_recipients_on_each_category():
     cats = build_notification_routing_reference()["settings_categories"]
     for key, row in cats.items():
@@ -83,6 +87,7 @@ def test_build_includes_primary_recipients_on_each_category():
         assert row["primary_recipients"].strip()
 
 
+@pytest.mark.django_db
 def test_transactional_routes_settings_categories_valid():
     allowed = frozenset(SETTINGS_CATEGORY_USER_FIELDS) | {"system"}
     for row in build_notification_routing_reference()["transactional_routes"]:
@@ -93,3 +98,36 @@ def test_transactional_routes_settings_categories_valid():
         assert row["summary"].strip()
         assert row["source"].strip()
         assert str(row["recipient_summary"]).strip()
+
+
+@pytest.mark.django_db
+def test_routing_reference_applies_reminder_overrides():
+    from notifications.models import NotificationRoutingOverride
+
+    NotificationRoutingOverride.objects.create(
+        kind=NotificationRoutingOverride.KIND_REMINDER_EVENT_TYPE,
+        key="application_deadline",
+        settings_category="documents",
+        is_active=True,
+    )
+    data = build_notification_routing_reference()
+    assert data["reminder_event_type_to_settings_category"]["application_deadline"] == "documents"
+    assert "application_deadline" in data["reminder_event_types_by_settings_category"]["documents"]
+
+
+@pytest.mark.django_db
+def test_routing_reference_applies_transactional_route_overrides():
+    from notifications.models import NotificationRoutingOverride
+
+    NotificationRoutingOverride.objects.create(
+        kind=NotificationRoutingOverride.KIND_TRANSACTIONAL_ROUTE_KEY,
+        key="application_submitted",
+        settings_category="system",
+        is_active=True,
+    )
+    data = build_notification_routing_reference()
+    row = next(
+        r for r in data["transactional_routes"] if r["route_key"] == "application_submitted"
+    )
+    assert row["settings_category"] == "system"
+    assert "application_submitted" in data["transactional_route_keys_by_settings_category"]["system"]

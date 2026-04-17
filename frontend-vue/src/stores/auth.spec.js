@@ -191,6 +191,33 @@ describe('Auth Store', () => {
       expect(user.email).toBe('u@test.com')
       expect(store.user?.full_name).toBe('Test User')
       expect(store.user?.role).toBe('student')
+      expect(store.user?.is_staff).toBe(false)
+      expect(store.user?.is_superuser).toBe(false)
+    })
+
+    it('maps is_staff and is_superuser for SPA permission gates', async () => {
+      const store = useAuthStore()
+      store.accessToken = 'at'
+      axios.get.mockResolvedValueOnce({
+        data: {
+          id: 1,
+          email: 'admin@test.com',
+          full_name: 'Admin User',
+          role: 'student',
+          username: 'admin',
+          is_admin: true,
+          is_staff: true,
+          is_superuser: true,
+        },
+      })
+
+      await store.fetchUserProfile()
+
+      expect(store.user?.is_admin).toBe(true)
+      expect(store.user?.is_staff).toBe(true)
+      expect(store.user?.is_superuser).toBe(true)
+      expect(store.isAdmin).toBe(true)
+      expect(store.canUseStaffReviewQueue).toBe(true)
     })
 
     it('throws and sets error on failure', async () => {

@@ -103,8 +103,8 @@ class User(AbstractUser, UUIDModel, TimeStampedModel):
 
     @property
     def is_admin(self):
-        """Check if user has admin role or is superuser."""
-        return self.has_role('admin') or self.is_superuser
+        """SEIM admin: role, Django staff, or superuser (matches SPA admin console access)."""
+        return self.has_role('admin') or self.is_superuser or self.is_staff
 
     @property
     def is_coordinator(self):

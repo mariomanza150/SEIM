@@ -1,14 +1,13 @@
 <template>
   <div class="notification-routing-page">
-    <div class="container-fluid mt-4">
-      <nav :aria-label="t('notificationRoutingPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item active">{{ t('route.names.NotificationRouting') }}</li>
-        </ol>
-      </nav>
+    <nav :aria-label="t('notificationRoutingPage.breadcrumbAria')">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item">
+          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+        </li>
+        <li class="breadcrumb-item active">{{ t('route.names.NotificationRouting') }}</li>
+      </ol>
+    </nav>
 
       <div class="row mb-4">
         <div class="col-md-8">
@@ -374,7 +373,6 @@
           </div>
         </div>
       </template>
-    </div>
   </div>
 </template>
 
@@ -383,9 +381,11 @@ import { computed, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 
 const { t } = useI18n()
 const { error: errorToast, success: successToast } = useToast()
+const { confirm } = useConfirm()
 const loading = ref(true)
 const error = ref('')
 const payload = ref(null)
@@ -517,15 +517,14 @@ async function toggleOverrideActive(row) {
 }
 
 async function deleteOverride(row) {
-  if (
-    !window.confirm(
-      t('notificationRoutingPage.deleteOverrideConfirm', {
-        key: row.key,
-      }),
-    )
-  ) {
-    return
-  }
+  const ok = await confirm({
+    title: t('notificationRoutingPage.deleteOverride'),
+    message: t('notificationRoutingPage.deleteOverrideConfirm', { key: row.key }),
+    confirmText: t('notificationRoutingPage.deleteOverride'),
+    cancelText: t('settings.cancel'),
+    variant: 'danger',
+  })
+  if (!ok) return
   overrideSaving.value = true
   try {
     await api.delete(`/api/notification-routing-overrides/${row.id}/`)

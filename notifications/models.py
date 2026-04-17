@@ -124,3 +124,64 @@ class Reminder(UUIDModel, TimeStampedModel):
     
     def __str__(self):
         return f"{self.event_title} - {self.user.username} ({self.remind_at})"
+
+
+class NotificationRoutingOverride(UUIDModel, TimeStampedModel):
+    """
+    Admin-configurable overrides for mapping event keys to ``NotificationService.settings_category``.
+
+    Initially used for Reminder ``event_type`` routing; can be extended to other keys.
+    """
+
+    KIND_REMINDER_EVENT_TYPE = "reminder_event_type"
+    KIND_TRANSACTIONAL_ROUTE_KEY = "transactional_route_key"
+    KIND_CHOICES = [
+        (KIND_REMINDER_EVENT_TYPE, "Reminder event type"),
+        (KIND_TRANSACTIONAL_ROUTE_KEY, "Transactional route key"),
+    ]
+
+    SETTINGS_CATEGORY_APPLICATIONS = "applications"
+    SETTINGS_CATEGORY_DOCUMENTS = "documents"
+    SETTINGS_CATEGORY_COMMENTS = "comments"
+    SETTINGS_CATEGORY_PROGRAMS = "programs"
+    SETTINGS_CATEGORY_SYSTEM = "system"
+    SETTINGS_CATEGORY_UNGATED = "ungated"
+    SETTINGS_CATEGORY_CHOICES = [
+        (SETTINGS_CATEGORY_APPLICATIONS, "Applications"),
+        (SETTINGS_CATEGORY_DOCUMENTS, "Documents"),
+        (SETTINGS_CATEGORY_COMMENTS, "Comments"),
+        (SETTINGS_CATEGORY_PROGRAMS, "Programs"),
+        (SETTINGS_CATEGORY_SYSTEM, "System"),
+        (SETTINGS_CATEGORY_UNGATED, "Ungated (ignore UserSettings groups)"),
+    ]
+
+    kind = models.CharField(max_length=64, choices=KIND_CHOICES)
+    key = models.CharField(
+        max_length=128,
+        help_text="For reminder routing: the Reminder.event_type string.",
+    )
+    settings_category = models.CharField(
+        max_length=32,
+        choices=SETTINGS_CATEGORY_CHOICES,
+        help_text=(
+            "Which UserSettings notification group gates delivery for this key. "
+            "Use Ungated to bypass group toggles (settings_category=None)."
+        ),
+    )
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["kind", "key"],
+                name="uniq_notification_routing_override_kind_key",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["kind", "key"], name="notif_route_override_kind_key"),
+            # Keep index names <= backend max identifier length (e.g., Oracle 30 chars).
+            models.Index(fields=["kind", "is_active"], name="notif_route_ovr_kind_act"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.kind}:{self.key} → {self.settings_category}"

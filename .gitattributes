@@ -1,1 +1,2 @@
 scripts/*.sh text eol=lf
+scripts/wait_for_db_tcp.py text eol=lf

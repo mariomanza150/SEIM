@@ -1,5 +1,8 @@
 <template>
   <a class="seim-skip-link" href="#main-content">{{ t('a11y.skipToMain') }}</a>
+  <div class="seim-route-progress" :class="{ 'is-active': routeBusy }" aria-hidden="true">
+    <div class="seim-route-progress__bar" />
+  </div>
   <div
     id="seim-route-announce"
     class="visually-hidden"
@@ -11,6 +14,7 @@
     <router-view />
   </main>
   <ToastContainer />
+  <ConfirmDialog />
 </template>
 
 <script setup>
@@ -25,6 +29,7 @@ import router from '@/router'
 import { routeBusy } from '@/router/routeBusy'
 import { syncAppMetaDescription, syncAppSocialMeta, syncCanonicalLink } from '@/utils/documentTitle'
 import ToastContainer from '@/components/ToastContainer.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
 const { t, locale } = useI18n()
 const authStore = useAuthStore()
@@ -105,27 +110,7 @@ onBeforeUnmount(() => {
 
 <style>
 /* Global styles */
-:root {
-  --seim-app-bg: #f8f9fa;
-  --seim-surface-bg: #ffffff;
-  --seim-surface-text: #212529;
-  --seim-border-color: #dee2e6;
-  --seim-muted: #6c757d;
-}
-
-html[data-theme='dark'] {
-  color-scheme: dark;
-  --seim-app-bg: #111827;
-  --seim-surface-bg: #1f2937;
-  --seim-surface-text: #f9fafb;
-  --seim-border-color: #374151;
-  --seim-muted: #9ca3af;
-}
-
-html[data-high-contrast='true'] {
-  --seim-border-color: #000000;
-  --seim-muted: #495057;
-}
+:root {}
 
 #app {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -134,6 +119,43 @@ html[data-high-contrast='true'] {
   min-height: 100%;
   background-color: var(--seim-app-bg);
   color: var(--seim-surface-text);
+}
+
+/* Route transition indicator (visual twin of aria-busy) */
+.seim-route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  /* Below app navbar (1030) so the blue bar is never covered by the loading strip */
+  z-index: 1020;
+  pointer-events: none;
+  opacity: 0;
+  background: transparent;
+  transition: opacity 0.15s ease;
+}
+
+.seim-route-progress.is-active {
+  opacity: 1;
+}
+
+.seim-route-progress__bar {
+  height: 100%;
+  width: 35%;
+  background: var(--bs-primary, #0d6efd);
+  border-radius: 999px;
+  transform: translateX(-120%);
+  animation: seim-route-progress-indeterminate 0.95s ease-in-out infinite;
+}
+
+@keyframes seim-route-progress-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
 }
 
 /* Ensure full height */
@@ -202,6 +224,12 @@ html[data-reduce-motion='true'] *::after {
   animation-iteration-count: 1 !important;
   scroll-behavior: auto !important;
   transition-duration: 0.01ms !important;
+}
+
+html[data-reduce-motion='true'] .seim-route-progress__bar {
+  animation: none !important;
+  transform: translateX(0);
+  width: 100%;
 }
 
 /* Skip link: off-screen until keyboard focus */

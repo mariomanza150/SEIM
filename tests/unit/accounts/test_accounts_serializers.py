@@ -109,6 +109,8 @@ class TestProfileSerializer:
         assert "full_name" in data
         assert "email" in data
         assert "role" in data
+        assert "is_staff" in data
+        assert "is_superuser" in data
         assert "gpa" in data
         assert "language" in data
 

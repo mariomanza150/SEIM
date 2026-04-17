@@ -6,7 +6,7 @@ Comprehensive tests for core application views.
 
 import pytest
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase, override_settings
+from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from unittest.mock import patch, MagicMock
 
@@ -14,6 +14,18 @@ from application_forms.models import FormType
 from core.views import DynamicFormFromSchema
 
 User = get_user_model()
+
+
+class TestHealthLiveView(SimpleTestCase):
+    """Liveness endpoint must not depend on Postgres/Redis."""
+
+    def test_health_live_returns_200(self):
+        response = self.client.get("/health/live/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["status"], "live")
+        self.assertIn("version", data)
+        self.assertIn("environment", data)
 
 
 @pytest.mark.django_db

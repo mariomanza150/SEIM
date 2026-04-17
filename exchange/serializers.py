@@ -6,6 +6,7 @@ from .models import (
     Application,
     ApplicationStatus,
     Comment,
+    EligibilityRuleSet,
     ExchangeAgreement,
     Program,
     SavedSearch,
@@ -68,6 +69,21 @@ class ProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = Program
         fields = "__all__"
+
+
+class EligibilityRuleSetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EligibilityRuleSet
+        fields = (
+            "id",
+            "name",
+            "description",
+            "schema_version",
+            "rules_json",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
 
 
 class ApplicationSerializer(serializers.ModelSerializer):
@@ -327,6 +343,16 @@ class ApplicationSerializer(serializers.ModelSerializer):
                     dynamic_form_data=dynamic_form_data,
                 )
 
+            # Initialize runtime workflow instance when configured on the program.
+            if getattr(application.program, "workflow_version_id", None):
+                try:
+                    from workflows.runtime import WorkflowRuntimeService
+
+                    WorkflowRuntimeService.ensure_instance(application, user=request.user if request else None)
+                except Exception:
+                    # Keep application creation resilient; workflow enforcement happens on actions.
+                    pass
+
         return application
 
     def update(self, instance, validated_data):
@@ -481,6 +507,12 @@ class ProgramEligibilitySnapshotSerializer(serializers.Serializer):
     max_age = serializers.IntegerField(allow_null=True)
 
 
+class EligibilityRuleSetSnapshotSerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    name = serializers.CharField()
+    schema_version = serializers.IntegerField()
+
+
 class ProgramCheckEligibilityResponseSerializer(serializers.Serializer):
     """Response for ``GET /api/programs/{id}/check_eligibility/`` (always HTTP 200 for rule outcome)."""
 
@@ -493,6 +525,9 @@ class ProgramCheckEligibilityResponseSerializer(serializers.Serializer):
     rules = EligibilityRuleOutcomeSchemaSerializer(many=True)
     schema_version = serializers.IntegerField()
     program = ProgramEligibilitySnapshotSerializer(required=False, allow_null=True)
+    application_context = serializers.DictField(required=False)
+    ruleset = EligibilityRuleSetSnapshotSerializer(required=False, allow_null=True)
+    using_ruleset = serializers.BooleanField(required=False)
 
 
 class CalendarEventSerializer(serializers.Serializer):

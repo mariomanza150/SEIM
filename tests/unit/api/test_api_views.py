@@ -6,6 +6,8 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from accounts.models import Profile
+from exchange.models import Application
 from exchange.models import ApplicationStatus, Program
 
 
@@ -38,6 +40,27 @@ class TestAPIViews(TestCase):
             name="draft",
             defaults={"order": 1}
         )
+
+        Profile.objects.get_or_create(user=self.user)
+
+    def test_program_check_eligibility_includes_application_context(self):
+        self.client.force_authenticate(user=self.user)
+        application = Application.objects.create(
+            program=self.program,
+            student=self.user,
+            status=self.application_status,
+        )
+        response = self.client.get(
+            f"/api/programs/{self.program.id}/check_eligibility/",
+            {"application": str(application.id)},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("schema_version", response.data)
+        self.assertEqual(response.data["schema_version"], 6)
+        self.assertIn("application_context", response.data)
+        ctx = response.data["application_context"]
+        self.assertEqual(ctx["application_id"], str(application.id))
+        self.assertIn("document_checklist", ctx)
 
     def test_api_schema(self):
         """Test API schema endpoint"""
