@@ -156,7 +156,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| _None_ |  |  |  |  |
+| OpenAPI (Spectacular) operation docs for notification routing overrides CRUD | `notifications`, `api` | In progress | 2026-04-16 | agent |
 
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
