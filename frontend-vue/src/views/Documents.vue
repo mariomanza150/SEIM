@@ -63,7 +63,7 @@
                 @click="advancedFiltersOpen = !advancedFiltersOpen"
               >
                 <i class="bi" :class="advancedFiltersOpen ? 'bi-chevron-up' : 'bi-chevron-down'" aria-hidden="true"></i>
-                <span class="ms-1">Advanced filters</span>
+                <span class="ms-1">{{ t('documentsPage.advancedFiltersToggle') }}</span>
               </button>
             </div>
             <div v-if="isStaff && advancedFiltersOpen" class="col-12 border-top pt-3 mt-2">

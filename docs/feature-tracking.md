@@ -95,6 +95,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Vue i18n: Application form notAvailable for dates | `frontend-vue` | Implemented | 2026-04-09 | `applicationFormPage.notAvailable` (en/es); `formatDate` / `calculateDuration` in `ApplicationForm.vue` (was `applicationsPage.notAvailable`). Vitest: `ApplicationForm.spec.js` (missing program dates). |
 | Vue i18n: `useStaffSavedPresets` (shared staff presets) | `frontend-vue` | Implemented | 2026-04-09 | `savedPresets.*` in locales; composable uses `useI18n` for save/remove/default toasts, errors, and `confirmRemove`. Vitest: `useStaffSavedPresets.spec.js`. |
 | Vue i18n: Coordinator review queue | `frontend-vue` | Implemented | 2026-04-09 | `reviewQueuePage.*` (incl. `status.*`, sort labels, `clearFilters`, saved-search preset UI) + `savedPresets` / `route.names`; list pagination labels: root `pagination.*`. Vitest: `CoordinatorReviewQueue.spec.js` (en/es filter copy + multi-page). |
+| Vue i18n: Advanced filters toggle (review queue + staff documents) | `frontend-vue` | Implemented | 2026-04-16 | Collapsible preset row toggle: `reviewQueuePage.advancedFiltersToggle`, `documentsPage.advancedFiltersToggle` (en/es). Vitest: `CoordinatorReviewQueue.spec.js`, `Documents.spec.js`. |
 | Vue i18n: Review queue status/sort/clear namespaced | `frontend-vue` | Implemented | 2026-04-09 | Queue filter status options, sort options, clear button, and `formatStatus` use `reviewQueuePage` (was `applicationsPage`). |
 | Vue i18n: Coordinator workload view | `frontend-vue` | Implemented | 2026-04-09 | `workloadPage.*` (incl. `pageSubtitleStatusSubmitted` / `pageSubtitleStatusUnderReview`) + `route.names`; `CoordinatorWorkload.vue` breadcrumbs, subtitle, cards, admin table, loading/error. Vitest: `CoordinatorWorkload.spec.js` (en + es subtitle highlights). |
 | Vue i18n: Coordinator workload subtitle status labels | `frontend-vue` | Implemented | 2026-04-09 | Subtitle queue-depth labels namespaced under `workloadPage` (was `applicationsPage.status.submitted` / `under_review`). |
@@ -157,7 +158,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Vue i18n: Advanced filters toggle (review queue + staff documents) | `frontend-vue` | In progress | 2026-04-16 | agent |
+| _None_ |  |  |  |  |
 
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
@@ -231,5 +232,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-04-16 — feature loop: OpenAPI `@extend_schema_view` for `NotificationRoutingOverrideViewSet`; prior: notification task tests + `DEFAULT_FROM_EMAIL`. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
+*Last updated: 2026-04-16 — feature loop: Vue i18n **Advanced filters** toggle (review queue + staff documents); prior: OpenAPI overrides ViewSet. QA: [`manual-qa-issues.md`](manual-qa-issues.md). Matrix: [`feature-test-tracking.md`](feature-test-tracking.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*  
