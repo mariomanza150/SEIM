@@ -3,8 +3,8 @@
  * Provides automated accessibility testing and WCAG compliance checking
  */
 
-import { SEIM_LOGGER } from './logger.js';
-import { SEIM_ERROR_HANDLER } from './error-handler.js';
+import { logger } from './logger.js';
+import { errorHandler } from './error-handler.js';
 
 class AccessibilityTester {
     constructor() {
@@ -88,14 +88,14 @@ class AccessibilityTester {
     }
     
     init() {
-        SEIM_LOGGER.info('Accessibility Tester initialized');
+        logger.info('Accessibility Tester initialized');
     }
     
     /**
      * Run comprehensive accessibility test
      */
     async runFullTest() {
-        SEIM_LOGGER.info('Starting comprehensive accessibility test');
+        logger.info('Starting comprehensive accessibility test');
         
         this.results = {
             passed: [],
@@ -112,7 +112,7 @@ class AccessibilityTester {
                 const result = await rule.test.call(this);
                 this.addResult(ruleId, rule.name, result);
             } catch (error) {
-                SEIM_ERROR_HANDLER.handleError(error, { context: 'Accessibility Test', ruleId });
+                errorHandler.handleError(error, { context: 'Accessibility Test', ruleId });
                 this.addResult(ruleId, rule.name, { passed: false, issues: [error.message] });
             }
         }
@@ -123,7 +123,7 @@ class AccessibilityTester {
         const endTime = performance.now();
         const duration = endTime - startTime;
         
-        SEIM_LOGGER.info(`Accessibility test completed in ${duration.toFixed(2)}ms`);
+        logger.info(`Accessibility test completed in ${duration.toFixed(2)}ms`);
         
         return this.results;
     }

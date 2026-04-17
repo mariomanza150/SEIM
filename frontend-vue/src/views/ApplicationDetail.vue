@@ -1,19 +1,26 @@
 <template>
   <div class="application-detail">
-    <!-- Breadcrumb -->
-    <nav :aria-label="t('applicationDetailPage.breadcrumbAria')">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-        </li>
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Applications' }">{{ t('route.names.Applications') }}</router-link>
-        </li>
-        <li class="breadcrumb-item active">{{
-          programDisplayName(application) || t('applicationDetailPage.loadingProgram')
-        }}</li>
-      </ol>
-    </nav>
+    <div class="container-fluid mt-4">
+      <!-- Breadcrumb -->
+      <nav :aria-label="t('applicationDetailPage.breadcrumbAria')">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item">
+            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
+          </li>
+          <li class="breadcrumb-item">
+            <router-link :to="{ name: 'Applications' }">{{ t('route.names.Applications') }}</router-link>
+          </li>
+          <li
+            class="breadcrumb-item active seim-breadcrumb-truncate"
+            aria-current="page"
+            :title="programDisplayName(application) || t('applicationDetailPage.loadingProgram')"
+          >
+            <span class="seim-breadcrumb-truncate__text">
+              {{ programDisplayName(application) || t('applicationDetailPage.loadingProgram') }}
+            </span>
+          </li>
+        </ol>
+      </nav>
 
       <!-- Loading -->
       <div v-if="loading" class="text-center py-5">
@@ -1036,6 +1043,20 @@ onBeforeUnmount(() => {
 .application-detail {
   min-height: 100vh;
   background-color: var(--seim-app-bg);
+}
+
+.seim-breadcrumb-truncate {
+  max-width: min(520px, 70vw);
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+.seim-breadcrumb-truncate__text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .timeline {
