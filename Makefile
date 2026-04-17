@@ -469,7 +469,8 @@ build-prod:
 	docker-compose -f docker-compose.prod.yml build --no-cache
 	@echo "✅ Production images built successfully!"
 
-deploy-prod:
+deploy-prod: build-prod quality-check
+		@echo "🚀 Deploying to production..."
 	@echo "🚀 Deploying to production..."
 	@if [ ! -f .env.prod ]; then \
 		echo "❌ Production environment file .env.prod not found!"; \

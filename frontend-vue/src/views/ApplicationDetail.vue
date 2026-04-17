@@ -1,6 +1,6 @@
 <template>
   <div class="application-detail">
-    <div class="container-fluid mt-4">
+  <div class="container-fluid mt-4">
       <!-- Breadcrumb -->
       <nav :aria-label="t('applicationDetailPage.breadcrumbAria')">
         <ol class="breadcrumb">
@@ -626,7 +626,7 @@
           </div>
         </div>
       </div>
-  </div>
+  </div></div>
 </template>
 
 <script setup>
