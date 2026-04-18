@@ -271,11 +271,22 @@ class ExchangeAgreement(UUIDModel, TimeStampedModel):
     )
     partner_institution_name = models.CharField(max_length=255)
     partner_country = models.CharField(max_length=120, blank=True, default="")
-    partner_reference_id = models.CharField(
-        max_length=120,
+    required_gpa = models.FloatField(
+        null=True, blank=True, help_text=_("Minimum GPA required for the agreement.")
+    )
+    language_requirements = models.JSONField(
+        default=list, blank=True, help_text=_("List of required languages and levels, e.g., [{'lang': 'French', 'level': 'B2'}]")
+    )
+    custom_tags = models.CharField(
+        max_length=50,
         blank=True,
-        default="",
-        help_text=_("Partner’s own agreement or contract reference, if any."),
+        help_text=_("Custom tags restricted to 'Foreign Language' or 'Habla Hispana'.")
+    )
+    application_limit = models.PositiveIntegerField(
+        null=True, blank=True, help_text=_("Maximum number of applications permitted under this agreement.")
+    )
+    notify_on_limit_reached = models.BooleanField(
+        default=True, help_text=_("If true, an alert is sent when the application limit is reached.")
     )
     internal_reference = models.CharField(
         max_length=64,
