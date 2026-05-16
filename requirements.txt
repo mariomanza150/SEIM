@@ -32,7 +32,7 @@ reportlab==4.4.5
 drf-spectacular==0.29.0
 
 # Production and Deployment
-gunicorn==23.0.0
+gunicorn==25.3.0
 whitenoise==6.6.0
 sentry-sdk==1.40.0
 

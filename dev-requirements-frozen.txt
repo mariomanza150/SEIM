@@ -58,7 +58,7 @@ flake8-docstrings==1.7.0
 flake8-quotes==3.4.0
 flake8_import_order==0.19.2
 funcy==2.0
-gunicorn==23.0.0
+gunicorn==25.3.0
 identify==2.6.12
 idna==3.10
 imagesize==1.4.1
