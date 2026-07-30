@@ -87,7 +87,7 @@ class ExchangeAgreementAdmin(admin.ModelAdmin):
         "title",
         "partner_institution_name",
         "internal_reference",
-        "partner_reference_id",
+        "custom_tags",
         "notes",
     )
     filter_horizontal = ("programs",)
@@ -104,12 +104,18 @@ class ExchangeAgreementAdmin(admin.ModelAdmin):
         (None, {"fields": ("title", "status", "agreement_type")}),
         (
             "Partner",
+            {"fields": ("partner_institution_name", "partner_country")},
+        ),
+        (
+            "Eligibility & limits",
             {
                 "fields": (
-                    "partner_institution_name",
-                    "partner_country",
-                    "partner_reference_id",
-                )
+                    "required_gpa",
+                    "language_requirements",
+                    "custom_tags",
+                    "application_limit",
+                    "notify_on_limit_reached",
+                ),
             },
         ),
         ("Coverage", {"fields": ("programs",)}),
