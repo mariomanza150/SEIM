@@ -95,11 +95,14 @@ jobs:
 
       - name: Create .env file
         run: |
+          # Overwrite Compose hostname ``db`` from env.example; django-environ keeps the first value.
           cp env.example .env
-          echo "DATABASE_URL=postgresql://seimuser:seimpass@localhost:5432/seim_e2e" >> .env
-          echo "REDIS_URL=redis://localhost:6379/0" >> .env
+          sed -i 's#@db:5432/seim#@localhost:5432/seim_e2e#g' .env
+          sed -i 's#redis://redis:6379#redis://localhost:6379#g' .env
           echo "DEBUG=false" >> .env
           echo "DJANGO_SETTINGS_MODULE=seim.settings.test" >> .env
+          echo "CELERY_BROKER_URL=redis://localhost:6379/0" >> .env
+          echo "CELERY_RESULT_BACKEND=redis://localhost:6379/0" >> .env
 
       - name: Run migrations
         run: python manage.py migrate --noinput
