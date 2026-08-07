@@ -30,6 +30,10 @@ jobs:
           REDIS_URL=redis://redis:6379/0
           ALLOWED_HOSTS=localhost,127.0.0.1
           DJANGO_SETTINGS_MODULE=seim.settings.test
+          EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend
+          AWS_ACCESS_KEY_ID=
+          AWS_SECRET_ACCESS_KEY=
+          AWS_STORAGE_BUCKET_NAME=
           EOF
 
       - name: Build images

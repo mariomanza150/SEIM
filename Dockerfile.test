@@ -25,6 +25,12 @@ RUN pip install --upgrade pip && \
 # Copy project files
 COPY . .
 
+# Build-time Django commands must not require development secrets (AWS/SMTP/.env).
+ENV DJANGO_SETTINGS_MODULE=seim.settings.test \
+    SECRET_KEY=build-time-placeholder-not-for-runtime \
+    DEBUG=false \
+    TESTING=true
+
 # Match CI: compile locale catalogs (requires gettext)
 RUN python manage.py compilemessages -l de -l es -l fr
 

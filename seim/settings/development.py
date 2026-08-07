@@ -191,10 +191,10 @@ CACHE_MIDDLEWARE_ALIAS = "default"
 #     'django.middleware.cache.FetchFromCacheMiddleware',  # Must be last
 # ]
 
-# AWS S3 config stub
-AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
+# AWS S3 config stub (optional in local/dev; production settings still require real values)
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID", default="")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY", default="")
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="")
 
 # Development tools
 # INSTALLED_APPS += ['livereload']  # Uncomment to enable livereload.js injection for hot reloading
