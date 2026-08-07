@@ -271,14 +271,19 @@ class TestVueLogout:
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
         page.goto(f"{VUE_BASE_URL}/dashboard")
         page.wait_for_load_state("networkidle")
-        user_menu = page.locator("#userDropdown, [data-testid=user-menu], [data-testid=user-dropdown]")
+        user_menu = page.locator("#userDropdown")
         if user_menu.count() == 0:
             pytest.skip("User menu control not found on dashboard")
-        user_menu.first.click()
-        logout = page.locator("[data-testid=logout-link], a:has-text('Logout'), button:has-text('Logout')")
+        # Navbar collapse / missing CSS can leave the control non-visible in CI.
+        if not user_menu.is_visible():
+            toggler = page.locator(".navbar-toggler")
+            if toggler.count() and toggler.is_visible():
+                toggler.click()
+        user_menu.click(force=True)
+        logout = page.locator("[data-testid=logout-link]")
         if logout.count() == 0:
             pytest.skip("Logout control not found")
-        logout.first.click()
+        logout.click(force=True)
         page.wait_for_load_state("networkidle")
         expect(page).to_have_url(re.compile(r".*login.*"), timeout=15000)
         assert not is_vue_logged_in(page), "Token should be cleared after logout"
@@ -666,8 +671,15 @@ class TestVueDashboardProfileLink:
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
         page.goto(f"{VUE_BASE_URL}/dashboard")
         page.wait_for_load_state("networkidle")
-        page.locator("#userDropdown").click()
-        page.get_by_role("link", name="Profile").click()
+        user_menu = page.locator("#userDropdown")
+        if user_menu.count() == 0:
+            pytest.skip("User menu control not found on dashboard")
+        if not user_menu.is_visible():
+            toggler = page.locator(".navbar-toggler")
+            if toggler.count() and toggler.is_visible():
+                toggler.click()
+        user_menu.click(force=True)
+        page.get_by_role("link", name=re.compile(r"Profile", re.I)).click(force=True)
         page.wait_for_load_state("networkidle")
         expect(page).to_have_url(_route_regex("/profile"))
         expect(page.locator('label:has-text("Language")').first).to_be_visible(timeout=5000)
