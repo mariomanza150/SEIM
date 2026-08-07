@@ -109,8 +109,7 @@ jobs:
 
       - name: Create test data
         run: |
-          python manage.py create_test_users
-          python manage.py populate_test_data
+          python manage.py seed_demo_readiness
 
       - name: Collect static files
         run: python manage.py collectstatic --noinput
