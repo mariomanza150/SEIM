@@ -17,21 +17,23 @@ class Document(UUIDModel, TimeStampedModel):
     application = models.ForeignKey("exchange.Application", on_delete=models.CASCADE)
     type = models.ForeignKey(DocumentType, on_delete=models.CASCADE)
     file = models.FileField(upload_to="documents/")
-    uploaded_by = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="uploaded_documents")
+    uploaded_by = models.ForeignKey(
+        "accounts.User", on_delete=models.CASCADE, related_name="uploaded_documents"
+    )
     is_valid = models.BooleanField(default=False)
     validated_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         indexes = [
-            models.Index(fields=['application', 'type'], name='doc_app_type_idx'),
-            models.Index(fields=['uploaded_by'], name='doc_uploaded_by_idx'),
-            models.Index(fields=['is_valid'], name='doc_is_valid_idx'),
-            models.Index(fields=['validated_at'], name='doc_validated_at_idx'),
-            models.Index(fields=['-created_at'], name='doc_created_desc_idx'),
+            models.Index(fields=["application", "type"], name="doc_app_type_idx"),
+            models.Index(fields=["uploaded_by"], name="doc_uploaded_by_idx"),
+            models.Index(fields=["is_valid"], name="doc_is_valid_idx"),
+            models.Index(fields=["validated_at"], name="doc_validated_at_idx"),
+            models.Index(fields=["-created_at"], name="doc_created_desc_idx"),
         ]
-        ordering = ['-created_at']
-        verbose_name = 'Document'
-        verbose_name_plural = 'Documents'
+        ordering = ["-created_at"]
+        verbose_name = "Document"
+        verbose_name_plural = "Documents"
 
 
 class DocumentValidation(UUIDModel, TimeStampedModel):
@@ -107,7 +109,9 @@ class ExchangeAgreementDocument(UUIDModel, TimeStampedModel):
         null=True,
         blank=True,
         related_name="successors",
-        help_text=_("Prior upload this file replaces (keeps history). Same agreement and category."),
+        help_text=_(
+            "Prior upload this file replaces (keeps history). Same agreement and category."
+        ),
     )
 
     class Meta:

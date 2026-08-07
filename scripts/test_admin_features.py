@@ -18,16 +18,18 @@ from datetime import date, timedelta
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'seim.settings.development')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "seim.settings.development")
 import django
+
 django.setup()
 
-from django.contrib.auth import get_user_model
-from exchange.models import Program, Application, ApplicationStatus
-from exchange.admin import ProgramAdmin, ApplicationAdmin
-from accounts.models import Profile
 from django.contrib.admin.sites import AdminSite
+from django.contrib.auth import get_user_model
 from django.http import HttpRequest
+
+from accounts.models import Profile
+from exchange.admin import ApplicationAdmin, ProgramAdmin
+from exchange.models import Application, ApplicationStatus, Program
 
 User = get_user_model()
 
@@ -38,7 +40,7 @@ print()
 
 # Clean up any existing test data
 print("Cleaning up existing test data...")
-User.objects.filter(username__in=['teststudent', 'ineligible', 'admin']).delete()
+User.objects.filter(username__in=["teststudent", "ineligible", "admin"]).delete()
 Program.objects.filter(name__contains="Erasmus Exchange 2025").delete()
 Program.objects.filter(name__contains="Test Program Inactive").delete()
 print("✓ Cleanup complete")
@@ -68,7 +70,7 @@ program = Program.objects.create(
     min_age=18,
     max_age=30,
     auto_reject_ineligible=False,
-    recurring=True
+    recurring=True,
 )
 
 print(f"✓ Created program: {program.name} (ID: {program.id})")
@@ -82,7 +84,7 @@ print("Test 2: Testing eligibility_summary display method...")
 print("-" * 80)
 
 eligibility_html = program_admin.eligibility_summary(program)
-print(f"✓ Eligibility Summary HTML generated:")
+print("✓ Eligibility Summary HTML generated:")
 print(f"  {eligibility_html}")
 print()
 
@@ -99,9 +101,7 @@ print("Test 4: Creating test student with profile...")
 print("-" * 80)
 
 student = User.objects.create_user(
-    username="teststudent",
-    email="student@test.edu",
-    password="testpass123"
+    username="teststudent", email="student@test.edu", password="testpass123"
 )
 
 # Update profile
@@ -123,14 +123,11 @@ print("Test 5: Creating test application...")
 print("-" * 80)
 
 draft_status, _ = ApplicationStatus.objects.get_or_create(
-    name="draft",
-    defaults={'order': 1}
+    name="draft", defaults={"order": 1}
 )
 
 application = Application.objects.create(
-    program=program,
-    student=student,
-    status=draft_status
+    program=program, student=student, status=draft_status
 )
 
 print(f"✓ Created application: {application.id}")
@@ -150,7 +147,9 @@ print("-" * 80)
 
 details_html = application_admin.eligibility_check_details(application)
 print(f"✓ Eligibility Details HTML generated (length: {len(details_html)} chars)")
-print(f"  Contains 'Student meets all eligibility': {'yes' if 'meets all eligibility' in details_html else 'no'}")
+print(
+    f"  Contains 'Student meets all eligibility': {'yes' if 'meets all eligibility' in details_html else 'no'}"
+)
 print()
 
 # Test 8: Test clone_programs action
@@ -159,16 +158,16 @@ print("-" * 80)
 
 # Create mock request with message support
 from unittest.mock import MagicMock
+
 request = HttpRequest()
-request.user = User.objects.filter(is_staff=True).first() or User.objects.create_superuser(
-    username="admin",
-    email="admin@test.edu",
-    password="admin123"
+request.user = User.objects.filter(
+    is_staff=True
+).first() or User.objects.create_superuser(
+    username="admin", email="admin@test.edu", password="admin123"
 )
 request._messages = MagicMock()
 
 # Clone the program
-from django.db.models import QuerySet
 queryset = Program.objects.filter(id=program.id)
 
 initial_count = Program.objects.count()
@@ -176,7 +175,9 @@ print(f"  Programs before clone: {initial_count}")
 
 # Execute clone action (mock message_user to avoid middleware requirement)
 original_message_user = program_admin.message_user
-program_admin.message_user = lambda req, msg, level=None: print(f"  Admin message: {msg}")
+program_admin.message_user = lambda req, msg, level=None: print(
+    f"  Admin message: {msg}"
+)
 
 program_admin.clone_programs(request, queryset)
 program_admin.message_user = original_message_user
@@ -191,7 +192,9 @@ if cloned:
     print(f"✓ Cloned program found: {cloned.name}")
     print(f"  - Active: {cloned.is_active} (should be False)")
     print(f"  - Min GPA: {cloned.min_gpa} (should match original: {program.min_gpa})")
-    print(f"  - Language Level: {cloned.min_language_level} (should match: {program.min_language_level})")
+    print(
+        f"  - Language Level: {cloned.min_language_level} (should match: {program.min_language_level})"
+    )
 print()
 
 # Test 9: Test ineligible student
@@ -199,9 +202,7 @@ print("Test 9: Testing ineligible student display...")
 print("-" * 80)
 
 ineligible_student = User.objects.create_user(
-    username="ineligible",
-    email="ineligible@test.edu",
-    password="testpass123"
+    username="ineligible", email="ineligible@test.edu", password="testpass123"
 )
 
 ineligible_profile = Profile.objects.get(user=ineligible_student)
@@ -212,9 +213,7 @@ ineligible_profile.date_of_birth = date(2010, 1, 1)  # Too young
 ineligible_profile.save()
 
 ineligible_app = Application.objects.create(
-    program=program,
-    student=ineligible_student,
-    status=draft_status
+    program=program, student=ineligible_student, status=draft_status
 )
 
 ineligible_status = application_admin.eligibility_status(ineligible_app)
@@ -224,7 +223,9 @@ print()
 
 ineligible_details = application_admin.eligibility_check_details(ineligible_app)
 print(f"✓ Ineligible details HTML generated (length: {len(ineligible_details)} chars)")
-print(f"  Contains 'does not meet': {'yes' if 'does not meet' in ineligible_details else 'no'}")
+print(
+    f"  Contains 'does not meet': {'yes' if 'does not meet' in ineligible_details else 'no'}"
+)
 print()
 
 # Test 10: Test bulk operations
@@ -237,28 +238,40 @@ inactive_program = Program.objects.create(
     description="Test",
     start_date=date.today(),
     end_date=date.today() + timedelta(days=90),
-    is_active=False
+    is_active=False,
 )
 
-print(f"  Created inactive program: {inactive_program.name} (active={inactive_program.is_active})")
+print(
+    f"  Created inactive program: {inactive_program.name} (active={inactive_program.is_active})"
+)
 
 # Test activate action (mock message_user)
-program_admin.message_user = lambda req, msg, level=None: print(f"  Admin message: {msg}")
+program_admin.message_user = lambda req, msg, level=None: print(
+    f"  Admin message: {msg}"
+)
 
 queryset = Program.objects.filter(id=inactive_program.id)
 program_admin.activate_programs(request, queryset)
 inactive_program.refresh_from_db()
 
-print(f"✓ After activate action: {inactive_program.name} (active={inactive_program.is_active})")
-print(f"  Expected: True, Got: {inactive_program.is_active} - {'PASS' if inactive_program.is_active else 'FAIL'}")
+print(
+    f"✓ After activate action: {inactive_program.name} (active={inactive_program.is_active})"
+)
+print(
+    f"  Expected: True, Got: {inactive_program.is_active} - {'PASS' if inactive_program.is_active else 'FAIL'}"
+)
 print()
 
 # Test deactivate action
 program_admin.deactivate_programs(request, queryset)
 inactive_program.refresh_from_db()
 
-print(f"✓ After deactivate action: {inactive_program.name} (active={inactive_program.is_active})")
-print(f"  Expected: False, Got: {inactive_program.is_active} - {'PASS' if not inactive_program.is_active else 'FAIL'}")
+print(
+    f"✓ After deactivate action: {inactive_program.name} (active={inactive_program.is_active})"
+)
+print(
+    f"  Expected: False, Got: {inactive_program.is_active} - {'PASS' if not inactive_program.is_active else 'FAIL'}"
+)
 
 # Restore original method
 program_admin.message_user = original_message_user
@@ -298,4 +311,3 @@ print("1. Start the server: docker-compose up -d")
 print("2. Navigate to: http://localhost:8000/admin/exchange/program/")
 print("3. Login and test features visually")
 print()
-

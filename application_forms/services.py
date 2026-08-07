@@ -36,41 +36,41 @@ class DynamicFormFromSchema(forms.Form):
             return
 
         schema = self.form_type.schema
-        properties = schema.get('properties', {})
-        required_fields = schema.get('required', [])
+        properties = schema.get("properties", {})
+        required_fields = schema.get("required", [])
 
         for field_name, field_config in properties.items():
-            field_type = field_config.get('type', 'string')
-            field_title = field_config.get('title', field_name)
-            field_help = field_config.get('description', '')
+            field_type = field_config.get("type", "string")
+            field_title = field_config.get("title", field_name)
+            field_help = field_config.get("description", "")
             is_required = field_name in required_fields
 
             # Create appropriate Django form field based on JSON schema type
-            if field_type == 'string':
-                field_format = field_config.get('format')
+            if field_type == "string":
+                field_format = field_config.get("format")
 
-                if field_format == 'email':
+                if field_format == "email":
                     field_class = forms.EmailField
-                elif field_format == 'url':
+                elif field_format == "url":
                     field_class = forms.URLField
-                elif field_format == 'date':
+                elif field_format == "date":
                     field_class = forms.DateField
-                elif field_format == 'datetime':
+                elif field_format == "datetime":
                     field_class = forms.DateTimeField
-                elif field_config.get('enum'):
+                elif field_config.get("enum"):
                     # For enum, use ChoiceField
                     field_class = forms.ChoiceField
-                    choices = [(val, val) for val in field_config.get('enum', [])]
+                    choices = [(val, val) for val in field_config.get("enum", [])]
                     self.fields[field_name] = field_class(
                         label=field_title,
                         help_text=field_help,
                         required=is_required,
-                        choices=choices
+                        choices=choices,
                     )
                     continue
                 else:
                     # Check for maxLength to determine if we need a textarea
-                    max_length = field_config.get('maxLength', 200)
+                    max_length = field_config.get("maxLength", 200)
                     if max_length > 200:
                         field_class = forms.CharField
                         self.fields[field_name] = field_class(
@@ -78,38 +78,40 @@ class DynamicFormFromSchema(forms.Form):
                             help_text=field_help,
                             required=is_required,
                             max_length=max_length,
-                            widget=forms.Textarea(attrs={'rows': 4})
+                            widget=forms.Textarea(attrs={"rows": 4}),
                         )
                         continue
                     else:
                         field_class = forms.CharField
 
-            elif field_type == 'number' or field_type == 'integer':
-                field_class = forms.IntegerField if field_type == 'integer' else forms.FloatField
-                min_value = field_config.get('minimum')
-                max_value = field_config.get('maximum')
+            elif field_type == "number" or field_type == "integer":
+                field_class = (
+                    forms.IntegerField if field_type == "integer" else forms.FloatField
+                )
+                min_value = field_config.get("minimum")
+                max_value = field_config.get("maximum")
                 self.fields[field_name] = field_class(
                     label=field_title,
                     help_text=field_help,
                     required=is_required,
                     min_value=min_value,
-                    max_value=max_value
+                    max_value=max_value,
                 )
                 continue
 
-            elif field_type == 'boolean':
+            elif field_type == "boolean":
                 field_class = forms.BooleanField
 
-            elif field_type == 'array':
+            elif field_type == "array":
                 # For arrays, use MultipleChoiceField
                 field_class = forms.MultipleChoiceField
-                items = field_config.get('items', {})
-                choices = [(val, val) for val in items.get('enum', [])]
+                items = field_config.get("items", {})
+                choices = [(val, val) for val in items.get("enum", [])]
                 self.fields[field_name] = field_class(
                     label=field_title,
                     help_text=field_help,
                     required=is_required,
-                    choices=choices
+                    choices=choices,
                 )
                 continue
 
@@ -119,9 +121,7 @@ class DynamicFormFromSchema(forms.Form):
 
             # Create the field
             self.fields[field_name] = field_class(
-                label=field_title,
-                help_text=field_help,
-                required=is_required
+                label=field_title, help_text=field_help, required=is_required
             )
 
 
@@ -134,34 +134,36 @@ class FormSubmissionService:
     def _is_missing_or_empty(field_config, value):
         if value is None:
             return True
-        field_type = field_config.get('type', 'string')
-        if field_type == 'boolean':
+        field_type = field_config.get("type", "string")
+        if field_type == "boolean":
             return False
-        if field_type == 'array':
+        if field_type == "array":
             return not isinstance(value, list) or len(value) == 0
-        if field_type in ('number', 'integer'):
-            return value == ''
+        if field_type in ("number", "integer"):
+            return value == ""
         if isinstance(value, str):
-            return value.strip() == ''
+            return value.strip() == ""
         return False
 
     @staticmethod
     def _validate_response_field_type(field_name, field_config, value):
-        field_type = field_config.get('type')
+        field_type = field_config.get("type")
 
-        if field_type == 'string' and not isinstance(value, str):
-            raise ValidationError(f'{field_name} must be a string')
-        if field_type == 'number' and not isinstance(value, (int, float)):
-            raise ValidationError(f'{field_name} must be a number')
-        if field_type == 'integer' and not isinstance(value, int):
-            raise ValidationError(f'{field_name} must be an integer')
-        if field_type == 'boolean' and not isinstance(value, bool):
-            raise ValidationError(f'{field_name} must be a boolean')
-        if field_type == 'array' and not isinstance(value, list):
-            raise ValidationError(f'{field_name} must be an array')
+        if field_type == "string" and not isinstance(value, str):
+            raise ValidationError(f"{field_name} must be a string")
+        if field_type == "number" and not isinstance(value, int | float):
+            raise ValidationError(f"{field_name} must be a number")
+        if field_type == "integer" and not isinstance(value, int):
+            raise ValidationError(f"{field_name} must be an integer")
+        if field_type == "boolean" and not isinstance(value, bool):
+            raise ValidationError(f"{field_name} must be a boolean")
+        if field_type == "array" and not isinstance(value, list):
+            raise ValidationError(f"{field_name} must be an array")
 
     @staticmethod
-    def create_submission(form_type, submitted_by, responses, program=None, application=None):
+    def create_submission(
+        form_type, submitted_by, responses, program=None, application=None
+    ):
         """
         Create a new form submission.
 
@@ -183,7 +185,7 @@ class FormSubmissionService:
             submitted_by=submitted_by,
             responses=responses,
             program=program,
-            application=application
+            application=application,
         )
 
         # Run model validation
@@ -212,8 +214,8 @@ class FormSubmissionService:
             return True
 
         schema = form_type.schema
-        properties = schema.get('properties', {})
-        required_fields = schema.get('required', [])
+        properties = schema.get("properties", {})
+        required_fields = schema.get("required", [])
         vctx = visibility_context
 
         missing_fields = []
@@ -227,7 +229,9 @@ class FormSubmissionService:
             ):
                 missing_fields.append(field)
         if missing_fields:
-            raise ValidationError(f'Missing required fields: {", ".join(missing_fields)}')
+            raise ValidationError(
+                f"Missing required fields: {', '.join(missing_fields)}"
+            )
 
         for field_name, value in responses.items():
             if field_name not in properties:
@@ -236,7 +240,9 @@ class FormSubmissionService:
             field_config = properties[field_name]
             if not field_effective_visible(form_type, field_name, responses, vctx):
                 continue
-            FormSubmissionService._validate_response_field_type(field_name, field_config, value)
+            FormSubmissionService._validate_response_field_type(
+                field_name, field_config, value
+            )
 
         return True
 
@@ -258,8 +264,8 @@ class FormSubmissionService:
             return True
 
         schema = form_type.schema
-        properties = schema.get('properties', {})
-        required_fields = set(schema.get('required', []))
+        properties = schema.get("properties", {})
+        required_fields = set(schema.get("required", []))
         step_set = set(step_field_names)
         merged = merged_responses if merged_responses is not None else patch_dict
         vctx = visibility_context
@@ -273,7 +279,9 @@ class FormSubmissionService:
         for field_name, value in patch_dict.items():
             field_config = properties[field_name]
             if field_effective_visible(form_type, field_name, merged, vctx):
-                FormSubmissionService._validate_response_field_type(field_name, field_config, value)
+                FormSubmissionService._validate_response_field_type(
+                    field_name, field_config, value
+                )
 
         step_required = []
         for f in step_field_names:
@@ -287,10 +295,14 @@ class FormSubmissionService:
             if field_name not in patch_dict:
                 missing.append(field_name)
                 continue
-            if FormSubmissionService._is_missing_or_empty(properties[field_name], patch_dict[field_name]):
+            if FormSubmissionService._is_missing_or_empty(
+                properties[field_name], patch_dict[field_name]
+            ):
                 missing.append(field_name)
         if missing:
-            raise ValidationError(f'Missing required fields for this step: {", ".join(missing)}')
+            raise ValidationError(
+                f"Missing required fields for this step: {', '.join(missing)}"
+            )
 
         return True
 
@@ -315,5 +327,4 @@ class FormSubmissionService:
         if program:
             queryset = queryset.filter(program=program)
 
-        return queryset.order_by('-submitted_at')
-
+        return queryset.order_by("-submitted_at")

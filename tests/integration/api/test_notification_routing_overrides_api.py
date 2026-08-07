@@ -39,7 +39,9 @@ class TestNotificationRoutingOverridesAPI(APITestCase):
         create_resp = self.client.post(self.list_url, payload, format="json")
         self.assert_response_success(create_resp, status_code=status.HTTP_201_CREATED)
         override_id = create_resp.data["id"]
-        detail_url = reverse("api:notification-routing-override-detail", args=[override_id])
+        detail_url = reverse(
+            "api:notification-routing-override-detail", args=[override_id]
+        )
 
         # List contains it
         list_resp = self.client.get(self.list_url)
@@ -60,5 +62,6 @@ class TestNotificationRoutingOverridesAPI(APITestCase):
         # Delete
         del_resp = self.client.delete(detail_url)
         self.assertEqual(del_resp.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(NotificationRoutingOverride.objects.filter(id=override_id).exists())
-
+        self.assertFalse(
+            NotificationRoutingOverride.objects.filter(id=override_id).exists()
+        )

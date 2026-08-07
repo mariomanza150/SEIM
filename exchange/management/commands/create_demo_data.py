@@ -86,8 +86,8 @@ class Command(BaseCommand):
         # Create admin users
         admin_role = Role.objects.get(name="admin")
         for i in range(2):
-            username = f"admin{i+1}"
-            email = f"admin{i+1}@seim.edu"
+            username = f"admin{i + 1}"
+            email = f"admin{i + 1}@seim.edu"
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
@@ -110,8 +110,8 @@ class Command(BaseCommand):
         # Create coordinator users
         coordinator_role = Role.objects.get(name="coordinator")
         for i in range(3):
-            username = f"coordinator{i+1}"
-            email = f"coordinator{i+1}@seim.edu"
+            username = f"coordinator{i + 1}"
+            email = f"coordinator{i + 1}@seim.edu"
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
@@ -135,8 +135,8 @@ class Command(BaseCommand):
         student_role = Role.objects.get(name="student")
         num_students = max(1, num_users - 5)  # Ensure at least 1 student
         for i in range(num_students):
-            username = f"student{i+1}"
-            email = f"student{i+1}@university.edu"
+            username = f"student{i + 1}"
+            email = f"student{i + 1}@university.edu"
             user, created = User.objects.get_or_create(
                 username=username,
                 defaults={
@@ -263,7 +263,11 @@ class Command(BaseCommand):
             # Generate weights dynamically to match the number of statuses
             num_statuses = len(statuses)
             if num_statuses == 0:
-                self.stdout.write(self.style.ERROR("No application statuses found. Please run create_initial_data first."))
+                self.stdout.write(
+                    self.style.ERROR(
+                        "No application statuses found. Please run create_initial_data first."
+                    )
+                )
                 return applications
 
             # Create more even distribution with slight preference for middle statuses
@@ -276,11 +280,32 @@ class Command(BaseCommand):
             elif num_statuses == 4:
                 status_weights = [0.2, 0.3, 0.3, 0.2]  # Middle statuses more likely
             elif num_statuses == 5:
-                status_weights = [0.15, 0.25, 0.3, 0.25, 0.05]  # Middle statuses more likely
+                status_weights = [
+                    0.15,
+                    0.25,
+                    0.3,
+                    0.25,
+                    0.05,
+                ]  # Middle statuses more likely
             elif num_statuses == 6:
-                status_weights = [0.1, 0.2, 0.25, 0.25, 0.15, 0.05]  # Middle statuses more likely
+                status_weights = [
+                    0.1,
+                    0.2,
+                    0.25,
+                    0.25,
+                    0.15,
+                    0.05,
+                ]  # Middle statuses more likely
             elif num_statuses == 7:
-                status_weights = [0.1, 0.2, 0.25, 0.25, 0.15, 0.03, 0.02]  # Middle statuses more likely
+                status_weights = [
+                    0.1,
+                    0.2,
+                    0.25,
+                    0.25,
+                    0.15,
+                    0.03,
+                    0.02,
+                ]  # Middle statuses more likely
             else:
                 # For more than 7 statuses, create a more even distribution
                 # with slight preference for middle statuses
@@ -308,7 +333,7 @@ class Command(BaseCommand):
 
             if i % 10 == 0:  # Log every 10th application
                 self.stdout.write(
-                    f"  Created application {i+1}/{num_applications}: {student.username} -> {program.name} ({status.name})"
+                    f"  Created application {i + 1}/{num_applications}: {student.username} -> {program.name} ({status.name})"
                 )
 
         return applications
@@ -366,13 +391,13 @@ class Command(BaseCommand):
 
     def create_notifications(self, users, applications):
         """Create notifications for users."""
-        notification_types = list(NotificationType.objects.all())
+        list(NotificationType.objects.all())
 
         for user in users:
             # Create 0-5 notifications per user
             num_notifications = random.randint(0, 5)
             for _i in range(num_notifications):
-                notif_type_choice = random.choice(['in_app', 'email', 'both'])
+                notif_type_choice = random.choice(["in_app", "email", "both"])
 
                 Notification.objects.create(
                     recipient=user,

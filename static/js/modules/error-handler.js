@@ -41,7 +41,7 @@ class ErrorHandler {
      */
     handleApiError(error, context = {}) {
         this.errorCount++;
-        
+
         const errorInfo = {
             type: 'API_ERROR',
             message: error.message,
@@ -126,4 +126,4 @@ class ErrorHandler {
 // Create singleton instance
 const errorHandler = new ErrorHandler();
 
-export { errorHandler, ErrorHandler }; 
+export { errorHandler, ErrorHandler };

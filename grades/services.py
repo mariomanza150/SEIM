@@ -1,4 +1,5 @@
 """Service layer for grade translation logic."""
+
 from typing import Any
 
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
@@ -11,9 +12,7 @@ class GradeTranslationService:
 
     @staticmethod
     def translate_grade(
-        source_grade_value_id: str,
-        target_scale_id: str,
-        fallback_to_gpa: bool = True
+        source_grade_value_id: str, target_scale_id: str, fallback_to_gpa: bool = True
     ) -> GradeValue | None:
         """
         Translate a grade value to a target scale.
@@ -30,14 +29,16 @@ class GradeTranslationService:
             ObjectDoesNotExist: If source grade or target scale not found
         """
         try:
-            source_grade = GradeValue.objects.select_related('grade_scale').get(
+            source_grade = GradeValue.objects.select_related("grade_scale").get(
                 id=source_grade_value_id
             )
-            target_scale = GradeScale.objects.prefetch_related('grade_values').get(
+            target_scale = GradeScale.objects.prefetch_related("grade_values").get(
                 id=target_scale_id
             )
         except GradeValue.DoesNotExist:
-            raise ObjectDoesNotExist(f"Source grade value {source_grade_value_id} not found")
+            raise ObjectDoesNotExist(
+                f"Source grade value {source_grade_value_id} not found"
+            )
         except GradeScale.DoesNotExist:
             raise ObjectDoesNotExist(f"Target grade scale {target_scale_id} not found")
 
@@ -62,16 +63,12 @@ class GradeTranslationService:
 
     @staticmethod
     def _get_direct_translation(
-        source_grade: GradeValue,
-        target_scale: GradeScale
+        source_grade: GradeValue, target_scale: GradeScale
     ) -> GradeValue | None:
         """Get direct translation if it exists."""
         try:
-            translation = GradeTranslation.objects.select_related(
-                'target_grade'
-            ).get(
-                source_grade=source_grade,
-                target_grade__grade_scale=target_scale
+            translation = GradeTranslation.objects.select_related("target_grade").get(
+                source_grade=source_grade, target_grade__grade_scale=target_scale
             )
             return translation.target_grade
         except GradeTranslation.DoesNotExist:
@@ -79,21 +76,20 @@ class GradeTranslationService:
 
     @staticmethod
     def _translate_by_gpa_equivalent(
-        source_grade: GradeValue,
-        target_scale: GradeScale
+        source_grade: GradeValue, target_scale: GradeScale
     ) -> GradeValue | None:
         """Translate using GPA equivalent as intermediate value."""
         gpa_equiv = source_grade.gpa_equivalent
 
         # Find closest GPA equivalent in target scale
-        target_grades = target_scale.grade_values.all().order_by('gpa_equivalent')
+        target_grades = target_scale.grade_values.all().order_by("gpa_equivalent")
 
         if not target_grades:
             return None
 
         # Find the closest match
         closest_grade = None
-        min_diff = float('inf')
+        min_diff = float("inf")
 
         for grade in target_grades:
             diff = abs(grade.gpa_equivalent - gpa_equiv)
@@ -125,8 +121,7 @@ class GradeTranslationService:
 
     @staticmethod
     def convert_gpa_to_scale(
-        gpa_value: float,
-        target_scale_id: str
+        gpa_value: float, target_scale_id: str
     ) -> GradeValue | None:
         """
         Convert a numeric GPA value to a grade in the target scale.
@@ -142,20 +137,20 @@ class GradeTranslationService:
             raise ValidationError("GPA value must be between 0.0 and 4.0")
 
         try:
-            target_scale = GradeScale.objects.prefetch_related('grade_values').get(
+            target_scale = GradeScale.objects.prefetch_related("grade_values").get(
                 id=target_scale_id
             )
         except GradeScale.DoesNotExist as e:
             raise ObjectDoesNotExist(f"Grade scale {target_scale_id} not found") from e
 
-        target_grades = target_scale.grade_values.all().order_by('gpa_equivalent')
+        target_grades = target_scale.grade_values.all().order_by("gpa_equivalent")
 
         if not target_grades:
             return None
 
         # Find closest match
         closest_grade = None
-        min_diff = float('inf')
+        min_diff = float("inf")
 
         for grade in target_grades:
             diff = abs(grade.gpa_equivalent - gpa_value)
@@ -177,7 +172,7 @@ class GradeTranslationService:
             List of dictionaries with translation information
         """
         try:
-            grade_value = GradeValue.objects.select_related('grade_scale').get(
+            grade_value = GradeValue.objects.select_related("grade_scale").get(
                 id=grade_value_id
             )
         except GradeValue.DoesNotExist as e:
@@ -188,26 +183,25 @@ class GradeTranslationService:
         # Get direct translations
         direct_trans = GradeTranslation.objects.filter(
             source_grade=grade_value
-        ).select_related('target_grade', 'target_grade__grade_scale')
+        ).select_related("target_grade", "target_grade__grade_scale")
 
         for trans in direct_trans:
-            translations.append({
-                'target_scale': trans.target_grade.grade_scale.name,
-                'target_scale_code': trans.target_grade.grade_scale.code,
-                'target_grade': trans.target_grade.label,
-                'target_gpa': trans.target_grade.gpa_equivalent,
-                'method': 'direct',
-                'confidence': trans.confidence
-            })
+            translations.append(
+                {
+                    "target_scale": trans.target_grade.grade_scale.name,
+                    "target_scale_code": trans.target_grade.grade_scale.code,
+                    "target_grade": trans.target_grade.label,
+                    "target_gpa": trans.target_grade.gpa_equivalent,
+                    "method": "direct",
+                    "confidence": trans.confidence,
+                }
+            )
 
         return translations
 
     @staticmethod
     def suggest_translation(
-        source_grade_id: str,
-        target_grade_id: str,
-        notes: str = "",
-        user=None
+        source_grade_id: str, target_grade_id: str, notes: str = "", user=None
     ) -> GradeTranslation:
         """
         Create a suggested translation mapping between two grades.
@@ -225,10 +219,10 @@ class GradeTranslationService:
             ValidationError: If translation is invalid
         """
         try:
-            source_grade = GradeValue.objects.select_related('grade_scale').get(
+            source_grade = GradeValue.objects.select_related("grade_scale").get(
                 id=source_grade_id
             )
-            target_grade = GradeValue.objects.select_related('grade_scale').get(
+            target_grade = GradeValue.objects.select_related("grade_scale").get(
                 id=target_grade_id
             )
         except GradeValue.DoesNotExist as e:
@@ -247,11 +241,7 @@ class GradeTranslationService:
         translation, created = GradeTranslation.objects.get_or_create(
             source_grade=source_grade,
             target_grade=target_grade,
-            defaults={
-                'confidence': confidence,
-                'notes': notes,
-                'created_by': user
-            }
+            defaults={"confidence": confidence, "notes": notes, "created_by": user},
         )
 
         if not created:
@@ -269,7 +259,7 @@ class GradeTranslationService:
         student_gpa: float,
         student_scale_id: str,
         required_gpa: float,
-        required_scale_id: str
+        required_scale_id: str,
     ) -> dict[str, Any]:
         """
         Check if student's grade meets program requirement with translation.
@@ -291,8 +281,7 @@ class GradeTranslationService:
 
         # Find student's grade value
         student_grade = GradeValue.objects.filter(
-            grade_scale=student_scale,
-            numeric_value=student_gpa
+            grade_scale=student_scale, numeric_value=student_gpa
         ).first()
 
         if not student_grade:
@@ -303,16 +292,15 @@ class GradeTranslationService:
 
         if not student_grade:
             return {
-                'eligible': False,
-                'reason': 'Student grade not found in grade scale',
-                'student_gpa_equivalent': None,
-                'required_gpa_equivalent': None
+                "eligible": False,
+                "reason": "Student grade not found in grade scale",
+                "student_gpa_equivalent": None,
+                "required_gpa_equivalent": None,
             }
 
         # Find required grade value
         required_grade = GradeValue.objects.filter(
-            grade_scale=required_scale,
-            numeric_value=required_gpa
+            grade_scale=required_scale, numeric_value=required_gpa
         ).first()
 
         if not required_grade:
@@ -322,10 +310,10 @@ class GradeTranslationService:
 
         if not required_grade:
             return {
-                'eligible': False,
-                'reason': 'Required grade not found in grade scale',
-                'student_gpa_equivalent': student_grade.gpa_equivalent,
-                'required_gpa_equivalent': None
+                "eligible": False,
+                "reason": "Required grade not found in grade scale",
+                "student_gpa_equivalent": student_grade.gpa_equivalent,
+                "required_gpa_equivalent": None,
             }
 
         # Compare using GPA equivalents
@@ -335,18 +323,17 @@ class GradeTranslationService:
         eligible = student_gpa_equiv >= required_gpa_equiv
 
         return {
-            'eligible': eligible,
-            'student_grade': student_grade.label,
-            'student_gpa_equivalent': student_gpa_equiv,
-            'required_grade': required_grade.label,
-            'required_gpa_equivalent': required_gpa_equiv,
-            'reason': 'Meets requirement' if eligible else 'Does not meet requirement'
+            "eligible": eligible,
+            "student_grade": student_grade.label,
+            "student_gpa_equivalent": student_gpa_equiv,
+            "required_grade": required_grade.label,
+            "required_gpa_equivalent": required_gpa_equiv,
+            "reason": "Meets requirement" if eligible else "Does not meet requirement",
         }
 
     @staticmethod
     def _find_closest_grade(
-        numeric_value: float,
-        grade_scale: GradeScale
+        numeric_value: float, grade_scale: GradeScale
     ) -> GradeValue | None:
         """Find the closest grade value in a scale."""
         grades = grade_scale.grade_values.all()
@@ -355,7 +342,7 @@ class GradeTranslationService:
             return None
 
         closest_grade = None
-        min_diff = float('inf')
+        min_diff = float("inf")
 
         for grade in grades:
             diff = abs(grade.numeric_value - numeric_value)
@@ -367,10 +354,7 @@ class GradeTranslationService:
 
     @staticmethod
     def bulk_create_translations(
-        source_scale_id: str,
-        target_scale_id: str,
-        mapping: dict[str, str],
-        user=None
+        source_scale_id: str, target_scale_id: str, mapping: dict[str, str], user=None
     ) -> list[GradeTranslation]:
         """
         Create multiple translations at once.
@@ -385,10 +369,10 @@ class GradeTranslationService:
             List of created GradeTranslation objects
         """
         try:
-            source_scale = GradeScale.objects.prefetch_related('grade_values').get(
+            source_scale = GradeScale.objects.prefetch_related("grade_values").get(
                 id=source_scale_id
             )
-            target_scale = GradeScale.objects.prefetch_related('grade_values').get(
+            target_scale = GradeScale.objects.prefetch_related("grade_values").get(
                 id=target_scale_id
             )
         except GradeScale.DoesNotExist as e:
@@ -405,11 +389,10 @@ class GradeTranslationService:
                     str(source_grade.id),
                     str(target_grade.id),
                     notes=f"Bulk created from {source_scale.code} to {target_scale.code}",
-                    user=user
+                    user=user,
                 )
                 translations.append(translation)
             except GradeValue.DoesNotExist:
                 continue  # Skip if grade not found
 
         return translations
-

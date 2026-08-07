@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class VirusScannerError(Exception):
     """Custom exception for virus scanner errors."""
+
     pass
 
 
@@ -40,11 +41,13 @@ class BaseVirusScanner:
 class ClamAVScanner(BaseVirusScanner):
     """ClamAV virus scanner implementation."""
 
-    def __init__(self,
-                 socket_path: str | None = None,
-                 host: str = 'localhost',
-                 port: int = 3310,
-                 timeout: int = 30):
+    def __init__(
+        self,
+        socket_path: str | None = None,
+        host: str = "localhost",
+        port: int = 3310,
+        timeout: int = 30,
+    ):
         """
         Initialize ClamAV scanner.
 
@@ -127,7 +130,7 @@ class ClamAVScanner(BaseVirusScanner):
 class ClamAVCommandLineScanner(BaseVirusScanner):
     """ClamAV command-line scanner implementation (fallback)."""
 
-    def __init__(self, clamscan_path: str = 'clamscan'):
+    def __init__(self, clamscan_path: str = "clamscan"):
         """
         Initialize ClamAV command-line scanner.
 
@@ -152,10 +155,10 @@ class ClamAVCommandLineScanner(BaseVirusScanner):
         try:
             # Run clamscan with specific return codes
             result = subprocess.run(
-                [self.clamscan_path, '--no-summary', '--stdout', file_path],
+                [self.clamscan_path, "--no-summary", "--stdout", file_path],
                 capture_output=True,
                 text=True,
-                timeout=60  # 60 second timeout
+                timeout=60,  # 60 second timeout
             )
 
             if result.returncode == 0:
@@ -172,12 +175,16 @@ class ClamAVCommandLineScanner(BaseVirusScanner):
                 logger.warning(f"Virus detected in {file_path}: {threat_name}")
                 return False, threat_name
             else:
-                raise VirusScannerError(f"ClamAV scan failed with return code {result.returncode}: {result.stderr}")
+                raise VirusScannerError(
+                    f"ClamAV scan failed with return code {result.returncode}: {result.stderr}"
+                )
 
         except subprocess.TimeoutExpired:
             raise VirusScannerError(f"ClamAV scan timed out for file: {file_path}")
         except FileNotFoundError:
-            raise VirusScannerError(f"ClamAV executable not found: {self.clamscan_path}")
+            raise VirusScannerError(
+                f"ClamAV executable not found: {self.clamscan_path}"
+            )
         except Exception as e:
             raise VirusScannerError(f"Unexpected error during virus scan: {e}")
 
@@ -229,23 +236,23 @@ class VirusScannerFactory:
             Configured virus scanner instance
         """
         if scanner_type is None:
-            scanner_type = getattr(settings, 'VIRUS_SCANNER_TYPE', 'clamav')
+            scanner_type = getattr(settings, "VIRUS_SCANNER_TYPE", "clamav")
 
-        if scanner_type == 'clamav':
+        if scanner_type == "clamav":
             return ClamAVScanner(
-                socket_path=kwargs.get('socket_path'),
-                host=kwargs.get('host', 'localhost'),
-                port=kwargs.get('port', 3310),
-                timeout=kwargs.get('timeout', 30)
+                socket_path=kwargs.get("socket_path"),
+                host=kwargs.get("host", "localhost"),
+                port=kwargs.get("port", 3310),
+                timeout=kwargs.get("timeout", 30),
             )
-        elif scanner_type == 'clamav_cli':
+        elif scanner_type == "clamav_cli":
             return ClamAVCommandLineScanner(
-                clamscan_path=kwargs.get('clamscan_path', 'clamscan')
+                clamscan_path=kwargs.get("clamscan_path", "clamscan")
             )
-        elif scanner_type == 'mock':
+        elif scanner_type == "mock":
             return MockVirusScanner(
-                simulate_infected=kwargs.get('simulate_infected', False),
-                threat_name=kwargs.get('threat_name', 'TestVirus')
+                simulate_infected=kwargs.get("simulate_infected", False),
+                threat_name=kwargs.get("threat_name", "TestVirus"),
             )
         else:
             raise ValueError(f"Unknown virus scanner type: {scanner_type}")
@@ -260,11 +267,13 @@ def get_virus_scanner() -> BaseVirusScanner:
     global _virus_scanner
 
     if _virus_scanner is None:
-        scanner_type = getattr(settings, 'VIRUS_SCANNER_TYPE', 'clamav')
-        scanner_config = getattr(settings, 'VIRUS_SCANNER_CONFIG', {})
+        scanner_type = getattr(settings, "VIRUS_SCANNER_TYPE", "clamav")
+        scanner_config = getattr(settings, "VIRUS_SCANNER_CONFIG", {})
 
         try:
-            _virus_scanner = VirusScannerFactory.create_scanner(scanner_type, **scanner_config)
+            _virus_scanner = VirusScannerFactory.create_scanner(
+                scanner_type, **scanner_config
+            )
         except Exception as e:
             logger.error(f"Failed to initialize virus scanner: {e}")
             # Fallback to mock scanner in case of configuration issues
@@ -301,7 +310,7 @@ def scan_file_for_viruses(file_path: str) -> tuple[bool, str | None]:
     except VirusScannerError as e:
         logger.error(f"Virus scan error: {e}")
         # In production, you might want to fail securely
-        if getattr(settings, 'VIRUS_SCAN_FAIL_SECURE', True):
+        if getattr(settings, "VIRUS_SCAN_FAIL_SECURE", True):
             raise ValidationError("Virus scan failed. File rejected for security.")
         else:
             # Allow file through if scan fails (not recommended for production)
@@ -309,7 +318,7 @@ def scan_file_for_viruses(file_path: str) -> tuple[bool, str | None]:
             return True, None
     except Exception as e:
         logger.error(f"Unexpected error during virus scan: {e}")
-        if getattr(settings, 'VIRUS_SCAN_FAIL_SECURE', True):
+        if getattr(settings, "VIRUS_SCAN_FAIL_SECURE", True):
             raise ValidationError("Virus scan failed. File rejected for security.")
         else:
             logger.warning("Unexpected virus scan error, allowing file through")
@@ -328,7 +337,8 @@ def test_virus_scanner_connection() -> bool:
 
         # Create a temporary test file
         import tempfile
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("This is a test file for virus scanning.")
             test_file_path = f.name
 

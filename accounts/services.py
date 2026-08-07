@@ -28,8 +28,8 @@ class AccountService:
     """Service for account-related business logic."""
 
     # Configuration (can be overridden in settings)
-    MAX_LOGIN_ATTEMPTS = getattr(settings, 'MAX_LOGIN_ATTEMPTS', 5)
-    LOCKOUT_DURATION_MINUTES = getattr(settings, 'LOCKOUT_DURATION_MINUTES', 30)
+    MAX_LOGIN_ATTEMPTS = getattr(settings, "MAX_LOGIN_ATTEMPTS", 5)
+    LOCKOUT_DURATION_MINUTES = getattr(settings, "LOCKOUT_DURATION_MINUTES", 30)
     EMAIL_VERIFICATION_TOKEN_LENGTH = 64
     PASSWORD_RESET_TOKEN_LENGTH = 64
 
@@ -68,7 +68,9 @@ class AccountService:
 
         if user.failed_login_attempts >= AccountService.MAX_LOGIN_ATTEMPTS:
             # Lock the account
-            lockout_duration = timedelta(minutes=AccountService.LOCKOUT_DURATION_MINUTES)
+            lockout_duration = timedelta(
+                minutes=AccountService.LOCKOUT_DURATION_MINUTES
+            )
             user.lockout_until = timezone.now() + lockout_duration
             user.failed_login_attempts = 0
 
@@ -77,8 +79,8 @@ class AccountService:
                 recipient=user,
                 title="Account Locked",
                 message=f"Your account has been locked due to too many failed login attempts. "
-                       f"It will be unlocked in {AccountService.LOCKOUT_DURATION_MINUTES} minutes.",
-                notification_type='email',
+                f"It will be unlocked in {AccountService.LOCKOUT_DURATION_MINUTES} minutes.",
+                notification_type="email",
                 transactional_route_key="account_security_email",
             )
 
@@ -172,7 +174,7 @@ class AccountService:
             recipient=user,
             title="Email Verified",
             message="Your email has been successfully verified. Welcome to SEIM!",
-            notification_type='email',
+            notification_type="email",
             transactional_route_key="account_security_email",
         )
 
@@ -210,8 +212,8 @@ class AccountService:
             recipient=user,
             title="Password Reset Request",
             message=f"Your password reset token: {token}\n\n"
-                   f"This token will expire in 1 hour. If you didn't request this, please ignore this message.",
-            notification_type='email',
+            f"This token will expire in 1 hour. If you didn't request this, please ignore this message.",
+            notification_type="email",
             transactional_route_key="account_security_email",
         )
 
@@ -252,7 +254,7 @@ class AccountService:
             recipient=user,
             title="Password Changed",
             message="Your password has been successfully changed. If you didn't make this change, please contact support immediately.",
-            notification_type='email',
+            notification_type="email",
             transactional_route_key="account_security_email",
         )
 
@@ -268,8 +270,8 @@ class AccountService:
         username: str,
         email: str,
         password: str,
-        first_name: str = '',
-        last_name: str = ''
+        first_name: str = "",
+        last_name: str = "",
     ) -> User:
         """
         Register a new user with email verification.
@@ -302,7 +304,7 @@ class AccountService:
             first_name=first_name,
             last_name=last_name,
             is_active=False,  # Inactive until email verified
-            is_email_verified=False
+            is_email_verified=False,
         )
         user.set_password(password)
         user.save()
@@ -315,7 +317,8 @@ class AccountService:
 
         # Assign default role (student)
         from .models import Role
-        student_role, _ = Role.objects.get_or_create(name='student')
+
+        student_role, _ = Role.objects.get_or_create(name="student")
         user.roles.add(student_role)
 
         # Send verification email
@@ -323,7 +326,7 @@ class AccountService:
             recipient=user,
             title="Email Verification Required",
             message=f"Welcome to SEIM! Please verify your email using this token: {token}",
-            notification_type='email',
+            notification_type="email",
             transactional_route_key="account_security_email",
         )
 
@@ -368,12 +371,16 @@ class AccountService:
 
         # Check if email verified
         if not user.is_email_verified:
-            raise ValueError("Email not verified. Please check your inbox for the verification link.")
+            raise ValueError(
+                "Email not verified. Please check your inbox for the verification link."
+            )
 
         # Check if account locked
         if AccountService.is_account_locked(user):
             minutes_left = (user.lockout_until - timezone.now()).total_seconds() / 60
-            raise ValueError(f"Account is locked. Please try again in {int(minutes_left)} minutes.")
+            raise ValueError(
+                f"Account is locked. Please try again in {int(minutes_left)} minutes."
+            )
 
         # Authenticate
         auth_user = authenticate(username=user.username, password=password)
@@ -420,7 +427,7 @@ class AccountService:
             recipient=user,
             title="Password Changed",
             message="Your password has been successfully changed.",
-            notification_type='email',
+            notification_type="email",
             transactional_route_key="account_security_email",
         )
 
@@ -446,9 +453,8 @@ class AccountService:
             recipient=user,
             title="Account Deactivated",
             message="Your account has been deactivated. Contact support if this was a mistake.",
-            notification_type='email',
+            notification_type="email",
             transactional_route_key="account_security_email",
         )
 
         return user
-

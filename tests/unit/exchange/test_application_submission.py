@@ -105,7 +105,7 @@ class TestApplicationSubmissionWorkflow:
     def test_application_creation_by_student(self):
         """Test that students can create applications."""
         refresh = RefreshToken.for_user(self.student)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
         data = {
             "program": self.program.id,
@@ -130,7 +130,7 @@ class TestApplicationSubmissionWorkflow:
 
         # Submit application
         refresh = RefreshToken.for_user(self.student)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
         data = {"status": "submitted"}
         response = self.client.patch(f"/api/applications/{application.id}/", data)
@@ -149,7 +149,7 @@ class TestApplicationSubmissionWorkflow:
         )
 
         refresh = RefreshToken.for_user(self.coordinator)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
         data = {"status": "under_review"}
         response = self.client.patch(f"/api/applications/{application.id}/", data)
@@ -167,7 +167,7 @@ class TestApplicationSubmissionWorkflow:
         )
 
         refresh = RefreshToken.for_user(self.admin)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
         # Test approval
         data = {"status": "approved"}
@@ -194,7 +194,7 @@ class TestApplicationSubmissionWorkflow:
         )
 
         refresh = RefreshToken.for_user(self.student)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
         # Try to change status back to draft
         data = {"status": "draft"}
@@ -202,7 +202,10 @@ class TestApplicationSubmissionWorkflow:
         # Expect 400 (Bad Request - validation error) not 403 (Permission denied)
         # Permission allows students to update their own applications, but service layer blocks invalid status transitions
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "permission" in response.data[0].lower() or "transition" in response.data[0].lower()
+        assert (
+            "permission" in response.data[0].lower()
+            or "transition" in response.data[0].lower()
+        )
 
     def test_application_withdrawal(self):
         """Test that students can withdraw their applications."""
@@ -213,7 +216,7 @@ class TestApplicationSubmissionWorkflow:
         )
 
         refresh = RefreshToken.for_user(self.student)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
         data = {"withdrawn": True}
         response = self.client.patch(f"/api/applications/{application.id}/", data)
@@ -230,18 +233,22 @@ class TestApplicationSubmissionWorkflow:
             status=self.draft_status,
         )
 
-        initial_event_count = TimelineEvent.objects.filter(application=application).count()
+        initial_event_count = TimelineEvent.objects.filter(
+            application=application
+        ).count()
 
         # Change status
         refresh = RefreshToken.for_user(self.coordinator)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
         data = {"status": "submitted"}
         response = self.client.patch(f"/api/applications/{application.id}/", data)
         assert response.status_code == status.HTTP_200_OK
 
         # Check that timeline event was created
-        final_event_count = TimelineEvent.objects.filter(application=application).count()
+        final_event_count = TimelineEvent.objects.filter(
+            application=application
+        ).count()
         assert final_event_count > initial_event_count
 
     def test_comment_creation_on_application(self):
@@ -253,7 +260,7 @@ class TestApplicationSubmissionWorkflow:
         )
 
         refresh = RefreshToken.for_user(self.coordinator)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
         comment_data = {
             "application": application.id,
@@ -314,12 +321,18 @@ class TestApplicationService:
         )
 
         # Should be able to submit (no active application exists)
-        assert ApplicationService.can_submit_application(self.student, self.program) is True
+        assert (
+            ApplicationService.can_submit_application(self.student, self.program)
+            is True
+        )
 
         # Should not be able to submit (active application exists)
         application.status = self.submitted_status
         application.save()
-        assert ApplicationService.can_submit_application(self.student, self.program) is False
+        assert (
+            ApplicationService.can_submit_application(self.student, self.program)
+            is False
+        )
 
     def test_can_withdraw_application(self):
         """Test application withdrawal validation."""

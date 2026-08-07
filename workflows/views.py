@@ -1,6 +1,4 @@
-import datetime
-import xml.etree.ElementTree as ET
-
+import defusedxml.ElementTree as ET
 from django.db.models import Max
 from django.utils import timezone
 from rest_framework import permissions, status, viewsets
@@ -43,7 +41,9 @@ class WorkflowDefinitionViewSet(viewsets.ModelViewSet):
             bpmn_xml=bpmn_xml,
             created_by=request.user,
         )
-        return Response(WorkflowVersionSerializer(v).data, status=status.HTTP_201_CREATED)
+        return Response(
+            WorkflowVersionSerializer(v).data, status=status.HTTP_201_CREATED
+        )
 
 
 class WorkflowVersionViewSet(viewsets.ModelViewSet):
@@ -83,4 +83,3 @@ class WorkflowVersionViewSet(viewsets.ModelViewSet):
         obj.published_at = timezone.now()
         obj.save(update_fields=["status", "published_at", "updated_at"])
         return Response(WorkflowVersionSerializer(obj).data)
-

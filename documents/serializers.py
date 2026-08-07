@@ -1,6 +1,8 @@
 from django.db.models import Q
 from rest_framework import serializers
 
+from notifications.services import NotificationService
+
 from .models import (
     Document,
     DocumentComment,
@@ -9,8 +11,6 @@ from .models import (
     DocumentValidation,
     ExchangeAgreementDocument,
 )
-from notifications.services import NotificationService
-
 from .services import DocumentService
 
 

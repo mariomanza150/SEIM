@@ -2,16 +2,16 @@
 
 export function updateAuthUI() {
     const authElements = document.querySelectorAll('.auth-only');
-    authElements.forEach(el => el.style.display = 'block');
+    authElements.forEach(el => (el.style.display = 'block'));
     const unauthElements = document.querySelectorAll('.unauth-only');
-    unauthElements.forEach(el => el.style.display = 'none');
+    unauthElements.forEach(el => (el.style.display = 'none'));
 }
 
 export function updateUnauthUI() {
     const authElements = document.querySelectorAll('.auth-only');
-    authElements.forEach(el => el.style.display = 'none');
+    authElements.forEach(el => (el.style.display = 'none'));
     const unauthElements = document.querySelectorAll('.unauth-only');
-    unauthElements.forEach(el => el.style.display = 'block');
+    unauthElements.forEach(el => (el.style.display = 'block'));
 }
 
 export function updateUserInterface(userData) {
@@ -45,4 +45,4 @@ export function updateRoleBasedUI(role) {
             el.style.display = 'block';
         });
     }
-} 
+}

@@ -318,7 +318,9 @@ def build_notification_routing_reference() -> dict:
         raw_cat = row.get("settings_category")
         label = raw_cat if raw_cat is not None else UNGATED_SETTINGS_CATEGORY_BUCKET
         tx_by_cat.setdefault(str(label), []).append(str(row["route_key"]))
-    tx_by_cat = {k: sorted(v) for k, v in sorted(tx_by_cat.items(), key=lambda kv: kv[0])}
+    tx_by_cat = {
+        k: sorted(v) for k, v in sorted(tx_by_cat.items(), key=lambda kv: kv[0])
+    }
     return {
         "schema_version": 12,
         "reference_api_access": dict(REFERENCE_API_ACCESS),

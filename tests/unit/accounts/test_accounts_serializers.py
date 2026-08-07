@@ -517,9 +517,12 @@ class TestChangePasswordSerializer:
         }
         # Create a mock request object
         from unittest.mock import Mock
+
         mock_request = Mock()
         mock_request.user = user
-        serializer = ChangePasswordSerializer(data=data, context={"request": mock_request})
+        serializer = ChangePasswordSerializer(
+            data=data, context={"request": mock_request}
+        )
 
         assert serializer.is_valid()
         result = serializer.save()
@@ -540,9 +543,12 @@ class TestChangePasswordSerializer:
         }
         # Create a mock request object
         from unittest.mock import Mock
+
         mock_request = Mock()
         mock_request.user = user
-        serializer = ChangePasswordSerializer(data=data, context={"request": mock_request})
+        serializer = ChangePasswordSerializer(
+            data=data, context={"request": mock_request}
+        )
 
         assert not serializer.is_valid()
         assert "old_password" in serializer.errors
@@ -562,9 +568,12 @@ class TestChangePasswordSerializer:
         }
         # Create a mock request object
         from unittest.mock import Mock
+
         mock_request = Mock()
         mock_request.user = user
-        serializer = ChangePasswordSerializer(data=data, context={"request": mock_request})
+        serializer = ChangePasswordSerializer(
+            data=data, context={"request": mock_request}
+        )
 
         assert not serializer.is_valid()
         assert "new_password" in serializer.errors
@@ -618,9 +627,12 @@ class TestUserSettingsSerializer:
         }
         # Create a mock request object
         from unittest.mock import Mock
+
         mock_request = Mock()
         mock_request.user = user
-        serializer = UserSettingsSerializer(data=data, context={"request": mock_request})
+        serializer = UserSettingsSerializer(
+            data=data, context={"request": mock_request}
+        )
 
         assert serializer.is_valid()
         settings = serializer.save()
@@ -662,9 +674,12 @@ class TestAppearanceSettingsSerializer:
         data = {"theme": "dark", "font_size": "large"}
         # Create a mock request object
         from unittest.mock import Mock
+
         mock_request = Mock()
         mock_request.user = user
-        serializer = AppearanceSettingsSerializer(data=data, context={"request": mock_request})
+        serializer = AppearanceSettingsSerializer(
+            data=data, context={"request": mock_request}
+        )
 
         assert serializer.is_valid()
         settings = serializer.save()
@@ -717,9 +732,12 @@ class TestNotificationSettingsSerializer:
         }
         # Create a mock request object
         from unittest.mock import Mock
+
         mock_request = Mock()
         mock_request.user = user
-        serializer = NotificationSettingsSerializer(data=data, context={"request": mock_request})
+        serializer = NotificationSettingsSerializer(
+            data=data, context={"request": mock_request}
+        )
 
         assert serializer.is_valid()
         settings = serializer.save()
@@ -761,9 +779,12 @@ class TestPrivacySettingsSerializer:
         data = {"profile_public": True, "share_analytics": False}
         # Create a mock request object
         from unittest.mock import Mock
+
         mock_request = Mock()
         mock_request.user = user
-        serializer = PrivacySettingsSerializer(data=data, context={"request": mock_request})
+        serializer = PrivacySettingsSerializer(
+            data=data, context={"request": mock_request}
+        )
 
         assert serializer.is_valid()
         settings = serializer.save()

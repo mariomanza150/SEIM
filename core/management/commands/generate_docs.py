@@ -119,7 +119,7 @@ class Command(BaseCommand):
 
         with open(endpoints_file, "w") as f:
             f.write("# SEIM API Endpoints\n\n")
-            f.write(f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n')
+            f.write(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
             # Document known API endpoints
             f.write("## Authentication\n\n")
@@ -170,7 +170,7 @@ class Command(BaseCommand):
 
         with open(code_docs_file, "w") as f:
             f.write("# SEIM Code Documentation\n\n")
-            f.write(f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n')
+            f.write(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
             # Document models
             f.write("## Models\n\n")
@@ -225,7 +225,7 @@ class Command(BaseCommand):
 
         with open(db_docs_file, "w") as f:
             f.write("# SEIM Database Schema\n\n")
-            f.write(f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n')
+            f.write(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
 
             # Get database schema information
             from django.db import connection
@@ -308,7 +308,7 @@ class Command(BaseCommand):
                             column_comment,
                         ) in columns:
                             f.write(
-                                f'| {column_name} | {data_type} | {is_nullable} | {column_default or ""} | {column_comment or ""} |\n'
+                                f"| {column_name} | {data_type} | {is_nullable} | {column_default or ''} | {column_comment or ''} |\n"
                             )
 
                     f.write("\n")
@@ -325,7 +325,7 @@ class Command(BaseCommand):
             with open(api_docs_file, "a") as f:
                 f.write("\n\n## Generated Documentation\n\n")
                 f.write(
-                    f'Last updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n'
+                    f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
                 )
                 f.write("- [API Schema](generated/api_schema.yaml)\n")
                 f.write("- [API Endpoints](generated/api_endpoints.md)\n")

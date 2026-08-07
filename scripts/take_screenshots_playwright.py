@@ -21,9 +21,9 @@ import argparse
 import os
 import re
 import sys
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 from playwright.sync_api import sync_playwright
 
@@ -32,7 +32,9 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from tests.e2e_playwright.utils.screenshot_manager import ScreenshotManager  # noqa: E402
+from tests.e2e_playwright.utils.screenshot_manager import (
+    ScreenshotManager,  # noqa: E402
+)
 from tests.e2e_playwright.utils.vue_auth_helpers import login_vue_via_jwt  # noqa: E402
 
 
@@ -47,7 +49,9 @@ class Viewport:
 
 DEFAULT_VIEWPORTS: tuple[Viewport, ...] = (
     Viewport(name="desktop_1440x900", width=1440, height=900),
-    Viewport(name="mobile_390x844", width=390, height=844, is_mobile=True, has_touch=True),
+    Viewport(
+        name="mobile_390x844", width=390, height=844, is_mobile=True, has_touch=True
+    ),
 )
 
 DEFAULT_ROUTES: tuple[str, ...] = (
@@ -113,7 +117,9 @@ def _parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--out-dir",
-        default=os.environ.get("SCREENSHOT_DIR", "tests/e2e_playwright/screenshots/manual"),
+        default=os.environ.get(
+            "SCREENSHOT_DIR", "tests/e2e_playwright/screenshots/manual"
+        ),
         help="Output directory for PNGs.",
     )
     return p.parse_args()
@@ -173,7 +179,10 @@ def main() -> int:
                         try:
                             login_vue_via_jwt(page, base_url, email, password)
                         except AssertionError as e:
-                            print(f"Auth failed ({e}). Continuing as guest.", file=sys.stderr)
+                            print(
+                                f"Auth failed ({e}). Continuing as guest.",
+                                file=sys.stderr,
+                            )
 
                 for route in routes:
                     url = f"{base_url}{route}"
@@ -185,7 +194,9 @@ def main() -> int:
                         pass
 
                     name = f"{vp.name}__{_slugify(route)}"
-                    saved_path = screenshot_manager.capture(page, name=name, full_page=True)
+                    saved_path = screenshot_manager.capture(
+                        page, name=name, full_page=True
+                    )
                     print(f"Saved screenshot: {saved_path}")
 
                 page.close()
@@ -199,4 +210,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

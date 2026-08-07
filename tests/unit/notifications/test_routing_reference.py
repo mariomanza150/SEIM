@@ -53,11 +53,15 @@ def test_build_notification_routing_reference_shape():
     assert UNGATED_SETTINGS_CATEGORY_BUCKET in tx_idx
     assert "applications" in tx_idx
     assert "application_submitted" in tx_idx["applications"]
-    assert sum(len(v) for v in tx_idx.values()) == len(TRANSACTIONAL_NOTIFICATION_ROUTES)
+    assert sum(len(v) for v in tx_idx.values()) == len(
+        TRANSACTIONAL_NOTIFICATION_ROUTES
+    )
     rem_idx = data["reminder_event_types_by_settings_category"]
     assert "applications" in rem_idx
     assert "application_deadline" in rem_idx["applications"]
-    assert sum(len(v) for v in rem_idx.values()) == len(data["reminder_event_type_to_settings_category"])
+    assert sum(len(v) for v in rem_idx.values()) == len(
+        data["reminder_event_type_to_settings_category"]
+    )
 
 
 def test_reminder_event_types_have_descriptions():
@@ -82,7 +86,7 @@ def test_settings_category_primary_recipients_complete():
 @pytest.mark.django_db
 def test_build_includes_primary_recipients_on_each_category():
     cats = build_notification_routing_reference()["settings_categories"]
-    for key, row in cats.items():
+    for _key, row in cats.items():
         assert "primary_recipients" in row
         assert row["primary_recipients"].strip()
 
@@ -111,8 +115,14 @@ def test_routing_reference_applies_reminder_overrides():
         is_active=True,
     )
     data = build_notification_routing_reference()
-    assert data["reminder_event_type_to_settings_category"]["application_deadline"] == "documents"
-    assert "application_deadline" in data["reminder_event_types_by_settings_category"]["documents"]
+    assert (
+        data["reminder_event_type_to_settings_category"]["application_deadline"]
+        == "documents"
+    )
+    assert (
+        "application_deadline"
+        in data["reminder_event_types_by_settings_category"]["documents"]
+    )
 
 
 @pytest.mark.django_db
@@ -127,7 +137,12 @@ def test_routing_reference_applies_transactional_route_overrides():
     )
     data = build_notification_routing_reference()
     row = next(
-        r for r in data["transactional_routes"] if r["route_key"] == "application_submitted"
+        r
+        for r in data["transactional_routes"]
+        if r["route_key"] == "application_submitted"
     )
     assert row["settings_category"] == "system"
-    assert "application_submitted" in data["transactional_route_keys_by_settings_category"]["system"]
+    assert (
+        "application_submitted"
+        in data["transactional_route_keys_by_settings_category"]["system"]
+    )

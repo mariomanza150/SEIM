@@ -34,19 +34,22 @@ app_name = "accounts"
 
 # Create router for ViewSets
 router = DefaultRouter()
-router.register(r'users', UserViewSet, basename='user')
-router.register(r'profiles', ProfileViewSet, basename='profile')
-router.register(r'roles', RoleViewSet, basename='role')
-router.register(r'permissions', PermissionViewSet, basename='permission')
-router.register(r'user-sessions', UserSessionViewSet, basename='user-session')
+router.register(r"users", UserViewSet, basename="user")
+router.register(r"profiles", ProfileViewSet, basename="profile")
+router.register(r"roles", RoleViewSet, basename="role")
+router.register(r"permissions", PermissionViewSet, basename="permission")
+router.register(r"user-sessions", UserSessionViewSet, basename="user-session")
 
 urlpatterns = [
     # Include ViewSet URLs
-    path('api/', include(router.urls)),
-
+    path("api/", include(router.urls)),
     path("register/", RegistrationView.as_view(), name="register"),
     path("verify-email/", EmailVerificationView.as_view(), name="verify-email"),
-    path("resend-verification/", ResendVerificationEmailView.as_view(), name="resend_verification"),
+    path(
+        "resend-verification/",
+        ResendVerificationEmailView.as_view(),
+        name="resend_verification",
+    ),
     path("login/", LoginView.as_view(), name="login"),
     path(
         "password-reset-request/",
@@ -69,16 +72,26 @@ urlpatterns = [
     path("logout/", LogoutView.as_view(), name="logout"),
     path("change-password/", ChangePasswordView.as_view(), name="change_password"),
     path("password-reset/", password_reset_view, name="password-reset"),
-
     # Permissions endpoint for frontend
     path("permissions/", UserPermissionsView.as_view(), name="user_permissions"),
-
     # Settings endpoints
-    path("appearance-settings/", AppearanceSettingsView.as_view(), name="appearance_settings"),
-    path("notification-settings/", NotificationSettingsView.as_view(), name="notification_settings"),
+    path(
+        "appearance-settings/",
+        AppearanceSettingsView.as_view(),
+        name="appearance_settings",
+    ),
+    path(
+        "notification-settings/",
+        NotificationSettingsView.as_view(),
+        name="notification_settings",
+    ),
     path("privacy-settings/", PrivacySettingsView.as_view(), name="privacy_settings"),
     path("user-settings/", UserSettingsView.as_view(), name="user_settings"),
     path("sessions/", UserSessionsView.as_view(), name="sessions"),
-    path("sessions/<int:session_id>/revoke/", RevokeSessionView.as_view(), name="revoke_session"),
+    path(
+        "sessions/<int:session_id>/revoke/",
+        RevokeSessionView.as_view(),
+        name="revoke_session",
+    ),
     path("delete/", DeleteAccountView.as_view(), name="delete_account"),
 ]

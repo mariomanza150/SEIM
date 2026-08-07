@@ -6,7 +6,6 @@ API views for form types and submissions.
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.shortcuts import render
 from django.views.generic import TemplateView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, viewsets
@@ -51,20 +50,22 @@ class IsSeimAdmin(permissions.BasePermission):
 
 class FormTypeListView(LoginRequiredMixin, AdminOnlyMixin, TemplateView):
     """List view for form types"""
-    template_name = 'application_forms/list.html'
+
+    template_name = "application_forms/list.html"
 
 
 class EnhancedFormBuilderView(LoginRequiredMixin, AdminOnlyMixin, TemplateView):
     """Enhanced form builder view with custom UI"""
-    template_name = 'application_forms/builder.html'
-    
+
+    template_name = "application_forms/builder.html"
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        form_id = kwargs.get('pk')
-        context['form_id'] = form_id
+        form_id = kwargs.get("pk")
+        context["form_id"] = form_id
         # Pass form_id to template for JavaScript
         if form_id:
-            context['form_id_js'] = form_id
+            context["form_id_js"] = form_id
         return context
 
 
@@ -76,18 +77,23 @@ class FormTypeViewSet(viewsets.ModelViewSet):
     Admin users can create and manage forms.
     Other users can view active forms.
     """
+
     queryset = FormType.objects.all()
     serializer_class = FormTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['form_type', 'is_active']
-    search_fields = ['name', 'description']
-    ordering_fields = ['name', 'created_at']
-    ordering = ['-created_at']
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_fields = ["form_type", "is_active"]
+    search_fields = ["name", "description"]
+    ordering_fields = ["name", "created_at"]
+    ordering = ["-created_at"]
 
     def get_serializer_class(self):
         """Use lightweight serializer for list views"""
-        if self.action == 'list':
+        if self.action == "list":
             return FormTypeListSerializer
         return FormTypeSerializer
 
@@ -107,7 +113,7 @@ class FormTypeViewSet(viewsets.ModelViewSet):
         """Auto-assign created_by to current user"""
         serializer.save(created_by=self.request.user)
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     def form_schema(self, request, pk=None):
         """
         Get just the form schema for rendering.
@@ -119,25 +125,29 @@ class FormTypeViewSet(viewsets.ModelViewSet):
         steps = form_type.get_multi_step_layout()
         if program_id:
             try:
-                program = Program.objects.prefetch_related("required_document_types").get(
-                    pk=program_id
-                )
+                program = Program.objects.prefetch_related(
+                    "required_document_types"
+                ).get(pk=program_id)
             except (Program.DoesNotExist, ValueError):
                 program = None
             if program:
-                steps = DocumentService.enrich_form_steps_for_program(form_type, program)
-        return Response({
-            'id': form_type.id,
-            'name': form_type.name,
-            'description': form_type.description,
-            'schema': form_type.schema,
-            'ui_schema': form_type.ui_schema,
-            'required_fields': form_type.get_required_fields(),
-            'multi_step': form_type.is_multi_step(),
-            'steps': steps,
-        })
+                steps = DocumentService.enrich_form_steps_for_program(
+                    form_type, program
+                )
+        return Response(
+            {
+                "id": form_type.id,
+                "name": form_type.name,
+                "description": form_type.description,
+                "schema": form_type.schema,
+                "ui_schema": form_type.ui_schema,
+                "required_fields": form_type.get_required_fields(),
+                "multi_step": form_type.is_multi_step(),
+                "steps": steps,
+            }
+        )
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=["get"])
     def submissions(self, request, pk=None):
         """
         Get all submissions for this form type.
@@ -222,18 +232,23 @@ class FormSubmissionViewSet(viewsets.ModelViewSet):
     Users can create submissions and view their own.
     Admins can view all submissions.
     """
+
     queryset = FormSubmission.objects.all()
     serializer_class = FormSubmissionSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['form_type', 'program', 'application']
-    search_fields = ['form_type__name', 'submitted_by__username']
-    ordering_fields = ['submitted_at']
-    ordering = ['-submitted_at']
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_fields = ["form_type", "program", "application"]
+    search_fields = ["form_type__name", "submitted_by__username"]
+    ordering_fields = ["submitted_at"]
+    ordering = ["-submitted_at"]
 
     def get_serializer_class(self):
         """Use lightweight serializer for list views"""
-        if self.action == 'list':
+        if self.action == "list":
             return FormSubmissionListSerializer
         return FormSubmissionSerializer
 
@@ -247,7 +262,7 @@ class FormSubmissionViewSet(viewsets.ModelViewSet):
             return queryset
 
         # Coordinator users see all submissions (no program-coordinator association in model)
-        if user.has_role('coordinator'):
+        if user.has_role("coordinator"):
             return queryset.all()
 
         # Regular users see only their own submissions

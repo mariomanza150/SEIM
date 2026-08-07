@@ -96,7 +96,9 @@ class ExchangeProgramSyncTests(TestCase):
             start_date=self.program.start_date,
             end_date=self.program.end_date,
         )
-        status, page = sync_program_page_operational_fields_and_publish(other, user=self.user)
+        status, page = sync_program_page_operational_fields_and_publish(
+            other, user=self.user
+        )
         self.assertEqual(status, "missing")
         self.assertIsNone(page)
 

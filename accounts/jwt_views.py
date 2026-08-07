@@ -1,10 +1,11 @@
 """
 Custom JWT views that accept email (instead of username) for Vue.js frontend login.
 """
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework import serializers
+
 from django.contrib.auth import get_user_model
+from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 User = get_user_model()
 
@@ -41,4 +42,5 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     """JWT token view that accepts email + password."""
+
     serializer_class = CustomTokenObtainPairSerializer

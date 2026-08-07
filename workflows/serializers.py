@@ -22,7 +22,13 @@ class WorkflowVersionSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "created_by", "published_at", "created_at", "updated_at"]
+        read_only_fields = [
+            "id",
+            "created_by",
+            "published_at",
+            "created_at",
+            "updated_at",
+        ]
 
 
 class WorkflowDefinitionSerializer(serializers.ModelSerializer):
@@ -43,15 +49,23 @@ class WorkflowDefinitionSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "slug", "created_at", "updated_at"]
 
     def get_latest_published_version(self, obj):
-        v = obj.versions.filter(status=WorkflowVersion.Status.PUBLISHED).order_by("-version").first()
+        v = (
+            obj.versions.filter(status=WorkflowVersion.Status.PUBLISHED)
+            .order_by("-version")
+            .first()
+        )
         if not v:
             return None
         return {"id": str(v.id), "version": v.version, "published_at": v.published_at}
 
 
 class WorkflowInstanceSerializer(serializers.ModelSerializer):
-    workflow_definition = serializers.CharField(source="workflow_version.definition.slug", read_only=True)
-    workflow_version_number = serializers.IntegerField(source="workflow_version.version", read_only=True)
+    workflow_definition = serializers.CharField(
+        source="workflow_version.definition.slug", read_only=True
+    )
+    workflow_version_number = serializers.IntegerField(
+        source="workflow_version.version", read_only=True
+    )
 
     class Meta:
         model = WorkflowInstance
@@ -69,4 +83,3 @@ class WorkflowInstanceSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
-

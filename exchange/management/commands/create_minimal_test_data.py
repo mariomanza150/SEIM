@@ -6,7 +6,6 @@ Creates: 1 admin, 1 coordinator, 1 student, 1 program, 1 application.
 from datetime import date, timedelta
 
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
 from accounts.models import Role, User
 from exchange.models import Application, ApplicationStatus, Program
@@ -58,7 +57,9 @@ class Command(BaseCommand):
         if created:
             coordinator_user.set_password("coordinator123")
             coordinator_user.save()
-            self.stdout.write("  ✓ Created coordinator user: coordinator / coordinator123")
+            self.stdout.write(
+                "  ✓ Created coordinator user: coordinator / coordinator123"
+            )
         else:
             self.stdout.write("  ✓ Coordinator user already exists: coordinator")
         coordinator_user.roles.add(coordinator_role)
@@ -117,14 +118,19 @@ class Command(BaseCommand):
             },
         )
         if created:
-            self.stdout.write(f"  ✓ Created application: {student_user.username} -> {program.name}")
+            self.stdout.write(
+                f"  ✓ Created application: {student_user.username} -> {program.name}"
+            )
         else:
-            self.stdout.write(f"  ✓ Application already exists: {student_user.username} -> {program.name}")
+            self.stdout.write(
+                f"  ✓ Application already exists: {student_user.username} -> {program.name}"
+            )
 
-        self.stdout.write(self.style.SUCCESS("\n✅ Minimal test data created successfully!"))
+        self.stdout.write(
+            self.style.SUCCESS("\n✅ Minimal test data created successfully!")
+        )
         self.stdout.write("\n📋 Test Credentials:")
         self.stdout.write("   Admin: admin / admin123")
         self.stdout.write("   Coordinator: coordinator / coordinator123")
         self.stdout.write("   Student: student / student123")
         self.stdout.write("\n🌐 Access: http://localhost:8000")
-

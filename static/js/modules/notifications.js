@@ -82,4 +82,4 @@ export function showLoadingAlert(title = 'Loading...') {
  */
 export function closeAlert() {
     Swal.close();
-} 
+}

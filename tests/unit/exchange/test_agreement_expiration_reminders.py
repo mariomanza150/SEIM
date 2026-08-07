@@ -5,7 +5,10 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 
 from accounts.models import Role
-from exchange.agreement_expiration import process_agreement_expiration_reminders, recipients_for_agreement
+from exchange.agreement_expiration import (
+    process_agreement_expiration_reminders,
+    recipients_for_agreement,
+)
 from exchange.models import AgreementExpirationReminderLog, ExchangeAgreement, Program
 from notifications.models import Notification
 
@@ -32,7 +35,7 @@ class AgreementExpirationReminderTests(TestCase):
     def test_sends_on_exact_milestone_and_idempotent(self):
         today = date(2026, 1, 1)
         end = date(2026, 4, 1)
-        agr = ExchangeAgreement.objects.create(
+        ExchangeAgreement.objects.create(
             title="Test Agr",
             partner_institution_name="Partner",
             status=ExchangeAgreement.Status.ACTIVE,

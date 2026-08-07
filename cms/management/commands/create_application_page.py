@@ -3,6 +3,7 @@ Management command to create "How to Apply" page explaining the application proc
 """
 
 from django.core.management.base import BaseCommand
+
 from cms.models import HomePage, StandardPage
 
 
@@ -11,54 +12,56 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS('Creating "How to Apply" page...'))
-        
+
         try:
-            home = HomePage.objects.get(slug='home')
+            home = HomePage.objects.get(slug="home")
         except HomePage.DoesNotExist:
-            self.stdout.write(self.style.ERROR('  ✗ HomePage not found'))
+            self.stdout.write(self.style.ERROR("  ✗ HomePage not found"))
             return
-        
+
         # Check if page already exists
         try:
-            apply_page = StandardPage.objects.get(slug='como-aplicar')
-            self.stdout.write(self.style.WARNING('  ⚠ Page already exists, updating...'))
+            apply_page = StandardPage.objects.get(slug="como-aplicar")
+            self.stdout.write(
+                self.style.WARNING("  ⚠ Page already exists, updating...")
+            )
             # Delete and recreate
             apply_page.delete()
         except StandardPage.DoesNotExist:
             pass
-        
+
         # Create the "How to Apply" page
         apply_page = StandardPage(
-            title='¿Cómo Aplicar al Programa de Intercambio?',
-            slug='como-aplicar',
+            title="¿Cómo Aplicar al Programa de Intercambio?",
+            slug="como-aplicar",
             show_in_menus=True,
-            introduction='Guía completa para aplicar a un programa de intercambio académico en la UAdeC'
+            introduction="Guía completa para aplicar a un programa de intercambio académico en la UAdeC",
         )
-        
+
         # Content for the page
         content = [
             {
-                'type': 'hero',
-                'value': {
-                    'title': '¿Cómo Aplicar al Intercambio?',
-                    'subtitle': 'Sigue estos pasos para iniciar tu aventura internacional',
-                    'background_color': 'primary'
-                }
+                "type": "hero",
+                "value": {
+                    "title": "¿Cómo Aplicar al Intercambio?",
+                    "subtitle": "Sigue estos pasos para iniciar tu aventura internacional",
+                    "background_color": "primary",
+                },
             },
             {
-                'type': 'paragraph',
-                'value': '<p class="lead">Aplicar a un programa de intercambio es un proceso emocionante. Aquí te explicamos paso a paso cómo hacerlo.</p>'
+                "type": "paragraph",
+                "value": '<p class="lead">Aplicar a un programa de intercambio es un proceso emocionante. Aquí te explicamos paso a paso cómo hacerlo.</p>',
             },
             {
-                'type': 'heading',
-                'value': {
-                    'heading_text': 'Paso 1: Verifica que Cumples los Requisitos',
-                    'size': '2'
-                }
+                "type": "heading",
+                "value": {
+                    "heading_text": "Paso 1: Verifica que Cumples los Requisitos",
+                    "size": "2",
+                },
             },
             {
-                'type': 'paragraph',
-                'value': '''
+                "type": "paragraph",
+                "value": """
                 <p>Antes de aplicar, asegúrate de cumplir con los requisitos generales:</p>
                 <ul>
                     <li>Ser estudiante activo de la UAdeC</li>
@@ -68,20 +71,20 @@ class Command(BaseCommand):
                     <li>Presentar certificación de idioma del país destino</li>
                     <li>No tener adeudos académicos o administrativos</li>
                 </ul>
-                <p><strong>Nota:</strong> Los requisitos específicos pueden variar según la universidad destino. 
+                <p><strong>Nota:</strong> Los requisitos específicos pueden variar según la universidad destino.
                 Consulta la página de cada <a href="/programas/">programa</a> para más detalles.</p>
-                '''
+                """,
             },
             {
-                'type': 'heading',
-                'value': {
-                    'heading_text': 'Paso 2: Reúne tu Documentación',
-                    'size': '2'
-                }
+                "type": "heading",
+                "value": {
+                    "heading_text": "Paso 2: Reúne tu Documentación",
+                    "size": "2",
+                },
             },
             {
-                'type': 'paragraph',
-                'value': '''
+                "type": "paragraph",
+                "value": """
                 <p>Prepara los siguientes documentos:</p>
                 <ul>
                     <li>Historial académico actualizado</li>
@@ -93,22 +96,22 @@ class Command(BaseCommand):
                     <li>Carta de aval del coordinador de carrera</li>
                 </ul>
                 <p class="alert alert-info">
-                    <strong>💡 Consejo:</strong> Comienza a preparar tus documentos con anticipación. 
-                    Las cartas de recomendación pueden tomar tiempo y los certificados de idioma tienen 
+                    <strong>💡 Consejo:</strong> Comienza a preparar tus documentos con anticipación.
+                    Las cartas de recomendación pueden tomar tiempo y los certificados de idioma tienen
                     fechas específicas de examen.
                 </p>
-                '''
+                """,
             },
             {
-                'type': 'heading',
-                'value': {
-                    'heading_text': 'Paso 3: Crea tu Cuenta en el Sistema',
-                    'size': '2'
-                }
+                "type": "heading",
+                "value": {
+                    "heading_text": "Paso 3: Crea tu Cuenta en el Sistema",
+                    "size": "2",
+                },
             },
             {
-                'type': 'paragraph',
-                'value': '''
+                "type": "paragraph",
+                "value": """
                 <p>Para aplicar formalmente, necesitas crear una cuenta en nuestro sistema de gestión de intercambios:</p>
                 <ol>
                     <li>Haz clic en el botón "Crear Cuenta" a continuación</li>
@@ -117,28 +120,28 @@ class Command(BaseCommand):
                     <li>Inicia sesión en el sistema</li>
                     <li>Completa tu perfil con tu información académica</li>
                 </ol>
-                '''
+                """,
             },
             {
-                'type': 'call_to_action',
-                'value': {
-                    'title': 'Crea Tu Cuenta de Aplicación',
-                    'text': 'Regístrate en nuestro sistema para iniciar tu solicitud de intercambio',
-                    'button_text': 'Crear Cuenta Ahora',
-                    'button_link': 'http://localhost:8000/seim/register/',
-                    'style': 'success'
-                }
+                "type": "call_to_action",
+                "value": {
+                    "title": "Crea Tu Cuenta de Aplicación",
+                    "text": "Regístrate en nuestro sistema para iniciar tu solicitud de intercambio",
+                    "button_text": "Crear Cuenta Ahora",
+                    "button_link": "http://localhost:8000/seim/register/",
+                    "style": "success",
+                },
             },
             {
-                'type': 'heading',
-                'value': {
-                    'heading_text': 'Paso 4: Completa tu Solicitud en Línea',
-                    'size': '2'
-                }
+                "type": "heading",
+                "value": {
+                    "heading_text": "Paso 4: Completa tu Solicitud en Línea",
+                    "size": "2",
+                },
             },
             {
-                'type': 'paragraph',
-                'value': '''
+                "type": "paragraph",
+                "value": """
                 <p>Una vez que tengas tu cuenta:</p>
                 <ol>
                     <li><strong>Selecciona tu programa:</strong> Elige hasta 3 opciones en orden de preferencia</li>
@@ -148,21 +151,18 @@ class Command(BaseCommand):
                     <li><strong>Envía tu solicitud:</strong> Una vez enviada, recibirás un número de folio</li>
                 </ol>
                 <p class="alert alert-warning">
-                    <strong>⚠️ Importante:</strong> Una vez enviada la solicitud, no podrás modificarla. 
+                    <strong>⚠️ Importante:</strong> Una vez enviada la solicitud, no podrás modificarla.
                     Asegúrate de revisar toda la información antes de enviar.
                 </p>
-                '''
+                """,
             },
             {
-                'type': 'heading',
-                'value': {
-                    'heading_text': 'Paso 5: Proceso de Evaluación',
-                    'size': '2'
-                }
+                "type": "heading",
+                "value": {"heading_text": "Paso 5: Proceso de Evaluación", "size": "2"},
             },
             {
-                'type': 'paragraph',
-                'value': '''
+                "type": "paragraph",
+                "value": """
                 <p>Después de enviar tu solicitud:</p>
                 <ul>
                     <li><strong>Revisión inicial:</strong> Verificamos que cumplas con los requisitos básicos</li>
@@ -170,20 +170,17 @@ class Command(BaseCommand):
                     <li><strong>Entrevista (si aplica):</strong> Algunos programas requieren entrevista personal</li>
                     <li><strong>Decisión final:</strong> El comité toma la decisión de aceptación</li>
                 </ul>
-                <p>Recibirás notificación por correo electrónico del resultado de tu solicitud. 
+                <p>Recibirás notificación por correo electrónico del resultado de tu solicitud.
                 También podrás consultar el estatus en tu cuenta del sistema.</p>
-                '''
+                """,
             },
             {
-                'type': 'heading',
-                'value': {
-                    'heading_text': 'Paso 6: Si Eres Aceptado',
-                    'size': '2'
-                }
+                "type": "heading",
+                "value": {"heading_text": "Paso 6: Si Eres Aceptado", "size": "2"},
             },
             {
-                'type': 'paragraph',
-                'value': '''
+                "type": "paragraph",
+                "value": """
                 <p>¡Felicidades! Si eres aceptado, deberás:</p>
                 <ol>
                     <li>Confirmar tu aceptación en el sistema</li>
@@ -195,18 +192,15 @@ class Command(BaseCommand):
                     <li>Preparar tu viaje</li>
                 </ol>
                 <p>Nuestro equipo te acompañará en cada uno de estos pasos.</p>
-                '''
+                """,
             },
             {
-                'type': 'heading',
-                'value': {
-                    'heading_text': 'Fechas Importantes',
-                    'size': '2'
-                }
+                "type": "heading",
+                "value": {"heading_text": "Fechas Importantes", "size": "2"},
             },
             {
-                'type': 'paragraph',
-                'value': '''
+                "type": "paragraph",
+                "value": """
                 <div class="alert alert-info">
                     <h5>Convocatoria Primavera 2026</h5>
                     <ul>
@@ -220,48 +214,40 @@ class Command(BaseCommand):
                 <p class="lead text-center mt-4">
                     <a href="/blog/" class="btn btn-primary btn-lg">Ver Convocatoria Actual</a>
                 </p>
-                '''
+                """,
             },
             {
-                'type': 'heading',
-                'value': {
-                    'heading_text': '¿Tienes Preguntas?',
-                    'size': '2'
-                }
+                "type": "heading",
+                "value": {"heading_text": "¿Tienes Preguntas?", "size": "2"},
             },
             {
-                'type': 'paragraph',
-                'value': '''
-                <p>Si tienes dudas sobre el proceso de aplicación, consulta nuestras 
-                <a href="/preguntas-frecuentes/">Preguntas Frecuentes</a> o 
+                "type": "paragraph",
+                "value": """
+                <p>Si tienes dudas sobre el proceso de aplicación, consulta nuestras
+                <a href="/preguntas-frecuentes/">Preguntas Frecuentes</a> o
                 <a href="/contacto/">contáctanos directamente</a>.</p>
                 <p>Nuestro equipo está disponible para ayudarte en cada paso del proceso.</p>
-                '''
+                """,
             },
             {
-                'type': 'call_to_action',
-                'value': {
-                    'title': '¿Listo para Comenzar?',
-                    'text': 'Crea tu cuenta ahora y da el primer paso hacia tu experiencia internacional',
-                    'button_text': 'Crear Mi Cuenta',
-                    'button_link': 'http://localhost:8000/seim/register/',
-                    'style': 'primary'
-                }
-            }
+                "type": "call_to_action",
+                "value": {
+                    "title": "¿Listo para Comenzar?",
+                    "text": "Crea tu cuenta ahora y da el primer paso hacia tu experiencia internacional",
+                    "button_text": "Crear Mi Cuenta",
+                    "button_link": "http://localhost:8000/seim/register/",
+                    "style": "primary",
+                },
+            },
         ]
-        
+
         apply_page.body = content
         home.add_child(instance=apply_page)
         apply_page.save_revision().publish()
-        
-        self.stdout.write(
-            self.style.SUCCESS(
-                '\n✅ "How to Apply" page created successfully!'
-            )
-        )
-        self.stdout.write(
-            self.style.SUCCESS(
-                '   URL: http://localhost:8000/como-aplicar/'
-            )
-        )
 
+        self.stdout.write(
+            self.style.SUCCESS('\n✅ "How to Apply" page created successfully!')
+        )
+        self.stdout.write(
+            self.style.SUCCESS("   URL: http://localhost:8000/como-aplicar/")
+        )

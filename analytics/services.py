@@ -31,10 +31,10 @@ class AnalyticsService:
             applications_by_status[status.name] = count
 
         return {
-            'total_applications': total_applications,
-            'total_users': total_users,
-            'total_programs': total_programs,
-            'applications_by_status': applications_by_status
+            "total_applications": total_applications,
+            "total_users": total_users,
+            "total_programs": total_programs,
+            "applications_by_status": applications_by_status,
         }
 
     @staticmethod
@@ -46,11 +46,13 @@ class AnalyticsService:
 
         for program in programs:
             total_applications = Application.objects.filter(program=program).count()
-            stats.append({
-                'name': program.name,
-                'total_applications': total_applications,
-                'is_active': program.is_active
-            })
+            stats.append(
+                {
+                    "name": program.name,
+                    "total_applications": total_applications,
+                    "is_active": program.is_active,
+                }
+            )
 
         return stats
 
@@ -63,10 +65,9 @@ class AnalyticsService:
 
         for user in users:
             total_applications = Application.objects.filter(student=user).count()
-            stats.append({
-                'username': user.username,
-                'total_applications': total_applications
-            })
+            stats.append(
+                {"username": user.username, "total_applications": total_applications}
+            )
 
         return stats
 
@@ -77,14 +78,15 @@ class AnalyticsService:
         end_date = timezone.now()
         start_date = end_date - timedelta(days=days)
 
-        applications = Application.objects.filter(
-            created_at__gte=start_date,
-            created_at__lte=end_date
-        ).extra(
-            select={'day': 'date(created_at)'}
-        ).values('day').annotate(
-            applications=Count('id')
-        ).order_by('day')
+        applications = (
+            Application.objects.filter(
+                created_at__gte=start_date, created_at__lte=end_date
+            )
+            .extra(select={"day": "date(created_at)"})
+            .values("day")
+            .annotate(applications=Count("id"))
+            .order_by("day")
+        )
 
         return list(applications)
 
@@ -92,16 +94,20 @@ class AnalyticsService:
     @cache_analytics(timeout=1800)
     def get_conversion_rates():
         """Get conversion rates between application statuses."""
-        draft_count = Application.objects.filter(status__name='draft').count()
-        submitted_count = Application.objects.filter(status__name='submitted').count()
-        approved_count = Application.objects.filter(status__name='approved').count()
+        draft_count = Application.objects.filter(status__name="draft").count()
+        submitted_count = Application.objects.filter(status__name="submitted").count()
+        approved_count = Application.objects.filter(status__name="approved").count()
 
-        draft_to_submitted = (submitted_count / draft_count * 100) if draft_count > 0 else 0
-        submitted_to_approved = (approved_count / submitted_count * 100) if submitted_count > 0 else 0
+        draft_to_submitted = (
+            (submitted_count / draft_count * 100) if draft_count > 0 else 0
+        )
+        submitted_to_approved = (
+            (approved_count / submitted_count * 100) if submitted_count > 0 else 0
+        )
 
         return {
-            'draft_to_submitted': draft_to_submitted,
-            'submitted_to_approved': submitted_to_approved
+            "draft_to_submitted": draft_to_submitted,
+            "submitted_to_approved": submitted_to_approved,
         }
 
     @staticmethod
@@ -110,11 +116,13 @@ class AnalyticsService:
         """Get user engagement metrics."""
         active_users = User.objects.filter(application__isnull=False).distinct().count()
         total_applications = Application.objects.count()
-        average_applications = total_applications / active_users if active_users > 0 else 0
+        average_applications = (
+            total_applications / active_users if active_users > 0 else 0
+        )
 
         return {
-            'active_users': active_users,
-            'average_applications_per_user': average_applications
+            "active_users": active_users,
+            "average_applications_per_user": average_applications,
         }
 
     @staticmethod
@@ -126,11 +134,13 @@ class AnalyticsService:
 
         for program in programs:
             total_applications = Application.objects.filter(program=program).count()
-            metrics.append({
-                'name': program.name,
-                'total_applications': total_applications,
-                'is_active': program.is_active
-            })
+            metrics.append(
+                {
+                    "name": program.name,
+                    "total_applications": total_applications,
+                    "is_active": program.is_active,
+                }
+            )
 
         return metrics
 
@@ -148,13 +158,10 @@ class AnalyticsService:
         users_by_role = {}
 
         for user in User.objects.all():
-            role = user.primary_role or 'unknown'
+            role = user.primary_role or "unknown"
             users_by_role[role] = users_by_role.get(role, 0) + 1
 
-        return {
-            'total_users': total_users,
-            'users_by_role': users_by_role
-        }
+        return {"total_users": total_users, "users_by_role": users_by_role}
 
     @staticmethod
     @cache_analytics(timeout=1800)
@@ -165,9 +172,9 @@ class AnalyticsService:
         total_users = User.objects.count()
 
         return {
-            'total_programs': total_programs,
-            'total_applications': total_applications,
-            'total_users': total_users
+            "total_programs": total_programs,
+            "total_applications": total_applications,
+            "total_users": total_users,
         }
 
     @staticmethod
@@ -287,14 +294,15 @@ class AnalyticsService:
         # Get user login activity
         from accounts.models import UserSession
 
-        user_activity = UserSession.objects.filter(
-            created_at__gte=start_date,
-            created_at__lte=end_date
-        ).extra(
-            select={'day': 'date(created_at)'}
-        ).values('day').annotate(
-            logins=Count('id')
-        ).order_by('day')
+        user_activity = (
+            UserSession.objects.filter(
+                created_at__gte=start_date, created_at__lte=end_date
+            )
+            .extra(select={"day": "date(created_at)"})
+            .values("day")
+            .annotate(logins=Count("id"))
+            .order_by("day")
+        )
 
         return list(user_activity)
 

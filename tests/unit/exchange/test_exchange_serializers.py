@@ -28,32 +28,32 @@ class TestProgramSerializer(TestCase):
         self.coordinator.roles.add(self.coordinator_role)
 
         self.program = Program.objects.create(
-            name='Test Program',
-            description='desc',
+            name="Test Program",
+            description="desc",
             start_date=timezone.now().date(),
             end_date=timezone.now().date() + timedelta(days=365),
-            is_active=True
+            is_active=True,
         )
         self.program.coordinators.add(self.coordinator)
 
     def test_program_serialize(self):
         serializer = ProgramSerializer(self.program)
         data = serializer.data
-        self.assertEqual(data['name'], 'Test Program')
-        self.assertTrue(data['is_active'])
+        self.assertEqual(data["name"], "Test Program")
+        self.assertTrue(data["is_active"])
 
     def test_program_create(self):
         data = {
-            'name': 'New Program',
-            'description': 'desc',
-            'start_date': timezone.now().date(),
-            'end_date': timezone.now().date() + timedelta(days=100),
-            'is_active': False
+            "name": "New Program",
+            "description": "desc",
+            "start_date": timezone.now().date(),
+            "end_date": timezone.now().date() + timedelta(days=100),
+            "is_active": False,
         }
         serializer = ProgramSerializer(data=data)
         self.assertTrue(serializer.is_valid(), serializer.errors)
         program = serializer.save()
-        self.assertEqual(program.name, 'New Program')
+        self.assertEqual(program.name, "New Program")
         self.assertFalse(program.is_active)
 
     def test_program_serializer_fields(self):
@@ -121,7 +121,10 @@ class TestProgramSerializer(TestCase):
         self.assertEqual(program.start_date, date(2024, 1, 1))
         self.assertEqual(program.end_date, date(2024, 6, 30))
         self.assertTrue(program.is_active)
-        self.assertEqual(list(program.coordinators.values_list("id", flat=True)), [self.coordinator.id])
+        self.assertEqual(
+            list(program.coordinators.values_list("id", flat=True)),
+            [self.coordinator.id],
+        )
         self.assertEqual(program.min_gpa, 3.5)
         self.assertEqual(program.required_language, "Spanish")
         self.assertTrue(program.recurring)
@@ -157,7 +160,10 @@ class TestProgramSerializer(TestCase):
         self.assertEqual(updated_program.description, "Updated description")
         self.assertEqual(updated_program.application_open_date, date(2023, 10, 1))
         self.assertEqual(updated_program.application_deadline, date(2023, 12, 20))
-        self.assertEqual(list(updated_program.coordinators.values_list("id", flat=True)), [self.coordinator.id])
+        self.assertEqual(
+            list(updated_program.coordinators.values_list("id", flat=True)),
+            [self.coordinator.id],
+        )
         self.assertEqual(updated_program.min_gpa, 3.5)
         # Other fields should remain unchanged
         self.assertEqual(updated_program.start_date, date(2024, 1, 1))
@@ -178,8 +184,8 @@ class TestProgramSerializer(TestCase):
 
         serializer = ProgramSerializer(data=data)
         self.assertFalse(serializer.is_valid())
-        self.assertIn('name', serializer.errors)
-        self.assertIn('description', serializer.errors)
+        self.assertIn("name", serializer.errors)
+        self.assertIn("description", serializer.errors)
 
     def test_program_serializer_rejects_non_coordinator_assignment(self):
         non_coordinator = User.objects.create_user(
@@ -205,12 +211,10 @@ class TestApplicationSerializer(TestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            username='appuser',
-            email='appuser@example.com',
-            password='TestPass123!'
+            username="appuser", email="appuser@example.com", password="TestPass123!"
         )
         # Ensure user has 'student' role
-        student_role, _ = Role.objects.get_or_create(name='student')
+        student_role, _ = Role.objects.get_or_create(name="student")
         self.user.roles.add(student_role)
         self.coordinator_role, _ = Role.objects.get_or_create(name="coordinator")
         self.coordinator = User.objects.create_user(
@@ -220,34 +224,36 @@ class TestApplicationSerializer(TestCase):
         )
         self.coordinator.roles.add(self.coordinator_role)
         self.program = Program.objects.create(
-            name='App Program',
-            description='desc',
+            name="App Program",
+            description="desc",
             start_date=timezone.now().date(),
             end_date=timezone.now().date() + timedelta(days=365),
-            is_active=True
+            is_active=True,
         )
         self.program.coordinators.add(self.coordinator)
         self.form_type = FormType.objects.create(
-            name='Application Questions',
-            form_type='application',
+            name="Application Questions",
+            form_type="application",
             schema={
-                'properties': {
-                    'motivation': {'type': 'string', 'title': 'Motivation'},
-                    'academic_goals': {'type': 'string', 'title': 'Academic Goals'},
+                "properties": {
+                    "motivation": {"type": "string", "title": "Motivation"},
+                    "academic_goals": {"type": "string", "title": "Academic Goals"},
                 },
-                'required': ['motivation', 'academic_goals'],
+                "required": ["motivation", "academic_goals"],
             },
             created_by=self.user,
         )
         self.program_with_form = Program.objects.create(
-            name='App Program With Form',
-            description='desc',
+            name="App Program With Form",
+            description="desc",
             start_date=timezone.now().date(),
             end_date=timezone.now().date() + timedelta(days=365),
             is_active=True,
             application_form=self.form_type,
         )
-        self.status, _ = ApplicationStatus.objects.get_or_create(name='draft', defaults={'order': 1})
+        self.status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
 
     def test_application_serializer_fields(self):
         """Test that ApplicationSerializer includes all required fields."""
@@ -263,7 +269,9 @@ class TestApplicationSerializer(TestCase):
             end_date=date(2024, 6, 30),
             is_active=True,
         )
-        status, _ = ApplicationStatus.objects.get_or_create(name="draft", defaults={"order": 1})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
         application = Application.objects.create(
             student=user,
             program=program,
@@ -300,8 +308,8 @@ class TestApplicationSerializer(TestCase):
             form_type=self.form_type,
             submitted_by=self.user,
             responses={
-                'motivation': 'Study abroad experience',
-                'academic_goals': 'Research collaboration',
+                "motivation": "Study abroad experience",
+                "academic_goals": "Research collaboration",
             },
             program=self.program_with_form,
             application=application,
@@ -314,7 +322,7 @@ class TestApplicationSerializer(TestCase):
         self.assertEqual(data["dynamic_form_submission"]["id"], submission.id)
         self.assertEqual(
             data["dynamic_form_submission"]["responses"]["motivation"],
-            'Study abroad experience',
+            "Study abroad experience",
         )
 
     def test_application_serializer_exposes_assigned_coordinator(self):
@@ -333,13 +341,13 @@ class TestApplicationSerializer(TestCase):
         self.assertIsNotNone(data["effective_coordinator"])
         self.assertEqual(data["effective_coordinator"]["id"], self.coordinator.id)
 
-    @patch('exchange.serializers.ApplicationService.check_eligibility')
-    @patch('exchange.serializers.ApplicationService.can_submit_application', return_value=True)
+    @patch("exchange.serializers.ApplicationService.check_eligibility")
+    @patch(
+        "exchange.serializers.ApplicationService.can_submit_application",
+        return_value=True,
+    )
     def test_application_validate_success(self, mock_can_submit, mock_check_elig):
-        data = {
-            'student': self.user.id,
-            'program': self.program.id
-        }
+        data = {"student": self.user.id, "program": self.program.id}
         serializer = ApplicationSerializer(data=data)
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
@@ -370,51 +378,68 @@ class TestApplicationSerializer(TestCase):
 
     def test_application_validate_duplicate(self):
         # Create an existing application with status 'submitted' to trigger duplicate validation
-        submitted_status, _ = ApplicationStatus.objects.get_or_create(name='submitted', defaults={'order': 2})
-        Application.objects.create(student=self.user, program=self.program, status=submitted_status)
-        data = {
-            'program': self.program.id
-        }
+        submitted_status, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
+        Application.objects.create(
+            student=self.user, program=self.program, status=submitted_status
+        )
+        data = {"program": self.program.id}
         # Create mock request with user
         request = Mock()
         request.user = self.user
         request.data = data
-        serializer = ApplicationSerializer(data=data, context={'request': request})
+        serializer = ApplicationSerializer(data=data, context={"request": request})
         self.assertFalse(serializer.is_valid())
-        self.assertIn('program', serializer.errors)
+        self.assertIn("program", serializer.errors)
 
     def test_application_create_default_status(self):
-        data = {
-            'program': self.program.id
-        }
+        data = {"program": self.program.id}
         # Create mock request with user
         request = Mock()
         request.user = self.user
         request.data = data
-        serializer = ApplicationSerializer(data=data, context={'request': request})
+        serializer = ApplicationSerializer(data=data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         app = serializer.save(student=self.user)
-        self.assertEqual(app.status.name, 'draft')
+        self.assertEqual(app.status.name, "draft")
         self.assertEqual(app.assigned_coordinator, self.coordinator)
 
-    @patch('exchange.serializers.ApplicationService.transition_status')
+    @patch("exchange.serializers.ApplicationService.transition_status")
     def test_application_update_status_transition(self, mock_transition):
-        app = Application.objects.create(student=self.user, program=self.program, status=self.status)
+        app = Application.objects.create(
+            student=self.user, program=self.program, status=self.status
+        )
         request = Mock()
         request.user = self.user
-        request.data = {'status': 'submitted'}
-        serializer = ApplicationSerializer(app, data={'program': self.program.id}, context={'request': request}, partial=True)
+        request.data = {"status": "submitted"}
+        serializer = ApplicationSerializer(
+            app,
+            data={"program": self.program.id},
+            context={"request": request},
+            partial=True,
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         mock_transition.assert_called_once()
 
-    @patch('exchange.serializers.ApplicationService.transition_status', side_effect=ValueError('Invalid transition'))
+    @patch(
+        "exchange.serializers.ApplicationService.transition_status",
+        side_effect=ValueError("Invalid transition"),
+    )
     def test_application_update_status_transition_error(self, mock_transition):
-        app = Application.objects.create(student=self.user, program=self.program, status=self.status)
+        app = Application.objects.create(
+            student=self.user, program=self.program, status=self.status
+        )
         request = Mock()
         request.user = self.user
-        request.data = {'status': 'submitted'}
-        serializer = ApplicationSerializer(app, data={'program': self.program.id}, context={'request': request}, partial=True)
+        request.data = {"status": "submitted"}
+        serializer = ApplicationSerializer(
+            app,
+            data={"program": self.program.id},
+            context={"request": request},
+            partial=True,
+        )
         serializer.is_valid(raise_exception=True)
         with self.assertRaises(serializers.ValidationError):
             serializer.save()
@@ -433,7 +458,9 @@ class TestApplicationSerializer(TestCase):
             end_date=date(2024, 6, 30),
             is_active=True,
         )
-        status, _ = ApplicationStatus.objects.get_or_create(name="draft", defaults={"order": 1})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
 
         data = {
             "program": program.id,
@@ -443,7 +470,7 @@ class TestApplicationSerializer(TestCase):
         request = Mock()
         request.user = user
         request.data = data
-        serializer = ApplicationSerializer(data=data, context={'request': request})
+        serializer = ApplicationSerializer(data=data, context={"request": request})
         self.assertTrue(serializer.is_valid())
 
         application = serializer.save(student=user)
@@ -461,7 +488,7 @@ class TestApplicationSerializer(TestCase):
         request.user = self.user
         request.data = data
 
-        serializer = ApplicationSerializer(data=data, context={'request': request})
+        serializer = ApplicationSerializer(data=data, context={"request": request})
         self.assertTrue(serializer.is_valid(), serializer.errors)
 
         with self.assertRaises(serializers.ValidationError) as exc:
@@ -469,7 +496,9 @@ class TestApplicationSerializer(TestCase):
 
         self.assertIn("dynamic_form", exc.exception.detail)
         self.assertEqual(
-            Application.objects.filter(program=self.program_with_form, student=self.user).count(),
+            Application.objects.filter(
+                program=self.program_with_form, student=self.user
+            ).count(),
             0,
         )
 
@@ -487,7 +516,9 @@ class TestApplicationSerializer(TestCase):
             end_date=date(2024, 6, 30),
             is_active=True,
         )
-        status, _ = ApplicationStatus.objects.get_or_create(name="draft", defaults={"order": 1})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
         application = Application.objects.create(
             student=user,
             program=program,
@@ -568,7 +599,7 @@ class TestApplicationSerializer(TestCase):
 
         serializer = ApplicationSerializer(data=data)
         self.assertFalse(serializer.is_valid())
-        self.assertIn('program', serializer.errors)
+        self.assertIn("program", serializer.errors)
 
     def test_application_serializer_read_only_fields(self):
         """Test that certain fields are read-only."""
@@ -584,7 +615,9 @@ class TestApplicationSerializer(TestCase):
             end_date=date(2024, 6, 30),
             is_active=True,
         )
-        status, _ = ApplicationStatus.objects.get_or_create(name="draft", defaults={"order": 1})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
         application = Application.objects.create(
             student=user,
             program=program,

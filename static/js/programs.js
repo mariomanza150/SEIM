@@ -7,4 +7,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeTooltips();
     initializeModals();
     initProgramsList();
-}); 
+});

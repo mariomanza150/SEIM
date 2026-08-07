@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, Optional, Tuple
+from typing import TYPE_CHECKING, Literal
 
 from django.db import transaction
 from django.utils.text import slugify
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from exchange.models import Program
 
 
-def _duration_label(program: "Program") -> str:
+def _duration_label(program: Program) -> str:
     return f"{program.start_date:%b %d, %Y} – {program.end_date:%b %d, %Y}"
 
 
@@ -43,7 +43,7 @@ def _unique_slug_under(parent, base: str) -> str:
     return candidate
 
 
-def _apply_operational_fields(program: "Program", page) -> None:
+def _apply_operational_fields(program: Program, page) -> None:
     page.title = program.name
     desc = (program.description or "").strip()
     page.introduction = desc[:500]
@@ -52,7 +52,7 @@ def _apply_operational_fields(program: "Program", page) -> None:
     page.duration = _duration_label(program)[:100]
 
 
-def create_draft_program_page_for_program(program: "Program", user: Optional["User"] = None):
+def create_draft_program_page_for_program(program: Program, user: User | None = None):
     """
     Add a draft ProgramPage under the primary ProgramIndexPage and link this program.
     Raises ValueError if no index exists or a page is already linked.
@@ -96,8 +96,8 @@ def create_draft_program_page_for_program(program: "Program", user: Optional["Us
 
 
 def sync_program_page_operational_fields_and_publish(
-    program: "Program", user: Optional["User"] = None
-) -> Tuple[Literal["updated", "missing"], Optional[object]]:
+    program: Program, user: User | None = None
+) -> tuple[Literal["updated", "missing"], object | None]:
     """
     Push Program name, summary, language, dates to the linked ProgramPage.
     If the page is live, publish a new revision so the public site updates.

@@ -19,12 +19,8 @@ class Command(BaseCommand):
     help = "Enhance docstrings in the SEIM codebase for better documentation"
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            "--file", type=str, help="Specific file to enhance"
-        )
-        parser.add_argument(
-            "--directory", type=str, help="Directory to enhance"
-        )
+        parser.add_argument("--file", type=str, help="Specific file to enhance")
+        parser.add_argument("--directory", type=str, help="Directory to enhance")
         parser.add_argument(
             "--recursive",
             action="store_true",

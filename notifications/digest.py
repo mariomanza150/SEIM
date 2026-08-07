@@ -88,17 +88,16 @@ def process_notification_digests(now=None) -> dict[str, int]:
             skipped_no_unread += 1
             continue
 
-        previews = list(unread_qs.order_by("-sent_at").values_list("title", flat=True)[:3])
+        previews = list(
+            unread_qs.order_by("-sent_at").values_list("title", flat=True)[:3]
+        )
         preview_lines = "\n".join(f"• {t or 'Notification'}" for t in previews)
         if total > len(previews):
             preview_lines += f"\n… and {total - len(previews)} more."
 
         message = f"You have {total} unread notification(s).\n\n{preview_lines}"
 
-        email_ok = (
-            settings_row.email_system
-            and settings_row.email_notification_digest
-        )
+        email_ok = settings_row.email_system and settings_row.email_notification_digest
         ntype = "both" if email_ok else "in_app"
 
         with transaction.atomic():
@@ -123,7 +122,9 @@ def process_notification_digests(now=None) -> dict[str, int]:
                 transactional_route_key="notification_digest_unread_summary",
             )
             locked.notification_digest_last_sent_at = now
-            locked.save(update_fields=["notification_digest_last_sent_at", "updated_at"])
+            locked.save(
+                update_fields=["notification_digest_last_sent_at", "updated_at"]
+            )
 
         if notif is None:
             skipped_suppressed += 1

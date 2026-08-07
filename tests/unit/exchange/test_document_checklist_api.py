@@ -113,6 +113,10 @@ class TestDocumentChecklistAPI(TestCase):
         response = self.client.get(reverse("api:application-list"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         payload = response.data
-        rows = payload["results"] if isinstance(payload, dict) and "results" in payload else payload
+        rows = (
+            payload["results"]
+            if isinstance(payload, dict) and "results" in payload
+            else payload
+        )
         row = rows[0]
         self.assertIsNone(row.get("document_checklist"))

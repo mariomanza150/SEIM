@@ -1,6 +1,6 @@
 /**
  * Preferences Manager
- * 
+ *
  * Manages user preferences for theme, font size, and accessibility options
  */
 
@@ -12,10 +12,10 @@ class PreferencesManager {
             highContrast: false,
             reduceMotion: false
         };
-        
+
         this.init();
     }
-    
+
     /**
      * Initialize preferences manager
      */
@@ -24,7 +24,7 @@ class PreferencesManager {
         this.applyPreferences();
         this.attachEventListeners();
     }
-    
+
     /**
      * Load preferences from localStorage and API
      */
@@ -38,14 +38,14 @@ class PreferencesManager {
                 console.error('Error parsing stored preferences:', error);
             }
         }
-        
+
         // Then sync with API
         await this.syncWithAPI();
-        
+
         // Update form fields
         this.updateFormFields();
     }
-    
+
     /**
      * Sync preferences with API
      */
@@ -53,69 +53,74 @@ class PreferencesManager {
         try {
             const token = localStorage.getItem('seim_access_token');
             if (!token) return;
-            
+
             const response = await fetch('/api/user-settings/', {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`
                 }
             });
-            
+
             if (!response.ok) return;
-            
+
             const data = await response.json();
-            
+
             // Map API data to our preferences
             if (data.theme) this.preferences.theme = data.theme;
             if (data.font_size) this.preferences.fontSize = data.font_size;
-            if (data.high_contrast !== undefined) this.preferences.highContrast = data.high_contrast;
-            if (data.reduce_motion !== undefined) this.preferences.reduceMotion = data.reduce_motion;
-            
+            if (data.high_contrast !== undefined)
+                this.preferences.highContrast = data.high_contrast;
+            if (data.reduce_motion !== undefined)
+                this.preferences.reduceMotion = data.reduce_motion;
+
             // Save to localStorage
             this.saveToLocalStorage();
-            
         } catch (error) {
             console.error('Error syncing preferences:', error);
         }
     }
-    
+
     /**
      * Update form fields with current preferences
      */
     updateFormFields() {
         // Theme
-        const themeRadio = document.querySelector(`input[name="theme"][value="${this.preferences.theme}"]`);
+        const themeRadio = document.querySelector(
+            `input[name="theme"][value="${this.preferences.theme}"]`
+        );
         if (themeRadio) themeRadio.checked = true;
-        
+
         // Font Size
-        const fontRadio = document.querySelector(`input[name="fontSize"][value="${this.preferences.fontSize}"]`);
+        const fontRadio = document.querySelector(
+            `input[name="fontSize"][value="${this.preferences.fontSize}"]`
+        );
         if (fontRadio) fontRadio.checked = true;
-        
+
         // High Contrast
         const highContrastCheckbox = document.getElementById('highContrast');
         if (highContrastCheckbox) highContrastCheckbox.checked = this.preferences.highContrast;
-        
+
         // Reduce Motion
         const reduceMotionCheckbox = document.getElementById('reduceMotion');
         if (reduceMotionCheckbox) reduceMotionCheckbox.checked = this.preferences.reduceMotion;
     }
-    
+
     /**
      * Apply preferences to the DOM
      */
     applyPreferences() {
         // Apply theme
         this.applyTheme(this.preferences.theme);
-        
+
         // Apply font size
         this.applyFontSize(this.preferences.fontSize);
-        
+
         // Apply high contrast
         if (this.preferences.highContrast) {
             document.body.setAttribute('data-accessibility', 'high-contrast');
         } else {
             document.body.removeAttribute('data-accessibility');
         }
-        
+
         // Apply reduce motion
         if (this.preferences.reduceMotion) {
             document.body.setAttribute('data-reduce-motion', 'true');
@@ -123,7 +128,7 @@ class PreferencesManager {
             document.body.removeAttribute('data-reduce-motion');
         }
     }
-    
+
     /**
      * Apply theme
      */
@@ -135,101 +140,101 @@ class PreferencesManager {
         } else {
             document.documentElement.setAttribute('data-theme', theme);
         }
-        
+
         // Store for theme manager compatibility
         localStorage.setItem('seim-theme', theme);
     }
-    
+
     /**
      * Apply font size
      */
     applyFontSize(fontSize) {
         // Remove existing font size classes
         document.body.removeAttribute('data-font-size');
-        
+
         if (fontSize !== 'normal') {
             document.body.setAttribute('data-font-size', fontSize);
         }
     }
-    
+
     /**
      * Attach event listeners
      */
     attachEventListeners() {
         // Theme radio buttons
         document.querySelectorAll('input[name="theme"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
+            radio.addEventListener('change', e => {
                 this.preferences.theme = e.target.value;
                 this.applyTheme(this.preferences.theme);
                 this.saveToLocalStorage();
             });
         });
-        
+
         // Font size radio buttons
         document.querySelectorAll('input[name="fontSize"]').forEach(radio => {
-            radio.addEventListener('change', (e) => {
+            radio.addEventListener('change', e => {
                 this.preferences.fontSize = e.target.value;
                 this.applyFontSize(this.preferences.fontSize);
                 this.saveToLocalStorage();
             });
         });
-        
+
         // High contrast checkbox
         const highContrastCheckbox = document.getElementById('highContrast');
         if (highContrastCheckbox) {
-            highContrastCheckbox.addEventListener('change', (e) => {
+            highContrastCheckbox.addEventListener('change', e => {
                 this.preferences.highContrast = e.target.checked;
                 this.applyPreferences();
                 this.saveToLocalStorage();
             });
         }
-        
+
         // Reduce motion checkbox
         const reduceMotionCheckbox = document.getElementById('reduceMotion');
         if (reduceMotionCheckbox) {
-            reduceMotionCheckbox.addEventListener('change', (e) => {
+            reduceMotionCheckbox.addEventListener('change', e => {
                 this.preferences.reduceMotion = e.target.checked;
                 this.applyPreferences();
                 this.saveToLocalStorage();
             });
         }
-        
+
         // Save button
         const saveBtn = document.getElementById('saveBtn');
         if (saveBtn) {
             saveBtn.addEventListener('click', () => this.saveToAPI());
         }
-        
+
         // Reset button
         const resetBtn = document.getElementById('resetBtn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => this.resetToDefaults());
         }
     }
-    
+
     /**
      * Save to localStorage
      */
     saveToLocalStorage() {
         localStorage.setItem('user_preferences', JSON.stringify(this.preferences));
     }
-    
+
     /**
      * Save to API
      */
     async saveToAPI() {
         try {
             this.showLoading();
-            
+
             const token = localStorage.getItem('seim_access_token');
             if (!token) {
                 throw new Error('Not authenticated');
             }
-            
+
             const response = await fetch('/api/user-settings/', {
                 method: 'PATCH',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -239,14 +244,13 @@ class PreferencesManager {
                     reduce_motion: this.preferences.reduceMotion
                 })
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to save preferences');
             }
-            
+
             this.saveToLocalStorage();
             this.showSuccess('Preferences saved successfully');
-            
         } catch (error) {
             console.error('Error saving preferences:', error);
             this.showError('Failed to save preferences');
@@ -254,7 +258,7 @@ class PreferencesManager {
             this.hideLoading();
         }
     }
-    
+
     /**
      * Reset to defaults
      */
@@ -262,20 +266,20 @@ class PreferencesManager {
         if (!confirm('Reset all preferences to defaults?')) {
             return;
         }
-        
+
         this.preferences = {
             theme: 'auto',
             fontSize: 'normal',
             highContrast: false,
             reduceMotion: false
         };
-        
+
         this.updateFormFields();
         this.applyPreferences();
         this.saveToLocalStorage();
         this.saveToAPI();
     }
-    
+
     /**
      * Show loading overlay
      */
@@ -285,7 +289,7 @@ class PreferencesManager {
             overlay.classList.remove('d-none');
         }
     }
-    
+
     /**
      * Hide loading overlay
      */
@@ -295,7 +299,7 @@ class PreferencesManager {
             overlay.classList.add('d-none');
         }
     }
-    
+
     /**
      * Show success message
      */
@@ -304,7 +308,7 @@ class PreferencesManager {
             window.toastNotifications.success('Success', message);
         }
     }
-    
+
     /**
      * Show error message
      */
@@ -322,4 +326,3 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Make available globally
 window.PreferencesManager = PreferencesManager;
-

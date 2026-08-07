@@ -89,9 +89,9 @@ class TestCoreFunctionality(unittest.TestCase):
         # Check for login/register links
         login_links = self.driver.find_elements(By.LINK_TEXT, "Login")
         register_links = self.driver.find_elements(By.LINK_TEXT, "Register")
-        assert (
-            len(login_links) > 0 or len(register_links) > 0
-        ), "Authentication links should be present"
+        assert len(login_links) > 0 or len(register_links) > 0, (
+            "Authentication links should be present"
+        )
 
     def test_user_registration(self):
         """Test user registration workflow."""
@@ -154,9 +154,9 @@ class TestCoreFunctionality(unittest.TestCase):
                 )
                 if validation_elements:
                     # Form submitted and got some response
-                    assert (
-                        True
-                    ), "Registration form submitted successfully with validation response"
+                    assert True, (
+                        "Registration form submitted successfully with validation response"
+                    )
                 else:
                     # Form submitted but no clear response - still consider it working
                     assert True, "Registration form submitted successfully"
@@ -372,9 +372,9 @@ class TestCoreFunctionality(unittest.TestCase):
             if len(all_inputs) == 0:
                 print("Application creation page source:")
                 print(self.driver.page_source[:1000])
-            assert (
-                len(all_inputs) > 0
-            ), "No form inputs found on application creation page"
+            assert len(all_inputs) > 0, (
+                "No form inputs found on application creation page"
+            )
 
             # Check for any submit button or interactive element
             submit_buttons = self.driver.find_elements(
@@ -384,9 +384,9 @@ class TestCoreFunctionality(unittest.TestCase):
             if len(submit_buttons) == 0:
                 print("Application creation page source:")
                 print(self.driver.page_source[:1000])
-            assert (
-                len(submit_buttons) > 0
-            ), "Application creation page loaded but no submit button found"
+            assert len(submit_buttons) > 0, (
+                "Application creation page loaded but no submit button found"
+            )
             assert True, "Application creation page loaded successfully"
 
         except NoSuchElementException as e:
@@ -443,9 +443,9 @@ class TestCoreFunctionality(unittest.TestCase):
             if len(upload_elements) == 0:
                 print("Documents page source:")
                 print(self.driver.page_source[:1000])
-            assert (
-                len(upload_elements) > 0
-            ), "Documents page loaded but no upload or interactive elements found"
+            assert len(upload_elements) > 0, (
+                "Documents page loaded but no upload or interactive elements found"
+            )
             assert True, "Documents page loaded successfully"
 
         except NoSuchElementException as e:

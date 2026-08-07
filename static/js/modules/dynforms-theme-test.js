@@ -8,35 +8,35 @@ class DynformsThemeTest {
         this.testResults = [];
         this.init();
     }
-    
+
     init() {
         console.log('DynformsThemeTest: Initializing...');
         this.runTests();
         this.setupThemeChangeListener();
     }
-    
+
     /**
      * Run comprehensive tests for dynforms theme implementation
      */
     runTests() {
         console.log('DynformsThemeTest: Running tests...');
-        
+
         // Test 1: Check if dynforms elements exist
         this.testElementExistence();
-        
+
         // Test 2: Check CSS variable application
         this.testCSSVariables();
-        
+
         // Test 3: Check contrast ratios
         this.testContrastRatios();
-        
+
         // Test 4: Check theme switching
         this.testThemeSwitching();
-        
+
         // Log results
         this.logResults();
     }
-    
+
     /**
      * Test if dynforms elements exist on the page
      */
@@ -49,7 +49,7 @@ class DynformsThemeTest {
             '.preview-frame',
             '.list-group-item'
         ];
-        
+
         const results = elements.map(selector => {
             const element = document.querySelector(selector);
             return {
@@ -58,16 +58,16 @@ class DynformsThemeTest {
                 element: element
             };
         });
-        
+
         this.testResults.push({
             test: 'Element Existence',
             results: results,
             passed: results.every(r => r.exists)
         });
-        
+
         console.log('DynformsThemeTest: Element existence test results:', results);
     }
-    
+
     /**
      * Test if CSS variables are being applied correctly
      */
@@ -77,14 +77,10 @@ class DynformsThemeTest {
             console.warn('DynformsThemeTest: Cannot test CSS variables - #df-builder not found');
             return;
         }
-        
+
         const computedStyle = window.getComputedStyle(testElement);
-        const variables = [
-            '--bg-secondary',
-            '--text-primary',
-            '--border-color'
-        ];
-        
+        const variables = ['--bg-secondary', '--text-primary', '--border-color'];
+
         const results = variables.map(variable => {
             const value = computedStyle.getPropertyValue(variable);
             return {
@@ -93,16 +89,16 @@ class DynformsThemeTest {
                 hasValue: value.trim() !== ''
             };
         });
-        
+
         this.testResults.push({
             test: 'CSS Variables',
             results: results,
             passed: results.every(r => r.hasValue)
         });
-        
+
         console.log('DynformsThemeTest: CSS variables test results:', results);
     }
-    
+
     /**
      * Test contrast ratios for accessibility
      */
@@ -112,20 +108,20 @@ class DynformsThemeTest {
             { selector: '.list-group-item', description: 'List group items' },
             { selector: '.preview-frame', description: 'Preview frame' }
         ];
-        
+
         const results = testElements.map(({ selector, description }) => {
             const element = document.querySelector(selector);
             if (!element) {
                 return { description, passed: false, reason: 'Element not found' };
             }
-            
+
             const computedStyle = window.getComputedStyle(element);
             const backgroundColor = computedStyle.backgroundColor;
             const color = computedStyle.color;
-            
+
             // Simple contrast check (basic implementation)
             const hasContrast = this.checkBasicContrast(backgroundColor, color);
-            
+
             return {
                 description,
                 backgroundColor,
@@ -134,16 +130,16 @@ class DynformsThemeTest {
                 reason: hasContrast ? 'Good contrast' : 'Poor contrast detected'
             };
         });
-        
+
         this.testResults.push({
             test: 'Contrast Ratios',
             results: results,
             passed: results.every(r => r.passed)
         });
-        
+
         console.log('DynformsThemeTest: Contrast test results:', results);
     }
-    
+
     /**
      * Basic contrast check (simplified)
      */
@@ -152,27 +148,33 @@ class DynformsThemeTest {
         if (bgColor === 'rgba(0, 0, 0, 0)' || textColor === 'rgba(0, 0, 0, 0)') {
             return false;
         }
-        
+
         // Check if colors are different (basic check)
         return bgColor !== textColor;
     }
-    
+
     /**
      * Test theme switching functionality
      */
     testThemeSwitching() {
         const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
         const themeManager = window.themeManager;
-        
+
         if (!themeManager) {
             this.testResults.push({
                 test: 'Theme Switching',
-                results: [{ description: 'Theme Manager', passed: false, reason: 'Theme manager not found' }],
+                results: [
+                    {
+                        description: 'Theme Manager',
+                        passed: false,
+                        reason: 'Theme manager not found'
+                    }
+                ],
                 passed: false
             });
             return;
         }
-        
+
         const results = [
             {
                 description: 'Theme Manager Available',
@@ -185,43 +187,43 @@ class DynformsThemeTest {
                 reason: `Current theme: ${currentTheme}`
             }
         ];
-        
+
         this.testResults.push({
             test: 'Theme Switching',
             results: results,
             passed: results.every(r => r.passed)
         });
-        
+
         console.log('DynformsThemeTest: Theme switching test results:', results);
     }
-    
+
     /**
      * Setup listener for theme changes
      */
     setupThemeChangeListener() {
-        window.addEventListener('themeChanged', (event) => {
+        window.addEventListener('themeChanged', event => {
             console.log('DynformsThemeTest: Theme changed to:', event.detail.theme);
             this.runTests();
         });
     }
-    
+
     /**
      * Log test results
      */
     logResults() {
         console.log('DynformsThemeTest: All test results:', this.testResults);
-        
+
         const passedTests = this.testResults.filter(test => test.passed).length;
         const totalTests = this.testResults.length;
-        
+
         console.log(`DynformsThemeTest: ${passedTests}/${totalTests} tests passed`);
-        
+
         // Show results in UI if on dynforms page
         if (document.querySelector('#df-builder')) {
             this.showResultsInUI();
         }
     }
-    
+
     /**
      * Show test results in the UI
      */
@@ -241,10 +243,10 @@ class DynformsThemeTest {
             font-size: 12px;
             color: var(--text-primary);
         `;
-        
+
         const passedTests = this.testResults.filter(test => test.passed).length;
         const totalTests = this.testResults.length;
-        
+
         resultsDiv.innerHTML = `
             <h6 style="margin: 0 0 10px 0; color: var(--text-primary);">Dynforms Theme Test</h6>
             <p style="margin: 0 0 10px 0; color: var(--text-primary);">
@@ -255,9 +257,9 @@ class DynformsThemeTest {
                 Close
             </button>
         `;
-        
+
         document.body.appendChild(resultsDiv);
-        
+
         // Auto-remove after 10 seconds
         setTimeout(() => {
             if (resultsDiv.parentElement) {
@@ -265,14 +267,14 @@ class DynformsThemeTest {
             }
         }, 10000);
     }
-    
+
     /**
      * Get test results for external use
      */
     getResults() {
         return this.testResults;
     }
-    
+
     /**
      * Run tests again
      */
@@ -283,7 +285,7 @@ class DynformsThemeTest {
 }
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Only run on dynforms pages
     if (document.querySelector('#df-builder') || window.location.pathname.includes('dynforms')) {
         window.dynformsThemeTest = new DynformsThemeTest();
@@ -294,4 +296,4 @@ document.addEventListener('DOMContentLoaded', function() {
 // Export for module use
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = DynformsThemeTest;
-} 
+}

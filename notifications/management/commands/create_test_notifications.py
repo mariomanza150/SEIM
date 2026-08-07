@@ -2,8 +2,9 @@
 Management command to create test notifications for Vue.js testing.
 """
 
-from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
+
 from notifications.models import Notification
 
 User = get_user_model()
@@ -14,27 +15,29 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--user',
+            "--user",
             type=str,
-            default='student@test.com',
-            help='Email of user to create notifications for',
+            default="student@test.com",
+            help="Email of user to create notifications for",
         )
         parser.add_argument(
-            '--count',
+            "--count",
             type=int,
             default=5,
-            help='Number of notifications to create',
+            help="Number of notifications to create",
         )
 
     def handle(self, *args, **options):
-        email = options['user']
-        count = options['count']
+        email = options["user"]
+        count = options["count"]
 
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             self.stdout.write(self.style.ERROR(f"User with email '{email}' not found."))
-            self.stdout.write("Create test users first: python manage.py create_vue_test_users")
+            self.stdout.write(
+                "Create test users first: python manage.py create_vue_test_users"
+            )
             return
 
         self.stdout.write(f"Creating {count} test notifications for {email}...")
@@ -98,5 +101,7 @@ class Command(BaseCommand):
         self.stdout.write("\n" + "=" * 60)
         self.stdout.write(self.style.SUCCESS(f"✓ Created {created} new notifications"))
         self.stdout.write("=" * 60)
-        self.stdout.write("\nView notifications at: http://localhost:5173/notifications")
+        self.stdout.write(
+            "\nView notifications at: http://localhost:5173/notifications"
+        )
         self.stdout.write("\n")

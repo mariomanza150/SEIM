@@ -31,9 +31,7 @@ class TestBulkOperations(TestCase):
         users = []
         for i in range(100):
             user = User.objects.create_user(
-                username=f"user{i}",
-                email=f"user{i}@test.com",
-                password="testpass123"
+                username=f"user{i}", email=f"user{i}@test.com", password="testpass123"
             )
             user.roles.add(student_role)
             users.append(user)
@@ -72,7 +70,7 @@ class TestBulkOperations(TestCase):
             user = User.objects.create_user(
                 username=f"student{i}",
                 email=f"student{i}@test.com",
-                password="testpass123"
+                password="testpass123",
             )
             user.roles.add(student_role)
             students.append(user)
@@ -89,7 +87,9 @@ class TestBulkOperations(TestCase):
             )
             programs.append(program)
 
-        status, _ = ApplicationStatus.objects.get_or_create(name="submitted", defaults={'order': 2})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
 
         # Create applications (10 students x 5 programs = 50 applications)
         applications = []
@@ -111,9 +111,7 @@ class TestBulkOperations(TestCase):
 
         # Create data
         student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         student.roles.add(student_role)
 
@@ -125,7 +123,9 @@ class TestBulkOperations(TestCase):
             is_active=True,
         )
 
-        status, _ = ApplicationStatus.objects.get_or_create(name="submitted", defaults={'order': 2})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
 
         # Create 100 applications
         for _ in range(100):
@@ -143,9 +143,7 @@ class TestBulkOperations(TestCase):
 
         # Test filtering on large dataset
         # Filter by program since personal_statement doesn't exist
-        filtered = Application.objects.filter(
-            program=program
-        )
+        filtered = Application.objects.filter(program=program)
 
         # Should find matches efficiently
         self.assertGreater(filtered.count(), 0)
@@ -162,9 +160,7 @@ class TestAPILoadScenarios(TestCase):
 
         self.student_role, _ = Role.objects.get_or_create(name="student")
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
 
@@ -213,7 +209,9 @@ class TestAPILoadScenarios(TestCase):
 
     def test_deep_nested_relations(self):
         """Test querying deeply nested relationships."""
-        status, _ = ApplicationStatus.objects.get_or_create(name="submitted", defaults={'order': 2})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
 
         program = Program.objects.create(
             name="Test Program",
@@ -239,7 +237,7 @@ class TestAPILoadScenarios(TestCase):
 
         # Query with select_related/prefetch_related
         apps = Application.objects.select_related(
-            'student', 'program', 'status'
+            "student", "program", "status"
         ).prefetch_related("comments")
 
         # Should efficiently load related data
@@ -331,16 +329,12 @@ class TestConcurrentAccess(TransactionTestCase):
         coordinator_role = Role.objects.create(name="coordinator")
 
         student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         student.roles.add(student_role)
 
         coordinator = User.objects.create_user(
-            username="coordinator",
-            email="coordinator@test.com",
-            password="testpass123"
+            username="coordinator", email="coordinator@test.com", password="testpass123"
         )
         coordinator.roles.add(coordinator_role)
 
@@ -352,7 +346,9 @@ class TestConcurrentAccess(TransactionTestCase):
             is_active=True,
         )
 
-        status, _ = ApplicationStatus.objects.get_or_create(name="submitted", defaults={'order': 2})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
 
         application = Application.objects.create(
             student=student,
@@ -380,9 +376,7 @@ class TestConcurrentAccess(TransactionTestCase):
         """Test view count increment with potential race conditions."""
         student_role = Role.objects.create(name="student")
         student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         student.roles.add(student_role)
 
@@ -394,7 +388,9 @@ class TestConcurrentAccess(TransactionTestCase):
             is_active=True,
         )
 
-        status, _ = ApplicationStatus.objects.get_or_create(name="submitted", defaults={'order': 2})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
 
         application = Application.objects.create(
             student=student,
@@ -411,4 +407,3 @@ class TestConcurrentAccess(TransactionTestCase):
         # Application should still exist and be valid
         final_app = Application.objects.get(id=application.id)
         self.assertEqual(final_app.id, application.id)
-

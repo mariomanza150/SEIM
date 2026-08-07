@@ -76,15 +76,11 @@ class TestMockVirusScanner(TestCase):
 class TestClamAVCommandLineScanner(TestCase):
     """Test ClamAV command-line scanner."""
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_clamav_cli_clean_file(self, mock_run):
         """Test ClamAV CLI scanner with clean file."""
         # Mock successful scan (return code 0)
-        mock_run.return_value = MagicMock(
-            returncode=0,
-            stdout="",
-            stderr=""
-        )
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
 
         scanner = ClamAVCommandLineScanner()
 
@@ -101,14 +97,12 @@ class TestClamAVCommandLineScanner(TestCase):
         finally:
             os.unlink(temp_file_path)
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_clamav_cli_infected_file(self, mock_run):
         """Test ClamAV CLI scanner with infected file."""
         # Mock infected file detection (return code 1)
         mock_run.return_value = MagicMock(
-            returncode=1,
-            stdout="/path/to/file: EICAR-Test-File FOUND",
-            stderr=""
+            returncode=1, stdout="/path/to/file: EICAR-Test-File FOUND", stderr=""
         )
 
         scanner = ClamAVCommandLineScanner()
@@ -125,14 +119,12 @@ class TestClamAVCommandLineScanner(TestCase):
         finally:
             os.unlink(temp_file_path)
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_clamav_cli_scan_error(self, mock_run):
         """Test ClamAV CLI scanner with scan error."""
         # Mock scan error (return code 2)
         mock_run.return_value = MagicMock(
-            returncode=2,
-            stdout="",
-            stderr="Scan error occurred"
+            returncode=2, stdout="", stderr="Scan error occurred"
         )
 
         scanner = ClamAVCommandLineScanner()
@@ -154,7 +146,7 @@ class TestClamAVCommandLineScanner(TestCase):
         with self.assertRaises(VirusScannerError):
             scanner.scan_file("non_existent_file.txt")
 
-    @patch('subprocess.run')
+    @patch("subprocess.run")
     def test_clamav_cli_timeout(self, mock_run):
         """Test ClamAV CLI scanner timeout."""
         import subprocess
@@ -188,8 +180,7 @@ class TestVirusScannerFactory(TestCase):
     def test_create_clamav_cli_scanner(self):
         """Test creating ClamAV CLI scanner."""
         scanner = VirusScannerFactory.create_scanner(
-            "clamav_cli",
-            clamscan_path="/usr/bin/clamscan"
+            "clamav_cli", clamscan_path="/usr/bin/clamscan"
         )
 
         self.assertIsInstance(scanner, ClamAVCommandLineScanner)
@@ -198,9 +189,7 @@ class TestVirusScannerFactory(TestCase):
     def test_create_clamav_scanner(self):
         """Test creating ClamAV daemon scanner."""
         scanner = VirusScannerFactory.create_scanner(
-            "clamav",
-            host="localhost",
-            port=3310
+            "clamav", host="localhost", port=3310
         )
 
         self.assertIsInstance(scanner, ClamAVScanner)
@@ -216,7 +205,7 @@ class TestVirusScannerFactory(TestCase):
 class TestVirusScannerIntegration(TestCase):
     """Test virus scanner integration functions."""
 
-    @patch('documents.virus_scanner.VirusScannerFactory.create_scanner')
+    @patch("documents.virus_scanner.VirusScannerFactory.create_scanner")
     def test_get_virus_scanner(self, mock_create):
         """Test getting virus scanner instance."""
         mock_scanner = MockVirusScanner()
@@ -224,6 +213,7 @@ class TestVirusScannerIntegration(TestCase):
 
         # Clear global scanner to test initialization
         import documents.virus_scanner
+
         documents.virus_scanner._virus_scanner = None
 
         scanner = get_virus_scanner()
@@ -231,7 +221,7 @@ class TestVirusScannerIntegration(TestCase):
         self.assertEqual(scanner, mock_scanner)
         mock_create.assert_called_once()
 
-    @patch('documents.virus_scanner.get_virus_scanner')
+    @patch("documents.virus_scanner.get_virus_scanner")
     def test_scan_file_for_viruses_clean(self, mock_get_scanner):
         """Test scanning clean file."""
         mock_scanner = MockVirusScanner(simulate_infected=False)
@@ -249,7 +239,7 @@ class TestVirusScannerIntegration(TestCase):
         finally:
             os.unlink(temp_file_path)
 
-    @patch('documents.virus_scanner.get_virus_scanner')
+    @patch("documents.virus_scanner.get_virus_scanner")
     def test_scan_file_for_viruses_infected(self, mock_get_scanner):
         """Test scanning infected file."""
         mock_scanner = MockVirusScanner(simulate_infected=True, threat_name="TestVirus")
@@ -267,11 +257,13 @@ class TestVirusScannerIntegration(TestCase):
         finally:
             os.unlink(temp_file_path)
 
-    @patch('documents.virus_scanner.get_virus_scanner')
+    @patch("documents.virus_scanner.get_virus_scanner")
     def test_scan_file_for_viruses_scanner_error(self, mock_get_scanner):
         """Test handling scanner errors."""
         mock_scanner = MockVirusScanner()
-        mock_scanner.scan_file = MagicMock(side_effect=VirusScannerError("Scanner failed"))
+        mock_scanner.scan_file = MagicMock(
+            side_effect=VirusScannerError("Scanner failed")
+        )
         mock_get_scanner.return_value = mock_scanner
 
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
@@ -286,7 +278,7 @@ class TestVirusScannerIntegration(TestCase):
         finally:
             os.unlink(temp_file_path)
 
-    @patch('documents.virus_scanner.get_virus_scanner')
+    @patch("documents.virus_scanner.get_virus_scanner")
     def test_test_virus_scanner_connection_success(self, mock_get_scanner):
         """Test virus scanner connection test success."""
         mock_scanner = MockVirusScanner()
@@ -296,7 +288,7 @@ class TestVirusScannerIntegration(TestCase):
 
         self.assertTrue(result)
 
-    @patch('documents.virus_scanner.get_virus_scanner')
+    @patch("documents.virus_scanner.get_virus_scanner")
     def test_test_virus_scanner_connection_failure(self, mock_get_scanner):
         """Test virus scanner connection test failure."""
         mock_scanner = MockVirusScanner()
@@ -322,9 +314,11 @@ class TestDocumentVirusScanning(TestCase):
         from documents.services import DocumentService
 
         file_content = b"Clean document content"
-        file_obj = SimpleUploadedFile("test.pdf", file_content, content_type="application/pdf")
+        file_obj = SimpleUploadedFile(
+            "test.pdf", file_content, content_type="application/pdf"
+        )
 
-        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
+        with patch("documents.virus_scanner.scan_file_for_viruses") as mock_scan:
             mock_scan.return_value = (True, None)
 
             result = DocumentService.virus_scan(file_obj)
@@ -340,9 +334,11 @@ class TestDocumentVirusScanning(TestCase):
         from documents.services import DocumentService
 
         file_content = b"Infected document content"
-        file_obj = SimpleUploadedFile("test.pdf", file_content, content_type="application/pdf")
+        file_obj = SimpleUploadedFile(
+            "test.pdf", file_content, content_type="application/pdf"
+        )
 
-        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
+        with patch("documents.virus_scanner.scan_file_for_viruses") as mock_scan:
             mock_scan.side_effect = ValidationError("File contains virus: TestVirus")
 
             result = DocumentService.virus_scan(file_obj)
@@ -357,9 +353,11 @@ class TestDocumentVirusScanning(TestCase):
         from documents.services import DocumentService
 
         file_content = b"Test document content"
-        file_obj = SimpleUploadedFile("test.pdf", file_content, content_type="application/pdf")
+        file_obj = SimpleUploadedFile(
+            "test.pdf", file_content, content_type="application/pdf"
+        )
 
-        with patch('documents.virus_scanner.scan_file_for_viruses') as mock_scan:
+        with patch("documents.virus_scanner.scan_file_for_viruses") as mock_scan:
             mock_scan.side_effect = Exception("Scanner error")
 
             # Should not raise exception, but return False

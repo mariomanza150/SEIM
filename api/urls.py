@@ -3,7 +3,6 @@ from rest_framework import routers
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from accounts.jwt_views import CustomTokenObtainPairView
-
 from accounts.views import (
     EmailVerificationView,
     LoginView,
@@ -48,8 +47,8 @@ from exchange.views import (
 )
 from notifications.views import (
     NotificationPreferenceViewSet,
-    NotificationRoutingReferenceView,
     NotificationRoutingOverrideViewSet,
+    NotificationRoutingReferenceView,
     NotificationTypeViewSet,
     NotificationViewSet,
     ReminderViewSet,
@@ -67,7 +66,9 @@ router.register(r"user-sessions", UserSessionViewSet, basename="user-sessions")
 
 # Exchange
 router.register(r"programs", ProgramViewSet)
-router.register(r"eligibility-rulesets", EligibilityRuleSetViewSet, basename="eligibility-ruleset")
+router.register(
+    r"eligibility-rulesets", EligibilityRuleSetViewSet, basename="eligibility-ruleset"
+)
 router.register(
     r"exchange-agreements",
     ExchangeAgreementViewSet,
@@ -111,7 +112,9 @@ router.register(r"admin/dashboard", AdminDashboardViewSet, basename="admin-dashb
 
 # Workflows (SPA-configurable application workflow definitions)
 router.register(r"workflows", WorkflowDefinitionViewSet, basename="workflow-definition")
-router.register(r"workflow-versions", WorkflowVersionViewSet, basename="workflow-version")
+router.register(
+    r"workflow-versions", WorkflowVersionViewSet, basename="workflow-version"
+)
 
 urlpatterns = [
     path(
@@ -127,13 +130,29 @@ urlpatterns = [
     path("", include(router.urls)),
     path("analytics/dashboard/", analytics_dashboard_api, name="analytics-dashboard"),
     path("analytics/export/", analytics_export_api, name="analytics-export"),
-    path("analytics/reports/<str:report_type>/", analytics_report_detail_api, name="analytics-report-detail"),
+    path(
+        "analytics/reports/<str:report_type>/",
+        analytics_report_detail_api,
+        name="analytics-report-detail",
+    ),
     path("accounts/", include(("accounts.urls", "accounts"), namespace="accounts")),
     path("login/", LoginView.as_view(), name="login"),
     path("register/", RegistrationView.as_view(), name="register"),
-    path("password-reset-request/", PasswordResetRequestView.as_view(), name="password-reset-request"),
-    path("password-reset-confirm/", PasswordResetConfirmView.as_view(), name="password-reset-confirm"),
-    path("email-verification/", EmailVerificationView.as_view(), name="email-verification"),
+    path(
+        "password-reset-request/",
+        PasswordResetRequestView.as_view(),
+        name="password-reset-request",
+    ),
+    path(
+        "password-reset-confirm/",
+        PasswordResetConfirmView.as_view(),
+        name="password-reset-confirm",
+    ),
+    path(
+        "email-verification/",
+        EmailVerificationView.as_view(),
+        name="email-verification",
+    ),
     path("user-settings/", UserSettingsView.as_view(), name="user-settings"),
     path("token/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),

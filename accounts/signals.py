@@ -33,9 +33,7 @@ def create_user_session(sender, request, user, **kwargs):
 
         # Check if session already exists
         existing_session = UserSession.objects.filter(
-            user=user,
-            session_key=session_key,
-            is_active=True
+            user=user, session_key=session_key, is_active=True
         ).first()
 
         if existing_session:
@@ -47,11 +45,11 @@ def create_user_session(sender, request, user, **kwargs):
             UserSession.objects.create(
                 user=user,
                 session_key=session_key,
-                user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                ip_address=request.META.get('REMOTE_ADDR'),
-                device=get_device_info(request.META.get('HTTP_USER_AGENT', '')),
-                location=get_location_info(request.META.get('REMOTE_ADDR')),
-                is_active=True
+                user_agent=request.META.get("HTTP_USER_AGENT", ""),
+                ip_address=request.META.get("REMOTE_ADDR"),
+                device=get_device_info(request.META.get("HTTP_USER_AGENT", "")),
+                location=get_location_info(request.META.get("REMOTE_ADDR")),
+                is_active=True,
             )
     except Exception as e:
         # Log error but don't break the login process
@@ -61,28 +59,32 @@ def create_user_session(sender, request, user, **kwargs):
 def get_device_info(user_agent):
     """Extract device information from user agent."""
     if not user_agent:
-        return 'Unknown'
+        return "Unknown"
 
     user_agent_lower = user_agent.lower()
-    if 'mobile' in user_agent_lower or 'android' in user_agent_lower or 'iphone' in user_agent_lower:
-        return 'Mobile'
-    elif 'tablet' in user_agent_lower or 'ipad' in user_agent_lower:
-        return 'Tablet'
+    if (
+        "mobile" in user_agent_lower
+        or "android" in user_agent_lower
+        or "iphone" in user_agent_lower
+    ):
+        return "Mobile"
+    elif "tablet" in user_agent_lower or "ipad" in user_agent_lower:
+        return "Tablet"
     else:
-        return 'Desktop'
+        return "Desktop"
 
 
 def get_location_info(ip_address):
     """Get location information from IP address (simplified)."""
     if not ip_address:
-        return 'Unknown'
+        return "Unknown"
 
     # For now, just return a generic location
     # In production, you might use a geolocation service
-    if ip_address in ['127.0.0.1', 'localhost']:
-        return 'Local'
+    if ip_address in ["127.0.0.1", "localhost"]:
+        return "Local"
     else:
-        return 'Remote'
+        return "Remote"
 
 
 @receiver(post_save, sender=User)
@@ -95,5 +97,5 @@ def create_user_profile(sender, instance, created, **kwargs):
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
     """Save the user's profile when the user is saved."""
-    if hasattr(instance, 'profile'):
+    if hasattr(instance, "profile"):
         instance.profile.save()

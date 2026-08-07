@@ -1,7 +1,7 @@
 // Bootstrap helpers for SEIM frontend
 
 export function initializeTooltips() {
-    const tooltipObserver = new IntersectionObserver((entries) => {
+    const tooltipObserver = new IntersectionObserver(entries => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const element = entry.target;
@@ -17,7 +17,7 @@ export function initializeTooltips() {
 }
 
 export function initializeModals() {
-    const modalObserver = new IntersectionObserver((entries) => {
+    const modalObserver = new IntersectionObserver(entries => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 const element = entry.target;
@@ -30,4 +30,4 @@ export function initializeModals() {
     document.querySelectorAll('[data-bs-toggle="modal"]').forEach(el => {
         modalObserver.observe(el);
     });
-} 
+}

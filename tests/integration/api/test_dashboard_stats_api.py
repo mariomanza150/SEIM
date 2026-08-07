@@ -13,7 +13,10 @@ class TestDashboardStatsAPI(APITestCase):
 
     def test_requires_auth(self):
         response = self.client.get(self.url)
-        self.assertIn(response.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN))
+        self.assertIn(
+            response.status_code,
+            (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN),
+        )
 
     def test_student_counts_only_own_applications(self):
         student = self.create_user(role="student")
@@ -35,7 +38,9 @@ class TestDashboardStatsAPI(APITestCase):
         p1 = self.create_program()
         p2 = self.create_program()
         self.create_application(student=student, program=p1, status_name="draft")
-        self.create_application(student=student, program=p2, status_name="submitted", withdrawn=False)
+        self.create_application(
+            student=student, program=p2, status_name="submitted", withdrawn=False
+        )
 
         self.authenticate_user(coordinator)
         response = self.client.get(self.url)

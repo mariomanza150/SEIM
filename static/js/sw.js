@@ -27,7 +27,7 @@ const API_ENDPOINTS = [
 // Install event - cache static files
 self.addEventListener('install', event => {
     console.log('Service Worker installing...');
-    
+
     event.waitUntil(
         Promise.all([
             // Cache static files
@@ -35,7 +35,7 @@ self.addEventListener('install', event => {
                 console.log('Caching static files');
                 return cache.addAll(STATIC_FILES);
             }),
-            
+
             // Cache API endpoints
             caches.open(API_CACHE).then(cache => {
                 console.log('Caching API endpoints');
@@ -51,21 +51,24 @@ self.addEventListener('install', event => {
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
     console.log('Service Worker activating...');
-    
+
     event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cacheName => {
-                    if (cacheName !== STATIC_CACHE && cacheName !== API_CACHE) {
-                        console.log('Deleting old cache:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        }).then(() => {
-            console.log('Service Worker activated successfully');
-            return self.clients.claim();
-        })
+        caches
+            .keys()
+            .then(cacheNames => {
+                return Promise.all(
+                    cacheNames.map(cacheName => {
+                        if (cacheName !== STATIC_CACHE && cacheName !== API_CACHE) {
+                            console.log('Deleting old cache:', cacheName);
+                            return caches.delete(cacheName);
+                        }
+                    })
+                );
+            })
+            .then(() => {
+                console.log('Service Worker activated successfully');
+                return self.clients.claim();
+            })
     );
 });
 
@@ -73,24 +76,24 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     const { request } = event;
     const url = new URL(request.url);
-    
+
     // Skip non-GET requests
     if (request.method !== 'GET') {
         return;
     }
-    
+
     // Handle static files
     if (url.pathname.startsWith('/static/')) {
         event.respondWith(handleStaticFile(request));
         return;
     }
-    
+
     // Handle API requests
     if (url.pathname.startsWith('/api/')) {
         event.respondWith(handleApiRequest(request));
         return;
     }
-    
+
     // Handle HTML pages
     if (request.headers.get('accept').includes('text/html')) {
         event.respondWith(handleHtmlRequest(request));
@@ -105,7 +108,7 @@ async function handleStaticFile(request) {
     try {
         // Try network first, fallback to cache
         const networkResponse = await fetch(request);
-        
+
         if (networkResponse.ok) {
             // Cache the response for future use
             const cache = await caches.open(STATIC_CACHE);
@@ -115,13 +118,13 @@ async function handleStaticFile(request) {
     } catch (error) {
         console.log('Network failed for static file:', request.url);
     }
-    
+
     // Fallback to cache
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
         return cachedResponse;
     }
-    
+
     // Return offline page if available
     return new Response('Offline - Static file not available', {
         status: 503,
@@ -134,7 +137,7 @@ async function handleStaticFile(request) {
  */
 async function handleApiRequest(request) {
     const url = new URL(request.url);
-    
+
     // For GET requests, try cache first, then network
     if (request.method === 'GET') {
         try {
@@ -144,10 +147,10 @@ async function handleApiRequest(request) {
                 // Return cached response immediately
                 return cachedResponse;
             }
-            
+
             // Try network
             const networkResponse = await fetch(request);
-            
+
             if (networkResponse.ok) {
                 // Cache successful responses
                 const cache = await caches.open(API_CACHE);
@@ -157,7 +160,7 @@ async function handleApiRequest(request) {
         } catch (error) {
             console.log('Network failed for API request:', request.url);
         }
-        
+
         // Return cached response if available
         const cachedResponse = await caches.match(request);
         if (cachedResponse) {
@@ -172,18 +175,21 @@ async function handleApiRequest(request) {
             console.log('Network failed for API request:', request.url);
         }
     }
-    
+
     // Return error response
-    return new Response(JSON.stringify({
-        error: 'Offline - API not available',
-        message: 'Please check your internet connection and try again.'
-    }), {
-        status: 503,
-        statusText: 'Service Unavailable',
-        headers: {
-            'Content-Type': 'application/json'
+    return new Response(
+        JSON.stringify({
+            error: 'Offline - API not available',
+            message: 'Please check your internet connection and try again.'
+        }),
+        {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: {
+                'Content-Type': 'application/json'
+            }
         }
-    });
+    );
 }
 
 /**
@@ -193,16 +199,17 @@ async function handleHtmlRequest(request) {
     try {
         // Try network first for HTML
         const networkResponse = await fetch(request);
-        
+
         if (networkResponse.ok) {
             return networkResponse;
         }
     } catch (error) {
         console.log('Network failed for HTML request:', request.url);
     }
-    
+
     // Return offline page
-    return new Response(`
+    return new Response(
+        `
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -263,12 +270,14 @@ async function handleHtmlRequest(request) {
             </div>
         </body>
         </html>
-    `, {
-        status: 200,
-        headers: {
-            'Content-Type': 'text/html'
+    `,
+        {
+            status: 200,
+            headers: {
+                'Content-Type': 'text/html'
+            }
         }
-    });
+    );
 }
 
 /**
@@ -276,7 +285,7 @@ async function handleHtmlRequest(request) {
  */
 self.addEventListener('sync', event => {
     console.log('Background sync triggered:', event.tag);
-    
+
     if (event.tag === 'background-sync') {
         event.waitUntil(performBackgroundSync());
     }
@@ -289,12 +298,12 @@ async function performBackgroundSync() {
     try {
         // Get stored offline actions
         const offlineActions = await getOfflineActions();
-        
+
         for (const action of offlineActions) {
             try {
                 // Retry the action
                 const response = await fetch(action.url, action.options);
-                
+
                 if (response.ok) {
                     // Remove successful action from storage
                     await removeOfflineAction(action.id);
@@ -318,7 +327,7 @@ async function storeOfflineAction(action) {
         ...action,
         timestamp: Date.now()
     });
-    
+
     localStorage.setItem('offline-actions', JSON.stringify(actions));
 }
 
@@ -348,7 +357,7 @@ async function removeOfflineAction(actionId) {
  */
 self.addEventListener('push', event => {
     console.log('Push notification received');
-    
+
     const options = {
         body: event.data ? event.data.text() : 'New notification from SEIM',
         icon: '/static/img/logo.png',
@@ -371,10 +380,8 @@ self.addEventListener('push', event => {
             }
         ]
     };
-    
-    event.waitUntil(
-        self.registration.showNotification('SEIM Notification', options)
-    );
+
+    event.waitUntil(self.registration.showNotification('SEIM Notification', options));
 });
 
 /**
@@ -382,24 +389,22 @@ self.addEventListener('push', event => {
  */
 self.addEventListener('notificationclick', event => {
     console.log('Notification clicked:', event.action);
-    
+
     event.notification.close();
-    
+
     if (event.action === 'explore') {
-        event.waitUntil(
-            clients.openWindow('/')
-        );
+        event.waitUntil(clients.openWindow('/'));
     }
 });
 
 // Message handling for communication with main thread
 self.addEventListener('message', event => {
     console.log('Service Worker received message:', event.data);
-    
+
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
-    
+
     if (event.data && event.data.type === 'CACHE_API') {
         event.waitUntil(
             caches.open(API_CACHE).then(cache => {
@@ -407,4 +412,4 @@ self.addEventListener('message', event => {
             })
         );
     }
-}); 
+});

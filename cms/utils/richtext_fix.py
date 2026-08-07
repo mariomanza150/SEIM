@@ -7,6 +7,7 @@ end tags for them. The next closing tag (e.g. </p>) then fails the stack check.
 
 Upstream: https://github.com/wagtail/wagtail/issues/11742
 """
+
 import logging
 
 from wagtail.admin.rich_text.converters.html_to_contentstate import (

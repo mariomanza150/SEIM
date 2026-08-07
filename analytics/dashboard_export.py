@@ -26,7 +26,13 @@ def render_dashboard_export_csv(dashboard_payload: dict) -> str:
 
     writer.writerow([])
     writer.writerow(
-        ["Program", "Applications", "Approval Rate", "Avg Processing Time", "Popularity Score"]
+        [
+            "Program",
+            "Applications",
+            "Approval Rate",
+            "Avg Processing Time",
+            "Popularity Score",
+        ]
     )
     for program in dashboard_payload["program_performance"]:
         writer.writerow(
@@ -59,7 +65,13 @@ def render_dashboard_export_xlsx(dashboard_payload: dict) -> bytes:
 
     ws_p = wb.create_sheet("Program performance")
     ws_p.append(
-        ["Program", "Applications", "Approval Rate", "Avg Processing Time", "Popularity Score"]
+        [
+            "Program",
+            "Applications",
+            "Approval Rate",
+            "Avg Processing Time",
+            "Popularity Score",
+        ]
     )
     for program in dashboard_payload["program_performance"]:
         ws_p.append(
@@ -82,7 +94,13 @@ def render_dashboard_export_pdf(dashboard_payload: dict) -> bytes:
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import landscape, letter
     from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from reportlab.platypus import (
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
+    )
 
     buffer = BytesIO()
     page = landscape(letter)
@@ -114,7 +132,12 @@ def render_dashboard_export_pdf(dashboard_payload: dict) -> bytes:
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                 ("FONTSIZE", (0, 0), (-1, -1), 9),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
+                (
+                    "ROWBACKGROUNDS",
+                    (0, 1),
+                    (-1, -1),
+                    [colors.white, colors.HexColor("#f8f9fa")],
+                ),
             ]
         )
     )
@@ -134,7 +157,12 @@ def render_dashboard_export_pdf(dashboard_payload: dict) -> bytes:
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                 ("FONTSIZE", (0, 0), (-1, -1), 9),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
+                (
+                    "ROWBACKGROUNDS",
+                    (0, 1),
+                    (-1, -1),
+                    [colors.white, colors.HexColor("#f8f9fa")],
+                ),
             ]
         )
     )
@@ -164,7 +192,10 @@ def render_dashboard_export_pdf(dashboard_payload: dict) -> bytes:
             ]
         )
     col_w = tw / 5
-    t3 = Table(p_rows, colWidths=[col_w * 1.4, col_w * 0.9, col_w * 0.9, col_w * 0.9, col_w * 0.9])
+    t3 = Table(
+        p_rows,
+        colWidths=[col_w * 1.4, col_w * 0.9, col_w * 0.9, col_w * 0.9, col_w * 0.9],
+    )
     t3.setStyle(
         TableStyle(
             [
@@ -173,7 +204,12 @@ def render_dashboard_export_pdf(dashboard_payload: dict) -> bytes:
                 ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
                 ("FONTSIZE", (0, 0), (-1, -1), 8),
                 ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
+                (
+                    "ROWBACKGROUNDS",
+                    (0, 1),
+                    (-1, -1),
+                    [colors.white, colors.HexColor("#f8f9fa")],
+                ),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
             ]
         )

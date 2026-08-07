@@ -77,7 +77,7 @@ class CacheManager:
                 return obj
 
             # Convert data to JSON-serializable format
-            if isinstance(data, (dict, list)):
+            if isinstance(data, dict | list):
                 # Convert UUIDs to strings
                 if isinstance(data, dict):
                     data = {k: serialize_uuid(v) for k, v in data.items()}
@@ -177,8 +177,12 @@ def cache_api_response(
                 # Default key generation
                 key_parts = [
                     func.__name__,
-                    hashlib.md5(str(args).encode()).hexdigest()[:8],
-                    hashlib.md5(str(sorted(kwargs.items())).encode()).hexdigest()[:8],
+                    hashlib.md5(str(args).encode(), usedforsecurity=False).hexdigest()[
+                        :8
+                    ],
+                    hashlib.md5(
+                        str(sorted(kwargs.items())).encode(), usedforsecurity=False
+                    ).hexdigest()[:8],
                 ]
                 cache_key = CacheManager.get_cache_key(cache_type, ":".join(key_parts))
 
@@ -214,7 +218,7 @@ def cache_user_data(timeout: int | None = None) -> Callable:
             key_parts = [
                 func.__name__,
                 str(user_id),
-                hashlib.md5(str(args).encode()).hexdigest()[:8],
+                hashlib.md5(str(args).encode(), usedforsecurity=False).hexdigest()[:8],
             ]
             cache_key = CacheManager.get_cache_key("user_data", ":".join(key_parts))
 
@@ -335,7 +339,9 @@ class APICacheMiddleware:
         key_parts = [
             "api_middleware",
             request.path,
-            hashlib.md5(str(request.GET).encode()).hexdigest()[:8],
+            hashlib.md5(str(request.GET).encode(), usedforsecurity=False).hexdigest()[
+                :8
+            ],
         ]
 
         # Include user ID if authenticated
@@ -394,9 +400,7 @@ cache_monitor = CachePerformanceMonitor()
 
 
 # Utility functions for common caching patterns
-def cache_program_data(
-    program_id: int, timeout: int | None = None
-) -> dict[str, Any]:
+def cache_program_data(program_id: int, timeout: int | None = None) -> dict[str, Any]:
     """Cache program data"""
     cache_key = CacheManager.get_cache_key("program_data", f"program_{program_id}")
     return CacheManager.get_cache(cache_key, {})
@@ -451,7 +455,7 @@ def generate_cache_key(prefix: str, *args, **kwargs) -> str:
     key_base = prefix + ":" + ":".join([str(arg) for arg in args])
     if kwargs:
         key_base += ":" + ":".join([f"{k}={v}" for k, v in sorted(kwargs.items())])
-    return hashlib.md5(key_base.encode()).hexdigest()
+    return hashlib.md5(key_base.encode(), usedforsecurity=False).hexdigest()
 
 
 def cache_analytics(timeout: int = 1800):

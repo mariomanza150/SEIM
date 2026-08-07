@@ -9,16 +9,15 @@ Or: docker compose exec web python manage.py seed_vue_e2e
 """
 
 from datetime import date, timedelta
+
+from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
-from accounts.models import Role
 from documents.models import Document, DocumentType
 from exchange.models import Application, ApplicationStatus, Program
 from notifications.models import Notification
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
@@ -35,7 +34,11 @@ class Command(BaseCommand):
         try:
             student = User.objects.get(email="student@test.com")
         except User.DoesNotExist:
-            self.stdout.write(self.style.ERROR("student@test.com not found. Run create_vue_test_users first."))
+            self.stdout.write(
+                self.style.ERROR(
+                    "student@test.com not found. Run create_vue_test_users first."
+                )
+            )
             return
 
         draft_status = ApplicationStatus.objects.get(name="draft")
@@ -58,7 +61,9 @@ class Command(BaseCommand):
             defaults={"status": draft_status},
         )
         if created:
-            self.stdout.write(self.style.SUCCESS(f"  ✓ Created draft application: {program.name}"))
+            self.stdout.write(
+                self.style.SUCCESS(f"  ✓ Created draft application: {program.name}")
+            )
         else:
             self.stdout.write(f"  ✓ Draft application exists: {program.name}")
 
@@ -66,6 +71,7 @@ class Command(BaseCommand):
             name="transcript",
             defaults={"description": "Academic transcript"},
         )
+
         # Build a minimal valid PDF so inline previews work in browser-based tests.
         def build_pdf_bytes(text: str) -> bytes:
             try:
@@ -100,14 +106,24 @@ class Command(BaseCommand):
             doc.save()
             self.stdout.write("  ✓ Updated existing document for application")
         else:
-            self.stdout.write(self.style.SUCCESS("  ✓ Created document for application"))
+            self.stdout.write(
+                self.style.SUCCESS("  ✓ Created document for application")
+            )
 
         unread = Notification.objects.filter(recipient=student, is_read=False).count()
         if unread < 2:
-            for i, (title, msg) in enumerate([
-                ("E2E Test Notification 1", "First unread notification for Vue E2E."),
-                ("E2E Test Notification 2", "Second unread notification for Vue E2E."),
-            ]):
+            for _i, (title, msg) in enumerate(
+                [
+                    (
+                        "E2E Test Notification 1",
+                        "First unread notification for Vue E2E.",
+                    ),
+                    (
+                        "E2E Test Notification 2",
+                        "Second unread notification for Vue E2E.",
+                    ),
+                ]
+            ):
                 Notification.objects.get_or_create(
                     recipient=student,
                     title=title,
@@ -123,4 +139,6 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f"  ✓ Unread notifications already exist ({unread})")
 
-        self.stdout.write(self.style.SUCCESS("\n✅ Vue E2E seed completed. Run Vue E2E tests."))
+        self.stdout.write(
+            self.style.SUCCESS("\n✅ Vue E2E seed completed. Run Vue E2E tests.")
+        )

@@ -55,7 +55,13 @@ def _document_progress_from_prefetch(application) -> tuple[float, dict[str, int]
     program = application.program
     required = list(program.required_document_types.all())
     if not required:
-        return 1.0, {"required": 0, "approved": 0, "pending_review": 0, "resubmit": 0, "missing": 0}
+        return 1.0, {
+            "required": 0,
+            "approved": 0,
+            "pending_review": 0,
+            "resubmit": 0,
+            "missing": 0,
+        }
 
     latest = _latest_document_per_type(application)
     approved = pending = resubmit = missing = 0
@@ -87,7 +93,12 @@ def _document_progress_from_prefetch(application) -> tuple[float, dict[str, int]
 def _document_progress(application) -> tuple[float, dict[str, int]]:
     cache = getattr(application.program, "_prefetched_objects_cache", None)
     app_cache = getattr(application, "_prefetched_objects_cache", None)
-    if cache and "required_document_types" in cache and app_cache and "document_set" in app_cache:
+    if (
+        cache
+        and "required_document_types" in cache
+        and app_cache
+        and "document_set" in app_cache
+    ):
         return _document_progress_from_prefetch(application)
     summary = DocumentService.build_application_document_checklist(application)
     req = summary["required_count"]
@@ -132,7 +143,9 @@ def _form_progress(application) -> float:
     return 1.0
 
 
-def _headline_draft(counts: dict[str, int], window_open: bool, days_left: int | None, form_ok: bool) -> str:
+def _headline_draft(
+    counts: dict[str, int], window_open: bool, days_left: int | None, form_ok: bool
+) -> str:
     if not window_open:
         return "Application window is closed for this program."
     parts = []
@@ -235,7 +248,12 @@ def compute_application_readiness(
     if docs_ok and form_ok and (days_left is None or days_left >= 0):
         level = "ready"
         score = max(score, 92)
-    elif counts["missing"] or counts["resubmit"] or not form_ok or (days_left is not None and days_left <= 7):
+    elif (
+        counts["missing"]
+        or counts["resubmit"]
+        or not form_ok
+        or (days_left is not None and days_left <= 7)
+    ):
         level = "attention"
     else:
         level = "ok"

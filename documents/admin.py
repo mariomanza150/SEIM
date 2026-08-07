@@ -27,7 +27,12 @@ class ExchangeAgreementDocumentAdmin(admin.ModelAdmin):
         "supersedes",
     )
     list_filter = ("category", "agreement")
-    search_fields = ("title", "notes", "agreement__title", "agreement__partner_institution_name")
+    search_fields = (
+        "title",
+        "notes",
+        "agreement__title",
+        "agreement__partner_institution_name",
+    )
     raw_id_fields = ("agreement", "supersedes", "uploaded_by")
     readonly_fields = ("created_at", "updated_at")
     fieldsets = (

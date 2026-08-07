@@ -45,4 +45,4 @@ class Logger {
 // Create singleton instance
 const logger = new Logger(process.env.LOG_LEVEL || 'INFO');
 
-export { logger, Logger, LOG_LEVELS }; 
+export { logger, Logger, LOG_LEVELS };

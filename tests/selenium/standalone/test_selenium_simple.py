@@ -4,7 +4,6 @@ Simple test script to verify Selenium setup for E2E tests on Windows.
 This version doesn't require Django setup.
 """
 
-
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service

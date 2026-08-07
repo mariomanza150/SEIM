@@ -10,7 +10,13 @@ from exchange.demo_seed import (
     demo_program_names,
     demo_usernames,
 )
-from exchange.models import Application, Comment, ExchangeAgreement, Program, TimelineEvent
+from exchange.models import (
+    Application,
+    Comment,
+    ExchangeAgreement,
+    Program,
+    TimelineEvent,
+)
 from notifications.models import Notification
 
 
@@ -37,14 +43,12 @@ class Command(BaseCommand):
             self.stdout.write(f"  Deleted {timeline_count} timeline events.")
             self.stdout.write(f"  Deleted {comment_count} comments.")
 
-            doc_count = Document.objects.filter(
-                Q(uploaded_by__in=demo_users)
-            ).delete()[0]
+            doc_count = Document.objects.filter(Q(uploaded_by__in=demo_users)).delete()[
+                0
+            ]
             self.stdout.write(f"  Deleted {doc_count} documents.")
 
-            app_count = Application.objects.filter(
-                student__in=demo_users
-            ).delete()[0]
+            app_count = Application.objects.filter(student__in=demo_users).delete()[0]
             self.stdout.write(f"  Deleted {app_count} applications.")
 
             demo_agreement_refs = [
@@ -55,11 +59,15 @@ class Command(BaseCommand):
             ).delete()[0]
             self.stdout.write(f"  Deleted {agr_count} demo exchange agreements.")
 
-            prog_count = Program.objects.filter(name__in=demo_program_names()).delete()[0]
+            prog_count = Program.objects.filter(name__in=demo_program_names()).delete()[
+                0
+            ]
             self.stdout.write(f"  Deleted {prog_count} programs.")
 
             user_count = User.objects.filter(demo_user_filter).delete()[0]
-            self.stdout.write(f"  Deleted {user_count} demo users (and their profiles).")
+            self.stdout.write(
+                f"  Deleted {user_count} demo users (and their profiles)."
+            )
 
         self.stdout.write(self.style.SUCCESS("Demo data cleanup completed!"))
 

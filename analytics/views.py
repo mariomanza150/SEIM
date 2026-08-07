@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
 from django.db.models import Count
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 from django.utils.dateparse import parse_date
@@ -16,6 +16,11 @@ from documents.models import Document
 from exchange.models import Application, Program
 from notifications.models import Notification
 
+from .dashboard_export import (
+    render_dashboard_export_csv,
+    render_dashboard_export_pdf,
+    render_dashboard_export_xlsx,
+)
 from .models import DashboardConfig, Metric, Report
 from .serializers import (
     ActivitySerializer,
@@ -32,11 +37,6 @@ from .serializers import (
     SystemInfoSerializer,
     TrackEventRequestSerializer,
     UserActivitySerializer,
-)
-from .dashboard_export import (
-    render_dashboard_export_csv,
-    render_dashboard_export_pdf,
-    render_dashboard_export_xlsx,
 )
 from .services import AnalyticsService
 
@@ -66,7 +66,9 @@ def _filter_by_date_range(queryset, field_name, start_date=None, end_date=None):
 def _get_filtered_applications(request):
     start_date, end_date, program_id = _parse_analytics_filters(request)
     applications = Application.objects.select_related("program", "status", "student")
-    applications = _filter_by_date_range(applications, "created_at", start_date, end_date)
+    applications = _filter_by_date_range(
+        applications, "created_at", start_date, end_date
+    )
 
     if program_id:
         applications = applications.filter(program_id=program_id)
@@ -83,7 +85,9 @@ def _days_from_filters(start_date, end_date, default_days=30):
 def _status_breakdown(queryset):
     return {
         item["status__name"] or "unknown": item["count"]
-        for item in queryset.values("status__name").annotate(count=Count("id")).order_by("status__name")
+        for item in queryset.values("status__name")
+        .annotate(count=Count("id"))
+        .order_by("status__name")
     }
 
 
@@ -140,7 +144,9 @@ def _build_program_performance(queryset, program_id=None):
             status__name="approved",
             withdrawn=False,
         ).count()
-        approval_rate = round((approved_count / processed_count) * 100) if processed_count else 0
+        approval_rate = (
+            round((approved_count / processed_count) * 100) if processed_count else 0
+        )
 
         performance.append(
             {
@@ -148,7 +154,9 @@ def _build_program_performance(queryset, program_id=None):
                 "institution": "N/A",
                 "applications": program_applications.count(),
                 "approval_rate": approval_rate,
-                "avg_processing_time": _average_processing_time_days(program_applications),
+                "avg_processing_time": _average_processing_time_days(
+                    program_applications
+                ),
             }
         )
 
@@ -168,7 +176,9 @@ def _build_dashboard_payload(request):
     days = _days_from_filters(start_date, end_date)
     application_status = _status_breakdown(applications)
     total_applications = applications.count()
-    approved_count = applications.filter(status__name="approved", withdrawn=False).count()
+    approved_count = applications.filter(
+        status__name="approved", withdrawn=False
+    ).count()
     processed_count = applications.filter(
         status__name__in=["approved", "rejected", "completed"],
         withdrawn=False,
@@ -180,15 +190,21 @@ def _build_dashboard_payload(request):
     return {
         "metrics": {
             "total_applications": total_applications,
-            "approval_rate": round((approved_count / processed_count) * 100) if processed_count else 0,
+            "approval_rate": round((approved_count / processed_count) * 100)
+            if processed_count
+            else 0,
             "avg_processing_time": _average_processing_time_days(applications),
             "active_programs": active_programs.count(),
         },
         "application_status": application_status,
         "monthly_trend": _build_monthly_trend(applications),
         "user_activity": _build_user_activity_payload(days),
-        "demographics": AnalyticsService.get_user_demographics().get("users_by_role", {}),
-        "program_performance": _build_program_performance(applications, program_id=program_id),
+        "demographics": AnalyticsService.get_user_demographics().get(
+            "users_by_role", {}
+        ),
+        "program_performance": _build_program_performance(
+            applications, program_id=program_id
+        ),
     }
 
 
@@ -218,7 +234,9 @@ def _build_detailed_report(report_type, request):
             }
             for item in data
         ]
-        summary = f"{len(data)} user activity rows generated from application ownership."
+        summary = (
+            f"{len(data)} user activity rows generated from application ownership."
+        )
     else:
         return None
 
@@ -316,23 +334,44 @@ class DashboardConfigViewSet(viewsets.ModelViewSet):
 
 @extend_schema_view(
     metrics=extend_schema(
-        responses={200: DashboardMetricsSerializer, 403: ErrorResponseSerializer, 500: ErrorResponseSerializer}
+        responses={
+            200: DashboardMetricsSerializer,
+            403: ErrorResponseSerializer,
+            500: ErrorResponseSerializer,
+        }
     ),
     activity=extend_schema(
-        responses={200: ActivitySerializer(many=True), 403: ErrorResponseSerializer, 500: ErrorResponseSerializer}
+        responses={
+            200: ActivitySerializer(many=True),
+            403: ErrorResponseSerializer,
+            500: ErrorResponseSerializer,
+        }
     ),
     performance=extend_schema(
-        responses={200: PerformanceMetricsSerializer, 403: ErrorResponseSerializer, 500: ErrorResponseSerializer}
+        responses={
+            200: PerformanceMetricsSerializer,
+            403: ErrorResponseSerializer,
+            500: ErrorResponseSerializer,
+        }
     ),
     alerts=extend_schema(
-        responses={200: AlertSerializer(many=True), 403: ErrorResponseSerializer, 500: ErrorResponseSerializer}
+        responses={
+            200: AlertSerializer(many=True),
+            403: ErrorResponseSerializer,
+            500: ErrorResponseSerializer,
+        }
     ),
     system_info=extend_schema(
-        responses={200: SystemInfoSerializer, 403: ErrorResponseSerializer, 500: ErrorResponseSerializer}
+        responses={
+            200: SystemInfoSerializer,
+            403: ErrorResponseSerializer,
+            500: ErrorResponseSerializer,
+        }
     ),
 )
 class AdminDashboardViewSet(viewsets.ViewSet):
     """Admin dashboard API endpoints."""
+
     permission_classes = [IsAuthenticated]
 
     def is_admin(self, user):
@@ -358,19 +397,30 @@ class AdminDashboardViewSet(viewsets.ViewSet):
 
             # Application status breakdown
             application_status = {}
-            for status_name in ["draft", "submitted", "under_review", "approved", "rejected", "withdrawn"]:
+            for status_name in [
+                "draft",
+                "submitted",
+                "under_review",
+                "approved",
+                "rejected",
+                "withdrawn",
+            ]:
                 application_status[status_name] = Application.objects.filter(
                     status__name=status_name
                 ).count()
 
-            return Response({
-                "total_users": total_users,
-                "total_applications": metrics.get("ongoing_applications", 0) + metrics.get("approved_applications", 0) + metrics.get("rejected_applications", 0),
-                "total_programs": total_programs,
-                "pending_reviews": pending_reviews,
-                "application_status": application_status,
-                **metrics
-            })
+            return Response(
+                {
+                    "total_users": total_users,
+                    "total_applications": metrics.get("ongoing_applications", 0)
+                    + metrics.get("approved_applications", 0)
+                    + metrics.get("rejected_applications", 0),
+                    "total_programs": total_programs,
+                    "pending_reviews": pending_reviews,
+                    "application_status": application_status,
+                    **metrics,
+                }
+            )
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
@@ -389,24 +439,35 @@ class AdminDashboardViewSet(viewsets.ViewSet):
             from exchange.models import TimelineEvent
 
             # Get recent events (last 7 days)
-            recent_events = TimelineEvent.objects.filter(
-                created_at__gte=timezone.now() - timedelta(days=7)
-            ).select_related('application', 'created_by').order_by('-created_at')[:20]
+            recent_events = (
+                TimelineEvent.objects.filter(
+                    created_at__gte=timezone.now() - timedelta(days=7)
+                )
+                .select_related("application", "created_by")
+                .order_by("-created_at")[:20]
+            )
 
             activities = []
             for event in recent_events:
-                activities.append({
-                    "id": event.id,
-                    "type": event.event_type,
-                    "title": getattr(event, 'title', ''),
-                    "description": event.description,
-                    "user": (event.created_by.get_full_name() if event.created_by else None) or (event.created_by.username if event.created_by else None),
-                    "timestamp": event.created_at.strftime("%Y-%m-%d %H:%M"),
-                    "related_object": {
-                        "type": "application",
-                        "id": event.application.id
+                activities.append(
+                    {
+                        "id": event.id,
+                        "type": event.event_type,
+                        "title": getattr(event, "title", ""),
+                        "description": event.description,
+                        "user": (
+                            event.created_by.get_full_name()
+                            if event.created_by
+                            else None
+                        )
+                        or (event.created_by.username if event.created_by else None),
+                        "timestamp": event.created_at.strftime("%Y-%m-%d %H:%M"),
+                        "related_object": {
+                            "type": "application",
+                            "id": event.application.id,
+                        },
                     }
-                })
+                )
 
             return Response(activities)
         except Exception as e:
@@ -423,13 +484,14 @@ class AdminDashboardViewSet(viewsets.ViewSet):
             # Mock performance data for now
             # In production, this would come from system monitoring
             import random
+
             performance_data = {
                 "cpu_usage": random.randint(10, 80),
                 "memory_usage": random.randint(20, 90),
                 "db_connections": random.randint(5, 25),
                 "cache_hit_rate": random.randint(70, 95),
                 "response_time": random.uniform(50, 200),
-                "active_users": User.objects.filter(is_active=True).count()
+                "active_users": User.objects.filter(is_active=True).count(),
             }
 
             return Response(performance_data)
@@ -451,26 +513,31 @@ class AdminDashboardViewSet(viewsets.ViewSet):
             # Check for applications pending review for too long
             old_pending = Application.objects.filter(
                 status__name="submitted",
-                created_at__lt=timezone.now() - timezone.timedelta(days=7)
+                created_at__lt=timezone.now() - timezone.timedelta(days=7),
             ).count()
 
             if old_pending > 0:
-                alerts.append({
-                    "level": "warning",
-                    "title": "Applications Pending Review",
-                    "message": f"{old_pending} applications have been pending review for over 7 days",
-                    "timestamp": timezone.now().strftime("%Y-%m-%d %H:%M")
-                })
+                alerts.append(
+                    {
+                        "level": "warning",
+                        "title": "Applications Pending Review",
+                        "message": f"{old_pending} applications have been pending review for over 7 days",
+                        "timestamp": timezone.now().strftime("%Y-%m-%d %H:%M"),
+                    }
+                )
 
             # Check for system issues (mock)
             import random
+
             if random.random() < 0.1:  # 10% chance of mock alert
-                alerts.append({
-                    "level": "info",
-                    "title": "System Maintenance",
-                    "message": "Scheduled maintenance completed successfully",
-                    "timestamp": timezone.now().strftime("%Y-%m-%d %H:%M")
-                })
+                alerts.append(
+                    {
+                        "level": "info",
+                        "title": "System Maintenance",
+                        "message": "Scheduled maintenance completed successfully",
+                        "timestamp": timezone.now().strftime("%Y-%m-%d %H:%M"),
+                    }
+                )
 
             return Response(alerts)
         except Exception as e:
@@ -495,41 +562,45 @@ class AdminDashboardViewSet(viewsets.ViewSet):
                 "python_version": sys.version,
                 "database": connection.vendor,
                 "redis": "Connected" if settings.CACHES else "Not configured",
-                "environment": getattr(settings, 'ENVIRONMENT', 'development'),
+                "environment": getattr(settings, "ENVIRONMENT", "development"),
                 "debug": settings.DEBUG,
                 "timezone": str(settings.TIME_ZONE),
                 "static_files": "Served" if settings.STATIC_URL else "Not configured",
-                "media_files": "Served" if settings.MEDIA_URL else "Not configured"
+                "media_files": "Served" if settings.MEDIA_URL else "Not configured",
             }
 
             return Response(system_info)
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 
+
 @login_required
 def dashboard_view(request):
-    return render(request, 'frontend/admin/dashboard.html')
+    return render(request, "frontend/admin/dashboard.html")
+
 
 @login_required
 def application_statistics_view(request):
-    return render(request, 'frontend/admin/analytics.html')
+    return render(request, "frontend/admin/analytics.html")
+
 
 @login_required
 def program_statistics_view(request):
-    return render(request, 'frontend/admin/analytics.html')
+    return render(request, "frontend/admin/analytics.html")
+
 
 @login_required
 def user_activity_view(request):
-    return render(request, 'frontend/admin/analytics.html')
+    return render(request, "frontend/admin/analytics.html")
+
 
 @login_required
 def export_data_view(request):
-    return render(request, 'frontend/admin/analytics.html')
+    return render(request, "frontend/admin/analytics.html")
 
-@extend_schema(
-    responses={200: ApplicationStatisticsSerializer}
-)
-@api_view(['GET'])
+
+@extend_schema(responses={200: ApplicationStatisticsSerializer})
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def api_application_statistics(request):
     """Get application statistics."""
@@ -539,10 +610,8 @@ def api_application_statistics(request):
     )
 
 
-@extend_schema(
-    responses={200: ProgramStatisticsSerializer}
-)
-@api_view(['GET'])
+@extend_schema(responses={200: ProgramStatisticsSerializer})
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def api_program_statistics(request):
     """Get program statistics."""
@@ -550,26 +619,30 @@ def api_program_statistics(request):
     return Response(
         {
             "total_programs": len(program_stats),
-            "active_programs": sum(1 for program in program_stats if program.get("is_active")),
+            "active_programs": sum(
+                1 for program in program_stats if program.get("is_active")
+            ),
             "program_performance": program_stats,
         },
         status=status.HTTP_200_OK,
     )
 
 
-@extend_schema(
-    responses={200: UserActivitySerializer}
-)
-@api_view(['GET'])
+@extend_schema(responses={200: UserActivitySerializer})
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def api_user_activity(request):
     """Get user activity statistics."""
     start_date, end_date, _ = _parse_analytics_filters(request)
     days = _days_from_filters(start_date, end_date)
     user_activity = AnalyticsService.get_user_activity(days=days)
-    active_users = User.objects.filter(
-        sessions__created_at__gte=timezone.now() - timezone.timedelta(days=days)
-    ).distinct().count()
+    active_users = (
+        User.objects.filter(
+            sessions__created_at__gte=timezone.now() - timezone.timedelta(days=days)
+        )
+        .distinct()
+        .count()
+    )
     return Response(
         {
             "total_users": User.objects.count(),
@@ -581,53 +654,58 @@ def api_user_activity(request):
 
 
 @extend_schema(
-    request=TrackEventRequestSerializer,
-    responses={201: None, 400: None, 401: None}
+    request=TrackEventRequestSerializer, responses={201: None, 400: None, 401: None}
 )
-@api_view(['POST'])
+@api_view(["POST"])
 def track_event(request):
     """Track an analytics event."""
     if not request.user.is_authenticated:
         return Response({}, status=status.HTTP_401_UNAUTHORIZED)
-    event_type = request.data.get('event_type', '')
+    event_type = request.data.get("event_type", "")
     if not event_type:
         return Response({}, status=status.HTTP_400_BAD_REQUEST)
     return Response({}, status=status.HTTP_201_CREATED)
 
 
-@extend_schema(
-    responses={200: GenericAnalyticsSerializer}
-)
-@api_view(['GET'])
+@extend_schema(responses={200: GenericAnalyticsSerializer})
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def metrics_view(request):
     """Get aggregated analytics metrics for the admin analytics UI."""
     return Response(_build_dashboard_payload(request), status=200)
 
 
-@extend_schema(
-    responses={200: GenericAnalyticsSerializer}
-)
-@api_view(['GET'])
+@extend_schema(responses={200: GenericAnalyticsSerializer})
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def reports_view(request):
     """List available detailed analytics reports."""
     return Response(
         {
             "reports": [
-                {"type": "applications", "label": "Applications", "endpoint": "/api/analytics/reports/applications/"},
-                {"type": "programs", "label": "Programs", "endpoint": "/api/analytics/reports/programs/"},
-                {"type": "users", "label": "Users", "endpoint": "/api/analytics/reports/users/"},
+                {
+                    "type": "applications",
+                    "label": "Applications",
+                    "endpoint": "/api/analytics/reports/applications/",
+                },
+                {
+                    "type": "programs",
+                    "label": "Programs",
+                    "endpoint": "/api/analytics/reports/programs/",
+                },
+                {
+                    "type": "users",
+                    "label": "Users",
+                    "endpoint": "/api/analytics/reports/users/",
+                },
             ]
         },
         status=200,
     )
 
 
-@extend_schema(
-    responses={200: GenericAnalyticsSerializer}
-)
-@api_view(['GET'])
+@extend_schema(responses={200: GenericAnalyticsSerializer})
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def application_analytics_view(request):
     """Get application-focused analytics."""
@@ -646,10 +724,8 @@ def application_analytics_view(request):
     )
 
 
-@extend_schema(
-    responses={200: GenericAnalyticsSerializer}
-)
-@api_view(['GET'])
+@extend_schema(responses={200: GenericAnalyticsSerializer})
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def document_analytics_view(request):
     """Get document-focused analytics."""
@@ -658,7 +734,9 @@ def document_analytics_view(request):
     documents = _filter_by_date_range(documents, "created_at", start_date, end_date)
     by_type = {
         item["type__name"]: item["count"]
-        for item in documents.values("type__name").annotate(count=Count("id")).order_by("type__name")
+        for item in documents.values("type__name")
+        .annotate(count=Count("id"))
+        .order_by("type__name")
     }
     return Response(
         {
@@ -673,23 +751,27 @@ def document_analytics_view(request):
     )
 
 
-@extend_schema(
-    responses={200: GenericAnalyticsSerializer}
-)
-@api_view(['GET'])
+@extend_schema(responses={200: GenericAnalyticsSerializer})
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def notification_analytics_view(request):
     """Get notification-focused analytics."""
     start_date, end_date, _ = _parse_analytics_filters(request)
     notifications = Notification.objects.all()
-    notifications = _filter_by_date_range(notifications, "sent_at", start_date, end_date)
+    notifications = _filter_by_date_range(
+        notifications, "sent_at", start_date, end_date
+    )
     by_category = {
         item["category"]: item["count"]
-        for item in notifications.values("category").annotate(count=Count("id")).order_by("category")
+        for item in notifications.values("category")
+        .annotate(count=Count("id"))
+        .order_by("category")
     }
     by_channel = {
         item["notification_type"]: item["count"]
-        for item in notifications.values("notification_type").annotate(count=Count("id")).order_by("notification_type")
+        for item in notifications.values("notification_type")
+        .annotate(count=Count("id"))
+        .order_by("notification_type")
     }
     return Response(
         {
@@ -704,10 +786,8 @@ def notification_analytics_view(request):
     )
 
 
-@extend_schema(
-    responses={200: GenericAnalyticsSerializer}
-)
-@api_view(['GET'])
+@extend_schema(responses={200: GenericAnalyticsSerializer})
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def program_analytics_view(request):
     """Get program-focused analytics."""
@@ -723,10 +803,8 @@ def program_analytics_view(request):
     )
 
 
-@extend_schema(
-    responses={200: GenericAnalyticsSerializer}
-)
-@api_view(['GET'])
+@extend_schema(responses={200: GenericAnalyticsSerializer})
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def user_analytics_view(request):
     """Get user-focused analytics."""
@@ -755,7 +833,11 @@ def analytics_dashboard_api(request):
 
 
 @extend_schema(
-    responses={200: GenericAnalyticsSerializer, 401: ErrorResponseSerializer, 404: ErrorResponseSerializer}
+    responses={
+        200: GenericAnalyticsSerializer,
+        401: ErrorResponseSerializer,
+        404: ErrorResponseSerializer,
+    }
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -763,7 +845,9 @@ def analytics_report_detail_api(request, report_type):
     """Get a detailed analytics report by type."""
     report = _build_detailed_report(report_type, request)
     if report is None:
-        return Response({"error": "Unknown report type"}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"error": "Unknown report type"}, status=status.HTTP_404_NOT_FOUND
+        )
     return Response(report, status=status.HTTP_200_OK)
 
 

@@ -21,7 +21,7 @@ export function debounce(func, wait) {
  */
 export function throttle(func, limit) {
     let inThrottle;
-    return function(...args) {
+    return function (...args) {
         if (!inThrottle) {
             func(...args);
             inThrottle = true;
@@ -80,4 +80,4 @@ export async function copyToClipboard(text) {
         document.execCommand('copy');
         document.body.removeChild(textarea);
     }
-} 
+}

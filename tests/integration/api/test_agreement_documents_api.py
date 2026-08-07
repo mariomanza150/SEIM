@@ -45,7 +45,9 @@ class AgreementDocumentsAPITests(APITestCase):
         _grant_role(coord, "coordinator")
         self.client.force_authenticate(coord)
 
-        pdf = SimpleUploadedFile("signed.pdf", b"%PDF-1.4", content_type="application/pdf")
+        pdf = SimpleUploadedFile(
+            "signed.pdf", b"%PDF-1.4", content_type="application/pdf"
+        )
         response = self.client.post(
             self.url,
             {
@@ -86,6 +88,8 @@ class AgreementDocumentsAPITests(APITestCase):
             supersedes=old,
         )
 
-        response = self.client.get(self.url, {"current_only": "true", "agreement": str(self.agreement.id)})
+        response = self.client.get(
+            self.url, {"current_only": "true", "agreement": str(self.agreement.id)}
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data["results"]), 1)

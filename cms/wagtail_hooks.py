@@ -12,35 +12,32 @@ from wagtail import hooks
 from wagtail.admin.menu import MenuItem
 
 
-@hooks.register('insert_global_admin_css')
+@hooks.register("insert_global_admin_css")
 def global_admin_css():
     """Add custom CSS to Wagtail admin."""
     return format_html(
-        '<link rel="stylesheet" href="{}">',
-        static('css/wagtail_admin_custom.css')
+        '<link rel="stylesheet" href="{}">', static("css/wagtail_admin_custom.css")
     )
 
 
-@hooks.register('insert_editor_js')
+@hooks.register("insert_editor_js")
 def editor_js():
     """Add custom JavaScript to Wagtail page editor."""
     return format_html(
-        '<script src="{}"></script>',
-        static('js/wagtail_editor_custom.js')
+        '<script src="{}"></script>', static("js/wagtail_editor_custom.js")
     )
 
 
-@hooks.register('construct_main_menu')
+@hooks.register("construct_main_menu")
 def add_django_admin_menu_item(request, menu_items):
     """Add link to Django admin in Wagtail menu for system admins."""
     # Only show for superusers or users with admin role
-    if request.user.is_superuser or (hasattr(request.user, 'has_role') and request.user.has_role('admin')):
+    if request.user.is_superuser or (
+        hasattr(request.user, "has_role") and request.user.has_role("admin")
+    ):
         menu_items.append(
             MenuItem(
-                'Django Admin',
-                reverse('admin:index'),
-                icon_name='cog',
-                order=10000
+                "Django Admin", reverse("admin:index"), icon_name="cog", order=10000
             )
         )
 
@@ -53,32 +50,36 @@ def add_django_admin_menu_item(request, menu_items):
 #     pass
 
 
-@hooks.register('insert_global_admin_js')
+@hooks.register("insert_global_admin_js")
 def global_admin_js():
     """Add custom global JavaScript to Wagtail admin."""
     return format_html(
-        '''
+        """
         <script>
             // Set custom branding
             document.addEventListener('DOMContentLoaded', function() {{
                 console.log('SEIM Wagtail Admin loaded');
             }});
         </script>
-        '''
+        """
     )
 
 
 # Restrict Wagtail admin access based on roles
-@hooks.register('construct_wagtail_userbar')
+@hooks.register("construct_wagtail_userbar")
 def hide_userbar_for_non_editors(request, items):
     """Hide Wagtail userbar for users without edit permissions."""
     if not request.user.is_authenticated:
         items.clear()
         return
-    
-    # Keep userbar only for staff, superusers, and users with coordinator/admin roles
-    if not (request.user.is_staff or request.user.is_superuser or 
-            (hasattr(request.user, 'has_role') and 
-             (request.user.has_role('admin') or request.user.has_role('coordinator')))):
-        items.clear()
 
+    # Keep userbar only for staff, superusers, and users with coordinator/admin roles
+    if not (
+        request.user.is_staff
+        or request.user.is_superuser
+        or (
+            hasattr(request.user, "has_role")
+            and (request.user.has_role("admin") or request.user.has_role("coordinator"))
+        )
+    ):
+        items.clear()

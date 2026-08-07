@@ -2,52 +2,58 @@
 Management command to set up the International section (CGRI & Movilidad)
 Drop-in replacement for /cgri/ and /movilidad/ pages.
 """
+
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from wagtail.models import Site, Page
+from wagtail.models import Site
+
 from cms.models import (
-    InternationalHomePage,
     CGRIPage,
-    MovilidadLandingPage,
     ConvenioIndexPage,
-    TestimonialIndexPage,
-    StandardPage,
-    ProgramIndexPage,
     FAQIndexPage,
+    InternationalHomePage,
+    MovilidadLandingPage,
+    ProgramIndexPage,
+    StandardPage,
+    TestimonialIndexPage,
 )
 
 
 class Command(BaseCommand):
-    help = 'Set up International Relations section (CGRI & Movilidad) pages'
+    help = "Set up International Relations section (CGRI & Movilidad) pages"
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--replace',
-            action='store_true',
-            help='Replace existing internacional page if it exists',
+            "--replace",
+            action="store_true",
+            help="Replace existing internacional page if it exists",
         )
 
     @transaction.atomic
     def handle(self, *args, **options):
         site = Site.objects.get(is_default_site=True)
         root_page = site.root_page
-        
+
         self.stdout.write("\n=== Setting up International Relations Section ===\n")
-        
+
         # Check if internacional already exists
         try:
-            internacional = InternationalHomePage.objects.get(slug='internacional')
-            if options['replace']:
-                self.stdout.write(self.style.WARNING("Deleting existing 'internacional' page..."))
+            internacional = InternationalHomePage.objects.get(slug="internacional")
+            if options["replace"]:
+                self.stdout.write(
+                    self.style.WARNING("Deleting existing 'internacional' page...")
+                )
                 internacional.delete()
             else:
-                self.stdout.write(self.style.WARNING(
-                    "Page 'internacional' already exists. Use --replace to recreate it."
-                ))
+                self.stdout.write(
+                    self.style.WARNING(
+                        "Page 'internacional' already exists. Use --replace to recreate it."
+                    )
+                )
                 return
         except InternationalHomePage.DoesNotExist:
             pass
-        
+
         # 1. Create main International home page
         self.stdout.write("Creating International Home Page...")
         internacional = InternationalHomePage(
@@ -68,7 +74,7 @@ class Command(BaseCommand):
         root_page.add_child(instance=internacional)
         internacional.save_revision().publish()
         self.stdout.write(self.style.SUCCESS(f"✓ Created: {internacional.url}"))
-        
+
         # 2. Create Institutional (CGRI) section
         self.stdout.write("\nCreating CGRI Institutional Section...")
         cgri_home = CGRIPage(
@@ -87,48 +93,48 @@ class Command(BaseCommand):
         internacional.add_child(instance=cgri_home)
         cgri_home.save_revision().publish()
         self.stdout.write(self.style.SUCCESS(f"  ✓ {cgri_home.url}"))
-        
+
         # 2.1 CGRI subpages
         cgri_pages = [
             {
-                'title': 'Misión y Visión',
-                'slug': 'mision-vision',
-                'introduction': 'Conoce la misión, visión y objetivos de la CGRI.',
+                "title": "Misión y Visión",
+                "slug": "mision-vision",
+                "introduction": "Conoce la misión, visión y objetivos de la CGRI.",
             },
             {
-                'title': 'Equipo',
-                'slug': 'equipo',
-                'introduction': 'Conoce al equipo que hace posible la internacionalización de la UAdeC.',
+                "title": "Equipo",
+                "slug": "equipo",
+                "introduction": "Conoce al equipo que hace posible la internacionalización de la UAdeC.",
             },
             {
-                'title': 'Acreditaciones',
-                'slug': 'acreditaciones',
-                'introduction': 'Acreditaciones internacionales de nuestros programas académicos.',
+                "title": "Acreditaciones",
+                "slug": "acreditaciones",
+                "introduction": "Acreditaciones internacionales de nuestros programas académicos.",
             },
             {
-                'title': 'Contacto',
-                'slug': 'contacto',
-                'introduction': 'Ponte en contacto con la Coordinación de Relaciones Internacionales.',
-                'show_contact': True,
-                'contact_name': 'CGRI UAdeC',
-                'contact_email': 'cgri@uadec.mx',
+                "title": "Contacto",
+                "slug": "contacto",
+                "introduction": "Ponte en contacto con la Coordinación de Relaciones Internacionales.",
+                "show_contact": True,
+                "contact_name": "CGRI UAdeC",
+                "contact_email": "cgri@uadec.mx",
             },
         ]
-        
+
         for page_data in cgri_pages:
             page = CGRIPage(
-                title=page_data['title'],
-                slug=page_data['slug'],
-                introduction=page_data['introduction'],
-                show_contact=page_data.get('show_contact', False),
-                contact_name=page_data.get('contact_name', ''),
-                contact_email=page_data.get('contact_email', ''),
+                title=page_data["title"],
+                slug=page_data["slug"],
+                introduction=page_data["introduction"],
+                show_contact=page_data.get("show_contact", False),
+                contact_name=page_data.get("contact_name", ""),
+                contact_email=page_data.get("contact_email", ""),
                 show_in_menus=True,
             )
             cgri_home.add_child(instance=page)
             page.save_revision().publish()
             self.stdout.write(self.style.SUCCESS(f"  ✓ {page.url}"))
-        
+
         # 3. Create Convenios (Agreements) section
         self.stdout.write("\nCreating Convenios Section...")
         convenios_index = ConvenioIndexPage(
@@ -141,7 +147,7 @@ class Command(BaseCommand):
         cgri_home.add_child(instance=convenios_index)
         convenios_index.save_revision().publish()
         self.stdout.write(self.style.SUCCESS(f"  ✓ {convenios_index.url}"))
-        
+
         # 4. Create Movilidad Estudiantil section
         self.stdout.write("\nCreating Movilidad Estudiantil Section...")
         movilidad = MovilidadLandingPage(
@@ -159,10 +165,10 @@ class Command(BaseCommand):
         internacional.add_child(instance=movilidad)
         movilidad.save_revision().publish()
         self.stdout.write(self.style.SUCCESS(f"  ✓ {movilidad.url}"))
-        
+
         # 4.1 Movilidad subpages
         self.stdout.write("\nCreating Movilidad Subpages...")
-        
+
         # Programs Index
         programas = ProgramIndexPage(
             title="Programas Disponibles",
@@ -174,7 +180,7 @@ class Command(BaseCommand):
         movilidad.add_child(instance=programas)
         programas.save_revision().publish()
         self.stdout.write(self.style.SUCCESS(f"  ✓ {programas.url}"))
-        
+
         # How to Apply
         como_aplicar = StandardPage(
             title="¿Cómo Aplicar?",
@@ -185,7 +191,7 @@ class Command(BaseCommand):
         movilidad.add_child(instance=como_aplicar)
         como_aplicar.save_revision().publish()
         self.stdout.write(self.style.SUCCESS(f"  ✓ {como_aplicar.url}"))
-        
+
         # Requirements
         requisitos = StandardPage(
             title="Requisitos",
@@ -196,7 +202,7 @@ class Command(BaseCommand):
         movilidad.add_child(instance=requisitos)
         requisitos.save_revision().publish()
         self.stdout.write(self.style.SUCCESS(f"  ✓ {requisitos.url}"))
-        
+
         # Documentation
         documentacion = StandardPage(
             title="Documentación",
@@ -207,7 +213,7 @@ class Command(BaseCommand):
         movilidad.add_child(instance=documentacion)
         documentacion.save_revision().publish()
         self.stdout.write(self.style.SUCCESS(f"  ✓ {documentacion.url}"))
-        
+
         # Benefits
         beneficios = StandardPage(
             title="Beneficios y Apoyos",
@@ -218,7 +224,7 @@ class Command(BaseCommand):
         movilidad.add_child(instance=beneficios)
         beneficios.save_revision().publish()
         self.stdout.write(self.style.SUCCESS(f"  ✓ {beneficios.url}"))
-        
+
         # Calendar
         calendario = StandardPage(
             title="Calendario y Fechas Importantes",
@@ -229,7 +235,7 @@ class Command(BaseCommand):
         movilidad.add_child(instance=calendario)
         calendario.save_revision().publish()
         self.stdout.write(self.style.SUCCESS(f"  ✓ {calendario.url}"))
-        
+
         # FAQ
         faq = FAQIndexPage(
             title="Preguntas Frecuentes",
@@ -240,7 +246,7 @@ class Command(BaseCommand):
         movilidad.add_child(instance=faq)
         faq.save_revision().publish()
         self.stdout.write(self.style.SUCCESS(f"  ✓ {faq.url}"))
-        
+
         # 5. Create Testimonials section
         self.stdout.write("\nCreating Testimonials Section...")
         testimonials = TestimonialIndexPage(
@@ -253,11 +259,11 @@ class Command(BaseCommand):
         movilidad.add_child(instance=testimonials)
         testimonials.save_revision().publish()
         self.stdout.write(self.style.SUCCESS(f"  ✓ {testimonials.url}"))
-        
+
         # Summary
-        self.stdout.write(self.style.SUCCESS("\n" + "="*60))
+        self.stdout.write(self.style.SUCCESS("\n" + "=" * 60))
         self.stdout.write(self.style.SUCCESS("✓ International section setup complete!"))
-        self.stdout.write(self.style.SUCCESS("="*60))
+        self.stdout.write(self.style.SUCCESS("=" * 60))
         self.stdout.write("\nPage Structure Created:\n")
         self.stdout.write(f"  • {internacional.url} (Main landing)")
         self.stdout.write(f"    ├── {cgri_home.url} (CGRI - Institutional)")
@@ -275,12 +281,16 @@ class Command(BaseCommand):
         self.stdout.write(f"        ├── {calendario.url}")
         self.stdout.write(f"        ├── {faq.url}")
         self.stdout.write(f"        └── {testimonials.url}")
-        
+
         self.stdout.write("\n" + self.style.SUCCESS("Next Steps:"))
         self.stdout.write("  1. Visit /admin/ to add content to pages")
         self.stdout.write("  2. Add program pages under /programas/")
         self.stdout.write("  3. Add convenio pages under /convenios/")
         self.stdout.write("  4. Add testimonial pages under /testimonios/")
         self.stdout.write("  5. Configure menu in Wagtail admin")
-        self.stdout.write("\n" + self.style.WARNING("To replace existing pages, run: python manage.py setup_internacional --replace"))
-
+        self.stdout.write(
+            "\n"
+            + self.style.WARNING(
+                "To replace existing pages, run: python manage.py setup_internacional --replace"
+            )
+        )

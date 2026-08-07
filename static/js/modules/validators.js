@@ -134,4 +134,4 @@ export function createValidationSchema(requiredFields = [], typeSchema = {}) {
         requiredFields,
         typeSchema
     };
-} 
+}

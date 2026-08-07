@@ -72,4 +72,4 @@ export function hideSectionLoading(selector) {
     if (spinner) {
         spinner.style.display = 'none';
     }
-} 
+}

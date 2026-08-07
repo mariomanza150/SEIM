@@ -5,7 +5,6 @@ from rest_framework.test import APITestCase
 
 from grades.models import GradeScale, GradeTranslation, GradeValue
 
-
 User = get_user_model()
 
 
@@ -74,7 +73,9 @@ class TestGradesAPI(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]["label"], "A")
-        self.assertEqual(str(response.data[0]["grade_scale"]), str(self.source_scale.id))
+        self.assertEqual(
+            str(response.data[0]["grade_scale"]), str(self.source_scale.id)
+        )
 
     def test_grade_translation_endpoint_translates_between_scales(self):
         response = self.client.post(

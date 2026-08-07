@@ -55,7 +55,9 @@ def logout_view(request):
 
     # Return a response that will clear JWT tokens via JavaScript
     response = redirect("/seim/login/")
-    response.set_cookie('clear_jwt_tokens', 'true', max_age=1)  # Short-lived cookie to signal JS
+    response.set_cookie(
+        "clear_jwt_tokens", "true", max_age=1
+    )  # Short-lived cookie to signal JS
     messages.success(request, "You have been logged out successfully.")
     return response
 
@@ -86,7 +88,7 @@ def applications_view(request):
     """Applications listing page with caching."""
     user = request.user
 
-    if user.has_any_role(['coordinator', 'admin']):
+    if user.has_any_role(["coordinator", "admin"]):
         applications = Application.objects.all()
     else:
         applications = Application.objects.filter(student=user)
@@ -96,9 +98,6 @@ def applications_view(request):
         "frontend/applications/list.html",
         {"applications": applications, "user": user},
     )
-
-
-
 
 
 @method_decorator(
@@ -131,10 +130,7 @@ class AnalyticsView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
 )  # Cache for 30 minutes
 def admin_dashboard_view(request):
     """Admin dashboard with comprehensive analytics and caching."""
-    if (
-        not request.user.is_authenticated
-        or not request.user.is_admin
-    ):
+    if not request.user.is_authenticated or not request.user.is_admin:
         return redirect("/seim/dashboard/")
 
     # Get cached analytics data
@@ -163,36 +159,37 @@ def coordinator_dashboard_view(request):
     Coordinator dashboard for reviewing applications and managing documents.
     Accessible to coordinators and admins.
     """
-    if (
-        not request.user.is_authenticated
-        or not request.user.has_any_role(['coordinator', 'admin'])
+    if not request.user.is_authenticated or not request.user.has_any_role(
+        ["coordinator", "admin"]
     ):
         return redirect("/seim/dashboard/")
 
     # Get pending applications and documents
     try:
         from exchange.models import Application
-        
-        pending_applications = Application.objects.filter(
-            status__name__in=['submitted', 'under_review']
-        ).select_related(
-            'student', 'program', 'status'
-        ).order_by('-updated_at')[:20]
-        
+
+        pending_applications = (
+            Application.objects.filter(status__name__in=["submitted", "under_review"])
+            .select_related("student", "program", "status")
+            .order_by("-updated_at")[:20]
+        )
+
         # Get documents needing validation
         from documents.models import Document
-        
-        pending_documents = Document.objects.filter(
-            documentvalidation__isnull=True
-        ).select_related(
-            'application', 'application__student', 'type'
-        ).order_by('-uploaded_at')[:20]
-        
+
+        pending_documents = (
+            Document.objects.filter(documentvalidation__isnull=True)
+            .select_related("application", "application__student", "type")
+            .order_by("-uploaded_at")[:20]
+        )
+
         # Get recent activity
-        recent_applications = Application.objects.all().select_related(
-            'student', 'program', 'status'
-        ).order_by('-updated_at')[:10]
-        
+        recent_applications = (
+            Application.objects.all()
+            .select_related("student", "program", "status")
+            .order_by("-updated_at")[:10]
+        )
+
     except Exception:
         pending_applications = []
         pending_documents = []
@@ -224,10 +221,7 @@ def invalidate_user_cache(request):
 @require_http_methods(["POST"])
 def clear_cache_view(request):
     """Clear all cache (admin only)."""
-    if (
-        not request.user.is_authenticated
-        or not request.user.is_admin
-    ):
+    if not request.user.is_authenticated or not request.user.is_admin:
         return JsonResponse({"error": "Unauthorized"}, status=403)
 
     try:
@@ -248,17 +242,16 @@ def profile_view(request):
 def sessions_view(request):
     """User session management page - view and revoke active sessions."""
     from accounts.models import UserSession
-    
-    sessions = UserSession.objects.filter(
-        user=request.user,
-        is_active=True
-    ).order_by('-last_activity')
-    
+
+    sessions = UserSession.objects.filter(user=request.user, is_active=True).order_by(
+        "-last_activity"
+    )
+
     context = {
         "user": request.user,
         "sessions": sessions,
     }
-    
+
     return render(request, "frontend/sessions.html", context)
 
 
@@ -269,47 +262,50 @@ def user_management_view(request):
     Shows all users with their last login times and session information.
     """
     # Check permission
-    if not request.user.has_any_role(['coordinator', 'admin']):
+    if not request.user.has_any_role(["coordinator", "admin"]):
         messages.error(request, "You don't have permission to access this page.")
         return redirect("/seim/dashboard/")
-    
+
     from django.contrib.auth import get_user_model
-    from accounts.models import UserSession
-    from django.db.models import Max, Count, Q
-    
+    from django.db.models import Count, Max, Q
+
     User = get_user_model()
-    
+
     # Get filter parameters
-    role_filter = request.GET.get('role', '')
-    search_query = request.GET.get('search', '')
-    
+    role_filter = request.GET.get("role", "")
+    search_query = request.GET.get("search", "")
+
     # Build query
-    users = User.objects.annotate(
-        last_login_time=Max('sessions__last_activity'),
-        active_sessions_count=Count('sessions', filter=Q(sessions__is_active=True))
-    ).select_related().prefetch_related('roles')
-    
+    users = (
+        User.objects.annotate(
+            last_login_time=Max("sessions__last_activity"),
+            active_sessions_count=Count("sessions", filter=Q(sessions__is_active=True)),
+        )
+        .select_related()
+        .prefetch_related("roles")
+    )
+
     # Apply filters
     if role_filter:
         users = users.filter(roles__name=role_filter)
-    
+
     if search_query:
         users = users.filter(
-            Q(username__icontains=search_query) |
-            Q(email__icontains=search_query) |
-            Q(first_name__icontains=search_query) |
-            Q(last_name__icontains=search_query)
+            Q(username__icontains=search_query)
+            | Q(email__icontains=search_query)
+            | Q(first_name__icontains=search_query)
+            | Q(last_name__icontains=search_query)
         )
-    
-    users = users.order_by('-last_login_time')
-    
+
+    users = users.order_by("-last_login_time")
+
     context = {
         "user": request.user,
         "users": users,
         "role_filter": role_filter,
         "search_query": search_query,
     }
-    
+
     return render(request, "frontend/user-management.html", context)
 
 
@@ -344,7 +340,7 @@ def theme_test_view(request):
 def application_create_view(request):
     """Create new application page."""
     # Get program ID from query params if provided
-    program_id = request.GET.get('program')
+    program_id = request.GET.get("program")
     form_type = None
 
     if program_id:
@@ -399,15 +395,17 @@ def application_edit_view(request, pk):
             return redirect("frontend:applications")
 
         # Get dynamic form data if exists
-        form_type = application.program.application_form if application.program else None
+        form_type = (
+            application.program.application_form if application.program else None
+        )
         form_data = {}
 
         if form_type:
             try:
                 from application_forms.models import FormSubmission
+
                 submission = FormSubmission.objects.filter(
-                    application=application,
-                    form_type=form_type
+                    application=application, form_type=form_type
                 ).first()
 
                 if submission:
@@ -468,16 +466,17 @@ def is_admin(user):
     """Check if user is admin (for use with user_passes_test decorator)."""
     return user.is_admin
 
+
 @login_required
 @user_passes_test(is_admin)
 def program_create_view(request):
     """Create new program (admin only)."""
-    if request.method == 'POST':
+    if request.method == "POST":
         form = ProgramForm(request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, "Program created successfully!")
-            return redirect('frontend:programs')
+            return redirect("frontend:programs")
     else:
         form = ProgramForm()
-    return render(request, 'frontend/programs/form.html', {'form': form})
+    return render(request, "frontend/programs/form.html", {"form": form})

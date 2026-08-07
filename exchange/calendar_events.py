@@ -2,7 +2,8 @@
 Build calendar event dicts for JSON and ICS feeds (shared logic).
 """
 
-from datetime import datetime, time as dt_time, timedelta
+from datetime import datetime, timedelta
+from datetime import time as dt_time
 
 from django.db.models import Q
 from django.utils import timezone as dj_tz

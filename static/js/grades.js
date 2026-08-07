@@ -3,7 +3,7 @@
  * Handles grade scale selection, conversion, and display
  */
 
-const GradeTranslation = (function() {
+const GradeTranslation = (function () {
     'use strict';
 
     // API endpoints
@@ -24,15 +24,15 @@ const GradeTranslation = (function() {
         try {
             const response = await fetch(ENDPOINTS.scales, {
                 headers: {
-                    'Authorization': `Bearer ${getAuthToken()}`,
+                    Authorization: `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to fetch grade scales');
             }
-            
+
             return await response.json();
         } catch (error) {
             console.error('Error fetching grade scales:', error);
@@ -47,20 +47,17 @@ const GradeTranslation = (function() {
      */
     async function fetchGradeValues(scaleId) {
         try {
-            const response = await fetch(
-                `${ENDPOINTS.values}by_scale/?grade_scale=${scaleId}`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${getAuthToken()}`,
-                        'Content-Type': 'application/json'
-                    }
+            const response = await fetch(`${ENDPOINTS.values}by_scale/?grade_scale=${scaleId}`, {
+                headers: {
+                    Authorization: `Bearer ${getAuthToken()}`,
+                    'Content-Type': 'application/json'
                 }
-            );
-            
+            });
+
             if (!response.ok) {
                 throw new Error('Failed to fetch grade values');
             }
-            
+
             return await response.json();
         } catch (error) {
             console.error('Error fetching grade values:', error);
@@ -79,7 +76,7 @@ const GradeTranslation = (function() {
             const response = await fetch(ENDPOINTS.translate, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${getAuthToken()}`,
+                    Authorization: `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCSRFToken()
                 },
@@ -89,11 +86,11 @@ const GradeTranslation = (function() {
                     fallback_to_gpa: true
                 })
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to translate grade');
             }
-            
+
             return await response.json();
         } catch (error) {
             console.error('Error translating grade:', error);
@@ -112,7 +109,7 @@ const GradeTranslation = (function() {
             const response = await fetch(ENDPOINTS.convertGPA, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${getAuthToken()}`,
+                    Authorization: `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCSRFToken()
                 },
@@ -121,11 +118,11 @@ const GradeTranslation = (function() {
                     target_scale_id: targetScaleId
                 })
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to convert GPA');
             }
-            
+
             return await response.json();
         } catch (error) {
             console.error('Error converting GPA:', error);
@@ -146,7 +143,7 @@ const GradeTranslation = (function() {
             const response = await fetch(ENDPOINTS.checkEligibility, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${getAuthToken()}`,
+                    Authorization: `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCSRFToken()
                 },
@@ -157,11 +154,11 @@ const GradeTranslation = (function() {
                     required_scale_id: requiredScaleId
                 })
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to check eligibility');
             }
-            
+
             return await response.json();
         } catch (error) {
             console.error('Error checking eligibility:', error);
@@ -178,12 +175,12 @@ const GradeTranslation = (function() {
         if (!select) return;
 
         const scales = await fetchGradeScales();
-        
+
         // Clear existing options except the first (placeholder)
         while (select.options.length > 1) {
             select.remove(1);
         }
-        
+
         // Add grade scales
         scales.forEach(scale => {
             const option = document.createElement('option');
@@ -213,7 +210,7 @@ const GradeTranslation = (function() {
         try {
             const values = await fetchGradeValues(scaleId);
             const closestGrade = findClosestGrade(gradeValue, values);
-            
+
             if (closestGrade) {
                 displayElement.innerHTML = `
                     <span class="badge bg-info">
@@ -258,13 +255,13 @@ const GradeTranslation = (function() {
     function getAuthToken() {
         // Try localStorage first
         let token = localStorage.getItem('access_token');
-        
+
         // If not found, try to get from cookie
         if (!token) {
             const match = document.cookie.match(/access_token=([^;]+)/);
             token = match ? match[1] : '';
         }
-        
+
         return token;
     }
 
@@ -286,27 +283,27 @@ const GradeTranslation = (function() {
     function initGradeScaleSelector(selectId, gradeInputId, displayId) {
         const select = document.getElementById(selectId);
         const gradeInput = document.getElementById(gradeInputId);
-        
+
         if (!select || !gradeInput) return;
 
         // Populate dropdown
         populateGradeScaleDropdown(selectId);
 
         // Handle scale change
-        select.addEventListener('change', function() {
+        select.addEventListener('change', function () {
             const scaleId = this.value;
             const gradeValue = parseFloat(gradeInput.value);
-            
+
             if (scaleId && gradeValue) {
                 displayGPAEquivalent(gradeValue, scaleId, displayId);
             }
         });
 
         // Handle grade input change
-        gradeInput.addEventListener('input', function() {
+        gradeInput.addEventListener('input', function () {
             const scaleId = select.value;
             const gradeValue = parseFloat(this.value);
-            
+
             if (scaleId && gradeValue) {
                 displayGPAEquivalent(gradeValue, scaleId, displayId);
             }
@@ -331,4 +328,3 @@ const GradeTranslation = (function() {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = GradeTranslation;
 }
-

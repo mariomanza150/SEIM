@@ -8,7 +8,7 @@ import os
 import sys
 import warnings
 from copy import deepcopy
-from urllib.parse import urlunparse, urlparse
+from urllib.parse import urlparse, urlunparse
 
 from .base import *
 
@@ -108,7 +108,8 @@ DATABASES = {
 if "sqlite" in DATABASES["default"]["ENGINE"]:
     warnings.warn(
         "SQLite is not supported for development. Please set DATABASE_URL to a PostgreSQL connection string.",
-        RuntimeWarning, stacklevel=2,
+        RuntimeWarning,
+        stacklevel=2,
     )
     print(
         "ERROR: SQLite is not supported for development. Please set DATABASE_URL to a PostgreSQL connection string.",
@@ -219,7 +220,9 @@ if env("EMAIL_BACKEND") == "django_ses.SESBackend":
 
 # Celery Configuration
 CELERY_BROKER_URL = _docker_compose_redis_host_to_localhost(env("CELERY_BROKER_URL"))
-CELERY_RESULT_BACKEND = _docker_compose_redis_host_to_localhost(env("CELERY_RESULT_BACKEND"))
+CELERY_RESULT_BACKEND = _docker_compose_redis_host_to_localhost(
+    env("CELERY_RESULT_BACKEND")
+)
 
 # CORS Configuration for Vue.js SPA Development
 CORS_ALLOW_ALL_ORIGINS = False  # More secure - specify origins
@@ -233,25 +236,25 @@ CORS_ALLOW_CREDENTIALS = True
 
 # Allow all HTTP methods
 CORS_ALLOW_METHODS = [
-    'DELETE',
-    'GET',
-    'OPTIONS',
-    'PATCH',
-    'POST',
-    'PUT',
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
 ]
 
 # Allow common headers
 CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
 ]
 
 # Security Settings (relaxed for development)

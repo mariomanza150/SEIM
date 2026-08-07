@@ -43,8 +43,12 @@ class TestDocumentPreviewAPI(APITestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_other_student_gets_404(self):
-        owner = self.create_user(role="student", username="doc_owner", email="doc_owner@example.com")
-        other = self.create_user(role="student", username="doc_other", email="doc_other@example.com")
+        owner = self.create_user(
+            role="student", username="doc_owner", email="doc_owner@example.com"
+        )
+        other = self.create_user(
+            role="student", username="doc_other", email="doc_other@example.com"
+        )
         doc = self._make_document(owner)
         self.authenticate_user(other)
         url = reverse("api:document-preview", kwargs={"pk": doc.pk})

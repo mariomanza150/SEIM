@@ -25,36 +25,29 @@ class FormType(models.Model):
     surveys, feedback forms, etc. It works alongside the official django-dynforms
     package by providing additional metadata and program-specific features.
     """
+
     FORM_TYPE_CHOICES = [
-        ('application', 'Exchange Application'),
-        ('survey', 'Survey'),
-        ('feedback', 'Feedback'),
-        ('custom', 'Custom Form'),
+        ("application", "Exchange Application"),
+        ("survey", "Survey"),
+        ("feedback", "Feedback"),
+        ("custom", "Custom Form"),
     ]
 
-    name = models.CharField(
-        max_length=200,
-        help_text="Display name for the form"
-    )
+    name = models.CharField(max_length=200, help_text="Display name for the form")
     form_type = models.CharField(
         max_length=50,
         choices=FORM_TYPE_CHOICES,
-        default='application',
-        help_text="The purpose/type of this form"
+        default="application",
+        help_text="The purpose/type of this form",
     )
     description = models.TextField(
-        blank=True,
-        help_text="Optional description of the form"
+        blank=True, help_text="Optional description of the form"
     )
     schema = models.JSONField(
-        help_text="JSON schema defining field structure",
-        default=dict,
-        blank=True
+        help_text="JSON schema defining field structure", default=dict, blank=True
     )
     ui_schema = models.JSONField(
-        help_text="UI schema for form rendering (optional)",
-        default=dict,
-        blank=True
+        help_text="UI schema for form rendering (optional)", default=dict, blank=True
     )
     step_definitions = models.JSONField(
         default=list,
@@ -68,21 +61,21 @@ class FormType(models.Model):
 
     # Meta fields
     created_by = models.ForeignKey(
-        'accounts.User',
+        "accounts.User",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='created_application_forms'
+        related_name="created_application_forms",
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        ordering = ['-created_at']
-        verbose_name = 'Application Form Type'
-        verbose_name_plural = 'Application Form Types'
-        app_label = 'application_forms'
+        ordering = ["-created_at"]
+        verbose_name = "Application Form Type"
+        verbose_name_plural = "Application Form Types"
+        app_label = "application_forms"
 
     def __str__(self):
         return f"{self.name} ({self.get_form_type_display()})"
@@ -94,30 +87,44 @@ class FormType(models.Model):
                 # Basic validation to ensure it's valid JSON
                 json.dumps(self.schema)
             except (TypeError, ValueError) as e:
-                raise ValidationError(f'Invalid JSON schema: {str(e)}')
+                raise ValidationError(f"Invalid JSON schema: {str(e)}")
 
         if self.step_definitions:
             if not isinstance(self.step_definitions, list):
-                raise ValidationError({'step_definitions': 'Must be a list of step objects.'})
-            props = set((self.schema or {}).get('properties', {}).keys())
+                raise ValidationError(
+                    {"step_definitions": "Must be a list of step objects."}
+                )
+            props = set((self.schema or {}).get("properties", {}).keys())
             seen_keys = set()
             for i, step in enumerate(self.step_definitions):
                 if not isinstance(step, dict):
-                    raise ValidationError({'step_definitions': f'Item {i} must be an object.'})
-                key = step.get('key')
+                    raise ValidationError(
+                        {"step_definitions": f"Item {i} must be an object."}
+                    )
+                key = step.get("key")
                 if not key or not str(key).strip():
-                    raise ValidationError({'step_definitions': f'Item {i} must include a non-empty key.'})
+                    raise ValidationError(
+                        {"step_definitions": f"Item {i} must include a non-empty key."}
+                    )
                 key = str(key)
                 if key in seen_keys:
-                    raise ValidationError({'step_definitions': f'Duplicate step key: {key}'})
+                    raise ValidationError(
+                        {"step_definitions": f"Duplicate step key: {key}"}
+                    )
                 seen_keys.add(key)
-                field_names = step.get('field_names')
+                field_names = step.get("field_names")
                 if not isinstance(field_names, list) or not field_names:
-                    raise ValidationError({'step_definitions': f'Step "{key}" needs a non-empty field_names list.'})
+                    raise ValidationError(
+                        {
+                            "step_definitions": f'Step "{key}" needs a non-empty field_names list.'
+                        }
+                    )
                 for fname in field_names:
                     if fname not in props:
                         raise ValidationError(
-                            {'step_definitions': f'Step "{key}" references unknown field "{fname}".'}
+                            {
+                                "step_definitions": f'Step "{key}" references unknown field "{fname}".'
+                            }
                         )
                 raw_doc_ids = step.get("required_document_type_ids", None)
                 if raw_doc_ids is not None:
@@ -145,11 +152,13 @@ class FormType(models.Model):
                         from documents.models import DocumentType
 
                         existing = set(
-                            DocumentType.objects.filter(pk__in=normalized_doc_ids).values_list(
-                                "pk", flat=True
-                            )
+                            DocumentType.objects.filter(
+                                pk__in=normalized_doc_ids
+                            ).values_list("pk", flat=True)
                         )
-                        missing = [pk for pk in normalized_doc_ids if pk not in existing]
+                        missing = [
+                            pk for pk in normalized_doc_ids if pk not in existing
+                        ]
                         if missing:
                             raise ValidationError(
                                 {
@@ -224,9 +233,10 @@ class FormType(models.Model):
                                             )
                                         }
                                     ) from exc
-                        if "has_assigned_coordinator" in raw_vw and raw_vw[
-                            "has_assigned_coordinator"
-                        ] is not None:
+                        if (
+                            "has_assigned_coordinator" in raw_vw
+                            and raw_vw["has_assigned_coordinator"] is not None
+                        ):
                             if not isinstance(raw_vw["has_assigned_coordinator"], bool):
                                 raise ValidationError(
                                     {
@@ -282,10 +292,10 @@ class FormType(models.Model):
                     except (TypeError, ValueError):
                         continue
             row = {
-                'key': str(step.get('key', '') or ''),
-                'title': step.get('title') or step.get('key') or '',
-                'field_names': list(step.get('field_names') or []),
-                'required_document_type_ids': doc_ids,
+                "key": str(step.get("key", "") or ""),
+                "title": step.get("title") or step.get("key") or "",
+                "field_names": list(step.get("field_names") or []),
+                "required_document_type_ids": doc_ids,
             }
             vw = step.get("visible_when") or step.get("visibleWhen")
             if vw is not None:
@@ -296,22 +306,22 @@ class FormType(models.Model):
     def get_step_field_names(self, step_key: str):
         """Return field_names for step_key, or None if unknown."""
         for step in self.step_definitions or []:
-            if str(step.get('key', '')) == str(step_key):
-                return list(step.get('field_names') or [])
+            if str(step.get("key", "")) == str(step_key):
+                return list(step.get("field_names") or [])
         return None
 
     def get_field_count(self):
         """Return the number of fields in the form schema"""
         if not self.schema:
             return 0
-        properties = self.schema.get('properties', {})
+        properties = self.schema.get("properties", {})
         return len(properties)
 
     def get_required_fields(self):
         """Return list of required field names"""
         if not self.schema:
             return []
-        return self.schema.get('required', [])
+        return self.schema.get("required", [])
 
 
 class FormStepTemplate(models.Model):
@@ -375,9 +385,17 @@ class FormStepTemplate(models.Model):
             base = slugify(self.name)[:80] or "step-template"
             candidate = base
             n = 2
-            while FormStepTemplate.objects.filter(slug=candidate).exclude(pk=self.pk).exists():
+            while (
+                FormStepTemplate.objects.filter(slug=candidate)
+                .exclude(pk=self.pk)
+                .exists()
+            ):
                 suffix = f"-{n}"
-                candidate = f"{base[: 80 - len(suffix)]}{suffix}" if len(base) + len(suffix) > 80 else f"{base}-{n}"
+                candidate = (
+                    f"{base[: 80 - len(suffix)]}{suffix}"
+                    if len(base) + len(suffix) > 80
+                    else f"{base}-{n}"
+                )
                 n += 1
             self.slug = candidate
         super().save(*args, **kwargs)
@@ -387,15 +405,21 @@ class FormStepTemplate(models.Model):
         if not isinstance(props, dict):
             raise ValidationError({"schema_properties": "Must be a JSON object."})
         if not props:
-            raise ValidationError({"schema_properties": "Define at least one property."})
+            raise ValidationError(
+                {"schema_properties": "Define at least one property."}
+            )
         keys = set(props.keys())
         req_names = self.required_field_names or []
         if not isinstance(req_names, list):
-            raise ValidationError({"required_field_names": "Must be a list of field names."})
+            raise ValidationError(
+                {"required_field_names": "Must be a list of field names."}
+            )
         for r in req_names:
             if r not in keys:
                 raise ValidationError(
-                    {"required_field_names": f'"{r}" is not a key in schema_properties.'}
+                    {
+                        "required_field_names": f'"{r}" is not a key in schema_properties.'
+                    }
                 )
         raw_docs = self.required_document_type_ids
         if raw_docs is not None and not isinstance(raw_docs, list):
@@ -427,7 +451,9 @@ class FormStepTemplate(models.Model):
                 )
         key = (self.default_step_key or "").strip()
         if not key:
-            raise ValidationError({"default_step_key": "Provide a non-empty default step key."})
+            raise ValidationError(
+                {"default_step_key": "Provide a non-empty default step key."}
+            )
 
 
 class FormSubmission(models.Model):
@@ -437,22 +463,20 @@ class FormSubmission(models.Model):
     This model captures user responses to custom forms and links them
     to exchange programs and applications for tracking and analysis.
     """
+
     form_type = models.ForeignKey(
-        FormType,
-        on_delete=models.CASCADE,
-        related_name='submissions'
+        FormType, on_delete=models.CASCADE, related_name="submissions"
     )
     submitted_by = models.ForeignKey(
-        'accounts.User',
+        "accounts.User",
         on_delete=models.SET_NULL,
         null=True,
-        related_name='application_form_submissions'
+        related_name="application_form_submissions",
     )
 
     # Store responses as JSON
     responses = models.JSONField(
-        help_text="JSON object containing the form responses",
-        default=dict
+        help_text="JSON object containing the form responses", default=dict
     )
 
     # Meta fields
@@ -461,29 +485,31 @@ class FormSubmission(models.Model):
 
     # Optional: link to exchange programs and applications
     program = models.ForeignKey(
-        'exchange.Program',
+        "exchange.Program",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='form_submissions'
+        related_name="form_submissions",
     )
     application = models.ForeignKey(
-        'exchange.Application',
+        "exchange.Application",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='form_submissions',
-        help_text="Link to the exchange application this form is part of"
+        related_name="form_submissions",
+        help_text="Link to the exchange application this form is part of",
     )
 
     class Meta:
-        ordering = ['-submitted_at']
-        verbose_name = 'Form Submission'
-        verbose_name_plural = 'Form Submissions'
-        app_label = 'application_forms'
+        ordering = ["-submitted_at"]
+        verbose_name = "Form Submission"
+        verbose_name_plural = "Form Submissions"
+        app_label = "application_forms"
 
     def __str__(self):
-        return f"{self.form_type.name} - {self.submitted_by} ({self.submitted_at.date()})"
+        return (
+            f"{self.form_type.name} - {self.submitted_by} ({self.submitted_at.date()})"
+        )
 
     def clean(self):
         """Validate the responses against the form schema"""
@@ -491,7 +517,7 @@ class FormSubmission(models.Model):
             try:
                 json.dumps(self.responses)
             except (TypeError, ValueError) as e:
-                raise ValidationError(f'Invalid JSON responses: {str(e)}')
+                raise ValidationError(f"Invalid JSON responses: {str(e)}")
 
         # Completeness of required fields is enforced in FormSubmissionService / application submit flow,
         # so draft submissions may be partial (e.g. multi-step saves).
@@ -512,9 +538,9 @@ def validate_json_schema(value):
         elif isinstance(value, dict):
             json.dumps(value)
         else:
-            raise ValidationError('Schema must be a valid JSON object or string')
+            raise ValidationError("Schema must be a valid JSON object or string")
     except (TypeError, ValueError) as e:
-        raise ValidationError(f'Invalid JSON: {str(e)}')
+        raise ValidationError(f"Invalid JSON: {str(e)}")
 
 
 def validate_form_response(value):
@@ -525,10 +551,9 @@ def validate_form_response(value):
         elif isinstance(value, dict):
             data = value
         else:
-            raise ValidationError('Response must be a valid JSON object or string')
+            raise ValidationError("Response must be a valid JSON object or string")
 
         if not isinstance(data, dict):
-            raise ValidationError('Form response must be a JSON object')
+            raise ValidationError("Form response must be a JSON object")
     except (TypeError, ValueError) as e:
-        raise ValidationError(f'Invalid JSON response: {str(e)}')
-
+        raise ValidationError(f"Invalid JSON response: {str(e)}")

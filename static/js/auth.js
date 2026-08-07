@@ -6,7 +6,12 @@
 import * as Auth from './modules/auth.js';
 import { setLoadingState } from './modules/ui.js';
 import { showErrorAlert, showSuccessAlert } from './modules/notifications.js';
-import { sanitizeInput, validateAndSanitizeEmail, validateAndSanitizeUsername, validatePassword } from './modules/validators.js';
+import {
+    sanitizeInput,
+    validateAndSanitizeEmail,
+    validateAndSanitizeUsername,
+    validatePassword
+} from './modules/validators.js';
 import { logger } from './modules/logger.js';
 import { errorHandler } from './modules/error-handler.js';
 
@@ -23,7 +28,7 @@ let authState = {
 };
 
 // Initialize authentication when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeAuth();
     initializeLoginPage();
 });
@@ -35,7 +40,7 @@ function initializeAuth() {
     // Check for existing tokens
     const accessToken = Auth.getAccessToken();
     const refreshToken = Auth.getRefreshToken();
-    
+
     if (accessToken && refreshToken) {
         // Validate token and get user info
         Auth.validateTokenAndGetUser();
@@ -43,7 +48,7 @@ function initializeAuth() {
         // No tokens, show login form
         Auth.showLoginForm();
     }
-    
+
     // Setup form event listeners
     Auth.setupAuthForms();
 }
@@ -56,44 +61,46 @@ async function handleLogin(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
-        
+
         // Get and sanitize form values
         const usernameOrEmail = sanitizeInput(formData.get('username'));
         const password = formData.get('password'); // Don't sanitize passwords
-        
+
         // Validate form
         if (!usernameOrEmail || !password) {
             showErrorAlert('Validation Error', 'Please fill in all fields');
             return;
         }
-        
+
         // Always use 'login' key for both username and email
         let payload = { login: usernameOrEmail, password: password };
-        
+
         // Show loading state
         const submitBtn = form.querySelector('button[type="submit"]');
         setLoadingState(submitBtn, true, 'Logging in...');
-        
+
         try {
             const data = await Auth.apiRequest(window.API_ENDPOINTS.token, {
                 method: 'POST',
                 body: JSON.stringify(payload)
             });
-            
+
             // Store tokens
             Auth.storeTokens(data.access, data.refresh);
-            
+
             // Get user info
             await Auth.getUserInfo();
-            
+
             // Show success message and redirect
             await showSuccessAlert('Login Successful', 'Welcome back! Redirecting to dashboard...');
             window.location.href = '/dashboard/';
-            
         } catch (error) {
             errorHandler.handleAuthError(error, { action: 'login' });
             logger.error('[ERROR] Login error:', error);
-            showErrorAlert('Login Failed', error.message || 'Please check your credentials and try again.');
+            showErrorAlert(
+                'Login Failed',
+                error.message || 'Please check your credentials and try again.'
+            );
         } finally {
             // Reset button state
             setLoadingState(submitBtn, false);
@@ -110,27 +117,27 @@ async function handleLogin(event) {
  */
 async function handleRegistration(event) {
     event.preventDefault();
-    
+
     const form = event.target;
     const formData = new FormData(form);
-    
+
     // Get and sanitize form values
     const email = sanitizeInput(formData.get('email'));
     const username = sanitizeInput(formData.get('username'));
     const password = formData.get('password'); // Don't sanitize passwords
     const confirmPassword = formData.get('confirm_password');
-    
+
     // Validate form
     if (!email || !username || !password || !confirmPassword) {
         showErrorAlert('Validation Error', 'Please fill in all fields');
         return;
     }
-    
+
     if (password !== confirmPassword) {
         showErrorAlert('Password Mismatch', 'Passwords do not match');
         return;
     }
-    
+
     // Validate and sanitize email
     try {
         validateAndSanitizeEmail(email);
@@ -138,7 +145,7 @@ async function handleRegistration(event) {
         showErrorAlert('Invalid Email', error.message);
         return;
     }
-    
+
     // Validate username
     try {
         validateAndSanitizeUsername(username);
@@ -146,18 +153,18 @@ async function handleRegistration(event) {
         showErrorAlert('Invalid Username', error.message);
         return;
     }
-    
+
     // Validate password strength
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.isValid) {
         showErrorAlert('Weak Password', passwordValidation.errors.join('\n'));
         return;
     }
-    
+
     // Show loading state
     const submitBtn = form.querySelector('button[type="submit"]');
     setLoadingState(submitBtn, true, 'Registering...');
-    
+
     try {
         const data = await Auth.apiRequest(window.API_ENDPOINTS.register, {
             method: 'POST',
@@ -167,14 +174,16 @@ async function handleRegistration(event) {
                 password: password
             })
         });
-        
-        await showSuccessAlert('Registration Successful', 'Please check your email for verification. You will be redirected to login.');
-        
+
+        await showSuccessAlert(
+            'Registration Successful',
+            'Please check your email for verification. You will be redirected to login.'
+        );
+
         // Redirect to login page
         setTimeout(() => {
             window.location.href = '/login/';
         }, 3000);
-        
     } catch (error) {
         errorHandler.handleAuthError(error, { action: 'register' });
         logger.error('Registration error:', error);
@@ -190,19 +199,19 @@ async function handleRegistration(event) {
  */
 async function handlePasswordReset(event) {
     event.preventDefault();
-    
+
     const form = event.target;
     const formData = new FormData(form);
-    
+
     // Get and sanitize form values
     const email = sanitizeInput(formData.get('email'));
-    
+
     // Validate form
     if (!email) {
         showErrorAlert('Validation Error', 'Please enter your email address');
         return;
     }
-    
+
     // Validate and sanitize email
     try {
         validateAndSanitizeEmail(email);
@@ -210,11 +219,11 @@ async function handlePasswordReset(event) {
         showErrorAlert('Invalid Email', error.message);
         return;
     }
-    
+
     // Show loading state
     const submitBtn = form.querySelector('button[type="submit"]');
     setLoadingState(submitBtn, true, 'Sending...');
-    
+
     try {
         const data = await Auth.apiRequest(window.API_ENDPOINTS.passwordReset, {
             method: 'POST',
@@ -222,10 +231,12 @@ async function handlePasswordReset(event) {
                 email: email
             })
         });
-        
-        await showSuccessAlert('Email Sent', 'If an account with this email exists, you will receive password reset instructions.');
+
+        await showSuccessAlert(
+            'Email Sent',
+            'If an account with this email exists, you will receive password reset instructions.'
+        );
         form.reset();
-        
     } catch (error) {
         errorHandler.handleAuthError(error, { action: 'password-reset' });
         logger.error('Password reset error:', error);
@@ -241,7 +252,7 @@ async function handlePasswordReset(event) {
  */
 async function handleLogout(event) {
     event.preventDefault();
-    
+
     try {
         // Call logout endpoint
         await Auth.apiRequest(window.API_ENDPOINTS.logout, {
@@ -265,15 +276,15 @@ async function handleLogout(event) {
 async function validateTokenAndGetUser() {
     try {
         const response = await Auth.apiRequest('/api/accounts/profile/');
-        
+
         if (response.ok) {
             const userData = await response.json();
             authState.user = userData;
             authState.isAuthenticated = true;
-            
+
             // Update UI
             updateUserInterface(userData);
-            
+
             // Start token refresh timer
             startTokenRefreshTimer();
         } else {
@@ -295,18 +306,18 @@ async function validateTokenAndGetUser() {
 async function getUserInfo() {
     try {
         const response = await Auth.apiRequest('/api/accounts/profile/');
-        
+
         if (response.ok) {
             const userData = await response.json();
             authState.user = userData;
             authState.isAuthenticated = true;
-            
+
             // Fetch user permissions
             await fetchUserPermissions();
-            
+
             // Update UI
             updateUserInterface(userData);
-            
+
             return userData;
         }
     } catch (error) {
@@ -325,19 +336,19 @@ function updateUserInterface(userData) {
     usernameElements.forEach(el => {
         el.textContent = userData.username;
     });
-    
+
     // Update user role
     const roleElements = document.querySelectorAll('.user-role');
     roleElements.forEach(el => {
         el.textContent = userData.role;
     });
-    
+
     // Update email
     const emailElements = document.querySelectorAll('.user-email');
     emailElements.forEach(el => {
         el.textContent = userData.email;
     });
-    
+
     // Show/hide role-based elements
     updateRoleBasedUI(userData.role);
 }
@@ -351,13 +362,13 @@ function updateRoleBasedUI(role) {
     roleElements.forEach(el => {
         el.style.display = 'none';
     });
-    
+
     // Show elements for current role
     const currentRoleElements = document.querySelectorAll(`[data-role="${role}"]`);
     currentRoleElements.forEach(el => {
         el.style.display = 'block';
     });
-    
+
     // Show admin elements for admin users
     if (role === 'admin') {
         const adminElements = document.querySelectorAll('[data-role="admin"]');
@@ -373,7 +384,7 @@ function updateRoleBasedUI(role) {
 function showLoginForm() {
     authState.isAuthenticated = false;
     authState.user = null;
-    
+
     // Update UI for non-authenticated users
     updateUnauthUI();
 }
@@ -385,7 +396,7 @@ function showLoginForm() {
 async function fetchUserPermissions() {
     try {
         const response = await Auth.apiRequest('/api/accounts/permissions/');
-        
+
         if (response.ok) {
             const permData = await response.json();
             // Update authState with permissions from backend
@@ -395,7 +406,7 @@ async function fetchUserPermissions() {
             authState.is_admin = permData.is_admin || false;
             authState.is_coordinator = permData.is_coordinator || false;
             authState.is_student = permData.is_student || false;
-            
+
             logger.info('[AUTH] Permissions loaded:', authState.permissions.length);
             return true;
         } else {
@@ -416,13 +427,13 @@ function hasPermission(permission) {
     if (!authState.isAuthenticated || !authState.user) {
         return false;
     }
-    
+
     // Check if permissions are loaded
     if (!authState.permissions || authState.permissions.length === 0) {
         logger.warn('[AUTH] Permissions not loaded yet');
         return false;
     }
-    
+
     // Check if user has the specific permission
     return authState.permissions.includes(permission);
 }
@@ -434,11 +445,11 @@ function hasAnyRole(roleNames) {
     if (!authState.isAuthenticated || !authState.roles) {
         return false;
     }
-    
+
     if (typeof roleNames === 'string') {
         roleNames = [roleNames];
     }
-    
+
     return roleNames.some(role => authState.roles.includes(role));
 }
 
@@ -467,12 +478,12 @@ function requirePermission(permission) {
     if (!requireAuth()) {
         return false;
     }
-    
+
     if (!hasPermission(permission)) {
         showErrorAlert('Access Denied', 'You do not have permission to access this resource');
         return false;
     }
-    
+
     return true;
 }
 
@@ -483,18 +494,18 @@ function initializeLoginPage() {
     // Toggle password visibility
     const togglePassword = document.getElementById('togglePassword');
     const password = document.getElementById('password');
-    
+
     if (togglePassword && password) {
-        togglePassword.addEventListener('click', function() {
+        togglePassword.addEventListener('click', function () {
             const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
             password.setAttribute('type', type);
-            
+
             const icon = this.querySelector('i');
             icon.classList.toggle('bi-eye');
             icon.classList.toggle('bi-eye-slash');
         });
     }
-    
+
     // Auto-focus on username field
     const usernameField = document.getElementById('username');
     if (usernameField) {
@@ -536,4 +547,4 @@ window.Auth = {
     isCoordinator: () => authState.is_coordinator,
     isStudent: () => authState.is_student,
     setupAuthForms
-}; 
+};

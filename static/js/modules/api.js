@@ -69,7 +69,7 @@ async function retryRequest(url, originalResponse) {
         method: originalResponse.method,
         headers: {
             ...originalResponse.headers,
-            'Authorization': `Bearer ${token}`
+            Authorization: `Bearer ${token}`
         }
     };
     if (originalResponse.body) {
@@ -80,16 +80,18 @@ async function retryRequest(url, originalResponse) {
 }
 
 export async function apiRequest(url, options = {}) {
-            const startTime = performance.now();
+    const startTime = performance.now();
     // Add JWT token if available
     const token = getAccessToken();
     options.headers = {
         ...options.headers,
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
     };
     // Add CSRF token for non-GET
     if (options.method && options.method !== 'GET') {
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const csrfToken = document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute('content');
         options.headers['X-CSRFToken'] = csrfToken;
         options.headers['Content-Type'] = 'application/json';
     }
@@ -108,13 +110,26 @@ export async function apiRequest(url, options = {}) {
         }
         const data = await handleApiResponse(response);
         const endTime = performance.now();
-        SEIM_PERFORMANCE.trackApiCall(url, options.method || 'GET', startTime, endTime, response.status);
+        SEIM_PERFORMANCE.trackApiCall(
+            url,
+            options.method || 'GET',
+            startTime,
+            endTime,
+            response.status
+        );
         return data;
     } catch (error) {
         const endTime = performance.now();
-        SEIM_PERFORMANCE.trackApiCall(url, options.method || 'GET', startTime, endTime, 'error', error);
+        SEIM_PERFORMANCE.trackApiCall(
+            url,
+            options.method || 'GET',
+            startTime,
+            endTime,
+            'error',
+            error
+        );
         errorHandler.handleApiError(error, { url, options });
         logger.error('API Request failed', error);
         throw error;
     }
-} 
+}

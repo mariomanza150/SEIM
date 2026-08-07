@@ -10,7 +10,7 @@ from django.test import TestCase
 
 from documents.models import Document, DocumentType
 
-sys.modules['magic'] = MagicMock()
+sys.modules["magic"] = MagicMock()
 from documents.services import DocumentService
 from exchange.models import Application, ApplicationStatus, Program
 
@@ -19,7 +19,7 @@ class TestDocumentService(TestCase):
     def setUp(self):
         self.User = get_user_model()
         self.user = self.User.objects.create_user(
-            username='testuser', email='testuser@example.com', password='TestPass123!'
+            username="testuser", email="testuser@example.com", password="TestPass123!"
         )
 
         # Create required objects for Document model
@@ -28,38 +28,33 @@ class TestDocumentService(TestCase):
             description="Test Description",
             is_active=True,
             start_date=date(2024, 1, 1),
-            end_date=date(2024, 6, 30)
+            end_date=date(2024, 6, 30),
         )
 
         self.application_status, _ = ApplicationStatus.objects.get_or_create(
-            name="draft",
-            defaults={"order": 1}
+            name="draft", defaults={"order": 1}
         )
 
         self.application = Application.objects.create(
-            student=self.user,
-            program=self.program,
-            status=self.application_status
+            student=self.user, program=self.program, status=self.application_status
         )
 
         self.document_type = DocumentType.objects.create(
-            name="transcript",
-            description="Academic transcript"
+            name="transcript", description="Academic transcript"
         )
 
     def test_validate_file_type_and_size_valid(self):
         """Test file validation with valid file"""
         import documents.services as services_module
+
         mock_magic_obj = MagicMock()
         mock_magic_obj.from_buffer = MagicMock(return_value="application/pdf")
 
-        with patch.object(services_module, 'MAGIC_AVAILABLE', True):
-            with patch.object(services_module, 'magic', mock_magic_obj):
-                file_content = b'Test document content'
+        with patch.object(services_module, "MAGIC_AVAILABLE", True):
+            with patch.object(services_module, "magic", mock_magic_obj):
+                file_content = b"Test document content"
                 uploaded_file = SimpleUploadedFile(
-                    'test.pdf',
-                    file_content,
-                    content_type='application/pdf'
+                    "test.pdf", file_content, content_type="application/pdf"
                 )
                 uploaded_file.size = 1024  # 1KB
 
@@ -69,16 +64,15 @@ class TestDocumentService(TestCase):
     def test_validate_file_type_and_size_invalid_type(self):
         """Test file validation with invalid file type"""
         import documents.services as services_module
+
         mock_magic_obj = MagicMock()
         mock_magic_obj.from_buffer = MagicMock(return_value="text/plain")
 
-        with patch.object(services_module, 'MAGIC_AVAILABLE', True):
-            with patch.object(services_module, 'magic', mock_magic_obj):
-                file_content = b'Test document content'
+        with patch.object(services_module, "MAGIC_AVAILABLE", True):
+            with patch.object(services_module, "magic", mock_magic_obj):
+                file_content = b"Test document content"
                 uploaded_file = SimpleUploadedFile(
-                    'test.exe',
-                    file_content,
-                    content_type='application/octet-stream'
+                    "test.exe", file_content, content_type="application/octet-stream"
                 )
                 uploaded_file.size = 1024
 
@@ -88,45 +82,46 @@ class TestDocumentService(TestCase):
     def test_validate_file_type_and_size_too_large(self):
         """Test file validation with file too large"""
         import documents.services as services_module
+
         mock_magic_obj = MagicMock()
         mock_magic_obj.from_buffer = MagicMock(return_value="application/pdf")
 
-        with patch.object(services_module, 'MAGIC_AVAILABLE', True):
-            with patch.object(services_module, 'magic', mock_magic_obj):
+        with patch.object(services_module, "MAGIC_AVAILABLE", True):
+            with patch.object(services_module, "magic", mock_magic_obj):
                 # Create a large file
-                file_content = b'x' * (DocumentService.MAX_FILE_SIZE_MB * 1024 * 1024 + 1000)
-                uploaded_file = SimpleUploadedFile(
-                    'test.pdf',
-                    file_content,
-                    content_type='application/pdf'
+                file_content = b"x" * (
+                    DocumentService.MAX_FILE_SIZE_MB * 1024 * 1024 + 1000
                 )
-                uploaded_file.size = DocumentService.MAX_FILE_SIZE_MB * 1024 * 1024 + 1000
+                uploaded_file = SimpleUploadedFile(
+                    "test.pdf", file_content, content_type="application/pdf"
+                )
+                uploaded_file.size = (
+                    DocumentService.MAX_FILE_SIZE_MB * 1024 * 1024 + 1000
+                )
 
-                with self.assertRaises(ValueError, msg="File size exceeds maximum allowed."):
+                with self.assertRaises(
+                    ValueError, msg="File size exceeds maximum allowed."
+                ):
                     DocumentService.validate_file_type_and_size(uploaded_file)
 
-    @patch('documents.services.scan_document_virus.delay')
+    @patch("documents.services.scan_document_virus.delay")
     def test_upload_document_success(self, mock_scan):
         """Test successful document upload"""
         import documents.services as services_module
+
         mock_magic_obj = MagicMock()
         mock_magic_obj.from_buffer = MagicMock(return_value="application/pdf")
 
-        with patch.object(services_module, 'MAGIC_AVAILABLE', True):
-            with patch.object(services_module, 'magic', mock_magic_obj):
-                file_content = b'Test document content'
+        with patch.object(services_module, "MAGIC_AVAILABLE", True):
+            with patch.object(services_module, "magic", mock_magic_obj):
+                file_content = b"Test document content"
                 uploaded_file = SimpleUploadedFile(
-                    'test.pdf',
-                    file_content,
-                    content_type='application/pdf'
+                    "test.pdf", file_content, content_type="application/pdf"
                 )
                 uploaded_file.size = 1024
 
                 document = DocumentService.upload_document(
-                    self.application,
-                    self.document_type,
-                    uploaded_file,
-                    self.user
+                    self.application, self.document_type, uploaded_file, self.user
                 )
 
                 self.assertIsInstance(document, Document)
@@ -138,14 +133,10 @@ class TestDocumentService(TestCase):
         """Test retrieving user documents"""
         # Create test documents
         Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
         Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
         # Get documents for the user
@@ -156,19 +147,14 @@ class TestDocumentService(TestCase):
         """Test retrieving documents by type"""
         # Create test documents
         Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
         another_type = DocumentType.objects.create(
-            name="id_document",
-            description="ID document"
+            name="id_document", description="ID document"
         )
         Document.objects.create(
-            application=self.application,
-            type=another_type,
-            uploaded_by=self.user
+            application=self.application, type=another_type, uploaded_by=self.user
         )
 
         application_docs = Document.objects.filter(type=self.document_type)
@@ -180,9 +166,7 @@ class TestDocumentService(TestCase):
     def test_delete_document_success(self):
         """Test successful document deletion"""
         document = Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
         # Delete the document
@@ -194,12 +178,10 @@ class TestDocumentService(TestCase):
     def test_delete_document_not_owner(self):
         """Test document deletion by non-owner"""
         self.User.objects.create_user(
-            username='otheruser', email='otheruser@example.com', password='TestPass123!'
+            username="otheruser", email="otheruser@example.com", password="TestPass123!"
         )
         document = Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
         # Other user cannot delete the document (this would be handled in views)
@@ -210,24 +192,17 @@ class TestDocumentService(TestCase):
         """Test document statistics calculation"""
         # Create test documents
         Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
         Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
         another_type = DocumentType.objects.create(
-            name="id_document",
-            description="ID document"
+            name="id_document", description="ID document"
         )
         Document.objects.create(
-            application=self.application,
-            type=another_type,
-            uploaded_by=self.user
+            application=self.application, type=another_type, uploaded_by=self.user
         )
 
         # Calculate statistics
@@ -238,11 +213,11 @@ class TestDocumentService(TestCase):
             documents_by_type[doc_type.name] = count
 
         stats = {
-            'total_documents': total_documents,
-            'documents_by_type': documents_by_type
+            "total_documents": total_documents,
+            "documents_by_type": documents_by_type,
         }
 
         self.assertIsInstance(stats, dict)
-        self.assertIn('total_documents', stats)
-        self.assertIn('documents_by_type', stats)
-        self.assertEqual(stats['total_documents'], 3)
+        self.assertIn("total_documents", stats)
+        self.assertIn("documents_by_type", stats)
+        self.assertEqual(stats["total_documents"], 3)

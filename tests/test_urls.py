@@ -1,6 +1,7 @@
 """
 Tests for URL configuration in SEIM project.
 """
+
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase

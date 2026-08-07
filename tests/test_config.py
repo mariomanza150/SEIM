@@ -291,33 +291,33 @@ def create_test_data():
 def assert_model_count(model_class, expected_count, **filters):
     """Assert that a model has the expected number of instances."""
     actual_count = model_class.objects.filter(**filters).count()
-    assert (
-        actual_count == expected_count
-    ), f"Expected {expected_count} {model_class.__name__} instances, got {actual_count}"
+    assert actual_count == expected_count, (
+        f"Expected {expected_count} {model_class.__name__} instances, got {actual_count}"
+    )
 
 
 def assert_response_contains(response, expected_content):
     """Assert that response contains expected content."""
     if hasattr(response, "content"):
-        assert expected_content in response.content.decode(
-            "utf-8"
-        ), f"Response does not contain '{expected_content}'"
+        assert expected_content in response.content.decode("utf-8"), (
+            f"Response does not contain '{expected_content}'"
+        )
     elif hasattr(response, "data"):
-        assert expected_content in str(
-            response.data
-        ), f"Response data does not contain '{expected_content}'"
+        assert expected_content in str(response.data), (
+            f"Response data does not contain '{expected_content}'"
+        )
 
 
 def assert_response_not_contains(response, unexpected_content):
     """Assert that response does not contain unexpected content."""
     if hasattr(response, "content"):
-        assert unexpected_content not in response.content.decode(
-            "utf-8"
-        ), f"Response contains unexpected '{unexpected_content}'"
+        assert unexpected_content not in response.content.decode("utf-8"), (
+            f"Response contains unexpected '{unexpected_content}'"
+        )
     elif hasattr(response, "data"):
-        assert unexpected_content not in str(
-            response.data
-        ), f"Response data contains unexpected '{unexpected_content}'"
+        assert unexpected_content not in str(response.data), (
+            f"Response data contains unexpected '{unexpected_content}'"
+        )
 
 
 # Test performance utilities
@@ -347,9 +347,9 @@ def measure_response_time(client, url, method="get", **kwargs):
 
 def assert_response_time_under(response_time, max_time=1.0):
     """Assert that response time is under the maximum allowed time."""
-    assert (
-        response_time < max_time
-    ), f"Response time {response_time}s exceeded limit {max_time}s"
+    assert response_time < max_time, (
+        f"Response time {response_time}s exceeded limit {max_time}s"
+    )
 
 
 # Test security utilities
@@ -358,9 +358,9 @@ def assert_no_sql_injection(client, url, payload, method="post"):
     response = getattr(client, method.lower())(url, data=payload)
 
     # Should not return 500 (internal server error)
-    assert (
-        response.status_code != 500
-    ), f"SQL injection vulnerability detected: {payload}"
+    assert response.status_code != 500, (
+        f"SQL injection vulnerability detected: {payload}"
+    )
 
     # Should either return 400 (bad request) or 403 (forbidden)
     assert response.status_code in [
@@ -377,12 +377,12 @@ def assert_no_xss_vulnerability(client, url, payload, method="post"):
     if response.status_code == 200:
         # If successful, check that payload is not reflected in response
         response_content = response.content.decode("utf-8")
-        assert (
-            "<script>" not in response_content
-        ), f"XSS vulnerability detected: {payload}"
-        assert (
-            "javascript:" not in response_content.lower()
-        ), f"XSS vulnerability detected: {payload}"
+        assert "<script>" not in response_content, (
+            f"XSS vulnerability detected: {payload}"
+        )
+        assert "javascript:" not in response_content.lower(), (
+            f"XSS vulnerability detected: {payload}"
+        )
 
 
 # Test configuration for different test types

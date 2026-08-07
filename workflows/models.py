@@ -41,7 +41,9 @@ class WorkflowVersion(UUIDModel, TimeStampedModel):
         related_name="versions",
     )
     version = models.PositiveIntegerField()
-    status = models.CharField(max_length=16, choices=Status.choices, default=Status.DRAFT)
+    status = models.CharField(
+        max_length=16, choices=Status.choices, default=Status.DRAFT
+    )
     bpmn_xml = models.TextField(help_text="BPMN 2.0 XML source for this version.")
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -117,4 +119,3 @@ class WorkflowEvent(UUIDModel, TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.event_type} @ {self.created_at:%Y-%m-%d %H:%M:%S}"
-

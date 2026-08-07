@@ -38,7 +38,13 @@ class AgreementExpirationReminderLogAdmin(admin.ModelAdmin):
     list_display = ("agreement", "days_before", "agreement_end_date", "created_at")
     list_filter = ("days_before",)
     search_fields = ("agreement__title", "agreement__partner_institution_name")
-    readonly_fields = ("agreement", "days_before", "agreement_end_date", "created_at", "updated_at")
+    readonly_fields = (
+        "agreement",
+        "days_before",
+        "agreement_end_date",
+        "created_at",
+        "updated_at",
+    )
     ordering = ("-created_at",)
 
     def has_add_permission(self, request):
@@ -51,7 +57,15 @@ class AgreementExpirationReminderLogAdmin(admin.ModelAdmin):
 class ExchangeAgreementDocumentInline(admin.TabularInline):
     model = ExchangeAgreementDocument
     extra = 0
-    fields = ("category", "title", "file", "supersedes", "notes", "uploaded_by", "created_at")
+    fields = (
+        "category",
+        "title",
+        "file",
+        "supersedes",
+        "notes",
+        "uploaded_by",
+        "created_at",
+    )
     readonly_fields = ("uploaded_by", "created_at")
     raw_id_fields = ("supersedes",)
 
@@ -90,7 +104,13 @@ class ExchangeAgreementAdmin(admin.ModelAdmin):
         (None, {"fields": ("title", "status", "agreement_type")}),
         (
             "Partner",
-            {"fields": ("partner_institution_name", "partner_country", "partner_reference_id")},
+            {
+                "fields": (
+                    "partner_institution_name",
+                    "partner_country",
+                    "partner_reference_id",
+                )
+            },
         ),
         ("Coverage", {"fields": ("programs",)}),
         ("Dates", {"fields": ("start_date", "end_date")}),
@@ -118,7 +138,10 @@ class ExchangeAgreementAdmin(admin.ModelAdmin):
         for obj in formset.deleted_objects:
             obj.delete()
         for instance in instances:
-            if isinstance(instance, ExchangeAgreementDocument) and not instance.uploaded_by_id:
+            if (
+                isinstance(instance, ExchangeAgreementDocument)
+                and not instance.uploaded_by_id
+            ):
                 instance.uploaded_by = request.user
             instance.save()
         formset.save_m2m()
@@ -128,7 +151,9 @@ class ExchangeAgreementAdmin(admin.ModelAdmin):
         from django.utils import timezone
 
         today = timezone.localdate()
-        qs = queryset.filter(end_date__lt=today).exclude(status=ExchangeAgreement.Status.EXPIRED)
+        qs = queryset.filter(end_date__lt=today).exclude(
+            status=ExchangeAgreement.Status.EXPIRED
+        )
         updated = qs.update(status=ExchangeAgreement.Status.EXPIRED)
         self.message_user(
             request,
@@ -181,7 +206,9 @@ class ExchangeAgreementAdmin(admin.ModelAdmin):
         url = reverse("admin:exchange_exchangeagreement_change", args=[successor.pk])
         self.message_user(
             request,
-            format_html('Created renewal draft: <a href="{}">{}</a>', url, successor.title),
+            format_html(
+                'Created renewal draft: <a href="{}">{}</a>', url, successor.title
+            ),
             messages.SUCCESS,
         )
 
@@ -225,51 +252,75 @@ class ProgramAdmin(admin.ModelAdmin):
     filter_horizontal = ("required_document_types",)
 
     fieldsets = (
-        (None, {
-            "fields": ("name", "description", "is_active", "recurring")
-        }),
-        ("Dates", {
-            "fields": ("application_open_date", "application_deadline", "start_date", "end_date")
-        }),
-        ("Enrollment", {
-            "fields": ("enrollment_capacity", "waitlist_when_full"),
-            "description": "Optional seat limit; waitlist applies when full and enabled.",
-        }),
-        ("Academic Requirements", {
-            "fields": (
-                "min_gpa",
-                "application_form",
-                "workflow_version",
-                "eligibility_ruleset",
-                "coordinators",
-                "required_document_types",
-            ),
-            "description": "Academic eligibility criteria for applicants"
-        }),
-        ("Language Requirements", {
-            "fields": ("required_language", "min_language_level"),
-            "description": "Language proficiency requirements (CEFR scale: A1-C2)",
-            "classes": ("collapse",)
-        }),
-        ("Age Requirements", {
-            "fields": ("min_age", "max_age"),
-            "description": "Age range requirements for applicants",
-            "classes": ("collapse",)
-        }),
-        ("Automation", {
-            "fields": ("auto_reject_ineligible",),
-            "description": "Automatically reject applications that don't meet eligibility criteria",
-            "classes": ("collapse",)
-        }),
-        ("Audit", {
-            "fields": (
-                "created_at",
-                "updated_at",
-                "application_count",
-                "cms_program_page_summary",
-            ),
-            "classes": ("collapse",)
-        }),
+        (None, {"fields": ("name", "description", "is_active", "recurring")}),
+        (
+            "Dates",
+            {
+                "fields": (
+                    "application_open_date",
+                    "application_deadline",
+                    "start_date",
+                    "end_date",
+                )
+            },
+        ),
+        (
+            "Enrollment",
+            {
+                "fields": ("enrollment_capacity", "waitlist_when_full"),
+                "description": "Optional seat limit; waitlist applies when full and enabled.",
+            },
+        ),
+        (
+            "Academic Requirements",
+            {
+                "fields": (
+                    "min_gpa",
+                    "application_form",
+                    "workflow_version",
+                    "eligibility_ruleset",
+                    "coordinators",
+                    "required_document_types",
+                ),
+                "description": "Academic eligibility criteria for applicants",
+            },
+        ),
+        (
+            "Language Requirements",
+            {
+                "fields": ("required_language", "min_language_level"),
+                "description": "Language proficiency requirements (CEFR scale: A1-C2)",
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Age Requirements",
+            {
+                "fields": ("min_age", "max_age"),
+                "description": "Age range requirements for applicants",
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Automation",
+            {
+                "fields": ("auto_reject_ineligible",),
+                "description": "Automatically reject applications that don't meet eligibility criteria",
+                "classes": ("collapse",),
+            },
+        ),
+        (
+            "Audit",
+            {
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                    "application_count",
+                    "cms_program_page_summary",
+                ),
+                "classes": ("collapse",),
+            },
+        ),
     )
 
     def eligibility_summary(self, obj):
@@ -277,26 +328,26 @@ class ProgramAdmin(admin.ModelAdmin):
         criteria = []
 
         if obj.min_gpa:
-            criteria.append(f'📊 GPA ≥{obj.min_gpa}')
+            criteria.append(f"📊 GPA ≥{obj.min_gpa}")
 
         if obj.required_language:
             lang_display = obj.required_language
             if obj.min_language_level:
-                lang_display += f' ({obj.min_language_level}+)'
-            criteria.append(f'🗣️ {lang_display}')
+                lang_display += f" ({obj.min_language_level}+)"
+            criteria.append(f"🗣️ {lang_display}")
 
         if obj.min_age or obj.max_age:
             if obj.min_age and obj.max_age:
-                criteria.append(f'🎂 {obj.min_age}-{obj.max_age} years')
+                criteria.append(f"🎂 {obj.min_age}-{obj.max_age} years")
             elif obj.min_age:
-                criteria.append(f'🎂 {obj.min_age}+ years')
+                criteria.append(f"🎂 {obj.min_age}+ years")
             elif obj.max_age:
-                criteria.append(f'🎂 ≤{obj.max_age} years')
+                criteria.append(f"🎂 ≤{obj.max_age} years")
 
         if criteria:
-            summary = ' | '.join(criteria)
+            summary = " | ".join(criteria)
             if obj.auto_reject_ineligible:
-                summary += ' ⚡'
+                summary += " ⚡"
             return format_html('<span style="font-size: 0.9em;">{}</span>', summary)
         return format_html('<span style="color: #999;">No criteria</span>')
 
@@ -309,7 +360,11 @@ class ProgramAdmin(admin.ModelAdmin):
 
         status = obj.get_application_window_status()
         color = "#198754" if status["is_open"] else "#dc3545"
-        return format_html('<span style="color: {}; font-size: 0.9em;">{}</span>', color, status["message"])
+        return format_html(
+            '<span style="color: {}; font-size: 0.9em;">{}</span>',
+            color,
+            status["message"],
+        )
 
     application_window_summary.short_description = "Application Window"
 
@@ -321,9 +376,9 @@ class ProgramAdmin(admin.ModelAdmin):
                 '<a href="/admin/exchange/application/?program__id__exact={}">{} application{}</a>',
                 obj.id,
                 count,
-                's' if count != 1 else ''
+                "s" if count != 1 else "",
             )
-        return '0 applications'
+        return "0 applications"
 
     application_count.short_description = "Applications"
 
@@ -332,7 +387,10 @@ class ProgramAdmin(admin.ModelAdmin):
         if not coordinators:
             return format_html('<span style="color: #999;">Unassigned</span>')
 
-        names = [coordinator.get_full_name().strip() or coordinator.username for coordinator in coordinators]
+        names = [
+            coordinator.get_full_name().strip() or coordinator.username
+            for coordinator in coordinators
+        ]
         extra_count = obj.coordinators.count() - len(names)
         if extra_count > 0:
             names.append(f"+{extra_count} more")
@@ -363,7 +421,11 @@ class ProgramAdmin(admin.ModelAdmin):
 
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "coordinators":
-            kwargs["queryset"] = User.objects.filter(roles__name="coordinator").distinct().order_by("username")
+            kwargs["queryset"] = (
+                User.objects.filter(roles__name="coordinator")
+                .distinct()
+                .order_by("username")
+            )
         return super().formfield_for_manytomany(db_field, request, **kwargs)
 
     @admin.action(description="🔄 Clone selected programs")
@@ -395,7 +457,7 @@ class ProgramAdmin(admin.ModelAdmin):
             request,
             f"Successfully cloned {cloned_count} program{'s' if cloned_count != 1 else ''}. "
             f"Clones are inactive by default.",
-            messages.SUCCESS
+            messages.SUCCESS,
         )
 
     @admin.action(description="✅ Activate selected programs")
@@ -405,7 +467,7 @@ class ProgramAdmin(admin.ModelAdmin):
         self.message_user(
             request,
             f"Successfully activated {updated} program{'s' if updated != 1 else ''}.",
-            messages.SUCCESS
+            messages.SUCCESS,
         )
 
     @admin.action(description="❌ Deactivate selected programs")
@@ -415,10 +477,12 @@ class ProgramAdmin(admin.ModelAdmin):
         self.message_user(
             request,
             f"Successfully deactivated {updated} program{'s' if updated != 1 else ''}.",
-            messages.SUCCESS
+            messages.SUCCESS,
         )
 
-    @admin.action(description="📄 Create draft CMS program page (linked to program index)")
+    @admin.action(
+        description="📄 Create draft CMS program page (linked to program index)"
+    )
     def create_draft_cms_program_pages(self, request, queryset):
         from cms.exchange_program_sync import create_draft_program_page_for_program
         from cms.models import ProgramPage
@@ -455,7 +519,9 @@ class ProgramAdmin(admin.ModelAdmin):
 
     @admin.action(description="🔁 Sync operational data to linked CMS program pages")
     def sync_operational_data_to_cms_pages(self, request, queryset):
-        from cms.exchange_program_sync import sync_program_page_operational_fields_and_publish
+        from cms.exchange_program_sync import (
+            sync_program_page_operational_fields_and_publish,
+        )
 
         updated = 0
         missing = 0
@@ -492,52 +558,68 @@ class ApplicationAdmin(admin.ModelAdmin):
         "status",
         "eligibility_status",
         "submitted_at",
-        "withdrawn"
+        "withdrawn",
     )
     search_fields = ("id", "student__email", "student__username", "program__name")
     list_filter = ("status", "withdrawn", "program__required_language")
     list_editable = ("withdrawn",)
-    readonly_fields = ("created_at", "updated_at", "submitted_at", "eligibility_check_details")
+    readonly_fields = (
+        "created_at",
+        "updated_at",
+        "submitted_at",
+        "eligibility_check_details",
+    )
     actions = ["check_eligibility", "mark_as_withdrawn"]
 
     fieldsets = (
-        (None, {
-            "fields": ("program", "student", "assigned_coordinator", "status", "withdrawn")
-        }),
-        ("Eligibility", {
-            "fields": ("eligibility_check_details",),
-            "description": "Automatic eligibility validation results"
-        }),
-        ("Submission", {
-            "fields": ("submitted_at",)
-        }),
-        ("Audit", {
-            "fields": ("created_at", "updated_at"),
-            "classes": ("collapse",)
-        }),
+        (
+            None,
+            {
+                "fields": (
+                    "program",
+                    "student",
+                    "assigned_coordinator",
+                    "status",
+                    "withdrawn",
+                )
+            },
+        ),
+        (
+            "Eligibility",
+            {
+                "fields": ("eligibility_check_details",),
+                "description": "Automatic eligibility validation results",
+            },
+        ),
+        ("Submission", {"fields": ("submitted_at",)}),
+        ("Audit", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
     inlines = [CommentInline, TimelineEventInline]
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "assigned_coordinator":
-            kwargs["queryset"] = User.objects.filter(roles__name="coordinator").distinct().order_by("username")
+            kwargs["queryset"] = (
+                User.objects.filter(roles__name="coordinator")
+                .distinct()
+                .order_by("username")
+            )
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def eligibility_status(self, obj):
         """Show eligibility status with visual indicator."""
         try:
             from exchange.services import ApplicationService
-            result = ApplicationService.check_eligibility(
+
+            ApplicationService.check_eligibility(
                 obj.student, obj.program, application=obj
             )
             return format_html(
                 '<span style="color: green; font-weight: bold;">✓ Eligible</span>'
             )
         except ValueError as e:
-            error_msg = str(e).replace('Eligibility requirements not met:\n- ', '')
+            error_msg = str(e).replace("Eligibility requirements not met:\n- ", "")
             return format_html(
-                '<span style="color: red;" title="{}">✗ Ineligible</span>',
-                error_msg
+                '<span style="color: red;" title="{}">✗ Ineligible</span>', error_msg
             )
         except Exception:
             return format_html('<span style="color: gray;">? Unknown</span>')
@@ -548,7 +630,8 @@ class ApplicationAdmin(admin.ModelAdmin):
         """Display detailed eligibility check results."""
         try:
             from exchange.services import ApplicationService
-            result = ApplicationService.check_eligibility(
+
+            ApplicationService.check_eligibility(
                 obj.student, obj.program, application=obj
             )
 
@@ -558,41 +641,50 @@ class ApplicationAdmin(admin.ModelAdmin):
 
             profile = obj.student.profile
             if obj.program.min_gpa:
-                html += f'<li>GPA: {profile.gpa} (required: ≥{obj.program.min_gpa})</li>'
+                html += (
+                    f"<li>GPA: {profile.gpa} (required: ≥{obj.program.min_gpa})</li>"
+                )
             if obj.program.required_language:
-                html += f'<li>Language: {profile.language} (required: {obj.program.required_language})</li>'
+                html += f"<li>Language: {profile.language} (required: {obj.program.required_language})</li>"
             if obj.program.min_language_level:
-                html += f'<li>Language Level: {profile.language_level} (required: {obj.program.min_language_level}+)</li>'
+                html += f"<li>Language Level: {profile.language_level} (required: {obj.program.min_language_level}+)</li>"
             if obj.program.min_age or obj.program.max_age:
                 from datetime import date
+
                 dob = profile.date_of_birth
                 if dob:
                     age = date.today().year - dob.year
-                    html += f'<li>Age: {age} years'
+                    html += f"<li>Age: {age} years"
                     if obj.program.min_age and obj.program.max_age:
-                        html += f' (required: {obj.program.min_age}-{obj.program.max_age})'
+                        html += (
+                            f" (required: {obj.program.min_age}-{obj.program.max_age})"
+                        )
                     elif obj.program.min_age:
-                        html += f' (required: {obj.program.min_age}+)'
+                        html += f" (required: {obj.program.min_age}+)"
                     elif obj.program.max_age:
-                        html += f' (required: ≤{obj.program.max_age})'
-                    html += '</li>'
+                        html += f" (required: ≤{obj.program.max_age})"
+                    html += "</li>"
 
-            html += '</ul></div>'
+            html += "</ul></div>"
             return format_html(html)
 
         except ValueError as e:
             error_msg = str(e)
             html = '<div style="padding: 10px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px;">'
             html += '<strong style="color: #721c24;">✗ Student does not meet eligibility requirements</strong><br><br>'
-            html += '<div style="color: #721c24; white-space: pre-line;">' + error_msg + '</div>'
-            html += '</div>'
+            html += (
+                '<div style="color: #721c24; white-space: pre-line;">'
+                + error_msg
+                + "</div>"
+            )
+            html += "</div>"
             return format_html(html)
 
         except Exception as e:
             return format_html(
                 '<div style="padding: 10px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">'
-                '<strong>Unable to check eligibility:</strong> {}</div>',
-                str(e)
+                "<strong>Unable to check eligibility:</strong> {}</div>",
+                str(e),
             )
 
     eligibility_check_details.short_description = "Eligibility Details"
@@ -606,6 +698,7 @@ class ApplicationAdmin(admin.ModelAdmin):
         for application in queryset:
             try:
                 from exchange.services import ApplicationService
+
                 ApplicationService.check_eligibility(
                     application.student,
                     application.program,
@@ -618,7 +711,7 @@ class ApplicationAdmin(admin.ModelAdmin):
         self.message_user(
             request,
             f"Eligibility check complete: {eligible_count} eligible, {ineligible_count} ineligible",
-            messages.INFO
+            messages.INFO,
         )
 
     @admin.action(description="🚫 Mark selected as withdrawn")
@@ -628,7 +721,7 @@ class ApplicationAdmin(admin.ModelAdmin):
         self.message_user(
             request,
             f"Successfully marked {updated} application{'s' if updated != 1 else ''} as withdrawn.",
-            messages.SUCCESS
+            messages.SUCCESS,
         )
 
 
@@ -657,46 +750,52 @@ class TimelineEventAdmin(admin.ModelAdmin):
 @admin.register(SavedSearch)
 class SavedSearchAdmin(admin.ModelAdmin):
     """Admin interface for SavedSearch model."""
-    
-    list_display = ("name", "user", "search_type", "is_default", "filter_count", "created_at")
+
+    list_display = (
+        "name",
+        "user",
+        "search_type",
+        "is_default",
+        "filter_count",
+        "created_at",
+    )
     search_fields = ("name", "user__username", "user__email")
     list_filter = ("search_type", "is_default", "created_at")
     readonly_fields = ("created_at", "updated_at", "filter_preview")
-    
+
     fieldsets = (
-        (None, {
-            "fields": ("user", "name", "search_type", "is_default")
-        }),
-        ("Filters", {
-            "fields": ("filters", "filter_preview"),
-            "description": "JSON filter parameters"
-        }),
-        ("Audit", {
-            "fields": ("created_at", "updated_at"),
-            "classes": ("collapse",)
-        }),
+        (None, {"fields": ("user", "name", "search_type", "is_default")}),
+        (
+            "Filters",
+            {
+                "fields": ("filters", "filter_preview"),
+                "description": "JSON filter parameters",
+            },
+        ),
+        ("Audit", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
-    
+
     def filter_count(self, obj):
         """Show number of filters applied."""
         count = len(obj.filters)
         return format_html(
             '<span class="badge" style="background: #0d6efd;">{} filter{}</span>',
             count,
-            's' if count != 1 else ''
+            "s" if count != 1 else "",
         )
-    
+
     filter_count.short_description = "Filters"
-    
+
     def filter_preview(self, obj):
         """Show preview of filter parameters."""
         import json
+
         filters_json = json.dumps(obj.filters, indent=2)
         return format_html(
             '<pre style="background: #f8f9fa; padding: 10px; border-radius: 4px;">{}</pre>',
-            filters_json
+            filters_json,
         )
-    
+
     filter_preview.short_description = "Filter Parameters"
 
 

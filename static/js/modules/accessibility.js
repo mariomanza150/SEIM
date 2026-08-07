@@ -9,13 +9,14 @@ import { errorHandler } from './error-handler.js';
 
 class AccessibilityManager {
     constructor() {
-        this.focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+        this.focusableElements =
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
         this.currentFocusIndex = 0;
         this.focusableElementsList = [];
         this.skipLinks = [];
         this.modalStack = [];
         this.announcements = [];
-        
+
         this.config = {
             enableKeyboardNavigation: true,
             enableSkipLinks: true,
@@ -25,10 +26,10 @@ class AccessibilityManager {
             enableReducedMotion: true,
             announcementDelay: 100
         };
-        
+
         this.init();
     }
-    
+
     init() {
         this.setupKeyboardNavigation();
         this.setupSkipLinks();
@@ -37,48 +38,48 @@ class AccessibilityManager {
         this.setupHighContrast();
         this.setupReducedMotion();
         this.setupFormAccessibility();
-        
+
         logger.info('Accessibility Manager initialized');
     }
-    
+
     /**
      * Setup keyboard navigation
      */
     setupKeyboardNavigation() {
         if (!this.config.enableKeyboardNavigation) return;
-        
-        document.addEventListener('keydown', (event) => {
+
+        document.addEventListener('keydown', event => {
             this.handleKeyboardNavigation(event);
         });
-        
+
         // Setup tab navigation
-        document.addEventListener('keydown', (event) => {
+        document.addEventListener('keydown', event => {
             if (event.key === 'Tab') {
                 this.handleTabNavigation(event);
             }
         });
-        
+
         // Setup escape key for modals
-        document.addEventListener('keydown', (event) => {
+        document.addEventListener('keydown', event => {
             if (event.key === 'Escape') {
                 this.handleEscapeKey(event);
             }
         });
     }
-    
+
     /**
      * Handle keyboard navigation
      */
     handleKeyboardNavigation(event) {
         const target = event.target;
         const isFormElement = target.matches('input, select, textarea');
-        
+
         // Handle form navigation
         if (isFormElement) {
             this.handleFormNavigation(event);
             return;
         }
-        
+
         // Handle custom keyboard shortcuts
         switch (event.key) {
             case 'Enter':
@@ -88,7 +89,7 @@ class AccessibilityManager {
                     this.activateElement(target);
                 }
                 break;
-                
+
             case 'ArrowUp':
             case 'ArrowDown':
                 if (target.matches('[role="listbox"], [role="menu"]')) {
@@ -96,7 +97,7 @@ class AccessibilityManager {
                     this.handleListNavigation(event);
                 }
                 break;
-                
+
             case 'Home':
             case 'End':
                 if (target.matches('[role="listbox"], [role="menu"]')) {
@@ -106,13 +107,13 @@ class AccessibilityManager {
                 break;
         }
     }
-    
+
     /**
      * Handle tab navigation
      */
     handleTabNavigation(event) {
         const focusableElements = this.getFocusableElements();
-        
+
         if (event.shiftKey) {
             // Tab backwards
             if (document.activeElement === focusableElements[0]) {
@@ -127,7 +128,7 @@ class AccessibilityManager {
             }
         }
     }
-    
+
     /**
      * Handle escape key
      */
@@ -140,7 +141,7 @@ class AccessibilityManager {
             event.preventDefault();
             return;
         }
-        
+
         // Close dropdowns
         const openDropdowns = document.querySelectorAll('[role="menu"][aria-expanded="true"]');
         if (openDropdowns.length > 0) {
@@ -149,17 +150,17 @@ class AccessibilityManager {
             event.preventDefault();
         }
     }
-    
+
     /**
      * Handle form navigation
      */
     handleFormNavigation(event) {
         const form = event.target.closest('form');
         if (!form) return;
-        
+
         const formElements = Array.from(form.querySelectorAll(this.focusableElements));
         const currentIndex = formElements.indexOf(event.target);
-        
+
         switch (event.key) {
             case 'Enter':
                 if (event.target.type === 'submit') {
@@ -172,7 +173,7 @@ class AccessibilityManager {
                     formElements[currentIndex + 1].focus();
                 }
                 break;
-                
+
             case 'ArrowUp':
             case 'ArrowDown':
                 if (event.target.type === 'number' || event.target.type === 'range') {
@@ -188,7 +189,7 @@ class AccessibilityManager {
                 break;
         }
     }
-    
+
     /**
      * Handle list navigation
      */
@@ -197,9 +198,9 @@ class AccessibilityManager {
         const items = Array.from(list.querySelectorAll('[role="option"], [role="menuitem"]'));
         const currentItem = list.querySelector('[aria-selected="true"]') || items[0];
         const currentIndex = items.indexOf(currentItem);
-        
+
         let nextIndex = currentIndex;
-        
+
         switch (event.key) {
             case 'ArrowUp':
                 nextIndex = currentIndex > 0 ? currentIndex - 1 : items.length - 1;
@@ -214,38 +215,38 @@ class AccessibilityManager {
                 nextIndex = items.length - 1;
                 break;
         }
-        
+
         if (items[nextIndex]) {
             this.selectListItem(items[nextIndex], items);
         }
     }
-    
+
     /**
      * Setup skip links
      */
     setupSkipLinks() {
         if (!this.config.enableSkipLinks) return;
-        
+
         // Create skip links
         const skipLinks = [
             { href: '#main-content', text: 'Skip to main content' },
             { href: '#navigation', text: 'Skip to navigation' },
             { href: '#footer', text: 'Skip to footer' }
         ];
-        
+
         const skipLinksContainer = document.createElement('div');
         skipLinksContainer.className = 'skip-links';
         skipLinksContainer.setAttribute('role', 'navigation');
         skipLinksContainer.setAttribute('aria-label', 'Skip links');
-        
+
         skipLinks.forEach(link => {
             const skipLink = document.createElement('a');
             skipLink.href = link.href;
             skipLink.textContent = link.text;
             skipLink.className = 'skip-link';
             skipLink.setAttribute('tabindex', '0');
-            
-            skipLink.addEventListener('click', (event) => {
+
+            skipLink.addEventListener('click', event => {
                 event.preventDefault();
                 const target = document.querySelector(link.href);
                 if (target) {
@@ -253,17 +254,17 @@ class AccessibilityManager {
                     target.scrollIntoView({ behavior: 'smooth' });
                 }
             });
-            
+
             skipLinksContainer.appendChild(skipLink);
         });
-        
+
         // Insert at the beginning of the body
         document.body.insertBefore(skipLinksContainer, document.body.firstChild);
-        
+
         // Add CSS for skip links
         this.addSkipLinksCSS();
     }
-    
+
     /**
      * Add CSS for skip links
      */
@@ -295,33 +296,33 @@ class AccessibilityManager {
         `;
         document.head.appendChild(style);
     }
-    
+
     /**
      * Setup focus management
      */
     setupFocusManagement() {
         // Track focus changes
-        document.addEventListener('focusin', (event) => {
+        document.addEventListener('focusin', event => {
             this.handleFocusIn(event);
         });
-        
-        document.addEventListener('focusout', (event) => {
+
+        document.addEventListener('focusout', event => {
             this.handleFocusOut(event);
         });
-        
+
         // Setup focus trapping for modals
         this.setupFocusTrapping();
     }
-    
+
     /**
      * Handle focus in
      */
     handleFocusIn(event) {
         const target = event.target;
-        
+
         // Add focus indicator
         target.classList.add('focus-visible');
-        
+
         // Announce focus changes for screen readers
         if (this.config.enableAnnouncements) {
             const label = this.getAccessibleName(target);
@@ -330,48 +331,48 @@ class AccessibilityManager {
             }
         }
     }
-    
+
     /**
      * Handle focus out
      */
     handleFocusOut(event) {
         const target = event.target;
-        
+
         // Remove focus indicator
         target.classList.remove('focus-visible');
     }
-    
+
     /**
      * Setup focus trapping
      */
     setupFocusTrapping() {
         if (!this.config.enableFocusTrapping) return;
-        
+
         // Override modal focus trapping
         const originalShowModal = window.showModal;
         if (originalShowModal) {
-            window.showModal = (dialog) => {
+            window.showModal = dialog => {
                 this.trapFocus(dialog);
                 return originalShowModal.call(window, dialog);
             };
         }
     }
-    
+
     /**
      * Trap focus within an element
      */
     trapFocus(element) {
         const focusableElements = this.getFocusableElements(element);
         if (focusableElements.length === 0) return;
-        
+
         const firstElement = focusableElements[0];
         const lastElement = focusableElements[focusableElements.length - 1];
-        
+
         // Focus first element
         firstElement.focus();
-        
+
         // Handle tab navigation within the trap
-        const handleTab = (event) => {
+        const handleTab = event => {
             if (event.key === 'Tab') {
                 if (event.shiftKey) {
                     if (document.activeElement === firstElement) {
@@ -386,13 +387,13 @@ class AccessibilityManager {
                 }
             }
         };
-        
+
         element.addEventListener('keydown', handleTab);
-        
+
         // Store for cleanup
         this.modalStack.push({ element, handleTab });
     }
-    
+
     /**
      * Release focus trap
      */
@@ -403,13 +404,13 @@ class AccessibilityManager {
             this.modalStack = this.modalStack.filter(m => m !== modal);
         }
     }
-    
+
     /**
      * Setup announcements
      */
     setupAnnouncements() {
         if (!this.config.enableAnnouncements) return;
-        
+
         // Create announcement region
         const announcementRegion = document.createElement('div');
         announcementRegion.id = 'announcement-region';
@@ -417,11 +418,11 @@ class AccessibilityManager {
         announcementRegion.setAttribute('aria-atomic', 'true');
         announcementRegion.className = 'sr-only';
         document.body.appendChild(announcementRegion);
-        
+
         // Add CSS for screen reader only content
         this.addScreenReaderCSS();
     }
-    
+
     /**
      * Add CSS for screen reader only content
      */
@@ -455,47 +456,47 @@ class AccessibilityManager {
         `;
         document.head.appendChild(style);
     }
-    
+
     /**
      * Announce message to screen readers
      */
     announce(message) {
         const region = document.getElementById('announcement-region');
         if (!region) return;
-        
+
         // Clear previous announcement
         region.textContent = '';
-        
+
         // Add new announcement
         setTimeout(() => {
             region.textContent = message;
         }, this.config.announcementDelay);
     }
-    
+
     /**
      * Setup high contrast mode
      */
     setupHighContrast() {
         if (!this.config.enableHighContrast) return;
-        
+
         // Check for high contrast preference
         const mediaQuery = window.matchMedia('(prefers-contrast: high)');
-        
-        const handleContrastChange = (event) => {
+
+        const handleContrastChange = event => {
             if (event.matches) {
                 document.documentElement.classList.add('high-contrast');
             } else {
                 document.documentElement.classList.remove('high-contrast');
             }
         };
-        
+
         mediaQuery.addEventListener('change', handleContrastChange);
         handleContrastChange(mediaQuery);
-        
+
         // Add high contrast CSS
         this.addHighContrastCSS();
     }
-    
+
     /**
      * Add high contrast CSS
      */
@@ -526,50 +527,50 @@ class AccessibilityManager {
         `;
         document.head.appendChild(style);
     }
-    
+
     /**
      * Setup reduced motion
      */
     setupReducedMotion() {
         if (!this.config.enableReducedMotion) return;
-        
+
         const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        
-        const handleMotionChange = (event) => {
+
+        const handleMotionChange = event => {
             if (event.matches) {
                 document.documentElement.classList.add('reduced-motion');
             } else {
                 document.documentElement.classList.remove('reduced-motion');
             }
         };
-        
+
         mediaQuery.addEventListener('change', handleMotionChange);
         handleMotionChange(mediaQuery);
     }
-    
+
     /**
      * Setup form accessibility
      */
     setupFormAccessibility() {
         // Enhance form labels
         this.enhanceFormLabels();
-        
+
         // Setup error associations
         this.setupErrorAssociations();
-        
+
         // Setup form validation
         this.setupFormValidation();
     }
-    
+
     /**
      * Enhance form labels
      */
     enhanceFormLabels() {
         const forms = document.querySelectorAll('form');
-        
+
         forms.forEach(form => {
             const inputs = form.querySelectorAll('input, select, textarea');
-            
+
             inputs.forEach(input => {
                 // Ensure proper labeling
                 if (!input.id && !input.getAttribute('aria-label')) {
@@ -580,7 +581,7 @@ class AccessibilityManager {
                         label.setAttribute('for', id);
                     }
                 }
-                
+
                 // Add required indicator
                 if (input.hasAttribute('required')) {
                     const label = input.labels?.[0] || input.previousElementSibling;
@@ -595,37 +596,37 @@ class AccessibilityManager {
             });
         });
     }
-    
+
     /**
      * Setup error associations
      */
     setupErrorAssociations() {
         // Watch for error messages
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
+        const observer = new MutationObserver(mutations => {
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
                     if (node.nodeType === Node.ELEMENT_NODE) {
                         this.associateErrors(node);
                     }
                 });
             });
         });
-        
+
         observer.observe(document.body, {
             childList: true,
             subtree: true
         });
     }
-    
+
     /**
      * Associate errors with form controls
      */
     associateErrors(errorElement) {
         if (!errorElement.classList.contains('error-message')) return;
-        
+
         const form = errorElement.closest('form');
         if (!form) return;
-        
+
         // Find the related input
         const inputName = errorElement.getAttribute('data-field');
         if (inputName) {
@@ -638,20 +639,20 @@ class AccessibilityManager {
             }
         }
     }
-    
+
     /**
      * Setup form validation
      */
     setupFormValidation() {
         const forms = document.querySelectorAll('form');
-        
+
         forms.forEach(form => {
-            form.addEventListener('submit', (event) => {
+            form.addEventListener('submit', event => {
                 if (!this.validateForm(form)) {
                     event.preventDefault();
                 }
             });
-            
+
             // Real-time validation
             const inputs = form.querySelectorAll('input, select, textarea');
             inputs.forEach(input => {
@@ -661,23 +662,23 @@ class AccessibilityManager {
             });
         });
     }
-    
+
     /**
      * Validate form
      */
     validateForm(form) {
         const inputs = form.querySelectorAll('input, select, textarea');
         let isValid = true;
-        
+
         inputs.forEach(input => {
             if (!this.validateField(input)) {
                 isValid = false;
             }
         });
-        
+
         return isValid;
     }
-    
+
     /**
      * Validate individual field
      */
@@ -686,54 +687,54 @@ class AccessibilityManager {
         const required = input.hasAttribute('required');
         const type = input.type;
         const pattern = input.pattern;
-        
+
         // Clear previous errors
         this.clearFieldError(input);
-        
+
         // Check required
         if (required && !value) {
             this.showFieldError(input, 'This field is required');
             return false;
         }
-        
+
         // Check pattern
         if (pattern && value && !new RegExp(pattern).test(value)) {
             this.showFieldError(input, 'Please enter a valid value');
             return false;
         }
-        
+
         // Check email
         if (type === 'email' && value && !this.isValidEmail(value)) {
             this.showFieldError(input, 'Please enter a valid email address');
             return false;
         }
-        
+
         // Mark as valid
         input.setAttribute('aria-invalid', 'false');
         return true;
     }
-    
+
     /**
      * Show field error
      */
     showFieldError(input, message) {
         input.setAttribute('aria-invalid', 'true');
-        
+
         const errorElement = document.createElement('div');
         errorElement.className = 'error-message';
         errorElement.textContent = message;
         errorElement.setAttribute('role', 'alert');
-        
+
         const errorId = `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         errorElement.id = errorId;
         input.setAttribute('aria-describedby', errorId);
-        
+
         input.parentNode.appendChild(errorElement);
-        
+
         // Announce error
         this.announce(message);
     }
-    
+
     /**
      * Clear field error
      */
@@ -744,28 +745,31 @@ class AccessibilityManager {
         }
         input.removeAttribute('aria-describedby');
     }
-    
+
     /**
      * Utility methods
      */
     getFocusableElements(container = document) {
-        return Array.from(container.querySelectorAll(this.focusableElements))
-            .filter(el => !el.disabled && el.offsetParent !== null);
+        return Array.from(container.querySelectorAll(this.focusableElements)).filter(
+            el => !el.disabled && el.offsetParent !== null
+        );
     }
-    
+
     getAccessibleName(element) {
-        return element.getAttribute('aria-label') ||
-               element.getAttribute('title') ||
-               element.textContent?.trim() ||
-               element.alt ||
-               '';
+        return (
+            element.getAttribute('aria-label') ||
+            element.getAttribute('title') ||
+            element.textContent?.trim() ||
+            element.alt ||
+            ''
+        );
     }
-    
+
     isValidEmail(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     }
-    
+
     activateElement(element) {
         if (element.click) {
             element.click();
@@ -773,18 +777,18 @@ class AccessibilityManager {
             element.dispatchEvent(new Event('click'));
         }
     }
-    
+
     selectListItem(item, items) {
         items.forEach(i => i.setAttribute('aria-selected', 'false'));
         item.setAttribute('aria-selected', 'true');
         item.focus();
     }
-    
+
     closeModal(modal) {
         modal.setAttribute('aria-hidden', 'true');
         this.releaseFocusTrap(modal);
     }
-    
+
     closeDropdown(dropdown) {
         dropdown.setAttribute('aria-expanded', 'false');
     }
@@ -797,4 +801,4 @@ const accessibilityManager = new AccessibilityManager();
 window.SEIM_ACCESSIBILITY = accessibilityManager;
 
 export default accessibilityManager;
-export { AccessibilityManager }; 
+export { AccessibilityManager };

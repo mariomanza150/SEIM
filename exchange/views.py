@@ -140,7 +140,11 @@ class ExchangeAgreementViewSet(viewsets.ModelViewSet):
         )
         return ExchangeAgreement.objects.prefetch_related(
             "programs",
-            Prefetch("renewal_successors", queryset=draft_successors, to_attr="_draft_renewal_successors"),
+            Prefetch(
+                "renewal_successors",
+                queryset=draft_successors,
+                to_attr="_draft_renewal_successors",
+            ),
         ).all()
 
     @action(detail=True, methods=["post"], url_path="mark-renewal-pending")
@@ -199,7 +203,13 @@ class EligibilityRuleSetViewSet(viewsets.ReadOnlyModelViewSet):
         filters.OrderingFilter,
     ]
     search_fields = ["name", "description"]
-    ordering_fields = ["name", "schema_version", "created_at", "updated_at", "is_active"]
+    ordering_fields = [
+        "name",
+        "schema_version",
+        "created_at",
+        "updated_at",
+        "is_active",
+    ]
 
 
 class ProgramViewSet(viewsets.ModelViewSet):
@@ -222,9 +232,8 @@ class ProgramViewSet(viewsets.ModelViewSet):
             application__withdrawn=False,
             application__status__name__in=SEAT_HOLDING_APPLICATION_STATUS_NAMES,
         )
-        return (
-            Program.objects.prefetch_related("coordinators")
-            .annotate(_seat_holding_count=Count("application", filter=seat_filter))
+        return Program.objects.prefetch_related("coordinators").annotate(
+            _seat_holding_count=Count("application", filter=seat_filter)
         )
 
     @cache_api_response(timeout=600)  # Cache for 10 minutes
@@ -287,15 +296,13 @@ class ProgramViewSet(viewsets.ModelViewSet):
 
         # Invalidate program cache
         from core.cache import invalidate_cache_pattern
+
         invalidate_cache_pattern("api:ProgramViewSet:*")
 
         serializer = self.get_serializer(cloned_program)
         return Response(
-            {
-                "status": "Program cloned successfully",
-                "program": serializer.data
-            },
-            status=status.HTTP_201_CREATED
+            {"status": "Program cloned successfully", "program": serializer.data},
+            status=status.HTTP_201_CREATED,
         )
 
     @extend_schema(
@@ -423,7 +430,9 @@ class ProgramViewSet(viewsets.ModelViewSet):
                     .only("id", "program_id", "student_id", "dynamic_form_current_step")
                     .get(pk=application_obj.pk)
                 )
-                checklist = DocumentService.build_application_document_checklist(full_app)
+                checklist = DocumentService.build_application_document_checklist(
+                    full_app
+                )
                 current_step_documents = None
                 ft = getattr(program, "application_form", None)
                 if ft and ft.is_multi_step():
@@ -443,7 +452,9 @@ class ProgramViewSet(viewsets.ModelViewSet):
                             if it.get("document_type_id") in eff_ids
                         ]
                         current_step_documents = {
-                            "complete": all(it.get("status") == "approved" for it in sub_items),
+                            "complete": all(
+                                it.get("status") == "approved" for it in sub_items
+                            ),
                             "items": sub_items,
                         }
                     else:
@@ -457,7 +468,9 @@ class ProgramViewSet(viewsets.ModelViewSet):
             except Exception:
                 application_context = None
 
-        ev = evaluate_eligibility(request.user, eval_program, application=application_obj)
+        ev = evaluate_eligibility(
+            request.user, eval_program, application=application_obj
+        )
         program_snapshot = {
             "name": program.name,
             "min_gpa": program.min_gpa,
@@ -476,7 +489,11 @@ class ProgramViewSet(viewsets.ModelViewSet):
                     "schema_version": 6,
                     **({"ruleset": ruleset_snapshot} if ruleset_snapshot else {}),
                     **({"using_ruleset": True} if use_ruleset else {}),
-                    **({"application_context": application_context} if application_context else {}),
+                    **(
+                        {"application_context": application_context}
+                        if application_context
+                        else {}
+                    ),
                 }
             )
         message = (
@@ -497,7 +514,11 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 "schema_version": 6,
                 **({"ruleset": ruleset_snapshot} if ruleset_snapshot else {}),
                 **({"using_ruleset": True} if use_ruleset else {}),
-                **({"application_context": application_context} if application_context else {}),
+                **(
+                    {"application_context": application_context}
+                    if application_context
+                    else {}
+                ),
             },
             status=status.HTTP_200_OK,
         )
@@ -548,22 +569,22 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
         # Base queryset with all optimizations
         base_qs = Application.objects.select_related(
-            'program',           # ForeignKey - use select_related
-            'student',           # ForeignKey
-            'assigned_coordinator',
-            'status'             # ForeignKey
+            "program",  # ForeignKey - use select_related
+            "student",  # ForeignKey
+            "assigned_coordinator",
+            "status",  # ForeignKey
         ).prefetch_related(
-            'program__coordinators',
-            'program__required_document_types',
-            'student__roles',    # ManyToMany through student
+            "program__coordinators",
+            "program__required_document_types",
+            "student__roles",  # ManyToMany through student
             "comments",
             "comments__author",
             "comments__author__roles",
             "timeline_events",  # Reverse FK: events for this application
             "timeline_events__created_by",
-            'document_set',         # Reverse ForeignKey (documents)
-            'document_set__type',   # Document types
-            'document_set__uploaded_by'  # Who uploaded them
+            "document_set",  # Reverse ForeignKey (documents)
+            "document_set__type",  # Document types
+            "document_set__uploaded_by",  # Who uploaded them
         )
 
         # Filter based on role
@@ -602,7 +623,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
         program = Program.objects.filter(pk=program_id).first()
         if not program:
-            return Response({"error": "Program not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Program not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         qs = (
             Application.objects.filter(program_id=program_id)
@@ -667,14 +690,18 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
         action_name = request.data.get("action")
-        payload = request.data.get("payload") if isinstance(request.data, dict) else None
+        payload = (
+            request.data.get("payload") if isinstance(request.data, dict) else None
+        )
         user = request.user
 
         # Minimal role guard in MVP: students can only submit/cancel-like actions.
         if hasattr(user, "has_role") and user.has_role("student"):
             allowed = {"submitted", "cancelled", "withdrawn"}
             if str(action_name or "") not in allowed:
-                return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+                return Response(
+                    {"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN
+                )
 
         from workflows.runtime import WorkflowRuntimeService
         from workflows.serializers import WorkflowInstanceSerializer
@@ -747,13 +774,13 @@ class CommentViewSet(viewsets.ModelViewSet):
 
         # Base queryset with optimizations
         base_qs = Comment.objects.select_related(
-            'application',              # ForeignKey
-            'application__program',     # Through application
-            'application__student',     # Through application
-            'application__status',      # Through application
-            'author',                   # ForeignKey
+            "application",  # ForeignKey
+            "application__program",  # Through application
+            "application__student",  # Through application
+            "application__status",  # Through application
+            "author",  # ForeignKey
         ).prefetch_related(
-            'author__roles'            # Author's roles
+            "author__roles"  # Author's roles
         )
 
         if user.has_role("coordinator") or user.has_role("admin"):
@@ -810,13 +837,13 @@ class TimelineEventViewSet(viewsets.ReadOnlyModelViewSet):
 
         # Base queryset with optimizations (default chronological for timelines)
         base_qs = TimelineEvent.objects.select_related(
-            'application',              # ForeignKey
-            'application__program',     # Through application
-            'application__student',     # Through application
-            'application__status',      # Through application
-            'created_by',               # ForeignKey (nullable)
+            "application",  # ForeignKey
+            "application__program",  # Through application
+            "application__student",  # Through application
+            "application__status",  # Through application
+            "created_by",  # ForeignKey (nullable)
         ).prefetch_related(
-            'created_by__roles'        # Creator's roles (if exists)
+            "created_by__roles"  # Creator's roles (if exists)
         )
 
         if user.has_role("coordinator") or user.has_role("admin"):
@@ -833,8 +860,8 @@ class SavedSearchViewSet(viewsets.ModelViewSet):
     serializer_class = SavedSearchSerializer
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ['search_type', 'is_default']
-    ordering_fields = ['created_at', 'name']
+    filterset_fields = ["search_type", "is_default"]
+    ordering_fields = ["created_at", "name"]
 
     def get_queryset(self):
         """Users can only see their own saved searches."""
@@ -844,7 +871,7 @@ class SavedSearchViewSet(viewsets.ModelViewSet):
         """Set user from request."""
         serializer.save(user=self.request.user)
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def apply(self, request, pk=None):
         """
         Apply a saved search and return the filters.
@@ -853,19 +880,21 @@ class SavedSearchViewSet(viewsets.ModelViewSet):
         programs or applications.
         """
         saved_search = self.get_object()
-        return Response({
-            'search_type': saved_search.search_type,
-            'filters': saved_search.filters,
-            'name': saved_search.name
-        })
+        return Response(
+            {
+                "search_type": saved_search.search_type,
+                "filters": saved_search.filters,
+                "name": saved_search.name,
+            }
+        )
 
-    @action(detail=True, methods=['post'])
+    @action(detail=True, methods=["post"])
     def set_default(self, request, pk=None):
         """Set this search as the default for its type."""
         saved_search = self.get_object()
         saved_search.is_default = True
         saved_search.save()
-        return Response({'status': 'default set'})
+        return Response({"status": "default set"})
 
 
 class CalendarEventViewSet(viewsets.ReadOnlyModelViewSet):

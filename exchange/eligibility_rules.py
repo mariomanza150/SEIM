@@ -105,7 +105,9 @@ def _effective_language_level_for_program(profile, program: Program) -> str | No
     return (profile.language_level or "").strip() or None
 
 
-def _rule_application_window(_profile, program: Program, application, _student: User) -> RuleOutcome:
+def _rule_application_window(
+    _profile, program: Program, application, _student: User
+) -> RuleOutcome:
     """Gate on ``Program.application_open_date`` / ``application_deadline`` when either is set."""
     if not program.application_open_date and not program.application_deadline:
         return RuleOutcome("application_window", passed=True, skipped=True)
@@ -148,7 +150,9 @@ def _rule_gpa(profile, program: Program, application, _student: User) -> RuleOut
     return RuleOutcome("gpa", passed=True)
 
 
-def _rule_required_language(profile, program: Program, application, _student: User) -> RuleOutcome:
+def _rule_required_language(
+    profile, program: Program, application, _student: User
+) -> RuleOutcome:
     if not (program.required_language or "").strip():
         return RuleOutcome("required_language", passed=True, skipped=True)
     if _student_speaks_required_language(profile, program.required_language):
@@ -163,7 +167,9 @@ def _rule_required_language(profile, program: Program, application, _student: Us
     )
 
 
-def _rule_language_proficiency(profile, program: Program, application, _student: User) -> RuleOutcome:
+def _rule_language_proficiency(
+    profile, program: Program, application, _student: User
+) -> RuleOutcome:
     if not (program.min_language_level or "").strip():
         return RuleOutcome("language_proficiency", passed=True, skipped=True)
     level = _effective_language_level_for_program(profile, program)
@@ -272,7 +278,9 @@ def _rule_dynamic_form_complete(
         "viewer_roles": _viewer_roles_for_user(application.student),
     }
     try:
-        FormSubmissionService.validate_responses(ft, sub.responses, visibility_context=vctx)
+        FormSubmissionService.validate_responses(
+            ft, sub.responses, visibility_context=vctx
+        )
     except DjangoValidationError as exc:
         msgs = list(exc.messages) if hasattr(exc, "messages") else [str(exc)]
         return RuleOutcome(
@@ -301,7 +309,9 @@ def evaluate_eligibility(
             eligible=False,
             failures=["Student profile is missing."],
             rules=[
-                RuleOutcome("profile", passed=False, message="Student profile is missing."),
+                RuleOutcome(
+                    "profile", passed=False, message="Student profile is missing."
+                ),
             ],
         )
 
@@ -325,7 +335,9 @@ def evaluate_eligibility(
         if not out.skipped and not out.passed and out.message:
             failures.append(out.message)
 
-    return EligibilityEvaluation(eligible=len(failures) == 0, failures=failures, rules=rules)
+    return EligibilityEvaluation(
+        eligible=len(failures) == 0, failures=failures, rules=rules
+    )
 
 
 def checks_passed_labels(program: Program) -> list[str | None]:

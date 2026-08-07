@@ -9,16 +9,16 @@ export function initializeFileUpload() {
     uploadAreas.forEach(area => {
         const input = area.querySelector('input[type="file"]');
         if (!input) return;
-        const debouncedDragLeave = debounce(function(e) {
+        const debouncedDragLeave = debounce(function (e) {
             e.preventDefault();
             area.classList.remove('dragover');
         }, 100);
-        area.addEventListener('dragover', function(e) {
+        area.addEventListener('dragover', function (e) {
             e.preventDefault();
             area.classList.add('dragover');
         });
         area.addEventListener('dragleave', debouncedDragLeave);
-        area.addEventListener('drop', function(e) {
+        area.addEventListener('drop', function (e) {
             e.preventDefault();
             area.classList.remove('dragover');
             const files = e.dataTransfer.files;
@@ -27,7 +27,7 @@ export function initializeFileUpload() {
                 input.dispatchEvent(new Event('change'));
             }
         });
-        input.addEventListener('change', function() {
+        input.addEventListener('change', function () {
             requestAnimationFrame(() => {
                 updateFileUploadDisplay(area, this.files);
             });
@@ -41,7 +41,10 @@ export function updateFileUploadDisplay(area, files) {
     if (files.length === 0) {
         // Use security utilities for safe innerHTML setting
         if (window.SEIM_SECURITY_UTILS) {
-            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(display, '<p class="text-muted">No files selected</p>');
+            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(
+                display,
+                '<p class="text-muted">No files selected</p>'
+            );
         } else {
             display.textContent = 'No files selected';
         }
@@ -55,7 +58,10 @@ export function updateFileUploadDisplay(area, files) {
         const safeFileName = escapeHtml(file.name);
         // Use security utilities for safe innerHTML setting
         if (window.SEIM_SECURITY_UTILS) {
-            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(li, `<i class="bi bi-file-earmark"></i> ${safeFileName} (${file.size} bytes)`);
+            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(
+                li,
+                `<i class="bi bi-file-earmark"></i> ${safeFileName} (${file.size} bytes)`
+            );
         } else {
             li.textContent = `${safeFileName} (${file.size} bytes)`;
         }
@@ -64,4 +70,4 @@ export function updateFileUploadDisplay(area, files) {
     fragment.appendChild(list);
     display.innerHTML = '';
     display.appendChild(fragment);
-} 
+}

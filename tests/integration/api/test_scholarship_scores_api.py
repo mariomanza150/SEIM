@@ -52,7 +52,9 @@ class TestScholarshipScoresAPI(APITestCase):
     def test_export_coordinator_csv(self):
         program = self.create_program()
         student = self.create_user(role="student")
-        self.create_application(student=student, program=program, status_name="submitted")
+        self.create_application(
+            student=student, program=program, status_name="submitted"
+        )
         coordinator = self.create_user(role="coordinator")
         self.authenticate_user(coordinator)
         url = reverse("api:application-scholarship-scores-export")
@@ -70,7 +72,9 @@ class TestScholarshipScoresAPI(APITestCase):
 
         program = self.create_program()
         student = self.create_user(role="student")
-        self.create_application(student=student, program=program, status_name="submitted")
+        self.create_application(
+            student=student, program=program, status_name="submitted"
+        )
         coordinator = self.create_user(role="coordinator")
         self.authenticate_user(coordinator)
         url = reverse("api:application-scholarship-scores-export")
@@ -91,7 +95,9 @@ class TestScholarshipScoresAPI(APITestCase):
     def test_export_coordinator_pdf(self):
         program = self.create_program()
         student = self.create_user(role="student")
-        self.create_application(student=student, program=program, status_name="submitted")
+        self.create_application(
+            student=student, program=program, status_name="submitted"
+        )
         coordinator = self.create_user(role="coordinator")
         self.authenticate_user(coordinator)
         url = reverse("api:application-scholarship-scores-export")

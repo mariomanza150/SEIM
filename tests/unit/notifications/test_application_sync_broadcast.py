@@ -22,7 +22,9 @@ def test_broadcast_application_sync_calls_group_send_per_stakeholder():
         end_date="2030-06-01",
     )
     program.coordinators.add(coord)
-    status, _ = ApplicationStatus.objects.get_or_create(name="draft", defaults={"order": 0})
+    status, _ = ApplicationStatus.objects.get_or_create(
+        name="draft", defaults={"order": 0}
+    )
     app = Application.objects.create(student=student, program=program, status=status)
 
     sync_send = MagicMock()

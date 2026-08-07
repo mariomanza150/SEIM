@@ -49,7 +49,11 @@ urlpatterns = [
     path("user-management/", views.user_management_view, name="user_management"),
     # Admin pages
     path("admin-dashboard/", views.admin_dashboard_view, name="admin_dashboard"),
-    path("coordinator-dashboard/", views.coordinator_dashboard_view, name="coordinator_dashboard"),
+    path(
+        "coordinator-dashboard/",
+        views.coordinator_dashboard_view,
+        name="coordinator_dashboard",
+    ),
     path("programs/create/", program_create_view, name="program_create"),
     # Cache management
     path("cache/invalidate/", views.invalidate_user_cache, name="invalidate_cache"),

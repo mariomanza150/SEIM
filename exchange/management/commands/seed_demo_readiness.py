@@ -39,9 +39,7 @@ class Command(BaseCommand):
         try:
             call_command("seed_grade_scales", verbosity=0)
         except Exception as exc:  # pragma: no cover - best effort
-            self.stdout.write(
-                self.style.WARNING(f"  Skipped grade scale seed: {exc}")
-            )
+            self.stdout.write(self.style.WARNING(f"  Skipped grade scale seed: {exc}"))
 
         with transaction.atomic():
             users = self._create_users()
@@ -161,15 +159,14 @@ class Command(BaseCommand):
 
     def _create_applications(self, users, programs):
         applications = []
-        status_map = {
-            status.name: status
-            for status in ApplicationStatus.objects.all()
-        }
+        status_map = {status.name: status for status in ApplicationStatus.objects.all()}
 
         for spec in DEMO_APPLICATION_SPECS:
             submitted_at = None
             if spec["submitted_days_ago"] is not None:
-                submitted_at = timezone.now() - timedelta(days=spec["submitted_days_ago"])
+                submitted_at = timezone.now() - timedelta(
+                    days=spec["submitted_days_ago"]
+                )
 
             application, created = Application.objects.get_or_create(
                 student=users[spec["student_username"]],
@@ -185,25 +182,32 @@ class Command(BaseCommand):
                 application.status = status_map[spec["status"]]
                 application.submitted_at = submitted_at
                 application.withdrawn = spec["withdrawn"]
-                application.save(update_fields=["status", "submitted_at", "withdrawn", "updated_at"])
+                application.save(
+                    update_fields=["status", "submitted_at", "withdrawn", "updated_at"]
+                )
 
             applications.append(application)
 
-        self.stdout.write(f"  Ensured {len(applications)} applications across all statuses")
+        self.stdout.write(
+            f"  Ensured {len(applications)} applications across all statuses"
+        )
         return applications
 
     def _create_documents(self, applications):
         document_types = {
             "transcript": DocumentType.objects.get(name="transcript"),
             "passport": DocumentType.objects.get(name="passport"),
-            "language_certificate": DocumentType.objects.get(name="language_certificate"),
+            "language_certificate": DocumentType.objects.get(
+                name="language_certificate"
+            ),
         }
 
         for application in applications:
             self._upsert_document(
                 application=application,
                 doc_type=document_types["transcript"],
-                is_valid=application.status.name in {"under_review", "approved", "completed"},
+                is_valid=application.status.name
+                in {"under_review", "approved", "completed"},
             )
 
             if application.status.name != "draft":
@@ -302,7 +306,9 @@ class Command(BaseCommand):
     def _create_notifications(self, applications, users):
         for application in applications:
             recipient = application.student
-            title = f"{application.program.name} application is {application.status.name}"
+            title = (
+                f"{application.program.name} application is {application.status.name}"
+            )
             Notification.objects.update_or_create(
                 recipient=recipient,
                 title=title,
@@ -371,4 +377,6 @@ class Command(BaseCommand):
             return buf.getvalue()
         except Exception:
             # Fallback: very small handcrafted PDF (best-effort).
-            return (b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n" + text.encode("utf-8") + b"\n%%EOF\n")
+            return (
+                b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n" + text.encode("utf-8") + b"\n%%EOF\n"
+            )

@@ -27,7 +27,9 @@ def setup_demo():
 
     try:
         # 1. Seed deterministic demo-ready data
-        print("\n📋 Creating demo-ready users, programs, applications, and supporting records...")
+        print(
+            "\n📋 Creating demo-ready users, programs, applications, and supporting records..."
+        )
         call_command("seed_demo_readiness")
 
         print("\n✅ Demo setup completed successfully!")
@@ -36,7 +38,9 @@ def setup_demo():
         print("   • Active exchange programs ready for browsing")
         print("   • Applications in every workflow status")
         print("   • Supporting documents, comments, timeline events, and notifications")
-        print("   • Exchange agreements (active, draft, renewal pending, expired) for the staff registry")
+        print(
+            "   • Exchange agreements (active, draft, renewal pending, expired) for the staff registry"
+        )
 
         print("\n🔑 Demo Login Credentials:")
         print("   Admin: admin@test.com / admin123")
