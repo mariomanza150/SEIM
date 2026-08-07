@@ -197,7 +197,10 @@ DEMO_AGREEMENT_SPECS = [
         "partner_institution_name": "Universitat de Barcelona",
         "partner_country": "Spain",
         "required_gpa": 3.0,
-        "language_requirements": [{"lang": "Spanish", "level": "B1"}, {"lang": "English", "level": "B2"}],
+        "language_requirements": [
+            {"lang": "Spanish", "level": "B1"},
+            {"lang": "English", "level": "B2"},
+        ],
         "custom_tags": "Habla Hispana",
         "application_limit": 25,
         "notify_on_limit_reached": True,
@@ -264,7 +267,10 @@ DEMO_AGREEMENT_SPECS = [
         "partner_institution_name": "University of Tokyo",
         "partner_country": "Japan",
         "required_gpa": 3.4,
-        "language_requirements": [{"lang": "Japanese", "level": "N3"}, {"lang": "English", "level": "B2"}],
+        "language_requirements": [
+            {"lang": "Japanese", "level": "N3"},
+            {"lang": "English", "level": "B2"},
+        ],
         "custom_tags": "Foreign Language",
         "application_limit": 8,
         "notify_on_limit_reached": False,

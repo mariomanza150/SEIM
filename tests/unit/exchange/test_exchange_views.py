@@ -75,9 +75,10 @@ class TestProgramViews:
         list_url = reverse("api:program-list")
         empty = client.get(list_url, {"ordering": "name"})
         assert empty.status_code == status.HTTP_200_OK
-        assert empty.data.get("results", empty.data) == [] or len(
-            empty.data.get("results", empty.data)
-        ) == 0
+        assert (
+            empty.data.get("results", empty.data) == []
+            or len(empty.data.get("results", empty.data)) == 0
+        )
 
         create = client.post(
             list_url,
@@ -94,10 +95,7 @@ class TestProgramViews:
 
         refreshed = client.get(list_url, {"ordering": "name"})
         assert refreshed.status_code == status.HTTP_200_OK
-        names = [
-            p["name"]
-            for p in refreshed.data.get("results", refreshed.data)
-        ]
+        names = [p["name"] for p in refreshed.data.get("results", refreshed.data)]
         assert "Cache Bust Program" in names
 
     def test_program_detail_view(self):

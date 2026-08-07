@@ -4,13 +4,16 @@ Authentication helpers for E2E tests.
 Uses Vue SPA: /login page, /api/token/ (email + password), access_token/refresh_token in localStorage.
 """
 
-from playwright.sync_api import Page, Browser, BrowserContext
 import time
+
+from playwright.sync_api import Browser, BrowserContext, Page
 
 
 class VueAppNotAvailable(Exception):
     """Raised when Vue app or API at base_url is not available (e.g. 404)."""
+
     pass
+
 
 # Username -> email for /api/token/ (matches seed_demo_readiness / DEMO_USER_SPECS)
 _USER_EMAIL = {
@@ -53,7 +56,9 @@ def login_via_api(page: Page, base_url: str, email: str, password: str) -> dict:
             time.sleep(retry_delay)
             retry_delay *= 2
             continue
-        assert response.ok, f"Login API failed: {response.status} {response.text()[:200]}"
+        assert response.ok, (
+            f"Login API failed: {response.status} {response.text()[:200]}"
+        )
     data = response.json()
     access = data.get("access", "")
     refresh = data.get("refresh", "")
@@ -71,10 +76,14 @@ def login_via_api(page: Page, base_url: str, email: str, password: str) -> dict:
     return data
 
 
-def login(page: Page, base_url: str, username: str, password: str | None = None) -> dict:
+def login(
+    page: Page, base_url: str, username: str, password: str | None = None
+) -> dict:
     """Login with username (mapped to email) and password. Used by conftest fixtures."""
     email = _USER_EMAIL.get(username, f"{username}@test.com")
-    resolved_password = password if password is not None else _USER_PASSWORD.get(username, "student123")
+    resolved_password = (
+        password if password is not None else _USER_PASSWORD.get(username, "student123")
+    )
     return login_via_api(page, base_url, email, resolved_password)
 
 
@@ -127,7 +136,9 @@ def ensure_logged_in(
 ) -> dict:
     """Ensure user is logged in; login via API if not."""
     email = _USER_EMAIL.get(username, f"{username}@test.com")
-    resolved_password = password if password is not None else _USER_PASSWORD.get(username, "student123")
+    resolved_password = (
+        password if password is not None else _USER_PASSWORD.get(username, "student123")
+    )
     if not is_logged_in(page):
         return login_via_api(page, base_url, email, resolved_password)
     try:

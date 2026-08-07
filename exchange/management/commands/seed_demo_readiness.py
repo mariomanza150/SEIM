@@ -142,7 +142,9 @@ class Command(BaseCommand):
                     "language_requirements": spec.get("language_requirements", []),
                     "custom_tags": spec.get("custom_tags", ""),
                     "application_limit": spec.get("application_limit"),
-                    "notify_on_limit_reached": spec.get("notify_on_limit_reached", True),
+                    "notify_on_limit_reached": spec.get(
+                        "notify_on_limit_reached", True
+                    ),
                     "agreement_type": spec["agreement_type"],
                     "status": spec["status"],
                     "notes": spec.get("notes", ""),

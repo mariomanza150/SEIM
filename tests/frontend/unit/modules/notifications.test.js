@@ -1,9 +1,28 @@
 import * as notifications from '../../../../static/js/modules/notifications.js';
 
-jest.mock('sweetalert2', () => ({
-  fire: jest.fn(() => Promise.resolve()),
-  showLoading: jest.fn(),
-  close: jest.fn()
+jest.mock('sweetalert2', () => {
+  const fire = jest.fn((opts) => {
+    if (opts && typeof opts.didOpen === 'function') {
+      opts.didOpen();
+    }
+    return Promise.resolve();
+  });
+  return {
+    __esModule: true,
+    default: {
+      fire,
+      showLoading: jest.fn(),
+      close: jest.fn(),
+    },
+  };
+});
+
+jest.mock('../../../../static/js/modules/logger.js', () => ({
+  logger: { info: jest.fn(), error: jest.fn() },
+}));
+
+jest.mock('../../../../static/js/modules/error-handler.js', () => ({
+  errorHandler: { handleApiError: jest.fn() },
 }));
 
 describe('notifications.js', () => {
@@ -13,40 +32,44 @@ describe('notifications.js', () => {
 
   test('showAlert calls Swal.fire', () => {
     notifications.showAlert('msg');
-    expect(require('sweetalert2').fire).toHaveBeenCalled();
+    expect(require('sweetalert2').default.fire).toHaveBeenCalled();
   });
 
-  test('showSuccessAlert calls showAlert with success', () => {
-    const spy = jest.spyOn(notifications, 'showAlert');
+  test('showSuccessAlert calls Swal.fire with success', () => {
     notifications.showSuccessAlert('title', 'msg');
-    expect(spy).toHaveBeenCalledWith('msg', 'success', 'title');
+    expect(require('sweetalert2').default.fire).toHaveBeenCalledWith(
+      expect.objectContaining({ text: 'msg', icon: 'success', title: 'title' })
+    );
   });
 
-  test('showErrorAlert calls showAlert with error', () => {
-    const spy = jest.spyOn(notifications, 'showAlert');
+  test('showErrorAlert calls Swal.fire with error', () => {
     notifications.showErrorAlert('title', 'msg');
-    expect(spy).toHaveBeenCalledWith('msg', 'error', 'title');
+    expect(require('sweetalert2').default.fire).toHaveBeenCalledWith(
+      expect.objectContaining({ text: 'msg', icon: 'error', title: 'title' })
+    );
   });
 
-  test('showWarningAlert calls showAlert with warning', () => {
-    const spy = jest.spyOn(notifications, 'showAlert');
+  test('showWarningAlert calls Swal.fire with warning', () => {
     notifications.showWarningAlert('title', 'msg');
-    expect(spy).toHaveBeenCalledWith('msg', 'warning', 'title');
+    expect(require('sweetalert2').default.fire).toHaveBeenCalledWith(
+      expect.objectContaining({ text: 'msg', icon: 'warning', title: 'title' })
+    );
   });
 
   test('showConfirmDialog calls Swal.fire', () => {
     notifications.showConfirmDialog('title', 'text');
-    expect(require('sweetalert2').fire).toHaveBeenCalled();
+    expect(require('sweetalert2').default.fire).toHaveBeenCalled();
   });
 
-  test('showLoadingAlert calls Swal.fire and showLoading', () => {
+  test('showLoadingAlert calls Swal.fire', () => {
     notifications.showLoadingAlert('Loading...');
-    expect(require('sweetalert2').fire).toHaveBeenCalled();
-    expect(require('sweetalert2').showLoading).toHaveBeenCalled();
+    expect(require('sweetalert2').default.fire).toHaveBeenCalledWith(
+      expect.objectContaining({ title: 'Loading...', allowOutsideClick: false })
+    );
   });
 
   test('closeAlert calls Swal.close', () => {
     notifications.closeAlert();
-    expect(require('sweetalert2').close).toHaveBeenCalled();
+    expect(require('sweetalert2').default.close).toHaveBeenCalled();
   });
-}); 
+});

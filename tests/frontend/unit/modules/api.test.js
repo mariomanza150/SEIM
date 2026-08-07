@@ -74,8 +74,8 @@ describe('api.js', () => {
     });
     await expect(api.apiRequest('/api/fail')).rejects.toThrow('fail');
     // errorHandler and logger should be called
-    expect(require('../../../static/js/modules/error-handler.js').errorHandler.handleApiError).toHaveBeenCalled();
-    expect(require('../../../static/js/modules/logger.js').logger.error).toHaveBeenCalled();
+    expect(require('../../../../static/js/modules/error-handler.js').errorHandler.handleApiError).toHaveBeenCalled();
+    expect(require('../../../../static/js/modules/logger.js').logger.error).toHaveBeenCalled();
   });
 
   it('refreshes token and retries on 401', async () => {
