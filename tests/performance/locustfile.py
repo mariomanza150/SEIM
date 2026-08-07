@@ -8,7 +8,8 @@ class SeimSmokeUser(HttpUser):
 
     @task(3)
     def health(self):
-        self.client.get("/health/", name="health")
+        # Use liveness probe: /health/ returns 503 under test DummyCache.
+        self.client.get("/health/live/", name="health_live")
 
     @task(1)
     def home(self):

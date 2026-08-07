@@ -4,22 +4,27 @@ Authentication helpers for E2E tests.
 Uses Vue SPA: /login page, /api/token/ (email + password), access_token/refresh_token in localStorage.
 """
 
+from playwright.sync_api import Page, Browser, BrowserContext
 import time
-
-from playwright.sync_api import Browser, BrowserContext, Page
 
 
 class VueAppNotAvailable(Exception):
     """Raised when Vue app or API at base_url is not available (e.g. 404)."""
-
     pass
 
-
-# Username -> email for /api/token/ (Vue backend accepts email)
+# Username -> email for /api/token/ (matches seed_demo_readiness / DEMO_USER_SPECS)
 _USER_EMAIL = {
-    "student1": "student1@example.com",
-    "coordinator": "coordinator@example.com",
-    "admin": "admin@example.com",
+    "student": "student@test.com",
+    "student1": "student@test.com",  # legacy fixture alias
+    "coordinator": "coordinator@test.com",
+    "admin": "admin@test.com",
+}
+
+_USER_PASSWORD = {
+    "student": "student123",
+    "student1": "student123",
+    "coordinator": "coordinator123",
+    "admin": "admin123",
 }
 
 
@@ -48,9 +53,7 @@ def login_via_api(page: Page, base_url: str, email: str, password: str) -> dict:
             time.sleep(retry_delay)
             retry_delay *= 2
             continue
-        assert response.ok, (
-            f"Login API failed: {response.status} {response.text()[:200]}"
-        )
+        assert response.ok, f"Login API failed: {response.status} {response.text()[:200]}"
     data = response.json()
     access = data.get("access", "")
     refresh = data.get("refresh", "")
@@ -68,25 +71,26 @@ def login_via_api(page: Page, base_url: str, email: str, password: str) -> dict:
     return data
 
 
-def login(page: Page, base_url: str, username: str, password: str) -> dict:
+def login(page: Page, base_url: str, username: str, password: str | None = None) -> dict:
     """Login with username (mapped to email) and password. Used by conftest fixtures."""
-    email = _USER_EMAIL.get(username, f"{username}@example.com")
-    return login_via_api(page, base_url, email, password)
+    email = _USER_EMAIL.get(username, f"{username}@test.com")
+    resolved_password = password if password is not None else _USER_PASSWORD.get(username, "student123")
+    return login_via_api(page, base_url, email, resolved_password)
 
 
 def login_as_student(page: Page, base_url: str) -> dict:
-    """Login as student1 user."""
-    return login_via_api(page, base_url, "student1@example.com", "student123")
+    """Login as demo student user."""
+    return login_via_api(page, base_url, "student@test.com", "student123")
 
 
 def login_as_coordinator(page: Page, base_url: str) -> dict:
-    """Login as coordinator user."""
-    return login_via_api(page, base_url, "coordinator@example.com", "coord123")
+    """Login as demo coordinator user."""
+    return login_via_api(page, base_url, "coordinator@test.com", "coordinator123")
 
 
 def login_as_admin(page: Page, base_url: str) -> dict:
-    """Login as admin user."""
-    return login_via_api(page, base_url, "admin@example.com", "admin123")
+    """Login as demo admin user."""
+    return login_via_api(page, base_url, "admin@test.com", "admin123")
 
 
 def create_authenticated_context(
@@ -118,13 +122,14 @@ def is_logged_in(page: Page) -> bool:
 def ensure_logged_in(
     page: Page,
     base_url: str,
-    username: str = "student1",
-    password: str = "student123",
+    username: str = "student",
+    password: str | None = None,
 ) -> dict:
     """Ensure user is logged in; login via API if not."""
+    email = _USER_EMAIL.get(username, f"{username}@test.com")
+    resolved_password = password if password is not None else _USER_PASSWORD.get(username, "student123")
     if not is_logged_in(page):
-        email = _USER_EMAIL.get(username, f"{username}@example.com")
-        return login_via_api(page, base_url, email, password)
+        return login_via_api(page, base_url, email, resolved_password)
     try:
         page.goto(f"{base_url}/dashboard")
         page.wait_for_load_state("networkidle", timeout=5000)
@@ -132,5 +137,4 @@ def ensure_logged_in(
             return {"status": "already_logged_in"}
     except Exception:
         pass
-    email = _USER_EMAIL.get(username, f"{username}@example.com")
-    return login_via_api(page, base_url, email, password)
+    return login_via_api(page, base_url, email, resolved_password)
