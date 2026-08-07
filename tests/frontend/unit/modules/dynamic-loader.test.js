@@ -1,38 +1,67 @@
-import DynamicLoader from '../../../../static/js/modules/dynamic-loader.js';
+import dynamicLoader from '../../../../static/js/modules/dynamic-loader.js';
 
 jest.mock('../../../../static/js/modules/logger.js', () => ({
-  SEIM_LOGGER: { info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn() },
+  logger: { info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn() },
+  Logger: jest.fn(),
+  LOG_LEVELS: { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3, NONE: 4 },
 }));
 jest.mock('../../../../static/js/modules/error-handler.js', () => ({
-  SEIM_ERROR_HANDLER: { handleError: jest.fn() },
+  errorHandler: { handleError: jest.fn(), handleApiError: jest.fn(), showError: jest.fn() },
+  ErrorHandler: jest.fn(),
 }));
 jest.mock('../../../../static/js/modules/performance.js', () => ({
-  default: { trackBundleLoad: jest.fn() },
+  __esModule: true,
+  default: { trackBundleLoad: jest.fn(), recordMetric: jest.fn(), trackApiCall: jest.fn() },
 }));
+
+function mockScriptLoad({ error = false } = {}) {
+  const originalCreateElement = document.createElement.bind(document);
+  document.createElement = jest.fn((tag) => {
+    if (tag === 'script') {
+      return {
+        set src(val) { this._src = val; },
+        get src() { return this._src; },
+        set type(val) { this._type = val; },
+        set async(val) { this._async = val; },
+        onload: null,
+        onerror: null,
+        addEventListener: jest.fn(),
+      };
+    }
+    return originalCreateElement(tag);
+  });
+  document.head.appendChild = jest.fn((script) => {
+    setTimeout(() => {
+      if (error && typeof script.onerror === 'function') {
+        script.onerror();
+      } else if (typeof script.onload === 'function') {
+        script.onload();
+      }
+    }, 10);
+  });
+}
 
 describe('DynamicLoader', () => {
   let loader;
   beforeEach(() => {
-    loader = new DynamicLoader();
-    jest.clearAllMocks();
-    loader.loadedModules.clear();
-    loader.loadingModules.clear();
+    loader = dynamicLoader;
+    loader.clear();
     loader.moduleConfigs.clear();
     loader.setupModuleConfigs();
+    // applications/dashboard depend on api/auth which have no configs — mark loaded
+    loader.loadedModules.set('api', { api: true });
+    loader.loadedModules.set('auth', { auth: true });
+    loader.config.retryAttempts = 0;
+    loader.config.loadTimeout = 2000;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('loads a module and caches it', async () => {
-    // Mock global for script loading
     window.SEIM_APPLICATIONS = { foo: 'bar' };
-    document.createElement = jest.fn(() => ({
-      set src(val) { this._src = val; },
-      set type(val) { this._type = val; },
-      set async(val) { this._async = val; },
-      addEventListener: jest.fn(),
-    }));
-    document.head.appendChild = jest.fn((script) => {
-      setTimeout(() => script.onload(), 10);
-    });
+    mockScriptLoad();
     const module = await loader.loadModule('applications', { showLoading: false });
     expect(module).toEqual({ foo: 'bar' });
     expect(loader.loadedModules.has('applications')).toBe(true);
@@ -49,33 +78,15 @@ describe('DynamicLoader', () => {
   });
 
   it('handles module load error and calls error handler', async () => {
-    document.createElement = jest.fn(() => ({
-      set src(val) { this._src = val; },
-      set type(val) { this._type = val; },
-      set async(val) { this._async = val; },
-      addEventListener: jest.fn(),
-    }));
-    document.head.appendChild = jest.fn((script) => {
-      setTimeout(() => script.onerror(), 10);
-    });
+    mockScriptLoad({ error: true });
     await expect(loader.loadModule('applications', { showLoading: false })).rejects.toThrow('Failed to load module');
-    expect(require('../../../static/js/modules/error-handler.js').SEIM_ERROR_HANDLER.handleError).toHaveBeenCalled();
+    expect(require('../../../../static/js/modules/error-handler.js').errorHandler.handleError).toHaveBeenCalled();
   });
 
   it('loads dependencies before loading module', async () => {
-    loader.loadedModules.set('api', { api: true });
-    loader.loadedModules.set('auth', { auth: true });
     window.SEIM_APPLICATIONS = { foo: 'bar' };
-    document.createElement = jest.fn(() => ({
-      set src(val) { this._src = val; },
-      set type(val) { this._type = val; },
-      set async(val) { this._async = val; },
-      addEventListener: jest.fn(),
-    }));
-    document.head.appendChild = jest.fn((script) => {
-      setTimeout(() => script.onload(), 10);
-    });
+    mockScriptLoad();
     const module = await loader.loadModule('applications', { showLoading: false });
     expect(module).toEqual({ foo: 'bar' });
   });
-}); 
+});

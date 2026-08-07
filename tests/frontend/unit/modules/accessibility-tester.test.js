@@ -1,33 +1,34 @@
 import { AccessibilityTester } from '../../../../static/js/modules/accessibility-tester.js';
 
 jest.mock('../../../../static/js/modules/logger.js', () => ({
-  SEIM_LOGGER: { info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn() },
+  logger: { info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn() },
+  Logger: jest.fn(),
+  LOG_LEVELS: { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3, NONE: 4 },
 }));
 jest.mock('../../../../static/js/modules/error-handler.js', () => ({
-  SEIM_ERROR_HANDLER: { handleError: jest.fn() },
+  errorHandler: { handleError: jest.fn(), handleApiError: jest.fn(), showError: jest.fn() },
+  ErrorHandler: jest.fn(),
 }));
 
-// Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: jest.fn().mockImplementation(query => ({
+function mockMatchMedia() {
+  window.matchMedia = (query) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-});
+    addListener() {},
+    removeListener() {},
+    addEventListener() {},
+    removeEventListener() {},
+    dispatchEvent() { return false; },
+  });
+}
 
 describe('AccessibilityTester', () => {
   let tester;
   beforeEach(() => {
+    mockMatchMedia();
     document.body.innerHTML = '';
     tester = new AccessibilityTester();
-    jest.clearAllMocks();
   });
 
   it('runs the full accessibility test and returns results', async () => {

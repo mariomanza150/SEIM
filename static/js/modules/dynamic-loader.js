@@ -213,13 +213,10 @@ class DynamicLoader {
                 setTimeout(() => reject(new Error(`Module load timeout: ${moduleName}`)), timeout);
             });
 
-            // Race between load and timeout
-            const result = await Promise.race([loadPromise, timeoutPromise]);
-
-            // Append script to document
+            // Append before racing so onload/onerror can fire
             document.head.appendChild(script);
 
-            return result;
+            return await Promise.race([loadPromise, timeoutPromise]);
         } catch (error) {
             // Retry logic
             if (retryCount < this.config.retryAttempts) {

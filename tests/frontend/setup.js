@@ -14,20 +14,21 @@ if (typeof global.TextEncoder === 'undefined') {
 }
 
 // matchMedia (jsdom + modules like accessibility.js)
+// Plain function — jest resetMocks clears jest.fn() implementations between tests
 if (typeof window !== 'undefined') {
     Object.defineProperty(window, 'matchMedia', {
         writable: true,
         configurable: true,
-        value: jest.fn().mockImplementation((query) => ({
+        value: (query) => ({
             matches: false,
             media: query,
             onchange: null,
-            addListener: jest.fn(),
-            removeListener: jest.fn(),
-            addEventListener: jest.fn(),
-            removeEventListener: jest.fn(),
-            dispatchEvent: jest.fn()
-        }))
+            addListener() {},
+            removeListener() {},
+            addEventListener() {},
+            removeEventListener() {},
+            dispatchEvent() { return false; }
+        })
     });
 }
 
