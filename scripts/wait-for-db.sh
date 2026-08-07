@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Wait for database to be ready
+# Wait for database to be ready (do not migrate — callers/CI own schema changes).
 echo "Waiting for database to be ready..."
 
 # Function to check if database is ready
@@ -23,13 +23,3 @@ if [ $counter -ge $timeout ]; then
 fi
 
 echo "Database is ready!"
-
-# Run migrations
-echo "Running database migrations..."
-python manage.py migrate
-
-# Collect static files
-echo "Collecting static files..."
-python manage.py collectstatic --noinput
-
-echo "Setup complete!" 
