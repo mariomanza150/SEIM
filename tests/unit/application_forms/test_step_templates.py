@@ -17,7 +17,11 @@ class TestApplyStepTemplateService:
         ft = FormType.objects.create(
             name="Base",
             form_type="application",
-            schema={"type": "object", "properties": {"a": {"type": "string"}}, "required": []},
+            schema={
+                "type": "object",
+                "properties": {"a": {"type": "string"}},
+                "required": [],
+            },
             step_definitions=[],
         )
         tpl = FormStepTemplate.objects.create(
@@ -102,19 +106,28 @@ class TestApplyStepTemplateAPI:
 
     def test_apply_as_admin_returns_updated_form(self):
         self.client.force_authenticate(user=self.admin)
-        url = reverse("application_forms:formtype-apply-step-template", kwargs={"pk": self.form.pk})
+        url = reverse(
+            "application_forms:formtype-apply-step-template",
+            kwargs={"pk": self.form.pk},
+        )
         r = self.client.post(url, {"template_id": self.tpl.id}, format="json")
         assert r.status_code == status.HTTP_200_OK
         assert "f1" in r.data.get("schema", {}).get("properties", {})
 
     def test_apply_forbidden_for_student(self):
         self.client.force_authenticate(user=self.student)
-        url = reverse("application_forms:formtype-apply-step-template", kwargs={"pk": self.form.pk})
+        url = reverse(
+            "application_forms:formtype-apply-step-template",
+            kwargs={"pk": self.form.pk},
+        )
         r = self.client.post(url, {"template_id": self.tpl.id}, format="json")
         assert r.status_code == status.HTTP_403_FORBIDDEN
 
     def test_apply_by_slug(self):
         self.client.force_authenticate(user=self.admin)
-        url = reverse("application_forms:formtype-apply-step-template", kwargs={"pk": self.form.pk})
+        url = reverse(
+            "application_forms:formtype-apply-step-template",
+            kwargs={"pk": self.form.pk},
+        )
         r = self.client.post(url, {"slug": self.tpl.slug}, format="json")
         assert r.status_code == status.HTTP_200_OK

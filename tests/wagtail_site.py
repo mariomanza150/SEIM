@@ -8,8 +8,9 @@ def ensure_wagtail_site_root_live():
     """Publish a ``HomePage`` at the default site root if ``GET /`` would otherwise 404."""
     if not apps.is_installed("wagtail"):
         return
-    from cms.models import HomePage
     from wagtail.models import Page, Site
+
+    from cms.models import HomePage
 
     client = Client()
     if client.get("/").status_code == 200:

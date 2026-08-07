@@ -26,40 +26,40 @@ class TestProgramModel(TestCase):
     def setUp(self):
         self.User = get_user_model()
         self.user = self.User.objects.create(
-            username='testuser', email='testuser@example.com', password='TestPass123!'
+            username="testuser", email="testuser@example.com", password="TestPass123!"
         )
 
     def test_program_creation(self):
         """Test program creation with valid data"""
         program = Program.objects.create(
-            name='Test Program',
-            description='Test Description',
+            name="Test Program",
+            description="Test Description",
             start_date=datetime.now().date(),
             end_date=(datetime.now() + timedelta(days=30)).date(),
             # max_participants=50  # Removed, not in model
         )
-        self.assertEqual(program.name, 'Test Program')
-        self.assertEqual(program.description, 'Test Description')
+        self.assertEqual(program.name, "Test Program")
+        self.assertEqual(program.description, "Test Description")
         # self.assertEqual(program.max_participants, 50)  # Removed
 
     def test_program_str_representation(self):
         """Test program string representation"""
         program = Program.objects.create(
-            name='Test Program',
-            description='Test Description',
+            name="Test Program",
+            description="Test Description",
             start_date=datetime.now().date(),
-            end_date=(datetime.now() + timedelta(days=30)).date()
+            end_date=(datetime.now() + timedelta(days=30)).date(),
         )
-        self.assertEqual(str(program), 'Test Program')
+        self.assertEqual(str(program), "Test Program")
 
     def test_program_end_date_after_start_date(self):
         """Test program validation - end date must be after start date"""
         with self.assertRaises(ValidationError):
             program = Program(
-                name='Test Program',
-                description='Test Description',
+                name="Test Program",
+                description="Test Description",
                 start_date=(datetime.now() + timedelta(days=30)).date(),
-                end_date=datetime.now().date()
+                end_date=datetime.now().date(),
             )
             program.full_clean()
 
@@ -67,11 +67,11 @@ class TestProgramModel(TestCase):
         """Test program validation - min GPA can be negative (no validation)"""
         # The model doesn't have validation for negative GPA, so this should pass
         program = Program(
-            name='Test Program',
-            description='Test Description',
+            name="Test Program",
+            description="Test Description",
             start_date=datetime.now().date(),
             end_date=(datetime.now() + timedelta(days=30)).date(),
-            min_gpa=-1.0
+            min_gpa=-1.0,
         )
         program.full_clean()  # This should not raise ValidationError
         self.assertEqual(program.min_gpa, -1.0)
@@ -113,22 +113,20 @@ class TestApplicationModel(TestCase):
     def setUp(self):
         self.User = get_user_model()
         self.user = self.User.objects.create(
-            username='testuser', email='testuser@example.com', password='TestPass123!'
+            username="testuser", email="testuser@example.com", password="TestPass123!"
         )
         self.program = Program.objects.create(
-            name='Test Program',
-            description='Test Description',
+            name="Test Program",
+            description="Test Description",
             start_date=datetime.now().date(),
-            end_date=(datetime.now() + timedelta(days=30)).date()
+            end_date=(datetime.now() + timedelta(days=30)).date(),
         )
-        self.status = ApplicationStatus.objects.create(name='pending', order=1)
+        self.status = ApplicationStatus.objects.create(name="pending", order=1)
 
     def test_application_creation(self):
         """Test application creation with valid data"""
         application = Application.objects.create(
-            student=self.user,
-            program=self.program,
-            status=self.status
+            student=self.user, program=self.program, status=self.status
         )
         self.assertEqual(application.student, self.user)
         self.assertEqual(application.program, self.program)
@@ -137,9 +135,7 @@ class TestApplicationModel(TestCase):
     def test_application_str_representation(self):
         """Test application string representation"""
         application = Application.objects.create(
-            student=self.user,
-            program=self.program,
-            status=self.status
+            student=self.user, program=self.program, status=self.status
         )
         expected_str = f"{self.user} - {self.program}"
         self.assertEqual(str(application), expected_str)
@@ -147,12 +143,10 @@ class TestApplicationModel(TestCase):
     def test_application_status_choices(self):
         """Test application status field choices"""
         status_obj, created = ApplicationStatus.objects.get_or_create(
-            name='pending', defaults={'order': 1}
+            name="pending", defaults={"order": 1}
         )
         application = Application.objects.create(
-            student=self.user,
-            program=self.program,
-            status=status_obj
+            student=self.user, program=self.program, status=status_obj
         )
         self.assertEqual(application.status, status_obj)
 
@@ -162,7 +156,7 @@ class TestApplicationModel(TestCase):
             application = Application(
                 student=self.user,
                 program=self.program,
-                status=None  # Invalid, must be ApplicationStatus
+                status=None,  # Invalid, must be ApplicationStatus
             )
             application.full_clean()
 

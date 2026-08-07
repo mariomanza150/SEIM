@@ -137,4 +137,4 @@ export function initDocumentsList() {
     setupFilters();
     fetchDocuments(currentPage, false);
     setupLoadMoreButton();
-} 
+}

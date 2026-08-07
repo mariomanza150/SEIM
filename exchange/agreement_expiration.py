@@ -5,7 +5,6 @@ Pre-expiry notifications for exchange agreements (staff: admins + relevant coord
 from __future__ import annotations
 
 from datetime import date
-from typing import List
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -21,7 +20,7 @@ User = get_user_model()
 NOTIFICATION_TYPE_NAME = "agreement_expiration"
 
 
-def _reminder_day_offsets() -> List[int]:
+def _reminder_day_offsets() -> list[int]:
     raw = getattr(settings, "AGREEMENT_EXPIRATION_REMINDER_DAYS", [90, 30, 7])
     out = []
     for x in raw:
@@ -34,7 +33,7 @@ def _reminder_day_offsets() -> List[int]:
     return sorted(set(out), reverse=True) or [90, 30, 7]
 
 
-def _statuses_to_remind() -> List[str]:
+def _statuses_to_remind() -> list[str]:
     return list(
         getattr(
             settings,
@@ -107,8 +106,8 @@ def process_agreement_expiration_reminders(today: date | None = None) -> dict:
                 else f"Agreement expires tomorrow: {agreement.title}"
             )
             message = (
-                f'Partner: {agreement.partner_institution_name}. '
-                f'End date: {agreement.end_date:%Y-%m-%d}. '
+                f"Partner: {agreement.partner_institution_name}. "
+                f"End date: {agreement.end_date:%Y-%m-%d}. "
                 f"Review renewal status and linked programs in admin."
             )
 

@@ -9,9 +9,10 @@ from __future__ import annotations
 
 import csv
 import io
+from collections.abc import Iterable
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Any, Iterable
+from typing import Any
 
 from django.http import HttpResponse
 from django.utils import timezone
@@ -310,9 +311,13 @@ def compute_scholarship_allocation_score(application) -> dict[str, Any]:
         "sort_keys": {
             "gpa_for_rank": gpa_sort,
             "submitted_at": (
-                application.submitted_at.isoformat() if application.submitted_at else None
+                application.submitted_at.isoformat()
+                if application.submitted_at
+                else None
             ),
-            "created_at": application.created_at.isoformat() if application.created_at else None,
+            "created_at": application.created_at.isoformat()
+            if application.created_at
+            else None,
         },
         "flags": {
             "withdrawn": application.withdrawn,
@@ -359,17 +364,21 @@ def build_scholarship_scores_table(
 ) -> tuple[list[str], list[list[Any]]]:
     """Headers and row values for CSV / Excel / PDF exports."""
     ranked = rank_applications_for_scholarship(applications_queryset)
-    headers = [
-        "rank",
-        "application_id",
-        "student_email",
-        "student_name",
-        "status",
-        "withdrawn",
-        "total_points",
-        "max_points",
-        "ruleset_id",
-    ] + [f"factor_{fid}" for fid in FACTOR_IDS] + ["factor_details_json"]
+    headers = (
+        [
+            "rank",
+            "application_id",
+            "student_email",
+            "student_name",
+            "status",
+            "withdrawn",
+            "total_points",
+            "max_points",
+            "ruleset_id",
+        ]
+        + [f"factor_{fid}" for fid in FACTOR_IDS]
+        + ["factor_details_json"]
+    )
     rows: list[list[Any]] = []
     for row in ranked:
         app = row.application
@@ -431,7 +440,13 @@ def render_scholarship_scores_pdf(
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import landscape, letter
     from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from reportlab.platypus import (
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
+    )
 
     headers, rows = build_scholarship_scores_table(applications_queryset)
     pdf_headers = headers[:-1]
@@ -479,7 +494,12 @@ def render_scholarship_scores_pdf(
                 ("ALIGN", (0, 0), (-1, -1), "LEFT"),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
+                (
+                    "ROWBACKGROUNDS",
+                    (0, 1),
+                    (-1, -1),
+                    [colors.white, colors.HexColor("#f8f9fa")],
+                ),
             ]
         )
     )
@@ -518,4 +538,6 @@ def scholarship_scores_export_response(
         resp = HttpResponse(body, content_type="application/pdf")
         resp["Content-Disposition"] = f'attachment; filename="{base}.pdf"'
         return resp
-    raise ValueError(f"Unsupported export_format: {export_format!r} (use csv, xlsx, or pdf).")
+    raise ValueError(
+        f"Unsupported export_format: {export_format!r} (use csv, xlsx, or pdf)."
+    )

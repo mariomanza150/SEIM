@@ -29,7 +29,7 @@ class AuthManager {
     checkAuthStatus() {
         const token = this.getAccessToken();
         this.isAuthenticated = token !== null;
-        
+
         if (this.isAuthenticated) {
             this.updateAuthUI();
         } else {
@@ -84,7 +84,7 @@ class AuthManager {
     async login(credentials) {
         try {
             logger.info('Attempting login');
-            
+
             const response = await fetch('/api/auth/login/', {
                 method: 'POST',
                 headers: {
@@ -100,18 +100,17 @@ class AuthManager {
             }
 
             const data = await response.json();
-            
+
             this.setAccessToken(data.access);
             this.setRefreshToken(data.refresh);
             this.currentUser = data.user;
             this.isAuthenticated = true;
-            
+
             this.updateAuthUI();
             this.setupTokenRefresh();
-            
+
             logger.info('Login successful');
             return { success: true, user: data.user };
-            
         } catch (error) {
             const errorInfo = errorHandler.handleAuthError(error, { action: 'login' });
             logger.error('Login failed', error);
@@ -125,25 +124,24 @@ class AuthManager {
     async logout() {
         try {
             logger.info('Attempting logout');
-            
+
             const token = this.getAccessToken();
             if (token) {
                 await fetch('/api/auth/logout/', {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        Authorization: `Bearer ${token}`,
                         'X-CSRFToken': this.getCSRFToken()
                     }
                 });
             }
-            
+
             this.clearTokens();
             this.updateUnauthUI();
             this.clearTokenRefresh();
-            
+
             logger.info('Logout successful');
             return { success: true };
-            
         } catch (error) {
             const errorInfo = errorHandler.handleAuthError(error, { action: 'logout' });
             logger.error('Logout failed', error);
@@ -175,10 +173,9 @@ class AuthManager {
 
             const data = await response.json();
             this.setAccessToken(data.access);
-            
+
             logger.info('Token refreshed successfully');
             return true;
-            
         } catch (error) {
             const errorInfo = errorHandler.handleAuthError(error, { action: 'refresh' });
             logger.error('Token refresh failed', error);
@@ -193,7 +190,7 @@ class AuthManager {
      */
     setupTokenRefresh() {
         this.clearTokenRefresh();
-        
+
         const token = this.getAccessToken();
         if (token) {
             try {
@@ -201,7 +198,7 @@ class AuthManager {
                 const expiryTime = payload.exp * 1000;
                 const currentTime = Date.now();
                 const timeUntilRefresh = expiryTime - currentTime - this.tokenRefreshInterval;
-                
+
                 if (timeUntilRefresh > 0) {
                     this.tokenRefreshTimer = setTimeout(() => {
                         this.refreshToken();
@@ -231,9 +228,9 @@ class AuthManager {
     updateAuthUI() {
         const authElements = document.querySelectorAll('.auth-only');
         const unauthElements = document.querySelectorAll('.unauth-only');
-        
-        authElements.forEach(el => el.style.display = 'block');
-        unauthElements.forEach(el => el.style.display = 'none');
+
+        authElements.forEach(el => (el.style.display = 'block'));
+        unauthElements.forEach(el => (el.style.display = 'none'));
     }
 
     /**
@@ -242,9 +239,9 @@ class AuthManager {
     updateUnauthUI() {
         const authElements = document.querySelectorAll('.auth-only');
         const unauthElements = document.querySelectorAll('.unauth-only');
-        
-        authElements.forEach(el => el.style.display = 'none');
-        unauthElements.forEach(el => el.style.display = 'block');
+
+        authElements.forEach(el => (el.style.display = 'none'));
+        unauthElements.forEach(el => (el.style.display = 'block'));
     }
 
     /**
@@ -273,4 +270,4 @@ class AuthManager {
 const authManager = new AuthManager();
 
 // Export for use in other modules
-export { authManager, AuthManager }; 
+export { authManager, AuthManager };

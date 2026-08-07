@@ -137,4 +137,4 @@ export function initApplicationsList() {
     setupFilters();
     fetchApplications(currentPage, false);
     setupLoadMoreButton();
-} 
+}

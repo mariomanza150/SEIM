@@ -34,16 +34,12 @@ class TestApplicationServiceEdgeCases(TestCase):
 
         # Create users
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
 
         self.coordinator = User.objects.create_user(
-            username="coordinator",
-            email="coordinator@test.com",
-            password="testpass123"
+            username="coordinator", email="coordinator@test.com", password="testpass123"
         )
         self.coordinator.roles.add(self.coordinator_role)
 
@@ -59,10 +55,10 @@ class TestApplicationServiceEdgeCases(TestCase):
 
         # Create statuses
         self.draft_status, _ = ApplicationStatus.objects.get_or_create(
-            name="draft", defaults={'order': 1}
+            name="draft", defaults={"order": 1}
         )
         self.submitted_status, _ = ApplicationStatus.objects.get_or_create(
-            name="submitted", defaults={'order': 2}
+            name="submitted", defaults={"order": 2}
         )
 
     def test_create_application_with_null_submitted_at(self):
@@ -121,10 +117,9 @@ class TestApplicationServiceEdgeCases(TestCase):
         # Both should exist
         self.assertEqual(
             Application.objects.filter(
-                student=self.student,
-                program=self.program
+                student=self.student, program=self.program
             ).count(),
-            2
+            2,
         )
 
     def test_comment_with_special_characters(self):
@@ -224,10 +219,7 @@ class TestApplicationServiceEdgeCases(TestCase):
             is_active=True,
         )
 
-        self.assertEqual(
-            single_day_program.start_date,
-            single_day_program.end_date
-        )
+        self.assertEqual(single_day_program.start_date, single_day_program.end_date)
 
     def test_program_with_zero_gpa_requirement(self):
         """Test program with minimum GPA of 0."""
@@ -264,9 +256,7 @@ class TestInputValidationEdgeCases(TestCase):
         """Set up test data."""
         self.student_role, _ = Role.objects.get_or_create(name="student")
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
 
@@ -275,9 +265,7 @@ class TestInputValidationEdgeCases(TestCase):
         long_username = "a" * 150  # Django default max_length
 
         user = User.objects.create_user(
-            username=long_username,
-            email="longuser@test.com",
-            password="testpass123"
+            username=long_username, email="longuser@test.com", password="testpass123"
         )
 
         self.assertEqual(len(user.username), 150)
@@ -287,9 +275,7 @@ class TestInputValidationEdgeCases(TestCase):
         special_username = "user.name+tag@domain"
 
         user = User.objects.create_user(
-            username=special_username,
-            email="special@test.com",
-            password="testpass123"
+            username=special_username, email="special@test.com", password="testpass123"
         )
 
         self.assertEqual(user.username, special_username)
@@ -297,30 +283,26 @@ class TestInputValidationEdgeCases(TestCase):
     def test_email_case_insensitivity(self):
         """Test that emails are handled case-insensitively."""
         User.objects.create_user(
-            username="user1",
-            email="Test@Example.COM",
-            password="testpass123"
+            username="user1", email="Test@Example.COM", password="testpass123"
         )
 
         # Should be able to create another user with different case email
         # (depends on database collation)
         user2 = User.objects.create_user(
-            username="user2",
-            email="test@example.com",
-            password="testpass123"
+            username="user2", email="test@example.com", password="testpass123"
         )
 
         self.assertEqual(user2.username, "user2")
-        self.assertEqual(User.objects.filter(email__iexact="test@example.com").count(), 2)
+        self.assertEqual(
+            User.objects.filter(email__iexact="test@example.com").count(), 2
+        )
 
     def test_password_edge_cases(self):
         """Test password with special characters and length."""
         # Very long password
         long_password = "a" * 1000
         user = User.objects.create_user(
-            username="testuser",
-            email="test@example.com",
-            password=long_password
+            username="testuser", email="test@example.com", password=long_password
         )
 
         # Password should be hashed (not stored as plaintext)
@@ -342,9 +324,7 @@ class TestConcurrencyEdgeCases(TestCase):
         """Set up test data."""
         self.student_role, _ = Role.objects.get_or_create(name="student")
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
 
@@ -356,7 +336,9 @@ class TestConcurrencyEdgeCases(TestCase):
             is_active=True,
         )
 
-        self.status, _ = ApplicationStatus.objects.get_or_create(name="draft", defaults={'order': 1})
+        self.status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
 
     def test_multiple_comments_on_same_application(self):
         """Test adding multiple comments rapidly."""
@@ -391,7 +373,9 @@ class TestConcurrencyEdgeCases(TestCase):
             status=self.status,
         )
 
-        new_status, _ = ApplicationStatus.objects.get_or_create(name="submitted", defaults={'order': 2})
+        new_status, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
 
         # Update status multiple times
         application.status = new_status
@@ -412,9 +396,7 @@ class TestErrorHandlingEdgeCases(TestCase):
         """Set up test data."""
         self.student_role, _ = Role.objects.get_or_create(name="student")
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
 
@@ -425,7 +407,8 @@ class TestErrorHandlingEdgeCases(TestCase):
             name="Invalid Date Program",
             description="Test",
             start_date=timezone.now().date(),
-            end_date=timezone.now().date() - timezone.timedelta(days=1),  # End before start
+            end_date=timezone.now().date()
+            - timezone.timedelta(days=1),  # End before start
             is_active=True,
         )
 
@@ -442,7 +425,9 @@ class TestErrorHandlingEdgeCases(TestCase):
             is_active=True,
         )
 
-        status, _ = ApplicationStatus.objects.get_or_create(name="draft", defaults={"order": 1})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
 
         Application.objects.create(
             student=self.student,
@@ -470,7 +455,9 @@ class TestErrorHandlingEdgeCases(TestCase):
             is_active=True,
         )
 
-        status, _ = ApplicationStatus.objects.get_or_create(name="draft", defaults={'order': 1})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
 
         # Create application
         application = Application.objects.create(
@@ -497,9 +484,7 @@ class TestSecurityEdgeCases(TestCase):
         """Set up test data."""
         self.student_role, _ = Role.objects.get_or_create(name="student")
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
 
@@ -511,7 +496,9 @@ class TestSecurityEdgeCases(TestCase):
             is_active=True,
         )
 
-        self.status, _ = ApplicationStatus.objects.get_or_create(name="draft", defaults={'order': 1})
+        self.status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
 
     def test_sql_injection_in_program_name(self):
         """Test that SQL injection attempts are escaped."""
@@ -635,9 +622,7 @@ class TestBoundaryConditions(TestCase):
         """Test application with all optional fields empty."""
         student_role, _ = Role.objects.get_or_create(name="student")
         student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         student.roles.add(student_role)
 
@@ -649,7 +634,9 @@ class TestBoundaryConditions(TestCase):
             is_active=True,
         )
 
-        status, _ = ApplicationStatus.objects.get_or_create(name="draft", defaults={'order': 1})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
 
         # Create application with minimal data
         application = Application.objects.create(
@@ -685,9 +672,7 @@ class TestNullAndBlankHandling(TestCase):
         """Test comment with empty text."""
         student_role, _ = Role.objects.get_or_create(name="student")
         student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         student.roles.add(student_role)
 
@@ -699,7 +684,9 @@ class TestNullAndBlankHandling(TestCase):
             is_active=True,
         )
 
-        status, _ = ApplicationStatus.objects.get_or_create(name="draft", defaults={'order': 1})
+        status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
 
         application = Application.objects.create(
             student=student,
@@ -715,4 +702,3 @@ class TestNullAndBlankHandling(TestCase):
         )
 
         self.assertEqual(comment.text, "")
-

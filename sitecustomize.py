@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import warnings
 
-
 # dateutil emits a DeprecationWarning at import time (datetime.utcfromtimestamp deprecation)
 # inside its tz module. This is third-party and not actionable inside SEIM.
 warnings.filterwarnings(
@@ -25,4 +24,3 @@ warnings.filterwarnings(
     message=r"datetime\.datetime\.utcfromtimestamp\(\) is deprecated.*",
     category=DeprecationWarning,
 )
-

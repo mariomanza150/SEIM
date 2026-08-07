@@ -1,19 +1,19 @@
-from typing import Dict, Any, Optional, List
+from typing import Any
+
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
 from accounts.models import User
+from exchange.eligibility_rules import checks_passed_labels, evaluate_eligibility
 from notifications.services import NotificationService
 
-from exchange.eligibility_rules import checks_passed_labels, evaluate_eligibility
-
 from .models import (
+    SEAT_HOLDING_APPLICATION_STATUS_NAMES,
     Application,
     ApplicationStatus,
     Comment,
     Program,
-    SEAT_HOLDING_APPLICATION_STATUS_NAMES,
     TimelineEvent,
 )
 
@@ -27,8 +27,8 @@ class ApplicationService:
     def check_eligibility(
         student: User,
         program: Program,
-        application: Optional[Application] = None,
-    ) -> Dict[str, Any]:
+        application: Application | None = None,
+    ) -> dict[str, Any]:
         """
         Comprehensive eligibility check for student applying to program.
 
@@ -47,9 +47,14 @@ class ApplicationService:
         """
         ev = evaluate_eligibility(student, program, application=application)
         if not ev.eligible:
-            if len(ev.failures) == 1 and ev.failures[0] == "Student profile is missing.":
+            if (
+                len(ev.failures) == 1
+                and ev.failures[0] == "Student profile is missing."
+            ):
                 raise ValueError("Student profile is missing.")
-            raise ValueError("Eligibility requirements not met:\n- " + "\n- ".join(ev.failures))
+            raise ValueError(
+                "Eligibility requirements not met:\n- " + "\n- ".join(ev.failures)
+            )
         return {
             "eligible": True,
             "message": "All eligibility requirements met",
@@ -59,7 +64,7 @@ class ApplicationService:
         }
 
     @staticmethod
-    def check_application_window(program: Program, on_date=None) -> Dict[str, Any]:
+    def check_application_window(program: Program, on_date=None) -> dict[str, Any]:
         """
         Validate whether a program is currently accepting new applications.
 
@@ -75,7 +80,7 @@ class ApplicationService:
     def can_submit_application(
         user: User,
         program: Program,
-        exclude_application: Optional[Application] = None,
+        exclude_application: Application | None = None,
     ) -> bool:
         """Check if user has another active application for this program.
 
@@ -93,7 +98,7 @@ class ApplicationService:
         return not qs.exists()
 
     @staticmethod
-    def get_default_coordinator(program: Program) -> Optional[User]:
+    def get_default_coordinator(program: Program) -> User | None:
         """Return the sole program coordinator when exactly one is assigned."""
         coordinator_ids = list(program.coordinators.values_list("id", flat=True)[:2])
         if len(coordinator_ids) != 1:
@@ -101,7 +106,7 @@ class ApplicationService:
         return program.coordinators.get(id=coordinator_ids[0])
 
     @staticmethod
-    def _viewer_roles_for_user(user: Optional[User]) -> List[str]:
+    def _viewer_roles_for_user(user: User | None) -> list[str]:
         """Role names for dynamic-form visibility (``staff_only`` / ``roles_any``)."""
         if not user or not getattr(user, "is_authenticated", False):
             return []
@@ -112,7 +117,7 @@ class ApplicationService:
 
     @staticmethod
     def _visibility_context_for_application(
-        application: Application, user: Optional[User] = None
+        application: Application, user: User | None = None
     ) -> dict:
         """Context for ``visible_when`` / ``x-seim-visibleWhen`` (program, coordinator, viewer roles)."""
         return {
@@ -152,7 +157,9 @@ class ApplicationService:
                 if getattr(program, "workflow_version_id", None):
                     from workflows.runtime import WorkflowRuntimeService
 
-                    WorkflowRuntimeService.trigger_action(application, "waitlist", user=user)
+                    WorkflowRuntimeService.trigger_action(
+                        application, "waitlist", user=user
+                    )
                 else:
                     application.status = ApplicationStatus.objects.get(name="waitlist")
                 application.submitted_at = timezone.now()
@@ -200,7 +207,9 @@ class ApplicationService:
             created_by=user,
         )
 
-        NotificationService.broadcast_application_sync(str(application.id), "application_submitted")
+        NotificationService.broadcast_application_sync(
+            str(application.id), "application_submitted"
+        )
 
         # Notify student that submission was successful with link to application
         NotificationService.send_notification(
@@ -217,45 +226,51 @@ class ApplicationService:
         return application
 
     @staticmethod
-    def can_transition_status(user: User, application: Application, new_status: str) -> bool:
+    def can_transition_status(
+        user: User, application: Application, new_status: str
+    ) -> bool:
         """
         Check if user can transition application to new status.
-        
+
         Rules:
         - Students can only transition draft -> submitted
-        - Students cannot modify submitted/reviewed applications  
+        - Students cannot modify submitted/reviewed applications
         - Coordinators/admins can perform any transition
         """
         # Coordinators and admins can perform any transition
         if user.has_role("coordinator") or user.has_role("admin"):
             return True
-        
+
         # Students can only transition draft -> submitted
         if user.has_role("student"):
             if application.status.name == "draft" and new_status == "submitted":
                 return True
             return False
-        
+
         # Default: deny
         return False
 
     @staticmethod
     @transaction.atomic
-    def transition_status(application: Application, user: User, new_status_name: str) -> Application:
+    def transition_status(
+        application: Application, user: User, new_status_name: str
+    ) -> Application:
         """Transition application status with role validation."""
         from django.utils import timezone
-        
+
         # Workflow-aware: if the program has a workflow, route through runtime actions.
         if getattr(application.program, "workflow_version_id", None):
             from workflows.runtime import WorkflowRuntimeService
 
-            WorkflowRuntimeService.trigger_action(application, new_status_name, user=user)
+            WorkflowRuntimeService.trigger_action(
+                application, new_status_name, user=user
+            )
             application.refresh_from_db()
             return application
 
         # Check if status exists first (will raise DoesNotExist if not)
         new_status = ApplicationStatus.objects.get(name=new_status_name)
-        
+
         # Then check permissions
         if not ApplicationService.can_transition_status(
             user, application, new_status_name
@@ -270,11 +285,11 @@ class ApplicationService:
             )
 
         application.status = new_status
-        
+
         # Set submitted_at timestamp when transitioning to submitted status
         if new_status_name == "submitted" and application.submitted_at is None:
             application.submitted_at = timezone.now()
-        
+
         application.save()
         TimelineEvent.objects.create(
             application=application,
@@ -283,7 +298,9 @@ class ApplicationService:
             created_by=user,
         )
 
-        NotificationService.broadcast_application_sync(str(application.id), "application_status_changed")
+        NotificationService.broadcast_application_sync(
+            str(application.id), "application_status_changed"
+        )
 
         # Notify student about status change with link to application
         NotificationService.send_notification(
@@ -303,8 +320,12 @@ class ApplicationService:
     def can_withdraw_application(application: Application):
         """Check if an application can be withdrawn."""
         # Can withdraw if not already withdrawn and not in final states
-        return (not application.withdrawn and 
-                application.status.name not in ["approved", "rejected", "completed", "cancelled"])
+        return not application.withdrawn and application.status.name not in [
+            "approved",
+            "rejected",
+            "completed",
+            "cancelled",
+        ]
 
     @staticmethod
     @transaction.atomic
@@ -325,13 +346,17 @@ class ApplicationService:
             description="Application withdrawn.",
             created_by=user,
         )
-        NotificationService.broadcast_application_sync(str(application.id), "application_withdrawn")
+        NotificationService.broadcast_application_sync(
+            str(application.id), "application_withdrawn"
+        )
         return application
 
     @staticmethod
     def get_status_history(application: Application):
         """Get timeline events for an application (status history)."""
-        return TimelineEvent.objects.filter(application=application).order_by('created_at')
+        return TimelineEvent.objects.filter(application=application).order_by(
+            "created_at"
+        )
 
     @staticmethod
     @transaction.atomic
@@ -346,12 +371,16 @@ class ApplicationService:
             description="Comment added.",
             created_by=author,
         )
-        NotificationService.broadcast_application_sync(str(application.id), "comment_added")
+        NotificationService.broadcast_application_sync(
+            str(application.id), "comment_added"
+        )
         return comment
 
     @staticmethod
     @transaction.atomic
-    def process_dynamic_form_submission(application: Application, form_data: dict, user):
+    def process_dynamic_form_submission(
+        application: Application, form_data: dict, user
+    ):
         """
         Process and save dynamic form submission for an application.
 
@@ -395,16 +424,22 @@ class ApplicationService:
                 **responses_patch,
             }
 
-            vctx = ApplicationService._visibility_context_for_application(application, user)
+            vctx = ApplicationService._visibility_context_for_application(
+                application, user
+            )
 
             if form_type.is_multi_step():
                 if current_step_key is None or str(current_step_key).strip() == "":
                     raise ValidationError(
                         "dynamic_form_current_step is required when saving a multi-step application form."
                     )
-                from application_forms.visibility import iter_visible_steps_from_form_type
+                from application_forms.visibility import (
+                    iter_visible_steps_from_form_type,
+                )
 
-                visible_steps = list(iter_visible_steps_from_form_type(form_type, merged, vctx))
+                visible_steps = list(
+                    iter_visible_steps_from_form_type(form_type, merged, vctx)
+                )
                 if not visible_steps:
                     raise ValidationError(
                         "No form steps apply to the current answers; check form configuration."
@@ -445,7 +480,9 @@ class ApplicationService:
                             application.dynamic_form_current_step = step_keys[idx + 1]
                         else:
                             application.dynamic_form_current_step = step_keys[idx]
-                application.save(update_fields=["dynamic_form_current_step", "updated_at"])
+                application.save(
+                    update_fields=["dynamic_form_current_step", "updated_at"]
+                )
             else:
                 FormSubmissionService.validate_responses(
                     form_type, merged, visibility_context=vctx
@@ -499,8 +536,7 @@ class ApplicationService:
             from application_forms.models import FormSubmission
 
             return FormSubmission.objects.filter(
-                application=application,
-                form_type=application.program.application_form
+                application=application, form_type=application.program.application_form
             ).first()
         except ImportError:
             return None

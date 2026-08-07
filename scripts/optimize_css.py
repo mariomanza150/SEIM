@@ -157,7 +157,9 @@ class CSSOptimizer:
 
     def generate_css_hash(self, css_content: str) -> str:
         """Generate hash for CSS content"""
-        return hashlib.md5(css_content.encode("utf-8")).hexdigest()[:8]
+        return hashlib.md5(
+            css_content.encode("utf-8"), usedforsecurity=False
+        ).hexdigest()[:8]
 
     def update_template_css_loading(self, critical_css: str, non_critical_css: str):
         """Update base template to inline critical CSS and defer non-critical CSS"""

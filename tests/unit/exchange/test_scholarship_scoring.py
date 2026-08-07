@@ -104,7 +104,9 @@ class TestScholarshipScoringCohort:
     def test_csv_contains_headers_and_rank(self):
         program = TestUtils.create_test_program()
         student = TestUtils.create_test_user(role="student")
-        TestUtils.create_test_application(student=student, program=program, status_name="submitted")
+        TestUtils.create_test_application(
+            student=student, program=program, status_name="submitted"
+        )
         qs = program.application_set.all()
         csv_text = build_scholarship_scores_csv(qs)
         lines = csv_text.strip().splitlines()
@@ -116,7 +118,9 @@ class TestScholarshipScoringCohort:
     def test_xlsx_starts_with_zip_signature(self):
         program = TestUtils.create_test_program()
         student = TestUtils.create_test_user(role="student")
-        TestUtils.create_test_application(student=student, program=program, status_name="submitted")
+        TestUtils.create_test_application(
+            student=student, program=program, status_name="submitted"
+        )
         raw = render_scholarship_scores_xlsx(program.application_set.all())
         assert raw[:2] == b"PK"
 

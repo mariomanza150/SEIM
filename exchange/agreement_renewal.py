@@ -11,7 +11,6 @@ from datetime import date
 
 from django.core.files.base import ContentFile
 from django.db import transaction
-from django.utils import timezone
 
 from accounts.models import User
 from documents.models import ExchangeAgreementDocument
@@ -21,7 +20,9 @@ from .models import ExchangeAgreement
 
 
 def _notify_staff(title: str, message: str) -> None:
-    recipients = User.objects.filter(roles__name__in=["admin", "coordinator"]).distinct()
+    recipients = User.objects.filter(
+        roles__name__in=["admin", "coordinator"]
+    ).distinct()
     if not recipients:
         return
     NotificationService.send_bulk_notifications(
@@ -100,9 +101,15 @@ class AgreementRenewalService:
         notify: bool = True,
     ) -> ExchangeAgreement:
         if agreement.status not in AgreementRenewalService.RENEWAL_SOURCE_STATUSES:
-            raise ValueError("Cannot create a renewal successor from this agreement status.")
-        if agreement.renewal_successors.filter(status=ExchangeAgreement.Status.DRAFT).exists():
-            raise ValueError("A draft renewal successor for this agreement already exists.")
+            raise ValueError(
+                "Cannot create a renewal successor from this agreement status."
+            )
+        if agreement.renewal_successors.filter(
+            status=ExchangeAgreement.Status.DRAFT
+        ).exists():
+            raise ValueError(
+                "A draft renewal successor for this agreement already exists."
+            )
 
         successor = ExchangeAgreement.objects.create(
             title=f"{agreement.title} (Renewal draft)",

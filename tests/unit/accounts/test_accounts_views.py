@@ -44,7 +44,7 @@ class TestUserViewSet(APITestCase):
         response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data['results']) == 2
+        assert len(response.data["results"]) == 2
 
     def test_list_users_regular_user_denied(self):
         """Test that regular user cannot list users."""
@@ -105,7 +105,7 @@ class TestProfileViewSet(APITestCase):
         response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data['results']) == 2
+        assert len(response.data["results"]) == 2
 
     def test_list_profiles_regular_user_own_only(self):
         """Test that regular user can only see their own profile."""
@@ -114,8 +114,8 @@ class TestProfileViewSet(APITestCase):
         response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data['results']) == 1
-        assert response.data['results'][0]["username"] == "testuser"
+        assert len(response.data["results"]) == 1
+        assert response.data["results"][0]["username"] == "testuser"
 
     def test_retrieve_profile(self):
         """Test retrieving profile details."""
@@ -270,6 +270,7 @@ class TestLoginView(APITestCase):
     def test_get_device_info_mobile(self):
         """Test device info extraction for mobile."""
         from accounts.views import LoginView
+
         view = LoginView()
         user_agent = "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X)"
         device = view._get_device_info(user_agent)
@@ -278,6 +279,7 @@ class TestLoginView(APITestCase):
     def test_get_device_info_desktop(self):
         """Test device info extraction for desktop."""
         from accounts.views import LoginView
+
         view = LoginView()
         user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
         device = view._get_device_info(user_agent)
@@ -286,6 +288,7 @@ class TestLoginView(APITestCase):
     def test_get_location_info_local(self):
         """Test location info extraction for local IP."""
         from accounts.views import LoginView
+
         view = LoginView()
         location = view._get_location_info("127.0.0.1")
         assert location == "Local"
@@ -293,6 +296,7 @@ class TestLoginView(APITestCase):
     def test_get_location_info_remote(self):
         """Test location info extraction for remote IP."""
         from accounts.views import LoginView
+
         view = LoginView()
         location = view._get_location_info("192.168.1.1")
         assert location == "Remote"
@@ -711,7 +715,9 @@ class TestRoleViewSet(APITestCase):
         response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert any(role["name"] == "test_role_viewset" for role in response.data['results'])
+        assert any(
+            role["name"] == "test_role_viewset" for role in response.data["results"]
+        )
 
     def test_retrieve_role(self):
         """Test retrieving role details."""
@@ -744,8 +750,8 @@ class TestPermissionViewSet(APITestCase):
         response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data['results']) == 1
-        assert response.data['results'][0]["name"] == "can_edit_applications"
+        assert len(response.data["results"]) == 1
+        assert response.data["results"][0]["name"] == "can_edit_applications"
 
     def test_retrieve_permission(self):
         """Test retrieving permission details."""
@@ -782,8 +788,8 @@ class TestUserSessionViewSet(APITestCase):
         response = self.client.get(url)
 
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data['results']) == 1
-        assert response.data['results'][0]["device"] == "Desktop"
+        assert len(response.data["results"]) == 1
+        assert response.data["results"][0]["device"] == "Desktop"
 
     def test_delete_user_session(self):
         """Test deleting user session."""

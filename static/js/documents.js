@@ -9,4 +9,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     initializeModals();
     initializeFileUpload();
     initDocumentsList();
-}); 
+});

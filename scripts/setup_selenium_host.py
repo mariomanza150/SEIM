@@ -173,9 +173,9 @@ if __name__ == "__main__":
 
 def print_next_steps():
     """Print next steps for the user."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🎉 Selenium setup completed!")
-    print("="*60)
+    print("=" * 60)
     print("\n📋 Next steps:")
     print("1. Install Chrome browser if not already installed")
     print("2. Start Django server: docker-compose up web")
@@ -196,7 +196,7 @@ def print_next_steps():
 def main():
     """Main setup function."""
     print("🚀 SEIM Selenium Host OS Setup")
-    print("="*40)
+    print("=" * 40)
     print("This script sets up Selenium E2E testing on your host OS.")
     print("Selenium tests will run outside Docker containers.\n")
 

@@ -4,14 +4,15 @@ Additional tests for Exchange Services to reach 80%+ coverage.
 Focuses on uncovered edge cases and scenarios.
 """
 
-import pytest
 from datetime import date, timedelta
+
+import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 
-from accounts.models import Profile, Role
-from application_forms.models import FormType, FormSubmission
+from accounts.models import Role
+from application_forms.models import FormType
 from exchange.models import Application, ApplicationStatus, Program, TimelineEvent
 from exchange.services import ApplicationService
 from grades.models import GradeScale, GradeValue
@@ -26,54 +27,52 @@ class TestEligibilityWithGradeScale(TestCase):
     def setUp(self):
         """Set up test data."""
         self.student_role, _ = Role.objects.get_or_create(name="student")
-        
+
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
-        
+
         # Create grade scale
         self.grade_scale = GradeScale.objects.create(
             name="US GPA",
             code="US_GPA",
             min_value=0.0,
             max_value=4.0,
-            passing_value=2.0
+            passing_value=2.0,
         )
-        
+
         # Create grade values
         self.grade_a = GradeValue.objects.create(
             grade_scale=self.grade_scale,
             label="A",
             numeric_value=4.0,
             gpa_equivalent=4.0,
-            order=1
+            order=1,
         )
-        
+
         self.grade_b = GradeValue.objects.create(
             grade_scale=self.grade_scale,
             label="B",
             numeric_value=3.0,
             gpa_equivalent=3.0,
-            order=2
+            order=2,
         )
-        
+
         self.grade_c = GradeValue.objects.create(
             grade_scale=self.grade_scale,
             label="C",
             numeric_value=2.0,
             gpa_equivalent=2.0,
-            order=3
+            order=3,
         )
-        
+
         # Get auto-created profile and update it
         self.profile = self.student.profile
         self.profile.gpa = 3.5
         self.profile.grade_scale = self.grade_scale
         self.profile.save()
-        
+
         # Create program
         today = date.today()
         self.program = Program.objects.create(
@@ -82,7 +81,7 @@ class TestEligibilityWithGradeScale(TestCase):
             start_date=today,
             end_date=today + timedelta(days=365),
             is_active=True,
-            min_gpa=3.0
+            min_gpa=3.0,
         )
 
     def test_eligibility_with_gpa_equivalent_above_requirement(self):
@@ -96,14 +95,14 @@ class TestEligibilityWithGradeScale(TestCase):
         # Use GPA 2.0 which maps to grade C with gpa_equivalent 2.0
         self.profile.gpa = 2.0
         self.profile.save()
-        
+
         self.program.min_gpa = 3.5
         self.program.save()
-        
+
         with self.assertRaises(ValueError) as context:
             ApplicationService.check_eligibility(self.student, self.program)
-        
-        self.assertIn('GPA below', str(context.exception))
+
+        self.assertIn("GPA below", str(context.exception))
 
     def test_eligibility_without_grade_scale_direct_comparison(self):
         """Test eligibility uses direct GPA comparison when no grade scale."""
@@ -111,15 +110,15 @@ class TestEligibilityWithGradeScale(TestCase):
         self.profile.grade_scale = None
         self.profile.gpa = 2.5
         self.profile.save()
-        
+
         self.program.min_gpa = 3.0
         self.program.save()
-        
+
         with self.assertRaises(ValueError) as context:
             ApplicationService.check_eligibility(self.student, self.program)
-        
+
         # Should use direct comparison
-        self.assertIn('GPA below', str(context.exception))
+        self.assertIn("GPA below", str(context.exception))
 
 
 @pytest.mark.django_db
@@ -129,20 +128,18 @@ class TestEligibilityLanguageLevel(TestCase):
     def setUp(self):
         """Set up test data."""
         self.student_role, _ = Role.objects.get_or_create(name="student")
-        
+
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
-        
+
         # Get auto-created profile and update it
         self.profile = self.student.profile
         self.profile.language = "English"
         self.profile.language_level = "B1"
         self.profile.save()
-        
+
         today = date.today()
         self.program = Program.objects.create(
             name="Language Test Program",
@@ -151,7 +148,7 @@ class TestEligibilityLanguageLevel(TestCase):
             end_date=today + timedelta(days=365),
             is_active=True,
             required_language="English",
-            min_language_level="B2"
+            min_language_level="B2",
         )
 
     def test_eligibility_language_level_below_requirement(self):
@@ -159,15 +156,15 @@ class TestEligibilityLanguageLevel(TestCase):
         # Student has B1, program requires B2
         with self.assertRaises(ValueError) as context:
             ApplicationService.check_eligibility(self.student, self.program)
-        
-        self.assertIn('Language proficiency below requirement', str(context.exception))
+
+        self.assertIn("Language proficiency below requirement", str(context.exception))
 
     def test_eligibility_language_level_meets_requirement(self):
         """Test eligibility passes when language level meets requirement."""
         # Update student to B2
         self.profile.language_level = "B2"
         self.profile.save()
-        
+
         # Should not raise
         ApplicationService.check_eligibility(self.student, self.program)
 
@@ -176,11 +173,11 @@ class TestEligibilityLanguageLevel(TestCase):
         # Remove student's language level
         self.profile.language_level = None
         self.profile.save()
-        
+
         with self.assertRaises(ValueError) as context:
             ApplicationService.check_eligibility(self.student, self.program)
-        
-        self.assertIn('Language proficiency not specified', str(context.exception))
+
+        self.assertIn("Language proficiency not specified", str(context.exception))
 
 
 @pytest.mark.django_db
@@ -190,19 +187,17 @@ class TestEligibilityAge(TestCase):
     def setUp(self):
         """Set up test data."""
         self.student_role, _ = Role.objects.get_or_create(name="student")
-        
+
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
-        
+
         # Get auto-created profile and update it with age (20 years old)
         self.profile = self.student.profile
-        self.profile.date_of_birth = date.today() - timedelta(days=365*20)
+        self.profile.date_of_birth = date.today() - timedelta(days=365 * 20)
         self.profile.save()
-        
+
         today = date.today()
         self.program = Program.objects.create(
             name="Age Test Program",
@@ -211,7 +206,7 @@ class TestEligibilityAge(TestCase):
             end_date=today + timedelta(days=365),
             is_active=True,
             min_age=18,
-            max_age=25
+            max_age=25,
         )
 
     def test_eligibility_age_within_range(self):
@@ -223,24 +218,24 @@ class TestEligibilityAge(TestCase):
     def test_eligibility_age_too_young(self):
         """Test eligibility fails when too young."""
         # Set student to 16 years old
-        self.profile.date_of_birth = date.today() - timedelta(days=365*16)
+        self.profile.date_of_birth = date.today() - timedelta(days=365 * 16)
         self.profile.save()
-        
+
         with self.assertRaises(ValueError) as context:
             ApplicationService.check_eligibility(self.student, self.program)
-        
-        self.assertIn('age', str(context.exception).lower())
+
+        self.assertIn("age", str(context.exception).lower())
 
     def test_eligibility_age_too_old(self):
         """Test eligibility fails when too old."""
         # Set student to 30 years old
-        self.profile.date_of_birth = date.today() - timedelta(days=365*30)
+        self.profile.date_of_birth = date.today() - timedelta(days=365 * 30)
         self.profile.save()
-        
+
         with self.assertRaises(ValueError) as context:
             ApplicationService.check_eligibility(self.student, self.program)
-        
-        self.assertIn('age', str(context.exception).lower())
+
+        self.assertIn("age", str(context.exception).lower())
 
 
 @pytest.mark.django_db
@@ -250,27 +245,25 @@ class TestDynamicFormProcessing(TestCase):
     def setUp(self):
         """Set up test data."""
         self.student_role, _ = Role.objects.get_or_create(name="student")
-        
+
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
-        
+
         # Create form type
         self.form_type = FormType.objects.create(
             name="Application Form",
-            form_type='application',
+            form_type="application",
             schema={
-                'properties': {
-                    'motivation': {'type': 'string', 'title': 'Motivation'},
-                    'experience': {'type': 'string', 'title': 'Experience'}
+                "properties": {
+                    "motivation": {"type": "string", "title": "Motivation"},
+                    "experience": {"type": "string", "title": "Experience"},
                 },
-                'required': ['motivation']
-            }
+                "required": ["motivation"],
+            },
         )
-        
+
         today = date.today()
         self.program = Program.objects.create(
             name="Form Test Program",
@@ -278,87 +271,73 @@ class TestDynamicFormProcessing(TestCase):
             start_date=today,
             end_date=today + timedelta(days=365),
             is_active=True,
-            application_form=self.form_type
+            application_form=self.form_type,
         )
-        
+
         status, _ = ApplicationStatus.objects.get_or_create(
-            name="draft",
-            defaults={'order': 1}
+            name="draft", defaults={"order": 1}
         )
-        
+
         self.application = Application.objects.create(
-            student=self.student,
-            program=self.program,
-            status=status
+            student=self.student, program=self.program, status=status
         )
 
     def test_process_dynamic_form_creates_submission(self):
         """Test processing dynamic form creates submission."""
         form_data = {
-            'df_motivation': 'I want to study abroad',
-            'df_experience': 'Previous internship'
+            "df_motivation": "I want to study abroad",
+            "df_experience": "Previous internship",
         }
-        
+
         submission = ApplicationService.process_dynamic_form_submission(
-            application=self.application,
-            form_data=form_data,
-            user=self.student
+            application=self.application, form_data=form_data, user=self.student
         )
-        
+
         self.assertIsNotNone(submission)
         self.assertEqual(submission.form_type, self.form_type)
-        self.assertEqual(submission.responses['motivation'], 'I want to study abroad')
-        self.assertEqual(submission.responses['experience'], 'Previous internship')
+        self.assertEqual(submission.responses["motivation"], "I want to study abroad")
+        self.assertEqual(submission.responses["experience"], "Previous internship")
 
     def test_process_dynamic_form_updates_existing(self):
         """Test processing dynamic form updates existing submission."""
         # Create initial submission
         form_data1 = {
-            'df_motivation': 'Initial motivation',
-            'df_experience': 'Initial experience'
+            "df_motivation": "Initial motivation",
+            "df_experience": "Initial experience",
         }
-        
+
         submission1 = ApplicationService.process_dynamic_form_submission(
-            application=self.application,
-            form_data=form_data1,
-            user=self.student
+            application=self.application, form_data=form_data1, user=self.student
         )
-        
+
         # Update with new data
         form_data2 = {
-            'df_motivation': 'Updated motivation',
-            'df_experience': 'Updated experience'
+            "df_motivation": "Updated motivation",
+            "df_experience": "Updated experience",
         }
-        
+
         submission2 = ApplicationService.process_dynamic_form_submission(
-            application=self.application,
-            form_data=form_data2,
-            user=self.student
+            application=self.application, form_data=form_data2, user=self.student
         )
-        
+
         # Should be same submission, updated
         self.assertEqual(submission1.id, submission2.id)
         submission1.refresh_from_db()
-        self.assertEqual(submission1.responses['motivation'], 'Updated motivation')
+        self.assertEqual(submission1.responses["motivation"], "Updated motivation")
 
     def test_process_dynamic_form_creates_timeline_event(self):
         """Test processing dynamic form creates timeline event."""
-        form_data = {
-            'df_motivation': 'Test motivation'
-        }
-        
+        form_data = {"df_motivation": "Test motivation"}
+
         ApplicationService.process_dynamic_form_submission(
-            application=self.application,
-            form_data=form_data,
-            user=self.student
+            application=self.application, form_data=form_data, user=self.student
         )
-        
+
         # Verify timeline event created
         timeline_events = TimelineEvent.objects.filter(
-            application=self.application,
-            event_type="form_submitted"
+            application=self.application, event_type="form_submitted"
         )
-        
+
         self.assertEqual(timeline_events.count(), 1)
 
     def test_process_dynamic_form_no_form_configured(self):
@@ -366,32 +345,26 @@ class TestDynamicFormProcessing(TestCase):
         # Remove form from program
         self.program.application_form = None
         self.program.save()
-        
-        form_data = {
-            'df_field': 'value'
-        }
-        
+
+        form_data = {"df_field": "value"}
+
         result = ApplicationService.process_dynamic_form_submission(
-            application=self.application,
-            form_data=form_data,
-            user=self.student
+            application=self.application, form_data=form_data, user=self.student
         )
-        
+
         # Should return None
         self.assertIsNone(result)
 
     def test_process_dynamic_form_no_dynamic_data(self):
         """Test processing when no df_ fields provided."""
         form_data = {
-            'regular_field': 'value'  # No df_ prefix
+            "regular_field": "value"  # No df_ prefix
         }
-        
+
         result = ApplicationService.process_dynamic_form_submission(
-            application=self.application,
-            form_data=form_data,
-            user=self.student
+            application=self.application, form_data=form_data, user=self.student
         )
-        
+
         # Should return None (no dynamic form data)
         self.assertIsNone(result)
 
@@ -399,41 +372,35 @@ class TestDynamicFormProcessing(TestCase):
         """Test processing with invalid form data."""
         # Missing required field
         form_data = {
-            'df_experience': 'Experience only'
+            "df_experience": "Experience only"
             # Missing required 'motivation'
         }
-        
+
         with self.assertRaises(ValidationError) as context:
             ApplicationService.process_dynamic_form_submission(
-                application=self.application,
-                form_data=form_data,
-                user=self.student
+                application=self.application, form_data=form_data, user=self.student
             )
-        
-        self.assertIn('validation failed', str(context.exception).lower())
+
+        self.assertIn("validation failed", str(context.exception).lower())
 
     def test_get_dynamic_form_submission_exists(self):
         """Test retrieving existing dynamic form submission."""
         # Create submission
-        form_data = {
-            'df_motivation': 'Test motivation'
-        }
-        
+        form_data = {"df_motivation": "Test motivation"}
+
         submission = ApplicationService.process_dynamic_form_submission(
-            application=self.application,
-            form_data=form_data,
-            user=self.student
+            application=self.application, form_data=form_data, user=self.student
         )
-        
+
         # Retrieve it
         retrieved = ApplicationService.get_dynamic_form_submission(self.application)
-        
+
         self.assertEqual(retrieved.id, submission.id)
 
     def test_get_dynamic_form_submission_none(self):
         """Test retrieving when no submission exists."""
         result = ApplicationService.get_dynamic_form_submission(self.application)
-        
+
         self.assertIsNone(result)
 
     def test_get_dynamic_form_submission_no_form_configured(self):
@@ -441,9 +408,9 @@ class TestDynamicFormProcessing(TestCase):
         # Remove form from program
         self.program.application_form = None
         self.program.save()
-        
+
         result = ApplicationService.get_dynamic_form_submission(self.application)
-        
+
         self.assertIsNone(result)
 
 
@@ -454,31 +421,29 @@ class TestEligibilityEdgeCases(TestCase):
     def setUp(self):
         """Set up test data."""
         self.student_role, _ = Role.objects.get_or_create(name="student")
-        
+
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
-        
+
         # Get auto-created profile
         self.profile = self.student.profile
-        
+
         today = date.today()
         self.program = Program.objects.create(
             name="Test Program",
             description="Test",
             start_date=today,
             end_date=today + timedelta(days=365),
-            is_active=True
+            is_active=True,
         )
 
     def test_eligibility_no_profile(self):
         """Test eligibility check when user has no profile."""
         # Delete profile
         self.profile.delete()
-        
+
         # Should handle gracefully
         try:
             ApplicationService.check_eligibility(self.student, self.program)
@@ -490,10 +455,10 @@ class TestEligibilityEdgeCases(TestCase):
         """Test eligibility passes when language requirement met."""
         self.profile.language = "Spanish"
         self.profile.save()
-        
+
         self.program.required_language = "Spanish"
         self.program.save()
-        
+
         # Should not raise
         ApplicationService.check_eligibility(self.student, self.program)
 
@@ -501,27 +466,27 @@ class TestEligibilityEdgeCases(TestCase):
         """Test eligibility fails when language requirement not met."""
         self.profile.language = "French"
         self.profile.save()
-        
+
         self.program.required_language = "Spanish"
         self.program.save()
-        
+
         with self.assertRaises(ValueError) as context:
             ApplicationService.check_eligibility(self.student, self.program)
-        
-        self.assertIn('Language requirement not met', str(context.exception))
+
+        self.assertIn("Language requirement not met", str(context.exception))
 
     def test_eligibility_language_not_specified(self):
         """Test eligibility when student language not specified."""
         self.profile.language = None
         self.profile.save()
-        
+
         self.program.required_language = "Spanish"
         self.program.save()
-        
+
         with self.assertRaises(ValueError) as context:
             ApplicationService.check_eligibility(self.student, self.program)
-        
-        self.assertIn('Language requirement not met', str(context.exception))
+
+        self.assertIn("Language requirement not met", str(context.exception))
 
 
 @pytest.mark.django_db
@@ -531,55 +496,47 @@ class TestCanWithdrawApplication(TestCase):
     def setUp(self):
         """Set up test data."""
         self.student_role, _ = Role.objects.get_or_create(name="student")
-        
+
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
-        
+
         today = date.today()
         self.program = Program.objects.create(
             name="Test Program",
             description="Test",
             start_date=today,
             end_date=today + timedelta(days=365),
-            is_active=True
+            is_active=True,
         )
-        
+
         self.draft_status, _ = ApplicationStatus.objects.get_or_create(
-            name="draft",
-            defaults={'order': 1}
+            name="draft", defaults={"order": 1}
         )
-        
+
         self.submitted_status, _ = ApplicationStatus.objects.get_or_create(
-            name="submitted",
-            defaults={'order': 2}
+            name="submitted", defaults={"order": 2}
         )
 
     def test_can_withdraw_draft_application(self):
         """Test can withdraw draft application."""
         application = Application.objects.create(
-            student=self.student,
-            program=self.program,
-            status=self.draft_status
+            student=self.student, program=self.program, status=self.draft_status
         )
-        
+
         result = ApplicationService.can_withdraw_application(application)
-        
+
         self.assertTrue(result)
 
     def test_can_withdraw_submitted_application(self):
         """Test can withdraw submitted application."""
         application = Application.objects.create(
-            student=self.student,
-            program=self.program,
-            status=self.submitted_status
+            student=self.student, program=self.program, status=self.submitted_status
         )
-        
+
         result = ApplicationService.can_withdraw_application(application)
-        
+
         self.assertTrue(result)
 
     def test_cannot_withdraw_already_withdrawn(self):
@@ -588,11 +545,11 @@ class TestCanWithdrawApplication(TestCase):
             student=self.student,
             program=self.program,
             status=self.draft_status,
-            withdrawn=True
+            withdrawn=True,
         )
-        
+
         result = ApplicationService.can_withdraw_application(application)
-        
+
         self.assertFalse(result)
 
 
@@ -684,4 +641,3 @@ class TestProcessDynamicFormStepVisibleWhen(TestCase):
                 },
                 user=self.student,
             )
-

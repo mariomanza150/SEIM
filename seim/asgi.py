@@ -12,7 +12,7 @@ import os
 from channels.routing import ProtocolTypeRouter
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'seim.settings.development')
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "seim.settings.development")
 
 # Initialize Django ASGI application early to ensure the AppRegistry
 # is populated before importing code that may import ORM models.
@@ -21,16 +21,15 @@ django_asgi_app = get_asgi_application()
 # Import after Django is initialized
 from channels.routing import URLRouter
 from channels.security.websocket import AllowedHostsOriginValidator
-from notifications.routing import websocket_urlpatterns
-from notifications.jwt_middleware import JWTAuthMiddlewareStack
 
-application = ProtocolTypeRouter({
-    "http": django_asgi_app,
-    "websocket": AllowedHostsOriginValidator(
-        JWTAuthMiddlewareStack(
-            URLRouter(
-                websocket_urlpatterns
-            )
-        )
-    ),
-})
+from notifications.jwt_middleware import JWTAuthMiddlewareStack
+from notifications.routing import websocket_urlpatterns
+
+application = ProtocolTypeRouter(
+    {
+        "http": django_asgi_app,
+        "websocket": AllowedHostsOriginValidator(
+            JWTAuthMiddlewareStack(URLRouter(websocket_urlpatterns))
+        ),
+    }
+)

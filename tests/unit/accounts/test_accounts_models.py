@@ -335,7 +335,7 @@ class TestProfileModel:
         )
 
         # Profile should exist
-        assert hasattr(user, 'profile')
+        assert hasattr(user, "profile")
         assert user.profile is not None
 
 
@@ -352,15 +352,15 @@ class TestUserSettingsModel:
 
         settings = UserSettings.objects.create(
             user=user,
-            theme='dark',
-            font_size='large',
+            theme="dark",
+            font_size="large",
             email_applications=False,
-            profile_public=True
+            profile_public=True,
         )
 
         assert settings.user == user
-        assert settings.theme == 'dark'
-        assert settings.font_size == 'large'
+        assert settings.theme == "dark"
+        assert settings.font_size == "large"
         assert settings.email_applications is False
         assert settings.profile_public is True
 
@@ -372,8 +372,8 @@ class TestUserSettingsModel:
 
         settings = UserSettings.objects.create(user=user)
 
-        assert settings.theme == 'auto'
-        assert settings.font_size == 'normal'
+        assert settings.theme == "auto"
+        assert settings.font_size == "normal"
         assert settings.email_applications is True
         assert settings.email_documents is True
         assert settings.email_comments is True
@@ -400,11 +400,11 @@ class TestUserSettingsModel:
     def test_user_settings_theme_choices(self):
         """Test user settings theme choices."""
         # Test valid theme choices
-        for i, theme in enumerate(['light', 'dark', 'auto']):
+        for i, theme in enumerate(["light", "dark", "auto"]):
             user = User.objects.create_user(
                 username=f"testuser_theme_{i}",
                 email=f"test{i}@example.com",
-                password="testpass123"
+                password="testpass123",
             )
             settings = UserSettings.objects.create(user=user, theme=theme)
             assert settings.theme == theme
@@ -412,11 +412,11 @@ class TestUserSettingsModel:
     def test_user_settings_font_size_choices(self):
         """Test user settings font size choices."""
         # Test valid font size choices
-        for i, font_size in enumerate(['small', 'medium', 'large']):
+        for i, font_size in enumerate(["small", "medium", "large"]):
             user = User.objects.create_user(
                 username=f"testuser_font_{i}",
                 email=f"test_font_{i}@example.com",
-                password="testpass123"
+                password="testpass123",
             )
             settings = UserSettings.objects.create(user=user, font_size=font_size)
             assert settings.font_size == font_size
@@ -451,12 +451,15 @@ class TestUserSessionModel:
             ip_address="192.168.1.1",
             device="Desktop",
             location="New York, NY",
-            is_active=True
+            is_active=True,
         )
 
         assert session.user == user
         assert session.session_key == "test_session_key_123"
-        assert session.user_agent == "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        assert (
+            session.user_agent
+            == "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        )
         assert session.ip_address == "192.168.1.1"
         assert session.device == "Desktop"
         assert session.location == "New York, NY"
@@ -469,8 +472,7 @@ class TestUserSessionModel:
         )
 
         session = UserSession.objects.create(
-            user=user,
-            session_key="test_session_key_123"
+            user=user, session_key="test_session_key_123"
         )
 
         assert session.is_active is True
@@ -483,9 +485,7 @@ class TestUserSessionModel:
         )
 
         session = UserSession.objects.create(
-            user=user,
-            session_key="test_session_key_123",
-            device="Desktop"
+            user=user, session_key="test_session_key_123", device="Desktop"
         )
 
         assert str(session) == f"Session for {user.username} - Desktop"
@@ -497,13 +497,12 @@ class TestUserSessionModel:
         )
 
         session = UserSession.objects.create(
-            user=user,
-            session_key="test_session_key_123"
+            user=user, session_key="test_session_key_123"
         )
 
         assert session._meta.verbose_name == "User Session"
         assert session._meta.verbose_name_plural == "User Sessions"
-        assert session._meta.ordering == ['-last_activity']
+        assert session._meta.ordering == ["-last_activity"]
 
     def test_user_session_ordering(self):
         """Test user session ordering by last_activity."""
@@ -512,15 +511,9 @@ class TestUserSessionModel:
         )
 
         # Create sessions with different timestamps
-        UserSession.objects.create(
-            user=user,
-            session_key="session1"
-        )
+        UserSession.objects.create(user=user, session_key="session1")
 
-        session2 = UserSession.objects.create(
-            user=user,
-            session_key="session2"
-        )
+        session2 = UserSession.objects.create(user=user, session_key="session2")
 
         # Query should return newest first
         sessions = UserSession.objects.filter(user=user)

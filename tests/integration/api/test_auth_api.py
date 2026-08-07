@@ -40,7 +40,7 @@ class TestAuthenticationAPI(APITestCase):
         """Test successful user registration."""
         username = f"testuser_{self.unique_id}"
         email = f"test_{self.unique_id}@example.com"
-        
+
         data = {
             "username": username,
             "email": email,
@@ -206,9 +206,7 @@ class TestAuthenticationAPI(APITestCase):
         """Test successful email verification."""
         email = f"test_{self.unique_id}@example.com"
         # Create unverified user
-        user = TestUtils.create_test_user(
-            email=email, is_email_verified=False
-        )
+        user = TestUtils.create_test_user(email=email, is_email_verified=False)
 
         # Use the actual email verification token
         verification_token = user.email_verification_token
@@ -382,9 +380,7 @@ class TestAuthenticationAPI(APITestCase):
             is_active=True,
         )
         data_email = {"email": email, "password": "tokenpass123"}
-        response_ok = self.client.post(
-            "/api/token/", data_email, format="json"
-        )
+        response_ok = self.client.post("/api/token/", data_email, format="json")
         self.assert_response_success(response_ok, status.HTTP_200_OK)
         if hasattr(response_ok, "data"):
             self.assertIn("access", response_ok.data)
@@ -408,7 +404,7 @@ class TestAuthenticationIntegration(APITestCase):
         """Test complete authentication workflow from registration to logout."""
         username = f"newuser_{self.unique_id}"
         email = f"newuser_{self.unique_id}@example.com"
-        
+
         # 1. Register new user
         register_data = {
             "username": username,
@@ -552,9 +548,7 @@ class TestAuthenticationSecurity(APITestCase):
         """Test account lockout after multiple failed login attempts."""
         username = f"lockoutuser_{self.unique_id}"
         # Create user
-        user = TestUtils.create_test_user(
-            username=username, password="testpass123"
-        )
+        user = TestUtils.create_test_user(username=username, password="testpass123")
 
         # Attempt multiple failed logins
         for i in range(5):
@@ -578,7 +572,9 @@ class TestAuthenticationSecurity(APITestCase):
         # Test that endpoints accept JSON requests
         data = {"username": "testuser", "password": "testpass123"}
 
-        response = self.client.post(reverse("api:token_obtain_pair"), data, format="json")
+        response = self.client.post(
+            reverse("api:token_obtain_pair"), data, format="json"
+        )
 
         # Should not fail due to CSRF (API endpoints are typically exempt)
         # The response should be 401 (unauthorized) not 403 (forbidden)

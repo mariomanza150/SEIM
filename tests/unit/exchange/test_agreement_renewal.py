@@ -58,7 +58,9 @@ def test_mark_renewal_pending_rejects_draft(active_agreement):
 
 
 @pytest.mark.django_db
-def test_create_successor_links_programs_and_rollover(coordinator_user, active_agreement):
+def test_create_successor_links_programs_and_rollover(
+    coordinator_user, active_agreement
+):
     today = date.today()
     prog = Program.objects.create(
         name="P1",
@@ -67,7 +69,9 @@ def test_create_successor_links_programs_and_rollover(coordinator_user, active_a
         end_date=today + timedelta(days=300),
     )
     active_agreement.programs.add(prog)
-    f = SimpleUploadedFile("sig.pdf", b"%PDF-1.4 renewal test", content_type="application/pdf")
+    f = SimpleUploadedFile(
+        "sig.pdf", b"%PDF-1.4 renewal test", content_type="application/pdf"
+    )
     ExchangeAgreementDocument.objects.create(
         agreement=active_agreement,
         category=ExchangeAgreementDocument.Category.SIGNED_COPY,

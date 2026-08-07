@@ -55,7 +55,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         if options["status"]:
             self.show_cache_status()
-        elif options["test"] or options["test_set_get"] or options["test_clear"] or options["test_performance"]:
+        elif (
+            options["test"]
+            or options["test_set_get"]
+            or options["test_clear"]
+            or options["test_performance"]
+        ):
             self.run_cache_tests()
         elif options["clear"]:
             self.clear_cache()
@@ -72,19 +77,19 @@ class Command(BaseCommand):
         # Show cache backends
         self.stdout.write("\n📋 Cache Backends:")
         for alias, config in settings.CACHES.items():
-            self.stdout.write(f'  {alias}: {config["BACKEND"]}')
-            self.stdout.write(f'    Location: {config.get("LOCATION", "N/A")}')
-            self.stdout.write(f'    Timeout: {config.get("TIMEOUT", "default")}s')
-            self.stdout.write(f'    Key Prefix: {config.get("KEY_PREFIX", "none")}')
+            self.stdout.write(f"  {alias}: {config['BACKEND']}")
+            self.stdout.write(f"    Location: {config.get('LOCATION', 'N/A')}")
+            self.stdout.write(f"    Timeout: {config.get('TIMEOUT', 'default')}s")
+            self.stdout.write(f"    Key Prefix: {config.get('KEY_PREFIX', 'none')}")
 
         # Show session configuration
         self.stdout.write("\n🔐 Session Configuration:")
-        self.stdout.write(f'  Engine: {getattr(settings, "SESSION_ENGINE", "default")}')
+        self.stdout.write(f"  Engine: {getattr(settings, 'SESSION_ENGINE', 'default')}")
         self.stdout.write(
-            f'  Cache Alias: {getattr(settings, "SESSION_CACHE_ALIAS", "default")}'
+            f"  Cache Alias: {getattr(settings, 'SESSION_CACHE_ALIAS', 'default')}"
         )
         self.stdout.write(
-            f'  Cookie Age: {getattr(settings, "SESSION_COOKIE_AGE", "default")}s'
+            f"  Cookie Age: {getattr(settings, 'SESSION_COOKIE_AGE', 'default')}s"
         )
 
         # Show middleware configuration
@@ -151,9 +156,9 @@ class Command(BaseCommand):
             cache.set(key, f"test_value_{i}", 60)
             retrieved = cache.get(key)
             if retrieved == f"test_value_{i}":
-                self.stdout.write(f"  ✅ Key {i+1}: PASS")
+                self.stdout.write(f"  ✅ Key {i + 1}: PASS")
             else:
-                self.stdout.write(f"  ❌ Key {i+1}: FAIL")
+                self.stdout.write(f"  ❌ Key {i + 1}: FAIL")
 
         key_time = time.time() - start_time
         self.stdout.write(f"  ⏱️ Key generation completed in {key_time:.4f}s")
@@ -218,7 +223,7 @@ class Command(BaseCommand):
         self.stdout.write("\n📊 Test Summary:")
         self.stdout.write(f"  Total time: {total_time:.4f}s")
         self.stdout.write("Cache test completed")
-        self.stdout.write(f"  Average operation time: {total_time/4:.4f}s")
+        self.stdout.write(f"  Average operation time: {total_time / 4:.4f}s")
 
     def clear_cache(self):
         """Clear all cache."""

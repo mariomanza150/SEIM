@@ -88,7 +88,9 @@ class TestApplicationDynamicFormAPI(TestCase):
         )
         self.assertEqual(detail_response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            detail_response.data["dynamic_form_submission"]["responses"]["academic_goals"],
+            detail_response.data["dynamic_form_submission"]["responses"][
+                "academic_goals"
+            ],
             "Study international policy.",
         )
         self.assertEqual(
@@ -117,7 +119,9 @@ class TestApplicationDynamicFormAPI(TestCase):
     def test_create_application_after_deadline_fails(self):
         self.program.application_open_date = timezone.localdate() - timedelta(days=30)
         self.program.application_deadline = timezone.localdate() - timedelta(days=1)
-        self.program.save(update_fields=["application_open_date", "application_deadline"])
+        self.program.save(
+            update_fields=["application_open_date", "application_deadline"]
+        )
 
         response = self.client.post(
             reverse("api:application-list"),
@@ -253,7 +257,9 @@ class TestApplicationDynamicFormAPI(TestCase):
         self.assertEqual(submit_ok.status_code, status.HTTP_200_OK)
 
     def test_multistep_advancing_blocked_until_step_documents_approved(self):
-        dt = DocumentType.objects.create(name="Step1 Doc", description="needed for step 1")
+        dt = DocumentType.objects.create(
+            name="Step1 Doc", description="needed for step 1"
+        )
         self.program.required_document_types.add(dt)
         self.form_type.step_definitions = [
             {
@@ -289,7 +295,9 @@ class TestApplicationDynamicFormAPI(TestCase):
         self.assertEqual(blocked.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("dynamic_form", blocked.data)
 
-        pdf = SimpleUploadedFile("stub.pdf", b"%PDF-1.4 test", content_type="application/pdf")
+        pdf = SimpleUploadedFile(
+            "stub.pdf", b"%PDF-1.4 test", content_type="application/pdf"
+        )
         app = self.program.application_set.get(id=app_id)
         Document.objects.create(
             application=app,

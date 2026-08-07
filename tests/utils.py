@@ -99,9 +99,7 @@ class TestUtils:
             "student": student,
             "program": program,
             "status": status_obj,
-            "submitted_at": None
-            if status_name == "draft"
-            else timezone.now(),
+            "submitted_at": None if status_name == "draft" else timezone.now(),
         }
         defaults.update(kwargs)
 
@@ -363,7 +361,9 @@ def assert_valid_date_format(date_string: str, format: str = "%Y-%m-%d"):
     try:
         datetime.strptime(date_string, format)
     except ValueError as e:
-        raise AssertionError(f"Date string '{date_string}' is not in format '{format}'") from e
+        raise AssertionError(
+            f"Date string '{date_string}' is not in format '{format}'"
+        ) from e
 
 
 # Mock helpers

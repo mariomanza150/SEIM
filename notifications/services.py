@@ -168,11 +168,15 @@ class NotificationService:
             Notification instance, or None if suppressed by preferences.
         """
         # Validate notification type
-        valid_types = ['in_app', 'email', 'both']
+        valid_types = ["in_app", "email", "both"]
         if notification_type not in valid_types:
-            raise ValueError(f"Invalid notification type: {notification_type}. Must be one of {valid_types}")
+            raise ValueError(
+                f"Invalid notification type: {notification_type}. Must be one of {valid_types}"
+            )
 
-        if preference_key and not NotificationService.is_enabled(recipient, preference_key):
+        if preference_key and not NotificationService.is_enabled(
+            recipient, preference_key
+        ):
             return None
 
         settings_category = resolve_transactional_route_settings_category(
@@ -193,28 +197,28 @@ class NotificationService:
             action_url=action_url,
             action_text=action_text,
             data=data or {},
-            category=category
+            category=category,
         )
 
         # Send email notification if type is email or both
-        if effective_type in ['email', 'both']:
+        if effective_type in ["email", "both"]:
             send_notification_by_id.delay(notification.id)
 
         # Send real-time notification via WebSocket
-        if effective_type in ('in_app', 'both'):
+        if effective_type in ("in_app", "both"):
             NotificationService._broadcast_notification(recipient, notification)
 
         return notification
-    
+
     @staticmethod
     def _broadcast_notification(recipient, notification):
         """
         Broadcast notification to user's WebSocket channel via Django Channels.
-        
+
         This method sends real-time notifications to connected clients through WebSocket.
         If the user is not connected or WebSocket broadcasting fails, the notification
         is still saved in the database and can be retrieved via API.
-        
+
         Args:
             recipient: User to send notification to
             notification: Notification instance
@@ -222,43 +226,44 @@ class NotificationService:
         try:
             channel_layer = get_channel_layer()
             if not channel_layer:
-                logger.warning("Channel layer not configured. WebSocket notifications disabled.")
+                logger.warning(
+                    "Channel layer not configured. WebSocket notifications disabled."
+                )
                 return
-                
+
             notification_group = f"notifications_{recipient.id}"
-            
+
             # Prepare notification data for WebSocket
             notification_data = {
-                'type': 'notification_new',
-                'notification': {
-                    'id': str(notification.id),
-                    'title': notification.title,
-                    'message': notification.message,
-                    'category': notification.category,
-                    'action_url': notification.action_url,
-                    'action_text': notification.action_text,
-                    'sent_at': notification.sent_at.isoformat(),
-                    'is_read': notification.is_read,
-                    'data': notification.data or {},
-                }
+                "type": "notification_new",
+                "notification": {
+                    "id": str(notification.id),
+                    "title": notification.title,
+                    "message": notification.message,
+                    "category": notification.category,
+                    "action_url": notification.action_url,
+                    "action_text": notification.action_text,
+                    "sent_at": notification.sent_at.isoformat(),
+                    "is_read": notification.is_read,
+                    "data": notification.data or {},
+                },
             }
-            
+
             # Send to user's notification group
             async_to_sync(channel_layer.group_send)(
-                notification_group,
-                notification_data
+                notification_group, notification_data
             )
-            
+
             logger.debug(
                 f"Broadcast notification {notification.id} to user {recipient.id} via WebSocket"
             )
-            
+
         except Exception as e:
             # Log error but don't fail the notification
             # The notification is still saved in database and accessible via API
             logger.error(
                 f"Failed to broadcast notification {notification.id} via WebSocket: {e}",
-                exc_info=True
+                exc_info=True,
             )
 
     @staticmethod
@@ -302,7 +307,9 @@ class NotificationService:
             logger.debug("broadcast_application_sync skipped: %s", e, exc_info=True)
 
     @staticmethod
-    def send_bulk_notifications(recipients, title, message, notification_type="in_app", **kwargs):
+    def send_bulk_notifications(
+        recipients, title, message, notification_type="in_app", **kwargs
+    ):
         """Send notifications to multiple recipients."""
         notifications = []
         for recipient in recipients:
@@ -318,7 +325,9 @@ class NotificationService:
         return notifications
 
     @staticmethod
-    def send_notification_to_role(role_name, title, message, notification_type="in_app", **kwargs):
+    def send_notification_to_role(
+        role_name, title, message, notification_type="in_app", **kwargs
+    ):
         """Send notification to all users with a specific role."""
         from accounts.models import User
 
@@ -345,19 +354,17 @@ class NotificationService:
     @staticmethod
     def mark_all_notifications_as_read(user):
         """Mark all notifications as read for a user."""
-        count = Notification.objects.filter(
-            recipient=user,
-            is_read=False
-        ).update(is_read=True)
+        count = Notification.objects.filter(recipient=user, is_read=False).update(
+            is_read=True
+        )
         return count
 
     @staticmethod
     def get_unread_notifications(user):
         """Get unread notifications for a user."""
-        return Notification.objects.filter(
-            recipient=user,
-            is_read=False
-        ).order_by('-sent_at')
+        return Notification.objects.filter(recipient=user, is_read=False).order_by(
+            "-sent_at"
+        )
 
     @staticmethod
     def get_notification_count(user, use_cache=False):
@@ -379,7 +386,5 @@ class NotificationService:
     def delete_old_notifications(days=30):
         """Delete notifications older than specified days."""
         cutoff_date = timezone.now() - timedelta(days=days)
-        deleted_count, _ = Notification.objects.filter(
-            sent_at__lt=cutoff_date
-        ).delete()
+        deleted_count, _ = Notification.objects.filter(sent_at__lt=cutoff_date).delete()
         return deleted_count

@@ -2,8 +2,9 @@
 Tests for Calendar Events API.
 """
 
-import pytest
 from datetime import timedelta
+
+import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -17,102 +18,134 @@ User = get_user_model()
 @pytest.mark.django_db
 class TestCalendarEventAPI:
     """Test Calendar Events API."""
-    
-    def test_get_calendar_events(self, api_client_authenticated_student, calendar_programs):
+
+    def test_get_calendar_events(
+        self, api_client_authenticated_student, calendar_programs
+    ):
         """Test getting calendar events."""
-        response = api_client_authenticated_student.get('/api/calendar/events/')
-        
+        response = api_client_authenticated_student.get("/api/calendar/events/")
+
         assert response.status_code == 200
         events = response.json()
         assert isinstance(events, list)
         assert len(events) > 0
-    
-    def test_calendar_events_format(self, api_client_authenticated_student, calendar_programs):
+
+    def test_calendar_events_format(
+        self, api_client_authenticated_student, calendar_programs
+    ):
         """Test calendar events are in FullCalendar format."""
-        response = api_client_authenticated_student.get('/api/calendar/events/')
-        
+        response = api_client_authenticated_student.get("/api/calendar/events/")
+
         assert response.status_code == 200
         events = response.json()
-        
+
         # Check FullCalendar format
         for event in events:
-            assert 'id' in event
-            assert 'title' in event
-            assert 'start' in event
+            assert "id" in event
+            assert "title" in event
+            assert "start" in event
             # Optional fields (DRF may include url as null)
             if event.get("url") is not None:
                 assert isinstance(event["url"], str)
             if event.get("spa_path") is not None:
                 assert isinstance(event["spa_path"], str)
-    
-    def test_filter_by_date_range(self, api_client_authenticated_student, calendar_programs):
+
+    def test_filter_by_date_range(
+        self, api_client_authenticated_student, calendar_programs
+    ):
         """Test filtering events by date range."""
         start = timezone.now()
         end = start + timedelta(days=90)
-        
+
         response = api_client_authenticated_student.get(
-            f'/api/calendar/events/?start={start.isoformat()}&end={end.isoformat()}'
+            f"/api/calendar/events/?start={start.isoformat()}&end={end.isoformat()}"
         )
-        
+
         assert response.status_code == 200
         events = response.json()
         assert isinstance(events, list)
-    
-    def test_filter_by_event_type_program(self, api_client_authenticated_student, calendar_programs):
+
+    def test_filter_by_event_type_program(
+        self, api_client_authenticated_student, calendar_programs
+    ):
         """Test filtering events by type: program."""
-        response = api_client_authenticated_student.get('/api/calendar/events/?type=program')
-        
+        response = api_client_authenticated_student.get(
+            "/api/calendar/events/?type=program"
+        )
+
         assert response.status_code == 200
         events = response.json()
-        
+
         # All events should be program-related
-        assert all('program' in event['id'] for event in events)
-    
-    def test_filter_by_event_type_application(self, api_client_authenticated_student, student_applications):
+        assert all("program" in event["id"] for event in events)
+
+    def test_filter_by_event_type_application(
+        self, api_client_authenticated_student, student_applications
+    ):
         """Test filtering events by type: application."""
-        response = api_client_authenticated_student.get('/api/calendar/events/?type=application')
-        
+        response = api_client_authenticated_student.get(
+            "/api/calendar/events/?type=application"
+        )
+
         assert response.status_code == 200
         events = response.json()
-        
+
         # All events should be application-related
-        assert all('application' in event['id'] for event in events)
-    
-    def test_student_sees_only_own_applications(self, api_client_authenticated_student, student_applications, other_student_applications):
+        assert all("application" in event["id"] for event in events)
+
+    def test_student_sees_only_own_applications(
+        self,
+        api_client_authenticated_student,
+        student_applications,
+        other_student_applications,
+    ):
         """Test students only see their own application events."""
-        response = api_client_authenticated_student.get('/api/calendar/events/?type=application')
-        
+        response = api_client_authenticated_student.get(
+            "/api/calendar/events/?type=application"
+        )
+
         assert response.status_code == 200
         events = response.json()
-        
+
         # Should only see own applications
         own_app_ids = [str(app.id) for app in student_applications]
-        event_ids = [e['id'].replace('application-', '') for e in events]
-        
+        event_ids = [e["id"].replace("application-", "") for e in events]
+
         assert all(eid in own_app_ids for eid in event_ids)
-    
-    def test_coordinator_sees_all_applications(self, api_client_authenticated_coordinator, student_applications, other_student_applications):
+
+    def test_coordinator_sees_all_applications(
+        self,
+        api_client_authenticated_coordinator,
+        student_applications,
+        other_student_applications,
+    ):
         """Test coordinators see all application events."""
-        response = api_client_authenticated_coordinator.get('/api/calendar/events/?type=application')
-        
+        response = api_client_authenticated_coordinator.get(
+            "/api/calendar/events/?type=application"
+        )
+
         assert response.status_code == 200
         events = response.json()
-        
+
         # Should see all applications
         total_apps = len(student_applications) + len(other_student_applications)
         assert len(events) == total_apps
-    
-    def test_program_start_end_events(self, api_client_authenticated_student, calendar_programs):
+
+    def test_program_start_end_events(
+        self, api_client_authenticated_student, calendar_programs
+    ):
         """Test program start and end events are generated."""
-        response = api_client_authenticated_student.get('/api/calendar/events/?type=program')
-        
+        response = api_client_authenticated_student.get(
+            "/api/calendar/events/?type=program"
+        )
+
         assert response.status_code == 200
         events = response.json()
-        
+
         # Should have both start and end events for each program
-        start_events = [e for e in events if 'start' in e['id']]
-        end_events = [e for e in events if 'end' in e['id']]
-        
+        start_events = [e for e in events if "start" in e["id"]]
+        end_events = [e for e in events if "end" in e["id"]]
+
         assert len(start_events) > 0
         assert len(end_events) > 0
 
@@ -163,152 +196,163 @@ class TestCalendarEventAPI:
 @pytest.mark.django_db
 class TestReminderAPI:
     """Test Reminder API endpoints."""
-    
+
     def test_create_reminder(self, api_client_authenticated_student, calendar_programs):
         """Test creating a reminder."""
         program = calendar_programs[0]
         remind_at = timezone.now() + timedelta(days=7)
-        
-        response = api_client_authenticated_student.post('/api/reminders/', {
-            'event_type': 'program_start',
-            'event_id': str(program.id),
-            'event_title': f'Program Start: {program.name}',
-            'remind_at': remind_at.isoformat()
-        }, format='json')
-        
+
+        response = api_client_authenticated_student.post(
+            "/api/reminders/",
+            {
+                "event_type": "program_start",
+                "event_id": str(program.id),
+                "event_title": f"Program Start: {program.name}",
+                "remind_at": remind_at.isoformat(),
+            },
+            format="json",
+        )
+
         assert response.status_code == 201
         data = response.json()
-        assert data['event_type'] == 'program_start'
-        assert data['sent'] is False
-    
+        assert data["event_type"] == "program_start"
+        assert data["sent"] is False
+
     def test_list_reminders(self, api_client_authenticated_student, reminders):
         """Test listing reminders."""
-        response = api_client_authenticated_student.get('/api/reminders/')
-        
+        response = api_client_authenticated_student.get("/api/reminders/")
+
         assert response.status_code == 200
         data = response.json()
-        assert 'results' in data
-        assert len(data['results']) == len(reminders)
-    
+        assert "results" in data
+        assert len(data["results"]) == len(reminders)
+
     def test_get_upcoming_reminders(self, api_client_authenticated_student, reminders):
         """Test getting upcoming (unsent) reminders."""
-        response = api_client_authenticated_student.get('/api/reminders/upcoming/')
-        
+        response = api_client_authenticated_student.get("/api/reminders/upcoming/")
+
         assert response.status_code == 200
         reminders_list = response.json()
-        
+
         # Should only show unsent reminders
-        assert all(not r['sent'] for r in reminders_list)
-    
+        assert all(not r["sent"] for r in reminders_list)
+
     def test_delete_reminder(self, api_client_authenticated_student, reminders):
         """Test deleting a reminder."""
         reminder = reminders[0]
-        
-        response = api_client_authenticated_student.delete(f'/api/reminders/{reminder.id}/')
-        
+
+        response = api_client_authenticated_student.delete(
+            f"/api/reminders/{reminder.id}/"
+        )
+
         assert response.status_code == 204
-        
+
         # Verify deleted
         from notifications.models import Reminder
+
         assert not Reminder.objects.filter(id=reminder.id).exists()
-    
-    def test_user_can_only_see_own_reminders(self, api_client_authenticated_student, other_user_reminders):
+
+    def test_user_can_only_see_own_reminders(
+        self, api_client_authenticated_student, other_user_reminders
+    ):
         """Test users can only see their own reminders."""
-        response = api_client_authenticated_student.get('/api/reminders/')
-        
+        response = api_client_authenticated_student.get("/api/reminders/")
+
         assert response.status_code == 200
         data = response.json()
         # Student shouldn't see other user's reminders
-        assert len(data['results']) == 0
-    
-    def test_filter_reminders_by_event_type(self, api_client_authenticated_student, reminders):
+        assert len(data["results"]) == 0
+
+    def test_filter_reminders_by_event_type(
+        self, api_client_authenticated_student, reminders
+    ):
         """Test filtering reminders by event type."""
         response = api_client_authenticated_student.get(
-            '/api/reminders/?event_type=program_start'
+            "/api/reminders/?event_type=program_start"
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        results = data['results']
-        assert all(r['event_type'] == 'program_start' for r in results)
+        results = data["results"]
+        assert all(r["event_type"] == "program_start" for r in results)
 
 
 @pytest.mark.django_db
 class TestReminderTask:
     """Test reminder sending task."""
-    
+
     def test_send_deadline_reminders_task(self, student_user, calendar_programs):
         """Test the Celery task sends reminders."""
         from notifications.models import Reminder
         from notifications.tasks import send_deadline_reminders
-        
+
         # Create a reminder that's due
         program = calendar_programs[0]
         reminder = Reminder.objects.create(
             user=student_user,
-            event_type='program_start',
+            event_type="program_start",
             event_id=program.id,
-            event_title=f'Program Start: {program.name}',
+            event_title=f"Program Start: {program.name}",
             remind_at=timezone.now() - timedelta(minutes=5),  # Past due
-            sent=False
+            sent=False,
         )
-        
+
         # Run task
         count = send_deadline_reminders()
-        
+
         assert count == 1
-        
+
         # Verify reminder was sent
         reminder.refresh_from_db()
         assert reminder.sent
         assert reminder.notification is not None
-    
+
     def test_only_sends_unsent_reminders(self, student_user, calendar_programs):
         """Test task only sends unsent reminders."""
         from notifications.models import Reminder
         from notifications.tasks import send_deadline_reminders
-        
+
         program = calendar_programs[0]
-        
+
         # Create already sent reminder
-        sent_reminder = Reminder.objects.create(
+        Reminder.objects.create(
             user=student_user,
-            event_type='program_start',
+            event_type="program_start",
             event_id=program.id,
-            event_title=f'Program Start: {program.name}',
+            event_title=f"Program Start: {program.name}",
             remind_at=timezone.now() - timedelta(days=1),
-            sent=True
+            sent=True,
         )
-        
+
         # Run task
         count = send_deadline_reminders()
-        
+
         # Should not send again
         assert count == 0
-    
+
     def test_only_sends_due_reminders(self, student_user, calendar_programs):
         """Test task only sends reminders that are due."""
         from notifications.models import Reminder
         from notifications.tasks import send_deadline_reminders
-        
+
         program = calendar_programs[0]
-        
+
         # Create future reminder
         future_reminder = Reminder.objects.create(
             user=student_user,
-            event_type='program_start',
+            event_type="program_start",
             event_id=program.id,
-            event_title=f'Program Start: {program.name}',
+            event_title=f"Program Start: {program.name}",
             remind_at=timezone.now() + timedelta(days=7),  # Future
-            sent=False
+            sent=False,
         )
-        
+
         # Run task
         count = send_deadline_reminders()
-        
+
         # Should not send yet
         assert count == 0
-        
+
         future_reminder.refresh_from_db()
         assert not future_reminder.sent
 
@@ -317,23 +361,27 @@ class TestReminderTask:
 def calendar_programs(db):
     """Create test programs for calendar."""
     programs = []
-    
-    programs.append(Program.objects.create(
-        name="Summer Exchange",
-        description="Summer program",
-        start_date=timezone.now().date() + timedelta(days=60),
-        end_date=timezone.now().date() + timedelta(days=150),
-        is_active=True
-    ))
-    
-    programs.append(Program.objects.create(
-        name="Fall Semester",
-        description="Fall semester abroad",
-        start_date=timezone.now().date() + timedelta(days=120),
-        end_date=timezone.now().date() + timedelta(days=270),
-        is_active=True
-    ))
-    
+
+    programs.append(
+        Program.objects.create(
+            name="Summer Exchange",
+            description="Summer program",
+            start_date=timezone.now().date() + timedelta(days=60),
+            end_date=timezone.now().date() + timedelta(days=150),
+            is_active=True,
+        )
+    )
+
+    programs.append(
+        Program.objects.create(
+            name="Fall Semester",
+            description="Fall semester abroad",
+            start_date=timezone.now().date() + timedelta(days=120),
+            end_date=timezone.now().date() + timedelta(days=270),
+            is_active=True,
+        )
+    )
+
     return programs
 
 
@@ -341,17 +389,19 @@ def calendar_programs(db):
 def student_applications(student_user, calendar_programs):
     """Create test applications for student."""
     apps = []
-    status = ApplicationStatus.objects.get_or_create(name="submitted", defaults={'order': 1})[0]
-    
+    status = ApplicationStatus.objects.get_or_create(
+        name="submitted", defaults={"order": 1}
+    )[0]
+
     for program in calendar_programs:
         app = Application.objects.create(
             student=student_user,
             program=program,
             status=status,
-            submitted_at=timezone.now()
+            submitted_at=timezone.now(),
         )
         apps.append(app)
-    
+
     return apps
 
 
@@ -359,27 +409,27 @@ def student_applications(student_user, calendar_programs):
 def other_student_applications(db, calendar_programs):
     """Create applications for another student."""
     from accounts.models import Role
-    
+
     other_user = User.objects.create_user(
-        username='other_student',
-        email='other@test.com',
-        password='testpass123'
+        username="other_student", email="other@test.com", password="testpass123"
     )
-    student_role = Role.objects.get_or_create(name='student')[0]
+    student_role = Role.objects.get_or_create(name="student")[0]
     other_user.roles.add(student_role)
-    
+
     apps = []
-    status = ApplicationStatus.objects.get_or_create(name="submitted", defaults={'order': 1})[0]
-    
+    status = ApplicationStatus.objects.get_or_create(
+        name="submitted", defaults={"order": 1}
+    )[0]
+
     for program in calendar_programs:
         app = Application.objects.create(
             student=other_user,
             program=program,
             status=status,
-            submitted_at=timezone.now()
+            submitted_at=timezone.now(),
         )
         apps.append(app)
-    
+
     return apps
 
 
@@ -387,48 +437,45 @@ def other_student_applications(db, calendar_programs):
 def reminders(student_user, calendar_programs):
     """Create test reminders."""
     from notifications.models import Reminder
-    
+
     reminders_list = []
-    
+
     for program in calendar_programs:
         reminder = Reminder.objects.create(
             user=student_user,
-            event_type='program_start',
+            event_type="program_start",
             event_id=program.id,
-            event_title=f'Program Start: {program.name}',
+            event_title=f"Program Start: {program.name}",
             remind_at=timezone.now() + timedelta(days=7),
-            sent=False
+            sent=False,
         )
         reminders_list.append(reminder)
-    
+
     return reminders_list
 
 
 @pytest.fixture
 def other_user_reminders(db, calendar_programs):
     """Create reminders for another user."""
-    from accounts.models import Role
     from notifications.models import Reminder
-    
+
     other_user = User.objects.create_user(
-        username='other_user',
-        email='other2@test.com',
-        password='testpass123'
+        username="other_user", email="other2@test.com", password="testpass123"
     )
-    
+
     reminders_list = []
     program = calendar_programs[0]
-    
+
     reminder = Reminder.objects.create(
         user=other_user,
-        event_type='program_start',
+        event_type="program_start",
         event_id=program.id,
-        event_title=f'Program Start: {program.name}',
+        event_title=f"Program Start: {program.name}",
         remind_at=timezone.now() + timedelta(days=7),
-        sent=False
+        sent=False,
     )
     reminders_list.append(reminder)
-    
+
     return reminders_list
 
 
@@ -436,11 +483,11 @@ def other_user_reminders(db, calendar_programs):
 def api_client_authenticated_coordinator(coordinator_user):
     """Create authenticated API client for coordinator."""
     from rest_framework_simplejwt.tokens import RefreshToken
-    
+
     client = APIClient()
     refresh = RefreshToken.for_user(coordinator_user)
-    client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
-    
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+
     return client
 
 
@@ -448,10 +495,9 @@ def api_client_authenticated_coordinator(coordinator_user):
 def api_client_authenticated_student(student_user):
     """Create authenticated API client for student."""
     from rest_framework_simplejwt.tokens import RefreshToken
-    
+
     client = APIClient()
     refresh = RefreshToken.for_user(student_user)
-    client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
-    
-    return client
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
+    return client

@@ -1,12 +1,12 @@
 """
 Dashboard API views for user statistics and recent activity.
 """
+
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.db.models import Count, Exists, OuterRef, Q
 from django.utils import timezone
-
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response

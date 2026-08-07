@@ -45,11 +45,32 @@ def test_visible_when_program_id_plus_field():
 
 
 def test_visible_when_staff_only_and_roles_any():
-    assert visible_when_satisfied({"staff_only": True}, {}, {"viewer_roles": ["student"]}) is False
-    assert visible_when_satisfied({"staff_only": True}, {}, {"viewer_roles": ["coordinator"]}) is True
-    assert visible_when_satisfied({"staff_only": True}, {}, {"viewer_roles": ["admin"]}) is True
-    assert visible_when_satisfied({"roles_any": ["admin", "student"]}, {}, {"viewer_roles": ["student"]}) is True
-    assert visible_when_satisfied({"roles_any": ["admin"]}, {}, {"viewer_roles": ["student"]}) is False
+    assert (
+        visible_when_satisfied({"staff_only": True}, {}, {"viewer_roles": ["student"]})
+        is False
+    )
+    assert (
+        visible_when_satisfied(
+            {"staff_only": True}, {}, {"viewer_roles": ["coordinator"]}
+        )
+        is True
+    )
+    assert (
+        visible_when_satisfied({"staff_only": True}, {}, {"viewer_roles": ["admin"]})
+        is True
+    )
+    assert (
+        visible_when_satisfied(
+            {"roles_any": ["admin", "student"]}, {}, {"viewer_roles": ["student"]}
+        )
+        is True
+    )
+    assert (
+        visible_when_satisfied(
+            {"roles_any": ["admin"]}, {}, {"viewer_roles": ["student"]}
+        )
+        is False
+    )
 
 
 @pytest.mark.django_db
@@ -74,7 +95,9 @@ def test_validate_responses_visibility_context_program_id_only():
     )
     with pytest.raises(ValidationError):
         FormSubmissionService.validate_responses(
-            ft, {}, visibility_context={"program_id": 42, "has_assigned_coordinator": False}
+            ft,
+            {},
+            visibility_context={"program_id": 42, "has_assigned_coordinator": False},
         )
 
 
@@ -189,9 +212,13 @@ def test_iter_visible_steps_skips_conditional():
             {"key": "s3", "title": "Three", "field_names": ["b"]},
         ],
     )
-    keys_hide = [s["key"] for s in iter_visible_steps_from_form_type(ft, {"branch": "n"})]
+    keys_hide = [
+        s["key"] for s in iter_visible_steps_from_form_type(ft, {"branch": "n"})
+    ]
     assert keys_hide == ["s1", "s3"]
-    keys_show = [s["key"] for s in iter_visible_steps_from_form_type(ft, {"branch": "x"})]
+    keys_show = [
+        s["key"] for s in iter_visible_steps_from_form_type(ft, {"branch": "x"})
+    ]
     assert keys_show == ["s1", "s2", "s3"]
 
 

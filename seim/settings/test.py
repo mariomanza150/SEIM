@@ -15,13 +15,12 @@ DEBUG = True
 
 # Use DATABASE_URL if available (for E2E tests in Docker), otherwise SQLite for unit tests
 import environ
+
 env = environ.Env()
 
-if os.environ.get('DATABASE_URL'):
+if os.environ.get("DATABASE_URL"):
     # Use PostgreSQL for E2E tests
-    DATABASES = {
-        'default': env.db()
-    }
+    DATABASES = {"default": env.db()}
 else:
     # Use in-memory SQLite for unit tests
     DATABASES = {
@@ -52,24 +51,28 @@ CACHEOPS_ENABLED = False
 
 # Disable Wagtail and other non-essential apps for E2E tests
 DISABLED_APPS = [
-    'cacheops',
-    'wagtail',
-    'wagtail.contrib.forms',
-    'wagtail.contrib.redirects',
-    'wagtail.embeds',
-    'wagtail.sites',
-    'wagtail.users',
-    'wagtail.snippets',
-    'wagtail.documents',
-    'wagtail.images',
-    'wagtail.search',
-    'wagtail.admin',
-    'wagtailseo',
-    'wagtail_markdown',
-    'cms',  # Our CMS app that depends on Wagtail
+    "cacheops",
+    "wagtail",
+    "wagtail.contrib.forms",
+    "wagtail.contrib.redirects",
+    "wagtail.embeds",
+    "wagtail.sites",
+    "wagtail.users",
+    "wagtail.snippets",
+    "wagtail.documents",
+    "wagtail.images",
+    "wagtail.search",
+    "wagtail.admin",
+    "wagtailseo",
+    "wagtail_markdown",
+    "cms",  # Our CMS app that depends on Wagtail
 ]
 
-INSTALLED_APPS = [app for app in INSTALLED_APPS if app not in DISABLED_APPS and not app.startswith('wagtail')]
+INSTALLED_APPS = [
+    app
+    for app in INSTALLED_APPS
+    if app not in DISABLED_APPS and not app.startswith("wagtail")
+]
 
 # Wagtail is stripped from INSTALLED_APPS but base TEMPLATES still reference its context
 # processors; remove them so Django template rendering (e.g. admin dashboard) works in tests.

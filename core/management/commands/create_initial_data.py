@@ -67,5 +67,6 @@ class Command(BaseCommand):
             Role.objects.get_or_create(name=role_name)
             self.stdout.write(f"  ✓ Role: {role_name}")
 
-        self.stdout.write(self.style.SUCCESS("Initial system data created successfully!"))
-
+        self.stdout.write(
+            self.style.SUCCESS("Initial system data created successfully!")
+        )

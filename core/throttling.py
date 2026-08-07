@@ -14,7 +14,8 @@ class BurstRateThrottle(UserRateThrottle):
     Use for endpoints that should have stricter short-term limits
     like login, registration, and password reset.
     """
-    scope = 'burst'
+
+    scope = "burst"
 
 
 class SustainedRateThrottle(UserRateThrottle):
@@ -23,7 +24,8 @@ class SustainedRateThrottle(UserRateThrottle):
 
     Default throttle for most authenticated endpoints.
     """
-    scope = 'user'
+
+    scope = "user"
 
 
 class StrictAnonRateThrottle(AnonRateThrottle):
@@ -32,5 +34,5 @@ class StrictAnonRateThrottle(AnonRateThrottle):
 
     Used to prevent abuse from unauthenticated users.
     """
-    scope = 'anon'
 
+    scope = "anon"

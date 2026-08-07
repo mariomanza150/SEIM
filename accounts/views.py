@@ -1,17 +1,15 @@
-
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from drf_spectacular.utils import extend_schema, extend_schema_field
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, status, viewsets
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from core.throttling import BurstRateThrottle
 from core.permissions import CanManageRoles
+from core.throttling import BurstRateThrottle
 
 from .models import Permission, Profile, Role, UserSession, UserSettings
 from .serializers import (
@@ -43,6 +41,7 @@ from .serializers import (
 
 class UserViewSet(viewsets.ModelViewSet):
     """ViewSet for User model operations."""
+
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
     permission_classes = [CanManageRoles]  # SEIM admins (role-based) can manage users
@@ -50,6 +49,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class ProfileViewSet(viewsets.ModelViewSet):
     """ViewSet for Profile model operations."""
+
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = [IsAuthenticated]
@@ -130,9 +130,7 @@ class LoginView(generics.GenericAPIView):
         # Create or update user session record
         try:
             session = UserSession.objects.get(
-                user=user,
-                session_key=request.session.session_key,
-                is_active=True
+                user=user, session_key=request.session.session_key, is_active=True
             )
             session.last_activity = timezone.now()
             session.save()
@@ -141,11 +139,11 @@ class LoginView(generics.GenericAPIView):
             UserSession.objects.create(
                 user=user,
                 session_key=request.session.session_key,
-                user_agent=request.META.get('HTTP_USER_AGENT', ''),
-                ip_address=request.META.get('REMOTE_ADDR'),
-                device=self._get_device_info(request.META.get('HTTP_USER_AGENT', '')),
-                location=self._get_location_info(request.META.get('REMOTE_ADDR')),
-                is_active=True
+                user_agent=request.META.get("HTTP_USER_AGENT", ""),
+                ip_address=request.META.get("REMOTE_ADDR"),
+                device=self._get_device_info(request.META.get("HTTP_USER_AGENT", "")),
+                location=self._get_location_info(request.META.get("REMOTE_ADDR")),
+                is_active=True,
             )
 
         # Issue JWT token for API authentication
@@ -162,27 +160,31 @@ class LoginView(generics.GenericAPIView):
     def _get_device_info(self, user_agent):
         """Extract device information from user agent."""
         if not user_agent:
-            return 'Unknown'
+            return "Unknown"
 
         user_agent_lower = user_agent.lower()
-        if 'mobile' in user_agent_lower or 'android' in user_agent_lower or 'iphone' in user_agent_lower:
-            return 'Mobile'
-        elif 'tablet' in user_agent_lower or 'ipad' in user_agent_lower:
-            return 'Tablet'
+        if (
+            "mobile" in user_agent_lower
+            or "android" in user_agent_lower
+            or "iphone" in user_agent_lower
+        ):
+            return "Mobile"
+        elif "tablet" in user_agent_lower or "ipad" in user_agent_lower:
+            return "Tablet"
         else:
-            return 'Desktop'
+            return "Desktop"
 
     def _get_location_info(self, ip_address):
         """Get location information from IP address (simplified)."""
         if not ip_address:
-            return 'Unknown'
+            return "Unknown"
 
         # For now, just return a generic location
         # In production, you might use a geolocation service
-        if ip_address in ['127.0.0.1', 'localhost']:
-            return 'Local'
+        if ip_address in ["127.0.0.1", "localhost"]:
+            return "Local"
         else:
-            return 'Remote'
+            return "Remote"
 
 
 class PasswordResetRequestView(generics.GenericAPIView):
@@ -236,43 +238,51 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
 class ProfileUpdateView(generics.GenericAPIView):
     """View for updating user account information (email, first_name, last_name)."""
+
     permission_classes = [IsAuthenticated]
     serializer_class = ProfileUpdateRequestSerializer
 
     @extend_schema(
         request=ProfileUpdateRequestSerializer,
-        responses={200: ProfileUpdateResponseSerializer, 400: ProfileUpdateResponseSerializer}
+        responses={
+            200: ProfileUpdateResponseSerializer,
+            400: ProfileUpdateResponseSerializer,
+        },
     )
     def patch(self, request, *args, **kwargs):
         user = request.user
         data = request.data
 
         # Update user fields
-        if 'email' in data and data['email'] != user.email:
+        if "email" in data and data["email"] != user.email:
             # Check if email is already taken
-            if get_user_model().objects.filter(email=data['email']).exclude(id=user.id).exists():
+            if (
+                get_user_model()
+                .objects.filter(email=data["email"])
+                .exclude(id=user.id)
+                .exists()
+            ):
                 return Response(
                     {"message": "Email address is already in use."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
-            user.email = data['email']
+            user.email = data["email"]
 
-        if 'first_name' in data:
-            user.first_name = data['first_name']
+        if "first_name" in data:
+            user.first_name = data["first_name"]
 
-        if 'last_name' in data:
-            user.last_name = data['last_name']
+        if "last_name" in data:
+            user.last_name = data["last_name"]
 
         try:
             user.save()
             return Response(
-                {"detail": "Profile updated successfully."},
-                status=status.HTTP_200_OK
+                {"detail": "Profile updated successfully."}, status=status.HTTP_200_OK
             )
         except Exception as e:
             return Response(
                 {"message": f"Failed to update profile: {str(e)}"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -286,10 +296,7 @@ class LogoutView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = LogoutSerializer
 
-    @extend_schema(
-        request=LogoutSerializer,
-        responses={200: LogoutResponseSerializer}
-    )
+    @extend_schema(request=LogoutSerializer, responses={200: LogoutResponseSerializer})
     def post(self, request, *args, **kwargs):
         try:
             refresh_token = request.data.get("refresh")
@@ -326,6 +333,7 @@ class ChangePasswordView(generics.GenericAPIView):
 
 class AppearanceSettingsView(generics.RetrieveUpdateAPIView):
     """View for managing appearance settings."""
+
     serializer_class = AppearanceSettingsSerializer
     permission_classes = [IsAuthenticated]
 
@@ -337,6 +345,7 @@ class AppearanceSettingsView(generics.RetrieveUpdateAPIView):
 
 class NotificationSettingsView(generics.RetrieveUpdateAPIView):
     """View for managing notification settings."""
+
     serializer_class = NotificationSettingsSerializer
     permission_classes = [IsAuthenticated]
 
@@ -348,6 +357,7 @@ class NotificationSettingsView(generics.RetrieveUpdateAPIView):
 
 class PrivacySettingsView(generics.RetrieveUpdateAPIView):
     """View for managing privacy settings."""
+
     serializer_class = PrivacySettingsSerializer
     permission_classes = [IsAuthenticated]
 
@@ -359,6 +369,7 @@ class PrivacySettingsView(generics.RetrieveUpdateAPIView):
 
 class UserSettingsView(generics.RetrieveUpdateAPIView):
     """Generic view for user settings operations."""
+
     serializer_class = UserSettingsSerializer
     permission_classes = [IsAuthenticated]
 
@@ -370,53 +381,53 @@ class UserSettingsView(generics.RetrieveUpdateAPIView):
 
 class UserSessionsView(generics.ListAPIView):
     """View for listing user sessions."""
+
     serializer_class = UserSessionSerializer
     permission_classes = [IsAuthenticated]
     pagination_class = None  # Disable pagination for sessions
 
     def get_queryset(self):
         # Handle swagger schema generation
-        if getattr(self, 'swagger_fake_view', False):
+        if getattr(self, "swagger_fake_view", False):
             return UserSession.objects.none()
         return UserSession.objects.filter(user=self.request.user, is_active=True)
 
 
 class RevokeSessionView(generics.GenericAPIView):
     """View for revoking a user session."""
+
     permission_classes = [IsAuthenticated]
     serializer_class = RevokeSessionResponseSerializer
 
     @extend_schema(
-        responses={200: RevokeSessionResponseSerializer, 404: RevokeSessionResponseSerializer}
+        responses={
+            200: RevokeSessionResponseSerializer,
+            404: RevokeSessionResponseSerializer,
+        }
     )
     def post(self, request, session_id):
         try:
             session = UserSession.objects.get(
-                id=session_id,
-                user=request.user,
-                is_active=True
+                id=session_id, user=request.user, is_active=True
             )
             session.is_active = False
             session.save()
             return Response(
-                {"detail": "Session revoked successfully."},
-                status=status.HTTP_200_OK
+                {"detail": "Session revoked successfully."}, status=status.HTTP_200_OK
             )
         except UserSession.DoesNotExist:
             return Response(
-                {"detail": "Session not found."},
-                status=status.HTTP_404_NOT_FOUND
+                {"detail": "Session not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
 
 class DeleteAccountView(generics.GenericAPIView):
     """View for deleting user account."""
+
     permission_classes = [IsAuthenticated]
     serializer_class = DeleteAccountResponseSerializer
 
-    @extend_schema(
-        responses={200: DeleteAccountResponseSerializer}
-    )
+    @extend_schema(responses={200: DeleteAccountResponseSerializer})
     def delete(self, request):
         user = request.user
         # Soft delete by deactivating the user
@@ -425,16 +436,17 @@ class DeleteAccountView(generics.GenericAPIView):
 
         # Logout the user
         from django.contrib.auth import logout
+
         logout(request)
 
         return Response(
-            {"detail": "Account deleted successfully."},
-            status=status.HTTP_200_OK
+            {"detail": "Account deleted successfully."}, status=status.HTTP_200_OK
         )
 
 
 class RoleViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for listing and retrieving roles."""
+
     queryset = Role.objects.all()
     serializer_class = RoleSerializer
     permission_classes = [IsAuthenticated]
@@ -442,6 +454,7 @@ class RoleViewSet(viewsets.ReadOnlyModelViewSet):
 
 class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
     """ViewSet for listing and retrieving permissions."""
+
     queryset = Permission.objects.all()
     serializer_class = PermissionSerializer
     permission_classes = [IsAuthenticated]
@@ -449,12 +462,13 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
 
 class UserSessionViewSet(viewsets.ModelViewSet):
     """ViewSet for listing and deleting user sessions."""
+
     serializer_class = UserSessionSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         # Handle swagger schema generation
-        if getattr(self, 'swagger_fake_view', False):
+        if getattr(self, "swagger_fake_view", False):
             return UserSession.objects.none()
         return UserSession.objects.filter(user=self.request.user)
 
@@ -468,9 +482,9 @@ class UserPermissionsView(APIView):
     """
     API endpoint to get current user's permissions.
     Used by frontend JavaScript to determine what UI elements to show.
-    
+
     GET /api/accounts/permissions/
-    
+
     Returns:
         {
             "roles": ["student", "coordinator"],
@@ -481,105 +495,108 @@ class UserPermissionsView(APIView):
             "is_student": true
         }
     """
+
     permission_classes = [IsAuthenticated]
-    
+
     @extend_schema(
         summary="Get user permissions",
         description="Returns current user's roles and permissions for frontend use",
-        responses={200: {
-            "type": "object",
-            "properties": {
-                "roles": {"type": "array", "items": {"type": "string"}},
-                "primary_role": {"type": "string"},
-                "permissions": {"type": "array", "items": {"type": "string"}},
-                "is_admin": {"type": "boolean"},
-                "is_coordinator": {"type": "boolean"},
-                "is_student": {"type": "boolean"},
+        responses={
+            200: {
+                "type": "object",
+                "properties": {
+                    "roles": {"type": "array", "items": {"type": "string"}},
+                    "primary_role": {"type": "string"},
+                    "permissions": {"type": "array", "items": {"type": "string"}},
+                    "is_admin": {"type": "boolean"},
+                    "is_coordinator": {"type": "boolean"},
+                    "is_student": {"type": "boolean"},
+                },
             }
-        }}
+        },
     )
     def get(self, request):
         user = request.user
-        return Response({
-            'roles': user.get_all_roles(),
-            'primary_role': user.primary_role,
-            'permissions': user.get_all_permissions(),
-            'is_admin': user.is_admin,
-            'is_coordinator': user.is_coordinator,
-            'is_student': user.is_student,
-        })
+        return Response(
+            {
+                "roles": user.get_all_roles(),
+                "primary_role": user.primary_role,
+                "permissions": user.get_all_permissions(),
+                "is_admin": user.is_admin,
+                "is_coordinator": user.is_coordinator,
+                "is_student": user.is_student,
+            }
+        )
 
 
 class ResendVerificationEmailView(APIView):
     """
     API endpoint to resend verification email.
-    
+
     POST /api/accounts/resend-verification/
     Body: {"email": "user@example.com"}
-    
+
     Rate limited to prevent abuse (1 request per 5 minutes per email).
     """
+
     permission_classes = []  # Allow unauthenticated
     throttle_classes = [BurstRateThrottle]
-    
+
     @extend_schema(
         summary="Resend verification email",
         description="Resend email verification link to user's email address",
         request={
             "type": "object",
-            "properties": {
-                "email": {"type": "string", "format": "email"}
-            },
-            "required": ["email"]
+            "properties": {"email": {"type": "string", "format": "email"}},
+            "required": ["email"],
         },
         responses={
             200: {"description": "Verification email sent"},
             400: {"description": "Email already verified or not found"},
-            429: {"description": "Too many requests"}
-        }
+            429: {"description": "Too many requests"},
+        },
     )
     def post(self, request):
-        email = request.data.get('email')
-        
+        email = request.data.get("email")
+
         if not email:
             return Response(
-                {"error": "Email is required"},
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         User = get_user_model()
-        
+
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             # Don't reveal if email exists (security)
             return Response(
                 {"message": "If the email exists, a verification link has been sent."},
-                status=status.HTTP_200_OK
+                status=status.HTTP_200_OK,
             )
-        
+
         # Check if already verified
         if user.is_email_verified:
             return Response(
                 {"error": "Email is already verified"},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
-        
+
         # Generate new token and send email
         from accounts.services import AccountService
         from notifications.services import NotificationService
-        
+
         token = AccountService.generate_email_verification_token(user)
-        
+
         NotificationService.send_notification(
             recipient=user,
             title="Email Verification Required",
             message=f"Please verify your email using this token: {token}",
-            notification_type='email',
+            notification_type="email",
             transactional_route_key="account_security_email",
         )
-        
+
         return Response(
             {"message": "Verification email sent successfully."},
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )

@@ -68,7 +68,9 @@ def apply_step_template_to_form_type(
     used_keys = {str(s.get("key", "")) for s in steps}
     final_key = (step_key or template.default_step_key or "").strip()
     if not final_key:
-        raise ValidationError("Provide step_key or set default_step_key on the template.")
+        raise ValidationError(
+            "Provide step_key or set default_step_key on the template."
+        )
     if final_key in used_keys:
         raise ValidationError(f'Step key "{final_key}" already exists on this form.')
 
@@ -80,7 +82,9 @@ def apply_step_template_to_form_type(
         try:
             doc_ids.append(int(x))
         except (TypeError, ValueError):
-            raise ValidationError("required_document_type_ids must contain integers.") from None
+            raise ValidationError(
+                "required_document_type_ids must contain integers."
+            ) from None
 
     field_names = list(props.keys())
     step_row = {

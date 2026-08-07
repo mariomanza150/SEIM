@@ -322,7 +322,9 @@ LEGACY_DEMO_USERS = [
 
 
 def demo_usernames():
-    return sorted({spec["username"] for spec in DEMO_USER_SPECS} | set(LEGACY_DEMO_USERS))
+    return sorted(
+        {spec["username"] for spec in DEMO_USER_SPECS} | set(LEGACY_DEMO_USERS)
+    )
 
 
 def demo_emails():

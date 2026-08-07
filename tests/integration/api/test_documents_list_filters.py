@@ -8,7 +8,9 @@ from tests.utils import APITestCase
 
 
 def _pdf():
-    return SimpleUploadedFile("doc.pdf", b"%PDF-1.4 test", content_type="application/pdf")
+    return SimpleUploadedFile(
+        "doc.pdf", b"%PDF-1.4 test", content_type="application/pdf"
+    )
 
 
 class TestDocumentsListFiltersAPI(APITestCase):
@@ -20,8 +22,12 @@ class TestDocumentsListFiltersAPI(APITestCase):
         student = self.create_user(role="student")
         coordinator = self.create_user(role="coordinator")
         program = self.create_program()
-        app1 = self.create_application(student=student, program=program, status_name="draft")
-        app2 = self.create_application(student=student, program=program, status_name="draft")
+        app1 = self.create_application(
+            student=student, program=program, status_name="draft"
+        )
+        app2 = self.create_application(
+            student=student, program=program, status_name="draft"
+        )
         dt1 = DocumentType.objects.create(name="Type A")
         dt2 = DocumentType.objects.create(name="Type B")
 
@@ -58,7 +64,9 @@ class TestDocumentsListFiltersAPI(APITestCase):
         student = self.create_user(role="student")
         coordinator = self.create_user(role="coordinator")
         program = self.create_program()
-        app = self.create_application(student=student, program=program, status_name="draft")
+        app = self.create_application(
+            student=student, program=program, status_name="draft"
+        )
         dt = DocumentType.objects.create(name="ID Scan")
         Document.objects.create(
             application=app,

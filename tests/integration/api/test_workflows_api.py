@@ -67,7 +67,9 @@ class TestWorkflowsAPI(APITestCase):
 
         versions_url = reverse("api:workflow-definition-versions", args=[wf_id])
         vresp = self.client.post(
-            versions_url, {"bpmn_xml": _simple_bpmn_with_manual_task("submitted")}, format="json"
+            versions_url,
+            {"bpmn_xml": _simple_bpmn_with_manual_task("submitted")},
+            format="json",
         )
         self.assertEqual(vresp.status_code, status.HTTP_201_CREATED)
         version_id = vresp.data["id"]
@@ -110,6 +112,7 @@ class TestWorkflowsAPI(APITestCase):
         self.assertTrue(actions)
 
         action_url = reverse("api:application-workflow-action", args=[app.id])
-        act = self.client.post(action_url, {"action": actions[0]["id"], "payload": {}}, format="json")
+        act = self.client.post(
+            action_url, {"action": actions[0]["id"], "payload": {}}, format="json"
+        )
         self.assertEqual(act.status_code, status.HTTP_200_OK)
-

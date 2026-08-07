@@ -11,7 +11,7 @@ class EnhancedUI {
         this.loadingStates = new Map();
         this.skeletonTemplates = new Map();
         this.errorStates = new Map();
-        
+
         this.config = {
             skeletonAnimationDuration: 1500,
             loadingTimeout: 10000,
@@ -21,48 +21,61 @@ class EnhancedUI {
             enableProgressiveLoading: true,
             enableErrorRecovery: true
         };
-        
+
         this.mobileDetected = this.detectMobile();
         this.init();
     }
-    
+
     init() {
         this.setupSkeletonTemplates();
         this.setupMobileOptimizations();
         this.setupErrorRecovery();
         this.setupProgressiveLoading();
-        
+
         logger.info('Enhanced UI initialized');
     }
-    
+
     /**
      * Detect mobile device
      */
     detectMobile() {
-        return window.innerWidth <= this.config.mobileBreakpoint ||
-               /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        return (
+            window.innerWidth <= this.config.mobileBreakpoint ||
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+                navigator.userAgent
+            )
+        );
     }
-    
+
     /**
      * Setup skeleton loading templates
      */
     setupSkeletonTemplates() {
         // Table skeleton
-        this.skeletonTemplates.set('table', `
+        this.skeletonTemplates.set(
+            'table',
+            `
             <div class="skeleton-table">
                 <div class="skeleton-header">
                     ${Array(5).fill('<div class="skeleton-cell"></div>').join('')}
                 </div>
-                ${Array(3).fill(`
+                ${Array(3)
+                    .fill(
+                        `
                     <div class="skeleton-row">
                         ${Array(5).fill('<div class="skeleton-cell"></div>').join('')}
                     </div>
-                `).join('')}
+                `
+                    )
+                    .join('')}
             </div>
-        `);
-        
+        `
+        );
+
         // Card skeleton
-        this.skeletonTemplates.set('card', `
+        this.skeletonTemplates.set(
+            'card',
+            `
             <div class="skeleton-card">
                 <div class="skeleton-image"></div>
                 <div class="skeleton-content">
@@ -71,22 +84,30 @@ class EnhancedUI {
                     <div class="skeleton-text short"></div>
                 </div>
             </div>
-        `);
-        
+        `
+        );
+
         // Form skeleton
-        this.skeletonTemplates.set('form', `
+        this.skeletonTemplates.set(
+            'form',
+            `
             <div class="skeleton-form">
                 <div class="skeleton-field"></div>
                 <div class="skeleton-field"></div>
                 <div class="skeleton-field short"></div>
                 <div class="skeleton-button"></div>
             </div>
-        `);
-        
+        `
+        );
+
         // List skeleton
-        this.skeletonTemplates.set('list', `
+        this.skeletonTemplates.set(
+            'list',
+            `
             <div class="skeleton-list">
-                ${Array(5).fill(`
+                ${Array(5)
+                    .fill(
+                        `
                     <div class="skeleton-item">
                         <div class="skeleton-avatar"></div>
                         <div class="skeleton-content">
@@ -94,14 +115,17 @@ class EnhancedUI {
                             <div class="skeleton-text"></div>
                         </div>
                     </div>
-                `).join('')}
+                `
+                    )
+                    .join('')}
             </div>
-        `);
-        
+        `
+        );
+
         // Add skeleton CSS
         this.addSkeletonCSS();
     }
-    
+
     /**
      * Add skeleton loading CSS
      */
@@ -297,21 +321,21 @@ class EnhancedUI {
         `;
         document.head.appendChild(style);
     }
-    
+
     /**
      * Show skeleton loading
      */
     showSkeleton(container, type = 'table', options = {}) {
         if (!this.config.enableSkeletonLoading) return;
-        
+
         const template = this.skeletonTemplates.get(type);
         if (!template) {
             logger.warn('Skeleton template not found', { type });
             return;
         }
-        
+
         const skeletonId = `skeleton-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        
+
         // Store original content
         const originalContent = container.innerHTML;
         this.loadingStates.set(skeletonId, {
@@ -320,7 +344,7 @@ class EnhancedUI {
             type,
             startTime: Date.now()
         });
-        
+
         // Show skeleton - use security utilities for safe innerHTML setting
         if (window.SEIM_SECURITY_UTILS) {
             window.SEIM_SECURITY_UTILS.safeSetInnerHTML(container, template);
@@ -330,24 +354,24 @@ class EnhancedUI {
         }
         container.classList.add('skeleton-loading');
         container.setAttribute('data-skeleton-id', skeletonId);
-        
+
         // Set timeout for loading
         setTimeout(() => {
             this.hideSkeleton(skeletonId);
         }, options.timeout || this.config.loadingTimeout);
-        
+
         return skeletonId;
     }
-    
+
     /**
      * Hide skeleton loading
      */
     hideSkeleton(skeletonId) {
         const loadingState = this.loadingStates.get(skeletonId);
         if (!loadingState) return;
-        
+
         const { container, originalContent } = loadingState;
-        
+
         // Restore original content - use security utilities for safe innerHTML setting
         if (window.SEIM_SECURITY_UTILS) {
             window.SEIM_SECURITY_UTILS.safeSetInnerHTML(container, originalContent);
@@ -357,50 +381,50 @@ class EnhancedUI {
         }
         container.classList.remove('skeleton-loading');
         container.removeAttribute('data-skeleton-id');
-        
+
         // Remove from tracking
         this.loadingStates.delete(skeletonId);
-        
+
         const duration = Date.now() - loadingState.startTime;
         logger.debug('Skeleton loading completed', { skeletonId, duration });
     }
-    
+
     /**
      * Setup progressive loading
      */
     setupProgressiveLoading() {
         if (!this.config.enableProgressiveLoading) return;
-        
+
         // Observe elements with progressive loading
-        const observer = new IntersectionObserver((entries) => {
+        const observer = new IntersectionObserver(entries => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     this.loadProgressiveContent(entry.target);
                 }
             });
         });
-        
+
         // Find elements with progressive loading
         document.querySelectorAll('[data-progressive-load]').forEach(element => {
             observer.observe(element);
         });
     }
-    
+
     /**
      * Load progressive content
      */
     async loadProgressiveContent(element) {
         const loadUrl = element.getAttribute('data-progressive-load');
         if (!loadUrl) return;
-        
+
         try {
             // Show loading overlay
             this.showProgressiveLoading(element);
-            
+
             // Load content
             const response = await fetch(loadUrl);
             const content = await response.text();
-            
+
             // Update element - use security utilities for safe innerHTML setting
             if (window.SEIM_SECURITY_UTILS) {
                 window.SEIM_SECURITY_UTILS.safeSetInnerHTML(element, content);
@@ -409,18 +433,17 @@ class EnhancedUI {
                 element.textContent = 'Content loaded';
             }
             element.removeAttribute('data-progressive-load');
-            
+
             // Hide loading overlay
             this.hideProgressiveLoading(element);
-            
+
             logger.debug('Progressive content loaded', { url: loadUrl });
-            
         } catch (error) {
             errorHandler.handleError(error, { context: 'Progressive Loading', url: loadUrl });
             this.showErrorState(element, 'Failed to load content', error);
         }
     }
-    
+
     /**
      * Show progressive loading overlay
      */
@@ -429,20 +452,23 @@ class EnhancedUI {
         overlay.className = 'loading-overlay';
         // Use security utilities for safe innerHTML setting
         if (window.SEIM_SECURITY_UTILS) {
-            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(overlay, `
+            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(
+                overlay,
+                `
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-            `);
+            `
+            );
         } else {
             // Fallback to textContent for safety
             overlay.textContent = 'Loading...';
         }
-        
+
         element.classList.add('progressive-loading');
         element.appendChild(overlay);
     }
-    
+
     /**
      * Hide progressive loading overlay
      */
@@ -453,44 +479,48 @@ class EnhancedUI {
         }
         element.classList.remove('progressive-loading');
     }
-    
+
     /**
      * Setup error recovery
      */
     setupErrorRecovery() {
         if (!this.config.enableErrorRecovery) return;
-        
+
         // Global error handler
-        window.addEventListener('error', (event) => {
+        window.addEventListener('error', event => {
             this.handleGlobalError(event);
         });
-        
+
         // Unhandled promise rejection handler
-        window.addEventListener('unhandledrejection', (event) => {
+        window.addEventListener('unhandledrejection', event => {
             this.handlePromiseRejection(event);
         });
     }
-    
+
     /**
      * Handle global errors
      */
     handleGlobalError(event) {
         logger.error('Global error occurred', event.error);
-        
+
         // Show user-friendly error message
-        this.showGlobalError('An unexpected error occurred. Please refresh the page or try again later.');
+        this.showGlobalError(
+            'An unexpected error occurred. Please refresh the page or try again later.'
+        );
     }
-    
+
     /**
      * Handle promise rejections
      */
     handlePromiseRejection(event) {
         logger.error('Unhandled promise rejection', event.reason);
-        
+
         // Show user-friendly error message
-        this.showGlobalError('A network error occurred. Please check your connection and try again.');
+        this.showGlobalError(
+            'A network error occurred. Please check your connection and try again.'
+        );
     }
-    
+
     /**
      * Show global error message
      */
@@ -501,19 +531,22 @@ class EnhancedUI {
         notification.setAttribute('role', 'alert');
         // Use security utilities for safe innerHTML setting
         if (window.SEIM_SECURITY_UTILS) {
-            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(notification, `
+            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(
+                notification,
+                `
                 <strong>Error:</strong> ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            `);
+            `
+            );
         } else {
             // Fallback to textContent for safety
             notification.textContent = `Error: ${message}`;
         }
-        
+
         // Add to page
         const container = document.querySelector('.container') || document.body;
         container.insertBefore(notification, container.firstChild);
-        
+
         // Auto-dismiss after 10 seconds
         setTimeout(() => {
             if (notification.parentNode) {
@@ -521,17 +554,18 @@ class EnhancedUI {
             }
         }, 10000);
     }
-    
+
     /**
      * Show error state for specific element
      */
     showErrorState(element, title, error, options = {}) {
         const errorId = `error-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        
+
         // Use security utilities for safe HTML creation
         let errorHTML;
         if (window.SEIM_SECURITY_UTILS) {
-            errorHTML = window.SEIM_SECURITY_UTILS.createSafeHTML(`
+            errorHTML = window.SEIM_SECURITY_UTILS.createSafeHTML(
+                `
                 <div class="error-state" data-error-id="{{errorId}}">
                     <div class="error-icon">⚠️</div>
                     <div class="error-title">{{title}}</div>
@@ -542,19 +576,27 @@ class EnhancedUI {
                         {{backButton}}
                     </div>
                 </div>
-            `, {
-                errorId: errorId,
-                title: title,
-                message: options.message || 'Something went wrong. Please try again.',
-                retryButton: options.showRetry ? `<button class="btn btn-primary btn-sm" onclick="window.SEIM_UI_ENHANCED.retryError('${errorId}')">Try Again</button>` : '',
-                refreshButton: options.showRefresh ? `<button class="btn btn-secondary btn-sm" onclick="location.reload()">Refresh Page</button>` : '',
-                backButton: options.showBack ? `<button class="btn btn-outline-secondary btn-sm" onclick="history.back()">Go Back</button>` : ''
-            });
+            `,
+                {
+                    errorId: errorId,
+                    title: title,
+                    message: options.message || 'Something went wrong. Please try again.',
+                    retryButton: options.showRetry
+                        ? `<button class="btn btn-primary btn-sm" onclick="window.SEIM_UI_ENHANCED.retryError('${errorId}')">Try Again</button>`
+                        : '',
+                    refreshButton: options.showRefresh
+                        ? `<button class="btn btn-secondary btn-sm" onclick="location.reload()">Refresh Page</button>`
+                        : '',
+                    backButton: options.showBack
+                        ? `<button class="btn btn-outline-secondary btn-sm" onclick="history.back()">Go Back</button>`
+                        : ''
+                }
+            );
         } else {
             // Fallback to simple text content
             errorHTML = `<div class="error-state">Error: ${title}</div>`;
         }
-        
+
         // Store error state
         this.errorStates.set(errorId, {
             element,
@@ -563,24 +605,24 @@ class EnhancedUI {
             retryCount: 0,
             retryFunction: options.retryFunction
         });
-        
+
         // Show error state
         element.innerHTML = errorHTML;
-        
+
         logger.warn('Error state shown', { errorId, title, error: error.message });
-        
+
         return errorId;
     }
-    
+
     /**
      * Retry error
      */
     async retryError(errorId) {
         const errorState = this.errorStates.get(errorId);
         if (!errorState) return;
-        
+
         const { element, error, retryCount, retryFunction } = errorState;
-        
+
         if (retryCount >= this.config.errorRetryAttempts) {
             this.showErrorState(element, 'Maximum retry attempts reached', error, {
                 message: 'Please refresh the page or contact support.',
@@ -588,10 +630,10 @@ class EnhancedUI {
             });
             return;
         }
-        
+
         // Update retry count
         errorState.retryCount = retryCount + 1;
-        
+
         try {
             // Show loading state
             element.innerHTML = `
@@ -602,21 +644,20 @@ class EnhancedUI {
                     <p class="mt-2">Retrying... (${retryCount + 1}/${this.config.errorRetryAttempts})</p>
                 </div>
             `;
-            
+
             // Execute retry function
             if (retryFunction) {
                 await retryFunction();
             }
-            
+
             // Restore original content
             element.innerHTML = errorState.originalContent;
             this.errorStates.delete(errorId);
-            
+
             logger.info('Error retry successful', { errorId, retryCount: retryCount + 1 });
-            
         } catch (retryError) {
             logger.error('Error retry failed', { errorId, retryError });
-            
+
             // Show updated error state
             this.showErrorState(element, 'Retry failed', retryError, {
                 message: `Retry attempt ${retryCount + 1} failed. Please try again.`,
@@ -625,51 +666,53 @@ class EnhancedUI {
             });
         }
     }
-    
+
     /**
      * Setup mobile optimizations
      */
     setupMobileOptimizations() {
         if (!this.mobileDetected) return;
-        
+
         // Add mobile-specific classes
         document.documentElement.classList.add('mobile-device');
-        
+
         // Optimize touch targets
         this.optimizeTouchTargets();
-        
+
         // Setup mobile navigation
         this.setupMobileNavigation();
-        
+
         // Optimize images for mobile
         this.optimizeImagesForMobile();
-        
+
         logger.info('Mobile optimizations applied');
     }
-    
+
     /**
      * Optimize touch targets
      */
     optimizeTouchTargets() {
-        const touchElements = document.querySelectorAll('button, a, input, select, textarea, [role="button"]');
-        
+        const touchElements = document.querySelectorAll(
+            'button, a, input, select, textarea, [role="button"]'
+        );
+
         touchElements.forEach(element => {
             const rect = element.getBoundingClientRect();
-            
+
             // Ensure minimum touch target size
             if (rect.width < 44 || rect.height < 44) {
                 element.classList.add('touch-target-optimized');
             }
         });
     }
-    
+
     /**
      * Setup mobile navigation
      */
     setupMobileNavigation() {
         const navbar = document.querySelector('.navbar');
         if (!navbar) return;
-        
+
         // Add mobile menu toggle
         const toggleButton = document.createElement('button');
         toggleButton.className = 'navbar-toggler d-md-none';
@@ -679,49 +722,49 @@ class EnhancedUI {
         toggleButton.innerHTML = `
             <span class="navbar-toggler-icon"></span>
         `;
-        
+
         // Add mobile menu
         const mobileMenu = document.createElement('div');
         mobileMenu.className = 'collapse navbar-collapse';
         mobileMenu.id = 'mobileNavbar';
-        
+
         // Move existing nav items to mobile menu
         const navItems = navbar.querySelector('.navbar-nav');
         if (navItems) {
             mobileMenu.appendChild(navItems.cloneNode(true));
         }
-        
+
         // Add toggle functionality
         toggleButton.addEventListener('click', () => {
             const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
             toggleButton.setAttribute('aria-expanded', !isExpanded);
             mobileMenu.classList.toggle('show');
         });
-        
+
         // Insert into navbar
         navbar.appendChild(toggleButton);
         navbar.appendChild(mobileMenu);
     }
-    
+
     /**
      * Optimize images for mobile
      */
     optimizeImagesForMobile() {
         const images = document.querySelectorAll('img');
-        
+
         images.forEach(img => {
             // Add lazy loading
             if (!img.loading) {
                 img.loading = 'lazy';
             }
-            
+
             // Add responsive images
             if (img.srcset) {
                 img.sizes = '(max-width: 768px) 100vw, 50vw';
             }
         });
     }
-    
+
     /**
      * Create loading indicator
      */
@@ -754,10 +797,10 @@ class EnhancedUI {
                 <div class="skeleton ${options.className || ''}"></div>
             `
         };
-        
+
         return indicators[type] || indicators.spinner;
     }
-    
+
     /**
      * Show loading overlay
      */
@@ -770,11 +813,11 @@ class EnhancedUI {
                 <p class="mt-2">${message}</p>
             </div>
         `;
-        
+
         container.appendChild(overlay);
         return overlay;
     }
-    
+
     /**
      * Hide loading overlay
      */
@@ -792,4 +835,4 @@ const enhancedUI = new EnhancedUI();
 window.SEIM_UI_ENHANCED = enhancedUI;
 
 export default enhancedUI;
-export { EnhancedUI }; 
+export { EnhancedUI };

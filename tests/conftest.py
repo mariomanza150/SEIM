@@ -16,7 +16,7 @@ from asgiref.sync import async_to_sync
 from channels.db import database_sync_to_async
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.db import connections, close_old_connections
+from django.db import close_old_connections, connections
 from django.utils import timezone
 from faker import Faker
 from rest_framework.test import APIClient
@@ -28,6 +28,8 @@ except ImportError:
     @contextmanager
     def freeze_time(_when=None):
         yield
+
+
 from rest_framework_simplejwt.tokens import RefreshToken
 
 # Selenium imports for E2E tests (optional in minimal images)
@@ -55,6 +57,7 @@ User = get_user_model()
 # =============================================================================
 # SELENIUM DRIVER CONFIGURATION
 # =============================================================================
+
 
 @pytest.fixture(scope="session")
 def chrome_options():
@@ -119,6 +122,7 @@ def chrome_options():
     options.add_experimental_option("prefs", prefs)
 
     return options
+
 
 # =============================================================================
 # FACTORY BOY FACTORIES
@@ -227,12 +231,9 @@ class ApplicationStatusFactory(factory.django.DjangoModelFactory):
     @classmethod
     def _create(cls, model_class, *args, **kwargs):
         """Override to use get_or_create to avoid unique constraint violations."""
-        name = kwargs.get('name')
+        name = kwargs.get("name")
         if name:
-            obj, created = model_class.objects.get_or_create(
-                name=name,
-                defaults=kwargs
-            )
+            obj, created = model_class.objects.get_or_create(name=name, defaults=kwargs)
             return obj
         return super()._create(model_class, *args, **kwargs)
 
@@ -559,6 +560,7 @@ def frozen_time():
 def clear_cache():
     """Clear cache before and after each test to ensure isolation."""
     from django.core.cache import cache
+
     cache.clear()
     yield
     cache.clear()

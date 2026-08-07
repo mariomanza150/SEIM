@@ -103,36 +103,40 @@ class DocumentViewSet(viewsets.ModelViewSet):
         )
 
         # Coordinators and admins can see all documents
-        if hasattr(user, 'has_role') and (user.has_role('coordinator') or user.has_role('admin')):
+        if hasattr(user, "has_role") and (
+            user.has_role("coordinator") or user.has_role("admin")
+        ):
             return Document.objects.select_related(
-                'application',
-                'application__student',
-                'application__program',
-                'application__status',
-                'type',
-                'uploaded_by'
+                "application",
+                "application__student",
+                "application__program",
+                "application__status",
+                "type",
+                "uploaded_by",
             ).prefetch_related(
-                'uploaded_by__roles',
+                "uploaded_by__roles",
                 Prefetch("documentvalidation_set", queryset=val_qs),
                 Prefetch("documentresubmissionrequest_set", queryset=resub_qs),
                 Prefetch("documentcomment_set", queryset=comment_qs),
             )
 
         # Students can only see their own documents
-        return Document.objects.filter(
-            Q(uploaded_by=user) | Q(application__student=user)
-        ).select_related(
-            'application',
-            'application__student',
-            'application__program',
-            'application__status',
-            'type',
-            'uploaded_by'
-        ).prefetch_related(
-            'uploaded_by__roles',
-            Prefetch("documentvalidation_set", queryset=val_qs),
-            Prefetch("documentresubmissionrequest_set", queryset=resub_qs),
-            Prefetch("documentcomment_set", queryset=comment_qs),
+        return (
+            Document.objects.filter(Q(uploaded_by=user) | Q(application__student=user))
+            .select_related(
+                "application",
+                "application__student",
+                "application__program",
+                "application__status",
+                "type",
+                "uploaded_by",
+            )
+            .prefetch_related(
+                "uploaded_by__roles",
+                Prefetch("documentvalidation_set", queryset=val_qs),
+                Prefetch("documentresubmissionrequest_set", queryset=resub_qs),
+                Prefetch("documentcomment_set", queryset=comment_qs),
+            )
         )
 
     def perform_create(self, serializer):
@@ -180,7 +184,10 @@ class DocumentViewSet(viewsets.ModelViewSet):
         """
         document = self.get_object()
         user = request.user
-        if not (getattr(user, "has_role", None) and (user.has_role("coordinator") or user.has_role("admin"))):
+        if not (
+            getattr(user, "has_role", None)
+            and (user.has_role("coordinator") or user.has_role("admin"))
+        ):
             return Response(
                 {"detail": "Only coordinators or admins can validate documents."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -215,22 +222,18 @@ class DocumentValidationViewSet(viewsets.ModelViewSet):
         """Filter validations based on user permissions."""
         user = self.request.user
 
-        if hasattr(user, 'has_role') and (user.has_role('coordinator') or user.has_role('admin')):
+        if hasattr(user, "has_role") and (
+            user.has_role("coordinator") or user.has_role("admin")
+        ):
             return DocumentValidation.objects.select_related(
-                'document',
-                'document__application',
-                'document__type',
-                'validator'
+                "document", "document__application", "document__type", "validator"
             )
 
         # Students can only see validations for their documents
         return DocumentValidation.objects.filter(
             Q(document__uploaded_by=user) | Q(document__application__student=user)
         ).select_related(
-            'document',
-            'document__application',
-            'document__type',
-            'validator'
+            "document", "document__application", "document__type", "validator"
         )
 
     @cache_api_response(timeout=300)
@@ -253,22 +256,18 @@ class DocumentResubmissionRequestViewSet(viewsets.ModelViewSet):
         """Filter resubmission requests based on user permissions."""
         user = self.request.user
 
-        if hasattr(user, 'has_role') and (user.has_role('coordinator') or user.has_role('admin')):
+        if hasattr(user, "has_role") and (
+            user.has_role("coordinator") or user.has_role("admin")
+        ):
             return DocumentResubmissionRequest.objects.select_related(
-                'document',
-                'document__application',
-                'document__type',
-                'requested_by'
+                "document", "document__application", "document__type", "requested_by"
             )
 
         # Students can only see requests for their documents
         return DocumentResubmissionRequest.objects.filter(
             Q(document__uploaded_by=user) | Q(document__application__student=user)
         ).select_related(
-            'document',
-            'document__application',
-            'document__type',
-            'requested_by'
+            "document", "document__application", "document__type", "requested_by"
         )
 
     @cache_api_response(timeout=300)
@@ -291,22 +290,17 @@ class DocumentCommentViewSet(viewsets.ModelViewSet):
         """Filter comments based on user permissions."""
         user = self.request.user
 
-        if hasattr(user, 'has_role') and (user.has_role('coordinator') or user.has_role('admin')):
+        if hasattr(user, "has_role") and (
+            user.has_role("coordinator") or user.has_role("admin")
+        ):
             return DocumentComment.objects.select_related(
-                'document',
-                'document__application',
-                'author'
+                "document", "document__application", "author"
             )
 
         # Students can only see public comments on their documents
         return DocumentComment.objects.filter(
-            Q(author=user) |
-            Q(document__application__student=user, is_private=False)
-        ).select_related(
-            'document',
-            'document__application',
-            'author'
-        )
+            Q(author=user) | Q(document__application__student=user, is_private=False)
+        ).select_related("document", "document__application", "author")
 
     def perform_create(self, serializer):
         document = serializer.validated_data["document"]

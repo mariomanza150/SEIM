@@ -36,41 +36,43 @@ async function handleLogin(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
-        
+
         // Get form values
         const usernameOrEmail = formData.get('username');
         const password = formData.get('password');
-        
+
         // Validate form
         if (!usernameOrEmail || !password) {
             showErrorAlert('Validation Error', 'Please fill in all fields');
             return;
         }
-        
+
         // Show loading state
         const submitBtn = form.querySelector('button[type="submit"]');
         setLoadingState(submitBtn, true, 'Logging in...');
-        
+
         try {
             const data = await apiRequest(window.API_ENDPOINTS.token, {
                 method: 'POST',
                 body: JSON.stringify({ login: usernameOrEmail, password })
             });
-            
+
             // Store tokens
             storeTokens(data.access, data.refresh);
-            
+
             // Get user info
             await getUserInfo();
-            
+
             // Show success message and redirect
             await showSuccessAlert('Login Successful', 'Welcome back! Redirecting to dashboard...');
             window.location.href = '/dashboard/';
-            
         } catch (error) {
             errorHandler.handleAuthError(error, { action: 'login' });
             logger.error('[ERROR] Login error:', error);
-            showErrorAlert('Login Failed', error.message || 'Please check your credentials and try again.');
+            showErrorAlert(
+                'Login Failed',
+                error.message || 'Please check your credentials and try again.'
+            );
         } finally {
             // Reset button state
             setLoadingState(submitBtn, false);
@@ -94,7 +96,10 @@ export async function login(usernameOrEmail, password, submitBtn) {
         await showSuccessAlert('Login Successful', 'Welcome back! Redirecting to dashboard...');
         window.location.href = '/dashboard/';
     } catch (error) {
-        showErrorAlert('Login Failed', error.message || 'Please check your credentials and try again.');
+        showErrorAlert(
+            'Login Failed',
+            error.message || 'Please check your credentials and try again.'
+        );
     } finally {
         setLoadingState(submitBtn, false);
     }
@@ -119,7 +124,10 @@ export async function register(email, username, password, submitBtn) {
             method: 'POST',
             body: JSON.stringify({ email, username, password })
         });
-        await showSuccessAlert('Registration Successful', 'Please check your email for verification. You will be redirected to login.');
+        await showSuccessAlert(
+            'Registration Successful',
+            'Please check your email for verification. You will be redirected to login.'
+        );
         setTimeout(() => {
             window.location.href = '/login/';
         }, 3000);
@@ -137,7 +145,10 @@ export async function resetPassword(email, submitBtn) {
             method: 'POST',
             body: JSON.stringify({ email })
         });
-        await showSuccessAlert('Email Sent', 'If an account with this email exists, you will receive password reset instructions.');
+        await showSuccessAlert(
+            'Email Sent',
+            'If an account with this email exists, you will receive password reset instructions.'
+        );
     } catch (error) {
         showErrorAlert('Email Send Failed', error.message || 'Please try again.');
     } finally {
@@ -189,41 +200,43 @@ async function handleRegister(event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
-        
+
         // Get form values
         const email = formData.get('email');
         const username = formData.get('username');
         const password = formData.get('password');
         const confirmPassword = formData.get('confirm_password');
         const agreeTerms = formData.get('agree_terms');
-        
+
         // Validate form
         if (!email || !username || !password || !confirmPassword || !agreeTerms) {
             showErrorAlert('Validation Error', 'Please fill in all fields and agree to terms');
             return;
         }
-        
+
         if (password !== confirmPassword) {
             showErrorAlert('Validation Error', 'Passwords do not match');
             return;
         }
-        
+
         // Show loading state
         const submitBtn = form.querySelector('button[type="submit"]');
         setLoadingState(submitBtn, true, 'Creating account...');
-        
+
         try {
             await apiRequest(window.API_ENDPOINTS.register, {
                 method: 'POST',
                 body: JSON.stringify({ email, username, password })
             });
-            
+
             // Show success message and redirect
-            await showSuccessAlert('Registration Successful', 'Account created successfully! Redirecting to login...');
+            await showSuccessAlert(
+                'Registration Successful',
+                'Account created successfully! Redirecting to login...'
+            );
             setTimeout(() => {
                 window.location.href = '/login/';
             }, 2000);
-            
         } catch (error) {
             errorHandler.handleAuthError(error, { action: 'register' });
             logger.error('[ERROR] Registration error:', error);
@@ -248,10 +261,10 @@ export function setupAuthForms() {
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
     }
-    
+
     // Registration form
     const registerForm = document.getElementById('registerForm');
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegister);
     }
-} 
+}

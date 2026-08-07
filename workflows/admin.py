@@ -21,7 +21,13 @@ class WorkflowVersionAdmin(admin.ModelAdmin):
 
 @admin.register(WorkflowInstance)
 class WorkflowInstanceAdmin(admin.ModelAdmin):
-    list_display = ("application", "workflow_version", "status", "last_event_at", "created_at")
+    list_display = (
+        "application",
+        "workflow_version",
+        "status",
+        "last_event_at",
+        "created_at",
+    )
     search_fields = ("application__id", "workflow_version__definition__name")
     readonly_fields = ("created_at", "updated_at")
 
@@ -31,4 +37,3 @@ class WorkflowEventAdmin(admin.ModelAdmin):
     list_display = ("instance", "event_type", "actor", "created_at")
     search_fields = ("event_type", "instance__application__id")
     readonly_fields = ("created_at", "updated_at")
-

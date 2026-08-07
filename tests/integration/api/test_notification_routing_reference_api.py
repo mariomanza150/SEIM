@@ -65,7 +65,9 @@ class TestNotificationRoutingReferenceAPI(APITestCase):
             response.data["reminder_event_type_to_settings_category"],
         )
         self.assertEqual(
-            response.data["reminder_event_type_to_settings_category"]["application_deadline"],
+            response.data["reminder_event_type_to_settings_category"][
+                "application_deadline"
+            ],
             "documents",
         )
         rsum = response.data["reminder_event_type_recipient_summaries"]

@@ -18,7 +18,7 @@ import { initializeFileUpload } from './modules/file_upload.js';
 let initialized = false;
 
 // Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     SEIM_PERFORMANCE.trackPageLoad();
     initializeApp();
 });
@@ -28,9 +28,9 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 function initializeApp() {
     if (initialized) return;
-    
+
     const startTime = performance.now();
-    
+
     try {
         // Use new SEIM_AUTH for authentication
         SEIM_AUTH.init();
@@ -46,7 +46,7 @@ function initializeApp() {
         SEIM_ERROR_HANDLER.handleError(error, { context: 'app-initialization' });
         SEIM_LOGGER.error('Application initialization failed', error);
     }
-    
+
     const endTime = performance.now();
     SEIM_PERFORMANCE.trackBundleLoad('main-app', startTime, endTime, 0);
 }
@@ -58,13 +58,13 @@ function initializeCoreFeatures() {
     try {
         // Initialize tooltips
         initializeTooltips();
-        
+
         // Initialize modals
         initializeModals();
-        
+
         // Initialize AJAX setup
         setupAjaxDefaults();
-        
+
         // Initialize notifications
         initializeNotifications();
         SEIM_LOGGER.info('Core features initialized');
@@ -81,16 +81,16 @@ function initializeLazyFeatures() {
     try {
         // Initialize file upload areas
         initializeFileUpload();
-        
+
         // Initialize dynamic loading
         initializeDynamicLoading();
-        
+
         // Initialize accessibility features
         initializeAccessibility();
-        
+
         // Initialize enhanced UI features
         initializeEnhancedUI();
-        
+
         // Initialize service worker if available
         initializeServiceWorker();
         SEIM_LOGGER.info('Lazy features initialized');
@@ -124,10 +124,10 @@ function initializeDynamicLoading() {
         SEIM_DYNAMIC_LOADER.setupLazyLoading('[data-module="documents"]', 'documents');
         SEIM_DYNAMIC_LOADER.setupLazyLoading('[data-module="programs"]', 'programs');
         SEIM_DYNAMIC_LOADER.setupLazyLoading('[data-module="analytics"]', 'analytics');
-        
+
         // Preload high-priority modules
         SEIM_DYNAMIC_LOADER.preloadModule('dashboard');
-        
+
         SEIM_LOGGER.info('Dynamic loading initialized');
     } catch (error) {
         SEIM_ERROR_HANDLER.handleError(error, { context: 'dynamic-loading' });
@@ -147,12 +147,12 @@ function initializeAccessibility() {
                 try {
                     const results = await SEIM_ACCESSIBILITY_TESTER.runFullTest();
                     SEIM_LOGGER.info('Accessibility test completed', results.summary);
-                    
+
                     // Log any issues
                     if (results.failed.length > 0) {
-                        SEIM_LOGGER.warn('Accessibility issues found', { 
+                        SEIM_LOGGER.warn('Accessibility issues found', {
                             failed: results.failed.length,
-                            warnings: results.warnings.length 
+                            warnings: results.warnings.length
                         });
                     }
                 } catch (error) {
@@ -160,7 +160,7 @@ function initializeAccessibility() {
                 }
             }, 2000);
         }
-        
+
         SEIM_LOGGER.info('Accessibility features initialized');
     } catch (error) {
         SEIM_ERROR_HANDLER.handleError(error, { context: 'accessibility' });
@@ -179,31 +179,34 @@ function initializeEnhancedUI() {
             const skeletonType = table.getAttribute('data-skeleton-load') || 'table';
             SEIM_UI_ENHANCED.showSkeleton(table, skeletonType);
         });
-        
+
         // Setup progressive loading for content areas
         const progressiveElements = document.querySelectorAll('[data-progressive-load]');
         progressiveElements.forEach(element => {
             // Progressive loading is handled by the enhanced UI module
-            SEIM_LOGGER.debug('Progressive loading element found', { 
-                element: element.tagName, 
-                url: element.getAttribute('data-progressive-load') 
+            SEIM_LOGGER.debug('Progressive loading element found', {
+                element: element.tagName,
+                url: element.getAttribute('data-progressive-load')
             });
         });
-        
+
         // Setup error recovery for forms
         const forms = document.querySelectorAll('form');
         forms.forEach(form => {
-            form.addEventListener('submit', (event) => {
+            form.addEventListener('submit', event => {
                 // Add error recovery options
                 const submitButton = form.querySelector('[type="submit"]');
                 if (submitButton) {
                     submitButton.addEventListener('click', () => {
                         // Show loading state
-                        const loadingOverlay = SEIM_UI_ENHANCED.showLoadingOverlay(form, 'Submitting...');
-                        
+                        const loadingOverlay = SEIM_UI_ENHANCED.showLoadingOverlay(
+                            form,
+                            'Submitting...'
+                        );
+
                         // Store for cleanup
                         form.setAttribute('data-loading-overlay', 'true');
-                        
+
                         // Cleanup after form submission
                         setTimeout(() => {
                             SEIM_UI_ENHANCED.hideLoadingOverlay(loadingOverlay);
@@ -213,15 +216,13 @@ function initializeEnhancedUI() {
                 }
             });
         });
-        
+
         SEIM_LOGGER.info('Enhanced UI features initialized');
     } catch (error) {
         SEIM_ERROR_HANDLER.handleError(error, { context: 'enhanced-ui' });
         SEIM_LOGGER.error('Enhanced UI initialization failed', error);
     }
 }
-
-
 
 /**
  * SweetAlert2 Utility Functions
@@ -328,7 +329,10 @@ function setLoadingState(element, isLoading, loadingText = 'Loading...') {
         element.dataset.originalText = element.innerHTML;
         // Use security utilities for safe innerHTML setting
         if (window.SEIM_SECURITY_UTILS) {
-            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(element, `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${loadingText}`);
+            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(
+                element,
+                `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ${loadingText}`
+            );
         } else {
             // Fallback to textContent for safety
             element.textContent = loadingText;
@@ -336,7 +340,10 @@ function setLoadingState(element, isLoading, loadingText = 'Loading...') {
     } else {
         element.disabled = false;
         if (window.SEIM_SECURITY_UTILS) {
-            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(element, element.dataset.originalText || 'Submit');
+            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(
+                element,
+                element.dataset.originalText || 'Submit'
+            );
         } else {
             element.textContent = element.dataset.originalText || 'Submit';
         }
@@ -360,28 +367,32 @@ function setLoadingStates(elements, isLoading, loadingText = 'Loading...') {
 function showPageLoading(message = 'Loading...') {
     const overlay = document.createElement('div');
     overlay.id = 'page-loading-overlay';
-    overlay.className = 'position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center';
+    overlay.className =
+        'position-fixed top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center';
     overlay.style.cssText = `
         background-color: rgba(0, 0, 0, 0.5);
         z-index: 9999;
         backdrop-filter: blur(2px);
     `;
-    
+
     // Use security utilities for safe innerHTML setting
     if (window.SEIM_SECURITY_UTILS) {
-        window.SEIM_SECURITY_UTILS.safeSetInnerHTML(overlay, `
+        window.SEIM_SECURITY_UTILS.safeSetInnerHTML(
+            overlay,
+            `
             <div class="text-center text-white">
                 <div class="spinner-border mb-3" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <div>${message}</div>
             </div>
-        `);
+        `
+        );
     } else {
         // Fallback to textContent for safety
         overlay.textContent = message;
     }
-    
+
     document.body.appendChild(overlay);
 }
 
@@ -401,29 +412,33 @@ function hidePageLoading() {
 function showSectionLoading(selector, message = 'Loading...') {
     const section = document.querySelector(selector);
     if (!section) return;
-    
+
     const overlay = document.createElement('div');
-    overlay.className = 'position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center';
+    overlay.className =
+        'position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center';
     overlay.style.cssText = `
         background-color: rgba(255, 255, 255, 0.8);
         z-index: 1000;
     `;
-    
+
     // Use security utilities for safe innerHTML setting
     if (window.SEIM_SECURITY_UTILS) {
-        window.SEIM_SECURITY_UTILS.safeSetInnerHTML(overlay, `
+        window.SEIM_SECURITY_UTILS.safeSetInnerHTML(
+            overlay,
+            `
             <div class="text-center">
                 <div class="spinner-border text-primary mb-2" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
                 <div class="text-muted">${message}</div>
             </div>
-        `);
+        `
+        );
     } else {
         // Fallback to textContent for safety
         overlay.textContent = message;
     }
-    
+
     section.style.position = 'relative';
     section.appendChild(overlay);
 }
@@ -434,7 +449,7 @@ function showSectionLoading(selector, message = 'Loading...') {
 function hideSectionLoading(selector) {
     const section = document.querySelector(selector);
     if (!section) return;
-    
+
     const overlay = section.querySelector('.position-absolute');
     if (overlay) {
         overlay.remove();
@@ -446,9 +461,12 @@ function hideSectionLoading(selector) {
  */
 function startTokenRefreshTimer() {
     // Refresh token every 50 minutes (tokens expire in 60 minutes)
-    setInterval(() => {
-        refreshToken();
-    }, 50 * 60 * 1000);
+    setInterval(
+        () => {
+            refreshToken();
+        },
+        50 * 60 * 1000
+    );
 }
 
 /**
@@ -461,7 +479,7 @@ async function refreshToken() {
         window.location.href = '/login/';
         return;
     }
-    
+
     try {
         const data = await apiRequest(window.API_ENDPOINTS.refresh, {
             method: 'POST',
@@ -469,7 +487,7 @@ async function refreshToken() {
                 refresh: refreshToken
             })
         });
-        
+
         storeTokens(data.access, data.refresh);
         return true; // Indicate successful refresh
     } catch (error) {
@@ -525,13 +543,13 @@ function debounce(func, wait) {
  */
 function throttle(func, limit) {
     let inThrottle;
-    return function() {
+    return function () {
         const args = arguments;
         const context = this;
         if (!inThrottle) {
             func.apply(context, args);
             inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
+            setTimeout(() => (inThrottle = false), limit);
         }
     };
 }
@@ -561,7 +579,7 @@ function sanitizeInput(input) {
     if (typeof input !== 'string') {
         return input;
     }
-    
+
     // Remove potentially dangerous characters
     return input
         .trim()
@@ -579,7 +597,7 @@ function escapeHtml(text) {
     if (typeof text !== 'string') {
         return text;
     }
-    
+
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
@@ -590,7 +608,7 @@ function escapeHtml(text) {
  */
 function sanitizeFormData(formData) {
     const sanitized = {};
-    
+
     for (const [key, value] of formData.entries()) {
         // Don't sanitize passwords or sensitive fields
         if (key.toLowerCase().includes('password') || key.toLowerCase().includes('token')) {
@@ -599,7 +617,7 @@ function sanitizeFormData(formData) {
             sanitized[key] = sanitizeInput(value);
         }
     }
-    
+
     return sanitized;
 }
 
@@ -609,11 +627,11 @@ function sanitizeFormData(formData) {
 function validateAndSanitizeEmail(email) {
     const sanitized = sanitizeInput(email);
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
+
     if (!emailRegex.test(sanitized)) {
         throw new Error('Please enter a valid email address');
     }
-    
+
     return sanitized;
 }
 
@@ -622,19 +640,19 @@ function validateAndSanitizeEmail(email) {
  */
 function validateAndSanitizeUsername(username) {
     const sanitized = sanitizeInput(username);
-    
+
     if (sanitized.length < 3) {
         throw new Error('Username must be at least 3 characters long');
     }
-    
+
     if (sanitized.length > 30) {
         throw new Error('Username must be less than 30 characters');
     }
-    
+
     if (!/^[a-zA-Z0-9_]+$/.test(sanitized)) {
         throw new Error('Username can only contain letters, numbers, and underscores');
     }
-    
+
     return sanitized;
 }
 
@@ -667,9 +685,14 @@ function validatePassword(password) {
     const hasLowerCase = /[a-z]/.test(password);
     const hasNumbers = /\d/.test(password);
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-    
+
     return {
-        isValid: password.length >= minLength && hasUpperCase && hasLowerCase && hasNumbers && hasSpecialChar,
+        isValid:
+            password.length >= minLength &&
+            hasUpperCase &&
+            hasLowerCase &&
+            hasNumbers &&
+            hasSpecialChar,
         errors: {
             length: password.length < minLength,
             uppercase: !hasUpperCase,
@@ -689,16 +712,16 @@ window.SEIM = {
     validatePassword,
     copyToClipboard,
     downloadFile
-}; 
+};
 
 // --- Programs List AJAX Filter/Search ---
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const filterForm = document.getElementById('programsFilterForm');
     const programsListContainer = document.getElementById('programsListContainer');
     if (filterForm && programsListContainer) {
         // Debounce input changes
         const debouncedFetch = debounce(fetchPrograms, 400);
-        filterForm.addEventListener('submit', function(e) {
+        filterForm.addEventListener('submit', function (e) {
             e.preventDefault();
             fetchPrograms();
         });
@@ -717,7 +740,8 @@ document.addEventListener('DOMContentLoaded', function() {
             renderProgramsList(data.results || data); // DRF paginated or plain list
             showToast('Programs updated!', 'success');
         } catch (err) {
-            let title = 'Error', message = 'Could not load programs.';
+            let title = 'Error',
+                message = 'Could not load programs.';
             if (err && err.title) title = err.title;
             if (err && err.message) message = err.message;
             showErrorAlert(title, message);
@@ -730,15 +754,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!Array.isArray(programs)) return;
         if (programs.length === 0) {
             // Use security utilities for safe innerHTML setting
-        if (window.SEIM_SECURITY_UTILS) {
-            window.SEIM_SECURITY_UTILS.safeSetInnerHTML(programsListContainer, `<div class='col-12'><div class='card'><div class='card-body text-center py-5'><i class='bi bi-calendar-x display-4 text-muted'></i><h4 class='mt-3'>No Programs Found</h4><p class='text-muted'>There are currently no exchange programs available.</p></div></div></div>`);
-        } else {
-            // Fallback to textContent for safety
-            programsListContainer.textContent = 'No Programs Found - There are currently no exchange programs available.';
-        }
+            if (window.SEIM_SECURITY_UTILS) {
+                window.SEIM_SECURITY_UTILS.safeSetInnerHTML(
+                    programsListContainer,
+                    `<div class='col-12'><div class='card'><div class='card-body text-center py-5'><i class='bi bi-calendar-x display-4 text-muted'></i><h4 class='mt-3'>No Programs Found</h4><p class='text-muted'>There are currently no exchange programs available.</p></div></div></div>`
+                );
+            } else {
+                // Fallback to textContent for safety
+                programsListContainer.textContent =
+                    'No Programs Found - There are currently no exchange programs available.';
+            }
             return;
         }
         // ... rest of render logic ...
     }
-}
-); 
+});

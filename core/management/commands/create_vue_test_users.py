@@ -3,8 +3,9 @@ Management command to create test users for Vue.js frontend testing.
 Creates users with different roles: admin, coordinator, and student.
 """
 
-from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand
+
 from accounts.models import Role
 
 User = get_user_model()
@@ -108,7 +109,9 @@ class Command(BaseCommand):
 
         self.stdout.write("\n" + "=" * 70)
         self.stdout.write(self.style.SUCCESS(f"✓ Created {created_count} new users"))
-        self.stdout.write(self.style.WARNING(f"↻ Updated {updated_count} existing users"))
+        self.stdout.write(
+            self.style.WARNING(f"↻ Updated {updated_count} existing users")
+        )
         self.stdout.write("=" * 70)
         self.stdout.write("\nTest Credentials:")
         self.stdout.write("-" * 70)

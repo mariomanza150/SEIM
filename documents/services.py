@@ -12,7 +12,7 @@ from django.utils import timezone
 magic = None
 MAGIC_AVAILABLE = False
 
-if not sys.platform.startswith('win'):
+if not sys.platform.startswith("win"):
     # Try to import pylibmagic before magic for compatibility with Python 3.12
     try:
         try:
@@ -20,6 +20,7 @@ if not sys.platform.startswith('win'):
         except ImportError:
             pass  # pylibmagic is optional, only needed for python-magic compatibility
         import magic
+
         MAGIC_AVAILABLE = True
     except (ImportError, OSError, Exception):
         magic = None
@@ -29,7 +30,12 @@ from django.core.exceptions import ValidationError
 
 from notifications.services import NotificationService
 
-from .models import Document, DocumentResubmissionRequest, DocumentType, DocumentValidation
+from .models import (
+    Document,
+    DocumentResubmissionRequest,
+    DocumentType,
+    DocumentValidation,
+)
 from .tasks import scan_document_virus
 
 
@@ -56,7 +62,9 @@ class DocumentService:
             mime_type, _ = mimetypes.guess_type(file.name)
             if not mime_type:
                 # Try to guess from file extension
-                mime_type = mimetypes.guess_type(file.name)[0] or 'application/octet-stream'
+                mime_type = (
+                    mimetypes.guess_type(file.name)[0] or "application/octet-stream"
+                )
 
         file.seek(0)
         if mime_type not in DocumentService.ALLOWED_FILE_TYPES:
@@ -79,7 +87,9 @@ class DocumentService:
         file.seek(0)  # Reset file pointer
 
         # Create temporary file for scanning
-        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.name)[1]) as temp_file:
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=os.path.splitext(file.name)[1]
+        ) as temp_file:
             temp_file.write(file_content)
             temp_file_path = temp_file.name
 
@@ -225,7 +235,9 @@ class DocumentService:
             transactional_route_key="document_resubmission_requested",
         )
         NotificationService.broadcast_application_sync(
-            str(document.application_id), "document_resubmission_requested", str(document.id)
+            str(document.application_id),
+            "document_resubmission_requested",
+            str(document.id),
         )
 
         return req
@@ -302,7 +314,9 @@ class DocumentService:
 
             entry["document_id"] = str(latest.id)
             open_req = (
-                DocumentResubmissionRequest.objects.filter(document=latest, resolved=False)
+                DocumentResubmissionRequest.objects.filter(
+                    document=latest, resolved=False
+                )
                 .order_by("-requested_at")
                 .first()
             )
@@ -402,7 +416,9 @@ class DocumentService:
         try:
             candidate = [int(x) for x in raw_ids]
         except (TypeError, ValueError):
-            raise ValidationError("Invalid required_document_type_ids on form step.") from None
+            raise ValidationError(
+                "Invalid required_document_type_ids on form step."
+            ) from None
         effective = DocumentService.intersect_program_required_document_type_ids(
             application.program, candidate
         )

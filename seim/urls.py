@@ -6,6 +6,7 @@ This configuration separates:
 - REST API endpoints - Used by Vue.js frontend
 - User-facing routes - Handled by Vue.js SPA
 """
+
 from django.apps import apps
 from django.conf import settings
 from django.conf.urls.static import static
@@ -41,11 +42,16 @@ urlpatterns = [
     # ============================================
     path("health/live/", health_live, name="health_live"),
     path("health/", health_check, name="health_check"),
-
     # Redirect /admin/ to Django admin (moved to avoid SPA route collisions under /seim/admin/*)
-    path("admin/", lambda request: redirect("/seim/django-admin/"), name="admin_redirect"),
+    path(
+        "admin/", lambda request: redirect("/seim/django-admin/"), name="admin_redirect"
+    ),
     # Redirect legacy /django/admin/ to the new Django admin path
-    path("django/admin/", lambda request: redirect("/seim/django-admin/"), name="django_admin_redirect"),
+    path(
+        "django/admin/",
+        lambda request: redirect("/seim/django-admin/"),
+        name="django_admin_redirect",
+    ),
     # Redirect /cms/admin/ to proper CMS admin
     path("cms/admin/", lambda request: redirect("/cms/"), name="cms_admin_redirect"),
     # ============================================
@@ -69,20 +75,27 @@ urlpatterns += [
     path("api/accounts/", include("accounts.urls")),
     path("analytics/", include(("analytics.urls", "analytics"), namespace="analytics")),
     path("grades/", include(("grades.urls", "grades"), namespace="grades")),
-
     # Application Forms API
-    path('api/application-forms/', include(('application_forms.urls', 'application_forms'), namespace='application_forms')),
-
+    path(
+        "api/application-forms/",
+        include(
+            ("application_forms.urls", "application_forms"),
+            namespace="application_forms",
+        ),
+    ),
     # django-dynforms builder (admin-only); see core/dynforms_urls.py
     *(
         [path("dynforms/", include("core.dynforms_urls"))]
         if apps.is_installed("dynforms")
         else []
     ),
-
     # API Documentation
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
 ]
 
 if _WAGTAIL:
@@ -95,12 +108,15 @@ urlpatterns += [
     # SEIM APPLICATION (Vue.js SPA)
     # ============================================
     # Vue.js SPA lives exclusively under /seim/ namespace - catch all subpaths
-    re_path(r"^seim(?:/.*)?/?$", TemplateView.as_view(template_name='index.html'), name='vue-app'),
-
+    re_path(
+        r"^seim(?:/.*)?/?$",
+        TemplateView.as_view(template_name="index.html"),
+        name="vue-app",
+    ),
     # ============================================
     # UTILITIES
     # ============================================
-    path('i18n/', include('django.conf.urls.i18n')),  # Internationalization
+    path("i18n/", include("django.conf.urls.i18n")),  # Internationalization
     path("jsreverse/", urls_js, name="js_reverse"),  # JavaScript reverse URLs
     # Contact form (Django templates) — before Wagtail/frontend ``""`` includes so ``/contact/`` resolves
     path("", include(("core.urls", "core"))),

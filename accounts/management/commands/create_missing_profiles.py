@@ -20,7 +20,7 @@ class Command(BaseCommand):
         users_without_profiles = []
         for user in User.objects.all():
             try:
-                user.profile
+                _ = user.profile
             except User.profile.RelatedObjectDoesNotExist:
                 users_without_profiles.append(user)
 

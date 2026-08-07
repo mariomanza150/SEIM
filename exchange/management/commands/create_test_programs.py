@@ -2,9 +2,10 @@
 Management command to create test exchange programs for Vue.js testing.
 """
 
+from datetime import timedelta
+
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from datetime import timedelta
 
 from exchange.models import Program
 
@@ -84,7 +85,7 @@ class Command(BaseCommand):
 
         for program_data in programs_data:
             name = program_data["name"]
-            
+
             program, created = Program.objects.update_or_create(
                 name=name,
                 defaults=program_data,
@@ -92,18 +93,16 @@ class Command(BaseCommand):
 
             if created:
                 created_count += 1
-                self.stdout.write(
-                    self.style.SUCCESS(f"  ✓ Created: {name}")
-                )
+                self.stdout.write(self.style.SUCCESS(f"  ✓ Created: {name}"))
             else:
                 updated_count += 1
-                self.stdout.write(
-                    self.style.WARNING(f"  ↻ Updated: {name}")
-                )
+                self.stdout.write(self.style.WARNING(f"  ↻ Updated: {name}"))
 
         self.stdout.write("\n" + "=" * 70)
         self.stdout.write(self.style.SUCCESS(f"✓ Created {created_count} new programs"))
-        self.stdout.write(self.style.WARNING(f"↻ Updated {updated_count} existing programs"))
+        self.stdout.write(
+            self.style.WARNING(f"↻ Updated {updated_count} existing programs")
+        )
         self.stdout.write("=" * 70)
         self.stdout.write("\nTest programs are now available at:")
         self.stdout.write("  API: http://localhost:8001/api/programs/")

@@ -7,7 +7,6 @@ and uses ``builder/<pk>/`` for the form builder to match SEIM paths and tests.
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.urls import path
-
 from dynforms import views
 
 

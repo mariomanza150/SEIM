@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
-from typing import Any, Mapping
+from collections.abc import Mapping
+from typing import Any
 
 VISIBLE_WHEN_KEY = "x-seim-visibleWhen"
 
 
-def _context_constraints_pass(rule: Mapping[str, Any], context: Mapping[str, Any] | None) -> bool:
+def _context_constraints_pass(
+    rule: Mapping[str, Any], context: Mapping[str, Any] | None
+) -> bool:
     """Program / coordinator predicates. Missing context fails checks that need it."""
     ctx = context or {}
 
@@ -168,7 +171,7 @@ def _is_truthy(value: Any) -> bool:
         return False
     if isinstance(value, bool):
         return value
-    if isinstance(value, (int, float)) and not isinstance(value, bool):
+    if isinstance(value, int | float) and not isinstance(value, bool):
         return value != 0
     if isinstance(value, str):
         return value.strip() != ""

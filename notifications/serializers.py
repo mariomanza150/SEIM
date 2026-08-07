@@ -41,19 +41,19 @@ class NotificationPreferenceSerializer(serializers.ModelSerializer):
 
 class ReminderSerializer(serializers.ModelSerializer):
     """Serializer for Reminder model."""
-    
+
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     notification = serializers.PrimaryKeyRelatedField(read_only=True)
-    
+
     class Meta:
         model = Reminder
         fields = "__all__"
-    
+
     def create(self, validated_data):
         """Set user from request context."""
-        request = self.context.get('request')
+        request = self.context.get("request")
         if request and request.user:
-            validated_data['user'] = request.user
+            validated_data["user"] = request.user
         return super().create(validated_data)
 
 
@@ -64,7 +64,9 @@ class NotificationRoutingReferenceSerializer(serializers.Serializer):
     reference_api_access = serializers.JSONField(read_only=True)
     settings_categories = serializers.JSONField(read_only=True)
     transactional_routes = serializers.JSONField(read_only=True)
-    transactional_route_keys_by_settings_category = serializers.JSONField(read_only=True)
+    transactional_route_keys_by_settings_category = serializers.JSONField(
+        read_only=True
+    )
     reminder_event_type_to_settings_category = serializers.JSONField(read_only=True)
     reminder_event_types_by_settings_category = serializers.JSONField(read_only=True)
     reminder_event_type_descriptions = serializers.JSONField(read_only=True)

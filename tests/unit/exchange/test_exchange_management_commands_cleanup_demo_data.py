@@ -34,13 +34,13 @@ class TestCleanupDemoDataCommand(TestCase):
         # Create admin users (should be cleaned up)
         for i in range(2):
             user = User.objects.create_user(
-                username=f"admin{i+1}",
-                email=f"admin{i+1}@seim.edu",
+                username=f"admin{i + 1}",
+                email=f"admin{i + 1}@seim.edu",
                 password="admin123",
-                first_name=f"Admin{i+1}",
+                first_name=f"Admin{i + 1}",
                 last_name="Demo",
                 is_email_verified=True,
-                is_active=True
+                is_active=True,
             )
             user.roles.add(self.admin_role)
             self.demo_users.append(user)
@@ -48,13 +48,13 @@ class TestCleanupDemoDataCommand(TestCase):
         # Create coordinator users (should be cleaned up)
         for i in range(2):
             user = User.objects.create_user(
-                username=f"coordinator{i+1}",
-                email=f"coordinator{i+1}@seim.edu",
+                username=f"coordinator{i + 1}",
+                email=f"coordinator{i + 1}@seim.edu",
                 password="coordinator123",
-                first_name=f"Coordinator{i+1}",
+                first_name=f"Coordinator{i + 1}",
                 last_name="Demo",
                 is_email_verified=True,
-                is_active=True
+                is_active=True,
             )
             user.roles.add(self.coordinator_role)
             self.demo_users.append(user)
@@ -62,13 +62,13 @@ class TestCleanupDemoDataCommand(TestCase):
         # Create student users (should be cleaned up)
         for i in range(3):
             user = User.objects.create_user(
-                username=f"student{i+1}",
-                email=f"student{i+1}@university.edu",
+                username=f"student{i + 1}",
+                email=f"student{i + 1}@university.edu",
                 password="student123",
-                first_name=f"Student{i+1}",
+                first_name=f"Student{i + 1}",
                 last_name="Demo",
                 is_email_verified=True,
-                is_active=True
+                is_active=True,
             )
             user.roles.add(self.student_role)
             self.demo_users.append(user)
@@ -81,7 +81,7 @@ class TestCleanupDemoDataCommand(TestCase):
             first_name="Regular",
             last_name="User",
             is_email_verified=True,
-            is_active=True
+            is_active=True,
         )
 
         # Create demo programs (should be cleaned up)
@@ -101,7 +101,7 @@ class TestCleanupDemoDataCommand(TestCase):
                 end_date=date(2024, 12, 31),
                 min_gpa=3.0,
                 required_language="English",
-                recurring=True
+                recurring=True,
             )
             self.demo_programs.append(program)
 
@@ -113,19 +113,23 @@ class TestCleanupDemoDataCommand(TestCase):
             end_date=date(2024, 12, 31),
             min_gpa=3.0,
             required_language="English",
-            recurring=True
+            recurring=True,
         )
 
         # Create demo applications (should be cleaned up)
         self.demo_applications = []
         # Create a status for all applications
-        self.status, _ = ApplicationStatus.objects.get_or_create(name="pending", defaults={"order": 1})
-        for i, student in enumerate([u for u in self.demo_users if u.username.startswith("student")]):
+        self.status, _ = ApplicationStatus.objects.get_or_create(
+            name="pending", defaults={"order": 1}
+        )
+        for i, student in enumerate(
+            [u for u in self.demo_users if u.username.startswith("student")]
+        ):
             application = Application.objects.create(
                 student=student,
                 program=self.demo_programs[i % len(self.demo_programs)],
                 status=self.status,
-                created_at=timezone.now()
+                created_at=timezone.now(),
             )
             self.demo_applications.append(application)
 
@@ -134,7 +138,7 @@ class TestCleanupDemoDataCommand(TestCase):
             student=self.regular_user,
             program=self.regular_program,
             status=self.status,
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
 
         # Create demo documents (should be cleaned up)
@@ -144,8 +148,10 @@ class TestCleanupDemoDataCommand(TestCase):
             document = Document.objects.create(
                 application=application,
                 type=doc_type,
-                file=SimpleUploadedFile(f"demo_transcript_{application.id}.pdf", b"dummy content"),
-                uploaded_by=application.student
+                file=SimpleUploadedFile(
+                    f"demo_transcript_{application.id}.pdf", b"dummy content"
+                ),
+                uploaded_by=application.student,
             )
             self.demo_documents.append(document)
 
@@ -155,7 +161,7 @@ class TestCleanupDemoDataCommand(TestCase):
             application=self.regular_application,
             type=doc_type,
             file=SimpleUploadedFile("regular_document.pdf", b"dummy content"),
-            uploaded_by=self.regular_user
+            uploaded_by=self.regular_user,
         )
 
         # Create demo comments (should be cleaned up)
@@ -165,7 +171,7 @@ class TestCleanupDemoDataCommand(TestCase):
                 application=application,
                 author=self.demo_users[0],  # Use first demo user
                 text=f"Demo comment for application {application.id}",
-                created_at=timezone.now()
+                created_at=timezone.now(),
             )
             self.demo_comments.append(comment)
 
@@ -174,7 +180,7 @@ class TestCleanupDemoDataCommand(TestCase):
             application=self.regular_application,
             author=self.regular_user,
             text="Regular comment",
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
 
         # Create demo timeline events (should be cleaned up)
@@ -184,7 +190,7 @@ class TestCleanupDemoDataCommand(TestCase):
                 application=application,
                 event_type="status_change",
                 description=f"Demo timeline event for application {application.id}",
-                created_at=timezone.now()
+                created_at=timezone.now(),
             )
             self.demo_timeline_events.append(event)
 
@@ -193,7 +199,7 @@ class TestCleanupDemoDataCommand(TestCase):
             application=self.regular_application,
             event_type="status_change",
             description="Regular timeline event",
-            created_at=timezone.now()
+            created_at=timezone.now(),
         )
 
         # Create demo notifications (should be cleaned up)
@@ -203,7 +209,7 @@ class TestCleanupDemoDataCommand(TestCase):
                 recipient=user,
                 title=f"Demo notification for {user.username}",
                 message=f"This is a demo notification for {user.username}",
-                notification_type="in_app"
+                notification_type="in_app",
             )
             self.demo_notifications.append(notification)
 
@@ -212,99 +218,203 @@ class TestCleanupDemoDataCommand(TestCase):
             recipient=self.regular_user,
             title="Regular notification",
             message="This should not be cleaned up",
-            notification_type="in_app"
+            notification_type="in_app",
         )
 
     def test_cleanup_demo_data_command(self):
         """Test that the cleanup_demo_data command properly removes demo data."""
         # Debug: Check what users were actually created
         print(f"DEBUG: Total users in database: {User.objects.count()}")
-        print(f"DEBUG: Users with admin prefix: {User.objects.filter(username__startswith='admin').count()}")
-        print(f"DEBUG: Users with coordinator prefix: {User.objects.filter(username__startswith='coordinator').count()}")
-        print(f"DEBUG: Users with student prefix: {User.objects.filter(username__startswith='student').count()}")
-        print(f"DEBUG: All usernames: {list(User.objects.values_list('username', flat=True))}")
+        print(
+            f"DEBUG: Users with admin prefix: {User.objects.filter(username__startswith='admin').count()}"
+        )
+        print(
+            f"DEBUG: Users with coordinator prefix: {User.objects.filter(username__startswith='coordinator').count()}"
+        )
+        print(
+            f"DEBUG: Users with student prefix: {User.objects.filter(username__startswith='student').count()}"
+        )
+        print(
+            f"DEBUG: All usernames: {list(User.objects.values_list('username', flat=True))}"
+        )
 
         # Verify initial state - demo data exists
         demo_user_count = User.objects.filter(
-            Q(username__startswith="admin") |
-            Q(username__startswith="coordinator") |
-            Q(username__startswith="student")
+            Q(username__startswith="admin")
+            | Q(username__startswith="coordinator")
+            | Q(username__startswith="student")
         ).count()
         print(f"DEBUG: Demo user count from filter: {demo_user_count}")
         self.assertEqual(demo_user_count, 7)
-        self.assertEqual(Program.objects.filter(name__in=[
-            "Erasmus+ Computer Science Exchange",
-            "Business Administration in Spain",
-            "Engineering Exchange in Germany",
-            "Arts and Culture in France",
-        ]).count(), 4)
-        self.assertEqual(Application.objects.filter(student__username__startswith="student").count(), 3)
-        self.assertEqual(Document.objects.filter(uploaded_by__username__startswith="student").count(), 3)
-        self.assertEqual(Comment.objects.filter(application__student__username__startswith="student").count(), 3)
-        self.assertEqual(TimelineEvent.objects.filter(application__student__username__startswith="student").count(), 3)
-        self.assertEqual(Notification.objects.filter(
-            Q(recipient__username__startswith="admin") |
-            Q(recipient__username__startswith="coordinator") |
-            Q(recipient__username__startswith="student")
-        ).count(), 7)
+        self.assertEqual(
+            Program.objects.filter(
+                name__in=[
+                    "Erasmus+ Computer Science Exchange",
+                    "Business Administration in Spain",
+                    "Engineering Exchange in Germany",
+                    "Arts and Culture in France",
+                ]
+            ).count(),
+            4,
+        )
+        self.assertEqual(
+            Application.objects.filter(student__username__startswith="student").count(),
+            3,
+        )
+        self.assertEqual(
+            Document.objects.filter(
+                uploaded_by__username__startswith="student"
+            ).count(),
+            3,
+        )
+        self.assertEqual(
+            Comment.objects.filter(
+                application__student__username__startswith="student"
+            ).count(),
+            3,
+        )
+        self.assertEqual(
+            TimelineEvent.objects.filter(
+                application__student__username__startswith="student"
+            ).count(),
+            3,
+        )
+        self.assertEqual(
+            Notification.objects.filter(
+                Q(recipient__username__startswith="admin")
+                | Q(recipient__username__startswith="coordinator")
+                | Q(recipient__username__startswith="student")
+            ).count(),
+            7,
+        )
 
         # Verify regular data exists
         self.assertEqual(User.objects.filter(username="regular_user").count(), 1)
-        self.assertEqual(Program.objects.filter(name="Regular Exchange Program").count(), 1)
-        self.assertEqual(Application.objects.filter(student__username="regular_user").count(), 1)
-        self.assertEqual(Document.objects.filter(uploaded_by__username="regular_user").count(), 1)
-        self.assertEqual(Comment.objects.filter(author__username="regular_user").count(), 1)
-        self.assertEqual(TimelineEvent.objects.filter(application__student__username="regular_user").count(), 1)
-        self.assertEqual(Notification.objects.filter(recipient__username="regular_user").count(), 1)
+        self.assertEqual(
+            Program.objects.filter(name="Regular Exchange Program").count(), 1
+        )
+        self.assertEqual(
+            Application.objects.filter(student__username="regular_user").count(), 1
+        )
+        self.assertEqual(
+            Document.objects.filter(uploaded_by__username="regular_user").count(), 1
+        )
+        self.assertEqual(
+            Comment.objects.filter(author__username="regular_user").count(), 1
+        )
+        self.assertEqual(
+            TimelineEvent.objects.filter(
+                application__student__username="regular_user"
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            Notification.objects.filter(recipient__username="regular_user").count(), 1
+        )
 
         # Run the cleanup command
-        call_command('cleanup_demo_data')
+        call_command("cleanup_demo_data")
 
         # Debug: Check what users remain after cleanup
         print(f"DEBUG AFTER CLEANUP: Total users in database: {User.objects.count()}")
-        print(f"DEBUG AFTER CLEANUP: Users with admin prefix: {User.objects.filter(username__startswith='admin').count()}")
-        print(f"DEBUG AFTER CLEANUP: Users with coordinator prefix: {User.objects.filter(username__startswith='coordinator').count()}")
-        print(f"DEBUG AFTER CLEANUP: Users with student prefix: {User.objects.filter(username__startswith='student').count()}")
-        print(f"DEBUG AFTER CLEANUP: All usernames: {list(User.objects.values_list('username', flat=True))}")
+        print(
+            f"DEBUG AFTER CLEANUP: Users with admin prefix: {User.objects.filter(username__startswith='admin').count()}"
+        )
+        print(
+            f"DEBUG AFTER CLEANUP: Users with coordinator prefix: {User.objects.filter(username__startswith='coordinator').count()}"
+        )
+        print(
+            f"DEBUG AFTER CLEANUP: Users with student prefix: {User.objects.filter(username__startswith='student').count()}"
+        )
+        print(
+            f"DEBUG AFTER CLEANUP: All usernames: {list(User.objects.values_list('username', flat=True))}"
+        )
 
         # Verify demo data is cleaned up
         # After cleanup
         demo_user_count_after = User.objects.filter(
-            Q(username__startswith="admin") |
-            Q(username__startswith="coordinator") |
-            Q(username__startswith="student")
+            Q(username__startswith="admin")
+            | Q(username__startswith="coordinator")
+            | Q(username__startswith="student")
         ).count()
-        print(f"DEBUG AFTER CLEANUP: Demo user count from filter: {demo_user_count_after}")
+        print(
+            f"DEBUG AFTER CLEANUP: Demo user count from filter: {demo_user_count_after}"
+        )
         self.assertEqual(demo_user_count_after, 0)
-        self.assertEqual(Program.objects.filter(name__in=[
-            "Erasmus+ Computer Science Exchange",
-            "Business Administration in Spain",
-            "Engineering Exchange in Germany",
-            "Arts and Culture in France",
-        ]).count(), 0)
-        self.assertEqual(Application.objects.filter(student__username__startswith="student").count(), 0)
-        self.assertEqual(Document.objects.filter(uploaded_by__username__startswith="student").count(), 0)
-        self.assertEqual(Comment.objects.filter(application__student__username__startswith="student").count(), 0)
-        self.assertEqual(TimelineEvent.objects.filter(application__student__username__startswith="student").count(), 0)
-        self.assertEqual(Notification.objects.filter(
-            Q(recipient__username__startswith="admin") |
-            Q(recipient__username__startswith="coordinator") |
-            Q(recipient__username__startswith="student")
-        ).count(), 0)
+        self.assertEqual(
+            Program.objects.filter(
+                name__in=[
+                    "Erasmus+ Computer Science Exchange",
+                    "Business Administration in Spain",
+                    "Engineering Exchange in Germany",
+                    "Arts and Culture in France",
+                ]
+            ).count(),
+            0,
+        )
+        self.assertEqual(
+            Application.objects.filter(student__username__startswith="student").count(),
+            0,
+        )
+        self.assertEqual(
+            Document.objects.filter(
+                uploaded_by__username__startswith="student"
+            ).count(),
+            0,
+        )
+        self.assertEqual(
+            Comment.objects.filter(
+                application__student__username__startswith="student"
+            ).count(),
+            0,
+        )
+        self.assertEqual(
+            TimelineEvent.objects.filter(
+                application__student__username__startswith="student"
+            ).count(),
+            0,
+        )
+        self.assertEqual(
+            Notification.objects.filter(
+                Q(recipient__username__startswith="admin")
+                | Q(recipient__username__startswith="coordinator")
+                | Q(recipient__username__startswith="student")
+            ).count(),
+            0,
+        )
 
         # Verify regular data is preserved
         self.assertEqual(User.objects.filter(username="regular_user").count(), 1)
-        self.assertEqual(Program.objects.filter(name="Regular Exchange Program").count(), 1)
-        self.assertEqual(Application.objects.filter(student__username="regular_user").count(), 1)
-        self.assertEqual(Document.objects.filter(uploaded_by__username="regular_user").count(), 1)
-        self.assertEqual(Comment.objects.filter(author__username="regular_user").count(), 1)
-        self.assertEqual(TimelineEvent.objects.filter(application__student__username="regular_user").count(), 1)
-        self.assertEqual(Notification.objects.filter(recipient__username="regular_user").count(), 1)
+        self.assertEqual(
+            Program.objects.filter(name="Regular Exchange Program").count(), 1
+        )
+        self.assertEqual(
+            Application.objects.filter(student__username="regular_user").count(), 1
+        )
+        self.assertEqual(
+            Document.objects.filter(uploaded_by__username="regular_user").count(), 1
+        )
+        self.assertEqual(
+            Comment.objects.filter(author__username="regular_user").count(), 1
+        )
+        self.assertEqual(
+            TimelineEvent.objects.filter(
+                application__student__username="regular_user"
+            ).count(),
+            1,
+        )
+        self.assertEqual(
+            Notification.objects.filter(recipient__username="regular_user").count(), 1
+        )
 
         # Verify that related objects are also cleaned up (cascade deletes)
         self.assertEqual(Comment.objects.count(), 1)  # Only the regular comment remains
-        self.assertEqual(TimelineEvent.objects.count(), 1)  # Only the regular event remains
-        self.assertEqual(Document.objects.count(), 1)  # Only the regular document remains
+        self.assertEqual(
+            TimelineEvent.objects.count(), 1
+        )  # Only the regular event remains
+        self.assertEqual(
+            Document.objects.count(), 1
+        )  # Only the regular document remains
 
 
 class TestCleanupDemoDataCommandSafety(TestCase):

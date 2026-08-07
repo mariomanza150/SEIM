@@ -4,14 +4,16 @@ Authentication helpers for E2E tests.
 Uses Vue SPA: /login page, /api/token/ (email + password), access_token/refresh_token in localStorage.
 """
 
-from playwright.sync_api import Page, Browser, BrowserContext
-from typing import Optional
 import time
+
+from playwright.sync_api import Browser, BrowserContext, Page
 
 
 class VueAppNotAvailable(Exception):
     """Raised when Vue app or API at base_url is not available (e.g. 404)."""
+
     pass
+
 
 # Username -> email for /api/token/ (Vue backend accepts email)
 _USER_EMAIL = {
@@ -46,7 +48,9 @@ def login_via_api(page: Page, base_url: str, email: str, password: str) -> dict:
             time.sleep(retry_delay)
             retry_delay *= 2
             continue
-        assert response.ok, f"Login API failed: {response.status} {response.text()[:200]}"
+        assert response.ok, (
+            f"Login API failed: {response.status} {response.text()[:200]}"
+        )
     data = response.json()
     access = data.get("access", "")
     refresh = data.get("refresh", "")

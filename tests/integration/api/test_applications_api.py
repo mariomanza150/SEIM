@@ -13,7 +13,6 @@ from django.urls import reverse
 from rest_framework import status
 
 from application_forms.models import FormSubmission, FormType
-from exchange.models import ApplicationStatus
 from tests.utils import APITestCase, PerformanceTestCase, WorkflowTestCase
 
 
@@ -94,10 +93,14 @@ class TestApplicationsAPI(APITestCase):
         self.assertEqual(submission.form_type, form_type)
         self.assertEqual(submission.responses["motivation"], "I want to study abroad.")
 
-        detail_response = self.client.get(reverse("api:application-detail", args=[application_id]))
+        detail_response = self.client.get(
+            reverse("api:application-detail", args=[application_id])
+        )
         self.assert_response_success(detail_response, status.HTTP_200_OK)
         self.assertEqual(
-            detail_response.data["dynamic_form_submission"]["responses"]["academic_goals"],
+            detail_response.data["dynamic_form_submission"]["responses"][
+                "academic_goals"
+            ],
             "Learn from a partner university.",
         )
 
@@ -374,26 +377,32 @@ class TestApplicationsAPI(APITestCase):
             print(f"Response status: {response.status_code}")
             print(f"Response data: {getattr(response, 'data', None)}")
         self.assert_response_success(response, status.HTTP_200_OK)
-        
+
         # Verify our draft application is in the results
         draft_app_ids = [app["id"] for app in response.data["results"]]
         self.assertIn(str(draft_app.id), draft_app_ids)
-        
+
         # Verify the draft application has correct status
-        our_draft_app = next((app for app in response.data["results"] if app["id"] == str(draft_app.id)), None)
+        our_draft_app = next(
+            (app for app in response.data["results"] if app["id"] == str(draft_app.id)),
+            None,
+        )
         self.assertIsNotNone(our_draft_app)
         self.assertEqual(our_draft_app["status"], "draft")
 
         # Filter by program
         response = self.client.get(f"{self.applications_url}?program={program1.id}")
         self.assert_response_success(response, status.HTTP_200_OK)
-        
+
         # Verify our application is in program1 results
         program1_app_ids = [app["id"] for app in response.data["results"]]
         self.assertIn(str(draft_app.id), program1_app_ids)
-        
+
         # Verify the application belongs to program1
-        our_program1_app = next((app for app in response.data["results"] if app["id"] == str(draft_app.id)), None)
+        our_program1_app = next(
+            (app for app in response.data["results"] if app["id"] == str(draft_app.id)),
+            None,
+        )
         self.assertIsNotNone(our_program1_app)
         self.assertEqual(our_program1_app["program"], program1.id)
 

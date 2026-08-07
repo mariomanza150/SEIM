@@ -20,7 +20,11 @@ def scan_document_virus(document_id, validator_id):
                 # Scan the file
                 is_clean, threat_name = scan_file_for_viruses(document.file.path)
                 result = "valid" if is_clean else "infected"
-                details = f"Scanned by async task. Threat: {threat_name}" if threat_name else "Scanned by async task"
+                details = (
+                    f"Scanned by async task. Threat: {threat_name}"
+                    if threat_name
+                    else "Scanned by async task"
+                )
             except Exception as e:
                 result = "error"
                 details = f"Scan failed: {str(e)}"
@@ -46,6 +50,7 @@ def scan_document_virus(document_id, validator_id):
     except Exception as e:
         # Log error and mark as error
         from .models import DocumentValidation
+
         try:
             document = Document.objects.get(id=document_id)
             DocumentValidation.objects.create(

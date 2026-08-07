@@ -1,12 +1,13 @@
 """
 Tests for documents services.
 """
+
 # Create a mock magic module for tests
 import sys
 from datetime import date
 from unittest.mock import MagicMock, patch
 
-sys.modules['magic'] = MagicMock()
+sys.modules["magic"] = MagicMock()
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -30,9 +31,7 @@ class TestDocumentService(TestCase):
     def setUp(self):
         """Set up test data."""
         self.user = User.objects.create_user(
-            username="testuser",
-            email="test@example.com",
-            password="testpass123"
+            username="testuser", email="test@example.com", password="testpass123"
         )
 
         self.program = Program.objects.create(
@@ -40,24 +39,20 @@ class TestDocumentService(TestCase):
             description="Test program description",
             start_date=date(2024, 1, 1),
             end_date=date(2024, 6, 30),
-            is_active=True
+            is_active=True,
         )
 
         # Create ApplicationStatus
         self.application_status, _ = ApplicationStatus.objects.get_or_create(
-            name="draft",
-            defaults={"order": 1}
+            name="draft", defaults={"order": 1}
         )
 
         self.application = Application.objects.create(
-            student=self.user,
-            program=self.program,
-            status=self.application_status
+            student=self.user, program=self.program, status=self.application_status
         )
 
         self.document_type = DocumentType.objects.create(
-            name="transcript",
-            description="Academic transcript"
+            name="transcript", description="Academic transcript"
         )
 
     def test_validate_file_type_and_size_success(self):
@@ -65,9 +60,7 @@ class TestDocumentService(TestCase):
         # Create a mock file
         file_content = b"Test file content"
         uploaded_file = SimpleUploadedFile(
-            "test.pdf",
-            file_content,
-            content_type="application/pdf"
+            "test.pdf", file_content, content_type="application/pdf"
         )
         uploaded_file.size = 1024  # 1KB
 
@@ -75,8 +68,8 @@ class TestDocumentService(TestCase):
         mock_magic_module = MagicMock()
         mock_magic_module.from_buffer = MagicMock(return_value="application/pdf")
 
-        with patch('documents.services.MAGIC_AVAILABLE', True):
-            with patch('documents.services.magic', mock_magic_module):
+        with patch("documents.services.MAGIC_AVAILABLE", True):
+            with patch("documents.services.magic", mock_magic_module):
                 result = DocumentService.validate_file_type_and_size(uploaded_file)
 
                 self.assertTrue(result)
@@ -85,14 +78,12 @@ class TestDocumentService(TestCase):
         """Test file validation with invalid type."""
         file_content = b"Test file content"
         uploaded_file = SimpleUploadedFile(
-            "test.txt",
-            file_content,
-            content_type="text/plain"
+            "test.txt", file_content, content_type="text/plain"
         )
         uploaded_file.size = 1024
 
-        with patch('documents.services.MAGIC_AVAILABLE', True):
-            with patch('magic.from_buffer') as mock_magic:
+        with patch("documents.services.MAGIC_AVAILABLE", True):
+            with patch("magic.from_buffer") as mock_magic:
                 mock_magic.return_value = "text/plain"
 
                 with self.assertRaises(ValueError, msg="File type not allowed."):
@@ -102,26 +93,24 @@ class TestDocumentService(TestCase):
         """Test file validation with file too large."""
         file_content = b"x" * (DocumentService.MAX_FILE_SIZE_MB * 1024 * 1024 + 1000)
         uploaded_file = SimpleUploadedFile(
-            "large.pdf",
-            file_content,
-            content_type="application/pdf"
+            "large.pdf", file_content, content_type="application/pdf"
         )
         uploaded_file.size = DocumentService.MAX_FILE_SIZE_MB * 1024 * 1024 + 1000
 
-        with patch('documents.services.MAGIC_AVAILABLE', True):
-            with patch('magic.from_buffer') as mock_magic:
+        with patch("documents.services.MAGIC_AVAILABLE", True):
+            with patch("magic.from_buffer") as mock_magic:
                 mock_magic.return_value = "application/pdf"
 
-                with self.assertRaises(ValueError, msg="File size exceeds maximum allowed."):
+                with self.assertRaises(
+                    ValueError, msg="File size exceeds maximum allowed."
+                ):
                     DocumentService.validate_file_type_and_size(uploaded_file)
 
     def test_virus_scan_clean(self):
         """Test virus scan with clean file."""
         file_content = b"Test file content"
         uploaded_file = SimpleUploadedFile(
-            "test.pdf",
-            file_content,
-            content_type="application/pdf"
+            "test.pdf", file_content, content_type="application/pdf"
         )
 
         result = DocumentService.virus_scan(uploaded_file)
@@ -132,9 +121,7 @@ class TestDocumentService(TestCase):
         """Test successful document upload."""
         file_content = b"Test file content"
         uploaded_file = SimpleUploadedFile(
-            "test.pdf",
-            file_content,
-            content_type="application/pdf"
+            "test.pdf", file_content, content_type="application/pdf"
         )
         uploaded_file.size = 1024
 
@@ -142,14 +129,11 @@ class TestDocumentService(TestCase):
         mock_magic_module = MagicMock()
         mock_magic_module.from_buffer = MagicMock(return_value="application/pdf")
 
-        with patch('documents.services.MAGIC_AVAILABLE', True):
-            with patch('documents.services.magic', mock_magic_module):
-                with patch('documents.services.scan_document_virus.delay'):
+        with patch("documents.services.MAGIC_AVAILABLE", True):
+            with patch("documents.services.magic", mock_magic_module):
+                with patch("documents.services.scan_document_virus.delay"):
                     result = DocumentService.upload_document(
-                        self.application,
-                        self.document_type,
-                        uploaded_file,
-                        self.user
+                        self.application, self.document_type, uploaded_file, self.user
                     )
 
                     self.assertIsInstance(result, Document)
@@ -161,33 +145,28 @@ class TestDocumentService(TestCase):
         """Test document upload with invalid file."""
         file_content = b"Test file content"
         uploaded_file = SimpleUploadedFile(
-            "test.txt",
-            file_content,
-            content_type="text/plain"
+            "test.txt", file_content, content_type="text/plain"
         )
         uploaded_file.size = 1024
 
-        with patch('documents.services.MAGIC_AVAILABLE', True):
-            with patch('magic.from_buffer') as mock_magic:
+        with patch("documents.services.MAGIC_AVAILABLE", True):
+            with patch("magic.from_buffer") as mock_magic:
                 mock_magic.return_value = "text/plain"
 
                 with self.assertRaises(ValueError, msg="File type not allowed."):
                     DocumentService.upload_document(
-                        self.application,
-                        self.document_type,
-                        uploaded_file,
-                        self.user
+                        self.application, self.document_type, uploaded_file, self.user
                     )
 
     def test_validate_document_success(self):
         """Test successful document validation."""
         document = Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
-        with patch("notifications.services.NotificationService.send_notification") as mock_notify:
+        with patch(
+            "notifications.services.NotificationService.send_notification"
+        ) as mock_notify:
             result = DocumentService.validate_document(
                 document,
                 self.user,
@@ -209,12 +188,12 @@ class TestDocumentService(TestCase):
     def test_validate_document_invalid(self):
         """Test document validation with invalid result."""
         document = Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
-        with patch("notifications.services.NotificationService.send_notification") as mock_notify:
+        with patch(
+            "notifications.services.NotificationService.send_notification"
+        ) as mock_notify:
             DocumentService.validate_document(
                 document,
                 self.user,
@@ -230,9 +209,7 @@ class TestDocumentService(TestCase):
     def test_can_request_resubmission_under_limit(self):
         """Test resubmission request under limit."""
         document = Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
         result = DocumentService.can_request_resubmission(document)
@@ -242,17 +219,13 @@ class TestDocumentService(TestCase):
     def test_can_request_resubmission_at_limit(self):
         """Test resubmission request at limit."""
         document = Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
         # Create maximum number of resubmission requests
         for i in range(DocumentService.MAX_RESUBMISSIONS):
             DocumentResubmissionRequest.objects.create(
-                document=document,
-                requested_by=self.user,
-                reason=f"Request {i+1}"
+                document=document, requested_by=self.user, reason=f"Request {i + 1}"
             )
 
         result = DocumentService.can_request_resubmission(document)
@@ -262,16 +235,12 @@ class TestDocumentService(TestCase):
     def test_request_resubmission_success(self):
         """Test successful resubmission request."""
         document = Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
-        with patch('documents.services.NotificationService.send_notification'):
+        with patch("documents.services.NotificationService.send_notification"):
             result = DocumentService.request_resubmission(
-                document,
-                self.user,
-                "Document needs to be updated"
+                document, self.user, "Document needs to be updated"
             )
 
             self.assertIsInstance(result, DocumentResubmissionRequest)
@@ -282,37 +251,31 @@ class TestDocumentService(TestCase):
     def test_request_resubmission_over_limit(self):
         """Test resubmission request over limit."""
         document = Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
         # Create maximum number of resubmission requests
         for i in range(DocumentService.MAX_RESUBMISSIONS):
             DocumentResubmissionRequest.objects.create(
-                document=document,
-                requested_by=self.user,
-                reason=f"Request {i+1}"
+                document=document, requested_by=self.user, reason=f"Request {i + 1}"
             )
 
-        with self.assertRaises(ValueError, msg="Maximum number of resubmissions reached."):
-            DocumentService.request_resubmission(
-                document,
-                self.user,
-                "Another request"
-            )
+        with self.assertRaises(
+            ValueError, msg="Maximum number of resubmissions reached."
+        ):
+            DocumentService.request_resubmission(document, self.user, "Another request")
 
     def test_can_replace_document_draft_status(self):
         """Test document replacement when application is in draft status."""
         # Set application to draft status
-        draft_status, _ = ApplicationStatus.objects.get_or_create(name="draft", defaults={"order": 1})
+        draft_status, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
         self.application.status = draft_status
         self.application.save()
 
         document = Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
         result = DocumentService.can_replace_document(document, self.user)
@@ -322,14 +285,14 @@ class TestDocumentService(TestCase):
     def test_can_replace_document_with_pending_request(self):
         """Test document replacement with pending resubmission request."""
         # Set application to submitted status
-        submitted_status, _ = ApplicationStatus.objects.get_or_create(name="submitted", defaults={"order": 2})
+        submitted_status, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
         self.application.status = submitted_status
         self.application.save()
 
         document = Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
         # Create a pending resubmission request
@@ -337,7 +300,7 @@ class TestDocumentService(TestCase):
             document=document,
             requested_by=self.user,
             reason="Update needed",
-            resolved=False
+            resolved=False,
         )
 
         result = DocumentService.can_replace_document(document, self.user)
@@ -347,14 +310,14 @@ class TestDocumentService(TestCase):
     def test_can_replace_document_no_pending_request(self):
         """Test document replacement without pending resubmission request."""
         # Set application to submitted status
-        submitted_status, _ = ApplicationStatus.objects.get_or_create(name="submitted", defaults={"order": 2})
+        submitted_status, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
         self.application.status = submitted_status
         self.application.save()
 
         document = Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
         result = DocumentService.can_replace_document(document, self.user)
@@ -364,24 +327,23 @@ class TestDocumentService(TestCase):
     def test_can_replace_document_admin_override(self):
         """Test document replacement with admin override."""
         # Set application to submitted status
-        submitted_status, _ = ApplicationStatus.objects.get_or_create(name="submitted", defaults={"order": 2})
+        submitted_status, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
         self.application.status = submitted_status
         self.application.save()
 
         document = Document.objects.create(
-            application=self.application,
-            type=self.document_type,
-            uploaded_by=self.user
+            application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
         # Create admin user
         admin_user = User.objects.create_user(
-            username="admin",
-            email="admin@example.com",
-            password="testpass123"
+            username="admin", email="admin@example.com", password="testpass123"
         )
         # Assign admin role to user
         from accounts.models import Role
+
         admin_role, _ = Role.objects.get_or_create(name="admin")
         admin_user.roles.add(admin_role)
         admin_user.save()

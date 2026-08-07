@@ -83,7 +83,9 @@ DATABASES = {
 # Redis/Celery config
 REDIS_URL = _docker_compose_redis_host_to_localhost(env("REDIS_URL"))
 CELERY_BROKER_URL = _docker_compose_redis_host_to_localhost(env("CELERY_BROKER_URL"))
-CELERY_RESULT_BACKEND = _docker_compose_redis_host_to_localhost(env("CELERY_RESULT_BACKEND"))
+CELERY_RESULT_BACKEND = _docker_compose_redis_host_to_localhost(
+    env("CELERY_RESULT_BACKEND")
+)
 
 # Django Caching Configuration (django_redis — matches dev; Django's RedisCache
 # does not accept the same OPTIONS shape as django_redis.)
@@ -184,13 +186,13 @@ if EMAIL_BACKEND == "django_ses.SESBackend":
 CORS_ALLOW_ALL_ORIGINS = False  # Never allow all origins in production!
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
-    default=[]  # Must be explicitly set in production
+    default=[],  # Must be explicitly set in production
 )
 
 # CSRF Configuration
 CSRF_TRUSTED_ORIGINS = env.list(
     "CSRF_TRUSTED_ORIGINS",
-    default=[]  # Must be explicitly set in production
+    default=[],  # Must be explicitly set in production
 )
 
 # Security Settings (strict for production; overridable e.g. docker-compose.local-prod)

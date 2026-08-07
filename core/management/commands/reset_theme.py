@@ -1,4 +1,3 @@
-
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -64,9 +63,7 @@ class Command(BaseCommand):
             self.set_user_theme_preference(user, theme)
 
             self.stdout.write(
-                self.style.SUCCESS(
-                    f"Theme reset for user {username} to {theme}"
-                )
+                self.style.SUCCESS(f"Theme reset for user {username} to {theme}")
             )
 
         except User.DoesNotExist:
@@ -91,9 +88,7 @@ class Command(BaseCommand):
             self.set_user_theme_preference(user, theme)
 
         self.stdout.write(
-            self.style.SUCCESS(
-                f"Theme reset for {users.count()} users to {theme}"
-            )
+            self.style.SUCCESS(f"Theme reset for {users.count()} users to {theme}")
         )
 
     def set_user_theme_preference(self, user, theme):

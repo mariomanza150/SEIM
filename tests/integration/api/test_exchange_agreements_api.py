@@ -58,7 +58,9 @@ class ExchangeAgreementsAPITests(APITestCase):
             "programs": [str(program.id)],
         }
         create_resp = self.client.post(self.url, payload, format="json")
-        self.assertEqual(create_resp.status_code, status.HTTP_201_CREATED, create_resp.data)
+        self.assertEqual(
+            create_resp.status_code, status.HTTP_201_CREATED, create_resp.data
+        )
         self.assertEqual(ExchangeAgreement.objects.count(), 1)
         agreement = ExchangeAgreement.objects.get()
         self.assertEqual(list(agreement.programs.all()), [program])
@@ -111,7 +113,9 @@ class ExchangeAgreementsAPITests(APITestCase):
         )
         with patch("exchange.agreement_renewal._notify_staff"):
             resp = self.client.post(
-                url, {"renewal_follow_up_due": str(today + timedelta(days=7))}, format="json"
+                url,
+                {"renewal_follow_up_due": str(today + timedelta(days=7))},
+                format="json",
             )
         self.assertEqual(resp.status_code, status.HTTP_200_OK, resp.data)
         ag.refresh_from_db()

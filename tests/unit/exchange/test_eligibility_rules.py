@@ -10,7 +10,6 @@ from accounts.models import Profile, Role
 from accounts.signals import create_user_profile
 from application_forms.models import FormSubmission, FormType
 from documents.models import DocumentType
-
 from exchange.eligibility_rules import evaluate_eligibility
 from exchange.models import Application, ApplicationStatus, Program
 
@@ -120,7 +119,9 @@ class TestEligibilityRulesEngine:
         assert any("Applications open on" in f for f in ev.failures)
 
     def test_rules_payload_includes_skipped_flags(self):
-        user = self._student_with_profile(gpa=3.5, language="English", language_level="B2")
+        user = self._student_with_profile(
+            gpa=3.5, language="English", language_level="B2"
+        )
         program = Program.objects.create(
             name="P3",
             description="d",
@@ -301,7 +302,9 @@ class TestEligibilityRulesEngine:
     def test_missing_profile_single_failure(self):
         post_save.disconnect(create_user_profile, sender=User)
         try:
-            user = User.objects.create(username="noprof", email="nop@test.com", password="x")
+            user = User.objects.create(
+                username="noprof", email="nop@test.com", password="x"
+            )
         finally:
             post_save.connect(create_user_profile, sender=User)
         Profile.objects.filter(user=user).delete()

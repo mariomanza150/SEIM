@@ -1,6 +1,6 @@
 /**
  * Saved Searches Manager
- * 
+ *
  * Manages saved searches dropdown and CRUD operations
  */
 
@@ -9,10 +9,10 @@ class SavedSearchesManager {
         this.searchType = searchType;
         this.savedSearches = [];
         this.dropdownElement = null;
-        
+
         this.init();
     }
-    
+
     /**
      * Initialize saved searches
      */
@@ -22,7 +22,7 @@ class SavedSearchesManager {
             this.loadSavedSearches();
         }
     }
-    
+
     /**
      * Load saved searches from API
      */
@@ -31,41 +31,41 @@ class SavedSearchesManager {
             const token = localStorage.getItem('seim_access_token');
             const response = await fetch(`/api/saved-searches/?search_type=${this.searchType}`, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`
                 }
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to load saved searches');
             }
-            
+
             const data = await response.json();
             this.savedSearches = data.results || [];
-            
+
             this.render();
-            
         } catch (error) {
             console.error('Error loading saved searches:', error);
         }
     }
-    
+
     /**
      * Render saved searches dropdown
      */
     render() {
         if (!this.dropdownElement) return;
-        
+
         const menu = this.dropdownElement.querySelector('.dropdown-menu');
         if (!menu) return;
-        
+
         // Clear existing items
         menu.innerHTML = '';
-        
+
         if (this.savedSearches.length === 0) {
-            menu.innerHTML = '<li><span class="dropdown-item text-muted">No saved searches</span></li>';
+            menu.innerHTML =
+                '<li><span class="dropdown-item text-muted">No saved searches</span></li>';
             return;
         }
-        
+
         // Add saved searches
         this.savedSearches.forEach(search => {
             const item = document.createElement('li');
@@ -85,33 +85,33 @@ class SavedSearchesManager {
                     </div>
                 </a>
             `;
-            
+
             menu.appendChild(item);
-            
+
             // Attach event listeners
             const link = item.querySelector('a');
-            link.addEventListener('click', (e) => {
+            link.addEventListener('click', e => {
                 e.preventDefault();
                 if (!e.target.closest('.btn')) {
                     this.applySearch(search.id);
                 }
             });
-            
+
             const starBtn = item.querySelector('.star-btn');
-            starBtn.addEventListener('click', (e) => {
+            starBtn.addEventListener('click', e => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.toggleDefault(search.id);
             });
-            
+
             const deleteBtn = item.querySelector('.delete-btn');
-            deleteBtn.addEventListener('click', (e) => {
+            deleteBtn.addEventListener('click', e => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.confirmDelete(search.id, search.name);
             });
         });
-        
+
         // Add divider and manage option
         menu.innerHTML += `
             <li><hr class="dropdown-divider"></li>
@@ -119,17 +119,17 @@ class SavedSearchesManager {
                 <i class="bi bi-gear"></i> Manage Searches
             </a></li>
         `;
-        
+
         // Attach manage link
         const manageLink = menu.querySelector('#manageSearchesLink');
         if (manageLink) {
-            manageLink.addEventListener('click', (e) => {
+            manageLink.addEventListener('click', e => {
                 e.preventDefault();
                 this.showManageModal();
             });
         }
     }
-    
+
     /**
      * Apply saved search
      */
@@ -139,29 +139,28 @@ class SavedSearchesManager {
             const response = await fetch(`/api/saved-searches/${searchId}/apply/`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`
                 }
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to apply search');
             }
-            
+
             const data = await response.json();
-            
+
             // Apply filters using AdvancedSearch
             if (window.advancedSearch) {
                 window.advancedSearch.applySavedSearch(data.filters);
             }
-            
+
             this.showSuccess(`Applied search: ${data.name}`);
-            
         } catch (error) {
             console.error('Error applying search:', error);
             this.showError('Failed to apply search');
         }
     }
-    
+
     /**
      * Toggle default status
      */
@@ -171,23 +170,22 @@ class SavedSearchesManager {
             const response = await fetch(`/api/saved-searches/${searchId}/set_default/`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`
                 }
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to set default');
             }
-            
+
             // Reload searches
             await this.loadSavedSearches();
-            
         } catch (error) {
             console.error('Error setting default:', error);
             this.showError('Failed to set default');
         }
     }
-    
+
     /**
      * Confirm and delete search
      */
@@ -195,10 +193,10 @@ class SavedSearchesManager {
         if (!confirm(`Are you sure you want to delete "${searchName}"?`)) {
             return;
         }
-        
+
         await this.deleteSearch(searchId);
     }
-    
+
     /**
      * Delete search
      */
@@ -208,25 +206,24 @@ class SavedSearchesManager {
             const response = await fetch(`/api/saved-searches/${searchId}/`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    Authorization: `Bearer ${token}`
                 }
             });
-            
+
             if (!response.ok) {
                 throw new Error('Failed to delete search');
             }
-            
+
             this.showSuccess('Search deleted successfully');
-            
+
             // Reload searches
             await this.loadSavedSearches();
-            
         } catch (error) {
             console.error('Error deleting search:', error);
             this.showError('Failed to delete search');
         }
     }
-    
+
     /**
      * Show manage searches modal
      */
@@ -251,24 +248,24 @@ class SavedSearchesManager {
                 </div>
             </div>
         `;
-        
+
         // Add modal to body if it doesn't exist
         let modal = document.getElementById('manageSearchesModal');
         if (modal) {
             modal.remove();
         }
-        
+
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         modal = document.getElementById('manageSearchesModal');
-        
+
         // Show modal
         const bsModal = new bootstrap.Modal(modal);
         bsModal.show();
-        
+
         // Attach event listeners
         this.attachManageListeners();
     }
-    
+
     /**
      * Render manage searches list
      */
@@ -276,8 +273,10 @@ class SavedSearchesManager {
         if (this.savedSearches.length === 0) {
             return '<p class="text-muted text-center py-4">No saved searches</p>';
         }
-        
-        return this.savedSearches.map(search => `
+
+        return this.savedSearches
+            .map(
+                search => `
             <div class="list-group-item">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -300,25 +299,27 @@ class SavedSearchesManager {
                     </div>
                 </div>
             </div>
-        `).join('');
+        `
+            )
+            .join('');
     }
-    
+
     /**
      * Attach listeners to manage modal
      */
     attachManageListeners() {
         // Apply buttons
         document.querySelectorAll('.apply-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
+            btn.addEventListener('click', async e => {
                 const searchId = e.currentTarget.dataset.searchId;
                 await this.applySearch(searchId);
                 bootstrap.Modal.getInstance(document.getElementById('manageSearchesModal')).hide();
             });
         });
-        
+
         // Star buttons
         document.querySelectorAll('.star-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
+            btn.addEventListener('click', async e => {
                 const searchId = e.currentTarget.dataset.searchId;
                 await this.toggleDefault(searchId);
                 // Refresh modal content
@@ -326,10 +327,10 @@ class SavedSearchesManager {
                 this.attachManageListeners();
             });
         });
-        
+
         // Delete buttons
         document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
+            btn.addEventListener('click', async e => {
                 const searchId = e.currentTarget.dataset.searchId;
                 const searchName = e.currentTarget.dataset.searchName;
                 await this.confirmDelete(searchId, searchName);
@@ -339,7 +340,7 @@ class SavedSearchesManager {
             });
         });
     }
-    
+
     /**
      * Escape HTML
      */
@@ -348,7 +349,7 @@ class SavedSearchesManager {
         div.textContent = text;
         return div.innerHTML;
     }
-    
+
     /**
      * Show success message
      */
@@ -357,7 +358,7 @@ class SavedSearchesManager {
             window.toastNotifications.success('Success', message);
         }
     }
-    
+
     /**
      * Show error message
      */
@@ -375,4 +376,3 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Make available globally
 window.SavedSearchesManager = SavedSearchesManager;
-

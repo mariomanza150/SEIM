@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Wait until Postgres hostname resolves and accepts TCP (Docker Compose DNS + readiness)."""
+
 from __future__ import annotations
 
 import os

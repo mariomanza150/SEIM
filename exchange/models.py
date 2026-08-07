@@ -46,7 +46,9 @@ class Program(UUIDModel, TimeStampedModel):
     application_deadline = models.DateField(
         null=True,
         blank=True,
-        help_text=_("Last date students can create a new application for this program."),
+        help_text=_(
+            "Last date students can create a new application for this program."
+        ),
     )
     is_active = models.BooleanField(default=True)
     min_gpa = models.FloatField(
@@ -63,14 +65,14 @@ class Program(UUIDModel, TimeStampedModel):
         null=True,
         blank=True,
         choices=[
-            ('A1', _('Beginner (A1)')),
-            ('A2', _('Elementary (A2)')),
-            ('B1', _('Intermediate (B1)')),
-            ('B2', _('Upper Intermediate (B2)')),
-            ('C1', _('Advanced (C1)')),
-            ('C2', _('Proficient (C2)')),
+            ("A1", _("Beginner (A1)")),
+            ("A2", _("Elementary (A2)")),
+            ("B1", _("Intermediate (B1)")),
+            ("B2", _("Upper Intermediate (B2)")),
+            ("C1", _("Advanced (C1)")),
+            ("C2", _("Proficient (C2)")),
         ],
-        help_text=_("Minimum language proficiency level (CEFR scale).")
+        help_text=_("Minimum language proficiency level (CEFR scale)."),
     )
     max_age = models.PositiveIntegerField(
         null=True, blank=True, help_text=_("Maximum age for eligibility.")
@@ -80,18 +82,20 @@ class Program(UUIDModel, TimeStampedModel):
     )
     auto_reject_ineligible = models.BooleanField(
         default=False,
-        help_text=_("Automatically reject applications that don't meet eligibility criteria.")
+        help_text=_(
+            "Automatically reject applications that don't meet eligibility criteria."
+        ),
     )
     recurring = models.BooleanField(
         default=False, help_text=_("Is this program recurring (e.g., every semester)?")
     )
     # Link to dynamic form created via django-dynforms
     application_form = models.ForeignKey(
-        'application_forms.FormType',
+        "application_forms.FormType",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        help_text=_("Dynamic application form for this program")
+        help_text=_("Dynamic application form for this program"),
     )
     workflow_version = models.ForeignKey(
         "workflows.WorkflowVersion",
@@ -99,7 +103,9 @@ class Program(UUIDModel, TimeStampedModel):
         null=True,
         blank=True,
         related_name="programs",
-        help_text=_("Published workflow version governing application behavior for this program."),
+        help_text=_(
+            "Published workflow version governing application behavior for this program."
+        ),
     )
     coordinators = models.ManyToManyField(
         "accounts.User",
@@ -142,7 +148,7 @@ class Program(UUIDModel, TimeStampedModel):
     )
 
     class Meta:
-        ordering = ['name']
+        ordering = ["name"]
 
     def __str__(self):
         return self.name
@@ -232,19 +238,25 @@ class Program(UUIDModel, TimeStampedModel):
             and self.application_deadline
             and self.application_deadline < self.application_open_date
         ):
-            raise ValidationError({
-                "application_deadline": "Application deadline must be on or after the application open date."
-            })
+            raise ValidationError(
+                {
+                    "application_deadline": "Application deadline must be on or after the application open date."
+                }
+            )
 
         if self.application_open_date and self.application_open_date > self.start_date:
-            raise ValidationError({
-                "application_open_date": "Application open date must be on or before the program start date."
-            })
+            raise ValidationError(
+                {
+                    "application_open_date": "Application open date must be on or before the program start date."
+                }
+            )
 
         if self.application_deadline and self.application_deadline > self.start_date:
-            raise ValidationError({
-                "application_deadline": "Application deadline must be on or before the program start date."
-            })
+            raise ValidationError(
+                {
+                    "application_deadline": "Application deadline must be on or before the program start date."
+                }
+            )
 
 
 class ExchangeAgreement(UUIDModel, TimeStampedModel):
@@ -275,18 +287,25 @@ class ExchangeAgreement(UUIDModel, TimeStampedModel):
         null=True, blank=True, help_text=_("Minimum GPA required for the agreement.")
     )
     language_requirements = models.JSONField(
-        default=list, blank=True, help_text=_("List of required languages and levels, e.g., [{'lang': 'French', 'level': 'B2'}]")
+        default=list,
+        blank=True,
+        help_text=_(
+            "List of required languages and levels, e.g., [{'lang': 'French', 'level': 'B2'}]"
+        ),
     )
     custom_tags = models.CharField(
         max_length=50,
         blank=True,
-        help_text=_("Custom tags restricted to 'Foreign Language' or 'Habla Hispana'.")
+        help_text=_("Custom tags restricted to 'Foreign Language' or 'Habla Hispana'."),
     )
     application_limit = models.PositiveIntegerField(
-        null=True, blank=True, help_text=_("Maximum number of applications permitted under this agreement.")
+        null=True,
+        blank=True,
+        help_text=_("Maximum number of applications permitted under this agreement."),
     )
     notify_on_limit_reached = models.BooleanField(
-        default=True, help_text=_("If true, an alert is sent when the application limit is reached.")
+        default=True,
+        help_text=_("If true, an alert is sent when the application limit is reached."),
     )
     internal_reference = models.CharField(
         max_length=64,
@@ -325,7 +344,9 @@ class ExchangeAgreement(UUIDModel, TimeStampedModel):
         null=True,
         blank=True,
         related_name="renewal_successors",
-        help_text=_("Prior agreement this record continues when created as a renewal successor."),
+        help_text=_(
+            "Prior agreement this record continues when created as a renewal successor."
+        ),
     )
     renewal_follow_up_due = models.DateField(
         null=True,
@@ -338,7 +359,9 @@ class ExchangeAgreement(UUIDModel, TimeStampedModel):
         verbose_name = _("Exchange agreement")
         verbose_name_plural = _("Exchange agreements")
         indexes = [
-            models.Index(fields=["status", "end_date"], name="exagreement_status_end_idx"),
+            models.Index(
+                fields=["status", "end_date"], name="exagreement_status_end_idx"
+            ),
         ]
 
     def __str__(self):
@@ -348,10 +371,18 @@ class ExchangeAgreement(UUIDModel, TimeStampedModel):
         from django.core.exceptions import ValidationError
 
         if self.start_date and self.end_date and self.end_date < self.start_date:
-            raise ValidationError({"end_date": _("End date must be on or after the start date.")})
+            raise ValidationError(
+                {"end_date": _("End date must be on or after the start date.")}
+            )
 
         if self.renewed_from_id and self.pk and self.renewed_from_id == self.pk:
-            raise ValidationError({"renewed_from": _("An agreement cannot reference itself as predecessor.")})
+            raise ValidationError(
+                {
+                    "renewed_from": _(
+                        "An agreement cannot reference itself as predecessor."
+                    )
+                }
+            )
 
 
 class AgreementExpirationReminderLog(UUIDModel, TimeStampedModel):
@@ -407,15 +438,17 @@ class Application(UUIDModel, TimeStampedModel):
 
     class Meta:
         indexes = [
-            models.Index(fields=['student', 'status'], name='app_student_status_idx'),
-            models.Index(fields=['program', 'status'], name='app_program_status_idx'),
-            models.Index(fields=['student', 'withdrawn'], name='app_student_withdrawn_idx'),
-            models.Index(fields=['submitted_at'], name='app_submitted_idx'),
-            models.Index(fields=['-created_at'], name='app_created_desc_idx'),
+            models.Index(fields=["student", "status"], name="app_student_status_idx"),
+            models.Index(fields=["program", "status"], name="app_program_status_idx"),
+            models.Index(
+                fields=["student", "withdrawn"], name="app_student_withdrawn_idx"
+            ),
+            models.Index(fields=["submitted_at"], name="app_submitted_idx"),
+            models.Index(fields=["-created_at"], name="app_created_desc_idx"),
         ]
-        ordering = ['-created_at']
-        verbose_name = _('Application')
-        verbose_name_plural = _('Applications')
+        ordering = ["-created_at"]
+        verbose_name = _("Application")
+        verbose_name_plural = _("Applications")
 
     def __str__(self):
         return f"{self.student} - {self.program}"
@@ -485,7 +518,9 @@ class TimelineEvent(UUIDModel, TimeStampedModel):
 class SavedSearch(UUIDModel, TimeStampedModel):
     """Saved search filters for users (coordinators/admins)."""
 
-    user = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name='saved_searches')
+    user = models.ForeignKey(
+        "accounts.User", on_delete=models.CASCADE, related_name="saved_searches"
+    )
     name = models.CharField(max_length=100, help_text="Name for this saved search")
     search_type = models.CharField(
         max_length=20,
@@ -500,21 +535,23 @@ class SavedSearch(UUIDModel, TimeStampedModel):
         help_text="Type of search (programs, applications, or staff list views)",
     )
     filters = models.JSONField(
-        default=dict,
-        help_text="JSON object containing filter parameters"
+        default=dict, help_text="JSON object containing filter parameters"
     )
     is_default = models.BooleanField(
-        default=False,
-        help_text="Use this search as default for this user"
+        default=False, help_text="Use this search as default for this user"
     )
 
     class Meta:
-        ordering = ['-created_at']
-        verbose_name = 'Saved Search'
-        verbose_name_plural = 'Saved Searches'
+        ordering = ["-created_at"]
+        verbose_name = "Saved Search"
+        verbose_name_plural = "Saved Searches"
         indexes = [
-            models.Index(fields=['user', 'search_type'], name='savedsearch_user_type_idx'),
-            models.Index(fields=['user', 'is_default'], name='savedsearch_user_default_idx'),
+            models.Index(
+                fields=["user", "search_type"], name="savedsearch_user_type_idx"
+            ),
+            models.Index(
+                fields=["user", "is_default"], name="savedsearch_user_default_idx"
+            ),
         ]
 
     def __str__(self):
@@ -525,8 +562,6 @@ class SavedSearch(UUIDModel, TimeStampedModel):
         if self.is_default:
             # Clear other defaults for this user and search type
             SavedSearch.objects.filter(
-                user=self.user,
-                search_type=self.search_type,
-                is_default=True
+                user=self.user, search_type=self.search_type, is_default=True
             ).exclude(id=self.id).update(is_default=False)
         super().save(*args, **kwargs)

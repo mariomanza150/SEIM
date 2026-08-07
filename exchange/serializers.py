@@ -13,12 +13,14 @@ from .models import (
     TimelineEvent,
 )
 
-_TIMELINE_EVENT_FIELDS = tuple(f.name for f in TimelineEvent._meta.fields) + ("created_by_name",)
+_TIMELINE_EVENT_FIELDS = tuple(f.name for f in TimelineEvent._meta.fields) + (
+    "created_by_name",
+)
 from .services import ApplicationService
 
-_APPLICATION_MODEL_FIELDS = tuple(
-    f.name for f in Application._meta.fields
-) + tuple(f.name for f in Application._meta.many_to_many)
+_APPLICATION_MODEL_FIELDS = tuple(f.name for f in Application._meta.fields) + tuple(
+    f.name for f in Application._meta.many_to_many
+)
 
 
 class ProgramSerializer(serializers.ModelSerializer):
@@ -53,13 +55,16 @@ class ProgramSerializer(serializers.ModelSerializer):
                 "id": coordinator.id,
                 "username": coordinator.username,
                 "email": coordinator.email,
-                "full_name": coordinator.get_full_name().strip() or coordinator.username,
+                "full_name": coordinator.get_full_name().strip()
+                or coordinator.username,
             }
             for coordinator in obj.coordinators.all()
         ]
 
     def validate_coordinators(self, value):
-        invalid_users = [user.username for user in value if not user.has_role("coordinator")]
+        invalid_users = [
+            user.username for user in value if not user.has_role("coordinator")
+        ]
         if invalid_users:
             raise serializers.ValidationError(
                 f"Only users with the coordinator role can be assigned to programs: {', '.join(invalid_users)}."
@@ -172,7 +177,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
         user = request.user
         if view and getattr(view, "action", None) == "list":
             return None
-        is_staff = hasattr(user, "has_any_role") and user.has_any_role(["coordinator", "admin"])
+        is_staff = hasattr(user, "has_any_role") and user.has_any_role(
+            ["coordinator", "admin"]
+        )
         is_owner = user.pk == obj.student_id
         if not is_staff and not is_owner:
             return None
@@ -211,7 +218,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
                         break
             if eff_ids:
                 full = DocumentService.build_application_document_checklist(obj)
-                sub_items = [it for it in full["items"] if it["document_type_id"] in eff_ids]
+                sub_items = [
+                    it for it in full["items"] if it["document_type_id"] in eff_ids
+                ]
                 current_step_documents = {
                     "complete": all(it["status"] == "approved" for it in sub_items),
                     "items": sub_items,
@@ -239,12 +248,12 @@ class ApplicationSerializer(serializers.ModelSerializer):
             return {}
 
         data = {
-            key: value
-            for key, value in request.data.items()
-            if key.startswith("df_")
+            key: value for key, value in request.data.items() if key.startswith("df_")
         }
         if "dynamic_form_current_step" in request.data:
-            data["dynamic_form_current_step"] = request.data.get("dynamic_form_current_step")
+            data["dynamic_form_current_step"] = request.data.get(
+                "dynamic_form_current_step"
+            )
         return data
 
     def _process_dynamic_form_submission(self, application, user, dynamic_form_data):
@@ -264,8 +273,12 @@ class ApplicationSerializer(serializers.ModelSerializer):
     def validate(self, data):
         # For create operations, get student from request context
         # For update operations, student is already set on the instance
-        request = self.context.get('request')
-        user = self.instance.student if self.instance else (request.user if request else None)
+        request = self.context.get("request")
+        user = (
+            self.instance.student
+            if self.instance
+            else (request.user if request else None)
+        )
         program = data.get("program")
         if self.instance is not None and program is None:
             program = self.instance.program
@@ -290,7 +303,11 @@ class ApplicationSerializer(serializers.ModelSerializer):
                     )
                 except ValueError as e:
                     raise serializers.ValidationError(
-                        {"program": str(e).replace("Eligibility requirements not met:\n- ", "").split("\n- ")}
+                        {
+                            "program": str(e)
+                            .replace("Eligibility requirements not met:\n- ", "")
+                            .split("\n- ")
+                        }
                         if "\n- " in str(e)
                         else {"program": str(e)}
                     )
@@ -305,7 +322,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
     def validate_assigned_coordinator(self, value):
         if value and not value.has_role("coordinator"):
-            raise serializers.ValidationError("Assigned coordinator must have the coordinator role.")
+            raise serializers.ValidationError(
+                "Assigned coordinator must have the coordinator role."
+            )
         return value
 
     def _request_can_manage_assignments(self):
@@ -314,8 +333,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
         return bool(user and (user.has_role("admin") or user.has_role("coordinator")))
 
     def create(self, validated_data):
-        request = self.context.get('request')
-        if request and hasattr(request, 'user'):
+        request = self.context.get("request")
+        if request and hasattr(request, "user"):
             validated_data["student"] = request.user
 
         if not self._request_can_manage_assignments():
@@ -331,7 +350,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
             application = super().create(validated_data)
 
             if not application.assigned_coordinator_id:
-                default_coordinator = ApplicationService.get_default_coordinator(application.program)
+                default_coordinator = ApplicationService.get_default_coordinator(
+                    application.program
+                )
                 if default_coordinator:
                     application.assigned_coordinator = default_coordinator
                     application.save(update_fields=["assigned_coordinator"])
@@ -348,7 +369,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
                 try:
                     from workflows.runtime import WorkflowRuntimeService
 
-                    WorkflowRuntimeService.ensure_instance(application, user=request.user if request else None)
+                    WorkflowRuntimeService.ensure_instance(
+                        application, user=request.user if request else None
+                    )
                 except Exception:
                     # Keep application creation resilient; workflow enforcement happens on actions.
                     pass
@@ -369,7 +392,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
             if new_status_name and new_status_name != instance.status.name:
                 # Only allow status transition via service
                 try:
-                    ApplicationService.transition_status(instance, user, new_status_name)
+                    ApplicationService.transition_status(
+                        instance, user, new_status_name
+                    )
                     instance.refresh_from_db()
                 except ValueError as e:
                     raise serializers.ValidationError(str(e))
@@ -398,20 +423,27 @@ class CommentSerializer(serializers.ModelSerializer):
     author = serializers.PrimaryKeyRelatedField(read_only=True)
     author_name = serializers.SerializerMethodField()
     author_role = serializers.CharField(source="author.role", read_only=True)
-    
+
     def validate_text(self, value):
         """Sanitize comment text to prevent XSS attacks."""
         import re
+
         # Remove script tags and other dangerous HTML
-        value = re.sub(r'<script[^>]*>.*?</script>', '', value, flags=re.IGNORECASE | re.DOTALL)
-        value = re.sub(r'<iframe[^>]*>.*?</iframe>', '', value, flags=re.IGNORECASE | re.DOTALL)
-        value = re.sub(r'on\w+\s*=\s*["\'][^"\']*["\']', '', value, flags=re.IGNORECASE)  # Remove event handlers
+        value = re.sub(
+            r"<script[^>]*>.*?</script>", "", value, flags=re.IGNORECASE | re.DOTALL
+        )
+        value = re.sub(
+            r"<iframe[^>]*>.*?</iframe>", "", value, flags=re.IGNORECASE | re.DOTALL
+        )
+        value = re.sub(
+            r'on\w+\s*=\s*["\'][^"\']*["\']', "", value, flags=re.IGNORECASE
+        )  # Remove event handlers
         return value
 
     def get_author_name(self, obj):
         full_name = obj.author.get_full_name().strip()
         return full_name or obj.author.username or obj.author.email
-    
+
     class Meta:
         model = Comment
         fields = "__all__"
@@ -434,18 +466,18 @@ class TimelineEventSerializer(serializers.ModelSerializer):
 
 class SavedSearchSerializer(serializers.ModelSerializer):
     """Serializer for SavedSearch model."""
-    
+
     user = serializers.PrimaryKeyRelatedField(read_only=True)
-    
+
     class Meta:
         model = SavedSearch
         fields = "__all__"
-    
+
     def create(self, validated_data):
         """Set user from request context."""
-        request = self.context.get('request')
+        request = self.context.get("request")
         if request and request.user:
-            validated_data['user'] = request.user
+            validated_data["user"] = request.user
         return super().create(validated_data)
 
 

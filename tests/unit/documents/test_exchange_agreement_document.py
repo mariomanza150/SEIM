@@ -17,8 +17,12 @@ class ExchangeAgreementDocumentFilterTests(TestCase):
         )
 
     def test_current_only_excludes_superseded(self):
-        f1 = SimpleUploadedFile("v1.pdf", b"%PDF-1.4 test", content_type="application/pdf")
-        f2 = SimpleUploadedFile("v2.pdf", b"%PDF-1.4 test2", content_type="application/pdf")
+        f1 = SimpleUploadedFile(
+            "v1.pdf", b"%PDF-1.4 test", content_type="application/pdf"
+        )
+        f2 = SimpleUploadedFile(
+            "v2.pdf", b"%PDF-1.4 test2", content_type="application/pdf"
+        )
         old = ExchangeAgreementDocument.objects.create(
             agreement=self.agreement,
             category=ExchangeAgreementDocument.Category.SIGNED_COPY,

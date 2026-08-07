@@ -4,15 +4,15 @@ Test Frontend Views
 Comprehensive tests for frontend application views.
 """
 
+from unittest.mock import patch
+
 import pytest
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from django.urls import reverse
-from unittest.mock import patch
+from django.utils import timezone
 
 from accounts.models import Role
 from exchange.models import Application, ApplicationStatus, Program
-from django.utils import timezone
 
 User = get_user_model()
 
@@ -34,7 +34,7 @@ class TestHomeView(TestCase):
 
     def test_home_view_authenticated_user_redirects(self):
         """Test home view redirects authenticated users to the Vue app dashboard."""
-        user = User.objects.create_user(
+        User.objects.create_user(
             username="testuser",
             email="test@test.com",
             password="testpass123",
@@ -84,22 +84,20 @@ class TestLoginView(TestCase):
 
     def test_login_view_anonymous(self):
         """Legacy ``/login/`` redirects anonymous users to the Vue login shell."""
-        response = self.client.get('/login/')
-        
+        response = self.client.get("/login/")
+
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers.get("Location"), "/seim/login/")
 
     def test_login_view_authenticated_redirects(self):
         """Legacy ``/login/`` sends everyone to the Vue login shell."""
-        user = User.objects.create_user(
-            username="testuser",
-            email="test@test.com",
-            password="testpass123"
+        User.objects.create_user(
+            username="testuser", email="test@test.com", password="testpass123"
         )
-        self.client.login(username='testuser', password='testpass123')
-        
-        response = self.client.get('/login/')
-        
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.get("/login/")
+
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers.get("Location"), "/seim/login/")
 
@@ -114,24 +112,22 @@ class TestRegisterView(TestCase):
 
     def test_register_view_anonymous(self):
         """Test register view displays for anonymous users."""
-        response = self.client.get('/register/')
-        
+        response = self.client.get("/register/")
+
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'frontend/auth/register.html')
+        self.assertTemplateUsed(response, "frontend/auth/register.html")
 
     def test_register_view_authenticated_redirects(self):
         """Test register view redirects authenticated users."""
-        user = User.objects.create_user(
-            username="testuser",
-            email="test@test.com",
-            password="testpass123"
+        User.objects.create_user(
+            username="testuser", email="test@test.com", password="testpass123"
         )
-        self.client.login(username='testuser', password='testpass123')
-        
-        response = self.client.get('/register/')
-        
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.get("/register/")
+
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/seim/dashboard', response.url)
+        self.assertIn("/seim/dashboard", response.url)
 
 
 @pytest.mark.django_db
@@ -142,27 +138,25 @@ class TestLogoutView(TestCase):
         """Set up test client."""
         self.client = Client()
         self.user = User.objects.create_user(
-            username="testuser",
-            email="test@test.com",
-            password="testpass123"
+            username="testuser", email="test@test.com", password="testpass123"
         )
 
     def test_logout_view(self):
         """Test logout clears session."""
-        self.client.login(username='testuser', password='testpass123')
-        
-        response = self.client.get('/logout/')
-        
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.get("/logout/")
+
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers.get("Location"), "/seim/login/")
-        
+
         # Verify cookie is set to clear JWT
-        self.assertIn('clear_jwt_tokens', response.cookies)
+        self.assertIn("clear_jwt_tokens", response.cookies)
 
     def test_logout_view_anonymous_user(self):
         """Test logout works even when not authenticated."""
-        response = self.client.get('/logout/')
-        
+        response = self.client.get("/logout/")
+
         self.assertEqual(response.status_code, 302)
 
 
@@ -176,8 +170,8 @@ class TestDashboardView(TestCase):
 
     def test_dashboard_view(self):
         """Legacy ``/dashboard/`` redirects to the Vue dashboard."""
-        response = self.client.get('/dashboard/')
-        
+        response = self.client.get("/dashboard/")
+
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers.get("Location"), "/seim/dashboard/")
 
@@ -251,18 +245,14 @@ class TestApplicationsView(TestCase):
 
         self.student_role, _ = Role.objects.get_or_create(name="student")
         self.coordinator_role, _ = Role.objects.get_or_create(name="coordinator")
-        
+
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
-        
+
         self.coordinator = User.objects.create_user(
-            username="coordinator",
-            email="coordinator@test.com",
-            password="testpass123"
+            username="coordinator", email="coordinator@test.com", password="testpass123"
         )
         self.coordinator.roles.add(self.coordinator_role)
 
@@ -276,41 +266,32 @@ class TestApplicationsView(TestCase):
     def test_applications_view_student_sees_own(self):
         """Test student only sees their own applications."""
         self.client.login(username="student", password="testpass123")
-        
+
         program = Program.objects.create(
             name="Test Program",
             description="Test",
             start_date=timezone.now().date(),
             end_date=timezone.now().date() + timezone.timedelta(days=365),
-            is_active=True
+            is_active=True,
         )
-        
+
         status, _ = ApplicationStatus.objects.get_or_create(
-            name="draft",
-            defaults={'order': 1}
+            name="draft", defaults={"order": 1}
         )
-        
+
         # Create application for student
         student_app = Application.objects.create(
-            student=self.student,
-            program=program,
-            status=status
+            student=self.student, program=program, status=status
         )
-        
+
         # Create application for different user
         other_user = User.objects.create_user(
-            username="other",
-            email="other@test.com",
-            password="testpass123"
+            username="other", email="other@test.com", password="testpass123"
         )
         other_user.roles.add(self.student_role)
-        
-        other_app = Application.objects.create(
-            student=other_user,
-            program=program,
-            status=status
-        )
-        
+
+        Application.objects.create(student=other_user, program=program, status=status)
+
         response = self.client.get("/applications/")
 
         self.assertEqual(response.status_code, 200)
@@ -322,40 +303,29 @@ class TestApplicationsView(TestCase):
     def test_applications_view_coordinator_sees_all(self):
         """Test coordinator sees all applications."""
         self.client.login(username="coordinator", password="testpass123")
-        
+
         program = Program.objects.create(
             name="Test Program",
             description="Test",
             start_date=timezone.now().date(),
             end_date=timezone.now().date() + timezone.timedelta(days=365),
-            is_active=True
+            is_active=True,
         )
-        
+
         status, _ = ApplicationStatus.objects.get_or_create(
-            name="draft",
-            defaults={'order': 1}
+            name="draft", defaults={"order": 1}
         )
-        
+
         # Create multiple applications
-        app1 = Application.objects.create(
-            student=self.student,
-            program=program,
-            status=status
-        )
-        
+        Application.objects.create(student=self.student, program=program, status=status)
+
         other_user = User.objects.create_user(
-            username="other",
-            email="other@test.com",
-            password="testpass123"
+            username="other", email="other@test.com", password="testpass123"
         )
         other_user.roles.add(self.student_role)
-        
-        app2 = Application.objects.create(
-            student=other_user,
-            program=program,
-            status=status
-        )
-        
+
+        Application.objects.create(student=other_user, program=program, status=status)
+
         response = self.client.get("/applications/")
 
         self.assertEqual(response.status_code, 200)
@@ -371,76 +341,69 @@ class TestAnalyticsView(TestCase):
     def setUp(self):
         """Set up test data."""
         self.client = Client()
-        
+
         self.admin_role, _ = Role.objects.get_or_create(name="admin")
         self.coordinator_role, _ = Role.objects.get_or_create(name="coordinator")
         self.student_role, _ = Role.objects.get_or_create(name="student")
-        
+
         self.admin = User.objects.create_user(
-            username="admin",
-            email="admin@test.com",
-            password="testpass123"
+            username="admin", email="admin@test.com", password="testpass123"
         )
         self.admin.roles.add(self.admin_role)
-        
+
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
 
     def test_analytics_view_requires_login(self):
         """Test analytics view requires authentication."""
-        response = self.client.get('/dashboard/analytics/')
-        
+        response = self.client.get("/dashboard/analytics/")
+
         self.assertEqual(response.status_code, 302)
 
     def test_analytics_view_admin_access(self):
         """Test admin can access analytics."""
-        self.client.login(username='admin', password='testpass123')
-        
-        response = self.client.get('/dashboard/analytics/')
-        
+        self.client.login(username="admin", password="testpass123")
+
+        response = self.client.get("/dashboard/analytics/")
+
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'frontend/admin/analytics.html')
+        self.assertTemplateUsed(response, "frontend/admin/analytics.html")
 
     def test_analytics_view_student_denied(self):
         """Test student cannot access analytics."""
-        self.client.login(username='student', password='testpass123')
-        
-        response = self.client.get('/dashboard/analytics/')
-        
+        self.client.login(username="student", password="testpass123")
+
+        response = self.client.get("/dashboard/analytics/")
+
         # Should be denied (403 or redirect)
         self.assertIn(response.status_code, [302, 403])
 
-    @patch('frontend.views.AnalyticsService.get_dashboard_metrics')
+    @patch("frontend.views.AnalyticsService.get_dashboard_metrics")
     def test_analytics_view_displays_metrics(self, mock_metrics):
         """Test analytics view displays metrics."""
-        self.client.login(username='admin', password='testpass123')
-        
-        mock_metrics.return_value = {
-            'total_applications': 10,
-            'total_programs': 5
-        }
-        
-        response = self.client.get('/dashboard/analytics/')
-        
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('metrics', response.context)
+        self.client.login(username="admin", password="testpass123")
 
-    @patch('frontend.views.AnalyticsService.get_dashboard_metrics')
+        mock_metrics.return_value = {"total_applications": 10, "total_programs": 5}
+
+        response = self.client.get("/dashboard/analytics/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("metrics", response.context)
+
+    @patch("frontend.views.AnalyticsService.get_dashboard_metrics")
     def test_analytics_view_handles_error(self, mock_metrics):
         """Test analytics view handles service errors."""
-        self.client.login(username='admin', password='testpass123')
-        
+        self.client.login(username="admin", password="testpass123")
+
         mock_metrics.side_effect = Exception("Service error")
-        
-        response = self.client.get('/dashboard/analytics/')
-        
+
+        response = self.client.get("/dashboard/analytics/")
+
         # Should still render with empty metrics
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['metrics'], {})
+        self.assertEqual(response.context["metrics"], {})
 
 
 @pytest.mark.django_db
@@ -450,76 +413,74 @@ class TestAdminDashboardView(TestCase):
     def setUp(self):
         """Set up test data."""
         self.client = Client()
-        
+
         self.admin_role, _ = Role.objects.get_or_create(name="admin")
         self.student_role, _ = Role.objects.get_or_create(name="student")
-        
+
         self.admin = User.objects.create_user(
-            username="admin",
-            email="admin@test.com",
-            password="testpass123"
+            username="admin", email="admin@test.com", password="testpass123"
         )
         self.admin.roles.add(self.admin_role)
-        
+
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
 
     def test_admin_dashboard_requires_authentication(self):
         """Test admin dashboard requires authentication."""
-        response = self.client.get('/admin-dashboard/')
-        
+        response = self.client.get("/admin-dashboard/")
+
         self.assertEqual(response.status_code, 302)
 
     def test_admin_dashboard_requires_admin_role(self):
         """Test admin dashboard requires admin role."""
-        self.client.login(username='student', password='testpass123')
-        
-        response = self.client.get('/admin-dashboard/')
-        
+        self.client.login(username="student", password="testpass123")
+
+        response = self.client.get("/admin-dashboard/")
+
         # Non-admin should be redirected
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/seim/dashboard', response.url)
+        self.assertIn("/seim/dashboard", response.url)
 
     def test_admin_dashboard_admin_access(self):
         """Test admin can access admin dashboard."""
-        self.client.login(username='admin', password='testpass123')
-        
-        response = self.client.get('/admin-dashboard/')
-        
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'frontend/admin/dashboard.html')
+        self.client.login(username="admin", password="testpass123")
 
-    @patch('frontend.views.AnalyticsService.get_dashboard_metrics')
-    @patch('frontend.views.AnalyticsService.get_program_metrics')
-    def test_admin_dashboard_displays_metrics(self, mock_program_metrics, mock_dashboard_metrics):
+        response = self.client.get("/admin-dashboard/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "frontend/admin/dashboard.html")
+
+    @patch("frontend.views.AnalyticsService.get_dashboard_metrics")
+    @patch("frontend.views.AnalyticsService.get_program_metrics")
+    def test_admin_dashboard_displays_metrics(
+        self, mock_program_metrics, mock_dashboard_metrics
+    ):
         """Test admin dashboard displays metrics."""
-        self.client.login(username='admin', password='testpass123')
-        
-        mock_dashboard_metrics.return_value = {'stat': 'value'}
-        mock_program_metrics.return_value = {'program': 'data'}
-        
-        response = self.client.get('/admin-dashboard/')
-        
-        self.assertEqual(response.status_code, 200)
-        self.assertIn('metrics', response.context)
-        self.assertIn('program_metrics', response.context)
+        self.client.login(username="admin", password="testpass123")
 
-    @patch('frontend.views.AnalyticsService.get_dashboard_metrics')
+        mock_dashboard_metrics.return_value = {"stat": "value"}
+        mock_program_metrics.return_value = {"program": "data"}
+
+        response = self.client.get("/admin-dashboard/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("metrics", response.context)
+        self.assertIn("program_metrics", response.context)
+
+    @patch("frontend.views.AnalyticsService.get_dashboard_metrics")
     def test_admin_dashboard_handles_error(self, mock_metrics):
         """Test admin dashboard handles service errors."""
-        self.client.login(username='admin', password='testpass123')
-        
+        self.client.login(username="admin", password="testpass123")
+
         mock_metrics.side_effect = Exception("Service error")
-        
-        response = self.client.get('/admin-dashboard/')
-        
+
+        response = self.client.get("/admin-dashboard/")
+
         # Should still render with empty metrics
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['metrics'], {})
+        self.assertEqual(response.context["metrics"], {})
 
 
 @pytest.mark.django_db
@@ -530,28 +491,26 @@ class TestInvalidateCacheView(TestCase):
         """Set up test client."""
         self.client = Client()
         self.user = User.objects.create_user(
-            username="testuser",
-            email="test@test.com",
-            password="testpass123"
+            username="testuser", email="test@test.com", password="testpass123"
         )
 
     def test_invalidate_cache_authenticated(self):
         """Test authenticated user can invalidate their cache."""
-        self.client.login(username='testuser', password='testpass123')
-        
-        response = self.client.get('/cache/invalidate/')
-        
+        self.client.login(username="testuser", password="testpass123")
+
+        response = self.client.get("/cache/invalidate/")
+
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data['status'], 'Cache invalidated')
+        self.assertEqual(data["status"], "Cache invalidated")
 
     def test_invalidate_cache_anonymous(self):
         """Test anonymous user cannot invalidate cache."""
-        response = self.client.get('/cache/invalidate/')
-        
+        response = self.client.get("/cache/invalidate/")
+
         self.assertEqual(response.status_code, 401)
         data = response.json()
-        self.assertEqual(data['status'], 'Not authenticated')
+        self.assertEqual(data["status"], "Not authenticated")
 
 
 @pytest.mark.django_db
@@ -561,73 +520,69 @@ class TestClearCacheView(TestCase):
     def setUp(self):
         """Set up test data."""
         self.client = Client()
-        
+
         self.admin_role, _ = Role.objects.get_or_create(name="admin")
         self.student_role, _ = Role.objects.get_or_create(name="student")
-        
+
         self.admin = User.objects.create_user(
-            username="admin",
-            email="admin@test.com",
-            password="testpass123"
+            username="admin", email="admin@test.com", password="testpass123"
         )
         self.admin.roles.add(self.admin_role)
-        
+
         self.student = User.objects.create_user(
-            username="student",
-            email="student@test.com",
-            password="testpass123"
+            username="student", email="student@test.com", password="testpass123"
         )
         self.student.roles.add(self.student_role)
 
     def test_clear_cache_requires_authentication(self):
         """Test clear cache requires authentication."""
-        response = self.client.post('/cache/clear/')
-        
+        response = self.client.post("/cache/clear/")
+
         self.assertEqual(response.status_code, 403)
         data = response.json()
-        self.assertEqual(data['error'], 'Unauthorized')
+        self.assertEqual(data["error"], "Unauthorized")
 
     def test_clear_cache_requires_admin_role(self):
         """Test clear cache requires admin role."""
-        self.client.login(username='student', password='testpass123')
-        
-        response = self.client.post('/cache/clear/')
-        
+        self.client.login(username="student", password="testpass123")
+
+        response = self.client.post("/cache/clear/")
+
         self.assertEqual(response.status_code, 403)
         data = response.json()
-        self.assertEqual(data['error'], 'Unauthorized')
+        self.assertEqual(data["error"], "Unauthorized")
 
     def test_clear_cache_admin_success(self):
         """Test admin can clear cache."""
-        self.client.login(username='admin', password='testpass123')
-        
-        response = self.client.post('/cache/clear/')
-        
+        self.client.login(username="admin", password="testpass123")
+
+        response = self.client.post("/cache/clear/")
+
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertIn('cache cleared', data['status'].lower())
+        self.assertIn("cache cleared", data["status"].lower())
 
     def test_clear_cache_requires_post(self):
         """Test clear cache only accepts POST method."""
-        self.client.login(username='admin', password='testpass123')
-        
+        self.client.login(username="admin", password="testpass123")
+
         # GET request should fail
-        response = self.client.get('/cache/clear/')
-        
+        response = self.client.get("/cache/clear/")
+
         self.assertEqual(response.status_code, 405)  # Method not allowed
 
-    @patch('frontend.views.cache.clear')
+    @patch("frontend.views.cache.clear")
     def test_clear_cache_handles_error(self, mock_clear):
         """Test clear cache handles errors."""
-        self.client.login(username='admin', password='testpass123')
-        
+        self.client.login(username="admin", password="testpass123")
+
         mock_clear.side_effect = Exception("Cache error")
-        
-        response = self.client.post('/cache/clear/')
-        
+
+        response = self.client.post("/cache/clear/")
+
         self.assertEqual(response.status_code, 500)
         data = response.json()
-        self.assertIn('error', data)
+        self.assertIn("error", data)
 
 
 @pytest.mark.django_db
@@ -638,25 +593,22 @@ class TestProfileView(TestCase):
         """Set up test data."""
         self.client = Client()
         self.user = User.objects.create_user(
-            username="testuser",
-            email="test@test.com",
-            password="testpass123"
+            username="testuser", email="test@test.com", password="testpass123"
         )
 
     def test_profile_view_requires_login(self):
         """Test profile view requires authentication."""
-        response = self.client.get('/profile/')
-        
+        response = self.client.get("/profile/")
+
         self.assertEqual(response.status_code, 302)
-        self.assertIn('/seim/login', response.url)
+        self.assertIn("/seim/login", response.url)
 
     def test_profile_view_authenticated(self):
         """Test profile view displays for authenticated users."""
-        self.client.login(username='testuser', password='testpass123')
-        
-        response = self.client.get('/profile/')
-        
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'frontend/profile.html')
-        self.assertEqual(response.context['user'], self.user)
+        self.client.login(username="testuser", password="testpass123")
 
+        response = self.client.get("/profile/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, "frontend/profile.html")
+        self.assertEqual(response.context["user"], self.user)

@@ -2,7 +2,7 @@
 Signed per-user calendar subscribe tokens and iCalendar (ICS) rendering.
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlencode
 
 from django.core.signing import BadSignature, Signer
@@ -46,7 +46,7 @@ def _fold_line(line: str) -> str:
 
 
 def _dtstamp_utc() -> str:
-    return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    return datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
 
 
 def _date_value(dt) -> str:

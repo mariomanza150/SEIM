@@ -14,16 +14,19 @@ function showToast(message, type = 'info') {
     toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
     // Use security utilities for safe innerHTML setting
     if (window.SEIM_SECURITY_UTILS) {
-        window.SEIM_SECURITY_UTILS.safeSetInnerHTML(toast, `
+        window.SEIM_SECURITY_UTILS.safeSetInnerHTML(
+            toast,
+            `
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `);
+        `
+        );
     } else {
         // Fallback to textContent for safety
         toast.textContent = message;
     }
     document.body.appendChild(toast);
-    
+
     // Auto-remove after 3 seconds
     setTimeout(() => {
         if (toast.parentNode) {
@@ -39,16 +42,19 @@ function showToast(message, type = 'info') {
 export async function submitApplication(applicationId) {
     const result = await showConfirmDialog(
         'Submit Application',
-        'Are you sure you want to submit this application? You won\'t be able to edit it after submission.',
+        "Are you sure you want to submit this application? You won't be able to edit it after submission.",
         'Yes, Submit'
     );
-    
+
     if (result.isConfirmed) {
         try {
             await apiRequest(`/api/applications/${applicationId}/submit/`, {
                 method: 'POST'
             });
-            showSuccessAlert('Application Submitted!', 'Your application has been submitted successfully.');
+            showSuccessAlert(
+                'Application Submitted!',
+                'Your application has been submitted successfully.'
+            );
             // Refresh the page to show updated status
             location.reload();
         } catch (error) {
@@ -68,13 +74,16 @@ export async function withdrawApplication(applicationId) {
         'Are you sure you want to withdraw this application? This action cannot be undone.',
         'Yes, Withdraw'
     );
-    
+
     if (result.isConfirmed) {
         try {
             await apiRequest(`/api/applications/${applicationId}/withdraw/`, {
                 method: 'POST'
             });
-            showSuccessAlert('Application Withdrawn', 'Your application has been withdrawn successfully.');
+            showSuccessAlert(
+                'Application Withdrawn',
+                'Your application has been withdrawn successfully.'
+            );
             // Refresh the page to show updated status
             location.reload();
         } catch (error) {
@@ -94,7 +103,7 @@ export async function deleteComment(commentId) {
         'Are you sure you want to delete this comment? This action cannot be undone.',
         'Yes, Delete'
     );
-    
+
     if (result.isConfirmed) {
         try {
             await apiRequest(`/api/comments/${commentId}/`, {
@@ -128,13 +137,14 @@ export async function addComment(applicationId, text, containerSelector = '#comm
                 text: text
             })
         });
-        
+
         // Add new comment to the container
         const commentsContainer = document.querySelector(containerSelector);
         if (commentsContainer) {
             // Use security utilities for safe HTML creation
             if (window.SEIM_SECURITY_UTILS) {
-                const commentHtml = window.SEIM_SECURITY_UTILS.createSafeHTML(`
+                const commentHtml = window.SEIM_SECURITY_UTILS.createSafeHTML(
+                    `
                     <div class="comment mb-3 p-3 border rounded" data-comment-id="{{commentId}}">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
@@ -147,18 +157,20 @@ export async function addComment(applicationId, text, containerSelector = '#comm
                         </div>
                         <p class="mb-0 mt-2">{{commentText}}</p>
                     </div>
-                `, {
-                    commentId: data.id,
-                    userName: data.user_name || 'You',
-                    commentText: text.replace(/\n/g, '<br>')
-                });
-                
+                `,
+                    {
+                        commentId: data.id,
+                        userName: data.user_name || 'You',
+                        commentText: text.replace(/\n/g, '<br>')
+                    }
+                );
+
                 // Remove "No comments yet" message if it exists
                 const noCommentsMsg = commentsContainer.querySelector('p.text-muted');
                 if (noCommentsMsg && noCommentsMsg.textContent === 'No comments yet.') {
                     noCommentsMsg.remove();
                 }
-                
+
                 commentsContainer.insertAdjacentHTML('afterbegin', commentHtml);
             } else {
                 // Fallback to simple text content
@@ -169,7 +181,7 @@ export async function addComment(applicationId, text, containerSelector = '#comm
                 commentsContainer.insertBefore(commentDiv, commentsContainer.firstChild);
             }
         }
-        
+
         showToast('Comment posted successfully!', 'success');
         return data;
     } catch (error) {
@@ -193,4 +205,4 @@ function escapeHtml(text) {
 // Make functions available globally for onclick handlers
 window.submitApplication = submitApplication;
 window.withdrawApplication = withdrawApplication;
-window.deleteComment = deleteComment; 
+window.deleteComment = deleteComment;

@@ -39,51 +39,51 @@ class DashboardUsernameDisplayTest(TestCase):
 
         # Authenticate user
         refresh = RefreshToken.for_user(self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
 
     def test_profile_api_returns_full_name(self):
         """Test that the profile API returns full_name field."""
-        url = reverse('accounts:profile')
+        url = reverse("accounts:profile")
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('full_name', response.data)
-        self.assertEqual(response.data['full_name'], 'John Doe')
-        self.assertEqual(response.data['username'], 'testuser')
+        self.assertIn("full_name", response.data)
+        self.assertEqual(response.data["full_name"], "John Doe")
+        self.assertEqual(response.data["username"], "testuser")
 
     def test_profile_api_full_name_fallback(self):
         """Test that full_name returns empty string when no first/last name."""
         # Update user to have no first/last name
-        self.user.first_name = ''
-        self.user.last_name = ''
+        self.user.first_name = ""
+        self.user.last_name = ""
         self.user.save()
 
-        url = reverse('accounts:profile')
+        url = reverse("accounts:profile")
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn('full_name', response.data)
-        self.assertEqual(response.data['full_name'], '')  # Django returns empty string
-        self.assertEqual(response.data['username'], 'testuser')
+        self.assertIn("full_name", response.data)
+        self.assertEqual(response.data["full_name"], "")  # Django returns empty string
+        self.assertEqual(response.data["username"], "testuser")
 
     def test_profile_api_full_name_with_partial_names(self):
         """Test full_name with only first name or only last name."""
         # Test with only first name
-        self.user.first_name = 'John'
-        self.user.last_name = ''
+        self.user.first_name = "John"
+        self.user.last_name = ""
         self.user.save()
 
-        url = reverse('accounts:profile')
+        url = reverse("accounts:profile")
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['full_name'], 'John')
+        self.assertEqual(response.data["full_name"], "John")
 
         # Test with only last name
-        self.user.first_name = ''
-        self.user.last_name = 'Doe'
+        self.user.first_name = ""
+        self.user.last_name = "Doe"
         self.user.save()
 
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['full_name'], 'Doe')
+        self.assertEqual(response.data["full_name"], "Doe")

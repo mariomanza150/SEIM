@@ -9,7 +9,13 @@ from exchange.demo_seed import (
     DEMO_PROGRAM_SPECS,
     DEMO_USER_SPECS,
 )
-from exchange.models import Application, Comment, ExchangeAgreement, Program, TimelineEvent
+from exchange.models import (
+    Application,
+    Comment,
+    ExchangeAgreement,
+    Program,
+    TimelineEvent,
+)
 from notifications.models import Notification
 
 

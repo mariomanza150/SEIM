@@ -83,14 +83,19 @@ LOCAL_APPS = [
     "data_management",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS + [
-    'crispy_forms',
-    'crispy_bootstrap5',
-    'crisp_modals',
-    'itemlist',
-    'dynforms',
-    'django_celery_beat',
-]
+INSTALLED_APPS = (
+    DJANGO_APPS
+    + THIRD_PARTY_APPS
+    + LOCAL_APPS
+    + [
+        "crispy_forms",
+        "crispy_bootstrap5",
+        "crisp_modals",
+        "itemlist",
+        "dynforms",
+        "django_celery_beat",
+    ]
+)
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -162,15 +167,15 @@ TIME_ZONE = "UTC"
 
 # Supported languages
 LANGUAGES = [
-    ('en', 'English'),
-    ('es', 'Español'),
-    ('fr', 'Français'),
-    ('de', 'Deutsch'),
+    ("en", "English"),
+    ("es", "Español"),
+    ("fr", "Français"),
+    ("de", "Deutsch"),
 ]
 
 # Locale paths
 LOCALE_PATHS = [
-    BASE_DIR / 'locale',
+    BASE_DIR / "locale",
 ]
 
 # Static files (CSS, JavaScript, Images)
@@ -227,9 +232,9 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "100/hour",      # Anonymous users: 100 requests per hour
-        "user": "1000/hour",     # Authenticated users: 1000 requests per hour
-        "burst": "10/minute",    # Burst rate for login/register endpoints
+        "anon": "100/hour",  # Anonymous users: 100 requests per hour
+        "user": "1000/hour",  # Authenticated users: 1000 requests per hour
+        "burst": "10/minute",  # Burst rate for login/register endpoints
     },
 }
 
@@ -328,7 +333,10 @@ SPECTACULAR_SETTINGS = {
             "url": "/",
             "description": "This host (Try it out uses the same origin as the docs page)",
         },
-        {"url": "http://localhost:8001", "description": "Local Docker Compose (default web port)"},
+        {
+            "url": "http://localhost:8001",
+            "description": "Local Docker Compose (default web port)",
+        },
         {"url": "http://localhost:8000", "description": "Alternate local port"},
         {"url": "https://api.seim.local", "description": "Production server"},
     ],
@@ -374,7 +382,9 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # Virus Scanner Configuration
-VIRUS_SCANNER_TYPE = env("VIRUS_SCANNER_TYPE", default="mock")  # Options: 'clamav', 'clamav_cli', 'mock'
+VIRUS_SCANNER_TYPE = env(
+    "VIRUS_SCANNER_TYPE", default="mock"
+)  # Options: 'clamav', 'clamav_cli', 'mock'
 VIRUS_SCANNER_CONFIG = {
     "socket_path": env("VIRUS_SCANNER_SOCKET_PATH", default=None),
     "host": env("VIRUS_SCANNER_HOST", default="localhost"),
@@ -402,18 +412,18 @@ WEBSOCKET_RECONNECT_INTERVAL = env.int("WEBSOCKET_RECONNECT_INTERVAL", default=5
 
 # Feature Flags
 FEATURE_FLAGS = {
-    'WEBSOCKET_NOTIFICATIONS': env.bool('FEATURE_WEBSOCKET_NOTIFICATIONS', default=True),
-    'ADVANCED_SEARCH': env.bool('FEATURE_ADVANCED_SEARCH', default=True),
-    'CALENDAR_VIEW': env.bool('FEATURE_CALENDAR_VIEW', default=True),
-    'NOTIFICATION_CENTER': env.bool('FEATURE_NOTIFICATION_CENTER', default=True),
+    "WEBSOCKET_NOTIFICATIONS": env.bool(
+        "FEATURE_WEBSOCKET_NOTIFICATIONS", default=True
+    ),
+    "ADVANCED_SEARCH": env.bool("FEATURE_ADVANCED_SEARCH", default=True),
+    "CALENDAR_VIEW": env.bool("FEATURE_CALENDAR_VIEW", default=True),
+    "NOTIFICATION_CENTER": env.bool("FEATURE_NOTIFICATION_CENTER", default=True),
 }
 
 # Exchange agreement expiry: notify staff when end_date is exactly N days away (comma-separated).
 _AGREEMENT_EXP_DAYS = env.str("AGREEMENT_EXPIRATION_REMINDER_DAYS", default="90,30,7")
 AGREEMENT_EXPIRATION_REMINDER_DAYS = [
-    int(x.strip())
-    for x in _AGREEMENT_EXP_DAYS.split(",")
-    if x.strip().isdigit()
+    int(x.strip()) for x in _AGREEMENT_EXP_DAYS.split(",") if x.strip().isdigit()
 ] or [90, 30, 7]
 
 _AGREEMENT_EXP_STATUSES = env.str(
@@ -421,9 +431,7 @@ _AGREEMENT_EXP_STATUSES = env.str(
     default="active,renewal_pending",
 )
 AGREEMENT_EXPIRATION_REMINDER_STATUSES = [
-    s.strip()
-    for s in _AGREEMENT_EXP_STATUSES.split(",")
-    if s.strip()
+    s.strip() for s in _AGREEMENT_EXP_STATUSES.split(",") if s.strip()
 ] or ["active", "renewal_pending"]
 
 # Wagtail CMS Configuration
@@ -448,12 +456,12 @@ WAGTAILSEARCH_BACKENDS = {
 
 # Wagtail image formats
 WAGTAILIMAGES_FORMAT_CONVERSIONS = {
-    'webp': 'webp',
-    'jpeg': 'jpeg',
+    "webp": "webp",
+    "jpeg": "jpeg",
 }
 
 # Wagtail custom image renditions
-WAGTAILIMAGES_EXTENSIONS = ['gif', 'jpg', 'jpeg', 'png', 'webp', 'svg']
+WAGTAILIMAGES_EXTENSIONS = ["gif", "jpg", "jpeg", "png", "webp", "svg"]
 
 # Wagtail image max upload size (10MB)
 WAGTAILIMAGES_MAX_UPLOAD_SIZE = 10 * 1024 * 1024
@@ -469,7 +477,9 @@ WAGTAIL_WORKFLOW_ENABLED = True
 WAGTAIL_MODERATION_ENABLED = True
 
 # Wagtail email notification settings
-WAGTAILADMIN_NOTIFICATION_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@seim.local")
+WAGTAILADMIN_NOTIFICATION_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL", default="noreply@seim.local"
+)
 WAGTAILADMIN_NOTIFICATION_USE_HTML = True
 
 # Wagtail admin UI customization
@@ -487,11 +497,20 @@ WAGTAIL_GRAVATAR_PROVIDER_URL = None  # Disable Gravatar
 
 # Password required for private pages
 WAGTAIL_PASSWORD_MANAGEMENT_ENABLED = True
-WAGTAIL_PASSWORD_REQUIRED_TEMPLATE = 'wagtailcore/password_required.html'
+WAGTAIL_PASSWORD_REQUIRED_TEMPLATE = "wagtailcore/password_required.html"
 
 # Allowed file extensions for Wagtail documents
 WAGTAILDOCS_EXTENSIONS = [
-    'csv', 'docx', 'key', 'odt', 'pdf', 'pptx', 'rtf', 'txt', 'xlsx', 'zip',
+    "csv",
+    "docx",
+    "key",
+    "odt",
+    "pdf",
+    "pptx",
+    "rtf",
+    "txt",
+    "xlsx",
+    "zip",
 ]
 
 # Wagtail SEO Configuration

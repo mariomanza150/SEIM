@@ -23,8 +23,6 @@ MIDDLEWARE = list(MIDDLEWARE)
 _wagtail_redirect = "wagtail.contrib.redirects.middleware.RedirectMiddleware"
 if _wagtail_redirect not in MIDDLEWARE:
     _insert_at = next(
-        i
-        for i, m in enumerate(MIDDLEWARE)
-        if m.endswith("XFrameOptionsMiddleware")
+        i for i, m in enumerate(MIDDLEWARE) if m.endswith("XFrameOptionsMiddleware")
     )
     MIDDLEWARE.insert(_insert_at, _wagtail_redirect)

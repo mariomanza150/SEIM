@@ -19,8 +19,8 @@ from .models import (
 from .routing_reference import build_notification_routing_reference
 from .serializers import (
     NotificationPreferenceSerializer,
-    NotificationRoutingReferenceSerializer,
     NotificationRoutingOverrideSerializer,
+    NotificationRoutingReferenceSerializer,
     NotificationSerializer,
     NotificationTypeSerializer,
     ReminderSerializer,
@@ -41,7 +41,9 @@ from .services import NotificationService
     ),
     responses={
         200: NotificationRoutingReferenceSerializer,
-        403: OpenApiResponse(description="Students and other roles without staff access."),
+        403: OpenApiResponse(
+            description="Students and other roles without staff access."
+        ),
     },
 )
 class NotificationRoutingReferenceView(APIView):
@@ -80,55 +82,54 @@ class NotificationTypeViewSet(viewsets.ModelViewSet):
 
 class NotificationViewSet(viewsets.ModelViewSet):
     """ViewSet for notifications with filtering and bulk operations."""
-    
+
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ['is_read', 'notification_type', 'category']
-    ordering_fields = ['sent_at', 'created_at']
-    ordering = ['-sent_at']
-    
+    filterset_fields = ["is_read", "notification_type", "category"]
+    ordering_fields = ["sent_at", "created_at"]
+    ordering = ["-sent_at"]
+
     def get_queryset(self):
         """Filter notifications to only show user's own notifications."""
         user = self.request.user
         qs = Notification.objects.filter(recipient=user)
-        
+
         # Filter by unread if requested
-        unread_only = self.request.query_params.get('unread')
-        if unread_only and unread_only.lower() == 'true':
+        unread_only = self.request.query_params.get("unread")
+        if unread_only and unread_only.lower() == "true":
             qs = qs.filter(is_read=False)
-        
-        return qs.select_related('recipient')
-    
-    @action(detail=True, methods=['post'])
+
+        return qs.select_related("recipient")
+
+    @action(detail=True, methods=["post"])
     def mark_read(self, request, pk=None):
         """Mark a single notification as read."""
         notification = self.get_object()
         notification.is_read = True
         notification.save()
-        return Response({'status': 'notification marked as read'})
-    
-    @action(detail=False, methods=['post'])
+        return Response({"status": "notification marked as read"})
+
+    @action(detail=False, methods=["post"])
     def mark_all_read(self, request):
         """Mark all notifications as read for the current user."""
         count = NotificationService.mark_all_notifications_as_read(request.user)
-        return Response({'status': 'all notifications marked as read', 'count': count})
-    
-    @action(detail=True, methods=['delete'])
+        return Response({"status": "all notifications marked as read", "count": count})
+
+    @action(detail=True, methods=["delete"])
     def delete_notification(self, request, pk=None):
         """Delete a notification."""
         notification = self.get_object()
         notification.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-    @action(detail=False, methods=['get'])
+
+    @action(detail=False, methods=["get"])
     def unread_count(self, request):
         """Get count of unread notifications."""
         count = Notification.objects.filter(
-            recipient=request.user,
-            is_read=False
+            recipient=request.user, is_read=False
         ).count()
-        return Response({'count': count})
+        return Response({"count": count})
 
     @action(detail=False, methods=["post"])
     def batch_send(self, request):
@@ -166,7 +167,9 @@ class NotificationPreferenceViewSet(viewsets.ModelViewSet):
         responses={
             201: NotificationRoutingOverrideSerializer,
             400: OpenApiResponse(description="Validation error."),
-            403: OpenApiResponse(description="Forbidden without coordinator or admin role."),
+            403: OpenApiResponse(
+                description="Forbidden without coordinator or admin role."
+            ),
         },
     ),
     retrieve=extend_schema(
@@ -174,7 +177,9 @@ class NotificationPreferenceViewSet(viewsets.ModelViewSet):
         summary="Retrieve notification routing override",
         responses={
             200: NotificationRoutingOverrideSerializer,
-            403: OpenApiResponse(description="Forbidden without coordinator or admin role."),
+            403: OpenApiResponse(
+                description="Forbidden without coordinator or admin role."
+            ),
         },
     ),
     update=extend_schema(
@@ -183,7 +188,9 @@ class NotificationPreferenceViewSet(viewsets.ModelViewSet):
         responses={
             200: NotificationRoutingOverrideSerializer,
             400: OpenApiResponse(description="Validation error."),
-            403: OpenApiResponse(description="Forbidden without coordinator or admin role."),
+            403: OpenApiResponse(
+                description="Forbidden without coordinator or admin role."
+            ),
         },
     ),
     partial_update=extend_schema(
@@ -192,7 +199,9 @@ class NotificationPreferenceViewSet(viewsets.ModelViewSet):
         responses={
             200: NotificationRoutingOverrideSerializer,
             400: OpenApiResponse(description="Validation error."),
-            403: OpenApiResponse(description="Forbidden without coordinator or admin role."),
+            403: OpenApiResponse(
+                description="Forbidden without coordinator or admin role."
+            ),
         },
     ),
     destroy=extend_schema(
@@ -200,7 +209,9 @@ class NotificationPreferenceViewSet(viewsets.ModelViewSet):
         summary="Delete notification routing override",
         responses={
             204: OpenApiResponse(description="No content."),
-            403: OpenApiResponse(description="Forbidden without coordinator or admin role."),
+            403: OpenApiResponse(
+                description="Forbidden without coordinator or admin role."
+            ),
         },
     ),
 )
@@ -214,7 +225,11 @@ class NotificationRoutingOverrideViewSet(viewsets.ModelViewSet):
     queryset = NotificationRoutingOverride.objects.all()
     serializer_class = NotificationRoutingOverrideSerializer
     permission_classes = [IsAuthenticated, IsCoordinatorOrAdmin]
-    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
     filterset_fields = ["kind", "key", "settings_category", "is_active"]
     search_fields = ["key"]
     ordering_fields = ["updated_at", "created_at", "kind", "key"]
@@ -223,25 +238,27 @@ class NotificationRoutingOverrideViewSet(viewsets.ModelViewSet):
 
 class ReminderViewSet(viewsets.ModelViewSet):
     """ViewSet for user reminders."""
-    
+
     queryset = Reminder.objects.all()
     serializer_class = ReminderSerializer
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ['sent', 'event_type']
-    ordering_fields = ['remind_at', 'created_at']
-    ordering = ['remind_at']
-    
+    filterset_fields = ["sent", "event_type"]
+    ordering_fields = ["remind_at", "created_at"]
+    ordering = ["remind_at"]
+
     def get_queryset(self):
         """Users can only see their own reminders."""
-        return Reminder.objects.filter(user=self.request.user).select_related('notification')
-    
+        return Reminder.objects.filter(user=self.request.user).select_related(
+            "notification"
+        )
+
     def perform_create(self, serializer):
         """Set user from request."""
         serializer.save(user=self.request.user)
-    
-    @action(detail=False, methods=['get'])
+
+    @action(detail=False, methods=["get"])
     def upcoming(self, request):
         """Get upcoming reminders (not sent yet)."""
-        reminders = self.get_queryset().filter(sent=False).order_by('remind_at')[:10]
+        reminders = self.get_queryset().filter(sent=False).order_by("remind_at")[:10]
         serializer = self.get_serializer(reminders, many=True)
         return Response(serializer.data)
