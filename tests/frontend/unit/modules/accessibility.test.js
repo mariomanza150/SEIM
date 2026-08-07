@@ -1,33 +1,35 @@
 import { AccessibilityManager } from '../../../../static/js/modules/accessibility.js';
 
 jest.mock('../../../../static/js/modules/logger.js', () => ({
-  SEIM_LOGGER: { info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn() },
+  logger: { info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn() },
+  Logger: jest.fn(),
+  LOG_LEVELS: { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3, NONE: 4 },
 }));
 jest.mock('../../../../static/js/modules/error-handler.js', () => ({
-  SEIM_ERROR_HANDLER: { handleError: jest.fn() },
+  errorHandler: { handleError: jest.fn(), handleApiError: jest.fn(), showError: jest.fn() },
+  ErrorHandler: jest.fn(),
 }));
 
-// Mock window.matchMedia
-Object.defineProperty(window, 'matchMedia', {
-  writable: true,
-  value: jest.fn().mockImplementation(query => ({
+// Plain function — jest resetMocks clears jest.fn() implementations between tests
+function mockMatchMedia() {
+  window.matchMedia = (query) => ({
     matches: false,
     media: query,
     onchange: null,
-    addListener: jest.fn(),
-    removeListener: jest.fn(),
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
-});
+    addListener() {},
+    removeListener() {},
+    addEventListener() {},
+    removeEventListener() {},
+    dispatchEvent() { return false; },
+  });
+}
 
 describe('AccessibilityManager', () => {
   let manager;
   beforeEach(() => {
+    mockMatchMedia();
     document.body.innerHTML = '';
     manager = new AccessibilityManager();
-    jest.clearAllMocks();
   });
 
   it('adds skip links to the DOM', () => {
@@ -37,6 +39,11 @@ describe('AccessibilityManager', () => {
   });
 
   it('returns focusable elements in a container', () => {
+    // jsdom leaves offsetParent null; getFocusableElements filters on it
+    Object.defineProperty(HTMLElement.prototype, 'offsetParent', {
+      configurable: true,
+      get() { return this.parentNode; },
+    });
     const container = document.createElement('div');
     container.innerHTML = '<button></button><a href="#"></a><input /><div></div>';
     document.body.appendChild(container);
@@ -45,8 +52,11 @@ describe('AccessibilityManager', () => {
   });
 
   it('announces messages for screen readers', () => {
+    jest.useFakeTimers();
     manager.announce('Test announcement');
-    expect(document.body.innerHTML).toContain('Test announcement');
+    jest.advanceTimersByTime(manager.config.announcementDelay);
+    expect(document.getElementById('announcement-region').textContent).toContain('Test announcement');
+    jest.useRealTimers();
   });
 
   it('handles keyboard navigation for Enter on button', () => {

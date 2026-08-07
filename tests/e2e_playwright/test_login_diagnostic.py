@@ -36,8 +36,8 @@ def test_inspect_login_form_submission(page: Page, base_url: str):
     email_field = page.locator('input#email, input[type="email"]').first
     print(f"\n👤 Email field found: {email_field.count() > 0}")
     if email_field.count() > 0:
-        email_field.fill("student1@example.com")
-        print("  ✅ Filled email: student1@example.com")
+        email_field.fill("student@test.com")
+        print("  ✅ Filled email: student@test.com")
 
     password_field = page.locator('input[type="password"]').first
     print(f"\n🔒 Password field found: {password_field.count() > 0}")

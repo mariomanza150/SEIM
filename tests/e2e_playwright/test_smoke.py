@@ -72,7 +72,7 @@ def test_api_health_check(page: Page, base_url: str):
     - Health check endpoint exists
     - Returns successful response
     """
-    response = page.goto(f"{base_url}/health/")
+    response = page.goto(f"{base_url}/health/live/")
     if response and response.status == 404:
         pytest.skip(
             "Backend not running at base_url. Start Django and run with appropriate BASE_URL."

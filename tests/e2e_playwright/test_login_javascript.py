@@ -25,7 +25,7 @@ def test_login_javascript_loaded(page: Page, base_url: str):
     expect(page.locator("input#password, input[type='password']")).to_be_visible()
     expect(page.locator('button:has-text("Sign In")')).to_be_visible()
 
-    page.locator("input#email, input[type='email']").first.fill("student1@example.com")
+    page.locator("input#email, input[type='email']").first.fill("student@test.com")
     page.locator("input#password, input[type='password']").first.fill("student123")
     page.locator(
         'button:has-text("Sign In"), [data-testid="login-submit"]'

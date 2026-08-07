@@ -63,6 +63,12 @@ COPY --from=frontend-builder /app/frontend-vue/dist /opt/seim-vue-dist
 # Create media directory for Wagtail uploads
 RUN mkdir -p /app/media
 
+# Build-time Django commands must not require development secrets (AWS/SMTP/.env).
+# Runtime compose/k8s still override DJANGO_SETTINGS_MODULE as needed.
+ENV DJANGO_SETTINGS_MODULE=seim.settings.test \
+    SECRET_KEY=build-time-placeholder-not-for-runtime \
+    DEBUG=false
+
 # gettext binary catalogs (.mo) are gitignored; compile project locales only
 RUN python manage.py compilemessages -l de -l es -l fr
 

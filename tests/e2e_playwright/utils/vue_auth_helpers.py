@@ -13,7 +13,8 @@ from playwright.sync_api import Page
 
 # API base URL (Django backend) - Vue proxies to this in dev
 API_BASE_URL = os.environ.get(
-    "VITE_API_BASE_URL", os.environ.get("API_URL", "http://localhost:8001")
+    "VITE_API_BASE_URL",
+    os.environ.get("API_URL", os.environ.get("BASE_URL", "http://localhost:8000")),
 )
 
 # Cache: (email, password) -> (access, refresh, expiry_ts). TTL 5 minutes.

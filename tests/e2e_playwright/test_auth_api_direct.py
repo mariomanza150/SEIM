@@ -16,7 +16,7 @@ def test_login_via_api_then_verify(page: Page, base_url: str):
     response = page.context.request.post(
         f"{base_url}/api/token/",
         headers={"Content-Type": "application/json"},
-        data={"email": "student1@example.com", "password": "student123"},
+        data={"email": "student@test.com", "password": "student123"},
     )
     print(f"\n📡 API Response Status: {response.status}")
     if response.status == 404:
@@ -75,7 +75,7 @@ def test_login_form_submission_with_wait(page: Page, base_url: str):
 
     page.on("response", handle_response)
 
-    page.locator("input#email, input[type='email']").first.fill("student1@example.com")
+    page.locator("input#email, input[type='email']").first.fill("student@test.com")
     page.locator("input#password, input[type='password']").first.fill("student123")
     page.locator(
         'button:has-text("Sign In"), [data-testid="login-submit"]'

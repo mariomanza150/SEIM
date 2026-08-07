@@ -122,7 +122,7 @@ class ExchangeAgreementViewSet(viewsets.ModelViewSet):
         "partner_institution_name",
         "partner_country",
         "internal_reference",
-        "partner_reference_id",
+        "custom_tags",
         "notes",
     ]
     ordering_fields = [
@@ -212,6 +212,40 @@ class EligibilityRuleSetViewSet(viewsets.ReadOnlyModelViewSet):
     ]
 
 
+def _program_list_cache_key(*args, **kwargs):
+    """Stable list cache key (path + user) so mutations can invalidate ProgramViewSet entries."""
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    digest = hashlib.sha256(request.get_full_path().encode()).hexdigest()[:32]
+    return CacheManager.get_cache_key(
+        "api_response", f"ProgramViewSet.list:{user_key}:{digest}"
+    )
+
+
+def _program_retrieve_cache_key(*args, **kwargs):
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    pk = kwargs.get("pk", "")
+    return CacheManager.get_cache_key(
+        "api_response", f"ProgramViewSet.retrieve:{user_key}:{pk}"
+    )
+
+
+def _program_active_cache_key(*args, **kwargs):
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    digest = hashlib.sha256(request.get_full_path().encode()).hexdigest()[:32]
+    return CacheManager.get_cache_key(
+        "api_response", f"ProgramViewSet.active:{user_key}:{digest}"
+    )
+
+
+def _invalidate_program_api_caches() -> None:
+    """Clear middleware + view-level caches for program list/detail after mutations."""
+    CacheManager.clear_pattern("api_resp:v1:api_middleware:/api/programs*")
+    CacheManager.clear_pattern("api_resp:v1:ProgramViewSet*")
+
+
 class ProgramViewSet(viewsets.ModelViewSet):
     """ViewSet for exchange programs with admin-only write permissions."""
 
@@ -236,18 +270,30 @@ class ProgramViewSet(viewsets.ModelViewSet):
             _seat_holding_count=Count("application", filter=seat_filter)
         )
 
-    @cache_api_response(timeout=600)  # Cache for 10 minutes
+    def perform_create(self, serializer):
+        serializer.save()
+        _invalidate_program_api_caches()
+
+    def perform_update(self, serializer):
+        serializer.save()
+        _invalidate_program_api_caches()
+
+    def perform_destroy(self, instance):
+        instance.delete()
+        _invalidate_program_api_caches()
+
+    @cache_api_response(timeout=600, key_func=_program_list_cache_key)
     def list(self, request, *args, **kwargs):
         """List all programs with caching."""
         return super().list(request, *args, **kwargs)
 
-    @cache_api_response(timeout=600)  # Cache for 10 minutes
+    @cache_api_response(timeout=600, key_func=_program_retrieve_cache_key)
     def retrieve(self, request, *args, **kwargs):
         """Retrieve a specific program with caching."""
         return super().retrieve(request, *args, **kwargs)
 
     @action(detail=False, methods=["get"])
-    @cache_api_response(timeout=600)  # Cache for 10 minutes
+    @cache_api_response(timeout=600, key_func=_program_active_cache_key)
     def active(self, request):
         """Get only active programs with caching."""
         active_programs = self.get_queryset().filter(is_active=True)
@@ -294,10 +340,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
         )
         cloned_program.coordinators.set(original_program.coordinators.all())
 
-        # Invalidate program cache
-        from core.cache import invalidate_cache_pattern
-
-        invalidate_cache_pattern("api:ProgramViewSet:*")
+        _invalidate_program_api_caches()
 
         serializer = self.get_serializer(cloned_program)
         return Response(

@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from accounts.models import Role
 from exchange.models import Application, ApplicationStatus, Program
 
 User = get_user_model()
@@ -53,6 +54,49 @@ class TestProgramViews:
         response = client.get(reverse("api:program-list"))
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["results"]) == 2
+
+    def test_program_list_refreshes_after_create(self):
+        """Creating a program must invalidate API list caches (middleware + view)."""
+        from django.core.cache import cache
+
+        cache.clear()
+        admin_role, _ = Role.objects.get_or_create(name="admin")
+        admin = User.objects.create_user(
+            username="prog_admin",
+            email="prog_admin@example.com",
+            password="testpass123",
+            is_staff=True,
+        )
+        admin.roles.add(admin_role)
+
+        client = APIClient()
+        client.force_authenticate(user=admin)
+
+        list_url = reverse("api:program-list")
+        empty = client.get(list_url, {"ordering": "name"})
+        assert empty.status_code == status.HTTP_200_OK
+        assert (
+            empty.data.get("results", empty.data) == []
+            or len(empty.data.get("results", empty.data)) == 0
+        )
+
+        create = client.post(
+            list_url,
+            {
+                "name": "Cache Bust Program",
+                "description": "Should appear immediately after create",
+                "is_active": True,
+                "start_date": "2026-09-01",
+                "end_date": "2026-12-31",
+            },
+            format="json",
+        )
+        assert create.status_code == status.HTTP_201_CREATED
+
+        refreshed = client.get(list_url, {"ordering": "name"})
+        assert refreshed.status_code == status.HTTP_200_OK
+        names = [p["name"] for p in refreshed.data.get("results", refreshed.data)]
+        assert "Cache Bust Program" in names
 
     def test_program_detail_view(self):
         client = APIClient()

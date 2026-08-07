@@ -1,4 +1,4 @@
-import AuthManager from '../../../../static/js/modules/auth-unified.js';
+import { AuthManager } from '../../../../static/js/modules/auth-unified.js';
 
 jest.mock('../../../../static/js/modules/logger.js', () => ({
   logger: { info: jest.fn(), error: jest.fn() },

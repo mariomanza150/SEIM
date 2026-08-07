@@ -30,13 +30,21 @@ jobs:
           REDIS_URL=redis://redis:6379/0
           ALLOWED_HOSTS=localhost,127.0.0.1
           DJANGO_SETTINGS_MODULE=seim.settings.test
+          EMAIL_BACKEND=django.core.mail.backends.locmem.EmailBackend
+          CELERY_BROKER_URL=redis://redis:6379/0
+          CELERY_RESULT_BACKEND=redis://redis:6379/0
+          AWS_ACCESS_KEY_ID=
+          AWS_SECRET_ACCESS_KEY=
+          AWS_STORAGE_BUCKET_NAME=
           EOF
 
       - name: Build images
         run: docker compose build
 
+      # Only db/redis/web — celery* entrypoints used to race migrate via wait-for-db.sh.
+      # override.yml starts runserver without migrate (migrate is the next step).
       - name: Start services
-        run: docker compose up -d
+        run: docker compose up -d db redis web
 
       - name: Wait for services
         run: |
@@ -58,7 +66,9 @@ jobs:
         run: docker compose exec -T web python manage.py migrate --noinput
 
       - name: Run tests
-        run: docker compose exec -T web pytest tests/ -v --maxfail=5
+        # Match CI backend scope — full ``tests/`` pulls Selenium (needs host.docker.internal)
+        # and unrelated performance suites.
+        run: docker compose exec -T web pytest tests/unit tests/integration -v --maxfail=5
 
       - name: Check logs on failure
         if: failure()

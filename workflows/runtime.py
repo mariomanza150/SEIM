@@ -54,11 +54,12 @@ def _ready_manual_tasks(workflow: BpmnWorkflow) -> list[dict]:
     out = []
     for t in workflow.get_tasks(state=TaskState.READY):
         if getattr(t.task_spec, "manual", False):
+            # Spiff Task has instance ``id``; TaskSpec/UserTask identity is ``name`` (no ``id``).
             out.append(
                 {
-                    "id": t.id,
+                    "id": str(t.id),
                     "name": t.task_spec.name or "",
-                    "spec_id": t.task_spec.id,
+                    "spec_id": t.task_spec.name,
                 }
             )
     return out
@@ -183,17 +184,13 @@ class WorkflowRuntimeService:
 
         target = None
         for t in ready:
-            if (
-                str(t.id) == action
-                or str(t.task_spec.id) == action
-                or str(t.task_spec.name) == action
-            ):
+            if str(t.id) == action or str(t.task_spec.name) == action:
                 target = t
                 break
 
         if target is None:
             available = [
-                {"id": t.id, "name": t.task_spec.name, "spec_id": t.task_spec.id}
+                {"id": str(t.id), "name": t.task_spec.name, "spec_id": t.task_spec.name}
                 for t in ready
             ]
             raise ValueError(f"Action not available: {action}. Available: {available}")

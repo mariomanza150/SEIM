@@ -5,6 +5,7 @@ This module provides fixtures for authenticated contexts, database seeding,
 screenshot management, and test data setup.
 """
 
+import json
 import os
 import subprocess
 import sys
@@ -13,6 +14,15 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+
+try:
+    from tests.playwright.config import VISUAL_REGRESSION_CONFIG
+except ImportError:  # pragma: no cover
+    VISUAL_REGRESSION_CONFIG = {
+        "threshold": 0.1,
+        "baseline_dir": "tests/e2e_playwright/visual/snapshots",
+        "update_baseline": False,
+    }
 
 try:
     from playwright.sync_api import (
@@ -60,29 +70,22 @@ SCREENSHOT_CONFIG = {
     "full_page": True,
 }
 
-# Visual regression configuration
-VISUAL_REGRESSION_CONFIG = {
-    "threshold": 0.1,
-    "baseline_dir": "tests/e2e_playwright/visual/baselines",
-    "update_baseline": False,
-}
-
 # Test data configuration
 TEST_DATA_CONFIG = {
     "users": {
         "admin": {
             "username": "admin",
-            "email": "admin@example.com",
+            "email": "admin@test.com",
             "password": "admin123",
         },
         "coordinator": {
             "username": "coordinator",
-            "email": "coordinator@example.com",
-            "password": "coord123",
+            "email": "coordinator@test.com",
+            "password": "coordinator123",
         },
         "student1": {
-            "username": "student1",
-            "email": "student1@example.com",
+            "username": "student",
+            "email": "student@test.com",
             "password": "student123",
         },
     }

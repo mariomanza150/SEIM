@@ -3,7 +3,7 @@
 # Development and Code Quality Tools for SEIM
 
 # Code formatting and linting
-ruff==0.1.15
+ruff==0.12.2
 isort==5.13.2
 flake8==6.1.0
 flake8-docstrings==1.7.0

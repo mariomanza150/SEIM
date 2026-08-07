@@ -153,6 +153,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-test.txt
 
+      - name: Install gettext (msgfmt for compilemessages)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+
       - name: Migrate
         env:
           DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
@@ -291,7 +296,7 @@ jobs:
         run: docker build -t seim:ci .
 
       - name: Trivy scan
-        uses: aquasecurity/trivy-action@v0.29.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: seim:ci
           format: sarif

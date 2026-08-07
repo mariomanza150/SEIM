@@ -38,7 +38,7 @@ def test_login_api_call(page: Page, base_url: str):
         pytest.skip(
             "Vue app not available at base_url. Run with BASE_URL=http://localhost:5173"
         )
-    page.locator("input#email, input[type='email']").first.fill("student1@example.com")
+    page.locator("input#email, input[type='email']").first.fill("student@test.com")
     page.locator("input#password, input[type='password']").first.fill("student123")
     page.locator(
         'button:has-text("Sign In"), [data-testid="login-submit"]'

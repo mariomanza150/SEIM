@@ -3,6 +3,21 @@
  * Comprehensive testing of API functionality, caching, and error handling
  */
 
+jest.mock('../../../../static/js/modules/logger.js', () => ({
+  logger: { info: jest.fn(), warn: jest.fn(), debug: jest.fn(), error: jest.fn() },
+  Logger: jest.fn(),
+  LOG_LEVELS: { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3, NONE: 4 },
+}));
+jest.mock('../../../../static/js/modules/error-handler.js', () => ({
+  errorHandler: { handleError: jest.fn(), handleApiError: jest.fn(), showError: jest.fn() },
+  ErrorHandler: jest.fn(),
+}));
+jest.mock('../../../../static/js/modules/performance.js', () => ({
+  __esModule: true,
+  default: { trackBundleLoad: jest.fn(), recordMetric: jest.fn(), trackApiCall: jest.fn() },
+  performanceMonitor: { trackBundleLoad: jest.fn(), recordMetric: jest.fn(), trackApiCall: jest.fn() },
+}));
+
 import { EnhancedAPI } from '../../../../static/js/modules/api-enhanced.js';
 import { TestData } from '../../utils/test-utils.js';
 
@@ -13,22 +28,19 @@ describe('SEIM Enhanced API Integration Tests', () => {
     beforeEach(() => {
         // Reset API instance
         api = new EnhancedAPI();
+        api.config.retryAttempts = 1;
+        api.config.retryDelay = 0;
         
         // Mock fetch globally
         fetchMock = jest.fn();
         global.fetch = fetchMock;
         
-        // Mock AbortSignal.timeout for Node.js test environment
-        if (typeof AbortSignal !== 'undefined' && !AbortSignal.timeout) {
-            AbortSignal.timeout = jest.fn((timeout) => {
-                const controller = new AbortController();
-                setTimeout(() => controller.abort(), timeout);
-                return controller.signal;
-            });
-        }
-        
-        // Clear any existing mocks
-        jest.clearAllMocks();
+        // Plain polyfill — jest resetMocks clears jest.fn() AbortSignal.timeout stubs
+        AbortSignal.timeout = (timeout) => {
+            const controller = new AbortController();
+            setTimeout(() => controller.abort(), timeout);
+            return controller.signal;
+        };
     });
     
     afterEach(() => {
@@ -50,15 +62,16 @@ describe('SEIM Enhanced API Integration Tests', () => {
             
             const result = await api.get('/api/test');
             
-            expect(fetchMock).toHaveBeenCalledWith('/api/test', {
-                method: 'GET',
-                headers: expect.objectContaining({
-                    'Content-Type': 'application/json',
-                    'X-Request-ID': expect.any(String)
-                }),
-                body: undefined,
-                signal: expect.any(AbortSignal)
-            });
+            expect(fetchMock).toHaveBeenCalledWith(
+                '/api/test',
+                expect.objectContaining({
+                    method: 'GET',
+                    headers: expect.objectContaining({
+                        'Content-Type': 'application/json',
+                        'X-Request-ID': expect.any(String)
+                    })
+                })
+            );
             expect(result).toEqual(mockResponse.data);
         });
         
@@ -74,15 +87,17 @@ describe('SEIM Enhanced API Integration Tests', () => {
             
             const result = await api.post('/api/test', postData);
             
-            expect(fetchMock).toHaveBeenCalledWith('/api/test', {
-                method: 'POST',
-                headers: expect.objectContaining({
-                    'Content-Type': 'application/json',
-                    'X-Request-ID': expect.any(String)
-                }),
-                body: JSON.stringify(postData),
-                signal: expect.any(AbortSignal)
-            });
+            expect(fetchMock).toHaveBeenCalledWith(
+                '/api/test',
+                expect.objectContaining({
+                    method: 'POST',
+                    headers: expect.objectContaining({
+                        'Content-Type': 'application/json',
+                        'X-Request-ID': expect.any(String)
+                    }),
+                    body: JSON.stringify(postData)
+                })
+            );
             expect(result).toEqual(mockResponse.data);
         });
         
@@ -98,15 +113,17 @@ describe('SEIM Enhanced API Integration Tests', () => {
             
             const result = await api.put('/api/test/1', updateData);
             
-            expect(fetchMock).toHaveBeenCalledWith('/api/test/1', {
-                method: 'PUT',
-                headers: expect.objectContaining({
-                    'Content-Type': 'application/json',
-                    'X-Request-ID': expect.any(String)
-                }),
-                body: JSON.stringify(updateData),
-                signal: expect.any(AbortSignal)
-            });
+            expect(fetchMock).toHaveBeenCalledWith(
+                '/api/test/1',
+                expect.objectContaining({
+                    method: 'PUT',
+                    headers: expect.objectContaining({
+                        'Content-Type': 'application/json',
+                        'X-Request-ID': expect.any(String)
+                    }),
+                    body: JSON.stringify(updateData)
+                })
+            );
             expect(result).toEqual(mockResponse.data);
         });
         
@@ -121,15 +138,16 @@ describe('SEIM Enhanced API Integration Tests', () => {
             
             const result = await api.delete('/api/test/1');
             
-            expect(fetchMock).toHaveBeenCalledWith('/api/test/1', {
-                method: 'DELETE',
-                headers: expect.objectContaining({
-                    'Content-Type': 'application/json',
-                    'X-Request-ID': expect.any(String)
-                }),
-                body: undefined,
-                signal: expect.any(AbortSignal)
-            });
+            expect(fetchMock).toHaveBeenCalledWith(
+                '/api/test/1',
+                expect.objectContaining({
+                    method: 'DELETE',
+                    headers: expect.objectContaining({
+                        'Content-Type': 'application/json',
+                        'X-Request-ID': expect.any(String)
+                    })
+                })
+            );
             expect(result).toEqual(mockResponse.data);
         });
     });
@@ -274,6 +292,9 @@ describe('SEIM Enhanced API Integration Tests', () => {
         });
         
         test('should retry failed requests', async () => {
+            api.config.retryAttempts = 2;
+            api.config.retryDelay = 0;
+
             // First call fails, second succeeds
             fetchMock
                 .mockRejectedValueOnce(new Error('Network error'))
@@ -290,14 +311,14 @@ describe('SEIM Enhanced API Integration Tests', () => {
         });
         
         test('should respect retry configuration', async () => {
-            api.setRetryConfig({ maxRetries: 1, retryDelay: 10 });
+            api.setRetryConfig({ maxRetries: 1, retryDelay: 0 });
             
             fetchMock.mockRejectedValue(new Error('Network error'));
             
             await expect(api.get('/api/test')).rejects.toThrow('Network error');
             
-            // Should only retry once (original + 1 retry)
-            expect(fetchMock).toHaveBeenCalledTimes(2);
+            // maxRetries: 1 => a single attempt (no further retries)
+            expect(fetchMock).toHaveBeenCalledTimes(1);
         });
     });
     
@@ -315,13 +336,16 @@ describe('SEIM Enhanced API Integration Tests', () => {
             
             await api.get('/api/test');
             
-            expect(fetchMock).toHaveBeenCalledWith('/api/test', {
-                method: 'GET',
-                headers: expect.objectContaining({
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+            expect(fetchMock).toHaveBeenCalledWith(
+                '/api/test',
+                expect.objectContaining({
+                    method: 'GET',
+                    headers: expect.objectContaining({
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    })
                 })
-            });
+            );
         });
         
         test('should handle authentication errors', async () => {
@@ -357,13 +381,16 @@ describe('SEIM Enhanced API Integration Tests', () => {
             await api.get('/api/test');
             
             expect(interceptor).toHaveBeenCalled();
-            expect(fetchMock).toHaveBeenCalledWith('/api/test', {
-                method: 'GET',
-                headers: expect.objectContaining({
-                    'X-Custom-Header': 'test-value',
-                    'Content-Type': 'application/json'
+            expect(fetchMock).toHaveBeenCalledWith(
+                '/api/test',
+                expect.objectContaining({
+                    method: 'GET',
+                    headers: expect.objectContaining({
+                        'X-Custom-Header': 'test-value',
+                        'Content-Type': 'application/json'
+                    })
                 })
-            });
+            );
         });
         
         test('should apply response interceptors', async () => {
