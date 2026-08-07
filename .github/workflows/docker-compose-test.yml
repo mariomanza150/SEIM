@@ -66,7 +66,9 @@ jobs:
         run: docker compose exec -T web python manage.py migrate --noinput
 
       - name: Run tests
-        run: docker compose exec -T web pytest tests/ -v --maxfail=5
+        # Match CI backend scope — full ``tests/`` pulls Selenium (needs host.docker.internal)
+        # and unrelated performance suites.
+        run: docker compose exec -T web pytest tests/unit tests/integration -v --maxfail=5
 
       - name: Check logs on failure
         if: failure()

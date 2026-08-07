@@ -83,10 +83,13 @@ for _tpl in TEMPLATES:
         p for p in processors if not p.startswith("wagtail.")
     ]
 
-# Minimal `index.html` for `TemplateView` under `/seim/` when `frontend-vue/dist` is absent (CI / dev checkout).
+# Prefer a real Vue build when present (Playwright E2E). Only inject the minimal
+# shell fixture when ``frontend-vue/dist`` is missing (unit/CI without npm build).
 _TEST_TEMPLATE_DIR = BASE_DIR / "tests" / "fixtures" / "templates"
-for _tpl in TEMPLATES:
-    _tpl["DIRS"] = [_TEST_TEMPLATE_DIR] + list(_tpl.get("DIRS", []))
+_VUE_DIST_INDEX = BASE_DIR / "frontend-vue" / "dist" / "index.html"
+if not _VUE_DIST_INDEX.is_file():
+    for _tpl in TEMPLATES:
+        _tpl["DIRS"] = [_TEST_TEMPLATE_DIR] + list(_tpl.get("DIRS", []))
 
 # Use console email backend for tests
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
