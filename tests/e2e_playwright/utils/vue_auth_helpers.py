@@ -5,15 +5,14 @@ Uses JWT login (email + password) and sets access_token/refresh_token in localSt
 so the Vue app at base_url considers the user logged in.
 Caches tokens per (email, password) to avoid throttle (429) when many tests run.
 """
-
 import os
 import time
-
 from playwright.sync_api import Page
 
 # API base URL (Django backend) - Vue proxies to this in dev
 API_BASE_URL = os.environ.get(
-    "VITE_API_BASE_URL", os.environ.get("API_URL", "http://localhost:8001")
+    "VITE_API_BASE_URL",
+    os.environ.get("API_URL", os.environ.get("BASE_URL", "http://localhost:8000")),
 )
 
 # Cache: (email, password) -> (access, refresh, expiry_ts). TTL 5 minutes.
@@ -46,7 +45,6 @@ def login_vue_via_jwt(page: Page, vue_base_url: str, email: str, password: str) 
             page.wait_for_load_state("networkidle")
             if page.title() and "not found" in page.title().lower():
                 from tests.e2e_playwright.utils.auth_helpers import VueAppNotAvailable
-
                 raise VueAppNotAvailable(
                     f"Vue app not available at {vue_base_url}. Run with BASE_URL=http://localhost:5173"
                 )
@@ -59,7 +57,6 @@ def login_vue_via_jwt(page: Page, vue_base_url: str, email: str, password: str) 
     )
     if response.status == 404:
         from tests.e2e_playwright.utils.auth_helpers import VueAppNotAvailable
-
         raise VueAppNotAvailable(
             f"API not available at {API_BASE_URL}/api/token/ (404). "
             "Start Vue dev server and Django API; run with BASE_URL=http://localhost:5173 API_URL=http://localhost:8001"
@@ -85,7 +82,6 @@ def login_vue_via_jwt(page: Page, vue_base_url: str, email: str, password: str) 
     page.wait_for_load_state("networkidle")
     if page.title() and "not found" in page.title().lower():
         from tests.e2e_playwright.utils.auth_helpers import VueAppNotAvailable
-
         raise VueAppNotAvailable(
             f"Vue app not available at {vue_base_url} (dashboard returned Not Found). "
             "Start Vue dev server and run with BASE_URL=http://localhost:5173"
@@ -109,9 +105,7 @@ def get_cached_access_token(email: str, password: str) -> str | None:
     return access
 
 
-def ensure_draft_application_via_api(
-    page: Page, email: str, password: str
-) -> str | None:
+def ensure_draft_application_via_api(page: Page, email: str, password: str) -> str | None:
     """
     Ensure the test user has at least one draft application by creating one via API if needed.
     Uses cached JWT or performs token request. Returns application id (UUID string) or None on failure.
@@ -127,11 +121,7 @@ def ensure_draft_application_via_api(
             return None
         data = response.json()
         token = data.get("access", "")
-        _JWT_CACHE[(email, password)] = (
-            token,
-            data.get("refresh", ""),
-            time.time() + _JWT_CACHE_TTL,
-        )
+        _JWT_CACHE[(email, password)] = (token, data.get("refresh", ""), time.time() + _JWT_CACHE_TTL)
     if not token:
         return None
     # GET first program
@@ -142,11 +132,7 @@ def ensure_draft_application_via_api(
     if not programs_resp.ok:
         return None
     programs_data = programs_resp.json()
-    results = (
-        programs_data.get("results", programs_data)
-        if isinstance(programs_data, dict)
-        else programs_data
-    )
+    results = programs_data.get("results", programs_data) if isinstance(programs_data, dict) else programs_data
     if not results or not isinstance(results, list):
         return None
     program_id = results[0].get("id") if isinstance(results[0], dict) else None
@@ -156,10 +142,7 @@ def ensure_draft_application_via_api(
     create_resp = page.context.request.post(
         f"{API_BASE_URL}/api/applications/",
         data={"program": program_id},
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        },
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
     )
     if not create_resp.ok:
         return None

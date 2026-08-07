@@ -17,9 +17,6 @@ jobs:
   docker-test:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    # Exclude docker-compose.override.yml (local migrate+runserver races CI migrate).
-    env:
-      COMPOSE_FILE: docker-compose.yml
 
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +41,8 @@ jobs:
       - name: Build images
         run: docker compose build
 
-      # Skip celery* — their entrypoints used to race migrate via wait-for-db.sh.
+      # Only db/redis/web — celery* entrypoints used to race migrate via wait-for-db.sh.
+      # override.yml starts runserver without migrate (migrate is the next step).
       - name: Start services
         run: docker compose up -d db redis web
 
