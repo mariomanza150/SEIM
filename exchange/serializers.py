@@ -847,6 +847,33 @@ class PartnerApplicationSerializer(serializers.ModelSerializer):
         return {"complete": full.get("complete"), "items": items}
 
 
+class PartnerCommentSerializer(serializers.ModelSerializer):
+    """Public comment payload for partner-institution threads (no emails)."""
+
+    author_display_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Comment
+        fields = (
+            "id",
+            "text",
+            "created_at",
+            "author_display_name",
+        )
+        read_only_fields = fields
+
+    def get_author_display_name(self, obj):
+        u = obj.author
+        name = u.get_full_name().strip()
+        if name:
+            return name
+        if hasattr(u, "has_role") and u.has_role("partner"):
+            return "Partner"
+        if hasattr(u, "has_any_role") and u.has_any_role(["coordinator", "admin"]):
+            return "Coordinator"
+        return u.username or "User"
+
+
 class EligibilityRuleOutcomeSchemaSerializer(serializers.Serializer):
     """OpenAPI shape for one row in ``GET .../check_eligibility/`` ``rules`` (``schema_version`` 4+)."""
 

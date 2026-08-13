@@ -9,10 +9,11 @@ from rest_framework.response import Response
 
 from documents.models import ExchangeAgreementDocument
 from documents.serializers import ExchangeAgreementDocumentSerializer
-from exchange.models import Application, ExchangeAgreement, PartnerContact
+from exchange.models import Application, Comment, ExchangeAgreement, PartnerContact
 from exchange.serializers import (
     ExchangeAgreementSerializer,
     PartnerApplicationSerializer,
+    PartnerCommentSerializer,
     PartnerContactSerializer,
 )
 
@@ -156,3 +157,29 @@ class PartnerApplicationViewSet(viewsets.ReadOnlyModelViewSet):
         return qs.filter(
             program__exchange_agreements__id__in=partner_agreement_ids(user)
         ).distinct()
+
+    @action(detail=True, methods=["get", "post"], url_path="comments")
+    def comments(self, request, pk=None):
+        """Public application thread for partner users (no private staff notes)."""
+        application = self.get_object()
+        if request.method == "GET":
+            qs = (
+                Comment.objects.filter(application=application, is_private=False)
+                .select_related("author")
+                .order_by("created_at", "id")
+            )
+            return Response(PartnerCommentSerializer(qs, many=True).data)
+        text = (request.data.get("text") or "").strip()
+        if not text:
+            return Response(
+                {"text": ["This field may not be blank."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        from exchange.services import ApplicationService
+
+        comment = ApplicationService.add_comment(
+            application, request.user, text, is_private=False
+        )
+        return Response(
+            PartnerCommentSerializer(comment).data, status=status.HTTP_201_CREATED
+        )

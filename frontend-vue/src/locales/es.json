@@ -1546,6 +1546,12 @@
     "noDocuments": "No hay documentos en este repositorio.",
     "noApplicants": "No hay postulantes en los programas vinculados.",
     "docsComplete": "Completo",
-    "docsIncomplete": "Incompleto"
+    "docsIncomplete": "Incompleto",
+    "openThread": "Mensajes",
+    "threadHeading": "Conversación con {name}",
+    "threadLoading": "Cargando mensajes…",
+    "threadEmpty": "Aún no hay mensajes.",
+    "threadLabel": "Mensaje",
+    "threadSubmit": "Enviar"
   }
 }

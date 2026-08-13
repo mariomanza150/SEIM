@@ -1550,6 +1550,12 @@
     "noDocuments": "No documents in this repository.",
     "noApplicants": "No applicants on linked programs.",
     "docsComplete": "Complete",
-    "docsIncomplete": "Incomplete"
+    "docsIncomplete": "Incomplete",
+    "openThread": "Messages",
+    "threadHeading": "Thread with {name}",
+    "threadLoading": "Loading messages…",
+    "threadEmpty": "No messages yet.",
+    "threadLabel": "Message",
+    "threadSubmit": "Send"
   }
 }
