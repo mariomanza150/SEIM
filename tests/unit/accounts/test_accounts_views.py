@@ -11,7 +11,15 @@ from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
-from accounts.models import Permission, Role, UserSession, UserSettings
+from accounts.models import (
+    AllowedEmailDomain,
+    HomeAcademicProgram,
+    Permission,
+    Role,
+    SchoolFaculty,
+    UserSession,
+    UserSettings,
+)
 
 User = get_user_model()
 
@@ -129,6 +137,58 @@ class TestProfileViewSet(APITestCase):
 
 @pytest.mark.django_db
 @pytest.mark.views
+class TestProfileCatalogPermissions(APITestCase):
+    def test_allowed_email_domains_are_public_but_other_catalogs_require_auth(self):
+        AllowedEmailDomain.objects.get_or_create(name="uanl.edu.mx")
+
+        public_response = self.client.get(
+            reverse("accounts:allowed-email-domain-list")
+        )
+        protected_response = self.client.get(reverse("accounts:academic-level-list"))
+
+        assert public_response.status_code == status.HTTP_200_OK
+        assert any(row["name"] == "uanl.edu.mx" for row in public_response.data)
+        assert protected_response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+@pytest.mark.views
+class TestHomeAcademicProgramSchoolFilter(APITestCase):
+    """HomeAcademicProgramViewSet filters by ?school=."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="cataloguser",
+            email="catalog@example.com",
+            password="testpass123",
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+        self.school_a = SchoolFaculty.objects.create(name="School A", code="a")
+        self.school_b = SchoolFaculty.objects.create(name="School B", code="b")
+        self.program_a = HomeAcademicProgram.objects.create(
+            name="Program A",
+            code="pa",
+            school=self.school_a,
+        )
+        self.program_b = HomeAcademicProgram.objects.create(
+            name="Program B",
+            code="pb",
+            school=self.school_b,
+        )
+
+    def test_programs_filtered_by_school_query_param(self):
+        url = reverse("accounts:home-program-list")
+        response = self.client.get(url, {"school": str(self.school_a.id)})
+
+        assert response.status_code == status.HTTP_200_OK
+        ids = {str(row["id"]) for row in response.data}
+        assert str(self.program_a.id) in ids
+        assert str(self.program_b.id) not in ids
+
+
+@pytest.mark.django_db
+@pytest.mark.views
 class TestRegistrationView(APITestCase):
     """Test cases for RegistrationView."""
 
@@ -136,6 +196,7 @@ class TestRegistrationView(APITestCase):
         """Set up test data."""
         self.client = APIClient()
         self.url = reverse("accounts:register")
+        AllowedEmailDomain.objects.get_or_create(name="example.com")
 
     def test_registration_success(self):
         """Test successful user registration."""
@@ -145,7 +206,9 @@ class TestRegistrationView(APITestCase):
             "password": "newpass123",
             "password2": "newpass123",
             "first_name": "New",
+            "middle_name": "Middle",
             "last_name": "User",
+            "mothers_last_name": "Family",
         }
         response = self.client.post(self.url, data)
 
@@ -160,6 +223,10 @@ class TestRegistrationView(APITestCase):
             "username": "newuser",
             "password": "newpass123",
             "password2": "differentpass",
+            "first_name": "New",
+            "middle_name": "Middle",
+            "last_name": "User",
+            "mothers_last_name": "Family",
         }
         response = self.client.post(self.url, data)
 

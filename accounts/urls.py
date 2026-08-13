@@ -4,10 +4,14 @@ from rest_framework.routers import DefaultRouter
 from frontend.views import password_reset_view
 
 from .views import (
+    AcademicLevelViewSet,
+    AllowedEmailDomainViewSet,
     AppearanceSettingsView,
+    BankInstitutionViewSet,
     ChangePasswordView,
     DeleteAccountView,
     EmailVerificationView,
+    HomeAcademicProgramViewSet,
     LoginView,
     LogoutView,
     NotificationSettingsView,
@@ -22,6 +26,8 @@ from .views import (
     ResendVerificationEmailView,
     RevokeSessionView,
     RoleViewSet,
+    SchoolFacultyViewSet,
+    UnidadViewSet,
     UserPermissionsView,
     UserSessionsView,
     UserSessionViewSet,
@@ -40,9 +46,26 @@ router.register(r"roles", RoleViewSet, basename="role")
 router.register(r"permissions", PermissionViewSet, basename="permission")
 router.register(r"user-sessions", UserSessionViewSet, basename="user-session")
 
+catalog_router = DefaultRouter()
+catalog_router.register(
+    r"allowed-email-domains",
+    AllowedEmailDomainViewSet,
+    basename="allowed-email-domain",
+)
+catalog_router.register(
+    r"academic-levels", AcademicLevelViewSet, basename="academic-level"
+)
+catalog_router.register(r"schools", SchoolFacultyViewSet, basename="school")
+catalog_router.register(r"unidades", UnidadViewSet, basename="unidad")
+catalog_router.register(
+    r"programs", HomeAcademicProgramViewSet, basename="home-program"
+)
+catalog_router.register(r"banks", BankInstitutionViewSet, basename="bank")
+
 urlpatterns = [
     # Include ViewSet URLs
     path("api/", include(router.urls)),
+    path("catalogs/", include(catalog_router.urls)),
     path("register/", RegistrationView.as_view(), name="register"),
     path("verify-email/", EmailVerificationView.as_view(), name="verify-email"),
     path(

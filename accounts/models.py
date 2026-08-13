@@ -1,4 +1,9 @@
+from datetime import date
+from decimal import Decimal
+
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 
 from core.models import TimeStampedModel, UUIDModel
@@ -8,6 +13,8 @@ class User(AbstractUser, UUIDModel, TimeStampedModel):
     """Custom user model for SEIM. Extend as needed."""
 
     email = models.EmailField(unique=True)
+    middle_name = models.CharField(max_length=150, blank=True, default="")
+    mothers_last_name = models.CharField(max_length=150, blank=True, default="")
     # Email verification and account lockout fields
     is_email_verified = models.BooleanField(
         default=False, help_text="Has the user verified their email?"
@@ -302,11 +309,140 @@ def _default_additional_languages():
     return []
 
 
+class CatalogModel(UUIDModel, TimeStampedModel):
+    """Common fields for administrator-managed student profile catalogs."""
+
+    name = models.CharField(max_length=150)
+    code = models.CharField(max_length=50, blank=True, default="")
+    is_active = models.BooleanField(default=True)
+    ordering = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        abstract = True
+        ordering = ["ordering", "name"]
+
+    def __str__(self):
+        return self.name
+
+
+class AllowedEmailDomain(CatalogModel):
+    """Institutional email domain permitted for student registration."""
+
+    name = models.CharField(max_length=150, unique=True)
+
+    def clean(self):
+        super().clean()
+        self.name = self.name.strip().lower().lstrip("@")
+        if "@" in self.name or "." not in self.name:
+            raise ValidationError({"name": "Enter a valid domain without '@'."})
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+
+class AcademicLevel(CatalogModel):
+    """Academic level selectable on a student profile."""
+
+
+class SchoolFaculty(CatalogModel):
+    """Home school or faculty."""
+
+    class Meta(CatalogModel.Meta):
+        verbose_name_plural = "School faculties"
+
+
+class Unidad(CatalogModel):
+    """Home campus unit."""
+
+    class Meta(CatalogModel.Meta):
+        verbose_name_plural = "Unidades"
+
+
+class HomeAcademicProgram(CatalogModel):
+    """Home program of study belonging to a school or faculty."""
+
+    school = models.ForeignKey(
+        SchoolFaculty,
+        on_delete=models.PROTECT,
+        related_name="academic_programs",
+    )
+
+
+class BankInstitution(CatalogModel):
+    """Bank available for optional student payment details."""
+
+
 class Profile(UUIDModel, TimeStampedModel):
     """Profile for additional user info."""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     secondary_email = models.EmailField(blank=True, null=True)
+    matricula = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=True,
+        validators=[RegexValidator(r"^\d+$", "Matricula must contain digits only.")],
+    )
+    academic_level = models.ForeignKey(
+        AcademicLevel,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="student_profiles",
+    )
+    school = models.ForeignKey(
+        SchoolFaculty,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="student_profiles",
+    )
+    unidad = models.ForeignKey(
+        Unidad,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="student_profiles",
+    )
+    home_academic_program = models.ForeignKey(
+        HomeAcademicProgram,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="student_profiles",
+    )
+    gender = models.CharField(
+        max_length=32,
+        blank=True,
+        choices=[
+            ("female", "Female"),
+            ("male", "Male"),
+            ("non_binary", "Non-binary"),
+            ("prefer_not_to_say", "Prefer not to say"),
+            ("other", "Other"),
+        ],
+    )
+    birthplace = models.CharField(max_length=150, blank=True)
+    postal_code = models.CharField(max_length=12, blank=True)
+    passport_number = models.CharField(max_length=30, blank=True)
+    mobile_phone = models.CharField(max_length=30, blank=True)
+    rfc = models.CharField(max_length=13, blank=True)
+    bank_institution = models.ForeignKey(
+        BankInstitution,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="student_profiles",
+    )
+    clabe = models.CharField(
+        max_length=18,
+        blank=True,
+        validators=[
+            RegexValidator(r"^\d{18}$", "CLABE must contain exactly 18 digits.")
+        ],
+    )
     gpa = models.FloatField(
         null=True,
         blank=True,
@@ -319,6 +455,25 @@ class Profile(UUIDModel, TimeStampedModel):
         blank=True,
         related_name="student_profiles",
         help_text="The grading scale used by the student's institution",
+    )
+    ingress_date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Date the student entered their current academic program (used to estimate semester).",
+    )
+    current_semester = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1)],
+        help_text="Optional override for current semester; when unset, derived from ingress_date.",
+    )
+    credits_approved_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("100"))],
+        help_text="Percentage of program credits approved (0–100).",
     )
     language = models.CharField(max_length=64, null=True, blank=True)
     language_level = models.CharField(
@@ -350,10 +505,99 @@ class Profile(UUIDModel, TimeStampedModel):
     def __str__(self):
         return f"Profile for {self.user.username}"
 
-    def get_gpa_equivalent(self):
+    def clean(self):
+        super().clean()
+        if (
+            self.home_academic_program_id
+            and self.school_id
+            and self.home_academic_program.school_id != self.school_id
+        ):
+            raise ValidationError(
+                {
+                    "home_academic_program": (
+                        "The academic program must belong to the selected school."
+                    )
+                }
+            )
+
+    @property
+    def is_personal_academic_complete(self):
+        """Whether all personal and academic fields required to apply are present."""
+        user_values = (
+            self.user.first_name,
+            self.user.middle_name,
+            self.user.last_name,
+            self.user.mothers_last_name,
+        )
+        profile_values = (
+            self.matricula,
+            self.academic_level_id,
+            self.school_id,
+            self.unidad_id,
+            self.home_academic_program_id,
+            self.gender,
+            self.date_of_birth,
+            self.birthplace,
+            self.postal_code,
+            self.passport_number,
+            self.mobile_phone,
+            self.secondary_email,
+            self.rfc,
+        )
+        return all(
+            value is not None and bool(str(value).strip())
+            for value in (*user_values, *profile_values)
+        )
+
+    @staticmethod
+    def calculate_semester_from_ingress(
+        ingress_date: date, on_date: date | None = None
+    ) -> int:
+        """Estimate semester as floor(months_since_ingress / 6) + 1, clamped to ≥ 1."""
+        if not ingress_date:
+            return 1
+        today = on_date or date.today()
+        if today < ingress_date:
+            return 1
+        months = (today.year - ingress_date.year) * 12 + (
+            today.month - ingress_date.month
+        )
+        if today.day < ingress_date.day:
+            months -= 1
+        months = max(0, months)
+        return max(1, (months // 6) + 1)
+
+    def get_effective_semester(self, on_date: date | None = None) -> int | None:
+        """Return stored semester override, else value derived from ingress_date."""
+        if self.current_semester is not None:
+            return int(self.current_semester)
+        if self.ingress_date:
+            return self.calculate_semester_from_ingress(self.ingress_date, on_date)
+        return None
+
+    @property
+    def is_eligibility_complete(self) -> bool:
+        """Whether GPA, scale, language, credits %, and semester inputs are present."""
+        has_semester_basis = bool(self.ingress_date) or self.current_semester is not None
+        return (
+            self.gpa is not None
+            and bool(self.grade_scale_id)
+            and bool((self.language or "").strip())
+            and self.credits_approved_percent is not None
+            and has_semester_basis
+        )
+
+    @property
+    def is_ready_to_apply(self):
+        """Personal/academic catalogs plus mobility eligibility fields required to apply."""
+        return self.is_personal_academic_complete and self.is_eligibility_complete
+
+    def get_gpa_equivalent(self, gpa=None, grade_scale=None):
         """Get the 4.0 GPA equivalent of the student's grade."""
-        if not self.gpa or not self.grade_scale:
-            return self.gpa  # Return as-is if no scale specified
+        gpa_value = self.gpa if gpa is None else gpa
+        scale = self.grade_scale if grade_scale is None else grade_scale
+        if not gpa_value or not scale:
+            return gpa_value  # Return as-is if no scale specified
 
         from grades.services import GradeTranslationService
 
@@ -362,24 +606,17 @@ class Profile(UUIDModel, TimeStampedModel):
             from grades.models import GradeValue
 
             grade_value = GradeValue.objects.filter(
-                grade_scale=self.grade_scale, numeric_value=self.gpa
+                grade_scale=scale, numeric_value=gpa_value
             ).first()
 
             if grade_value:
                 return grade_value.gpa_equivalent
 
             # If exact match not found, find closest
-            return (
-                GradeTranslationService._find_closest_grade(
-                    self.gpa, self.grade_scale
-                ).gpa_equivalent
-                if GradeTranslationService._find_closest_grade(
-                    self.gpa, self.grade_scale
-                )
-                else self.gpa
-            )
+            closest = GradeTranslationService._find_closest_grade(gpa_value, scale)
+            return closest.gpa_equivalent if closest else gpa_value
         except Exception:
-            return self.gpa  # Fallback to original value
+            return gpa_value  # Fallback to original value
 
 
 class Role(models.Model):

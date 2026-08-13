@@ -49,6 +49,8 @@ export function serializeDocumentListFilters(state) {
     application: state.application || '',
     type: state.type || '',
     valid: state.valid === '' || state.valid == null ? '' : String(state.valid),
+    pending_review: Boolean(state.pending_review),
+    overdue: Boolean(state.overdue),
     ordering: state.ordering || '-created_at',
   }
 }
@@ -59,6 +61,8 @@ export function deserializeDocumentListFilters(raw) {
     application: f.application ?? '',
     type: f.type ?? '',
     valid: f.valid === undefined || f.valid === null ? '' : String(f.valid),
+    pending_review: Boolean(f.pending_review),
+    overdue: Boolean(f.overdue),
     ordering: f.ordering || '-created_at',
   }
 }

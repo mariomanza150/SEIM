@@ -12,6 +12,8 @@ import { routeBusy } from '@/router/routeBusy'
 
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
+const Register = () => import('@/views/Register.vue')
+const VerifyEmail = () => import('@/views/VerifyEmail.vue')
 const AppShell = () => import('@/layouts/AppShell.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
 const Applications = () => import('@/views/Applications.vue')
@@ -41,6 +43,22 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login,
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/register',
+    name: 'Register',
+    component: Register,
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/verify-email',
+    name: 'VerifyEmail',
+    component: VerifyEmail,
     meta: {
       requiresAuth: false,
     },
@@ -180,7 +198,10 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // Route doesn't require auth
-  if (to.name === 'Login' && authStore.isAuthenticated) {
+  if (
+    (to.name === 'Login' || to.name === 'Register' || to.name === 'VerifyEmail') &&
+    authStore.isAuthenticated
+  ) {
     next({ name: 'Dashboard' })
   } else {
     next()

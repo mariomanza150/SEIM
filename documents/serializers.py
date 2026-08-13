@@ -23,9 +23,26 @@ class DocumentTypeSerializer(serializers.ModelSerializer):
 class DocumentTypeSummarySerializer(serializers.ModelSerializer):
     """Compact type payload for nested document responses (list/detail)."""
 
+    has_template = serializers.SerializerMethodField()
+
     class Meta:
         model = DocumentType
-        fields = ("id", "name", "description")
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "description",
+            "submission_mode",
+            "instructions",
+            "faq",
+            "accepted_extensions",
+            "max_file_size_mb",
+            "allows_multiple",
+            "has_template",
+        )
+
+    def get_has_template(self, obj):
+        return bool(obj.template_file)
 
 
 class DocumentValidationSerializer(serializers.ModelSerializer):
@@ -144,36 +161,55 @@ class DocumentSerializer(serializers.ModelSerializer):
         return ret
 
     def validate_file(self, file):
-        DocumentService.validate_file_type_and_size(file)
+        # Type-aware checks run in create/update once document type is known.
+        try:
+            DocumentService.validate_file_type_and_size(file)
+        except ValueError as exc:
+            raise serializers.ValidationError(str(exc)) from exc
         if not DocumentService.virus_scan(file):
             raise serializers.ValidationError("File failed virus scan.")
         return file
 
     def create(self, validated_data):
         uploaded_by = self.context["request"].user
-        return DocumentService.upload_document(
-            validated_data["application"],
-            validated_data["type"],
-            validated_data["file"],
-            uploaded_by,
-        )
+        try:
+            return DocumentService.upload_document(
+                validated_data["application"],
+                validated_data["type"],
+                validated_data["file"],
+                uploaded_by,
+            )
+        except ValueError as exc:
+            raise serializers.ValidationError({"detail": str(exc)}) from exc
 
     def update(self, instance, validated_data):
-        if not DocumentService.can_replace_document(
-            instance, self.context["request"].user
-        ):
+        user = self.context["request"].user
+        if not DocumentService.can_replace_document(instance, user):
             raise serializers.ValidationError(
                 "Document cannot be replaced. A resubmission request is required or you need admin privileges."
             )
 
         if "file" in validated_data:
             file = validated_data["file"]
-            DocumentService.validate_file_type_and_size(file)
+            for_staff = getattr(user, "has_role", None) and (
+                user.has_role("coordinator") or user.has_role("admin")
+            )
+            try:
+                DocumentService.ensure_upload_allowed(
+                    instance.application,
+                    instance.type,
+                    for_staff=bool(for_staff),
+                    replacing=True,
+                )
+                DocumentService.validate_file_type_and_size(
+                    file, document_type=instance.type
+                )
+            except ValueError as exc:
+                raise serializers.ValidationError({"file": str(exc)}) from exc
             if not DocumentService.virus_scan(file):
                 raise serializers.ValidationError("File failed virus scan.")
 
         file_replacing = "file" in validated_data
-        user = self.context["request"].user
         instance = super().update(instance, validated_data)
         if file_replacing and user.has_role("student"):
             if instance.application.student_id == user.id:

@@ -292,21 +292,55 @@
                     v-for="item in application.document_checklist.items"
                     :key="item.document_type_id"
                     class="list-group-item px-0 d-flex justify-content-between align-items-start flex-wrap gap-2"
+                    data-testid="document-checklist-item"
                   >
-                    <div>
+                    <div class="me-2" style="min-width: 12rem">
                       <span class="fw-semibold">{{ item.name }}</span>
+                      <span
+                        v-if="item.is_required === false"
+                        class="badge bg-light text-muted border ms-1"
+                      >{{ t('applicationDetailPage.checklistOptional') }}</span>
                       <p v-if="item.description" class="small text-muted mb-0">{{ item.description }}</p>
+                      <p v-if="item.deadline" class="small mb-0 mt-1" :class="item.is_overdue ? 'text-danger' : 'text-muted'">
+                        <i class="bi bi-calendar-event me-1" aria-hidden="true"></i>
+                        {{ t('applicationDetailPage.checklistDeadline', { date: formatChecklistDate(item.deadline) }) }}
+                        <span v-if="item.is_overdue" class="badge bg-danger ms-1">{{ t('applicationDetailPage.checklistOverdue') }}</span>
+                      </p>
                       <p
                         v-if="item.status === 'resubmit_requested' && item.resubmission_reason"
                         class="small text-danger mb-0 mt-1"
                       >
                         {{ item.resubmission_reason }}
                       </p>
+                      <details v-if="item.instructions || item.faq" class="small mt-1">
+                        <summary class="text-primary" style="cursor: pointer">
+                          {{ t('applicationDetailPage.checklistInstructions') }}
+                        </summary>
+                        <p v-if="item.instructions" class="mb-1 mt-1 text-muted">{{ item.instructions }}</p>
+                        <p v-if="item.faq" class="mb-0 text-muted">{{ item.faq }}</p>
+                      </details>
                     </div>
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                       <span class="badge" :class="checklistBadgeClass(item.status)">
                         {{ checklistStatusLabel(item.status) }}
                       </span>
+                      <button
+                        v-if="item.slug === 'solicitud_participacion'"
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        data-testid="download-solicitud-pdf"
+                        @click="downloadSolicitudPdf"
+                      >
+                        <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>{{ t('applicationDetailPage.downloadSolicitud') }}
+                      </button>
+                      <button
+                        v-else-if="item.has_template"
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        @click="downloadDocTemplate(item.document_type_id, item.name)"
+                      >
+                        <i class="bi bi-download me-1" aria-hidden="true"></i>{{ t('applicationDetailPage.downloadTemplate') }}
+                      </button>
                       <router-link
                         v-if="item.document_id"
                         :to="{ name: 'DocumentDetail', params: { id: item.document_id } }"
@@ -863,8 +897,56 @@ function checklistBadgeClass(status) {
     pending_review: 'bg-warning text-dark',
     resubmit_requested: 'bg-danger',
     approved: 'bg-success',
+    n_a: 'bg-info text-dark',
   }
   return classes[status] || 'bg-secondary'
+}
+
+function formatChecklistDate(iso) {
+  if (!iso) return ''
+  const date = new Date(`${iso}T00:00:00`)
+  const localeTag = locale.value === 'es' ? 'es' : 'en-US'
+  return date.toLocaleDateString(localeTag, { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+async function downloadBlobUrl(url, filename, mime = 'application/pdf') {
+  const response = await api.get(url, { responseType: 'blob' })
+  const blob = new Blob([response.data], { type: mime })
+  const objectUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = objectUrl
+  a.download = filename
+  a.rel = 'noopener noreferrer'
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(objectUrl)
+}
+
+async function downloadSolicitudPdf() {
+  if (!application.value?.id) return
+  try {
+    await downloadBlobUrl(
+      `/api/applications/${application.value.id}/solicitud-participacion/`,
+      `solicitud_participacion_${application.value.id}.pdf`,
+    )
+  } catch (err) {
+    console.error('Solicitud PDF download failed:', err)
+    errorToast(t('applicationDetailPage.downloadSolicitudError'))
+  }
+}
+
+async function downloadDocTemplate(typeId, name) {
+  try {
+    await downloadBlobUrl(
+      `/api/document-types/${typeId}/download-template/`,
+      `${name || 'template'}.pdf`,
+      'application/octet-stream',
+    )
+  } catch (err) {
+    console.error('Template download failed:', err)
+    errorToast(t('applicationDetailPage.downloadTemplateError'))
+  }
 }
 
 function timelineEventHeading(event) {
@@ -1076,7 +1158,7 @@ onBeforeUnmount(() => {
   top: 30px;
   width: 2px;
   height: calc(100% - 10px);
-  background: #dee2e6;
+  background: var(--seim-border-color, #dee2e6);
 }
 
 .timeline-icon {

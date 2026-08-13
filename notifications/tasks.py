@@ -65,7 +65,10 @@ def get_reminder_event_type_routing_map() -> dict[str, str]:
 
 
 def get_user_email(user):
-    # Replace with actual logic to get user email
+    profile = getattr(user, "profile", None)
+    secondary_email = getattr(profile, "secondary_email", None)
+    if secondary_email and secondary_email.strip():
+        return secondary_email.strip()
     return user.email
 
 

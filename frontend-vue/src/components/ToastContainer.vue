@@ -62,13 +62,20 @@ function toastTitle(type) {
   min-width: 300px;
   margin-bottom: 0.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: var(--seim-surface-bg);
+  color: var(--seim-surface-text);
+  border-color: var(--seim-border-color);
 }
 
 .toast-header {
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background-color: var(--seim-surface-bg);
+  color: var(--seim-surface-text);
+  border-bottom: 1px solid var(--seim-border-color, rgba(0, 0, 0, 0.05));
 }
 
 .toast-body {
   word-wrap: break-word;
+  background-color: var(--seim-surface-bg);
+  color: var(--seim-surface-text);
 }
 </style>

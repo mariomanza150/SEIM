@@ -7,6 +7,7 @@ This file contains settings specific to the test environment.
 import copy
 import os
 import tempfile
+from urllib.parse import urlparse, urlunparse
 
 from .base import *
 
@@ -18,9 +19,48 @@ import environ
 
 env = environ.Env()
 
+
+def _docker_compose_postgres_service_to_localhost(url: str) -> str:
+    """Map Compose Postgres hostname *db* to loopback when tests run on the host OS."""
+    if not url or os.path.exists("/.dockerenv"):
+        return url
+    u = urlparse(url)
+    scheme = (u.scheme or "").lower()
+    if scheme not in ("postgres", "postgresql", "pgsql", "postgis"):
+        return url
+    if u.hostname != "db":
+        return url
+    published = env.int("DATABASE_PUBLISHED_PORT", default=5434)
+    inner_port = u.port or 5432
+    port_on_host = published if inner_port == 5432 else inner_port
+    auth = ""
+    if u.username or u.password:
+        if u.username:
+            auth = u.username
+            if u.password:
+                auth += f":{u.password}"
+        else:
+            auth = f":{u.password}"
+        auth += "@"
+    return urlunparse(
+        (
+            u.scheme,
+            f"{auth}127.0.0.1:{port_on_host}",
+            u.path,
+            u.params,
+            u.query,
+            u.fragment,
+        )
+    )
+
+
 if os.environ.get("DATABASE_URL"):
-    # Use PostgreSQL for E2E tests
-    DATABASES = {"default": env.db()}
+    # Use PostgreSQL (rewrite Compose hostname when running outside Docker)
+    DATABASES = {
+        "default": env.db_url_config(
+            _docker_compose_postgres_service_to_localhost(os.environ["DATABASE_URL"])
+        )
+    }
 else:
     # Use in-memory SQLite for unit tests
     DATABASES = {

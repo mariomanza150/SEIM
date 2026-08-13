@@ -16,6 +16,10 @@ from exchange.models import (
     TimelineEvent,
 )
 from exchange.services import ApplicationService
+from tests.unit.exchange.host_destination_helpers import (
+    apply_host_destination,
+    attach_host_destination,
+)
 
 User = get_user_model()
 
@@ -49,10 +53,12 @@ def test_data():
         start_date=today,
         end_date=today + timedelta(days=30),
     )
+    host_tree = attach_host_destination(program)
     # Create applications
     application = Application.objects.create(
         student=user, program=program, status=draft_status
     )
+    apply_host_destination(application, host_tree)
     return {
         "user": user,
         "draft_status": draft_status,
@@ -62,6 +68,7 @@ def test_data():
         "withdrawn_status": withdrawn_status,
         "program": program,
         "application": application,
+        "host_tree": host_tree,
     }
 
 
@@ -109,11 +116,13 @@ def test_data_no_profile():
         start_date=today,
         end_date=today + timedelta(days=30),
     )
+    host_tree = attach_host_destination(program)
 
     # Create applications
     application = Application.objects.create(
         student=user, program=program, status=draft_status
     )
+    apply_host_destination(application, host_tree)
 
     return {
         "user": user,
@@ -142,7 +151,7 @@ class TestApplicationService:
         assert isinstance(result, dict)
         assert result["eligible"] is True
         assert result["message"] == "All eligibility requirements met"
-        assert result.get("schema_version") == 4
+        assert result.get("schema_version") == 7
 
     def test_check_eligibility_missing_profile(self, test_data_no_profile):
         """Test eligibility check with missing profile."""

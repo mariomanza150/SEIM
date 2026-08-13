@@ -9,7 +9,15 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework.exceptions import AuthenticationFailed
 
-from accounts.models import Permission, Role, UserSession, UserSettings
+from accounts.models import (
+    AllowedEmailDomain,
+    HomeAcademicProgram,
+    Permission,
+    Role,
+    SchoolFaculty,
+    UserSession,
+    UserSettings,
+)
 from accounts.serializers import (
     AppearanceSettingsSerializer,
     ChangePasswordSerializer,
@@ -143,6 +151,51 @@ class TestProfileSerializer:
         assert updated_profile.gpa == 3.8
         assert updated_profile.language == "English"
 
+    def test_rejects_program_from_another_school(self):
+        user = User.objects.create_user(
+            username="program-test",
+            email="program@example.com",
+            password="testpass123",
+        )
+        selected_school = SchoolFaculty.objects.create(name="Engineering")
+        other_school = SchoolFaculty.objects.create(name="Medicine")
+        program = HomeAcademicProgram.objects.create(
+            name="Medicine",
+            school=other_school,
+        )
+
+        serializer = ProfileSerializer(
+            user.profile,
+            data={"school": selected_school.id, "home_academic_program": program.id},
+            partial=True,
+        )
+
+        assert not serializer.is_valid()
+        assert "home_academic_program" in serializer.errors
+
+    def test_normalizes_blank_matricula_and_validates_clabe(self):
+        user = User.objects.create_user(
+            username="bank-test",
+            email="bank@example.com",
+            password="testpass123",
+        )
+        serializer = ProfileSerializer(
+            user.profile,
+            data={"matricula": "", "clabe": "123"},
+            partial=True,
+        )
+
+        assert not serializer.is_valid()
+        assert "clabe" in serializer.errors
+
+        valid = ProfileSerializer(
+            user.profile,
+            data={"matricula": "", "clabe": "123456789012345678"},
+            partial=True,
+        )
+        assert valid.is_valid(), valid.errors
+        assert valid.validated_data["matricula"] is None
+
 
 @pytest.mark.django_db
 @pytest.mark.serializers
@@ -184,6 +237,9 @@ class TestPermissionSerializer:
 class TestRegistrationSerializer:
     """Test cases for RegistrationSerializer."""
 
+    def setup_method(self):
+        AllowedEmailDomain.objects.get_or_create(name="example.com")
+
     def test_registration_serializer_valid_data(self):
         """Test RegistrationSerializer with valid data."""
         data = {
@@ -192,7 +248,9 @@ class TestRegistrationSerializer:
             "password": "testpass123",
             "password2": "testpass123",
             "first_name": "New",
+            "middle_name": "Middle",
             "last_name": "User",
+            "mothers_last_name": "Family",
         }
 
         serializer = RegistrationSerializer(data=data)
@@ -206,7 +264,9 @@ class TestRegistrationSerializer:
             "password": "testpass123",
             "password2": "differentpass",
             "first_name": "New",
+            "middle_name": "Middle",
             "last_name": "User",
+            "mothers_last_name": "Family",
         }
 
         serializer = RegistrationSerializer(data=data)
@@ -221,7 +281,9 @@ class TestRegistrationSerializer:
             "password": "testpass123",
             "password2": "testpass123",
             "first_name": "New",
+            "middle_name": "Middle",
             "last_name": "User",
+            "mothers_last_name": "Family",
         }
 
         serializer = RegistrationSerializer(data=data)
@@ -232,14 +294,15 @@ class TestRegistrationSerializer:
         assert user.email == "newuser@example.com"
         assert user.username == "newuser"
         assert user.first_name == "New"
+        assert user.middle_name == "Middle"
         assert user.last_name == "User"
+        assert user.mothers_last_name == "Family"
         assert user.is_active is False
         assert user.is_email_verified is False
         assert user.email_verification_token is not None
         assert user.check_password("testpass123")
 
-    def test_registration_serializer_create_user_minimal_data(self):
-        """Test RegistrationSerializer create method with minimal data."""
+    def test_registration_serializer_requires_all_name_parts(self):
         data = {
             "email": "newuser@example.com",
             "username": "newuser",
@@ -248,14 +311,43 @@ class TestRegistrationSerializer:
         }
 
         serializer = RegistrationSerializer(data=data)
-        assert serializer.is_valid()
+        assert not serializer.is_valid()
+        assert {"first_name", "middle_name", "last_name", "mothers_last_name"} <= set(
+            serializer.errors
+        )
 
-        user = serializer.save()
+    def test_registration_serializer_rejects_inactive_or_unknown_domain(self):
+        AllowedEmailDomain.objects.create(name="inactive.edu.mx", is_active=False)
 
-        assert user.email == "newuser@example.com"
-        assert user.username == "newuser"
-        assert user.first_name == ""
-        assert user.last_name == ""
+        unknown = RegistrationSerializer(
+            data={
+                "email": "student@unknown.edu.mx",
+                "username": "unknown",
+                "password": "testpass123",
+                "password2": "testpass123",
+                "first_name": "New",
+                "middle_name": "Middle",
+                "last_name": "User",
+                "mothers_last_name": "Family",
+            }
+        )
+        inactive = RegistrationSerializer(
+            data={
+                "email": "student@inactive.edu.mx",
+                "username": "inactive",
+                "password": "testpass123",
+                "password2": "testpass123",
+                "first_name": "New",
+                "middle_name": "Middle",
+                "last_name": "User",
+                "mothers_last_name": "Family",
+            }
+        )
+
+        assert not unknown.is_valid()
+        assert not inactive.is_valid()
+        assert "email" in unknown.errors
+        assert "email" in inactive.errors
 
     def test_registration_serializer_weak_password(self):
         """Test RegistrationSerializer with weak password."""
@@ -264,6 +356,10 @@ class TestRegistrationSerializer:
             "username": "newuser",
             "password": "123",
             "password2": "123",
+            "first_name": "New",
+            "middle_name": "Middle",
+            "last_name": "User",
+            "mothers_last_name": "Family",
         }
 
         serializer = RegistrationSerializer(data=data)

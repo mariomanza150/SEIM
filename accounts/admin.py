@@ -3,20 +3,96 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .models import Permission, Profile, Role, User, UserSession, UserSettings
+from .models import (
+    AcademicLevel,
+    AllowedEmailDomain,
+    BankInstitution,
+    HomeAcademicProgram,
+    Permission,
+    Profile,
+    Role,
+    SchoolFaculty,
+    Unidad,
+    User,
+    UserSession,
+    UserSettings,
+)
 
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
     list_display = ("email", "username", "is_active", "is_staff", "is_superuser")
-    search_fields = ("email", "username")
+    search_fields = (
+        "email",
+        "username",
+        "first_name",
+        "middle_name",
+        "last_name",
+        "mothers_last_name",
+    )
     ordering = ("email",)
+    fieldsets = BaseUserAdmin.fieldsets + (
+        (_("Additional names"), {"fields": ("middle_name", "mothers_last_name")}),
+    )
+    add_fieldsets = BaseUserAdmin.add_fieldsets + (
+        (_("Additional names"), {"fields": ("middle_name", "mothers_last_name")}),
+    )
 
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "secondary_email")
-    search_fields = ("user__email", "secondary_email")
+    list_display = (
+        "user",
+        "matricula",
+        "academic_level",
+        "school",
+        "is_ready_to_apply",
+    )
+    list_filter = ("academic_level", "school", "unidad", "gender")
+    search_fields = ("user__email", "secondary_email", "matricula", "rfc")
+
+    @admin.display(boolean=True, description=_("Ready to apply"))
+    def is_ready_to_apply(self, obj):
+        return obj.is_ready_to_apply
+
+
+class CatalogAdmin(admin.ModelAdmin):
+    list_display = ("name", "code", "is_active", "ordering")
+    list_editable = ("is_active", "ordering")
+    list_filter = ("is_active",)
+    search_fields = ("name", "code")
+    ordering = ("ordering", "name")
+
+
+@admin.register(AllowedEmailDomain)
+class AllowedEmailDomainAdmin(CatalogAdmin):
+    pass
+
+
+@admin.register(AcademicLevel)
+class AcademicLevelAdmin(CatalogAdmin):
+    pass
+
+
+@admin.register(SchoolFaculty)
+class SchoolFacultyAdmin(CatalogAdmin):
+    pass
+
+
+@admin.register(Unidad)
+class UnidadAdmin(CatalogAdmin):
+    pass
+
+
+@admin.register(BankInstitution)
+class BankInstitutionAdmin(CatalogAdmin):
+    pass
+
+
+@admin.register(HomeAcademicProgram)
+class HomeAcademicProgramAdmin(CatalogAdmin):
+    list_display = ("name", "school", "code", "is_active", "ordering")
+    list_filter = ("school", "is_active")
 
 
 @admin.register(Role)

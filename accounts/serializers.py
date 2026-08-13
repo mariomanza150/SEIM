@@ -2,7 +2,20 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 
-from .models import Permission, Profile, Role, User, UserSession, UserSettings
+from .models import (
+    AcademicLevel,
+    AllowedEmailDomain,
+    BankInstitution,
+    HomeAcademicProgram,
+    Permission,
+    Profile,
+    Role,
+    SchoolFaculty,
+    Unidad,
+    User,
+    UserSession,
+    UserSettings,
+)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -15,7 +28,9 @@ class UserSerializer(serializers.ModelSerializer):
             "username",
             "email",
             "first_name",
+            "middle_name",
             "last_name",
+            "mothers_last_name",
             "is_active",
             "is_staff",
             "is_superuser",
@@ -26,11 +41,51 @@ class UserSerializer(serializers.ModelSerializer):
 _CEFR_LEVELS = frozenset({"A1", "A2", "B1", "B2", "C1", "C2"})
 
 
+class CatalogSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ("id", "name", "code", "ordering")
+
+
+class AllowedEmailDomainSerializer(CatalogSerializer):
+    class Meta(CatalogSerializer.Meta):
+        model = AllowedEmailDomain
+
+
+class AcademicLevelSerializer(CatalogSerializer):
+    class Meta(CatalogSerializer.Meta):
+        model = AcademicLevel
+
+
+class SchoolFacultySerializer(CatalogSerializer):
+    class Meta(CatalogSerializer.Meta):
+        model = SchoolFaculty
+
+
+class UnidadSerializer(CatalogSerializer):
+    class Meta(CatalogSerializer.Meta):
+        model = Unidad
+
+
+class BankInstitutionSerializer(CatalogSerializer):
+    class Meta(CatalogSerializer.Meta):
+        model = BankInstitution
+
+
+class HomeAcademicProgramSerializer(CatalogSerializer):
+    school_name = serializers.CharField(source="school.name", read_only=True)
+
+    class Meta(CatalogSerializer.Meta):
+        model = HomeAcademicProgram
+        fields = CatalogSerializer.Meta.fields + ("school", "school_name")
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     first_name = serializers.CharField(source="user.first_name")
+    middle_name = serializers.CharField(source="user.middle_name")
     last_name = serializers.CharField(source="user.last_name")
-    full_name = serializers.CharField(source="user.get_full_name", read_only=True)
+    mothers_last_name = serializers.CharField(source="user.mothers_last_name")
+    full_name = serializers.SerializerMethodField()
     email = serializers.EmailField(source="user.email")
     role = serializers.CharField(source="user.primary_role", read_only=True)
     is_admin = serializers.BooleanField(source="user.is_admin", read_only=True)
@@ -52,6 +107,67 @@ class ProfileSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
     additional_languages = serializers.JSONField(required=False, default=list)
+    academic_level = serializers.PrimaryKeyRelatedField(
+        queryset=AcademicLevel.objects.filter(is_active=True),
+        required=False,
+        allow_null=True,
+    )
+    school = serializers.PrimaryKeyRelatedField(
+        queryset=SchoolFaculty.objects.filter(is_active=True),
+        required=False,
+        allow_null=True,
+    )
+    unidad = serializers.PrimaryKeyRelatedField(
+        queryset=Unidad.objects.filter(is_active=True),
+        required=False,
+        allow_null=True,
+    )
+    home_academic_program = serializers.PrimaryKeyRelatedField(
+        queryset=HomeAcademicProgram.objects.filter(is_active=True),
+        required=False,
+        allow_null=True,
+    )
+    bank_institution = serializers.PrimaryKeyRelatedField(
+        queryset=BankInstitution.objects.filter(is_active=True),
+        required=False,
+        allow_null=True,
+    )
+    academic_level_name = serializers.CharField(
+        source="academic_level.name", read_only=True
+    )
+    school_name = serializers.CharField(source="school.name", read_only=True)
+    unidad_name = serializers.CharField(source="unidad.name", read_only=True)
+    home_academic_program_name = serializers.CharField(
+        source="home_academic_program.name", read_only=True
+    )
+    bank_institution_name = serializers.CharField(
+        source="bank_institution.name", read_only=True
+    )
+    is_personal_academic_complete = serializers.BooleanField(read_only=True)
+    is_eligibility_complete = serializers.BooleanField(read_only=True)
+    is_ready_to_apply = serializers.BooleanField(read_only=True)
+    computed_semester = serializers.SerializerMethodField()
+    effective_semester = serializers.SerializerMethodField()
+
+    def get_full_name(self, obj):
+        return " ".join(
+            part
+            for part in (
+                obj.user.first_name,
+                obj.user.middle_name,
+                obj.user.last_name,
+                obj.user.mothers_last_name,
+            )
+            if part
+        )
+
+    def get_computed_semester(self, obj):
+        if not obj.ingress_date:
+            return None
+        return Profile.calculate_semester_from_ingress(obj.ingress_date)
+
+    def get_effective_semester(self, obj):
+        return obj.get_effective_semester()
 
     class Meta:
         model = Profile
@@ -59,18 +175,83 @@ class ProfileSerializer(serializers.ModelSerializer):
             "secondary_email",
             "username",
             "first_name",
+            "middle_name",
             "last_name",
+            "mothers_last_name",
             "full_name",
             "email",
             "role",
             "is_admin",
             "is_staff",
             "is_superuser",
+            "matricula",
+            "academic_level",
+            "academic_level_name",
+            "school",
+            "school_name",
+            "unidad",
+            "unidad_name",
+            "home_academic_program",
+            "home_academic_program_name",
+            "gender",
+            "date_of_birth",
+            "birthplace",
+            "postal_code",
+            "passport_number",
+            "mobile_phone",
+            "rfc",
+            "bank_institution",
+            "bank_institution_name",
+            "clabe",
             "gpa",
+            "grade_scale",
+            "ingress_date",
+            "current_semester",
+            "computed_semester",
+            "effective_semester",
+            "credits_approved_percent",
             "language",
             "language_level",
             "additional_languages",
+            "is_personal_academic_complete",
+            "is_eligibility_complete",
+            "is_ready_to_apply",
         )
+
+    def validate_matricula(self, value):
+        return value or None
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        school = attrs.get("school", getattr(self.instance, "school", None))
+        program = attrs.get(
+            "home_academic_program",
+            getattr(self.instance, "home_academic_program", None),
+        )
+        if program and (not school or program.school_id != school.id):
+            raise serializers.ValidationError(
+                {
+                    "home_academic_program": (
+                        "The academic program must belong to the selected school."
+                    )
+                }
+            )
+        credits = attrs.get(
+            "credits_approved_percent",
+            getattr(self.instance, "credits_approved_percent", None),
+        )
+        if credits is not None and (credits < 0 or credits > 100):
+            raise serializers.ValidationError(
+                {"credits_approved_percent": "Must be between 0 and 100."}
+            )
+        semester = attrs.get(
+            "current_semester", getattr(self.instance, "current_semester", None)
+        )
+        if semester is not None and semester < 1:
+            raise serializers.ValidationError(
+                {"current_semester": "Must be at least 1."}
+            )
+        return attrs
 
     def validate_additional_languages(self, value):
         if value is None:
@@ -128,8 +309,10 @@ class PermissionSerializer(serializers.ModelSerializer):
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     password2 = serializers.CharField(write_only=True)
-    first_name = serializers.CharField(required=False, allow_blank=True)
-    last_name = serializers.CharField(required=False, allow_blank=True)
+    first_name = serializers.CharField(required=True, allow_blank=False)
+    middle_name = serializers.CharField(required=True, allow_blank=False)
+    last_name = serializers.CharField(required=True, allow_blank=False)
+    mothers_last_name = serializers.CharField(required=True, allow_blank=False)
 
     class Meta:
         model = User
@@ -139,7 +322,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
             "password",
             "password2",
             "first_name",
+            "middle_name",
             "last_name",
+            "mothers_last_name",
         )
 
     def validate(self, data):
@@ -150,6 +335,16 @@ class RegistrationSerializer(serializers.ModelSerializer):
     def validate_password(self, value):
         validate_password(value)
         return value
+
+    def validate_email(self, value):
+        domain = value.rsplit("@", 1)[-1].strip().lower()
+        if not AllowedEmailDomain.objects.filter(
+            name__iexact=domain, is_active=True
+        ).exists():
+            raise serializers.ValidationError(
+                "Email domain is not allowed for registration."
+            )
+        return value.strip().lower()
 
     def create(self, validated_data):
         """
@@ -162,7 +357,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
         password = validated_data.pop("password")
         validated_data.pop("password2", None)
         first_name = validated_data.pop("first_name", "")
+        middle_name = validated_data.pop("middle_name", "")
         last_name = validated_data.pop("last_name", "")
+        mothers_last_name = validated_data.pop("mothers_last_name", "")
         username = validated_data["username"]
         email = validated_data["email"]
 
@@ -172,7 +369,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
                 email=email,
                 password=password,
                 first_name=first_name,
+                middle_name=middle_name,
                 last_name=last_name,
+                mothers_last_name=mothers_last_name,
             )
             return user
         except ValueError as e:

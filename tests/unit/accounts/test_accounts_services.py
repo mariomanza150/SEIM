@@ -288,8 +288,11 @@ class TestUserRegistration(TestCase):
         # Should have profile created
         self.assertTrue(hasattr(user, "profile"))
 
-        # Should send notification
+        # Should send notification with a clickable verification link
         mock_notification.assert_called_once()
+        message = mock_notification.call_args.kwargs["message"]
+        self.assertIn("/seim/verify-email?token=test_token", message)
+        self.assertNotIn("using this token:", message)
 
     @patch("accounts.services.AccountService.generate_email_verification_token")
     @patch("accounts.services.NotificationService.send_notification")

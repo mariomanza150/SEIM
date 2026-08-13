@@ -121,6 +121,31 @@
               </div>
             </div>
 
+            <div
+              v-if="typeInstructions || typeFaq"
+              class="card mb-4"
+              data-testid="document-instructions-panel"
+            >
+              <div class="card-header">
+                <h6 class="mb-0">
+                  <i class="bi bi-info-circle me-2"></i>{{ t('documentDetailPage.instructionsHeading') }}
+                </h6>
+              </div>
+              <div class="card-body">
+                <p v-if="typeInstructions" class="small mb-2">{{ typeInstructions }}</p>
+                <p v-if="typeFaq" class="small text-muted mb-2">{{ typeFaq }}</p>
+                <button
+                  v-if="document.type?.has_template"
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  data-testid="download-type-template"
+                  @click="downloadTypeTemplate"
+                >
+                  <i class="bi bi-download me-1"></i>{{ t('documentDetailPage.downloadTemplate') }}
+                </button>
+              </div>
+            </div>
+
             <div class="card mb-4">
               <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">
@@ -430,6 +455,31 @@ const isStaff = computed(() => {
   return r === 'coordinator' || r === 'admin'
 })
 const isStudent = computed(() => authStore.userRole === 'student')
+
+const typeInstructions = computed(() => document.value?.type?.instructions || '')
+const typeFaq = computed(() => document.value?.type?.faq || '')
+
+async function downloadTypeTemplate() {
+  const typeId = document.value?.type?.id
+  if (!typeId) return
+  try {
+    const response = await api.get(`/api/document-types/${typeId}/download-template/`, {
+      responseType: 'blob',
+    })
+    const blob = new Blob([response.data])
+    const objectUrl = URL.createObjectURL(blob)
+    const a = window.document.createElement('a')
+    a.href = objectUrl
+    a.download = `${document.value?.type?.name || 'template'}`
+    a.rel = 'noopener noreferrer'
+    window.document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(objectUrl)
+  } catch {
+    toast.error(t('documentDetailPage.downloadTemplateError'))
+  }
+}
 
 const openResubmissions = computed(() =>
   (document.value?.resubmission_requests || []).filter((x) => !x.resolved)

@@ -27,8 +27,9 @@ Custom user model extending Django's AbstractUser with email verification and ro
 - `id` (UUID, primary key)
 - `username` (CharField, unique)
 - `email` (EmailField, unique, required)
+- `first_name`, `middle_name`, `last_name`, `mothers_last_name` (CharField)
 - `is_email_verified` (BooleanField, default=False)
-- `email_verification_token` (CharField, max_length=64, nullable)
+- `email_verification_token` (CharField, max_length=64, blank/nullable)
 - `failed_login_attempts` (IntegerField, default=0)
 - `lockout_until` (DateTimeField, nullable)
 - `roles` (ManyToManyField to Role)
@@ -60,20 +61,60 @@ Extended user profile with additional information.
 **Fields:**
 - `id` (UUID, primary key)
 - `user` (OneToOneField to User)
-- `secondary_email` (EmailField, nullable)
+- `secondary_email` (EmailField, blank/nullable) - Preferred notification email when set
+- `matricula` (CharField, unique, blank/nullable, digits only)
+- `academic_level` (ForeignKey to AcademicLevel, blank/nullable)
+- `school` (ForeignKey to SchoolFaculty, blank/nullable)
+- `unidad` (ForeignKey to Unidad, blank/nullable)
+- `home_academic_program` (ForeignKey to HomeAcademicProgram, blank/nullable)
+- `gender` (CharField: female/male/non_binary/prefer_not_to_say/other, blank)
+- `date_of_birth` (DateField, blank/nullable)
+- `birthplace` (CharField, blank)
+- `postal_code` (CharField, blank)
+- `passport_number` (CharField, blank)
+- `mobile_phone` (CharField, blank)
+- `rfc` (CharField, blank)
+- `bank_institution` (ForeignKey to BankInstitution, blank/nullable)
+- `clabe` (CharField, blank, exactly 18 digits when provided)
 - `gpa` (FloatField, nullable) - Student's GPA in institutional grading scale
 - `grade_scale` (ForeignKey to grades.GradeScale, nullable)
+- `ingress_date` (DateField, nullable) - Used to derive current semester
+- `current_semester` (PositiveIntegerField, nullable) - Optional override of derived semester
+- `credits_approved_percent` (DecimalField 0–100, nullable)
 - `language` (CharField, max_length=64, nullable)
 - `language_level` (CharField, choices: A1-C2, nullable)
-- `date_of_birth` (DateField, nullable)
+- `additional_languages` (JSONField, default=list)
 - `created_at`, `updated_at` (from TimeStampedModel)
 
 **Relationships:**
 - One-to-One: `user` → User
+- Foreign Key: `academic_level` → AcademicLevel
+- Foreign Key: `school` → SchoolFaculty
+- Foreign Key: `unidad` → Unidad
+- Foreign Key: `home_academic_program` → HomeAcademicProgram
+- Foreign Key: `bank_institution` → BankInstitution
 - Foreign Key: `grade_scale` → grades.GradeScale
 
 **Key Methods:**
+- `calculate_semester_from_ingress()` - `floor(months_since(ingress_date) / 6) + 1`, clamped ≥ 1
+- `get_effective_semester()` - Prefers `current_semester` override when set
+- `is_personal_academic_complete` - Required personal/academic application fields are populated
+- `is_ready_to_apply` - Readiness for apply: catalogs + GPA/scale + language + credits % + semester
 - `get_gpa_equivalent()` - Convert GPA to 4.0 scale equivalent
+
+**Validation:**
+- `home_academic_program` must belong to the selected `school`
+- Application creation returns `profile_incomplete` until `is_ready_to_apply` is true
+
+### Student Profile Catalogs
+Administrator-managed catalogs share `id` (UUID), `name`, `code`, `is_active`, `ordering`, `created_at`, and `updated_at`.
+
+- `AllowedEmailDomain` - Unique normalized institutional domain used by registration; active entries are publicly readable
+- `AcademicLevel` - Academic level choices
+- `SchoolFaculty` - Home school/faculty choices
+- `Unidad` - Home campus/unit choices
+- `HomeAcademicProgram` - Program choices; includes a required ForeignKey to `SchoolFaculty`
+- `BankInstitution` - Optional bank choices
 
 ### Role
 User roles for role-based access control.
@@ -109,8 +150,11 @@ User preferences and settings.
   - `high_contrast` (BooleanField, default=False)
   - `reduce_motion` (BooleanField, default=False)
 - **Notifications:**
-  - `email_applications`, `email_documents`, `email_programs`, `email_system` (BooleanField)
-  - `inapp_applications`, `inapp_documents`, `inapp_comments` (BooleanField)
+  - `email_applications`, `email_documents`, `email_comments`, `email_programs`, `email_system` (BooleanField)
+  - `inapp_applications`, `inapp_documents`, `inapp_comments`, `inapp_programs`, `inapp_system` (BooleanField)
+  - `notification_digest_frequency` (off/daily/weekly)
+  - `email_notification_digest` (BooleanField)
+  - `notification_digest_last_sent_at` (DateTimeField, blank/nullable, managed internally)
 - **Privacy:**
   - `profile_public` (BooleanField, default=False)
   - `share_analytics` (BooleanField, default=True)
@@ -134,7 +178,7 @@ Track user sessions for security management.
 ## Exchange Models
 
 ### Program
-Exchange program definition with eligibility criteria.
+Mobility **scheme** definition (not a destination). Seeded schemes: Movilidad Nacional, Movilidad Internacional Habla Hispana, Movilidad Internacional.
 
 **Fields:**
 - `id` (UUID, primary key)
@@ -142,34 +186,60 @@ Exchange program definition with eligibility criteria.
 - `description` (TextField)
 - `start_date` (DateField)
 - `end_date` (DateField)
+- `application_open_date` / `application_deadline` (DateField, nullable)
 - `is_active` (BooleanField, default=True)
 - **Eligibility Criteria:**
-  - `min_gpa` (FloatField, nullable)
+  - `min_gpa` (FloatField, nullable) — compared via 4.0-normalized GPA
+  - `min_semester` (PositiveIntegerField, nullable)
+  - `min_credits_approved_percent` (DecimalField, nullable)
   - `required_language` (CharField, max_length=64, nullable)
   - `min_language_level` (CharField, choices: A1-C2, nullable)
-  - `min_age` (PositiveIntegerField, nullable)
-  - `max_age` (PositiveIntegerField, nullable)
+  - `min_age` / `max_age` (PositiveIntegerField, nullable)
   - `auto_reject_ineligible` (BooleanField, default=False)
+- `enrollment_capacity` / `waitlist_when_full`
 - `recurring` (BooleanField, default=False)
 - `application_form` (ForeignKey to application_forms.FormType, nullable)
+- `eligibility_ruleset` (optional linked ruleset)
 - `created_at`, `updated_at` (from TimeStampedModel)
 
 **Relationships:**
 - One-to-Many: `applications` → Application
+- One-to-Many: `host_institutions` → HostInstitution
+- Through: `required_document_types` ↔ DocumentType via **ProgramDocumentRequirement**
 - One-to-Many: `form_submissions` → application_forms.FormSubmission
 - Foreign Key: `application_form` → application_forms.FormType
 
 **Validation:**
 - `clean()` - Ensures end_date > start_date
 
+### Host destination hierarchy
+Nested under a scheme `Program`:
+
+| Model | Parent | Key fields |
+|-------|--------|------------|
+| `HostInstitution` | Program | `name`, `country`, `is_active` |
+| `HostSchool` | HostInstitution | `name`, `is_active` |
+| `HostAcademicProgram` | HostSchool | `name`, `code`, `is_active` |
+| `HostSubject` | HostAcademicProgram | `code`, `name`, `credits`, `is_active` |
+
+Cascade APIs: `/api/programs/{id}/host-institutions/`, `.../host-institutions/{id}/schools/`, `.../schools/{id}/academic-programs/`, `.../academic-programs/{id}/subjects/`.
+
+### ProgramDocumentRequirement
+Through model configuring per-scheme document checklist items.
+
+**Fields:** `program`, `document_type`, `is_required`, `deadline` (absolute) **or** `deadline_days_before_program_deadline`, instruction override, `sort_order`.
+
 ### Application
-Student application for an exchange program.
+Student application for a mobility scheme.
 
 **Fields:**
 - `id` (UUID, primary key)
 - `program` (ForeignKey to Program)
 - `student` (ForeignKey to accounts.User)
 - `status` (ForeignKey to ApplicationStatus)
+- **Host destination (required before submit):**
+  - `host_institution`, `host_school`, `host_academic_program` (nullable FKs; cascade-validated)
+- **Eligibility snapshot at submit:** `semester_at_apply`, `gpa_at_apply`, `grade_scale_at_apply`, `credits_percent_at_apply`, language fields
 - `submitted_at` (DateTimeField, nullable)
 - `withdrawn` (BooleanField, default=False)
 - `created_at`, `updated_at` (from TimeStampedModel)
@@ -178,10 +248,16 @@ Student application for an exchange program.
 - Foreign Key: `program` → Program
 - Foreign Key: `student` → accounts.User
 - Foreign Key: `status` → ApplicationStatus
+- Foreign Keys: host destination models above
+- One-to-Many: `subject_selections` → ApplicationSubjectSelection (optional; not required for submit)
 - One-to-Many: `comments` → Comment
 - One-to-Many: `timeline_events` → TimelineEvent
 - One-to-Many: `documents` → Document
 - One-to-Many: `form_submissions` → application_forms.FormSubmission
+
+**Validation:**
+- `validate_application_host_destination(..., require_complete=True)` on submit / transition to submitted
+- Host school must belong to institution; academic program to school; institution to scheme
 
 **Indexes:**
 - `app_student_status_idx` - (student, status)
@@ -189,6 +265,9 @@ Student application for an exchange program.
 - `app_student_withdrawn_idx` - (student, withdrawn)
 - `app_submitted_idx` - (submitted_at)
 - `app_created_desc_idx` - (-created_at)
+
+### ApplicationSubjectSelection
+Optional host↔home course mapping for Carta de Homologación PDF generation. Not required for submit.
 
 ### ApplicationStatus
 Status values for application workflow state machine.
@@ -245,15 +324,22 @@ Saved search filters for users (coordinators/admins).
 ## Documents Models
 
 ### DocumentType
-Types of documents (transcript, ID, recommendation letter, etc.).
+Document catalog entry (MX mobility seeds use stable `slug` values).
 
 **Fields:**
 - `id` (AutoField, primary key)
 - `name` (CharField, max_length=100, unique)
+- `slug` (CharField, unique, nullable) — e.g. `solicitud_participacion`, `carta_homologacion`
 - `description` (TextField, blank=True)
+- `submission_mode` — `upload` / `template_download` / `system_generated` / `instructions_only`
+- `template_file`, `instructions`, `faq`
+- `accepted_extensions`, `max_file_size_mb`, `allows_multiple`
 
 **Relationships:**
 - One-to-Many: `documents` → Document
+- Through ProgramDocumentRequirement → Program
+
+**System-generated PDFs:** `documents/pdf_generation.py` (`render_solicitud_participacion_pdf`, `render_carta_homologacion_pdf`); API download actions on applications.
 
 ### Document
 Uploaded document for an application.

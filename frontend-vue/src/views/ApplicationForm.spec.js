@@ -3,19 +3,22 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import ApplicationForm from './ApplicationForm.vue'
 import api from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 import i18n, { setAppLocale } from '@/i18n'
 
 const mockPush = vi.fn()
+const mockReplace = vi.fn()
 const mockSuccessToast = vi.fn()
 const mockErrorToast = vi.fn()
 const mockRoute = {
   params: {},
   query: {},
+  fullPath: '/applications/new',
 }
 
 vi.mock('vue-router', () => ({
   useRoute: () => mockRoute,
-  useRouter: () => ({ push: mockPush }),
+  useRouter: () => ({ push: mockPush, replace: mockReplace }),
 }))
 
 vi.mock('@/composables/useToast', () => ({
@@ -27,13 +30,21 @@ vi.mock('@/services/api', () => ({
     get: vi.fn(),
     post: vi.fn(),
     patch: vi.fn(),
+    delete: vi.fn(),
   },
 }))
 
 function mountView() {
+  const pinia = createPinia()
+  setActivePinia(pinia)
+  const authStore = useAuthStore()
+  authStore.fetchUserProfile = vi.fn().mockResolvedValue({
+    is_ready_to_apply: true,
+    gpa: 3.5,
+  })
   return mount(ApplicationForm, {
     global: {
-      plugins: [createPinia(), i18n],
+      plugins: [pinia, i18n],
       stubs: {
         RouterLink: { template: '<a><slot /></a>' },
       },
@@ -50,6 +61,51 @@ function isoDateWithOffset(days) {
   return `${y}-${m}-${d}`
 }
 
+function profileGateResponse(url) {
+  if (url === '/api/accounts/profile/') {
+    return Promise.resolve({
+      data: {
+        is_ready_to_apply: true,
+        gpa: 3.5,
+        grade_scale: 'scale-1',
+        language: 'English',
+        language_level: 'B2',
+        ingress_date: '2023-08-01',
+        current_semester: 5,
+        computed_semester: 5,
+        credits_approved_percent: 70,
+      },
+    })
+  }
+  if (url === '/grades/scales/active/') {
+    return Promise.resolve({
+      data: [{ id: 'scale-1', name: '4.0 Scale', scale_type: '4.0' }],
+    })
+  }
+  return null
+}
+
+/** Default empty host cascade / subject APIs so program selection does not reject. */
+function hostCascadeResponse(url, { institutions = [], schools = [], academics = [], subjects = [] } = {}) {
+  if (typeof url !== 'string') return null
+  if (/\/api\/programs\/[^/]+\/host-institutions\/?/.test(url)) {
+    return Promise.resolve({ data: institutions })
+  }
+  if (/\/api\/host-institutions\/[^/]+\/schools\/?/.test(url)) {
+    return Promise.resolve({ data: schools })
+  }
+  if (/\/api\/schools\/[^/]+\/academic-programs\/?/.test(url)) {
+    return Promise.resolve({ data: academics })
+  }
+  if (/\/api\/academic-programs\/[^/]+\/subjects\/?/.test(url)) {
+    return Promise.resolve({ data: subjects })
+  }
+  if (url.includes('/application-subject-selections')) {
+    return Promise.resolve({ data: [] })
+  }
+  return null
+}
+
 describe('ApplicationForm', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -58,6 +114,18 @@ describe('ApplicationForm', () => {
     vi.clearAllMocks()
     mockRoute.params = {}
     mockRoute.query = {}
+    api.patch.mockResolvedValue({
+      data: {
+        is_ready_to_apply: true,
+        gpa: 3.5,
+        grade_scale: 'scale-1',
+        language: 'English',
+        language_level: 'B2',
+        ingress_date: '2023-08-01',
+        current_semester: 5,
+        credits_approved_percent: 70,
+      },
+    })
   })
 
   afterEach(() => {
@@ -67,6 +135,10 @@ describe('ApplicationForm', () => {
 
   it('renders dynamic form fields for the selected program and submits df payload keys', async () => {
     api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
       if (typeof url === 'string' && url.includes('/check_eligibility/')) {
         return Promise.resolve({
           data: { eligible: true, message: 'All eligibility requirements met' },
@@ -139,13 +211,18 @@ describe('ApplicationForm', () => {
     await wrapper.find('[data-testid="dynamic-field-motivation"]').setValue('I want to represent my university abroad.')
     await wrapper.find('[data-testid="dynamic-field-language_level"]').setValue('Advanced')
     await wrapper.find('[data-testid="dynamic-field-needs_housing"]').setValue(true)
-    await wrapper.find('form').trigger('submit.prevent')
+    await wrapper.find('[data-testid="application-form"]').trigger('submit.prevent')
 
-    expect(api.post).toHaveBeenCalledWith('/api/applications/', {
-      program: 'program-1',
-      df_motivation: 'I want to represent my university abroad.',
-      df_language_level: 'Advanced',
-      df_needs_housing: true,
+    await vi.waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith('/api/applications/', {
+        program: 'program-1',
+        host_institution: null,
+        host_school: null,
+        host_academic_program: null,
+        df_motivation: 'I want to represent my university abroad.',
+        df_language_level: 'Advanced',
+        df_needs_housing: true,
+      })
     })
     expect(mockSuccessToast).toHaveBeenCalledWith('Application created successfully!')
     expect(mockPush).toHaveBeenCalledWith({ name: 'ApplicationDetail', params: { id: 'application-1' } })
@@ -153,6 +230,10 @@ describe('ApplicationForm', () => {
 
   it('surfaces API validation errors on create submit failure', async () => {
     api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
       if (typeof url === 'string' && url.includes('/check_eligibility/')) {
         return Promise.resolve({
           data: { eligible: true, message: 'All eligibility requirements met' },
@@ -218,6 +299,10 @@ describe('ApplicationForm', () => {
     mockRoute.params = { id: 'application-1' }
 
     api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
       if (typeof url === 'string' && url.includes('/check_eligibility/')) {
         return Promise.resolve({
           data: { eligible: true, message: 'All eligibility requirements met' },
@@ -298,6 +383,10 @@ describe('ApplicationForm', () => {
 
   it('disables new application creation when the application window is closed', async () => {
     api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
       if (typeof url === 'string' && url.includes('/check_eligibility/')) {
         return Promise.resolve({
           data: { eligible: true, message: 'All eligibility requirements met' },
@@ -340,6 +429,10 @@ describe('ApplicationForm', () => {
 
   it('uses applicationFormPage.notAvailable for missing program dates and duration', async () => {
     api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
       if (typeof url === 'string' && url.includes('/check_eligibility/')) {
         return Promise.resolve({
           data: { eligible: true, message: 'All eligibility requirements met' },
@@ -392,6 +485,10 @@ describe('ApplicationForm', () => {
 
   it('shows eligibility alert from check_eligibility when student is not yet eligible', async () => {
     api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
       if (typeof url === 'string' && url.includes('/check_eligibility/')) {
         return Promise.resolve({
           data: {
@@ -431,5 +528,88 @@ describe('ApplicationForm', () => {
     })
     expect(wrapper.text()).toContain('German')
     expect(wrapper.text()).toContain('English')
+  })
+
+  it('redirects to profile when readiness check reports an incomplete profile', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/accounts/profile/') {
+        return Promise.resolve({ data: { is_ready_to_apply: false } })
+      }
+      if (url === '/grades/scales/active/') return Promise.resolve({ data: [] })
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+
+    const wrapper = mountView()
+
+    await vi.waitFor(() => {
+      expect(mockErrorToast).toHaveBeenCalledWith(
+        'Complete your personal and academic profile before starting an application.',
+      )
+      expect(mockReplace).toHaveBeenCalledWith({
+        name: 'Profile',
+        query: { next: '/applications/new' },
+      })
+    })
+    expect(api.get).not.toHaveBeenCalledWith('/api/programs/')
+  })
+
+  it('loads host destination cascade after program selection', async () => {
+    api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      const cascade = hostCascadeResponse(url, {
+        institutions: [{ id: 'inst-1', name: 'Host U', country: 'MX' }],
+        schools: [{ id: 'school-1', name: 'Engineering' }],
+        academics: [{ id: 'ap-1', name: 'CS', code: 'CS' }],
+        subjects: [{ id: 'subj-1', code: 'CS101', name: 'Algorithms', credits: 6 }],
+      })
+      if (cascade) return cascade
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({ data: { eligible: true, message: 'ok' } })
+      }
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-host',
+                name: 'Movilidad Nacional',
+                description: 'Domestic',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+              },
+            ],
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="program-select"]').setValue('program-host')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="host-destination-section"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="host-institution-select"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="host-institution-select"]').text()).toContain('Host U')
+
+    await wrapper.find('[data-testid="host-institution-select"]').setValue('inst-1')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="host-school-select"]').element.disabled).toBe(false)
+    })
+    await wrapper.find('[data-testid="host-school-select"]').setValue('school-1')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="host-academic-program-select"]').element.disabled).toBe(false)
+    })
+    await wrapper.find('[data-testid="host-academic-program-select"]').setValue('ap-1')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="subjects-section"]').exists()).toBe(true)
+    })
+    // New applications: subjects optional; prompt to save first (skip by continuing without selections)
+    expect(wrapper.find('[data-testid="subjects-save-first"]').exists()).toBe(true)
+    expect(wrapper.text()).toMatch(/optional/i)
   })
 })

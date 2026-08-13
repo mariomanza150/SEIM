@@ -50,56 +50,14 @@ def _latest_document_per_type(application):
 def _document_progress_from_prefetch(application) -> tuple[float, dict[str, int]]:
     """
     Returns (progress 0..1, counts).
-    Uses prefetched program.required_document_types and document_set when possible.
+
+    Prefer checklist (honors is_required / instructions_only); prefetch path is a fallback.
     """
-    program = application.program
-    required = list(program.required_document_types.all())
-    if not required:
-        return 1.0, {
-            "required": 0,
-            "approved": 0,
-            "pending_review": 0,
-            "resubmit": 0,
-            "missing": 0,
-        }
-
-    latest = _latest_document_per_type(application)
-    approved = pending = resubmit = missing = 0
-    for dt in required:
-        doc = latest.get(dt.id)
-        if not doc:
-            missing += 1
-            continue
-        st = _doc_workflow_status(doc)
-        if st == "approved":
-            approved += 1
-        elif st == "pending_review":
-            pending += 1
-        else:
-            resubmit += 1
-
-    # Weight partial progress (aligned with checklist semantics).
-    weighted = approved + 0.55 * pending + 0.25 * resubmit
-    progress = weighted / len(required)
-    return min(1.0, max(0.0, progress)), {
-        "required": len(required),
-        "approved": approved,
-        "pending_review": pending,
-        "resubmit": resubmit,
-        "missing": missing,
-    }
+    # Checklist is authoritative after Phase 4 (deadlines, optional, instructions_only).
+    return _document_progress_via_checklist(application)
 
 
-def _document_progress(application) -> tuple[float, dict[str, int]]:
-    cache = getattr(application.program, "_prefetched_objects_cache", None)
-    app_cache = getattr(application, "_prefetched_objects_cache", None)
-    if (
-        cache
-        and "required_document_types" in cache
-        and app_cache
-        and "document_set" in app_cache
-    ):
-        return _document_progress_from_prefetch(application)
+def _document_progress_via_checklist(application) -> tuple[float, dict[str, int]]:
     summary = DocumentService.build_application_document_checklist(application)
     req = summary["required_count"]
     if req == 0:
@@ -113,6 +71,8 @@ def _document_progress(application) -> tuple[float, dict[str, int]]:
     approved = summary["approved_count"]
     pending = resubmit = missing = 0
     for item in summary["items"]:
+        if not item.get("is_required", True):
+            continue
         st = item["status"]
         if st == "pending_review":
             pending += 1
@@ -128,6 +88,10 @@ def _document_progress(application) -> tuple[float, dict[str, int]]:
         "resubmit": resubmit,
         "missing": missing,
     }
+
+
+def _document_progress(application) -> tuple[float, dict[str, int]]:
+    return _document_progress_via_checklist(application)
 
 
 def _form_progress(application) -> float:

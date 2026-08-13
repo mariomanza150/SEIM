@@ -51,8 +51,9 @@ SEIM supports three main user roles:
 2. Click **"Add User"**
 3. Fill in required fields:
    - **Username**: Unique identifier
-   - **Email**: Primary contact method
-   - **Role**: Student, Coordinator, or Admin
+   - **Email**: Unique institutional login and security address
+   - **First name, middle name, paternal last name, maternal last name**
+   - **Roles**: One or more of Student, Coordinator, or Admin
    - **Password**: Secure password
 4. Click **"Save"**
 
@@ -71,15 +72,22 @@ docker-compose exec web python manage.py create_missing_profiles
 ### **User Profile Management**
 
 #### **Student Profiles:**
-- **GPA**: Current grade point average
-- **Language**: Primary language(s)
-- **Academic Level**: Undergraduate/Graduate
-- **Department**: Academic department
+- **Required before starting an application**: matrícula, academic level, school/faculty, home academic program, unidad, gender, date of birth, birthplace, postal code, passport number, mobile phone, secondary email, and RFC.
+- **Eligibility information**: GPA, grade scale, primary language and CEFR level, plus optional additional languages.
+- **Optional banking information**: bank institution and 18-digit CLABE.
+- The profile API exposes `is_personal_academic_complete` and its client-facing alias `is_ready_to_apply`. Application creation is rejected until the required personal and academic fields are complete.
+- Notification email is delivered to `secondary_email` when present; otherwise it uses the account email.
 
-#### **Coordinator Profiles:**
-- **Department**: Responsible department
-- **Programs**: Assigned exchange programs
-- **Contact Information**: Phone, office location
+#### **Student Profile Catalogs:**
+Manage these under **Admin** → **Accounts**:
+- **Allowed email domains**: Active domains accepted during registration. The default seed includes `uanl.edu.mx`.
+- **Academic levels**
+- **School faculties**
+- **Unidades**
+- **Home academic programs**: Each program belongs to one school/faculty.
+- **Bank institutions**
+
+Only active catalog entries are shown in the student UI. Allowed email domains are publicly readable so the registration page can display and validate them; all other profile catalogs require authentication.
 
 ### **Account Security**
 

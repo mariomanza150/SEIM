@@ -28,6 +28,9 @@ export function normalizeSpaLocation(url) {
   if (spaPath === '/login') {
     return { name: 'Login' }
   }
+  if (spaPath === '/register') {
+    return { name: 'Register' }
+  }
   if (
     spaPath === '/applications' ||
     spaPath === '/applications/new' ||

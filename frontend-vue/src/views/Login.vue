@@ -86,6 +86,15 @@
               <div class="text-center mt-3">
                 <a href="/password-reset/" class="text-decoration-none">{{ t('login.forgotPassword') }}</a>
               </div>
+              <div class="text-center mt-2">
+                <router-link
+                  :to="{ name: 'Register' }"
+                  class="text-decoration-none"
+                  data-testid="login-create-account"
+                >
+                  {{ t('login.createAccount') }}
+                </router-link>
+              </div>
             </div>
           </div>
 

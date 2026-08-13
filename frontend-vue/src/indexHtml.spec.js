@@ -109,6 +109,33 @@ describe('frontend-vue/index.html', () => {
     expect(dom.window.document.querySelector('meta[name="color-scheme"]').getAttribute('content')).toBe('light')
   })
 
+  it('links shared theme token stylesheets', () => {
+    const html = readFileSync(indexPath, 'utf8')
+    expect(html).toContain('/static/css/utilities/seim-shared-tokens.css')
+    expect(html).toContain('/static/css/utilities/colors.css')
+  })
+
+  it('shell bootstrap sets data-theme from stored UI preferences', () => {
+    const html = readFileSync(indexPath, 'utf8')
+    const dom = new JSDOM(html, {
+      runScripts: 'dangerously',
+      url: 'http://localhost/',
+      beforeParse(window) {
+        window.localStorage.setItem(
+          'seim_ui_preferences',
+          JSON.stringify({
+            theme: 'dark',
+            font_size: 'normal',
+            high_contrast: false,
+            reduce_motion: false,
+          }),
+        )
+      },
+    })
+    expect(dom.window.document.documentElement.dataset.theme).toBe('dark')
+    expect(dom.window.document.documentElement.dataset.themePreference).toBe('dark')
+  })
+
   it('shell bootstrap sets canonical and og:url from window.location', () => {
     const html = readFileSync(indexPath, 'utf8')
     const dom = new JSDOM(html, {

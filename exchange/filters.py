@@ -83,6 +83,10 @@ class ProgramFilter(django_filters.FilterSet):
         method="filter_accepting_applications",
         label="Application window open today",
     )
+    eligible_for_me = django_filters.BooleanFilter(
+        method="filter_eligible_for_me",
+        label="Only programs the current student passes (strict)",
+    )
     recurring = django_filters.BooleanFilter(label="Recurring")
     auto_reject_ineligible = django_filters.BooleanFilter(
         label="Auto-reject Ineligible"
@@ -145,6 +149,22 @@ class ProgramFilter(django_filters.FilterSet):
         ).filter(
             Q(application_deadline__isnull=True) | Q(application_deadline__gte=today),
         )
+
+    def filter_eligible_for_me(self, queryset, name, value):
+        """Strict catalog filter: keep only schemes the authenticated student currently passes."""
+        if value is not True:
+            return queryset
+        user = getattr(self.request, "user", None)
+        if not user or not user.is_authenticated:
+            return queryset.none()
+        from exchange.eligibility_rules import evaluate_eligibility
+
+        eligible_ids = [
+            program.pk
+            for program in queryset
+            if evaluate_eligibility(user, program).eligible
+        ]
+        return queryset.filter(pk__in=eligible_ids)
 
 
 class ApplicationFilter(django_filters.FilterSet):

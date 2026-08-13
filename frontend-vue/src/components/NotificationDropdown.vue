@@ -153,10 +153,10 @@ defineExpose({ refresh: fetchRecent })
 }
 
 .dropdown-item.notification-item:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--bg-tertiary, rgba(0, 0, 0, 0.05));
 }
 
 html[data-theme='dark'] .dropdown-item.notification-item:hover {
-  background-color: rgba(255, 255, 255, 0.06);
+  background-color: var(--bg-tertiary, rgba(255, 255, 255, 0.06));
 }
 </style>

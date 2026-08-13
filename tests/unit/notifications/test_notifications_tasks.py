@@ -72,6 +72,17 @@ class TestGetUserEmail:
         assert email2 == "another@example.com"
         assert email1 != email2
 
+    def test_get_user_email_prefers_secondary_email(self, user):
+        user.profile.secondary_email = "student.notifications@example.net"
+        user.profile.save(update_fields=["secondary_email"])
+
+        assert get_user_email(user) == "student.notifications@example.net"
+
+    def test_get_user_email_ignores_blank_secondary_email(self, user):
+        user.profile.secondary_email = "   "
+
+        assert get_user_email(user) == user.email
+
 
 @pytest.mark.django_db
 @pytest.mark.celery
@@ -93,6 +104,15 @@ class TestSendNotificationEmailTask:
         assert mail.outbox[0].subject == subject
         assert mail.outbox[0].body == message
         assert user.email in mail.outbox[0].to
+
+    def test_send_notification_email_routes_to_secondary_email(self, user):
+        user.profile.secondary_email = "student.notifications@example.net"
+        user.profile.save(update_fields=["secondary_email"])
+        mail.outbox = []
+
+        send_notification_email(str(user.id), "Profile routing", "Test message")
+
+        assert mail.outbox[0].to == ["student.notifications@example.net"]
 
     def test_send_notification_email_with_long_subject(self, user):
         """Test sending email with long subject."""

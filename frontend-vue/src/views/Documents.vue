@@ -53,6 +53,26 @@
                 <i class="bi bi-x-circle me-1"></i>{{ t('documentsPage.clearFilters') }}
               </button>
             </div>
+            <div v-if="isStaff" class="col-12 d-flex flex-wrap gap-2">
+              <button
+                type="button"
+                class="btn btn-sm"
+                :class="filters.pending_review ? 'btn-warning' : 'btn-outline-warning'"
+                data-testid="filter-pending-review"
+                @click="togglePendingReview"
+              >
+                <i class="bi bi-hourglass-split me-1" aria-hidden="true"></i>{{ t('documentsPage.filterPendingReview') }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm"
+                :class="filters.overdue ? 'btn-danger' : 'btn-outline-danger'"
+                data-testid="filter-overdue"
+                @click="toggleOverdue"
+              >
+                <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{{ t('documentsPage.filterOverdue') }}
+              </button>
+            </div>
             <div v-if="isStaff" class="col-12 d-flex justify-content-end pt-1">
               <button
                 type="button"
@@ -287,6 +307,8 @@ const filters = ref({
   application: '',
   type: '',
   valid: '',
+  pending_review: false,
+  overdue: false,
   ordering: '-created_at',
 })
 
@@ -327,6 +349,8 @@ async function fetchDocuments(page = 1) {
     if (filters.value.application) params.application = filters.value.application
     if (filters.value.type) params.type = filters.value.type
     if (filters.value.valid !== '') params.is_valid = filters.value.valid
+    if (filters.value.pending_review) params.pending_review = true
+    if (filters.value.overdue) params.overdue = true
 
     const response = await api.get('/api/documents/', { params })
     documents.value = response.data.results || response.data
@@ -354,8 +378,26 @@ function goToPage(page) {
 }
 
 function clearFilters() {
-  filters.value = { application: '', type: '', valid: '', ordering: '-created_at' }
+  filters.value = {
+    application: '',
+    type: '',
+    valid: '',
+    pending_review: false,
+    overdue: false,
+    ordering: '-created_at',
+  }
   fetchDocuments()
+}
+
+function togglePendingReview() {
+  filters.value.pending_review = !filters.value.pending_review
+  if (filters.value.pending_review) filters.value.valid = 'false'
+  fetchDocuments(1)
+}
+
+function toggleOverdue() {
+  filters.value.overdue = !filters.value.overdue
+  fetchDocuments(1)
 }
 
 function applyDocPreset(p) {

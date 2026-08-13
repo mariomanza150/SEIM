@@ -116,7 +116,7 @@ class AgreementRenewalService:
             partner_institution_name=agreement.partner_institution_name,
             partner_country=agreement.partner_country,
             required_gpa=agreement.required_gpa,
-            language_requirements=agreement.language_requirements,
+            language_requirements=list(agreement.language_requirements or []),
             custom_tags=agreement.custom_tags,
             application_limit=agreement.application_limit,
             notify_on_limit_reached=agreement.notify_on_limit_reached,

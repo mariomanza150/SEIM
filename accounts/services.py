@@ -21,7 +21,7 @@ from django.utils.crypto import get_random_string
 
 from notifications.services import NotificationService
 
-from .models import Profile, User
+from .models import AllowedEmailDomain, Profile, User
 
 
 class AccountService:
@@ -32,6 +32,35 @@ class AccountService:
     LOCKOUT_DURATION_MINUTES = getattr(settings, "LOCKOUT_DURATION_MINUTES", 30)
     EMAIL_VERIFICATION_TOKEN_LENGTH = 64
     PASSWORD_RESET_TOKEN_LENGTH = 64
+
+    # ==========================================
+    # Email link helpers
+    # ==========================================
+
+    @staticmethod
+    def build_email_verification_url(token: str) -> str:
+        """Build the SPA URL users open to verify their email."""
+        base = getattr(settings, "FRONTEND_BASE_URL", "http://localhost:8001").rstrip(
+            "/"
+        )
+        return f"{base}/seim/verify-email?token={token}"
+
+    @staticmethod
+    def send_verification_email(user: User, token: str) -> None:
+        """Send the email-verification notification with a clickable link."""
+        verify_url = AccountService.build_email_verification_url(token)
+        NotificationService.send_notification(
+            recipient=user,
+            title="Email Verification Required",
+            message=(
+                "Welcome to SEIM!\n\n"
+                "Please verify your email by opening this link:\n"
+                f"{verify_url}\n\n"
+                "If the link does not work, copy and paste it into your browser."
+            ),
+            notification_type="email",
+            transactional_route_key="account_security_email",
+        )
 
     # ==========================================
     # Account Lockout Methods
@@ -271,7 +300,9 @@ class AccountService:
         email: str,
         password: str,
         first_name: str = "",
+        middle_name: str = "",
         last_name: str = "",
+        mothers_last_name: str = "",
     ) -> User:
         """
         Register a new user with email verification.
@@ -280,21 +311,35 @@ class AccountService:
             username: Username
             email: Email address
             password: Password (will be hashed)
-            first_name: First name (optional)
-            last_name: Last name (optional)
+            first_name: First name
+            middle_name: Middle name
+            last_name: Paternal last name
+            mothers_last_name: Maternal last name
 
         Returns:
             Created user instance (inactive until email verified)
 
         Raises:
-            ValueError: If username or email already exists
+            ValueError: If the email domain is not allowed or account already exists
         """
+        email = email.strip().lower()
+        domain = email.rsplit("@", 1)[-1]
+        if not AllowedEmailDomain.objects.filter(
+            name__iexact=domain, is_active=True
+        ).exists():
+            raise ValueError("Email domain is not allowed for registration")
+        if not all(
+            str(value).strip()
+            for value in (first_name, middle_name, last_name, mothers_last_name)
+        ):
+            raise ValueError("All four name fields are required")
+
         # Check if username exists
         if User.objects.filter(username=username).exists():
             raise ValueError("Username already exists")
 
         # Check if email exists
-        if User.objects.filter(email=email).exists():
+        if User.objects.filter(email__iexact=email).exists():
             raise ValueError("Email already exists")
 
         # Create user
@@ -302,7 +347,9 @@ class AccountService:
             username=username,
             email=email,
             first_name=first_name,
+            middle_name=middle_name,
             last_name=last_name,
+            mothers_last_name=mothers_last_name,
             is_active=False,  # Inactive until email verified
             is_email_verified=False,
         )
@@ -321,14 +368,7 @@ class AccountService:
         student_role, _ = Role.objects.get_or_create(name="student")
         user.roles.add(student_role)
 
-        # Send verification email
-        NotificationService.send_notification(
-            recipient=user,
-            title="Email Verification Required",
-            message=f"Welcome to SEIM! Please verify your email using this token: {token}",
-            notification_type="email",
-            transactional_route_key="account_security_email",
-        )
+        AccountService.send_verification_email(user, token)
 
         return user
 

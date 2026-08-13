@@ -47,6 +47,12 @@ describe('Login', () => {
     const wrapper = mount(Login, {
       global: {
         plugins: [createPinia(), i18n],
+        stubs: {
+          RouterLink: {
+            template: '<a><slot /></a>',
+            props: ['to'],
+          },
+        },
       },
     })
 
@@ -56,12 +62,19 @@ describe('Login', () => {
     expect(wrapper.find('button[type="submit"]').text()).toContain('Sign In')
     expect(wrapper.text()).toContain('SEIM')
     expect(wrapper.text()).toContain('Sign in to continue')
+    expect(wrapper.find('[data-testid="login-create-account"]').exists()).toBe(true)
   })
 
   it('calls auth store login on form submit', async () => {
     const wrapper = mount(Login, {
       global: {
         plugins: [createPinia(), i18n],
+        stubs: {
+          RouterLink: {
+            template: '<a><slot /></a>',
+            props: ['to'],
+          },
+        },
       },
     })
 
@@ -77,6 +90,12 @@ describe('Login', () => {
     const wrapper = mount(Login, {
       global: {
         plugins: [createPinia(), i18n],
+        stubs: {
+          RouterLink: {
+            template: '<a><slot /></a>',
+            props: ['to'],
+          },
+        },
       },
     })
 

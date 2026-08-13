@@ -202,11 +202,26 @@ html[data-theme='dark'] .form-select {
   border-color: var(--seim-border-color);
 }
 
+html[data-theme='dark'] .form-control::placeholder {
+  color: var(--seim-muted);
+  opacity: 1;
+}
+
 html[data-theme='dark'] .text-muted,
 html[data-theme='dark'] .form-text,
 html[data-theme='dark'] .breadcrumb-item,
 html[data-theme='dark'] .breadcrumb-item a {
   color: var(--seim-muted) !important;
+}
+
+html[data-theme='dark'] .table-striped > tbody > tr:nth-of-type(odd) > * {
+  --bs-table-bg-type: rgba(255, 255, 255, 0.04);
+  color: var(--seim-surface-text);
+}
+
+html[data-theme='dark'] .table-hover > tbody > tr:hover > * {
+  --bs-table-bg-state: rgba(255, 255, 255, 0.06);
+  color: var(--seim-surface-text);
 }
 
 html[data-high-contrast='true'] .card,

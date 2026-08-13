@@ -7,8 +7,76 @@ from core.models import TimeStampedModel, UUIDModel
 class DocumentType(models.Model):
     """Types of documents (e.g., transcript, ID, recommendation letter)."""
 
+    class SubmissionMode(models.TextChoices):
+        UPLOAD = "upload", _("Upload")
+        TEMPLATE_DOWNLOAD = "template_download", _("Template download")
+        SYSTEM_GENERATED = "system_generated", _("System generated")
+        INSTRUCTIONS_ONLY = "instructions_only", _("Instructions only")
+
     name = models.CharField(max_length=100, unique=True)
+    slug = models.SlugField(
+        max_length=80,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text=_("Stable key (e.g. solicitud_participacion)."),
+    )
     description = models.TextField(blank=True)
+    submission_mode = models.CharField(
+        max_length=32,
+        choices=SubmissionMode.choices,
+        default=SubmissionMode.UPLOAD,
+        db_index=True,
+    )
+    template_file = models.FileField(
+        upload_to="document_templates/",
+        blank=True,
+        null=True,
+        help_text=_("Downloadable blank template for students."),
+    )
+    instructions = models.TextField(
+        blank=True,
+        default="",
+        help_text=_("Student-facing instructions / FAQ body."),
+    )
+    faq = models.TextField(
+        blank=True,
+        default="",
+        help_text=_("Optional FAQ / tips shown alongside instructions."),
+    )
+    accepted_extensions = models.CharField(
+        max_length=120,
+        blank=True,
+        default="",
+        help_text=_(
+            "Comma-separated extensions without dots (e.g. pdf,jpg,png). "
+            "Empty = global defaults."
+        ),
+    )
+    max_file_size_mb = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text=_("Per-type size cap in MB. Empty = global default."),
+    )
+    allows_multiple = models.BooleanField(
+        default=False,
+        help_text=_("Allow more than one upload of this type per application."),
+    )
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def parsed_accepted_extensions(self) -> list[str]:
+        if not (self.accepted_extensions or "").strip():
+            return []
+        return [
+            ext.strip().lower().lstrip(".")
+            for ext in self.accepted_extensions.split(",")
+            if ext.strip()
+        ]
 
 
 class Document(UUIDModel, TimeStampedModel):

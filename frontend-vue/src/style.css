@@ -55,12 +55,155 @@ html[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
 html[data-theme='dark'] .table-light {
   --bs-table-bg: #111827;
   --bs-table-color: var(--seim-surface-text);
+  --bs-table-border-color: var(--seim-border-color);
+  color: var(--seim-surface-text);
+  border-color: var(--seim-border-color);
 }
 
 html[data-theme='dark'] .text-bg-light {
   background-color: #1f2937 !important;
   color: var(--seim-surface-text) !important;
   border: 1px solid var(--seim-border-color);
+}
+
+/* Bootstrap light utilities stay light-colored unless overridden after Bootstrap CSS */
+html[data-theme='dark'] .bg-light,
+html[data-theme='dark'] .card-header.bg-light,
+html[data-theme='dark'] .card-footer.bg-light {
+  background-color: var(--bg-tertiary, #495057) !important;
+  color: var(--seim-surface-text) !important;
+}
+
+html[data-theme='dark'] .bg-white,
+html[data-theme='dark'] .card-footer.bg-white {
+  background-color: var(--seim-surface-bg) !important;
+  color: var(--seim-surface-text) !important;
+}
+
+html[data-theme='dark'] .text-dark,
+html[data-theme='dark'] .badge.bg-light.text-dark {
+  color: var(--seim-surface-text) !important;
+}
+
+html[data-theme='dark'] .border-dark {
+  border-color: var(--seim-border-color) !important;
+}
+
+html[data-theme='dark'] .card-header,
+html[data-theme='dark'] .card-footer,
+html[data-theme='dark'] .modal-header,
+html[data-theme='dark'] .modal-footer {
+  background-color: var(--bg-tertiary, #495057);
+  color: var(--seim-surface-text);
+  border-color: var(--seim-border-color);
+}
+
+html[data-theme='dark'] .input-group-text {
+  background-color: var(--bg-tertiary, #495057);
+  color: var(--seim-surface-text);
+  border-color: var(--seim-border-color);
+}
+
+html[data-theme='dark'] .page-link {
+  background-color: var(--seim-surface-bg);
+  color: var(--seim-surface-text);
+  border-color: var(--seim-border-color);
+}
+
+html[data-theme='dark'] .page-item.disabled .page-link {
+  background-color: var(--bg-secondary, #343a40);
+  color: var(--seim-muted);
+  border-color: var(--seim-border-color);
+}
+
+html[data-theme='dark'] .page-item.active .page-link {
+  background-color: var(--bs-primary, #667eea);
+  border-color: var(--bs-primary, #667eea);
+  color: #fff;
+}
+
+html[data-theme='dark'] .dropdown-item {
+  color: var(--seim-surface-text);
+}
+
+html[data-theme='dark'] .dropdown-item:hover,
+html[data-theme='dark'] .dropdown-item:focus {
+  background-color: var(--bg-tertiary, #495057);
+  color: var(--seim-surface-text);
+}
+
+html[data-theme='dark'] .dropdown-divider {
+  border-color: var(--seim-border-color);
+}
+
+html[data-theme='dark'] .list-group-item-action:hover,
+html[data-theme='dark'] .list-group-item-action:focus {
+  background-color: var(--bg-tertiary, #495057);
+  color: var(--seim-surface-text);
+}
+
+html[data-theme='dark'] .hr,
+html[data-theme='dark'] hr {
+  border-color: var(--seim-border-color);
+  opacity: 1;
+}
+
+html[data-theme='dark'] .form-control:disabled,
+html[data-theme='dark'] .form-select:disabled,
+html[data-theme='dark'] .form-control[readonly] {
+  background-color: var(--bg-secondary, #343a40);
+  color: var(--seim-muted);
+}
+
+html[data-theme='dark'] .form-check-input {
+  background-color: #111827;
+  border-color: var(--seim-border-color);
+}
+
+html[data-theme='dark'] .nav-tabs {
+  border-bottom-color: var(--seim-border-color);
+}
+
+html[data-theme='dark'] .nav-tabs .nav-link {
+  color: var(--seim-muted);
+}
+
+html[data-theme='dark'] .nav-tabs .nav-link:hover {
+  border-color: var(--seim-border-color);
+  color: var(--seim-surface-text);
+}
+
+html[data-theme='dark'] .nav-tabs .nav-link.active {
+  background-color: var(--seim-surface-bg);
+  border-color: var(--seim-border-color);
+  color: var(--seim-surface-text);
+}
+
+html[data-theme='dark'] .progress {
+  background-color: var(--bg-tertiary, #495057);
+}
+
+html[data-theme='dark'] .popover,
+html[data-theme='dark'] .tooltip-inner {
+  background-color: var(--seim-surface-bg);
+  color: var(--seim-surface-text);
+  border-color: var(--seim-border-color);
+}
+
+html[data-theme='dark'] .btn-outline-secondary {
+  color: var(--seim-muted);
+  border-color: var(--seim-border-color);
+}
+
+html[data-theme='dark'] .btn-outline-secondary:hover {
+  background-color: var(--bg-tertiary, #495057);
+  color: var(--seim-surface-text);
+  border-color: var(--seim-border-color);
+}
+
+html[data-theme='dark'] .btn-close {
+  filter: invert(1) grayscale(100%);
+  opacity: 0.75;
 }
 
 /* Animation utilities */

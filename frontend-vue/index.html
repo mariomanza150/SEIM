@@ -13,8 +13,9 @@
     <!-- Hint scrollbars/form controls; shell + uiPreferences align with theme auto/light/dark. -->
     <meta name="color-scheme" content="light dark" />
 
-    <!-- Shared SEIM tokens (Django + SPA) -->
+    <!-- Shared SEIM tokens + color primitives (Django + SPA) -->
     <link rel="stylesheet" href="/static/css/utilities/seim-shared-tokens.css" />
+    <link rel="stylesheet" href="/static/css/utilities/colors.css" />
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
@@ -122,6 +123,8 @@
           }
         } catch (e) {}
         var resolvedTheme = resolveShellTheme(themePref)
+        document.documentElement.dataset.theme = resolvedTheme
+        document.documentElement.dataset.themePreference = themePref
         var tc = document.querySelector('meta[name="theme-color"]')
         if (tc) tc.setAttribute('content', resolvedTheme === 'dark' ? THEME_DARK : THEME_LIGHT)
         var cs =

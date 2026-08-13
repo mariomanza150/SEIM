@@ -11,6 +11,10 @@ from accounts.models import Profile, Role, User
 from documents.models import Document, DocumentType
 from documents.services import DocumentService
 from exchange.models import ApplicationStatus, Program
+from tests.unit.exchange.host_destination_helpers import (
+    apply_host_destination,
+    attach_host_destination,
+)
 
 
 class TestDocumentChecklistAPI(TestCase):
@@ -45,6 +49,7 @@ class TestDocumentChecklistAPI(TestCase):
             is_active=True,
         )
         self.program.required_document_types.add(self.doc_type)
+        self.host_tree = attach_host_destination(self.program)
         self.draft_status, _ = ApplicationStatus.objects.get_or_create(
             name="draft",
             defaults={"order": 1},
@@ -79,6 +84,7 @@ class TestDocumentChecklistAPI(TestCase):
             student=self.student,
             status=self.draft_status,
         )
+        apply_host_destination(app, self.host_tree)
         submit = self.client.post(
             reverse("api:application-submit", args=[app.id]),
             {},
@@ -101,6 +107,23 @@ class TestDocumentChecklistAPI(TestCase):
             format="json",
         )
         self.assertEqual(submit_ok.status_code, status.HTTP_200_OK)
+
+    def test_submit_blocked_when_host_destination_missing(self):
+        from exchange.models import Application
+
+        app = Application.objects.create(
+            program=self.program,
+            student=self.student,
+            status=self.draft_status,
+        )
+        submit = self.client.post(
+            reverse("api:application-submit", args=[app.id]),
+            {},
+            format="json",
+        )
+        self.assertEqual(submit.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Host destination", submit.data["error"])
+        self.assertIn("host university", submit.data["error"].lower())
 
     def test_list_excludes_document_checklist_payload(self):
         from exchange.models import Application

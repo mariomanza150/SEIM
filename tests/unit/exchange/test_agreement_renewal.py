@@ -94,6 +94,35 @@ def test_create_successor_links_programs_and_rollover(
 
 
 @pytest.mark.django_db
+def test_create_successor_copies_agreement_criteria(coordinator_user, active_agreement):
+    active_agreement.required_gpa = 3.2
+    active_agreement.application_limit = 12
+    active_agreement.custom_tags = "Habla Hispana"
+    active_agreement.language_requirements = [{"lang": "Spanish", "level": "B2"}]
+    active_agreement.notify_on_limit_reached = False
+    active_agreement.save(
+        update_fields=[
+            "required_gpa",
+            "application_limit",
+            "custom_tags",
+            "language_requirements",
+            "notify_on_limit_reached",
+        ]
+    )
+
+    with patch("exchange.agreement_renewal._notify_staff"):
+        successor = AgreementRenewalService.create_renewal_successor(
+            active_agreement, coordinator_user, copy_documents=False, notify=False
+        )
+
+    assert successor.required_gpa == 3.2
+    assert successor.application_limit == 12
+    assert successor.custom_tags == "Habla Hispana"
+    assert successor.language_requirements == [{"lang": "Spanish", "level": "B2"}]
+    assert successor.notify_on_limit_reached is False
+
+
+@pytest.mark.django_db
 def test_create_successor_blocks_second_draft(coordinator_user, active_agreement):
     with patch("exchange.agreement_renewal._notify_staff"):
         AgreementRenewalService.create_renewal_successor(

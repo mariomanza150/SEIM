@@ -49,9 +49,34 @@ class ExchangeAgreementDocumentAdmin(admin.ModelAdmin):
 
 @admin.register(DocumentType)
 class DocumentTypeAdmin(admin.ModelAdmin):
-    list_display = ("name", "description")
-    search_fields = ("name",)
+    list_display = (
+        "name",
+        "slug",
+        "submission_mode",
+        "allows_multiple",
+        "max_file_size_mb",
+    )
+    list_filter = ("submission_mode", "allows_multiple")
+    search_fields = ("name", "slug", "description")
     readonly_fields = ("id",)
+    prepopulated_fields = {"slug": ("name",)}
+    fieldsets = (
+        (None, {"fields": ("name", "slug", "description", "submission_mode")}),
+        (
+            "Student guidance",
+            {"fields": ("instructions", "faq", "template_file")},
+        ),
+        (
+            "Upload constraints",
+            {
+                "fields": (
+                    "accepted_extensions",
+                    "max_file_size_mb",
+                    "allows_multiple",
+                )
+            },
+        ),
+    )
 
 
 @admin.register(Document)

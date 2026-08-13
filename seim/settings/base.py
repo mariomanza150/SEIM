@@ -24,6 +24,11 @@ SECRET_KEY = env("SECRET_KEY")
 # SMTP/SES settings files may override this when those backends are selected.
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@seim.local")
 
+# Public origin for SPA links in emails (no trailing slash). Paths use /seim/...
+FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="http://localhost:8001").rstrip(
+    "/"
+)
+
 # Application definition
 DJANGO_APPS = [
     "django.contrib.admin",

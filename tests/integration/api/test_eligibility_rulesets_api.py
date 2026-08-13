@@ -72,5 +72,5 @@ class TestEligibilityRuleSetsApi(TestCase):
             {"use_ruleset": "true"},
         )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data["schema_version"], 6)
+        self.assertEqual(resp.data["schema_version"], 7)
         self.assertTrue(resp.data.get("using_ruleset"))

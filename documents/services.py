@@ -45,33 +45,110 @@ class DocumentService:
     """
 
     ALLOWED_FILE_TYPES = ["application/pdf", "image/jpeg", "image/png"]
+    EXTENSION_MIME = {
+        "pdf": "application/pdf",
+        "jpg": "image/jpeg",
+        "jpeg": "image/jpeg",
+        "png": "image/png",
+    }
     MAX_FILE_SIZE_MB = 10
     MAX_RESUBMISSIONS = 3
 
     @staticmethod
-    def validate_file_type_and_size(file):
-        """Check file type and size against allowed types and max size."""
+    def _detect_mime(file) -> str:
         file.seek(0)
-
-        # Use magic if available, otherwise fallback to mimetypes
         if MAGIC_AVAILABLE and magic is not None:
             mime_type = magic.from_buffer(file.read(2048), mime=True)
         else:
-            # Fallback to mimetypes for Windows compatibility
             file.read(2048)
             mime_type, _ = mimetypes.guess_type(file.name)
             if not mime_type:
-                # Try to guess from file extension
                 mime_type = (
                     mimetypes.guess_type(file.name)[0] or "application/octet-stream"
                 )
-
         file.seek(0)
-        if mime_type not in DocumentService.ALLOWED_FILE_TYPES:
+        return mime_type or "application/octet-stream"
+
+    @staticmethod
+    def validate_file_type_and_size(file, document_type: DocumentType | None = None):
+        """Check file type and size against allowed types and max size (per-type overrides)."""
+        mime_type = DocumentService._detect_mime(file)
+
+        allowed_mimes = list(DocumentService.ALLOWED_FILE_TYPES)
+        if document_type is not None:
+            exts = document_type.parsed_accepted_extensions()
+            if exts:
+                allowed_mimes = [
+                    DocumentService.EXTENSION_MIME[ext]
+                    for ext in exts
+                    if ext in DocumentService.EXTENSION_MIME
+                ]
+                if not allowed_mimes:
+                    allowed_mimes = list(DocumentService.ALLOWED_FILE_TYPES)
+
+        if mime_type not in allowed_mimes:
             raise ValueError("File type not allowed.")
-        if file.size > DocumentService.MAX_FILE_SIZE_MB * 1024 * 1024:
+
+        max_mb = DocumentService.MAX_FILE_SIZE_MB
+        if document_type is not None and document_type.max_file_size_mb:
+            max_mb = document_type.max_file_size_mb
+        if file.size > max_mb * 1024 * 1024:
             raise ValueError("File size exceeds maximum allowed.")
         return True
+
+    @staticmethod
+    def get_requirement_for_application(application, document_type):
+        """Return ProgramDocumentRequirement for this application/type, if any."""
+        from exchange.models import ProgramDocumentRequirement
+
+        return (
+            ProgramDocumentRequirement.objects.filter(
+                program_id=application.program_id, document_type=document_type
+            )
+            .select_related("program", "document_type")
+            .first()
+        )
+
+    @staticmethod
+    def ensure_upload_allowed(
+        application, document_type, *, for_staff=False, replacing=False
+    ):
+        """
+        Block student uploads past per-doc deadline (staff may still review late uploads).
+        Also enforce allows_multiple / instructions_only.
+        """
+        if document_type.submission_mode == DocumentType.SubmissionMode.INSTRUCTIONS_ONLY:
+            raise ValueError(
+                "This document type is instructions-only and does not accept uploads."
+            )
+
+        requirement = DocumentService.get_requirement_for_application(
+            application, document_type
+        )
+        if requirement and requirement.is_overdue() and not for_staff:
+            latest = (
+                Document.objects.filter(application=application, type=document_type)
+                .order_by("-created_at")
+                .first()
+            )
+            open_resub = False
+            if latest:
+                open_resub = DocumentResubmissionRequest.objects.filter(
+                    document=latest, resolved=False
+                ).exists()
+            if not open_resub:
+                raise ValueError(
+                    "The deadline for this document has passed; new uploads are not allowed."
+                )
+
+        if not replacing and not document_type.allows_multiple:
+            existing_count = Document.objects.filter(
+                application=application, type=document_type
+            ).count()
+            if existing_count > 0:
+                raise ValueError(
+                    "This document type allows only one file. Replace the existing upload instead."
+                )
 
     @staticmethod
     def virus_scan(file):
@@ -111,7 +188,15 @@ class DocumentService:
     @transaction.atomic
     def upload_document(application, doc_type, file, uploaded_by):
         """Upload a new document for an application with file type/size and virus scan validation."""
-        DocumentService.validate_file_type_and_size(file)
+        for_staff = False
+        if getattr(uploaded_by, "has_role", None):
+            for_staff = uploaded_by.has_role("coordinator") or uploaded_by.has_role(
+                "admin"
+            )
+        DocumentService.ensure_upload_allowed(
+            application, doc_type, for_staff=for_staff
+        )
+        DocumentService.validate_file_type_and_size(file, document_type=doc_type)
         # Async virus scan
         document = Document.objects.create(
             application=application, type=doc_type, file=file, uploaded_by=uploaded_by
@@ -277,14 +362,20 @@ class DocumentService:
     @staticmethod
     def build_application_document_checklist(application):
         """
-        Compare program required document types to uploads on this application.
+        Compare program document requirements to uploads on this application.
 
         Status per type (latest upload for that type): missing, pending_review,
-        resubmit_requested, approved.
+        resubmit_requested, approved, n_a (instructions_only).
+        Includes deadline / overdue flags for UI and coordinator review.
         """
-        program = application.program
-        required = list(program.required_document_types.all().order_by("name"))
-        if not required:
+        from exchange.models import ProgramDocumentRequirement
+
+        requirements = list(
+            ProgramDocumentRequirement.objects.filter(program=application.program)
+            .select_related("document_type")
+            .order_by("sort_order", "id")
+        )
+        if not requirements:
             return {
                 "complete": True,
                 "required_count": 0,
@@ -294,20 +385,53 @@ class DocumentService:
 
         items = []
         approved_count = 0
-        for dt in required:
-            latest = (
-                Document.objects.filter(application=application, type=dt)
-                .order_by("-created_at")
-                .first()
+        required_count = 0
+        for req in requirements:
+            dt = req.document_type
+            is_required = bool(getattr(req, "is_required", True))
+            if is_required:
+                required_count += 1
+
+            deadline = req.resolve_deadline()
+            overdue = req.is_overdue()
+            instructions = (
+                (getattr(req, "instructions_override", None) or "").strip()
+                or (dt.instructions or "")
             )
             entry = {
                 "document_type_id": dt.id,
+                "slug": dt.slug or "",
                 "name": dt.name,
                 "description": dt.description or "",
+                "submission_mode": dt.submission_mode,
+                "is_required": is_required,
                 "status": "missing",
                 "document_id": None,
                 "resubmission_reason": None,
+                "deadline": deadline.isoformat() if deadline else None,
+                "is_overdue": overdue,
+                "instructions": instructions,
+                "faq": dt.faq or "",
+                "has_template": bool(dt.template_file),
+                "allows_multiple": dt.allows_multiple,
+                "accepted_extensions": dt.accepted_extensions or "",
+                "upload_count": 0,
             }
+
+            if dt.submission_mode == DocumentType.SubmissionMode.INSTRUCTIONS_ONLY:
+                entry["status"] = "n_a"
+                if is_required:
+                    approved_count += 1
+                items.append(entry)
+                continue
+
+            uploads = list(
+                Document.objects.filter(application=application, type=dt).order_by(
+                    "-created_at"
+                )
+            )
+            entry["upload_count"] = len(uploads)
+            latest = uploads[0] if uploads else None
             if not latest:
                 items.append(entry)
                 continue
@@ -325,14 +449,15 @@ class DocumentService:
                 entry["resubmission_reason"] = open_req.reason
             elif latest.is_valid:
                 entry["status"] = "approved"
-                approved_count += 1
+                if is_required:
+                    approved_count += 1
             else:
                 entry["status"] = "pending_review"
             items.append(entry)
 
         return {
-            "complete": approved_count == len(required),
-            "required_count": len(required),
+            "complete": approved_count == required_count,
+            "required_count": required_count,
             "approved_count": approved_count,
             "items": items,
         }

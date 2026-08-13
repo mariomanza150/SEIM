@@ -3,6 +3,7 @@ Unit tests for application submission workflow.
 """
 
 from datetime import date
+from decimal import Decimal
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -10,7 +11,13 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from accounts.models import Role
+from accounts.models import (
+    AcademicLevel,
+    HomeAcademicProgram,
+    Role,
+    SchoolFaculty,
+    Unidad,
+)
 from exchange.models import (
     Application,
     ApplicationStatus,
@@ -19,6 +26,7 @@ from exchange.models import (
     TimelineEvent,
 )
 from exchange.services import ApplicationService
+from grades.models import GradeScale
 
 User = get_user_model()
 
@@ -38,14 +46,46 @@ class TestApplicationSubmissionWorkflow:
             username="student",
             email="student@university.edu",
             password="testpass123",
+            first_name="Student",
+            middle_name="Middle",
+            last_name="Example",
+            mothers_last_name="Family",
         )
 
-        # Set up student profile with eligibility data
+        school = SchoolFaculty.objects.create(name="Engineering")
+        home_program = HomeAcademicProgram.objects.create(
+            name="Computer Science",
+            school=school,
+        )
+        # Set up a complete student profile with eligibility data.
         student_profile = self.student.profile
+        student_profile.matricula = "1234567"
+        student_profile.academic_level = AcademicLevel.objects.create(
+            name="Undergraduate"
+        )
+        student_profile.school = school
+        student_profile.unidad = Unidad.objects.create(name="Ciudad Universitaria")
+        student_profile.home_academic_program = home_program
+        student_profile.gender = "prefer_not_to_say"
         student_profile.gpa = 3.5
         student_profile.language = "English"
         student_profile.language_level = "B2"
         student_profile.date_of_birth = date(2000, 1, 1)  # 25 years old
+        student_profile.birthplace = "Monterrey"
+        student_profile.postal_code = "64000"
+        student_profile.passport_number = "P123456"
+        student_profile.mobile_phone = "8112345678"
+        student_profile.secondary_email = "student@example.net"
+        student_profile.rfc = "STU000101ABC"
+        student_profile.grade_scale = GradeScale.objects.create(
+            name="US GPA 4.0 Scale",
+            code="US_GPA_4",
+            min_value=0.0,
+            max_value=4.0,
+            passing_value=2.0,
+        )
+        student_profile.credits_approved_percent = Decimal("70.00")
+        student_profile.ingress_date = date(2022, 8, 1)
         student_profile.save()
 
         self.coordinator = User.objects.create_user(
@@ -118,6 +158,44 @@ class TestApplicationSubmissionWorkflow:
         assert application.student == self.student
         assert application.program == self.program
         assert application.status == self.draft_status
+
+    def test_application_creation_is_blocked_when_profile_is_incomplete(self):
+        self.student.profile.secondary_email = ""
+        self.student.profile.save(update_fields=["secondary_email"])
+        refresh = RefreshToken.for_user(self.student)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+
+        response = self.client.post("/api/applications/", {"program": self.program.id})
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data["code"] == "profile_incomplete"
+        assert not Application.objects.filter(student=self.student).exists()
+
+    def test_application_creation_blocked_when_eligibility_incomplete(self):
+        profile = self.student.profile
+        profile.grade_scale = None
+        profile.credits_approved_percent = None
+        profile.ingress_date = None
+        profile.current_semester = None
+        profile.save(
+            update_fields=[
+                "grade_scale",
+                "credits_approved_percent",
+                "ingress_date",
+                "current_semester",
+            ]
+        )
+        assert profile.is_personal_academic_complete is True
+        assert profile.is_ready_to_apply is False
+
+        refresh = RefreshToken.for_user(self.student)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+
+        response = self.client.post("/api/applications/", {"program": self.program.id})
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data["code"] == "profile_incomplete"
+        assert not Application.objects.filter(student=self.student).exists()
 
     def test_application_submission_workflow(self):
         """Test the complete application submission workflow."""

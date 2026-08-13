@@ -136,6 +136,90 @@ class TestVueProfile:
         page.wait_for_load_state("networkidle")
         expect(page.locator(".alert-danger")).to_have_count(0, timeout=3000)
 
+    def test_profile_eligibility_sections_and_save(self, page: Page):
+        """Academic + Eligibility sections are present; semester/credits save without error."""
+        _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
+        page.goto(f"{VUE_BASE_URL}/profile")
+        page.wait_for_load_state("networkidle")
+        expect(page.locator("[data-testid=profile-academic-section]")).to_be_visible(
+            timeout=5000
+        )
+        expect(page.locator("[data-testid=profile-eligibility-section]")).to_be_visible()
+        page.locator("[data-testid=profile-current-semester]").fill("6")
+        page.locator("[data-testid=profile-credits-percent]").fill("75")
+        page.get_by_role("button", name="Save profile").click()
+        page.wait_for_load_state("networkidle")
+        expect(page.locator(".alert-danger")).to_have_count(0, timeout=3000)
+
+
+@pytest.mark.e2e_playwright
+@pytest.mark.vue
+@pytest.mark.nondestructive
+class TestVueHostCascade:
+    """Host destination cascade on new application."""
+
+    def test_host_destination_cascade_on_new_application(self, page: Page):
+        """Select a program with hosts, then institution → school → academic program."""
+        _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
+        page.goto(f"{VUE_BASE_URL}/applications/new")
+        page.wait_for_load_state("networkidle")
+        program_select = page.locator("[data-testid=program-select]")
+        expect(program_select).to_be_visible(timeout=5000)
+        options = program_select.locator("option")
+        if options.count() < 2:
+            pytest.skip("No programs available")
+
+        vue_e2e_option = program_select.locator("option", has_text="Vue E2E Test Program")
+        if vue_e2e_option.count() > 0:
+            program_select.select_option(label="Vue E2E Test Program")
+        else:
+            program_select.select_option(index=1)
+
+        host_select = page.locator("[data-testid=host-institution-select]")
+        try:
+            host_select.wait_for(state="visible", timeout=8000)
+        except Exception:
+            pytest.skip("Host destination section not visible")
+
+        host_options = host_select.locator("option")
+        if host_options.count() < 2:
+            found_hosts = False
+            for i in range(1, options.count()):
+                program_select.select_option(index=i)
+                page.wait_for_timeout(1500)
+                if host_select.locator("option").count() >= 2:
+                    found_hosts = True
+                    break
+            if not found_hosts:
+                pytest.skip("No host institution options (unseeded env)")
+
+        host_select.select_option(index=1)
+        school_select = page.locator("[data-testid=host-school-select]")
+        try:
+            page.wait_for_function(
+                """() => {
+                  const el = document.querySelector('[data-testid=host-school-select]');
+                  return el && !el.disabled && el.querySelectorAll('option').length >= 2;
+                }""",
+                timeout=8000,
+            )
+        except Exception:
+            pytest.skip("No host school options")
+        school_select.select_option(index=1)
+        academic_select = page.locator("[data-testid=host-academic-program-select]")
+        try:
+            page.wait_for_function(
+                """() => {
+                  const el = document.querySelector('[data-testid=host-academic-program-select]');
+                  return el && !el.disabled && el.querySelectorAll('option').length >= 2;
+                }""",
+                timeout=8000,
+            )
+        except Exception:
+            pytest.skip("No host academic program options")
+        academic_select.select_option(index=1)
+        expect(page.locator("[data-testid=subjects-section]")).to_be_visible(timeout=8000)
+
 
 @pytest.mark.e2e_playwright
 @pytest.mark.vue

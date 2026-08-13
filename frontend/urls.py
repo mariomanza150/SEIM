@@ -21,7 +21,11 @@ urlpatterns = [
         RedirectView.as_view(url="/seim/login/", permanent=False),
         name="login",
     ),
-    path("register/", views.register_view, name="register"),
+    path(
+        "register/",
+        RedirectView.as_view(url="/seim/register/", permanent=False),
+        name="register",
+    ),
     path("logout/", views.logout_view, name="logout"),
     path("password-reset/", views.password_reset_view, name="password_reset"),
     # Application pages

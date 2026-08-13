@@ -317,7 +317,8 @@ onMounted(async () => {
 pre {
   white-space: pre-wrap;
   word-break: break-word;
-  background: rgba(0, 0, 0, 0.03);
+  background: var(--bg-tertiary, rgba(0, 0, 0, 0.03));
+  color: var(--seim-surface-text);
   padding: 0.75rem;
   border-radius: 0.5rem;
 }

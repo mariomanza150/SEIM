@@ -227,10 +227,18 @@
                 <input v-model.number="editor.form.min_gpa" class="form-control" type="number" step="0.01" min="0" />
               </div>
               <div class="col-md-4">
+                <label class="form-label">{{ t('adminPrograms.fields.minSemester') }}</label>
+                <input v-model.number="editor.form.min_semester" class="form-control" type="number" min="1" step="1" />
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">{{ t('adminPrograms.fields.minCredits') }}</label>
+                <input v-model.number="editor.form.min_credits_approved_percent" class="form-control" type="number" min="0" max="100" step="0.01" />
+              </div>
+              <div class="col-md-6">
                 <label class="form-label">{{ t('adminPrograms.fields.requiredLanguage') }}</label>
                 <input v-model="editor.form.required_language" class="form-control" type="text" />
               </div>
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <label class="form-label">{{ t('adminPrograms.fields.minLanguageLevel') }}</label>
                 <select v-model="editor.form.min_language_level" class="form-select">
                   <option value="">{{ t('adminCommon.notSet') }}</option>
@@ -344,6 +352,8 @@ function emptyProgramForm() {
     start_date: null,
     end_date: null,
     min_gpa: null,
+    min_semester: null,
+    min_credits_approved_percent: null,
     required_language: '',
     min_language_level: '',
     min_age: null,
@@ -428,6 +438,8 @@ function openEdit(program) {
       start_date: program.start_date || null,
       end_date: program.end_date || null,
       min_gpa: program.min_gpa ?? null,
+      min_semester: program.min_semester ?? null,
+      min_credits_approved_percent: program.min_credits_approved_percent ?? null,
       required_language: program.required_language || '',
       min_language_level: program.min_language_level || '',
       min_age: program.min_age ?? null,
@@ -459,6 +471,8 @@ function cleanProgramPayload(form) {
   if (payload.workflow_version === '') payload.workflow_version = null
   if (payload.enrollment_capacity === '') payload.enrollment_capacity = null
   if (payload.min_gpa === '') payload.min_gpa = null
+  if (payload.min_semester === '') payload.min_semester = null
+  if (payload.min_credits_approved_percent === '') payload.min_credits_approved_percent = null
   if (payload.min_age === '') payload.min_age = null
   if (payload.max_age === '') payload.max_age = null
   return payload

@@ -13,12 +13,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
+from decimal import Decimal
 from typing import Any
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 
 from accounts.models import Profile, User
 from exchange.models import Application, Program
+
+# Bump when rule set, order, or payload shape changes.
+ELIGIBILITY_SCHEMA_VERSION = 7
 
 
 def _norm(s: str | None) -> str:
@@ -65,13 +69,66 @@ class EligibilityEvaluation:
         ]
 
 
-def _student_speaks_required_language(profile, required: str) -> bool:
+def _effective_semester(profile: Profile, application: Application | None) -> int | None:
+    if application is not None and application.semester_at_apply is not None:
+        return int(application.semester_at_apply)
+    return profile.get_effective_semester()
+
+
+def _effective_credits(
+    profile: Profile, application: Application | None
+) -> Decimal | None:
+    if application is not None and application.credits_percent_at_apply is not None:
+        return Decimal(str(application.credits_percent_at_apply))
+    if profile.credits_approved_percent is None:
+        return None
+    return Decimal(str(profile.credits_approved_percent))
+
+
+def _effective_gpa(profile: Profile, application: Application | None) -> float | None:
+    if application is not None and application.gpa_at_apply is not None:
+        return float(application.gpa_at_apply)
+    return profile.gpa
+
+
+def _effective_grade_scale(profile: Profile, application: Application | None):
+    if application is not None and application.grade_scale_at_apply_id:
+        return application.grade_scale_at_apply
+    return profile.grade_scale
+
+
+def _effective_language(profile: Profile, application: Application | None) -> str | None:
+    if application is not None and application.language_at_apply is not None:
+        return application.language_at_apply
+    return profile.language
+
+
+def _effective_language_level(
+    profile: Profile, application: Application | None
+) -> str | None:
+    if application is not None and application.language_level_at_apply is not None:
+        return application.language_level_at_apply
+    return profile.language_level
+
+
+def _effective_additional_languages(
+    profile: Profile, application: Application | None
+) -> list:
+    if application is not None and application.additional_languages_at_apply is not None:
+        return application.additional_languages_at_apply or []
+    return profile.additional_languages or []
+
+
+def _student_speaks_required_language(
+    profile, required: str, application: Application | None = None
+) -> bool:
     if not (required or "").strip():
         return True
     req = _norm(required)
-    if profile.language and _norm(profile.language) == req:
+    language = _effective_language(profile, application)
+    if language and _norm(language) == req:
         return True
-    for row in profile.additional_languages or []:
+    for row in _effective_additional_languages(profile, application):
         if not isinstance(row, dict):
             continue
         name = (row.get("name") or "").strip()
@@ -80,7 +137,9 @@ def _student_speaks_required_language(profile, required: str) -> bool:
     return False
 
 
-def _effective_language_level_for_program(profile, program: Program) -> str | None:
+def _effective_language_level_for_program(
+    profile, program: Program, application: Application | None = None
+) -> str | None:
     """
     CEFR level used when comparing to ``program.min_language_level``.
 
@@ -90,9 +149,11 @@ def _effective_language_level_for_program(profile, program: Program) -> str | No
     """
     req = (program.required_language or "").strip()
     if req:
-        if profile.language and _norm(profile.language) == _norm(req):
-            return (profile.language_level or "").strip() or None
-        for row in profile.additional_languages or []:
+        language = _effective_language(profile, application)
+        if language and _norm(language) == _norm(req):
+            level = _effective_language_level(profile, application)
+            return (level or "").strip() or None
+        for row in _effective_additional_languages(profile, application):
             if not isinstance(row, dict):
                 continue
             name = (row.get("name") or "").strip()
@@ -102,7 +163,8 @@ def _effective_language_level_for_program(profile, program: Program) -> str | No
             if lv is None or lv == "":
                 return None
             return str(lv).strip()
-    return (profile.language_level or "").strip() or None
+    level = _effective_language_level(profile, application)
+    return (level or "").strip() or None
 
 
 def _rule_application_window(
@@ -121,14 +183,74 @@ def _rule_application_window(
     )
 
 
+def _rule_min_semester(
+    profile, program: Program, application, _student: User
+) -> RuleOutcome:
+    min_sem = getattr(program, "min_semester", None)
+    if not min_sem:
+        return RuleOutcome("min_semester", passed=True, skipped=True)
+    semester = _effective_semester(profile, application)
+    if semester is None:
+        return RuleOutcome(
+            "min_semester",
+            passed=False,
+            message=(
+                f"Semester not specified. Required: semester {min_sem}+ "
+                "(set ingress date or current semester on your profile)."
+            ),
+        )
+    if semester < min_sem:
+        return RuleOutcome(
+            "min_semester",
+            passed=False,
+            message=(
+                f"Semester below program minimum. Your semester: {semester}, "
+                f"Required: {min_sem}+"
+            ),
+        )
+    return RuleOutcome("min_semester", passed=True)
+
+
+def _rule_min_credits(
+    profile, program: Program, application, _student: User
+) -> RuleOutcome:
+    min_credits = getattr(program, "min_credits_approved_percent", None)
+    if min_credits is None:
+        return RuleOutcome("min_credits", passed=True, skipped=True)
+    credits = _effective_credits(profile, application)
+    if credits is None:
+        return RuleOutcome(
+            "min_credits",
+            passed=False,
+            message=(
+                f"Credits approved % not specified. Required: "
+                f"{float(min_credits):.2f}%+"
+            ),
+        )
+    if credits < Decimal(str(min_credits)):
+        return RuleOutcome(
+            "min_credits",
+            passed=False,
+            message=(
+                f"Credits approved % below program minimum. Your credits: "
+                f"{float(credits):.2f}%, Required: {float(min_credits):.2f}%+"
+            ),
+        )
+    return RuleOutcome("min_credits", passed=True)
+
+
 def _rule_gpa(profile, program: Program, application, _student: User) -> RuleOutcome:
     if not (hasattr(program, "min_gpa") and program.min_gpa):
         return RuleOutcome("gpa", passed=True, skipped=True)
+    student_gpa = _effective_gpa(profile, application)
     # Legacy parity: if student has no GPA value, the minimum-GPA rule is not applied.
-    if profile.gpa is None:
+    if student_gpa is None:
         return RuleOutcome("gpa", passed=True, skipped=True)
-    if profile.grade_scale:
-        student_gpa_equivalent = profile.get_gpa_equivalent()
+    grade_scale = _effective_grade_scale(profile, application)
+    if grade_scale:
+        student_gpa_equivalent = profile.get_gpa_equivalent(
+            gpa=student_gpa, grade_scale=grade_scale
+        )
         if student_gpa_equivalent < program.min_gpa:
             return RuleOutcome(
                 "gpa",
@@ -138,12 +260,12 @@ def _rule_gpa(profile, program: Program, application, _student: User) -> RuleOut
                     f"Required: {program.min_gpa:.2f}"
                 ),
             )
-    elif profile.gpa < program.min_gpa:
+    elif student_gpa < program.min_gpa:
         return RuleOutcome(
             "gpa",
             passed=False,
             message=(
-                f"GPA below program minimum. Your GPA: {profile.gpa:.2f}, "
+                f"GPA below program minimum. Your GPA: {student_gpa:.2f}, "
                 f"Required: {program.min_gpa:.2f}"
             ),
         )
@@ -155,14 +277,17 @@ def _rule_required_language(
 ) -> RuleOutcome:
     if not (program.required_language or "").strip():
         return RuleOutcome("required_language", passed=True, skipped=True)
-    if _student_speaks_required_language(profile, program.required_language):
+    if _student_speaks_required_language(
+        profile, program.required_language, application=application
+    ):
         return RuleOutcome("required_language", passed=True)
+    language = _effective_language(profile, application)
     return RuleOutcome(
         "required_language",
         passed=False,
         message=(
             f"Language requirement not met. Required: {program.required_language}, "
-            f"Your language: {profile.language or 'Not specified'}"
+            f"Your language: {language or 'Not specified'}"
         ),
     )
 
@@ -172,7 +297,7 @@ def _rule_language_proficiency(
 ) -> RuleOutcome:
     if not (program.min_language_level or "").strip():
         return RuleOutcome("language_proficiency", passed=True, skipped=True)
-    level = _effective_language_level_for_program(profile, program)
+    level = _effective_language_level_for_program(profile, program, application)
     required = program.min_language_level
     student_rank = CEFR_ORDER.get(level or "", 0)
     required_rank = CEFR_ORDER.get(required, 0)
@@ -223,7 +348,12 @@ def _rule_required_documents(
     _profile, program: Program, application: Application | None, _student: User
 ) -> RuleOutcome:
     """Program required document types must be approved on the given application (submit parity)."""
-    if not program.required_document_types.exists():
+    from exchange.models import ProgramDocumentRequirement
+
+    has_required = ProgramDocumentRequirement.objects.filter(
+        program=program, is_required=True
+    ).exists()
+    if not has_required and not program.required_document_types.exists():
         return RuleOutcome("required_documents", passed=True, skipped=True)
     if application is None:
         return RuleOutcome("required_documents", passed=True, skipped=True)
@@ -317,6 +447,8 @@ def evaluate_eligibility(
 
     runners: list = [
         _rule_application_window,
+        _rule_min_semester,
+        _rule_min_credits,
         _rule_gpa,
         _rule_required_language,
         _rule_language_proficiency,
@@ -345,6 +477,10 @@ def checks_passed_labels(program: Program) -> list[str | None]:
     labels: list[str | None] = [
         "Application window"
         if (program.application_open_date or program.application_deadline)
+        else None,
+        "Semester requirement" if getattr(program, "min_semester", None) else None,
+        "Credits requirement"
+        if getattr(program, "min_credits_approved_percent", None) is not None
         else None,
         "GPA requirement" if program.min_gpa else None,
         "Language requirement" if program.required_language else None,

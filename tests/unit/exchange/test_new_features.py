@@ -392,7 +392,7 @@ class TestEnhancedEligibilityCriteria:
         assert response.status_code == status.HTTP_200_OK
         assert response.data["eligible"] is False
         assert "Required documents" in response.data["message"]
-        assert response.data.get("schema_version") == 6
+        assert response.data.get("schema_version") == 7
         rule_ids = [r["id"] for r in response.data["rules"]]
         assert "required_documents" in rule_ids
 
@@ -421,14 +421,27 @@ class TestNotificationLinks:
             end_date=date.today() + timedelta(days=180),
             is_active=True,
         )
+        from tests.unit.exchange.host_destination_helpers import (
+            apply_host_destination,
+            attach_host_destination,
+        )
+
+        host_tree = attach_host_destination(program)
 
         draft_status = ApplicationStatus.objects.get_or_create(
             name="draft", defaults={"order": 1}
         )[0]
+        ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
+        ApplicationStatus.objects.get_or_create(
+            name="under_review", defaults={"order": 3}
+        )
 
         application = Application.objects.create(
             program=program, student=student, status=draft_status
         )
+        apply_host_destination(application, host_tree)
 
         return {"student": student, "program": program, "application": application}
 

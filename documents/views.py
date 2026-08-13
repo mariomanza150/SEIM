@@ -63,6 +63,7 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
     queryset = DocumentType.objects.all()
     serializer_class = DocumentTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
+    lookup_field = "pk"
 
     @cache_api_response(timeout=600)
     def list(self, request, *args, **kwargs):
@@ -71,6 +72,30 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
     @cache_api_response(timeout=600)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+    @action(detail=True, methods=["get"], url_path="download-template")
+    def download_template(self, request, pk=None):
+        """Download blank template file for a document type (if configured)."""
+        doc_type = self.get_object()
+        if not doc_type.template_file:
+            return Response(
+                {"detail": "No template file available for this document type."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        try:
+            handle = doc_type.template_file.open("rb")
+        except FileNotFoundError:
+            return Response(
+                {"detail": "Template file missing on server."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        filename = os.path.basename(doc_type.template_file.name)
+        content_type, _ = mimetypes.guess_type(filename)
+        response = FileResponse(
+            handle, content_type=content_type or "application/octet-stream"
+        )
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
 
 
 class DocumentViewSet(viewsets.ModelViewSet):

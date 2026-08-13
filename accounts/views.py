@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, status, viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -11,12 +11,28 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from core.permissions import CanManageRoles
 from core.throttling import BurstRateThrottle
 
-from .models import Permission, Profile, Role, UserSession, UserSettings
+from .models import (
+    AcademicLevel,
+    AllowedEmailDomain,
+    BankInstitution,
+    HomeAcademicProgram,
+    Permission,
+    Profile,
+    Role,
+    SchoolFaculty,
+    Unidad,
+    UserSession,
+    UserSettings,
+)
 from .serializers import (
+    AcademicLevelSerializer,
+    AllowedEmailDomainSerializer,
     AppearanceSettingsSerializer,
+    BankInstitutionSerializer,
     ChangePasswordSerializer,
     DeleteAccountResponseSerializer,
     EmailVerificationSerializer,
+    HomeAcademicProgramSerializer,
     LoginSerializer,
     LogoutResponseSerializer,
     LogoutSerializer,
@@ -31,6 +47,8 @@ from .serializers import (
     RegistrationSerializer,
     RevokeSessionResponseSerializer,
     RoleSerializer,
+    SchoolFacultySerializer,
+    UnidadSerializer,
     UserSerializer,
     UserSessionSerializer,
     UserSettingsSerializer,
@@ -59,6 +77,54 @@ class ProfileViewSet(viewsets.ModelViewSet):
         if self.request.user.is_staff:
             return Profile.objects.all()
         return Profile.objects.filter(user=self.request.user)
+
+
+class ActiveCatalogViewSet(viewsets.ReadOnlyModelViewSet):
+    """Authenticated, unpaginated access to active profile catalog entries."""
+
+    permission_classes = [IsAuthenticated]
+    pagination_class = None
+
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=True)
+
+
+class AllowedEmailDomainViewSet(ActiveCatalogViewSet):
+    queryset = AllowedEmailDomain.objects.all()
+    serializer_class = AllowedEmailDomainSerializer
+    permission_classes = [AllowAny]
+
+
+class AcademicLevelViewSet(ActiveCatalogViewSet):
+    queryset = AcademicLevel.objects.all()
+    serializer_class = AcademicLevelSerializer
+
+
+class SchoolFacultyViewSet(ActiveCatalogViewSet):
+    queryset = SchoolFaculty.objects.all()
+    serializer_class = SchoolFacultySerializer
+
+
+class UnidadViewSet(ActiveCatalogViewSet):
+    queryset = Unidad.objects.all()
+    serializer_class = UnidadSerializer
+
+
+class BankInstitutionViewSet(ActiveCatalogViewSet):
+    queryset = BankInstitution.objects.all()
+    serializer_class = BankInstitutionSerializer
+
+
+class HomeAcademicProgramViewSet(ActiveCatalogViewSet):
+    queryset = HomeAcademicProgram.objects.select_related("school")
+    serializer_class = HomeAcademicProgramSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        school_id = self.request.query_params.get("school")
+        if school_id:
+            queryset = queryset.filter(school_id=school_id)
+        return queryset
 
 
 class RegistrationView(generics.CreateAPIView):
@@ -584,17 +650,9 @@ class ResendVerificationEmailView(APIView):
 
         # Generate new token and send email
         from accounts.services import AccountService
-        from notifications.services import NotificationService
 
         token = AccountService.generate_email_verification_token(user)
-
-        NotificationService.send_notification(
-            recipient=user,
-            title="Email Verification Required",
-            message=f"Please verify your email using this token: {token}",
-            notification_type="email",
-            transactional_route_key="account_security_email",
-        )
+        AccountService.send_verification_email(user, token)
 
         return Response(
             {"message": "Verification email sent successfully."},

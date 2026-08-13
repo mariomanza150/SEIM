@@ -4,8 +4,12 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import User
-from exchange.eligibility_rules import checks_passed_labels, evaluate_eligibility
+from accounts.models import Profile, User
+from exchange.eligibility_rules import (
+    ELIGIBILITY_SCHEMA_VERSION,
+    checks_passed_labels,
+    evaluate_eligibility,
+)
 from notifications.services import NotificationService
 
 from .models import (
@@ -60,8 +64,49 @@ class ApplicationService:
             "message": "All eligibility requirements met",
             "checks_passed": checks_passed_labels(program),
             "rules": ev.rules_as_dicts(),
-            "schema_version": 4,
+            "schema_version": ELIGIBILITY_SCHEMA_VERSION,
         }
+
+    @staticmethod
+    def capture_eligibility_snapshot(
+        application: Application,
+        profile: Profile | None = None,
+        *,
+        semester_override: int | None = None,
+    ) -> Application:
+        """Snapshot profile eligibility fields onto the application at apply time."""
+        if profile is None:
+            profile = Profile.objects.filter(user_id=application.student_id).first()
+        if profile is None:
+            return application
+
+        semester = (
+            semester_override
+            if semester_override is not None
+            else profile.get_effective_semester()
+        )
+        application.semester_at_apply = semester
+        application.gpa_at_apply = profile.gpa
+        application.grade_scale_at_apply = profile.grade_scale
+        application.credits_percent_at_apply = profile.credits_approved_percent
+        application.language_at_apply = profile.language
+        application.language_level_at_apply = profile.language_level
+        application.additional_languages_at_apply = list(
+            profile.additional_languages or []
+        )
+        application.save(
+            update_fields=[
+                "semester_at_apply",
+                "gpa_at_apply",
+                "grade_scale_at_apply",
+                "credits_percent_at_apply",
+                "language_at_apply",
+                "language_level_at_apply",
+                "additional_languages_at_apply",
+                "updated_at",
+            ]
+        )
+        return application
 
     @staticmethod
     def check_application_window(program: Program, on_date=None) -> dict[str, Any]:
@@ -132,6 +177,20 @@ class ApplicationService:
         """Submit an application (draft -> submitted) with eligibility and single active check."""
         if application.status.name != "draft":
             raise ValueError("Only draft applications can be submitted.")
+        from exchange.models import validate_application_host_destination
+
+        host_errors = validate_application_host_destination(
+            application, require_complete=True
+        )
+        if host_errors:
+            messages = [
+                str(msg) for msg in host_errors.values() if msg
+            ]
+            raise ValueError(
+                "Host destination incomplete or inconsistent:\n- "
+                + "\n- ".join(messages)
+            )
+        ApplicationService.capture_eligibility_snapshot(application)
         ApplicationService.check_eligibility(
             application.student,
             application.program,
@@ -278,6 +337,17 @@ class ApplicationService:
             raise ValueError("You do not have permission to perform this transition.")
 
         if new_status_name == "submitted":
+            from exchange.models import validate_application_host_destination
+
+            host_errors = validate_application_host_destination(
+                application, require_complete=True
+            )
+            if host_errors:
+                messages = [str(msg) for msg in host_errors.values() if msg]
+                raise ValueError(
+                    "Host destination incomplete or inconsistent:\n- "
+                    + "\n- ".join(messages)
+                )
             ApplicationService.check_eligibility(
                 application.student,
                 application.program,

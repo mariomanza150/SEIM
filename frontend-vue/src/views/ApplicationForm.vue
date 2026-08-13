@@ -42,6 +42,109 @@
           <div class="card">
             <div class="card-body">
               <form data-testid="application-form" @submit.prevent="handleSubmit">
+                <div
+                  v-if="eligibilityRequired || !isEditMode"
+                  class="card border border-warning mb-4"
+                  data-testid="application-eligibility-section"
+                >
+                  <div class="card-header bg-warning-subtle">
+                    <h5 class="mb-0">
+                      <i class="bi bi-mortarboard me-2"></i>{{ t('applicationFormPage.profileEligibilityTitle') }}
+                    </h5>
+                  </div>
+                  <div class="card-body">
+                    <p class="text-muted small">{{ t('applicationFormPage.profileEligibilityIntro') }}</p>
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label for="application-profile-ingress" class="form-label">{{ t('profilePage.ingressDate') }} *</label>
+                        <input
+                          id="application-profile-ingress"
+                          v-model="profileEligibility.ingress_date"
+                          type="date"
+                          class="form-control"
+                          required
+                        >
+                      </div>
+                      <div class="col-md-6">
+                        <label for="application-profile-semester" class="form-label">{{ t('profilePage.currentSemester') }}</label>
+                        <input
+                          id="application-profile-semester"
+                          v-model.number="profileEligibility.current_semester"
+                          type="number"
+                          min="1"
+                          step="1"
+                          class="form-control"
+                          :placeholder="profileEligibility.computed_semester != null
+                            ? t('profilePage.computedSemesterPlaceholder', { n: profileEligibility.computed_semester })
+                            : t('profilePage.semesterOverridePlaceholder')"
+                        >
+                      </div>
+                      <div class="col-md-6">
+                        <label for="application-profile-credits" class="form-label">{{ t('profilePage.creditsApprovedPercent') }} *</label>
+                        <input
+                          id="application-profile-credits"
+                          v-model.number="profileEligibility.credits_approved_percent"
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.01"
+                          class="form-control"
+                          required
+                        >
+                      </div>
+                      <div class="col-md-6">
+                        <label for="application-profile-gpa" class="form-label">{{ t('profilePage.gpaLabel') }} *</label>
+                        <input
+                          id="application-profile-gpa"
+                          v-model.number="profileEligibility.gpa"
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          class="form-control"
+                          required
+                        >
+                      </div>
+                      <div class="col-md-6">
+                        <label for="application-profile-grade-scale" class="form-label">{{ t('profilePage.gradeScale') }} *</label>
+                        <select
+                          id="application-profile-grade-scale"
+                          v-model="profileEligibility.grade_scale"
+                          class="form-select"
+                          required
+                        >
+                          <option value="">{{ t('profilePage.selectOption') }}</option>
+                          <option v-for="scale in gradeScales" :key="scale.id" :value="scale.id">{{ scale.name }}</option>
+                        </select>
+                      </div>
+                      <div class="col-md-6">
+                        <label for="application-profile-language" class="form-label">{{ t('profilePage.primaryLanguage') }} *</label>
+                        <input
+                          id="application-profile-language"
+                          v-model="profileEligibility.language"
+                          type="text"
+                          class="form-control"
+                          required
+                        >
+                      </div>
+                      <div class="col-md-6">
+                        <label for="application-profile-language-level" class="form-label">{{ t('profilePage.primaryLevelLabel') }} *</label>
+                        <select
+                          id="application-profile-language-level"
+                          v-model="profileEligibility.language_level"
+                          class="form-select"
+                          required
+                        >
+                          <option value="">{{ t('profilePage.selectOption') }}</option>
+                          <option v-for="level in ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']" :key="level" :value="level">{{ level }}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div v-if="profileEligibilityError" class="alert alert-danger mt-3 mb-0" role="alert">
+                      {{ profileEligibilityError }}
+                    </div>
+                  </div>
+                </div>
+
                 <!-- Program Selection -->
                 <div class="mb-4">
                   <label for="program" class="form-label">
@@ -281,6 +384,244 @@
                   <div v-else class="form-text">
                     {{ isEditMode ? t('applicationFormPage.programHelpEdit') : t('applicationFormPage.programHelpNew') }}
                   </div>
+                </div>
+
+                <!-- Host destination cascade -->
+                <div
+                  v-if="form.program"
+                  class="mb-4"
+                  data-testid="host-destination-section"
+                >
+                  <h5 class="mb-3">
+                    <i class="bi bi-geo-alt me-2"></i>{{ t('applicationFormPage.hostDestinationTitle') }}
+                  </h5>
+                  <p class="text-muted small">{{ t('applicationFormPage.hostDestinationHelp') }}</p>
+                  <div class="row g-3">
+                    <div class="col-md-12">
+                      <label for="host-institution" class="form-label">
+                        {{ t('applicationFormPage.hostInstitutionLabel') }} <span class="text-danger">*</span>
+                      </label>
+                      <select
+                        id="host-institution"
+                        v-model="form.host_institution"
+                        class="form-select"
+                        :class="{ 'is-invalid': errors.host_institution }"
+                        :disabled="hostInstitutionsLoading || !hostInstitutions.length"
+                        data-testid="host-institution-select"
+                      >
+                        <option value="">{{ t('applicationFormPage.selectHostInstitution') }}</option>
+                        <option
+                          v-for="inst in hostInstitutions"
+                          :key="inst.id"
+                          :value="inst.id"
+                        >
+                          {{ inst.country ? `${inst.name} (${inst.country})` : inst.name }}
+                        </option>
+                      </select>
+                      <div v-if="hostInstitutionsLoading" class="form-text">
+                        {{ t('applicationFormPage.loadingHostInstitutions') }}
+                      </div>
+                      <div
+                        v-else-if="form.program && !hostInstitutions.length"
+                        class="form-text text-warning"
+                      >
+                        {{ t('applicationFormPage.noHostInstitutions') }}
+                      </div>
+                      <div v-if="errors.host_institution" class="invalid-feedback d-block">
+                        {{ flattenFieldMessages(errors.host_institution).join(' ') }}
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <label for="host-school" class="form-label">
+                        {{ t('applicationFormPage.hostSchoolLabel') }} <span class="text-danger">*</span>
+                      </label>
+                      <select
+                        id="host-school"
+                        v-model="form.host_school"
+                        class="form-select"
+                        :class="{ 'is-invalid': errors.host_school }"
+                        :disabled="!form.host_institution || hostSchoolsLoading || !hostSchools.length"
+                        data-testid="host-school-select"
+                      >
+                        <option value="">{{ t('applicationFormPage.selectHostSchool') }}</option>
+                        <option v-for="school in hostSchools" :key="school.id" :value="school.id">
+                          {{ school.name }}
+                        </option>
+                      </select>
+                      <div v-if="hostSchoolsLoading" class="form-text">
+                        {{ t('applicationFormPage.loadingHostSchools') }}
+                      </div>
+                      <div v-if="errors.host_school" class="invalid-feedback d-block">
+                        {{ flattenFieldMessages(errors.host_school).join(' ') }}
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <label for="host-academic-program" class="form-label">
+                        {{ t('applicationFormPage.hostAcademicProgramLabel') }} <span class="text-danger">*</span>
+                      </label>
+                      <select
+                        id="host-academic-program"
+                        v-model="form.host_academic_program"
+                        class="form-select"
+                        :class="{ 'is-invalid': errors.host_academic_program }"
+                        :disabled="!form.host_school || hostAcademicProgramsLoading || !hostAcademicPrograms.length"
+                        data-testid="host-academic-program-select"
+                      >
+                        <option value="">{{ t('applicationFormPage.selectHostAcademicProgram') }}</option>
+                        <option
+                          v-for="ap in hostAcademicPrograms"
+                          :key="ap.id"
+                          :value="ap.id"
+                        >
+                          {{ ap.code ? `${ap.name} (${ap.code})` : ap.name }}
+                        </option>
+                      </select>
+                      <div v-if="hostAcademicProgramsLoading" class="form-text">
+                        {{ t('applicationFormPage.loadingHostAcademicPrograms') }}
+                      </div>
+                      <div v-if="errors.host_academic_program" class="invalid-feedback d-block">
+                        {{ flattenFieldMessages(errors.host_academic_program).join(' ') }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Optional subjects (Asignaturas) — skip allowed -->
+                <div
+                  v-if="form.program && form.host_academic_program"
+                  class="mb-4"
+                  data-testid="subjects-section"
+                >
+                  <h5 class="mb-2">
+                    <i class="bi bi-journal-text me-2"></i>{{ t('applicationFormPage.subjectsTitle') }}
+                    <span class="badge text-bg-secondary ms-2">{{ t('applicationFormPage.subjectsOptionalBadge') }}</span>
+                  </h5>
+                  <p class="text-muted small mb-3">{{ t('applicationFormPage.subjectsHelp') }}</p>
+
+                  <div v-if="!isEditMode" class="alert alert-light border mb-0" data-testid="subjects-save-first">
+                    {{ t('applicationFormPage.subjectsSaveFirst') }}
+                  </div>
+
+                  <template v-else>
+                    <div v-if="hostSubjectsLoading" class="form-text mb-2">
+                      {{ t('applicationFormPage.loadingHostSubjects') }}
+                    </div>
+                    <div v-else-if="!hostSubjects.length" class="form-text mb-3">
+                      {{ t('applicationFormPage.noHostSubjects') }}
+                    </div>
+                    <div v-else class="row g-2 align-items-end mb-3">
+                      <div class="col-md-6">
+                        <label for="host-subject-pick" class="form-label">
+                          {{ t('applicationFormPage.hostSubjectLabel') }}
+                        </label>
+                        <select
+                          id="host-subject-pick"
+                          v-model="subjectDraft.host_subject"
+                          class="form-select"
+                          data-testid="host-subject-select"
+                        >
+                          <option value="">{{ t('applicationFormPage.selectHostSubject') }}</option>
+                          <option
+                            v-for="subj in availableHostSubjects"
+                            :key="subj.id"
+                            :value="subj.id"
+                          >
+                            {{ formatHostSubjectOption(subj) }}
+                          </option>
+                        </select>
+                      </div>
+                      <div class="col-md-3">
+                        <label for="home-course-code" class="form-label">
+                          {{ t('applicationFormPage.homeCourseCodeLabel') }}
+                        </label>
+                        <input
+                          id="home-course-code"
+                          v-model="subjectDraft.home_course_code"
+                          type="text"
+                          class="form-control"
+                          maxlength="64"
+                        >
+                      </div>
+                      <div class="col-md-3">
+                        <label for="home-course-label" class="form-label">
+                          {{ t('applicationFormPage.homeCourseLabelLabel') }}
+                        </label>
+                        <input
+                          id="home-course-label"
+                          v-model="subjectDraft.home_course_label"
+                          type="text"
+                          class="form-control"
+                          maxlength="255"
+                        >
+                      </div>
+                      <div class="col-12 d-flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          class="btn btn-outline-primary btn-sm"
+                          :disabled="!subjectDraft.host_subject || subjectSelectionSaving"
+                          data-testid="add-subject-selection"
+                          @click="addSubjectSelection"
+                        >
+                          <i class="bi bi-plus-lg me-1"></i>{{ t('applicationFormPage.addSubjectSelection') }}
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-outline-secondary btn-sm"
+                          :disabled="cartaDownloading"
+                          data-testid="download-carta-homologacion"
+                          @click="downloadCartaHomologacion"
+                        >
+                          <i class="bi bi-file-earmark-pdf me-1"></i>
+                          {{ t('applicationFormPage.downloadCartaHomologacion') }}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div v-if="subjectSelectionsLoading" class="form-text">
+                      {{ t('applicationFormPage.loadingSubjectSelections') }}
+                    </div>
+                    <div
+                      v-else-if="!subjectSelections.length"
+                      class="alert alert-light border small mb-0"
+                      data-testid="subjects-empty"
+                    >
+                      {{ t('applicationFormPage.subjectsEmpty') }}
+                    </div>
+                    <div v-else class="table-responsive">
+                      <table class="table table-sm align-middle" data-testid="subject-selections-table">
+                        <thead>
+                          <tr>
+                            <th>{{ t('applicationFormPage.hostSubjectLabel') }}</th>
+                            <th>{{ t('applicationFormPage.homeCourseCodeLabel') }}</th>
+                            <th>{{ t('applicationFormPage.homeCourseLabelLabel') }}</th>
+                            <th>{{ t('applicationFormPage.subjectCreditsLabel') }}</th>
+                            <th class="text-end">{{ t('applicationFormPage.subjectActionsLabel') }}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="sel in subjectSelections" :key="sel.id">
+                            <td>
+                              {{ formatHostSubjectOption(sel.host_subject_detail || sel.host_subject) }}
+                            </td>
+                            <td>{{ sel.home_course_code || '—' }}</td>
+                            <td>{{ sel.home_course_label || '—' }}</td>
+                            <td>{{ sel.credits ?? sel.host_subject_detail?.credits ?? '—' }}</td>
+                            <td class="text-end">
+                              <button
+                                type="button"
+                                class="btn btn-outline-danger btn-sm"
+                                :disabled="subjectSelectionSaving"
+                                :data-testid="`remove-subject-${sel.id}`"
+                                @click="removeSubjectSelection(sel)"
+                              >
+                                <i class="bi bi-trash"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </template>
                 </div>
 
                 <!-- Selected Program Info -->
@@ -730,6 +1071,19 @@ const isEditMode = computed(() => route.params.id !== undefined)
 const loading = ref(true)
 const loadingMessage = ref(t('applicationFormPage.loadingDefault'))
 const submitting = ref(false)
+const eligibilityRequired = ref(false)
+const profileEligibilityError = ref('')
+const gradeScales = ref([])
+const profileEligibility = ref({
+  gpa: null,
+  grade_scale: '',
+  language: '',
+  language_level: '',
+  ingress_date: '',
+  current_semester: null,
+  credits_approved_percent: null,
+  computed_semester: null,
+})
 
 const programs = ref([])
 const programsLoading = ref(false)
@@ -748,7 +1102,28 @@ let suppressProgramFilterWatch = false
 
 const form = ref({
   program: '',
+  host_institution: '',
+  host_school: '',
+  host_academic_program: '',
 })
+const hostInstitutions = ref([])
+const hostSchools = ref([])
+const hostAcademicPrograms = ref([])
+const hostInstitutionsLoading = ref(false)
+const hostSchoolsLoading = ref(false)
+const hostAcademicProgramsLoading = ref(false)
+const hostSubjects = ref([])
+const hostSubjectsLoading = ref(false)
+const subjectSelections = ref([])
+const subjectSelectionsLoading = ref(false)
+const subjectSelectionSaving = ref(false)
+const cartaDownloading = ref(false)
+const subjectDraft = ref({
+  host_subject: '',
+  home_course_code: '',
+  home_course_label: '',
+})
+let suppressHostCascadeReset = false
 /** For ``visible_when`` rules: ``has_assigned_coordinator`` (program id comes from ``form.program``). */
 const applicationVisibilityContext = ref({
   has_assigned_coordinator: false,
@@ -789,6 +1164,100 @@ function flattenFieldMessages(raw) {
     return Object.values(raw).flatMap((v) => flattenFieldMessages(v))
   }
   return [String(raw)]
+}
+
+function catalogId(value) {
+  if (value && typeof value === 'object') return value.id ?? ''
+  return value ?? ''
+}
+
+function isIncompleteProfileError(data) {
+  const code = data?.code || data?.error_code || data?.detail?.code
+  if (['profile_incomplete', 'incomplete_profile', 'profile_not_ready'].includes(code)) return true
+  const message = flattenFieldMessages(data).join(' ').toLowerCase()
+  return message.includes('profile') && (
+    message.includes('incomplete') ||
+    message.includes('complete your') ||
+    message.includes('not ready')
+  )
+}
+
+async function loadProfileGate() {
+  try {
+    const [{ data: profile }, scalesResponse] = await Promise.all([
+      api.get('/api/accounts/profile/'),
+      api.get('/grades/scales/active/').catch(() => ({ data: [] })),
+    ])
+    const scales = scalesResponse.data?.results || scalesResponse.data
+    gradeScales.value = Array.isArray(scales) ? scales : []
+
+    if (profile.is_ready_to_apply === false) {
+      errorToast(t('applicationFormPage.profileRequiredToast'))
+      await router.replace({ name: 'Profile', query: { next: route.fullPath } })
+      return false
+    }
+
+    profileEligibility.value = {
+      gpa: profile.gpa ?? null,
+      grade_scale: catalogId(profile.grade_scale),
+      language: profile.language ?? '',
+      language_level: profile.language_level ?? '',
+      ingress_date: profile.ingress_date || '',
+      current_semester: profile.current_semester ?? null,
+      credits_approved_percent: profile.credits_approved_percent ?? null,
+      computed_semester: profile.computed_semester ?? null,
+    }
+    eligibilityRequired.value = !profileEligibility.value.gpa
+      || !profileEligibility.value.grade_scale
+      || !profileEligibility.value.language
+      || !profileEligibility.value.language_level
+      || !profileEligibility.value.ingress_date
+      || profileEligibility.value.credits_approved_percent == null
+      || profileEligibility.value.credits_approved_percent === ''
+    return true
+  } catch (err) {
+    console.error('Failed to check profile readiness:', err)
+    errorToast(t('applicationFormPage.profileLoadFailed'))
+    await router.replace({ name: 'Profile', query: { next: route.fullPath } })
+    return false
+  }
+}
+
+async function persistProfileEligibility() {
+  if (isEditMode.value && !eligibilityRequired.value) return true
+  profileEligibilityError.value = ''
+  const values = profileEligibility.value
+  if (
+    !values.gpa
+    || !values.grade_scale
+    || !values.language.trim()
+    || !values.language_level
+    || !values.ingress_date
+    || values.credits_approved_percent == null
+    || values.credits_approved_percent === ''
+  ) {
+    profileEligibilityError.value = t('applicationFormPage.profileEligibilityRequired')
+    return false
+  }
+  try {
+    await api.patch('/api/accounts/profile/', {
+      gpa: values.gpa,
+      grade_scale: values.grade_scale,
+      language: values.language.trim(),
+      language_level: values.language_level,
+      ingress_date: values.ingress_date,
+      current_semester: values.current_semester === '' ? null : values.current_semester,
+      credits_approved_percent: values.credits_approved_percent,
+    })
+    eligibilityRequired.value = false
+    await authStore.fetchUserProfile()
+    if (!isEditMode.value) await fetchPrograms()
+    return true
+  } catch (err) {
+    profileEligibilityError.value = flattenFieldMessages(err.response?.data).join(' ')
+      || t('applicationFormPage.profileEligibilitySaveFailed')
+    return false
+  }
 }
 
 function parseEligibilityApiMessage(message) {
@@ -1104,8 +1573,8 @@ function applyProgramContext() {
 }
 
 function buildProgramQueryParams() {
-  const base = { is_active: true, ordering: 'name' }
-  if (isEditMode.value) return base
+  const base = { is_active: true, ordering: 'name', eligible_for_me: true }
+  if (isEditMode.value) return { is_active: true, ordering: 'name' }
   const p = { ...base }
   const f = programFilters.value
   if (f.ordering) p.ordering = f.ordering
@@ -1301,20 +1770,212 @@ function applyApplicationVisibilityFromResponse(data) {
   }
 }
 
+async function fetchHostInstitutions(programId) {
+  hostInstitutions.value = []
+  hostSchools.value = []
+  hostAcademicPrograms.value = []
+  if (!programId) return
+  hostInstitutionsLoading.value = true
+  try {
+    const { data } = await api.get(`/api/programs/${programId}/host-institutions/`)
+    hostInstitutions.value = Array.isArray(data) ? data : (data.results || [])
+  } catch (err) {
+    console.error('Failed to load host institutions:', err)
+    hostInstitutions.value = []
+  } finally {
+    hostInstitutionsLoading.value = false
+  }
+}
+
+async function fetchHostSchools(institutionId) {
+  hostSchools.value = []
+  hostAcademicPrograms.value = []
+  if (!institutionId) return
+  hostSchoolsLoading.value = true
+  try {
+    const { data } = await api.get(`/api/host-institutions/${institutionId}/schools/`)
+    hostSchools.value = Array.isArray(data) ? data : (data.results || [])
+  } catch (err) {
+    console.error('Failed to load host schools:', err)
+    hostSchools.value = []
+  } finally {
+    hostSchoolsLoading.value = false
+  }
+}
+
+async function fetchHostAcademicPrograms(schoolId) {
+  hostAcademicPrograms.value = []
+  if (!schoolId) return
+  hostAcademicProgramsLoading.value = true
+  try {
+    const { data } = await api.get(`/api/schools/${schoolId}/academic-programs/`)
+    hostAcademicPrograms.value = Array.isArray(data) ? data : (data.results || [])
+  } catch (err) {
+    console.error('Failed to load host academic programs:', err)
+    hostAcademicPrograms.value = []
+  } finally {
+    hostAcademicProgramsLoading.value = false
+  }
+}
+
+const availableHostSubjects = computed(() => {
+  const selectedIds = new Set(subjectSelections.value.map((s) => String(s.host_subject)))
+  return hostSubjects.value.filter((s) => !selectedIds.has(String(s.id)))
+})
+
+function formatHostSubjectOption(subj) {
+  if (!subj || typeof subj !== 'object') return String(subj || '')
+  const code = subj.code ? `${subj.code} — ` : ''
+  const credits = subj.credits != null && subj.credits !== '' ? ` (${subj.credits})` : ''
+  return `${code}${subj.name || ''}${credits}`
+}
+
+async function fetchHostSubjects(academicProgramId) {
+  hostSubjects.value = []
+  if (!academicProgramId) return
+  hostSubjectsLoading.value = true
+  try {
+    const { data } = await api.get(`/api/academic-programs/${academicProgramId}/subjects/`)
+    hostSubjects.value = Array.isArray(data) ? data : (data.results || [])
+  } catch (err) {
+    console.error('Failed to load host subjects:', err)
+    hostSubjects.value = []
+  } finally {
+    hostSubjectsLoading.value = false
+  }
+}
+
+async function fetchSubjectSelections() {
+  subjectSelections.value = []
+  if (!isEditMode.value || !route.params.id) return
+  subjectSelectionsLoading.value = true
+  try {
+    const { data } = await api.get('/api/application-subject-selections/', {
+      params: { application: route.params.id },
+    })
+    subjectSelections.value = Array.isArray(data) ? data : (data.results || [])
+  } catch (err) {
+    console.error('Failed to load subject selections:', err)
+    subjectSelections.value = []
+  } finally {
+    subjectSelectionsLoading.value = false
+  }
+}
+
+async function addSubjectSelection() {
+  if (!isEditMode.value || !route.params.id || !subjectDraft.value.host_subject) return
+  subjectSelectionSaving.value = true
+  try {
+    const { data } = await api.post('/api/application-subject-selections/', {
+      application: route.params.id,
+      host_subject: subjectDraft.value.host_subject,
+      home_course_code: subjectDraft.value.home_course_code || '',
+      home_course_label: subjectDraft.value.home_course_label || '',
+    })
+    subjectSelections.value = [...subjectSelections.value, data]
+    subjectDraft.value = { host_subject: '', home_course_code: '', home_course_label: '' }
+    success(t('applicationFormPage.toastSubjectAdded'))
+  } catch (err) {
+    console.error('Failed to add subject selection:', err)
+    const data = err.response?.data
+    if (applyServerValidationErrors(data)) {
+      errorToast(t('applicationFormPage.toastFixErrors'))
+    } else {
+      errorToast(t('applicationFormPage.toastSubjectAddFailed'))
+    }
+  } finally {
+    subjectSelectionSaving.value = false
+  }
+}
+
+async function removeSubjectSelection(sel) {
+  if (!sel?.id) return
+  subjectSelectionSaving.value = true
+  try {
+    await api.delete(`/api/application-subject-selections/${sel.id}/`)
+    subjectSelections.value = subjectSelections.value.filter((s) => s.id !== sel.id)
+    success(t('applicationFormPage.toastSubjectRemoved'))
+  } catch (err) {
+    console.error('Failed to remove subject selection:', err)
+    errorToast(t('applicationFormPage.toastSubjectRemoveFailed'))
+  } finally {
+    subjectSelectionSaving.value = false
+  }
+}
+
+async function downloadCartaHomologacion() {
+  if (!isEditMode.value || !route.params.id) return
+  cartaDownloading.value = true
+  try {
+    const response = await api.get(`/api/applications/${route.params.id}/carta-homologacion/`, {
+      responseType: 'blob',
+    })
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `carta_homologacion_${route.params.id}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    if (!subjectSelections.value.length) {
+      success(t('applicationFormPage.toastCartaEmpty'))
+    } else {
+      success(t('applicationFormPage.toastCartaDownloaded'))
+    }
+  } catch (err) {
+    console.error('Failed to download Carta de Homologación:', err)
+    errorToast(t('applicationFormPage.toastCartaFailed'))
+  } finally {
+    cartaDownloading.value = false
+  }
+}
+
+function hostDestinationPayload() {
+  return {
+    host_institution: form.value.host_institution || null,
+    host_school: form.value.host_school || null,
+    host_academic_program: form.value.host_academic_program || null,
+  }
+}
+
 async function fetchApplication() {
   if (!isEditMode.value) return
 
   try {
     loadingMessage.value = t('applicationFormPage.loadingApplication')
     const response = await api.get(`/api/applications/${route.params.id}/`)
-    
+
+    suppressHostCascadeReset = true
     form.value = {
       program: response.data.program?.id || response.data.program,
+      host_institution: response.data.host_institution || '',
+      host_school: response.data.host_school || '',
+      host_academic_program: response.data.host_academic_program || '',
     }
     applyApplicationVisibilityFromResponse(response.data)
     pendingDynamicResponses.value = response.data.dynamic_form_submission?.responses || null
     applicationDynamicLayout.value = response.data.dynamic_form_layout || null
+
+    if (form.value.program) {
+      await fetchHostInstitutions(form.value.program)
+    }
+    if (form.value.host_institution) {
+      await fetchHostSchools(form.value.host_institution)
+    }
+    if (form.value.host_school) {
+      await fetchHostAcademicPrograms(form.value.host_school)
+    }
+    if (form.value.host_academic_program) {
+      await Promise.all([
+        fetchHostSubjects(form.value.host_academic_program),
+        fetchSubjectSelections(),
+      ])
+    }
+    suppressHostCascadeReset = false
   } catch (err) {
+    suppressHostCascadeReset = false
     console.error('Failed to fetch application:', err)
     errorToast(t('applicationFormPage.toastLoadApplication'))
     router.push({ name: 'Applications' })
@@ -1431,6 +2092,11 @@ async function handleSubmit() {
   errors.value = {}
   dynamicFormErrors.value = []
 
+  if (!(await persistProfileEligibility())) {
+    errorToast(t('applicationFormPage.toastFixErrors'))
+    return
+  }
+
   if (hasDynamicFields.value) {
     if (isMultiStep.value && !isLastStep.value) {
       if (!validateDynamicForm(visibleDynamicFields.value)) {
@@ -1450,6 +2116,7 @@ async function handleSubmit() {
     const fieldsForPayload = useMulti ? visibleDynamicFields.value : allVisibleDynamicFields.value
     const data = {
       program: form.value.program,
+      ...hostDestinationPayload(),
       ...buildDynamicPayload(fieldsForPayload),
     }
     if (useMulti && currentStepKey.value) {
@@ -1489,6 +2156,11 @@ async function handleSubmit() {
   } catch (err) {
     console.error('Failed to save application:', err)
     const data = err.response?.data
+    if (!isEditMode.value && isIncompleteProfileError(data)) {
+      errorToast(t('applicationFormPage.profileRequiredToast'))
+      await router.replace({ name: 'Profile', query: { next: route.fullPath } })
+      return
+    }
     if (applyServerValidationErrors(data)) {
       errorToast(t('applicationFormPage.toastFixErrors'))
       await scrollToFirstValidationAlert()
@@ -1503,6 +2175,11 @@ async function handleSubmit() {
 async function saveDraft() {
   errors.value = {}
   dynamicFormErrors.value = []
+
+  if (!(await persistProfileEligibility())) {
+    errorToast(t('applicationFormPage.toastFixErrors'))
+    return
+  }
 
   if (hasDynamicFields.value && isMultiStep.value) {
     if (!validateDynamicForm(visibleDynamicFields.value)) {
@@ -1520,6 +2197,7 @@ async function saveDraft() {
     const fieldsForPayload = useMulti ? visibleDynamicFields.value : allVisibleDynamicFields.value
     const data = {
       program: form.value.program,
+      ...hostDestinationPayload(),
       ...buildDynamicPayload(fieldsForPayload),
     }
     if (useMulti && currentStepKey.value) {
@@ -1546,6 +2224,11 @@ async function saveDraft() {
   } catch (err) {
     console.error('Failed to save draft:', err)
     const data = err.response?.data
+    if (!isEditMode.value && isIncompleteProfileError(data)) {
+      errorToast(t('applicationFormPage.profileRequiredToast'))
+      await router.replace({ name: 'Profile', query: { next: route.fullPath } })
+      return
+    }
     if (applyServerValidationErrors(data)) {
       errorToast(t('applicationFormPage.toastFixErrors'))
       await scrollToFirstValidationAlert()
@@ -1582,6 +2265,11 @@ function calculateDuration(startDate, endDate) {
 
 onMounted(async () => {
   loading.value = true
+
+  if (!isEditMode.value && !(await loadProfileGate())) {
+    loading.value = false
+    return
+  }
 
   if (!isEditMode.value) {
     await loadPresets()
@@ -1648,6 +2336,52 @@ watch(
     pendingDynamicResponses.value = null
   }
 )
+
+watch(
+  () => form.value.program,
+  async (programId, prev) => {
+    if (suppressHostCascadeReset) return
+    if (String(programId || '') === String(prev || '')) return
+    form.value.host_institution = ''
+    form.value.host_school = ''
+    form.value.host_academic_program = ''
+    await fetchHostInstitutions(programId)
+  },
+)
+
+watch(
+  () => form.value.host_institution,
+  async (institutionId, prev) => {
+    if (suppressHostCascadeReset) return
+    if (String(institutionId || '') === String(prev || '')) return
+    form.value.host_school = ''
+    form.value.host_academic_program = ''
+    await fetchHostSchools(institutionId)
+  },
+)
+
+watch(
+  () => form.value.host_school,
+  async (schoolId, prev) => {
+    if (suppressHostCascadeReset) return
+    if (String(schoolId || '') === String(prev || '')) return
+    form.value.host_academic_program = ''
+    await fetchHostAcademicPrograms(schoolId)
+  },
+)
+
+watch(
+  () => form.value.host_academic_program,
+  async (academicProgramId, prev) => {
+    if (suppressHostCascadeReset) return
+    if (String(academicProgramId || '') === String(prev || '')) return
+    subjectDraft.value = { host_subject: '', home_course_code: '', home_course_label: '' }
+    await fetchHostSubjects(academicProgramId)
+    if (isEditMode.value) {
+      await fetchSubjectSelections()
+    }
+  },
+)
 </script>
 
 <style scoped>
@@ -1661,8 +2395,9 @@ watch(
 }
 
 .alert-info {
-  background-color: #e7f3ff;
-  border-color: #b3d7ff;
+  background-color: var(--info-light, rgba(13, 202, 240, 0.12));
+  border-color: rgba(13, 202, 240, 0.35);
+  color: var(--seim-surface-text);
 }
 
 .card {

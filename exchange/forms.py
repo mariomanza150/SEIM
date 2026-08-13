@@ -42,7 +42,21 @@ class ProgramForm(forms.ModelForm):
             attrs={"class": "form-control", "step": "0.01", "min": "0.0", "max": "4.0"}
         ),
         required=False,
-        help_text="Minimum GPA required for eligibility",
+        help_text="Minimum GPA required for eligibility (4.0-normalized)",
+    )
+
+    min_semester = forms.IntegerField(
+        widget=forms.NumberInput(attrs={"class": "form-control", "min": "1"}),
+        required=False,
+        help_text="Minimum academic semester required",
+    )
+
+    min_credits_approved_percent = forms.DecimalField(
+        widget=forms.NumberInput(
+            attrs={"class": "form-control", "step": "0.01", "min": "0", "max": "100"}
+        ),
+        required=False,
+        help_text="Minimum percentage of approved credits (0–100)",
     )
 
     required_language = forms.CharField(
@@ -122,6 +136,8 @@ class ProgramForm(forms.ModelForm):
             "is_active",
             "coordinators",
             "min_gpa",
+            "min_semester",
+            "min_credits_approved_percent",
             "required_language",
             "recurring",
             "application_form",

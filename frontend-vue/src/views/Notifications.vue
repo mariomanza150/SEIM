@@ -362,7 +362,7 @@ onUnmounted(() => {
 .list-group-item {
   border-radius: 0.5rem;
   margin-bottom: 0.5rem;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--seim-border-color, rgba(0, 0, 0, 0.08));
 }
 
 .list-group-item.seim-notification-unread {

@@ -133,6 +133,59 @@ describe('Auth Store', () => {
     })
   })
 
+  describe('register', () => {
+    it('posts signup payload and returns true on success', async () => {
+      axios.post.mockResolvedValueOnce({
+        data: { detail: 'Registration successful. Please check your email to verify your account.' },
+      })
+
+      const store = useAuthStore()
+      const result = await store.register({
+        email: 'new@test.com',
+        username: 'newuser',
+        password: 'Passw0rd!',
+        password2: 'Passw0rd!',
+        first_name: 'New',
+        middle_name: 'Middle',
+        last_name: 'User',
+        mothers_last_name: 'Family',
+      })
+
+      expect(result).toBe(true)
+      expect(store.error).toBeNull()
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/api/accounts/register/'),
+        {
+          email: 'new@test.com',
+          username: 'newuser',
+          password: 'Passw0rd!',
+          password2: 'Passw0rd!',
+          first_name: 'New',
+          middle_name: 'Middle',
+          last_name: 'User',
+          mothers_last_name: 'Family',
+        },
+      )
+    })
+
+    it('on failure sets error and returns false', async () => {
+      axios.post.mockRejectedValueOnce({
+        response: { data: { detail: 'Username already exists' } },
+      })
+
+      const store = useAuthStore()
+      const result = await store.register({
+        email: 'new@test.com',
+        username: 'taken',
+        password: 'Passw0rd!',
+        password2: 'Passw0rd!',
+      })
+
+      expect(result).toBe(false)
+      expect(store.error).toContain('Username')
+    })
+  })
+
   describe('refreshToken (refreshAccessToken)', () => {
     it('updates access token on success', async () => {
       localStorage.setItem('seim_refresh_token', 'rt')
@@ -183,6 +236,10 @@ describe('Auth Store', () => {
           full_name: 'Test User',
           role: 'student',
           username: 'user',
+          middle_name: 'Middle',
+          mothers_last_name: 'Family',
+          secondary_email: 'student@example.net',
+          is_ready_to_apply: true,
         },
       })
 
@@ -191,6 +248,10 @@ describe('Auth Store', () => {
       expect(user.email).toBe('u@test.com')
       expect(store.user?.full_name).toBe('Test User')
       expect(store.user?.role).toBe('student')
+      expect(store.user?.middle_name).toBe('Middle')
+      expect(store.user?.mothers_last_name).toBe('Family')
+      expect(store.user?.secondary_email).toBe('student@example.net')
+      expect(store.user?.is_ready_to_apply).toBe(true)
       expect(store.user?.is_staff).toBe(false)
       expect(store.user?.is_superuser).toBe(false)
     })
@@ -227,6 +288,33 @@ describe('Auth Store', () => {
 
       await expect(store.fetchUserProfile()).rejects.toThrow('Network error')
       expect(store.error).toBe('Failed to fetch user profile')
+    })
+  })
+
+  describe('verifyEmail', () => {
+    it('posts token and returns true on success', async () => {
+      const store = useAuthStore()
+      axios.post.mockResolvedValueOnce({ data: { detail: 'ok' } })
+
+      const ok = await store.verifyEmail('tok123')
+
+      expect(ok).toBe(true)
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/api/accounts/verify-email/'),
+        { token: 'tok123' },
+      )
+    })
+
+    it('sets error and returns false on failure', async () => {
+      const store = useAuthStore()
+      axios.post.mockRejectedValueOnce({
+        response: { data: { token: ['Invalid verification token.'] } },
+      })
+
+      const ok = await store.verifyEmail('bad')
+
+      expect(ok).toBe(false)
+      expect(store.error).toBeTruthy()
     })
   })
 

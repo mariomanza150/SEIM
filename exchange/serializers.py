@@ -5,12 +5,18 @@ from rest_framework import serializers
 from .models import (
     Application,
     ApplicationStatus,
+    ApplicationSubjectSelection,
     Comment,
     EligibilityRuleSet,
     ExchangeAgreement,
+    HostAcademicProgram,
+    HostInstitution,
+    HostSchool,
+    HostSubject,
     Program,
     SavedSearch,
     TimelineEvent,
+    validate_application_host_destination,
 )
 
 _TIMELINE_EVENT_FIELDS = tuple(f.name for f in TimelineEvent._meta.fields) + (
@@ -89,6 +95,142 @@ class EligibilityRuleSetSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+
+
+class HostInstitutionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HostInstitution
+        fields = (
+            "id",
+            "program",
+            "name",
+            "country",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class HostSchoolSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HostSchool
+        fields = (
+            "id",
+            "institution",
+            "name",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class HostAcademicProgramSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HostAcademicProgram
+        fields = (
+            "id",
+            "school",
+            "name",
+            "code",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class HostSubjectSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HostSubject
+        fields = (
+            "id",
+            "academic_program",
+            "code",
+            "name",
+            "credits",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class ApplicationSubjectSelectionSerializer(serializers.ModelSerializer):
+    host_subject_detail = HostSubjectSerializer(source="host_subject", read_only=True)
+
+    class Meta:
+        model = ApplicationSubjectSelection
+        fields = (
+            "id",
+            "application",
+            "host_subject",
+            "host_subject_detail",
+            "home_course_label",
+            "home_course_code",
+            "credits",
+            "notes",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "created_at", "updated_at", "host_subject_detail")
+
+    def validate(self, attrs):
+        application = attrs.get("application")
+        if application is None and self.instance is not None:
+            application = self.instance.application
+        host_subject = attrs.get("host_subject")
+        if host_subject is None and self.instance is not None:
+            host_subject = self.instance.host_subject
+
+        request = self.context.get("request")
+        if application is not None and request is not None:
+            user = request.user
+            is_staff = hasattr(user, "has_any_role") and user.has_any_role(
+                ["coordinator", "admin"]
+            )
+            if not is_staff and application.student_id != user.pk:
+                raise serializers.ValidationError(
+                    {
+                        "application": (
+                            "You can only manage subjects on your own application."
+                        )
+                    }
+                )
+            status_name = getattr(application.status, "name", None)
+            if not is_staff and status_name and status_name != "draft":
+                raise serializers.ValidationError(
+                    {
+                        "application": (
+                            "Subject selections can only be changed on draft applications."
+                        )
+                    }
+                )
+
+        if application is not None and host_subject is not None:
+            app_prog_id = application.host_academic_program_id
+            if app_prog_id and host_subject.academic_program_id != app_prog_id:
+                raise serializers.ValidationError(
+                    {
+                        "host_subject": (
+                            "Host subject must belong to the application's "
+                            "host academic program."
+                        )
+                    }
+                )
+            if not host_subject.is_active and self.instance is None:
+                raise serializers.ValidationError(
+                    {"host_subject": "This host subject is not active."}
+                )
+        return attrs
+
+    def create(self, validated_data):
+        if validated_data.get("credits") is None:
+            subject = validated_data.get("host_subject")
+            if subject is not None:
+                validated_data["credits"] = subject.credits
+        return super().create(validated_data)
 
 
 class ApplicationSerializer(serializers.ModelSerializer):
@@ -318,6 +460,46 @@ class ApplicationSerializer(serializers.ModelSerializer):
                     {"program": "Active application already exists for this program."}
                 )
 
+        # Cascade-validate host destination when any host field is present / being set.
+        host_keys = (
+            "host_institution",
+            "host_school",
+            "host_academic_program",
+        )
+        if any(k in data for k in host_keys) or any(
+            getattr(self.instance, f"{k}_id", None) for k in host_keys if self.instance
+        ):
+
+            class _HostProbe:
+                pass
+
+            probe = _HostProbe()
+            probe.program_id = (
+                program.id
+                if program is not None
+                else (self.instance.program_id if self.instance else None)
+            )
+            for key in host_keys:
+                if key in data:
+                    setattr(probe, key, data[key])
+                    setattr(
+                        probe,
+                        f"{key}_id",
+                        getattr(data[key], "id", None) if data[key] else None,
+                    )
+                elif self.instance is not None:
+                    setattr(probe, key, getattr(self.instance, key))
+                    setattr(probe, f"{key}_id", getattr(self.instance, f"{key}_id"))
+                else:
+                    setattr(probe, key, None)
+                    setattr(probe, f"{key}_id", None)
+
+            host_errors = validate_application_host_destination(
+                probe, require_complete=False
+            )
+            if host_errors:
+                raise serializers.ValidationError(host_errors)
+
         return data
 
     def validate_assigned_coordinator(self, value):
@@ -345,9 +527,14 @@ class ApplicationSerializer(serializers.ModelSerializer):
             validated_data["status"] = ApplicationStatus.objects.get(name="draft")
 
         dynamic_form_data = self._get_dynamic_form_data()
+        semester_override = validated_data.get("semester_at_apply")
 
         with transaction.atomic():
             application = super().create(validated_data)
+
+            ApplicationService.capture_eligibility_snapshot(
+                application, semester_override=semester_override
+            )
 
             if not application.assigned_coordinator_id:
                 default_coordinator = ApplicationService.get_default_coordinator(

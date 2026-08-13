@@ -14,12 +14,14 @@ class EligibilityCriteriaOverrides:
     Scalar eligibility criteria overrides applied on top of a Program.
 
     This is intentionally narrow: it overrides only the fields used by the
-    eligibility engine's scalar checks (window, GPA, language, age).
+    eligibility engine's scalar checks (window, semester, credits, GPA, language, age).
     """
 
     application_open_date: Any | None = None
     application_deadline: Any | None = None
     min_gpa: float | None = None
+    min_semester: int | None = None
+    min_credits_approved_percent: Any | None = None
     required_language: str | None = None
     min_language_level: str | None = None
     min_age: int | None = None
@@ -61,6 +63,22 @@ class ProgramEligibilityProxy:
     def min_gpa(self):
         return (
             self._ov.min_gpa if self._ov.min_gpa is not None else self._program.min_gpa
+        )
+
+    @property
+    def min_semester(self):
+        return (
+            self._ov.min_semester
+            if self._ov.min_semester is not None
+            else getattr(self._program, "min_semester", None)
+        )
+
+    @property
+    def min_credits_approved_percent(self):
+        return (
+            self._ov.min_credits_approved_percent
+            if self._ov.min_credits_approved_percent is not None
+            else getattr(self._program, "min_credits_approved_percent", None)
         )
 
     @property
@@ -119,6 +137,8 @@ def parse_ruleset_overrides(
         application_open_date=open_date,
         application_deadline=deadline_date,
         min_gpa=prog.get("min_gpa"),
+        min_semester=prog.get("min_semester"),
+        min_credits_approved_percent=prog.get("min_credits_approved_percent"),
         required_language=prog.get("required_language"),
         min_language_level=prog.get("min_language_level"),
         min_age=prog.get("min_age"),

@@ -33,8 +33,8 @@ App is at http://localhost:8001/ — SPA `/seim/`, admin `/admin/`, API docs `/a
   ```
 - API login is `POST /api/login/` and expects a `login` field (email or username), not `email`. Returns JWT `access`/`refresh`.
 
-### Demo data
-`manage.py seed_demo_readiness` seeds deterministic demo users, programs, exchange agreements, applications, documents, and notifications. Demo credentials: `admin@test.com` / `admin123`, `coordinator@test.com` / `coordinator123`, `student@test.com` / `student123`.
+### Demo seed
+`manage.py seed_demo_readiness` seeds deterministic demo users, programs, exchange agreements, applications, documents, and notifications without the removed `partner_reference_id` field. Use `manage.py create_initial_data` first (roles, statuses, document/notification types, mobility schemes, profile catalogs) plus a manually created superuser. Demo credentials: `admin@test.com` / `admin123`, `coordinator@test.com` / `coordinator123`, `student@test.com` / `student123`.
 
 ### Lint / test / build (standard commands live in the Makefile & CLAUDE.md)
 Run these against the venv (the Makefile targets assume Docker, so invoke tools directly here):

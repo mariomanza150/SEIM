@@ -12,6 +12,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from core.cache import CacheManager, cache_api_response
@@ -29,16 +30,25 @@ from .calendar_ics import (
     sign_calendar_subscribe_token,
     unsign_calendar_subscribe_token,
 )
-from .eligibility_rules import checks_passed_labels, evaluate_eligibility
+from .eligibility_rules import (
+    ELIGIBILITY_SCHEMA_VERSION,
+    checks_passed_labels,
+    evaluate_eligibility,
+)
 from .eligibility_rulesets import ProgramEligibilityProxy, parse_ruleset_overrides
 from .filters import ApplicationFilter, ExchangeAgreementFilter, ProgramFilter
 from .models import (
     SEAT_HOLDING_APPLICATION_STATUS_NAMES,
     Application,
     ApplicationStatus,
+    ApplicationSubjectSelection,
     Comment,
     EligibilityRuleSet,
     ExchangeAgreement,
+    HostAcademicProgram,
+    HostInstitution,
+    HostSchool,
+    HostSubject,
     Program,
     SavedSearch,
     TimelineEvent,
@@ -47,10 +57,15 @@ from .scholarship_scoring import scholarship_scores_export_response
 from .serializers import (
     ApplicationSerializer,
     ApplicationStatusSerializer,
+    ApplicationSubjectSelectionSerializer,
     CalendarEventSerializer,
     CommentSerializer,
     EligibilityRuleSetSerializer,
     ExchangeAgreementSerializer,
+    HostAcademicProgramSerializer,
+    HostInstitutionSerializer,
+    HostSchoolSerializer,
+    HostSubjectSerializer,
     ProgramCheckEligibilityResponseSerializer,
     ProgramSerializer,
     SavedSearchSerializer,
@@ -59,6 +74,27 @@ from .serializers import (
 from .services import ApplicationService
 
 # Create your views here.
+
+
+def _program_list_cache_key(view, request, *args, **kwargs):
+    """Scope program list cache by user + query when eligibility filtering is used."""
+    user = getattr(request, "user", None)
+    user_part = str(getattr(user, "pk", "anon"))
+    qs = request.META.get("QUERY_STRING", "")
+    digest = hashlib.md5(qs.encode(), usedforsecurity=False).hexdigest()[:12]
+    return CacheManager.get_cache_key(
+        "api_response", f"ProgramViewSet.list:{user_part}:{digest}"
+    )
+
+
+def _program_active_cache_key(view, request, *args, **kwargs):
+    user = getattr(request, "user", None)
+    user_part = str(getattr(user, "pk", "anon"))
+    qs = request.META.get("QUERY_STRING", "")
+    digest = hashlib.md5(qs.encode(), usedforsecurity=False).hexdigest()[:12]
+    return CacheManager.get_cache_key(
+        "api_response", f"ProgramViewSet.active:{user_part}:{digest}"
+    )
 
 
 def calendar_subscribe_ics(request):
@@ -296,9 +332,24 @@ class ProgramViewSet(viewsets.ModelViewSet):
     @cache_api_response(timeout=600, key_func=_program_active_cache_key)
     def active(self, request):
         """Get only active programs with caching."""
-        active_programs = self.get_queryset().filter(is_active=True)
+        active_programs = self.filter_queryset(
+            self.get_queryset().filter(is_active=True)
+        )
         serializer = self.get_serializer(active_programs, many=True)
         return Response(serializer.data)
+
+    @extend_schema(
+        summary="List host institutions for a mobility scheme",
+        responses={200: HostInstitutionSerializer(many=True)},
+    )
+    @action(detail=True, methods=["get"], url_path="host-institutions")
+    def host_institutions(self, request, pk=None):
+        """Active host universities under this program (mobility scheme)."""
+        program = self.get_object()
+        qs = HostInstitution.objects.filter(
+            program=program, is_active=True
+        ).order_by("name")
+        return Response(HostInstitutionSerializer(qs, many=True).data)
 
     @action(detail=True, methods=["post"])
     def clone(self, request, pk=None):
@@ -326,6 +377,8 @@ class ProgramViewSet(viewsets.ModelViewSet):
             end_date=original_program.end_date,
             is_active=False,  # Start as inactive, admin must activate
             min_gpa=original_program.min_gpa,
+            min_semester=original_program.min_semester,
+            min_credits_approved_percent=original_program.min_credits_approved_percent,
             required_language=original_program.required_language,
             min_language_level=original_program.min_language_level,
             min_age=original_program.min_age,
@@ -517,6 +570,12 @@ class ProgramViewSet(viewsets.ModelViewSet):
         program_snapshot = {
             "name": program.name,
             "min_gpa": program.min_gpa,
+            "min_semester": program.min_semester,
+            "min_credits_approved_percent": (
+                float(program.min_credits_approved_percent)
+                if program.min_credits_approved_percent is not None
+                else None
+            ),
             "required_language": program.required_language,
             "min_language_level": program.min_language_level,
             "min_age": program.min_age,
@@ -529,7 +588,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
                     "message": "All eligibility requirements met",
                     "checks_passed": checks_passed_labels(program),
                     "rules": ev.rules_as_dicts(),
-                    "schema_version": 6,
+                    "schema_version": ELIGIBILITY_SCHEMA_VERSION,
                     **({"ruleset": ruleset_snapshot} if ruleset_snapshot else {}),
                     **({"using_ruleset": True} if use_ruleset else {}),
                     **(
@@ -554,7 +613,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 "message": message,
                 "rules": ev.rules_as_dicts(),
                 "program": program_snapshot,
-                "schema_version": 6,
+                "schema_version": ELIGIBILITY_SCHEMA_VERSION,
                 **({"ruleset": ruleset_snapshot} if ruleset_snapshot else {}),
                 **({"using_ruleset": True} if use_ruleset else {}),
                 **(
@@ -616,6 +675,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             "student",  # ForeignKey
             "assigned_coordinator",
             "status",  # ForeignKey
+            "host_institution",
+            "host_school",
+            "host_academic_program",
         ).prefetch_related(
             "program__coordinators",
             "program__required_document_types",
@@ -637,7 +699,24 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             return base_qs.filter(student=user)
 
     def perform_create(self, serializer):
-        """Set student to current user on creation."""
+        """Set the student after enforcing apply-readiness (catalogs + eligibility)."""
+        from accounts.models import Profile
+
+        try:
+            profile = self.request.user.profile
+        except Profile.DoesNotExist:
+            profile = None
+        if not profile or not profile.is_ready_to_apply:
+            raise ValidationError(
+                {
+                    "detail": (
+                        "Complete your personal, academic, and eligibility profile "
+                        "(GPA, grade scale, language, credits, and semester) before "
+                        "starting an application."
+                    ),
+                    "code": "profile_incomplete",
+                }
+            )
         serializer.save(student=self.request.user)
 
     @cache_api_response(timeout=300, key_func=_application_list_cache_key)
@@ -702,6 +781,27 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             return Response({"status": "Application submitted successfully"})
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="solicitud-participacion",
+    )
+    def solicitud_participacion(self, request, pk=None):
+        """
+        Download system-generated Solicitud de Participación PDF
+        (profile + application + destination when host FKs exist).
+        """
+        from django.http import HttpResponse
+
+        from documents.pdf_generation import render_solicitud_participacion_pdf
+
+        application = self.get_object()
+        pdf_bytes = render_solicitud_participacion_pdf(application)
+        filename = f"solicitud_participacion_{application.id}.pdf"
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
 
     @action(detail=True, methods=["get"], url_path="workflow")
     def workflow_snapshot(self, request, pk=None):
@@ -774,6 +874,77 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+    @extend_schema(
+        summary="Download Carta de Homologación PDF",
+        responses={200: OpenApiResponse(description="PDF file")},
+    )
+    @action(detail=True, methods=["get"], url_path="carta-homologacion")
+    def carta_homologacion(self, request, pk=None):
+        """
+        Generate and download Carta de Homologación from subject selections.
+
+        Empty selections still return a PDF with an explanatory notice.
+        When DocumentType slug ``carta_homologacion`` exists, attach a draft
+        Document for the student's checklist (download → sign → re-upload).
+        """
+        from django.core.files.base import ContentFile
+
+        from documents.models import Document, DocumentType
+        from documents.pdf_generation import render_carta_homologacion_pdf
+
+        application = self.get_object()
+        user = request.user
+        is_staff = hasattr(user, "has_any_role") and user.has_any_role(
+            ["coordinator", "admin"]
+        )
+        if not is_staff and application.student_id != user.pk:
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+
+        pdf_bytes = render_carta_homologacion_pdf(application)
+        filename = f"carta_homologacion_{application.id}.pdf"
+
+        doc_type = DocumentType.objects.filter(slug="carta_homologacion").first()
+        if doc_type is None:
+            # Slug-compatible stub so Phase 4 seeds can take over later.
+            doc_type, _ = DocumentType.objects.get_or_create(
+                slug="carta_homologacion",
+                defaults={
+                    "name": "Carta de Homologación",
+                    "description": "Carta de homologación de asignaturas.",
+                    "submission_mode": getattr(
+                        DocumentType.SubmissionMode,
+                        "SYSTEM_GENERATED",
+                        "system_generated",
+                    ),
+                    "accepted_extensions": "pdf",
+                },
+            )
+
+        # Keep a generated copy on the application for checklist visibility.
+        existing = (
+            Document.objects.filter(application=application, type=doc_type)
+            .order_by("-created_at")
+            .first()
+        )
+        if existing is None:
+            document = Document(
+                application=application,
+                type=doc_type,
+                uploaded_by=user if user.is_authenticated else application.student,
+            )
+            document.file.save(filename, ContentFile(pdf_bytes), save=True)
+        else:
+            # Refresh generated file content for draft regenerations.
+            existing.file.save(filename, ContentFile(pdf_bytes), save=True)
+
+        response = HttpResponse(pdf_bytes, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        selection_count = application.subject_selections.count()
+        response["X-Subject-Selection-Count"] = str(selection_count)
+        if selection_count == 0:
+            response["X-Homologacion-Empty"] = "1"
+        return response
+
     def _invalidate_application_cache(self, application):
         """Invalidate cache for application-related data."""
         from core.cache import invalidate_cache_pattern
@@ -782,6 +953,100 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         invalidate_cache_pattern(f"api:ApplicationViewSet:*{application.id}*")
         # Invalidate list cache
         invalidate_cache_pattern("api:ApplicationViewSet:list*")
+
+
+class HostInstitutionViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only host institutions; nested schools list for cascade selects."""
+
+    queryset = HostInstitution.objects.filter(is_active=True).select_related("program")
+    serializer_class = HostInstitutionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="List schools for a host institution",
+        responses={200: HostSchoolSerializer(many=True)},
+    )
+    @action(detail=True, methods=["get"], url_path="schools")
+    def schools(self, request, pk=None):
+        institution = self.get_object()
+        qs = HostSchool.objects.filter(
+            institution=institution, is_active=True
+        ).order_by("name")
+        return Response(HostSchoolSerializer(qs, many=True).data)
+
+
+class HostSchoolViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only host schools; nested academic programs for cascade selects."""
+
+    queryset = HostSchool.objects.filter(is_active=True).select_related("institution")
+    serializer_class = HostSchoolSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="List academic programs for a host school",
+        responses={200: HostAcademicProgramSerializer(many=True)},
+    )
+    @action(detail=True, methods=["get"], url_path="academic-programs")
+    def academic_programs(self, request, pk=None):
+        school = self.get_object()
+        qs = HostAcademicProgram.objects.filter(
+            school=school, is_active=True
+        ).order_by("name")
+        return Response(HostAcademicProgramSerializer(qs, many=True).data)
+
+
+class HostAcademicProgramViewSet(viewsets.ReadOnlyModelViewSet):
+    """Read-only host academic programs; nested subjects for optional selection."""
+
+    queryset = HostAcademicProgram.objects.filter(is_active=True).select_related(
+        "school", "school__institution"
+    )
+    serializer_class = HostAcademicProgramSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    @extend_schema(
+        summary="List subjects for a host academic program",
+        responses={200: HostSubjectSerializer(many=True)},
+    )
+    @action(detail=True, methods=["get"], url_path="subjects")
+    def subjects(self, request, pk=None):
+        academic_program = self.get_object()
+        qs = HostSubject.objects.filter(
+            academic_program=academic_program, is_active=True
+        ).order_by("name", "code")
+        return Response(HostSubjectSerializer(qs, many=True).data)
+
+
+class ApplicationSubjectSelectionViewSet(viewsets.ModelViewSet):
+    """CRUD for optional subject selections on a student's own application."""
+
+    serializer_class = ApplicationSubjectSelectionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["application"]
+    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        user = self.request.user
+        qs = ApplicationSubjectSelection.objects.select_related(
+            "application",
+            "application__status",
+            "host_subject",
+            "host_subject__academic_program",
+        )
+        if user.has_any_role(["coordinator", "admin"]):
+            return qs
+        return qs.filter(application__student=user)
+
+    def perform_create(self, serializer):
+        application = serializer.validated_data["application"]
+        user = self.request.user
+        if not user.has_any_role(["coordinator", "admin"]):
+            if application.student_id != user.pk:
+                raise ValidationError(
+                    {"application": "You can only add subjects to your own application."}
+                )
+        serializer.save()
 
 
 class ApplicationStatusViewSet(viewsets.ReadOnlyModelViewSet):

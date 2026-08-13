@@ -2,14 +2,25 @@
 Unit tests for accounts models.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.utils import timezone
 
-from accounts.models import Permission, Role, UserSession, UserSettings
+from accounts.models import (
+    AcademicLevel,
+    AllowedEmailDomain,
+    HomeAcademicProgram,
+    Permission,
+    Role,
+    SchoolFaculty,
+    Unidad,
+    UserSession,
+    UserSettings,
+)
 
 User = get_user_model()
 
@@ -337,6 +348,79 @@ class TestProfileModel:
         # Profile should exist
         assert hasattr(user, "profile")
         assert user.profile is not None
+
+    def test_matricula_and_clabe_validation(self):
+        user = User.objects.create_user(
+            username="student-validation",
+            email="validation@example.com",
+            password="testpass123",
+        )
+        profile = user.profile
+        profile.matricula = "ABC123"
+        profile.clabe = "123"
+
+        with pytest.raises(ValidationError) as exc:
+            profile.full_clean()
+
+        assert {"matricula", "clabe"} <= set(exc.value.message_dict)
+
+    def test_personal_academic_completeness(self):
+        user = User.objects.create_user(
+            username="complete-student",
+            email="complete@example.com",
+            password="testpass123",
+            first_name="Ada",
+            middle_name="Byron",
+            last_name="Lovelace",
+            mothers_last_name="Milbanke",
+        )
+        school = SchoolFaculty.objects.create(name="Engineering")
+        program = HomeAcademicProgram.objects.create(
+            name="Computer Science",
+            school=school,
+        )
+        profile = user.profile
+        profile.matricula = "1234567"
+        profile.academic_level = AcademicLevel.objects.create(name="Undergraduate")
+        profile.school = school
+        profile.unidad = Unidad.objects.create(name="Ciudad Universitaria")
+        profile.home_academic_program = program
+        profile.gender = "female"
+        profile.date_of_birth = date(2000, 1, 1)
+        profile.birthplace = "Monterrey"
+        profile.postal_code = "64000"
+        profile.passport_number = "P123456"
+        profile.mobile_phone = "8112345678"
+        profile.secondary_email = "ada@example.net"
+        profile.rfc = "LOVA000101ABC"
+        profile.save()
+
+        assert profile.is_personal_academic_complete is True
+        assert profile.is_ready_to_apply is False
+
+        profile.gpa = 3.5
+        profile.language = "Spanish"
+        profile.credits_approved_percent = 55
+        profile.ingress_date = date(2024, 1, 15)
+        # grade_scale required for readiness; leave unset → still not ready
+        assert profile.is_eligibility_complete is False
+
+        profile.secondary_email = ""
+        assert profile.is_personal_academic_complete is False
+
+
+@pytest.mark.django_db
+@pytest.mark.models
+class TestAllowedEmailDomain:
+    def test_normalizes_valid_domain(self):
+        domain = AllowedEmailDomain.objects.create(name="@EXAMPLE.EDU.MX")
+
+        assert domain.name == "example.edu.mx"
+
+    @pytest.mark.parametrize("value", ["uanl@edu.mx", "localhost"])
+    def test_rejects_invalid_domain(self, value):
+        with pytest.raises(ValidationError):
+            AllowedEmailDomain.objects.create(name=value)
 
 
 @pytest.mark.django_db

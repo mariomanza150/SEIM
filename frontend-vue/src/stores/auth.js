@@ -24,7 +24,7 @@ function persistToken(keys, value) {
 }
 
 /** Normalize DRF / Django error payloads for display (MQ-006). */
-function formatLoginErrorResponse(data) {
+function formatAuthErrorResponse(data) {
   if (data == null || typeof data !== 'object') return null
   if (typeof data.detail === 'string') return data.detail
   if (Array.isArray(data.detail)) return data.detail.map(String).join(' ')
@@ -99,10 +99,69 @@ export const useAuthStore = defineStore('auth', () => {
     } catch (err) {
       const body = err.response?.data
       error.value =
-        formatLoginErrorResponse(body) ||
+        formatAuthErrorResponse(body) ||
         (typeof body === 'string' ? body : null) ||
         'Login failed. Please check your credentials.'
       console.error('Login error:', err)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Self-service signup. Creates an inactive user pending email verification.
+   * @param {{ email: string, username: string, password: string, password2: string, first_name: string, middle_name: string, last_name: string, mothers_last_name: string }} payload
+   * @returns {Promise<boolean>}
+   */
+  async function register(payload) {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      await axios.post(`${API_BASE_URL}/api/accounts/register/`, {
+        email: payload.email,
+        username: payload.username,
+        password: payload.password,
+        password2: payload.password2,
+        first_name: payload.first_name || '',
+        middle_name: payload.middle_name || '',
+        last_name: payload.last_name || '',
+        mothers_last_name: payload.mothers_last_name || '',
+      })
+      return true
+    } catch (err) {
+      const body = err.response?.data
+      error.value =
+        formatAuthErrorResponse(body) ||
+        (typeof body === 'string' ? body : null) ||
+        'Registration failed. Please try again.'
+      console.error('Registration error:', err)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Confirm email ownership with the token from the verification link.
+   * @param {string} token
+   * @returns {Promise<boolean>}
+   */
+  async function verifyEmail(token) {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      await axios.post(`${API_BASE_URL}/api/accounts/verify-email/`, { token })
+      return true
+    } catch (err) {
+      const body = err.response?.data
+      error.value =
+        formatAuthErrorResponse(body) ||
+        (typeof body === 'string' ? body : null) ||
+        'Email verification failed. The link may be invalid or expired.'
+      console.error('Verify email error:', err)
       return false
     } finally {
       isLoading.value = false
@@ -171,7 +230,9 @@ export const useAuthStore = defineStore('auth', () => {
         id: profileData.id,
         email: profileData.email,
         first_name: profileData.first_name,
+        middle_name: profileData.middle_name,
         last_name: profileData.last_name,
+        mothers_last_name: profileData.mothers_last_name,
         full_name: profileData.full_name,
         role: profileData.role,
         username: profileData.username,
@@ -181,8 +242,10 @@ export const useAuthStore = defineStore('auth', () => {
         // Add other profile fields
         secondary_email: profileData.secondary_email,
         gpa: profileData.gpa,
+        grade_scale: profileData.grade_scale,
         language: profileData.language,
         language_level: profileData.language_level,
+        is_ready_to_apply: Boolean(profileData.is_ready_to_apply),
       }
       
       return user.value
@@ -226,6 +289,8 @@ export const useAuthStore = defineStore('auth', () => {
     canUseStaffReviewQueue,
     // Actions
     login,
+    register,
+    verifyEmail,
     logout,
     refreshToken: refreshAccessToken,
     fetchUserProfile,

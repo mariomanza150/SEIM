@@ -10,13 +10,61 @@ from .models import (
     AgreementExpirationReminderLog,
     Application,
     ApplicationStatus,
+    ApplicationSubjectSelection,
     Comment,
     EligibilityRuleSet,
     ExchangeAgreement,
+    HostAcademicProgram,
+    HostInstitution,
+    HostSchool,
+    HostSubject,
     Program,
+    ProgramDocumentRequirement,
     SavedSearch,
     TimelineEvent,
 )
+
+
+class HostInstitutionInline(admin.TabularInline):
+    model = HostInstitution
+    extra = 0
+    fields = ("name", "country", "is_active")
+    show_change_link = True
+
+
+class HostSchoolInline(admin.TabularInline):
+    model = HostSchool
+    extra = 0
+    fields = ("name", "is_active")
+    show_change_link = True
+
+
+class HostAcademicProgramInline(admin.TabularInline):
+    model = HostAcademicProgram
+    extra = 0
+    fields = ("name", "code", "is_active")
+    show_change_link = True
+
+
+class HostSubjectInline(admin.TabularInline):
+    model = HostSubject
+    extra = 0
+    fields = ("code", "name", "credits", "is_active")
+    show_change_link = True
+
+
+class ApplicationSubjectSelectionInline(admin.TabularInline):
+    model = ApplicationSubjectSelection
+    extra = 0
+    fields = (
+        "host_subject",
+        "home_course_code",
+        "home_course_label",
+        "credits",
+        "notes",
+    )
+    autocomplete_fields = ("host_subject",)
+    show_change_link = True
 
 
 class CommentInline(admin.TabularInline):
@@ -219,6 +267,21 @@ class ExchangeAgreementAdmin(admin.ModelAdmin):
         )
 
 
+class ProgramDocumentRequirementInline(admin.TabularInline):
+    model = ProgramDocumentRequirement
+    extra = 0
+    autocomplete_fields = ("document_type",)
+    fields = (
+        "document_type",
+        "is_required",
+        "sort_order",
+        "deadline",
+        "deadline_days_before_program_deadline",
+        "instructions_override",
+    )
+    ordering = ("sort_order", "id")
+
+
 @admin.register(Program)
 class ProgramAdmin(admin.ModelAdmin):
     list_display = (
@@ -254,8 +317,7 @@ class ProgramAdmin(admin.ModelAdmin):
         "create_draft_cms_program_pages",
         "sync_operational_data_to_cms_pages",
     ]
-
-    filter_horizontal = ("required_document_types",)
+    inlines = [HostInstitutionInline, ProgramDocumentRequirementInline]
 
     fieldsets = (
         (None, {"fields": ("name", "description", "is_active", "recurring")}),
@@ -282,13 +344,17 @@ class ProgramAdmin(admin.ModelAdmin):
             {
                 "fields": (
                     "min_gpa",
+                    "min_semester",
+                    "min_credits_approved_percent",
                     "application_form",
                     "workflow_version",
                     "eligibility_ruleset",
                     "coordinators",
-                    "required_document_types",
                 ),
-                "description": "Academic eligibility criteria for applicants",
+                "description": (
+                    "Academic eligibility criteria for applicants (GPA is 4.0-normalized). "
+                    "Document requirements use ProgramDocumentRequirement (Phase 4)."
+                ),
             },
         ),
         (
@@ -335,6 +401,12 @@ class ProgramAdmin(admin.ModelAdmin):
 
         if obj.min_gpa:
             criteria.append(f"📊 GPA ≥{obj.min_gpa}")
+
+        if obj.min_semester:
+            criteria.append(f"📅 Sem ≥{obj.min_semester}")
+
+        if obj.min_credits_approved_percent is not None:
+            criteria.append(f"📚 Credits ≥{obj.min_credits_approved_percent}%")
 
         if obj.required_language:
             lang_display = obj.required_language
@@ -448,6 +520,8 @@ class ProgramAdmin(admin.ModelAdmin):
                 application_deadline=program.application_deadline,
                 is_active=False,  # Clones start inactive
                 min_gpa=program.min_gpa,
+                min_semester=program.min_semester,
+                min_credits_approved_percent=program.min_credits_approved_percent,
                 required_language=program.required_language,
                 min_language_level=program.min_language_level,
                 min_age=program.min_age,
@@ -554,12 +628,64 @@ class ProgramAdmin(admin.ModelAdmin):
             )
 
 
+@admin.register(HostInstitution)
+class HostInstitutionAdmin(admin.ModelAdmin):
+    list_display = ("name", "program", "country", "is_active", "created_at")
+    list_filter = ("is_active", "program", "country")
+    search_fields = ("name", "country", "program__name")
+    list_editable = ("is_active",)
+    inlines = [HostSchoolInline]
+    autocomplete_fields = ("program",)
+
+
+@admin.register(HostSchool)
+class HostSchoolAdmin(admin.ModelAdmin):
+    list_display = ("name", "institution", "is_active", "created_at")
+    list_filter = ("is_active", "institution__program")
+    search_fields = ("name", "institution__name")
+    list_editable = ("is_active",)
+    inlines = [HostAcademicProgramInline]
+    autocomplete_fields = ("institution",)
+
+
+@admin.register(HostAcademicProgram)
+class HostAcademicProgramAdmin(admin.ModelAdmin):
+    list_display = ("name", "code", "school", "is_active", "created_at")
+    list_filter = ("is_active", "school__institution__program")
+    search_fields = ("name", "code", "school__name", "school__institution__name")
+    list_editable = ("is_active",)
+    autocomplete_fields = ("school",)
+    inlines = [HostSubjectInline]
+
+
+@admin.register(HostSubject)
+class HostSubjectAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "code",
+        "credits",
+        "academic_program",
+        "is_active",
+        "created_at",
+    )
+    list_filter = ("is_active", "academic_program__school__institution__program")
+    search_fields = (
+        "name",
+        "code",
+        "academic_program__name",
+        "academic_program__school__name",
+    )
+    list_editable = ("is_active",)
+    autocomplete_fields = ("academic_program",)
+
+
 @admin.register(Application)
 class ApplicationAdmin(admin.ModelAdmin):
     list_display = (
         "id",
         "student",
         "program",
+        "host_institution",
         "assigned_coordinator",
         "status",
         "eligibility_status",
@@ -576,6 +702,12 @@ class ApplicationAdmin(admin.ModelAdmin):
         "eligibility_check_details",
     )
     actions = ["check_eligibility", "mark_as_withdrawn"]
+    autocomplete_fields = (
+        "program",
+        "host_institution",
+        "host_school",
+        "host_academic_program",
+    )
 
     fieldsets = (
         (
@@ -591,6 +723,17 @@ class ApplicationAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Host destination",
+            {
+                "fields": (
+                    "host_institution",
+                    "host_school",
+                    "host_academic_program",
+                ),
+                "description": "Cascade: institution → school → academic program",
+            },
+        ),
+        (
             "Eligibility",
             {
                 "fields": ("eligibility_check_details",),
@@ -600,7 +743,7 @@ class ApplicationAdmin(admin.ModelAdmin):
         ("Submission", {"fields": ("submitted_at",)}),
         ("Audit", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
     )
-    inlines = [CommentInline, TimelineEventInline]
+    inlines = [ApplicationSubjectSelectionInline, CommentInline, TimelineEventInline]
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         if db_field.name == "assigned_coordinator":

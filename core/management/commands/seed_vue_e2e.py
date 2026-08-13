@@ -9,6 +9,7 @@ Or: docker compose exec web python manage.py seed_vue_e2e
 """
 
 from datetime import date, timedelta
+from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -16,7 +17,15 @@ from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
 from documents.models import Document, DocumentType
-from exchange.models import Application, ApplicationStatus, Program
+from exchange.models import (
+    Application,
+    ApplicationStatus,
+    HostAcademicProgram,
+    HostInstitution,
+    HostSchool,
+    HostSubject,
+    Program,
+)
 from notifications.models import Notification
 
 User = get_user_model()
@@ -66,6 +75,37 @@ class Command(BaseCommand):
             )
         else:
             self.stdout.write(f"  ✓ Draft application exists: {program.name}")
+
+        if HostInstitution.objects.filter(program=program).exists():
+            self.stdout.write("  ✓ Host destination tree already exists")
+        else:
+            institution = HostInstitution.objects.create(
+                program=program,
+                name="Vue E2E Host University",
+                country="MX",
+                is_active=True,
+            )
+            school = HostSchool.objects.create(
+                institution=institution,
+                name="Faculty of Engineering",
+                is_active=True,
+            )
+            academic = HostAcademicProgram.objects.create(
+                school=school,
+                name="Computer Science",
+                code="CS",
+                is_active=True,
+            )
+            HostSubject.objects.create(
+                academic_program=academic,
+                code="CS101",
+                name="Algorithms",
+                credits=Decimal("6.00"),
+                is_active=True,
+            )
+            self.stdout.write(
+                self.style.SUCCESS("  ✓ Attached host destination tree to program")
+            )
 
         doc_type, _ = DocumentType.objects.get_or_create(
             name="transcript",

@@ -24,8 +24,21 @@
     --primary-light: rgba(102, 126, 234, 0.12);
 }
 
-/* Cross-surface semantic surface tokens (SPA uses --seim-*, Django uses --bg-*/--text-*) */
+/*
+  Surface primitives used by SPA (+ Django when colors.css is also loaded).
+  Fallbacks keep --seim-* resolvable even if colors.css fails to load (Vite-only).
+*/
 :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --text-primary: #212529;
+    --text-secondary: #495057;
+    --text-muted: #6c757d;
+    --border-color: #dee2e6;
+    --border-color-light: #e9ecef;
+
+    /* Cross-surface semantic tokens (SPA uses --seim-*) */
     --seim-app-bg: var(--bg-secondary);
     --seim-surface-bg: var(--bg-primary);
     --seim-surface-text: var(--text-primary);
@@ -33,8 +46,28 @@
     --seim-muted: var(--text-muted);
 }
 
+html[data-theme="light"] {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-tertiary: #e9ecef;
+    --text-primary: #212529;
+    --text-secondary: #495057;
+    --text-muted: #6c757d;
+    --border-color: #dee2e6;
+    --border-color-light: #e9ecef;
+    color-scheme: light;
+}
+
 /* Ensure dark mode sets browser chrome for form controls/scrollbars */
 html[data-theme="dark"] {
+    --bg-primary: #212529;
+    --bg-secondary: #343a40;
+    --bg-tertiary: #495057;
+    --text-primary: #f8f9fa;
+    --text-secondary: #e9ecef;
+    --text-muted: #adb5bd;
+    --border-color: #495057;
+    --border-color-light: #6c757d;
     color-scheme: dark;
 }
 

@@ -35,11 +35,15 @@ from documents.views import (
 )
 from exchange.views import (
     ApplicationStatusViewSet,
+    ApplicationSubjectSelectionViewSet,
     ApplicationViewSet,
     CalendarEventViewSet,
     CommentViewSet,
     EligibilityRuleSetViewSet,
     ExchangeAgreementViewSet,
+    HostAcademicProgramViewSet,
+    HostInstitutionViewSet,
+    HostSchoolViewSet,
     ProgramViewSet,
     SavedSearchViewSet,
     TimelineEventViewSet,
@@ -74,7 +78,21 @@ router.register(
     ExchangeAgreementViewSet,
     basename="exchange-agreement",
 )
+router.register(
+    r"host-institutions", HostInstitutionViewSet, basename="host-institution"
+)
+router.register(r"schools", HostSchoolViewSet, basename="host-school")
+router.register(
+    r"academic-programs",
+    HostAcademicProgramViewSet,
+    basename="host-academic-program",
+)
 router.register(r"applications", ApplicationViewSet, basename="application")
+router.register(
+    r"application-subject-selections",
+    ApplicationSubjectSelectionViewSet,
+    basename="application-subject-selection",
+)
 router.register(r"application-statuses", ApplicationStatusViewSet)
 router.register(r"comments", CommentViewSet)
 router.register(r"timeline-events", TimelineEventViewSet)
