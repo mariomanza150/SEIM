@@ -66,4 +66,37 @@ describe('DeadlinesCalendar', () => {
       i18n.global.t('calendarPage.presetNamePlaceholder'),
     )
   })
+
+  it('shows imported Google events and a Google filter', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/calendar/events/subscribe-token/') {
+        return Promise.resolve({ data: { ics_url: 'https://example/ics', webcal_url: 'webcal://example' } })
+      }
+      if (url === '/api/saved-searches/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/calendar/events/') {
+        return Promise.resolve({
+          data: [
+            {
+              id: 'google-g-ext',
+              title: 'Office hours',
+              start: '2026-09-01T10:00:00.000Z',
+              source: 'google',
+            },
+          ],
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+    const wrapper = mount(DeadlinesCalendar, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="calendar-show-google"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Office hours')
+  })
 })

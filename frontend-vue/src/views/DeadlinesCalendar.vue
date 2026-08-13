@@ -87,6 +87,10 @@
                   <input id="cf-agr" v-model="show.agreement" class="form-check-input" type="checkbox">
                   <label class="form-check-label" for="cf-agr">{{ t('calendarPage.showAgreementsStaff') }}</label>
                 </div>
+                <div class="form-check">
+                  <input id="cf-google" v-model="show.google" class="form-check-input" type="checkbox" data-testid="calendar-show-google">
+                  <label class="form-check-label" for="cf-google">{{ t('calendarPage.showGoogle') }}</label>
+                </div>
               </div>
             </div>
             <div class="col-12 border-top pt-3 mt-2">
@@ -231,6 +235,7 @@ const show = ref({
   deadline: true,
   application: true,
   agreement: true,
+  google: true,
 })
 
 function calendarLocaleTag() {
@@ -252,6 +257,7 @@ function eventCategory(ev) {
   if (id.startsWith('agreement-')) return 'agreement'
   if (id.startsWith('program-app-open-') || id.startsWith('program-app-deadline-')) return 'deadline'
   if (id.startsWith('program-start-') || id.startsWith('program-end-')) return 'program'
+  if (id.startsWith('google-')) return 'google'
   return 'program'
 }
 
@@ -260,6 +266,7 @@ const visibleEvents = computed(() => {
     const cat = eventCategory(ev)
     if (cat === 'application') return show.value.application
     if (cat === 'agreement') return show.value.agreement && authStore.canUseStaffReviewQueue
+    if (cat === 'google') return show.value.google
     if (cat === 'deadline') return show.value.deadline
     if (cat === 'program') return show.value.program
     return true

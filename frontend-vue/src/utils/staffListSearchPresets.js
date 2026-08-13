@@ -100,6 +100,7 @@ export function serializeCalendarFilters(state) {
     show_deadline: Boolean(show.deadline),
     show_application: Boolean(show.application),
     show_agreement: Boolean(show.agreement),
+    show_google: show.google !== false,
   }
 }
 
@@ -113,6 +114,7 @@ export function deserializeCalendarFilters(raw) {
       deadline: f.show_deadline !== false,
       application: f.show_application !== false,
       agreement: f.show_agreement !== false,
+      google: f.show_google !== false,
     },
   }
 }

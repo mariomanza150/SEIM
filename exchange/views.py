@@ -176,6 +176,8 @@ class ExchangeAgreementViewSet(viewsets.ModelViewSet):
         )
         return ExchangeAgreement.objects.prefetch_related(
             "programs",
+            "partner_contacts",
+            "partner_contacts__user",
             Prefetch(
                 "renewal_successors",
                 queryset=draft_successors,
@@ -1347,12 +1349,25 @@ class CalendarEventViewSet(viewsets.ReadOnlyModelViewSet):
         return Program.objects.none()
 
     def list(self, request, *args, **kwargs):
+        event_type = request.query_params.get("type")
+        start_param = request.query_params.get("start")
+        end_param = request.query_params.get("end")
         events = build_calendar_event_dicts(
             request.user,
-            start_param=request.query_params.get("start"),
-            end_param=request.query_params.get("end"),
-            event_type=request.query_params.get("type"),
+            start_param=start_param,
+            end_param=end_param,
+            event_type=event_type,
         )
+        if event_type in (None, "", "all", "google"):
+            from exchange.google_calendar import imported_event_dicts
+
+            overlay = imported_event_dicts(
+                request.user, start_param=start_param, end_param=end_param
+            )
+            if event_type == "google":
+                events = overlay
+            else:
+                events = list(events) + overlay
         serializer = self.get_serializer(events, many=True)
         return Response(serializer.data)
 

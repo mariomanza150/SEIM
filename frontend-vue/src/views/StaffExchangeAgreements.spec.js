@@ -89,4 +89,49 @@ describe('StaffExchangeAgreements', () => {
       i18n.global.t('exchangeAgreementsPage.presetNamePlaceholder'),
     )
   })
+
+  it('adds a partner user by email on an agreement row', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/programs/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/saved-searches/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/exchange-agreements/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'agr-1',
+                title: 'MoU',
+                partner_institution_name: 'TU Berlin',
+                status: 'active',
+                partner_contacts: [],
+              },
+            ],
+            count: 1,
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+    api.post.mockResolvedValue({ data: { id: 'pc-1' } })
+    const wrapper = mount(StaffExchangeAgreements, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const input = wrapper.find('[data-testid="add-partner-email"]')
+    expect(input.exists()).toBe(true)
+    await input.setValue('partner@example.com')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(api.post).toHaveBeenCalledWith(
+      '/api/partner/agreements/agr-1/partner-contacts/',
+      { email: 'partner@example.com' },
+    )
+  })
 })

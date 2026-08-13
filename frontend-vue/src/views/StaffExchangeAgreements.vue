@@ -183,6 +183,7 @@
               <th>{{ t('exchangeAgreementsPage.colEnd') }}</th>
               <th>{{ t('exchangeAgreementsPage.colPrograms') }}</th>
               <th>{{ t('exchangeAgreementsPage.colRepository') }}</th>
+              <th>{{ t('exchangeAgreementsPage.colPortal') }}</th>
               <th class="text-end">{{ t('exchangeAgreementsPage.colRenewal') }}</th>
             </tr>
           </thead>
@@ -203,6 +204,33 @@
                 >
                   {{ t('exchangeAgreementsPage.openRepository') }}
                 </router-link>
+              </td>
+              <td class="small" style="min-width: 220px">
+                <div v-if="(a.partner_contacts || []).length" class="mb-1">
+                  <div v-for="c in a.partner_contacts" :key="c.id" class="text-truncate">
+                    {{ c.user_email || c.user_name }}
+                  </div>
+                </div>
+                <div v-else class="text-muted mb-1">{{ t('exchangeAgreementsPage.addPartnerEmpty') }}</div>
+                <form class="d-flex gap-1" @submit.prevent="addPartnerByEmail(a)">
+                  <input
+                    v-model="partnerEmails[a.id]"
+                    type="email"
+                    class="form-control form-control-sm"
+                    required
+                    :placeholder="t('exchangeAgreementsPage.addPartnerEmailPlaceholder')"
+                    :aria-label="t('exchangeAgreementsPage.addPartnerAria', { title: a.title })"
+                    data-testid="add-partner-email"
+                  />
+                  <button
+                    type="submit"
+                    class="btn btn-sm btn-outline-primary"
+                    :disabled="!!partnerBusy[a.id]"
+                    data-testid="add-partner-submit"
+                  >
+                    {{ t('exchangeAgreementsPage.addPartnerSubmit') }}
+                  </button>
+                </form>
               </td>
               <td class="text-end text-nowrap">
                 <button
@@ -324,6 +352,8 @@ const typeChoices = computed(() =>
 
 const programs = ref([])
 const rows = ref([])
+const partnerEmails = ref({})
+const partnerBusy = ref({})
 const loading = ref(true)
 const error = ref(null)
 
@@ -418,6 +448,27 @@ function goToPage(page) {
   if (page >= 1 && page <= totalPages.value) {
     fetchAgreements(page)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+async function addPartnerByEmail(a) {
+  const email = (partnerEmails.value[a.id] || '').trim()
+  if (!email) return
+  partnerBusy.value = { ...partnerBusy.value, [a.id]: true }
+  try {
+    await api.post(`/api/partner/agreements/${a.id}/partner-contacts/`, { email })
+    partnerEmails.value = { ...partnerEmails.value, [a.id]: '' }
+    successToast(t('exchangeAgreementsPage.addPartnerSuccessToast'))
+    await fetchAgreements(pagination.value.currentPage)
+  } catch (e) {
+    const data = e.response?.data
+    const msg =
+      (Array.isArray(data?.email) && data.email[0]) ||
+      data?.detail ||
+      t('exchangeAgreementsPage.addPartnerErrorFallback')
+    errorToast(msg)
+  } finally {
+    partnerBusy.value = { ...partnerBusy.value, [a.id]: false }
   }
 }
 

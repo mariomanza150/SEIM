@@ -642,6 +642,11 @@ class GoogleCalendarConnection(TimeStampedModel):
         blank=True,
         help_text="Map of SEIM event id → Google Calendar event id.",
     )
+    imported_events = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Cached Google-only events from the last two-way sync (read-only overlay).",
+    )
 
     class Meta:
         verbose_name = "Google Calendar connection"

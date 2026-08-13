@@ -736,8 +736,14 @@ class ExchangeAgreementSerializer(serializers.ModelSerializer):
         staff = bool(
             user
             and user.is_authenticated
-            and hasattr(user, "has_any_role")
-            and user.has_any_role(["coordinator", "admin"])
+            and (
+                getattr(user, "is_staff", False)
+                or getattr(user, "is_superuser", False)
+                or (
+                    hasattr(user, "has_any_role")
+                    and user.has_any_role(["coordinator", "admin"])
+                )
+            )
         )
         if not staff:
             return []
@@ -899,3 +905,4 @@ class CalendarEventSerializer(serializers.Serializer):
     backgroundColor = serializers.CharField(required=False, allow_null=True)
     borderColor = serializers.CharField(required=False, allow_null=True)
     allDay = serializers.BooleanField(default=False)
+    source = serializers.CharField(required=False, allow_null=True, allow_blank=True)
