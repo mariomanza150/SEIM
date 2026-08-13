@@ -235,6 +235,127 @@
               </form>
             </div>
           </div>
+
+          <div class="card mt-3">
+            <div class="card-body">
+              <h6 class="text-muted mb-3">{{ t('settings.sectionPassword') }}</h6>
+              <form @submit.prevent="handleChangePassword" data-testid="change-password-form">
+                <div class="mb-3">
+                  <label class="form-label" for="settings-current-password">{{ t('settings.currentPassword') }}</label>
+                  <input
+                    id="settings-current-password"
+                    v-model="passwordForm.old_password"
+                    type="password"
+                    class="form-control"
+                    name="current-password"
+                    autocomplete="current-password"
+                    required
+                    :disabled="changingPassword"
+                    data-testid="settings-current-password"
+                  >
+                </div>
+                <div class="row">
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label" for="settings-new-password">{{ t('settings.newPassword') }}</label>
+                    <input
+                      id="settings-new-password"
+                      v-model="passwordForm.new_password"
+                      type="password"
+                      class="form-control"
+                      name="new-password"
+                      autocomplete="new-password"
+                      required
+                      :disabled="changingPassword"
+                      data-testid="settings-new-password"
+                    >
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label" for="settings-confirm-password">{{ t('settings.confirmNewPassword') }}</label>
+                    <input
+                      id="settings-confirm-password"
+                      v-model="passwordForm.new_password2"
+                      type="password"
+                      class="form-control"
+                      name="new-password-confirm"
+                      autocomplete="new-password"
+                      required
+                      :disabled="changingPassword"
+                      data-testid="settings-confirm-password"
+                    >
+                  </div>
+                </div>
+                <div v-if="passwordError" class="alert alert-danger" role="alert">{{ passwordError }}</div>
+                <div class="d-flex justify-content-end">
+                  <button
+                    type="submit"
+                    class="btn btn-outline-primary"
+                    :disabled="changingPassword"
+                    data-testid="change-password-btn"
+                  >
+                    <span v-if="changingPassword">
+                      <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
+                      {{ t('settings.changingPassword') }}
+                    </span>
+                    <span v-else>{{ t('settings.changePassword') }}</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="card mt-3" data-testid="google-calendar-card">
+            <div class="card-body">
+              <h6 class="text-muted mb-3">{{ t('settings.sectionGoogleCalendar') }}</h6>
+              <p class="small text-muted">{{ t('settings.googleCalendarHelp') }}</p>
+              <div v-if="googleCalLoading" class="text-muted small">{{ t('settings.googleCalendarLoading') }}</div>
+              <template v-else>
+                <p v-if="!googleCal.configured" class="alert alert-secondary small mb-2">
+                  {{ t('settings.googleCalendarNotConfigured') }}
+                </p>
+                <p v-else-if="googleCal.connected" class="mb-2">
+                  <span class="badge bg-success me-2">{{ t('settings.googleCalendarConnected') }}</span>
+                  {{ googleCal.google_email }}
+                </p>
+                <p v-else class="mb-2">{{ t('settings.googleCalendarDisconnected') }}</p>
+                <p v-if="googleCal.last_synced_at" class="small text-muted">
+                  {{ t('settings.googleCalendarLastSync', { when: googleCal.last_synced_at }) }}
+                </p>
+                <p v-if="googleCal.last_sync_error" class="small text-danger">{{ googleCal.last_sync_error }}</p>
+                <div class="d-flex flex-wrap gap-2">
+                  <button
+                    v-if="googleCal.configured && !googleCal.connected"
+                    type="button"
+                    class="btn btn-sm btn-primary"
+                    data-testid="google-calendar-connect"
+                    :disabled="googleCalBusy"
+                    @click="connectGoogleCalendar"
+                  >
+                    {{ t('settings.googleCalendarConnect') }}
+                  </button>
+                  <button
+                    v-if="googleCal.connected"
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    data-testid="google-calendar-sync"
+                    :disabled="googleCalBusy"
+                    @click="syncGoogleCalendar"
+                  >
+                    {{ t('settings.googleCalendarSync') }}
+                  </button>
+                  <button
+                    v-if="googleCal.connected"
+                    type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    data-testid="google-calendar-disconnect"
+                    :disabled="googleCalBusy"
+                    @click="disconnectGoogleCalendar"
+                  >
+                    {{ t('settings.googleCalendarDisconnect') }}
+                  </button>
+                </div>
+              </template>
+            </div>
+          </div>
         </div>
 
         <div class="col-lg-4">
@@ -260,6 +381,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
@@ -271,6 +393,7 @@ import router from '@/router'
 import { resolveDocumentTitle, syncAppSocialMeta } from '@/utils/documentTitle'
 
 const authStore = useAuthStore()
+const route = useRoute()
 const { t, locale } = useI18n()
 
 function onLocaleChange() {
@@ -283,6 +406,22 @@ const { success, error: errorToast } = useToast()
 const loading = ref(true)
 const saving = ref(false)
 const saveError = ref('')
+const changingPassword = ref(false)
+const passwordError = ref('')
+const passwordForm = ref({
+  old_password: '',
+  new_password: '',
+  new_password2: '',
+})
+const googleCalLoading = ref(true)
+const googleCalBusy = ref(false)
+const googleCal = ref({
+  configured: false,
+  connected: false,
+  google_email: '',
+  last_synced_at: null,
+  last_sync_error: '',
+})
 
 const defaultForm = () => ({
   theme: 'auto',
@@ -363,7 +502,98 @@ async function handleSubmit() {
   }
 }
 
-onMounted(fetchSettings)
+async function handleChangePassword() {
+  passwordError.value = ''
+  if (passwordForm.value.new_password !== passwordForm.value.new_password2) {
+    passwordError.value = t('settings.passwordMismatch')
+    errorToast(passwordError.value)
+    return
+  }
+  changingPassword.value = true
+  try {
+    await api.post('/api/accounts/change-password/', {
+      old_password: passwordForm.value.old_password,
+      new_password: passwordForm.value.new_password,
+      new_password2: passwordForm.value.new_password2,
+    })
+    passwordForm.value = { old_password: '', new_password: '', new_password2: '' }
+    success(t('settings.passwordChanged'))
+  } catch (err) {
+    const data = err.response?.data
+    const msg =
+      data?.detail ||
+      data?.old_password?.[0] ||
+      data?.new_password?.[0] ||
+      t('settings.passwordChangeError')
+    passwordError.value = typeof msg === 'string' ? msg : JSON.stringify(msg)
+    errorToast(t('settings.passwordChangeError'))
+  } finally {
+    changingPassword.value = false
+  }
+}
+
+async function fetchGoogleCalendar() {
+  googleCalLoading.value = true
+  try {
+    const { data } = await api.get('/api/calendar/events/google-status/')
+    googleCal.value = { ...googleCal.value, ...data }
+  } catch {
+    googleCal.value.configured = false
+    googleCal.value.connected = false
+  } finally {
+    googleCalLoading.value = false
+  }
+}
+
+async function connectGoogleCalendar() {
+  googleCalBusy.value = true
+  try {
+    const { data } = await api.get('/api/calendar/events/google-authorize/')
+    if (data.authorization_url) {
+      window.location.href = data.authorization_url
+      return
+    }
+    errorToast(t('settings.googleCalendarError'))
+  } catch (err) {
+    errorToast(err.response?.data?.detail || t('settings.googleCalendarError'))
+  } finally {
+    googleCalBusy.value = false
+  }
+}
+
+async function syncGoogleCalendar() {
+  googleCalBusy.value = true
+  try {
+    const { data } = await api.post('/api/calendar/events/google-sync/')
+    googleCal.value = { ...googleCal.value, ...data }
+    success(t('settings.googleCalendarSyncSuccess'))
+  } catch (err) {
+    errorToast(err.response?.data?.detail || t('settings.googleCalendarError'))
+  } finally {
+    googleCalBusy.value = false
+  }
+}
+
+async function disconnectGoogleCalendar() {
+  googleCalBusy.value = true
+  try {
+    const { data } = await api.post('/api/calendar/events/google-disconnect/')
+    googleCal.value = { ...googleCal.value, ...data }
+    success(t('settings.googleCalendarDisconnectedToast'))
+  } catch {
+    errorToast(t('settings.googleCalendarError'))
+  } finally {
+    googleCalBusy.value = false
+  }
+}
+
+onMounted(async () => {
+  await fetchSettings()
+  await fetchGoogleCalendar()
+  const flag = route?.query?.google_calendar
+  if (flag === 'connected') success(t('settings.googleCalendarConnectedToast'))
+  if (flag === 'error') errorToast(t('settings.googleCalendarError'))
+})
 </script>
 
 <style scoped>

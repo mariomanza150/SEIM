@@ -63,6 +63,7 @@ describe('Login', () => {
     expect(wrapper.text()).toContain('SEIM')
     expect(wrapper.text()).toContain('Sign in to continue')
     expect(wrapper.find('[data-testid="login-create-account"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="login-forgot-password"]').exists()).toBe(true)
   })
 
   it('calls auth store login on form submit', async () => {

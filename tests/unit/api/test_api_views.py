@@ -57,7 +57,7 @@ class TestAPIViews(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("schema_version", response.data)
-        self.assertEqual(response.data["schema_version"], 7)
+        self.assertEqual(response.data["schema_version"], 8)
         self.assertIn("application_context", response.data)
         ctx = response.data["application_context"]
         self.assertEqual(ctx["application_id"], str(application.id))

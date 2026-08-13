@@ -281,6 +281,14 @@ describe('Auth Store', () => {
       expect(store.canUseStaffReviewQueue).toBe(true)
     })
 
+    it('treats partner role as partner portal access', () => {
+      const store = useAuthStore()
+      store.user = { role: 'partner', email: 'iro@partner.edu' }
+      expect(store.isPartner).toBe(true)
+      expect(store.canUsePartnerPortal).toBe(true)
+      expect(store.canUseStaffReviewQueue).toBe(false)
+    })
+
     it('throws and sets error on failure', async () => {
       const store = useAuthStore()
       store.accessToken = 'at'
@@ -315,6 +323,40 @@ describe('Auth Store', () => {
 
       expect(ok).toBe(false)
       expect(store.error).toBeTruthy()
+    })
+  })
+
+  describe('requestPasswordReset', () => {
+    it('posts email and returns true on success', async () => {
+      axios.post.mockResolvedValueOnce({ data: { message: 'Password reset email sent' } })
+      const store = useAuthStore()
+      const ok = await store.requestPasswordReset('ada@example.com')
+      expect(ok).toBe(true)
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/api/accounts/password-reset-request/'),
+        { email: 'ada@example.com' },
+      )
+    })
+  })
+
+  describe('confirmPasswordReset', () => {
+    it('posts token payload and returns true on success', async () => {
+      axios.post.mockResolvedValueOnce({ data: { detail: 'Password has been reset successfully.' } })
+      const store = useAuthStore()
+      const ok = await store.confirmPasswordReset({
+        email: 'ada@example.com',
+        token: 'tok123',
+        new_password: 'Newpass1!',
+      })
+      expect(ok).toBe(true)
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/api/accounts/password-reset-confirm/'),
+        {
+          email: 'ada@example.com',
+          token: 'tok123',
+          new_password: 'Newpass1!',
+        },
+      )
     })
   })
 

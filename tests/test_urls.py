@@ -56,7 +56,7 @@ class UrlConfigurationTests(TestCase):
         self.assertIn(response.status_code, (200, 401))
 
     def test_root_auth_routes_are_registered(self):
-        """Legacy paths outside ``/seim/``: login/dashboard redirect to Vue; register/password stay Django."""
+        """Legacy paths outside ``/seim/`` redirect to the Vue auth shell."""
         self.assertEqual(self.client.get("/dashboard/", follow=False).status_code, 302)
         self.assertEqual(
             self.client.get("/dashboard/", follow=False).headers.get("Location"),
@@ -67,9 +67,18 @@ class UrlConfigurationTests(TestCase):
             self.client.get("/login/", follow=False).headers.get("Location"),
             "/seim/login/",
         )
-        for route in ("/register/", "/password-reset/"):
-            with self.subTest(route=route):
-                self.assertEqual(self.client.get(route).status_code, 200)
+        self.assertEqual(self.client.get("/register/", follow=False).status_code, 302)
+        self.assertEqual(
+            self.client.get("/register/", follow=False).headers.get("Location"),
+            "/seim/register/",
+        )
+        self.assertEqual(
+            self.client.get("/password-reset/", follow=False).status_code, 302
+        )
+        self.assertEqual(
+            self.client.get("/password-reset/", follow=False).headers.get("Location"),
+            "/seim/password-reset/",
+        )
 
     def test_root_logout_route_redirects(self):
         """The public logout route clears session and sends users to the Vue login shell."""

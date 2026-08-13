@@ -37,6 +37,10 @@ function studentStoreAfterCheckAuth() {
         user.is_staff === true
       )
     },
+    get canUsePartnerPortal() {
+      if (!user) return false
+      return this.canUseStaffReviewQueue || user.role === 'partner'
+    },
     checkAuth: vi.fn(async () => {
       user = { role: 'student' }
     }),
@@ -77,6 +81,10 @@ describe('resolveAuthenticatedNavigation', () => {
           user.is_staff === true
         )
       },
+      get canUsePartnerPortal() {
+        if (!user) return false
+        return this.canUseStaffReviewQueue || user.role === 'partner'
+      },
       checkAuth: vi.fn(async () => {
         user = { role: 'coordinator' }
       }),
@@ -91,6 +99,7 @@ describe('resolveAuthenticatedNavigation', () => {
       isAuthenticated: false,
       isAdmin: false,
       canUseStaffReviewQueue: false,
+      canUsePartnerPortal: false,
       checkAuth: vi.fn(),
     }
     const to = { meta: { requiresAuth: true, staffReviewQueue: false }, fullPath: '/dashboard' }
@@ -104,6 +113,7 @@ describe('resolveAuthenticatedNavigation', () => {
       isAuthenticated: false,
       isAdmin: false,
       canUseStaffReviewQueue: false,
+      canUsePartnerPortal: false,
       checkAuth: vi.fn(async () => {
         throw new Error('network')
       }),
@@ -117,6 +127,7 @@ describe('resolveAuthenticatedNavigation', () => {
       isAuthenticated: true,
       isAdmin: false,
       canUseStaffReviewQueue: false,
+      canUsePartnerPortal: false,
       checkAuth: vi.fn(),
     }
     const to = { meta: { requiresAuth: true }, fullPath: '/dashboard' }
@@ -130,6 +141,7 @@ describe('resolveAuthenticatedNavigation', () => {
       isAuthenticated: true,
       isAdmin: false,
       canUseStaffReviewQueue: false,
+      canUsePartnerPortal: false,
       checkAuth: vi.fn(),
     }
     expect(await resolveAuthenticatedNavigation(staffRoute(), authStore)).toBe('applications')
@@ -141,6 +153,7 @@ describe('resolveAuthenticatedNavigation', () => {
       isAuthenticated: true,
       isAdmin: true,
       canUseStaffReviewQueue: true,
+      canUsePartnerPortal: true,
       checkAuth: vi.fn(),
     }
     expect(await resolveAuthenticatedNavigation(adminRoute(), authStore)).toBe('next')

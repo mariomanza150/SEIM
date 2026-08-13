@@ -12,6 +12,7 @@ All account business logic should be delegated to this service.
 """
 
 from datetime import timedelta
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.contrib.auth import authenticate
@@ -44,6 +45,15 @@ class AccountService:
             "/"
         )
         return f"{base}/seim/verify-email?token={token}"
+
+    @staticmethod
+    def build_password_reset_url(email: str, token: str) -> str:
+        """Build the SPA URL users open to choose a new password."""
+        base = getattr(settings, "FRONTEND_BASE_URL", "http://localhost:8001").rstrip(
+            "/"
+        )
+        qs = urlencode({"email": email, "token": token})
+        return f"{base}/seim/password-reset/confirm?{qs}"
 
     @staticmethod
     def send_verification_email(user: User, token: str) -> None:
@@ -236,12 +246,17 @@ class AccountService:
         user.email_verification_token = token  # Reuse field for reset
         user.save()
 
-        # Send reset email
+        reset_url = AccountService.build_password_reset_url(user.email, token)
         NotificationService.send_notification(
             recipient=user,
             title="Password Reset Request",
-            message=f"Your password reset token: {token}\n\n"
-            f"This token will expire in 1 hour. If you didn't request this, please ignore this message.",
+            message=(
+                "We received a request to reset your SEIM password.\n\n"
+                "Open this link to choose a new password:\n"
+                f"{reset_url}\n\n"
+                "If the link does not work, copy and paste it into your browser. "
+                "If you didn't request this, you can ignore this message."
+            ),
             notification_type="email",
             transactional_route_key="account_security_email",
         )

@@ -15,7 +15,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--role",
             type=str,
-            choices=["admin", "coordinator", "student"],
+            choices=["admin", "coordinator", "student", "partner"],
             help="Role to assign (optional)",
         )
 
@@ -25,7 +25,7 @@ class Command(BaseCommand):
 
         # Create roles if they don't exist
         roles = {}
-        for role_type in ["admin", "coordinator", "student"]:
+        for role_type in ["admin", "coordinator", "student", "partner"]:
             role, created = Role.objects.get_or_create(name=role_type)
             roles[role_type] = role
             if created:

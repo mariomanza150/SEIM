@@ -72,7 +72,7 @@ class Command(BaseCommand):
             self.stdout.write(f"  ✓ NotificationType: {name}")
 
         # Create Role objects
-        roles = ["admin", "coordinator", "student"]
+        roles = ["admin", "coordinator", "student", "partner"]
         for role_name in roles:
             Role.objects.get_or_create(name=role_name)
             self.stdout.write(f"  ✓ Role: {role_name}")

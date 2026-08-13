@@ -84,7 +84,13 @@
               </form>
 
               <div class="text-center mt-3">
-                <a href="/password-reset/" class="text-decoration-none">{{ t('login.forgotPassword') }}</a>
+                <router-link
+                  :to="{ name: 'PasswordReset' }"
+                  class="text-decoration-none"
+                  data-testid="login-forgot-password"
+                >
+                  {{ t('login.forgotPassword') }}
+                </router-link>
               </div>
               <div class="text-center mt-2">
                 <router-link

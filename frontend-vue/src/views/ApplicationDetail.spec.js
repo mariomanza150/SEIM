@@ -34,6 +34,7 @@ vi.mock('@/services/api', () => ({
     post: vi.fn(),
     delete: vi.fn(),
     patch: vi.fn(),
+    put: vi.fn(),
   },
 }))
 
@@ -169,7 +170,7 @@ describe('ApplicationDetail', () => {
 
     await wrapper.find('#commentText').setValue('Internal note for reviewers')
     await wrapper.find('#privateComment').setValue(true)
-    await wrapper.find('form').trigger('submit.prevent')
+    await wrapper.find('[data-testid="comment-form"]').trigger('submit.prevent')
     await vi.waitFor(() => {
       expect(api.post).toHaveBeenCalled()
     })
@@ -345,5 +346,23 @@ describe('ApplicationDetail', () => {
       i18n.global.t('applicationDetailPage.scholarshipScoring.exportCohortCsv'),
     )
     mockAuthStore.userRole = 'coordinator'
+  })
+
+  it('shows scholarship award panel for coordinators', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({ data: { ...applicationPayload, scholarship_award: null } })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="scholarship-award-panel"]').exists()).toBe(true)
+    })
+    expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.scholarshipAward.noneYet'))
+    expect(wrapper.find('[data-testid="award-save"]').exists()).toBe(true)
   })
 })

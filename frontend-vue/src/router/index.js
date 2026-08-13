@@ -14,6 +14,8 @@ import { routeBusy } from '@/router/routeBusy'
 const Login = () => import('@/views/Login.vue')
 const Register = () => import('@/views/Register.vue')
 const VerifyEmail = () => import('@/views/VerifyEmail.vue')
+const PasswordReset = () => import('@/views/PasswordReset.vue')
+const PasswordResetConfirm = () => import('@/views/PasswordResetConfirm.vue')
 const AppShell = () => import('@/layouts/AppShell.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
 const Applications = () => import('@/views/Applications.vue')
@@ -31,6 +33,8 @@ const Notifications = () => import('@/views/Notifications.vue')
 const Profile = () => import('@/views/Profile.vue')
 const Settings = () => import('@/views/Settings.vue')
 const DeadlinesCalendar = () => import('@/views/DeadlinesCalendar.vue')
+const EligibilityRulesets = () => import('@/views/EligibilityRulesets.vue')
+const PartnerPortal = () => import('@/views/PartnerPortal.vue')
 const AdminPrograms = () => import('@/views/admin/AdminPrograms.vue')
 const AdminForms = () => import('@/views/admin/AdminForms.vue')
 const AdminWorkflows = () => import('@/views/admin/AdminWorkflows.vue')
@@ -59,6 +63,22 @@ const routes = [
     path: '/verify-email',
     name: 'VerifyEmail',
     component: VerifyEmail,
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/password-reset',
+    name: 'PasswordReset',
+    component: PasswordReset,
+    meta: {
+      requiresAuth: false,
+    },
+  },
+  {
+    path: '/password-reset/confirm',
+    name: 'PasswordResetConfirm',
+    component: PasswordResetConfirm,
     meta: {
       requiresAuth: false,
     },
@@ -116,6 +136,18 @@ const routes = [
       { path: 'profile', name: 'Profile', component: Profile },
       { path: 'settings', name: 'Settings', component: Settings },
       { path: 'calendar', name: 'DeadlinesCalendar', component: DeadlinesCalendar },
+      {
+        path: 'eligibility-rulesets',
+        name: 'EligibilityRulesets',
+        component: EligibilityRulesets,
+        meta: { staffReviewQueue: true },
+      },
+      {
+        path: 'partner',
+        name: 'PartnerPortal',
+        component: PartnerPortal,
+        meta: { partnerPortal: true },
+      },
       { path: 'preferences', redirect: { name: 'Settings' } },
 
       // SPA admin console (admin-only)
@@ -199,7 +231,11 @@ router.beforeEach(async (to, from, next) => {
 
   // Route doesn't require auth
   if (
-    (to.name === 'Login' || to.name === 'Register' || to.name === 'VerifyEmail') &&
+    (to.name === 'Login' ||
+      to.name === 'Register' ||
+      to.name === 'VerifyEmail' ||
+      to.name === 'PasswordReset' ||
+      to.name === 'PasswordResetConfirm') &&
     authStore.isAuthenticated
   ) {
     next({ name: 'Dashboard' })

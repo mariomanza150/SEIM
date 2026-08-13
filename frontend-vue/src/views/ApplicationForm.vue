@@ -1045,6 +1045,7 @@ import {
   deserializeApplicationProgramFilters,
 } from '@/utils/applicationProgramFilterPresets'
 import { fieldMeetsVisibleWhen, stepMeetsVisibleWhen } from '@/utils/dynamicFormVisibility'
+import { eligibilityFailureMessages } from '@/utils/eligibilityMessages'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 
@@ -1260,26 +1261,6 @@ async function persistProfileEligibility() {
   }
 }
 
-function parseEligibilityApiMessage(message) {
-  if (!message || typeof message !== 'string') return []
-  const trimmed = message.trim()
-  if (!trimmed) return []
-  if (trimmed.includes('\n- ')) {
-    const parts = trimmed.split('\n- ').map((s) => s.trim()).filter(Boolean)
-    const prefix = 'Eligibility requirements not met:'
-    if (parts[0]?.startsWith(prefix)) {
-      const rest = parts[0].slice(prefix.length).trim()
-      if (rest) {
-        parts[0] = rest
-      } else {
-        parts.shift()
-      }
-    }
-    return parts
-  }
-  return [trimmed]
-}
-
 /** Eligibility preview (API) + save validation on `program` / `non_field_errors`, deduped for assertive alert + `aria-describedby`. */
 const programIssueMessages = computed(() => {
   const fromProg = flattenFieldMessages(errors.value?.program)
@@ -1418,7 +1399,7 @@ watch(
         const { data } = await api.get(url)
         if (seq !== eligibilityCheckSeq) return
         if (data.eligible === false && data.message) {
-          eligibilityPreviewMessages.value = parseEligibilityApiMessage(data.message)
+          eligibilityPreviewMessages.value = eligibilityFailureMessages(data, t)
         } else {
           eligibilityPreviewMessages.value = []
         }

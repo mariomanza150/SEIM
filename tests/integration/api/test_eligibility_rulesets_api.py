@@ -72,5 +72,58 @@ class TestEligibilityRuleSetsApi(TestCase):
             {"use_ruleset": "true"},
         )
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data["schema_version"], 7)
+        self.assertEqual(resp.data["schema_version"], 8)
         self.assertTrue(resp.data.get("using_ruleset"))
+
+    def test_check_eligibility_applies_active_ruleset_overrides(self):
+        from accounts.models import Profile
+        from exchange.services import ApplicationService
+
+        Profile.objects.get_or_create(user=self.student)
+        self.ruleset.rules_json = {
+            "program_overrides": {
+                "required_language": "Klingon",
+            }
+        }
+        self.ruleset.save()
+        program = Program.objects.select_related("eligibility_ruleset").get(
+            pk=self.program.pk
+        )
+        with self.assertRaises(ValueError) as ctx:
+            ApplicationService.check_eligibility(self.student, program)
+        self.assertIn("Klingon", str(ctx.exception))
+
+    def test_check_eligibility_ignores_inactive_ruleset(self):
+        from accounts.models import Profile
+        from exchange.services import ApplicationService
+
+        Profile.objects.get_or_create(user=self.student)
+        self.ruleset.rules_json = {
+            "program_overrides": {
+                "required_language": "Klingon",
+            }
+        }
+        self.ruleset.is_active = False
+        self.ruleset.save()
+        program = Program.objects.select_related("eligibility_ruleset").get(
+            pk=self.program.pk
+        )
+        result = ApplicationService.check_eligibility(self.student, program)
+        self.assertTrue(result["eligible"])
+
+    def test_coordinator_can_create_ruleset(self):
+        self.client.force_authenticate(user=self.coordinator)
+        resp = self.client.post(
+            "/api/eligibility-rulesets/",
+            {
+                "name": "Strict GPA",
+                "description": "",
+                "is_active": True,
+                "schema_version": 1,
+                "rules_json": {"program_overrides": {"min_gpa": 3.5}},
+            },
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resp.data["name"], "Strict GPA")
+        self.assertEqual(resp.data["rules_json"]["program_overrides"]["min_gpa"], 3.5)

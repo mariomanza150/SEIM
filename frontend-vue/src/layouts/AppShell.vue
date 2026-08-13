@@ -79,6 +79,11 @@
                     {{ t('route.names.AdminWorkflows') }}
                   </router-link>
                 </li>
+                <li>
+                  <router-link class="dropdown-item" :to="{ name: 'EligibilityRulesets' }">
+                    {{ t('route.names.EligibilityRulesets') }}
+                  </router-link>
+                </li>
               </ul>
             </li>
             <li class="nav-item" v-if="authStore.isAdmin">
@@ -269,6 +274,20 @@ const primaryNavItems = computed(() => [
     label: t('route.names.StaffExchangeAgreements'),
     iconClass: 'bi bi-file-earmark-richtext',
     isVisible: authStore.canUseStaffReviewQueue,
+  },
+  {
+    key: 'eligibilityRulesets',
+    to: { name: 'EligibilityRulesets' },
+    label: t('route.names.EligibilityRulesets'),
+    iconClass: 'bi bi-funnel',
+    isVisible: authStore.canUseStaffReviewQueue,
+  },
+  {
+    key: 'partnerPortal',
+    to: { name: 'PartnerPortal' },
+    label: t('route.names.PartnerPortal'),
+    iconClass: 'bi bi-building',
+    isVisible: authStore.canUsePartnerPortal,
   },
   {
     key: 'documents',

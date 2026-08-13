@@ -193,8 +193,17 @@ class TestPasswordReset(TestCase):
         user.refresh_from_db()
         self.assertIsNotNone(user.email_verification_token)
 
-        # Should send notification
         mock_notification.assert_called_once()
+        message = mock_notification.call_args.kwargs["message"]
+        self.assertIn("/seim/password-reset/confirm?", message)
+        self.assertIn("test%40test.com", message)
+        self.assertIn(user.email_verification_token, message)
+
+    def test_build_password_reset_url_includes_email_and_token(self):
+        url = AccountService.build_password_reset_url("ada@example.com", "tok123")
+        self.assertIn("/seim/password-reset/confirm?", url)
+        self.assertIn("email=ada%40example.com", url)
+        self.assertIn("token=tok123", url)
 
     def test_initiate_password_reset_nonexistent_email(self):
         """Test password reset with non-existent email."""

@@ -17,7 +17,7 @@ from notifications.tasks import REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY
 @pytest.mark.django_db
 def test_build_notification_routing_reference_shape():
     data = build_notification_routing_reference()
-    assert data["schema_version"] == 12
+    assert data["schema_version"] == 13
     access = data["reference_api_access"]
     assert access["superuser"] is True
     assert "coordinator" in access["roles_any"]

@@ -82,7 +82,7 @@
                   <div v-if="document.file" class="d-flex flex-wrap gap-2">
                     <a
                       :href="resolveFileUrl(document.file)"
-                      download
+                      download=""
                       class="btn btn-sm btn-primary"
                       rel="noopener noreferrer"
                     >
@@ -99,17 +99,20 @@
                   </div>
                 </div>
                 <template v-else-if="previewObjectUrl">
-                  <iframe
+                  <embed
                     v-if="previewKind === 'pdf'"
                     :src="previewObjectUrl"
+                    type="application/pdf"
                     :title="t('documentDetailPage.previewIframeTitle')"
                     class="w-100 border rounded preview-frame"
+                    data-testid="document-preview-pdf"
                   />
                   <img
                     v-else-if="previewKind === 'image'"
                     :src="previewObjectUrl"
                     :alt="t('documentDetailPage.previewImageAlt')"
                     class="img-fluid border rounded"
+                    data-testid="document-preview-image"
                   />
                 </template>
                 <div v-if="previewContextLines.length" class="mt-3 pt-3 border-top small">
@@ -538,6 +541,17 @@ function revokePreviewUrl() {
   }
 }
 
+async function readBlobMagic(blob, n = 5) {
+  try {
+    const chunk = blob.slice(0, n)
+    if (typeof chunk.arrayBuffer !== 'function') return ''
+    const buf = await chunk.arrayBuffer()
+    return String.fromCharCode(...new Uint8Array(buf).slice(0, n))
+  } catch {
+    return ''
+  }
+}
+
 async function loadPreview() {
   revokePreviewUrl()
   previewError.value = null
@@ -549,23 +563,37 @@ async function loadPreview() {
   try {
     const res = await api.get(`/api/documents/${document.value.id}/preview/`, {
       responseType: 'blob',
+      headers: {
+        Accept: previewKind.value === 'pdf' ? 'application/pdf,*/*' : 'image/*,*/*',
+      },
+      transformRequest: [
+        (data, headers) => {
+          if (headers) {
+            delete headers['Content-Type']
+            delete headers['content-type']
+          }
+          return data
+        },
+      ],
     })
     const contentType = String(res?.headers?.['content-type'] || res?.headers?.['Content-Type'] || '')
     const rawBlob = res?.data instanceof Blob ? res.data : new Blob([res?.data])
+    const magic = await readBlobMagic(rawBlob, 5)
+    const looksPdf = magic.startsWith('%PDF')
+    const looksHtml = contentType.toLowerCase().includes('text/html') || contentType.toLowerCase().includes('application/json')
 
     if (previewKind.value === 'pdf') {
-      // Common failure mode: server returns HTML/JSON (e.g., auth redirect / error) as a blob.
-      if (contentType && !contentType.toLowerCase().includes('pdf')) {
+      if (looksHtml && !looksPdf) {
         previewError.value = t('documentDetailPage.previewError')
         return
       }
     }
 
     const expectedType =
-      previewKind.value === 'pdf'
+      previewKind.value === 'pdf' || looksPdf
         ? 'application/pdf'
-        : contentType || rawBlob.type || 'application/octet-stream'
-    const blob = rawBlob.type && rawBlob.type !== expectedType ? new Blob([rawBlob], { type: expectedType }) : rawBlob
+        : contentType.split(';')[0].trim() || rawBlob.type || 'application/octet-stream'
+    const blob = new Blob([rawBlob], { type: expectedType })
     previewObjectUrl.value = URL.createObjectURL(blob)
   } catch (e) {
     console.error(e)

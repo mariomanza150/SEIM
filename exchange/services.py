@@ -10,6 +10,10 @@ from exchange.eligibility_rules import (
     checks_passed_labels,
     evaluate_eligibility,
 )
+from exchange.eligibility_rulesets import (
+    ProgramEligibilityProxy,
+    parse_ruleset_overrides,
+)
 from notifications.services import NotificationService
 
 from .models import (
@@ -20,6 +24,14 @@ from .models import (
     Program,
     TimelineEvent,
 )
+
+
+def _program_for_eligibility(program: Program):
+    """Use an active linked EligibilityRuleSet's scalar overrides when present."""
+    ruleset = getattr(program, "eligibility_ruleset", None)
+    if ruleset is None or not getattr(ruleset, "is_active", False):
+        return program
+    return ProgramEligibilityProxy(program, parse_ruleset_overrides(ruleset))
 
 
 class ApplicationService:
@@ -49,7 +61,8 @@ class ApplicationService:
         Returns:
             dict: Detailed eligibility result with status, ``rules``, and legacy ``checks_passed``.
         """
-        ev = evaluate_eligibility(student, program, application=application)
+        eval_program = _program_for_eligibility(program)
+        ev = evaluate_eligibility(student, eval_program, application=application)
         if not ev.eligible:
             if (
                 len(ev.failures) == 1
@@ -62,7 +75,7 @@ class ApplicationService:
         return {
             "eligible": True,
             "message": "All eligibility requirements met",
-            "checks_passed": checks_passed_labels(program),
+            "checks_passed": checks_passed_labels(eval_program),
             "rules": ev.rules_as_dicts(),
             "schema_version": ELIGIBILITY_SCHEMA_VERSION,
         }

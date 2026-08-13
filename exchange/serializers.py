@@ -13,6 +13,7 @@ from .models import (
     HostInstitution,
     HostSchool,
     HostSubject,
+    PartnerContact,
     Program,
     SavedSearch,
     TimelineEvent,
@@ -95,6 +96,19 @@ class EligibilityRuleSetSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+        read_only_fields = ("id", "created_at", "updated_at")
+
+    def validate_rules_json(self, value):
+        if value in (None, ""):
+            return {}
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Must be a JSON object.")
+        overrides = value.get("program_overrides")
+        if overrides is not None and not isinstance(overrides, dict):
+            raise serializers.ValidationError(
+                "program_overrides must be a JSON object."
+            )
+        return value
 
 
 class HostInstitutionSerializer(serializers.ModelSerializer):
@@ -247,6 +261,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     program_name = serializers.SerializerMethodField()
     readiness = serializers.SerializerMethodField()
     scholarship_allocation_score = serializers.SerializerMethodField()
+    scholarship_award = serializers.SerializerMethodField()
 
     class Meta:
         model = Application
@@ -256,6 +271,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "document_checklist",
             "readiness",
             "scholarship_allocation_score",
+            "scholarship_award",
             "assigned_coordinator_name",
             "effective_coordinator",
             "student_display_name",
@@ -334,6 +350,27 @@ class ApplicationSerializer(serializers.ModelSerializer):
         if is_owner and not is_staff:
             return {**payload, "disclaimer": STUDENT_SCHOLARSHIP_DISCLAIMER}
         return payload
+
+    def get_scholarship_award(self, obj):
+        request = self.context.get("request")
+        view = self.context.get("view")
+        if not request or not request.user.is_authenticated:
+            return None
+        if view and getattr(view, "action", None) == "list":
+            return None
+        user = request.user
+        is_staff = hasattr(user, "has_any_role") and user.has_any_role(
+            ["coordinator", "admin"]
+        )
+        is_owner = user.pk == obj.student_id
+        if not is_staff and not is_owner:
+            return None
+        award = getattr(obj, "scholarship_award", None)
+        if award is None:
+            return None
+        from exchange.scholarship_awards import serialize_award
+
+        return serialize_award(award)
 
     def get_dynamic_form_layout(self, obj):
         from documents.services import DocumentService
@@ -673,6 +710,7 @@ class ExchangeAgreementSerializer(serializers.ModelSerializer):
         many=True, queryset=Program.objects.all(), required=False
     )
     renewal_draft_successor_id = serializers.SerializerMethodField(read_only=True)
+    partner_contacts = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = ExchangeAgreement
@@ -688,6 +726,23 @@ class ExchangeAgreementSerializer(serializers.ModelSerializer):
             .first()
         )
         return str(sid) if sid else None
+
+    def get_partner_contacts(self, obj):
+        contacts = getattr(obj, "partner_contacts", None)
+        if contacts is None:
+            return []
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        staff = bool(
+            user
+            and user.is_authenticated
+            and hasattr(user, "has_any_role")
+            and user.has_any_role(["coordinator", "admin"])
+        )
+        if not staff:
+            return []
+        qs = obj.partner_contacts.select_related("user").all()
+        return PartnerContactSerializer(qs, many=True).data
 
     def create(self, validated_data):
         programs = validated_data.pop("programs", None)
@@ -706,6 +761,86 @@ class ExchangeAgreementSerializer(serializers.ModelSerializer):
         return instance
 
 
+class PartnerContactSerializer(serializers.ModelSerializer):
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    user_name = serializers.SerializerMethodField()
+    agreement_title = serializers.CharField(source="agreement.title", read_only=True)
+
+    class Meta:
+        model = PartnerContact
+        fields = (
+            "id",
+            "user",
+            "user_email",
+            "user_name",
+            "agreement",
+            "agreement_title",
+            "title",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "created_at", "updated_at")
+
+    def get_user_name(self, obj):
+        u = obj.user
+        return u.get_full_name().strip() or u.username
+
+    def validate_user(self, user):
+        if not getattr(user, "has_role", None) or not user.has_role("partner"):
+            raise serializers.ValidationError(
+                "User must have the partner role."
+            )
+        return user
+
+
+class PartnerApplicationSerializer(serializers.ModelSerializer):
+    """Limited applicant payload for partner-institution users."""
+
+    program_name = serializers.CharField(source="program.name", read_only=True)
+    status_name = serializers.CharField(source="status.name", read_only=True)
+    student_display_name = serializers.SerializerMethodField()
+    document_checklist = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Application
+        fields = (
+            "id",
+            "program",
+            "program_name",
+            "status",
+            "status_name",
+            "submitted_at",
+            "withdrawn",
+            "student_display_name",
+            "document_checklist",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+    def get_student_display_name(self, obj):
+        s = obj.student
+        first = (s.first_name or "").strip() or (s.username or "")
+        last = (s.last_name or "").strip()
+        initial = f"{last[0]}." if last else ""
+        return f"{first} {initial}".strip()
+
+    def get_document_checklist(self, obj):
+        from documents.services import DocumentService
+
+        full = DocumentService.build_application_document_checklist(obj)
+        items = [
+            {
+                "name": it.get("name"),
+                "status": it.get("status"),
+                "required": it.get("required", True),
+            }
+            for it in (full.get("items") or [])
+        ]
+        return {"complete": full.get("complete"), "items": items}
+
+
 class EligibilityRuleOutcomeSchemaSerializer(serializers.Serializer):
     """OpenAPI shape for one row in ``GET .../check_eligibility/`` ``rules`` (``schema_version`` 4+)."""
 
@@ -713,6 +848,8 @@ class EligibilityRuleOutcomeSchemaSerializer(serializers.Serializer):
     passed = serializers.BooleanField()
     skipped = serializers.BooleanField()
     message = serializers.CharField(required=False, allow_blank=True)
+    message_key = serializers.CharField(required=False, allow_blank=True)
+    message_params = serializers.DictField(required=False)
 
 
 class ProgramEligibilitySnapshotSerializer(serializers.Serializer):

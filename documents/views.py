@@ -194,9 +194,17 @@ class DocumentViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
         content_type, _ = mimetypes.guess_type(file_field.name)
-        if not content_type:
-            content_type = "application/octet-stream"
         filename = os.path.basename(file_field.name)
+        try:
+            head = file_handle.read(5)
+            file_handle.seek(0)
+        except Exception:
+            head = b""
+        name_l = (file_field.name or filename or "").lower()
+        if name_l.endswith(".pdf") or head.startswith(b"%PDF"):
+            content_type = "application/pdf"
+        elif not content_type:
+            content_type = "application/octet-stream"
         response = FileResponse(file_handle, content_type=content_type)
         response["Content-Disposition"] = f'inline; filename="{filename}"'
         return response

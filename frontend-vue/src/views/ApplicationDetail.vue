@@ -225,6 +225,102 @@
           </div>
         </div>
 
+        <div
+          v-if="application.scholarship_award || isCoordinator"
+          class="row mb-3"
+          data-testid="scholarship-award-panel"
+        >
+          <div class="col-12">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0">
+                  <i class="bi bi-award me-2"></i>{{ t('applicationDetailPage.scholarshipAward.title') }}
+                </h5>
+                <button
+                  v-if="isCoordinator"
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  :disabled="scholarshipAwardBusy"
+                  data-testid="scholarship-awards-export"
+                  @click="downloadScholarshipAwardsExport"
+                >
+                  {{ t('applicationDetailPage.scholarshipAward.exportCsv') }}
+                </button>
+              </div>
+              <div class="card-body">
+                <p v-if="!application.scholarship_award" class="text-muted small mb-3">
+                  {{ t('applicationDetailPage.scholarshipAward.noneYet') }}
+                </p>
+                <template v-else>
+                  <p class="mb-2">
+                    <span class="badge bg-primary me-2">{{
+                      t(`applicationDetailPage.scholarshipAward.status.${application.scholarship_award.status}`)
+                    }}</span>
+                    <span v-if="application.scholarship_award.amount">
+                      {{ application.scholarship_award.amount }} {{ application.scholarship_award.currency }}
+                    </span>
+                  </p>
+                  <p v-if="application.scholarship_award.notes" class="small">{{ application.scholarship_award.notes }}</p>
+                  <ul v-if="application.scholarship_award.disbursements?.length" class="small mb-2">
+                    <li v-for="d in application.scholarship_award.disbursements" :key="d.id">
+                      {{ d.label }} — {{ d.status }}
+                      <span v-if="d.amount"> ({{ d.amount }})</span>
+                    </li>
+                  </ul>
+                  <p v-if="application.scholarship_award.evidence_documents?.length" class="small text-muted mb-0">
+                    {{ t('applicationDetailPage.scholarshipAward.evidenceCount', { n: application.scholarship_award.evidence_documents.length }) }}
+                  </p>
+                </template>
+                <form v-if="isCoordinator" class="row g-2 mt-3" @submit.prevent="saveScholarshipAward">
+                  <div class="col-md-3">
+                    <label class="form-label" for="award-status">{{ t('applicationDetailPage.scholarshipAward.statusLabel') }}</label>
+                    <select id="award-status" v-model="awardForm.status" class="form-select" data-testid="award-status">
+                      <option value="nominated">{{ t('applicationDetailPage.scholarshipAward.status.nominated') }}</option>
+                      <option value="awarded">{{ t('applicationDetailPage.scholarshipAward.status.awarded') }}</option>
+                      <option value="declined">{{ t('applicationDetailPage.scholarshipAward.status.declined') }}</option>
+                      <option value="disbursing">{{ t('applicationDetailPage.scholarshipAward.status.disbursing') }}</option>
+                      <option value="disbursed">{{ t('applicationDetailPage.scholarshipAward.status.disbursed') }}</option>
+                      <option value="withdrawn">{{ t('applicationDetailPage.scholarshipAward.status.withdrawn') }}</option>
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label" for="award-amount">{{ t('applicationDetailPage.scholarshipAward.amountLabel') }}</label>
+                    <input id="award-amount" v-model="awardForm.amount" class="form-control" data-testid="award-amount" />
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label" for="award-currency">{{ t('applicationDetailPage.scholarshipAward.currencyLabel') }}</label>
+                    <input id="award-currency" v-model="awardForm.currency" class="form-control" maxlength="8" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label" for="award-notes">{{ t('applicationDetailPage.scholarshipAward.notesLabel') }}</label>
+                    <input id="award-notes" v-model="awardForm.notes" class="form-control" />
+                  </div>
+                  <div class="col-12">
+                    <button type="submit" class="btn btn-sm btn-primary" :disabled="scholarshipAwardBusy" data-testid="award-save">
+                      {{ t('applicationDetailPage.scholarshipAward.save') }}
+                    </button>
+                  </div>
+                </form>
+                <form v-if="isCoordinator && application.scholarship_award" class="row g-2 mt-2" @submit.prevent="addDisbursement">
+                  <div class="col-md-5">
+                    <label class="form-label" for="disb-label">{{ t('applicationDetailPage.scholarshipAward.disbursementLabel') }}</label>
+                    <input id="disb-label" v-model.trim="disbursementForm.label" class="form-control" data-testid="disbursement-label" />
+                  </div>
+                  <div class="col-md-3">
+                    <label class="form-label" for="disb-amount">{{ t('applicationDetailPage.scholarshipAward.amountLabel') }}</label>
+                    <input id="disb-amount" v-model="disbursementForm.amount" class="form-control" />
+                  </div>
+                  <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-sm btn-outline-primary" :disabled="scholarshipAwardBusy || !disbursementForm.label">
+                      {{ t('applicationDetailPage.scholarshipAward.addDisbursement') }}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="row">
           <!-- Main Content -->
           <div class="col-lg-8">
@@ -440,7 +536,7 @@
                   {{ t('applicationDetailPage.noCommentsYet') }}
                 </p>
 
-                <form class="border-top pt-3" @submit.prevent="submitComment">
+                <form class="border-top pt-3" data-testid="comment-form" @submit.prevent="submitComment">
                   <div class="mb-3">
                     <label class="form-label" for="commentText">{{ t('applicationDetailPage.addCommentLabel') }}</label>
                     <textarea
@@ -725,6 +821,9 @@ const timelineError = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const scholarshipExportLoading = ref(false)
+const scholarshipAwardBusy = ref(false)
+const awardForm = ref({ status: 'nominated', amount: '', currency: 'MXN', notes: '' })
+const disbursementForm = ref({ label: '', amount: '' })
 
 const SCHOLARSHIP_EXPORT_MIME = {
   csv: 'text/csv;charset=utf-8',
@@ -764,6 +863,87 @@ async function downloadScholarshipCohortExport(format = 'csv') {
   }
 }
 
+function syncAwardForm(app) {
+  const a = app?.scholarship_award
+  awardForm.value = {
+    status: a?.status || 'nominated',
+    amount: a?.amount || '',
+    currency: a?.currency || 'MXN',
+    notes: a?.notes || '',
+  }
+}
+
+async function saveScholarshipAward() {
+  if (!application.value?.id) return
+  scholarshipAwardBusy.value = true
+  try {
+    const { data } = await api.put(`/api/applications/${application.value.id}/scholarship-award/`, {
+      status: awardForm.value.status,
+      amount: awardForm.value.amount === '' ? null : awardForm.value.amount,
+      currency: awardForm.value.currency || 'MXN',
+      notes: awardForm.value.notes,
+    })
+    application.value = { ...application.value, scholarship_award: data }
+    syncAwardForm(application.value)
+    success(t('applicationDetailPage.scholarshipAward.saveSuccess'))
+  } catch (err) {
+    errorToast(err.response?.data?.error || t('applicationDetailPage.scholarshipAward.saveError'))
+  } finally {
+    scholarshipAwardBusy.value = false
+  }
+}
+
+async function addDisbursement() {
+  if (!application.value?.id || !disbursementForm.value.label) return
+  scholarshipAwardBusy.value = true
+  try {
+    const { data } = await api.post(
+      `/api/applications/${application.value.id}/scholarship-award/disbursements/`,
+      {
+        label: disbursementForm.value.label,
+        amount: disbursementForm.value.amount === '' ? null : disbursementForm.value.amount,
+      },
+    )
+    application.value = { ...application.value, scholarship_award: data }
+    disbursementForm.value = { label: '', amount: '' }
+    success(t('applicationDetailPage.scholarshipAward.disbursementAdded'))
+  } catch (err) {
+    errorToast(err.response?.data?.error || t('applicationDetailPage.scholarshipAward.saveError'))
+  } finally {
+    scholarshipAwardBusy.value = false
+  }
+}
+
+async function downloadScholarshipAwardsExport() {
+  const programId = application.value?.program
+  if (!programId) {
+    errorToast(t('applicationDetailPage.scholarshipScoring.exportMissingProgram'))
+    return
+  }
+  scholarshipAwardBusy.value = true
+  try {
+    const response = await api.get('/api/applications/scholarship-awards-export/', {
+      params: { program: programId },
+      responseType: 'blob',
+    })
+    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `scholarship-awards-${programId}.csv`
+    a.rel = 'noopener noreferrer'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+    success(t('applicationDetailPage.scholarshipAward.exportSuccess'))
+  } catch {
+    errorToast(t('applicationDetailPage.scholarshipAward.exportError'))
+  } finally {
+    scholarshipAwardBusy.value = false
+  }
+}
+
 async function fetchApplication() {
   try {
     loading.value = true
@@ -771,6 +951,7 @@ async function fetchApplication() {
 
     const response = await api.get(`/api/applications/${route.params.id}/`)
     application.value = response.data
+    syncAwardForm(application.value)
     await Promise.all([fetchApplicationDocuments(), fetchComments(), fetchTimelineEvents()])
   } catch (err) {
     console.error('Failed to fetch application:', err)
@@ -787,6 +968,7 @@ async function softRefreshFromSync() {
   try {
     const response = await api.get(`/api/applications/${route.params.id}/`)
     application.value = response.data
+    syncAwardForm(application.value)
     await Promise.all([fetchApplicationDocuments(), fetchComments(), fetchTimelineEvents()])
   } catch (err) {
     console.warn('Live sync refresh failed:', err)

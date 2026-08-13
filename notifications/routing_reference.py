@@ -170,6 +170,16 @@ TRANSACTIONAL_NOTIFICATION_ROUTES: list[dict[str, object]] = [
         "source": "exchange.services.ApplicationService.submit_application",
     },
     {
+        "route_key": "scholarship_award_status",
+        "settings_category": "applications",
+        "recipient_summary": "The application student.",
+        "summary": (
+            "Student notified when staff nominates, awards, declines, or disburses "
+            "a scholarship on their application."
+        ),
+        "source": "exchange.scholarship_awards._notify_student",
+    },
+    {
         "route_key": "calendar_deadline_reminder",
         "settings_category": None,
         "recipient_summary": "The user who owns the reminder (same user as ``Reminder.user``).",
@@ -322,7 +332,7 @@ def build_notification_routing_reference() -> dict:
         k: sorted(v) for k, v in sorted(tx_by_cat.items(), key=lambda kv: kv[0])
     }
     return {
-        "schema_version": 12,
+        "schema_version": 13,
         "reference_api_access": dict(REFERENCE_API_ACCESS),
         "settings_categories": categories,
         "transactional_routes": transactional,

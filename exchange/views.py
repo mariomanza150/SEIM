@@ -227,8 +227,8 @@ class ExchangeAgreementViewSet(viewsets.ModelViewSet):
         )
 
 
-class EligibilityRuleSetViewSet(viewsets.ReadOnlyModelViewSet):
-    """Staff read-only API for persisted eligibility rule sets."""
+class EligibilityRuleSetViewSet(viewsets.ModelViewSet):
+    """Staff CRUD API for persisted eligibility rule sets."""
 
     queryset = EligibilityRuleSet.objects.all()
     serializer_class = EligibilityRuleSetSerializer
@@ -239,6 +239,7 @@ class EligibilityRuleSetViewSet(viewsets.ReadOnlyModelViewSet):
         filters.OrderingFilter,
     ]
     search_fields = ["name", "description"]
+    filterset_fields = ["is_active", "schema_version"]
     ordering_fields = [
         "name",
         "schema_version",
@@ -690,6 +691,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             "document_set",  # Reverse ForeignKey (documents)
             "document_set__type",  # Document types
             "document_set__uploaded_by",  # Who uploaded them
+            "scholarship_award",
+            "scholarship_award__disbursements",
+            "scholarship_award__decided_by",
         )
 
         # Filter based on role
@@ -769,6 +773,127 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             )
         except ValueError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=["get"], url_path="scholarship-awards-export")
+    def scholarship_awards_export(self, request):
+        """Export scholarship awards for a program cohort (CSV, staff)."""
+        user = request.user
+        if not user.is_authenticated or not user.has_any_role(["coordinator", "admin"]):
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        program_id = request.query_params.get("program")
+        if not program_id:
+            return Response(
+                {"error": "Query parameter 'program' is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        from .models import Program
+
+        program = Program.objects.filter(pk=program_id).first()
+        if not program:
+            return Response(
+                {"error": "Program not found."}, status=status.HTTP_404_NOT_FOUND
+            )
+        qs = (
+            Application.objects.filter(program_id=program_id)
+            .select_related(
+                "program",
+                "student",
+                "scholarship_award",
+                "scholarship_award__decided_by",
+            )
+            .order_by("created_at")
+        )
+        from exchange.scholarship_awards import awards_export_response
+
+        return awards_export_response(program_id, qs, program_name=program.name)
+
+    @action(
+        detail=True,
+        methods=["get", "put", "patch"],
+        url_path="scholarship-award",
+    )
+    def scholarship_award(self, request, pk=None):
+        """Read or upsert the scholarship award on this application."""
+        application = self.get_object()
+        from exchange.scholarship_awards import serialize_award, upsert_award
+
+        if request.method == "GET":
+            award = getattr(application, "scholarship_award", None)
+            if not award:
+                return Response({"scholarship_award": None})
+            return Response(serialize_award(award))
+        user = request.user
+        if not user.has_any_role(["coordinator", "admin"]):
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            award = upsert_award(
+                application,
+                user,
+                status_value=request.data.get("status"),
+                amount=request.data.get("amount", None)
+                if "amount" in request.data
+                else None,
+                currency=request.data.get("currency"),
+                notes=request.data.get("notes"),
+            )
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serialize_award(award))
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="scholarship-award/transition",
+    )
+    def scholarship_award_transition(self, request, pk=None):
+        application = self.get_object()
+        user = request.user
+        if not user.has_any_role(["coordinator", "admin"]):
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        award = getattr(application, "scholarship_award", None)
+        if not award:
+            return Response(
+                {"error": "No scholarship award on this application."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        new_status = request.data.get("status")
+        if not new_status:
+            return Response(
+                {"error": "status is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        from exchange.scholarship_awards import serialize_award, transition_award
+
+        try:
+            award = transition_award(award, user, new_status)
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serialize_award(award))
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="scholarship-award/disbursements",
+    )
+    def scholarship_award_disbursement(self, request, pk=None):
+        application = self.get_object()
+        user = request.user
+        if not user.has_any_role(["coordinator", "admin"]):
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        award = getattr(application, "scholarship_award", None)
+        if not award:
+            return Response(
+                {"error": "No scholarship award on this application."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        from exchange.scholarship_awards import serialize_award, upsert_disbursement
+
+        try:
+            upsert_disbursement(award, request.data)
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        award.refresh_from_db()
+        return Response(serialize_award(award), status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"])
     def submit(self, request, pk=None):
@@ -1242,3 +1367,75 @@ class CalendarEventViewSet(viewsets.ReadOnlyModelViewSet):
             "http://", "webcal://", 1
         )
         return Response({"ics_url": ics_url, "webcal_url": webcal_url})
+
+    @action(detail=False, methods=["get"], url_path="google-status")
+    def google_status(self, request):
+        from exchange.google_calendar import connection_status
+
+        return Response(connection_status(request.user))
+
+    @action(detail=False, methods=["get"], url_path="google-authorize")
+    def google_authorize(self, request):
+        from exchange.google_calendar import build_authorization_url, is_configured
+
+        if not is_configured():
+            return Response(
+                {
+                    "configured": False,
+                    "detail": "Google Calendar OAuth is not configured.",
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        try:
+            url = build_authorization_url(request, request.user)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"configured": True, "authorization_url": url})
+
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="google-callback",
+        permission_classes=[permissions.AllowAny],
+        authentication_classes=[],
+    )
+    def google_callback(self, request):
+        from django.shortcuts import redirect
+
+        from exchange.google_calendar import exchange_code, spa_settings_url
+
+        error = request.query_params.get("error")
+        if error:
+            return redirect(spa_settings_url("google_calendar=error"))
+        code = request.query_params.get("code")
+        state = request.query_params.get("state")
+        if not code or not state:
+            return redirect(spa_settings_url("google_calendar=error"))
+        try:
+            exchange_code(request, code, state)
+        except Exception:
+            return redirect(spa_settings_url("google_calendar=error"))
+        return redirect(spa_settings_url("google_calendar=connected"))
+
+    @action(detail=False, methods=["post"], url_path="google-disconnect")
+    def google_disconnect(self, request):
+        from exchange.google_calendar import connection_status, disconnect
+
+        disconnect(request.user)
+        return Response(connection_status(request.user))
+
+    @action(detail=False, methods=["post"], url_path="google-sync")
+    def google_sync(self, request):
+        from exchange.google_calendar import connection_status, sync_user_events
+
+        try:
+            result = sync_user_events(request.user)
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as exc:
+            return Response(
+                {"detail": str(exc)}, status=status.HTTP_502_BAD_GATEWAY
+            )
+        payload = connection_status(request.user)
+        payload["sync"] = result
+        return Response(payload)

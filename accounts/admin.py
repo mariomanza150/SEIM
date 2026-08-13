@@ -7,6 +7,7 @@ from .models import (
     AcademicLevel,
     AllowedEmailDomain,
     BankInstitution,
+    GoogleCalendarConnection,
     HomeAcademicProgram,
     Permission,
     Profile,
@@ -195,3 +196,19 @@ class UserSessionAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False  # Sessions are created automatically
+
+
+@admin.register(GoogleCalendarConnection)
+class GoogleCalendarConnectionAdmin(admin.ModelAdmin):
+    list_display = ("user", "google_email", "last_synced_at")
+    search_fields = ("user__email", "google_email")
+    readonly_fields = (
+        "user",
+        "google_email",
+        "token_expiry",
+        "last_synced_at",
+        "last_sync_error",
+        "created_at",
+        "updated_at",
+    )
+    exclude = ("access_token", "refresh_token", "event_map")

@@ -18,9 +18,12 @@ from .models import (
     HostInstitution,
     HostSchool,
     HostSubject,
+    PartnerContact,
     Program,
     ProgramDocumentRequirement,
     SavedSearch,
+    ScholarshipAward,
+    ScholarshipDisbursement,
     TimelineEvent,
 )
 
@@ -953,4 +956,37 @@ class EligibilityRuleSetAdmin(admin.ModelAdmin):
     list_display = ("name", "schema_version", "is_active", "created_at", "updated_at")
     list_filter = ("is_active", "schema_version")
     search_fields = ("name", "description")
+    readonly_fields = ("created_at", "updated_at")
+
+
+class ScholarshipDisbursementInline(admin.TabularInline):
+    model = ScholarshipDisbursement
+    extra = 0
+    fields = ("label", "amount", "due_date", "status", "paid_at", "sort_order", "notes")
+
+
+@admin.register(ScholarshipAward)
+class ScholarshipAwardAdmin(admin.ModelAdmin):
+    list_display = ("application", "status", "amount", "currency", "decided_at")
+    list_filter = ("status", "currency")
+    search_fields = (
+        "application__student__email",
+        "application__program__name",
+        "notes",
+    )
+    readonly_fields = ("created_at", "updated_at")
+    inlines = [ScholarshipDisbursementInline]
+
+
+@admin.register(PartnerContact)
+class PartnerContactAdmin(admin.ModelAdmin):
+    list_display = ("user", "agreement", "title", "is_active", "created_at")
+    list_filter = ("is_active",)
+    search_fields = (
+        "user__email",
+        "user__username",
+        "agreement__title",
+        "agreement__partner_institution_name",
+    )
+    autocomplete_fields = ("user", "agreement")
     readonly_fields = ("created_at", "updated_at")

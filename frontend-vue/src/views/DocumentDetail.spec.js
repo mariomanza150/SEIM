@@ -66,6 +66,11 @@ describe('DocumentDetail', () => {
     setAppLocale('en')
     vi.clearAllMocks()
     mockSuccessFlow()
+    vi.stubGlobal('URL', {
+      ...URL,
+      createObjectURL: vi.fn(() => 'blob:mock-preview'),
+      revokeObjectURL: vi.fn(),
+    })
   })
 
   afterEach(() => {
@@ -162,6 +167,20 @@ describe('DocumentDetail', () => {
     expect(links[0].attributes('download')).toBeDefined()
     expect(links[1].attributes('target')).toBe('_blank')
     expect(links[1].attributes('rel')).toBe('noopener noreferrer')
+  })
+
+  it('renders a PDF embed when preview returns a PDF blob', async () => {
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const embed = wrapper.find('[data-testid="document-preview-pdf"]')
+    expect(embed.exists()).toBe(true)
+    expect(embed.attributes('type')).toBe('application/pdf')
+    expect(embed.attributes('src')).toBe('blob:mock-preview')
   })
 
   it('uses documentDetailPage fallbacks for missing file, uploader, dates, and application', async () => {

@@ -106,7 +106,7 @@ describe('Profile', () => {
     expect(wrapper.text()).toContain('ready for applications')
     expect(wrapper.text()).toContain('Additional languages')
     expect(wrapper.text()).toContain('Cancel')
-    expect(wrapper.find('input[type="number"]').attributes('placeholder')).toBe(
+    expect(wrapper.find('[data-testid="profile-gpa"]').attributes('placeholder')).toBe(
       i18n.global.t('profilePage.gpaPlaceholder'),
     )
     expect(api.get).toHaveBeenCalledWith('/api/accounts/catalogs/academic-levels/')
@@ -152,7 +152,7 @@ describe('Profile', () => {
     expect(wrapper.text()).toContain('Completa tus datos personales y académicos')
     expect(wrapper.text()).toContain('Idiomas adicionales')
     expect(wrapper.text()).toContain('Cancelar')
-    expect(wrapper.find('input[type="number"]').attributes('placeholder')).toBe(
+    expect(wrapper.find('[data-testid="profile-gpa"]').attributes('placeholder')).toBe(
       i18n.global.t('profilePage.gpaPlaceholder'),
     )
   })

@@ -92,9 +92,9 @@ class User(AbstractUser, UUIDModel, TimeStampedModel):
     def primary_role(self):
         """
         Get the primary role name for the user.
-        Priority: admin > coordinator > student
+        Priority: admin > coordinator > partner > student
         """
-        role_priority = ["admin", "coordinator", "student"]
+        role_priority = ["admin", "coordinator", "partner", "student"]
         user_roles = self.get_all_roles()
 
         for role in role_priority:
@@ -124,6 +124,11 @@ class User(AbstractUser, UUIDModel, TimeStampedModel):
     def is_student(self):
         """Check if user has student role."""
         return self.has_role("student")
+
+    @property
+    def is_partner(self):
+        """Check if user has partner-institution role."""
+        return self.has_role("partner")
 
     def generate_email_verification_token(self):
         """Generate a random token for email verification."""
@@ -619,8 +624,39 @@ class Profile(UUIDModel, TimeStampedModel):
             return gpa_value  # Fallback to original value
 
 
+class GoogleCalendarConnection(TimeStampedModel):
+    """Per-user Google Calendar OAuth tokens and last-sync metadata."""
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="google_calendar"
+    )
+    google_email = models.EmailField(blank=True, default="")
+    access_token = models.TextField(blank=True, default="")
+    refresh_token = models.TextField(blank=True, default="")
+    token_expiry = models.DateTimeField(null=True, blank=True)
+    google_calendar_id = models.CharField(max_length=255, default="primary")
+    last_synced_at = models.DateTimeField(null=True, blank=True)
+    last_sync_error = models.TextField(blank=True, default="")
+    event_map = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Map of SEIM event id → Google Calendar event id.",
+    )
+
+    class Meta:
+        verbose_name = "Google Calendar connection"
+        verbose_name_plural = "Google Calendar connections"
+
+    def __str__(self):
+        return f"{self.user_id} ({self.google_email or 'unlinked'})"
+
+    @property
+    def is_connected(self):
+        return bool(self.refresh_token or self.access_token)
+
+
 class Role(models.Model):
-    """User roles (student, coordinator, admin)."""
+    """User roles (student, coordinator, admin, partner)."""
 
     name = models.CharField(max_length=50, unique=True)
 

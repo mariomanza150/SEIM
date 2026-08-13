@@ -29,6 +29,11 @@ FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="http://localhost:8001").rs
     "/"
 )
 
+# Google Calendar OAuth (optional). When unset, connect/sync APIs return 503.
+GOOGLE_OAUTH_CLIENT_ID = env("GOOGLE_OAUTH_CLIENT_ID", default="")
+GOOGLE_OAUTH_CLIENT_SECRET = env("GOOGLE_OAUTH_CLIENT_SECRET", default="")
+GOOGLE_OAUTH_REDIRECT_URI = env("GOOGLE_OAUTH_REDIRECT_URI", default="")
+
 # Application definition
 DJANGO_APPS = [
     "django.contrib.admin",

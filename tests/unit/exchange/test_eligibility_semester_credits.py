@@ -103,4 +103,4 @@ class TestMinSemesterAndCreditsRules:
         assert any(r.rule_id == "min_credits" and not r.passed for r in ev.rules)
 
     def test_schema_version_constant(self):
-        assert ELIGIBILITY_SCHEMA_VERSION == 7
+        assert ELIGIBILITY_SCHEMA_VERSION == 8

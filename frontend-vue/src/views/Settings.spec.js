@@ -17,8 +17,17 @@ vi.mock('@/services/api', () => ({
   default: {
     get: vi.fn(),
     patch: vi.fn(),
+    post: vi.fn(),
   },
 }))
+
+vi.mock('vue-router', async (importOriginal) => {
+  const actual = await importOriginal()
+  return {
+    ...actual,
+    useRoute: () => ({ query: {}, params: {}, path: '/seim/settings', name: 'Settings' }),
+  }
+})
 
 function mountView() {
   const pinia = createPinia()
@@ -60,6 +69,14 @@ describe('Settings', () => {
     vi.clearAllMocks()
     localStorage.clear()
     setAppLocale('en')
+    api.get.mockImplementation((url) => {
+      if (String(url).includes('google-status')) {
+        return Promise.resolve({
+          data: { configured: false, connected: false, google_email: '' },
+        })
+      }
+      return Promise.resolve({ data: defaultSettingsPayload })
+    })
   })
 
   afterEach(() => {
@@ -262,5 +279,50 @@ describe('Settings', () => {
       expect(wrapper.find('[data-testid="settings-theme"]').exists()).toBe(true)
     })
     expect(wrapper.find('[data-testid="settings-notification-routing-link"]').exists()).toBe(false)
+  })
+
+  it('posts a password change from the dedicated form', async () => {
+    api.get.mockResolvedValue({ data: { ...defaultSettingsPayload } })
+    api.post.mockResolvedValue({ data: { detail: 'Password changed successfully.' } })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="change-password-form"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="settings-current-password"]').setValue('oldpass')
+    await wrapper.find('[data-testid="settings-new-password"]').setValue('Newpass1!')
+    await wrapper.find('[data-testid="settings-confirm-password"]').setValue('Newpass1!')
+    await wrapper.find('[data-testid="change-password-form"]').trigger('submit.prevent')
+    expect(api.post).toHaveBeenCalledWith('/api/accounts/change-password/', {
+      old_password: 'oldpass',
+      new_password: 'Newpass1!',
+      new_password2: 'Newpass1!',
+    })
+    expect(mockSuccessToast).toHaveBeenCalledWith(i18n.global.t('settings.passwordChanged'))
+  })
+
+  it('shows Google Calendar card and unconfigured message', async () => {
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="google-calendar-card"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="google-calendar-card"]').text()).toContain(
+      i18n.global.t('settings.googleCalendarNotConfigured'),
+    )
+    expect(wrapper.find('[data-testid="google-calendar-connect"]').exists()).toBe(false)
+  })
+
+  it('shows a Connect button when Google Calendar OAuth is configured', async () => {
+    api.get.mockImplementation((url) => {
+      if (String(url).includes('google-status')) {
+        return Promise.resolve({
+          data: { configured: true, connected: false, google_email: '' },
+        })
+      }
+      return Promise.resolve({ data: defaultSettingsPayload })
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="google-calendar-connect"]').exists()).toBe(true)
+    })
   })
 })

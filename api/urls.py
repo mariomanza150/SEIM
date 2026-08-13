@@ -49,6 +49,11 @@ from exchange.views import (
     TimelineEventViewSet,
     calendar_subscribe_ics,
 )
+from exchange.partner_views import (
+    PartnerAgreementViewSet,
+    PartnerApplicationViewSet,
+    PartnerContactViewSet,
+)
 from notifications.views import (
     NotificationPreferenceViewSet,
     NotificationRoutingOverrideViewSet,
@@ -98,6 +103,17 @@ router.register(r"comments", CommentViewSet)
 router.register(r"timeline-events", TimelineEventViewSet)
 router.register(r"saved-searches", SavedSearchViewSet, basename="saved-search")
 router.register(r"calendar/events", CalendarEventViewSet, basename="calendar-event")
+router.register(
+    r"partner/agreements", PartnerAgreementViewSet, basename="partner-agreement"
+)
+router.register(
+    r"partner/applications",
+    PartnerApplicationViewSet,
+    basename="partner-application",
+)
+router.register(
+    r"partner-contacts", PartnerContactViewSet, basename="partner-contact"
+)
 
 # Documents
 router.register(r"document-types", DocumentTypeViewSet)

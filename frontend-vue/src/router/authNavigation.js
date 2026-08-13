@@ -24,6 +24,10 @@ export async function resolveAuthenticatedNavigation(to, authStore) {
     return 'applications'
   }
 
+  if (to.meta.partnerPortal && !authStore.canUsePartnerPortal) {
+    return 'applications'
+  }
+
   // Admin-only routes (SPA admin console)
   if (to.meta.adminOnly && !authStore.isAdmin) {
     return 'applications'

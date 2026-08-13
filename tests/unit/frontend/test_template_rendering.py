@@ -40,17 +40,16 @@ class TestPublicPageRendering(TestCase):
         self.assertEqual(response.headers.get("Location"), "/seim/login/")
 
     def test_register_page_renders(self):
-        """Test register page renders without errors."""
+        """Legacy register URL redirects to the Vue register shell."""
         response = self.client.get(reverse("frontend:register"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "frontend/auth/register.html")
-        self.assertContains(response, "Register")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/register/")
 
     def test_password_reset_page_renders(self):
-        """Test password reset page renders without errors."""
+        """Legacy password reset URL redirects to the Vue reset shell."""
         response = self.client.get(reverse("frontend:password_reset"))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "frontend/auth/password_reset.html")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/password-reset/")
 
 
 class TestAuthenticatedPageRendering(TestCase):

@@ -12,10 +12,10 @@ SEAT_HOLDING_APPLICATION_STATUS_NAMES = frozenset(
 
 class EligibilityRuleSet(UUIDModel, TimeStampedModel):
     """
-    Persisted eligibility ruleset (future: admin-configurable evaluation).
+    Persisted eligibility ruleset.
 
-    Initial use is bookkeeping and admin editing; runtime evaluation continues to use
-    code-defined rules derived from program fields unless explicitly wired elsewhere.
+    When a program links an active ruleset, ``ApplicationService.check_eligibility``
+    applies ``rules_json.program_overrides`` on top of program scalar fields.
     """
 
     name = models.CharField(max_length=255)
@@ -952,3 +952,116 @@ class SavedSearch(UUIDModel, TimeStampedModel):
                 user=self.user, search_type=self.search_type, is_default=True
             ).exclude(id=self.id).update(is_default=False)
         super().save(*args, **kwargs)
+
+
+class ScholarshipAward(UUIDModel, TimeStampedModel):
+    """Staff scholarship award decision attached to one application."""
+
+    class Status(models.TextChoices):
+        NOMINATED = "nominated", _("Nominated")
+        AWARDED = "awarded", _("Awarded")
+        DECLINED = "declined", _("Declined")
+        DISBURSING = "disbursing", _("Disbursing")
+        DISBURSED = "disbursed", _("Disbursed")
+        WITHDRAWN = "withdrawn", _("Withdrawn")
+
+    application = models.OneToOneField(
+        Application,
+        on_delete=models.CASCADE,
+        related_name="scholarship_award",
+    )
+    status = models.CharField(
+        max_length=32,
+        choices=Status.choices,
+        default=Status.NOMINATED,
+        db_index=True,
+    )
+    amount = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    currency = models.CharField(max_length=8, default="MXN")
+    notes = models.TextField(blank=True, default="")
+    decided_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="scholarship_awards_decided",
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-updated_at"]
+        verbose_name = _("Scholarship award")
+        verbose_name_plural = _("Scholarship awards")
+
+    def __str__(self):
+        return f"{self.application_id} — {self.status}"
+
+
+class ScholarshipDisbursement(UUIDModel, TimeStampedModel):
+    """A scheduled or completed disbursement milestone on a scholarship award."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        PAID = "paid", _("Paid")
+        SKIPPED = "skipped", _("Skipped")
+
+    award = models.ForeignKey(
+        ScholarshipAward,
+        on_delete=models.CASCADE,
+        related_name="disbursements",
+    )
+    label = models.CharField(max_length=255)
+    amount = models.DecimalField(
+        max_digits=12, decimal_places=2, null=True, blank=True
+    )
+    due_date = models.DateField(null=True, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, default="")
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+        db_index=True,
+    )
+    sort_order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort_order", "due_date", "created_at"]
+        verbose_name = _("Scholarship disbursement")
+        verbose_name_plural = _("Scholarship disbursements")
+
+    def __str__(self):
+        return f"{self.label} ({self.status})"
+
+
+class PartnerContact(UUIDModel, TimeStampedModel):
+    """Links a partner-institution user to an operational exchange agreement."""
+
+    user = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.CASCADE,
+        related_name="partner_contacts",
+    )
+    agreement = models.ForeignKey(
+        ExchangeAgreement,
+        on_delete=models.CASCADE,
+        related_name="partner_contacts",
+    )
+    title = models.CharField(max_length=120, blank=True, default="")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = _("Partner contact")
+        verbose_name_plural = _("Partner contacts")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "agreement"],
+                name="uniq_partner_contact_user_agreement",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} @ {self.agreement_id}"

@@ -69,6 +69,10 @@ export const useAuthStore = defineStore('auth', () => {
   const canUseStaffReviewQueue = computed(
     () => isAdmin.value || user.value?.role === 'coordinator',
   )
+  const isPartner = computed(() => user.value?.role === 'partner')
+  const canUsePartnerPortal = computed(
+    () => isPartner.value || canUseStaffReviewQueue.value,
+  )
   const userName = computed(() => {
     if (!user.value) return ''
     return user.value.full_name || user.value.email || 'User'
@@ -137,6 +141,61 @@ export const useAuthStore = defineStore('auth', () => {
         (typeof body === 'string' ? body : null) ||
         'Registration failed. Please try again.'
       console.error('Registration error:', err)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Request a password-reset email. Always returns true on HTTP 200
+   * (the API does not reveal whether the address exists).
+   * @param {string} email
+   * @returns {Promise<boolean>}
+   */
+  async function requestPasswordReset(email) {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      await axios.post(`${API_BASE_URL}/api/accounts/password-reset-request/`, { email })
+      return true
+    } catch (err) {
+      const body = err.response?.data
+      error.value =
+        formatAuthErrorResponse(body) ||
+        (typeof body === 'string' ? body : null) ||
+        'Could not send a password reset email. Please try again.'
+      console.error('Password reset request error:', err)
+      return false
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
+   * Set a new password using the email + token from the reset message.
+   * @param {{ email: string, token: string, new_password: string }} payload
+   * @returns {Promise<boolean>}
+   */
+  async function confirmPasswordReset(payload) {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      await axios.post(`${API_BASE_URL}/api/accounts/password-reset-confirm/`, {
+        email: payload.email,
+        token: payload.token,
+        new_password: payload.new_password,
+      })
+      return true
+    } catch (err) {
+      const body = err.response?.data
+      error.value =
+        formatAuthErrorResponse(body) ||
+        (typeof body === 'string' ? body : null) ||
+        'Password reset failed. The link may be invalid or expired.'
+      console.error('Password reset confirm error:', err)
       return false
     } finally {
       isLoading.value = false
@@ -286,10 +345,14 @@ export const useAuthStore = defineStore('auth', () => {
     userName,
     isAdmin,
     isCoordinator,
+    isPartner,
     canUseStaffReviewQueue,
+    canUsePartnerPortal,
     // Actions
     login,
     register,
+    requestPasswordReset,
+    confirmPasswordReset,
     verifyEmail,
     logout,
     refreshToken: refreshAccessToken,

@@ -49,6 +49,8 @@ class TestEligibilityRulesEngine:
         ids = [r.rule_id for r in ev.rules]
         assert ids == [
             "application_window",
+            "min_semester",
+            "min_credits",
             "gpa",
             "required_language",
             "language_proficiency",
@@ -317,3 +319,6 @@ class TestEligibilityRulesEngine:
         ev = evaluate_eligibility(user, program)
         assert ev.eligible is False
         assert ev.failures == ["Student profile is missing."]
+        row = ev.rules_as_dicts()[0]
+        assert row["message_key"] == "profile_missing"
+

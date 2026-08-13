@@ -22,7 +22,7 @@ from accounts.models import Profile, User
 from exchange.models import Application, Program
 
 # Bump when rule set, order, or payload shape changes.
-ELIGIBILITY_SCHEMA_VERSION = 7
+ELIGIBILITY_SCHEMA_VERSION = 8
 
 
 def _norm(s: str | None) -> str:
@@ -49,6 +49,8 @@ class RuleOutcome:
     passed: bool
     skipped: bool = False
     message: str | None = None
+    message_key: str | None = None
+    message_params: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -58,15 +60,21 @@ class EligibilityEvaluation:
     rules: list[RuleOutcome] = field(default_factory=list)
 
     def rules_as_dicts(self) -> list[dict[str, Any]]:
-        return [
-            {
+        rows = []
+        for r in self.rules:
+            item: dict[str, Any] = {
                 "id": r.rule_id,
                 "passed": r.passed,
                 "skipped": r.skipped,
-                **({"message": r.message} if r.message else {}),
             }
-            for r in self.rules
-        ]
+            if r.message:
+                item["message"] = r.message
+            if r.message_key:
+                item["message_key"] = r.message_key
+                if r.message_params:
+                    item["message_params"] = r.message_params
+            rows.append(item)
+        return rows
 
 
 def _effective_semester(profile: Profile, application: Application | None) -> int | None:
@@ -176,10 +184,26 @@ def _rule_application_window(
     status = program.get_application_window_status()
     if status["is_open"]:
         return RuleOutcome("application_window", passed=True)
+    reason = status.get("reason") or "closed"
+    key = f"window_{reason}"
+    params = {
+        "open_date": (
+            program.application_open_date.isoformat()
+            if program.application_open_date
+            else ""
+        ),
+        "deadline": (
+            program.application_deadline.isoformat()
+            if program.application_deadline
+            else ""
+        ),
+    }
     return RuleOutcome(
         "application_window",
         passed=False,
         message=status["message"],
+        message_key=key,
+        message_params=params,
     )
 
 
@@ -198,6 +222,8 @@ def _rule_min_semester(
                 f"Semester not specified. Required: semester {min_sem}+ "
                 "(set ingress date or current semester on your profile)."
             ),
+            message_key="semester_unspecified",
+            message_params={"required": min_sem},
         )
     if semester < min_sem:
         return RuleOutcome(
@@ -207,6 +233,8 @@ def _rule_min_semester(
                 f"Semester below program minimum. Your semester: {semester}, "
                 f"Required: {min_sem}+"
             ),
+            message_key="semester_below",
+            message_params={"student": semester, "required": min_sem},
         )
     return RuleOutcome("min_semester", passed=True)
 
@@ -226,6 +254,8 @@ def _rule_min_credits(
                 f"Credits approved % not specified. Required: "
                 f"{float(min_credits):.2f}%+"
             ),
+            message_key="credits_unspecified",
+            message_params={"required": f"{float(min_credits):.2f}"},
         )
     if credits < Decimal(str(min_credits)):
         return RuleOutcome(
@@ -235,6 +265,11 @@ def _rule_min_credits(
                 f"Credits approved % below program minimum. Your credits: "
                 f"{float(credits):.2f}%, Required: {float(min_credits):.2f}%+"
             ),
+            message_key="credits_below",
+            message_params={
+                "student": f"{float(credits):.2f}",
+                "required": f"{float(min_credits):.2f}",
+            },
         )
     return RuleOutcome("min_credits", passed=True)
 
@@ -259,6 +294,11 @@ def _rule_gpa(profile, program: Program, application, _student: User) -> RuleOut
                     f"GPA below program minimum. Your GPA equivalent: {student_gpa_equivalent:.2f}, "
                     f"Required: {program.min_gpa:.2f}"
                 ),
+                message_key="gpa_below_equivalent",
+                message_params={
+                    "student": f"{student_gpa_equivalent:.2f}",
+                    "required": f"{program.min_gpa:.2f}",
+                },
             )
     elif student_gpa < program.min_gpa:
         return RuleOutcome(
@@ -268,6 +308,11 @@ def _rule_gpa(profile, program: Program, application, _student: User) -> RuleOut
                 f"GPA below program minimum. Your GPA: {student_gpa:.2f}, "
                 f"Required: {program.min_gpa:.2f}"
             ),
+            message_key="gpa_below",
+            message_params={
+                "student": f"{student_gpa:.2f}",
+                "required": f"{program.min_gpa:.2f}",
+            },
         )
     return RuleOutcome("gpa", passed=True)
 
@@ -289,6 +334,11 @@ def _rule_required_language(
             f"Language requirement not met. Required: {program.required_language}, "
             f"Your language: {language or 'Not specified'}"
         ),
+        message_key="language_unmet",
+        message_params={
+            "required": program.required_language,
+            "student": language or "Not specified",
+        },
     )
 
 
@@ -306,6 +356,8 @@ def _rule_language_proficiency(
             "language_proficiency",
             passed=False,
             message=f"Language proficiency not specified. Required: {required}",
+            message_key="language_level_unspecified",
+            message_params={"required": required},
         )
     if student_rank < required_rank:
         return RuleOutcome(
@@ -316,6 +368,8 @@ def _rule_language_proficiency(
                 f"Required: {required}, "
                 f"Your level: {level}"
             ),
+            message_key="language_level_below",
+            message_params={"required": required, "student": level},
         )
     return RuleOutcome("language_proficiency", passed=True)
 
@@ -334,12 +388,16 @@ def _rule_age(profile, program: Program, application, _student: User) -> RuleOut
             "age",
             passed=False,
             message=f"Age below minimum requirement. Your age: {age}, Required: {program.min_age}+",
+            message_key="age_below",
+            message_params={"student": age, "required": program.min_age},
         )
     if program.max_age and age > program.max_age:
         return RuleOutcome(
             "age",
             passed=False,
             message=f"Age above maximum requirement. Your age: {age}, Maximum: {program.max_age}",
+            message_key="age_above",
+            message_params={"student": age, "maximum": program.max_age},
         )
     return RuleOutcome("age", passed=True)
 
@@ -374,6 +432,8 @@ def _rule_required_documents(
         "required_documents",
         passed=False,
         message="Required documents are not all approved yet: " + "; ".join(problems),
+        message_key="documents_incomplete",
+        message_params={"items": "; ".join(problems)},
     )
 
 
@@ -401,6 +461,7 @@ def _rule_dynamic_form_complete(
             "dynamic_form",
             passed=False,
             message="Complete the program application form before submitting.",
+            message_key="dynamic_form_incomplete",
         )
     vctx = {
         "program_id": application.program_id,
@@ -417,6 +478,8 @@ def _rule_dynamic_form_complete(
             "dynamic_form",
             passed=False,
             message="; ".join(msgs),
+            message_key="dynamic_form_invalid",
+            message_params={"detail": "; ".join(msgs)},
         )
     return RuleOutcome("dynamic_form", passed=True)
 
@@ -440,7 +503,10 @@ def evaluate_eligibility(
             failures=["Student profile is missing."],
             rules=[
                 RuleOutcome(
-                    "profile", passed=False, message="Student profile is missing."
+                    "profile",
+                    passed=False,
+                    message="Student profile is missing.",
+                    message_key="profile_missing",
                 ),
             ],
         )
