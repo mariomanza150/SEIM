@@ -157,11 +157,12 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | API contracts doc: staff notification routing endpoints | `docs`, `notifications`, `api` | Implemented | 2026-04-16 | `docs/api-contracts.md` **Staff notification routing** subsection (parity with manual API doc + OpenAPI). No new automated tests (documentation-only). |
 | Notification Celery email tests: `DEFAULT_FROM_EMAIL` portability | `notifications`, `tests` | Implemented | 2026-04-16 | `test_notifications_tasks` from-address assertions compare `mail.outbox[0].from_email` to `settings.DEFAULT_FROM_EMAIL` (matches `send_mail` in `notifications/tasks.py`) so runs succeed when `.env` overrides the default sender. |
 | Transactional notification route overrides at runtime send | `notifications`, `exchange`, `documents`, `accounts` | Implemented | 2026-04-16 | `resolve_transactional_route_settings_category` + optional `transactional_route_key` on `NotificationService.send_notification`; documented transactional routes (account security, application/document/agreement flows, digest, calendar reminders) pass keys so admin overrides match live UserSettings gating. Tests: `tests/unit/notifications/test_notifications_services.py`. |
+| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Implemented | 2026-08-13 | `EligibilityRuleSet` model + migration + Django admin interface; staff REST API `/api/eligibility-rulesets/` (coordinator/admin, read-only); `check_eligibility` with ruleset snapshot + optional `use_ruleset` query parameter applies `rules_json.program_overrides` on scalar criteria; Vue `ApplicationForm` sends `use_ruleset=true` when program has `eligibility_ruleset`; program clone copies `workflow_version` + `eligibility_ruleset`. Tests: `tests/integration/api/test_eligibility_rulesets_api.py`. **Remaining enhancements (Priority 3):** Localized per-rule client copy (i18n), enhanced admin UI for rule JSON editing. |
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | In progress | 2026-04-17 | Cursor agent (DB model + migration + admin + staff read API `/api/eligibility-rulesets/`; `check_eligibility` ruleset snapshot + `use_ruleset` scalar overrides; Vue `ApplicationForm` sends `use_ruleset=true` when program has `eligibility_ruleset`; program clone copies `workflow_version` + `eligibility_ruleset`) |
+| _No features currently in progress_ | | | | |
 
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
@@ -181,7 +182,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Applications, Forms, and Eligibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Promoted from P3: eligibility is implemented, but rules are code-defined. **Progress:** `EligibilityRuleSet` model + migration + admin; staff read API `/api/eligibility-rulesets/` (coordinator/admin) with integration test. **Next:** program evaluation wiring (feature-flagged), ruleset JSON schema + versioning, localized per-rule client copy, and step-level document gates in preview payload (if not already sufficient). |
+| _No pending features in this subsection_ | | **Note:** Eligibility rulesets moved to IMPLEMENTED (2026-08-13). Remaining enhancements (i18n, admin UX) are Priority 3. |
 
 #### Programs, Agreements, and Planning
 | Feature | Module | Notes |
