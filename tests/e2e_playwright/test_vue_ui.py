@@ -175,6 +175,7 @@ class TestVueHostCascade:
         else:
             program_select.select_option(index=1)
 
+        page.wait_for_load_state("networkidle")
         host_select = page.locator("[data-testid=host-institution-select]")
         try:
             host_select.wait_for(state="visible", timeout=8000)
