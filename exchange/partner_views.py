@@ -9,9 +9,16 @@ from rest_framework.response import Response
 
 from documents.models import ExchangeAgreementDocument
 from documents.serializers import ExchangeAgreementDocumentSerializer
-from exchange.models import Application, Comment, ExchangeAgreement, PartnerContact
+from exchange.models import (
+    AgreementComment,
+    Application,
+    Comment,
+    ExchangeAgreement,
+    PartnerContact,
+)
 from exchange.serializers import (
     ExchangeAgreementSerializer,
+    PartnerAgreementCommentSerializer,
     PartnerApplicationSerializer,
     PartnerCommentSerializer,
     PartnerContactSerializer,
@@ -138,6 +145,36 @@ class PartnerAgreementViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(
             PartnerContactSerializer(contact).data,
             status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+    @action(detail=True, methods=["get", "post"], url_path="comments")
+    def comments(self, request, pk=None):
+        """Public agreement thread for partner users (no private staff notes)."""
+        agreement = self.get_object()
+        if request.method == "GET":
+            qs = (
+                AgreementComment.objects.filter(
+                    agreement=agreement, is_private=False
+                )
+                .select_related("author")
+                .order_by("created_at", "id")
+            )
+            return Response(PartnerAgreementCommentSerializer(qs, many=True).data)
+        text = (request.data.get("text") or "").strip()
+        if not text:
+            return Response(
+                {"text": ["This field may not be blank."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        comment = AgreementComment.objects.create(
+            agreement=agreement,
+            author=request.user,
+            text=text,
+            is_private=False,
+        )
+        return Response(
+            PartnerAgreementCommentSerializer(comment).data,
+            status=status.HTTP_201_CREATED,
         )
 
 

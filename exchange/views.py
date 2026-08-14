@@ -39,6 +39,7 @@ from .eligibility_rulesets import ProgramEligibilityProxy, parse_ruleset_overrid
 from .filters import ApplicationFilter, ExchangeAgreementFilter, ProgramFilter
 from .models import (
     SEAT_HOLDING_APPLICATION_STATUS_NAMES,
+    AgreementComment,
     Application,
     ApplicationStatus,
     ApplicationSubjectSelection,
@@ -55,6 +56,7 @@ from .models import (
 )
 from .scholarship_scoring import scholarship_scores_export_response
 from .serializers import (
+    AgreementCommentSerializer,
     ApplicationSerializer,
     ApplicationStatusSerializer,
     ApplicationSubjectSelectionSerializer,
@@ -225,6 +227,39 @@ class ExchangeAgreementViewSet(viewsets.ModelViewSet):
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(
             self.get_serializer(successor).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=["get", "post"], url_path="comments")
+    def comments(self, request, pk=None):
+        """Staff thread on an exchange agreement, including private notes."""
+        agreement = self.get_object()
+        if request.method == "GET":
+            qs = (
+                AgreementComment.objects.filter(agreement=agreement)
+                .select_related("author")
+                .order_by("created_at", "id")
+            )
+            return Response(AgreementCommentSerializer(qs, many=True).data)
+        text = (request.data.get("text") or "").strip()
+        if not text:
+            return Response(
+                {"text": ["This field may not be blank."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        raw_private = request.data.get("is_private", False)
+        if isinstance(raw_private, str):
+            is_private = raw_private.strip().lower() in ("1", "true", "yes", "on")
+        else:
+            is_private = bool(raw_private)
+        comment = AgreementComment.objects.create(
+            agreement=agreement,
+            author=request.user,
+            text=text,
+            is_private=is_private,
+        )
+        return Response(
+            AgreementCommentSerializer(comment).data,
             status=status.HTTP_201_CREATED,
         )
 

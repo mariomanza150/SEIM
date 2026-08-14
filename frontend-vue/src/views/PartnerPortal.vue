@@ -30,6 +30,7 @@
                 <th>{{ t('partnerPortalPage.colInstitution') }}</th>
                 <th>{{ t('partnerPortalPage.colStatus') }}</th>
                 <th>{{ t('partnerPortalPage.colDocuments') }}</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -42,9 +43,19 @@
                     {{ t('partnerPortalPage.viewDocuments') }}
                   </button>
                 </td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary"
+                    data-testid="partner-open-agreement-thread"
+                    @click="openAgreementThread(ag)"
+                  >
+                    {{ t('partnerPortalPage.openThread') }}
+                  </button>
+                </td>
               </tr>
               <tr v-if="!agreements.length">
-                <td colspan="4" class="text-muted text-center py-3">{{ t('partnerPortalPage.noAgreements') }}</td>
+                <td colspan="5" class="text-muted text-center py-3">{{ t('partnerPortalPage.noAgreements') }}</td>
               </tr>
             </tbody>
           </table>
@@ -147,6 +158,43 @@
           </form>
         </div>
       </div>
+
+      <div v-if="threadAgreement" class="card mt-4" data-testid="partner-agreement-thread">
+        <div class="card-header">
+          <h5 class="mb-0">
+            {{ t('partnerPortalPage.agreementThreadHeading', { title: threadAgreement.title }) }}
+          </h5>
+        </div>
+        <div class="card-body">
+          <div v-if="agreementThreadLoading" class="text-muted small">{{ t('partnerPortalPage.threadLoading') }}</div>
+          <ul v-else class="list-unstyled mb-3">
+            <li v-for="c in agreementThreadComments" :key="c.id" class="mb-2">
+              <div class="small text-muted">{{ c.author_display_name }}</div>
+              <div>{{ c.text }}</div>
+            </li>
+            <li v-if="!agreementThreadComments.length" class="text-muted">{{ t('partnerPortalPage.threadEmpty') }}</li>
+          </ul>
+          <form @submit.prevent="postAgreementThread">
+            <label class="form-label" for="partner-agreement-thread-text">{{ t('partnerPortalPage.threadLabel') }}</label>
+            <textarea
+              id="partner-agreement-thread-text"
+              v-model="agreementThreadText"
+              class="form-control mb-2"
+              rows="3"
+              required
+              data-testid="partner-agreement-thread-text"
+            ></textarea>
+            <button
+              type="submit"
+              class="btn btn-primary btn-sm"
+              :disabled="agreementThreadBusy"
+              data-testid="partner-agreement-thread-submit"
+            >
+              {{ t('partnerPortalPage.threadSubmit') }}
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -169,6 +217,11 @@ const threadComments = ref([])
 const threadText = ref('')
 const threadLoading = ref(false)
 const threadBusy = ref(false)
+const threadAgreement = ref(null)
+const agreementThreadComments = ref([])
+const agreementThreadText = ref('')
+const agreementThreadLoading = ref(false)
+const agreementThreadBusy = ref(false)
 
 function unwrap(data) {
   if (Array.isArray(data)) return data
@@ -230,6 +283,36 @@ async function postThread() {
     threadText.value = ''
   } finally {
     threadBusy.value = false
+  }
+}
+
+async function openAgreementThread(ag) {
+  threadAgreement.value = ag
+  agreementThreadText.value = ''
+  agreementThreadLoading.value = true
+  try {
+    const { data } = await api.get(`/api/partner/agreements/${ag.id}/comments/`)
+    agreementThreadComments.value = Array.isArray(data) ? data : unwrap(data)
+  } catch {
+    agreementThreadComments.value = []
+  } finally {
+    agreementThreadLoading.value = false
+  }
+}
+
+async function postAgreementThread() {
+  const text = agreementThreadText.value.trim()
+  if (!text || !threadAgreement.value) return
+  agreementThreadBusy.value = true
+  try {
+    const { data } = await api.post(
+      `/api/partner/agreements/${threadAgreement.value.id}/comments/`,
+      { text },
+    )
+    agreementThreadComments.value = [...agreementThreadComments.value, data]
+    agreementThreadText.value = ''
+  } finally {
+    agreementThreadBusy.value = false
   }
 }
 

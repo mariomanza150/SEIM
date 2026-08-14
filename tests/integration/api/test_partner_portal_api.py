@@ -3,7 +3,7 @@
 from django.urls import reverse
 
 from accounts.models import Role
-from exchange.models import Comment, ExchangeAgreement, PartnerContact
+from exchange.models import AgreementComment, Comment, ExchangeAgreement, PartnerContact
 from tests.utils import APITestCase
 
 
@@ -119,6 +119,50 @@ class TestPartnerPortalAPI(APITestCase):
         self.authenticate_user(self.partner)
         url = reverse(
             "api:partner-application-comments", kwargs={"pk": self.app.pk}
+        )
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 404)
+
+    def test_partner_can_post_and_list_agreement_thread(self):
+        PartnerContact.objects.create(user=self.partner, agreement=self.agreement)
+        AgreementComment.objects.create(
+            agreement=self.agreement,
+            author=self.coord,
+            text="Staff private",
+            is_private=True,
+        )
+        AgreementComment.objects.create(
+            agreement=self.agreement,
+            author=self.coord,
+            text="Public renewal note",
+            is_private=False,
+        )
+        self.authenticate_user(self.partner)
+        url = reverse(
+            "api:partner-agreement-comments", kwargs={"pk": self.agreement.pk}
+        )
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        texts = [row["text"] for row in resp.data]
+        self.assertIn("Public renewal note", texts)
+        self.assertNotIn("Staff private", texts)
+        post = self.client.post(url, {"text": "We can sign in June"}, format="json")
+        self.assertEqual(post.status_code, 201)
+        self.assertEqual(post.data["text"], "We can sign in June")
+        self.assertNotIn("is_private", post.data)
+        self.assertTrue(
+            AgreementComment.objects.filter(
+                agreement=self.agreement,
+                author=self.partner,
+                text="We can sign in June",
+                is_private=False,
+            ).exists()
+        )
+
+    def test_unlinked_partner_cannot_comment_on_agreement(self):
+        self.authenticate_user(self.partner)
+        url = reverse(
+            "api:partner-agreement-comments", kwargs={"pk": self.agreement.pk}
         )
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 404)

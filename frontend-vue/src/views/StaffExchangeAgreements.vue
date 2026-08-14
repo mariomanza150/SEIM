@@ -183,6 +183,7 @@
               <th>{{ t('exchangeAgreementsPage.colEnd') }}</th>
               <th>{{ t('exchangeAgreementsPage.colPrograms') }}</th>
               <th>{{ t('exchangeAgreementsPage.colRepository') }}</th>
+              <th>{{ t('exchangeAgreementsPage.colMessages') }}</th>
               <th>{{ t('exchangeAgreementsPage.colPortal') }}</th>
               <th class="text-end">{{ t('exchangeAgreementsPage.colRenewal') }}</th>
             </tr>
@@ -204,6 +205,16 @@
                 >
                   {{ t('exchangeAgreementsPage.openRepository') }}
                 </router-link>
+              </td>
+              <td>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary"
+                  data-testid="agreements-open-thread"
+                  @click="openThread(a)"
+                >
+                  {{ t('exchangeAgreementsPage.openThread') }}
+                </button>
               </td>
               <td class="small" style="min-width: 220px">
                 <div v-if="(a.partner_contacts || []).length" class="mb-1">
@@ -254,6 +265,52 @@
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div v-if="threadAgreement" class="card mt-3" data-testid="agreements-thread">
+        <div class="card-header">
+          <h5 class="mb-0">{{ t('exchangeAgreementsPage.threadHeading', { title: threadAgreement.title }) }}</h5>
+        </div>
+        <div class="card-body">
+          <div v-if="threadLoading" class="text-muted small">{{ t('exchangeAgreementsPage.threadLoading') }}</div>
+          <ul v-else class="list-unstyled mb-3">
+            <li v-for="c in threadComments" :key="c.id" class="mb-2">
+              <div class="small text-muted">
+                {{ c.author_display_name }}
+                <span v-if="c.is_private" class="badge bg-secondary ms-1">{{
+                  t('exchangeAgreementsPage.privateBadge')
+                }}</span>
+              </div>
+              <div>{{ c.text }}</div>
+            </li>
+            <li v-if="!threadComments.length" class="text-muted">{{ t('exchangeAgreementsPage.threadEmpty') }}</li>
+          </ul>
+          <form @submit.prevent="postThread">
+            <label class="form-label" for="agreements-thread-text">{{ t('exchangeAgreementsPage.threadLabel') }}</label>
+            <textarea
+              id="agreements-thread-text"
+              v-model="threadText"
+              class="form-control mb-2"
+              rows="3"
+              required
+              data-testid="agreements-thread-text"
+            ></textarea>
+            <div class="form-check mb-2">
+              <input id="agreements-thread-private" v-model="threadPrivate" class="form-check-input" type="checkbox" />
+              <label class="form-check-label" for="agreements-thread-private">{{
+                t('exchangeAgreementsPage.threadPrivateLabel')
+              }}</label>
+            </div>
+            <button
+              type="submit"
+              class="btn btn-primary btn-sm"
+              :disabled="threadBusy"
+              data-testid="agreements-thread-submit"
+            >
+              {{ t('exchangeAgreementsPage.threadSubmit') }}
+            </button>
+          </form>
+        </div>
       </div>
 
       <nav
@@ -354,6 +411,12 @@ const programs = ref([])
 const rows = ref([])
 const partnerEmails = ref({})
 const partnerBusy = ref({})
+const threadAgreement = ref(null)
+const threadComments = ref([])
+const threadText = ref('')
+const threadPrivate = ref(false)
+const threadLoading = ref(false)
+const threadBusy = ref(false)
 const loading = ref(true)
 const error = ref(null)
 
@@ -448,6 +511,40 @@ function goToPage(page) {
   if (page >= 1 && page <= totalPages.value) {
     fetchAgreements(page)
     window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+}
+
+async function openThread(a) {
+  threadAgreement.value = a
+  threadText.value = ''
+  threadPrivate.value = false
+  threadLoading.value = true
+  try {
+    const { data } = await api.get(`/api/exchange-agreements/${a.id}/comments/`)
+    threadComments.value = Array.isArray(data) ? data : data.results ?? []
+  } catch {
+    threadComments.value = []
+  } finally {
+    threadLoading.value = false
+  }
+}
+
+async function postThread() {
+  const text = threadText.value.trim()
+  if (!text || !threadAgreement.value) return
+  threadBusy.value = true
+  try {
+    const { data } = await api.post(`/api/exchange-agreements/${threadAgreement.value.id}/comments/`, {
+      text,
+      is_private: threadPrivate.value,
+    })
+    threadComments.value = [...threadComments.value, data]
+    threadText.value = ''
+    threadPrivate.value = false
+  } catch (e) {
+    errorToast(e.response?.data?.detail || t('exchangeAgreementsPage.threadErrorFallback'))
+  } finally {
+    threadBusy.value = false
   }
 }
 

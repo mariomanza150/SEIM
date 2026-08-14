@@ -134,4 +134,59 @@ describe('StaffExchangeAgreements', () => {
       { email: 'partner@example.com' },
     )
   })
+
+  it('opens an agreement comment thread', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/programs/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/saved-searches/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/exchange-agreements/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'agr-1',
+                title: 'MoU',
+                partner_institution_name: 'TU Berlin',
+                status: 'active',
+                partner_contacts: [],
+              },
+            ],
+            count: 1,
+          },
+        })
+      }
+      if (url === '/api/exchange-agreements/agr-1/comments/') {
+        return Promise.resolve({
+          data: [{ id: 'c1', text: 'Staff note', author_display_name: 'Coordinator', is_private: true }],
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+    api.post.mockResolvedValue({
+      data: { id: 'c2', text: 'Hello partner', author_display_name: 'Coordinator', is_private: false },
+    })
+    const wrapper = mount(StaffExchangeAgreements, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="agreements-open-thread"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="agreements-thread"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Staff note')
+    await wrapper.find('[data-testid="agreements-thread-text"]').setValue('Hello partner')
+    await wrapper.find('[data-testid="agreements-thread"]').find('form').trigger('submit')
+    await flushPromises()
+    expect(api.post).toHaveBeenCalledWith('/api/exchange-agreements/agr-1/comments/', {
+      text: 'Hello partner',
+      is_private: false,
+    })
+    expect(wrapper.text()).toContain('Hello partner')
+  })
 })

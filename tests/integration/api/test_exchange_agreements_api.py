@@ -8,7 +8,7 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import Role
-from exchange.models import ExchangeAgreement, Program
+from exchange.models import AgreementComment, ExchangeAgreement, Program
 
 User = get_user_model()
 
@@ -144,3 +144,47 @@ class ExchangeAgreementsAPITests(APITestCase):
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED, resp.data)
         self.assertEqual(resp.data["status"], ExchangeAgreement.Status.DRAFT)
         self.assertEqual(str(resp.data["renewed_from"]), str(ag.id))
+
+    def test_coordinator_can_post_and_list_agreement_comments(self):
+        coordinator = User.objects.create_user(
+            username="coord_cmt", email="ccmt@example.com", password="pass12345"
+        )
+        _grant_role(coordinator, "coordinator")
+        self.client.force_authenticate(coordinator)
+        ag = ExchangeAgreement.objects.create(
+            title="MoU comments",
+            partner_institution_name="TU Berlin",
+            status=ExchangeAgreement.Status.ACTIVE,
+        )
+        url = reverse("api:exchange-agreement-comments", kwargs={"pk": str(ag.id)})
+        private = self.client.post(
+            url, {"text": "Internal note", "is_private": True}, format="json"
+        )
+        self.assertEqual(private.status_code, status.HTTP_201_CREATED, private.data)
+        self.assertTrue(private.data["is_private"])
+        public = self.client.post(url, {"text": "Hello partner"}, format="json")
+        self.assertEqual(public.status_code, status.HTTP_201_CREATED, public.data)
+        listed = self.client.get(url)
+        self.assertEqual(listed.status_code, status.HTTP_200_OK)
+        texts = [row["text"] for row in listed.data]
+        self.assertIn("Internal note", texts)
+        self.assertIn("Hello partner", texts)
+        self.assertTrue(
+            AgreementComment.objects.filter(
+                agreement=ag, text="Internal note", is_private=True
+            ).exists()
+        )
+
+    def test_student_forbidden_from_agreement_comments(self):
+        student = User.objects.create_user(
+            username="stu_cmt", email="stu_cmt@example.com", password="pass12345"
+        )
+        _grant_role(student, "student")
+        self.client.force_authenticate(student)
+        ag = ExchangeAgreement.objects.create(
+            title="Hidden",
+            partner_institution_name="Uni",
+            status=ExchangeAgreement.Status.ACTIVE,
+        )
+        url = reverse("api:exchange-agreement-comments", kwargs={"pk": str(ag.id)})
+        self.assertEqual(self.client.get(url).status_code, status.HTTP_403_FORBIDDEN)

@@ -3,6 +3,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from .models import (
+    AgreementComment,
     Application,
     ApplicationStatus,
     ApplicationSubjectSelection,
@@ -848,6 +849,17 @@ class PartnerApplicationSerializer(serializers.ModelSerializer):
         return {"complete": full.get("complete"), "items": items}
 
 
+def _author_display_name(user):
+    name = user.get_full_name().strip()
+    if name:
+        return name
+    if hasattr(user, "has_role") and user.has_role("partner"):
+        return "Partner"
+    if hasattr(user, "has_any_role") and user.has_any_role(["coordinator", "admin"]):
+        return "Coordinator"
+    return user.username or "User"
+
+
 class PartnerCommentSerializer(serializers.ModelSerializer):
     """Public comment payload for partner-institution threads (no emails)."""
 
@@ -864,15 +876,37 @@ class PartnerCommentSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_author_display_name(self, obj):
-        u = obj.author
-        name = u.get_full_name().strip()
-        if name:
-            return name
-        if hasattr(u, "has_role") and u.has_role("partner"):
-            return "Partner"
-        if hasattr(u, "has_any_role") and u.has_any_role(["coordinator", "admin"]):
-            return "Coordinator"
-        return u.username or "User"
+        return _author_display_name(obj.author)
+
+
+class AgreementCommentSerializer(serializers.ModelSerializer):
+    """Staff/partner payload for agreement comment threads."""
+
+    author_display_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AgreementComment
+        fields = (
+            "id",
+            "text",
+            "created_at",
+            "author_display_name",
+            "is_private",
+        )
+        read_only_fields = fields
+
+    def get_author_display_name(self, obj):
+        return _author_display_name(obj.author)
+
+
+class PartnerAgreementCommentSerializer(AgreementCommentSerializer):
+    class Meta(AgreementCommentSerializer.Meta):
+        fields = (
+            "id",
+            "text",
+            "created_at",
+            "author_display_name",
+        )
 
 
 class EligibilityRuleOutcomeSchemaSerializer(serializers.Serializer):

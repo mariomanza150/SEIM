@@ -689,6 +689,7 @@
     "colEnd": "End",
     "colPrograms": "Programs",
     "colRepository": "Repository",
+    "colMessages": "Messages",
     "openRepository": "Files",
     "colRenewal": "Renewal",
     "colPortal": "Partner portal",
@@ -698,6 +699,15 @@
     "addPartnerSuccessToast": "Partner user linked to this agreement.",
     "addPartnerErrorFallback": "Could not link that email.",
     "addPartnerEmpty": "No portal users yet.",
+    "openThread": "Messages",
+    "threadHeading": "Agreement thread — {title}",
+    "threadLoading": "Loading messages…",
+    "threadEmpty": "No messages yet.",
+    "threadLabel": "Message",
+    "threadSubmit": "Send",
+    "threadPrivateLabel": "Private staff note (hidden from partners)",
+    "privateBadge": "Private",
+    "threadErrorFallback": "Could not send that message.",
     "renewalPendingShort": "Pending",
     "renewalDraftShort": "Draft",
     "renewalPendingTitle": "Set status to renewal pending",
@@ -1559,7 +1569,8 @@
     "threadLoading": "Loading messages…",
     "threadEmpty": "No messages yet.",
     "threadLabel": "Message",
-    "threadSubmit": "Send"
+    "threadSubmit": "Send",
+    "agreementThreadHeading": "Agreement thread — {title}"
   },
   "nominationsPage": {
     "subtitle": "Rank applicants and allocate seats for programs with limited capacity.",

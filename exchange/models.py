@@ -1071,3 +1071,31 @@ class PartnerContact(UUIDModel, TimeStampedModel):
 
     def __str__(self):
         return f"{self.user_id} @ {self.agreement_id}"
+
+
+class AgreementComment(UUIDModel, TimeStampedModel):
+    """Comments on an exchange agreement (staff notes or partner-visible thread)."""
+
+    agreement = models.ForeignKey(
+        ExchangeAgreement,
+        on_delete=models.CASCADE,
+        related_name="comments",
+    )
+    author = models.ForeignKey("accounts.User", on_delete=models.CASCADE)
+    text = models.TextField()
+    is_private = models.BooleanField(
+        default=False,
+        help_text="Private staff notes are hidden from partner portal users.",
+    )
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        indexes = [
+            models.Index(
+                fields=["agreement", "created_at"],
+                name="agcomment_agr_created_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"Comment by {self.author} on {self.agreement}"

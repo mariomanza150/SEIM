@@ -7,6 +7,7 @@ from documents.models import ExchangeAgreementDocument
 
 from .agreement_renewal import AgreementRenewalService
 from .models import (
+    AgreementComment,
     AgreementExpirationReminderLog,
     Application,
     ApplicationStatus,
@@ -121,6 +122,13 @@ class ExchangeAgreementDocumentInline(admin.TabularInline):
     raw_id_fields = ("supersedes",)
 
 
+class AgreementCommentInline(admin.TabularInline):
+    model = AgreementComment
+    extra = 0
+    fields = ("author", "text", "is_private", "created_at")
+    readonly_fields = ("created_at",)
+
+
 @admin.register(ExchangeAgreement)
 class ExchangeAgreementAdmin(admin.ModelAdmin):
     list_display = (
@@ -149,7 +157,7 @@ class ExchangeAgreementAdmin(admin.ModelAdmin):
         "admin_mark_renewal_pending",
         "admin_create_renewal_successor",
     )
-    inlines = (ExchangeAgreementDocumentInline,)
+    inlines = (ExchangeAgreementDocumentInline, AgreementCommentInline)
 
     fieldsets = (
         (None, {"fields": ("title", "status", "agreement_type")}),
@@ -888,6 +896,14 @@ class ApplicationStatusAdmin(admin.ModelAdmin):
 class CommentAdmin(admin.ModelAdmin):
     list_display = ("application", "author", "is_private", "created_at")
     search_fields = ("application__id", "author__email", "text")
+    list_filter = ("is_private",)
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(AgreementComment)
+class AgreementCommentAdmin(admin.ModelAdmin):
+    list_display = ("agreement", "author", "is_private", "created_at")
+    search_fields = ("agreement__title", "author__email", "text")
     list_filter = ("is_private",)
     readonly_fields = ("created_at", "updated_at")
 

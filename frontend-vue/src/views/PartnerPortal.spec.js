@@ -16,6 +16,11 @@ describe('PartnerPortal', () => {
     setAppLocale('en')
     vi.clearAllMocks()
     api.get.mockImplementation((url) => {
+      if (String(url).includes('/api/partner/agreements/') && String(url).includes('/comments/')) {
+        return Promise.resolve({
+          data: [{ id: 'ac1', text: 'Renewal timing?', author_display_name: 'Coordinator' }],
+        })
+      }
       if (String(url).includes('/api/partner/agreements/')) {
         return Promise.resolve({
           data: { results: [{ id: 'ag-1', title: 'Bilateral MoU', partner_institution_name: 'TU Berlin', status: 'active' }] },
@@ -82,5 +87,30 @@ describe('PartnerPortal', () => {
       { text: 'Nomination received' },
     )
     expect(wrapper.text()).toContain('Nomination received')
+  })
+
+  it('opens a public message thread for an agreement', async () => {
+    api.post.mockResolvedValue({
+      data: { id: 'ac2', text: 'We can sign in June', author_display_name: 'Partner' },
+    })
+    const wrapper = mount(PartnerPortal, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' }, PageHeader: { template: '<div><slot /></div>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="partner-open-agreement-thread"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="partner-agreement-thread"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Renewal timing?')
+    await wrapper.find('[data-testid="partner-agreement-thread-text"]').setValue('We can sign in June')
+    await wrapper.find('[data-testid="partner-agreement-thread"]').find('form').trigger('submit')
+    await flushPromises()
+    expect(api.post).toHaveBeenCalledWith(
+      '/api/partner/agreements/ag-1/comments/',
+      { text: 'We can sign in June' },
+    )
+    expect(wrapper.text()).toContain('We can sign in June')
   })
 })

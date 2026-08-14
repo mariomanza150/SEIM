@@ -685,6 +685,7 @@
     "colEnd": "Fin",
     "colPrograms": "Programas",
     "colRepository": "Repositorio",
+    "colMessages": "Mensajes",
     "openRepository": "Archivos",
     "colRenewal": "Renovación",
     "colPortal": "Portal socio",
@@ -694,6 +695,15 @@
     "addPartnerSuccessToast": "Usuario socio vinculado a este convenio.",
     "addPartnerErrorFallback": "No se pudo vincular ese correo.",
     "addPartnerEmpty": "Aún no hay usuarios del portal.",
+    "openThread": "Mensajes",
+    "threadHeading": "Conversación del convenio — {title}",
+    "threadLoading": "Cargando mensajes…",
+    "threadEmpty": "Aún no hay mensajes.",
+    "threadLabel": "Mensaje",
+    "threadSubmit": "Enviar",
+    "threadPrivateLabel": "Nota interna del personal (oculta para socios)",
+    "privateBadge": "Privado",
+    "threadErrorFallback": "No se pudo enviar el mensaje.",
     "renewalPendingShort": "Pendiente",
     "renewalDraftShort": "Borrador",
     "renewalPendingTitle": "Marcar estado como renovación pendiente",
@@ -1555,7 +1565,8 @@
     "threadLoading": "Cargando mensajes…",
     "threadEmpty": "Aún no hay mensajes.",
     "threadLabel": "Mensaje",
-    "threadSubmit": "Enviar"
+    "threadSubmit": "Enviar",
+    "agreementThreadHeading": "Conversación del convenio — {title}"
   },
   "nominationsPage": {
     "subtitle": "Ordena postulantes y asigna plazas en programas con cupo limitado.",
