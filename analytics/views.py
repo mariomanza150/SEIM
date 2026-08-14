@@ -437,7 +437,10 @@ class AdminDashboardViewSet(viewsets.ViewSet):
         if not self.is_staff_analyst(request.user):
             return Response({"error": "Staff access required"}, status=403)
         try:
-            return Response(AnalyticsService.get_predictive_insights())
+            program_id = request.query_params.get("program") or None
+            return Response(
+                AnalyticsService.get_predictive_insights(program_id=program_id)
+            )
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 

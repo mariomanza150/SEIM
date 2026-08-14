@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import {
   deserializeAgreementDocumentFilters,
+  deserializeAnalyticsForecastFilters,
   deserializeCalendarFilters,
   deserializeDocumentListFilters,
   deserializeExchangeAgreementFilters,
+  serializeAnalyticsForecastFilters,
   serializeCalendarFilters,
 } from './staffListSearchPresets'
 
@@ -40,5 +42,12 @@ describe('staffListSearchPresets', () => {
     expect(back.rangeStart).toBe('2026-01-10')
     expect(back.show.deadline).toBe(false)
     expect(back.show.program).toBe(true)
+  })
+
+  it('roundtrips analytics forecast filters', () => {
+    const raw = serializeAnalyticsForecastFilters({ program: 'p1' })
+    expect(raw).toEqual({ program: 'p1' })
+    expect(deserializeAnalyticsForecastFilters(raw)).toEqual({ program: 'p1' })
+    expect(deserializeAnalyticsForecastFilters(null)).toEqual({ program: '' })
   })
 })

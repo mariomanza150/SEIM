@@ -923,6 +923,7 @@ class SavedSearch(UUIDModel, TimeStampedModel):
             ("document", "Application document list"),
             ("agreement_document", "Agreement document repository"),
             ("calendar", "Deadlines / calendar view"),
+            ("analytics_forecast", "Analytics forecasts"),
         ],
         help_text="Type of search (programs, applications, or staff list views)",
     )

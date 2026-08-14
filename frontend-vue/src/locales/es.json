@@ -1593,6 +1593,19 @@
     "colDeadline": "Fecha límite",
     "colDaysLeft": "Días restantes",
     "colDrafts": "Borradores",
-    "noDeadlines": "Ningún programa cierra su ventana en los próximos 21 días."
+    "noDeadlines": "Ningún programa cierra su ventana en los próximos 21 días.",
+    "programLabel": "Programa",
+    "programAny": "Todos los programas",
+    "savedViewsLabel": "Vistas guardadas",
+    "saveView": "Guardar vista",
+    "presetNamePlaceholder": "Nombre de la vista",
+    "presetDefaultCheckbox": "Predeterminada al abrir esta página",
+    "presetSavedPrefix": "Guardadas:",
+    "presetDefaultTitle": "Vista predeterminada",
+    "presetDefaultAria": "Vista predeterminada",
+    "presetSetDefaultTitle": "Establecer como predeterminada",
+    "presetSetDefaultAria": "Establecer como predeterminada",
+    "presetRemoveTitle": "Quitar vista",
+    "presetRemoveAria": "Quitar vista"
   }
 }

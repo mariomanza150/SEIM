@@ -5,6 +5,7 @@ export const STAFF_SAVED_SEARCH_TYPE = Object.freeze({
   APPLICATION_DOCUMENT: 'document',
   AGREEMENT_REPOSITORY_DOC: 'agreement_document',
   DEADLINES_CALENDAR: 'calendar',
+  ANALYTICS_FORECAST: 'analytics_forecast',
 })
 
 const AG_ORDER_DEFAULT = '-end_date'
@@ -117,4 +118,13 @@ export function deserializeCalendarFilters(raw) {
       google: f.show_google !== false,
     },
   }
+}
+
+export function serializeAnalyticsForecastFilters(state) {
+  return { program: state.program || '' }
+}
+
+export function deserializeAnalyticsForecastFilters(raw) {
+  const f = raw && typeof raw === 'object' ? raw : {}
+  return { program: f.program ?? '' }
 }

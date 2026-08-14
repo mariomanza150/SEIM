@@ -1597,6 +1597,19 @@
     "colDeadline": "Deadline",
     "colDaysLeft": "Days left",
     "colDrafts": "Draft applications",
-    "noDeadlines": "No programs close a window in the next 21 days."
+    "noDeadlines": "No programs close a window in the next 21 days.",
+    "programLabel": "Program",
+    "programAny": "All programs",
+    "savedViewsLabel": "Saved views",
+    "saveView": "Save view",
+    "presetNamePlaceholder": "Preset name",
+    "presetDefaultCheckbox": "Default when opening this page",
+    "presetSavedPrefix": "Saved:",
+    "presetDefaultTitle": "Default preset",
+    "presetDefaultAria": "Default preset",
+    "presetSetDefaultTitle": "Set as default",
+    "presetSetDefaultAria": "Set as default",
+    "presetRemoveTitle": "Remove preset",
+    "presetRemoveAria": "Remove preset"
   }
 }

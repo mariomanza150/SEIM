@@ -265,18 +265,19 @@ class AnalyticsService:
         }
 
     @staticmethod
-    def get_predictive_insights(weeks_history=8, weeks_ahead=4):
+    def get_predictive_insights(weeks_history=8, weeks_ahead=4, program_id=None):
         """Heuristic demand forecast, review bottlenecks, and upcoming deadline risk."""
         now = timezone.now()
         today = timezone.localdate()
+        apps = Application.objects.all()
+        if program_id:
+            apps = apps.filter(program_id=program_id)
         history = []
         counts = []
         for i in range(weeks_history, 0, -1):
             start = now - timedelta(weeks=i)
             end = now - timedelta(weeks=i - 1)
-            n = Application.objects.filter(
-                created_at__gte=start, created_at__lt=end
-            ).count()
+            n = apps.filter(created_at__gte=start, created_at__lt=end).count()
             history.append({"week_start": start.date().isoformat(), "applications": n})
             counts.append(n)
         n = len(counts)
@@ -302,7 +303,7 @@ class AnalyticsService:
                 }
             )
 
-        pending = Application.objects.filter(
+        pending = apps.filter(
             withdrawn=False,
             status__name__in=["submitted", "under_review"],
         )
@@ -312,9 +313,7 @@ class AnalyticsService:
             .order_by("-pending_count")[:8]
         )
         aging = pending.filter(submitted_at__lt=now - timedelta(days=7)).count()
-        waitlisted = Application.objects.filter(
-            withdrawn=False, status__name="waitlist"
-        ).count()
+        waitlisted = apps.filter(withdrawn=False, status__name="waitlist").count()
 
         horizon = today + timedelta(days=21)
         deadline_risk = []
@@ -323,6 +322,8 @@ class AnalyticsService:
             application_deadline__gte=today,
             application_deadline__lte=horizon,
         ).order_by("application_deadline")
+        if program_id:
+            programs = programs.filter(pk=program_id)
         for program in programs:
             drafts = Application.objects.filter(
                 program=program, withdrawn=False, status__name="draft"
@@ -366,6 +367,7 @@ class AnalyticsService:
                 ],
             },
             "deadline_risk": deadline_risk,
+            "filters": {"program": str(program_id) if program_id else ""},
         }
 
     @staticmethod

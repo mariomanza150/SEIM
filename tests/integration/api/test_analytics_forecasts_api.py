@@ -32,3 +32,20 @@ class TestAnalyticsForecastsAPI(APITestCase):
         url = reverse("api:admin-dashboard-forecasts")
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 403)
+
+    def test_program_query_filters_forecasts(self):
+        other = self.create_program(name="Other Program")
+        other_student = self.create_user(role="student")
+        self.create_application(
+            student=other_student, program=other, status_name="submitted"
+        )
+        self.authenticate_user(self.coord)
+        url = reverse("api:admin-dashboard-forecasts")
+        resp = self.client.get(url, {"program": str(self.program.id)})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["filters"]["program"], str(self.program.id))
+        program_ids = {
+            row["program_id"] for row in resp.data["bottlenecks"]["by_program"]
+        }
+        self.assertEqual(program_ids, {str(self.program.id)})
+        self.assertEqual(resp.data["bottlenecks"]["pending_review"], 1)

@@ -126,6 +126,25 @@ class TestSavedSearchAPI:
         assert data["name"] == "New Search"
         assert data["search_type"] == "program"
 
+    def test_create_analytics_forecast_saved_search(
+        self, api_client_authenticated_coordinator
+    ):
+        response = api_client_authenticated_coordinator.post(
+            "/api/saved-searches/",
+            {
+                "name": "Erasmus forecast",
+                "search_type": "analytics_forecast",
+                "filters": {"program": "p1"},
+                "is_default": False,
+            },
+            format="json",
+        )
+
+        assert response.status_code == 201
+        data = response.json()
+        assert data["search_type"] == "analytics_forecast"
+        assert data["filters"]["program"] == "p1"
+
     def test_apply_saved_search(
         self, api_client_authenticated_coordinator, saved_searches
     ):
