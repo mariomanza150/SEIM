@@ -269,6 +269,7 @@
       "DeadlinesCalendar": "Deadlines and calendar",
       "EligibilityRulesets": "Eligibility rulesets",
       "Nominations": "Nominations",
+      "AnalyticsForecasts": "Demand forecasts",
       "PartnerPortal": "Partner portal",
       "AdminPrograms": "Admin — Programs",
       "AdminForms": "Admin — Forms",
@@ -1577,5 +1578,25 @@
     "loadError": "Could not load nominations.",
     "saveSuccess": "Ranks saved.",
     "matchSuccess": "Matched {nominated} nomination(s) and waitlisted {waitlisted}."
+  },
+  "analyticsForecastsPage": {
+    "subtitle": "Projected application demand, review bottlenecks, and programs nearing deadlines.",
+    "loadError": "Could not load forecasts.",
+    "demandHeading": "Demand forecast",
+    "trend": "Trend: {n} applications/week",
+    "colWeek": "Week starting",
+    "colActual": "Actual",
+    "colPredicted": "Predicted",
+    "bottlenecksHeading": "Review bottlenecks",
+    "pendingReview": "Pending review: {n}",
+    "aging": "Aging over 7 days: {n}",
+    "waitlisted": "Waitlisted: {n}",
+    "colProgram": "Program",
+    "colPending": "Pending",
+    "deadlinesHeading": "Deadline risk (21 days)",
+    "colDeadline": "Deadline",
+    "colDaysLeft": "Days left",
+    "colDrafts": "Draft applications",
+    "noDeadlines": "No programs close a window in the next 21 days."
   }
 }

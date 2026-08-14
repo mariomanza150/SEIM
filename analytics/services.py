@@ -265,6 +265,110 @@ class AnalyticsService:
         }
 
     @staticmethod
+    def get_predictive_insights(weeks_history=8, weeks_ahead=4):
+        """Heuristic demand forecast, review bottlenecks, and upcoming deadline risk."""
+        now = timezone.now()
+        today = timezone.localdate()
+        history = []
+        counts = []
+        for i in range(weeks_history, 0, -1):
+            start = now - timedelta(weeks=i)
+            end = now - timedelta(weeks=i - 1)
+            n = Application.objects.filter(
+                created_at__gte=start, created_at__lt=end
+            ).count()
+            history.append({"week_start": start.date().isoformat(), "applications": n})
+            counts.append(n)
+        n = len(counts)
+        if n >= 2:
+            xs = list(range(n))
+            x_mean = sum(xs) / n
+            y_mean = sum(counts) / n
+            denom = sum((x - x_mean) ** 2 for x in xs) or 1.0
+            slope = (
+                sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, counts)) / denom
+            )
+            intercept = y_mean - slope * x_mean
+        else:
+            slope = 0.0
+            intercept = float(counts[0]) if counts else 0.0
+        forecast = []
+        for i in range(weeks_ahead):
+            predicted = max(0, int(round(intercept + slope * (n + i))))
+            forecast.append(
+                {
+                    "week_start": (now + timedelta(weeks=i)).date().isoformat(),
+                    "predicted_applications": predicted,
+                }
+            )
+
+        pending = Application.objects.filter(
+            withdrawn=False,
+            status__name__in=["submitted", "under_review"],
+        )
+        bottlenecks = list(
+            pending.values("program_id", "program__name")
+            .annotate(pending_count=Count("id"))
+            .order_by("-pending_count")[:8]
+        )
+        aging = pending.filter(submitted_at__lt=now - timedelta(days=7)).count()
+        waitlisted = Application.objects.filter(
+            withdrawn=False, status__name="waitlist"
+        ).count()
+
+        horizon = today + timedelta(days=21)
+        deadline_risk = []
+        programs = Program.objects.filter(
+            is_active=True,
+            application_deadline__gte=today,
+            application_deadline__lte=horizon,
+        ).order_by("application_deadline")
+        for program in programs:
+            drafts = Application.objects.filter(
+                program=program, withdrawn=False, status__name="draft"
+            ).count()
+            deadline_risk.append(
+                {
+                    "program_id": str(program.id),
+                    "program_name": program.name,
+                    "deadline": (
+                        program.application_deadline.isoformat()
+                        if program.application_deadline
+                        else None
+                    ),
+                    "days_left": (
+                        (program.application_deadline - today).days
+                        if program.application_deadline
+                        else None
+                    ),
+                    "draft_applications": drafts,
+                }
+            )
+
+        return {
+            "generated_at": now.isoformat(),
+            "demand": {
+                "history": history,
+                "forecast": forecast,
+                "trend_per_week": round(slope, 2),
+            },
+            "bottlenecks": {
+                "pending_review": pending.count(),
+                "aging_over_7_days": aging,
+                "waitlisted": waitlisted,
+                "by_program": [
+                    {
+                        "program_id": str(row["program_id"]),
+                        "program_name": row["program__name"],
+                        "pending_count": row["pending_count"],
+                    }
+                    for row in bottlenecks
+                ],
+            },
+            "deadline_risk": deadline_risk,
+        }
+
+    @staticmethod
     @cache_analytics(timeout=1800)  # Cache for 30 minutes
     def get_coordinator_metrics(coordinator_id):
         """Get metrics for coordinator's assigned programs."""

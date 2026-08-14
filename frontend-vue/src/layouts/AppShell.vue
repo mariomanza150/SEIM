@@ -290,6 +290,13 @@ const primaryNavItems = computed(() => [
     isVisible: authStore.canUseStaffReviewQueue,
   },
   {
+    key: 'analyticsForecasts',
+    to: { name: 'AnalyticsForecasts' },
+    label: t('route.names.AnalyticsForecasts'),
+    iconClass: 'bi bi-graph-up',
+    isVisible: authStore.canUseStaffReviewQueue,
+  },
+  {
     key: 'partnerPortal',
     to: { name: 'PartnerPortal' },
     label: t('route.names.PartnerPortal'),

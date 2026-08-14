@@ -377,6 +377,13 @@ class AdminDashboardViewSet(viewsets.ViewSet):
     def is_admin(self, user):
         return user.has_role("admin")
 
+    def is_staff_analyst(self, user):
+        return bool(
+            self.is_admin(user)
+            or (hasattr(user, "has_role") and user.has_role("coordinator"))
+            or getattr(user, "is_staff", False)
+        )
+
     @action(detail=False, methods=["get"])
     @cache_api_response(timeout=300)
     def metrics(self, request):
@@ -421,6 +428,16 @@ class AdminDashboardViewSet(viewsets.ViewSet):
                     **metrics,
                 }
             )
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+    @action(detail=False, methods=["get"])
+    def forecasts(self, request):
+        """Demand forecast, review bottlenecks, and deadline risk for staff."""
+        if not self.is_staff_analyst(request.user):
+            return Response({"error": "Staff access required"}, status=403)
+        try:
+            return Response(AnalyticsService.get_predictive_insights())
         except Exception as e:
             return Response({"error": str(e)}, status=500)
 

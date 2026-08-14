@@ -269,6 +269,7 @@
       "DeadlinesCalendar": "Plazos y calendario",
       "EligibilityRulesets": "Conjuntos de reglas de elegibilidad",
       "Nominations": "Nominaciones",
+      "AnalyticsForecasts": "Pronósticos de demanda",
       "PartnerPortal": "Portal de socios",
       "AdminPrograms": "Admin — Programas",
       "AdminForms": "Admin — Formularios",
@@ -1573,5 +1574,25 @@
     "loadError": "No se pudieron cargar las nominaciones.",
     "saveSuccess": "Orden guardado.",
     "matchSuccess": "Se nominaron {nominated} y {waitlisted} pasaron a lista de espera."
+  },
+  "analyticsForecastsPage": {
+    "subtitle": "Demanda prevista, cuellos de botella de revisión y programas con plazos cercanos.",
+    "loadError": "No se pudieron cargar los pronósticos.",
+    "demandHeading": "Pronóstico de demanda",
+    "trend": "Tendencia: {n} solicitudes/semana",
+    "colWeek": "Semana que inicia",
+    "colActual": "Real",
+    "colPredicted": "Previsto",
+    "bottlenecksHeading": "Cuellos de botella",
+    "pendingReview": "Pendientes de revisión: {n}",
+    "aging": "Con más de 7 días: {n}",
+    "waitlisted": "Lista de espera: {n}",
+    "colProgram": "Programa",
+    "colPending": "Pendientes",
+    "deadlinesHeading": "Riesgo de plazo (21 días)",
+    "colDeadline": "Fecha límite",
+    "colDaysLeft": "Días restantes",
+    "colDrafts": "Borradores",
+    "noDeadlines": "Ningún programa cierra su ventana en los próximos 21 días."
   }
 }
