@@ -268,6 +268,7 @@
       "Settings": "Ajustes",
       "DeadlinesCalendar": "Plazos y calendario",
       "EligibilityRulesets": "Conjuntos de reglas de elegibilidad",
+      "Nominations": "Nominaciones",
       "PartnerPortal": "Portal de socios",
       "AdminPrograms": "Admin — Programas",
       "AdminForms": "Admin — Formularios",
@@ -1547,11 +1548,30 @@
     "noApplicants": "No hay postulantes en los programas vinculados.",
     "docsComplete": "Completo",
     "docsIncomplete": "Incompleto",
+    "nominated": "Nominado",
     "openThread": "Mensajes",
     "threadHeading": "Conversación con {name}",
     "threadLoading": "Cargando mensajes…",
     "threadEmpty": "Aún no hay mensajes.",
     "threadLabel": "Mensaje",
     "threadSubmit": "Enviar"
+  },
+  "nominationsPage": {
+    "subtitle": "Ordena postulantes y asigna plazas en programas con cupo limitado.",
+    "programLabel": "Programa",
+    "programPlaceholder": "Selecciona un programa",
+    "capacity": "Cupo: {n}",
+    "capacityUnlimited": "Cupo: ilimitado",
+    "slotsRemaining": "Plazas restantes: {n}",
+    "colStudent": "Estudiante",
+    "colStatus": "Estado",
+    "colRank": "Orden",
+    "colSubmitted": "Enviada",
+    "saveRanks": "Guardar orden",
+    "runMatch": "Asignar plazas",
+    "empty": "No hay postulantes enviados, en lista de espera o nominados para este programa.",
+    "loadError": "No se pudieron cargar las nominaciones.",
+    "saveSuccess": "Orden guardado.",
+    "matchSuccess": "Se nominaron {nominated} y {waitlisted} pasaron a lista de espera."
   }
 }

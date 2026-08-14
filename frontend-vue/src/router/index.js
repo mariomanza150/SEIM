@@ -34,6 +34,7 @@ const Profile = () => import('@/views/Profile.vue')
 const Settings = () => import('@/views/Settings.vue')
 const DeadlinesCalendar = () => import('@/views/DeadlinesCalendar.vue')
 const EligibilityRulesets = () => import('@/views/EligibilityRulesets.vue')
+const Nominations = () => import('@/views/Nominations.vue')
 const PartnerPortal = () => import('@/views/PartnerPortal.vue')
 const AdminPrograms = () => import('@/views/admin/AdminPrograms.vue')
 const AdminForms = () => import('@/views/admin/AdminForms.vue')
@@ -140,6 +141,12 @@ const routes = [
         path: 'eligibility-rulesets',
         name: 'EligibilityRulesets',
         component: EligibilityRulesets,
+        meta: { staffReviewQueue: true },
+      },
+      {
+        path: 'nominations',
+        name: 'Nominations',
+        component: Nominations,
         meta: { staffReviewQueue: true },
       },
       {

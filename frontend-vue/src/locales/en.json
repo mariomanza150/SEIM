@@ -268,6 +268,7 @@
       "Settings": "Settings",
       "DeadlinesCalendar": "Deadlines and calendar",
       "EligibilityRulesets": "Eligibility rulesets",
+      "Nominations": "Nominations",
       "PartnerPortal": "Partner portal",
       "AdminPrograms": "Admin — Programs",
       "AdminForms": "Admin — Forms",
@@ -1551,11 +1552,30 @@
     "noApplicants": "No applicants on linked programs.",
     "docsComplete": "Complete",
     "docsIncomplete": "Incomplete",
+    "nominated": "Nominated",
     "openThread": "Messages",
     "threadHeading": "Thread with {name}",
     "threadLoading": "Loading messages…",
     "threadEmpty": "No messages yet.",
     "threadLabel": "Message",
     "threadSubmit": "Send"
+  },
+  "nominationsPage": {
+    "subtitle": "Rank applicants and allocate seats for programs with limited capacity.",
+    "programLabel": "Program",
+    "programPlaceholder": "Select a program",
+    "capacity": "Capacity: {n}",
+    "capacityUnlimited": "Capacity: unlimited",
+    "slotsRemaining": "Slots remaining: {n}",
+    "colStudent": "Student",
+    "colStatus": "Status",
+    "colRank": "Rank",
+    "colSubmitted": "Submitted",
+    "saveRanks": "Save ranks",
+    "runMatch": "Match to seats",
+    "empty": "No submitted, waitlisted, or nominated applicants for this program.",
+    "loadError": "Could not load nominations.",
+    "saveSuccess": "Ranks saved.",
+    "matchSuccess": "Matched {nominated} nomination(s) and waitlisted {waitlisted}."
   }
 }

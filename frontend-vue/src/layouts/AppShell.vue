@@ -283,6 +283,13 @@ const primaryNavItems = computed(() => [
     isVisible: authStore.canUseStaffReviewQueue,
   },
   {
+    key: 'nominations',
+    to: { name: 'Nominations' },
+    label: t('route.names.Nominations'),
+    iconClass: 'bi bi-trophy',
+    isVisible: authStore.canUseStaffReviewQueue,
+  },
+  {
     key: 'partnerPortal',
     to: { name: 'PartnerPortal' },
     label: t('route.names.PartnerPortal'),

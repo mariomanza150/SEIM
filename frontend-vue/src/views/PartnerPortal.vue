@@ -83,6 +83,9 @@
                 <td>{{ app.program_name }}</td>
                 <td>{{ app.status_name || app.status }}</td>
                 <td>
+                  <span v-if="app.status_name === 'nominated'" class="badge bg-success me-1">{{
+                    t('partnerPortalPage.nominated')
+                  }}</span>
                   {{
                     app.document_checklist?.complete
                       ? t('partnerPortalPage.docsComplete')

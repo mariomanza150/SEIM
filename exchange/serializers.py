@@ -820,6 +820,7 @@ class PartnerApplicationSerializer(serializers.ModelSerializer):
             "withdrawn",
             "student_display_name",
             "document_checklist",
+            "nomination_rank",
             "created_at",
             "updated_at",
         )

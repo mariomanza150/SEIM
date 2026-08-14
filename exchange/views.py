@@ -628,6 +628,45 @@ class ProgramViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @action(
+        detail=True,
+        methods=["get", "put"],
+        url_path="nominations",
+        permission_classes=[IsCoordinatorOrAdmin],
+    )
+    def nominations(self, request, pk=None):
+        from exchange.nomination_matching import (
+            program_nomination_payload,
+            set_nomination_ranks,
+        )
+
+        program = self.get_object()
+        if request.method == "GET":
+            return Response(program_nomination_payload(program))
+        items = request.data.get("ranks") or request.data.get("items") or []
+        if not isinstance(items, list):
+            return Response(
+                {"ranks": ["Expected a list of {id, rank} objects."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            payload = set_nomination_ranks(program, items)
+        except (TypeError, ValueError) as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(payload)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="nominations/match",
+        permission_classes=[IsCoordinatorOrAdmin],
+    )
+    def nominations_match(self, request, pk=None):
+        from exchange.nomination_matching import match_nominations
+
+        program = self.get_object()
+        return Response(match_nominations(program, request.user))
+
 
 def _application_list_cache_key(*args, **kwargs):
     """Scope cached list per user and full path (default decorator key omitted request user)."""

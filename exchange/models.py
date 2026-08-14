@@ -6,7 +6,7 @@ from core.models import TimeStampedModel, UUIDModel
 
 # Statuses that count toward program seat capacity (excludes draft, rejected, cancelled, waitlist).
 SEAT_HOLDING_APPLICATION_STATUS_NAMES = frozenset(
-    {"submitted", "under_review", "approved", "completed"}
+    {"submitted", "under_review", "approved", "completed", "nominated"}
 )
 
 
@@ -661,6 +661,11 @@ class Application(UUIDModel, TimeStampedModel):
     language_at_apply = models.CharField(max_length=64, null=True, blank=True)
     language_level_at_apply = models.CharField(max_length=10, null=True, blank=True)
     additional_languages_at_apply = models.JSONField(default=list, blank=True)
+    nomination_rank = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text=_("Staff ranking for nomination matching (lower is higher priority)."),
+    )
     # Host destination hierarchy (required before submit).
     host_institution = models.ForeignKey(
         "HostInstitution",
