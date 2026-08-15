@@ -69,7 +69,7 @@ jobs:
       - name: Install Node (static assets if needed)
         run: npm ci
 
-      - uses: browser-actions/setup-chrome@v1
+      - uses: browser-actions/setup-chrome@v2
 
       - name: Migrate and seed
         env:
