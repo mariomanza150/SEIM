@@ -1,70 +1,117 @@
 # Contributing to SEIM
 
-Thank you for your interest in contributing to the Student Exchange Information Manager (SEIM) project!
+Thank you for your interest in contributing to the Student Exchange Information Manager (SEIM).
+
+SEIM is a Django 5.1 + DRF backend that serves a Vue 3 SPA (`/seim/`), a Wagtail CMS (`/`, `/cms/`), and a REST API (`/api/`).
 
 ## Getting Started
 
-1. **Fork the repository** and clone your fork locally.
-2. **Set up the development environment** (see [installation guide](documentation/installation.md)).
-3. **Create a new branch** for your feature or bugfix:
-   ```bash
+1. **Fork** the repository and clone your fork.
+2. **Set up** the development environment (Docker is the documented path; see below).
+3. **Create a branch** for your change:
+   ```powershell
    git checkout -b feature/your-feature-name
    ```
 
-## Branching & Pull Requests
+## Running the app
 
-- Use descriptive branch names: `feature/`, `bugfix/`, `docs/`, etc.
-- Keep your branch up to date with `main`.
-- Open a Pull Request (PR) against the `main` branch.
-- Reference related issues in your PR description.
-- Ensure your PR passes all CI checks and code reviews.
+### Docker (documented path)
 
-## Code Style & Linting
+```powershell
+copy env.example .env
+docker-compose up -d
+docker-compose exec web python manage.py migrate
+docker-compose exec web python manage.py create_initial_data
+docker-compose exec web python manage.py seed_demo_readiness
+docker-compose exec web python manage.py restore_cms
+```
 
-- Follow PEP8 and Django best practices.
-- Use type annotations where possible.
-- Run linters and formatters before committing:
-  ```bash
-  make quality-check  # Run all quality checks
-  # Or individually:
-  ruff check .        # Linting
-  ruff format .       # Formatting
-  flake8             # Additional linting
-  isort .            # Import sorting
-  mypy .             # Type checking
-  ```
+Then open:
 
-## Commit Messages
+- Public / CMS: http://localhost:8001/
+- Vue SPA: http://localhost:8001/seim/
+- API docs: http://localhost:8001/api/docs/
+- Django admin: http://localhost:8001/admin/
 
-- Use clear, descriptive commit messages.
-- Example: `fix: correct document upload validation`
+Demo accounts from `seed_demo_readiness`: `admin@test.com` / `admin123`, `coordinator@test.com` / `coordinator123`, `student@test.com` / `student123`.
 
-## Issues & Feature Requests
+Full install steps: [documentation/installation.md](documentation/installation.md).
 
-- Use GitHub Issues to report bugs or request features.
-- Provide clear steps to reproduce bugs or describe feature needs.
+### Native PostgreSQL + Redis
 
-## Code Review Process
+Docker is the supported contributor path. If you run Django on the host instead (for example a Cloud VM), start local PostgreSQL and Redis first, point `.env` at `localhost` (not Compose hostnames `db` / `redis`), use `seim.settings.development`, and build the SPA:
 
-- All code must be reviewed before merging.
-- Address all reviewer comments and suggestions.
-- Be respectful and constructive in feedback.
+```powershell
+npm --prefix frontend-vue run build
+python manage.py collectstatic --noinput
+```
 
-## Security & Conduct
+SQLite is rejected in development settings. See [AGENTS.md](AGENTS.md) for the native layout.
 
-- Report security issues privately to the project maintainer.
-- Follow the [Contributor Covenant Code of Conduct](https://www.contributor-covenant.org/).
+## Where the UI lives
 
-## 📚 Documentation Standards & Generation
+| Surface | Path | Code |
+| --- | --- | --- |
+| Vue 3 SPA | `/seim/` | `frontend-vue/` |
+| Wagtail CMS / public site | `/`, `/cms/` | `cms/` |
+| REST API | `/api/` | domain apps + `api/urls.py` |
 
-- All documentation (API, code, Sphinx HTML) must be generated using Docker containers for consistency.
-- Use the Makefile targets for all documentation tasks:
-  - `make docs-api` for API docs
-  - `make docs-sphinx-docker` for Sphinx HTML docs
-  - `make docs-workflow` for the full workflow
-- Always update docstrings and run the full documentation workflow before submitting a PR.
-- See the [developer guide](documentation/developer_guide.md) and [README](README.md) for details.
+The legacy Django template frontend has been removed. Do not add new pages under a `frontend/` Django app.
+
+## Tests
+
+```powershell
+make test
+npm --prefix frontend-vue run test:run
+```
+
+- Backend unit/integration: `pytest` via `make test` (Docker). Settings module: `seim.settings.test`.
+- Vue unit tests: Vitest in `frontend-vue/`.
+- Playwright E2E: `make e2e-test`.
+- Legacy Selenium: `SEIM_RUN_SELENIUM=1 make test-selenium` (host OS, not Docker).
+
+More detail: [documentation/testing.md](documentation/testing.md).
+
+## Lint and quality
+
+```powershell
+make quality-check
+make pre-commit-install
+```
+
+Or individually: `ruff check .`, `ruff format .`. CI runs Ruff, Bandit, backend pytest, Vue Vitest + Vite build, and related jobs on PRs to `main`.
+
+## Branching and pull requests
+
+- Use descriptive prefixes: `feature/`, `bugfix/`, `docs/`.
+- Keep the branch up to date with `main`.
+- Open a PR against `main` and fill in `.github/PULL_REQUEST_TEMPLATE.md`.
+- Reference related issues. CI must be green.
+
+## Commit messages
+
+Use a clear, descriptive message, for example: `fix: correct document upload validation`.
+
+## Issues and feature requests
+
+Use the GitHub issue templates (bug report or feature request). Include environment (Docker vs native), role, and whether the problem is SPA, API, or CMS.
+
+- Issues: https://github.com/mariomanza150/SEIM/issues
+
+## Code review
+
+All changes need review before merge. Address comments; keep feedback specific and respectful.
+
+## Security
+
+Report security issues privately to the maintainer. Do not open a public issue with secrets, tokens, or `.env` contents.
+
+## Documentation
+
+- Authoritative guides live in `documentation/`.
+- Prefer Makefile/Docker targets for generated docs (`make docs-workflow`).
+- Update docstrings when behavior changes.
 
 ## Questions?
 
-See the [Support & Contact](README.md#support--contact) section or open an issue on GitHub. 
+See [Support & Contact](README.md#support--contact) or open an issue.

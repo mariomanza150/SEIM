@@ -1,11 +1,10 @@
 # SEIM - Student Exchange Information Manager
 
-[![Backend Status](https://img.shields.io/badge/Backend-Stable-brightgreen)](https://img.shields.io/badge/Backend-Stable-brightgreen)
-[![Frontend Status](https://img.shields.io/badge/Frontend-Complete-brightgreen)](https://img.shields.io/badge/Frontend-Complete-brightgreen)
-[![Production Status](https://img.shields.io/badge/Production-Ready-green)](https://img.shields.io/badge/Production-Ready-green)
-[![Tests](https://img.shields.io/badge/Tests-1147%20Passing-success)](https://img.shields.io/badge/Tests-1147%20Passing-success)
+[![CI](https://github.com/mariomanza150/SEIM/actions/workflows/ci.yml/badge.svg)](https://github.com/mariomanza150/SEIM/actions/workflows/ci.yml)
 
-A comprehensive Django-based web application for managing student exchange programs, applications, and workflows with a modern Bootstrap 5 frontend.
+Student Exchange Information Manager: Django 5.1 + DRF + Vue 3 SPA + Wagtail CMS for student exchange programs.
+
+**SPA:** `/seim/` (`frontend-vue/`) · **CMS:** `/` and `/cms/` · **API:** `/api/` · [Contributing](CONTRIBUTING.md) · [Issues](https://github.com/mariomanza150/SEIM/issues)
 
 ## 🎉 Project Status
 
@@ -16,7 +15,7 @@ A comprehensive Django-based web application for managing student exchange progr
 **✅ Code Quality Verified**  
 **✅ Documentation Comprehensive & Up-to-Date**
 
-SEIM is production-ready with comprehensive features, security, and infrastructure. The system features a modern, responsive Django frontend with Bootstrap 5, JWT authentication, and role-based dashboards. The codebase includes 1,147 comprehensive tests covering all critical functionality, with robust CI/CD automation and comprehensive security hardening.
+SEIM is production-ready with comprehensive features, security, and infrastructure. The system features a Vue 3 SPA (`frontend-vue/`, served at `/seim/`), JWT authentication, and role-based dashboards. Wagtail CMS owns the public site at `/`. The codebase includes comprehensive backend and Vue tests, with CI/CD automation and security hardening.
 
 ### 🚀 What's Ready for Production
 - Complete user authentication and authorization
@@ -408,7 +407,7 @@ make test-selenium-setup
 ```
 
 - All code quality and test commands must be run inside Docker containers or using the Makefile.
-- Frontend tests are located in `tests/frontend/` and cover core JavaScript logic in `static/js/`.
+- Vue tests live in `frontend-vue/` and run with Vitest (`npm --prefix frontend-vue run test:run`).
 - **Selenium E2E tests run from HOST OS, not Docker containers** (requires Chrome browser on host OS).
 - Pre-commit hooks will automatically check formatting, lint, types, and security before each commit.
 
@@ -511,14 +510,14 @@ SEIM documentation is organized into two main directories:
 
 ## 🏗️ Architecture
 
-SEIM follows a modular, service-oriented architecture with a Django frontend:
+SEIM follows a modular, service-oriented architecture with a Vue 3 SPA:
 
 ```
 ┌─────────────────────────┐    ┌─────────────────┐    ┌─────────────────┐
 │   Frontend              │    │   API Layer     │    │   Business      │
-│   (Django Templates +   │◄──►│   (DRF)         │◄──►│   Logic Layer   │
-│   Bootstrap 5 +         │    │                 │    │   (Services)    │
-│   ES6+ JavaScript)      │    │                 │    │                 │
+│   (Vue 3 SPA at /seim/  │◄──►│   (DRF)         │◄──►│   Logic Layer   │
+│   + Wagtail CMS at /)   │    │                 │    │   (Services)    │
+│                         │    │                 │    │                 │
 └─────────────────────────┘    └─────────────────┘    └─────────────────┘
                                         │                       │
                                         ▼                       ▼
@@ -542,9 +541,9 @@ SEIM follows a modular, service-oriented architecture with a Django frontend:
 - **`analytics/`** - Reporting and metrics
 - **`grades/`** - Grade translation system
 - **`application_forms/`** - Dynamic form builder and management
-- **`api/`** - REST API endpoints
-- **`dashboard/`** - Admin and user interfaces
-- **`frontend/`** - Django templates and static files
+- **`api/`** - REST API gateway (viewsets live in domain apps)
+- **`frontend-vue/`** - Vue 3 SPA served at `/seim/`
+- **`cms/`** - Wagtail CMS pages and public site
 
 ---
 
@@ -559,12 +558,10 @@ SEIM follows a modular, service-oriented architecture with a Django frontend:
 - **JWT** - Authentication
 
 ### **Frontend**
-- **Bootstrap 5** - CSS framework
-- **Bootstrap Icons** - Icon library
-- **Django Templates** - Server-side rendering
-- **JavaScript ES6+** - Client-side functionality
-- **SortableJS** - Drag-and-drop functionality
-- **CSS3** - Custom styling
+- **Vue 3 + Vite + Pinia** - SPA at `/seim/`
+- **Vue Router** - Client-side routes under `/seim/`
+- **Bootstrap 5 + Bootstrap Icons** - SPA and CMS styling
+- **Wagtail templates** - Public/CMS pages at `/`
 
 ### **Development & Deployment**
 - **Docker & Docker Compose** - Containerization
@@ -578,43 +575,35 @@ SEIM follows a modular, service-oriented architecture with a Django frontend:
 
 ## 📋 Frontend Pages
 
-### **Public Pages**
-- **Home** (`/`) - Landing page with features and call-to-action
-- **Login** (`/login/`) - User authentication
-- **Register** (`/register/`) - User registration
+### **Public / CMS**
+- **Home** (`/`) - Wagtail marketing site
+- **Login** (`/seim/login/`) - SPA authentication (legacy `/login/` redirects here)
+- **Register** (`/seim/register/`) - SPA registration
 
 ### **Student Pages**
-- **Dashboard** (`/dashboard/`) - Personal overview and quick actions
-- **Programs** (`/programs/`) - Browse available exchange programs
-- **Applications** (`/applications/`) - Manage applications
-- **Documents** (`/documents/`) - Upload and manage documents
+- **Dashboard** (`/seim/dashboard/`) - Personal overview and quick actions
+- **Programs** (`/seim/programs/compare`) - Browse available exchange programs
+- **Applications** (`/seim/applications/`) - Manage applications
+- **Documents** (`/seim/documents/`) - Upload and manage documents
 
 ### **Coordinator Pages**
-- **Dashboard** (`/dashboard/`) - Application review and management
-- **Applications** (`/applications/`) - Review and process applications
-- **Documents** (`/documents/`) - Document validation and comments
-- **Programs** (`/programs/`) - Program management (draft mode)
+- **Review queue** (`/seim/review-queue/`) - Application review
+- **Applications** (`/seim/applications/`) - Review and process applications
+- **Documents** (`/seim/documents/`) - Document validation and comments
 
 ### **Admin Pages**
-- **Dashboard** (`/admin/dashboard/`) - System overview and analytics
-- **Analytics** (`/admin/analytics/`) - Detailed reporting and metrics
-- **Form Builder** (`/admin/form-builder/`) - Dynamic form creation
-- **User Management** (`/admin/`) - Django admin interface
+- **Programs** (`/seim/admin/programs`) - Program management
+- **Form Builder** (`/seim/admin/forms`) - Dynamic form creation
+- **Django admin** (`/seim/django-admin/`) - System admin
+- **CMS admin** (`/cms/`) - Wagtail admin
 
 ---
 
 ## 🧪 Testing
 
-### **Current Status**
-- **Unit Tests**: 0% coverage (to be implemented)
-- **Integration Tests**: 0% coverage (to be implemented)
-- **End-to-End Tests**: 0% coverage (to be implemented)
+Backend unit + integration tests enforce **80%** coverage (`pytest --cov-fail-under=80`). Vue Vitest coverage is collected in CI for stores/services. Historical trends upload to [Codecov](https://codecov.io/gh/mariomanza150/SEIM) when the `CODECOV_TOKEN` GitHub Actions secret is set — see [`.github/README.md`](.github/README.md). A README badge can be added after the first successful upload.
 
-### **Testing Plan**
-1. **Unit Tests** - Test individual components and functions
-2. **Integration Tests** - Test API endpoints and workflows
-3. **Frontend Tests** - Test user interface components
-4. **End-to-End Tests** - Test complete user workflows
+Commands: `make test-coverage` (backend) and `npm --prefix frontend-vue run test:coverage` (Vue).
 
 ---
 
@@ -672,7 +661,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🆘 Support & Contact
 
 - **Documentation**: [Developer Guide](documentation/developer_guide.md)
-- **Issues**: [GitHub Issues](https://github.com/your-org/seim/issues)
+- **Issues**: [GitHub Issues](https://github.com/mariomanza150/SEIM/issues)
 - **Email**: support@seim.local
 
 ---

@@ -1,0 +1,58 @@
+name: Feature request
+description: Propose a change or new capability
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem first, then the change you want. SEIM is a Django 5.1 + DRF backend with a Vue 3 SPA (`/seim/`) and Wagtail CMS.
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which part of SEIM is this for?
+      options:
+        - Vue SPA (`frontend-vue/`, `/seim/`)
+        - REST API
+        - Wagtail CMS
+        - Backend workflow / data model
+        - Docs / DX
+        - Unsure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: role
+    attributes:
+      label: Who benefits?
+      options:
+        - Students
+        - Coordinators / staff
+        - Admins
+        - All roles
+        - Contributors / operators
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What is hard or missing today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: What should SEIM do instead? Keep it concrete.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. Other approaches or existing workarounds.

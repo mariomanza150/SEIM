@@ -1,0 +1,84 @@
+name: Bug report
+description: Report a bug in SEIM (SPA, API, or CMS)
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Include enough detail for someone to reproduce it during the Vue SPA + Django API setup.
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where did this happen?
+      options:
+        - Vue SPA (`/seim/`)
+        - REST API (`/api/`)
+        - Wagtail CMS (`/` or `/cms/`)
+        - Django admin
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: role
+    attributes:
+      label: Role you were using
+      options:
+        - Student
+        - Coordinator
+        - Admin
+        - Unauthenticated / public
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: How are you running SEIM?
+      options:
+        - Docker Compose (documented path)
+        - Native PostgreSQL + Redis (host Python)
+        - CI / GitHub Actions
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: os_browser
+    attributes:
+      label: OS and browser (if UI)
+      placeholder: "Windows 11 + Chrome 128, or N/A for API"
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Log in as student@test.com
+        2. Open /seim/applications
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Logs, screenshots, or extra context
+      description: Paste relevant API status codes, browser console errors, or Docker logs. Do not include secrets or `.env` values.
