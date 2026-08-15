@@ -141,8 +141,8 @@ deactivate
 # 2. Run code quality checks
 make quality-check
 
-# 3. Run frontend tests
-npx jest --config=jest.config.js
+# 3. Run Vue frontend tests
+npm --prefix frontend-vue run test:run
 
 # 4. Generate documentation
 python manage.py generate_docs

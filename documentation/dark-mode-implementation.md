@@ -1,5 +1,7 @@
 # SEIM Dark Mode Implementation
 
+SPA theme lives in `frontend-vue/` (`uiPreferences.js`). References to `static/js/modules/` below are historical.
+
 ## Overview
 
 The SEIM application includes a comprehensive dark mode implementation that provides both automatic system preference detection and manual theme switching capabilities. This implementation covers all components including the dynamic forms (dynforms) system.

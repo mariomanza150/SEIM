@@ -24,14 +24,14 @@ help:
 	@echo "  shell              - Start Django shell (Docker)"
 	@echo "  test               - Run all tests (comprehensive)"
 	@echo "  test-quick         - Run quick test suite"
-	@echo "  test-unit          - Run unit tests (backend + frontend)"
-	@echo "  test-integration   - Run integration tests (backend + frontend)"
-	@echo "  test-e2e           - Run E2E tests"
+	@echo "  test-unit          - Run unit tests (backend + Vue)"
+	@echo "  test-integration   - Run integration tests (backend)"
+	@echo "  test-e2e           - Run Playwright E2E tests"
 	@echo "  test-coverage      - Run tests with coverage"
-	@echo "  test-frontend      - Run frontend tests (Jest)"
-	@echo "  test-selenium      - Run Selenium tests (host OS)"
+	@echo "  test-frontend      - Run Vue frontend tests (Vitest)"
+	@echo "  test-selenium      - Deprecated; use make e2e-test (Playwright)"
 	@echo "  test-all           - Run complete test suite"
-	@echo "  test-workflow      - Run test workflow (quick + frontend + selenium setup)"
+	@echo "  test-workflow      - Run test workflow (quick + frontend + Playwright setup)"
 	@echo ""
 	@echo "Playwright E2E Tests:"
 	@echo "  e2e-setup          - Setup Playwright E2E environment"
@@ -155,53 +155,53 @@ test-quick:
 
 test-unit:
 	@echo "🧪 Running unit tests..."
-	./scripts/run_tests.sh backend unit && ./scripts/run_tests.sh frontend unit
+	./scripts/run_tests.sh backend unit && npm --prefix frontend-vue run test:run
 
 test-integration:
 	@echo "🧪 Running integration tests..."
-	./scripts/run_tests.sh backend integration && ./scripts/run_tests.sh frontend integration
+	./scripts/run_tests.sh backend integration
 
 test-e2e:
-	@echo "🧪 Running end-to-end tests..."
-	./scripts/run_tests.sh selenium e2e
+	@echo "🎭 Running Playwright E2E tests..."
+	$(MAKE) e2e-test
 
-# Frontend tests (HOST OS)
+# Frontend tests (HOST OS) — Vue 3 SPA
 test-frontend:
-	@echo "🧪 Running frontend tests..."
-	./scripts/test_frontend.sh all
+	@echo "🧪 Running Vue frontend tests..."
+	npm --prefix frontend-vue run test:run
 
 test-frontend-unit:
-	@echo "🧪 Running frontend unit tests..."
-	./scripts/test_frontend.sh unit
+	@echo "🧪 Running Vue frontend unit tests..."
+	npm --prefix frontend-vue run test:run
 
 test-frontend-integration:
-	@echo "🧪 Running frontend integration tests..."
-	./scripts/test_frontend.sh integration
+	@echo "🧪 Vue has no separate Jest integration suite; running Vitest..."
+	npm --prefix frontend-vue run test:run
 
 test-frontend-e2e:
-	@echo "🧪 Running frontend E2E tests..."
-	./scripts/test_frontend.sh e2e
+	@echo "🧪 Use Playwright/Vue E2E targets (e2e-test / vue-e2e) instead of legacy Jest."
+	npm --prefix frontend-vue run test:run
 
 test-frontend-coverage:
-	@echo "🧪 Running frontend tests with coverage..."
-	./scripts/test_frontend.sh all true
+	@echo "🧪 Running Vue frontend tests with coverage..."
+	npm --prefix frontend-vue run test:run -- --coverage
 
-# Selenium E2E tests (HOST OS ONLY - not Docker)
+# Selenium E2E is deprecated. Playwright is the supported path (make e2e-test).
+# Set SEIM_RUN_SELENIUM=1 to force the legacy runner.
 test-selenium:
-	@echo "🧪 Running Selenium E2E tests from HOST OS..."
-	./scripts/test_selenium.sh all
+	@echo "⚠️  Selenium E2E is deprecated. Use: make e2e-test"
+	@if [ "$${SEIM_RUN_SELENIUM:-0}" = "1" ]; then ./scripts/test_selenium.sh all; fi
 
 test-selenium-e2e:
-	@echo "🧪 Running Selenium E2E tests..."
-	./scripts/test_selenium.sh e2e
+	@echo "⚠️  Selenium E2E is deprecated. Use: make e2e-test"
+	@if [ "$${SEIM_RUN_SELENIUM:-0}" = "1" ]; then ./scripts/test_selenium.sh e2e; fi
 
 test-selenium-standalone:
-	@echo "🧪 Running standalone Selenium tests from HOST OS..."
-	./scripts/test_selenium.sh standalone
+	@echo "⚠️  Selenium E2E is deprecated. Use: make e2e-test"
+	@if [ "$${SEIM_RUN_SELENIUM:-0}" = "1" ]; then ./scripts/test_selenium.sh standalone; fi
 
 test-selenium-setup:
-	@echo "🧪 Testing Selenium setup from HOST OS..."
-	./scripts/test_selenium.sh setup
+	@echo "⚠️  Selenium setup is deprecated. Use: make e2e-setup"
 
 test-coverage:
 	@echo "🧪 Running tests with coverage..."
@@ -431,14 +431,14 @@ cache-workflow: cache-status cache-test
 	@echo "📊 Cache performance tested and verified"
 
 # Test workflow
-test-workflow: test-quick test-frontend-unit test-selenium-setup
+test-workflow: test-quick test-frontend-unit e2e-setup
 	@echo "✅ Test workflow completed!"
-	@echo "📊 Quick tests, frontend unit tests, and Selenium setup verified"
+	@echo "📊 Quick tests, frontend unit tests, and Playwright setup verified"
 
 # Full test suite
-test-all: test test-frontend test-selenium
+test-all: test test-frontend
 	@echo "✅ Complete test suite completed!"
-	@echo "📊 Backend, frontend, and Selenium tests all executed"
+	@echo "📊 Backend and frontend tests executed. E2E: make e2e-test (Playwright)"
 
 # Full development workflow
 dev-workflow: docker-up migrate collectstatic docs-workflow cache-workflow test-workflow
@@ -449,14 +449,7 @@ dev-workflow: docker-up migrate collectstatic docs-workflow cache-workflow test-
 
 # Host OS test setup
 setup-selenium-host:
-	@echo "🔧 Setting up Selenium environment on HOST OS..."
-	@echo "Installing Python dependencies for Selenium..."
-	pip install selenium webdriver-manager pytest-selenium requests
-	@echo "✅ Selenium dependencies installed"
-	@echo "📋 Next steps:"
-	@echo "  1. Install Chrome browser on your host OS"
-	@echo "  2. Start Django server: docker-compose up web"
-	@echo "  3. Run tests: make test-selenium"
+	@echo "⚠️  Selenium is deprecated. Use: make e2e-setup"
 
 # Production deployment targets
 build-prod:

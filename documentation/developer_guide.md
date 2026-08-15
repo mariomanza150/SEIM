@@ -1,7 +1,7 @@
 # SEIM Developer Guide
 
 ## Introduction
-This guide is for developers working on SEIM (Student Exchange Information Manager). The application is production-ready with a complete Django backend and Bootstrap 5 frontend.
+This guide is for developers working on SEIM (Student Exchange Information Manager). The application is production-ready with a Django backend and a Vue 3 SPA under `/seim/`.
 
 ---
 
@@ -16,10 +16,9 @@ This guide is for developers working on SEIM (Student Exchange Information Manag
 - **`grades/`**: Grade translation system for international students
 - **`core/`**: Shared utilities, base models, and project-wide logic
 - **`analytics/`**: Dashboards, metrics, and reporting
-- **`api/`**: RESTful endpoints and third-party integrations
-- **`dashboard/`**: Admin and user dashboards (UI/UX)
-- **`plugins/`**: Modular plugin system for custom workflows
-- **`frontend/`**: Django-based frontend with Bootstrap 5
+- **`api/`**: REST API gateway (URL aggregator; viewsets live in domain apps)
+- **`frontend-vue/`**: Vue 3 SPA served at `/seim/` (the Django `frontend` app is removed)
+- Dashboards: Vue SPA under `/seim/` plus `accounts/views_dashboard.py` APIs
 
 ### **Key Models:**
 - **User**: Custom user model with email verification, lockout policy
@@ -149,8 +148,8 @@ deactivate
 # 2. Run code quality checks
 make quality-check
 
-# 3. Run frontend tests
-npx jest --config=jest.config.js
+# 3. Run Vue frontend tests
+npm --prefix frontend-vue run test:run
 
 # 4. Generate documentation
 python manage.py generate_docs
@@ -253,45 +252,31 @@ make pre-commit-run
 
 ### **Frontend Testing with Jest**
 - Frontend JavaScript logic is tested using Jest and jsdom.
-- Tests are located in `tests/frontend/` and cover `static/js/` code.
-- Run tests and view coverage (Virtual Environment Required):
+- Vue unit tests live in `frontend-vue/` (Vitest).
+- Run tests and view coverage:
 
 ```bash
-# 1. Activate virtual environment
-.venv\Scripts\Activate.ps1
-
-# 2. Run tests
-npx jest --config=jest.config.js
-npx jest --config=jest.config.js --coverage
-
-# 3. Deactivate
-deactivate
+npm --prefix frontend-vue run test:run
+npm --prefix frontend-vue run test:run -- --coverage
 ```
 
-- Coverage reports are generated in `coverage/frontend/`.
-- All new frontend code should include or update corresponding Jest tests.
+- All new SPA code should include or update corresponding Vitest tests.
 
 ---
 
 ## 🔧 Frontend Development
 
-### **Template Structure:**
+### **SPA structure:**
 ```
-templates/frontend/
-├── base.html              # Main layout
-├── dashboard.html         # Role-based dashboard
-├── auth/                  # Authentication pages
-├── programs/              # Program management
-├── applications/          # Application workflow
-├── documents/             # Document management
-└── admin/                 # Admin interfaces
+frontend-vue/              # Vue 3 app (Vite), served at /seim/
+cms/templates/             # Wagtail CMS pages (not the app UI)
+templates/                 # Django admin / contact / dynforms only
+static/css/utilities/seim-shared-tokens.css  # Shared Vue + CMS tokens
 ```
 
 ### **JavaScript Architecture:**
-- **`static/js/main.js`**: Core utilities and functions
-- **`static/js/auth.js`**: Authentication logic
-- **SweetAlert2**: Modern notifications
-- **JWT Management**: Token handling and refresh
+- **`frontend-vue/src/`**: Vue 3 SPA (router, stores, views)
+- **JWT Management**: Token handling in the SPA auth store
 
 ### **CSS Guidelines:**
 - Use Bootstrap 5 utilities first
@@ -633,55 +618,20 @@ SEIM uses a hybrid authentication model:
 - To add role-based UI, use JS to show/hide elements based on the user's role from the API.
 - Do not use Django's `@login_required` or `request.user` in templates for frontend access control.
 
-See `static/js/auth.js` and the dashboard template for examples. 
+See `frontend-vue/src/stores/auth.js` and the Vue router for examples.
 
-## Frontend Build Process (Webpack)
+## Frontend Build Process (Vite)
 
-The SEIM frontend uses [Webpack](https://webpack.js.org/) for JavaScript and CSS bundling, minification, and cache-busting. This ensures all static assets are optimized for production and that browsers always load the latest versions.
-
-### Entry Points
-- `dashboard.js`
-- `applications.js`
-- `programs.js`
-- `documents.js`
-- `auth_entry.js`
-
-Each entry point corresponds to a major page or feature and imports only the modules needed for that page.
-
-### Output
-- Bundled and minified files are output to `static/dist/` as `[name].[contenthash].js` and `[name].[contenthash].css`.
-- Content hashes ensure cache-busting: when the file changes, the filename changes.
+The app UI is the Vue 3 SPA. Docker and CI run `npm --prefix frontend-vue run build` in a multi-stage image, then `collectstatic`. Locally, if `frontend-vue/dist/index.html` is missing, development settings serve `templates/vue_spa_missing_dist/` instead of crashing.
 
 ### How to Build
-1. Install dependencies (first time only):
-   ```sh
-   npm install
-   # or
-   yarn install
-   ```
-2. Build for production:
-   ```sh
-   npm run build
-   # or
-   yarn build
-   ```
-3. For development with auto-rebuild:
-   ```sh
-   npm run dev
-   # or
-   yarn dev
-   ```
+```sh
+npm --prefix frontend-vue ci
+npm --prefix frontend-vue run build
+python manage.py collectstatic --noinput
+```
 
-### Referencing Assets in Django Templates
-- Use `{% static 'dist/dashboard.[hash].js' %}` (replace `[hash]` with the actual hash from the build output).
-- For automated injection of hashed filenames, consider using [django-webpack-loader](https://github.com/django-webpack/django-webpack-loader).
-
-### Notes
-- All ES6+ modules are transpiled via Babel for browser compatibility.
-- CSS can be imported into JS entry points and will be extracted/minified.
-- The build process cleans the output directory before each build.
-
-See `webpack.config.js` and `package.json` for configuration details. 
+Vite emits `frontend-vue/dist/` (HTML + `assets/`). Django `TEMPLATES` and `STATICFILES_DIRS` include that directory so `/seim/` and `/static/assets/` resolve. 
 
 ## UI Module Structure and Best Practices
 

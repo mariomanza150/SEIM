@@ -1,8 +1,6 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from frontend.views import password_reset_view
-
 from .views import (
     AcademicLevelViewSet,
     AllowedEmailDomainViewSet,
@@ -94,7 +92,11 @@ urlpatterns = [
     ),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("change-password/", ChangePasswordView.as_view(), name="change_password"),
-    path("password-reset/", password_reset_view, name="password-reset"),
+    path(
+        "password-reset/",
+        PasswordResetRequestView.as_view(),
+        name="password-reset",
+    ),
     # Permissions endpoint for frontend
     path("permissions/", UserPermissionsView.as_view(), name="user_permissions"),
     # Settings endpoints

@@ -2,7 +2,8 @@
 set -e
 
 # SEIM Comprehensive Test Runner
-# Orchestrates all test types: backend (Docker), frontend (host), Selenium (host)
+# Orchestrates all test types: backend (Docker), frontend (host).
+# Playwright is the supported E2E path (make e2e-test). Selenium is deprecated.
 
 # Colors for output
 RED='\033[0;31m'
@@ -175,8 +176,8 @@ run_frontend_tests() {
     
     log_section "Running Frontend Tests ($test_type)"
     
-    # Use the frontend test script
-    if ./scripts/test_frontend.sh "$test_type"; then
+    # Vue 3 SPA unit tests (legacy Django/Jest frontend suite removed)
+    if npm --prefix frontend-vue run test:run; then
         test_results["frontend_$test_type"]="passed"
         log_success "Frontend tests ($test_type) passed"
     else
@@ -189,10 +190,18 @@ run_frontend_tests() {
     return 0
 }
 
-# Run Selenium tests (host OS)
+# Run Selenium tests (host OS) — deprecated; Playwright is the default E2E path.
 run_selenium_tests() {
     local test_type="$1"
     local start_time=$(start_timer)
+
+    log_warning "Selenium E2E is deprecated. Use Playwright: make e2e-test"
+    if [[ "${SEIM_RUN_SELENIUM:-0}" != "1" ]]; then
+        log_info "Skipping Selenium (set SEIM_RUN_SELENIUM=1 to force)"
+        test_results["selenium_$test_type"]="skipped"
+        test_durations["selenium_$test_type"]=0
+        return 0
+    fi
     
     log_section "Running Selenium Tests ($test_type)"
     
@@ -336,10 +345,7 @@ main() {
             if ! run_frontend_tests "$frontend_type"; then
                 exit_code=1
             fi
-            
-            if ! run_selenium_tests "$selenium_type"; then
-                exit_code=1
-            fi
+            log_info "E2E: Playwright is the supported path (make e2e-test). Selenium skipped."
             ;;
         "backend")
             if ! run_backend_tests "$backend_type"; then
@@ -375,10 +381,7 @@ main() {
             if ! run_frontend_tests "ci"; then
                 exit_code=1
             fi
-            
-            if ! run_selenium_tests "all"; then
-                exit_code=1
-            fi
+            log_info "E2E: Playwright is the supported path (make e2e-test). Selenium skipped."
             ;;
         *)
             log_error "Unknown test suite: $test_suite"
@@ -410,7 +413,7 @@ show_help() {
     echo "  all       - Run all test types (default)"
     echo "  backend   - Run backend tests only"
     echo "  frontend  - Run frontend tests only"
-    echo "  selenium  - Run Selenium tests only"
+    echo "  selenium  - Deprecated Selenium suite (requires SEIM_RUN_SELENIUM=1)"
     echo "  quick     - Run quick test suite (unit tests only)"
     echo "  ci        - Run CI test suite (comprehensive with coverage)"
     echo ""
@@ -440,14 +443,14 @@ show_help() {
     echo "  $0 quick                             # Run quick test suite"
     echo "  $0 backend unit                      # Run backend unit tests only"
     echo "  $0 frontend unit                     # Run frontend unit tests only"
-    echo "  $0 selenium e2e                      # Run Selenium E2E tests only"
+    echo "  SEIM_RUN_SELENIUM=1 $0 selenium e2e  # Legacy Selenium (deprecated)"
     echo "  $0 ci                                # Run CI test suite"
     echo ""
     echo "Environment requirements:"
     echo "  - Docker and Docker Compose for backend tests"
     echo "  - Node.js and npm for frontend tests"
-    echo "  - Python with selenium/webdriver-manager for Selenium tests"
-    echo "  - Django server running for Selenium tests"
+    echo "  - Playwright for supported E2E (make e2e-test)"
+    echo "  - SEIM_RUN_SELENIUM=1 plus Django server for legacy Selenium only"
 }
 
 # Parse command line arguments

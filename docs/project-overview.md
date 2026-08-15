@@ -100,11 +100,9 @@ Access:
 - **`grades/`** - Grade translation system
 - **`application_forms/`** - Dynamic form builder and management
 - **`cms/`** - Wagtail CMS pages and content
-- **`api/`** - REST API endpoints
-- **`dashboard/`** - Admin and user interfaces
+- **`api/`** - REST API gateway (URL aggregator)
 - **`frontend/`** - Django templates and static files
 - **`core/`** - Shared utilities, base models, permissions
-- **`plugins/`** - Modular plugin system
 - **`seim/`** - Django project settings
 - **`templates/`** - HTML templates
 - **`static/`** - CSS, JavaScript, images

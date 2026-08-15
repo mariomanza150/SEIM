@@ -3,6 +3,8 @@
 **Generated:** 2026-01-29  
 **Priority:** Action Plan for Frontend Revision
 
+Historical plan for the removed Django SSR frontend. App UI is `frontend-vue/` at `/seim/`.
+
 ---
 
 ## Quick Summary

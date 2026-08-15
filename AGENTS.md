@@ -40,5 +40,5 @@ App is at http://localhost:8001/ — SPA `/seim/`, admin `/admin/`, API docs `/a
 Run these against the venv (the Makefile targets assume Docker, so invoke tools directly here):
 - Lint: `.venv/bin/ruff check .` (repo currently has pre-existing ruff findings).
 - Backend tests: `.venv/bin/python -m pytest tests/unit tests/integration` — uses `seim.settings.test` (also needs Postgres+Redis running). Full run enforces `--cov-fail-under=80`; for a subset override with `-o addopts="--ds=seim.settings.test -m 'not e2e and not e2e_playwright'"`.
-- Frontend unit tests: `npm --prefix frontend-vue run test:run` (Vitest) and root `npx jest --config jest.config.js` (Jest).
+- Frontend unit tests: `npm --prefix frontend-vue run test:run` (Vitest).
 - Vue build: `npm --prefix frontend-vue run build`.

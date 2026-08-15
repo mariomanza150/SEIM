@@ -1,5 +1,5 @@
 # CI: single entry point (lint, security, typecheck, backend, frontends, docker scan, perf on PR).
-# CD: see deploy.yml (GHCR + environments). Playwright E2E: e2e-tests.yml. Scheduled Selenium: e2e-selenium-scheduled.yml.
+# CD: see deploy.yml (GHCR + environments). Playwright E2E: e2e-tests.yml. Selenium is deprecated (manual-only workflow).
 # Postgres/Redis (CI): DB seim_test, user seimuser, password seimpass — keep in sync across jobs.
 
 name: CI
@@ -174,9 +174,9 @@ jobs:
         run: |
           pytest \
             --cov=accounts --cov=analytics --cov=api --cov=application_forms --cov=core \
-            --cov=dashboard --cov=data_management --cov=documents --cov=exchange \
-            --cov=frontend --cov=grades --cov=internacional --cov=notifications \
-            --cov=plugins --cov=seim \
+            --cov=data_management --cov=documents --cov=exchange \
+            --cov=grades --cov=internacional --cov=notifications \
+            --cov=seim \
             --cov-config=pyproject.toml \
             --cov-report=xml --cov-report=html --cov-fail-under=80 \
             --junitxml=test-results.xml \
@@ -215,44 +215,6 @@ jobs:
           echo "## Backend tests" >> "$GITHUB_STEP_SUMMARY"
           echo "JUnit: artifact **backend-test-results**. Coverage: Codecov + **backend-coverage-xml**." >> "$GITHUB_STEP_SUMMARY"
 
-  frontend-webpack:
-    name: Frontend (webpack / Jest)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-
-      - run: npm ci
-
-      - name: ESLint
-        run: npm run lint
-
-      - name: Prettier
-        run: npm run format:check
-
-      - name: Jest
-        run: npm run test:ci
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage/lcov.info
-          flags: frontend-webpack
-          name: frontend-webpack-coverage
-          fail_ci_if_error: false
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-
-      - name: Job summary
-        if: always()
-        run: |
-          echo "## Webpack frontend" >> "$GITHUB_STEP_SUMMARY"
-          echo "ESLint, Prettier, Jest (CI) complete." >> "$GITHUB_STEP_SUMMARY"
-
   frontend-vue:
     name: Frontend (Vue / Vitest)
     runs-on: ubuntu-latest
@@ -276,23 +238,26 @@ jobs:
       - name: Vite build
         run: npm run build
 
+      - name: Verify production dist
+        run: test -f dist/index.html && test -d dist/assets
+
       - name: Job summary
         if: always()
         run: |
           echo "## Vue frontend" >> "$GITHUB_STEP_SUMMARY"
-          echo "Vitest + production build complete." >> "$GITHUB_STEP_SUMMARY"
+          echo "Vitest + production build complete. Docker image build collectstatics this dist." >> "$GITHUB_STEP_SUMMARY"
 
   docker-security:
     name: Docker image + Trivy
     runs-on: ubuntu-latest
-    needs: [lint, security, backend-tests, frontend-webpack, frontend-vue]
+    needs: [lint, security, backend-tests, frontend-vue]
     permissions:
       contents: read
       security-events: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build image
+      - name: Build image (Vue dist + collectstatic)
         run: docker build -t seim:ci .
 
       - name: Trivy scan

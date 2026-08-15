@@ -1,71 +1,24 @@
 # SEIM Frontend Development Guide
 
 ## Overview
-SEIM uses a modern Django-based frontend with Bootstrap 5, JavaScript ES6+, and responsive design principles. The frontend is production-ready with comprehensive features and optimizations.
+App UI is the Vue 3 SPA in `frontend-vue/`, served at `/seim/`. Wagtail CMS (`cms/templates/`) is the public/CMS site. The Django `frontend` app, `templates/frontend/`, and `static/js/modules/` are removed.
 
 ---
 
 ## 🏗️ Frontend Architecture
 
 ### **Technology Stack**
-- **Django Templates** - Server-side rendering with template inheritance
-- **Bootstrap 5** - CSS framework for responsive design
-- **JavaScript ES6+** - Modern client-side functionality
-- **CSS3** - Custom styling with CSS custom properties
-- **JWT Authentication** - Token-based authentication with automatic refresh
+- **Vue 3 + Vite** - SPA under `/seim/`
+- **Wagtail CMS templates** - Public marketing/CMS pages
+- **Shared tokens** - `static/css/utilities/seim-shared-tokens.css` (Vue + CMS)
+- **JWT Authentication** - Token-based auth in the SPA auth store
 
 ### **Directory Structure**
 ```
-static/
-├── css/
-│   ├── main.css (modular entry point)
-│   ├── utilities/
-│   │   ├── colors.css (comprehensive color system)
-│   │   ├── spacing.css (spacing utilities)
-│   │   └── typography.css (typography system)
-│   ├── layouts/
-│   │   ├── base.css (grid system & fundamentals)
-│   │   └── navigation.css (navbar & sidebar)
-│   └── components/
-│       ├── buttons.css (button variants & states)
-│       ├── cards.css (card components & variants)
-│       ├── forms.css (form controls & validation)
-│       └── tables.css (table styles & responsive)
-├── js/
-│   ├── main.js (core utilities and initialization)
-│   ├── auth.js (authentication logic)
-│   ├── dashboard.js (dashboard functionality)
-│   └── modules/
-│       ├── api.js (API interaction utilities)
-│       ├── auth-unified.js (unified authentication)
-│       ├── notifications.js (notification system)
-│       ├── validators.js (form validation)
-│       ├── utils.js (utility functions)
-│       ├── logger.js (logging system)
-│       ├── error-handler.js (error handling)
-│       └── ui/
-│           ├── auth_ui.js (authentication UI)
-│           ├── bootstrap_helpers.js (Bootstrap utilities)
-│           └── loading.js (loading states)
-└── img/ (images and icons)
-
-templates/
-├── base.html (modular base template)
-├── components/
-│   ├── navigation/
-│   │   └── navbar.html (accessible navigation)
-│   ├── forms/
-│   │   └── search_form.html (reusable search)
-│   ├── tables/
-│   │   └── data_table.html (responsive data table)
-│   ├── messages.html (enhanced message display)
-│   └── footer.html (modular footer)
-└── frontend/
-    ├── dashboard.html
-    ├── auth/
-    ├── applications/
-    ├── programs/
-    └── documents/
+frontend-vue/                 # Vue 3 SPA (Vite + Vitest)
+cms/templates/                # Wagtail CMS pages
+templates/                    # Django admin / contact / dynforms only
+static/css/utilities/         # Shared tokens + CMS/Django leftovers
 ```
 
 ---
@@ -213,10 +166,10 @@ const Notifications = {
 ### **Frontend Development Commands**
 ```bash
 # Run frontend tests
-npx jest --config=jest.config.js
+npm --prefix frontend-vue run test:run
 
 # View test coverage
-npx jest --config=jest.config.js --coverage
+npm --prefix frontend-vue run test:run -- --coverage
 
 # Code quality checks
 make quality-check

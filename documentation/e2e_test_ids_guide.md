@@ -208,20 +208,20 @@ Add `data-testid` to these elements first:
 - Decorative elements
 - Footer links
 
-## Templates to Update
+## Views to Update
 
-Key templates that need data-testid attributes:
+Add `data-testid` attributes in the Vue SPA (`frontend-vue/src/views/`), not the removed `templates/frontend/` Django SSR pages:
 
-1. **templates/frontend/auth/login.html**
-2. **templates/frontend/auth/register.html**
-3. **templates/frontend/dashboard.html**
-4. **templates/frontend/applications/list.html**
-5. **templates/frontend/applications/form.html**
-6. **templates/frontend/documents/list.html**
-7. **templates/frontend/programs/list.html**
-8. **templates/frontend/profile.html**
-9. **templates/components/navigation/navbar.html**
-10. **templates/frontend/admin/dashboard.html**
+1. **Login.vue**
+2. **Register.vue**
+3. **Dashboard.vue**
+4. **Applications.vue**
+5. **ApplicationForm.vue**
+6. **Documents.vue**
+7. **ProgramCompare.vue** / admin programs
+8. **Profile.vue**
+9. App shell navigation
+10. Admin views under `frontend-vue/src/views/admin/`
 
 ## Using in Tests
 

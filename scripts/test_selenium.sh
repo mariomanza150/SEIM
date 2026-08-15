@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-# SEIM Selenium Test Runner
-# Runs Selenium E2E tests on HOST OS (not Docker)
+# SEIM Selenium Test Runner (DEPRECATED)
+# Playwright is the supported E2E path: make e2e-test
+# This runner is opt-in: SEIM_RUN_SELENIUM=1 ./scripts/test_selenium.sh
 
 # Colors for output
 RED='\033[0;31m'
@@ -40,7 +41,13 @@ export SELENIUM_HOST
 export CHROME_HEADLESS
 export PYTHONPATH="${PROJECT_ROOT}:${PYTHONPATH}"
 
-log_info "SEIM Selenium Test Runner"
+if [[ "${SEIM_RUN_SELENIUM:-0}" != "1" ]]; then
+    log_warning "Selenium E2E is deprecated. Use: make e2e-test"
+    log_info "Set SEIM_RUN_SELENIUM=1 to force this legacy runner."
+    exit 0
+fi
+
+log_info "SEIM Selenium Test Runner (deprecated)"
 log_info "========================"
 log_info "SELENIUM_HOST: $SELENIUM_HOST"
 log_info "CHROME_HEADLESS: $CHROME_HEADLESS"

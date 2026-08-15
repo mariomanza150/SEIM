@@ -3,9 +3,12 @@ WebSocket consumer for real-time notifications.
 """
 
 import json
+import logging
 
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
+
+logger = logging.getLogger(__name__)
 
 
 class NotificationConsumer(AsyncWebsocketConsumer):
@@ -60,10 +63,17 @@ class NotificationConsumer(AsyncWebsocketConsumer):
         Handle WebSocket disconnection.
         Unsubscribe from notification channel.
         """
-        if hasattr(self, "notification_group_name"):
-            # Leave notification group
-            await self.channel_layer.group_discard(
-                self.notification_group_name, self.channel_name
+        group_name = getattr(self, "notification_group_name", None)
+        channel_layer = getattr(self, "channel_layer", None)
+        if not group_name or channel_layer is None:
+            return
+        try:
+            await channel_layer.group_discard(group_name, self.channel_name)
+        except Exception:
+            logger.exception(
+                "Failed to leave notification group %s (close_code=%s)",
+                group_name,
+                close_code,
             )
 
     async def receive(self, text_data):

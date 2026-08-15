@@ -2,6 +2,8 @@ from celery import shared_task
 from django.conf import settings
 from django.core.mail import send_mail
 
+from core.celery_utils import log_celery_failure, retryable_task_kwargs
+
 REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY = {
     "application_deadline": "applications",
     "document_deadline": "documents",
@@ -72,8 +74,8 @@ def get_user_email(user):
     return user.email
 
 
-@shared_task
-def send_notification_email(user_id, subject, message):
+@shared_task(on_failure=log_celery_failure, **retryable_task_kwargs())
+def send_notification_email(self, user_id, subject, message):
     from accounts.models import User
 
     user = User.objects.get(id=user_id)
@@ -87,14 +89,14 @@ def send_notification_email(user_id, subject, message):
     )
 
 
-@shared_task
-def send_email_notification(user_id, subject, message):
+@shared_task(on_failure=log_celery_failure, **retryable_task_kwargs())
+def send_email_notification(self, user_id, subject, message):
     """Alias for send_notification_email to match test expectations."""
     return send_notification_email(user_id, subject, message)
 
 
-@shared_task
-def send_notification_by_id(notification_id):
+@shared_task(on_failure=log_celery_failure, **retryable_task_kwargs())
+def send_notification_by_id(self, notification_id):
     """Send email notification based on notification ID."""
     from .models import Notification
 
@@ -113,8 +115,8 @@ def send_notification_by_id(notification_id):
         return False
 
 
-@shared_task
-def send_deadline_reminders():
+@shared_task(on_failure=log_celery_failure, **retryable_task_kwargs())
+def send_deadline_reminders(self):
     """
     Send reminder notifications for upcoming deadlines.
 
@@ -168,8 +170,8 @@ def send_deadline_reminders():
     return sent_count
 
 
-@shared_task
-def send_notification_digests():
+@shared_task(on_failure=log_celery_failure, **retryable_task_kwargs())
+def send_notification_digests(self):
     """
     Daily Celery Beat job: send unread summary notifications per user settings.
     """
@@ -178,8 +180,8 @@ def send_notification_digests():
     return process_notification_digests()
 
 
-@shared_task
-def send_agreement_expiration_reminders():
+@shared_task(on_failure=log_celery_failure, **retryable_task_kwargs())
+def send_agreement_expiration_reminders(self):
     """
     Notify admins/coordinators on configured days before agreement end_date.
     Scheduled daily via Celery Beat (seim.celery beat_schedule + django_celery_beat migration).

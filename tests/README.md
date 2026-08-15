@@ -13,9 +13,9 @@ This guide covers all testing approaches for SEIM, including unit tests, integra
 - **Command**: `make test-unit`, `make test-integration`
 
 ### **2. Frontend Tests (Host OS)**
-- **Location**: `tests/frontend/`
+- **Location**: `frontend-vue/`
 - **Environment**: Host OS with Node.js
-- **Command**: `npx jest --config=jest.config.js`
+- **Command**: `npm --prefix frontend-vue run test:run`
 
 ### **3. Selenium E2E Tests (HOST OS ONLY)**
 - **Location**: `tests/e2e/`, `tests/selenium/`
@@ -167,26 +167,18 @@ tests/
 
 ## 🎨 **Frontend Testing**
 
-### **Jest Configuration**
+### **Vitest (Vue SPA)**
 ```bash
 # Run all frontend tests
-npx jest --config=jest.config.js
+npm --prefix frontend-vue run test:run
 
 # Run with coverage
-npx jest --config=jest.config.js --coverage
-
-# Run specific test file
-npx jest --config=jest.config.js tests/frontend/unit/modules/logger.test.js
+npm --prefix frontend-vue run test:run -- --coverage
 ```
 
 ### **Test Structure**
 ```
-tests/frontend/
-├── unit/                   # Unit tests
-│   └── modules/           # JavaScript module tests
-├── integration/           # Integration tests
-│   └── api/              # API integration tests
-└── setup.js              # Jest setup file
+frontend-vue/src/          # Vue components, stores, and colocated *.spec.js
 ```
 
 ---
@@ -225,8 +217,8 @@ docker-compose exec web python manage.py check
 rm -rf node_modules package-lock.json
 npm install
 
-# Jest configuration issues
-npx jest --config=jest.config.js --verbose
+# Vitest issues
+npm --prefix frontend-vue run test:run
 ```
 
 ---
@@ -251,7 +243,7 @@ make test-api          # API tests
 
 # Host OS tests
 make test-selenium     # Selenium E2E tests
-npx jest --config=jest.config.js  # Frontend tests
+npm --prefix frontend-vue run test:run  # Vue tests
 
 # Setup
 make setup-selenium-host  # Setup Selenium environment
@@ -263,7 +255,7 @@ make setup-selenium-host  # Setup Selenium environment
 make test-coverage
 
 # Frontend coverage (Host OS)
-npx jest --config=jest.config.js --coverage
+npm --prefix frontend-vue run test:run -- --coverage
 
 # Selenium coverage (Host OS)
 python -m pytest tests/e2e/ --cov=. --cov-report=html:htmlcov_selenium

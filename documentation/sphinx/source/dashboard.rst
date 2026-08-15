@@ -1,6 +1,9 @@
 Dashboard Module
 ===============
 
+Role-based app dashboards are the Vue SPA under ``/seim/`` (``frontend-vue/``).
+The Django ``templates/frontend/`` examples below are historical.
+
 The dashboard module provides role-based dashboards and user interfaces for SEIM.
 
 Overview

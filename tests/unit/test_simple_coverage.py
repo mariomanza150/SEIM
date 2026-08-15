@@ -152,9 +152,9 @@ class TestSimpleCoverage(TestCase):
     def test_view_imports(self):
         """Test that views can be imported"""
         views_to_test = [
-            "frontend.views",
-            "api.views",
-            "dashboard.views",
+            "api.urls",
+            "accounts.views_dashboard",
+            "core.views",
         ]
 
         for view_module in views_to_test:
@@ -186,9 +186,9 @@ class TestSimpleCoverage(TestCase):
         from django.urls import NoReverseMatch, reverse
 
         urls_to_test = [
-            ("frontend:login", {}),
-            ("frontend:register", {}),
-            ("frontend:dashboard", {}),
+            ("legacy_login", {}),
+            ("legacy_register", {}),
+            ("legacy_dashboard", {}),
         ]
 
         for url_name, kwargs in urls_to_test:

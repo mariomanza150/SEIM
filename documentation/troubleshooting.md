@@ -194,7 +194,7 @@ docker-compose ps
 # 3. Run your tests/tools
 make test-selenium
 # or
-npx jest --config=jest.config.js
+npm --prefix frontend-vue run test:run
 
 # 4. Deactivate when done
 deactivate
@@ -662,14 +662,11 @@ print('STATICFILES_DIRS:', settings.STATICFILES_DIRS)
 
 #### **Issue**: Console errors or broken functionality
 ```bash
-# Check JavaScript files
-ls -la static/js/
+# Vue SPA source
+dir frontend-vue\src
 
-# Check for syntax errors
-npx eslint static/js/
-
-# Run frontend tests
-npx jest --config=jest.config.js
+# Run Vue unit tests
+npm --prefix frontend-vue run test:run
 ```
 
 #### **Solutions**:
@@ -679,11 +676,7 @@ npx jest --config=jest.config.js
 
 2. **JavaScript errors**:
    ```bash
-   # Check for syntax errors
-   node -c static/js/main.js
-   
-   # Run linter
-   npx eslint static/js/ --fix
+   npm --prefix frontend-vue run test:run
    ```
 
 3. **API errors**:

@@ -274,50 +274,50 @@ class TestAnalyticsViewsSimple(TestCase):
             username="testuser", email="test@example.com", password="testpass123"
         )
 
-    @patch("analytics.views.render")
-    def test_dashboard_view(self, mock_render):
-        """Test dashboard view."""
+    def test_dashboard_view(self):
+        """Legacy HTML dashboard redirects to the Vue SPA."""
         request = Mock()
         request.user = self.user
 
-        dashboard_view(request)
-        mock_render.assert_called_with(request, "frontend/admin/dashboard.html")
+        response = dashboard_view(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/dashboard/")
 
-    @patch("analytics.views.render")
-    def test_application_statistics_view(self, mock_render):
-        """Test application statistics view."""
+    def test_application_statistics_view(self):
+        """Legacy HTML statistics redirect to the Vue SPA."""
         request = Mock()
         request.user = self.user
 
-        application_statistics_view(request)
-        mock_render.assert_called_with(request, "frontend/admin/analytics.html")
+        response = application_statistics_view(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/analytics-forecasts/")
 
-    @patch("analytics.views.render")
-    def test_program_statistics_view(self, mock_render):
-        """Test program statistics view."""
+    def test_program_statistics_view(self):
+        """Legacy HTML program statistics redirect to the Vue SPA."""
         request = Mock()
         request.user = self.user
 
-        program_statistics_view(request)
-        mock_render.assert_called_with(request, "frontend/admin/analytics.html")
+        response = program_statistics_view(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/analytics-forecasts/")
 
-    @patch("analytics.views.render")
-    def test_user_activity_view(self, mock_render):
-        """Test user activity view."""
+    def test_user_activity_view(self):
+        """Legacy HTML user activity redirect to the Vue SPA."""
         request = Mock()
         request.user = self.user
 
-        user_activity_view(request)
-        mock_render.assert_called_with(request, "frontend/admin/analytics.html")
+        response = user_activity_view(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/analytics-forecasts/")
 
-    @patch("analytics.views.render")
-    def test_export_data_view(self, mock_render):
-        """Test export data view."""
+    def test_export_data_view(self):
+        """Legacy HTML export page redirects to the Vue SPA."""
         request = Mock()
         request.user = self.user
 
-        export_data_view(request)
-        mock_render.assert_called_with(request, "frontend/admin/analytics.html")
+        response = export_data_view(request)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/analytics-forecasts/")
 
 
 class TestAnalyticsAPIViewsSimple(APITestCase):

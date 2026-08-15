@@ -27,13 +27,11 @@ SEIM/
 ├── application_forms/     # Dynamic form builder
 ├── cms/                   # Wagtail CMS integration
 ├── core/                  # Shared utilities and base classes
-├── dashboard/            # Dashboard views
 ├── documents/             # Document management
 ├── exchange/              # Exchange programs and applications
 ├── frontend/              # Django frontend views
 ├── grades/                # Grade translation system
 ├── notifications/         # Notification system
-├── plugins/               # Plugin system
 ├── seim/                  # Django project settings
 ├── static/                # Static files (CSS, JS, images)
 ├── templates/             # Django templates
@@ -212,8 +210,7 @@ app_name/
 - **`requirements-dev.txt`** - Development dependencies
 - **`requirements-test.txt`** - Testing dependencies
 - **`pytest.ini`** - Pytest configuration
-- **`webpack.config.js`** - Frontend build configuration
-- **`jest.config.frontend.js`** - Frontend test configuration
+- **`frontend-vue/`** - Vue 3 SPA (Vite + Vitest), served at `/seim/`
 - **`.gitignore`** - Git ignore patterns
 - **`.env.example`** - Environment variable template
 

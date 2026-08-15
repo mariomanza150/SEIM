@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'seim_ui_preferences'
-/** Keeps Django `theme-manager.js` (server-rendered pages) aligned with SPA theme preference. */
+/** Aligns SPA theme with Django templates that persist `seim-theme` in localStorage. */
 const LEGACY_THEME_KEY = 'seim-theme'
 
 /** Browser chrome / PWA status bar; keep in sync with `index.html` shell bootstrap. */

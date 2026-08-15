@@ -37,10 +37,10 @@ class UrlConfigurationTests(TestCase):
         self.assertIn('id="app"', str(response.content))
 
     def test_django_admin_legacy_path_redirects(self):
-        """``/django/admin/`` redirects to the unified admin at ``/seim/admin/``."""
+        """``/django/admin/`` redirects to Django admin at ``/seim/django-admin/``."""
         response = self.client.get("/django/admin/", follow=False)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers.get("Location"), "/seim/admin/")
+        self.assertEqual(response.headers.get("Location"), "/seim/django-admin/")
 
     def test_wagtail_admin_url(self):
         """Wagtail CMS admin is only mounted when ``wagtail`` is installed."""
@@ -98,7 +98,7 @@ class UrlConfigurationTests(TestCase):
         self.user.save()
         self.client.login(username="testuser", password="testpass123")
 
-        response = self.client.get("/seim/admin/", follow=True)
+        response = self.client.get("/seim/django-admin/", follow=True)
         self.assertEqual(response.status_code, 200)
 
         if apps.is_installed("wagtail"):
@@ -106,14 +106,14 @@ class UrlConfigurationTests(TestCase):
             self.assertEqual(response.status_code, 200)
 
     def test_redirects(self):
-        """``/admin/`` and legacy Django admin path redirect to ``/seim/admin/``."""
+        """``/admin/`` and legacy Django admin path redirect to ``/seim/django-admin/``."""
         response = self.client.get("/admin/", follow=False)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers.get("Location"), "/seim/admin/")
+        self.assertEqual(response.headers.get("Location"), "/seim/django-admin/")
 
         response = self.client.get("/django/admin/", follow=False)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers.get("Location"), "/seim/admin/")
+        self.assertEqual(response.headers.get("Location"), "/seim/django-admin/")
 
     def test_contact_form_route_not_vue_shell(self):
         """Legacy Django contact form is mounted at ``/contact/`` (not the SPA)."""
@@ -131,6 +131,7 @@ class VueAppRoutingTests(TestCase):
             "/seim/applications/new",
             "/seim/documents",
             "/seim/profile",
+            "/seim/admin/programs",
             "/seim/nonexistent-page",
         ]
 
@@ -143,7 +144,7 @@ class VueAppRoutingTests(TestCase):
         """Admin, CMS, and API paths are not the Vue ``index.html`` shell."""
         excluded_paths = [
             "/django/admin/",
-            "/seim/admin/",
+            "/seim/django-admin/",
             "/cms/",
             "/api/",
             "/media/",

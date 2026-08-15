@@ -323,14 +323,14 @@ deactivate
 # 1. Activate virtual environment
 .venv\Scripts\Activate.ps1
 
-# 2. Run Jest tests
-npx jest --config=jest.config.js
+# 2. Run Vue tests
+npm --prefix frontend-vue run test:run
 
 # 3. Run with coverage
-npx jest --config=jest.config.js --coverage
+npm --prefix frontend-vue run test:run -- --coverage
 
 # 4. Watch mode
-npx jest --config=jest.config.js --watch
+npm --prefix frontend-vue run test
 
 # 5. Deactivate when done
 deactivate
@@ -384,11 +384,11 @@ make pre-commit-install
 # Run pre-commit hooks on all files
 make pre-commit-run
 
-# Run frontend JavaScript tests with Jest (from project root)
-npx jest --config=jest.config.js
+# Run Vue frontend tests (from project root)
+npm --prefix frontend-vue run test:run
 
 # View frontend test coverage report
-npx jest --config=jest.config.js --coverage
+npm --prefix frontend-vue run test:run -- --coverage
 ```
 
 ### **Selenium E2E Testing (HOST OS ONLY)**

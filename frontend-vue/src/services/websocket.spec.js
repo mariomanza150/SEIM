@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, afterEach } from 'vitest'
+import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 
 import NotificationWebSocket, { resolveNotificationWsUrl } from '@/services/websocket'
 
@@ -56,5 +56,80 @@ describe('NotificationWebSocket application.sync', () => {
     expect(custom).toBeTruthy()
     expect(custom[0].detail.applicationId).toBe('app-1')
     expect(custom[0].detail.documentId).toBe('doc-9')
+  })
+})
+
+describe('NotificationWebSocket reconnect and heartbeat', () => {
+  let sockets
+
+  beforeEach(() => {
+    sockets = []
+    vi.useFakeTimers()
+    vi.stubGlobal(
+      'WebSocket',
+      class MockWebSocket {
+        static OPEN = 1
+        static CLOSED = 3
+        constructor(url) {
+          this.url = url
+          this.readyState = MockWebSocket.OPEN
+          this.sent = []
+          sockets.push(this)
+        }
+        send(payload) {
+          this.sent.push(payload)
+        }
+        close() {
+          this.readyState = MockWebSocket.CLOSED
+        }
+      }
+    )
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+  })
+
+  it('sends ping heartbeats while connected', () => {
+    const ws = new NotificationWebSocket()
+    ws.connect('access-token')
+    ws._onOpen()
+
+    vi.advanceTimersByTime(30000)
+
+    expect(sockets[0].sent[0]).toContain('"type":"ping"')
+  })
+
+  it('refreshes JWT before reconnecting after an unexpected close', async () => {
+    const refreshToken = vi.fn().mockResolvedValue('fresh-token')
+    const ws = new NotificationWebSocket({
+      getToken: () => 'stale-token',
+      refreshToken,
+    })
+    ws.connect('stale-token')
+    ws._onClose({ code: 4001 })
+
+    await vi.advanceTimersByTimeAsync(2000)
+
+    expect(refreshToken).toHaveBeenCalled()
+    expect(sockets.at(-1).url).toContain('fresh-token')
+  })
+
+  it('reconnects with a fresh token when the browser comes back online', async () => {
+    const refreshToken = vi.fn().mockResolvedValue('online-token')
+    const ws = new NotificationWebSocket({
+      getToken: () => null,
+      refreshToken,
+    })
+    ws.connect('initial-token')
+    ws.ws = null
+    ws._onOnline()
+
+    await Promise.resolve()
+
+    expect(refreshToken).toHaveBeenCalled()
+    expect(sockets.at(-1).url).toContain('online-token')
   })
 })

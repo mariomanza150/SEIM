@@ -8,7 +8,7 @@ Automated workflows for SEIM: quality gates, tests, container scan, E2E, and dep
 
 Runs on: **push** to `main`, `master`, `develop`, `feature/vue-migration`; **pull request** targeting `main`, `master`, `develop`
 
-**Jobs:** Ruff · Bandit + `pip-audit` · mypy (non-blocking) · backend pytest (unit + integration) · webpack ESLint/Prettier/Jest · Vue Vitest + Vite build · Docker build + Trivy SARIF · Locust on pull requests only.
+**Jobs:** Ruff · Bandit + `pip-audit` · mypy (non-blocking) · backend pytest (unit + integration) · Vue Vitest + Vite build · Docker build (Vue dist + collectstatic) + Trivy SARIF · Locust on pull requests only.
 
 **Secrets (optional):** `CODECOV_TOKEN`
 

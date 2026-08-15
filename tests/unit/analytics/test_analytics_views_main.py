@@ -97,19 +97,22 @@ class AnalyticsViewsTestCase(TestCase):
         """Test dashboard view for student user."""
         self.client.force_login(self.student)
         response = self.client.get(reverse("analytics:dashboard"))
-        self.assertTemplateUsed(response, "frontend/admin/dashboard.html")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/dashboard/")
 
     def test_dashboard_view_coordinator(self):
         """Test dashboard view for coordinator user."""
         self.client.force_login(self.coordinator)
         response = self.client.get(reverse("analytics:dashboard"))
-        self.assertTemplateUsed(response, "frontend/admin/dashboard.html")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/dashboard/")
 
     def test_dashboard_view_admin(self):
         """Test dashboard view for admin user."""
         self.client.force_login(self.admin)
         response = self.client.get(reverse("analytics:dashboard"))
-        self.assertTemplateUsed(response, "frontend/admin/dashboard.html")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/dashboard/")
 
     def test_application_statistics_view_anonymous(self):
         """Test application statistics view for anonymous user."""
@@ -120,7 +123,8 @@ class AnalyticsViewsTestCase(TestCase):
         """Test application statistics view for authenticated user."""
         self.client.force_login(self.coordinator)
         response = self.client.get(reverse("analytics:application_statistics"))
-        self.assertTemplateUsed(response, "frontend/admin/analytics.html")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/analytics-forecasts/")
 
     def test_program_statistics_view_anonymous(self):
         """Test program statistics view for anonymous user."""
@@ -131,7 +135,8 @@ class AnalyticsViewsTestCase(TestCase):
         """Test program statistics view for authenticated user."""
         self.client.force_login(self.coordinator)
         response = self.client.get(reverse("analytics:program_statistics"))
-        self.assertTemplateUsed(response, "frontend/admin/analytics.html")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/analytics-forecasts/")
 
     def test_user_activity_view_anonymous(self):
         """Test user activity view for anonymous user."""
@@ -142,7 +147,8 @@ class AnalyticsViewsTestCase(TestCase):
         """Test user activity view for authenticated user."""
         self.client.force_login(self.coordinator)
         response = self.client.get(reverse("analytics:user_activity"))
-        self.assertTemplateUsed(response, "frontend/admin/analytics.html")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/analytics-forecasts/")
 
     def test_export_data_view_anonymous(self):
         """Test export data view for anonymous user."""
@@ -153,10 +159,11 @@ class AnalyticsViewsTestCase(TestCase):
         """Test export data view for authenticated user."""
         self.client.force_login(self.coordinator)
         response = self.client.get(reverse("analytics:export_data"))
-        self.assertTemplateUsed(response, "frontend/admin/analytics.html")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/analytics-forecasts/")
 
     def test_export_data_post(self):
-        """Test export data POST request."""
+        """Legacy HTML export POST also redirects to the Vue SPA."""
         self.client.force_login(self.coordinator)
         response = self.client.post(
             reverse("analytics:export_data"),
@@ -167,7 +174,8 @@ class AnalyticsViewsTestCase(TestCase):
                 "date_to": "2024-12-31",
             },
         )
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/analytics-forecasts/")
 
     @patch("analytics.views.AnalyticsService.get_application_statistics")
     def test_application_statistics_api(self, mock_get_stats):
@@ -260,18 +268,18 @@ class AnalyticsViewsTestCase(TestCase):
     #     self.assertEqual(response.status_code, 200)
 
     def test_analytics_permissions(self):
-        """Test analytics view permissions."""
-        # Test that students can access basic analytics
+        """Authenticated roles are redirected from legacy HTML analytics to the SPA."""
         self.client.force_login(self.student)
         response = self.client.get(reverse("analytics:dashboard"))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/dashboard/")
 
-        # Test that coordinators can access all analytics
         self.client.force_login(self.coordinator)
         response = self.client.get(reverse("analytics:application_statistics"))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/analytics-forecasts/")
 
-        # Test that admins can access all analytics
         self.client.force_login(self.admin)
         response = self.client.get(reverse("analytics:user_activity"))
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/analytics-forecasts/")

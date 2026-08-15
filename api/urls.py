@@ -1,3 +1,9 @@
+"""REST API URL aggregator.
+
+Domain viewsets live in their apps. Exchange routes are included from
+``exchange.urls``; other apps register on the router below.
+"""
+
 from django.urls import include, path
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -33,27 +39,6 @@ from documents.views import (
     DocumentViewSet,
     ExchangeAgreementDocumentViewSet,
 )
-from exchange.views import (
-    ApplicationStatusViewSet,
-    ApplicationSubjectSelectionViewSet,
-    ApplicationViewSet,
-    CalendarEventViewSet,
-    CommentViewSet,
-    EligibilityRuleSetViewSet,
-    ExchangeAgreementViewSet,
-    HostAcademicProgramViewSet,
-    HostInstitutionViewSet,
-    HostSchoolViewSet,
-    ProgramViewSet,
-    SavedSearchViewSet,
-    TimelineEventViewSet,
-    calendar_subscribe_ics,
-)
-from exchange.partner_views import (
-    PartnerAgreementViewSet,
-    PartnerApplicationViewSet,
-    PartnerContactViewSet,
-)
 from notifications.views import (
     NotificationPreferenceViewSet,
     NotificationRoutingOverrideViewSet,
@@ -72,48 +57,6 @@ router.register(r"profiles", ProfileViewSet)
 router.register(r"roles", RoleViewSet)
 router.register(r"permissions", PermissionViewSet)
 router.register(r"user-sessions", UserSessionViewSet, basename="user-sessions")
-
-# Exchange
-router.register(r"programs", ProgramViewSet)
-router.register(
-    r"eligibility-rulesets", EligibilityRuleSetViewSet, basename="eligibility-ruleset"
-)
-router.register(
-    r"exchange-agreements",
-    ExchangeAgreementViewSet,
-    basename="exchange-agreement",
-)
-router.register(
-    r"host-institutions", HostInstitutionViewSet, basename="host-institution"
-)
-router.register(r"schools", HostSchoolViewSet, basename="host-school")
-router.register(
-    r"academic-programs",
-    HostAcademicProgramViewSet,
-    basename="host-academic-program",
-)
-router.register(r"applications", ApplicationViewSet, basename="application")
-router.register(
-    r"application-subject-selections",
-    ApplicationSubjectSelectionViewSet,
-    basename="application-subject-selection",
-)
-router.register(r"application-statuses", ApplicationStatusViewSet)
-router.register(r"comments", CommentViewSet)
-router.register(r"timeline-events", TimelineEventViewSet)
-router.register(r"saved-searches", SavedSearchViewSet, basename="saved-search")
-router.register(r"calendar/events", CalendarEventViewSet, basename="calendar-event")
-router.register(
-    r"partner/agreements", PartnerAgreementViewSet, basename="partner-agreement"
-)
-router.register(
-    r"partner/applications",
-    PartnerApplicationViewSet,
-    basename="partner-application",
-)
-router.register(
-    r"partner-contacts", PartnerContactViewSet, basename="partner-contact"
-)
 
 # Documents
 router.register(r"document-types", DocumentTypeViewSet)
@@ -151,11 +94,8 @@ router.register(
 )
 
 urlpatterns = [
-    path(
-        "calendar/subscribe.ics",
-        calendar_subscribe_ics,
-        name="calendar-subscribe-ics",
-    ),
+    # Exchange viewsets + calendar ICS (owned by exchange.urls)
+    path("", include("exchange.urls")),
     path(
         "notifications/routing-reference/",
         NotificationRoutingReferenceView.as_view(),

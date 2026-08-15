@@ -26,26 +26,26 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link{% if url_name == 'programs' %} active{% endif %}" href="{% url 'frontend:programs' %}" aria-label="{% trans 'Programs' %}" {% if url_name == 'programs' %}aria-current="page"{% endif %}>
+                    <a class="nav-link{% if url_name == 'programs' %} active{% endif %}" href="/seim/programs/compare" aria-label="{% trans 'Programs' %}" {% if url_name == 'programs' %}aria-current="page"{% endif %}>
                         <i class="bi bi-calendar-event" aria-hidden="true"></i> 
                         <span>{% trans "Programs" %}</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link{% if url_name == 'applications' %} active{% endif %}" href="{% url 'frontend:applications' %}" aria-label="{% trans 'Applications' %}" {% if url_name == 'applications' %}aria-current="page"{% endif %}>
+                    <a class="nav-link{% if url_name == 'applications' %} active{% endif %}" href="/seim/applications/" aria-label="{% trans 'Applications' %}" {% if url_name == 'applications' %}aria-current="page"{% endif %}>
                         <i class="bi bi-file-earmark-text" aria-hidden="true"></i> 
                         <span>{% trans "Applications" %}</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link{% if url_name == 'calendar' %} active{% endif %}" href="{% url 'frontend:calendar' %}" aria-label="{% trans 'Calendar' %}" {% if url_name == 'calendar' %}aria-current="page"{% endif %}>
+                    <a class="nav-link{% if url_name == 'calendar' %} active{% endif %}" href="/seim/calendar/" aria-label="{% trans 'Calendar' %}" {% if url_name == 'calendar' %}aria-current="page"{% endif %}>
                         <i class="bi bi-calendar3" aria-hidden="true"></i> 
                         <span>{% trans "Calendar" %}</span>
                     </a>
                 </li>
                 <!-- Coordinator Navigation -->
                 <li class="nav-item coordinator-nav" {% if user.is_authenticated and user.is_coordinator %}style="display:block;"{% else %}style="display:none;"{% endif %}>
-                    <a class="nav-link{% if url_name == 'coordinator_dashboard' %} active{% endif %}" href="{% url 'frontend:coordinator_dashboard' %}" aria-label="{% trans 'Coordinator Dashboard' %}" {% if url_name == 'coordinator_dashboard' %}aria-current="page"{% endif %}>
+                    <a class="nav-link{% if url_name == 'coordinator_dashboard' %} active{% endif %}" href="/seim/review-queue/" aria-label="{% trans 'Coordinator Dashboard' %}" {% if url_name == 'coordinator_dashboard' %}aria-current="page"{% endif %}>
                         <i class="bi bi-kanban" aria-hidden="true"></i> 
                         <span>{% trans "Reviews" %}</span>
                     </a>
@@ -53,7 +53,7 @@
                 
                 <!-- Admin Navigation -->
                 <li class="nav-item admin-nav" {% if user.is_authenticated and user.is_admin %}style="display:block;"{% else %}style="display:none;"{% endif %}>
-                    <a class="nav-link{% if url_name == 'admin_dashboard' %} active{% endif %}" href="{% url 'frontend:admin_dashboard' %}" aria-label="{% trans 'Admin Dashboard' %}" {% if url_name == 'admin_dashboard' %}aria-current="page"{% endif %}>
+                    <a class="nav-link{% if url_name == 'admin_dashboard' %} active{% endif %}" href="/seim/admin/programs" aria-label="{% trans 'Admin Dashboard' %}" {% if url_name == 'admin_dashboard' %}aria-current="page"{% endif %}>
                         <i class="bi bi-gear" aria-hidden="true"></i> 
                         <span>{% trans "Admin" %}</span>
                     </a>
@@ -88,13 +88,9 @@
                     </span>
                 </li>
                 <li class="nav-item authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
-                    <button class="nav-link btn btn-link position-relative" type="button" data-bs-toggle="offcanvas" data-bs-target="#notificationCenter" aria-controls="notificationCenter" aria-label="Notifications">
+                    <a class="nav-link" href="/seim/notifications/" aria-label="Notifications">
                         <i class="bi bi-bell" aria-hidden="true"></i>
-                        <span class="notification-badge position-absolute">0</span>
-                    </button>
-                </li>
-                <li class="nav-item authed-nav" {% if user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
-                    {% include 'components/language-switcher.html' %}
+                    </a>
                 </li>
 
                 <!-- Unauthenticated (before theme so primary actions come first) -->
@@ -104,7 +100,7 @@
                     </a>
                 </li>
                 <li class="nav-item unauth-nav" {% if not user.is_authenticated %}style="display:flex;"{% else %}style="display:none;"{% endif %}>
-                    <a class="nav-link{% if url_name == 'register' %} active{% endif %}" href="{% url 'frontend:register' %}" aria-label="{% trans 'Register' %}" {% if url_name == 'register' %}aria-current="page"{% endif %}>
+                    <a class="nav-link{% if url_name == 'register' %} active{% endif %}" href="/seim/register/" aria-label="{% trans 'Register' %}" {% if url_name == 'register' %}aria-current="page"{% endif %}>
                         <i class="bi bi-person-plus" aria-hidden="true"></i> {% trans "Register" %}
                     </a>
                 </li>
@@ -128,17 +124,17 @@
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                         <li>
-                            <a class="dropdown-item{% if url_name == 'profile' %} active{% endif %}" href="{% url 'frontend:profile' %}" aria-label="{% trans 'Profile' %}" {% if url_name == 'profile' %}aria-current="page"{% endif %}>
+                            <a class="dropdown-item{% if url_name == 'profile' %} active{% endif %}" href="/seim/profile/" aria-label="{% trans 'Profile' %}" {% if url_name == 'profile' %}aria-current="page"{% endif %}>
                                 <i class="bi bi-person" aria-hidden="true"></i> {% trans "Profile" %}
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item{% if url_name == 'settings' %} active{% endif %}" href="{% url 'frontend:settings' %}" aria-label="{% trans 'Settings' %}" {% if url_name == 'settings' %}aria-current="page"{% endif %}>
+                            <a class="dropdown-item{% if url_name == 'settings' %} active{% endif %}" href="/seim/settings/" aria-label="{% trans 'Settings' %}" {% if url_name == 'settings' %}aria-current="page"{% endif %}>
                                 <i class="bi bi-gear" aria-hidden="true"></i> {% trans "Settings" %}
                             </a>
                         </li>
                         <li>
-                            <a class="dropdown-item{% if url_name == 'preferences' %} active{% endif %}" href="{% url 'frontend:preferences' %}" aria-label="{% trans 'Preferences' %}" {% if url_name == 'preferences' %}aria-current="page"{% endif %}>
+                            <a class="dropdown-item{% if url_name == 'preferences' %} active{% endif %}" href="/seim/settings/" aria-label="{% trans 'Preferences' %}" {% if url_name == 'preferences' %}aria-current="page"{% endif %}>
                                 <i class="bi bi-sliders" aria-hidden="true"></i> {% trans "Preferences" %}
                             </a>
                         </li>

@@ -208,6 +208,11 @@ class TestNotificationConsumer:
         # No message should be received (connection closed)
         # This test verifies the consumer properly cleans up on disconnect
 
+    async def test_disconnect_without_group_is_a_noop(self):
+        consumer = NotificationConsumer()
+        consumer.channel_layer = None
+        await consumer.disconnect(1000)
+
     async def test_application_sync_forwards_to_client(self, user_student):
         consumer = NotificationConsumer()
         consumer.send = AsyncMock()

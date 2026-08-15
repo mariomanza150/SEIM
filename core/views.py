@@ -5,8 +5,10 @@ from django import forms
 from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
-from django.http import JsonResponse
-from django.shortcuts import render
+from django.contrib import messages
+from django.contrib.auth import logout
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import redirect, render
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -193,6 +195,26 @@ def health_check(request):
         return JsonResponse(health_status, status=503)
 
     return JsonResponse(health_status, status=200)
+
+
+def marketing_home(request):
+    """Public home when Wagtail is not installed (e.g. default unit test settings)."""
+    if request.user.is_authenticated:
+        return redirect("/seim/dashboard/")
+    return HttpResponse(
+        "<!DOCTYPE html><html><body>"
+        "<h1>Student Exchange Information Manager</h1>"
+        "</body></html>"
+    )
+
+
+def spa_logout(request):
+    """Clear the Django session and send the user to the Vue login shell."""
+    logout(request)
+    response = redirect("/seim/login/")
+    response.set_cookie("clear_jwt_tokens", "true", max_age=1)
+    messages.success(request, "You have been logged out successfully.")
+    return response
 
 
 class ContactFormView(View):

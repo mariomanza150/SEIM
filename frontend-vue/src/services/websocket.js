@@ -10,6 +10,7 @@ const RECONNECT_DECAY = 1.5
 const RECONNECT_MAX_ATTEMPTS = 10
 const NOTIFICATION_PATH = '/ws/notifications/'
 const PLACEHOLDER_HOST_FRAGMENT = 'your-domain.com'
+const AUTH_CLOSE_CODES = new Set([4001, 4003, 4401, 4403])
 
 function hasPlaceholderHost(url) {
   if (!url) return false
@@ -66,11 +67,22 @@ class NotificationWebSocket {
     this.onNotification = options.onNotification || (() => {})
     this.onConnect = options.onConnect || (() => {})
     this.onDisconnect = options.onDisconnect || (() => {})
+    this.getToken = options.getToken || (() => {
+      try {
+        return localStorage.getItem('access_token')
+      } catch {
+        return null
+      }
+    })
+    this.refreshToken = options.refreshToken || null
     this.ws = null
     this.pingTimer = null
     this.reconnectTimer = null
     this.reconnectAttempts = 0
     this.intentionalClose = false
+    this._networkBound = false
+    this._onOnline = null
+    this._onOffline = null
   }
 
   connect(token) {
@@ -80,6 +92,7 @@ class NotificationWebSocket {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) return
 
     this.intentionalClose = false
+    this._bindNetworkListeners()
     const url = `${baseUrl}?token=${encodeURIComponent(token)}`
     try {
       this.ws = new WebSocket(url)
@@ -96,6 +109,7 @@ class NotificationWebSocket {
   disconnect() {
     this.intentionalClose = true
     this._clearTimers()
+    this._unbindNetworkListeners()
     if (this.ws) {
       this.ws.close()
       this.ws = null
@@ -165,8 +179,13 @@ class NotificationWebSocket {
     this._clearTimers()
     this.ws = null
     if (this.intentionalClose) return
-    const token = localStorage.getItem('access_token')
-    if (token) this._scheduleReconnect(token)
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) return
+    const token = typeof this.getToken === 'function' ? this.getToken() : null
+    if (token || this.refreshToken) {
+      this._scheduleReconnect(token, {
+        forceRefresh: Boolean(this.refreshToken) || AUTH_CLOSE_CODES.has(event?.code),
+      })
+    }
   }
 
   _startPing() {
@@ -177,7 +196,7 @@ class NotificationWebSocket {
     }, PING_INTERVAL_MS)
   }
 
-  _scheduleReconnect(token) {
+  _scheduleReconnect(token, { forceRefresh = false } = {}) {
     if (this.reconnectAttempts >= RECONNECT_MAX_ATTEMPTS) return
     const delay = Math.min(
       RECONNECT_INITIAL_MS * Math.pow(RECONNECT_DECAY, this.reconnectAttempts),
@@ -186,8 +205,47 @@ class NotificationWebSocket {
     this.reconnectAttempts += 1
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null
-      this.connect(token)
+      void this._connectWithFreshToken(token, forceRefresh)
     }, delay)
+  }
+
+  async _connectWithFreshToken(fallbackToken, forceRefresh = false) {
+    let token = (typeof this.getToken === 'function' ? this.getToken() : null) || fallbackToken
+    if (this.refreshToken && (forceRefresh || !token)) {
+      try {
+        const refreshed = await this.refreshToken()
+        if (refreshed) token = refreshed
+      } catch (err) {
+        console.warn('WebSocket token refresh failed:', err)
+        this.onDisconnect()
+        return
+      }
+    }
+    if (token) this.connect(token)
+  }
+
+  _bindNetworkListeners() {
+    if (this._networkBound || typeof window === 'undefined') return
+    this._onOnline = () => {
+      this.reconnectAttempts = 0
+      if (this.intentionalClose || this.isConnected()) return
+      void this._connectWithFreshToken()
+    }
+    this._onOffline = () => {
+      this._clearTimers()
+    }
+    window.addEventListener('online', this._onOnline)
+    window.addEventListener('offline', this._onOffline)
+    this._networkBound = true
+  }
+
+  _unbindNetworkListeners() {
+    if (!this._networkBound || typeof window === 'undefined') return
+    if (this._onOnline) window.removeEventListener('online', this._onOnline)
+    if (this._onOffline) window.removeEventListener('offline', this._onOffline)
+    this._onOnline = null
+    this._onOffline = null
+    this._networkBound = false
   }
 
   isConnected() {
@@ -209,6 +267,8 @@ export function getNotificationWebSocket(options = {}) {
     if (options.onNotification) sharedInstance.onNotification = options.onNotification
     if (options.onConnect) sharedInstance.onConnect = options.onConnect
     if (options.onDisconnect) sharedInstance.onDisconnect = options.onDisconnect
+    if (options.getToken) sharedInstance.getToken = options.getToken
+    if (options.refreshToken) sharedInstance.refreshToken = options.refreshToken
   }
   return sharedInstance
 }
@@ -224,6 +284,8 @@ export function useNotificationWebSocket(authStore, callbacks = {}) {
     onNotification: callbacks.onNotification || (() => {}),
     onConnect: callbacks.onConnect,
     onDisconnect: callbacks.onDisconnect,
+    getToken: () => authStore.accessToken,
+    refreshToken: typeof authStore.refreshToken === 'function' ? () => authStore.refreshToken() : null,
   })
 
   function connectIfAuthenticated() {

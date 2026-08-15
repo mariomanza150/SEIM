@@ -65,6 +65,13 @@ COPY . .
 # Copy Vue.js build from frontend-builder stage
 COPY --from=frontend-builder /app/frontend-vue/dist /app/frontend-vue/dist
 
+# Bake collected statics (including Vue dist) so `/seim/` works without a host npm build.
+# Runtime compose/k8s must still set DJANGO_SETTINGS_MODULE. Entry script also collectstatics.
+RUN DJANGO_SETTINGS_MODULE=seim.settings.test \
+    SECRET_KEY=build-time-placeholder-not-for-runtime \
+    DEBUG=false \
+    python manage.py collectstatic --noinput --clear
+
 # Create necessary directories
 RUN mkdir -p /var/log/seim /app/staticfiles /app/media && \
     chown -R seim:seim /app /var/log/seim

@@ -179,11 +179,9 @@ For maintaining and updating documentation, see:
 | `analytics/` | Reporting and metrics |
 | `grades/` | Grade translation system |
 | `application_forms/` | Dynamic form builder |
-| `api/` | REST API layer |
+| `api/` | REST API gateway (URL aggregator) |
 | `core/` | Shared utilities |
-| `dashboard/` | User interfaces |
 | `frontend/` | UI components |
-| `plugins/` | Extensibility system |
 
 ---
 

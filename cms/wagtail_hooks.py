@@ -16,7 +16,9 @@ from wagtail.admin.menu import MenuItem
 def global_admin_css():
     """Add custom CSS to Wagtail admin."""
     return format_html(
-        '<link rel="stylesheet" href="{}">', static("css/wagtail_admin_custom.css")
+        '<link rel="stylesheet" href="{}"><link rel="stylesheet" href="{}">',
+        static("css/utilities/seim-shared-tokens.css"),
+        static("css/wagtail_admin_custom.css"),
     )
 
 

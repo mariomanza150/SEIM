@@ -3,6 +3,8 @@
 **Generated:** 2025-01-27  
 **Project Type:** Web Application
 
+Vanilla `static/js/` modules and `templates/frontend/` pages below are removed. App UI is `frontend-vue/` at `/seim/`.
+
 ## UI Component Catalog
 
 ### Frontend JavaScript Modules

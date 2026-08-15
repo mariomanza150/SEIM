@@ -167,6 +167,77 @@ class TestClamAVCommandLineScanner(TestCase):
             os.unlink(temp_file_path)
 
 
+class TestClamAVScannerUnreachable(TestCase):
+    """ClamAV daemon must fail as VirusScannerError, never a raw socket crash."""
+
+    def test_connect_to_closed_port_raises_virus_scanner_error(self):
+        scanner = ClamAVScanner(host="127.0.0.1", port=1, timeout=0.2)
+
+        with self.assertRaises(VirusScannerError) as ctx:
+            scanner._connect_to_daemon()
+
+        self.assertIn("Failed to connect to ClamAV daemon", str(ctx.exception))
+
+    def test_scan_file_unreachable_daemon_raises_virus_scanner_error(self):
+        scanner = ClamAVScanner(host="127.0.0.1", port=1, timeout=0.2)
+
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(b"clean")
+            path = temp_file.name
+
+        try:
+            with self.assertRaises(VirusScannerError):
+                scanner.scan_file(path)
+        finally:
+            os.unlink(path)
+
+    @patch("documents.virus_scanner.get_virus_scanner")
+    def test_scan_file_for_viruses_fail_open_when_daemon_unreachable(
+        self, mock_get_scanner
+    ):
+        mock_get_scanner.return_value = ClamAVScanner(
+            host="127.0.0.1", port=1, timeout=0.2
+        )
+
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(b"clean")
+            path = temp_file.name
+
+        try:
+            from django.test import override_settings
+
+            with override_settings(VIRUS_SCAN_FAIL_SECURE=False):
+                is_clean, threat = scan_file_for_viruses(path)
+
+            self.assertTrue(is_clean)
+            self.assertIsNone(threat)
+        finally:
+            os.unlink(path)
+
+    @patch("documents.virus_scanner.get_virus_scanner")
+    def test_scan_file_for_viruses_fail_closed_when_daemon_unreachable(
+        self, mock_get_scanner
+    ):
+        mock_get_scanner.return_value = ClamAVScanner(
+            host="127.0.0.1", port=1, timeout=0.2
+        )
+
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            temp_file.write(b"clean")
+            path = temp_file.name
+
+        try:
+            from django.test import override_settings
+
+            with override_settings(VIRUS_SCAN_FAIL_SECURE=True):
+                with self.assertRaises(ValidationError) as ctx:
+                    scan_file_for_viruses(path)
+
+            self.assertIn("Virus scan failed", str(ctx.exception))
+        finally:
+            os.unlink(path)
+
+
 class TestVirusScannerFactory(TestCase):
     """Test virus scanner factory."""
 

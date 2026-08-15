@@ -1,7 +1,8 @@
 # SEIM Frontend - File Index
 
-**Purpose:** Quick reference for locating and understanding frontend files  
-**Last Updated:** 2026-01-29
+**Purpose:** Historical index of the removed Django `frontend` app / `templates/frontend/` / `static/js/modules/`.  
+Current app UI: `frontend-vue/` at `/seim/`. Shared tokens: `static/css/utilities/seim-shared-tokens.css`.  
+**Last Updated:** 2026-08-15
 
 ---
 

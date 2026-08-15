@@ -36,9 +36,10 @@ class TestBasicCoverage(TestCase):
         self.assertEqual(response.headers.get("Location"), "/seim/login/")
 
     def test_register_page(self):
-        """Test register page loads"""
+        """Legacy ``/register/`` redirects to the Vue app."""
         response = self.client.get("/register/")
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), "/seim/register/")
 
     def test_dashboard_page_authenticated(self):
         """Legacy ``/dashboard/`` redirects to the Vue app."""
@@ -143,35 +144,37 @@ class TestBasicCoverage(TestCase):
         self.assertEqual(program.name, "Test Program")
         self.assertEqual(str(program), "Test Program")
 
-    def test_frontend_views_basic(self):
-        """Test frontend views basic functionality"""
-        # Test that frontend views can be imported
-        try:
-            from frontend import views
+    def test_api_gateway_basic(self):
+        """API package is a URL aggregator, not a views/models app."""
+        from api import urls
 
-            self.assertTrue(True)  # Import successful
-        except ImportError:
-            self.fail("Frontend views import failed")
+        self.assertTrue(hasattr(urls, "urlpatterns"))
+        self.assertTrue(urls.urlpatterns)
 
-    def test_api_views_basic(self):
-        """Test API views basic functionality"""
-        # Test that API views can be imported
-        try:
-            from api import views
+    def test_dashboard_stats_view_import(self):
+        """Dashboard HTTP API lives in accounts, not a dashboard app."""
+        from accounts.views_dashboard import DashboardStatsView
 
-            self.assertTrue(True)  # Import successful
-        except ImportError:
-            self.fail("API views import failed")
+        self.assertTrue(DashboardStatsView)
 
-    def test_dashboard_views_basic(self):
-        """Test dashboard views basic functionality"""
-        # Test that dashboard views can be imported
-        try:
-            from dashboard import views
+    def test_stub_apps_removed(self):
+        """Unused plugins/dashboard Django apps are not installed."""
+        from django.conf import settings
 
-            self.assertTrue(True)  # Import successful
-        except ImportError:
-            self.fail("Dashboard views import failed")
+        self.assertNotIn("plugins", settings.INSTALLED_APPS)
+        self.assertNotIn("dashboard", settings.INSTALLED_APPS)
+
+    def test_exchange_urls_mounted_under_api(self):
+        """Exchange viewsets are mounted via exchange.urls under /api/."""
+        from django.urls import reverse
+
+        import exchange.urls as exchange_urls
+
+        self.assertTrue(exchange_urls.urlpatterns)
+        self.assertEqual(reverse("api:program-list"), "/api/programs/")
+        self.assertEqual(
+            reverse("api:calendar-subscribe-ics"), "/api/calendar/subscribe.ics"
+        )
 
     def test_management_commands_basic(self):
         """Test management commands basic functionality"""
@@ -194,9 +197,9 @@ class TestBasicCoverage(TestCase):
 
         # Test some basic URLs
         urls_to_test = [
-            ("frontend:login", []),
-            ("frontend:register", []),
-            ("frontend:dashboard", []),
+            ("legacy_login", []),
+            ("legacy_register", []),
+            ("legacy_dashboard", []),
         ]
 
         for url_name, kwargs in urls_to_test:

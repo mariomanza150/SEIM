@@ -120,21 +120,15 @@ SEIM (Student Exchange Information Manager) is a Django-based web application de
   - Migration command available
   - Will be removed in future version
 
-- **`api/`**: REST API endpoints
-  - DRF-based API with OpenAPI documentation
+- **`api/`**: REST API gateway
+  - DRF URL aggregator with OpenAPI documentation
   - JWT authentication
   - Pagination and filtering
-
-- **`dashboard/`**: Admin and user interfaces
-  - Django admin customization
-  - User dashboard views
+  - Domain viewsets live in their apps (mounted via ``api.urls`` / ``exchange.urls``)
 
 - **`core/`**: Shared utilities and base classes
   - Base models and mixins
   - Common utilities and helpers
-
-- **`plugins/`**: Extensibility system
-  - Plugin architecture for custom workflows
 
 ---
 

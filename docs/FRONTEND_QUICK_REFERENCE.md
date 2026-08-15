@@ -1,6 +1,8 @@
 # SEIM Frontend - Quick Reference Guide
 
-**Last Updated:** 2026-01-29
+**Last Updated:** 2026-08-15
+
+The Django `frontend` app, `templates/frontend/`, and `static/js/modules/` are removed. App UI is `frontend-vue/` at `/seim/`. Sections below that still list those paths are historical.
 
 ---
 
@@ -131,32 +133,15 @@ npm run lint:fix
 
 ### Adding a New Page
 
-1. **Create Django view** in `frontend/views.py`
-```python
-def my_new_view(request):
-    return render(request, 'frontend/my_page.html')
-```
-
-2. **Add URL route** in `frontend/urls.py`
-```python
-path('my-page/', views.my_new_view, name='my_page'),
-```
-
-3. **Create template** at `templates/frontend/my_page.html`
-```django
-{% extends 'base.html' %}
-{% block content %}
-  <!-- Your content -->
-{% endblock %}
-```
-
-4. **Add navigation link** in `templates/components/navigation/navbar.html`
+1. **Add a Vue view** under `frontend-vue/src/views/`
+2. **Register the route** in `frontend-vue/src/router/index.js` (history base is `/seim/`)
+3. **Add navigation** in the Vue app shell, not `templates/frontend/`
 
 ---
 
 ### Adding a New JavaScript Module
 
-1. **Create module** at `static/js/modules/my-module.js`
+1. **Create a module or composable** under `frontend-vue/src/` (do not add `static/js/modules/`)
 ```javascript
 export class MyModule {
     constructor() {

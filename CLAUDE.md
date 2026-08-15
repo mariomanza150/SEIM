@@ -12,15 +12,14 @@ SEIM follows a modular, service-oriented architecture using Django, organized in
 - **`analytics/`**: Aggregates metrics for the admin dashboard.
 - **`grades/`**: Contains logic for international grade scale conversion.
 - **`application_forms/`**: Manages the dynamic form builder for applications.
-- **`api/`**: Houses the entire RESTful API layer built with Django REST Framework.
-- **`dashboard/`**: Contains the view logic for role-based dashboards.
-- **`frontend/`**: Holds Django templates and static assets for server-rendered components.
+- **`api/`**: REST API gateway (URL aggregator). Viewsets live in domain apps.
+- **`frontend-vue/`**: Vue 3 SPA served under `/seim/` (dashboards included). Role-based dashboard APIs live in `accounts/views_dashboard.py`.
 
 The system uses a clear separation of concerns: the **API Layer** handles data contracts (DRF), the **Business Logic Layer** resides in dedicated services (e.g., grade translation), and the **Data Layer** is managed by Django ORM over PostgreSQL.
 
 ### 🌐 Tech Stack Overview
 *   **Backend**: Django 5.1.4, Django REST Framework, PostgreSQL, Redis, Celery.
-*   **Frontend**: Bootstrap 5, Django Templates, ES6+ JavaScript.
+*   **Frontend**: Vue 3 SPA (`frontend-vue/`) under `/seim/`. Wagtail CMS (`cms/templates/`) is the public/CMS templates. Shared tokens: `static/css/utilities/seim-shared-tokens.css`.
 *   **Deployment**: Docker Compose for containerization (`web`, `redis`, `db`, `worker`).
 
 ## 🛠️ Common Development Commands
@@ -37,7 +36,7 @@ All development, testing, and documentation generation should be executed inside
 ### Testing
 *   **Unit/Integration Tests (Docker)**: `make test`
 *   **Frontend Vue Tests**: `npm --prefix frontend-vue run test:run`
-*   **Selenium E2E Tests (Host OS Only)**: `make test-selenium`
+*   **Playwright E2E Tests**: `make e2e-test` (legacy Selenium: `SEIM_RUN_SELENIUM=1 make test-selenium`)
 
 ### Documentation
 *   **Generate all docs (API, code, DB, Sphinx)**: `make docs-workflow`

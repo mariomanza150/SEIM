@@ -1,12 +1,23 @@
 Frontend Module
 ==============
 
-The frontend module provides the user interface and client-side functionality for SEIM.
+The Django ``frontend`` app and ``templates/frontend/`` SSR UI are removed.
+App UI is the Vue 3 SPA in ``frontend-vue/`` (``/seim/``). The examples below
+are historical.
 
 Overview
 --------
 
-The frontend module provides:
+The current frontend provides:
+
+* Vue 3 SPA under ``/seim/``
+* Shared design tokens in ``static/css/utilities/seim-shared-tokens.css``
+* Wagtail CMS templates (not the app UI)
+
+Historical Django frontend (removed)
+------------------------------------
+
+The removed module provided:
 
 * Django-based frontend with Bootstrap 5
 * Responsive design and mobile support

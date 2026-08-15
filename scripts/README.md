@@ -32,29 +32,7 @@ Orchestrates all test types: backend (Docker), frontend (host), and Selenium (ho
 ./scripts/run_tests.sh ci                 # Run CI test suite
 ```
 
-#### `test_frontend.sh` - Frontend Test Runner
-Runs Jest tests on the host OS (not Docker).
-
-**Usage:**
-```bash
-./scripts/test_frontend.sh [test_type] [coverage] [watch]
-```
-
-**Test Types:**
-- `all` - All frontend tests (default)
-- `unit` - Unit tests only
-- `integration` - Integration tests only
-- `e2e` - E2E tests only
-- `debug` - Debug mode
-- `ci` - CI mode with coverage
-
-**Examples:**
-```bash
-./scripts/test_frontend.sh                    # Run all tests
-./scripts/test_frontend.sh unit true         # Run unit tests with coverage
-./scripts/test_frontend.sh all true true     # Run all tests with coverage and watch mode
-./scripts/test_frontend.sh ci                # Run CI tests
-```
+Vue SPA tests: `npm --prefix frontend-vue run test:run` (also `make test-frontend`).
 
 #### `test_selenium.sh` - Selenium Test Runner
 Runs Selenium E2E tests on the host OS (not Docker).
@@ -116,7 +94,7 @@ Sets up the environment for running all test types.
 
 ### Frontend Tests (Host OS)
 - Node.js 14+ and npm
-- Jest configuration (`jest.config.frontend.js`)
+- Vue tests: `npm --prefix frontend-vue run test:run`
 - npm dependencies installed
 
 ### Selenium Tests (Host OS)
@@ -194,7 +172,7 @@ Reports are saved to `test-report-YYYYMMDD-HHMMSS.txt` in the project root.
 ### Getting Help
 
 - Run `./scripts/run_tests.sh --help` for comprehensive test runner help
-- Run `./scripts/test_frontend.sh --help` for frontend test help
+- Run `npm --prefix frontend-vue run test:run` for Vue tests
 - Run `./scripts/test_selenium.sh --help` for Selenium test help
 - Run `./scripts/setup_test_environment.sh --help` for setup help
 

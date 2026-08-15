@@ -84,9 +84,6 @@ LOCAL_APPS = [
     "core",
     "analytics",
     "api",
-    "dashboard",
-    "plugins",
-    "frontend",
     "grades",
     "application_forms",  # Custom form types and submissions (separate from dynforms package)
     "workflows",

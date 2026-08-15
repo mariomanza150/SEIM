@@ -93,21 +93,14 @@ deactivate
 
 ### **Frontend Tests:**
 ```bash
-# Run Jest tests (Virtual Environment Required)
-# 1. Activate virtual environment
-.venv\Scripts\Activate.ps1
+# Vue 3 SPA (Vitest) — no virtualenv required
+npm --prefix frontend-vue run test:run
 
-# 2. Run tests
-npx jest --config=jest.config.js
+# Coverage
+npm --prefix frontend-vue run test:run -- --coverage
 
-# 3. Run with coverage
-npx jest --config=jest.config.js --coverage
-
-# 4. Watch mode
-npx jest --config=jest.config.js --watch
-
-# 5. Deactivate when done
-deactivate
+# Watch mode
+npm --prefix frontend-vue run test
 ```
 
 ---
@@ -394,57 +387,32 @@ pytest tests/selenium/ --base-url=http://localhost:8000
 
 ---
 
-## 🎯 **Frontend Testing (Virtual Environment Required)**
+## 🎯 **Frontend Testing (Vue / Vitest)**
 
-### **Jest Testing Setup:**
+### **Vitest setup:**
 ```bash
-# 1. Activate virtual environment
-.venv\Scripts\Activate.ps1  # Windows
-# source .venv/bin/activate  # Linux/macOS
-
-# 2. Run Jest tests
-npx jest --config=jest.config.js
-
-# 3. Run with coverage
-npx jest --config=jest.config.js --coverage
-
-# 4. Watch mode for development
-npx jest --config=jest.config.js --watch
-
-# 5. Deactivate when done
-deactivate
+npm --prefix frontend-vue run test:run
+npm --prefix frontend-vue run test:run -- --coverage
+npm --prefix frontend-vue run test
 ```
 
 ### **Frontend Test Structure:**
 ```
-tests/frontend/
-├── unit/                    # Unit tests for JavaScript modules
-│   └── modules/
-│       └── logger.test.js
-├── integration/            # Integration tests
-│   └── api/
-│       └── api-enhanced.test.js
-├── e2e/                   # Frontend E2E tests
-│   └── user-workflows.test.js
-└── utils/                 # Test utilities
-    └── test-utils.js
+frontend-vue/src/            # Vue views, stores, and colocated *.spec.js
 ```
 
-### **Example Jest Test:**
+### **Example Vitest test:**
 ```javascript
-// tests/frontend/unit/modules/logger.test.js
-import { Logger } from '../../../static/js/modules/logger.js';
+// frontend-vue/src/stores/auth.spec.js
+import { describe, it, expect } from 'vitest'
+import { useAuthStore } from './auth'
 
-describe('Logger', () => {
-    test('should log messages correctly', () => {
-        const logger = new Logger();
-        const consoleSpy = jest.spyOn(console, 'log');
-        
-        logger.info('Test message');
-        
-        expect(consoleSpy).toHaveBeenCalledWith('INFO:', 'Test message');
-    });
-});
+describe('auth store', () => {
+    it('starts unauthenticated', () => {
+        const store = useAuthStore()
+        expect(store.isAuthenticated).toBe(false)
+    })
+})
 ```
 
 ---
@@ -463,19 +431,9 @@ docker-compose exec web coverage report
 docker-compose exec web coverage html
 ```
 
-### **Frontend Coverage (Virtual Environment):**
+### **Frontend Coverage:**
 ```bash
-# 1. Activate virtual environment
-.venv\Scripts\Activate.ps1
-
-# 2. Run tests with coverage
-npx jest --config=jest.config.js --coverage
-
-# 3. View coverage report
-# Coverage reports are generated in coverage/frontend/
-
-# 4. Deactivate
-deactivate
+npm --prefix frontend-vue run test:run -- --coverage
 ```
 
 ### **Coverage Targets:**
@@ -500,21 +458,8 @@ markers =
     api: marks tests as API tests
 ```
 
-### **Jest Configuration:**
-```javascript
-// jest.config.js
-module.exports = {
-    testEnvironment: 'jsdom',
-    setupFilesAfterEnv: ['<rootDir>/tests/frontend/setup.js'],
-    moduleNameMapping: {
-        '^@/(.*)$': '<rootDir>/static/js/$1'
-    },
-    collectCoverageFrom: [
-        'static/js/**/*.js',
-        '!static/js/vendor/**'
-    ]
-};
-```
+### **Vitest:**
+Vue unit tests use `frontend-vue/vitest.config.js` (or the Vite config `test` block). Run them with `npm --prefix frontend-vue run test:run`.
 
 ---
 
@@ -561,7 +506,7 @@ make quality-check
 - **[Django Testing Documentation](https://docs.djangoproject.com/en/stable/topics/testing/)**
 - **[pytest Documentation](https://docs.pytest.org/)**
 - **[Selenium Documentation](https://selenium-python.readthedocs.io/)**
-- **[Jest Documentation](https://jestjs.io/docs/getting-started)**
+- **[Vitest Documentation](https://vitest.dev/)**
 
 ---
 

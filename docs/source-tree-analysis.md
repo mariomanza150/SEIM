@@ -3,6 +3,8 @@
 **Generated:** 2025-01-27  
 **Project Root:** `c:\Users\mario\OneDrive\Documents\SEIM`
 
+The Django `frontend` app, `templates/frontend/`, and `static/js/modules/` listed below are removed. App UI is `frontend-vue/` at `/seim/`.
+
 ## Project Structure Overview
 
 SEIM follows a standard Django project structure with clear separation of concerns:
@@ -15,14 +17,12 @@ SEIM/
 ├── application_forms/     # Dynamic form builder and management
 ├── cms/                   # Wagtail CMS pages and content
 ├── core/                  # Shared utilities, base models, permissions
-├── dashboard/             # Admin and user dashboards
 ├── documents/             # Document management system
 ├── exchange/              # Exchange program and application logic
 ├── frontend/              # Django frontend views and URLs
 ├── grades/                # Grade translation system
 ├── internacional/         # Internationalization utilities
 ├── notifications/         # Email and notification system
-├── plugins/               # Modular plugin system
 ├── seim/                  # Django project settings and configuration
 ├── static/                # Static files (CSS, JavaScript, images)
 ├── templates/             # HTML templates
@@ -93,10 +93,9 @@ SEIM/
 - **Features:** Rich content management, SEO optimization, blog posts, program pages, FAQs
 
 #### `api/`
-**Purpose:** REST API routing and organization
-- **Views:** API endpoint aggregation
-- **URLs:** Main API router configuration
-- **Features:** Centralized API endpoint registration
+**Purpose:** REST API gateway (URL aggregator)
+- **URLs:** Main API router configuration; exchange routes via ``exchange.urls``
+- **Features:** Centralized API endpoint registration; no models or viewsets of its own
 
 #### `frontend/`
 **Purpose:** Django frontend views and URL routing
@@ -111,18 +110,6 @@ SEIM/
 - **Cache:** API response caching middleware and utilities
 - **Management Commands:** Utility commands (create_initial_data, etc.)
 - **Features:** Common base classes, shared utilities, caching infrastructure
-
-#### `dashboard/`
-**Purpose:** Admin and user dashboard interfaces
-- **Views:** Dashboard views
-- **Models:** Dashboard-specific models
-- **Features:** Role-based dashboards
-
-#### `plugins/`
-**Purpose:** Modular plugin system for custom workflows
-- **Models:** Plugin models
-- **Views:** Plugin views
-- **Features:** Extensible plugin architecture
 
 ### Configuration (`seim/`)
 

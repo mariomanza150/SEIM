@@ -1,9 +1,11 @@
 from celery import shared_task
 from django.utils import timezone
 
+from core.celery_utils import log_celery_failure, log_task_exception, retryable_task_kwargs
 
-@shared_task
-def scan_document_virus(document_id, validator_id):
+
+@shared_task(on_failure=log_celery_failure, **retryable_task_kwargs())
+def scan_document_virus(self, document_id, validator_id):
     """Scan document for viruses using the configured virus scanner."""
     from .models import Document, DocumentValidation
     from .virus_scanner import scan_file_for_viruses
@@ -48,6 +50,7 @@ def scan_document_virus(document_id, validator_id):
     except Document.DoesNotExist:
         return f"Document {document_id} not found"
     except Exception as e:
+        log_task_exception(self, e)
         # Log error and mark as error
         from .models import DocumentValidation
 

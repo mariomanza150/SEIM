@@ -1,5 +1,7 @@
 # Multi-Role System Implementation - SEIM
 
+The Django `templates/frontend/` paths below are historical; role UI now lives in `frontend-vue/`.
+
 ## Summary of Changes
 
 This document summarizes all changes made to implement the comprehensive multi-role and unified permissions system in SEIM.

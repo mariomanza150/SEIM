@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from drf_spectacular.utils import extend_schema, extend_schema_view
@@ -596,27 +596,27 @@ class AdminDashboardViewSet(viewsets.ViewSet):
 
 @login_required
 def dashboard_view(request):
-    return render(request, "frontend/admin/dashboard.html")
+    return redirect("/seim/dashboard/")
 
 
 @login_required
 def application_statistics_view(request):
-    return render(request, "frontend/admin/analytics.html")
+    return redirect("/seim/analytics-forecasts/")
 
 
 @login_required
 def program_statistics_view(request):
-    return render(request, "frontend/admin/analytics.html")
+    return redirect("/seim/analytics-forecasts/")
 
 
 @login_required
 def user_activity_view(request):
-    return render(request, "frontend/admin/analytics.html")
+    return redirect("/seim/analytics-forecasts/")
 
 
 @login_required
 def export_data_view(request):
-    return render(request, "frontend/admin/analytics.html")
+    return redirect("/seim/analytics-forecasts/")
 
 
 @extend_schema(responses={200: ApplicationStatisticsSerializer})

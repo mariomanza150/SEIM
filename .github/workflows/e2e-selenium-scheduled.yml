@@ -1,10 +1,10 @@
-# Legacy Selenium / pytest browser tests — not run on every PR (Playwright is in e2e-tests.yml).
+# DEPRECATED: Selenium E2E is no longer scheduled.
+# Playwright is the supported path (.github/workflows/e2e-tests.yml).
+# Keep this workflow for optional manual/legacy runs only (SEIM_RUN_SELENIUM=1).
 
-name: E2E Selenium (scheduled)
+name: E2E Selenium (deprecated)
 
 on:
-  schedule:
-    - cron: "0 6 * * 1"
   workflow_dispatch:
 
 permissions:
@@ -15,6 +15,7 @@ env:
   DJANGO_ENV: test
   DEBUG: "false"
   SECRET_KEY: ci-not-a-secret-key-for-tests-only
+  SEIM_RUN_SELENIUM: "1"
 
 jobs:
   selenium:
@@ -86,7 +87,7 @@ jobs:
           python manage.py runserver 0.0.0.0:8000 &
           sleep 15
 
-      - name: Run Selenium E2E
+      - name: Run Selenium E2E (legacy)
         env:
           DATABASE_URL: postgresql://seimuser:seimpass@localhost:5432/seim_test
           REDIS_URL: redis://localhost:6379/0

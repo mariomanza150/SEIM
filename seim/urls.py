@@ -13,12 +13,11 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import include, path, re_path
-from django.views.generic import TemplateView
+from django.views.generic import RedirectView, TemplateView
 from django_js_reverse.views import urls_js
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
-from core.views import health_check, health_live
-from frontend import views as frontend_views
+from core.views import health_check, health_live, marketing_home, spa_logout
 
 _WAGTAIL = apps.is_installed("wagtail")
 
@@ -118,20 +117,35 @@ urlpatterns += [
     # ============================================
     path("i18n/", include("django.conf.urls.i18n")),  # Internationalization
     path("jsreverse/", urls_js, name="js_reverse"),  # JavaScript reverse URLs
-    # Contact form (Django templates) — before Wagtail/frontend ``""`` includes so ``/contact/`` resolves
+    # Contact form (Django templates) — before Wagtail ``""`` so ``/contact/`` resolves
     path("", include(("core.urls", "core"))),
 ]
 
-if _WAGTAIL:
-    urlpatterns.append(
-        path("admin-dashboard/", frontend_views.admin_dashboard_view),
-    )
-
-# Django template frontend routes (non-root) must be registered *before* Wagtail's ``""``
-# catch-all so paths like ``/programs/`` and ``/dashboard/analytics/`` resolve here; ``/`` is
-# served by Wagtail when a root page exists.
+# Legacy root auth paths redirect to the Vue SPA under ``/seim/``. Registered
+# before Wagtail's ``""`` catch-all. Do not add a site-wide SPA catch-all here:
+# Wagtail owns ``/`` (CMS pages); Vue is mounted only at ``/seim/``.
 urlpatterns += [
-    path("", include(("frontend.urls", "frontend"), namespace="frontend")),
+    path(
+        "dashboard/",
+        RedirectView.as_view(url="/seim/dashboard/", permanent=False),
+        name="legacy_dashboard",
+    ),
+    path(
+        "login/",
+        RedirectView.as_view(url="/seim/login/", permanent=False),
+        name="legacy_login",
+    ),
+    path(
+        "register/",
+        RedirectView.as_view(url="/seim/register/", permanent=False),
+        name="legacy_register",
+    ),
+    path(
+        "password-reset/",
+        RedirectView.as_view(url="/seim/password-reset/", permanent=False),
+        name="legacy_password_reset",
+    ),
+    path("logout/", spa_logout, name="legacy_logout"),
 ]
 
 if _WAGTAIL:
@@ -142,8 +156,8 @@ if _WAGTAIL:
         ),
     )
 else:
-    # Unit tests and minimal installs disable Wagtail; keep a template marketing root.
-    urlpatterns.append(path("", frontend_views.home_view, name="marketing_home"))
+    # Unit tests and minimal installs disable Wagtail; keep a public marketing root.
+    urlpatterns.append(path("", marketing_home, name="marketing_home"))
 
 # ============================================
 # DEVELOPMENT: Serve media and static files
