@@ -672,6 +672,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Documentation**: [Developer Guide](docs/developer_guide.md)
 - **Issues**: [GitHub Issues](https://github.com/mariomanza150/SEIM/issues)
+- **Security**: [Security Policy](SECURITY.md) — report vulnerabilities privately
 - **Email**: support@seim.local
 
 ---
