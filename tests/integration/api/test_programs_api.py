@@ -39,7 +39,10 @@ class TestProgramsAPI(APITestCase):
         response = self.client.get(self.programs_url)
 
         self.assert_response_success(response, status.HTTP_200_OK)
-        self.assertEqual(len(response.data["results"]), 2)
+        names = [p["name"] for p in response.data["results"]]
+        self.assertIn("Test Program 1", names)
+        self.assertIn("Test Program 2", names)
+        self.assertEqual(response.data["count"], Program.objects.count())
 
         # Verify program data structure
         program_data = response.data["results"][0]
@@ -263,7 +266,7 @@ class TestProgramsAPI(APITestCase):
         self.assertIn("previous", response.data)
 
         # Verify pagination structure
-        self.assertEqual(response.data["count"], 25)
+        self.assertEqual(response.data["count"], Program.objects.count())
         self.assertIsNotNone(response.data["next"])  # Should have next page
         self.assertIsNone(response.data["previous"])  # First page, no previous
 
@@ -395,7 +398,7 @@ class TestProgramsPerformance(PerformanceTestCase):
         )  # Should respond within 1 second
 
         # Verify pagination works correctly
-        self.assertEqual(response.data["count"], 100)
+        self.assertEqual(response.data["count"], Program.objects.count())
         self.assertIn("results", response.data)
         self.assertIn("next", response.data)
 

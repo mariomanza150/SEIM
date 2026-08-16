@@ -25,11 +25,12 @@ class TestAnalyticsViews(TestCase):
         self.assertEqual(response.status_code, 302)  # Redirect to login
 
     def test_dashboard_view_authenticated(self):
-        """Test dashboard view with authenticated user"""
+        """Legacy Django dashboard redirects into the Vue SPA."""
         self.client.force_login(self.user)
         url = reverse("analytics:dashboard")
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/seim/dashboard/")
 
     def test_reports_view_get(self):
         """Test reports view GET request - should require authentication"""

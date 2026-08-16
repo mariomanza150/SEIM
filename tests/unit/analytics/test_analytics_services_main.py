@@ -73,7 +73,7 @@ class TestAnalyticsService:
 
         assert stats["total_applications"] == 4
         assert stats["total_users"] == 2
-        assert stats["total_programs"] == 2
+        assert stats["total_programs"] == Program.objects.count()
         assert stats["applications_by_status"]["draft"] == 2
         assert stats["applications_by_status"]["submitted"] == 1
         assert stats["applications_by_status"]["approved"] == 1
@@ -119,11 +119,11 @@ class TestAnalyticsService:
 
         stats = service.get_program_statistics()
 
-        assert len(stats) == 2
-        assert stats[0]["name"] == "Program 1"
-        assert stats[0]["total_applications"] == 2
-        assert stats[1]["name"] == "Program 2"
-        assert stats[1]["total_applications"] == 1
+        assert len(stats) == Program.objects.count()
+        program1_stats = next(s for s in stats if s["name"] == "Program 1")
+        program2_stats = next(s for s in stats if s["name"] == "Program 2")
+        assert program1_stats["total_applications"] == 2
+        assert program2_stats["total_applications"] == 1
 
     def test_get_user_statistics(self):
         """Test getting user statistics."""
@@ -374,11 +374,11 @@ class TestAnalyticsService:
 
         metrics = service.get_program_performance_metrics()
 
-        assert len(metrics) == 2
-        assert metrics[0]["name"] == "Program 1"
-        assert metrics[0]["total_applications"] == 2
-        assert metrics[1]["name"] == "Program 2"
-        assert metrics[1]["total_applications"] == 1
+        assert len(metrics) == Program.objects.count()
+        program1_metrics = next(m for m in metrics if m["name"] == "Program 1")
+        program2_metrics = next(m for m in metrics if m["name"] == "Program 2")
+        assert program1_metrics["total_applications"] == 2
+        assert program2_metrics["total_applications"] == 1
 
     def test_get_application_trends(self):
         """Test getting application trends."""

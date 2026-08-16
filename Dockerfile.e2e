@@ -1,25 +1,37 @@
-# Dockerfile for E2E tests with Playwright
-# Using official Playwright image with Python 3.10 (compatible with all dependencies)
-FROM mcr.microsoft.com/playwright/python:v1.41.0-jammy
+# Playwright E2E image. Python 3.12 matches pyproject.toml requires-python >=3.11.
+FROM python:3.12-slim-bookworm
 
-# Set working directory
 WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    DJANGO_SETTINGS_MODULE=seim.settings.test \
+    DOCKER_ENV=true \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+        gcc \
+        gettext \
+        libmagic1 \
+        curl \
+        ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 # Pins live in pyproject.toml (pip install ".[test]")
 COPY pyproject.toml README.md LICENSE ./
 COPY seim/ seim/
 
-# Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir ".[test]"
 
-# Install Playwright browsers (already included in base image, but ensuring latest)
-RUN playwright install chromium firefox webkit --with-deps
+RUN playwright install-deps chromium
+RUN playwright install chromium
 
-# Copy project files
 COPY . .
 
-# Create necessary directories
 RUN mkdir -p tests/e2e_playwright/screenshots \
     tests/e2e_playwright/videos \
     tests/e2e_playwright/reports \
@@ -27,11 +39,4 @@ RUN mkdir -p tests/e2e_playwright/screenshots \
     tests/e2e_playwright/visual/diffs \
     tests/e2e_playwright/visual/reports
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV DJANGO_SETTINGS_MODULE=seim.settings.test
-ENV DOCKER_ENV=true
-
-# Default command
 CMD ["pytest", "tests/e2e_playwright/", "-v"]
-

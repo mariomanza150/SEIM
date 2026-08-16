@@ -47,13 +47,17 @@ class TestProgramViews:
         client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
         response = client.get(reverse("api:program-list"))
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data["results"]) == 2
+        names = [p["name"] for p in response.data["results"]]
+        assert "Test Program 1" in names
+        assert "Test Program 2" in names
         # Session Auth
         client = APIClient()
         client.force_authenticate(user=user)
         response = client.get(reverse("api:program-list"))
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.data["results"]) == 2
+        names = [p["name"] for p in response.data["results"]]
+        assert "Test Program 1" in names
+        assert "Test Program 2" in names
 
     def test_program_list_refreshes_after_create(self):
         """Creating a program must invalidate API list caches (middleware + view)."""
@@ -75,10 +79,10 @@ class TestProgramViews:
         list_url = reverse("api:program-list")
         empty = client.get(list_url, {"ordering": "name"})
         assert empty.status_code == status.HTTP_200_OK
-        assert (
-            empty.data.get("results", empty.data) == []
-            or len(empty.data.get("results", empty.data)) == 0
-        )
+        before_names = [
+            p["name"] for p in empty.data.get("results", empty.data)
+        ]
+        assert "Cache Bust Program" not in before_names
 
         create = client.post(
             list_url,

@@ -75,6 +75,12 @@ class InstitutionBrandingTests(SimpleTestCase):
         self.assertNotIn("UAdeC", text)
         self.assertNotIn("uadec.edu.mx", text)
 
+        letterhead = apply_institution_tokens(
+            "UNIVERSIDAD AUTÓNOMA DE COAHUILA",
+            brand,
+        )
+        self.assertEqual(letterhead, "EXAMPLE UNIVERSITY")
+
     def test_merge_institution_config_reads_override_file(self, tmp_path=None):
         from tempfile import TemporaryDirectory
 

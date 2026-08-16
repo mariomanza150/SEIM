@@ -10,7 +10,12 @@ from rest_framework.test import APIClient
 from accounts.models import Role, User
 from application_forms.models import FormSubmission, FormType
 from documents.models import Document, DocumentType
-from exchange.models import ApplicationStatus, Program
+from exchange.models import Application, ApplicationStatus, Program
+from tests.unit.exchange.host_destination_helpers import (
+    apply_host_destination,
+    attach_host_destination,
+)
+from tests.utils import complete_apply_profile
 
 
 class TestApplicationDynamicFormAPI(TestCase):
@@ -22,8 +27,13 @@ class TestApplicationDynamicFormAPI(TestCase):
             username="dynamic-form-student",
             email="dynamic-form-student@example.com",
             password="testpass123",
+            first_name="Dynamic",
+            middle_name="A",
+            last_name="Student",
+            mothers_last_name="Perez",
         )
         self.student.roles.add(self.student_role)
+        complete_apply_profile(self.student)
         self.coordinator = User.objects.create_user(
             username="dynamic-form-coordinator",
             email="dynamic-form-coordinator@example.com",
@@ -53,6 +63,7 @@ class TestApplicationDynamicFormAPI(TestCase):
             application_form=self.form_type,
         )
         self.program.coordinators.add(self.coordinator)
+        self.host_tree = attach_host_destination(self.program)
         self.draft_status, _ = ApplicationStatus.objects.get_or_create(
             name="draft",
             defaults={"order": 1},
@@ -220,6 +231,7 @@ class TestApplicationDynamicFormAPI(TestCase):
         self.assertEqual(create_resp.status_code, status.HTTP_201_CREATED)
         app_id = create_resp.data["id"]
         self.assertEqual(create_resp.data["dynamic_form_layout"]["current_step"], "s1")
+        apply_host_destination(Application.objects.get(pk=app_id), self.host_tree)
 
         submit_resp = self.client.post(
             reverse("api:application-submit", args=[app_id]),

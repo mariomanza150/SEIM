@@ -27,6 +27,10 @@ from exchange.models import (
 )
 from exchange.services import ApplicationService
 from grades.models import GradeScale
+from tests.unit.exchange.host_destination_helpers import (
+    apply_host_destination,
+    attach_host_destination,
+)
 
 User = get_user_model()
 
@@ -141,6 +145,7 @@ class TestApplicationSubmissionWorkflow:
             max_age=30,
             is_active=True,
         )
+        self.host_tree = attach_host_destination(self.program)
 
     def test_application_creation_by_student(self):
         """Test that students can create applications."""
@@ -205,6 +210,7 @@ class TestApplicationSubmissionWorkflow:
             program=self.program,
             status=self.draft_status,
         )
+        apply_host_destination(application, self.host_tree)
 
         # Submit application
         refresh = RefreshToken.for_user(self.student)
@@ -310,6 +316,7 @@ class TestApplicationSubmissionWorkflow:
             program=self.program,
             status=self.draft_status,
         )
+        apply_host_destination(application, self.host_tree)
 
         initial_event_count = TimelineEvent.objects.filter(
             application=application

@@ -7,7 +7,7 @@ Tests translation loading, language switching, and locale preferences.
 from django.contrib.auth import get_user_model
 from django.test import RequestFactory, TestCase, override_settings
 from django.utils import translation
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 
 User = get_user_model()
 
@@ -123,10 +123,17 @@ class TestModelTranslations(TestCase):
         from exchange.models import Program
 
         with translation.override("es"):
-            # Get help text for a field
             min_gpa_field = Program._meta.get_field("min_gpa")
             help_text = str(min_gpa_field.help_text)
-            self.assertEqual(help_text, "GPA mínimo requerido para elegibilidad.")
+            self.assertEqual(
+                help_text,
+                str(
+                    _(
+                        "Minimum GPA required for eligibility "
+                        "(4.0-normalized via student grade scale)."
+                    )
+                ),
+            )
 
     def test_choices_translated(self):
         """Test that model field choices are translated."""

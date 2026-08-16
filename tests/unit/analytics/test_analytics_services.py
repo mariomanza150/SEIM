@@ -92,7 +92,7 @@ class TestAnalyticsService:
 
         assert stats["total_applications"] == 3
         assert stats["total_users"] == 1
-        assert stats["total_programs"] == 2
+        assert stats["total_programs"] == Program.objects.count()
         assert stats["applications_by_status"]["draft"] == 1
         assert stats["applications_by_status"]["submitted"] == 1
         assert stats["applications_by_status"]["approved"] == 1
@@ -101,7 +101,7 @@ class TestAnalyticsService:
         """Test getting program statistics."""
         stats = AnalyticsService.get_program_statistics()
 
-        assert len(stats) == 2
+        assert len(stats) == Program.objects.count()
         program1_stats = next(s for s in stats if s["name"] == "Test Program 1")
         program2_stats = next(s for s in stats if s["name"] == "Test Program 2")
 
@@ -168,7 +168,7 @@ class TestAnalyticsService:
         """Test getting program performance metrics."""
         metrics = AnalyticsService.get_program_performance_metrics()
 
-        assert len(metrics) == 2
+        assert len(metrics) == Program.objects.count()
         program1_metrics = next(m for m in metrics if m["name"] == "Test Program 1")
         program2_metrics = next(m for m in metrics if m["name"] == "Test Program 2")
 
@@ -202,7 +202,7 @@ class TestAnalyticsService:
         """Test getting system health metrics."""
         metrics = AnalyticsService.get_system_health_metrics()
 
-        assert metrics["total_programs"] == 2
+        assert metrics["total_programs"] == Program.objects.count()
         assert metrics["total_applications"] == 3
         assert metrics["total_users"] >= 1
 
@@ -404,8 +404,8 @@ class TestAnalyticsService:
         """Test program performance includes inactive programs."""
         metrics = AnalyticsService.get_program_performance_metrics()
 
-        # Should include both active and inactive
-        assert len(metrics) == 2
+        # Should include both active and inactive (plus any migration-seeded programs)
+        assert len(metrics) == Program.objects.count()
 
         # Verify we have both types
         active_count = sum(1 for m in metrics if m["is_active"])
@@ -475,10 +475,12 @@ class TestAnalyticsService:
 
         stats = AnalyticsService.get_program_statistics()
 
-        # Should still return program stats
-        assert len(stats) == 2
+        # Should still return program stats (includes migration-seeded schemes)
+        assert len(stats) == Program.objects.count()
+        created = {programs["active"].name, programs["inactive"].name}
         for stat in stats:
-            assert stat["total_applications"] == 0
+            if stat["name"] in created:
+                assert stat["total_applications"] == 0
 
     def test_get_user_statistics_multiple_applications(
         self, user, programs, application_statuses

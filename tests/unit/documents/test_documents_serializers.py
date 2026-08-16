@@ -127,9 +127,8 @@ class TestDocumentSerializer:
             mock_validate.side_effect = ValueError("Invalid file type")
 
             serializer = serializers.DocumentSerializer(data=data)
-            # The ValueError should be raised during validation
-            with pytest.raises(ValueError, match="Invalid file type"):
-                serializer.is_valid()
+            assert serializer.is_valid() is False
+            assert "Invalid file type" in str(serializer.errors)
 
     def test_document_serializer_virus_scan_failed(self):
         """Test DocumentSerializer when virus scan fails."""

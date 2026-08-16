@@ -312,7 +312,8 @@ def generate_commitment_letter():
     # Letter content
     story.append(
         Paragraph(
-            "Saltillo, Coahuila a ___ de __________ de 20__", styles["CustomBody"]
+            _t("Saltillo, Coahuila, México a ___ de __________ de 20__"),
+            styles["CustomBody"],
         )
     )
     story.append(Spacer(1, 0.2 * inch))
@@ -322,7 +323,7 @@ def generate_commitment_letter():
             "COORDINACIÓN GENERAL DE RELACIONES INTERNACIONALES", styles["CustomBody"]
         )
     )
-    story.append(Paragraph("UNIVERSIDAD AUTÓNOMA DE COAHUILA", styles["CustomBody"]))
+    story.append(Paragraph(_t("UNIVERSIDAD AUTÓNOMA DE COAHUILA"), styles["CustomBody"]))
     story.append(Paragraph("PRESENTE", styles["CustomBody"]))
     story.append(Spacer(1, 0.3 * inch))
 
@@ -420,7 +421,8 @@ def generate_nomination_letter_template():
     # Letter format
     story.append(
         Paragraph(
-            "Saltillo, Coahuila a ___ de __________ de 20__", styles["CustomBody"]
+            _t("Saltillo, Coahuila, México a ___ de __________ de 20__"),
+            styles["CustomBody"],
         )
     )
     story.append(Spacer(1, 0.2 * inch))
@@ -431,7 +433,7 @@ def generate_nomination_letter_template():
             "COORDINADORA GENERAL DE RELACIONES INTERNACIONALES", styles["CustomBody"]
         )
     )
-    story.append(Paragraph("UNIVERSIDAD AUTÓNOMA DE COAHUILA", styles["CustomBody"]))
+    story.append(Paragraph(_t("UNIVERSIDAD AUTÓNOMA DE COAHUILA"), styles["CustomBody"]))
     story.append(Paragraph("PRESENTE", styles["CustomBody"]))
     story.append(Spacer(1, 0.3 * inch))
 

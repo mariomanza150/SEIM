@@ -252,6 +252,10 @@ def apply_institution_tokens(text: str, brand: Mapping[str, Any]) -> str:
             brand.get("address") or "",
         ),
         ("Universidad Autónoma de Coahuila", brand.get("name") or ""),
+        (
+            "UNIVERSIDAD AUTÓNOMA DE COAHUILA",
+            (brand.get("name") or "").upper(),
+        ),
         ("intercambio@uadec.edu.mx", brand.get("email") or ""),
         ("relaciones.internacionales@uadec.edu.mx", brand.get("email") or ""),
         ("cgri@uadec.mx", brand.get("email") or ""),

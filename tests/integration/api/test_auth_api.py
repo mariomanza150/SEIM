@@ -47,7 +47,9 @@ class TestAuthenticationAPI(APITestCase):
             "password": "testpass123",
             "password2": "testpass123",
             "first_name": "Test",
+            "middle_name": "Q",
             "last_name": "User",
+            "mothers_last_name": "Garcia",
         }
 
         response = self.client.post(self.register_url, data, format="json")
@@ -412,7 +414,9 @@ class TestAuthenticationIntegration(APITestCase):
             "password": "testpass123",
             "password2": "testpass123",
             "first_name": "New",
+            "middle_name": "A",
             "last_name": "User",
+            "mothers_last_name": "Garcia",
         }
 
         register_response = self.client.post(

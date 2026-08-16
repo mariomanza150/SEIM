@@ -13,6 +13,7 @@ from django.urls import reverse
 from rest_framework import status
 
 from application_forms.models import FormSubmission, FormType
+from exchange.models import Application
 from tests.utils import APITestCase, PerformanceTestCase, WorkflowTestCase
 
 
@@ -448,6 +449,13 @@ class TestApplicationsIntegration(WorkflowTestCase):
         )
         self.assert_response_success(create_response, status.HTTP_201_CREATED)
         application_id = create_response.data["id"]
+        from tests.unit.exchange.host_destination_helpers import (
+            apply_host_destination,
+            attach_host_destination,
+        )
+
+        application = Application.objects.get(pk=application_id)
+        apply_host_destination(application, attach_host_destination(program))
 
         # 2. Student submits application
         submit_response = self.client.post(

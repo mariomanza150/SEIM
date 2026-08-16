@@ -21,6 +21,11 @@ from documents.models import Document
 from exchange.models import Application, ApplicationStatus, Program
 from grades.models import GradeScale, GradeTranslation, GradeValue
 from notifications.models import Notification, NotificationType
+from tests.unit.exchange.host_destination_helpers import (
+    apply_host_destination,
+    attach_host_destination,
+)
+from tests.utils import complete_apply_profile
 
 User = get_user_model()
 
@@ -58,6 +63,7 @@ class TestStudentApplicationWorkflow(TestCase):
             is_active=True,
             min_gpa=3.0,
         )
+        self.host_tree = attach_host_destination(self.program)
 
     def test_complete_student_workflow(self):
         """Test full workflow: registration -> application -> submission."""
@@ -77,14 +83,12 @@ class TestStudentApplicationWorkflow(TestCase):
             email=register_data["email"],
             password=register_data["password"],
             first_name=register_data["first_name"],
+            middle_name="A",
             last_name=register_data["last_name"],
+            mothers_last_name="Garcia",
         )
         student.roles.add(self.student_role)
-
-        # Update profile with required info
-        profile = student.profile
-        profile.gpa = 3.5
-        profile.save()
+        complete_apply_profile(student)
 
         # Step 2: Student logs in and creates draft application
         self.client.force_login(student)
@@ -93,6 +97,7 @@ class TestStudentApplicationWorkflow(TestCase):
         application = Application.objects.create(
             student=student, program=self.program, status=self.draft_status
         )
+        apply_host_destination(application, self.host_tree)
 
         self.assertEqual(application.status, self.draft_status)
         self.assertEqual(application.student, student)
@@ -120,18 +125,21 @@ class TestStudentApplicationWorkflow(TestCase):
             username="docstudent",
             email="docstudent@university.edu",
             password="TestPass123!",
+            first_name="Doc",
+            middle_name="A",
+            last_name="Student",
+            mothers_last_name="Garcia",
         )
         student.roles.add(self.student_role)
-
-        # Update profile
-        profile = student.profile
-        profile.gpa = 3.7
-        profile.save()
+        complete_apply_profile(student)
+        student.profile.gpa = 3.7
+        student.profile.save(update_fields=["gpa"])
 
         # Create application
         application = Application.objects.create(
             student=student, program=self.program, status=self.draft_status
         )
+        apply_host_destination(application, self.host_tree)
 
         # Upload document
         file_content = b"Test document content"
@@ -168,19 +176,24 @@ class TestStudentApplicationWorkflow(TestCase):
         """Test that ineligible student cannot submit application."""
         # Create student with low GPA
         student = User.objects.create_user(
-            username="lowgpa", email="lowgpa@university.edu", password="TestPass123!"
+            username="lowgpa",
+            email="lowgpa@university.edu",
+            password="TestPass123!",
+            first_name="Low",
+            middle_name="A",
+            last_name="Gpa",
+            mothers_last_name="Garcia",
         )
         student.roles.add(self.student_role)
-
-        # Update profile with GPA below minimum
-        profile = student.profile
-        profile.gpa = 2.5  # Below program minimum of 3.0
-        profile.save()
+        complete_apply_profile(student)
+        student.profile.gpa = 2.5  # Below program minimum of 3.0
+        student.profile.save(update_fields=["gpa"])
 
         # Try to create application
         application = Application.objects.create(
             student=student, program=self.program, status=self.draft_status
         )
+        apply_host_destination(application, self.host_tree)
 
         # Try to submit - should raise ValueError
         from exchange.services import ApplicationService

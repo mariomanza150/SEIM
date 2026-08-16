@@ -87,7 +87,6 @@ services:
           -v 
           --base-url=http://web:8000
           --browser=chromium
-          --headed=false
           --html=tests/e2e_playwright/reports/report.html
           --self-contained-html
           -n auto

@@ -12,7 +12,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.utils import timezone
 
-from accounts.models import Role
+from accounts.models import AllowedEmailDomain, Role
 from accounts.services import AccountService
 
 User = get_user_model()
@@ -272,6 +272,12 @@ class TestPasswordReset(TestCase):
 class TestUserRegistration(TestCase):
     """Test user registration functionality."""
 
+    def setUp(self):
+        AllowedEmailDomain.objects.get_or_create(
+            name="test.com",
+            defaults={"code": "test", "is_active": True},
+        )
+
     @patch("accounts.services.AccountService.generate_email_verification_token")
     @patch("accounts.services.NotificationService.send_notification")
     def test_register_user_success(self, mock_notification, mock_token):
@@ -283,7 +289,9 @@ class TestUserRegistration(TestCase):
             email="newuser@test.com",
             password="testpass123",
             first_name="New",
+            middle_name="Q",
             last_name="User",
+            mothers_last_name="Garcia",
         )
 
         self.assertIsNotNone(user.id)
@@ -310,7 +318,13 @@ class TestUserRegistration(TestCase):
         mock_token.return_value = "test_token"
 
         user = AccountService.register_user(
-            username="minimal", email="minimal@test.com", password="testpass123"
+            username="minimal",
+            email="minimal@test.com",
+            password="testpass123",
+            first_name="Min",
+            middle_name="A",
+            last_name="User",
+            mothers_last_name="Lopez",
         )
 
         self.assertIsNotNone(user.id)
@@ -324,7 +338,13 @@ class TestUserRegistration(TestCase):
 
         with self.assertRaises(ValueError):
             AccountService.register_user(
-                username="existing", email="different@test.com", password="testpass123"
+                username="existing",
+                email="different@test.com",
+                password="testpass123",
+                first_name="Diff",
+                middle_name="A",
+                last_name="User",
+                mothers_last_name="Perez",
             )
 
     @patch("accounts.services.AccountService.generate_email_verification_token")
@@ -336,7 +356,13 @@ class TestUserRegistration(TestCase):
         student_role, _ = Role.objects.get_or_create(name="student")
 
         user = AccountService.register_user(
-            username="student", email="student@test.com", password="testpass123"
+            username="student",
+            email="student@test.com",
+            password="testpass123",
+            first_name="Stu",
+            middle_name="A",
+            last_name="Dent",
+            mothers_last_name="Ruiz",
         )
 
         # Should have student role

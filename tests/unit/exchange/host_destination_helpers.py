@@ -26,22 +26,20 @@ def attach_host_destination(
     Create a consistent HostInstitution → HostSchool → HostAcademicProgram tree
     under ``program``. Optionally add one HostSubject.
     """
-    institution = HostInstitution.objects.create(
+    institution, _ = HostInstitution.objects.get_or_create(
         program=program,
         name=institution_name,
-        country="MX",
-        is_active=True,
+        defaults={"country": "MX", "is_active": True},
     )
-    school = HostSchool.objects.create(
+    school, _ = HostSchool.objects.get_or_create(
         institution=institution,
         name=school_name,
-        is_active=True,
+        defaults={"is_active": True},
     )
-    academic = HostAcademicProgram.objects.create(
+    academic, _ = HostAcademicProgram.objects.get_or_create(
         school=school,
         name=academic_name,
-        code=academic_code,
-        is_active=True,
+        defaults={"code": academic_code, "is_active": True},
     )
     subject = None
     if with_subject:
