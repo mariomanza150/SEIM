@@ -4,6 +4,8 @@ Base Page Object for all page objects in E2E tests.
 Provides common functionality and patterns for all page objects.
 """
 
+import re
+
 from playwright.sync_api import Page, expect
 
 
@@ -28,7 +30,15 @@ class BasePage:
         Args:
             path: Path to navigate to (relative to base_url)
         """
-        url = f"{self.base_url}/{path.lstrip('/')}" if path else self.base_url
+        path = path.lstrip("/")
+        base = self.base_url.rstrip("/")
+        if (
+            path
+            and "/seim" not in base
+            and not path.startswith(("seim/", "api/", "admin/", "cms/", "health"))
+        ):
+            path = f"seim/{path}"
+        url = f"{base}/{path}" if path else base
         self.page.goto(url)
         self.wait_for_load()
 
@@ -184,7 +194,7 @@ class BasePage:
             text: Text to check for in URL
             timeout: Timeout in milliseconds
         """
-        expect(self.page).to_have_url(f"**{text}**", timeout=timeout)
+        expect(self.page).to_have_url(re.compile(re.escape(text)), timeout=timeout)
 
     def assert_title_contains(self, text: str, timeout: int = 5000) -> None:
         """

@@ -17,20 +17,34 @@ class AuthPage(BasePage):
     LOGIN_ERROR_MESSAGE = ".alert-danger, .error-message"
 
     # Register page locators
-    REGISTER_USERNAME_INPUT = '[name="username"]'
-    REGISTER_EMAIL_INPUT = '[name="email"]'
-    REGISTER_PASSWORD_INPUT = '[name="password"]'
-    REGISTER_CONFIRM_PASSWORD_INPUT = '[name="confirm_password"]'
-    REGISTER_FIRST_NAME_INPUT = '[name="first_name"]'
-    REGISTER_LAST_NAME_INPUT = '[name="last_name"]'
+    REGISTER_USERNAME_INPUT = '[data-testid="register-username"], [name="username"]'
+    REGISTER_EMAIL_INPUT = '[data-testid="register-email"], [name="email"]'
+    REGISTER_PASSWORD_INPUT = '[data-testid="register-password"], [name="password"]'
+    REGISTER_CONFIRM_PASSWORD_INPUT = (
+        '[data-testid="register-password2"], [name="password2"]'
+    )
+    REGISTER_FIRST_NAME_INPUT = '[data-testid="register-first-name"], [name="first_name"]'
+    REGISTER_LAST_NAME_INPUT = '[data-testid="register-last-name"], [name="last_name"]'
+    REGISTER_MIDDLE_NAME_INPUT = (
+        '[data-testid="register-middle-name"], [name="middle_name"]'
+    )
+    REGISTER_MOTHERS_LAST_NAME_INPUT = (
+        '[data-testid="register-mothers-last-name"], [name="mothers_last_name"]'
+    )
     REGISTER_AGREE_TERMS_CHECKBOX = '[name="agree_terms"]'
-    REGISTER_SUBMIT_BUTTON = 'button[type="submit"]'
-    REGISTER_SUCCESS_MESSAGE = ".alert-success"
+    REGISTER_SUBMIT_BUTTON = '[data-testid="register-submit"], button[type="submit"]'
+    REGISTER_SUCCESS_MESSAGE = (
+        '[data-testid="register-success"], .alert-success'
+    )
     REGISTER_ERROR_MESSAGE = ".alert-danger, .error-message"
 
     # Common elements
-    LOGOUT_BUTTON = '[data-testid="logout-button"], a:has-text("Logout")'
-    USER_MENU = '[data-testid="user-menu"]'
+    LOGOUT_BUTTON = (
+        '[data-testid="logout-button"], [data-testid="logout-link"], a:has-text("Logout")'
+    )
+    USER_MENU = (
+        '[data-testid="user-menu"], #userDropdown, a[aria-label*="User menu" i]'
+    )
 
     def navigate_to_login(self) -> None:
         """Navigate to Vue login page."""
@@ -40,17 +54,23 @@ class AuthPage(BasePage):
         """Navigate to register page."""
         self.navigate("register/")
 
-    def login(self, username_or_email: str, password: str) -> None:
+    def login(
+        self, username_or_email: str, password: str, *, expect_success: bool = True
+    ) -> None:
         """
         Login with credentials (Vue: email in first field).
         Args:
             username_or_email: Email or username
             password: Password
+            expect_success: Wait for the authenticated shell when True
         """
         self.fill(self.LOGIN_USERNAME_INPUT, username_or_email)
         self.fill(self.LOGIN_PASSWORD_INPUT, password)
         self.click(self.LOGIN_SUBMIT_BUTTON)
-        self.wait_for_no_loading_indicators()
+        if expect_success:
+            self.page.locator(self.USER_MENU).wait_for(state="visible", timeout=15000)
+        else:
+            self.wait_for_no_loading_indicators()
 
     def register(
         self,
@@ -78,13 +98,12 @@ class AuthPage(BasePage):
         self.fill(self.REGISTER_EMAIL_INPUT, email)
         self.fill(self.REGISTER_PASSWORD_INPUT, password)
         self.fill(self.REGISTER_CONFIRM_PASSWORD_INPUT, confirm_password)
+        self.fill(self.REGISTER_FIRST_NAME_INPUT, first_name or "Test")
+        self.fill(self.REGISTER_MIDDLE_NAME_INPUT, "Q")
+        self.fill(self.REGISTER_LAST_NAME_INPUT, last_name or "User")
+        self.fill(self.REGISTER_MOTHERS_LAST_NAME_INPUT, "Garcia")
 
-        if first_name:
-            self.fill(self.REGISTER_FIRST_NAME_INPUT, first_name)
-        if last_name:
-            self.fill(self.REGISTER_LAST_NAME_INPUT, last_name)
-
-        if agree_terms:
+        if agree_terms and self.is_visible(self.REGISTER_AGREE_TERMS_CHECKBOX, timeout=1000):
             self.check(self.REGISTER_AGREE_TERMS_CHECKBOX)
 
         self.click(self.REGISTER_SUBMIT_BUTTON)
@@ -93,11 +112,12 @@ class AuthPage(BasePage):
     def logout(self) -> None:
         """Logout from the application."""
         try:
+            if self.is_visible(self.USER_MENU, timeout=2000):
+                self.click(self.USER_MENU, timeout=5000)
             self.click(self.LOGOUT_BUTTON, timeout=5000)
             self.wait_for_load()
-        except:
-            # If button not found, navigate to logout URL
-            self.navigate("logout/")
+        except Exception:
+            self.navigate("login/")
 
     def is_logged_in(self) -> bool:
         """

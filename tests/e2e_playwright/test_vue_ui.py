@@ -16,10 +16,14 @@ from playwright.sync_api import Page, expect
 
 from tests.e2e_playwright.utils.auth_helpers import VueAppNotAvailable
 from tests.e2e_playwright.utils.vue_auth_helpers import (
-    API_BASE_URL,
     ensure_draft_application_via_api,
+    ensure_unread_notification_via_api,
+    fill_host_destination_cascade,
     is_vue_logged_in,
     login_vue_via_jwt,
+    select_preferred_program,
+    wait_for_program_select_options,
+    withdraw_blocking_applications_via_api,
 )
 
 
@@ -28,6 +32,28 @@ def _login_vue_or_skip(page, vue_base_url, email, password):
         return login_vue_via_jwt(page, vue_base_url, email, password)
     except VueAppNotAvailable as e:
         pytest.skip(str(e))
+
+
+def _goto_draft_application_detail(page: Page, *, force_new: bool = False) -> str:
+    """Open a known draft application detail page; skip if none can be ensured."""
+    withdraw_blocking_applications_via_api(
+        page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD
+    )
+    app_id = ensure_draft_application_via_api(
+        page,
+        VUE_STUDENT_EMAIL,
+        VUE_STUDENT_PASSWORD,
+        program_name="Vue E2E Test Program",
+        force_new=force_new,
+    )
+    if not app_id:
+        pytest.skip("Could not ensure a draft application")
+    page.goto(f"{VUE_BASE_URL}/applications/{app_id}")
+    page.wait_for_load_state("networkidle")
+    expect(page.locator("[data-testid=application-detail-page]")).to_be_visible(
+        timeout=10000
+    )
+    return str(app_id)
 
 
 def _normalize_vue_base_url(base_url: str) -> str:
@@ -163,66 +189,14 @@ class TestVueHostCascade:
     def test_host_destination_cascade_on_new_application(self, page: Page):
         """Select a program with hosts, then institution → school → academic program."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
+        withdraw_blocking_applications_via_api(
+            page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD
+        )
         page.goto(f"{VUE_BASE_URL}/applications/new")
         page.wait_for_load_state("networkidle")
-        program_select = page.locator("[data-testid=program-select]")
-        expect(program_select).to_be_visible(timeout=5000)
-        options = program_select.locator("option")
-        if options.count() < 2:
-            pytest.skip("No programs available")
-
-        vue_e2e_option = program_select.locator(
-            "option", has_text="Vue E2E Test Program"
-        )
-        if vue_e2e_option.count() > 0:
-            program_select.select_option(label="Vue E2E Test Program")
-        else:
-            program_select.select_option(index=1)
-
-        page.wait_for_load_state("networkidle")
-        host_select = page.locator("[data-testid=host-institution-select]")
-        try:
-            host_select.wait_for(state="visible", timeout=8000)
-        except Exception:
-            pytest.skip("Host destination section not visible")
-
-        host_options = host_select.locator("option")
-        if host_options.count() < 2:
-            found_hosts = False
-            for i in range(1, options.count()):
-                program_select.select_option(index=i)
-                page.wait_for_timeout(1500)
-                if host_select.locator("option").count() >= 2:
-                    found_hosts = True
-                    break
-            if not found_hosts:
-                pytest.skip("No host institution options (unseeded env)")
-
-        host_select.select_option(index=1)
-        school_select = page.locator("[data-testid=host-school-select]")
-        try:
-            page.wait_for_function(
-                """() => {
-                  const el = document.querySelector('[data-testid=host-school-select]');
-                  return el && !el.disabled && el.querySelectorAll('option').length >= 2;
-                }""",
-                timeout=8000,
-            )
-        except Exception:
-            pytest.skip("No host school options")
-        school_select.select_option(index=1)
-        academic_select = page.locator("[data-testid=host-academic-program-select]")
-        try:
-            page.wait_for_function(
-                """() => {
-                  const el = document.querySelector('[data-testid=host-academic-program-select]');
-                  return el && !el.disabled && el.querySelectorAll('option').length >= 2;
-                }""",
-                timeout=8000,
-            )
-        except Exception:
-            pytest.skip("No host academic program options")
-        academic_select.select_option(index=1)
+        wait_for_program_select_options(page)
+        select_preferred_program(page)
+        fill_host_destination_cascade(page)
         expect(page.locator("[data-testid=subjects-section]")).to_be_visible(
             timeout=8000
         )
@@ -247,6 +221,9 @@ class TestVueApplicationFlow:
     def test_new_application_page_loads(self, page: Page):
         """New application form loads with program select."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
+        withdraw_blocking_applications_via_api(
+            page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD
+        )
         page.goto(f"{VUE_BASE_URL}/applications/new")
         page.wait_for_load_state("networkidle")
         expect(page).to_have_url(_route_regex("/applications/new"))
@@ -255,15 +232,14 @@ class TestVueApplicationFlow:
     def test_create_application_submit(self, page: Page):
         """Select program, submit; expect redirect to application detail or eligibility alert."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
+        withdraw_blocking_applications_via_api(
+            page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD
+        )
         page.goto(f"{VUE_BASE_URL}/applications/new")
         page.wait_for_load_state("networkidle")
-        program_select = page.locator("[data-testid=program-select]")
-        expect(program_select).to_be_visible(timeout=5000)
-        # Select first real program (index 1; 0 is placeholder)
-        options = program_select.locator("option")
-        if options.count() < 2:
-            pytest.skip("No programs available")
-        program_select.select_option(index=1)
+        wait_for_program_select_options(page)
+        select_preferred_program(page)
+        fill_host_destination_cascade(page)
         page.locator("[data-testid=create-application-btn]").click()
         # Either redirect to application detail or eligibility alert appears
         page.wait_for_timeout(3000)
@@ -413,23 +389,9 @@ class TestVueEditApplication:
     def test_edit_application_from_detail(self, page: Page):
         """From application detail (draft), click Edit and land on edit form with program disabled."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
-        ensure_draft_application_via_api(page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
-        page.goto(f"{VUE_BASE_URL}/applications")
-        page.wait_for_load_state("networkidle")
-        page.locator("[data-testid=applications-filter-status]").select_option(
-            value="draft"
-        )
-        page.wait_for_load_state("networkidle")
-        detail_link = page.locator("[data-testid=application-detail-link]").first
-        try:
-            detail_link.wait_for(state="visible", timeout=10000)
-        except Exception:
-            pytest.skip("No applications to view")
-        detail_link.click()
-        page.wait_for_load_state("networkidle")
+        _goto_draft_application_detail(page)
         edit_link = page.locator("[data-testid=edit-application-link]").first
-        if edit_link.count() == 0:
-            pytest.skip("No draft application to edit")
+        expect(edit_link).to_be_visible(timeout=5000)
         edit_link.click()
         page.wait_for_load_state("networkidle")
         expect(page).to_have_url(re.compile(r".*/applications/[0-9a-f-]+/edit$"))
@@ -575,6 +537,9 @@ class TestVueApplicationFormCancel:
     def test_application_form_cancel_goes_to_applications(self, page: Page):
         """From new application form, Cancel link navigates to applications list."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
+        withdraw_blocking_applications_via_api(
+            page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD
+        )
         page.goto(f"{VUE_BASE_URL}/applications/new")
         page.wait_for_load_state("networkidle")
         page.locator("[data-testid=cancel-link]").click()
@@ -594,23 +559,8 @@ class TestVueApplicationDetailActions:
     def test_application_detail_draft_shows_edit_and_submit(self, page: Page):
         """On draft application detail, Edit Application and Submit Application are visible."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
-        ensure_draft_application_via_api(page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
-        page.goto(f"{VUE_BASE_URL}/applications")
-        page.wait_for_load_state("networkidle")
-        page.locator("[data-testid=applications-filter-status]").select_option(
-            value="draft"
-        )
-        page.wait_for_load_state("networkidle")
-        detail_link = page.locator("[data-testid=application-detail-link]").first
-        try:
-            detail_link.wait_for(state="visible", timeout=10000)
-        except Exception:
-            pytest.skip("No draft application")
-        detail_link.click()
-        page.wait_for_load_state("networkidle")
+        _goto_draft_application_detail(page)
         edit_link = page.locator("[data-testid=edit-application-link]").first
-        if edit_link.count() == 0:
-            pytest.skip("First application is not draft")
         expect(edit_link).to_be_visible()
         expect(
             page.locator("[data-testid=submit-application-btn]").first
@@ -661,11 +611,13 @@ class TestVueNotificationsFilters:
     def test_notifications_mark_all_read_click_when_unread(self, page: Page):
         """When unread exist, Mark All as Read is visible and clickable without error."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
+        assert ensure_unread_notification_via_api(
+            page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD
+        )
         page.goto(f"{VUE_BASE_URL}/notifications")
         page.wait_for_load_state("networkidle")
         mark_all_btn = page.locator("[data-testid=mark-all-read-btn]").first
-        if mark_all_btn.count() == 0:
-            pytest.skip("No unread notifications")
+        expect(mark_all_btn).to_be_visible(timeout=5000)
         mark_all_btn.click()
         page.wait_for_load_state("networkidle")
         expect(page.locator("[data-testid=notifications-page]")).to_be_visible()
@@ -703,12 +655,14 @@ class TestVueApplicationFormSaveDraft:
     def test_save_draft_from_new_form(self, page: Page):
         """Select program, Save as Draft; expect redirect to application detail or list."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
+        withdraw_blocking_applications_via_api(
+            page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD
+        )
         page.goto(f"{VUE_BASE_URL}/applications/new")
         page.wait_for_load_state("networkidle")
-        program_select = page.locator("[data-testid=program-select]")
-        if program_select.locator("option").count() < 2:
-            pytest.skip("No programs available")
-        program_select.select_option(index=1)
+        wait_for_program_select_options(page)
+        select_preferred_program(page)
+        fill_host_destination_cascade(page)
         page.locator("[data-testid=save-draft-btn]").click()
         page.wait_for_timeout(3000)
         url = page.url
@@ -758,29 +712,15 @@ class TestVueApplicationDetailDelete:
     def test_application_detail_delete_draft_redirects(self, page: Page):
         """From draft detail, confirm Delete; expect redirect to applications (skip if no draft)."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
-        ensure_draft_application_via_api(page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
-        page.goto(f"{VUE_BASE_URL}/applications")
-        page.wait_for_load_state("networkidle")
-        page.locator("[data-testid=applications-filter-status]").select_option(
-            value="draft"
-        )
-        page.wait_for_load_state("networkidle")
-        detail_link = page.locator("[data-testid=application-detail-link]").first
-        try:
-            detail_link.wait_for(state="visible", timeout=10000)
-        except Exception:
-            pytest.skip("No draft application to delete")
-        detail_link.click()
-        page.wait_for_load_state("networkidle")
+        _goto_draft_application_detail(page)
         delete_loc = page.get_by_role(
             "button", name=re.compile(r"Delete Application", re.I)
         )
-        if delete_loc.count() == 0:
-            pytest.skip("No draft application to delete")
-        page.once("dialog", lambda d: d.accept())
+        expect(delete_loc.first).to_be_visible(timeout=5000)
         delete_loc.first.click()
+        page.locator("[data-testid=confirm-accept-btn]").click()
         page.wait_for_load_state("networkidle")
-        expect(page).to_have_url(_route_regex("/applications"), timeout=10000)
+        expect(page).to_have_url(re.compile(r".*/applications/?$"), timeout=10000)
         expect(page.locator(".alert-danger")).to_have_count(0)
 
 
@@ -852,11 +792,13 @@ class TestVueNotificationsMarkOneRead:
     def test_notifications_mark_one_read_click(self, page: Page):
         """Click first Mark as Read on a notification; page still valid (skip if none)."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
+        assert ensure_unread_notification_via_api(
+            page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD
+        )
         page.goto(f"{VUE_BASE_URL}/notifications")
         page.wait_for_load_state("networkidle")
         mark_btn = page.locator("[data-testid=mark-read-btn]").first
-        if mark_btn.count() == 0:
-            pytest.skip("No per-item Mark as Read button")
+        expect(mark_btn).to_be_visible(timeout=5000)
         mark_btn.click()
         page.wait_for_load_state("networkidle")
         expect(page.locator("[data-testid=notifications-page]")).to_be_visible()
@@ -1017,39 +959,34 @@ class TestVueAdminLogin:
 
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
+@pytest.mark.nondestructive
 class TestVueSubmitApplication:
     """Submit application from draft detail."""
 
     def test_submit_draft_application(self, page: Page):
         """From draft detail, click Submit Application and confirm; status changes."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
-        ensure_draft_application_via_api(page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
-        page.goto(f"{VUE_BASE_URL}/applications")
-        page.wait_for_load_state("networkidle")
-        page.locator("[data-testid=applications-filter-status]").select_option(
-            value="draft"
-        )
-        page.wait_for_load_state("networkidle")
-        detail_link = page.locator("[data-testid=application-detail-link]").first
-        try:
-            detail_link.wait_for(state="visible", timeout=10000)
-        except Exception:
-            pytest.skip("No draft application to submit")
-        detail_link.click()
-        page.wait_for_load_state("networkidle")
+        _goto_draft_application_detail(page, force_new=True)
         submit_btn = page.locator("[data-testid=submit-application-btn]").first
-        if submit_btn.count() == 0:
-            pytest.skip("Submit button not visible (not draft)")
-        page.once("dialog", lambda d: d.accept())
+        expect(submit_btn).to_be_visible(timeout=5000)
+        expect(submit_btn).to_be_enabled(timeout=5000)
         submit_btn.click()
-        page.wait_for_load_state("networkidle")
-        # After submit, status should change (page reloads or shows success)
+        confirm = page.locator("[data-testid=confirm-accept-btn]")
+        expect(confirm).to_be_visible(timeout=5000)
+        with page.expect_response(
+            lambda r: r.request.method == "POST" and "/submit/" in r.url,
+            timeout=15000,
+        ) as pending:
+            confirm.click()
+        submit_response = pending.value
+        assert submit_response.ok, (
+            f"Submit failed: {submit_response.status} {submit_response.text()[:500]}"
+        )
         expect(page.locator("[data-testid=application-detail-page]")).to_be_visible(
             timeout=10000
         )
-        # Submit button should no longer be visible
         expect(page.locator("[data-testid=submit-application-btn]")).to_have_count(
-            0, timeout=5000
+            0, timeout=10000
         )
 
 
@@ -1062,21 +999,7 @@ class TestVueDocumentUploadForm:
     def test_document_upload_form_visible_on_draft(self, page: Page):
         """On draft application detail, document upload form is visible with type select and file input."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
-        ensure_draft_application_via_api(page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
-        page.goto(f"{VUE_BASE_URL}/applications")
-        page.wait_for_load_state("networkidle")
-        page.locator("[data-testid=applications-filter-status]").select_option(
-            value="draft"
-        )
-        page.wait_for_load_state("networkidle")
-        detail_link = page.locator("[data-testid=application-detail-link]").first
-        try:
-            detail_link.wait_for(state="visible", timeout=10000)
-        except Exception:
-            pytest.skip("No draft application")
-        detail_link.click()
-        page.wait_for_load_state("networkidle")
-        # Upload form should be present on draft/submitted applications
+        _goto_draft_application_detail(page)
         expect(page.locator("[data-testid=document-type-select]")).to_be_visible(
             timeout=5000
         )
@@ -1086,6 +1009,7 @@ class TestVueDocumentUploadForm:
 
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
+@pytest.mark.nondestructive
 class TestVueDocumentUpload:
     """Document upload from application detail."""
 
@@ -1094,26 +1018,21 @@ class TestVueDocumentUpload:
         if not SAMPLE_PDF_PATH.exists():
             pytest.skip("Fixture sample.pdf not found")
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
-        ensure_draft_application_via_api(page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
-        page.goto(f"{VUE_BASE_URL}/applications")
-        page.wait_for_load_state("networkidle")
-        page.locator("[data-testid=applications-filter-status]").select_option(
-            value="draft"
-        )
-        page.wait_for_load_state("networkidle")
-        detail_link = page.locator("[data-testid=application-detail-link]").first
-        try:
-            detail_link.wait_for(state="visible", timeout=10000)
-        except Exception:
-            pytest.skip("No draft application")
-        detail_link.click()
-        page.wait_for_load_state("networkidle")
+        _goto_draft_application_detail(page)
         type_select = page.locator("[data-testid=document-type-select]")
         expect(type_select).to_be_visible(timeout=5000)
-        options = type_select.locator("option").all_inner_texts()
-        if len(options) <= 1:
-            pytest.skip("No document types (only placeholder)")
-        type_select.select_option(index=1)
+        options = type_select.locator("option")
+        assert options.count() > 1, "Expected document types on draft upload form"
+        existing = " ".join(page.locator(".list-group-item").all_inner_texts()).lower()
+        selected = False
+        for i in range(1, options.count()):
+            label = (options.nth(i).inner_text() or "").strip().lower()
+            if label and label not in existing:
+                type_select.select_option(index=i)
+                selected = True
+                break
+        if not selected:
+            pytest.skip("No unused document type available to upload")
         page.locator("[data-testid=document-file-input]").set_input_files(
             str(SAMPLE_PDF_PATH)
         )
@@ -1121,9 +1040,7 @@ class TestVueDocumentUpload:
         page.wait_for_load_state("networkidle")
         page.wait_for_timeout(1500)
         expect(page.locator("[data-testid=application-detail-page]")).to_be_visible()
-        expect(page.locator(".document-upload .alert-danger")).to_have_count(
-            0, timeout=3000
-        )
+        expect(page.locator(".document-upload .alert-danger")).to_have_count(0)
 
 
 @pytest.mark.e2e_playwright

@@ -17,7 +17,7 @@ def generate_random_string(length: int = 10) -> str:
 
 def generate_random_email() -> str:
     """Generate a random email address."""
-    return f"test_{generate_random_string(8)}@example.com"
+    return f"test_{generate_random_string(8)}@uanl.edu.mx"
 
 
 def generate_random_username() -> str:

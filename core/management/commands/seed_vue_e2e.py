@@ -16,6 +16,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 
+from accounts.profile_seed import complete_apply_profile
+from core.cache import CacheManager
 from documents.models import Document, DocumentType
 from exchange.models import (
     Application,
@@ -50,6 +52,8 @@ class Command(BaseCommand):
             )
             return
 
+        complete_apply_profile(student)
+
         draft_status = ApplicationStatus.objects.get(name="draft")
         start = date.today() + timedelta(days=30)
         end = start + timedelta(days=180)
@@ -60,15 +64,47 @@ class Command(BaseCommand):
                 "start_date": start,
                 "end_date": end,
                 "is_active": True,
-                "min_gpa": 2.5,
-                "required_language": "English",
             },
         )
-        application, created = Application.objects.get_or_create(
-            student=student,
-            program=program,
-            defaults={"status": draft_status},
+        # New-application catalog uses eligible_for_me; keep this scheme always passable.
+        program.description = program.description or "Program for Vue E2E tests."
+        program.start_date = start
+        program.end_date = end
+        program.is_active = True
+        program.min_gpa = None
+        program.required_language = None
+        program.min_language_level = None
+        program.min_semester = None
+        program.min_credits_approved_percent = None
+        program.application_open_date = None
+        program.application_deadline = None
+        program.application_form = None
+        program.eligibility_ruleset = None
+        program.save()
+        program.required_document_types.clear()
+
+        existing = list(
+            Application.objects.filter(student=student, program=program).order_by(
+                "created_at"
+            )
         )
+        if existing:
+            application = existing[0]
+            created = False
+            Application.objects.filter(pk__in=[a.pk for a in existing[1:]]).update(
+                withdrawn=True
+            )
+        else:
+            application = Application.objects.create(
+                student=student,
+                program=program,
+                status=draft_status,
+            )
+            created = True
+        application.status = draft_status
+        application.withdrawn = False
+        application.submitted_at = None
+        application.save()
         if created:
             self.stdout.write(
                 self.style.SUCCESS(f"  ✓ Created draft application: {program.name}")
@@ -76,26 +112,35 @@ class Command(BaseCommand):
         else:
             self.stdout.write(f"  ✓ Draft application exists: {program.name}")
 
-        if HostInstitution.objects.filter(program=program).exists():
-            self.stdout.write("  ✓ Host destination tree already exists")
-        else:
+        institution = HostInstitution.objects.filter(program=program).first()
+        if institution is None:
             institution = HostInstitution.objects.create(
                 program=program,
                 name="Vue E2E Host University",
                 country="MX",
                 is_active=True,
             )
+            self.stdout.write(
+                self.style.SUCCESS("  ✓ Attached host destination tree to program")
+            )
+        else:
+            self.stdout.write("  ✓ Host destination tree already exists")
+        school = HostSchool.objects.filter(institution=institution).first()
+        if school is None:
             school = HostSchool.objects.create(
                 institution=institution,
                 name="Faculty of Engineering",
                 is_active=True,
             )
+        academic = HostAcademicProgram.objects.filter(school=school).first()
+        if academic is None:
             academic = HostAcademicProgram.objects.create(
                 school=school,
                 name="Computer Science",
                 code="CS",
                 is_active=True,
             )
+        if not HostSubject.objects.filter(academic_program=academic).exists():
             HostSubject.objects.create(
                 academic_program=academic,
                 code="CS101",
@@ -103,9 +148,22 @@ class Command(BaseCommand):
                 credits=Decimal("6.00"),
                 is_active=True,
             )
-            self.stdout.write(
-                self.style.SUCCESS("  ✓ Attached host destination tree to program")
-            )
+        application.host_institution = institution
+        application.host_school = school
+        application.host_academic_program = academic
+        application.save(
+            update_fields=[
+                "host_institution",
+                "host_school",
+                "host_academic_program",
+            ]
+        )
+        CacheManager.clear_pattern("api_resp:v1:api_middleware:/api/programs*")
+        CacheManager.clear_pattern("api_resp:v1:ProgramViewSet*")
+        CacheManager.clear_pattern("api_resp:*")
+        from django.core.cache import cache
+
+        cache.clear()
 
         doc_type, _ = DocumentType.objects.get_or_create(
             name="transcript",
@@ -150,34 +208,31 @@ class Command(BaseCommand):
                 self.style.SUCCESS("  ✓ Created document for application")
             )
 
-        unread = Notification.objects.filter(recipient=student, is_read=False).count()
-        if unread < 2:
-            for _i, (title, msg) in enumerate(
-                [
-                    (
-                        "E2E Test Notification 1",
-                        "First unread notification for Vue E2E.",
-                    ),
-                    (
-                        "E2E Test Notification 2",
-                        "Second unread notification for Vue E2E.",
-                    ),
-                ]
-            ):
-                Notification.objects.get_or_create(
-                    recipient=student,
-                    title=title,
-                    defaults={
-                        "message": msg,
-                        "category": "info",
-                        "is_read": False,
-                        "action_url": "/applications",
-                        "action_text": "View",
-                    },
-                )
-            self.stdout.write(self.style.SUCCESS("  ✓ Created unread notifications"))
-        else:
-            self.stdout.write(f"  ✓ Unread notifications already exist ({unread})")
+        for title, msg in (
+            (
+                "E2E Test Notification 1",
+                "First unread notification for Vue E2E.",
+            ),
+            (
+                "E2E Test Notification 2",
+                "Second unread notification for Vue E2E.",
+            ),
+        ):
+            obj, _created = Notification.objects.get_or_create(
+                recipient=student,
+                title=title,
+                defaults={
+                    "message": msg,
+                    "category": "info",
+                    "is_read": False,
+                    "action_url": "/applications",
+                    "action_text": "View",
+                },
+            )
+            if obj.is_read:
+                obj.is_read = False
+                obj.save(update_fields=["is_read"])
+        self.stdout.write(self.style.SUCCESS("  ✓ Ensured unread E2E notifications"))
 
         self.stdout.write(
             self.style.SUCCESS("\n✅ Vue E2E seed completed. Run Vue E2E tests.")

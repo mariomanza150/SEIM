@@ -49,7 +49,7 @@
                 v-model="filters.is_read"
                 class="form-select"
                 :aria-label="t('notifications.filterReadStateLabel')"
-                @change="fetchNotifications"
+                @change="() => fetchNotifications(1)"
               >
                 <option value="">{{ t('notifications.filterAll') }}</option>
                 <option value="false">{{ t('notifications.filterUnread') }}</option>
@@ -63,7 +63,7 @@
                 v-model="filters.category"
                 class="form-select"
                 :aria-label="t('notifications.filterCategory')"
-                @change="fetchNotifications"
+                @change="() => fetchNotifications(1)"
               >
                 <option value="">{{ t('notifications.filterAll') }}</option>
                 <option value="info">{{ t('notifications.categoryInfo') }}</option>
@@ -234,11 +234,12 @@ const pagination = ref({
 })
 
 async function fetchNotifications(page = 1) {
+  const pageNum = typeof page === 'number' && page > 0 ? page : 1
   try {
     loading.value = true
     error.value = null
     const list = await apiFetchNotifications({
-      page,
+      page: pageNum,
       ordering: '-sent_at',
       filters: {
         ...(filters.value.is_read !== '' ? { is_read: filters.value.is_read } : {}),

@@ -1147,13 +1147,23 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         return response
 
     def _invalidate_application_cache(self, application):
-        """Invalidate cache for application-related data."""
-        from core.cache import invalidate_cache_pattern
-
-        # Invalidate application-specific cache
-        invalidate_cache_pattern(f"api:ApplicationViewSet:*{application.id}*")
-        # Invalidate list cache
-        invalidate_cache_pattern("api:ApplicationViewSet:list*")
+        """Drop retrieve/list API caches so the UI sees post-submit status."""
+        user_ids = {"anon"}
+        request = getattr(self, "request", None)
+        user = getattr(request, "user", None) if request is not None else None
+        if user is not None and getattr(user, "is_authenticated", False):
+            user_ids.add(str(user.pk))
+        if getattr(application, "student_id", None):
+            user_ids.add(str(application.student_id))
+        pk = str(application.pk)
+        for user_key in user_ids:
+            identity = f"ApplicationViewSet.retrieve:{user_key}:{pk}"
+            digest = hashlib.sha256(identity.encode()).hexdigest()[:48]
+            CacheManager.delete_cache(
+                CacheManager.get_cache_key("api_response", digest)
+            )
+        CacheManager.clear_pattern("api_resp:v1:api_middleware:/api/applications*")
+        CacheManager.clear_pattern("api_resp:*")
 
 
 class HostInstitutionViewSet(viewsets.ReadOnlyModelViewSet):

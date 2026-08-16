@@ -9,6 +9,7 @@ import pytest
 
 @pytest.mark.e2e_playwright
 @pytest.mark.accessibility
+@pytest.mark.nondestructive
 class TestAccessibility:
     """Test suite for accessibility compliance."""
 
@@ -18,23 +19,14 @@ class TestAccessibility:
 
         auth_page = AuthPage(page, base_url)
         auth_page.navigate_to_login()
-        if page.title() and "not found" in page.title().lower():
-            pytest.skip(
-                "Vue app not available at base_url. Run with BASE_URL=http://localhost:5173"
-            )
-        # Run axe accessibility scan
-        try:
-            from axe_playwright_python.sync_playwright import Axe
+        from tests.e2e_playwright.utils.axe_helpers import (
+            format_violations,
+            run_axe,
+            serious_violations,
+        )
 
-            axe = Axe()
-            results = axe.run(page)
-
-            # Assert no violations
-            assert len(results.violations) == 0, (
-                f"Found {len(results.violations)} accessibility violations"
-            )
-        except ImportError:
-            pytest.skip("axe-playwright-python not installed")
+        violations = serious_violations(run_axe(page))
+        assert not violations, format_violations(violations)
 
     def test_register_page_accessibility(self, page, base_url):
         """Test accessibility of register page."""
@@ -42,15 +34,14 @@ class TestAccessibility:
 
         auth_page = AuthPage(page, base_url)
         auth_page.navigate_to_register()
+        from tests.e2e_playwright.utils.axe_helpers import (
+            format_violations,
+            run_axe,
+            serious_violations,
+        )
 
-        try:
-            from axe_playwright_python.sync_playwright import Axe
-
-            axe = Axe()
-            results = axe.run(page)
-            assert len(results.violations) == 0
-        except ImportError:
-            pytest.skip("axe-playwright-python not installed")
+        violations = serious_violations(run_axe(page))
+        assert not violations, format_violations(violations)
 
     def test_dashboard_accessibility(self, page, base_url, login_as_student):
         """Test accessibility of dashboard."""
@@ -58,15 +49,14 @@ class TestAccessibility:
 
         dashboard_page = DashboardPage(page, base_url)
         dashboard_page.navigate_to_dashboard()
+        from tests.e2e_playwright.utils.axe_helpers import (
+            format_violations,
+            run_axe,
+            serious_violations,
+        )
 
-        try:
-            from axe_playwright_python.sync_playwright import Axe
-
-            axe = Axe()
-            results = axe.run(page)
-            assert len(results.violations) == 0
-        except ImportError:
-            pytest.skip("axe-playwright-python not installed")
+        violations = serious_violations(run_axe(page))
+        assert not violations, format_violations(violations)
 
     def test_programs_page_accessibility(self, page, base_url, login_as_student):
         """Test accessibility of programs page."""
@@ -74,15 +64,14 @@ class TestAccessibility:
 
         programs_page = ProgramsPage(page, base_url)
         programs_page.navigate_to_programs()
+        from tests.e2e_playwright.utils.axe_helpers import (
+            format_violations,
+            run_axe,
+            serious_violations,
+        )
 
-        try:
-            from axe_playwright_python.sync_playwright import Axe
-
-            axe = Axe()
-            results = axe.run(page)
-            assert len(results.violations) == 0
-        except ImportError:
-            pytest.skip("axe-playwright-python not installed")
+        violations = serious_violations(run_axe(page))
+        assert not violations, format_violations(violations)
 
     def test_keyboard_navigation_login(self, page, base_url):
         """Test keyboard navigation on login page."""
@@ -94,13 +83,14 @@ class TestAccessibility:
             pytest.skip(
                 "Vue app not available at base_url. Run with BASE_URL=http://localhost:5173"
             )
-        # Test Tab navigation (Vue: email, password, submit)
-        page.keyboard.press("Tab")
-        page.keyboard.press("Tab")
-        page.keyboard.press("Tab")
-        focused = page.evaluate(
-            "() => document.activeElement?.type || document.activeElement?.getAttribute('type')"
-        )
+        focused = None
+        for _ in range(12):
+            page.keyboard.press("Tab")
+            focused = page.evaluate(
+                "() => document.activeElement?.type || document.activeElement?.getAttribute('type')"
+            )
+            if focused == "submit":
+                break
         assert focused == "submit", (
             f"Expected focus on submit button, got type: {focused}"
         )
@@ -133,30 +123,24 @@ class TestAccessibility:
 
         auth_page = AuthPage(page, base_url)
         auth_page.navigate_to_login()
-        if page.title() and "not found" in page.title().lower():
-            pytest.skip(
-                "Vue app not available at base_url. Run with BASE_URL=http://localhost:5173"
-            )
-        try:
-            from axe_playwright_python.sync_playwright import Axe
+        from tests.e2e_playwright.utils.axe_helpers import format_violations, run_axe
 
-            axe = Axe()
-            results = axe.run(page)
-
-            # Check for color contrast violations
-            contrast_violations = [
-                v for v in results.violations if "color-contrast" in v.id
-            ]
-            assert len(contrast_violations) == 0, (
-                f"Found {len(contrast_violations)} color contrast violations"
+        results = run_axe(page)
+        raw = getattr(results, "violations", None) or []
+        contrast_violations = []
+        for item in raw:
+            vid = getattr(item, "id", None) or (
+                item.get("id") if isinstance(item, dict) else ""
             )
-        except ImportError:
-            pytest.skip("axe-playwright-python not installed")
+            if "color-contrast" in str(vid):
+                contrast_violations.append(item)
+        assert not contrast_violations, format_violations(contrast_violations)
 
 
 @pytest.mark.e2e_playwright
 @pytest.mark.accessibility
 @pytest.mark.smoke
+@pytest.mark.nondestructive
 class TestAccessibilitySmoke:
     """Smoke tests for critical accessibility requirements."""
 

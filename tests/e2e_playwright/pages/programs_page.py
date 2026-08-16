@@ -9,7 +9,10 @@ class ProgramsPage(BasePage):
     """Page object for programs listing page."""
 
     # Page elements
-    PROGRAMS_CONTAINER = '[data-testid="programs-list"], .programs-container'
+    PROGRAMS_CONTAINER = (
+        '[data-testid="program-compare-page"], [data-testid="programs-list"], '
+        ".programs-container, .program-compare-page"
+    )
     PROGRAM_CARD = '.program-card, [data-testid^="program-"]'
     PROGRAM_TITLE = ".program-title, .card-title"
     PROGRAM_DESCRIPTION = ".program-description, .card-text"
@@ -27,7 +30,7 @@ class ProgramsPage(BasePage):
 
     def navigate_to_programs(self) -> None:
         """Navigate to programs page."""
-        self.navigate("programs/")
+        self.navigate("programs/compare")
 
     def assert_programs_page_loaded(self) -> None:
         """Assert that programs page is loaded."""

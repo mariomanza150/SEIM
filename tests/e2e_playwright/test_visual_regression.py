@@ -16,6 +16,7 @@ from tests.e2e_playwright.pages.programs_page import ProgramsPage
 
 @pytest.mark.e2e_playwright
 @pytest.mark.visual
+@pytest.mark.nondestructive
 class TestVisualRegression:
     """Test suite for visual regression testing."""
 
@@ -69,12 +70,11 @@ class TestVisualRegression:
         """Test visual appearance of programs listing."""
         programs_page = ProgramsPage(page, base_url)
         programs_page.navigate_to_programs()
-
         from tests.e2e_playwright.utils.visual_regression import hide_dynamic_elements
 
         hide_dynamic_elements(page, [".timestamp", "[data-time]"])
 
-        assert assert_visual_match("programs_list")
+        assert assert_visual_match("program_compare")
 
     def test_applications_list_visual(
         self, page, base_url, login_as_student, assert_visual_match
@@ -105,6 +105,7 @@ class TestVisualRegression:
 
 @pytest.mark.e2e_playwright
 @pytest.mark.visual
+@pytest.mark.nondestructive
 class TestVisualRegressionDarkMode:
     """Test visual appearance in dark mode."""
 

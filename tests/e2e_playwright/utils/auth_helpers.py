@@ -62,7 +62,8 @@ def login_via_api(page: Page, base_url: str, email: str, password: str) -> dict:
     data = response.json()
     access = data.get("access", "")
     refresh = data.get("refresh", "")
-    page.goto(base_url)
+    spa_root = f"{base_url.rstrip('/')}/seim"
+    page.goto(spa_root)
     page.wait_for_load_state("domcontentloaded")
     page.evaluate(
         """
@@ -73,6 +74,8 @@ def login_via_api(page: Page, base_url: str, email: str, password: str) -> dict:
         """,
         {"access": access, "refresh": refresh},
     )
+    page.goto(f"{spa_root}/dashboard")
+    page.wait_for_load_state("networkidle")
     return data
 
 

@@ -13,6 +13,7 @@ from tests.e2e_playwright.utils.data_generators import generate_user_data
 
 @pytest.mark.e2e_playwright
 @pytest.mark.auth
+@pytest.mark.nondestructive
 class TestAuthenticationWorkflows:
     """Test suite for authentication workflows."""
 
@@ -93,7 +94,7 @@ class TestAuthenticationWorkflows:
             pytest.skip(
                 "Vue app not available at base_url. Run with BASE_URL=http://localhost:5173"
             )
-        auth_page.login("nonexistent@example.com", "wrong_password")
+        auth_page.login("nonexistent@example.com", "wrong_password", expect_success=False)
         # Should show error and stay on login page
         assert "login" in page.url
 
@@ -144,6 +145,7 @@ class TestAuthenticationWorkflows:
 @pytest.mark.e2e_playwright
 @pytest.mark.auth
 @pytest.mark.smoke
+@pytest.mark.nondestructive
 class TestAuthenticationSmoke:
     """Smoke tests for critical authentication paths."""
 

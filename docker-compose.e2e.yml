@@ -61,6 +61,8 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - DOCKER_ENV=true
       - SECRET_KEY=e2e-test-secret-key-for-testing-only
+      - DISABLE_THROTTLE_E2E=1
+      - VIRUS_SCANNER_TYPE=mock
     networks:
       - e2e_network
     healthcheck:

@@ -6,6 +6,7 @@ import pytest
 
 
 @pytest.mark.e2e_playwright
+@pytest.mark.nondestructive
 class TestErrorScenarios:
     """Test suite for error handling."""
 

@@ -9,6 +9,7 @@ from tests.e2e_playwright.pages.documents_page import DocumentsPage
 
 @pytest.mark.e2e_playwright
 @pytest.mark.file_upload
+@pytest.mark.nondestructive
 class TestDocumentWorkflows:
     """Test suite for document workflows."""
 
@@ -31,6 +32,7 @@ class TestDocumentWorkflows:
 @pytest.mark.e2e_playwright
 @pytest.mark.file_upload
 @pytest.mark.smoke
+@pytest.mark.nondestructive
 class TestDocumentWorkflowsSmoke:
     """Smoke tests for document workflows."""
 

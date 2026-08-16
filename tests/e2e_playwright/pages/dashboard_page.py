@@ -9,11 +9,17 @@ class DashboardPage(BasePage):
     """Page object for dashboard pages (all roles)."""
 
     # Common dashboard elements
-    DASHBOARD_CONTAINER = '#dashboard-content, [data-testid="dashboard"]'
+    DASHBOARD_CONTAINER = (
+        '[data-testid="dashboard-page"], #dashboard-content, [data-testid="dashboard"]'
+    )
     WELCOME_MESSAGE = "h1, .welcome-message"
     NAVIGATION_MENU = "nav, .navbar"
-    USER_MENU = '[data-testid="user-menu"]'
-    NOTIFICATIONS_BADGE = '[data-testid="notifications-badge"]'
+    USER_MENU = (
+        '[data-testid="user-menu"], #userDropdown, a[aria-label*="User menu" i]'
+    )
+    NOTIFICATIONS_BADGE = (
+        '[data-testid="notifications-badge"], [data-testid="notifications-menu"], button[aria-label*="Notifications"]'
+    )
 
     # Quick actions
     QUICK_ACTIONS_CONTAINER = '.quick-actions, [data-testid="quick-actions"]'

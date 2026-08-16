@@ -129,6 +129,42 @@ describe('Notifications', () => {
     expect(success).toHaveBeenCalledWith('Notification marked as read')
   })
 
+  it('status filter refetch sends numeric page 1', async () => {
+    setupDefaultGets({
+      list: mockNotificationsListResponse({
+        results: [
+          {
+            id: 1,
+            title: 'Unread',
+            message: 'Hello',
+            is_read: false,
+            category: 'info',
+            sent_at: new Date().toISOString(),
+          },
+        ],
+        count: 1,
+      }),
+      unreadCount: 1,
+    })
+    const wrapper = mount(Notifications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    api.get.mockClear()
+    setupDefaultGets()
+    await wrapper.get('#notifications-filter-status').setValue('false')
+    await wrapper.get('#notifications-filter-status').trigger('change')
+    await flushPromises()
+    const listCalls = api.get.mock.calls.filter(([, cfg]) => cfg?.params?.page_size !== 1)
+    expect(listCalls.length).toBeGreaterThan(0)
+    for (const [, cfg] of listCalls) {
+      expect(cfg.params.page).toBe(1)
+    }
+  })
+
   it('shows pagination when count exceeds page size', async () => {
     setupDefaultGets({
       list: mockNotificationsListResponse({

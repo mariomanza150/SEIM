@@ -114,6 +114,7 @@
                 id="userDropdown"
                 role="button"
                 data-bs-toggle="dropdown"
+                data-testid="user-menu"
                 aria-expanded="false"
                 aria-haspopup="menu"
                 :aria-label="t('dashboard.userMenuAria', { name: userName })"

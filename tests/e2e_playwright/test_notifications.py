@@ -8,6 +8,7 @@ from tests.e2e_playwright.pages.dashboard_page import DashboardPage
 
 
 @pytest.mark.e2e_playwright
+@pytest.mark.nondestructive
 class TestNotifications:
     """Test suite for notification workflows."""
 
