@@ -103,7 +103,7 @@ dev = [
     # Documentation (aligned with [docs])
     "sphinx==7.4.7",
     "sphinx-rtd-theme==2.0.0",
-    "sphinx-autodoc-typehints==1.25.3",
+    "sphinx-autodoc-typehints==3.6.1",
     # Development utilities
     "ipython==8.18.1",
     "ipdb==0.13.13",
@@ -159,7 +159,7 @@ test = [
 docs = [
     "sphinx==7.4.7",
     "sphinx-rtd-theme==2.0.0",
-    "sphinx-autodoc-typehints==1.25.3",
+    "sphinx-autodoc-typehints==3.6.1",
 ]
 
 [project.urls]
