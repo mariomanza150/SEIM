@@ -1,9 +1,8 @@
 /**
- * UAdeC (Universidad Autónoma de Coahuila) Official Color Scheme
- * Based on official website: https://www.uadec.mx/
- * 
- * Primary: Royal Blue and Gold
- * Last Updated: November 2025
+ * Default institution theme (UAdeC colors).
+ * Override --uadec-* / --brand-* via INSTITUTION_THEME (see CMS base template)
+ * or documentation/white_labeling.md. Legacy --uadec-* names are kept so
+ * existing CMS templates keep working.
  */
 
 /* ============================================
@@ -39,6 +38,17 @@
     --uadec-warning: #F39C12;
     --uadec-danger: #E74C3C;
     --uadec-info: #3498DB;
+
+    /* Canonical aliases for white-labeling */
+    --brand-primary: var(--uadec-blue);
+    --brand-primary-light: var(--uadec-blue-light);
+    --brand-primary-dark: var(--uadec-blue-dark);
+    --brand-accent: var(--uadec-gold);
+    --brand-accent-light: var(--uadec-gold-light);
+    --brand-accent-dark: var(--uadec-gold-dark);
+    --brand-navy: var(--uadec-navy);
+    --brand-orange: var(--uadec-orange);
+    --brand-text: var(--uadec-text);
 }
 
 /* ============================================

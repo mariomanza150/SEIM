@@ -9,7 +9,7 @@ class Command(BaseCommand):
     help = "Enhance homepage with content blocks for students and teachers"
 
     def handle(self, *args, **options):
-        self.stdout.write(self.style.SUCCESS("Enhancing UAdeC homepage..."))
+        self.stdout.write(self.style.SUCCESS("Enhancing CMS homepage..."))
 
         try:
             home = HomePage.objects.get(slug="home")

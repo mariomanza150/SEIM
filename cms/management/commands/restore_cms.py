@@ -11,7 +11,10 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = "Restore CMS to working state with UAdeC content"
+    help = (
+        "Restore CMS with configured institution example content "
+        "(UAdeC defaults unless INSTITUTION_* is set)."
+    )
 
     def add_arguments(self, parser):
         parser.add_argument(

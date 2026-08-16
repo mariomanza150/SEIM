@@ -46,6 +46,9 @@ jobs:
           ruff check . --output-format=github
           ruff format --check .
 
+      - name: Dependency manifest
+        run: python scripts/check_python_deps.py
+
       - name: Job summary
         if: always()
         run: |

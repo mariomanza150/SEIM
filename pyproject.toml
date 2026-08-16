@@ -6,28 +6,18 @@ build-backend = "setuptools.build_meta"
 name = "seim"
 version = "1.0.0"
 description = "Student Exchange Information Management System"
-authors = [{name = "SEIM Team"}]
+authors = [{name = "Mario Alejandro Manzano and SEIM contributors"}]
 readme = "README.md"
+license = {file = "LICENSE"}
 requires-python = ">=3.11"
-dependencies = [
-    "Django>=5.2.3",
-    "djangorestframework>=3.15.1",
-    "psycopg2-binary>=2.9.9",
-    "celery>=5.3.6",
-    "redis>=5.0.4",
-    "django-redis>=5.4.0",
-    "djangorestframework-simplejwt>=5.3.1",
-    "django-cors-headers>=4.3.1",
-    "django-environ>=0.11.2",
-    "reportlab>=4.2.0",
-    "python-magic>=0.4.27",
-    "django-dynforms>=2025.7.0",
-    "django-ses>=3.5.0",
-    "drf-spectacular>=0.27.1",
-    "django-filter>=24.1",
-    "whitenoise>=6.6.0",
-    "sphinx>=8.2.3",
-]
+# Runtime pins live in requirements.txt (Docker, CI, Makefile). Do not list a
+# second dependency set here — it previously drifted (Django 5.2 vs 5.1).
+dynamic = ["dependencies"]
+
+[project.urls]
+Homepage = "https://github.com/mariomanza150/SEIM"
+Issues = "https://github.com/mariomanza150/SEIM/issues"
+Documentation = "https://github.com/mariomanza150/SEIM/blob/main/documentation/README.md"
 
 [project.optional-dependencies]
 dev = [
@@ -50,6 +40,15 @@ test = [
     "factory-boy>=3.3.0",
     "faker>=20.1.0",
 ]
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+include = ["seim*"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
 
 # Ruff configuration - used for linting and formatting (not Black)
 [tool.ruff]
@@ -129,6 +128,7 @@ exclude = [
     "frontend-vue/",
     "manage.py",
     "download_uadec_assets.py",
+    "scripts/download_institution_assets.py",
 ]
 
 [[tool.mypy.overrides]]
@@ -223,6 +223,8 @@ omit = [
     "*/celery.py",
     "seim/urls_OLD_BACKUP.py",
     "download_uadec_assets.py",
+    "scripts/download_institution_assets.py",
+    "scripts/check_python_deps.py",
     # Thin wiring / boilerplate: focus gate on models, services, tasks, etc.
     "*/admin.py",
     "*/views.py",

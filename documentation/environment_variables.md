@@ -213,6 +213,23 @@ SECURE_CONTENT_TYPE_NOSNIFF=True
 X_FRAME_OPTIONS=DENY
 ```
 
+### **🏛 Institution branding (white-label)**
+
+UAdeC is the default/example theme. Override to run SEIM for another institution. Full guide: [white_labeling.md](white_labeling.md).
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `INSTITUTION_NAME` | ❌ | Universidad Autónoma de Coahuila | Footer / legal name |
+| `INSTITUTION_SHORT_NAME` | ❌ | UAdeC | Short label in CMS chrome |
+| `INSTITUTION_TAGLINE` | ❌ | Intercambio Académico | Title suffix |
+| `INSTITUTION_DEPARTMENT` | ❌ | Dirección de Intercambio Académico | Footer + homepage hero |
+| `INSTITUTION_LOCATION` | ❌ | Saltillo, Coahuila, México | Footer location |
+| `INSTITUTION_WEBSITE` | ❌ | https://www.uadec.mx/ | Footer link and asset download source |
+| `INSTITUTION_LOGO_URL` | ❌ | (empty) | Optional navbar logo URL |
+| `BRAND_PRIMARY` | ❌ | `#2E5090` | CMS primary color |
+| `BRAND_ACCENT` | ❌ | `#C7A162` | CMS accent color |
+| `WAGTAIL_SITE_NAME` | ❌ | `SEIM - {short name}` | Wagtail admin site name |
+
 ### **🎨 Frontend Configuration**
 
 | Variable | Required | Default | Description |
@@ -575,6 +592,7 @@ MEDIA_ROOT=media/
 - [Deployment Guide](deployment.md)
 - [Troubleshooting Guide](troubleshooting.md)
 - [Admin Guide](admin_guide.md)
+- [White-labeling](white_labeling.md)
 
 ---
 

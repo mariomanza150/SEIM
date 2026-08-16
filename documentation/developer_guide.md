@@ -98,9 +98,11 @@ source .venv/bin/activate
 # Upgrade pip
 pip install --upgrade pip
 
-# Install all development dependencies
+# Install all development dependencies (pulls in requirements.txt)
 pip install -r requirements-dev.txt
 ```
+
+Pinned runtime deps are `requirements.txt`. `pyproject.toml` reads that file (no second conflicting list). Docker/CI install `requirements*.txt`. After changing either file: `python scripts/check_python_deps.py`.
 
 #### **4. Verify Installation:**
 ```bash

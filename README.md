@@ -4,18 +4,15 @@
 
 Student Exchange Information Manager: Django 5.1 + DRF + Vue 3 SPA + Wagtail CMS for student exchange programs.
 
-**SPA:** `/seim/` (`frontend-vue/`) · **CMS:** `/` and `/cms/` · **API:** `/api/` · [Contributing](CONTRIBUTING.md) · [Issues](https://github.com/mariomanza150/SEIM/issues)
+**SPA:** `/seim/` (`frontend-vue/`) · **CMS:** `/` and `/cms/` · **API:** `/api/` · [Contributing](CONTRIBUTING.md) · [Issues](https://github.com/mariomanza150/SEIM/issues) · [License](LICENSE)
 
 ## 🎉 Project Status
 
-**✅ Production Ready**  
-**✅ Backend Implementation Complete (1,147 tests passing)**  
-**✅ Frontend Implementation Complete**  
-**✅ Testing Infrastructure Stabilized**  
-**✅ Code Quality Verified**  
-**✅ Documentation Comprehensive & Up-to-Date**
+**✅ Backend + Vue SPA application UI**  
+**✅ Wagtail CMS for the public site**  
+**✅ JWT API, Docker, and CI**
 
-SEIM is production-ready with comprehensive features, security, and infrastructure. The system features a Vue 3 SPA (`frontend-vue/`, served at `/seim/`), JWT authentication, and role-based dashboards. Wagtail CMS owns the public site at `/`. The codebase includes comprehensive backend and Vue tests, with CI/CD automation and security hardening.
+SEIM is a Django 5.1 + DRF backend with a Vue 3 SPA (`frontend-vue/`, served at `/seim/`), JWT authentication, and role-based dashboards. Wagtail CMS owns the public site at `/`. The Django template frontend has been removed. Remaining operator leftovers (dynforms builder, data-management UI) are listed in [docs/SPA_VS_LEGACY.md](docs/SPA_VS_LEGACY.md).
 
 ### 🚀 What's Ready for Production
 - Complete user authentication and authorization
@@ -31,11 +28,11 @@ SEIM is production-ready with comprehensive features, security, and infrastructu
 - Grade translation system for international students
 
 ### 🔧 Optional Enhancements
-1. **Expanded Test Coverage** - Currently 34% backend, target 80% (estimated 4-6 weeks)
-2. **CI/CD Pipeline** - Automated testing and deployment
-3. **Internationalization** - Multi-language support
+1. **Coverage depth** — unit+integration already enforce `--cov-fail-under=80` on first-party apps; remaining work is CMS/operator leftovers and Vue slices in [docs/SPA_VS_LEGACY.md](docs/SPA_VS_LEGACY.md)
+2. **White-labeling** — UAdeC is the default theme; override `INSTITUTION_*` / `BRAND_*` (see [documentation/white_labeling.md](documentation/white_labeling.md))
+3. **Internationalization** — expand beyond the current SPA/CMS split
 
-**Note**: All critical functionality is tested and stable. Coverage expansion is an enhancement, not a blocker for production deployment.
+**Note**: Backend unit+integration coverage is gated at 80%. Historical “34%” figures in older notes are stale.
 
 ---
 
@@ -222,9 +219,11 @@ source .venv/bin/activate
 # Upgrade pip
 pip install --upgrade pip
 
-# Install all development dependencies
+# Install all development dependencies (includes requirements.txt)
 pip install -r requirements-dev.txt
 ```
+
+Runtime pins live in `requirements.txt`. `pyproject.toml` reads that file so the two cannot drift. Docker and CI install `requirements*.txt`, not a second dependency list.
 
 #### **4. Verify Installation:**
 ```bash
@@ -455,7 +454,14 @@ export DJANGO_SETTINGS_MODULE=seim.settings.production
 
 ## 📚 Documentation
 
-SEIM documentation is organized into two main directories:
+**Start here:** [documentation/README.md](documentation/README.md) (canonical guides + Sphinx).
+
+`documents/` at the repo root is the **Django document-upload app**, not a third docs tree.
+
+| Tree | Role |
+| --- | --- |
+| [`documentation/`](documentation/README.md) | **Canonical** manuals (install, architecture, testing, white-labeling, Sphinx) |
+| [`docs/`](docs/README.md) | Generated notes, status reports, Vue/CMS working papers. Index: [docs/index.md](docs/index.md) |
 
 ### **`documentation/` - Manual/Maintained Documentation**
 **Authoritative source** for development guidelines, user guides, and planning documents. Manually maintained by the team.
@@ -466,6 +472,7 @@ SEIM documentation is organized into two main directories:
 - **[Architecture](documentation/architecture.md)** - System design and architecture
 - **[Business Rules](documentation/business_rules.md)** - Business logic and rules
 - **[Form Builder Guide](documentation/form_builder_guide.md)** - Dynamic form creation system
+- **[White-labeling](documentation/white_labeling.md)** - Institution branding (UAdeC default)
 - **[Grade Translation Guide](documentation/grade_translation_user_guide.md)** - Grade scale conversion system
 - **[Roadmap](documentation/roadmap.md)** - Development roadmap and upcoming features
 - **[Backlog](documentation/backlog.md)** - Current development tasks and priorities
@@ -476,6 +483,8 @@ SEIM documentation is organized into two main directories:
 ### **`docs/` - Generated/Auto-Generated Documentation**
 **Auto-generated** documentation from code analysis and tools. Regenerated periodically.
 
+- **[docs/ README](docs/README.md)** - How this folder relates to `documentation/`
+- **[SPA vs leftover Django](docs/SPA_VS_LEGACY.md)** - Current Vue vs Django split
 - **[Documentation Index](docs/index.md)** - Index of generated documentation
 - **[Project Structure Guide](docs/PROJECT_STRUCTURE.md)** - Comprehensive project structure guide
 - **[API Contracts](docs/api-contracts.md)** - Auto-generated API documentation

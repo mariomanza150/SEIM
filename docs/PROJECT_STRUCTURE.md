@@ -10,7 +10,7 @@
 SEIM follows a clear organizational structure to separate concerns and make the codebase maintainable:
 
 - **Application Code** - Django apps and core functionality
-- **Documentation** - Separated into generated and manual documentation
+- **Documentation** - Canonical manuals in `documentation/`; working notes in `docs/` (`documents/` is a Django app)
 - **Configuration** - Environment, Docker, and tool configurations
 - **Tests** - Comprehensive test suite
 - **Tools** - AI agent configurations and IDE settings
@@ -39,23 +39,28 @@ SEIM/
 ├── scripts/               # Utility scripts
 ├── nginx/                 # Nginx configuration
 ├── locale/                # Translation files
-├── docs/                  # Generated/auto-generated documentation
-├── documentation/        # Manual/maintained documentation
+├── docs/                  # Generated notes + working papers (see docs/README.md)
+├── documentation/         # Canonical manuals + Sphinx
+├── documents/             # Django document-upload app (not docs)
+├── LICENSE                # MIT
 ├── .tools/                # AI agent configs and IDE settings
 ├── docker-compose.yml     # Main Docker Compose configuration
 ├── Dockerfile             # Main Dockerfile
 ├── Makefile               # Development commands
 ├── README.md              # Project overview and quick start
-└── requirements.txt       # Python dependencies
+├── pyproject.toml         # Tooling + dynamic deps from requirements.txt
+└── requirements.txt       # Pinned runtime Python dependencies
 ```
 
 ---
 
 ## Documentation Structure
 
-### `docs/` - Generated/Auto-Generated Documentation
+### `docs/` - Generated notes and working papers
 
-**Purpose:** Documentation that is automatically generated or updated by tools.
+**Purpose:** Generated analysis, status reports, and historical Vue/CMS notes. Not the contributor manual. See [docs/README.md](README.md).
+
+**Canonical manuals:** [`documentation/`](../documentation/README.md) (includes Sphinx).
 
 **Contents:**
 - `architecture.md` - Auto-generated system architecture

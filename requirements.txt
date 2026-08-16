@@ -1,3 +1,8 @@
+# Pinned runtime dependencies. Source of truth for Docker, CI, and
+# `pip install -r requirements.txt`. pyproject.toml reads this file via
+# [tool.setuptools.dynamic] so the two cannot drift.
+# Install extras with requirements-dev.txt or requirements-test.txt.
+
 # Core Django and DRF
 Django==5.1.15
 djangorestframework==3.16.1

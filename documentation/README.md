@@ -3,8 +3,11 @@
 Welcome to the SEIM (Student Exchange Information Manager) documentation. This comprehensive guide provides everything you need to understand, deploy, and maintain the SEIM platform.
 
 **📌 Documentation Structure:**
-- **`documentation/`** (this directory) - **Manual/Maintained Documentation** - Authoritative source for development guidelines, user guides, and planning documents. Manually maintained by the team.
-- **`docs/`** - **Generated/Auto-Generated Documentation** - Auto-generated documentation from code analysis and tools. See [docs/index.md](../docs/index.md) for generated documentation.
+- **`documentation/`** (this directory) — **canonical manuals** (install, architecture, testing, Sphinx). Start here.
+- **`docs/`** — generated notes, status reports, Vue/CMS working papers. Entry: [docs/README.md](../docs/README.md) · index: [docs/index.md](../docs/index.md).
+- **`documents/`** — Django **document-upload app**, not a documentation tree.
+
+Unique files in `docs/` are kept (not deleted). Cross-link instead of duplicating.
 
 **Quick Reference:**
 - Need authoritative info? → Check this directory (`documentation/`)
@@ -24,7 +27,9 @@ Welcome to the SEIM (Student Exchange Information Manager) documentation. This c
 - **[Developer Guide](developer_guide.md)** - Development workflow, standards, and best practices
 - **[Architecture](architecture.md)** - System design and technical architecture
 - **[Business Rules](business_rules.md)** - Business logic and rules
-- **[Frontend Guide](frontend_guide.md)** - Frontend development and UI patterns
+- **[Frontend Guide](frontend_guide.md)** - Vue SPA + CMS patterns
+- **[SPA vs leftover Django](../docs/SPA_VS_LEGACY.md)** - What is still Django
+- **[White-labeling](white_labeling.md)** - Institution branding (UAdeC default)
 - **[Form Builder Guide](form_builder_guide.md)** - Dynamic form creation and management
 
 ### **🔧 Technical Reference**
@@ -106,7 +111,7 @@ SEIM is a comprehensive Django-based web application for managing student exchan
 
 ### **Technology Stack:**
 - **Backend**: Django 5.1.4 with PostgreSQL
-- **Frontend**: Bootstrap 5 with modern JavaScript
+- **Frontend**: Vue 3 SPA at `/seim/` plus Wagtail CMS at `/`
 - **Caching**: Redis for performance optimization
 - **Background Tasks**: Celery for async processing
 - **Containerization**: Docker for consistent deployment
@@ -181,7 +186,7 @@ For maintaining and updating documentation, see:
 | `application_forms/` | Dynamic form builder |
 | `api/` | REST API gateway (URL aggregator) |
 | `core/` | Shared utilities |
-| `frontend/` | UI components |
+| `frontend-vue/` | Vue 3 SPA at `/seim/` |
 
 ---
 

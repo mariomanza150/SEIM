@@ -19,7 +19,7 @@ SEIM (Student Exchange Information Manager) is a comprehensive Django-based web 
 
 ## Generated Documentation
 
-**Note:** This directory contains auto-generated and generated documentation. For manually maintained documentation, see the [`documentation/`](../documentation/) directory.
+**Note:** This directory contains generated notes and working papers. Canonical manuals live in [`documentation/`](../documentation/README.md). How the two trees relate: [`docs/README.md`](README.md). `documents/` is a Django app, not docs.
 
 ### Core Documentation
 
@@ -52,6 +52,7 @@ SEIM (Student Exchange Information Manager) is a comprehensive Django-based web 
 
 ### Frontend Migration Notes
 
+- [SPA vs leftover Django](./SPA_VS_LEGACY.md) - **Current** Vue SPA vs remaining Django surfaces
 - [Vue Migration Plan](./VUE_MIGRATION_PLAN.md) - Historical migration rationale and scope
 - [Vue Test Results](./VUE_TEST_RESULTS.md) - Current Vue testing status and rerun instructions
 

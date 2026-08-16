@@ -78,7 +78,7 @@ describe('Profile', () => {
         expect(school).toBe('school-1')
         return Promise.resolve({ data: [{ id: 'program-1', name: 'Computer Science' }] })
       }
-      if (url === '/grades/scales/active/') return Promise.resolve({ data: [] })
+      if (url === '/grades/api/scales/active/') return Promise.resolve({ data: [] })
       return Promise.reject(new Error(`Unhandled GET ${url}`))
     })
     api.patch.mockResolvedValue({ data: profilePayload })

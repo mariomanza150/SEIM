@@ -138,6 +138,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.static",
                 "wagtail.contrib.settings.context_processors.settings",
+                "core.context_processors.institution",
             ],
         },
     },
@@ -441,8 +442,44 @@ AGREEMENT_EXPIRATION_REMINDER_STATUSES = [
     s.strip() for s in _AGREEMENT_EXP_STATUSES.split(",") if s.strip()
 ] or ["active", "renewal_pending"]
 
+# Institution branding (UAdeC is the default/example production theme).
+# Override these to white-label CMS chrome, emails, and asset download.
+INSTITUTION_NAME = env("INSTITUTION_NAME", default="Universidad Autónoma de Coahuila")
+INSTITUTION_SHORT_NAME = env("INSTITUTION_SHORT_NAME", default="UAdeC")
+INSTITUTION_TAGLINE = env("INSTITUTION_TAGLINE", default="Intercambio Académico")
+INSTITUTION_DEPARTMENT = env(
+    "INSTITUTION_DEPARTMENT", default="Dirección de Intercambio Académico"
+)
+INSTITUTION_LOCATION = env("INSTITUTION_LOCATION", default="Saltillo, Coahuila, México")
+INSTITUTION_WEBSITE = env("INSTITUTION_WEBSITE", default="https://www.uadec.mx/")
+INSTITUTION_LOGO_URL = env("INSTITUTION_LOGO_URL", default="")
+INSTITUTION_NAV_BRAND = env("INSTITUTION_NAV_BRAND", default="")
+INSTITUTION_SOCIAL_FACEBOOK = env(
+    "INSTITUTION_SOCIAL_FACEBOOK", default="https://facebook.com/uadec"
+)
+INSTITUTION_SOCIAL_TWITTER = env(
+    "INSTITUTION_SOCIAL_TWITTER", default="https://twitter.com/uadec"
+)
+INSTITUTION_SOCIAL_INSTAGRAM = env(
+    "INSTITUTION_SOCIAL_INSTAGRAM", default="https://instagram.com/uadec"
+)
+INSTITUTION_THEME = {
+    "primary": env("BRAND_PRIMARY", default="#2E5090"),
+    "primary_light": env("BRAND_PRIMARY_LIGHT", default="#3B5FA5"),
+    "primary_dark": env("BRAND_PRIMARY_DARK", default="#1E3A5F"),
+    "accent": env("BRAND_ACCENT", default="#C7A162"),
+    "accent_light": env("BRAND_ACCENT_LIGHT", default="#D4B177"),
+    "accent_dark": env("BRAND_ACCENT_DARK", default="#B08D4D"),
+    "navy": env("BRAND_NAVY", default="#1E3A5F"),
+    "orange": env("BRAND_ORANGE", default="#E67E22"),
+    "text": env("BRAND_TEXT", default="#2C3E50"),
+}
+
 # Wagtail CMS Configuration
-WAGTAIL_SITE_NAME = "SEIM - Student Exchange Information Manager"
+WAGTAIL_SITE_NAME = env(
+    "WAGTAIL_SITE_NAME",
+    default=f"SEIM - {INSTITUTION_SHORT_NAME}",
+)
 WAGTAILADMIN_BASE_URL = env("WAGTAILADMIN_BASE_URL", default="http://localhost:8000")
 
 # Wagtail API Configuration

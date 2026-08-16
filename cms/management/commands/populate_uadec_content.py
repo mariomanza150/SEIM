@@ -9,6 +9,7 @@ This creates realistic content for UAdeC's international exchange department inc
 - FAQs
 """
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
@@ -26,11 +27,19 @@ from cms.models import (
 
 
 class Command(BaseCommand):
-    help = "Populate CMS with Universidad Autónoma de Coahuila content"
+    help = (
+        "Populate CMS with the configured institution example content "
+        "(UAdeC names unless INSTITUTION_* settings are overridden)."
+    )
 
     def handle(self, *args, **options):
+        short = getattr(settings, "INSTITUTION_SHORT_NAME", "UAdeC")
+        name = getattr(settings, "INSTITUTION_NAME", "Universidad Autónoma de Coahuila")
+        department = getattr(
+            settings, "INSTITUTION_DEPARTMENT", "Dirección de Intercambio Académico"
+        )
         self.stdout.write(
-            self.style.SUCCESS("Populating UAdeC Exchange Department content...")
+            self.style.SUCCESS(f"Populating {short} Exchange Department content...")
         )
 
         # Get or create homepage
@@ -44,14 +53,16 @@ class Command(BaseCommand):
             )
             return
 
-        # Update HomePage with UAdeC branding
-        home_page.title = "UAdeC - Dirección de Intercambio Académico"
-        home_page.hero_title = "Bienvenido a la Dirección de Intercambio Académico"
-        home_page.hero_subtitle = "Universidad Autónoma de Coahuila - Transformando vidas a través de experiencias internacionales"
+        # Update HomePage with configured institution branding (UAdeC defaults)
+        home_page.title = f"{short} - {department}"
+        home_page.hero_title = f"Bienvenido a la {department}"
+        home_page.hero_subtitle = (
+            f"{name} - Transformando vidas a través de experiencias internacionales"
+        )
         home_page.hero_cta_text = "Explorar Programas"
         home_page.save_revision().publish()
         self.stdout.write(
-            self.style.SUCCESS("  ✓ Updated HomePage with UAdeC branding")
+            self.style.SUCCESS(f"  ✓ Updated HomePage with {short} branding")
         )
 
         # Create or update About page

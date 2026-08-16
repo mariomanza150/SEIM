@@ -77,7 +77,7 @@ function profileGateResponse(url) {
       },
     })
   }
-  if (url === '/grades/scales/active/') {
+  if (url === '/grades/api/scales/active/') {
     return Promise.resolve({
       data: [{ id: 'scale-1', name: '4.0 Scale', scale_type: '4.0' }],
     })
@@ -535,7 +535,7 @@ describe('ApplicationForm', () => {
       if (url === '/api/accounts/profile/') {
         return Promise.resolve({ data: { is_ready_to_apply: false } })
       }
-      if (url === '/grades/scales/active/') return Promise.resolve({ data: [] })
+      if (url === '/grades/api/scales/active/') return Promise.resolve({ data: [] })
       return Promise.reject(new Error(`Unexpected GET ${url}`))
     })
 
