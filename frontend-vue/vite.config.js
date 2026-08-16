@@ -81,7 +81,8 @@ export default defineConfig({
     include: ['src/**/*.{spec,test}.{js,ts}'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html'],
+      reporter: ['text', 'html', 'lcov'],
+      reportsDirectory: './coverage',
       include: ['src/stores/**', 'src/services/**'],
       exclude: ['**/*.spec.js', '**/*.test.js', 'node_modules'],
     },

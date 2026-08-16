@@ -1,0 +1,81 @@
+# Visual/historical coverage tracker. The hard CI gate remains
+# pytest --cov-fail-under=80 (see pytest.ini / pyproject.toml).
+# Project status is informational while Vue/Django frontend coverage is in flux.
+
+codecov:
+  require_ci_to_pass: false
+  notify:
+    wait_for_ci: true
+
+coverage:
+  precision: 2
+  round: down
+  range: "60...90"
+  status:
+    project:
+      default:
+        informational: true
+        target: auto
+        threshold: 2%
+      backend:
+        flags:
+          - backend
+        informational: true
+        target: auto
+        threshold: 2%
+      frontend:
+        flags:
+          - frontend
+        informational: true
+        target: auto
+        threshold: 3%
+    patch:
+      default:
+        target: 50%
+        threshold: 5%
+      backend:
+        flags:
+          - backend
+        target: 50%
+        threshold: 5%
+      frontend:
+        flags:
+          - frontend
+        informational: true
+        target: 40%
+        threshold: 5%
+
+comment:
+  layout: "header, diff, flags, files"
+  behavior: default
+  require_changes: true
+
+flags:
+  backend:
+    paths:
+      - accounts/
+      - analytics/
+      - api/
+      - application_forms/
+      - core/
+      - data_management/
+      - documents/
+      - exchange/
+      - grades/
+      - internacional/
+      - notifications/
+      - seim/
+    carryforward: true
+  frontend:
+    paths:
+      - frontend-vue/src/
+    carryforward: true
+
+ignore:
+  - "*/migrations/*"
+  - "*/management/commands/*"
+  - "*/tests/*"
+  - "*/tests.py"
+  - "frontend-vue/src/**/*.spec.js"
+  - "frontend-vue/src/**/*.test.js"
+  - "frontend-vue/dist/**"

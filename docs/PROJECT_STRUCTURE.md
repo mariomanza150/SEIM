@@ -29,7 +29,7 @@ SEIM/
 ├── core/                  # Shared utilities and base classes
 ├── documents/             # Document management
 ├── exchange/              # Exchange programs and applications
-├── frontend/              # Django frontend views
+├── frontend-vue/          # Vue 3 SPA (served at /seim/)
 ├── grades/                # Grade translation system
 ├── notifications/         # Notification system
 ├── seim/                  # Django project settings
@@ -262,15 +262,10 @@ tests/
 
 ```
 static/
-├── css/                  # Stylesheets
+├── css/                  # CMS / shared styles
 │   ├── main.css
-│   ├── accessibility.css
-│   └── uadec-styles.css
-├── js/                   # JavaScript modules
-│   ├── main.js           # Entry point
-│   ├── auth.js
-│   └── modules/          # Feature modules
-└── favicon.ico
+│   └── utilities/seim-shared-tokens.css
+└── js/                   # CMS-only scripts (SPA JS is in frontend-vue/)
 ```
 
 ### Templates
@@ -281,13 +276,11 @@ templates/
 ├── components/            # Reusable components
 │   ├── navigation/
 │   └── ...
-├── frontend/               # Frontend pages
-│   ├── dashboard.html
-│   ├── applications/
-│   ├── documents/
-│   └── ...
+├── vue_spa_missing_dist/  # Dev placeholder when Vue dist is missing
 └── admin/                 # Admin templates
 ```
+
+App UI pages live in `frontend-vue/`, not `templates/frontend/`.
 
 ---
 

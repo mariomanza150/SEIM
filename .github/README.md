@@ -8,9 +8,9 @@ Automated workflows for SEIM: quality gates, tests, container scan, E2E, and dep
 
 Runs on: **push** to `main`, `master`, `develop`, `feature/vue-migration`; **pull request** targeting `main`, `master`, `develop`
 
-**Jobs:** Ruff · Bandit + `pip-audit` · mypy (non-blocking) · backend pytest (unit + integration) · Vue Vitest + Vite build · Docker build (Vue dist + collectstatic) + Trivy SARIF · Locust on pull requests only.
+**Jobs:** Ruff · Bandit + `pip-audit` · mypy (non-blocking) · backend pytest (unit + integration, coverage XML) · Vue Vitest + coverage + Vite build · Docker build (Vue dist + collectstatic) + Trivy SARIF · Locust on pull requests only.
 
-**Secrets (optional):** `CODECOV_TOKEN`
+**Secrets (optional for CI green, required for production Codecov tracking):** `CODECOV_TOKEN`
 
 ### 2. Deploy (`deploy.yml`)
 
@@ -47,7 +47,14 @@ Gitleaks on **push** to `main`, `master`, `develop`, `feature/vue-migration`; **
 Do these in [github.com/mariomanza150/SEIM](https://github.com/mariomanza150/SEIM) (requires admin on the repo).
 
 1. **Deploy environments** — [Settings → Environments](https://github.com/mariomanza150/SEIM/settings/environments): create **`staging`** and **`production`**. Optionally add **required reviewers** or **wait timer** on `production` so `deploy.yml` manual production deploys are gated.
-2. **Codecov (optional)** — [Settings → Secrets and variables → Actions](https://github.com/mariomanza150/SEIM/settings/secrets/actions): add **`CODECOV_TOKEN`** from [codecov.io](https://codecov.io) after linking the repo. CI still runs if this secret is missing (`fail_ci_if_error: false` on upload steps).
+2. **Codecov (recommended for production metrics)** — CI always writes coverage reports (backend `coverage.xml`, frontend `frontend-vue/coverage/lcov.info`) and uploads them as artifacts. Upload to Codecov is **non-blocking** (`continue-on-error: true`, `fail_ci_if_error: false`) so missing tokens / fork PRs do not turn the job red. Tokenless upload may work for public repos; it is rate-limited and unreliable. For production tracking:
+
+   1. Sign in at [codecov.io](https://codecov.io) with GitHub and add **`mariomanza150/SEIM`**.
+   2. Copy the repository upload token (Settings → General on the Codecov repo page).
+   3. In GitHub: [Settings → Secrets and variables → Actions](https://github.com/mariomanza150/SEIM/settings/secrets/actions) → **New repository secret** → name **`CODECOV_TOKEN`** → paste the token only (no `CODECOV_TOKEN=` prefix).
+   4. Re-run **CI** on `main` (or merge a PR). Backend uploads flag `backend`; Vue uploads flag `frontend`. Policy lives in [`codecov.yml`](../codecov.yml) (project informational during migration; pytest `--cov-fail-under=80` remains the hard gate).
+
+   The job summary states when the secret is missing. Do not put this token in `.env` or `env.example`.
 3. **Merge line of work into `main`** — Open a PR from `feature/vue-migration` into `main` ([compare](https://github.com/mariomanza150/SEIM/compare/main...feature/vue-migration?expand=1)). If GitHub reports unrelated histories, merge via the UI using a merge commit or align `main` to this branch using a one-time strategy your team agrees on (replacing the old `main` history is destructive).
 
 ## Other automation
@@ -67,11 +74,12 @@ Optional `.secrets` file: `CODECOV_TOKEN=...` then `act --secret-file .secrets p
 ## Practices
 
 1. CI green before merge.
-2. Target coverage policy: see `pytest.ini` / `pyproject.toml` (`--cov-fail-under=80` for scoped backend jobs).
+2. Target coverage policy: pytest `--cov-fail-under=80` is the hard gate (`pytest.ini` / `pyproject.toml`). Codecov (`codecov.yml`) is the visual/historical tracker (project status informational; patch on new backend lines targets 50%).
 3. Staging deploy follows push to `main`/`master`; production uses protected environment + manual workflow.
 
 ## References
 
 - [GitHub Actions](https://docs.github.com/en/actions)
 - [GHCR](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry)
+- [Codecov](https://docs.codecov.com/docs)
 - [act](https://github.com/nektos/act)

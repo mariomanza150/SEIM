@@ -56,7 +56,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         // Refresh failed - logout user
         await authStore.logout()
-        window.location.href = '/login'
+        window.location.href = '/seim/login/'
         return Promise.reject(refreshError)
       }
     }

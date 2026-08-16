@@ -433,13 +433,13 @@ docker-compose exec web coverage html
 
 ### **Frontend Coverage:**
 ```bash
-npm --prefix frontend-vue run test:run -- --coverage
+npm --prefix frontend-vue run test:coverage
 ```
 
 ### **Coverage Targets:**
-- **Backend**: Minimum 80% coverage
-- **Frontend**: Minimum 70% coverage
-- **Critical Paths**: 100% coverage for authentication, payment, and data integrity
+- **Backend**: Minimum 80% coverage (hard CI gate: pytest `--cov-fail-under=80`)
+- **Frontend**: Vitest coverage collected in CI for `src/stores` and `src/services` (no fail-under gate)
+- **Codecov**: Visual/historical tracker. Add GitHub Actions secret `CODECOV_TOKEN` from [codecov.io](https://codecov.io) after linking `mariomanza150/SEIM`. CI stays green if the secret is missing. Setup steps: [`.github/README.md`](../.github/README.md).
 
 ---
 
@@ -465,27 +465,7 @@ Vue unit tests use `frontend-vue/vitest.config.js` (or the Vite config `test` bl
 
 ## 🚀 **CI/CD Testing**
 
-### **GitHub Actions Workflow:**
-```yaml
-# .github/workflows/test.yml
-name: Tests
-on: [push, pull_request]
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.12'
-      - name: Install dependencies
-        run: |
-          pip install -r requirements-dev.txt
-      - name: Run tests
-        run: |
-          make test
-```
+CI lives in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). Backend pytest writes `coverage.xml`; Vue Vitest writes `frontend-vue/coverage/lcov.info`. Both upload to Codecov when possible (see [`.github/README.md`](../.github/README.md) for `CODECOV_TOKEN`).
 
 ### **Local CI Simulation:**
 ```bash

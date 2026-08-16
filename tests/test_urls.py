@@ -5,6 +5,7 @@ Tests for URL configuration in SEIM project.
 from django.apps import apps
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
+from django.urls import NoReverseMatch, reverse
 
 from tests.wagtail_site import ensure_wagtail_site_root_live
 
@@ -126,6 +127,8 @@ class VueAppRoutingTests(TestCase):
     def test_vue_app_catch_all(self):
         """Paths under ``/seim/`` are served by the Vue shell template."""
         test_paths = [
+            "/seim/login/",
+            "/seim/register/",
             "/seim/dashboard",
             "/seim/applications",
             "/seim/applications/new",
@@ -139,6 +142,13 @@ class VueAppRoutingTests(TestCase):
             response = self.client.get(path)
             self.assertEqual(response.status_code, 200)
             self.assertIn('id="app"', str(response.content))
+
+    def test_legacy_frontend_url_namespace_is_gone(self):
+        """The removed Django ``frontend`` app must not register URL names."""
+        with self.assertRaises(NoReverseMatch):
+            reverse("frontend:login")
+        with self.assertRaises(NoReverseMatch):
+            reverse("frontend:dashboard")
 
     def test_vue_app_excludes_admin_cms_api(self):
         """Admin, CMS, and API paths are not the Vue ``index.html`` shell."""

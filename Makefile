@@ -184,7 +184,7 @@ test-frontend-e2e:
 
 test-frontend-coverage:
 	@echo "🧪 Running Vue frontend tests with coverage..."
-	npm --prefix frontend-vue run test:run -- --coverage
+	npm --prefix frontend-vue run test:coverage
 
 # Selenium E2E is deprecated. Playwright is the supported path (make e2e-test).
 # Set SEIM_RUN_SELENIUM=1 to force the legacy runner.

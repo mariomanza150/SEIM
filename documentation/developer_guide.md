@@ -114,7 +114,7 @@ python -c "import selenium; print(f'Selenium {selenium.__version__}')"
 #### **✅ Required for:**
 - **Selenium E2E Tests**: Browser automation tests that run from host OS
 - **Local Development Tools**: Code quality checks, documentation generation
-- **Frontend Testing**: Jest tests and frontend build tools
+- **Frontend Testing**: Vitest (`npm --prefix frontend-vue run test:run`) and Vite builds
 - **CI/CD Scripts**: Local testing of deployment scripts
 
 #### **❌ Not Required for:**
@@ -250,9 +250,9 @@ make pre-commit-install
 make pre-commit-run
 ```
 
-### **Frontend Testing with Jest**
-- Frontend JavaScript logic is tested using Jest and jsdom.
-- Vue unit tests live in `frontend-vue/` (Vitest).
+### **Frontend Testing with Vitest**
+- Vue unit tests live in `frontend-vue/` (Vitest + jsdom).
+- The legacy Django `frontend` app and Jest configs are removed.
 - Run tests and view coverage:
 
 ```bash
@@ -413,19 +413,10 @@ class ApplicationService:
 ### **Test Structure:**
 ```
 tests/
-├── unit/
-│   ├── test_models.py
-│   ├── test_services.py
-│   └── test_utils.py
-├── integration/
-│   ├── test_api.py
-│   ├── test_workflows.py
-│   └── test_auth.py
-├── frontend/
-│   ├── test_components.py
-│   └── test_forms.py
-└── e2e/
-    └── test_user_workflows.py
+├── unit/              # Django unit tests
+├── integration/       # API and workflow tests
+└── e2e_playwright/    # Browser E2E (Playwright)
+frontend-vue/          # Vue unit tests (Vitest, colocated *.spec.js)
 ```
 
 ---

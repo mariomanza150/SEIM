@@ -163,6 +163,7 @@ class TestBasicCoverage(TestCase):
 
         self.assertNotIn("plugins", settings.INSTALLED_APPS)
         self.assertNotIn("dashboard", settings.INSTALLED_APPS)
+        self.assertNotIn("frontend", settings.INSTALLED_APPS)
 
     def test_exchange_urls_mounted_under_api(self):
         """Exchange viewsets are mounted via exchange.urls under /api/."""
