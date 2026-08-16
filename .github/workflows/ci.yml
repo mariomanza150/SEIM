@@ -194,7 +194,7 @@ jobs:
       - name: Upload coverage to Codecov
         id: codecov_backend
         if: always() && env.CODECOV_TOKEN != ''
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ env.CODECOV_TOKEN }}
           files: ./coverage.xml
@@ -274,7 +274,7 @@ jobs:
       - name: Upload coverage to Codecov
         id: codecov_frontend
         if: always() && env.CODECOV_TOKEN != ''
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           token: ${{ env.CODECOV_TOKEN }}
           files: frontend-vue/coverage/lcov.info
