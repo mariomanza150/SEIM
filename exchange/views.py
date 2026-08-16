@@ -384,9 +384,9 @@ class ProgramViewSet(viewsets.ModelViewSet):
     def host_institutions(self, request, pk=None):
         """Active host universities under this program (mobility scheme)."""
         program = self.get_object()
-        qs = HostInstitution.objects.filter(
-            program=program, is_active=True
-        ).order_by("name")
+        qs = HostInstitution.objects.filter(program=program, is_active=True).order_by(
+            "name"
+        )
         return Response(HostInstitutionSerializer(qs, many=True).data)
 
     @action(detail=True, methods=["post"])
@@ -1190,9 +1190,9 @@ class HostSchoolViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=["get"], url_path="academic-programs")
     def academic_programs(self, request, pk=None):
         school = self.get_object()
-        qs = HostAcademicProgram.objects.filter(
-            school=school, is_active=True
-        ).order_by("name")
+        qs = HostAcademicProgram.objects.filter(school=school, is_active=True).order_by(
+            "name"
+        )
         return Response(HostAcademicProgramSerializer(qs, many=True).data)
 
 
@@ -1245,7 +1245,9 @@ class ApplicationSubjectSelectionViewSet(viewsets.ModelViewSet):
         if not user.has_any_role(["coordinator", "admin"]):
             if application.student_id != user.pk:
                 raise ValidationError(
-                    {"application": "You can only add subjects to your own application."}
+                    {
+                        "application": "You can only add subjects to your own application."
+                    }
                 )
         serializer.save()
 
@@ -1522,9 +1524,7 @@ class CalendarEventViewSet(viewsets.ReadOnlyModelViewSet):
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as exc:
-            return Response(
-                {"detail": str(exc)}, status=status.HTTP_502_BAD_GATEWAY
-            )
+            return Response({"detail": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
         payload = connection_status(request.user)
         payload["sync"] = result
         return Response(payload)

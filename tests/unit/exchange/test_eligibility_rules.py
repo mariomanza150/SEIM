@@ -321,4 +321,3 @@ class TestEligibilityRulesEngine:
         assert ev.failures == ["Student profile is missing."]
         row = ev.rules_as_dicts()[0]
         assert row["message_key"] == "profile_missing"
-

@@ -95,7 +95,9 @@ class DataManagementAPITests(APITestCase):
             format="json",
         )
         self.assertEqual(reset.status_code, status.HTTP_200_OK)
-        self.assertTrue(DataOperationLog.objects.filter(operation_type="DB_RESET").exists())
+        self.assertTrue(
+            DataOperationLog.objects.filter(operation_type="DB_RESET").exists()
+        )
 
         cleanup = self.client.post(
             "/api/data-management/execute/",
@@ -106,7 +108,9 @@ class DataManagementAPITests(APITestCase):
             format="json",
         )
         self.assertEqual(cleanup.status_code, status.HTTP_200_OK)
-        self.assertTrue(DataOperationLog.objects.filter(operation_type="CLEANUP").exists())
+        self.assertTrue(
+            DataOperationLog.objects.filter(operation_type="CLEANUP").exists()
+        )
 
     def test_admin_can_import_students(self):
         self.client.force_authenticate(user=self.admin)

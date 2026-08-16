@@ -122,9 +122,7 @@ class TestHostDestinationCascade:
             patch("exchange.services.NotificationService.send_notification"),
             patch("exchange.services.NotificationService.broadcast_application_sync"),
         ):
-            result = ApplicationService.submit_application(
-                app, mobility_app["student"]
-            )
+            result = ApplicationService.submit_application(app, mobility_app["student"])
         result.refresh_from_db()
         assert result.status.name == "submitted"
         assert result.submitted_at is not None

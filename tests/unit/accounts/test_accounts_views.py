@@ -141,9 +141,7 @@ class TestProfileCatalogPermissions(APITestCase):
     def test_allowed_email_domains_are_public_but_other_catalogs_require_auth(self):
         AllowedEmailDomain.objects.get_or_create(name="uanl.edu.mx")
 
-        public_response = self.client.get(
-            reverse("accounts:allowed-email-domain-list")
-        )
+        public_response = self.client.get(reverse("accounts:allowed-email-domain-list"))
         protected_response = self.client.get(reverse("accounts:academic-level-list"))
 
         assert public_response.status_code == status.HTTP_200_OK

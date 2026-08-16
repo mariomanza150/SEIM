@@ -86,7 +86,9 @@ def create_styles():
             name="CustomTitle",
             parent=styles["Heading1"],
             fontSize=18,
-            textColor=colors.HexColor(_institution_brand()["theme"].get("primary", "#2E5090")),
+            textColor=colors.HexColor(
+                _institution_brand()["theme"].get("primary", "#2E5090")
+            ),
             spaceAfter=12,
             alignment=TA_CENTER,
             fontName="Helvetica-Bold",
@@ -98,7 +100,9 @@ def create_styles():
             name="CustomHeading",
             parent=styles["Heading2"],
             fontSize=14,
-            textColor=colors.HexColor(_institution_brand()["theme"].get("primary", "#2E5090")),
+            textColor=colors.HexColor(
+                _institution_brand()["theme"].get("primary", "#2E5090")
+            ),
             spaceAfter=10,
             spaceBefore=10,
             fontName="Helvetica-Bold",
@@ -323,7 +327,9 @@ def generate_commitment_letter():
             "COORDINACIÓN GENERAL DE RELACIONES INTERNACIONALES", styles["CustomBody"]
         )
     )
-    story.append(Paragraph(_t("UNIVERSIDAD AUTÓNOMA DE COAHUILA"), styles["CustomBody"]))
+    story.append(
+        Paragraph(_t("UNIVERSIDAD AUTÓNOMA DE COAHUILA"), styles["CustomBody"])
+    )
     story.append(Paragraph("PRESENTE", styles["CustomBody"]))
     story.append(Spacer(1, 0.3 * inch))
 
@@ -340,7 +346,9 @@ def generate_commitment_letter():
     # Commitments
     commitments = [
         "Cumplir con todos los requisitos académicos y administrativos establecidos por el programa de movilidad.",
-        _t("Mantener un comportamiento ejemplar que honre a la Universidad Autónoma de Coahuila."),
+        _t(
+            "Mantener un comportamiento ejemplar que honre a la Universidad Autónoma de Coahuila."
+        ),
         "Cursar satisfactoriamente las materias acordadas en el programa de estudios.",
         _t("Regresar a la UAdeC al finalizar el período de intercambio acordado."),
         "Presentar la documentación requerida para la revalidación de créditos.",
@@ -433,7 +441,9 @@ def generate_nomination_letter_template():
             "COORDINADORA GENERAL DE RELACIONES INTERNACIONALES", styles["CustomBody"]
         )
     )
-    story.append(Paragraph(_t("UNIVERSIDAD AUTÓNOMA DE COAHUILA"), styles["CustomBody"]))
+    story.append(
+        Paragraph(_t("UNIVERSIDAD AUTÓNOMA DE COAHUILA"), styles["CustomBody"])
+    )
     story.append(Paragraph("PRESENTE", styles["CustomBody"]))
     story.append(Spacer(1, 0.3 * inch))
 
@@ -569,7 +579,12 @@ def generate_course_equivalency_form():
 
     # Course table
     data = [
-        [_t("Materia en UAdeC"), "Créditos", "Materia en Universidad Destino", "Créditos"],
+        [
+            _t("Materia en UAdeC"),
+            "Créditos",
+            "Materia en Universidad Destino",
+            "Créditos",
+        ],
         ["", "", "", ""],
         ["", "", "", ""],
         ["", "", "", ""],

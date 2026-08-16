@@ -8,6 +8,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from accounts.models import Profile, Role
+from accounts.profile_seed import complete_apply_profile
 from documents.models import Document, DocumentType
 from exchange.demo_seed import (
     DEMO_AGREEMENT_SPECS,
@@ -83,6 +84,8 @@ class Command(BaseCommand):
                 for field_name, value in profile_data.items():
                     setattr(profile, field_name, value)
                 profile.save()
+            if spec["role"] == "student":
+                complete_apply_profile(user)
 
             action = "Created" if created else "Updated"
             self.stdout.write(f"  {action} user: {user.email}")

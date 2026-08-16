@@ -144,7 +144,9 @@ class TestVueProfile:
         expect(page.locator("[data-testid=profile-academic-section]")).to_be_visible(
             timeout=5000
         )
-        expect(page.locator("[data-testid=profile-eligibility-section]")).to_be_visible()
+        expect(
+            page.locator("[data-testid=profile-eligibility-section]")
+        ).to_be_visible()
         page.locator("[data-testid=profile-current-semester]").fill("6")
         page.locator("[data-testid=profile-credits-percent]").fill("75")
         page.get_by_role("button", name="Save profile").click()
@@ -169,7 +171,9 @@ class TestVueHostCascade:
         if options.count() < 2:
             pytest.skip("No programs available")
 
-        vue_e2e_option = program_select.locator("option", has_text="Vue E2E Test Program")
+        vue_e2e_option = program_select.locator(
+            "option", has_text="Vue E2E Test Program"
+        )
         if vue_e2e_option.count() > 0:
             program_select.select_option(label="Vue E2E Test Program")
         else:
@@ -219,7 +223,9 @@ class TestVueHostCascade:
         except Exception:
             pytest.skip("No host academic program options")
         academic_select.select_option(index=1)
-        expect(page.locator("[data-testid=subjects-section]")).to_be_visible(timeout=8000)
+        expect(page.locator("[data-testid=subjects-section]")).to_be_visible(
+            timeout=8000
+        )
 
 
 @pytest.mark.e2e_playwright

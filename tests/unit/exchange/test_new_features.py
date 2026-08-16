@@ -431,9 +431,7 @@ class TestNotificationLinks:
         draft_status = ApplicationStatus.objects.get_or_create(
             name="draft", defaults={"order": 1}
         )[0]
-        ApplicationStatus.objects.get_or_create(
-            name="submitted", defaults={"order": 2}
-        )
+        ApplicationStatus.objects.get_or_create(name="submitted", defaults={"order": 2})
         ApplicationStatus.objects.get_or_create(
             name="under_review", defaults={"order": 3}
         )

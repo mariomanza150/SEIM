@@ -70,6 +70,8 @@ class TestSeedDemoReadinessCommand(TestCase):
         self.assertGreater(Comment.objects.count(), 0)
         self.assertGreater(TimelineEvent.objects.count(), 0)
         self.assertGreater(Notification.objects.filter(is_read=False).count(), 0)
+        student = User.objects.get(email="student@test.com")
+        self.assertTrue(student.profile.is_ready_to_apply)
 
     def test_seed_demo_readiness_is_idempotent_for_core_records(self):
         call_command("seed_demo_readiness")

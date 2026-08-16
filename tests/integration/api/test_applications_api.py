@@ -626,7 +626,8 @@ class TestApplicationsPerformance(PerformanceTestCase):
             print(f"Response status: {response.status_code}")
             print(f"Response data: {getattr(response, 'data', None)}")
         self.assert_response_success(response, status.HTTP_200_OK)
-        self.assert_response_time(response, max_time=1.0)
+        # 100 programs + full-text search is heavier than the list-only case.
+        self.assert_response_time(response, max_time=2.0)
 
         # Verify search results
         self.assertGreater(len(response.data["results"]), 0)

@@ -287,7 +287,10 @@ class AnalyticsService:
             y_mean = sum(counts) / n
             denom = sum((x - x_mean) ** 2 for x in xs) or 1.0
             slope = (
-                sum((x - x_mean) * (y - y_mean) for x, y in zip(xs, counts)) / denom
+                sum(
+                    (x - x_mean) * (y - y_mean) for x, y in zip(xs, counts, strict=True)
+                )
+                / denom
             )
             intercept = y_mean - slope * x_mean
         else:

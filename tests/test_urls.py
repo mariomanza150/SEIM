@@ -30,6 +30,7 @@ class UrlConfigurationTests(TestCase):
         self.assertNotIn('id="app"', body)
         if not apps.is_installed("wagtail"):
             self.assertIn("student exchange information manager", body.lower())
+            self.assertIn("<title>", body.lower())
 
     def test_seim_url_resolves_to_vue_app(self):
         """``/seim/`` serves the Vue shell template (``index.html``)."""
@@ -140,7 +141,9 @@ class UrlConfigurationTests(TestCase):
         app_id = "11111111-1111-1111-1111-111111111111"
         response = self.client.get(f"/applications/{app_id}/", follow=False)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response.headers.get("Location"), f"/seim/applications/{app_id}")
+        self.assertEqual(
+            response.headers.get("Location"), f"/seim/applications/{app_id}"
+        )
 
         response = self.client.get(f"/applications/{app_id}/edit/", follow=False)
         self.assertEqual(response.status_code, 302)

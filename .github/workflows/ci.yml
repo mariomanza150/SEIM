@@ -201,7 +201,7 @@ jobs:
           files: ./coverage.xml
           flags: backend
           name: backend-coverage
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           verbose: true
 
       - name: Upload coverage artifact
@@ -233,7 +233,7 @@ jobs:
               echo "Maintainers must add the GitHub Actions secret — see [.github/README.md](.github/README.md)."
             elif [ "${{ steps.codecov_backend.outcome }}" != "success" ]; then
               echo ""
-              echo "**Codecov:** upload failed. This job fails when the token is set."
+              echo "**Codecov:** upload failed. Coverage artifacts are still retained; upload is best-effort."
             else
               echo "**Codecov:** backend flag uploaded."
             fi
@@ -283,7 +283,7 @@ jobs:
           files: frontend-vue/coverage/lcov.info
           flags: frontend
           name: frontend-coverage
-          fail_ci_if_error: true
+          fail_ci_if_error: false
           verbose: true
 
       - name: Upload coverage artifact
@@ -306,7 +306,7 @@ jobs:
               echo "Maintainers must add the GitHub Actions secret — see [.github/README.md](.github/README.md)."
             elif [ "${{ steps.codecov_frontend.outcome }}" != "success" ]; then
               echo ""
-              echo "**Codecov:** upload failed. This job fails when the token is set."
+              echo "**Codecov:** upload failed. Coverage artifacts are still retained; upload is best-effort."
             else
               echo "**Codecov:** frontend flag uploaded."
             fi

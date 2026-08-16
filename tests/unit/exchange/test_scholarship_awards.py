@@ -19,7 +19,9 @@ class TestScholarshipAwards(APITestCase):
         self.app = self.create_application(student=self.student, program=self.program)
 
     def test_nominate_and_award(self):
-        award = upsert_award(self.app, self.coord, status_value="nominated", amount="12000")
+        award = upsert_award(
+            self.app, self.coord, status_value="nominated", amount="12000"
+        )
         self.assertEqual(award.status, ScholarshipAward.Status.NOMINATED)
         self.assertEqual(award.amount, Decimal("12000"))
         award = transition_award(award, self.coord, "awarded")

@@ -12,9 +12,13 @@ class TestNominationMatchingAPI(APITestCase):
         self.coord = self.create_user(role="coordinator")
         self.student_a = self.create_user(role="student", username="nom_a")
         self.student_b = self.create_user(role="student", username="nom_b")
-        self.program = self.create_program(enrollment_capacity=1, waitlist_when_full=True)
+        self.program = self.create_program(
+            enrollment_capacity=1, waitlist_when_full=True
+        )
         submitted, _ = ApplicationStatus.objects.get_or_create(name="submitted")
-        ApplicationStatus.objects.get_or_create(name="nominated", defaults={"order": 16})
+        ApplicationStatus.objects.get_or_create(
+            name="nominated", defaults={"order": 16}
+        )
         ApplicationStatus.objects.get_or_create(name="waitlist", defaults={"order": 15})
         self.app_a = self.create_application(
             student=self.student_a, program=self.program, status_name="submitted"
@@ -44,7 +48,9 @@ class TestNominationMatchingAPI(APITestCase):
             format="json",
         )
         self.assertEqual(put.status_code, 200)
-        match_url = reverse("api:program-nominations-match", kwargs={"pk": self.program.pk})
+        match_url = reverse(
+            "api:program-nominations-match", kwargs={"pk": self.program.pk}
+        )
         matched = self.client.post(match_url)
         self.assertEqual(matched.status_code, 200)
         self.assertEqual(matched.data["matched"]["nominated"], 1)

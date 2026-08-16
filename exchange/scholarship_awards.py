@@ -146,7 +146,9 @@ def _notify_student(award: ScholarshipAward, previous_status: str | None) -> Non
         pass
 
 
-def upsert_award(application, actor, *, status_value=None, amount=None, currency=None, notes=None):
+def upsert_award(
+    application, actor, *, status_value=None, amount=None, currency=None, notes=None
+):
     """Create or update the award on *application*. Staff only."""
     award, created = ScholarshipAward.objects.get_or_create(
         application=application,
@@ -178,7 +180,9 @@ def upsert_award(application, actor, *, status_value=None, amount=None, currency
     return award
 
 
-def transition_award(award: ScholarshipAward, actor, new_status: str) -> ScholarshipAward:
+def transition_award(
+    award: ScholarshipAward, actor, new_status: str
+) -> ScholarshipAward:
     allowed = ALLOWED_TRANSITIONS.get(award.status, set())
     if new_status not in allowed:
         raise ValueError(f"Cannot transition from {award.status} to {new_status}.")
@@ -213,7 +217,10 @@ def upsert_disbursement(award: ScholarshipAward, payload: dict, disbursement=Non
         if new_status not in ScholarshipDisbursement.Status.values:
             raise ValueError("Invalid disbursement status.")
         disbursement.status = new_status
-        if new_status == ScholarshipDisbursement.Status.PAID and not disbursement.paid_at:
+        if (
+            new_status == ScholarshipDisbursement.Status.PAID
+            and not disbursement.paid_at
+        ):
             disbursement.paid_at = timezone.now()
         if new_status != ScholarshipDisbursement.Status.PAID:
             disbursement.paid_at = (
@@ -222,12 +229,11 @@ def upsert_disbursement(award: ScholarshipAward, payload: dict, disbursement=Non
                 else disbursement.paid_at
             )
     disbursement.save()
-    if (
-        award.status == ScholarshipAward.Status.AWARDED
-        and award.disbursements.exists()
-    ):
+    if award.status == ScholarshipAward.Status.AWARDED and award.disbursements.exists():
         try:
-            transition_award(award, award.decided_by, ScholarshipAward.Status.DISBURSING)
+            transition_award(
+                award, award.decided_by, ScholarshipAward.Status.DISBURSING
+            )
         except ValueError:
             pass
     return disbursement

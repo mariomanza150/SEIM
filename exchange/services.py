@@ -196,9 +196,7 @@ class ApplicationService:
             application, require_complete=True
         )
         if host_errors:
-            messages = [
-                str(msg) for msg in host_errors.values() if msg
-            ]
+            messages = [str(msg) for msg in host_errors.values() if msg]
             raise ValueError(
                 "Host destination incomplete or inconsistent:\n- "
                 + "\n- ".join(messages)

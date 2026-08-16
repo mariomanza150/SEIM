@@ -15,9 +15,18 @@ from tests.conftest import UserFactory
 class TestSemesterHelper:
     def test_calculate_semester_from_ingress(self):
         ingress = date(2024, 1, 1)
-        assert Profile.calculate_semester_from_ingress(ingress, on_date=date(2024, 1, 1)) == 1
-        assert Profile.calculate_semester_from_ingress(ingress, on_date=date(2024, 7, 1)) == 2
-        assert Profile.calculate_semester_from_ingress(ingress, on_date=date(2025, 1, 1)) == 3
+        assert (
+            Profile.calculate_semester_from_ingress(ingress, on_date=date(2024, 1, 1))
+            == 1
+        )
+        assert (
+            Profile.calculate_semester_from_ingress(ingress, on_date=date(2024, 7, 1))
+            == 2
+        )
+        assert (
+            Profile.calculate_semester_from_ingress(ingress, on_date=date(2025, 1, 1))
+            == 3
+        )
 
     def test_effective_semester_prefers_override(self):
         user = UserFactory()

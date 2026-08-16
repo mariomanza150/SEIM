@@ -3,10 +3,10 @@ import logging
 import redis
 from django import forms
 from django.conf import settings
-from django.core.cache import cache
-from django.db import connection
 from django.contrib import messages
 from django.contrib.auth import logout
+from django.core.cache import cache
+from django.db import connection
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.views import View
@@ -202,7 +202,7 @@ def marketing_home(request):
     if request.user.is_authenticated:
         return redirect("/seim/dashboard/")
     return HttpResponse(
-        "<!DOCTYPE html><html><body>"
+        "<!DOCTYPE html><html><head><title>SEIM</title></head><body>"
         "<h1>Student Exchange Information Manager</h1>"
         "</body></html>"
     )

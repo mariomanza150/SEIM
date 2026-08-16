@@ -7,6 +7,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 
 from accounts.models import Role
+from accounts.profile_seed import complete_apply_profile
 
 User = get_user_model()
 
@@ -106,6 +107,9 @@ class Command(BaseCommand):
                         f"  ↻ Updated: {email} (password: {password}) - Role: {role.name}"
                     )
                 )
+
+            if role.name == "student":
+                complete_apply_profile(user)
 
         self.stdout.write("\n" + "=" * 70)
         self.stdout.write(self.style.SUCCESS(f"✓ Created {created_count} new users"))

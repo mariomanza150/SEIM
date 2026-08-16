@@ -1,7 +1,11 @@
 from celery import shared_task
 from django.utils import timezone
 
-from core.celery_utils import log_celery_failure, log_task_exception, retryable_task_kwargs
+from core.celery_utils import (
+    log_celery_failure,
+    log_task_exception,
+    retryable_task_kwargs,
+)
 
 
 @shared_task(on_failure=log_celery_failure, **retryable_task_kwargs())

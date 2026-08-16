@@ -73,7 +73,9 @@ def _overlap_version_errors(*extras: list[str]) -> list[str]:
     """Shared extra packages must use the same pin across extras."""
     maps: list[dict[str, str]] = []
     for extra in extras:
-        maps.append({_normalize(pin).split("==", 1)[0]: _normalize(pin) for pin in extra})
+        maps.append(
+            {_normalize(pin).split("==", 1)[0]: _normalize(pin) for pin in extra}
+        )
     errors: list[str] = []
     names: set[str] = set()
     for mapping in maps:
@@ -81,7 +83,9 @@ def _overlap_version_errors(*extras: list[str]) -> list[str]:
     for name in sorted(names):
         pins = {mapping[name] for mapping in maps if name in mapping}
         if len(pins) > 1:
-            errors.append(f"overlapping extra {name} differs: {', '.join(sorted(pins))}")
+            errors.append(
+                f"overlapping extra {name} differs: {', '.join(sorted(pins))}"
+            )
     return errors
 
 
@@ -91,7 +95,7 @@ def _legacy_file_errors() -> list[str]:
         if path.is_file():
             errors.append(
                 f"legacy {path.relative_to(ROOT)} must be deleted; "
-                "install from pyproject.toml (pip install -e \".[dev]\")"
+                'install from pyproject.toml (pip install -e ".[dev]")'
             )
     return errors
 
@@ -114,7 +118,9 @@ def check(
         errors.append("pyproject.toml [project.dependencies] is empty")
     for extra in ("dev", "test", "docs"):
         if not optional.get(extra):
-            errors.append(f"pyproject.toml [project.optional-dependencies.{extra}] is empty")
+            errors.append(
+                f"pyproject.toml [project.optional-dependencies.{extra}] is empty"
+            )
     if "django" not in _requirement_names(runtime):
         errors.append("pyproject.toml runtime dependencies do not list Django")
 
@@ -169,7 +175,7 @@ def main(argv: list[str] | None = None) -> int:
             f"({len(runtime)} runtime, {len(optional.get('dev') or [])} dev, "
             f"{len(optional.get('test') or [])} test, "
             f"{len(optional.get('docs') or [])} docs). "
-            "Install with pip install -e \".[dev]\"."
+            'Install with pip install -e ".[dev]".'
         )
         return 0
 

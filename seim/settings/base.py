@@ -214,6 +214,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+FORMS_URLFIELD_ASSUME_HTTPS = True
 
 # Custom user model
 AUTH_USER_MODEL = "accounts.User"

@@ -77,7 +77,9 @@ class EligibilityEvaluation:
         return rows
 
 
-def _effective_semester(profile: Profile, application: Application | None) -> int | None:
+def _effective_semester(
+    profile: Profile, application: Application | None
+) -> int | None:
     if application is not None and application.semester_at_apply is not None:
         return int(application.semester_at_apply)
     return profile.get_effective_semester()
@@ -105,7 +107,9 @@ def _effective_grade_scale(profile: Profile, application: Application | None):
     return profile.grade_scale
 
 
-def _effective_language(profile: Profile, application: Application | None) -> str | None:
+def _effective_language(
+    profile: Profile, application: Application | None
+) -> str | None:
     if application is not None and application.language_at_apply is not None:
         return application.language_at_apply
     return profile.language
@@ -122,7 +126,10 @@ def _effective_language_level(
 def _effective_additional_languages(
     profile: Profile, application: Application | None
 ) -> list:
-    if application is not None and application.additional_languages_at_apply is not None:
+    if (
+        application is not None
+        and application.additional_languages_at_apply is not None
+    ):
         return application.additional_languages_at_apply or []
     return profile.additional_languages or []
 

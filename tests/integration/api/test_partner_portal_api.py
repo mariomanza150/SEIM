@@ -95,9 +95,7 @@ class TestPartnerPortalAPI(APITestCase):
             is_private=False,
         )
         self.authenticate_user(self.partner)
-        url = reverse(
-            "api:partner-application-comments", kwargs={"pk": self.app.pk}
-        )
+        url = reverse("api:partner-application-comments", kwargs={"pk": self.app.pk})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 200)
         texts = [row["text"] for row in resp.data]
@@ -117,9 +115,7 @@ class TestPartnerPortalAPI(APITestCase):
 
     def test_unlinked_partner_cannot_comment(self):
         self.authenticate_user(self.partner)
-        url = reverse(
-            "api:partner-application-comments", kwargs={"pk": self.app.pk}
-        )
+        url = reverse("api:partner-application-comments", kwargs={"pk": self.app.pk})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 404)
 

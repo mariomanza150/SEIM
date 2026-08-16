@@ -29,7 +29,10 @@ def _is_staff(user) -> bool:
     return bool(
         getattr(user, "is_staff", False)
         or getattr(user, "is_superuser", False)
-        or (hasattr(user, "has_any_role") and user.has_any_role(["coordinator", "admin"]))
+        or (
+            hasattr(user, "has_any_role")
+            and user.has_any_role(["coordinator", "admin"])
+        )
     )
 
 
@@ -153,9 +156,7 @@ class PartnerAgreementViewSet(viewsets.ReadOnlyModelViewSet):
         agreement = self.get_object()
         if request.method == "GET":
             qs = (
-                AgreementComment.objects.filter(
-                    agreement=agreement, is_private=False
-                )
+                AgreementComment.objects.filter(agreement=agreement, is_private=False)
                 .select_related("author")
                 .order_by("created_at", "id")
             )

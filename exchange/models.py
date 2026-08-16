@@ -664,7 +664,9 @@ class Application(UUIDModel, TimeStampedModel):
     nomination_rank = models.PositiveIntegerField(
         null=True,
         blank=True,
-        help_text=_("Staff ranking for nomination matching (lower is higher priority)."),
+        help_text=_(
+            "Staff ranking for nomination matching (lower is higher priority)."
+        ),
     )
     # Host destination hierarchy (required before submit).
     host_institution = models.ForeignKey(
@@ -763,7 +765,9 @@ class ApplicationSubjectSelection(UUIDModel, TimeStampedModel):
         decimal_places=2,
         null=True,
         blank=True,
-        help_text=_("Credits used for homologación (defaults to host subject credits)."),
+        help_text=_(
+            "Credits used for homologación (defaults to host subject credits)."
+        ),
     )
     notes = models.TextField(blank=True, default="")
 
@@ -837,7 +841,10 @@ def validate_application_host_destination(application, *, require_complete=False
             errors["host_school"] = _(
                 "Select a host institution before choosing a school."
             )
-        elif school is not None and school.institution_id != application.host_institution_id:
+        elif (
+            school is not None
+            and school.institution_id != application.host_institution_id
+        ):
             errors["host_school"] = _(
                 "Host school must belong to the selected host institution."
             )
@@ -847,10 +854,7 @@ def validate_application_host_destination(application, *, require_complete=False
             errors["host_academic_program"] = _(
                 "Select a host school before choosing an academic program."
             )
-        elif (
-            academic is not None
-            and academic.school_id != application.host_school_id
-        ):
+        elif academic is not None and academic.school_id != application.host_school_id:
             errors["host_academic_program"] = _(
                 "Host academic program must belong to the selected host school."
             )
@@ -982,9 +986,7 @@ class ScholarshipAward(UUIDModel, TimeStampedModel):
         default=Status.NOMINATED,
         db_index=True,
     )
-    amount = models.DecimalField(
-        max_digits=12, decimal_places=2, null=True, blank=True
-    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     currency = models.CharField(max_length=8, default="MXN")
     notes = models.TextField(blank=True, default="")
     decided_by = models.ForeignKey(
@@ -1019,9 +1021,7 @@ class ScholarshipDisbursement(UUIDModel, TimeStampedModel):
         related_name="disbursements",
     )
     label = models.CharField(max_length=255)
-    amount = models.DecimalField(
-        max_digits=12, decimal_places=2, null=True, blank=True
-    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     due_date = models.DateField(null=True, blank=True)
     paid_at = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(blank=True, default="")

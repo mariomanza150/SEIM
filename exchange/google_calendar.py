@@ -21,7 +21,9 @@ from exchange.calendar_events import build_calendar_event_dicts
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo"
-GOOGLE_EVENTS_URL = "https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events"
+GOOGLE_EVENTS_URL = (
+    "https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events"
+)
 SCOPE = "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/userinfo.email"
 STATE_SALT = "seim-google-calendar"
 STATE_MAX_AGE = 600
@@ -53,7 +55,9 @@ def connection_status(user) -> dict:
         "configured": is_configured(),
         "connected": bool(conn and conn.is_connected),
         "google_email": conn.google_email if conn else "",
-        "last_synced_at": conn.last_synced_at.isoformat() if conn and conn.last_synced_at else None,
+        "last_synced_at": conn.last_synced_at.isoformat()
+        if conn and conn.last_synced_at
+        else None,
         "last_sync_error": conn.last_sync_error if conn else "",
     }
 
@@ -134,11 +138,7 @@ def disconnect(user) -> None:
 
 
 def _ensure_access_token(conn: GoogleCalendarConnection) -> str:
-    if (
-        conn.access_token
-        and conn.token_expiry
-        and conn.token_expiry > timezone.now()
-    ):
+    if conn.access_token and conn.token_expiry and conn.token_expiry > timezone.now():
         return conn.access_token
     if not conn.refresh_token:
         raise ValueError("Google Calendar is not connected.")
@@ -298,7 +298,9 @@ def _event_body(event: dict) -> dict:
         end_iso = str(end)
     body = {
         "summary": event.get("title") or "SEIM event",
-        "extendedProperties": {"private": {"seim_event_id": str(event.get("id") or "")}},
+        "extendedProperties": {
+            "private": {"seim_event_id": str(event.get("id") or "")}
+        },
     }
     if all_day:
         body["start"] = {"date": start_iso[:10]}
@@ -370,9 +372,9 @@ def sync_user_events(user) -> dict:
                     google_id = remote_event["id"]
                     event_map[seim_id] = google_id
             if google_id:
-                if remote_event and _google_fingerprint(remote_event) != _seim_fingerprint(
-                    event
-                ):
+                if remote_event and _google_fingerprint(
+                    remote_event
+                ) != _seim_fingerprint(event):
                     conflicts_resolved += 1
                 resp = requests.put(
                     f"{base}/{google_id}",

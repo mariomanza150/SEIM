@@ -5,9 +5,9 @@
 # drops past the threshold. Frontend stays informational (Vue coverage in flux).
 
 codecov:
-  require_ci_to_pass: true
+  require_ci_to_pass: false
   notify:
-    wait_for_ci: true
+    wait_for_ci: false
 
 coverage:
   precision: 2

@@ -126,7 +126,11 @@ class TestHostSubjectsPhase3:
             {"application": str(application.id)},
         )
         assert list_resp.status_code == status.HTTP_200_OK
-        rows = list_resp.data if isinstance(list_resp.data, list) else list_resp.data["results"]
+        rows = (
+            list_resp.data
+            if isinstance(list_resp.data, list)
+            else list_resp.data["results"]
+        )
         assert len(rows) == 1
 
         del_resp = client.delete(f"/api/application-subject-selections/{selection_id}/")

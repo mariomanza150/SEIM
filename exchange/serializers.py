@@ -795,9 +795,7 @@ class PartnerContactSerializer(serializers.ModelSerializer):
 
     def validate_user(self, user):
         if not getattr(user, "has_role", None) or not user.has_role("partner"):
-            raise serializers.ValidationError(
-                "User must have the partner role."
-            )
+            raise serializers.ValidationError("User must have the partner role.")
         return user
 
 

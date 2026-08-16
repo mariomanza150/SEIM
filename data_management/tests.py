@@ -260,9 +260,7 @@ class DataManagementViewTests(TestCase):
         self.grant_permission("data_cleanup", "VIEW")
         self.grant_permission("data_cleanup", "DELETE")
 
-        response = self.client.post(
-            reverse("data_management:execute_data_cleanup")
-        )
+        response = self.client.post(reverse("data_management:execute_data_cleanup"))
 
         self.assertRedirects(
             response,

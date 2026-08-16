@@ -253,7 +253,9 @@ def seed_mobility_document_types() -> list[DocumentType]:
         existing = DocumentType.objects.filter(slug=slug).first()
         if not existing:
             for legacy in legacy_names:
-                existing = DocumentType.objects.filter(name=legacy, slug__isnull=True).first()
+                existing = DocumentType.objects.filter(
+                    name=legacy, slug__isnull=True
+                ).first()
                 if existing:
                     break
             if not existing:

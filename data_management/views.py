@@ -88,9 +88,7 @@ class DatabaseResetView(View):
 
     @method_decorator(login_required)
     def post(self, request):
-        return _handle_execute(
-            request, "database", confirm=request.POST.get("confirm")
-        )
+        return _handle_execute(request, "database", confirm=request.POST.get("confirm"))
 
 
 class DataCleanupView(View):

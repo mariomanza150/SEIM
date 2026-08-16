@@ -77,7 +77,7 @@ class ClamAVScanner(BaseVirusScanner):
                 sock.settimeout(self.timeout)
                 sock.connect((self.host, self.port))
                 return sock
-        except (OSError, ConnectionRefusedError, TimeoutError, socket.timeout) as e:
+        except (OSError, TimeoutError) as e:
             raise VirusScannerError(f"Failed to connect to ClamAV daemon: {e}") from e
 
     def _send_command(self, sock: socket.socket, command: str) -> str:
@@ -86,8 +86,10 @@ class ClamAVScanner(BaseVirusScanner):
             sock.send(command.encode())
             response = sock.recv(4096).decode().strip()
             return response
-        except (OSError, TimeoutError, socket.timeout) as e:
-            raise VirusScannerError(f"Failed to communicate with ClamAV daemon: {e}") from e
+        except (OSError, TimeoutError) as e:
+            raise VirusScannerError(
+                f"Failed to communicate with ClamAV daemon: {e}"
+            ) from e
 
     def scan_file(self, file_path: str) -> tuple[bool, str | None]:
         """

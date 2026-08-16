@@ -79,9 +79,7 @@ class TestProgramViews:
         list_url = reverse("api:program-list")
         empty = client.get(list_url, {"ordering": "name"})
         assert empty.status_code == status.HTTP_200_OK
-        before_names = [
-            p["name"] for p in empty.data.get("results", empty.data)
-        ]
+        before_names = [p["name"] for p in empty.data.get("results", empty.data)]
         assert "Cache Bust Program" not in before_names
 
         create = client.post(

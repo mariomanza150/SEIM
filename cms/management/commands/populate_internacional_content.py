@@ -28,6 +28,7 @@ class Command(BaseCommand):
 
         def t(text):
             return apply_institution_tokens(text, brand)
+
         self.stdout.write(
             f"\n=== Populating Internacional ({short} example content) ===\n"
         )

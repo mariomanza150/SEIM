@@ -6,9 +6,8 @@ from django.db import transaction
 from django.db.models import Case, IntegerField, Value, When
 from django.db.models.functions import Coalesce
 
-from notifications.services import NotificationService
-
 from exchange.models import Application, ApplicationStatus, Program, TimelineEvent
+from notifications.services import NotificationService
 
 POOL_STATUSES = ("submitted", "under_review", "waitlist", "nominated")
 LOCKED_STATUSES = ("approved", "completed")
@@ -125,5 +124,9 @@ def match_nominations(program: Program, user) -> dict:
             if _set_status(app, "waitlist", user):
                 waitlisted += 1
     payload = program_nomination_payload(program)
-    payload["matched"] = {"nominated": nominated, "waitlisted": waitlisted, "slots": slots}
+    payload["matched"] = {
+        "nominated": nominated,
+        "waitlisted": waitlisted,
+        "slots": slots,
+    }
     return payload

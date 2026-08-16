@@ -19,7 +19,12 @@ class TestScholarshipAwardsAPI(APITestCase):
         url = reverse("api:application-scholarship-award", kwargs={"pk": self.app.pk})
         resp = self.client.put(
             url,
-            {"status": "nominated", "amount": "5000", "currency": "MXN", "notes": "merit"},
+            {
+                "status": "nominated",
+                "amount": "5000",
+                "currency": "MXN",
+                "notes": "merit",
+            },
             format="json",
         )
         self.assertEqual(resp.status_code, 200)

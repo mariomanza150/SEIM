@@ -48,7 +48,9 @@ class Command(BaseCommand):
 
             # Step 2: Populate example institution content (UAdeC tokens unless overridden)
             if not options["skip_populate"]:
-                self.stdout.write("\n📝 Step 2/3: Populating institution example content...")
+                self.stdout.write(
+                    "\n📝 Step 2/3: Populating institution example content..."
+                )
                 call_command("populate_institution_content")
             else:
                 self.stdout.write("\n⏭️  Skipping content population")

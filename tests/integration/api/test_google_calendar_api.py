@@ -66,9 +66,10 @@ class TestGoogleCalendarAPI(APITestCase):
             "refresh_token": "rt",
             "expires_in": 3600,
         }
-        with patch("exchange.google_calendar.requests.post") as post, patch(
-            "exchange.google_calendar.requests.get"
-        ) as get:
+        with (
+            patch("exchange.google_calendar.requests.post") as post,
+            patch("exchange.google_calendar.requests.get") as get,
+        ):
             post.return_value.status_code = 200
             post.return_value.json.return_value = token_json
             post.return_value.raise_for_status = lambda: None
@@ -79,7 +80,9 @@ class TestGoogleCalendarAPI(APITestCase):
         self.assertEqual(conn.refresh_token, "rt")
         self.assertTrue(connection_status(self.user)["connected"])
         disconnect(self.user)
-        self.assertFalse(GoogleCalendarConnection.objects.filter(user=self.user).exists())
+        self.assertFalse(
+            GoogleCalendarConnection.objects.filter(user=self.user).exists()
+        )
 
     def test_is_configured_false_by_default(self):
         self.assertFalse(is_configured())
@@ -90,7 +93,9 @@ class TestGoogleCalendarAPI(APITestCase):
         self.assertTrue(seim_events)
         seim_id = seim_events[0]["id"]
         start = seim_events[0]["start"]
-        start_date = start.date().isoformat() if hasattr(start, "date") else str(start)[:10]
+        start_date = (
+            start.date().isoformat() if hasattr(start, "date") else str(start)[:10]
+        )
         conn = GoogleCalendarConnection.objects.create(
             user=self.user,
             access_token="at",
@@ -137,9 +142,11 @@ class TestGoogleCalendarAPI(APITestCase):
         def fake_post(url, **kwargs):
             return FakeResp({"id": "g-new"})
 
-        with patch("exchange.google_calendar.requests.get", side_effect=fake_get), patch(
-            "exchange.google_calendar.requests.put", side_effect=fake_put
-        ), patch("exchange.google_calendar.requests.post", side_effect=fake_post):
+        with (
+            patch("exchange.google_calendar.requests.get", side_effect=fake_get),
+            patch("exchange.google_calendar.requests.put", side_effect=fake_put),
+            patch("exchange.google_calendar.requests.post", side_effect=fake_post),
+        ):
             result = sync_user_events(self.user)
         self.assertGreaterEqual(result["conflicts_resolved"], 1)
         self.assertEqual(result["imported"], 1)

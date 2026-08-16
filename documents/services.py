@@ -117,7 +117,10 @@ class DocumentService:
         Block student uploads past per-doc deadline (staff may still review late uploads).
         Also enforce allows_multiple / instructions_only.
         """
-        if document_type.submission_mode == DocumentType.SubmissionMode.INSTRUCTIONS_ONLY:
+        if (
+            document_type.submission_mode
+            == DocumentType.SubmissionMode.INSTRUCTIONS_ONLY
+        ):
             raise ValueError(
                 "This document type is instructions-only and does not accept uploads."
             )
@@ -395,9 +398,8 @@ class DocumentService:
             deadline = req.resolve_deadline()
             overdue = req.is_overdue()
             instructions = (
-                (getattr(req, "instructions_override", None) or "").strip()
-                or (dt.instructions or "")
-            )
+                getattr(req, "instructions_override", None) or ""
+            ).strip() or (dt.instructions or "")
             entry = {
                 "document_type_id": dt.id,
                 "slug": dt.slug or "",

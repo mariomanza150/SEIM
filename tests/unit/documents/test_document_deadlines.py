@@ -11,7 +11,12 @@ from django.utils import timezone
 from documents.models import DocumentType
 from documents.pdf_generation import render_solicitud_participacion_pdf
 from documents.services import DocumentService
-from exchange.models import Application, ApplicationStatus, Program, ProgramDocumentRequirement
+from exchange.models import (
+    Application,
+    ApplicationStatus,
+    Program,
+    ProgramDocumentRequirement,
+)
 
 
 class DocumentDeadlineTests(TestCase):
@@ -113,7 +118,9 @@ class DocumentDeadlineTests(TestCase):
         Document.objects.create(
             application=self.application,
             type=self.doc_type,
-            file=SimpleUploadedFile("a.pdf", b"%PDF-1.4\n", content_type="application/pdf"),
+            file=SimpleUploadedFile(
+                "a.pdf", b"%PDF-1.4\n", content_type="application/pdf"
+            ),
             uploaded_by=self.user,
             is_valid=True,
         )

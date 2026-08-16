@@ -583,7 +583,9 @@ class Profile(UUIDModel, TimeStampedModel):
     @property
     def is_eligibility_complete(self) -> bool:
         """Whether GPA, scale, language, credits %, and semester inputs are present."""
-        has_semester_basis = bool(self.ingress_date) or self.current_semester is not None
+        has_semester_basis = (
+            bool(self.ingress_date) or self.current_semester is not None
+        )
         return (
             self.gpa is not None
             and bool(self.grade_scale_id)
