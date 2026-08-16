@@ -186,7 +186,7 @@ def print_next_steps():
     print("  make test-selenium-standalone   # Run standalone tests")
     print("  make test-selenium-setup        # Test setup")
     print("\n📚 Documentation:")
-    print("  See documentation/testing.md for detailed instructions")
+    print("  See docs/testing.md for detailed instructions")
     print("\n⚠️  Important notes:")
     print("  - Selenium tests run from HOST OS, not Docker")
     print("  - Django server must be running in Docker")

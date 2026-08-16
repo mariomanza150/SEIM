@@ -165,7 +165,7 @@ docs = [
 [project.urls]
 Homepage = "https://github.com/mariomanza150/SEIM"
 Issues = "https://github.com/mariomanza150/SEIM/issues"
-Documentation = "https://github.com/mariomanza150/SEIM/blob/main/documentation/README.md"
+Documentation = "https://github.com/mariomanza150/SEIM/blob/main/docs/README.md"
 
 [tool.setuptools]
 include-package-data = false
@@ -219,7 +219,7 @@ ignore = [
 "seim/asgi.py" = ["E402"]
 "scripts/**/*.py" = ["E402", "F401", "F405", "F403"]
 "tests/**/*.py" = ["E402", "F401", "F811", "B018", "F405", "F403"]
-"documentation/**/*.py" = ["E402", "F401"]
+"docs/**/*.py" = ["E402", "F401"]
 "core/management/commands/*.py" = ["E402", "F401"]
 "core/permissions.py" = ["E402"]
 "documents/services.py" = ["E402"]
@@ -246,7 +246,7 @@ exclude = [
     "migrations/",
     "tests/",
     "scripts/",
-    "documentation/",
+    "docs/",
     "htmlcov/",
     "frontend-vue/",
     "manage.py",
@@ -314,7 +314,7 @@ markers = [
 
 [tool.coverage.run]
 # First-party Django apps measured by unit+integration runs. CMS is omitted: ``seim.settings.test``
-# strips Wagtail/cms, so including ``cms`` would falsely tank the gate (see documentation/notes/prompts/ci-backend-green-prompt.md).
+# strips Wagtail/cms, so including ``cms`` would falsely tank the gate (see docs/notes/prompts/ci-backend-green-prompt.md).
 source = [
     "accounts",
     "analytics",
@@ -348,6 +348,7 @@ omit = [
     "download_uadec_assets.py",
     "scripts/download_institution_assets.py",
     "scripts/check_python_deps.py",
+    "scripts/check_codecov_ci.py",
     # Thin wiring / boilerplate: focus gate on models, services, tasks, etc.
     "*/admin.py",
     "*/views.py",

@@ -52,10 +52,10 @@ All development, testing, and documentation generation should be executed inside
 *   **Environment Variables**: Must be set in a `.env` file based on `env.example`, especially `DATABASE_URL`, `REDIS_URL`, and email credentials for production environments.
 
 ## 📚 Key Guides
-*   **[CMS Management](documentation/notes/CMS_RESTORE_GUIDE.md)**: For managing the Wagtail CMS content.
-*   **[Documentation index](documentation/README.md)**: Canonical technical docs (Sphinx + manuals + notes).
-*   **[Developer Guide](documentation/developer_guide.md)**: Contains the full set of developer guidelines.
-*   **[Architecture Decisions](documentation/architectural_decisions.md)**: Critical place to review major design choices.
+*   **[CMS Management](docs/notes/CMS_RESTORE_GUIDE.md)**: For managing the Wagtail CMS content.
+*   **[Documentation index](docs/README.md)**: Canonical technical docs (Sphinx + manuals + notes).
+*   **[Developer Guide](docs/developer_guide.md)**: Contains the full set of developer guidelines.
+*   **[Architecture Decisions](docs/architectural_decisions.md)**: Critical place to review major design choices.
 
 ---
 *This guide summarizes the structure and common tasks for efficient development in SEIM.*

@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-"""Download institution logos/assets from branding config or env vars.
+"""Download institution logos/assets from tenant/branding config or env vars.
 
-UAdeC is the default source. Prefer this script over download_uadec_assets.py.
-Default output: branding/<slug>/logos. See documentation/white_labeling.md.
+Reads tenant_config.json, branding overlays, and INSTITUTION_* env vars.
+UAdeC URLs are the packaged fallback when no tenant config is set.
+Prefer this script over download_uadec_assets.py.
+Default output: branding/<slug>/logos. See docs/white_labeling.md.
 
 Do not commit downloaded university logos. Keep branding/<slug>/logos/.gitkeep.
 """
@@ -24,9 +26,9 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from core.branding import DEFAULT_SLUG, merge_institution_config  # noqa: E402
+from core.branding import DEFAULT_INSTITUTION, DEFAULT_SLUG, merge_institution_config  # noqa: E402, I001
 
-DEFAULT_WEBSITE = "https://www.uadec.mx/"
+DEFAULT_WEBSITE = DEFAULT_INSTITUTION["INSTITUTION_WEBSITE"]
 GENERIC_ASSET_PATHS = (
     "/images/logo.png",
     "/img/logo.png",
@@ -54,7 +56,9 @@ def load_asset_config(base_dir: Path | None = None) -> dict[str, str]:
     root = Path(base_dir) if base_dir else ROOT
     merged = merge_institution_config(root)
     slug = _env("INSTITUTION_SLUG", merged.get("INSTITUTION_SLUG") or DEFAULT_SLUG)
-    website = _env("INSTITUTION_WEBSITE", merged.get("INSTITUTION_WEBSITE") or DEFAULT_WEBSITE)
+    website = _env(
+        "INSTITUTION_WEBSITE", merged.get("INSTITUTION_WEBSITE") or DEFAULT_WEBSITE
+    )
     if not website.endswith("/"):
         website = f"{website}/"
     return {

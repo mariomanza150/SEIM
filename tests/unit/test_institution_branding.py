@@ -130,6 +130,29 @@ class InstitutionBrandingTests(SimpleTestCase):
             self.assertEqual(merged["INSTITUTION_SLUG"], "exampleu")
             self.assertEqual(merged["INSTITUTION_SHORT_NAME"], "ExampleU")
 
+    def test_tenant_config_json_overrides_institution_overlay(self):
+        from tempfile import TemporaryDirectory
+
+        with TemporaryDirectory() as raw:
+            base = Path(raw)
+            (base / "branding").mkdir()
+            (base / "institution.json").write_text(
+                '{"INSTITUTION_SHORT_NAME": "OverlayU"}',
+                encoding="utf-8",
+            )
+            (base / "tenant_config.json").write_text(
+                '{"INSTITUTION_SLUG": "exampleu", "INSTITUTION_SHORT_NAME": "TenantU",'
+                ' "INSTITUTION_WEBSITE": "https://www.example.edu/"}',
+                encoding="utf-8",
+            )
+            merged = merge_institution_config(base, base / "institution.json")
+            self.assertEqual(merged["INSTITUTION_SLUG"], "exampleu")
+            self.assertEqual(merged["INSTITUTION_SHORT_NAME"], "TenantU")
+            self.assertEqual(merged["INSTITUTION_WEBSITE"], "https://www.example.edu/")
+            self.assertEqual(
+                merged["INSTITUTION_NAME"], DEFAULT_INSTITUTION["INSTITUTION_NAME"]
+            )
+
     def test_download_config_uses_branding_slug(self):
         module = _load_script("download_institution_assets.py")
         config = module.load_asset_config(Path(__file__).resolve().parents[2])

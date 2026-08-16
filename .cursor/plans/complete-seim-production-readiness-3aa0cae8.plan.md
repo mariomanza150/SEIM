@@ -144,7 +144,7 @@ act push  # Run on push event
 ```bash
 git init
 git add .gitignore
-git add documentation/
+git add docs/
 git add requirements*.txt
 git add docker-compose*.yml Dockerfile*
 git commit -m "Initial commit: Project structure and documentation"
@@ -271,9 +271,9 @@ docker-compose run --rm web python manage.py makemessages -l de
 **Files to update:**
 
 - `README.md` - Add i18n instructions, update CI/CD info
-- `documentation/deployment.md` - Add GitHub Actions deployment
-- `documentation/testing.md` - Document 80% coverage achievement
-- `documentation/developer_guide.md` - Add i18n contribution guide
+- `docs/deployment.md` - Add GitHub Actions deployment
+- `docs/testing.md` - Document 80% coverage achievement
+- `docs/developer_guide.md` - Add i18n contribution guide
 
 ### 6.2 Deployment Checklist
 

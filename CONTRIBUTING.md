@@ -35,7 +35,7 @@ Then open:
 
 Demo accounts from `seed_demo_readiness`: `admin@test.com` / `admin123`, `coordinator@test.com` / `coordinator123`, `student@test.com` / `student123`.
 
-Full install steps: [documentation/installation.md](documentation/installation.md).
+Full install steps: [docs/installation.md](docs/installation.md).
 
 ### Native PostgreSQL + Redis
 
@@ -56,7 +56,7 @@ SQLite is rejected in development settings. See [AGENTS.md](AGENTS.md) for the n
 | Wagtail CMS / public site | `/`, `/cms/` | `cms/` |
 | REST API | `/api/` | domain apps + `api/urls.py` |
 
-The legacy Django template frontend has been removed. Do not add new pages under a `frontend/` Django app. Current split: [documentation/notes/SPA_VS_LEGACY.md](documentation/notes/SPA_VS_LEGACY.md).
+The legacy Django template frontend has been removed. Do not add new pages under a `frontend/` Django app. Current split: [docs/notes/SPA_VS_LEGACY.md](docs/notes/SPA_VS_LEGACY.md).
 
 ## Tests
 
@@ -70,7 +70,7 @@ npm --prefix frontend-vue run test:run
 - Playwright E2E: `make e2e-test`.
 - Legacy Selenium: `SEIM_RUN_SELENIUM=1 make test-selenium` (host OS, not Docker).
 
-More detail: [documentation/testing.md](documentation/testing.md).
+More detail: [docs/testing.md](docs/testing.md).
 
 ## Lint and quality
 
@@ -108,9 +108,8 @@ Report security issues privately to the maintainer. Do not open a public issue w
 
 ## Documentation
 
-- Authoritative guides live in `documentation/` ([index](documentation/README.md)).
-- Working notes live in `documentation/notes/` ([notes/README.md](documentation/notes/README.md)).
-- `docs/` is a deprecated pointer ([docs/README.md](docs/README.md)).
+- Authoritative guides live in `docs/` ([index](docs/README.md)).
+- Working notes live in `docs/notes/` ([notes/README.md](docs/notes/README.md)).
 - `documents/` is the Django file-upload app, not a docs tree ([documents/README.md](documents/README.md)).
 - Prefer Makefile/Docker targets for generated docs (`make docs-workflow`).
 - Update docstrings when behavior changes.
@@ -119,7 +118,7 @@ Report security issues privately to the maintainer. Do not open a public issue w
 
 Pins live in `pyproject.toml` (`[project.dependencies]` and `[project.optional-dependencies]` for `dev`, `test`, and `docs`). Docker and CI install from that file (`pip install -e ".[dev]"` / `".[test]"`). After changing a pin, commit `pyproject.toml` only. `python scripts/check_python_deps.py` (or `make check-deps`) rejects leftover `requirements*.txt` files.
 
-Coverage reports are always generated in CI. Maintainers should set the GitHub Actions secret `CODECOV_TOKEN` so uploads run on this repo. A missing secret warns and skips upload; it does not fail CI. The hard gate is pytest `--cov-fail-under=80`. See [`.github/README.md`](.github/README.md).
+Coverage reports are always generated in CI. Maintainers must set the GitHub Actions secret `CODECOV_TOKEN`; same-repo CI **fails closed** if the secret is missing or coverage is not reported. Local pytest is unaffected. The hard gate remains `--cov-fail-under=80`. See [`.github/README.md`](.github/README.md).
 
 ## License
 

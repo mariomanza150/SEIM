@@ -73,6 +73,22 @@ python scripts/check_python_deps.py          # verify extras (CI / make check-de
 python scripts/check_python_deps.py --write  # remove leftover requirements*.txt if present
 ```
 
+#### `check_codecov_ci.py` - Codecov token gate (CI only)
+
+Fails closed in GitHub Actions when `CODECOV_TOKEN` is missing or coverage files were not produced. Local runs always succeed.
+
+```bash
+python scripts/check_codecov_ci.py --coverage-file coverage.xml
+```
+
+#### `download_institution_assets.py` - Institution logos
+
+```powershell
+python scripts\download_institution_assets.py
+```
+
+Reads `tenant_config.json` / `INSTITUTION_*` env vars. `download_uadec_assets.py` is a compatibility wrapper.
+
 ### Setup Scripts
 
 #### `setup_test_environment.sh` - Test Environment Setup

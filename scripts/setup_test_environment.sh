@@ -254,8 +254,8 @@ show_next_steps() {
     echo ""
     echo "Documentation:"
     echo "============="
-    echo "  - Testing guide: documentation/testing.md"
-    echo "  - Development guide: documentation/developer_guide.md"
+    echo "  - Testing guide: docs/testing.md"
+    echo "  - Development guide: docs/developer_guide.md"
     echo ""
 }
 

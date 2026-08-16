@@ -1,7 +1,7 @@
 # SEIM Makefile
 # Development and documentation automation
 
-.PHONY: help docs docs-api docs-code docs-db docs-all clean-docs enhance-docs test migrate collectstatic runserver shell cache-test cache-status cache-clear clean clean-all setup format lint type-check security-check quality-check check-deps export-deps build-prod deploy-prod deploy-prod-update prod-setup prod-secrets prod-backup prod-restore prod-logs prod-shell prod-status prod-health prod-stop prod-clean
+.PHONY: help docs docs-api docs-code docs-db docs-all clean-docs enhance-docs test migrate collectstatic runserver shell cache-test cache-status cache-clear clean clean-all setup format lint type-check security-check quality-check check-deps export-deps download-institution-assets build-prod deploy-prod deploy-prod-update prod-setup prod-secrets prod-backup prod-restore prod-logs prod-shell prod-status prod-health prod-stop prod-clean
 
 # Default target
 help:
@@ -79,6 +79,7 @@ help:
 	@echo "  quality-check      - Run all code quality checks (Docker)"
 	@echo "  check-deps         - Verify pyproject.toml extras (no requirements*.txt)"
 	@echo "  export-deps        - No-op; pyproject.toml is the only pin list"
+	@echo "  download-institution-assets - Download logos using tenant_config.json / env"
 	@echo ""
 	@echo "Docker:"
 	@echo "  docker-setup       - Setup Docker environment (creates .env, builds, starts)"
@@ -109,7 +110,7 @@ docs-db:
 
 docs-sphinx-docker:
 	@echo "📖 Building Sphinx HTML documentation inside Docker..."
-	docker-compose exec web python -m sphinx -b html documentation/sphinx/source documentation/sphinx/build/html
+	docker-compose exec web python -m sphinx -b html docs/sphinx/source docs/sphinx/build/html
 
 docs-all:
 	@echo "🚀 Generating all documentation..."
@@ -122,7 +123,7 @@ enhance-docs:
 
 clean-docs:
 	@echo "🧹 Cleaning generated documentation..."
-	rm -rf documentation/generated/
+	rm -rf docs/generated/
 	rm -f api_schema.yaml
 
 # Development targets
@@ -325,6 +326,10 @@ export-deps:
 	@echo "📦 pyproject.toml is the source of truth; leftover requirements*.txt are removed if present..."
 	python scripts/check_python_deps.py --write
 
+download-institution-assets:
+	@echo "🏫 Downloading institution assets from tenant/branding config..."
+	python scripts/download_institution_assets.py
+
 quality-analysis:
 	@echo "🔍 Running comprehensive code quality analysis..."
 	docker-compose exec web python scripts/code_quality.py --check all
@@ -361,8 +366,8 @@ clean:
 	find . -name "*.pyc" -delete 2>/dev/null || true
 	find . -name "*.pyo" -delete 2>/dev/null || true
 	find . -name "*.pyd" -delete 2>/dev/null || true
-	rm -rf documentation/generated/ 2>/dev/null || true
-	rm -rf documentation/sphinx/build/ 2>/dev/null || true
+	rm -rf docs/generated/ 2>/dev/null || true
+	rm -rf docs/sphinx/build/ 2>/dev/null || true
 	rm -f api_schema.yaml 2>/dev/null || true
 	rm -rf staticfiles/ 2>/dev/null || true
 	@echo "✅ Cleanup completed!"
@@ -432,8 +437,8 @@ setup-test-env:
 docs-workflow: enhance-docs docs-all
 	@echo "✅ Documentation workflow completed!"
 	@echo "📁 Generated files:"
-	@ls -la documentation/generated/ 2>/dev/null || echo "No generated files found"
-	@echo "📖 Sphinx HTML docs: documentation/sphinx/build/html/index.html"
+	@ls -la docs/generated/ 2>/dev/null || echo "No generated files found"
+	@echo "📖 Sphinx HTML docs: docs/sphinx/build/html/index.html"
 
 # Cache workflow
 cache-workflow: cache-status cache-test

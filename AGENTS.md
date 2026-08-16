@@ -37,7 +37,7 @@ App is at http://localhost:8001/ — SPA `/seim/`, admin `/admin/`, API docs `/a
 `manage.py seed_demo_readiness` seeds deterministic demo users, programs, exchange agreements, applications, documents, and notifications without the removed `partner_reference_id` field. Use `manage.py create_initial_data` first (roles, statuses, document/notification types, mobility schemes, profile catalogs) plus a manually created superuser. Demo credentials: `admin@test.com` / `admin123`, `coordinator@test.com` / `coordinator123`, `student@test.com` / `student123`.
 
 ### Documentation
-Canonical technical docs live in `documentation/` (manuals + Sphinx + `documentation/notes/`). `docs/` is a deprecated pointer. `documents/` is the Django upload app, not a docs tree. Build Sphinx with `make docs-workflow` (writes `documentation/generated/` and `documentation/sphinx/build/`).
+Canonical technical docs live in `docs/` (manuals + Sphinx + `docs/notes/`). `documents/` is the Django upload app, not a docs tree. Build Sphinx with `make docs-workflow` (writes `docs/generated/` and `docs/sphinx/build/`).
 
 ### Lint / test / build (standard commands live in the Makefile & CLAUDE.md)
 Run these against the venv (the Makefile targets assume Docker, so invoke tools directly here):

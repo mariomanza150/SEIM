@@ -10,7 +10,7 @@ Runs on: **push** to `main`, `master`, `develop`, `feature/vue-migration`; **pul
 
 **Jobs:** Ruff · Bandit + `pip-audit` · mypy (non-blocking) · backend pytest (unit + integration, coverage XML) · Vue Vitest + coverage + Vite build · Docker build (Vue dist + collectstatic) + Trivy SARIF · Locust on pull requests only.
 
-**Secrets:** `CODECOV_TOKEN` — add this so CI can upload coverage to Codecov. When it is missing, CI still generates coverage artifacts, warns, and stays green. Fork PRs skip upload. The hard gate is pytest `--cov-fail-under=80`. See setup below.
+**Secrets:** `CODECOV_TOKEN` — required on same-repo CI so coverage uploads to Codecov. Missing token **fails the job** (`scripts/check_codecov_ci.py`). Fork PRs skip the token requirement because GitHub does not expose secrets. Coverage artifacts are still generated. The hard pytest gate is `--cov-fail-under=80`. See setup below.
 
 ### 2. Deploy (`deploy.yml`)
 
@@ -47,14 +47,14 @@ Gitleaks on **push** to `main`, `master`, `develop`, `feature/vue-migration`; **
 Do these in [github.com/mariomanza150/SEIM](https://github.com/mariomanza150/SEIM) (requires admin on the repo).
 
 1. **Deploy environments** — [Settings → Environments](https://github.com/mariomanza150/SEIM/settings/environments): create **`staging`** and **`production`**. Optionally add **required reviewers** or **wait timer** on `production` so `deploy.yml` manual production deploys are gated.
-2. **Codecov (recommended for production metrics on this repo)** — CI always writes coverage reports (backend `coverage.xml`, frontend `frontend-vue/coverage/lcov.info`) and uploads them as artifacts. When `CODECOV_TOKEN` is set, CI uploads to Codecov and a failed upload **fails the job**. When the secret is missing, upload is skipped, CI emits a warning, and the job stays green (fork PRs, local `act` without `.secrets`, or this repo before the secret is added). Maintainers should still set the secret so Codecov history is tracked.
+2. **Codecov (required for same-repo CI)** — CI always writes coverage reports (backend `coverage.xml`, frontend `frontend-vue/coverage/lcov.info`) and uploads them as artifacts. `scripts/check_codecov_ci.py` **fails the job** when `CODECOV_TOKEN` is missing on this repository (push and same-repo PRs). Fork PRs skip the token requirement. When the token is set, Codecov upload uses `fail_ci_if_error: true`. Local pytest does not need the token.
 
    1. Sign in at [codecov.io](https://codecov.io) with GitHub and add **`mariomanza150/SEIM`**.
    2. Copy the repository upload token (Settings → General on the Codecov repo page).
    3. In GitHub: [Settings → Secrets and variables → Actions](https://github.com/mariomanza150/SEIM/settings/secrets/actions) → **New repository secret** → name **`CODECOV_TOKEN`** → paste the token only (no `CODECOV_TOKEN=` prefix).
    4. Re-run **CI** on `main` (or merge a PR). Backend uploads flag `backend`; Vue uploads flag `frontend`. Policy lives in [`codecov.yml`](../codecov.yml): backend project/patch statuses fail the Codecov check on drops; frontend stays informational. pytest `--cov-fail-under=80` remains the hard local/CI gate.
 
-   The job summary states when the secret is missing. Do not put this token in `.env` or `env.example`. Never commit a real token.
+   Do not put this token in `.env` or `env.example`. Never commit a real token.
 3. **Merge line of work into `main`** — Open a PR from `feature/vue-migration` into `main` ([compare](https://github.com/mariomanza150/SEIM/compare/main...feature/vue-migration?expand=1)). If GitHub reports unrelated histories, merge via the UI using a merge commit or align `main` to this branch using a one-time strategy your team agrees on (replacing the old `main` history is destructive).
 
 ## Other automation

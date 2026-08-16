@@ -1,13 +1,12 @@
 ---
-description: Remember to read/update relevant documentation files to help you understand the current codebase. main documentation folder: "/documentation"
+description: Remember to read/update relevant documentation files to help you understand the current codebase. main documentation folder: "/docs"
 globs:
 alwaysApply: false
 ---
 
 # SEIM documentation
 
-- **SSOT:** `documentation/` — manuals, Sphinx (`documentation/sphinx/`), generated API/code/DB output (`documentation/generated/`), and working notes (`documentation/notes/`).
-- **Deprecated pointer:** `docs/` — stub README plus a few moved-file stubs. Do not add new manuals there.
-- **Not docs:** `documents/` — Django document-upload app. See `documents/README.md`.
+- **SSOT:** `docs/` — manuals, Sphinx (`docs/sphinx/`), generated API/code/DB output (`docs/generated/`), and working notes (`docs/notes/`).
+- **Not docs:** `documents/` — Django document-upload app. See `documents/README.md`. Do not merge, move, or delete it.
 
-When you add or change engineering docs, put them under `documentation/` (guides at the root of that tree; status/audit/working papers under `documentation/notes/`). Keep `make docs-workflow` writing into `documentation/`.
+When you add or change engineering docs, put them under `docs/` (guides at the root of that tree; status/audit/working papers under `docs/notes/`). Keep `make docs-workflow` writing into `docs/`.

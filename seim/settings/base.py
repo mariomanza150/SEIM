@@ -339,7 +339,7 @@ SPECTACULAR_SETTINGS = {
     ],
     "EXTERNAL_DOCS": {
         "description": "SEIM Documentation",
-        "url": "http://localhost:8000/documentation/",
+        "url": "http://localhost:8000/docs/",
     },
     "SERVERS": [
         {
@@ -448,17 +448,28 @@ AGREEMENT_EXPIRATION_REMINDER_STATUSES = [
 ] or ["active", "renewal_pending"]
 
 # Institution branding (UAdeC is the default/example production theme).
-# Precedence: env vars > branding/institution.json > branding/<slug>/config.json > defaults.
-# See documentation/white_labeling.md.
+# Precedence: env vars > tenant_config.json > branding/institution.json
+# > branding/<slug>/config.json > defaults. See docs/white_labeling.md.
+TENANT_CONFIG_FILE = env(
+    "TENANT_CONFIG_FILE",
+    default=str(BASE_DIR / "tenant_config.json"),
+)
 INSTITUTION_CONFIG_FILE = env(
     "INSTITUTION_CONFIG_FILE",
     default=str(BASE_DIR / "branding" / "institution.json"),
 )
-_INSTITUTION_FILE = merge_institution_config(BASE_DIR, INSTITUTION_CONFIG_FILE)
+_INSTITUTION_FILE = merge_institution_config(
+    BASE_DIR,
+    override_path=INSTITUTION_CONFIG_FILE,
+    tenant_path=TENANT_CONFIG_FILE,
+)
 
 
 def _institution_env(name: str, fallback: str = "") -> str:
-    return env(name, default=_INSTITUTION_FILE.get(name, DEFAULT_INSTITUTION.get(name, fallback)))
+    return env(
+        name,
+        default=_INSTITUTION_FILE.get(name, DEFAULT_INSTITUTION.get(name, fallback)),
+    )
 
 
 INSTITUTION_SLUG = _institution_env("INSTITUTION_SLUG", "uadec")

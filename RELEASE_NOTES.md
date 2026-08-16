@@ -299,7 +299,7 @@ python manage.py compilemessages
 ### Updated Documentation
 - **`README.md`** - Updated with new features
 - **`CONTRIBUTING.md`** - Test and CI/CD guidelines
-- **`documentation/testing.md`** - Comprehensive testing guide
+- **`docs/testing.md`** - Comprehensive testing guide
 
 ---
 
@@ -327,7 +327,7 @@ python manage.py compilemessages
 
 We welcome contributions! Please see:
 - **CONTRIBUTING.md** for guidelines
-- **documentation/developer_guide.md** for setup
+- **docs/developer_guide.md** for setup
 - **.github/README.md** for CI/CD workflows
 
 ### Running Tests Locally
@@ -349,7 +349,7 @@ pytest tests/integration/
 
 ## 📞 Support
 
-- **Documentation:** See `documentation/` directory
+- **Documentation:** See `docs/` directory
 - **Issues:** GitHub Issues
 - **Wiki:** GitHub Wiki
 - **Email:** support@seim.example.com
@@ -398,5 +398,5 @@ Special thanks to all contributors who helped achieve production readiness!
 
 **Full Changelog:** See `CHANGELOG.md` for detailed changes
 
-**Upgrade Guide:** See `documentation/deployment.md` for migration instructions
+**Upgrade Guide:** See `docs/deployment.md` for migration instructions
 

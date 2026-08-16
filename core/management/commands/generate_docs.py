@@ -25,7 +25,7 @@ class Command(BaseCommand):
         parser.add_argument(
             "--output-dir",
             type=str,
-            default="documentation/generated",
+            default="docs/generated",
             help="Output directory for generated documentation",
         )
         parser.add_argument(

@@ -186,10 +186,11 @@ jobs:
             tests/unit/ tests/integration/ \
             -v --tb=short
 
-      - name: Note missing CODECOV_TOKEN
-        if: env.CODECOV_TOKEN == ''
-        run: |
-          echo "::warning::CODECOV_TOKEN is not set. Coverage XML was still generated as an artifact. Add the GitHub Actions secret for Codecov uploads — see .github/README.md. The hard gate remains pytest --cov-fail-under=80."
+      - name: Enforce Codecov token and coverage report
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          CODECOV_SKIP_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        run: python scripts/check_codecov_ci.py --coverage-file coverage.xml
 
       - name: Upload coverage to Codecov
         id: codecov_backend
@@ -228,8 +229,8 @@ jobs:
             echo "Hard gate: pytest \`--cov-fail-under=80\` (unchanged)."
             if [ -z "$CODECOV_TOKEN" ]; then
               echo ""
-              echo "**Codecov:** \`CODECOV_TOKEN\` is not set. Coverage report was still generated as an artifact; upload was skipped."
-              echo "Maintainers should add the GitHub Actions secret for Codecov history — see [.github/README.md](.github/README.md)."
+              echo "**Codecov:** \`CODECOV_TOKEN\` is not set. Same-repo CI fails closed via \`scripts/check_codecov_ci.py\` (fork PRs skip the token)."
+              echo "Maintainers must add the GitHub Actions secret — see [.github/README.md](.github/README.md)."
             elif [ "${{ steps.codecov_backend.outcome }}" != "success" ]; then
               echo ""
               echo "**Codecov:** upload failed. This job fails when the token is set."
@@ -266,10 +267,12 @@ jobs:
       - name: Verify production dist
         run: test -f dist/index.html && test -d dist/assets
 
-      - name: Note missing CODECOV_TOKEN
-        if: env.CODECOV_TOKEN == ''
-        run: |
-          echo "::warning::CODECOV_TOKEN is not set. Coverage LCOV was still generated as an artifact. Add the GitHub Actions secret for Codecov uploads — see .github/README.md."
+      - name: Enforce Codecov token and coverage report
+        working-directory: ${{ github.workspace }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+          CODECOV_SKIP_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        run: python3 scripts/check_codecov_ci.py --coverage-file frontend-vue/coverage/lcov.info
 
       - name: Upload coverage to Codecov
         id: codecov_frontend
@@ -299,8 +302,8 @@ jobs:
             echo "Vitest + coverage + production build complete. Coverage LCOV: **frontend-coverage-lcov**."
             if [ -z "$CODECOV_TOKEN" ]; then
               echo ""
-              echo "**Codecov:** \`CODECOV_TOKEN\` is not set. Coverage report was still generated as an artifact; upload was skipped."
-              echo "Maintainers should add the GitHub Actions secret for Codecov history — see [.github/README.md](.github/README.md)."
+              echo "**Codecov:** \`CODECOV_TOKEN\` is not set. Same-repo CI fails closed via \`scripts/check_codecov_ci.py\` (fork PRs skip the token)."
+              echo "Maintainers must add the GitHub Actions secret — see [.github/README.md](.github/README.md)."
             elif [ "${{ steps.codecov_frontend.outcome }}" != "success" ]; then
               echo ""
               echo "**Codecov:** upload failed. This job fails when the token is set."

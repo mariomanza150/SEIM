@@ -75,15 +75,49 @@ def default_override_config_path(base_dir: Path) -> Path:
     return Path(base_dir) / "branding" / "institution.json"
 
 
+def default_tenant_config_path(base_dir: Path) -> Path:
+    return Path(base_dir) / "tenant_config.json"
+
+
+def resolve_tenant_config_path(
+    base_dir: Path,
+    tenant_path: Path | str | None = None,
+) -> Path:
+    """TENANT_CONFIG_FILE env, explicit path, then repo-root tenant_config.json."""
+    if tenant_path:
+        path = Path(tenant_path)
+        return path if path.is_absolute() else Path(base_dir) / path
+    env_path = (os.environ.get("TENANT_CONFIG_FILE") or "").strip()
+    if env_path:
+        path = Path(env_path)
+        return path if path.is_absolute() else Path(base_dir) / path
+    return default_tenant_config_path(base_dir)
+
+
+def _nonempty_mapping(data: Mapping[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in data.items() if value not in (None, "")}
+
+
 def resolve_institution_slug(
     base_dir: Path,
     override_path: Path | str | None = None,
+    tenant_path: Path | str | None = None,
 ) -> str:
-    """Env INSTITUTION_SLUG, then institution.json, then the UAdeC default."""
+    """Env INSTITUTION_SLUG, then tenant_config.json, then institution.json, then UAdeC."""
     env_slug = (os.environ.get("INSTITUTION_SLUG") or "").strip()
     if env_slug:
         return env_slug
-    path = Path(override_path) if override_path else default_override_config_path(base_dir)
+    tenant_slug = str(
+        load_json_object(resolve_tenant_config_path(base_dir, tenant_path)).get(
+            "INSTITUTION_SLUG"
+        )
+        or ""
+    ).strip()
+    if tenant_slug:
+        return tenant_slug
+    path = (
+        Path(override_path) if override_path else default_override_config_path(base_dir)
+    )
     file_slug = str(load_json_object(path).get("INSTITUTION_SLUG") or "").strip()
     return file_slug or DEFAULT_SLUG
 
@@ -105,29 +139,31 @@ def load_json_object(path: Path | str | None) -> dict[str, Any]:
 def merge_institution_config(
     base_dir: Path,
     override_path: Path | str | None = None,
+    tenant_path: Path | str | None = None,
 ) -> dict[str, str]:
-    """Defaults ← branding/<slug>/config.json ← optional institution.json."""
-    slug = resolve_institution_slug(base_dir, override_path)
+    """Defaults ← pack ← institution.json ← tenant_config.json.
+
+    Missing overlays are skipped. Env vars still win in Django settings.
+    UAdeC remains the packaged fallback when no tenant file is present.
+    """
+    resolved_tenant = resolve_tenant_config_path(base_dir, tenant_path)
+    slug = resolve_institution_slug(base_dir, override_path, resolved_tenant)
     merged = dict(DEFAULT_INSTITUTION)
     merged["INSTITUTION_SLUG"] = slug
     pack_path = pack_config_path(base_dir, slug)
     if not pack_path.is_file() and slug != DEFAULT_SLUG:
         pack_path = default_pack_config_path(base_dir)
-    merged.update(
-        {
-            key: value
-            for key, value in load_json_object(pack_path).items()
-            if value not in (None, "")
-        }
+    merged.update(_nonempty_mapping(load_json_object(pack_path)))
+    overlay = (
+        Path(override_path) if override_path else default_override_config_path(base_dir)
     )
-    path = Path(override_path) if override_path else default_override_config_path(base_dir)
-    merged.update(
-        {
-            key: value
-            for key, value in load_json_object(path).items()
-            if value not in (None, "")
-        }
+    overlay_key = overlay.resolve() if overlay.exists() else overlay
+    tenant_key = (
+        resolved_tenant.resolve() if resolved_tenant.exists() else resolved_tenant
     )
+    if overlay_key != tenant_key:
+        merged.update(_nonempty_mapping(load_json_object(overlay)))
+    merged.update(_nonempty_mapping(load_json_object(resolved_tenant)))
     if not merged.get("INSTITUTION_SLUG"):
         merged["INSTITUTION_SLUG"] = slug
     return merged
@@ -138,14 +174,25 @@ def default_brand() -> dict[str, Any]:
 
 
 def brand_from_config(config: Mapping[str, Any]) -> dict[str, Any]:
-    brand = {field: config.get(key, DEFAULT_INSTITUTION.get(key, "")) for key, field in _CONFIG_TO_BRAND.items()}
+    brand = {
+        field: config.get(key, DEFAULT_INSTITUTION.get(key, ""))
+        for key, field in _CONFIG_TO_BRAND.items()
+    }
     brand["theme"] = {
         "primary": config.get("BRAND_PRIMARY", DEFAULT_INSTITUTION["BRAND_PRIMARY"]),
-        "primary_light": config.get("BRAND_PRIMARY_LIGHT", DEFAULT_INSTITUTION["BRAND_PRIMARY_LIGHT"]),
-        "primary_dark": config.get("BRAND_PRIMARY_DARK", DEFAULT_INSTITUTION["BRAND_PRIMARY_DARK"]),
+        "primary_light": config.get(
+            "BRAND_PRIMARY_LIGHT", DEFAULT_INSTITUTION["BRAND_PRIMARY_LIGHT"]
+        ),
+        "primary_dark": config.get(
+            "BRAND_PRIMARY_DARK", DEFAULT_INSTITUTION["BRAND_PRIMARY_DARK"]
+        ),
         "accent": config.get("BRAND_ACCENT", DEFAULT_INSTITUTION["BRAND_ACCENT"]),
-        "accent_light": config.get("BRAND_ACCENT_LIGHT", DEFAULT_INSTITUTION["BRAND_ACCENT_LIGHT"]),
-        "accent_dark": config.get("BRAND_ACCENT_DARK", DEFAULT_INSTITUTION["BRAND_ACCENT_DARK"]),
+        "accent_light": config.get(
+            "BRAND_ACCENT_LIGHT", DEFAULT_INSTITUTION["BRAND_ACCENT_LIGHT"]
+        ),
+        "accent_dark": config.get(
+            "BRAND_ACCENT_DARK", DEFAULT_INSTITUTION["BRAND_ACCENT_DARK"]
+        ),
         "navy": config.get("BRAND_NAVY", DEFAULT_INSTITUTION["BRAND_NAVY"]),
         "orange": config.get("BRAND_ORANGE", DEFAULT_INSTITUTION["BRAND_ORANGE"]),
         "text": config.get("BRAND_TEXT", DEFAULT_INSTITUTION["BRAND_TEXT"]),
@@ -160,14 +207,22 @@ def brand_from_config(config: Mapping[str, Any]) -> dict[str, Any]:
 def brand_from_settings(settings: Any) -> dict[str, Any]:
     """Build the runtime brand dict from Django settings."""
     theme = getattr(settings, "INSTITUTION_THEME", {}) or {}
-    short_name = getattr(settings, "INSTITUTION_SHORT_NAME", DEFAULT_INSTITUTION["INSTITUTION_SHORT_NAME"])
+    short_name = getattr(
+        settings,
+        "INSTITUTION_SHORT_NAME",
+        DEFAULT_INSTITUTION["INSTITUTION_SHORT_NAME"],
+    )
     tagline = getattr(settings, "INSTITUTION_TAGLINE", "")
     nav_brand = getattr(settings, "INSTITUTION_NAV_BRAND", "") or " ".join(
         part for part in (short_name, tagline) if part
     )
     return {
-        "slug": getattr(settings, "INSTITUTION_SLUG", DEFAULT_INSTITUTION["INSTITUTION_SLUG"]),
-        "name": getattr(settings, "INSTITUTION_NAME", DEFAULT_INSTITUTION["INSTITUTION_NAME"]),
+        "slug": getattr(
+            settings, "INSTITUTION_SLUG", DEFAULT_INSTITUTION["INSTITUTION_SLUG"]
+        ),
+        "name": getattr(
+            settings, "INSTITUTION_NAME", DEFAULT_INSTITUTION["INSTITUTION_NAME"]
+        ),
         "short_name": short_name,
         "tagline": tagline,
         "department": getattr(settings, "INSTITUTION_DEPARTMENT", ""),
@@ -217,5 +272,8 @@ def apply_institution_tokens_deep(value: Any, brand: Mapping[str, Any]) -> Any:
     if isinstance(value, list):
         return [apply_institution_tokens_deep(item, brand) for item in value]
     if isinstance(value, dict):
-        return {key: apply_institution_tokens_deep(item, brand) for key, item in value.items()}
+        return {
+            key: apply_institution_tokens_deep(item, brand)
+            for key, item in value.items()
+        }
     return value

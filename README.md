@@ -12,7 +12,7 @@ Student Exchange Information Manager: Django 5.1 + DRF + Vue 3 SPA + Wagtail CMS
 **✅ Wagtail CMS for the public site**  
 **✅ JWT API, Docker, and CI**
 
-SEIM is a Django 5.1 + DRF backend with a Vue 3 SPA (`frontend-vue/`, served at `/seim/`), JWT authentication, and role-based dashboards. Wagtail CMS owns the public site at `/`. The Django template frontend has been removed. Remaining operator leftovers (dynforms builder, data-management UI) are listed in [documentation/notes/SPA_VS_LEGACY.md](documentation/notes/SPA_VS_LEGACY.md).
+SEIM is a Django 5.1 + DRF backend with a Vue 3 SPA (`frontend-vue/`, served at `/seim/`), JWT authentication, and role-based dashboards. Wagtail CMS owns the public site at `/`. The Django template frontend has been removed. Remaining operator leftovers (dynforms builder, data-management UI) are listed in [docs/notes/SPA_VS_LEGACY.md](docs/notes/SPA_VS_LEGACY.md).
 
 ### 🚀 What's Ready for Production
 - Complete user authentication and authorization
@@ -28,8 +28,8 @@ SEIM is a Django 5.1 + DRF backend with a Vue 3 SPA (`frontend-vue/`, served at 
 - Grade translation system for international students
 
 ### 🔧 Optional Enhancements
-1. **Coverage depth** — unit+integration already enforce `--cov-fail-under=80` on first-party apps; remaining work is CMS/operator leftovers and Vue slices in [documentation/notes/SPA_VS_LEGACY.md](documentation/notes/SPA_VS_LEGACY.md)
-2. **White-labeling** — UAdeC is the default theme. Copy `branding\uadec\`, set `INSTITUTION_*` / `BRAND_*` or `branding\institution.json` (see [documentation/white_labeling.md](documentation/white_labeling.md))
+1. **Coverage depth** — unit+integration already enforce `--cov-fail-under=80` on first-party apps; remaining work is CMS/operator leftovers and Vue slices in [docs/notes/SPA_VS_LEGACY.md](docs/notes/SPA_VS_LEGACY.md)
+2. **White-labeling** — UAdeC is the default theme. Copy `branding\uadec\`, set `INSTITUTION_*` / `BRAND_*` or `branding\institution.json` (see [docs/white_labeling.md](docs/white_labeling.md))
 3. **Internationalization** — expand beyond the current SPA/CMS split
 
 **Note**: Backend unit+integration coverage is gated at 80%. Historical “34%” figures in older notes are stale.
@@ -65,7 +65,7 @@ Restore it later:
 docker-compose exec web python manage.py import_cms --clear
 ```
 
-**📖 See [documentation/notes/CMS_RESTORE_GUIDE.md](documentation/notes/CMS_RESTORE_GUIDE.md) for complete documentation**
+**📖 See [docs/notes/CMS_RESTORE_GUIDE.md](docs/notes/CMS_RESTORE_GUIDE.md) for complete documentation**
 
 ### CMS Access
 - **Public Landing Page**: http://localhost:8001/
@@ -454,45 +454,45 @@ export DJANGO_SETTINGS_MODULE=seim.settings.production
 
 ## 📚 Documentation
 
-**Start here:** [documentation/README.md](documentation/README.md) (single source of truth: guides + Sphinx + notes).
+**Start here:** [docs/README.md](docs/README.md) (single source of truth: guides + Sphinx + notes).
 
-`documents/` at the repo root is the **Django document-upload app**, not a docs tree. See [documents/README.md](documents/README.md). `docs/` is a deprecated pointer ([docs/README.md](docs/README.md)).
+`documents/` at the repo root is the **Django document-upload app**, not a docs tree. See [documents/README.md](documents/README.md). Do not merge it with `docs/`.
 
 | Tree | Role |
 | --- | --- |
-| [`documentation/`](documentation/README.md) | **Canonical** manuals (install, architecture, testing, white-labeling, Sphinx) |
-| [`documentation/notes/`](documentation/notes/README.md) | Working notes, status, Vue/CMS papers. Index: [notes/index.md](documentation/notes/index.md) |
-| [`docs/`](docs/README.md) | Deprecated stubs that point here |
+| [`docs/`](docs/README.md) | **Canonical** manuals (install, architecture, testing, white-labeling, Sphinx) |
+| [`docs/notes/`](docs/notes/README.md) | Working notes, status, Vue/CMS papers. Index: [notes/index.md](docs/notes/index.md) |
+| [`documents/`](documents/README.md) | Django file-upload app (not documentation) |
 
-### **`documentation/` - Manual/Maintained Documentation**
+### **`docs/` - Manual/Maintained Documentation**
 **Authoritative source** for development guidelines, user guides, and planning documents. Manually maintained by the team.
 
-- **[Documentation Index](documentation/README.md)** - Complete documentation index
-- **[Developer Guide](documentation/developer_guide.md)** - Complete development documentation
-- **[Installation Guide](documentation/installation.md)** - Setup and deployment instructions
-- **[Architecture](documentation/architecture.md)** - System design and architecture
-- **[Business Rules](documentation/business_rules.md)** - Business logic and rules
-- **[Form Builder Guide](documentation/form_builder_guide.md)** - Dynamic form creation system
-- **[White-labeling](documentation/white_labeling.md)** - Institution branding (UAdeC default)
-- **[Grade Translation Guide](documentation/grade_translation_user_guide.md)** - Grade scale conversion system
-- **[Roadmap](documentation/roadmap.md)** - Development roadmap and upcoming features
-- **[Backlog](documentation/backlog.md)** - Current development tasks and priorities
-- **[User Stories](documentation/user_stories.md)** - User requirements and acceptance criteria
-- **[Deployment Guide](documentation/deployment.md)** - Production deployment instructions
-- **[Architectural Decisions](documentation/architectural_decisions.md)** - Key design decisions and rationale
+- **[Documentation Index](docs/README.md)** - Complete documentation index
+- **[Developer Guide](docs/developer_guide.md)** - Complete development documentation
+- **[Installation Guide](docs/installation.md)** - Setup and deployment instructions
+- **[Architecture](docs/architecture.md)** - System design and architecture
+- **[Business Rules](docs/business_rules.md)** - Business logic and rules
+- **[Form Builder Guide](docs/form_builder_guide.md)** - Dynamic form creation system
+- **[White-labeling](docs/white_labeling.md)** - Institution branding (UAdeC default)
+- **[Grade Translation Guide](docs/grade_translation_user_guide.md)** - Grade scale conversion system
+- **[Roadmap](docs/roadmap.md)** - Development roadmap and upcoming features
+- **[Backlog](docs/backlog.md)** - Current development tasks and priorities
+- **[User Stories](docs/user_stories.md)** - User requirements and acceptance criteria
+- **[Deployment Guide](docs/deployment.md)** - Production deployment instructions
+- **[Architectural Decisions](docs/architectural_decisions.md)** - Key design decisions and rationale
 
-### **`documentation/notes/` - Generated/working notes**
+### **`docs/notes/` - Generated/working notes**
 Working papers and generated analysis. Not a second official manual.
 
-- **[notes README](documentation/notes/README.md)** - How notes relate to the manuals
-- **[SPA vs leftover Django](documentation/notes/SPA_VS_LEGACY.md)** - Current Vue vs Django split
-- **[Notes index](documentation/notes/index.md)** - Index of generated documentation
-- **[Project Structure Guide](documentation/notes/PROJECT_STRUCTURE.md)** - Comprehensive project structure guide
-- **[API Contracts](documentation/notes/api-contracts.md)** - Auto-generated API documentation
-- **[Data Models](documentation/notes/data-models.md)** - Auto-generated database schema
-- **[Component Inventory](documentation/notes/component-inventory.md)** - Auto-generated component catalog
-- **[Status Reports](documentation/notes/status/)** - Project status and progress tracking
-- **[Quick Guides](documentation/notes/guides/)** - Quick reference guides
+- **[notes README](docs/notes/README.md)** - How notes relate to the manuals
+- **[SPA vs leftover Django](docs/notes/SPA_VS_LEGACY.md)** - Current Vue vs Django split
+- **[Notes index](docs/notes/index.md)** - Index of generated documentation
+- **[Project Structure Guide](docs/notes/PROJECT_STRUCTURE.md)** - Comprehensive project structure guide
+- **[API Contracts](docs/notes/api-contracts.md)** - Auto-generated API documentation
+- **[Data Models](docs/notes/data-models.md)** - Auto-generated database schema
+- **[Component Inventory](docs/notes/component-inventory.md)** - Auto-generated component catalog
+- **[Status Reports](docs/notes/status/)** - Project status and progress tracking
+- **[Quick Guides](docs/notes/guides/)** - Quick reference guides
 
 ### **API Documentation**
 - **[Interactive API Docs](http://localhost:8001/api/docs/)** - Swagger UI (auto-generated, Docker)
@@ -502,7 +502,7 @@ Working papers and generated analysis. Not a second official manual.
 - **Build Sphinx HTML docs (inside Docker):**
   ```bash
   make docs-sphinx-docker
-  # Open documentation/sphinx/build/html/index.html in your browser
+  # Open docs/sphinx/build/html/index.html in your browser
   ```
 
 ### **Full Documentation Workflow**
@@ -512,9 +512,9 @@ Working papers and generated analysis. Not a second official manual.
   ```
 
 **Quick Reference:**
-- Need authoritative info? → Check `documentation/`
-- Need current system state? → Check `documentation/notes/`
-- Need project structure? → See [PROJECT_STRUCTURE.md](documentation/notes/PROJECT_STRUCTURE.md)
+- Need authoritative info? → Check `docs/`
+- Need current system state? → Check `docs/notes/`
+- Need project structure? → See [PROJECT_STRUCTURE.md](docs/notes/PROJECT_STRUCTURE.md)
 
 ---
 
@@ -670,7 +670,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support & Contact
 
-- **Documentation**: [Developer Guide](documentation/developer_guide.md)
+- **Documentation**: [Developer Guide](docs/developer_guide.md)
 - **Issues**: [GitHub Issues](https://github.com/mariomanza150/SEIM/issues)
 - **Email**: support@seim.local
 

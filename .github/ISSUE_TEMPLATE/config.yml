@@ -1,7 +1,7 @@
 blank_issues_enabled: true
 contact_links:
   - name: Documentation
-    url: https://github.com/mariomanza150/SEIM/blob/main/documentation/README.md
+    url: https://github.com/mariomanza150/SEIM/blob/main/docs/README.md
     about: Installation, developer, and architecture guides.
   - name: Contributing
     url: https://github.com/mariomanza150/SEIM/blob/main/CONTRIBUTING.md

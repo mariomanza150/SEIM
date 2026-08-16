@@ -207,11 +207,14 @@ ehthumbs.db
 Thumbs.db
 
 # Generated documentation
-documentation/generated/
+docs/generated/
 api_schema.yaml
 
 # Sphinx build
-documentation/sphinx/build/
+docs/sphinx/build/
+
+# Local institution overlay (keep tenant_config.json.example)
+tenant_config.json
 
 # Docker
 .dockerignore

@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 """Backward-compatible entry point for institution asset download.
 
-UAdeC remains the default source. Prefer:
+Prefer::
 
     python scripts/download_institution_assets.py
 
-Configure INSTITUTION_WEBSITE, INSTITUTION_ASSET_DIR, and related env vars.
-See documentation/white_labeling.md.
+Reads tenant_config.json / INSTITUTION_* env vars. UAdeC is only the fallback
+when no tenant overlay is present. See docs/white_labeling.md.
 """
 
 import runpy

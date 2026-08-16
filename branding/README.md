@@ -9,12 +9,13 @@ SEIM is white-labelable. **UAdeC** (`branding\uadec\`) is the packaged default e
 3. Recolor `theme.css`. After `collectstatic`, it is served as `/static/<slug>/theme.css`.
 4. Put your own logos in `branding\<slug>\logos\` (PNG/SVG). Do **not** commit copyrighted university marks; keep `.gitkeep`.
 5. Point SEIM at the pack:
+   - Copy `tenant_config.json.example` to `tenant_config.json` (gitignored), or
    - Copy `institution.json.example` to `institution.json` (gitignored), or
    - Set `INSTITUTION_SLUG=myuni` and/or `INSTITUTION_CONFIG_FILE=branding\myuni\config.json`.
 6. Optional: set the same `INSTITUTION_*` / `BRAND_*` keys in `.env` (env wins).
 7. Re-seed CMS example pages if needed: `python manage.py populate_institution_content`.
 
-Full guide: `documentation\white_labeling.md`.
+Full guide: `docs\white_labeling.md`.
 
 ## Asset download (optional)
 
@@ -27,6 +28,7 @@ Reads `branding\<slug>\config.json` / `institution.json` plus env vars (`INSTITU
 ## Precedence
 
 1. Environment variables
-2. `branding\institution.json` (or `INSTITUTION_CONFIG_FILE`)
-3. `branding\<slug>\config.json` (`INSTITUTION_SLUG`, default `uadec`)
-4. Built-in defaults in `core\branding.py`
+2. `tenant_config.json` (or `TENANT_CONFIG_FILE`)
+3. `branding\institution.json` (or `INSTITUTION_CONFIG_FILE`)
+4. `branding\<slug>\config.json` (`INSTITUTION_SLUG`, default `uadec`)
+5. Built-in defaults in `core\branding.py`

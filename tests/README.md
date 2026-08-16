@@ -225,9 +225,9 @@ npm --prefix frontend-vue run test:run
 
 ## 📚 **Additional Resources**
 
-- **[Main Testing Guide](../documentation/testing.md)** - Comprehensive testing documentation
-- **[Developer Guide](../documentation/developer_guide.md)** - Development setup and workflows
-- **[Installation Guide](../documentation/installation.md)** - Project setup instructions
+- **[Main Testing Guide](../docs/testing.md)** - Comprehensive testing documentation
+- **[Developer Guide](../docs/developer_guide.md)** - Development setup and workflows
+- **[Installation Guide](../docs/installation.md)** - Project setup instructions
 
 ---
 

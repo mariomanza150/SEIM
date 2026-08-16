@@ -1,7 +1,7 @@
 /**
  * Default institution theme pack (UAdeC colors and CMS chrome).
  * Relocated from static/css/uadec-styles.css. Override --uadec-* / --brand-*
- * via INSTITUTION_THEME (CMS base template) or documentation/white_labeling.md.
+ * via INSTITUTION_THEME (CMS base template) or docs/white_labeling.md.
  * Legacy --uadec-* names are kept so existing CMS templates keep working.
  */
 
