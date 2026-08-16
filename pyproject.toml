@@ -149,7 +149,7 @@ test = [
     # Selenium (host-oriented tests; kept for parity with dev)
     "webdriver-manager==4.0.1",
     # Playwright E2E
-    "playwright==1.41.2",
+    "playwright==1.62.0",
     "pytest-playwright==0.4.4",
     "pytest-base-url==2.1.0",
     "pytest-html==4.1.1",
