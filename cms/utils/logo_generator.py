@@ -24,10 +24,26 @@ def create_placeholder_logo(institution_name, output_path=None, return_buffer=Fa
     # Image size
     width, height = 400, 200
 
-    # UAdeC color scheme
-    bg_color = (255, 255, 255)  # White background
-    primary_color = (0, 51, 102)  # UAdeC blue
-    accent_color = (204, 204, 204)  # Light gray
+    def _hex_rgb(value, fallback):
+        raw = str(value or "").lstrip("#")
+        if len(raw) == 6:
+            try:
+                return tuple(int(raw[i : i + 2], 16) for i in (0, 2, 4))
+            except ValueError:
+                return fallback
+        return fallback
+
+    bg_color = (255, 255, 255)
+    primary_color = (46, 80, 144)
+    accent_color = (204, 204, 204)
+    try:
+        from django.conf import settings
+
+        theme = getattr(settings, "INSTITUTION_THEME", {}) or {}
+        primary_color = _hex_rgb(theme.get("primary"), primary_color)
+        accent_color = _hex_rgb(theme.get("accent"), accent_color)
+    except Exception:
+        pass
 
     # Create image
     img = Image.new("RGB", (width, height), bg_color)

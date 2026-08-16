@@ -7,6 +7,7 @@ This folder is **not** the contributor guide set.
 | [`documentation/`](../documentation/README.md) | **Canonical** human guides (install, architecture, testing, Sphinx) |
 | [`docs/index.md`](index.md) | Index of generated/status/Vue working notes in this folder |
 | [`docs/SPA_VS_LEGACY.md`](SPA_VS_LEGACY.md) | Current Vue SPA vs leftover Django surfaces |
+| [`docs/archive/`](archive/README.md) | Superseded Vue-SSR plans (not current work) |
 | [`docs/PROJECT_STRUCTURE.md`](PROJECT_STRUCTURE.md) | Directory map |
 | `documents/` (Django app at repo root) | **Not documentation** — file-upload domain app |
 

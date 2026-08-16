@@ -14,6 +14,9 @@ Set these in `.env` (see `env.example`):
 | `INSTITUTION_DEPARTMENT` | Footer and homepage hero |
 | `INSTITUTION_LOCATION` | Footer address line |
 | `INSTITUTION_WEBSITE` | Footer link and asset-download source |
+| `INSTITUTION_EMAIL` | Seed contact email |
+| `INSTITUTION_PHONE` | Seed contact phone |
+| `INSTITUTION_ADDRESS` | Seed postal address (HTML allowed) |
 | `INSTITUTION_LOGO_URL` | Optional navbar logo |
 | `INSTITUTION_NAV_BRAND` | Navbar label (falls back to short name + tagline) |
 | `INSTITUTION_SOCIAL_*` | Footer social links |
@@ -39,12 +42,14 @@ python scripts\download_institution_assets.py
 
 ## CMS seed content
 
-`manage.py populate_uadec_content` and `restore_cms` still install the UAdeC **example pages** (Spanish copy, programs, FAQs). Homepage title/hero use `INSTITUTION_*`. Replacing the rest of the seed copy is a follow-up (GitHub issue), not a requirement to change colors or chrome.
+`manage.py populate_uadec_content` and `restore_cms` still install the Spanish **example pages**. Name, email, phone, address, and “UAdeC” tokens are replaced from `INSTITUTION_*` at seed time.
 
-## Still institution-specific
+PDF mobility forms stamp `INSTITUTION_NAME` in the header. CMS CSS loads `static/css/institution-styles.css` (imports the UAdeC default theme file).
 
-- Remaining Spanish UAdeC body copy in `populate_uadec_content`
-- PDF mobility forms and some `docs/` UAdeC deployment notes
-- CSS file name `static/css/uadec-styles.css` (content is now theme-overridable)
+## Still example-specific
+
+- Spanish narrative in seed FAQs/programs (tokens replaced; stories are still the sample set)
+- `docs/INTERNACIONAL_*` hostnames (banner notes they are examples)
+- Default `static/css/uadec-styles.css` palette file (do not delete)
 
 Do not delete those assets; override or replace them per institution.

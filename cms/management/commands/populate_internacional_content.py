@@ -3,6 +3,7 @@ Management command to populate International section with real UAdeC content.
 Scraped from https://www.uadec.mx/cgri/ and https://www.uadec.mx/movilidad/
 """
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
@@ -19,17 +20,20 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
+        short = getattr(settings, "INSTITUTION_SHORT_NAME", "UAdeC")
+        name = getattr(settings, "INSTITUTION_NAME", "Universidad Autónoma de Coahuila")
+        email = getattr(settings, "INSTITUTION_EMAIL", "intercambio@uadec.edu.mx")
         self.stdout.write(
-            "\n=== Populating Internacional with Real UAdeC Content ===\n"
+            f"\n=== Populating Internacional ({short} example content) ===\n"
         )
 
         # 1. Update International Home Page
         try:
             internacional = InternationalHomePage.objects.get(slug="internacional")
-            internacional.hero_title = "Relaciones Internacionales UAdeC"
+            internacional.hero_title = f"Relaciones Internacionales {short}"
             internacional.hero_subtitle = "Coordinación General de Relaciones Internacionales - Promoviendo la movilidad académica y la cooperación internacional"
-            internacional.introduction = """
-                <p>La Coordinación General de Relaciones Internacionales (CGRI) de la Universidad Autónoma de Coahuila es responsable de promover la movilidad internacional de académicos y estudiantes, gestionar convenios de colaboración con instituciones educativas y científicas de alta calidad, y buscar la acreditación internacional de los programas académicos.</p>
+            internacional.introduction = f"""
+                <p>La Coordinación General de Relaciones Internacionales (CGRI) de {name} es responsable de promover la movilidad internacional de académicos y estudiantes, gestionar convenios de colaboración con instituciones educativas y científicas de alta calidad, y buscar la acreditación internacional de los programas académicos.</p>
             """
             internacional.stat_programs_count = 50
             internacional.stat_countries_count = 20
@@ -43,13 +47,17 @@ class Command(BaseCommand):
         # 2. Update CGRI Institucional page
         try:
             cgri_home = CGRIPage.objects.get(slug="institucional")
-            cgri_home.introduction = """La CGRI es la instancia responsable de promover la internacionalización de la Universidad Autónoma de Coahuila, facilitando la movilidad académica y fortaleciendo la cooperación con instituciones de prestigio internacional."""
+            cgri_home.introduction = (
+                f"La CGRI es la instancia responsable de promover la internacionalización "
+                f"de {name}, facilitando la movilidad académica y fortaleciendo la "
+                f"cooperación con instituciones de prestigio internacional."
+            )
             cgri_home.show_contact = True
             cgri_home.contact_name = "Dra. Lourdes Morales Oyervides"
             cgri_home.contact_title = (
                 "Coordinadora General de Relaciones Internacionales"
             )
-            cgri_home.contact_email = "lourdesmorales@uadec.edu.mx"
+            cgri_home.contact_email = email
             cgri_home.contact_phone = "844 415 3077 | 844 416 9995"
             cgri_home.contact_office = "Lic. Salvador González Lobo s/n, Col. República Ote., Saltillo, Coah. C.P. 25280"
             cgri_home.save_revision().publish()

@@ -1,7 +1,6 @@
--r requirements.txt
-# Extra pins are mirrored in requirements/dev-extras.txt for pyproject extras.
-
-# Development and Code Quality Tools for SEIM
+# Extra packages for `pip install seim[dev]`.
+# Must stay in sync with requirements-dev.txt (minus `-r requirements.txt`).
+# Docker/CI still install requirements-dev.txt.
 
 # Code formatting and linting
 ruff==0.12.2
@@ -37,7 +36,7 @@ sphinx-rtd-theme==2.0.0
 sphinx-autodoc-typehints==1.25.3
 
 # Development utilities
-ipython==8.18.1  # Latest version compatible with Python 3.10
+ipython==8.18.1
 ipdb==0.13.13
 django-debug-toolbar==6.1.0
 django-livereload==1.7

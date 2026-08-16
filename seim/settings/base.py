@@ -452,6 +452,15 @@ INSTITUTION_DEPARTMENT = env(
 )
 INSTITUTION_LOCATION = env("INSTITUTION_LOCATION", default="Saltillo, Coahuila, México")
 INSTITUTION_WEBSITE = env("INSTITUTION_WEBSITE", default="https://www.uadec.mx/")
+INSTITUTION_EMAIL = env("INSTITUTION_EMAIL", default="intercambio@uadec.edu.mx")
+INSTITUTION_PHONE = env("INSTITUTION_PHONE", default="+52 (844) 412-8800 ext. 2345")
+INSTITUTION_ADDRESS = env(
+    "INSTITUTION_ADDRESS",
+    default=(
+        "Boulevard V. Carranza y González Lobo s/n<br>"
+        "Col. República Oriente<br>Saltillo, Coahuila, México<br>C.P. 25280"
+    ),
+)
 INSTITUTION_LOGO_URL = env("INSTITUTION_LOGO_URL", default="")
 INSTITUTION_NAV_BRAND = env("INSTITUTION_NAV_BRAND", default="")
 INSTITUTION_SOCIAL_FACEBOOK = env(

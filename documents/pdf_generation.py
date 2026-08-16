@@ -74,7 +74,16 @@ def render_solicitud_participacion_pdf(application) -> bytes:
     )
     body = styles["Normal"]
 
+    institution = "SEIM"
+    try:
+        from django.conf import settings
+
+        institution = getattr(settings, "INSTITUTION_NAME", "SEIM")
+    except Exception:
+        pass
+
     story = [
+        Paragraph(institution, body),
         Paragraph("Solicitud de Participación en Movilidad", title_style),
         Paragraph(
             "Documento generado por SEIM. Imprima, firme y cargue el escaneo firmado.",
@@ -156,7 +165,9 @@ def render_solicitud_participacion_pdf(application) -> bytes:
         )
     )
     story.append(Spacer(1, 36))
-    story.append(Paragraph("Firma del estudiante: _______________________________", body))
+    story.append(
+        Paragraph("Firma del estudiante: _______________________________", body)
+    )
     story.append(Spacer(1, 12))
     story.append(Paragraph("Fecha: ____________________", body))
 
@@ -339,7 +350,9 @@ def render_carta_homologacion_pdf(application) -> bytes:
         )
     )
     story.append(Spacer(1, 36))
-    story.append(Paragraph("Firma del estudiante: _______________________________", body))
+    story.append(
+        Paragraph("Firma del estudiante: _______________________________", body)
+    )
     story.append(Spacer(1, 12))
     story.append(Paragraph("Fecha: ____________________", body))
 

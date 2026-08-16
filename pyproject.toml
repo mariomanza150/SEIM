@@ -12,34 +12,12 @@ license = {file = "LICENSE"}
 requires-python = ">=3.11"
 # Runtime pins live in requirements.txt (Docker, CI, Makefile). Do not list a
 # second dependency set here — it previously drifted (Django 5.2 vs 5.1).
-dynamic = ["dependencies"]
+dynamic = ["dependencies", "optional-dependencies"]
 
 [project.urls]
 Homepage = "https://github.com/mariomanza150/SEIM"
 Issues = "https://github.com/mariomanza150/SEIM/issues"
 Documentation = "https://github.com/mariomanza150/SEIM/blob/main/documentation/README.md"
-
-[project.optional-dependencies]
-dev = [
-    "ruff>=0.1.0",
-    "isort>=5.13.2",
-    "flake8>=7.0.0",
-    "mypy>=1.8.0",
-    "pylint>=3.0.3",
-    "bandit>=1.7.5",
-    "pre-commit>=3.6.0",
-    "pytest>=7.4.0",
-    "pytest-django>=4.7.0",
-    "coverage>=7.3.2",
-]
-
-test = [
-    "pytest>=7.4.0",
-    "pytest-django>=4.7.0",
-    "pytest-cov>=4.1.0",
-    "factory-boy>=3.3.0",
-    "faker>=20.1.0",
-]
 
 [tool.setuptools]
 include-package-data = false
@@ -49,6 +27,8 @@ include = ["seim*"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
+optional-dependencies.dev = {file = ["requirements/dev-extras.txt"]}
+optional-dependencies.test = {file = ["requirements/test-extras.txt"]}
 
 # Ruff configuration - used for linting and formatting (not Black)
 [tool.ruff]

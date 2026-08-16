@@ -116,7 +116,7 @@ Report security issues privately to the maintainer. Do not open a public issue w
 
 ## Python dependencies
 
-Install with `pip install -r requirements-dev.txt` (or `requirements.txt` / `requirements-test.txt`). Those pinned files are what Docker and CI use. `pyproject.toml` reads `requirements.txt` via setuptools dynamic dependencies so a second list cannot drift. Run `python scripts/check_python_deps.py` (or `make check-deps`) after changing either file.
+Install with `pip install -r requirements-dev.txt` (or `requirements.txt` / `requirements-test.txt`). Those pinned files are what Docker and CI use. `pyproject.toml` reads `requirements.txt` plus `requirements/dev-extras.txt` and `requirements/test-extras.txt` so extras cannot drift. After changing a pin file, update the matching extras file and run `python scripts/check_python_deps.py`.
 
 ## License
 

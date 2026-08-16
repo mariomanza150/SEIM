@@ -1,6 +1,6 @@
-# Test image: full app deps plus runners and fixtures (Wagtail/CMS via requirements.txt).
-# Extra pins are mirrored in requirements/test-extras.txt for pyproject extras.
--r requirements.txt
+# Extra packages for `pip install seim[test]`.
+# Must stay in sync with requirements-test.txt (minus `-r requirements.txt`).
+# Docker/CI still install requirements-test.txt.
 
 # Core testing
 pytest==8.3.5

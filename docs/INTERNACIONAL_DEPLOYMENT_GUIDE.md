@@ -1,5 +1,7 @@
 # International Section Deployment Guide
 
+> Hostnames such as `uadec.mx` / `internacional.uadec.mx` are **example UAdeC production values**. Substitute `INSTITUTION_WEBSITE` (and your DNS) when white-labeling. See [documentation/white_labeling.md](../documentation/white_labeling.md).
+
 ## Overview
 
 This document provides a comprehensive guide for deploying the new **International Relations section** (`/internacional/`) as a drop-in replacement for UAdeC's existing `/cgri/` and `/movilidad/` pages.

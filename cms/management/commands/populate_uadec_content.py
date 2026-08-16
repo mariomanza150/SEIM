@@ -32,12 +32,63 @@ class Command(BaseCommand):
         "(UAdeC names unless INSTITUTION_* settings are overridden)."
     )
 
-    def handle(self, *args, **options):
-        short = getattr(settings, "INSTITUTION_SHORT_NAME", "UAdeC")
-        name = getattr(settings, "INSTITUTION_NAME", "Universidad Autónoma de Coahuila")
-        department = getattr(
+    def _load_brand(self):
+        self.short = getattr(settings, "INSTITUTION_SHORT_NAME", "UAdeC")
+        self.name = getattr(
+            settings, "INSTITUTION_NAME", "Universidad Autónoma de Coahuila"
+        )
+        self.department = getattr(
             settings, "INSTITUTION_DEPARTMENT", "Dirección de Intercambio Académico"
         )
+        self.location = getattr(
+            settings, "INSTITUTION_LOCATION", "Saltillo, Coahuila, México"
+        )
+        self.email = getattr(settings, "INSTITUTION_EMAIL", "intercambio@uadec.edu.mx")
+        self.phone = getattr(
+            settings, "INSTITUTION_PHONE", "+52 (844) 412-8800 ext. 2345"
+        )
+        self.address = getattr(
+            settings,
+            "INSTITUTION_ADDRESS",
+            "Boulevard V. Carranza y González Lobo s/n<br>Col. República Oriente<br>"
+            "Saltillo, Coahuila, México<br>C.P. 25280",
+        )
+
+    def _brand(self, text):
+        """Replace default UAdeC example copy with INSTITUTION_* values."""
+        if not isinstance(text, str):
+            return text
+        replacements = (
+            (
+                "Boulevard V. Carranza y González Lobo s/n<br>Col. República Oriente<br>"
+                "Saltillo, Coahuila, México<br>C.P. 25280",
+                self.address,
+            ),
+            ("Universidad Autónoma de Coahuila", self.name),
+            ("intercambio@uadec.edu.mx", self.email),
+            ("+52 (844) 412-8800 ext. 2345", self.phone),
+            ("Saltillo, Coahuila, México", self.location),
+            ("UAdeC", self.short),
+        )
+        for old, new in replacements:
+            if old != new:
+                text = text.replace(old, new)
+        return text
+
+    def _brand_value(self, value):
+        if isinstance(value, str):
+            return self._brand(value)
+        if isinstance(value, list):
+            return [self._brand_value(item) for item in value]
+        if isinstance(value, dict):
+            return {key: self._brand_value(item) for key, item in value.items()}
+        return value
+
+    def handle(self, *args, **options):
+        self._load_brand()
+        short = self.short
+        name = self.name
+        department = self.department
         self.stdout.write(
             self.style.SUCCESS(f"Populating {short} Exchange Department content...")
         )
@@ -80,7 +131,9 @@ class Command(BaseCommand):
         # Create additional pages
         self.create_additional_pages(home_page)
 
-        self.stdout.write(self.style.SUCCESS("\n✅ UAdeC content population complete!"))
+        self.stdout.write(
+            self.style.SUCCESS(f"\n✅ {short} content population complete!")
+        )
         self.stdout.write(
             self.style.SUCCESS("Visit http://localhost:8000/ to see the new content")
         )
@@ -126,7 +179,7 @@ class Command(BaseCommand):
                 },
             ]
 
-            about_page.body = content_data
+            about_page.body = self._brand_value(content_data)
             about_page.save_revision().publish()
             self.stdout.write(self.style.SUCCESS("  ✓ Created About page"))
 
@@ -257,7 +310,7 @@ class Command(BaseCommand):
                     introduction=post_data["excerpt"],
                     published_date=post_data["date"],
                     author=post_data["author"],
-                    body=post_data["content"],
+                    body=self._brand_value(post_data["content"]),
                 )
                 blog_index.add_child(instance=post)
 
@@ -412,7 +465,7 @@ class Command(BaseCommand):
                     location=prog_data["location"],
                     duration=prog_data["duration"],
                     introduction=prog_data["description"],
-                    body=prog_data["content"],
+                    body=self._brand_value(prog_data["content"]),
                 )
                 program_index.add_child(instance=program)
                 program.save_revision().publish()
@@ -476,7 +529,9 @@ class Command(BaseCommand):
                 faq = FAQPage(
                     title=faq_data["title"],
                     slug=faq_data["slug"],
-                    body=[{"type": "paragraph", "value": faq_data["answer"]}],
+                    body=self._brand_value(
+                        [{"type": "paragraph", "value": faq_data["answer"]}]
+                    ),
                 )
                 faq_index.add_child(instance=faq)
                 faq.save_revision().publish()
@@ -559,7 +614,7 @@ class Command(BaseCommand):
                     title=page_data["title"],
                     slug=page_data["slug"],
                     show_in_menus=True,
-                    body=page_data["content"],
+                    body=self._brand_value(page_data["content"]),
                 )
                 parent.add_child(instance=page)
                 page.save_revision().publish()
