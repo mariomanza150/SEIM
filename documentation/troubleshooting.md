@@ -80,8 +80,7 @@ This guide provides solutions to common issues encountered when setting up, runn
    # Upgrade pip
    pip install --upgrade pip
    
-   # Generated from pyproject.toml (or: pip install -e ".[dev]")
-   pip install -r requirements-dev.txt
+   pip install -e ".[dev]"
    ```
 
 3. **Verify Installation**:
@@ -125,7 +124,7 @@ python -m venv .venv
 # 4. Activate and install dependencies
 .venv\Scripts\Activate.ps1  # Windows
 # source .venv/bin/activate  # Linux/macOS
-pip install -r requirements-dev.txt
+pip install -e ".[dev]"
 ```
 
 #### **Issue**: Selenium tests fail with "Chrome not found"
@@ -209,11 +208,12 @@ echo $VIRTUAL_ENV  # Should show path to .venv
 pip list
 
 # Update dependencies
-pip install -r requirements-dev.txt --upgrade
+pip install -e ".[dev]" --upgrade
 
-# Clean virtual environment
-pip uninstall -y -r requirements-dev.txt
-pip install -r requirements-dev.txt
+# Recreate the virtual environment if pins drifted
+# python -m venv .venv
+# .venv\Scripts\Activate.ps1
+# pip install -e ".[dev]"
 ```
 
 ---

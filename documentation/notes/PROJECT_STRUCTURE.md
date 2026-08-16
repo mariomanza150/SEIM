@@ -49,7 +49,7 @@ SEIM/
 ├── Makefile               # Development commands
 ├── README.md              # Project overview and quick start
 ├── pyproject.toml         # Tooling + Python dependency pins (SSOT)
-└── requirements.txt       # Generated from pyproject.toml for Docker/CI
+└── branding/              # Institution packs (UAdeC default)
 ```
 
 ---
@@ -212,10 +212,8 @@ app_name/
 - **`Dockerfile`** - Main application Dockerfile
 - **`Dockerfile.e2e`** - E2E testing Dockerfile
 - **`Makefile`** - Development commands
-- **`pyproject.toml`** - Python dependency pins (source of truth)
-- **`requirements.txt`** - Generated runtime pins for Docker/CI
-- **`requirements-dev.txt`** - Generated runtime + dev extras
-- **`requirements-test.txt`** - Generated runtime + test extras
+- **`pyproject.toml`** - Python dependency pins (source of truth; extras: dev, test, docs)
+- **`branding/`** - Institution packs (UAdeC default example)
 - **`pytest.ini`** - Pytest configuration
 - **`frontend-vue/`** - Vue 3 SPA (Vite + Vitest), served at `/seim/`
 - **`.gitignore`** - Git ignore patterns

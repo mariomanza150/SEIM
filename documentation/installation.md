@@ -93,9 +93,6 @@ pip install --upgrade pip
 
 # From pyproject.toml (source of truth)
 pip install -e ".[dev]"
-
-# Or the generated files used by Docker/CI
-pip install -r requirements-dev.txt
 ```
 
 #### **4. Verify Installation:**
@@ -161,7 +158,7 @@ deactivate
 # Issue: "No module named 'celery'" or similar import errors
 # Solution: Ensure virtual environment is activated and dependencies are installed
 .venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
+pip install -e ".[dev]"
 
 # Issue: Permission errors on Windows
 # Solution: Run PowerShell as Administrator or use:
@@ -172,7 +169,7 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 rm -rf .venv
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
+pip install -e ".[dev]"
 ```
 
 ---

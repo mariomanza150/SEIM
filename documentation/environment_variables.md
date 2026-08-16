@@ -219,6 +219,7 @@ UAdeC is the default/example theme. Override to run SEIM for another institution
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
+| `INSTITUTION_SLUG` | ❌ | `uadec` | Branding pack folder under `branding\` |
 | `INSTITUTION_NAME` | ❌ | Universidad Autónoma de Coahuila | Footer / legal name |
 | `INSTITUTION_SHORT_NAME` | ❌ | UAdeC | Short label in CMS chrome |
 | `INSTITUTION_TAGLINE` | ❌ | Intercambio Académico | Title suffix |
@@ -588,6 +589,16 @@ STATIC_ROOT=staticfiles/
 MEDIA_URL=https://cdn.yourdomain.com/media/
 MEDIA_ROOT=media/
 ```
+
+---
+
+### **CI secrets (GitHub Actions, not `.env`)**
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `CODECOV_TOKEN` | Maintainers on `mariomanza150/SEIM` | (unset) | Codecov upload token. Set as a **GitHub Actions secret** only. Coverage XML/LCOV is always generated. Upload runs when the secret is present; pushes to `main`/`master` on this repo fail if it is missing. Fork PRs skip upload. See [`.github/README.md`](../.github/README.md). |
+
+Do not put `CODECOV_TOKEN` in `.env` or `env.example`.
 
 ---
 

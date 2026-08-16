@@ -1,5 +1,0 @@
-# Convenience alias. Pins live in pyproject.toml; this file includes the
-# generated requirements-dev.txt used by Docker/CI.
--r ../requirements-dev.txt
-
-

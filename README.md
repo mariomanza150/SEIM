@@ -221,12 +221,9 @@ pip install --upgrade pip
 
 # From pyproject.toml (source of truth)
 pip install -e ".[dev]"
-
-# Or the generated files used by Docker/CI
-pip install -r requirements-dev.txt
 ```
 
-Python pins live in `pyproject.toml`. `requirements*.txt` are generated (`python scripts/check_python_deps.py --write`); do not edit them by hand.
+Python pins live in `pyproject.toml`. Install extras with `pip install -e ".[dev]"`, `".[test]"`, or `".[docs]"`.
 
 #### **4. Verify Installation:**
 ```bash

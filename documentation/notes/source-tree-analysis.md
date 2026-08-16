@@ -271,7 +271,7 @@ SEIM/
 ### Build Configuration
 - `webpack.config.js` - Webpack configuration for JavaScript bundling
 - `package.json` - Node.js dependencies and scripts
-- `requirements.txt` - Python dependencies
+- `pyproject.toml` - Python dependencies (source of truth)
 
 ## File Organization Patterns
 

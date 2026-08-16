@@ -17,9 +17,9 @@ Existing UAdeC deployments keep working if you change nothing.
 
 ## Precedence
 
-1. Environment variables (`INSTITUTION_*`, `BRAND_*`)
+1. Environment variables (`INSTITUTION_*`, `BRAND_*`, `INSTITUTION_SLUG`)
 2. `INSTITUTION_CONFIG_FILE` (default `branding\institution.json`)
-3. Packaged defaults in `branding\uadec\config.json`
+3. Packaged defaults in `branding\<slug>\config.json` (slug from env / overlay, default `uadec`)
 4. Built-in Python defaults in `core\branding.py`
 
 ## What is configurable
@@ -28,6 +28,7 @@ Set these in `.env` (see `env.example`) or in the JSON config:
 
 | Variable | Role |
 | --- | --- |
+| `INSTITUTION_SLUG` | Pack folder under `branding\` (default `uadec`) |
 | `INSTITUTION_NAME` | Legal / footer name |
 | `INSTITUTION_SHORT_NAME` | Navbar, titles, CMS seed headings, document labels |
 | `INSTITUTION_TAGLINE` | Title suffix (default: Intercambio Académico) |
@@ -66,12 +67,15 @@ python scripts\download_institution_assets.py
 
 `download_uadec_assets.py` (repo root and `scripts\`) is a compatibility wrapper. Environment:
 
-- `INSTITUTION_WEBSITE` — homepage to scrape (default `https://www.uadec.mx/`)
-- `INSTITUTION_ASSET_DIR` — output directory (default `branding\uadec\logos`)
+- `INSTITUTION_SLUG` — branding pack folder (default `uadec`)
+- `INSTITUTION_WEBSITE` — homepage to scrape (from branding config, UAdeC default)
+- `INSTITUTION_ASSET_DIR` — output directory (default `branding\<slug>\logos`)
 - `INSTITUTION_LOGO_FILENAME` — primary file name (default `institution-logo.png`)
-- `INSTITUTION_LOGO_COMPAT_FILENAME` — extra copy (default `uadec-logo.png`)
+- `INSTITUTION_LOGO_COMPAT_FILENAME` — extra copy (default `uadec-logo.png` only for the UAdeC slug)
 - `INSTITUTION_ASSET_PATHS` — comma-separated logo paths to try
-- `INSTITUTION_ASSET_SSL_VERIFY` — `true` to enable TLS verify (default off for the legacy UAdeC fetch)
+- `INSTITUTION_ASSET_SSL_VERIFY` — `true` to enable TLS verify (default off)
+
+Do not commit downloaded logos. Keep `branding\<slug>\logos\.gitkeep`.
 
 You can skip the downloader and drop files into `branding\<slug>\logos\` yourself.
 
@@ -85,7 +89,7 @@ PDF mobility forms stamp `INSTITUTION_NAME` / short name in the header. The docu
 
 - Spanish narrative in seed FAQs/programs (tokens replaced; stories are still the UAdeC sample set)
 - Named CGRI staff and scraped copy in `populate_internacional_content` (demo/CMS content)
-- `docs\INTERNACIONAL_*` hostnames (`uadec.mx`) — banners note they are examples
+- `documentation\notes\INTERNACIONAL_*` hostnames (`uadec.mx`) — banners note they are examples
 - Default `branding\uadec\theme.css` palette file (do not delete; copy it)
 - Legacy document slug `inscripcion_uadec`
 - `/cgri/` and `/movilidad/` URL redirects in `internacional\` (UAdeC site compatibility)

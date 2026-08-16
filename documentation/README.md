@@ -125,11 +125,11 @@ SEIM is a comprehensive Django-based web application for managing student exchan
 # Clone and start the application
 git clone <repository-url>
 cd SEIM
-docker-compose up -d
+docker compose up -d
 
 # Run migrations and create initial data
-docker-compose exec web python manage.py migrate
-docker-compose exec web python manage.py create_initial_data
+docker compose exec web python manage.py migrate
+docker compose exec web python manage.py create_initial_data
 
 # Access the application
 # Web: http://localhost:8001/

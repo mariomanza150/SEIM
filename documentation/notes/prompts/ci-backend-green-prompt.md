@@ -97,7 +97,7 @@ You are a senior Django engineer working on SEIM. Your job is to get **GitHub Ac
    docker compose --profile test run --rm -e DJANGO_SETTINGS_MODULE=seim.settings.test test bash -c "/app/scripts/wait-for-db.sh && python manage.py compilemessages -l de -l es -l fr && pytest tests/unit/ tests/integration/ -v --tb=short --cov=. --cov-report=term-missing --cov-fail-under=80"
    ```
 2. Confirm **GitHub Actions** run on `feature/vue-migration` (or target branch) is **green** for **CI → Backend tests**.
-3. Optional: run **lint** job parity (`ruff check`, `ruff format --check` from `requirements-dev.txt`).
+3. Optional: run **lint** job parity (`ruff check`, `ruff format --check` from `pip install -e ".[dev]"`).
 
 ## Definition of done
 - [ ] `tests/unit/test_dynforms_access.py` passes under CI settings.
@@ -110,4 +110,4 @@ You are a senior Django engineer working on SEIM. Your job is to get **GitHub Ac
 - CI workflow: `.github/workflows/ci.yml`
 - Test settings: `seim/settings/test.py` (Wagtail/CMS stripped)
 - Pytest defaults: `pytest.ini`, `[tool.coverage.*]` in `pyproject.toml`
-- Prior art (Vue-focused): `docs/prompts/vue-validation-test-fix-prompt.md`
+- Prior art (Vue-focused): `documentation/notes/prompts/vue-validation-test-fix-prompt.md`

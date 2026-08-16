@@ -1,8 +1,7 @@
 version: 2
 updates:
-  # Pins live in pyproject.toml. After a Dependabot bump, run
-  # `python scripts/check_python_deps.py --write` so generated
-  # requirements*.txt stay in sync (lint job enforces this).
+  # Pins live in pyproject.toml. After a Dependabot bump, commit
+  # pyproject.toml only (lint job rejects leftover requirements*.txt).
   - package-ecosystem: pip
     directory: /
     schedule:

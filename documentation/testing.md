@@ -73,7 +73,7 @@ make e2e-accessibility
 python -m venv .venv
 .venv\Scripts\Activate.ps1  # Windows
 # source .venv/bin/activate  # Linux/macOS
-pip install -r requirements-dev.txt
+pip install -e ".[dev]"
 
 # 2. Setup Selenium environment on host OS
 make setup-selenium-host
@@ -280,7 +280,7 @@ python -m venv .venv
 # source .venv/bin/activate  # Linux/macOS
 
 # 2. Install Selenium dependencies in virtual environment
-pip install -r requirements-dev.txt
+pip install -e ".[dev]"
 
 # 3. Setup Selenium environment
 make setup-selenium-host
@@ -352,7 +352,7 @@ class TestDynformsBuilder(unittest.TestCase):
 # Issue: "No module named 'celery'" or similar import errors
 # Solution: Ensure virtual environment is activated and dependencies are installed
 .venv\Scripts\Activate.ps1
-pip install -r requirements-dev.txt
+pip install -e ".[dev]"
 
 # Issue: Chrome driver not found
 # Solution: Install Chrome browser and ensure it's in PATH
@@ -439,7 +439,7 @@ npm --prefix frontend-vue run test:coverage
 ### **Coverage Targets:**
 - **Backend**: Minimum 80% coverage (hard CI gate: pytest `--cov-fail-under=80`)
 - **Frontend**: Vitest coverage collected in CI for `src/stores` and `src/services` (no fail-under gate)
-- **Codecov**: Historical tracker + GitHub checks. Add repository secret `CODECOV_TOKEN` from [codecov.io](https://codecov.io) after linking `mariomanza150/SEIM`. On this repo, a failed upload fails CI. Fork PRs without the secret stay green (tokenless fallback). Setup: [`.github/README.md`](../.github/README.md).
+- **Codecov**: Historical tracker + GitHub checks. Add repository secret `CODECOV_TOKEN` from [codecov.io](https://codecov.io) after linking `mariomanza150/SEIM`. Coverage reports are always generated. Upload runs when the secret is set; pushes to `main`/`master` on this repo fail if it is missing. Fork PRs skip upload and stay green. Setup: [`.github/README.md`](../.github/README.md).
 
 ---
 

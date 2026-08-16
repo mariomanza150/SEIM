@@ -1,5 +1,6 @@
 # Coverage tracker. Local/dev is unaffected: pytest --cov-fail-under=80
 # (pytest.ini / pyproject.toml) remains the hard unit+integration gate.
+# CI uploads with the GitHub secret CODECOV_TOKEN (never commit a token).
 # Backend project/patch statuses fail the Codecov GitHub check when coverage
 # drops past the threshold. Frontend stays informational (Vue coverage in flux).
 

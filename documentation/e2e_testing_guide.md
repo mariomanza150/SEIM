@@ -22,8 +22,7 @@ This guide provides comprehensive documentation for the SEIM E2E testing infrast
 ### Installation
 
 ```bash
-# Generated from pyproject.toml (or: pip install -e ".[test]")
-pip install -r requirements-test.txt
+pip install -e ".[test]"
 
 # Install Playwright browsers
 playwright install chromium firefox webkit --with-deps

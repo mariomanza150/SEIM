@@ -77,8 +77,8 @@ help:
 	@echo "  type-check         - Run type checking with mypy (Docker)"
 	@echo "  security-check     - Run security analysis (Docker)"
 	@echo "  quality-check      - Run all code quality checks (Docker)"
-	@echo "  check-deps         - Verify generated requirements*.txt match pyproject.toml"
-	@echo "  export-deps        - Regenerate requirements*.txt from pyproject.toml"
+	@echo "  check-deps         - Verify pyproject.toml extras (no requirements*.txt)"
+	@echo "  export-deps        - No-op; pyproject.toml is the only pin list"
 	@echo ""
 	@echo "Docker:"
 	@echo "  docker-setup       - Setup Docker environment (creates .env, builds, starts)"
@@ -318,11 +318,11 @@ quality-check: format-check lint type-check security-check complexity-check
 	@echo "✅ All code quality checks completed!"
 
 check-deps:
-	@echo "📦 Verifying generated requirements*.txt match pyproject.toml..."
+	@echo "📦 Verifying pyproject.toml is the only Python pin list..."
 	python scripts/check_python_deps.py
 
 export-deps:
-	@echo "📦 Regenerating requirements*.txt from pyproject.toml..."
+	@echo "📦 pyproject.toml is the source of truth; leftover requirements*.txt are removed if present..."
 	python scripts/check_python_deps.py --write
 
 quality-analysis:
@@ -604,7 +604,7 @@ prod-clean:
 # Playwright E2E testing targets
 e2e-setup:
 	@echo "🎭 Setting up Playwright E2E testing environment..."
-	pip install -r requirements-test.txt
+	pip install -e ".[test]"
 	playwright install chromium firefox webkit --with-deps
 	@echo "✅ Playwright E2E environment setup complete!"
 

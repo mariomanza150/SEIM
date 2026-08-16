@@ -1,14 +1,17 @@
 #!/usr/bin/env python
-"""Download institution logos/assets.
+"""Download institution logos/assets from branding config or env vars.
 
 UAdeC is the default source. Prefer this script over download_uadec_assets.py.
-Default output: branding/uadec/logos. See documentation/white_labeling.md.
+Default output: branding/<slug>/logos. See documentation/white_labeling.md.
+
+Do not commit downloaded university logos. Keep branding/<slug>/logos/.gitkeep.
 """
 
 from __future__ import annotations
 
 import os
 import re
+import sys
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
@@ -17,12 +20,16 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from core.branding import DEFAULT_SLUG, merge_institution_config  # noqa: E402
+
 DEFAULT_WEBSITE = "https://www.uadec.mx/"
-DEFAULT_ASSET_PATHS = (
+GENERIC_ASSET_PATHS = (
     "/images/logo.png",
-    "/images/logo-uadec.png",
     "/img/logo.png",
-    "/img/logo-uadec.png",
     "/assets/img/logo.png",
     "/assets/images/logo.png",
     "/static/img/logo.png",
@@ -42,34 +49,43 @@ def _bool_env(name: str, default: bool) -> bool:
     return raw.strip().lower() in {"1", "true", "yes", "on"}
 
 
-def _website() -> str:
-    url = _env("INSTITUTION_WEBSITE", DEFAULT_WEBSITE)
-    return url if url.endswith("/") else f"{url}/"
+def load_asset_config(base_dir: Path | None = None) -> dict[str, str]:
+    """Merge branding JSON + env overrides for the downloader."""
+    root = Path(base_dir) if base_dir else ROOT
+    merged = merge_institution_config(root)
+    slug = _env("INSTITUTION_SLUG", merged.get("INSTITUTION_SLUG") or DEFAULT_SLUG)
+    website = _env("INSTITUTION_WEBSITE", merged.get("INSTITUTION_WEBSITE") or DEFAULT_WEBSITE)
+    if not website.endswith("/"):
+        website = f"{website}/"
+    return {
+        "slug": slug,
+        "short_name": _env(
+            "INSTITUTION_SHORT_NAME", merged.get("INSTITUTION_SHORT_NAME") or slug
+        ),
+        "website": website,
+        "asset_dir": _env("INSTITUTION_ASSET_DIR", f"branding/{slug}/logos"),
+        "logo_filename": _env("INSTITUTION_LOGO_FILENAME", "institution-logo.png"),
+        "compat_filename": _env(
+            "INSTITUTION_LOGO_COMPAT_FILENAME",
+            "uadec-logo.png" if slug.lower() == DEFAULT_SLUG else "",
+        ),
+        "asset_paths": _env("INSTITUTION_ASSET_PATHS", ""),
+    }
 
 
-def _output_dir() -> Path:
-    path = Path(_env("INSTITUTION_ASSET_DIR", "branding/uadec/logos"))
-    path.mkdir(parents=True, exist_ok=True)
-    return path
-
-
-def _ssl_verify() -> bool:
-    return _bool_env("INSTITUTION_ASSET_SSL_VERIFY", False)
-
-
-def _logo_filename() -> str:
-    return _env("INSTITUTION_LOGO_FILENAME", "institution-logo.png")
-
-
-def _compat_filename() -> str:
-    return _env("INSTITUTION_LOGO_COMPAT_FILENAME", "uadec-logo.png")
-
-
-def _asset_paths() -> list[str]:
-    extra = _env("INSTITUTION_ASSET_PATHS", "")
+def _asset_paths(config: dict[str, str]) -> list[str]:
+    extra = config.get("asset_paths") or ""
     if extra:
         return [p.strip() for p in extra.split(",") if p.strip()]
-    return list(DEFAULT_ASSET_PATHS)
+    slug = config.get("slug") or DEFAULT_SLUG
+    paths = list(GENERIC_ASSET_PATHS)
+    paths.extend(
+        (
+            f"/images/logo-{slug}.png",
+            f"/img/logo-{slug}.png",
+        )
+    )
+    return paths
 
 
 def download_asset(url: str, filename: str, output_dir: Path, verify: bool) -> bool:
@@ -122,12 +138,14 @@ def scrape_page_for_images(website: str, output_dir: Path, verify: bool) -> None
 
 
 def main() -> None:
-    website = _website()
-    output_dir = _output_dir()
-    verify = _ssl_verify()
-    logo_name = _logo_filename()
-    compat_name = _compat_filename()
-    short_name = _env("INSTITUTION_SHORT_NAME", "UAdeC")
+    config = load_asset_config()
+    output_dir = Path(config["asset_dir"])
+    output_dir.mkdir(parents=True, exist_ok=True)
+    verify = _bool_env("INSTITUTION_ASSET_SSL_VERIFY", False)
+    logo_name = config["logo_filename"]
+    compat_name = config["compat_filename"]
+    short_name = config["short_name"]
+    website = config["website"]
 
     print("=" * 60)
     print(f"{short_name} asset downloader")
@@ -135,7 +153,7 @@ def main() -> None:
 
     print("\n1. Trying common logo paths...")
     downloaded = False
-    for asset_path in _asset_paths():
+    for asset_path in _asset_paths(config):
         url = urljoin(website, asset_path)
         if download_asset(url, logo_name, output_dir, verify):
             downloaded = True
@@ -153,6 +171,7 @@ def main() -> None:
 
     print("\n" + "=" * 60)
     print(f"Assets saved to: {output_dir.resolve()}")
+    print("Do not commit copyrighted logos. Keep logos/.gitkeep only.")
     print("=" * 60)
 
 

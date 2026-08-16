@@ -448,7 +448,7 @@ AGREEMENT_EXPIRATION_REMINDER_STATUSES = [
 ] or ["active", "renewal_pending"]
 
 # Institution branding (UAdeC is the default/example production theme).
-# Precedence: env vars > branding/institution.json > branding/uadec/config.json > defaults.
+# Precedence: env vars > branding/institution.json > branding/<slug>/config.json > defaults.
 # See documentation/white_labeling.md.
 INSTITUTION_CONFIG_FILE = env(
     "INSTITUTION_CONFIG_FILE",
@@ -461,6 +461,7 @@ def _institution_env(name: str, fallback: str = "") -> str:
     return env(name, default=_INSTITUTION_FILE.get(name, DEFAULT_INSTITUTION.get(name, fallback)))
 
 
+INSTITUTION_SLUG = _institution_env("INSTITUTION_SLUG", "uadec")
 INSTITUTION_NAME = _institution_env("INSTITUTION_NAME")
 INSTITUTION_SHORT_NAME = _institution_env("INSTITUTION_SHORT_NAME")
 INSTITUTION_TAGLINE = _institution_env("INSTITUTION_TAGLINE")

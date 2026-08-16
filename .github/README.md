@@ -10,7 +10,7 @@ Runs on: **push** to `main`, `master`, `develop`, `feature/vue-migration`; **pul
 
 **Jobs:** Ruff · Bandit + `pip-audit` · mypy (non-blocking) · backend pytest (unit + integration, coverage XML) · Vue Vitest + coverage + Vite build · Docker build (Vue dist + collectstatic) + Trivy SARIF · Locust on pull requests only.
 
-**Secrets:** `CODECOV_TOKEN` — required on this repo so coverage upload failures fail CI. Fork PRs have no secrets; they fall back to tokenless upload and stay green. See setup below.
+**Secrets:** `CODECOV_TOKEN` — required on this repo for Codecov upload. Pushes to `main`/`master` fail if the secret is missing. Fork PRs have no secrets; they skip upload, keep coverage artifacts, and stay green. See setup below.
 
 ### 2. Deploy (`deploy.yml`)
 
@@ -47,7 +47,7 @@ Gitleaks on **push** to `main`, `master`, `develop`, `feature/vue-migration`; **
 Do these in [github.com/mariomanza150/SEIM](https://github.com/mariomanza150/SEIM) (requires admin on the repo).
 
 1. **Deploy environments** — [Settings → Environments](https://github.com/mariomanza150/SEIM/settings/environments): create **`staging`** and **`production`**. Optionally add **required reviewers** or **wait timer** on `production` so `deploy.yml` manual production deploys are gated.
-2. **Codecov (required for production metrics on this repo)** — CI always writes coverage reports (backend `coverage.xml`, frontend `frontend-vue/coverage/lcov.info`) and uploads them as artifacts. When `CODECOV_TOKEN` is set, a failed Codecov upload **fails the job**. When the secret is missing (fork PRs, local `act` without `.secrets`), CI attempts a tokenless upload and does **not** fail — that fallback is for outsiders only.
+2. **Codecov (required for production metrics on this repo)** — CI always writes coverage reports (backend `coverage.xml`, frontend `frontend-vue/coverage/lcov.info`) and uploads them as artifacts. When `CODECOV_TOKEN` is set, CI uploads to Codecov and a failed upload **fails the job**. When the secret is missing, upload is skipped (fork PRs, local `act` without `.secrets`) and the job stays green — except **pushes to `main`/`master` on `mariomanza150/SEIM`**, which fail so maintainers notice the missing secret.
 
    1. Sign in at [codecov.io](https://codecov.io) with GitHub and add **`mariomanza150/SEIM`**.
    2. Copy the repository upload token (Settings → General on the Codecov repo page).

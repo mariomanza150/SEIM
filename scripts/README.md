@@ -64,13 +64,13 @@ SELENIUM_HOST=localhost ./scripts/test_selenium.sh  # Use localhost
 
 ### Dependency Scripts
 
-#### `check_python_deps.py` - Python pin sync
+#### `check_python_deps.py` - Python pin check
 
-`pyproject.toml` is the source of truth. `requirements*.txt` are generated for Docker/CI.
+`pyproject.toml` is the only pin list. Install with `pip install -e ".[dev]"`.
 
 ```bash
-python scripts/check_python_deps.py          # verify (CI / make check-deps)
-python scripts/check_python_deps.py --write  # regenerate (make export-deps)
+python scripts/check_python_deps.py          # verify extras (CI / make check-deps)
+python scripts/check_python_deps.py --write  # remove leftover requirements*.txt if present
 ```
 
 ### Setup Scripts

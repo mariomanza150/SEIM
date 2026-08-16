@@ -46,11 +46,11 @@ RUN apt-get update && \
 # Note: Selenium tests run from HOST OS, not Docker containers
 # Chrome and ChromeDriver are not installed in Docker
 
-# Generated from pyproject.toml (python scripts/check_python_deps.py --write)
-COPY requirements*.txt .
+# Pins live in pyproject.toml (pip install ".[dev]")
+COPY pyproject.toml README.md LICENSE ./
+COPY seim/ seim/
 RUN pip install --upgrade pip && \
-    pip install -r requirements-dev.txt && \
-    pip install --no-cache-dir "pytest==8.3.5" "pytest-django==4.7.0" "pytest-asyncio==0.25.3"
+    pip install --no-cache-dir ".[dev]"
 
 # Copy project files
 COPY . .

@@ -16,11 +16,11 @@ RUN apt-get update && apt-get install -y libmagic1 && rm -rf /var/lib/apt/lists/
 # Note: Selenium tests run from HOST OS, not Docker containers
 # Chrome and ChromeDriver are not installed in Docker
 
-# Generated from pyproject.toml (python scripts/check_python_deps.py --write)
-COPY requirements*.txt .
+# Pins live in pyproject.toml (pip install ".[test]")
+COPY pyproject.toml README.md LICENSE ./
+COPY seim/ seim/
 RUN pip install --upgrade pip && \
-    pip install -r requirements-test.txt && \
-    pip install --no-cache-dir "pytest==8.3.5" "pytest-django==4.7.0" "pytest-asyncio==0.25.3"
+    pip install --no-cache-dir ".[test]"
 
 # Copy project files
 COPY . .

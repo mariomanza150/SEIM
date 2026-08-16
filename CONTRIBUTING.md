@@ -117,7 +117,9 @@ Report security issues privately to the maintainer. Do not open a public issue w
 
 ## Python dependencies
 
-Pins live in `pyproject.toml` (`[project.dependencies]` and `[project.optional-dependencies]`). Docker and CI install the generated `requirements*.txt` files. After changing a pin, run `python scripts/check_python_deps.py --write` (or `make export-deps`) and commit both `pyproject.toml` and the regenerated files. Local install: `pip install -e ".[dev]"` or `pip install -r requirements-dev.txt`.
+Pins live in `pyproject.toml` (`[project.dependencies]` and `[project.optional-dependencies]` for `dev`, `test`, and `docs`). Docker and CI install from that file (`pip install -e ".[dev]"` / `".[test]"`). After changing a pin, commit `pyproject.toml` only. `python scripts/check_python_deps.py` (or `make check-deps`) rejects leftover `requirements*.txt` files.
+
+Coverage reports are always generated in CI. Maintainers must set the GitHub Actions secret `CODECOV_TOKEN` so uploads run on this repo; pushes to `main`/`master` fail if the secret is missing. Fork PRs skip upload and stay green. See [`.github/README.md`](.github/README.md).
 
 ## License
 

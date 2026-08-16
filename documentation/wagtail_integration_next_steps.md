@@ -167,7 +167,7 @@ docker-compose exec web python manage.py remove_old_form_system --confirm
 Manual steps (as output by the command):
 1. Remove `application_forms` from `INSTALLED_APPS`
 2. Remove django-dynforms URLs from `seim/urls.py`
-3. Remove packages from `requirements.txt`:
+3. Remove packages from `pyproject.toml`:
    - `django-dynforms`
    - `crispy-bootstrap5`
    - `django-crisp-modals`

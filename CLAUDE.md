@@ -48,7 +48,7 @@ All development, testing, and documentation generation should be executed inside
 
 ## ⚙️ Environment Configuration
 *   **Python**: Requires `python3.12+` for E2E testing (if running locally outside Docker).
-*   **Dependencies**: Pins live in `pyproject.toml`. Host install: `pip install -e ".[dev]"` or `pip install -r requirements-dev.txt` (generated). After changing pins: `python scripts/check_python_deps.py --write`.
+*   **Dependencies**: Pins live in `pyproject.toml`. Host install: `pip install -e ".[dev]"` (or `".[test]"` / `".[docs]"`). `python scripts/check_python_deps.py` validates extras and rejects leftover `requirements*.txt`.
 *   **Environment Variables**: Must be set in a `.env` file based on `env.example`, especially `DATABASE_URL`, `REDIS_URL`, and email credentials for production environments.
 
 ## 📚 Key Guides

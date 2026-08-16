@@ -10,8 +10,8 @@ authors = [{name = "Mario Alejandro Manzano and SEIM contributors"}]
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.11"
-# Single source of truth for Python pins. requirements*.txt are generated:
-#   python scripts/check_python_deps.py --write
+# Single source of truth for Python pins. Install with:
+#   pip install -e ".[dev]"   # or .[test] / .[docs]
 dependencies = [
     # Core Django and DRF
     "Django==5.1.15",
@@ -100,7 +100,7 @@ dev = [
     "bandit==1.8.6",
     # Pre-commit hooks
     "pre-commit==4.4.0",
-    # Documentation
+    # Documentation (aligned with [docs])
     "sphinx==7.4.7",
     "sphinx-rtd-theme==2.0.0",
     "sphinx-autodoc-typehints==1.25.3",
@@ -155,6 +155,11 @@ test = [
     "pytest-html==4.1.1",
     "pixelmatch==0.3.0",
     "axe-playwright-python==0.1.3",
+]
+docs = [
+    "sphinx==7.4.7",
+    "sphinx-rtd-theme==2.0.0",
+    "sphinx-autodoc-typehints==1.25.3",
 ]
 
 [project.urls]
@@ -309,7 +314,7 @@ markers = [
 
 [tool.coverage.run]
 # First-party Django apps measured by unit+integration runs. CMS is omitted: ``seim.settings.test``
-# strips Wagtail/cms, so including ``cms`` would falsely tank the gate (see docs/prompts/ci-backend-green-prompt.md).
+# strips Wagtail/cms, so including ``cms`` would falsely tank the gate (see documentation/notes/prompts/ci-backend-green-prompt.md).
 source = [
     "accounts",
     "analytics",

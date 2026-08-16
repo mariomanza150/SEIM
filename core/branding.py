@@ -3,11 +3,15 @@
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+DEFAULT_SLUG = "uadec"
+
 DEFAULT_INSTITUTION: dict[str, str] = {
+    "INSTITUTION_SLUG": DEFAULT_SLUG,
     "INSTITUTION_NAME": "Universidad Autónoma de Coahuila",
     "INSTITUTION_SHORT_NAME": "UAdeC",
     "INSTITUTION_TAGLINE": "Intercambio Académico",
@@ -40,6 +44,7 @@ DEFAULT_INSTITUTION: dict[str, str] = {
 _DEFAULT_ADDRESS = DEFAULT_INSTITUTION["INSTITUTION_ADDRESS"]
 
 _CONFIG_TO_BRAND = {
+    "INSTITUTION_SLUG": "slug",
     "INSTITUTION_NAME": "name",
     "INSTITUTION_SHORT_NAME": "short_name",
     "INSTITUTION_TAGLINE": "tagline",
@@ -59,11 +64,28 @@ _CONFIG_TO_BRAND = {
 
 
 def default_pack_config_path(base_dir: Path) -> Path:
-    return Path(base_dir) / "branding" / "uadec" / "config.json"
+    return pack_config_path(base_dir, DEFAULT_SLUG)
+
+
+def pack_config_path(base_dir: Path, slug: str | None = None) -> Path:
+    return Path(base_dir) / "branding" / (slug or DEFAULT_SLUG) / "config.json"
 
 
 def default_override_config_path(base_dir: Path) -> Path:
     return Path(base_dir) / "branding" / "institution.json"
+
+
+def resolve_institution_slug(
+    base_dir: Path,
+    override_path: Path | str | None = None,
+) -> str:
+    """Env INSTITUTION_SLUG, then institution.json, then the UAdeC default."""
+    env_slug = (os.environ.get("INSTITUTION_SLUG") or "").strip()
+    if env_slug:
+        return env_slug
+    path = Path(override_path) if override_path else default_override_config_path(base_dir)
+    file_slug = str(load_json_object(path).get("INSTITUTION_SLUG") or "").strip()
+    return file_slug or DEFAULT_SLUG
 
 
 def load_json_object(path: Path | str | None) -> dict[str, Any]:
@@ -84,12 +106,17 @@ def merge_institution_config(
     base_dir: Path,
     override_path: Path | str | None = None,
 ) -> dict[str, str]:
-    """Defaults ← packaged UAdeC pack ← optional institution.json."""
+    """Defaults ← branding/<slug>/config.json ← optional institution.json."""
+    slug = resolve_institution_slug(base_dir, override_path)
     merged = dict(DEFAULT_INSTITUTION)
+    merged["INSTITUTION_SLUG"] = slug
+    pack_path = pack_config_path(base_dir, slug)
+    if not pack_path.is_file() and slug != DEFAULT_SLUG:
+        pack_path = default_pack_config_path(base_dir)
     merged.update(
         {
             key: value
-            for key, value in load_json_object(default_pack_config_path(base_dir)).items()
+            for key, value in load_json_object(pack_path).items()
             if value not in (None, "")
         }
     )
@@ -101,6 +128,8 @@ def merge_institution_config(
             if value not in (None, "")
         }
     )
+    if not merged.get("INSTITUTION_SLUG"):
+        merged["INSTITUTION_SLUG"] = slug
     return merged
 
 
@@ -137,6 +166,7 @@ def brand_from_settings(settings: Any) -> dict[str, Any]:
         part for part in (short_name, tagline) if part
     )
     return {
+        "slug": getattr(settings, "INSTITUTION_SLUG", DEFAULT_INSTITUTION["INSTITUTION_SLUG"]),
         "name": getattr(settings, "INSTITUTION_NAME", DEFAULT_INSTITUTION["INSTITUTION_NAME"]),
         "short_name": short_name,
         "tagline": tagline,

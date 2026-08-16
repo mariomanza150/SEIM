@@ -5,14 +5,13 @@ FROM mcr.microsoft.com/playwright/python:v1.41.0-jammy
 # Set working directory
 WORKDIR /app
 
-# Generated from pyproject.toml (python scripts/check_python_deps.py --write)
-COPY requirements.txt requirements-dev.txt requirements-test.txt ./
+# Pins live in pyproject.toml (pip install ".[test]")
+COPY pyproject.toml README.md LICENSE ./
+COPY seim/ seim/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r requirements-dev.txt && \
-    pip install --no-cache-dir -r requirements-test.txt
+    pip install --no-cache-dir ".[test]"
 
 # Install Playwright browsers (already included in base image, but ensuring latest)
 RUN playwright install chromium firefox webkit --with-deps

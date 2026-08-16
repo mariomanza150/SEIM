@@ -12,17 +12,22 @@ from core.branding import (
     brand_from_config,
     load_json_object,
     merge_institution_config,
+    resolve_institution_slug,
 )
 from core.context_processors import institution
 
 
-def _check_python_deps_main():
-    path = Path(__file__).resolve().parents[2] / "scripts" / "check_python_deps.py"
-    spec = importlib.util.spec_from_file_location("check_python_deps", path)
+def _load_script(name: str):
+    path = Path(__file__).resolve().parents[2] / "scripts" / name
+    spec = importlib.util.spec_from_file_location(name.replace(".py", ""), path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
     spec.loader.exec_module(module)
-    return module.main
+    return module
+
+
+def _check_python_deps_main():
+    return _load_script("check_python_deps.py").main
 
 
 class InstitutionBrandingTests(SimpleTestCase):
@@ -92,3 +97,42 @@ class InstitutionBrandingTests(SimpleTestCase):
 
     def test_runtime_requirements_are_wired_in_pyproject(self):
         self.assertEqual(_check_python_deps_main()(), 0)
+
+    def test_resolve_slug_reads_override_file(self):
+        from tempfile import TemporaryDirectory
+
+        with TemporaryDirectory() as raw:
+            base = Path(raw)
+            override = base / "institution.json"
+            override.write_text(
+                '{"INSTITUTION_SLUG": "exampleu"}',
+                encoding="utf-8",
+            )
+            self.assertEqual(resolve_institution_slug(base, override), "exampleu")
+
+    def test_merge_loads_pack_for_slug(self):
+        from tempfile import TemporaryDirectory
+
+        with TemporaryDirectory() as raw:
+            base = Path(raw)
+            pack = base / "branding" / "exampleu"
+            pack.mkdir(parents=True)
+            (pack / "config.json").write_text(
+                '{"INSTITUTION_SLUG": "exampleu", "INSTITUTION_SHORT_NAME": "ExampleU"}',
+                encoding="utf-8",
+            )
+            override = base / "institution.json"
+            override.write_text(
+                '{"INSTITUTION_SLUG": "exampleu"}',
+                encoding="utf-8",
+            )
+            merged = merge_institution_config(base, override)
+            self.assertEqual(merged["INSTITUTION_SLUG"], "exampleu")
+            self.assertEqual(merged["INSTITUTION_SHORT_NAME"], "ExampleU")
+
+    def test_download_config_uses_branding_slug(self):
+        module = _load_script("download_institution_assets.py")
+        config = module.load_asset_config(Path(__file__).resolve().parents[2])
+        self.assertEqual(config["slug"], "uadec")
+        self.assertIn("branding/uadec/logos", config["asset_dir"].replace("\\", "/"))
+        self.assertTrue(config["website"].startswith("http"))

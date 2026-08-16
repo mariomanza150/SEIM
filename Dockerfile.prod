@@ -50,14 +50,12 @@ RUN groupadd -r seim && useradd -r -g seim seim
 # Set work directory
 WORKDIR /app
 
-# Install Python dependencies
-# Generated from pyproject.toml (python scripts/check_python_deps.py --write).
-COPY requirements.txt requirements-dev.txt ./
-# Alias include only (`requirements/dev.txt` → requirements-dev.txt).
-COPY requirements/ requirements/
+# Pins live in pyproject.toml (pip install .)
+COPY pyproject.toml README.md LICENSE ./
+COPY seim/ seim/
 RUN pip install --upgrade pip && \
     pip install gunicorn[gevent] && \
-    pip install -r requirements.txt
+    pip install --no-cache-dir .
 
 # Copy project files
 COPY . .
