@@ -56,7 +56,7 @@ Legacy server-rendered application creation also remains available at `/applicat
 #### Administrative
 - `/seim/admin/` - Django Admin interface
 - `/seim/admin-dashboard/` - Admin dashboard view
-- `/seim/dynforms/` - Dynamic forms builder (admin only)
+- `/seim/admin/dynforms` - Vue visual form builder (admin only; `/dynforms/` redirects here)
 
 ### Admin Interfaces
 

@@ -708,7 +708,7 @@ SEIM's Selenium-based tests are configured to run from the HOST OS, not Docker c
 - Admins can add new exchange programs via the "Add Program" button on the program list page.
 - This opens a dedicated creation page (`/programs/create/`) with a form for all program details.
 - Admins can select a dynamic application form (powered by django-dynforms) to associate with the program.
-- The dynamic form builder is available at `/dynforms/` for creating and editing forms.
+- The visual form builder is available at `/seim/admin/dynforms` (legacy `/dynforms/` redirects there).
 - After creation, the program appears in the list and is linked to its application form.
 
 ## Dynamic Forms Integration (django-dynforms)

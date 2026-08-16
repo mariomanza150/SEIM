@@ -59,14 +59,15 @@ class DataManagementViewTests(TestCase):
     def test_index_lists_only_permitted_sections(self):
         self.grant_permission("demo_data", "VIEW")
         response = self.client.get(reverse("data_management:index"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, reverse("data_management:demo_data_setup"))
-        self.assertNotContains(response, reverse("data_management:bulk_operations"))
+        self.assertRedirects(
+            response, "/seim/admin/data-management", fetch_redirect_response=False
+        )
 
     def test_index_shows_message_when_no_sections(self):
         response = self.client.get(reverse("data_management:index"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "do not have permission")
+        self.assertRedirects(
+            response, "/seim/admin/data-management", fetch_redirect_response=False
+        )
 
     def grant_permission(self, model_name, permission_type):
         return DataPermission.objects.create(
@@ -86,7 +87,11 @@ class DataManagementViewTests(TestCase):
             )
         )
 
-        self.assertRedirects(response, reverse("data_management:bulk_operations"))
+        self.assertRedirects(
+            response,
+            "/seim/admin/data-management?section=bulk_operation",
+            fetch_redirect_response=False,
+        )
         log = DataOperationLog.objects.get(operation_type="BULK_UPDATE")
         self.assertEqual(log.user, self.user)
         self.assertEqual(log.model_name, self.bulk_operation.operation_type)
@@ -103,7 +108,11 @@ class DataManagementViewTests(TestCase):
             reverse("data_management:execute_export", args=[self.export_config.id])
         )
 
-        self.assertRedirects(response, reverse("data_management:data_exports"))
+        self.assertRedirects(
+            response,
+            "/seim/admin/data-management?section=data_export",
+            fetch_redirect_response=False,
+        )
         log = DataOperationLog.objects.get(operation_type="EXPORT")
         self.assertEqual(log.model_name, self.export_config.model_name)
         self.assertEqual(log.operation_details["export_id"], str(self.export_config.id))
@@ -113,12 +122,14 @@ class DataManagementViewTests(TestCase):
         self.grant_permission("data_import", "IMPORT")
 
         response = self.client.post(
-            reverse("data_management:execute_import", args=[self.import_config.id]),
-            follow=True,
+            reverse("data_management:execute_import", args=[self.import_config.id])
         )
 
-        self.assertRedirects(response, reverse("data_management:data_imports"))
-        self.assertContains(response, "Please choose a file to import.")
+        self.assertRedirects(
+            response,
+            "/seim/admin/data-management?section=data_import",
+            fetch_redirect_response=False,
+        )
         self.assertFalse(
             DataOperationLog.objects.filter(operation_type="IMPORT").exists()
         )
@@ -136,10 +147,13 @@ class DataManagementViewTests(TestCase):
                     content_type="text/csv",
                 )
             },
-            follow=True,
         )
 
-        self.assertRedirects(response, reverse("data_management:data_imports"))
+        self.assertRedirects(
+            response,
+            "/seim/admin/data-management?section=data_import",
+            fetch_redirect_response=False,
+        )
         log = DataOperationLog.objects.get(operation_type="IMPORT")
         self.assertEqual(log.file_path, "users.csv")
         self.assertEqual(log.operation_details["import_id"], str(self.import_config.id))
@@ -152,7 +166,6 @@ class DataManagementViewTests(TestCase):
         self.assertEqual(imported_user.profile.language, "English")
         self.assertEqual(imported_user.profile.language_level, "B2")
         self.assertEqual(imported_user.profile.gpa, 3.7)
-        self.assertContains(response, "Student import completed.")
 
     def test_execute_import_updates_existing_student_by_email(self):
         self.grant_permission("data_import", "VIEW")
@@ -176,7 +189,11 @@ class DataManagementViewTests(TestCase):
             },
         )
 
-        self.assertRedirects(response, reverse("data_management:data_imports"))
+        self.assertRedirects(
+            response,
+            "/seim/admin/data-management?section=data_import",
+            fetch_redirect_response=False,
+        )
         existing_user.refresh_from_db()
         self.assertEqual(existing_user.first_name, "Updated")
         self.assertEqual(existing_user.last_name, "Student")
@@ -195,7 +212,11 @@ class DataManagementViewTests(TestCase):
             reverse("data_management:execute_demo_setup", args=[self.demo_dataset.id])
         )
 
-        self.assertRedirects(response, reverse("data_management:demo_data_setup"))
+        self.assertRedirects(
+            response,
+            "/seim/admin/data-management?section=demo_data",
+            fetch_redirect_response=False,
+        )
         log = DataOperationLog.objects.get(operation_type="DEMO_SETUP")
         self.assertEqual(log.operation_details["dataset_id"], str(self.demo_dataset.id))
 
@@ -206,11 +227,13 @@ class DataManagementViewTests(TestCase):
         response = self.client.post(
             reverse("data_management:execute_database_reset"),
             {"confirm": "NOPE"},
-            follow=True,
         )
 
-        self.assertRedirects(response, reverse("data_management:database_reset"))
-        self.assertContains(response, "confirm the database reset request.")
+        self.assertRedirects(
+            response,
+            "/seim/admin/data-management?section=database",
+            fetch_redirect_response=False,
+        )
         self.assertFalse(
             DataOperationLog.objects.filter(operation_type="DB_RESET").exists()
         )
@@ -224,7 +247,11 @@ class DataManagementViewTests(TestCase):
             {"confirm": "RESET"},
         )
 
-        self.assertRedirects(response, reverse("data_management:database_reset"))
+        self.assertRedirects(
+            response,
+            "/seim/admin/data-management?section=database",
+            fetch_redirect_response=False,
+        )
         log = DataOperationLog.objects.get(operation_type="DB_RESET")
         self.assertEqual(log.model_name, "database")
         self.assertTrue(log.operation_details["confirmed"])
@@ -234,12 +261,14 @@ class DataManagementViewTests(TestCase):
         self.grant_permission("data_cleanup", "DELETE")
 
         response = self.client.post(
-            reverse("data_management:execute_data_cleanup"),
-            follow=True,
+            reverse("data_management:execute_data_cleanup")
         )
 
-        self.assertRedirects(response, reverse("data_management:data_cleanup"))
-        self.assertContains(response, "Select at least one cleanup operation.")
+        self.assertRedirects(
+            response,
+            "/seim/admin/data-management?section=data_cleanup",
+            fetch_redirect_response=False,
+        )
         self.assertFalse(
             DataOperationLog.objects.filter(operation_type="CLEANUP").exists()
         )
@@ -253,7 +282,11 @@ class DataManagementViewTests(TestCase):
             {"clean_orphaned": "on", "clean_invalid": "on"},
         )
 
-        self.assertRedirects(response, reverse("data_management:data_cleanup"))
+        self.assertRedirects(
+            response,
+            "/seim/admin/data-management?section=data_cleanup",
+            fetch_redirect_response=False,
+        )
         log = DataOperationLog.objects.get(operation_type="CLEANUP")
         self.assertEqual(
             log.operation_details["cleanup_options"],

@@ -1,13 +1,13 @@
 """
-URLConf for django-dynforms under /dynforms/, admin-only.
+Legacy /dynforms/ operator URLs now redirect into the Vue visual builder.
 
-Mirrors ``dynforms.urls`` but wraps each view with login + admin role checks,
-and uses ``builder/<pk>/`` for the form builder to match SEIM paths and tests.
+Keeps login + admin checks so non-admins still receive 403.
 """
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.shortcuts import redirect
 from django.urls import path
-from dynforms import views
+from django.views import View
 
 
 class _DynformsAdminRequired(UserPassesTestMixin):
@@ -18,72 +18,57 @@ class _DynformsAdminRequired(UserPassesTestMixin):
         return bool(getattr(user, "is_admin", False))
 
 
-def _wrap(view_cls):
-    return type(
-        f"AuthDynforms{view_cls.__name__}",
-        (LoginRequiredMixin, _DynformsAdminRequired, view_cls),
-        {},
-    )
+class DynformsSpaRedirect(LoginRequiredMixin, _DynformsAdminRequired, View):
+    def get(self, request, *args, **kwargs):
+        pk = kwargs.get("pk")
+        if pk:
+            return redirect(f"/seim/admin/dynforms/{pk}")
+        return redirect("/seim/admin/dynforms")
 
+    def post(self, request, *args, **kwargs):
+        return self.get(request, *args, **kwargs)
+
+
+_redirect = DynformsSpaRedirect.as_view()
 
 urlpatterns = [
-    path("", _wrap(views.FormList).as_view(), name="dynforms-list"),
-    path("new/", _wrap(views.CreateFormType).as_view(), name="dynforms-create-type"),
-    path(
-        "builder/<int:pk>/",
-        _wrap(views.FormBuilder).as_view(),
-        name="dynforms-builder",
-    ),
-    path("<int:pk>/run/", _wrap(views.TestFormView).as_view(), name="dynforms-run"),
-    path("<int:pk>/check/", _wrap(views.CheckFormAPI).as_view(), name="dynforms-check"),
-    path(
-        "<int:pk>/edit/",
-        _wrap(views.EditTemplate).as_view(),
-        name="dynforms-edit-template",
-    ),
-    path(
-        "<int:pk>/delete/",
-        _wrap(views.DeleteFormType).as_view(),
-        name="dynforms-delete-type",
-    ),
+    path("", _redirect, name="dynforms-list"),
+    path("new/", _redirect, name="dynforms-create-type"),
+    path("builder/<int:pk>/", _redirect, name="dynforms-builder"),
+    path("<int:pk>/run/", _redirect, name="dynforms-run"),
+    path("<int:pk>/check/", _redirect, name="dynforms-check"),
+    path("<int:pk>/edit/", _redirect, name="dynforms-edit-template"),
+    path("<int:pk>/delete/", _redirect, name="dynforms-delete-type"),
     path(
         "<int:pk>/<int:page>/add/<slug:type>/<int:pos>/",
-        _wrap(views.AddFieldView).as_view(),
+        _redirect,
         name="dynforms-add-field",
     ),
     path(
         "<int:pk>/<int:page>/del/<int:pos>/",
-        _wrap(views.DeleteFieldView).as_view(),
+        _redirect,
         name="dynforms-del-field",
     ),
     path(
         "<int:pk>/<int:page>/clone/<int:pos>/",
-        _wrap(views.CloneFieldView).as_view(),
+        _redirect,
         name="dynforms-clone-field",
     ),
-    path(
-        "<int:pk>/<int:page>/del/",
-        _wrap(views.DeletePageView).as_view(),
-        name="dynforms-del-page",
-    ),
+    path("<int:pk>/<int:page>/del/", _redirect, name="dynforms-del-page"),
     path(
         "<int:pk>/<int:page>/put/<int:pos>/",
-        _wrap(views.EditFieldView).as_view(),
+        _redirect,
         name="dynforms-put-field",
     ),
     path(
         "<int:pk>/<int:page>/get/<int:pos>/",
-        _wrap(views.GetFieldView).as_view(),
+        _redirect,
         name="dynforms-get-field",
     ),
-    path(
-        "<int:pk>/move/",
-        _wrap(views.MoveFieldView).as_view(),
-        name="dynforms-move-field",
-    ),
+    path("<int:pk>/move/", _redirect, name="dynforms-move-field"),
     path(
         "<int:pk>/<int:page>/rules/<int:pos>/",
-        _wrap(views.FieldRulesView).as_view(),
+        _redirect,
         name="dynforms-field-rules",
     ),
 ]

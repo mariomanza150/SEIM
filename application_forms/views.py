@@ -6,7 +6,8 @@ API views for form types and submissions.
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.views.generic import TemplateView
+from django.shortcuts import redirect
+from django.views import View
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
@@ -48,25 +49,20 @@ class IsSeimAdmin(permissions.BasePermission):
         return is_admin(request.user)
 
 
-class FormTypeListView(LoginRequiredMixin, AdminOnlyMixin, TemplateView):
-    """List view for form types"""
+class FormTypeListView(LoginRequiredMixin, AdminOnlyMixin, View):
+    """Legacy form-type list: send operators to the SPA builder."""
 
-    template_name = "application_forms/list.html"
+    def get(self, request, *args, **kwargs):
+        return redirect("/seim/admin/dynforms")
 
 
-class EnhancedFormBuilderView(LoginRequiredMixin, AdminOnlyMixin, TemplateView):
-    """Enhanced form builder view with custom UI"""
+class EnhancedFormBuilderView(LoginRequiredMixin, AdminOnlyMixin, View):
+    """Legacy Django builder: send operators to the Vue visual builder."""
 
-    template_name = "application_forms/builder.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        form_id = kwargs.get("pk")
-        context["form_id"] = form_id
-        # Pass form_id to template for JavaScript
-        if form_id:
-            context["form_id_js"] = form_id
-        return context
+    def get(self, request, pk=None, *args, **kwargs):
+        if pk:
+            return redirect(f"/seim/admin/dynforms/{pk}")
+        return redirect("/seim/admin/dynforms")
 
 
 class FormTypeViewSet(viewsets.ModelViewSet):

@@ -500,7 +500,7 @@ The SEIM platform now includes a comprehensive CMS powered by Wagtail:
 ### Dynamic Program Application Forms
 
 - Each `Program` can be linked to a `DynamicForm` (from django-dynforms) via the `application_form` field.
-- Admins manage and design forms using the visual builder at `/dynforms/`.
+- Admins manage and design forms using the Vue visual builder at `/seim/admin/dynforms`.
 - This enables multi-stage, customizable application forms per program, supporting complex eligibility and workflow logic.
 
 This architecture provides a solid foundation for the SEIM application, with clear separation of concerns, scalability considerations, and maintainable code structure. 

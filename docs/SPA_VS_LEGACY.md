@@ -11,26 +11,27 @@
 | Wagtail admin | `/cms/` | Wagtail | Keep |
 | Django admin | `/seim/django-admin/` (`/admin/` redirects here) | Django admin | Keep |
 | REST API | `/api/*` | domain apps + `api/urls.py` | Canonical data plane |
-| Grade translation API | `/grades/api/*` | `grades/` | API only; SPA should call this prefix |
+| Grade translation API | `/api/grades/` (`/grades/api/` alias) | `grades/` | API only |
 | Analytics API + shims | `/analytics/*` and `/api/analytics/*` | `analytics/` | HTML views redirect into the SPA |
 | Contact form | `/contact/` | `core/views.py` | Small Django form (CMS also has `/contacto/`) |
-| Dynforms builder | `/seim/admin/dynforms` (SPA entry) + `/dynforms/` | `frontend-vue` + `core/dynforms_urls.py` | SPA entry shipped; visual builder still Django |
-| Data management | `/seim/admin/data-management` (SPA entry) + `/data-management/` | `frontend-vue` + `data_management/` | SPA catalog/logs; execute still Django |
+| Dynforms builder | `/seim/admin/dynforms` and `/seim/admin/dynforms/:id` | `frontend-vue` | **SPA-canonical** visual builder; `/dynforms/` redirects here |
+| Data management | `/seim/admin/data-management` | `frontend-vue` + `data_management/` API | **SPA-canonical** catalog, execute, import, cleanup, and reset; `/data-management/` redirects here |
 
 Legacy root auth URLs (`/login/`, `/register/`, `/dashboard/`, `/password-reset/`) redirect to `/seim/...`. `/logout/` clears the session and is not a Vue route.
 
 ## Vue routes (application UI)
 
-Mounted at `/seim/` (see `frontend-vue/src/router/index.js`): login, register, verify-email, password-reset, dashboard, applications (list/new/detail/edit), documents, notifications, profile, settings, calendar, program compare, coordinator review/workload, agreements, nominations, eligibility rulesets, analytics forecasts, partner portal, SPA admin (`/seim/admin/programs|forms|workflows`).
+Mounted at `/seim/` (see `frontend-vue/src/router/index.js`): login, register, verify-email, password-reset, dashboard, applications (list/new/detail/edit), documents, notifications, profile, settings, calendar, program compare, coordinator review/workload, agreements, nominations, eligibility rulesets, analytics forecasts, partner portal, SPA admin (`/seim/admin/programs|forms|dynforms|data-management|workflows`).
 
-## Intentionally not migrated in this pass
+## Intentionally not migrated
 
-Finishing the entire Vue migration is out of scope. Remaining slices are tracked as GitHub issues:
+These remain Django by design:
 
-1. django-dynforms visual builder still under `/dynforms/` (SPA entry at `/seim/admin/dynforms`)
-2. Data-management execute/reset still Django templates (SPA catalog at `/seim/admin/data-management`)
-3. Grades API is on `/api/grades/`; `/grades/api/` remains a legacy alias
-4. CMS seed narratives remain the Spanish example set (tokens use `INSTITUTION_*`)
+1. Wagtail CMS public pages and `/cms/` admin
+2. Django admin at `/seim/django-admin/`
+3. Contact form at `/contact/`
+4. Grades API alias `/grades/api/` (canonical is `/api/grades/`)
+5. CMS seed narratives remain the Spanish example set (tokens use `INSTITUTION_*`)
 
 ## Docs that are historical
 
