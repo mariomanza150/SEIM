@@ -1187,7 +1187,7 @@ async function loadProfileGate() {
   try {
     const [{ data: profile }, scalesResponse] = await Promise.all([
       api.get('/api/accounts/profile/'),
-      api.get('/grades/api/scales/active/').catch(() => ({ data: [] })),
+      api.get('/api/grades/scales/active/').catch(() => ({ data: [] })),
     ])
     const scales = scalesResponse.data?.results || scalesResponse.data
     gradeScales.value = Array.isArray(scales) ? scales : []

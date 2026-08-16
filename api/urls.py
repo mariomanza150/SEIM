@@ -39,6 +39,7 @@ from documents.views import (
     DocumentViewSet,
     ExchangeAgreementDocumentViewSet,
 )
+from grades.urls import router as grades_router
 from notifications.views import (
     NotificationPreferenceViewSet,
     NotificationRoutingOverrideViewSet,
@@ -130,4 +131,12 @@ urlpatterns = [
     path("user-settings/", UserSettingsView.as_view(), name="user-settings"),
     path("token/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    # Grades also remain at /grades/api/ (legacy alias). SPA should use /api/grades/.
+    path(
+        "grades/", include((grades_router.urls, "grades_api"), namespace="grades_api")
+    ),
+    path(
+        "data-management/",
+        include(("data_management.api_urls", "data_management_api")),
+    ),
 ]

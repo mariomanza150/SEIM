@@ -273,6 +273,8 @@
       "PartnerPortal": "Partner portal",
       "AdminPrograms": "Admin — Programs",
       "AdminForms": "Admin — Forms",
+      "AdminDynforms": "Admin — Form builders",
+      "AdminDataManagement": "Admin — Data management",
       "AdminWorkflows": "Admin — Workflows",
       "AdminWorkflowEditor": "Admin — Workflow editor",
       "AdminApplicationEdit": "Admin — Application",
@@ -408,6 +410,30 @@
       "steps": "Step definitions",
       "stepsHelp": "Optional JSON array. Stored in FormType.step_definitions."
     }
+  },
+  "adminDynforms": {
+    "title": "Form builders",
+    "subtitle": "SPA form types and the leftover django-dynforms builder.",
+    "spaTitle": "Application form types (Vue)",
+    "spaBody": "Create and edit FormType records used by programs. This is the supported SPA builder.",
+    "openSpa": "Open form types",
+    "legacyTitle": "django-dynforms builder",
+    "legacyBody": "Visual field builder at /dynforms/. Requires a Django admin session. Prefer the Vue form types page for new work.",
+    "openLegacy": "Open dynforms"
+  },
+  "adminData": {
+    "title": "Data management",
+    "subtitle": "Imports, exports, demo data, and maintenance.",
+    "sessionNote": "Opening a tool uses the existing Django operator pages (session login). This console is the SPA entry and shows recent jobs.",
+    "openTool": "Open tool",
+    "empty": "You do not have permission to use any data management tools.",
+    "recentLogs": "Recent operations",
+    "logType": "Type",
+    "logModel": "Model",
+    "logStatus": "Status",
+    "logUser": "User",
+    "noLogs": "No operations logged yet.",
+    "loadError": "Failed to load data management catalog."
   },
   "adminWorkflows": {
     "title": "Workflow management",

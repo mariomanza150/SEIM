@@ -75,6 +75,16 @@
                   </router-link>
                 </li>
                 <li>
+                  <router-link class="dropdown-item" :to="{ name: 'AdminDynforms' }">
+                    {{ t('route.names.AdminDynforms') }}
+                  </router-link>
+                </li>
+                <li>
+                  <router-link class="dropdown-item" :to="{ name: 'AdminDataManagement' }">
+                    {{ t('route.names.AdminDataManagement') }}
+                  </router-link>
+                </li>
+                <li>
                   <router-link class="dropdown-item" :to="{ name: 'AdminWorkflows' }">
                     {{ t('route.names.AdminWorkflows') }}
                   </router-link>
@@ -347,6 +357,18 @@ const adminNavItems = computed(() => [
     to: { name: 'AdminForms' },
     label: t('route.names.AdminForms'),
     iconClass: 'bi bi-ui-checks-grid',
+  },
+  {
+    key: 'adminDynforms',
+    to: { name: 'AdminDynforms' },
+    label: t('route.names.AdminDynforms'),
+    iconClass: 'bi bi-window-sidebar',
+  },
+  {
+    key: 'adminDataManagement',
+    to: { name: 'AdminDataManagement' },
+    label: t('route.names.AdminDataManagement'),
+    iconClass: 'bi bi-database-gear',
   },
   {
     key: 'adminWorkflows',

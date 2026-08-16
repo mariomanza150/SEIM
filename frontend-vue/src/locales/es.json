@@ -273,6 +273,8 @@
       "PartnerPortal": "Portal de socios",
       "AdminPrograms": "Admin — Programas",
       "AdminForms": "Admin — Formularios",
+      "AdminDynforms": "Admin — Constructores de formularios",
+      "AdminDataManagement": "Admin — Gestión de datos",
       "AdminWorkflows": "Admin — Flujos",
       "AdminWorkflowEditor": "Admin — Editor de flujo",
       "AdminApplicationEdit": "Admin — Solicitud",
@@ -408,6 +410,30 @@
       "steps": "Definición de pasos",
       "stepsHelp": "Array JSON opcional. Se guarda en FormType.step_definitions."
     }
+  },
+  "adminDynforms": {
+    "title": "Constructores de formularios",
+    "subtitle": "Tipos de formulario en Vue y el constructor django-dynforms restante.",
+    "spaTitle": "Tipos de formulario (Vue)",
+    "spaBody": "Crea y edita FormType usados por los programas. Este es el constructor SPA soportado.",
+    "openSpa": "Abrir tipos de formulario",
+    "legacyTitle": "Constructor django-dynforms",
+    "legacyBody": "Constructor visual en /dynforms/. Requiere sesión de Django admin. Prefiere la página Vue para trabajo nuevo.",
+    "openLegacy": "Abrir dynforms"
+  },
+  "adminData": {
+    "title": "Gestión de datos",
+    "subtitle": "Importaciones, exportaciones, datos demo y mantenimiento.",
+    "sessionNote": "Cada herramienta abre las páginas Django existentes (sesión). Esta consola es la entrada SPA y muestra trabajos recientes.",
+    "openTool": "Abrir herramienta",
+    "empty": "No tienes permiso para usar las herramientas de gestión de datos.",
+    "recentLogs": "Operaciones recientes",
+    "logType": "Tipo",
+    "logModel": "Modelo",
+    "logStatus": "Estado",
+    "logUser": "Usuario",
+    "noLogs": "Aún no hay operaciones.",
+    "loadError": "No se pudo cargar el catálogo de gestión de datos."
   },
   "adminWorkflows": {
     "title": "Gestión de flujos",

@@ -92,3 +92,16 @@ class TestGradesAPI(APITestCase):
         self.assertEqual(response.data["translation_method"], "direct")
         self.assertEqual(response.data["source_grade"]["id"], str(self.source_grade.id))
         self.assertEqual(response.data["target_grade"]["id"], str(self.target_grade.id))
+
+    def test_grade_scales_are_mounted_under_api_gateway(self):
+        response = self.client.get("/api/grades/scales/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        items = response.data.get("results", response.data)
+        returned_ids = {str(item["id"]) for item in items}
+        self.assertIn(str(self.source_scale.id), returned_ids)
+
+        active = self.client.get("/api/grades/scales/active/")
+        self.assertEqual(active.status_code, status.HTTP_200_OK)
+
+        legacy = self.client.get("/grades/api/scales/")
+        self.assertEqual(legacy.status_code, status.HTTP_200_OK)

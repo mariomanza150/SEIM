@@ -39,6 +39,8 @@ const AnalyticsForecasts = () => import('@/views/AnalyticsForecasts.vue')
 const PartnerPortal = () => import('@/views/PartnerPortal.vue')
 const AdminPrograms = () => import('@/views/admin/AdminPrograms.vue')
 const AdminForms = () => import('@/views/admin/AdminForms.vue')
+const AdminDynforms = () => import('@/views/admin/AdminDynforms.vue')
+const AdminDataManagement = () => import('@/views/admin/AdminDataManagement.vue')
 const AdminWorkflows = () => import('@/views/admin/AdminWorkflows.vue')
 const AdminWorkflowEditor = () => import('@/views/admin/AdminWorkflowEditor.vue')
 const AdminApplicationEdit = () => import('@/views/admin/AdminApplicationEdit.vue')
@@ -175,6 +177,18 @@ const routes = [
         path: 'admin/forms',
         name: 'AdminForms',
         component: AdminForms,
+        meta: { adminOnly: true },
+      },
+      {
+        path: 'admin/dynforms',
+        name: 'AdminDynforms',
+        component: AdminDynforms,
+        meta: { adminOnly: true },
+      },
+      {
+        path: 'admin/data-management',
+        name: 'AdminDataManagement',
+        component: AdminDataManagement,
         meta: { adminOnly: true },
       },
       {

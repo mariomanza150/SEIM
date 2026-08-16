@@ -241,25 +241,31 @@ _DATA_MANAGEMENT_SECTIONS = (
 )
 
 
+def data_management_catalog(user):
+    """Sections the current user may open (Django index + SPA catalog)."""
+    sections = []
+    for model_name, title, url_name, description in _DATA_MANAGEMENT_SECTIONS:
+        if has_data_permission(user, model_name, "VIEW"):
+            sections.append(
+                {
+                    "key": model_name,
+                    "title": str(title),
+                    "description": str(description),
+                    "url": reverse(url_name),
+                }
+            )
+    return sections
+
+
 class DataManagementIndexView(View):
     """Hub for `/data-management/` when no subpath is given (avoids 404)."""
 
     @method_decorator(login_required)
     def get(self, request):
-        sections = []
-        for model_name, title, url_name, description in _DATA_MANAGEMENT_SECTIONS:
-            if has_data_permission(request.user, model_name, "VIEW"):
-                sections.append(
-                    {
-                        "title": title,
-                        "description": description,
-                        "url": reverse(url_name),
-                    }
-                )
         return render(
             request,
             "data_management/index.html",
-            {"sections": sections},
+            {"sections": data_management_catalog(request.user)},
         )
 
 

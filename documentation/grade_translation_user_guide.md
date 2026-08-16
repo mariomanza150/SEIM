@@ -142,7 +142,7 @@ The grade translation system provides a REST API for programmatic access.
 #### Translate a Grade
 
 ```http
-POST /grades/api/translations/translate/
+POST /api/grades/translations/translate/
 Content-Type: application/json
 Authorization: Bearer YOUR_JWT_TOKEN
 
@@ -176,7 +176,7 @@ Authorization: Bearer YOUR_JWT_TOKEN
 #### Convert GPA to Grade
 
 ```http
-POST /grades/api/translations/convert_gpa/
+POST /api/grades/translations/convert_gpa/
 Content-Type: application/json
 
 {
@@ -188,7 +188,7 @@ Content-Type: application/json
 #### Check Eligibility
 
 ```http
-POST /grades/api/translations/check_eligibility/
+POST /api/grades/translations/check_eligibility/
 Content-Type: application/json
 
 {
@@ -214,14 +214,14 @@ Content-Type: application/json
 #### List Grade Scales
 
 ```http
-GET /grades/api/scales/
+GET /api/grades/scales/
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
 
 #### Get Grade Values for a Scale
 
 ```http
-GET /grades/api/values/by_scale/?grade_scale=uuid-of-scale
+GET /api/grades/values/by_scale/?grade_scale=uuid-of-scale
 Authorization: Bearer YOUR_JWT_TOKEN
 ```
 

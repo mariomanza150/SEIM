@@ -331,7 +331,7 @@ async function fetchProfileAndCatalogs() {
       fetchCatalog('schools'),
       fetchCatalog('unidades'),
       fetchCatalog('banks'),
-      api.get('/grades/api/scales/active/').catch(() => ({ data: [] })),
+      api.get('/api/grades/scales/active/').catch(() => ({ data: [] })),
     ])
     catalogs.academicLevels = academicLevels
     catalogs.schools = schools
