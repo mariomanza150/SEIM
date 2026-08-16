@@ -84,7 +84,7 @@ dev = [
     "flake8-docstrings==1.7.0",
     "flake8-import-order==0.18.2",
     "flake8-quotes==3.4.0",
-    "flake8-bugbear==24.2.6",
+    "flake8-bugbear==25.11.29",
     "flake8-django==1.4",
     # Type checking
     "mypy==1.18.2",
