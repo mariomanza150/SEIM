@@ -1,14 +1,25 @@
-# `docs/` — generated notes and working papers
+# `docs/` is deprecated
 
-This folder is **not** the contributor guide set.
+**Canonical technical documentation:** [`documentation/`](../documentation/README.md)
 
-| Look here | For |
+This folder is a pointer only. Unique working notes that used to live here were moved into [`documentation/notes/`](../documentation/notes/README.md) so there is a single docs tree. Sphinx and `make docs-workflow` already use `documentation/`.
+
+`documents/` at the repo root is the **Django document-upload app**, not a documentation tree. See [`documents/README.md`](../documents/README.md).
+
+## Where things went
+
+| Old path | New path |
 | --- | --- |
-| [`documentation/`](../documentation/README.md) | **Canonical** human guides (install, architecture, testing, Sphinx) |
-| [`docs/index.md`](index.md) | Index of generated/status/Vue working notes in this folder |
-| [`docs/SPA_VS_LEGACY.md`](SPA_VS_LEGACY.md) | Current Vue SPA vs leftover Django surfaces |
-| [`docs/archive/`](archive/README.md) | Superseded Vue-SSR plans (not current work) |
-| [`docs/PROJECT_STRUCTURE.md`](PROJECT_STRUCTURE.md) | Directory map |
-| `documents/` (Django app at repo root) | **Not documentation** — file-upload domain app |
+| `docs/README.md` (this file) | stub → [`documentation/README.md`](../documentation/README.md) |
+| `docs/index.md` | [`documentation/notes/index.md`](../documentation/notes/index.md) |
+| `docs/SPA_VS_LEGACY.md` | [`documentation/notes/SPA_VS_LEGACY.md`](../documentation/notes/SPA_VS_LEGACY.md) |
+| `docs/url-structure.md` | [`documentation/notes/url-structure.md`](../documentation/notes/url-structure.md) |
+| `docs/CMS_RESTORE_GUIDE.md` | [`documentation/notes/CMS_RESTORE_GUIDE.md`](../documentation/notes/CMS_RESTORE_GUIDE.md) |
+| `docs/PROJECT_STRUCTURE.md` | [`documentation/notes/PROJECT_STRUCTURE.md`](../documentation/notes/PROJECT_STRUCTURE.md) |
+| `docs/status/` | [`documentation/notes/status/`](../documentation/notes/status/) |
+| `docs/guides/` | [`documentation/notes/guides/`](../documentation/notes/guides/) |
+| `docs/ui-audit/` | [`documentation/notes/ui-audit/`](../documentation/notes/ui-audit/) |
+| `docs/prompts/` | [`documentation/notes/prompts/`](../documentation/notes/prompts/) |
+| `docs/archive/` | [`documentation/notes/archive/`](../documentation/notes/archive/) |
 
-`documentation/` is the maintained guide tree (including Sphinx at `documentation/sphinx/`). Unique material in `docs/` (CMS restore, Vue history, status reports, UI audit) stays here and is linked from the indexes. Do not treat this folder as a second official manual.
+Thin stubs remain for the most-linked filenames so old bookmarks do not 404 silently.

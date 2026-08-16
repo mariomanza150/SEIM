@@ -274,6 +274,9 @@ frontend-vue/.eslintcache
 frontend-vue/dist-ssr/
 frontend-vue/*.local 
 
+# Local institution overlay (packaged example stays committed)
+branding/institution.json
+
 # Playwright-generated artifacts
 tests/e2e_playwright/screenshots/
 tests/e2e_playwright/videos/

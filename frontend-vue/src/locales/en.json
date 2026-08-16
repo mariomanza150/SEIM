@@ -371,8 +371,9 @@
   },
   "adminForms": {
     "title": "Form management",
-    "subtitle": "Manage dynamic application forms and step templates.",
+    "subtitle": "Manage form metadata and JSON schema, or open the visual builder.",
     "create": "New form",
+    "openBuilder": "Open builder",
     "editTitle": "Edit form",
     "searchPlaceholder": "Search by name or description…",
     "filterType": "Type",

@@ -1,7 +1,7 @@
 # SEIM Makefile
 # Development and documentation automation
 
-.PHONY: help docs docs-api docs-code docs-db docs-all clean-docs enhance-docs test migrate collectstatic runserver shell cache-test cache-status cache-clear clean clean-all setup format lint type-check security-check quality-check check-deps build-prod deploy-prod deploy-prod-update prod-setup prod-secrets prod-backup prod-restore prod-logs prod-shell prod-status prod-health prod-stop prod-clean
+.PHONY: help docs docs-api docs-code docs-db docs-all clean-docs enhance-docs test migrate collectstatic runserver shell cache-test cache-status cache-clear clean clean-all setup format lint type-check security-check quality-check check-deps export-deps build-prod deploy-prod deploy-prod-update prod-setup prod-secrets prod-backup prod-restore prod-logs prod-shell prod-status prod-health prod-stop prod-clean
 
 # Default target
 help:
@@ -77,7 +77,8 @@ help:
 	@echo "  type-check         - Run type checking with mypy (Docker)"
 	@echo "  security-check     - Run security analysis (Docker)"
 	@echo "  quality-check      - Run all code quality checks (Docker)"
-	@echo "  check-deps         - Verify pyproject.toml reads requirements.txt"
+	@echo "  check-deps         - Verify generated requirements*.txt match pyproject.toml"
+	@echo "  export-deps        - Regenerate requirements*.txt from pyproject.toml"
 	@echo ""
 	@echo "Docker:"
 	@echo "  docker-setup       - Setup Docker environment (creates .env, builds, starts)"
@@ -317,8 +318,12 @@ quality-check: format-check lint type-check security-check complexity-check
 	@echo "✅ All code quality checks completed!"
 
 check-deps:
-	@echo "📦 Verifying pyproject.toml reads requirements.txt..."
+	@echo "📦 Verifying generated requirements*.txt match pyproject.toml..."
 	python scripts/check_python_deps.py
+
+export-deps:
+	@echo "📦 Regenerating requirements*.txt from pyproject.toml..."
+	python scripts/check_python_deps.py --write
 
 quality-analysis:
 	@echo "🔍 Running comprehensive code quality analysis..."

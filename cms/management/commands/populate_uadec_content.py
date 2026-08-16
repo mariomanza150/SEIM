@@ -24,6 +24,11 @@ from cms.models import (
     ProgramPage,
     StandardPage,
 )
+from core.branding import (
+    apply_institution_tokens,
+    apply_institution_tokens_deep,
+    brand_from_settings,
+)
 
 
 class Command(BaseCommand):
@@ -33,56 +38,22 @@ class Command(BaseCommand):
     )
 
     def _load_brand(self):
-        self.short = getattr(settings, "INSTITUTION_SHORT_NAME", "UAdeC")
-        self.name = getattr(
-            settings, "INSTITUTION_NAME", "Universidad Autónoma de Coahuila"
-        )
-        self.department = getattr(
-            settings, "INSTITUTION_DEPARTMENT", "Dirección de Intercambio Académico"
-        )
-        self.location = getattr(
-            settings, "INSTITUTION_LOCATION", "Saltillo, Coahuila, México"
-        )
-        self.email = getattr(settings, "INSTITUTION_EMAIL", "intercambio@uadec.edu.mx")
-        self.phone = getattr(
-            settings, "INSTITUTION_PHONE", "+52 (844) 412-8800 ext. 2345"
-        )
-        self.address = getattr(
-            settings,
-            "INSTITUTION_ADDRESS",
-            "Boulevard V. Carranza y González Lobo s/n<br>Col. República Oriente<br>"
-            "Saltillo, Coahuila, México<br>C.P. 25280",
-        )
+        brand = brand_from_settings(settings)
+        self.brand = brand
+        self.short = brand["short_name"]
+        self.name = brand["name"]
+        self.department = brand["department"]
+        self.location = brand["location"]
+        self.email = brand["email"]
+        self.phone = brand["phone"]
+        self.address = brand["address"]
 
     def _brand(self, text):
         """Replace default UAdeC example copy with INSTITUTION_* values."""
-        if not isinstance(text, str):
-            return text
-        replacements = (
-            (
-                "Boulevard V. Carranza y González Lobo s/n<br>Col. República Oriente<br>"
-                "Saltillo, Coahuila, México<br>C.P. 25280",
-                self.address,
-            ),
-            ("Universidad Autónoma de Coahuila", self.name),
-            ("intercambio@uadec.edu.mx", self.email),
-            ("+52 (844) 412-8800 ext. 2345", self.phone),
-            ("Saltillo, Coahuila, México", self.location),
-            ("UAdeC", self.short),
-        )
-        for old, new in replacements:
-            if old != new:
-                text = text.replace(old, new)
-        return text
+        return apply_institution_tokens(text, self.brand)
 
     def _brand_value(self, value):
-        if isinstance(value, str):
-            return self._brand(value)
-        if isinstance(value, list):
-            return [self._brand_value(item) for item in value]
-        if isinstance(value, dict):
-            return {key: self._brand_value(item) for key, item in value.items()}
-        return value
+        return apply_institution_tokens_deep(value, self.brand)
 
     def handle(self, *args, **options):
         self._load_brand()

@@ -91,7 +91,10 @@ source .venv/bin/activate
 # Upgrade pip
 pip install --upgrade pip
 
-# Install all development dependencies
+# From pyproject.toml (source of truth)
+pip install -e ".[dev]"
+
+# Or the generated files used by Docker/CI
 pip install -r requirements-dev.txt
 ```
 

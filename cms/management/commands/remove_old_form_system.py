@@ -60,7 +60,7 @@ class Command(BaseCommand):
             '1. Remove "application_forms" from INSTALLED_APPS in settings/base.py'
         )
         self.stdout.write("2. Remove django-dynforms URLs from seim/urls.py")
-        self.stdout.write("3. Remove django-dynforms from requirements.txt:")
+        self.stdout.write("3. Remove django-dynforms from pyproject.toml:")
         self.stdout.write("   - django-dynforms==2025.9.10")
         self.stdout.write("   - crispy-bootstrap5==2025.6")
         self.stdout.write("   - django-crisp-modals==2025.10.0")

@@ -179,7 +179,7 @@ Navigation is automatically generated from:
 
 ## 📚 Additional Resources
 
-- **URL Structure Guide:** `docs/url-structure.md`
+- **URL Structure Guide:** `url-structure.md`
 - **Architecture Documentation:** `documentation/architecture.md`
 - **API Documentation:** `http://localhost:8001/api/docs/`
 

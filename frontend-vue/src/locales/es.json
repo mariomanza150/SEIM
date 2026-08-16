@@ -371,8 +371,9 @@
   },
   "adminForms": {
     "title": "Gestión de formularios",
-    "subtitle": "Gestiona formularios dinámicos y plantillas de pasos.",
+    "subtitle": "Gestiona metadatos y el esquema JSON, o abre el constructor visual.",
     "create": "Nuevo formulario",
+    "openBuilder": "Abrir constructor",
     "editTitle": "Editar formulario",
     "searchPlaceholder": "Buscar por nombre o descripción…",
     "filterType": "Tipo",

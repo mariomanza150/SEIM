@@ -35,7 +35,7 @@ try:
 except ModuleNotFoundError:  # pragma: no cover
     pytest.skip(
         "Playwright is not installed; skipping e2e_playwright collection. "
-        "Install test deps (requirements-test.txt) to run these tests.",
+        "Install test deps (pip install -e \".[test]\" or requirements-test.txt) to run these tests.",
         allow_module_level=True,
     )
 

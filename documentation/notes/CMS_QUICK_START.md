@@ -1,6 +1,6 @@
 # CMS Quick Start Guide
 
-> Keep this as the short operational reference for day-to-day CMS usage. For full restore/export workflows, use `docs/CMS_RESTORE_GUIDE.md`. For broader CMS architecture and content guidance, use `documentation/cms_guide.md`.
+> Keep this as the short operational reference for day-to-day CMS usage. For full restore/export workflows, use `CMS_RESTORE_GUIDE.md`. For broader CMS architecture and content guidance, use `documentation/cms_guide.md`.
 
 ## 🚀 Accessing the Landing Page
 
@@ -297,7 +297,7 @@ docker-compose exec web python manage.py shell
 ## 📚 Documentation References
 
 - **Full CMS Guide**: `documentation/cms_guide.md`
-- **CMS Restore Workflow**: `docs/CMS_RESTORE_GUIDE.md`
+- **CMS Restore Workflow**: `CMS_RESTORE_GUIDE.md`
 - **Full CMS Guide**: `documentation/cms_guide.md`
 - **Architecture**: `documentation/architecture.md`
 - **Wagtail Docs**: https://docs.wagtail.org/

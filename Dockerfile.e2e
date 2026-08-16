@@ -5,7 +5,7 @@ FROM mcr.microsoft.com/playwright/python:v1.41.0-jammy
 # Set working directory
 WORKDIR /app
 
-# Copy requirements
+# Generated from pyproject.toml (python scripts/check_python_deps.py --write)
 COPY requirements.txt requirements-dev.txt requirements-test.txt ./
 
 # Install Python dependencies

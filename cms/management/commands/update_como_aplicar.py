@@ -5,11 +5,13 @@ Usage:
     python manage.py update_como_aplicar
 """
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from wagtail.blocks import StreamValue
 
 from cms.blocks import BaseStreamBlock
 from cms.models import StandardPage
+from core.branding import apply_institution_tokens_deep, brand_from_settings
 
 
 class Command(BaseCommand):
@@ -104,6 +106,9 @@ class Command(BaseCommand):
                 },
             },
         ]
+
+        brand = brand_from_settings(settings)
+        content_data = apply_institution_tokens_deep(content_data, brand)
 
         # Update the body StreamField
         page.body = StreamValue(BaseStreamBlock(), content_data, is_lazy=True)

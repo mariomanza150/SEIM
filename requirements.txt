@@ -1,81 +1,49 @@
-# Pinned runtime dependencies. Source of truth for Docker, CI, and
-# `pip install -r requirements.txt`. pyproject.toml reads this file via
-# [tool.setuptools.dynamic] so the two cannot drift.
-# Install extras with requirements-dev.txt or requirements-test.txt.
+# Generated from pyproject.toml. Do not edit by hand.
+# Edit pins in pyproject.toml, then run: python scripts/check_python_deps.py --write
 
-# Core Django and DRF
 Django==5.1.15
 djangorestframework==3.16.1
 django-cors-headers==4.9.0
 django-environ==0.12.0
-
-# Authentication and Security
 djangorestframework-simplejwt==5.5.1
 defusedxml==0.7.1
-
-# Database and Caching
 psycopg2-binary==2.9.11
 redis==5.0.4
 django-redis==6.0.0
 django-cacheops==7.2
-
-# Background Tasks and Queue Management
 celery==5.5.3
 django-celery-results==2.6.0
 django-celery-beat==2.8.1
-
-# Performance and Monitoring
 psutil==7.1.3
 django-extensions==4.1
-
-# File Handling and Media
 Pillow==12.3.0
 django-storages==1.14.6
 pylibmagic==0.5.0
 reportlab==4.4.5
-
-# API Documentation
 drf-spectacular==0.29.0
-
-# Production and Deployment
 gunicorn==23.0.0
 whitenoise==6.6.0
 sentry-sdk==2.8.0
-
-# Utilities
 openpyxl==3.1.5
 python-dateutil==2.8.2
 pytz==2024.1
 requests==2.33.0
 django-js-reverse==0.10.2
 django-filter==24.3
-
-# Wagtail CMS
-# pip-audit still flags 6.3.8 (fix Versions 7.0.7+/7.0.8+); bumped to 7.0.8.
-# wagtail-seo 3.1.1 supports <8.0; wagtail-markdown 0.14.1 for Wagtail 7+
-# (drops bleach; uses nh3).
 wagtail==7.0.8
 wagtail-seo==3.1.1
 wagtail-markdown==0.14.1
-
-# Dynamic Forms and UI Components
 django-dynforms==2025.9.10
 crispy-bootstrap5==2025.6
 django-crisp-modals==2025.10.0
 django-itemlist==2025.7.7
-
-# Additional Utilities
 Markdown==3.10
-numpy==2.2.6  # Required by django-dynforms (>=2.2.4) and compatible with Python 3.10
+numpy==2.2.6
 py-dateutil==2.2
 pycryptodome==3.23.0
 pyparsing==3.2.5
-
-# Workflow Engine (BPMN)
 SpiffWorkflow==3.1.2
 lxml==6.1.0
-
-# WebSocket Support
 channels==4.3.1
 channels-redis==4.3.0
 daphne==4.2.2

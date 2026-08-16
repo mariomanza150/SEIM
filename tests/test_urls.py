@@ -116,6 +116,38 @@ class UrlConfigurationTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.headers.get("Location"), "/seim/django-admin/")
 
+    def test_legacy_app_paths_redirect_into_spa(self):
+        """Bookmarks and notification action URLs outside ``/seim/`` reach the SPA."""
+        cases = [
+            ("/applications/", "/seim/applications/"),
+            ("/applications/create/", "/seim/applications/new"),
+            ("/applications/new/", "/seim/applications/new"),
+            ("/profile/", "/seim/profile/"),
+            ("/settings/", "/seim/settings/"),
+            ("/preferences/", "/seim/settings/"),
+            ("/calendar/", "/seim/calendar/"),
+            ("/documents/", "/seim/documents/"),
+            ("/notifications/", "/seim/notifications/"),
+            ("/review-queue/", "/seim/review-queue/"),
+            ("/programs/compare/", "/seim/programs/compare"),
+        ]
+        for source, target in cases:
+            response = self.client.get(source, follow=False)
+            self.assertEqual(response.status_code, 302, msg=source)
+            self.assertEqual(response.headers.get("Location"), target, msg=source)
+
+    def test_legacy_application_detail_redirects_into_spa(self):
+        app_id = "11111111-1111-1111-1111-111111111111"
+        response = self.client.get(f"/applications/{app_id}/", follow=False)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers.get("Location"), f"/seim/applications/{app_id}")
+
+        response = self.client.get(f"/applications/{app_id}/edit/", follow=False)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response.headers.get("Location"), f"/seim/applications/{app_id}/edit"
+        )
+
     def test_contact_form_route_not_vue_shell(self):
         """Legacy Django contact form is mounted at ``/contact/`` (not the SPA)."""
         response = self.client.get("/contact/")

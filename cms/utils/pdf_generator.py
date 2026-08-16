@@ -1,8 +1,9 @@
 """
-PDF Form Generator for UAdeC Mobility Program
+PDF form generator for mobility programs.
 
 Generates professional PDF forms for student mobility applications.
-Uses ReportLab for PDF generation.
+Header/footer and institution tokens come from INSTITUTION_* settings
+(UAdeC remains the default). Uses ReportLab for PDF generation.
 """
 
 from io import BytesIO
@@ -22,27 +23,54 @@ from reportlab.platypus import (
 )
 
 
-def add_header_footer(canvas, doc, title="UAdeC - Movilidad Internacional"):
+def _institution_brand():
+    try:
+        from django.conf import settings
+
+        from core.branding import brand_from_settings
+
+        return brand_from_settings(settings)
+    except Exception:
+        from core.branding import default_brand
+
+        return default_brand()
+
+
+def _t(text: str) -> str:
+    from core.branding import apply_institution_tokens
+
+    return apply_institution_tokens(text, _institution_brand())
+
+
+def add_header_footer(canvas, doc, title=None):
     """Add header and footer to PDF pages."""
+    brand = _institution_brand()
+    if title is None:
+        title = f"{brand['short_name']} - Movilidad Internacional"
     canvas.saveState()
 
     # Header
     canvas.setFont("Helvetica-Bold", 10)
-    canvas.drawString(inch, letter[1] - 0.5 * inch, "Universidad Autónoma de Coahuila")
+    canvas.drawString(inch, letter[1] - 0.5 * inch, brand["name"])
     canvas.setFont("Helvetica", 9)
     canvas.drawString(
         inch,
         letter[1] - 0.7 * inch,
-        "Coordinación General de Relaciones Internacionales",
+        brand.get("department") or title,
     )
 
     # Footer
     canvas.setFont("Helvetica", 8)
-    canvas.drawString(
-        inch,
-        0.5 * inch,
-        "CGRI | Tel: 844 415 3077 | relaciones.internacionales@uadec.edu.mx",
+    contact = " | ".join(
+        part
+        for part in (
+            brand.get("short_name"),
+            f"Tel: {brand['phone']}" if brand.get("phone") else "",
+            brand.get("email"),
+        )
+        if part
     )
+    canvas.drawString(inch, 0.5 * inch, contact)
     canvas.drawString(letter[0] - 1.5 * inch, 0.5 * inch, f"Página {doc.page}")
 
     canvas.restoreState()
@@ -58,7 +86,7 @@ def create_styles():
             name="CustomTitle",
             parent=styles["Heading1"],
             fontSize=18,
-            textColor=colors.HexColor("#003366"),  # UAdeC blue
+            textColor=colors.HexColor(_institution_brand()["theme"].get("primary", "#2E5090")),
             spaceAfter=12,
             alignment=TA_CENTER,
             fontName="Helvetica-Bold",
@@ -70,7 +98,7 @@ def create_styles():
             name="CustomHeading",
             parent=styles["Heading2"],
             fontSize=14,
-            textColor=colors.HexColor("#003366"),
+            textColor=colors.HexColor(_institution_brand()["theme"].get("primary", "#2E5090")),
             spaceAfter=10,
             spaceBefore=10,
             fontName="Helvetica-Bold",
@@ -225,8 +253,10 @@ def generate_participation_form():
     story.append(Paragraph("DECLARACIÓN DEL SOLICITANTE", styles["CustomHeading"]))
     story.append(
         Paragraph(
-            "Declaro que la información proporcionada es verídica y me comprometo a cumplir "
-            "con los lineamientos del programa de movilidad internacional de la UAdeC.",
+            _t(
+                "Declaro que la información proporcionada es verídica y me comprometo a cumplir "
+                "con los lineamientos del programa de movilidad internacional de la UAdeC."
+            ),
             styles["CustomBody"],
         )
     )
@@ -309,9 +339,9 @@ def generate_commitment_letter():
     # Commitments
     commitments = [
         "Cumplir con todos los requisitos académicos y administrativos establecidos por el programa de movilidad.",
-        "Mantener un comportamiento ejemplar que honre a la Universidad Autónoma de Coahuila.",
+        _t("Mantener un comportamiento ejemplar que honre a la Universidad Autónoma de Coahuila."),
         "Cursar satisfactoriamente las materias acordadas en el programa de estudios.",
-        "Regresar a la UAdeC al finalizar el período de intercambio acordado.",
+        _t("Regresar a la UAdeC al finalizar el período de intercambio acordado."),
         "Presentar la documentación requerida para la revalidación de créditos.",
         "Cumplir con el reglamento de la institución de acogida.",
         "Mantener comunicación constante con la CGRI durante mi estancia.",
@@ -526,8 +556,10 @@ def generate_course_equivalency_form():
     # Instructions
     story.append(
         Paragraph(
-            "Complete la siguiente tabla con las materias que cursará en la universidad destino "
-            "y sus equivalencias en la UAdeC. Este formulario debe ser aprobado por su coordinador académico.",
+            _t(
+                "Complete la siguiente tabla con las materias que cursará en la universidad destino "
+                "y sus equivalencias en la UAdeC. Este formulario debe ser aprobado por su coordinador académico."
+            ),
             styles["CustomBody"],
         )
     )
@@ -535,7 +567,7 @@ def generate_course_equivalency_form():
 
     # Course table
     data = [
-        ["Materia en UAdeC", "Créditos", "Materia en Universidad Destino", "Créditos"],
+        [_t("Materia en UAdeC"), "Créditos", "Materia en Universidad Destino", "Créditos"],
         ["", "", "", ""],
         ["", "", "", ""],
         ["", "", "", ""],
@@ -619,8 +651,10 @@ def generate_guidelines_document():
     # Introduction
     story.append(
         Paragraph(
-            "Los siguientes lineamientos rigen el Programa de Movilidad Internacional de la Universidad "
-            "Autónoma de Coahuila. Todo estudiante participante debe conocer y aceptar estas disposiciones.",
+            _t(
+                "Los siguientes lineamientos rigen el Programa de Movilidad Internacional de la Universidad "
+                "Autónoma de Coahuila. Todo estudiante participante debe conocer y aceptar estas disposiciones."
+            ),
             styles["CustomBody"],
         )
     )
@@ -634,7 +668,7 @@ def generate_guidelines_document():
                 "Promedio mínimo de 80/100",
                 "Haber cursado al menos el 45% de los créditos de la carrera",
                 "No estar cursando el último semestre durante la movilidad",
-                "Estar inscrito de manera regular en la UAdeC",
+                _t("Estar inscrito de manera regular en la UAdeC"),
             ],
         ),
         (
@@ -679,8 +713,10 @@ def generate_guidelines_document():
 
     story.append(
         Paragraph(
-            "Yo, _________________________________, declaro que he leído y comprendido los lineamientos "
-            "y disposiciones del Programa de Movilidad Internacional de la UAdeC y me comprometo a cumplirlos.",
+            _t(
+                "Yo, _________________________________, declaro que he leído y comprendido los lineamientos "
+                "y disposiciones del Programa de Movilidad Internacional de la UAdeC y me comprometo a cumplirlos."
+            ),
             styles["CustomBody"],
         )
     )
@@ -828,7 +864,7 @@ FORMS = {
         "generator": generate_course_equivalency_form,
         "filename": "Formulario_Equivalencias.pdf",
         "title": "Formulario de Equivalencias",
-        "description": "Para establecer las equivalencias de materias entre UAdeC y universidad destino",
+        "description": "Para establecer las equivalencias de materias entre la institución de origen y la universidad destino",
     },
     "guidelines": {
         "generator": generate_guidelines_document,

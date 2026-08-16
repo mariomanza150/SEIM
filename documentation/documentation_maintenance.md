@@ -28,7 +28,7 @@ This guide provides comprehensive procedures for maintaining, updating, and orga
 ### Main Documentation Directory
 
 ```
-documentation/
+documentation/                          # Single source of truth
 ├── README.md                           # Documentation index and overview
 ├── developer_guide.md                  # Development workflows and practices
 ├── architecture.md                     # System architecture and design
@@ -42,7 +42,13 @@ documentation/
 ├── changelog.md                        # Release notes
 ├── roadmap.md                          # Future features
 ├── backlog.md                          # Current tasks
-├── generated/                          # Auto-generated docs
+├── notes/                              # Working notes (former docs/ tree)
+│   ├── README.md
+│   ├── index.md
+│   ├── SPA_VS_LEGACY.md
+│   ├── status/
+│   └── guides/
+├── generated/                          # Auto-generated docs (make docs-workflow)
 │   ├── code_documentation.md
 │   └── database_schema.md
 ├── archive/                            # Historical documentation
@@ -66,8 +72,10 @@ documentation/
 /
 ├── README.md                           # Main project README
 ├── CONTRIBUTING.md                     # Contribution guidelines
-├── RELEASE_NOTES.md                    # Release announcements
-└── documentation-cleanup.plan.md       # Documentation plans
+├── LICENSE                             # MIT
+├── docs/                               # Deprecated pointer stubs
+├── documents/                          # Django upload app (not docs)
+└── RELEASE_NOTES.md                    # Release announcements
 ```
 
 ---

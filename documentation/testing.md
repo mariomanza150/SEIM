@@ -439,7 +439,7 @@ npm --prefix frontend-vue run test:coverage
 ### **Coverage Targets:**
 - **Backend**: Minimum 80% coverage (hard CI gate: pytest `--cov-fail-under=80`)
 - **Frontend**: Vitest coverage collected in CI for `src/stores` and `src/services` (no fail-under gate)
-- **Codecov**: Visual/historical tracker. Add GitHub Actions secret `CODECOV_TOKEN` from [codecov.io](https://codecov.io) after linking `mariomanza150/SEIM`. CI stays green if the secret is missing. Setup steps: [`.github/README.md`](../.github/README.md).
+- **Codecov**: Historical tracker + GitHub checks. Add repository secret `CODECOV_TOKEN` from [codecov.io](https://codecov.io) after linking `mariomanza150/SEIM`. On this repo, a failed upload fails CI. Fork PRs without the secret stay green (tokenless fallback). Setup: [`.github/README.md`](../.github/README.md).
 
 ---
 
@@ -465,7 +465,7 @@ Vue unit tests use `frontend-vue/vitest.config.js` (or the Vite config `test` bl
 
 ## 🚀 **CI/CD Testing**
 
-CI lives in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). Backend pytest writes `coverage.xml`; Vue Vitest writes `frontend-vue/coverage/lcov.info`. Both upload to Codecov when possible (see [`.github/README.md`](../.github/README.md) for `CODECOV_TOKEN`).
+CI lives in [`.github/workflows/ci.yml`](../.github/workflows/ci.yml). Backend pytest writes `coverage.xml`; Vue Vitest writes `frontend-vue/coverage/lcov.info`. Both upload to Codecov (see [`.github/README.md`](../.github/README.md) for `CODECOV_TOKEN`).
 
 ### **Local CI Simulation:**
 ```bash

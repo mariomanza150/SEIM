@@ -236,9 +236,9 @@ User has BOTH Student and Coordinator roles:
 
 ## More Information
 
-- **Full Guide**: `docs/roles-and-permissions-guide.md`
-- **Architecture**: `docs/role-permission-architecture.md`
-- **Implementation**: `docs/MULTI_ROLE_IMPLEMENTATION.md`
+- **Full Guide**: `roles-and-permissions-guide.md`
+- **Architecture**: `role-permission-architecture.md`
+- **Implementation**: `MULTI_ROLE_IMPLEMENTATION.md`
 
 ---
 

@@ -43,7 +43,7 @@ docker-compose exec web python manage.py collectstatic --noinput
 - ✅ UAdeC-branded content
 - ✅ Rich content blocks on homepage
 
-**📖 See [docs/CMS_RESTORE_GUIDE.md](../docs/CMS_RESTORE_GUIDE.md) for complete documentation**
+**📖 See [notes/CMS_RESTORE_GUIDE.md](notes/CMS_RESTORE_GUIDE.md) for complete documentation**
 
 ### Export/Import Workflow
 

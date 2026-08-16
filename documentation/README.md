@@ -3,16 +3,15 @@
 Welcome to the SEIM (Student Exchange Information Manager) documentation. This comprehensive guide provides everything you need to understand, deploy, and maintain the SEIM platform.
 
 **📌 Documentation Structure:**
-- **`documentation/`** (this directory) — **canonical manuals** (install, architecture, testing, Sphinx). Start here.
-- **`docs/`** — generated notes, status reports, Vue/CMS working papers. Entry: [docs/README.md](../docs/README.md) · index: [docs/index.md](../docs/index.md).
-- **`documents/`** — Django **document-upload app**, not a documentation tree.
-
-Unique files in `docs/` are kept (not deleted). Cross-link instead of duplicating.
+- **`documentation/`** (this directory) — **single source of truth** for technical docs (install, architecture, testing, Sphinx). Start here.
+- **`documentation/notes/`** — generated notes, status reports, Vue/CMS working papers. Entry: [notes/README.md](notes/README.md) · index: [notes/index.md](notes/index.md).
+- **`docs/`** — deprecated pointer folder only ([docs/README.md](../docs/README.md)).
+- **`documents/`** — Django **document-upload app**, not a documentation tree ([documents/README.md](../documents/README.md)).
 
 **Quick Reference:**
 - Need authoritative info? → Check this directory (`documentation/`)
-- Need current system state? → Check [`docs/`](../docs/)
-- Need project structure? → See [PROJECT_STRUCTURE.md](../docs/PROJECT_STRUCTURE.md)
+- Need current system state? → Check [`notes/`](notes/)
+- Need project structure? → See [PROJECT_STRUCTURE.md](notes/PROJECT_STRUCTURE.md)
 
 ---
 
@@ -28,7 +27,7 @@ Unique files in `docs/` are kept (not deleted). Cross-link instead of duplicatin
 - **[Architecture](architecture.md)** - System design and technical architecture
 - **[Business Rules](business_rules.md)** - Business logic and rules
 - **[Frontend Guide](frontend_guide.md)** - Vue SPA + CMS patterns
-- **[SPA vs leftover Django](../docs/SPA_VS_LEGACY.md)** - What is still Django
+- **[SPA vs leftover Django](notes/SPA_VS_LEGACY.md)** - What is still Django
 - **[White-labeling](white_labeling.md)** - Institution branding (UAdeC default)
 - **[Form Builder Guide](form_builder_guide.md)** - Dynamic form creation and management
 
@@ -41,6 +40,7 @@ Unique files in `docs/` are kept (not deleted). Cross-link instead of duplicatin
 ### **⚙️ Administration**
 - **[Admin Guide](admin_guide.md)** - System administration and operations
 - **[Deployment Guide](deployment.md)** - Production deployment instructions
+- **[CMS Restore Guide](notes/CMS_RESTORE_GUIDE.md)** - Wagtail export/import and restore
 - **[Virus Scanner Setup](virus_scanner_setup.md)** - Document scanning configuration
 - **[Selenium Setup](selenium_setup.md)** - E2E testing setup
 

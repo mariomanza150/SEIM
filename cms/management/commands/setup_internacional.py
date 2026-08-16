@@ -3,6 +3,7 @@ Management command to set up the International section (CGRI & Movilidad)
 Drop-in replacement for /cgri/ and /movilidad/ pages.
 """
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from wagtail.models import Site
@@ -17,6 +18,7 @@ from cms.models import (
     StandardPage,
     TestimonialIndexPage,
 )
+from core.branding import apply_institution_tokens, brand_from_settings
 
 
 class Command(BaseCommand):
@@ -33,6 +35,11 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         site = Site.objects.get(is_default_site=True)
         root_page = site.root_page
+
+        brand = brand_from_settings(settings)
+
+        def t(text):
+            return apply_institution_tokens(text, brand)
 
         self.stdout.write("\n=== Setting up International Relations Section ===\n")
 
@@ -59,16 +66,16 @@ class Command(BaseCommand):
         internacional = InternationalHomePage(
             title="Relaciones Internacionales",
             slug="internacional",
-            hero_title="Relaciones Internacionales UAdeC",
+            hero_title=t("Relaciones Internacionales UAdeC"),
             hero_subtitle="Tu puerta al mundo académico - Intercambio, movilidad y convenios internacionales",
-            introduction="<p>La Coordinación General de Relaciones Internacionales (CGRI) de la Universidad Autónoma de Coahuila promueve la internacionalización de la universidad a través de programas de movilidad estudiantil, convenios de colaboración académica y oportunidades de intercambio cultural.</p>",
+            introduction=t("<p>La Coordinación General de Relaciones Internacionales (CGRI) de la Universidad Autónoma de Coahuila promueve la internacionalización de la universidad a través de programas de movilidad estudiantil, convenios de colaboración académica y oportunidades de intercambio cultural.</p>"),
             show_stats=True,
             stat_programs_count=25,
             stat_countries_count=15,
             stat_students_count=150,
             stat_institutions_count=40,
-            seo_title="Relaciones Internacionales - UAdeC",
-            search_description="Coordinación General de Relaciones Internacionales de la Universidad Autónoma de Coahuila. Programas de intercambio y movilidad estudiantil.",
+            seo_title=t("Relaciones Internacionales - UAdeC"),
+            search_description=t("Coordinación General de Relaciones Internacionales de la Universidad Autónoma de Coahuila. Programas de intercambio y movilidad estudiantil."),
             show_in_menus=True,
         )
         root_page.add_child(instance=internacional)
@@ -81,10 +88,10 @@ class Command(BaseCommand):
             title="Información Institucional",
             slug="institucional",
             subtitle="Coordinación General de Relaciones Internacionales",
-            introduction="La CGRI es responsable de promover y coordinar las actividades de internacionalización de la Universidad Autónoma de Coahuila.",
+            introduction=t("La CGRI es responsable de promover y coordinar las actividades de internacionalización de la Universidad Autónoma de Coahuila."),
             show_contact=True,
             contact_name="Coordinación General de Relaciones Internacionales",
-            contact_email="cgri@uadec.mx",
+            contact_email=t("cgri@uadec.mx"),
             contact_phone="+52 (844) 000-0000",
             contact_office="Rectoría, Edificio Central",
             seo_title="CGRI - Información Institucional",
@@ -104,7 +111,7 @@ class Command(BaseCommand):
             {
                 "title": "Equipo",
                 "slug": "equipo",
-                "introduction": "Conoce al equipo que hace posible la internacionalización de la UAdeC.",
+                "introduction": t("Conoce al equipo que hace posible la internacionalización de la UAdeC."),
             },
             {
                 "title": "Acreditaciones",
@@ -116,8 +123,8 @@ class Command(BaseCommand):
                 "slug": "contacto",
                 "introduction": "Ponte en contacto con la Coordinación de Relaciones Internacionales.",
                 "show_contact": True,
-                "contact_name": "CGRI UAdeC",
-                "contact_email": "cgri@uadec.mx",
+                "contact_name": t("CGRI UAdeC"),
+                "contact_email": t("cgri@uadec.mx"),
             },
         ]
 
@@ -140,8 +147,8 @@ class Command(BaseCommand):
         convenios_index = ConvenioIndexPage(
             title="Convenios Internacionales",
             slug="convenios",
-            introduction="<p>La UAdeC mantiene convenios de colaboración con instituciones educativas de todo el mundo, facilitando el intercambio académico y la movilidad estudiantil.</p>",
-            seo_title="Convenios Internacionales - UAdeC",
+            introduction=t("<p>La UAdeC mantiene convenios de colaboración con instituciones educativas de todo el mundo, facilitando el intercambio académico y la movilidad estudiantil.</p>"),
+            seo_title=t("Convenios Internacionales - UAdeC"),
             show_in_menus=True,
         )
         cgri_home.add_child(instance=convenios_index)
@@ -155,11 +162,11 @@ class Command(BaseCommand):
             slug="movilidad-estudiantil",
             hero_title="Movilidad Estudiantil Internacional",
             hero_subtitle="Vive una experiencia académica única en el extranjero",
-            introduction="<p>El programa de movilidad estudiantil de la UAdeC te permite realizar parte de tus estudios en universidades extranjeras con las que tenemos convenios de colaboración. Amplía tus horizontes académicos, culturales y profesionales.</p>",
+            introduction=t("<p>El programa de movilidad estudiantil de la UAdeC te permite realizar parte de tus estudios en universidades extranjeras con las que tenemos convenios de colaboración. Amplía tus horizontes académicos, culturales y profesionales.</p>"),
             show_quick_links=True,
             show_application_cta=True,
             application_cta_text="Aplicar Ahora",
-            seo_title="Movilidad Estudiantil - UAdeC",
+            seo_title=t("Movilidad Estudiantil - UAdeC"),
             show_in_menus=True,
         )
         internacional.add_child(instance=movilidad)
@@ -252,7 +259,7 @@ class Command(BaseCommand):
         testimonials = TestimonialIndexPage(
             title="Testimonios",
             slug="testimonios",
-            introduction="<p>Lee las experiencias de estudiantes UAdeC que han vivido un intercambio internacional.</p>",
+            introduction=t("<p>Lee las experiencias de estudiantes UAdeC que han vivido un intercambio internacional.</p>"),
             seo_title="Testimonios de Estudiantes",
             show_in_menus=True,
         )

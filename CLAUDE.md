@@ -48,11 +48,12 @@ All development, testing, and documentation generation should be executed inside
 
 ## ⚙️ Environment Configuration
 *   **Python**: Requires `python3.12+` for E2E testing (if running locally outside Docker).
-*   **Dependencies**: Use `requirements-dev.txt` for development dependencies when working on host OS tools (e.g., frontend testing).
+*   **Dependencies**: Pins live in `pyproject.toml`. Host install: `pip install -e ".[dev]"` or `pip install -r requirements-dev.txt` (generated). After changing pins: `python scripts/check_python_deps.py --write`.
 *   **Environment Variables**: Must be set in a `.env` file based on `env.example`, especially `DATABASE_URL`, `REDIS_URL`, and email credentials for production environments.
 
 ## 📚 Key Guides
-*   **[CMS Management](documentation/CMS_RESTORE_GUIDE.md)**: For managing the Wagtail CMS content.
+*   **[CMS Management](documentation/notes/CMS_RESTORE_GUIDE.md)**: For managing the Wagtail CMS content.
+*   **[Documentation index](documentation/README.md)**: Canonical technical docs (Sphinx + manuals + notes).
 *   **[Developer Guide](documentation/developer_guide.md)**: Contains the full set of developer guidelines.
 *   **[Architecture Decisions](documentation/architectural_decisions.md)**: Critical place to review major design choices.
 

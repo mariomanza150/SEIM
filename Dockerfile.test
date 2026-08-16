@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y libmagic1 && rm -rf /var/lib/apt/lists/
 # Note: Selenium tests run from HOST OS, not Docker containers
 # Chrome and ChromeDriver are not installed in Docker
 
-# Install Python dependencies including testing dependencies
+# Generated from pyproject.toml (python scripts/check_python_deps.py --write)
 COPY requirements*.txt .
 RUN pip install --upgrade pip && \
     pip install -r requirements-test.txt && \

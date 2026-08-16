@@ -2,15 +2,22 @@
 Management command to create "How to Apply" page explaining the application process.
 """
 
+from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from cms.models import HomePage, StandardPage
+from core.branding import (
+    apply_institution_tokens,
+    apply_institution_tokens_deep,
+    brand_from_settings,
+)
 
 
 class Command(BaseCommand):
     help = 'Create "How to Apply" page with registration instructions'
 
     def handle(self, *args, **options):
+        brand = brand_from_settings(settings)
         self.stdout.write(self.style.SUCCESS('Creating "How to Apply" page...'))
 
         try:
@@ -35,7 +42,10 @@ class Command(BaseCommand):
             title="¿Cómo Aplicar al Programa de Intercambio?",
             slug="como-aplicar",
             show_in_menus=True,
-            introduction="Guía completa para aplicar a un programa de intercambio académico en la UAdeC",
+            introduction=apply_institution_tokens(
+                "Guía completa para aplicar a un programa de intercambio académico en la UAdeC",
+                brand,
+            ),
         )
 
         # Content for the page
@@ -241,7 +251,7 @@ class Command(BaseCommand):
             },
         ]
 
-        apply_page.body = content
+        apply_page.body = apply_institution_tokens_deep(content, brand)
         home.add_child(instance=apply_page)
         apply_page.save_revision().publish()
 

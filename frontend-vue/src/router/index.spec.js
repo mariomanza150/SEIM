@@ -51,6 +51,19 @@ describe('router beforeEach + resolveAuthenticatedNavigation (MQ-014)', () => {
     expect(routeBusy.value).toBe(false)
   })
 
+  it('aliases leftover /seim/admin and /seim/analytics paths', async () => {
+    mockAxios.get.mockResolvedValue({
+      data: { ...profileStudent, role: 'admin', is_admin: true, is_staff: true },
+    })
+    localStorage.setItem('access_token', 'admin-jwt')
+    setActivePinia(createPinia())
+    await router.push({ name: 'Login' })
+    await router.push('/admin')
+    expect(router.currentRoute.value.name).toBe('AdminPrograms')
+    await router.push('/analytics')
+    expect(router.currentRoute.value.name).toBe('AnalyticsForecasts')
+  })
+
   it('allows coordinator to reach staff-only route after checkAuth', async () => {
     mockAxios.get.mockResolvedValue({
       data: { ...profileStudent, role: 'coordinator' },

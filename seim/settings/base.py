@@ -10,6 +10,8 @@ from pathlib import Path
 
 import environ
 
+from core.branding import DEFAULT_INSTITUTION, merge_institution_config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
@@ -190,6 +192,9 @@ LOCALE_PATHS = [
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+_branding_dir = BASE_DIR / "branding"
+if _branding_dir.is_dir():
+    STATICFILES_DIRS.append(_branding_dir)
 
 # If the Vue SPA has been built, include its compiled assets so `collectstatic`
 # can serve them via WhiteNoise in production(-like) containers.
@@ -443,45 +448,44 @@ AGREEMENT_EXPIRATION_REMINDER_STATUSES = [
 ] or ["active", "renewal_pending"]
 
 # Institution branding (UAdeC is the default/example production theme).
-# Override these to white-label CMS chrome, emails, and asset download.
-INSTITUTION_NAME = env("INSTITUTION_NAME", default="Universidad Autónoma de Coahuila")
-INSTITUTION_SHORT_NAME = env("INSTITUTION_SHORT_NAME", default="UAdeC")
-INSTITUTION_TAGLINE = env("INSTITUTION_TAGLINE", default="Intercambio Académico")
-INSTITUTION_DEPARTMENT = env(
-    "INSTITUTION_DEPARTMENT", default="Dirección de Intercambio Académico"
+# Precedence: env vars > branding/institution.json > branding/uadec/config.json > defaults.
+# See documentation/white_labeling.md.
+INSTITUTION_CONFIG_FILE = env(
+    "INSTITUTION_CONFIG_FILE",
+    default=str(BASE_DIR / "branding" / "institution.json"),
 )
-INSTITUTION_LOCATION = env("INSTITUTION_LOCATION", default="Saltillo, Coahuila, México")
-INSTITUTION_WEBSITE = env("INSTITUTION_WEBSITE", default="https://www.uadec.mx/")
-INSTITUTION_EMAIL = env("INSTITUTION_EMAIL", default="intercambio@uadec.edu.mx")
-INSTITUTION_PHONE = env("INSTITUTION_PHONE", default="+52 (844) 412-8800 ext. 2345")
-INSTITUTION_ADDRESS = env(
-    "INSTITUTION_ADDRESS",
-    default=(
-        "Boulevard V. Carranza y González Lobo s/n<br>"
-        "Col. República Oriente<br>Saltillo, Coahuila, México<br>C.P. 25280"
-    ),
-)
-INSTITUTION_LOGO_URL = env("INSTITUTION_LOGO_URL", default="")
-INSTITUTION_NAV_BRAND = env("INSTITUTION_NAV_BRAND", default="")
-INSTITUTION_SOCIAL_FACEBOOK = env(
-    "INSTITUTION_SOCIAL_FACEBOOK", default="https://facebook.com/uadec"
-)
-INSTITUTION_SOCIAL_TWITTER = env(
-    "INSTITUTION_SOCIAL_TWITTER", default="https://twitter.com/uadec"
-)
-INSTITUTION_SOCIAL_INSTAGRAM = env(
-    "INSTITUTION_SOCIAL_INSTAGRAM", default="https://instagram.com/uadec"
-)
+_INSTITUTION_FILE = merge_institution_config(BASE_DIR, INSTITUTION_CONFIG_FILE)
+
+
+def _institution_env(name: str, fallback: str = "") -> str:
+    return env(name, default=_INSTITUTION_FILE.get(name, DEFAULT_INSTITUTION.get(name, fallback)))
+
+
+INSTITUTION_NAME = _institution_env("INSTITUTION_NAME")
+INSTITUTION_SHORT_NAME = _institution_env("INSTITUTION_SHORT_NAME")
+INSTITUTION_TAGLINE = _institution_env("INSTITUTION_TAGLINE")
+INSTITUTION_DEPARTMENT = _institution_env("INSTITUTION_DEPARTMENT")
+INSTITUTION_LOCATION = _institution_env("INSTITUTION_LOCATION")
+INSTITUTION_WEBSITE = _institution_env("INSTITUTION_WEBSITE")
+INSTITUTION_EMAIL = _institution_env("INSTITUTION_EMAIL")
+INSTITUTION_PHONE = _institution_env("INSTITUTION_PHONE")
+INSTITUTION_ADDRESS = _institution_env("INSTITUTION_ADDRESS")
+INSTITUTION_LOGO_URL = _institution_env("INSTITUTION_LOGO_URL")
+INSTITUTION_NAV_BRAND = _institution_env("INSTITUTION_NAV_BRAND")
+INSTITUTION_SOCIAL_FACEBOOK = _institution_env("INSTITUTION_SOCIAL_FACEBOOK")
+INSTITUTION_SOCIAL_TWITTER = _institution_env("INSTITUTION_SOCIAL_TWITTER")
+INSTITUTION_SOCIAL_INSTAGRAM = _institution_env("INSTITUTION_SOCIAL_INSTAGRAM")
+INSTITUTION_THEME_CSS = _institution_env("INSTITUTION_THEME_CSS", "uadec/theme.css")
 INSTITUTION_THEME = {
-    "primary": env("BRAND_PRIMARY", default="#2E5090"),
-    "primary_light": env("BRAND_PRIMARY_LIGHT", default="#3B5FA5"),
-    "primary_dark": env("BRAND_PRIMARY_DARK", default="#1E3A5F"),
-    "accent": env("BRAND_ACCENT", default="#C7A162"),
-    "accent_light": env("BRAND_ACCENT_LIGHT", default="#D4B177"),
-    "accent_dark": env("BRAND_ACCENT_DARK", default="#B08D4D"),
-    "navy": env("BRAND_NAVY", default="#1E3A5F"),
-    "orange": env("BRAND_ORANGE", default="#E67E22"),
-    "text": env("BRAND_TEXT", default="#2C3E50"),
+    "primary": _institution_env("BRAND_PRIMARY", "#2E5090"),
+    "primary_light": _institution_env("BRAND_PRIMARY_LIGHT", "#3B5FA5"),
+    "primary_dark": _institution_env("BRAND_PRIMARY_DARK", "#1E3A5F"),
+    "accent": _institution_env("BRAND_ACCENT", "#C7A162"),
+    "accent_light": _institution_env("BRAND_ACCENT_LIGHT", "#D4B177"),
+    "accent_dark": _institution_env("BRAND_ACCENT_DARK", "#B08D4D"),
+    "navy": _institution_env("BRAND_NAVY", "#1E3A5F"),
+    "orange": _institution_env("BRAND_ORANGE", "#E67E22"),
+    "text": _institution_env("BRAND_TEXT", "#2C3E50"),
 }
 
 # Wagtail CMS Configuration

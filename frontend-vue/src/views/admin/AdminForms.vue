@@ -110,6 +110,13 @@
                 {{ ft.field_count ?? 0 }}
               </td>
               <td class="text-end text-nowrap">
+                <router-link
+                  class="btn btn-sm btn-primary me-2"
+                  :to="{ name: 'AdminDynformEditor', params: { id: String(ft.id) } }"
+                  data-testid="admin-forms-open-builder"
+                >
+                  {{ t('adminForms.openBuilder') }}
+                </router-link>
                 <button type="button" class="btn btn-sm btn-outline-secondary me-2" @click="openEdit(ft)">
                   <i class="bi bi-pencil me-1" aria-hidden="true"></i>{{ t('adminCommon.edit') }}
                 </button>

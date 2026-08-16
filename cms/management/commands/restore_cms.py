@@ -1,6 +1,6 @@
 """
 Single command to restore CMS to a working state.
-Combines setup_wagtail_site, populate_uadec_content, and enhance_homepage.
+Combines setup_wagtail_site, populate_institution_content, and enhance_homepage.
 
 Usage:
     python manage.py restore_cms [--skip-setup] [--skip-populate] [--skip-enhance]
@@ -46,10 +46,10 @@ class Command(BaseCommand):
             else:
                 self.stdout.write("\n⏭️  Skipping Wagtail site setup")
 
-            # Step 2: Populate UAdeC content
+            # Step 2: Populate example institution content (UAdeC tokens unless overridden)
             if not options["skip_populate"]:
-                self.stdout.write("\n📝 Step 2/3: Populating UAdeC content...")
-                call_command("populate_uadec_content")
+                self.stdout.write("\n📝 Step 2/3: Populating institution example content...")
+                call_command("populate_institution_content")
             else:
                 self.stdout.write("\n⏭️  Skipping content population")
 

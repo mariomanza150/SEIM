@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "SEIM"
-copyright = "2025, SEIM Team"
+copyright = "2026, Mario Alejandro Manzano and SEIM contributors"
 author = "SEIM Team"
 release = "1.0.0"
 version = "1.0"

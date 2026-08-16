@@ -46,7 +46,7 @@ RUN apt-get update && \
 # Note: Selenium tests run from HOST OS, not Docker containers
 # Chrome and ChromeDriver are not installed in Docker
 
-# Install Python dependencies
+# Generated from pyproject.toml (python scripts/check_python_deps.py --write)
 COPY requirements*.txt .
 RUN pip install --upgrade pip && \
     pip install -r requirements-dev.txt && \

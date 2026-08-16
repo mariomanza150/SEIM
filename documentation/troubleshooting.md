@@ -80,7 +80,7 @@ This guide provides solutions to common issues encountered when setting up, runn
    # Upgrade pip
    pip install --upgrade pip
    
-   # Install all development dependencies
+   # Generated from pyproject.toml (or: pip install -e ".[dev]")
    pip install -r requirements-dev.txt
    ```
 

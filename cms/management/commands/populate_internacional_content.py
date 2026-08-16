@@ -13,6 +13,7 @@ from cms.models import (
     MovilidadLandingPage,
     StandardPage,
 )
+from core.branding import apply_institution_tokens, brand_from_settings
 
 
 class Command(BaseCommand):
@@ -20,9 +21,13 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        short = getattr(settings, "INSTITUTION_SHORT_NAME", "UAdeC")
-        name = getattr(settings, "INSTITUTION_NAME", "Universidad Autónoma de Coahuila")
-        email = getattr(settings, "INSTITUTION_EMAIL", "intercambio@uadec.edu.mx")
+        brand = brand_from_settings(settings)
+        short = brand["short_name"]
+        name = brand["name"]
+        email = brand["email"]
+
+        def t(text):
+            return apply_institution_tokens(text, brand)
         self.stdout.write(
             f"\n=== Populating Internacional ({short} example content) ===\n"
         )
@@ -75,7 +80,7 @@ class Command(BaseCommand):
             # Note: In a real implementation, you would use StreamField blocks
             # For now, we'll just update the introduction
             mision_page.show_contact = True
-            mision_page.contact_email = "relaciones.internacionales@uadec.edu.mx"
+            mision_page.contact_email = email
             mision_page.save_revision().publish()
             self.stdout.write(self.style.SUCCESS(f"✓ Updated: {mision_page.url}"))
         except CGRIPage.DoesNotExist:
@@ -86,10 +91,10 @@ class Command(BaseCommand):
             movilidad = MovilidadLandingPage.objects.get(slug="movilidad-estudiantil")
             movilidad.hero_title = "Movilidad Estudiantil Internacional"
             movilidad.hero_subtitle = "Vive una experiencia académica única en el extranjero - Amplía tus horizontes y desarrolla competencias internacionales"
-            movilidad.introduction = """
+            movilidad.introduction = t("""
                 <p>El programa de movilidad estudiantil de la UAdeC te ofrece la oportunidad de realizar parte de tus estudios en universidades extranjeras con las que mantenemos convenios de colaboración. Esta experiencia te permitirá crecer académicamente, culturalmente y profesionalmente.</p>
                 <p>Contamos con convenios en más de 20 países incluyendo Alemania, Argentina, Brasil, Canadá, Colombia, Corea del Sur, Cuba, Chile, China, España, Estados Unidos, Finlandia, Francia, Italia, Panamá, Perú y Taiwán.</p>
-            """
+            """)
             movilidad.show_quick_links = True
             movilidad.show_application_cta = True
             movilidad.application_cta_text = "Aplicar al Programa de Movilidad"
@@ -101,7 +106,9 @@ class Command(BaseCommand):
         # 5. Update Requisitos page
         try:
             requisitos = StandardPage.objects.get(slug="requisitos")
-            requisitos.introduction = """Conoce los requisitos académicos y administrativos necesarios para participar en los programas de movilidad estudiantil de la UAdeC."""
+            requisitos.introduction = t(
+                "Conoce los requisitos académicos y administrativos necesarios para participar en los programas de movilidad estudiantil de la UAdeC."
+            )
 
             requisitos.save_revision().publish()
             self.stdout.write(self.style.SUCCESS(f"✓ Updated: {requisitos.url}"))
@@ -143,7 +150,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("✓ Content population complete!"))
         self.stdout.write(self.style.SUCCESS("=" * 60))
         self.stdout.write(
-            "\nAll pages have been updated with real UAdeC content scraped from:"
+            f"\nAll pages have been updated with {short} example content. Original sample sources:"
         )
         self.stdout.write("  • https://www.uadec.mx/cgri/")
         self.stdout.write("  • https://www.uadec.mx/movilidad/")

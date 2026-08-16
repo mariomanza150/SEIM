@@ -27,8 +27,8 @@ SEIM/
 ├── static/                # Static files (CSS, JavaScript, images)
 ├── templates/             # HTML templates
 ├── tests/                 # Test suites
-├── docs/                  # Project documentation (BMAD generated)
-├── documentation/         # Existing project documentation
+├── docs/                  # Deprecated pointer → documentation/
+├── documentation/         # Canonical manuals + Sphinx + notes/
 └── scripts/               # Utility scripts
 ```
 
@@ -174,7 +174,7 @@ SEIM/
 - `accessibility.css` - Accessibility enhancements
 - `dark-mode.css` - Dark mode theme
 - `critical.css` - Critical above-the-fold styles
-- `uadec-styles.css` - UAdeC branding styles
+- `uadec-styles.css` - Compatibility stub; theme lives in `branding/uadec/theme.css`
 - `wagtail_admin_custom.css` - Wagtail admin customizations
 
 **Organized Stylesheets:**
@@ -245,7 +245,8 @@ SEIM/
 
 #### `scripts/`
 **Purpose:** Utility scripts for development and maintenance
-- `download_uadec_assets.py` - Asset downloading
+- `download_institution_assets.py` - Configurable institution asset download
+- `download_uadec_assets.py` - Compatibility wrapper
 - `code_quality.py` - Code quality checks
 - `dashboard_debug.py` - Debugging utilities
 - `setup_demo.py` - Demo data setup

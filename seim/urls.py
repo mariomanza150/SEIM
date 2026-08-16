@@ -146,6 +146,7 @@ urlpatterns += [
         name="legacy_password_reset",
     ),
     path("logout/", spa_logout, name="legacy_logout"),
+    path("", include("core.legacy_spa_urls")),
 ]
 
 if _WAGTAIL:

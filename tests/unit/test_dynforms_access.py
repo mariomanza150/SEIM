@@ -39,3 +39,17 @@ class DynformsAccessTest(TestCase):
         self.assertRedirects(
             response, "/seim/admin/dynforms/1", fetch_redirect_response=False
         )
+
+    def test_application_forms_html_list_redirects_to_spa(self):
+        self.client.login(username="admin", password="admin123")
+        response = self.client.get("/api/application-forms/list/")
+        self.assertRedirects(
+            response, "/seim/admin/dynforms", fetch_redirect_response=False
+        )
+
+    def test_application_forms_html_builder_redirects_to_spa(self):
+        self.client.login(username="admin", password="admin123")
+        response = self.client.get("/api/application-forms/builder/4/")
+        self.assertRedirects(
+            response, "/seim/admin/dynforms/4", fetch_redirect_response=False
+        )

@@ -22,7 +22,7 @@ This guide provides comprehensive documentation for the SEIM E2E testing infrast
 ### Installation
 
 ```bash
-# Install dependencies
+# Generated from pyproject.toml (or: pip install -e ".[test]")
 pip install -r requirements-test.txt
 
 # Install Playwright browsers

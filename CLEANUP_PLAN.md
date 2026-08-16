@@ -1,5 +1,7 @@
 # Root Directory Cleanup Plan
 
+> **Superseded.** Status/guide files now live under `documentation/notes/`. `docs/` is a deprecated pointer. See [`documentation/README.md`](documentation/README.md).
+
 ## 📋 Files to Move from Root
 
 ### Status Reports → `docs/status/`

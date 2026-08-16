@@ -56,7 +56,7 @@ SQLite is rejected in development settings. See [AGENTS.md](AGENTS.md) for the n
 | Wagtail CMS / public site | `/`, `/cms/` | `cms/` |
 | REST API | `/api/` | domain apps + `api/urls.py` |
 
-The legacy Django template frontend has been removed. Do not add new pages under a `frontend/` Django app. Current split: [docs/SPA_VS_LEGACY.md](docs/SPA_VS_LEGACY.md).
+The legacy Django template frontend has been removed. Do not add new pages under a `frontend/` Django app. Current split: [documentation/notes/SPA_VS_LEGACY.md](documentation/notes/SPA_VS_LEGACY.md).
 
 ## Tests
 
@@ -109,14 +109,15 @@ Report security issues privately to the maintainer. Do not open a public issue w
 ## Documentation
 
 - Authoritative guides live in `documentation/` ([index](documentation/README.md)).
-- `docs/` is generated notes and working papers ([docs/README.md](docs/README.md)).
-- `documents/` is the Django file-upload app, not a docs tree.
+- Working notes live in `documentation/notes/` ([notes/README.md](documentation/notes/README.md)).
+- `docs/` is a deprecated pointer ([docs/README.md](docs/README.md)).
+- `documents/` is the Django file-upload app, not a docs tree ([documents/README.md](documents/README.md)).
 - Prefer Makefile/Docker targets for generated docs (`make docs-workflow`).
 - Update docstrings when behavior changes.
 
 ## Python dependencies
 
-Install with `pip install -r requirements-dev.txt` (or `requirements.txt` / `requirements-test.txt`). Those pinned files are what Docker and CI use. `pyproject.toml` reads `requirements.txt` plus `requirements/dev-extras.txt` and `requirements/test-extras.txt` so extras cannot drift. After changing a pin file, update the matching extras file and run `python scripts/check_python_deps.py`.
+Pins live in `pyproject.toml` (`[project.dependencies]` and `[project.optional-dependencies]`). Docker and CI install the generated `requirements*.txt` files. After changing a pin, run `python scripts/check_python_deps.py --write` (or `make export-deps`) and commit both `pyproject.toml` and the regenerated files. Local install: `pip install -e ".[dev]"` or `pip install -r requirements-dev.txt`.
 
 ## License
 

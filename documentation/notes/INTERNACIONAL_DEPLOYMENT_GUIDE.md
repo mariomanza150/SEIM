@@ -465,7 +465,7 @@ See `URL Mapping` section above
 - Document Download Block
 
 ### C. Color Scheme Reference
-See `docs/CMS_COLOR_SCHEME_UPDATE.md`
+See `CMS_COLOR_SCHEME_UPDATE.md`
 
 ### D. Custom Page Types
 - `InternationalHomePage` - Main landing page

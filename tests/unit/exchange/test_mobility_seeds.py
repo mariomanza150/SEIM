@@ -37,6 +37,8 @@ class TestMobilitySeeds:
         assert len(types) == len(MOBILITY_DOCUMENT_TYPES)
         assert DocumentType.objects.filter(slug="solicitud_participacion").exists()
         assert DocumentType.objects.filter(slug="carta_homologacion").exists()
+        inscription = DocumentType.objects.get(slug="inscripcion_uadec")
+        assert inscription.name == "Inscripción UAdeC"
 
         # First call may create rows; re-run is idempotent (created count may be 0).
         assign_scheme_document_requirements()
@@ -53,3 +55,10 @@ class TestMobilitySeeds:
                 document_type__slug="solicitud_participacion",
                 is_required=True,
             ).exists()
+
+    def test_inscription_label_uses_institution_short_name(self, settings):
+        settings.INSTITUTION_SHORT_NAME = "ExampleU"
+        seed_mobility_document_types()
+        inscription = DocumentType.objects.get(slug="inscripcion_uadec")
+        assert inscription.name == "Inscripción ExampleU"
+        assert "ExampleU" in inscription.description

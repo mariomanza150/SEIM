@@ -62,6 +62,17 @@ Runs Selenium E2E tests on the host OS (not Docker).
 SELENIUM_HOST=localhost ./scripts/test_selenium.sh  # Use localhost
 ```
 
+### Dependency Scripts
+
+#### `check_python_deps.py` - Python pin sync
+
+`pyproject.toml` is the source of truth. `requirements*.txt` are generated for Docker/CI.
+
+```bash
+python scripts/check_python_deps.py          # verify (CI / make check-deps)
+python scripts/check_python_deps.py --write  # regenerate (make export-deps)
+```
+
 ### Setup Scripts
 
 #### `setup_test_environment.sh` - Test Environment Setup

@@ -29,9 +29,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     
-    <!-- Shared SEIM tokens, then default institution CMS styles -->
+    <!-- Shared SEIM tokens, then configured institution theme (default: uadec/theme.css) -->
     <link rel="stylesheet" href="{% static 'css/utilities/seim-shared-tokens.css' %}">
-    <link rel="stylesheet" href="{% static 'css/institution-styles.css' %}">
+    <link rel="stylesheet" href="{% static institution.theme_css|default:'uadec/theme.css' %}">
     <style>
         :root {
             --uadec-blue: {{ institution.theme.primary }};

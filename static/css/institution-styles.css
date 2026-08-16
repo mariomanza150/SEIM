@@ -1,5 +1,5 @@
 /**
- * Institution theme entry. Default implementation is the UAdeC palette in
- * uadec-styles.css. Override colors via INSTITUTION_THEME / CMS base inline vars.
+ * Compatibility entry. Prefer INSTITUTION_THEME_CSS (default: uadec/theme.css).
+ * Kept so older templates that still link this file keep working.
  */
-@import url("uadec-styles.css");
+@import url("../uadec/theme.css");

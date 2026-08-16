@@ -51,9 +51,9 @@ RUN groupadd -r seim && useradd -r -g seim seim
 WORKDIR /app
 
 # Install Python dependencies
+# Generated from pyproject.toml (python scripts/check_python_deps.py --write).
 COPY requirements.txt requirements-dev.txt ./
-# Some environments/branches include nested requirement includes like `-r requirements/dev.txt`.
-# Copy the folder early so pip can resolve those includes during `pip install -r requirements.txt`.
+# Alias include only (`requirements/dev.txt` → requirements-dev.txt).
 COPY requirements/ requirements/
 RUN pip install --upgrade pip && \
     pip install gunicorn[gevent] && \

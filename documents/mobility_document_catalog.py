@@ -76,7 +76,7 @@ MOBILITY_DOCUMENT_TYPES = (
     {
         "slug": "credencial_estudiante",
         "name": "Credencial de estudiante",
-        "description": "Credencial vigente de estudiante UADEC.",
+        "description": "Credencial vigente de estudiante.",
         "submission_mode": DocumentType.SubmissionMode.UPLOAD,
         "accepted_extensions": "pdf,jpg,jpeg,png",
     },
@@ -120,9 +120,10 @@ MOBILITY_DOCUMENT_TYPES = (
         ),
     },
     {
+        # Stable legacy slug; display name is branded at seed time.
         "slug": "inscripcion_uadec",
-        "name": "Inscripción UADEC",
-        "description": "Comprobante de inscripción vigente en UADEC.",
+        "name": "Inscripción {short_name}",
+        "description": "Comprobante de inscripción vigente en {short_name}.",
         "submission_mode": DocumentType.SubmissionMode.UPLOAD,
         "accepted_extensions": "pdf",
     },
@@ -229,10 +230,24 @@ NACIONAL_EXTRA = (
 )
 
 
+def _branded_document_spec(spec: dict) -> dict:
+    """Resolve {short_name} placeholders from INSTITUTION_SHORT_NAME."""
+    from django.conf import settings
+
+    short_name = getattr(settings, "INSTITUTION_SHORT_NAME", "UAdeC")
+    branded = dict(spec)
+    for key in ("name", "description", "instructions"):
+        value = branded.get(key)
+        if isinstance(value, str):
+            branded[key] = value.format(short_name=short_name)
+    return branded
+
+
 def seed_mobility_document_types() -> list[DocumentType]:
     """Create/update Mexican mobility DocumentType rows; map legacy English names."""
     by_slug: dict[str, DocumentType] = {}
     for spec in MOBILITY_DOCUMENT_TYPES:
+        spec = _branded_document_spec(spec)
         slug = spec["slug"]
         legacy_names = spec.get("legacy_names") or ()
         existing = DocumentType.objects.filter(slug=slug).first()

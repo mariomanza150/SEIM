@@ -12,7 +12,7 @@ Student Exchange Information Manager: Django 5.1 + DRF + Vue 3 SPA + Wagtail CMS
 **✅ Wagtail CMS for the public site**  
 **✅ JWT API, Docker, and CI**
 
-SEIM is a Django 5.1 + DRF backend with a Vue 3 SPA (`frontend-vue/`, served at `/seim/`), JWT authentication, and role-based dashboards. Wagtail CMS owns the public site at `/`. The Django template frontend has been removed. Remaining operator leftovers (dynforms builder, data-management UI) are listed in [docs/SPA_VS_LEGACY.md](docs/SPA_VS_LEGACY.md).
+SEIM is a Django 5.1 + DRF backend with a Vue 3 SPA (`frontend-vue/`, served at `/seim/`), JWT authentication, and role-based dashboards. Wagtail CMS owns the public site at `/`. The Django template frontend has been removed. Remaining operator leftovers (dynforms builder, data-management UI) are listed in [documentation/notes/SPA_VS_LEGACY.md](documentation/notes/SPA_VS_LEGACY.md).
 
 ### 🚀 What's Ready for Production
 - Complete user authentication and authorization
@@ -28,8 +28,8 @@ SEIM is a Django 5.1 + DRF backend with a Vue 3 SPA (`frontend-vue/`, served at 
 - Grade translation system for international students
 
 ### 🔧 Optional Enhancements
-1. **Coverage depth** — unit+integration already enforce `--cov-fail-under=80` on first-party apps; remaining work is CMS/operator leftovers and Vue slices in [docs/SPA_VS_LEGACY.md](docs/SPA_VS_LEGACY.md)
-2. **White-labeling** — UAdeC is the default theme; override `INSTITUTION_*` / `BRAND_*` (see [documentation/white_labeling.md](documentation/white_labeling.md))
+1. **Coverage depth** — unit+integration already enforce `--cov-fail-under=80` on first-party apps; remaining work is CMS/operator leftovers and Vue slices in [documentation/notes/SPA_VS_LEGACY.md](documentation/notes/SPA_VS_LEGACY.md)
+2. **White-labeling** — UAdeC is the default theme. Copy `branding\uadec\`, set `INSTITUTION_*` / `BRAND_*` or `branding\institution.json` (see [documentation/white_labeling.md](documentation/white_labeling.md))
 3. **Internationalization** — expand beyond the current SPA/CMS split
 
 **Note**: Backend unit+integration coverage is gated at 80%. Historical “34%” figures in older notes are stale.
@@ -50,7 +50,7 @@ docker-compose exec web python manage.py restore_cms
 
 This single command:
 - ✅ Sets up Wagtail site structure
-- ✅ Populates UAdeC content (programs, blog, FAQs)
+- ✅ Populates example institution content (UAdeC names unless `INSTITUTION_*` is set)
 - ✅ Enhances homepage with rich content blocks
 
 ### Export/Import Workflow
@@ -65,7 +65,7 @@ Restore it later:
 docker-compose exec web python manage.py import_cms --clear
 ```
 
-**📖 See [docs/CMS_RESTORE_GUIDE.md](docs/CMS_RESTORE_GUIDE.md) for complete documentation**
+**📖 See [documentation/notes/CMS_RESTORE_GUIDE.md](documentation/notes/CMS_RESTORE_GUIDE.md) for complete documentation**
 
 ### CMS Access
 - **Public Landing Page**: http://localhost:8001/
@@ -219,11 +219,14 @@ source .venv/bin/activate
 # Upgrade pip
 pip install --upgrade pip
 
-# Install all development dependencies (includes requirements.txt)
+# From pyproject.toml (source of truth)
+pip install -e ".[dev]"
+
+# Or the generated files used by Docker/CI
 pip install -r requirements-dev.txt
 ```
 
-Runtime pins live in `requirements.txt`. `pyproject.toml` reads that file so the two cannot drift. Docker and CI install `requirements*.txt`, not a second dependency list.
+Python pins live in `pyproject.toml`. `requirements*.txt` are generated (`python scripts/check_python_deps.py --write`); do not edit them by hand.
 
 #### **4. Verify Installation:**
 ```bash
@@ -454,14 +457,15 @@ export DJANGO_SETTINGS_MODULE=seim.settings.production
 
 ## 📚 Documentation
 
-**Start here:** [documentation/README.md](documentation/README.md) (canonical guides + Sphinx).
+**Start here:** [documentation/README.md](documentation/README.md) (single source of truth: guides + Sphinx + notes).
 
-`documents/` at the repo root is the **Django document-upload app**, not a third docs tree.
+`documents/` at the repo root is the **Django document-upload app**, not a docs tree. See [documents/README.md](documents/README.md). `docs/` is a deprecated pointer ([docs/README.md](docs/README.md)).
 
 | Tree | Role |
 | --- | --- |
 | [`documentation/`](documentation/README.md) | **Canonical** manuals (install, architecture, testing, white-labeling, Sphinx) |
-| [`docs/`](docs/README.md) | Generated notes, status reports, Vue/CMS working papers. Index: [docs/index.md](docs/index.md) |
+| [`documentation/notes/`](documentation/notes/README.md) | Working notes, status, Vue/CMS papers. Index: [notes/index.md](documentation/notes/index.md) |
+| [`docs/`](docs/README.md) | Deprecated stubs that point here |
 
 ### **`documentation/` - Manual/Maintained Documentation**
 **Authoritative source** for development guidelines, user guides, and planning documents. Manually maintained by the team.
@@ -480,18 +484,18 @@ export DJANGO_SETTINGS_MODULE=seim.settings.production
 - **[Deployment Guide](documentation/deployment.md)** - Production deployment instructions
 - **[Architectural Decisions](documentation/architectural_decisions.md)** - Key design decisions and rationale
 
-### **`docs/` - Generated/Auto-Generated Documentation**
-**Auto-generated** documentation from code analysis and tools. Regenerated periodically.
+### **`documentation/notes/` - Generated/working notes**
+Working papers and generated analysis. Not a second official manual.
 
-- **[docs/ README](docs/README.md)** - How this folder relates to `documentation/`
-- **[SPA vs leftover Django](docs/SPA_VS_LEGACY.md)** - Current Vue vs Django split
-- **[Documentation Index](docs/index.md)** - Index of generated documentation
-- **[Project Structure Guide](docs/PROJECT_STRUCTURE.md)** - Comprehensive project structure guide
-- **[API Contracts](docs/api-contracts.md)** - Auto-generated API documentation
-- **[Data Models](docs/data-models.md)** - Auto-generated database schema
-- **[Component Inventory](docs/component-inventory.md)** - Auto-generated component catalog
-- **[Status Reports](docs/status/)** - Project status and progress tracking
-- **[Quick Guides](docs/guides/)** - Quick reference guides
+- **[notes README](documentation/notes/README.md)** - How notes relate to the manuals
+- **[SPA vs leftover Django](documentation/notes/SPA_VS_LEGACY.md)** - Current Vue vs Django split
+- **[Notes index](documentation/notes/index.md)** - Index of generated documentation
+- **[Project Structure Guide](documentation/notes/PROJECT_STRUCTURE.md)** - Comprehensive project structure guide
+- **[API Contracts](documentation/notes/api-contracts.md)** - Auto-generated API documentation
+- **[Data Models](documentation/notes/data-models.md)** - Auto-generated database schema
+- **[Component Inventory](documentation/notes/component-inventory.md)** - Auto-generated component catalog
+- **[Status Reports](documentation/notes/status/)** - Project status and progress tracking
+- **[Quick Guides](documentation/notes/guides/)** - Quick reference guides
 
 ### **API Documentation**
 - **[Interactive API Docs](http://localhost:8001/api/docs/)** - Swagger UI (auto-generated, Docker)
@@ -512,8 +516,8 @@ export DJANGO_SETTINGS_MODULE=seim.settings.production
 
 **Quick Reference:**
 - Need authoritative info? → Check `documentation/`
-- Need current system state? → Check `docs/`
-- Need project structure? → See [PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
+- Need current system state? → Check `documentation/notes/`
+- Need project structure? → See [PROJECT_STRUCTURE.md](documentation/notes/PROJECT_STRUCTURE.md)
 
 ---
 
@@ -610,7 +614,7 @@ SEIM follows a modular, service-oriented architecture with a Vue 3 SPA:
 
 ## 🧪 Testing
 
-Backend unit + integration tests enforce **80%** coverage (`pytest --cov-fail-under=80`). Vue Vitest coverage is collected in CI for stores/services. Historical trends upload to [Codecov](https://codecov.io/gh/mariomanza150/SEIM) when the `CODECOV_TOKEN` GitHub Actions secret is set — see [`.github/README.md`](.github/README.md). A README badge can be added after the first successful upload.
+Backend unit + integration tests enforce **80%** coverage (`pytest --cov-fail-under=80`). Vue Vitest coverage is collected in CI for stores/services. Coverage uploads to [Codecov](https://codecov.io/gh/mariomanza150/SEIM) via the `CODECOV_TOKEN` GitHub Actions secret — see [`.github/README.md`](.github/README.md). A README badge can be added after the first successful upload.
 
 Commands: `make test-coverage` (backend) and `npm --prefix frontend-vue run test:coverage` (Vue).
 

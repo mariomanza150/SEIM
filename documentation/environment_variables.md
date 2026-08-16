@@ -229,6 +229,8 @@ UAdeC is the default/example theme. Override to run SEIM for another institution
 | `INSTITUTION_PHONE` | ❌ | +52 (844) 412-8800 ext. 2345 | Seed / contact phone |
 | `INSTITUTION_ADDRESS` | ❌ | Saltillo address HTML | Seed postal address |
 | `INSTITUTION_LOGO_URL` | ❌ | (empty) | Optional navbar logo URL |
+| `INSTITUTION_THEME_CSS` | ❌ | `uadec/theme.css` | CMS theme stylesheet under `branding\` |
+| `INSTITUTION_CONFIG_FILE` | ❌ | `branding/institution.json` | JSON overlay (env still wins) |
 | `BRAND_PRIMARY` | ❌ | `#2E5090` | CMS primary color |
 | `BRAND_ACCENT` | ❌ | `#C7A162` | CMS accent color |
 | `WAGTAIL_SITE_NAME` | ❌ | `SEIM - {short name}` | Wagtail admin site name |

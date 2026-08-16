@@ -166,6 +166,12 @@ const routes = [
         meta: { partnerPortal: true },
       },
       { path: 'preferences', redirect: { name: 'Settings' } },
+      { path: 'admin', redirect: { name: 'AdminPrograms' } },
+      { path: 'admin-dashboard', redirect: { name: 'Dashboard' } },
+      { path: 'analytics', redirect: { name: 'AnalyticsForecasts' } },
+      { path: 'grades', redirect: { name: 'Profile' } },
+      { path: 'programs', redirect: { name: 'ProgramCompare' } },
+      { path: 'exchange', redirect: { name: 'StaffExchangeAgreements' } },
 
       // SPA admin console (admin-only)
       {

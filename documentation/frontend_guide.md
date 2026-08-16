@@ -3,7 +3,7 @@
 ## Overview
 App UI is the Vue 3 SPA in `frontend-vue/`, served at `/seim/`. Wagtail CMS (`cms/templates/`) is the public/CMS site. The Django `frontend` app, `templates/frontend/`, and `static/js/modules/` are removed.
 
-Current URL split and remaining Django leftovers: [docs/SPA_VS_LEGACY.md](../docs/SPA_VS_LEGACY.md). Institution chrome: [white_labeling.md](white_labeling.md).
+Current URL split and remaining Django leftovers: [notes/SPA_VS_LEGACY.md](notes/SPA_VS_LEGACY.md). Institution chrome: [white_labeling.md](white_labeling.md).
 
 ---
 

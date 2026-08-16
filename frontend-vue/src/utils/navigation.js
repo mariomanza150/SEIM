@@ -1,5 +1,44 @@
 const SPA_BASE_PREFIX = '/seim'
 
+const EXACT_SPA_ROUTES = {
+  '/': { name: 'Dashboard' },
+  '/dashboard': { name: 'Dashboard' },
+  '/admin-dashboard': { name: 'Dashboard' },
+  '/login': { name: 'Login' },
+  '/register': { name: 'Register' },
+  '/verify-email': { name: 'VerifyEmail' },
+  '/password-reset': { name: 'PasswordReset' },
+  '/applications': { name: 'Applications' },
+  '/applications/new': { name: 'ApplicationNew' },
+  '/applications/create': { name: 'ApplicationNew' },
+  '/documents': { name: 'Documents' },
+  '/notifications': { name: 'Notifications' },
+  '/profile': { name: 'Profile' },
+  '/settings': { name: 'Settings' },
+  '/preferences': { name: 'Settings' },
+  '/calendar': { name: 'DeadlinesCalendar' },
+  '/review-queue': { name: 'CoordinatorReviewQueue' },
+  '/coordinator-workload': { name: 'CoordinatorWorkload' },
+  '/notification-routing': { name: 'NotificationRouting' },
+  '/exchange-agreements': { name: 'StaffExchangeAgreements' },
+  '/agreement-documents': { name: 'StaffExchangeAgreements' },
+  '/exchange': { name: 'StaffExchangeAgreements' },
+  '/programs/compare': { name: 'ProgramCompare' },
+  '/programs': { name: 'ProgramCompare' },
+  '/eligibility-rulesets': { name: 'EligibilityRulesets' },
+  '/nominations': { name: 'Nominations' },
+  '/analytics-forecasts': { name: 'AnalyticsForecasts' },
+  '/analytics': { name: 'AnalyticsForecasts' },
+  '/partner': { name: 'PartnerPortal' },
+  '/admin': { name: 'AdminPrograms' },
+  '/admin/programs': { name: 'AdminPrograms' },
+  '/admin/forms': { name: 'AdminForms' },
+  '/admin/dynforms': { name: 'AdminDynforms' },
+  '/admin/data-management': { name: 'AdminDataManagement' },
+  '/admin/workflows': { name: 'AdminWorkflows' },
+  '/grades': { name: 'Profile' },
+}
+
 function stripTrailingSlash(path) {
   if (!path || path === '/') return '/'
   return path.endsWith('/') ? path.slice(0, -1) : path
@@ -22,34 +61,8 @@ export function normalizeSpaLocation(url) {
 
   const spaPath = path.startsWith(SPA_BASE_PREFIX) ? path.slice(SPA_BASE_PREFIX.length) || '/' : path
 
-  if (spaPath === '/' || spaPath === '/dashboard') {
-    return { name: 'Dashboard' }
-  }
-  if (spaPath === '/login') {
-    return { name: 'Login' }
-  }
-  if (spaPath === '/register') {
-    return { name: 'Register' }
-  }
-  if (
-    spaPath === '/applications' ||
-    spaPath === '/applications/new' ||
-    spaPath === '/applications/create'
-  ) {
-    return {
-      name: spaPath === '/applications' ? 'Applications' : 'ApplicationNew',
-    }
-  }
-  if (spaPath === '/documents') {
-    return { name: 'Documents' }
-  }
-  if (spaPath === '/notifications') {
-    return { name: 'Notifications' }
-  }
-  if (spaPath === '/profile' || spaPath === '/settings') {
-    return {
-      name: spaPath === '/profile' ? 'Profile' : 'Settings',
-    }
+  if (EXACT_SPA_ROUTES[spaPath]) {
+    return { ...EXACT_SPA_ROUTES[spaPath] }
   }
 
   const applicationEditMatch = spaPath.match(/^\/applications\/([^/]+)\/edit$/)
@@ -67,18 +80,27 @@ export function normalizeSpaLocation(url) {
     return { name: 'DocumentDetail', params: { id: documentDetailMatch[1] } }
   }
 
-  if (spaPath === '/agreement-documents') {
-    return { name: 'StaffExchangeAgreements' }
-  }
-  if (spaPath === '/exchange-agreements') {
-    return { name: 'StaffExchangeAgreements' }
-  }
   const agreementRepositoryMatch = spaPath.match(/^\/exchange-agreements\/([^/]+)\/documents$/)
   if (agreementRepositoryMatch) {
     return {
       name: 'StaffAgreementDocuments',
       params: { agreementId: agreementRepositoryMatch[1] },
     }
+  }
+
+  const dynformEditorMatch = spaPath.match(/^\/admin\/dynforms\/([^/]+)$/)
+  if (dynformEditorMatch) {
+    return { name: 'AdminDynformEditor', params: { id: dynformEditorMatch[1] } }
+  }
+
+  const workflowEditorMatch = spaPath.match(/^\/admin\/workflows\/([^/]+)$/)
+  if (workflowEditorMatch) {
+    return { name: 'AdminWorkflowEditor', params: { id: workflowEditorMatch[1] } }
+  }
+
+  const adminApplicationMatch = spaPath.match(/^\/admin\/applications\/([^/]+)$/)
+  if (adminApplicationMatch) {
+    return { name: 'AdminApplicationEdit', params: { id: adminApplicationMatch[1] } }
   }
 
   return null
@@ -94,7 +116,7 @@ export function isNewTabUrl(url) {
 
   return (
     path.startsWith('/cms') ||
-    path.startsWith('/seim/admin') ||
+    path.startsWith('/seim/django-admin') ||
     /^https?:\/\//.test(url)
   )
 }

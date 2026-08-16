@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-"""Download institution logos/assets. UAdeC is the default source."""
+"""Download institution logos/assets.
+
+UAdeC is the default source. Prefer this script over download_uadec_assets.py.
+Default output: branding/uadec/logos. See documentation/white_labeling.md.
+"""
 
 from __future__ import annotations
 
@@ -44,7 +48,7 @@ def _website() -> str:
 
 
 def _output_dir() -> Path:
-    path = Path(_env("INSTITUTION_ASSET_DIR", "staticfiles/images"))
+    path = Path(_env("INSTITUTION_ASSET_DIR", "branding/uadec/logos"))
     path.mkdir(parents=True, exist_ok=True)
     return path
 

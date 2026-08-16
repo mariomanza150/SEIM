@@ -1,6 +1,6 @@
 # SEIM Vue.js Frontend
 
-Modern Vue.js 3 SPA frontend for the Student Exchange Information Management (SEIM) system. Served at `/seim/`. Remaining Django surfaces: [docs/SPA_VS_LEGACY.md](../docs/SPA_VS_LEGACY.md).
+Modern Vue.js 3 SPA frontend for the Student Exchange Information Management (SEIM) system. Served at `/seim/`. Remaining Django surfaces: [documentation/notes/SPA_VS_LEGACY.md](../documentation/notes/SPA_VS_LEGACY.md).
 
 ## 🚀 Tech Stack
 
