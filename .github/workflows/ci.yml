@@ -115,6 +115,8 @@ jobs:
   backend-tests:
     name: Backend tests
     runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     services:
       postgres:
         image: postgres:15
@@ -184,25 +186,17 @@ jobs:
             tests/unit/ tests/integration/ \
             -v --tb=short
 
-      - name: Require CODECOV_TOKEN on official default-branch pushes
-        if: >
-          github.repository == 'mariomanza150/SEIM' &&
-          github.event_name == 'push' &&
-          (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        env:
-          HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
+      - name: Note missing CODECOV_TOKEN
+        if: env.CODECOV_TOKEN == ''
         run: |
-          if [ "$HAS_CODECOV_TOKEN" != "true" ]; then
-            echo "::error::CODECOV_TOKEN must be set as a GitHub Actions secret on mariomanza150/SEIM. Coverage XML was still generated. See .github/README.md."
-            exit 1
-          fi
+          echo "::warning::CODECOV_TOKEN is not set. Coverage XML was still generated as an artifact. Add the GitHub Actions secret for Codecov uploads — see .github/README.md. The hard gate remains pytest --cov-fail-under=80."
 
       - name: Upload coverage to Codecov
         id: codecov_backend
-        if: ${{ always() && secrets.CODECOV_TOKEN != '' }}
+        if: always() && env.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
           files: ./coverage.xml
           flags: backend
           name: backend-coverage
@@ -227,20 +221,18 @@ jobs:
 
       - name: Job summary
         if: always()
-        env:
-          HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
         run: |
           {
             echo "## Backend tests"
             echo "JUnit: artifact **backend-test-results**. Coverage XML: **backend-coverage-xml**."
             echo "Hard gate: pytest \`--cov-fail-under=80\` (unchanged)."
-            if [ "$HAS_CODECOV_TOKEN" != "true" ]; then
+            if [ -z "$CODECOV_TOKEN" ]; then
               echo ""
-              echo "**Codecov:** \`CODECOV_TOKEN\` is not set. Coverage report was still generated as an artifact."
-              echo "Fork PRs and local \`act\` skip upload and stay green. On \`mariomanza150/SEIM\` pushes to main/master, the missing secret fails CI — see [.github/README.md](.github/README.md)."
+              echo "**Codecov:** \`CODECOV_TOKEN\` is not set. Coverage report was still generated as an artifact; upload was skipped."
+              echo "Maintainers should add the GitHub Actions secret for Codecov history — see [.github/README.md](.github/README.md)."
             elif [ "${{ steps.codecov_backend.outcome }}" != "success" ]; then
               echo ""
-              echo "**Codecov:** upload failed. This job fails when \`CODECOV_TOKEN\` is set."
+              echo "**Codecov:** upload failed. This job fails when the token is set."
             else
               echo "**Codecov:** backend flag uploaded."
             fi
@@ -249,6 +241,8 @@ jobs:
   frontend-vue:
     name: Frontend (Vue / Vitest)
     runs-on: ubuntu-latest
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     defaults:
       run:
         working-directory: frontend-vue
@@ -272,25 +266,17 @@ jobs:
       - name: Verify production dist
         run: test -f dist/index.html && test -d dist/assets
 
-      - name: Require CODECOV_TOKEN on official default-branch pushes
-        if: >
-          github.repository == 'mariomanza150/SEIM' &&
-          github.event_name == 'push' &&
-          (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        env:
-          HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
+      - name: Note missing CODECOV_TOKEN
+        if: env.CODECOV_TOKEN == ''
         run: |
-          if [ "$HAS_CODECOV_TOKEN" != "true" ]; then
-            echo "::error::CODECOV_TOKEN must be set as a GitHub Actions secret on mariomanza150/SEIM. Coverage LCOV was still generated. See .github/README.md."
-            exit 1
-          fi
+          echo "::warning::CODECOV_TOKEN is not set. Coverage LCOV was still generated as an artifact. Add the GitHub Actions secret for Codecov uploads — see .github/README.md."
 
       - name: Upload coverage to Codecov
         id: codecov_frontend
-        if: ${{ always() && secrets.CODECOV_TOKEN != '' }}
+        if: always() && env.CODECOV_TOKEN != ''
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
           files: frontend-vue/coverage/lcov.info
           flags: frontend
           name: frontend-coverage
@@ -307,19 +293,17 @@ jobs:
 
       - name: Job summary
         if: always()
-        env:
-          HAS_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
         run: |
           {
             echo "## Vue frontend"
             echo "Vitest + coverage + production build complete. Coverage LCOV: **frontend-coverage-lcov**."
-            if [ "$HAS_CODECOV_TOKEN" != "true" ]; then
+            if [ -z "$CODECOV_TOKEN" ]; then
               echo ""
-              echo "**Codecov:** \`CODECOV_TOKEN\` is not set. Coverage report was still generated as an artifact."
-              echo "Fork PRs and local \`act\` skip upload and stay green. On \`mariomanza150/SEIM\` pushes to main/master, the missing secret fails CI — see [.github/README.md](.github/README.md)."
+              echo "**Codecov:** \`CODECOV_TOKEN\` is not set. Coverage report was still generated as an artifact; upload was skipped."
+              echo "Maintainers should add the GitHub Actions secret for Codecov history — see [.github/README.md](.github/README.md)."
             elif [ "${{ steps.codecov_frontend.outcome }}" != "success" ]; then
               echo ""
-              echo "**Codecov:** upload failed. This job fails when \`CODECOV_TOKEN\` is set."
+              echo "**Codecov:** upload failed. This job fails when the token is set."
             else
               echo "**Codecov:** frontend flag uploaded."
             fi

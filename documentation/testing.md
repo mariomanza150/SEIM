@@ -439,7 +439,7 @@ npm --prefix frontend-vue run test:coverage
 ### **Coverage Targets:**
 - **Backend**: Minimum 80% coverage (hard CI gate: pytest `--cov-fail-under=80`)
 - **Frontend**: Vitest coverage collected in CI for `src/stores` and `src/services` (no fail-under gate)
-- **Codecov**: Historical tracker + GitHub checks. Add repository secret `CODECOV_TOKEN` from [codecov.io](https://codecov.io) after linking `mariomanza150/SEIM`. Coverage reports are always generated. Upload runs when the secret is set; pushes to `main`/`master` on this repo fail if it is missing. Fork PRs skip upload and stay green. Setup: [`.github/README.md`](../.github/README.md).
+- **Codecov**: Historical tracker + GitHub checks. Add repository secret `CODECOV_TOKEN` from [codecov.io](https://codecov.io) after linking `mariomanza150/SEIM`. Coverage reports are always generated. Upload runs when the secret is set; a missing secret warns and skips upload. The hard gate is pytest `--cov-fail-under=80`. Setup: [`.github/README.md`](../.github/README.md).
 
 ---
 

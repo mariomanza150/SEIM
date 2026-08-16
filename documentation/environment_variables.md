@@ -596,7 +596,7 @@ MEDIA_ROOT=media/
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `CODECOV_TOKEN` | Maintainers on `mariomanza150/SEIM` | (unset) | Codecov upload token. Set as a **GitHub Actions secret** only. Coverage XML/LCOV is always generated. Upload runs when the secret is present; pushes to `main`/`master` on this repo fail if it is missing. Fork PRs skip upload. See [`.github/README.md`](../.github/README.md). |
+| `CODECOV_TOKEN` | Maintainers on `mariomanza150/SEIM` | (unset) | Codecov upload token. Set as a **GitHub Actions secret** only. Coverage XML/LCOV is always generated. Upload runs when the secret is present; a missing secret warns and skips upload (CI stays green). See [`.github/README.md`](../.github/README.md). |
 
 Do not put `CODECOV_TOKEN` in `.env` or `env.example`.
 

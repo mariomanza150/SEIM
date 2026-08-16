@@ -119,7 +119,7 @@ Report security issues privately to the maintainer. Do not open a public issue w
 
 Pins live in `pyproject.toml` (`[project.dependencies]` and `[project.optional-dependencies]` for `dev`, `test`, and `docs`). Docker and CI install from that file (`pip install -e ".[dev]"` / `".[test]"`). After changing a pin, commit `pyproject.toml` only. `python scripts/check_python_deps.py` (or `make check-deps`) rejects leftover `requirements*.txt` files.
 
-Coverage reports are always generated in CI. Maintainers must set the GitHub Actions secret `CODECOV_TOKEN` so uploads run on this repo; pushes to `main`/`master` fail if the secret is missing. Fork PRs skip upload and stay green. See [`.github/README.md`](.github/README.md).
+Coverage reports are always generated in CI. Maintainers should set the GitHub Actions secret `CODECOV_TOKEN` so uploads run on this repo. A missing secret warns and skips upload; it does not fail CI. The hard gate is pytest `--cov-fail-under=80`. See [`.github/README.md`](.github/README.md).
 
 ## License
 
