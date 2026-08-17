@@ -59,8 +59,15 @@ from .models import (
     Program,
     SavedSearch,
     TimelineEvent,
+    visible_host_subjects_queryset,
 )
 from .scholarship_scoring import scholarship_scores_export_response
+from .subject_grades import (
+    confirm_subject_grades,
+    persist_carta_homologacion,
+    propose_subject_grades,
+    reject_subject_grades,
+)
 from .serializers import (
     AgreementCommentSerializer,
     ApplicationSerializer,
@@ -377,16 +384,32 @@ class ProgramViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(
-        summary="List host institutions for a mobility scheme",
+        summary="List or create host institutions for a mobility scheme",
         responses={200: HostInstitutionSerializer(many=True)},
     )
-    @action(detail=True, methods=["get"], url_path="host-institutions")
+    @action(detail=True, methods=["get", "post"], url_path="host-institutions")
     def host_institutions(self, request, pk=None):
-        """Active host universities under this program (mobility scheme)."""
+        """Host universities under this program (mobility scheme)."""
         program = self.get_object()
-        qs = HostInstitution.objects.filter(program=program, is_active=True).order_by(
-            "name"
+        if request.method == "POST":
+            payload = request.data.copy()
+            payload["program"] = str(program.id)
+            serializer = HostInstitutionSerializer(
+                data=payload, context={"request": request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(program=program)
+            _invalidate_program_api_caches()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        qs = HostInstitution.objects.filter(program=program).select_related(
+            "grade_scale"
         )
+        if not (
+            request.user.is_staff
+            or (hasattr(request.user, "is_admin") and request.user.is_admin)
+        ):
+            qs = qs.filter(is_active=True)
+        qs = qs.order_by("name")
         return Response(HostInstitutionSerializer(qs, many=True).data)
 
     @action(detail=True, methods=["post"])
@@ -767,6 +790,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             "assigned_coordinator",
             "status",  # ForeignKey
             "host_institution",
+            "host_institution__grade_scale",
             "host_school",
             "host_academic_program",
         ).prefetch_related(
@@ -1110,11 +1134,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         When DocumentType slug ``carta_homologacion`` exists, attach a draft
         Document for the student's checklist (download → sign → re-upload).
         """
-        from django.core.files.base import ContentFile
-
-        from documents.models import Document, DocumentType
-        from documents.pdf_generation import render_carta_homologacion_pdf
-
         application = self.get_object()
         user = request.user
         is_staff = hasattr(user, "has_any_role") and user.has_any_role(
@@ -1123,43 +1142,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         if not is_staff and application.student_id != user.pk:
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
 
-        pdf_bytes = render_carta_homologacion_pdf(application)
+        pdf_bytes = persist_carta_homologacion(application, user)
         filename = f"carta_homologacion_{application.id}.pdf"
-
-        doc_type = DocumentType.objects.filter(slug="carta_homologacion").first()
-        if doc_type is None:
-            # Slug-compatible stub so Phase 4 seeds can take over later.
-            doc_type, _ = DocumentType.objects.get_or_create(
-                slug="carta_homologacion",
-                defaults={
-                    "name": "Carta de Homologación",
-                    "description": "Carta de homologación de asignaturas.",
-                    "submission_mode": getattr(
-                        DocumentType.SubmissionMode,
-                        "SYSTEM_GENERATED",
-                        "system_generated",
-                    ),
-                    "accepted_extensions": "pdf",
-                },
-            )
-
-        # Keep a generated copy on the application for checklist visibility.
-        existing = (
-            Document.objects.filter(application=application, type=doc_type)
-            .order_by("-created_at")
-            .first()
-        )
-        if existing is None:
-            document = Document(
-                application=application,
-                type=doc_type,
-                uploaded_by=user if user.is_authenticated else application.student,
-            )
-            document.file.save(filename, ContentFile(pdf_bytes), save=True)
-        else:
-            # Refresh generated file content for draft regenerations.
-            existing.file.save(filename, ContentFile(pdf_bytes), save=True)
-
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         selection_count = application.subject_selections.count()
@@ -1168,71 +1152,336 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             response["X-Homologacion-Empty"] = "1"
         return response
 
+    @extend_schema(
+        summary="List catalog subjects visible for this application's destination",
+        responses={200: HostSubjectSerializer(many=True)},
+    )
+    @action(detail=True, methods=["get"], url_path="available-subjects")
+    def available_subjects(self, request, pk=None):
+        application = self.get_object()
+        user = request.user
+        is_staff = hasattr(user, "has_any_role") and user.has_any_role(
+            ["coordinator", "admin"]
+        )
+        if not is_staff and application.student_id != user.pk:
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        qs = visible_host_subjects_queryset(
+            institution_id=application.host_institution_id,
+            school_id=application.host_school_id,
+            academic_program_id=application.host_academic_program_id,
+            include_inactive=False,
+        )
+        return Response(HostSubjectSerializer(qs, many=True).data)
+
+    @extend_schema(summary="Student proposes host subject grades for confirmation")
+    @action(detail=True, methods=["post"], url_path="propose-subject-grades")
+    def propose_subject_grades_action(self, request, pk=None):
+        application = self.get_object()
+        user = request.user
+        is_staff = hasattr(user, "has_any_role") and user.has_any_role(
+            ["coordinator", "admin"]
+        )
+        if not is_staff and application.student_id != user.pk:
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        try:
+            updated = propose_subject_grades(application, user)
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        self._invalidate_application_cache(application)
+        return Response({"updated": updated, "status": "proposed"})
+
+    @extend_schema(summary="Coordinator confirms host grades and locks translations")
+    @action(detail=True, methods=["post"], url_path="confirm-subject-grades")
+    def confirm_subject_grades_action(self, request, pk=None):
+        application = self.get_object()
+        user = request.user
+        if not (
+            hasattr(user, "has_any_role")
+            and user.has_any_role(["coordinator", "admin"])
+        ):
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        notes = ""
+        if isinstance(request.data, dict):
+            notes = (
+                request.data.get("notes")
+                or request.data.get("confirmation_notes")
+                or ""
+            )
+        try:
+            updated = confirm_subject_grades(application, user, notes=notes)
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        self._invalidate_application_cache(application)
+        return Response({"updated": updated, "status": "confirmed"})
+
+    @extend_schema(summary="Coordinator rejects host grades and reopens student edits")
+    @action(detail=True, methods=["post"], url_path="reject-subject-grades")
+    def reject_subject_grades_action(self, request, pk=None):
+        application = self.get_object()
+        user = request.user
+        if not (
+            hasattr(user, "has_any_role")
+            and user.has_any_role(["coordinator", "admin"])
+        ):
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        notes = ""
+        if isinstance(request.data, dict):
+            notes = (
+                request.data.get("notes")
+                or request.data.get("confirmation_notes")
+                or ""
+            )
+        try:
+            updated = reject_subject_grades(application, user, notes=notes)
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        self._invalidate_application_cache(application)
+        return Response({"updated": updated, "status": "rejected"})
+
     def _invalidate_application_cache(self, application):
         """Drop retrieve/list/comment API caches after an application mutation."""
         invalidate_application_api_responses(application)
 
 
-class HostInstitutionViewSet(viewsets.ReadOnlyModelViewSet):
-    """Read-only host institutions; nested schools list for cascade selects."""
+def _user_is_catalog_admin(user) -> bool:
+    return bool(
+        user
+        and (
+            user.is_staff
+            or (hasattr(user, "is_admin") and user.is_admin)
+        )
+    )
 
-    queryset = HostInstitution.objects.filter(is_active=True).select_related("program")
+
+def _active_or_all(qs, request, *, admin_all=True):
+    if admin_all and _user_is_catalog_admin(request.user):
+        return qs
+    return qs.filter(is_active=True)
+
+
+class HostInstitutionViewSet(viewsets.ModelViewSet):
+    """Host institutions; nested schools/subjects. Admin write, authenticated read."""
+
     serializer_class = HostInstitutionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = None
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["program", "is_active"]
+    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        qs = HostInstitution.objects.select_related("program", "grade_scale")
+        if _user_is_catalog_admin(self.request.user):
+            return qs
+        return qs.filter(is_active=True)
+
+    def perform_create(self, serializer):
+        serializer.save()
+        _invalidate_program_api_caches()
+
+    def perform_update(self, serializer):
+        serializer.save()
+        _invalidate_program_api_caches()
+
+    def perform_destroy(self, instance):
+        instance.delete()
+        _invalidate_program_api_caches()
 
     @extend_schema(
-        summary="List schools for a host institution",
+        summary="List or create schools for a host institution",
         responses={200: HostSchoolSerializer(many=True)},
     )
-    @action(detail=True, methods=["get"], url_path="schools")
+    @action(detail=True, methods=["get", "post"], url_path="schools")
     def schools(self, request, pk=None):
         institution = self.get_object()
-        qs = HostSchool.objects.filter(
-            institution=institution, is_active=True
+        if request.method == "POST":
+            payload = request.data.copy()
+            payload["institution"] = str(institution.id)
+            serializer = HostSchoolSerializer(
+                data=payload, context={"request": request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(institution=institution)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        qs = _active_or_all(
+            HostSchool.objects.filter(institution=institution), request
         ).order_by("name")
         return Response(HostSchoolSerializer(qs, many=True).data)
 
-
-class HostSchoolViewSet(viewsets.ReadOnlyModelViewSet):
-    """Read-only host schools; nested academic programs for cascade selects."""
-
-    queryset = HostSchool.objects.filter(is_active=True).select_related("institution")
-    serializer_class = HostSchoolSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
     @extend_schema(
-        summary="List academic programs for a host school",
-        responses={200: HostAcademicProgramSerializer(many=True)},
-    )
-    @action(detail=True, methods=["get"], url_path="academic-programs")
-    def academic_programs(self, request, pk=None):
-        school = self.get_object()
-        qs = HostAcademicProgram.objects.filter(school=school, is_active=True).order_by(
-            "name"
-        )
-        return Response(HostAcademicProgramSerializer(qs, many=True).data)
-
-
-class HostAcademicProgramViewSet(viewsets.ReadOnlyModelViewSet):
-    """Read-only host academic programs; nested subjects for optional selection."""
-
-    queryset = HostAcademicProgram.objects.filter(is_active=True).select_related(
-        "school", "school__institution"
-    )
-    serializer_class = HostAcademicProgramSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    @extend_schema(
-        summary="List subjects for a host academic program",
+        summary="List or create subjects for a host institution",
         responses={200: HostSubjectSerializer(many=True)},
     )
-    @action(detail=True, methods=["get"], url_path="subjects")
+    @action(detail=True, methods=["get", "post"], url_path="subjects")
+    def subjects(self, request, pk=None):
+        institution = self.get_object()
+        if request.method == "POST":
+            payload = request.data.copy()
+            payload["institution"] = str(institution.id)
+            serializer = HostSubjectSerializer(
+                data=payload, context={"request": request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(institution=institution)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        school_id = request.query_params.get("school") or None
+        academic_id = request.query_params.get("academic_program") or None
+        scope = request.query_params.get("scope") or ""
+        include_inactive = _user_is_catalog_admin(request.user)
+        if scope == "all" or (
+            include_inactive and not school_id and not academic_id
+        ):
+            qs = HostSubject.objects.filter(institution=institution)
+            if not include_inactive:
+                qs = qs.filter(is_active=True)
+            qs = qs.order_by("name", "code")
+        else:
+            qs = visible_host_subjects_queryset(
+                institution_id=institution.id,
+                school_id=school_id,
+                academic_program_id=academic_id,
+                include_inactive=include_inactive,
+            )
+        return Response(HostSubjectSerializer(qs, many=True).data)
+
+
+class HostSchoolViewSet(viewsets.ModelViewSet):
+    """Host schools; nested academic programs and school-level subjects."""
+
+    serializer_class = HostSchoolSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = None
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["institution", "is_active"]
+    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        qs = HostSchool.objects.select_related("institution")
+        if _user_is_catalog_admin(self.request.user):
+            return qs
+        return qs.filter(is_active=True)
+
+    @extend_schema(
+        summary="List or create academic programs for a host school",
+        responses={200: HostAcademicProgramSerializer(many=True)},
+    )
+    @action(detail=True, methods=["get", "post"], url_path="academic-programs")
+    def academic_programs(self, request, pk=None):
+        school = self.get_object()
+        if request.method == "POST":
+            payload = request.data.copy()
+            payload["school"] = str(school.id)
+            serializer = HostAcademicProgramSerializer(
+                data=payload, context={"request": request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(school=school)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        qs = _active_or_all(
+            HostAcademicProgram.objects.filter(school=school), request
+        ).order_by("name")
+        return Response(HostAcademicProgramSerializer(qs, many=True).data)
+
+    @extend_schema(
+        summary="List or create subjects for a host school",
+        responses={200: HostSubjectSerializer(many=True)},
+    )
+    @action(detail=True, methods=["get", "post"], url_path="subjects")
+    def subjects(self, request, pk=None):
+        school = self.get_object()
+        if request.method == "POST":
+            payload = request.data.copy()
+            payload["institution"] = str(school.institution_id)
+            payload["school"] = str(school.id)
+            serializer = HostSubjectSerializer(
+                data=payload, context={"request": request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(institution=school.institution, school=school)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        qs = HostSubject.objects.filter(school=school, academic_program__isnull=True)
+        if not _user_is_catalog_admin(request.user):
+            qs = qs.filter(is_active=True)
+        return Response(
+            HostSubjectSerializer(qs.order_by("name", "code"), many=True).data
+        )
+
+
+class HostAcademicProgramViewSet(viewsets.ModelViewSet):
+    """Host academic programs; nested subjects for optional selection."""
+
+    serializer_class = HostAcademicProgramSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = None
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["school", "is_active"]
+    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        qs = HostAcademicProgram.objects.select_related(
+            "school", "school__institution"
+        )
+        if _user_is_catalog_admin(self.request.user):
+            return qs
+        return qs.filter(is_active=True)
+
+    @extend_schema(
+        summary="List or create subjects for a host academic program",
+        responses={200: HostSubjectSerializer(many=True)},
+    )
+    @action(detail=True, methods=["get", "post"], url_path="subjects")
     def subjects(self, request, pk=None):
         academic_program = self.get_object()
-        qs = HostSubject.objects.filter(
-            academic_program=academic_program, is_active=True
-        ).order_by("name", "code")
-        return Response(HostSubjectSerializer(qs, many=True).data)
+        if request.method == "POST":
+            payload = request.data.copy()
+            payload["institution"] = str(academic_program.school.institution_id)
+            payload["school"] = str(academic_program.school_id)
+            payload["academic_program"] = str(academic_program.id)
+            serializer = HostSubjectSerializer(
+                data=payload, context={"request": request}
+            )
+            serializer.is_valid(raise_exception=True)
+            serializer.save(
+                institution=academic_program.school.institution,
+                school=academic_program.school,
+                academic_program=academic_program,
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        qs = HostSubject.objects.filter(academic_program=academic_program)
+        if not _user_is_catalog_admin(request.user):
+            qs = qs.filter(is_active=True)
+        return Response(
+            HostSubjectSerializer(qs.order_by("name", "code"), many=True).data
+        )
+
+
+class HostSubjectViewSet(viewsets.ModelViewSet):
+    """Staff CRUD for host subjects; authenticated users may list/retrieve active rows."""
+
+    serializer_class = HostSubjectSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = None
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ["institution", "school", "academic_program", "is_active"]
+    http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
+
+    def get_queryset(self):
+        qs = HostSubject.objects.select_related(
+            "institution", "school", "academic_program"
+        )
+        if _user_is_catalog_admin(self.request.user):
+            return qs
+        return qs.filter(is_active=True)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.application_selections.exists():
+            instance.is_active = False
+            instance.save(update_fields=["is_active", "updated_at"])
+            return Response(
+                HostSubjectSerializer(instance).data, status=status.HTTP_200_OK
+            )
+        return super().destroy(request, *args, **kwargs)
 
 
 class ApplicationSubjectSelectionViewSet(viewsets.ModelViewSet):
@@ -1251,6 +1500,10 @@ class ApplicationSubjectSelectionViewSet(viewsets.ModelViewSet):
             "application__status",
             "host_subject",
             "host_subject__academic_program",
+            "host_subject__institution",
+            "proposed_host_grade",
+            "confirmed_host_grade",
+            "home_grade",
         )
         if user.has_any_role(["coordinator", "admin"]):
             return qs
@@ -1267,6 +1520,36 @@ class ApplicationSubjectSelectionViewSet(viewsets.ModelViewSet):
                     }
                 )
         serializer.save()
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        is_staff = user.has_any_role(["coordinator", "admin"])
+        locked = instance.grade_status in (
+            ApplicationSubjectSelection.GradeStatus.PROPOSED,
+            ApplicationSubjectSelection.GradeStatus.CONFIRMED,
+        )
+        if not is_staff and locked:
+            raise ValidationError(
+                {
+                    "detail": (
+                        "This subject mapping is locked until a coordinator "
+                        "rejects the proposed grades."
+                    )
+                }
+            )
+        if not is_staff:
+            from exchange.serializers import _application_subject_grades_locked
+
+            if _application_subject_grades_locked(instance.application):
+                raise ValidationError(
+                    {
+                        "detail": (
+                            "Subject mappings cannot be changed after grades "
+                            "have been proposed or confirmed."
+                        )
+                    }
+                )
+        instance.delete()
 
 
 class ApplicationStatusViewSet(viewsets.ReadOnlyModelViewSet):

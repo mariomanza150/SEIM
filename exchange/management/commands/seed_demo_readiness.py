@@ -361,10 +361,12 @@ class Command(BaseCommand):
             )
             for subject_spec in spec.get("subjects") or ():
                 HostSubject.objects.update_or_create(
-                    academic_program=academic,
+                    institution=institution,
                     name=subject_spec["name"],
                     code=subject_spec["code"],
                     defaults={
+                        "school": school,
+                        "academic_program": academic,
                         "credits": Decimal(subject_spec["credits"]),
                         "is_active": True,
                     },

@@ -65,6 +65,25 @@ def _ready_manual_tasks(workflow: BpmnWorkflow) -> list[dict]:
     return out
 
 
+def _normalize_available_actions(tasks) -> list[dict]:
+    """Coerce stored current_tasks (dicts or seeded name strings) to action objects."""
+    out = []
+    for task in tasks or []:
+        if isinstance(task, dict):
+            name = str(task.get("name") or task.get("spec_id") or task.get("id") or "")
+            out.append(
+                {
+                    "id": str(task.get("id") or name),
+                    "name": name,
+                    "spec_id": task.get("spec_id") or name,
+                }
+            )
+        elif task:
+            name = str(task)
+            out.append({"id": name, "name": name, "spec_id": name})
+    return out
+
+
 def _derive_application_status_from_tasks(
     application: Application, tasks: list[dict]
 ) -> ApplicationStatus | None:
@@ -161,7 +180,8 @@ class WorkflowRuntimeService:
     def get_snapshot(application: Application, user=None) -> WorkflowSnapshot:
         inst = WorkflowRuntimeService.ensure_instance(application, user=user)
         return WorkflowSnapshot(
-            instance=inst, available_actions=list(inst.current_tasks or [])
+            instance=inst,
+            available_actions=_normalize_available_actions(inst.current_tasks),
         )
 
     @staticmethod

@@ -38,12 +38,15 @@ const Nominations = () => import('@/views/Nominations.vue')
 const AnalyticsForecasts = () => import('@/views/AnalyticsForecasts.vue')
 const PartnerPortal = () => import('@/views/PartnerPortal.vue')
 const AdminPrograms = () => import('@/views/admin/AdminPrograms.vue')
+const AdminProgramDestinations = () => import('@/views/admin/AdminProgramDestinations.vue')
 const AdminForms = () => import('@/views/admin/AdminForms.vue')
 const AdminDynforms = () => import('@/views/admin/AdminDynforms.vue')
 const AdminDynformEditor = () => import('@/views/admin/AdminDynformEditor.vue')
 const AdminDataManagement = () => import('@/views/admin/AdminDataManagement.vue')
 const AdminWorkflows = () => import('@/views/admin/AdminWorkflows.vue')
 const AdminWorkflowEditor = () => import('@/views/admin/AdminWorkflowEditor.vue')
+const AdminDocuments = () => import('@/views/admin/AdminDocuments.vue')
+const AdminDocumentTypeEdit = () => import('@/views/admin/AdminDocumentTypeEdit.vue')
 const AdminApplicationEdit = () => import('@/views/admin/AdminApplicationEdit.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
@@ -181,6 +184,12 @@ const routes = [
         meta: { adminOnly: true },
       },
       {
+        path: 'admin/programs/:id/destinations',
+        name: 'AdminProgramDestinations',
+        component: AdminProgramDestinations,
+        meta: { adminOnly: true },
+      },
+      {
         path: 'admin/forms',
         name: 'AdminForms',
         component: AdminForms,
@@ -214,6 +223,18 @@ const routes = [
         path: 'admin/workflows/:id',
         name: 'AdminWorkflowEditor',
         component: AdminWorkflowEditor,
+        meta: { adminOnly: true },
+      },
+      {
+        path: 'admin/documents',
+        name: 'AdminDocuments',
+        component: AdminDocuments,
+        meta: { adminOnly: true },
+      },
+      {
+        path: 'admin/documents/:id',
+        name: 'AdminDocumentTypeEdit',
+        component: AdminDocumentTypeEdit,
         meta: { adminOnly: true },
       },
       {

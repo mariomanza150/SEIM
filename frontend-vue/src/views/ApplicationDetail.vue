@@ -357,6 +357,23 @@
               </div>
             </div>
 
+            <div class="card mb-4" data-testid="application-subjects-card">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="bi bi-journal-text me-2"></i>{{ t('applicationSubjects.title') }}
+                </h5>
+              </div>
+              <div class="card-body">
+                <ApplicationSubjectsPanel
+                  :application-id="application.id"
+                  :application-status="application.status"
+                  :host-institution-id="application.host_institution"
+                  :is-coordinator="isCoordinator"
+                  :show-heading="false"
+                />
+              </div>
+            </div>
+
             <!-- Required documents checklist -->
             <div
               v-if="application.document_checklist && application.document_checklist.required_count > 0"
@@ -428,6 +445,15 @@
                         @click="downloadSolicitudPdf"
                       >
                         <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>{{ t('applicationDetailPage.downloadSolicitud') }}
+                      </button>
+                      <button
+                        v-else-if="item.slug === 'carta_homologacion'"
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        data-testid="download-carta-checklist"
+                        @click="downloadCartaPdf"
+                      >
+                        <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>{{ t('applicationSubjects.downloadCarta') }}
                       </button>
                       <button
                         v-else-if="item.has_template"
@@ -713,14 +739,12 @@
                         {{ documentTypeLabel(doc.type, t('documentDetailPage.notAvailable')) }}
                       </router-link>
                       <span class="d-flex align-items-center gap-1">
-                        <span class="badge" :class="doc.is_valid === true ? 'bg-success' : doc.is_valid === false ? 'bg-danger' : 'bg-warning'">
-                          {{
-                            doc.is_valid === true
-                              ? t('applicationDetailPage.docValid')
-                              : doc.is_valid === false
-                                ? t('applicationDetailPage.docInvalid')
-                                : t('applicationDetailPage.docPending')
-                          }}
+                        <span
+                          class="badge"
+                          :class="documentStatusBadgeClass(doc)"
+                          data-testid="document-status-badge"
+                        >
+                          {{ documentStatusLabel(doc) }}
                         </span>
                         <template v-if="isCoordinator">
                           <template v-if="docValidatingId !== doc.id">
@@ -767,10 +791,11 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import DocumentUpload from '@/components/DocumentUpload.vue'
+import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import api from '@/services/api'
 import { readinessLevelBadgeClass, readinessScoreBarClass } from '@/utils/applicationReadiness'
-import { documentTypeLabel } from '@/utils/documentApi'
+import { documentReviewStatus, documentTypeLabel } from '@/utils/documentApi'
 import {
   applicationProgramDisplayName,
   applicationStatusBadgeClass,
@@ -1084,6 +1109,20 @@ function checklistBadgeClass(status) {
   return classes[status] || 'bg-secondary'
 }
 
+function documentStatusLabel(doc) {
+  const status = documentReviewStatus(doc)
+  if (status === 'valid') return t('applicationDetailPage.docValid')
+  if (status === 'invalid') return t('applicationDetailPage.docInvalid')
+  return t('applicationDetailPage.docPending')
+}
+
+function documentStatusBadgeClass(doc) {
+  const status = documentReviewStatus(doc)
+  if (status === 'valid') return 'bg-success'
+  if (status === 'invalid') return 'bg-danger'
+  return 'bg-warning text-dark'
+}
+
 function formatChecklistDate(iso) {
   if (!iso) return ''
   const date = new Date(`${iso}T00:00:00`)
@@ -1118,11 +1157,26 @@ async function downloadSolicitudPdf() {
   }
 }
 
-async function downloadDocTemplate(typeId, name) {
+async function downloadCartaPdf() {
+  if (!application.value?.id) return
   try {
     await downloadBlobUrl(
-      `/api/document-types/${typeId}/download-template/`,
-      `${name || 'template'}.pdf`,
+      `/api/applications/${application.value.id}/carta-homologacion/`,
+      `carta_homologacion_${application.value.id}.pdf`,
+    )
+  } catch (err) {
+    console.error('Carta PDF download failed:', err)
+    errorToast(t('applicationSubjects.toastCartaFailed'))
+  }
+}
+
+async function downloadDocTemplate(typeId, name) {
+  try {
+    const appId = application.value?.id
+    const qs = appId ? `?application=${encodeURIComponent(appId)}` : ''
+    await downloadBlobUrl(
+      `/api/document-types/${typeId}/download-template/${qs}`,
+      name || 'template',
       'application/octet-stream',
     )
   } catch (err) {
@@ -1145,6 +1199,9 @@ function timelineEventHeading(event) {
   if (evtType === 'form_submitted') return t('applicationDetailPage.timeline.programFormActivity')
   if (evtType === 'withdrawn') return t('applicationDetailPage.timeline.applicationWithdrawn')
   if (evtType === 'comment') return t('applicationDetailPage.timeline.commentRecorded')
+  if (evtType === 'subject_grades_proposed') return t('applicationDetailPage.timeline.subjectGradesProposed')
+  if (evtType === 'subject_grades_confirmed') return t('applicationDetailPage.timeline.subjectGradesConfirmed')
+  if (evtType === 'subject_grades_rejected') return t('applicationDetailPage.timeline.subjectGradesRejected')
   return (
     evtType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || t('applicationDetailPage.status.unknown')
   )

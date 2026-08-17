@@ -64,6 +64,8 @@ def host_tree(db):
         school=school, name="Computer Science", code="CS", is_active=True
     )
     subject = HostSubject.objects.create(
+        institution=institution,
+        school=school,
         academic_program=academic,
         code="CS101",
         name="Algorithms",

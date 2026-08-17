@@ -127,19 +127,19 @@
               {{ workflowError }}
             </div>
             <div v-else>
-              <p v-if="!workflow.available_actions?.length" class="text-muted mb-2">
+              <p v-if="!normalizedActions.length" class="text-muted mb-2">
                 {{ t('adminApplicationEdit.noWorkflowActions') }}
               </p>
               <div v-else class="d-grid gap-2">
                 <button
-                  v-for="a in workflow.available_actions"
+                  v-for="a in normalizedActions"
                   :key="a.id"
                   type="button"
                   class="btn btn-outline-primary"
                   :disabled="mutating"
                   @click="triggerWorkflowAction(a)"
                 >
-                  {{ a.name || a.spec_id || a.id }}
+                  {{ a.name }}
                 </button>
               </div>
 
@@ -156,7 +156,7 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
@@ -181,6 +181,16 @@ const edit = ref({
 const workflowLoading = ref(false)
 const workflowError = ref(null)
 const workflow = ref({ instance: null, available_actions: [] })
+const normalizedActions = computed(() =>
+  (workflow.value.available_actions || []).map((action) => {
+    if (action && typeof action === 'object') {
+      const name = action.name || action.spec_id || action.id || ''
+      return { id: String(action.id || name), name: String(name) }
+    }
+    const name = String(action || '')
+    return { id: name, name }
+  }).filter((action) => action.id),
+)
 
 const timelineEvents = ref([])
 const timelineLoading = ref(false)
@@ -283,7 +293,7 @@ async function triggerWorkflowAction(actionRow) {
   mutating.value = true
   try {
     await api.post(`/api/applications/${application.value.id}/workflow/action/`, {
-      action: actionRow.id,
+      action: actionRow.id || actionRow.name,
       payload: {},
     })
     success(t('adminApplicationEdit.toastWorkflowAction'))

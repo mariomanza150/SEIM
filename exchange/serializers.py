@@ -18,6 +18,7 @@ from .models import (
     Program,
     SavedSearch,
     TimelineEvent,
+    visible_host_subjects_queryset,
     validate_application_host_destination,
 )
 
@@ -113,6 +114,13 @@ class EligibilityRuleSetSerializer(serializers.ModelSerializer):
 
 
 class HostInstitutionSerializer(serializers.ModelSerializer):
+    grade_scale_name = serializers.CharField(
+        source="grade_scale.name", read_only=True, allow_null=True, default=None
+    )
+    grade_scale_code = serializers.CharField(
+        source="grade_scale.code", read_only=True, allow_null=True, default=None
+    )
+
     class Meta:
         model = HostInstitution
         fields = (
@@ -121,10 +129,20 @@ class HostInstitutionSerializer(serializers.ModelSerializer):
             "name",
             "country",
             "is_active",
+            "grade_scale",
+            "grade_scale_name",
+            "grade_scale_code",
             "created_at",
             "updated_at",
         )
-        read_only_fields = fields
+        extra_kwargs = {"program": {"required": False}}
+        read_only_fields = (
+            "id",
+            "created_at",
+            "updated_at",
+            "grade_scale_name",
+            "grade_scale_code",
+        )
 
 
 class HostSchoolSerializer(serializers.ModelSerializer):
@@ -138,7 +156,8 @@ class HostSchoolSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-        read_only_fields = fields
+        extra_kwargs = {"institution": {"required": False}}
+        read_only_fields = ("id", "created_at", "updated_at")
 
 
 class HostAcademicProgramSerializer(serializers.ModelSerializer):
@@ -153,7 +172,8 @@ class HostAcademicProgramSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-        read_only_fields = fields
+        extra_kwargs = {"school": {"required": False}}
+        read_only_fields = ("id", "created_at", "updated_at")
 
 
 class HostSubjectSerializer(serializers.ModelSerializer):
@@ -161,6 +181,8 @@ class HostSubjectSerializer(serializers.ModelSerializer):
         model = HostSubject
         fields = (
             "id",
+            "institution",
+            "school",
             "academic_program",
             "code",
             "name",
@@ -169,11 +191,77 @@ class HostSubjectSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-        read_only_fields = fields
+        extra_kwargs = {"institution": {"required": False}}
+        read_only_fields = ("id", "created_at", "updated_at")
+
+    def validate(self, attrs):
+        instance = self.instance
+        institution = attrs.get("institution")
+        if institution is None and instance is not None:
+            institution = instance.institution
+        school = attrs.get("school", getattr(instance, "school", None))
+        academic = attrs.get(
+            "academic_program", getattr(instance, "academic_program", None)
+        )
+        errors = {}
+        if school is not None and institution is not None:
+            if school.institution_id != institution.id:
+                errors["school"] = (
+                    "Host school must belong to the selected host institution."
+                )
+        if academic is not None:
+            if school is None:
+                attrs["school"] = academic.school
+                school = academic.school
+            elif academic.school_id != school.id:
+                errors["academic_program"] = (
+                    "Host academic program must belong to the selected host school."
+                )
+            if institution is not None and academic.school.institution_id != institution.id:
+                errors["academic_program"] = (
+                    "Host academic program must belong to the selected host institution."
+                )
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
+
+
+def _is_staff_user(user) -> bool:
+    return bool(
+        user
+        and hasattr(user, "has_any_role")
+        and user.has_any_role(["coordinator", "admin"])
+    )
+
+
+def _application_subject_grades_locked(application) -> bool:
+    return application.subject_selections.filter(
+        grade_status__in=[
+            ApplicationSubjectSelection.GradeStatus.PROPOSED,
+            ApplicationSubjectSelection.GradeStatus.CONFIRMED,
+        ]
+    ).exists()
 
 
 class ApplicationSubjectSelectionSerializer(serializers.ModelSerializer):
     host_subject_detail = HostSubjectSerializer(source="host_subject", read_only=True)
+    host_course_code = serializers.CharField(read_only=True)
+    host_course_name = serializers.CharField(read_only=True)
+    proposed_host_grade_label = serializers.CharField(
+        source="proposed_host_grade.label",
+        read_only=True,
+        allow_null=True,
+        default=None,
+    )
+    confirmed_host_grade_label = serializers.CharField(
+        source="confirmed_host_grade.label",
+        read_only=True,
+        allow_null=True,
+        default=None,
+    )
+    home_grade_label = serializers.CharField(
+        source="home_grade.label", read_only=True, allow_null=True, default=None
+    )
 
     class Meta:
         model = ApplicationSubjectSelection
@@ -182,29 +270,88 @@ class ApplicationSubjectSelectionSerializer(serializers.ModelSerializer):
             "application",
             "host_subject",
             "host_subject_detail",
+            "custom_code",
+            "custom_name",
+            "custom_credits",
+            "host_course_code",
+            "host_course_name",
             "home_course_label",
             "home_course_code",
             "credits",
             "notes",
+            "proposed_host_grade",
+            "proposed_host_grade_label",
+            "confirmed_host_grade",
+            "confirmed_host_grade_label",
+            "home_grade",
+            "home_grade_label",
+            "grade_status",
+            "proposed_at",
+            "proposed_by",
+            "confirmed_at",
+            "confirmed_by",
+            "confirmation_notes",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "created_at", "updated_at", "host_subject_detail")
+        read_only_fields = (
+            "id",
+            "created_at",
+            "updated_at",
+            "host_subject_detail",
+            "host_course_code",
+            "host_course_name",
+            "proposed_host_grade_label",
+            "confirmed_host_grade",
+            "confirmed_host_grade_label",
+            "home_grade",
+            "home_grade_label",
+            "grade_status",
+            "proposed_at",
+            "proposed_by",
+            "confirmed_at",
+            "confirmed_by",
+            "confirmation_notes",
+        )
 
     def validate(self, attrs):
         application = attrs.get("application")
         if application is None and self.instance is not None:
             application = self.instance.application
-        host_subject = attrs.get("host_subject")
-        if host_subject is None and self.instance is not None:
-            host_subject = self.instance.host_subject
+        host_subject = attrs["host_subject"] if "host_subject" in attrs else (
+            self.instance.host_subject if self.instance is not None else None
+        )
+        custom_name = attrs.get(
+            "custom_name",
+            self.instance.custom_name if self.instance is not None else "",
+        )
+        custom_code = attrs.get(
+            "custom_code",
+            self.instance.custom_code if self.instance is not None else "",
+        )
+        custom_credits = attrs.get(
+            "custom_credits",
+            self.instance.custom_credits if self.instance is not None else None,
+        )
 
         request = self.context.get("request")
-        if application is not None and request is not None:
-            user = request.user
-            is_staff = hasattr(user, "has_any_role") and user.has_any_role(
-                ["coordinator", "admin"]
-            )
+        user = getattr(request, "user", None)
+        is_staff = _is_staff_user(user)
+
+        mapping_keys = {
+            "host_subject",
+            "custom_code",
+            "custom_name",
+            "custom_credits",
+            "home_course_label",
+            "home_course_code",
+            "credits",
+            "notes",
+        }
+        mapping_changed = bool(mapping_keys.intersection(attrs))
+        grade_changed = "proposed_host_grade" in attrs
+
+        if application is not None and user is not None:
             if not is_staff and application.student_id != user.pk:
                 raise serializers.ValidationError(
                     {
@@ -213,24 +360,113 @@ class ApplicationSubjectSelectionSerializer(serializers.ModelSerializer):
                         )
                     }
                 )
+
             status_name = getattr(application.status, "name", None)
-            if not is_staff and status_name and status_name != "draft":
-                raise serializers.ValidationError(
-                    {
-                        "application": (
-                            "Subject selections can only be changed on draft applications."
-                        )
-                    }
-                )
+            row_status = (
+                self.instance.grade_status
+                if self.instance is not None
+                else ApplicationSubjectSelection.GradeStatus.NONE
+            )
+            locked_row = row_status in (
+                ApplicationSubjectSelection.GradeStatus.PROPOSED,
+                ApplicationSubjectSelection.GradeStatus.CONFIRMED,
+            )
+            app_locked = _application_subject_grades_locked(application)
+
+            if not is_staff and mapping_changed:
+                if self.instance is None and app_locked:
+                    raise serializers.ValidationError(
+                        {
+                            "application": (
+                                "Subject mappings cannot be changed after grades "
+                                "have been proposed or confirmed."
+                            )
+                        }
+                    )
+                if self.instance is not None and locked_row:
+                    raise serializers.ValidationError(
+                        {
+                            "application": (
+                                "This subject mapping is locked until a coordinator "
+                                "rejects the proposed grades."
+                            )
+                        }
+                    )
+
+            if grade_changed and not is_staff:
+                from exchange.models import SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES
+
+                if status_name not in SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES:
+                    raise serializers.ValidationError(
+                        {
+                            "proposed_host_grade": (
+                                "Host grades can only be proposed when the application "
+                                "is approved, nominated, or completed."
+                            )
+                        }
+                    )
+                if row_status == ApplicationSubjectSelection.GradeStatus.CONFIRMED:
+                    raise serializers.ValidationError(
+                        {
+                            "proposed_host_grade": (
+                                "Confirmed grades cannot be edited. Ask a coordinator "
+                                "to reject them first."
+                            )
+                        }
+                    )
+
+        has_catalog = host_subject is not None
+        custom_name = (custom_name or "").strip()
+        custom_code = (custom_code or "").strip()
+        has_custom = bool(custom_name or custom_code or custom_credits is not None)
+        if has_catalog and has_custom:
+            raise serializers.ValidationError(
+                {
+                    "host_subject": (
+                        "Choose a catalog subject or a custom host course, not both."
+                    )
+                }
+            )
+        if not has_catalog and not custom_name:
+            raise serializers.ValidationError(
+                {
+                    "custom_name": (
+                        "Provide a custom course name or select a catalog subject."
+                    )
+                }
+            )
+        if has_catalog:
+            attrs["custom_code"] = ""
+            attrs["custom_name"] = ""
+            attrs["custom_credits"] = None
+        else:
+            attrs["host_subject"] = None
+            attrs["custom_name"] = custom_name
+            attrs["custom_code"] = custom_code
 
         if application is not None and host_subject is not None:
-            app_prog_id = application.host_academic_program_id
-            if app_prog_id and host_subject.academic_program_id != app_prog_id:
+            if host_subject.institution_id != application.host_institution_id:
                 raise serializers.ValidationError(
                     {
                         "host_subject": (
                             "Host subject must belong to the application's "
-                            "host academic program."
+                            "host institution."
+                        )
+                    }
+                )
+            visible_ids = set(
+                visible_host_subjects_queryset(
+                    institution_id=application.host_institution_id,
+                    school_id=application.host_school_id,
+                    academic_program_id=application.host_academic_program_id,
+                    include_inactive=is_staff,
+                ).values_list("id", flat=True)
+            )
+            if host_subject.id not in visible_ids and self.instance is None:
+                raise serializers.ValidationError(
+                    {
+                        "host_subject": (
+                            "Host subject is not available for this destination."
                         )
                     }
                 )
@@ -245,7 +481,10 @@ class ApplicationSubjectSelectionSerializer(serializers.ModelSerializer):
             subject = validated_data.get("host_subject")
             if subject is not None:
                 validated_data["credits"] = subject.credits
+            elif validated_data.get("custom_credits") is not None:
+                validated_data["credits"] = validated_data["custom_credits"]
         return super().create(validated_data)
+
 
 
 class ApplicationSerializer(serializers.ModelSerializer):

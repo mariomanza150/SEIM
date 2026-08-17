@@ -32,7 +32,7 @@ from .models import (
 class HostInstitutionInline(admin.TabularInline):
     model = HostInstitution
     extra = 0
-    fields = ("name", "country", "is_active")
+    fields = ("name", "country", "grade_scale", "is_active")
     show_change_link = True
 
 
@@ -62,9 +62,15 @@ class ApplicationSubjectSelectionInline(admin.TabularInline):
     extra = 0
     fields = (
         "host_subject",
+        "custom_code",
+        "custom_name",
+        "custom_credits",
         "home_course_code",
         "home_course_label",
         "credits",
+        "grade_status",
+        "proposed_host_grade",
+        "home_grade",
         "notes",
     )
     autocomplete_fields = ("host_subject",)
@@ -288,6 +294,7 @@ class ProgramDocumentRequirementInline(admin.TabularInline):
         "sort_order",
         "deadline",
         "deadline_days_before_program_deadline",
+        "deadline_days_after_program_start",
         "instructions_override",
     )
     ordering = ("sort_order", "id")
@@ -641,12 +648,12 @@ class ProgramAdmin(admin.ModelAdmin):
 
 @admin.register(HostInstitution)
 class HostInstitutionAdmin(admin.ModelAdmin):
-    list_display = ("name", "program", "country", "is_active", "created_at")
+    list_display = ("name", "program", "country", "grade_scale", "is_active", "created_at")
     list_filter = ("is_active", "program", "country")
     search_fields = ("name", "country", "program__name")
     list_editable = ("is_active",)
     inlines = [HostSchoolInline]
-    autocomplete_fields = ("program",)
+    autocomplete_fields = ("program", "grade_scale")
 
 
 @admin.register(HostSchool)
@@ -675,19 +682,22 @@ class HostSubjectAdmin(admin.ModelAdmin):
         "name",
         "code",
         "credits",
+        "institution",
+        "school",
         "academic_program",
         "is_active",
         "created_at",
     )
-    list_filter = ("is_active", "academic_program__school__institution__program")
+    list_filter = ("is_active", "institution__program")
     search_fields = (
         "name",
         "code",
+        "institution__name",
+        "school__name",
         "academic_program__name",
-        "academic_program__school__name",
     )
     list_editable = ("is_active",)
-    autocomplete_fields = ("academic_program",)
+    autocomplete_fields = ("institution", "school", "academic_program")
 
 
 @admin.register(Application)

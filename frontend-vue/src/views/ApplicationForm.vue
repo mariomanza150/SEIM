@@ -488,140 +488,15 @@
 
                 <!-- Optional subjects (Asignaturas) — skip allowed -->
                 <div
-                  v-if="form.program && form.host_academic_program"
+                  v-if="form.program && form.host_institution"
                   class="mb-4"
-                  data-testid="subjects-section"
                 >
-                  <h5 class="mb-2">
-                    <i class="bi bi-journal-text me-2"></i>{{ t('applicationFormPage.subjectsTitle') }}
-                    <span class="badge text-bg-secondary ms-2">{{ t('applicationFormPage.subjectsOptionalBadge') }}</span>
-                  </h5>
-                  <p class="text-muted small mb-3">{{ t('applicationFormPage.subjectsHelp') }}</p>
-
-                  <div v-if="!isEditMode" class="alert alert-light border mb-0" data-testid="subjects-save-first">
-                    {{ t('applicationFormPage.subjectsSaveFirst') }}
-                  </div>
-
-                  <template v-else>
-                    <div v-if="hostSubjectsLoading" class="form-text mb-2">
-                      {{ t('applicationFormPage.loadingHostSubjects') }}
-                    </div>
-                    <div v-else-if="!hostSubjects.length" class="form-text mb-3">
-                      {{ t('applicationFormPage.noHostSubjects') }}
-                    </div>
-                    <div v-else class="row g-2 align-items-end mb-3">
-                      <div class="col-md-6">
-                        <label for="host-subject-pick" class="form-label">
-                          {{ t('applicationFormPage.hostSubjectLabel') }}
-                        </label>
-                        <select
-                          id="host-subject-pick"
-                          v-model="subjectDraft.host_subject"
-                          class="form-select"
-                          data-testid="host-subject-select"
-                        >
-                          <option value="">{{ t('applicationFormPage.selectHostSubject') }}</option>
-                          <option
-                            v-for="subj in availableHostSubjects"
-                            :key="subj.id"
-                            :value="subj.id"
-                          >
-                            {{ formatHostSubjectOption(subj) }}
-                          </option>
-                        </select>
-                      </div>
-                      <div class="col-md-3">
-                        <label for="home-course-code" class="form-label">
-                          {{ t('applicationFormPage.homeCourseCodeLabel') }}
-                        </label>
-                        <input
-                          id="home-course-code"
-                          v-model="subjectDraft.home_course_code"
-                          type="text"
-                          class="form-control"
-                          maxlength="64"
-                        >
-                      </div>
-                      <div class="col-md-3">
-                        <label for="home-course-label" class="form-label">
-                          {{ t('applicationFormPage.homeCourseLabelLabel') }}
-                        </label>
-                        <input
-                          id="home-course-label"
-                          v-model="subjectDraft.home_course_label"
-                          type="text"
-                          class="form-control"
-                          maxlength="255"
-                        >
-                      </div>
-                      <div class="col-12 d-flex flex-wrap gap-2">
-                        <button
-                          type="button"
-                          class="btn btn-outline-primary btn-sm"
-                          :disabled="!subjectDraft.host_subject || subjectSelectionSaving"
-                          data-testid="add-subject-selection"
-                          @click="addSubjectSelection"
-                        >
-                          <i class="bi bi-plus-lg me-1"></i>{{ t('applicationFormPage.addSubjectSelection') }}
-                        </button>
-                        <button
-                          type="button"
-                          class="btn btn-outline-secondary btn-sm"
-                          :disabled="cartaDownloading"
-                          data-testid="download-carta-homologacion"
-                          @click="downloadCartaHomologacion"
-                        >
-                          <i class="bi bi-file-earmark-pdf me-1"></i>
-                          {{ t('applicationFormPage.downloadCartaHomologacion') }}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div v-if="subjectSelectionsLoading" class="form-text">
-                      {{ t('applicationFormPage.loadingSubjectSelections') }}
-                    </div>
-                    <div
-                      v-else-if="!subjectSelections.length"
-                      class="alert alert-light border small mb-0"
-                      data-testid="subjects-empty"
-                    >
-                      {{ t('applicationFormPage.subjectsEmpty') }}
-                    </div>
-                    <div v-else class="table-responsive">
-                      <table class="table table-sm align-middle" data-testid="subject-selections-table">
-                        <thead>
-                          <tr>
-                            <th>{{ t('applicationFormPage.hostSubjectLabel') }}</th>
-                            <th>{{ t('applicationFormPage.homeCourseCodeLabel') }}</th>
-                            <th>{{ t('applicationFormPage.homeCourseLabelLabel') }}</th>
-                            <th>{{ t('applicationFormPage.subjectCreditsLabel') }}</th>
-                            <th class="text-end">{{ t('applicationFormPage.subjectActionsLabel') }}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <tr v-for="sel in subjectSelections" :key="sel.id">
-                            <td>
-                              {{ formatHostSubjectOption(sel.host_subject_detail || sel.host_subject) }}
-                            </td>
-                            <td>{{ sel.home_course_code || '—' }}</td>
-                            <td>{{ sel.home_course_label || '—' }}</td>
-                            <td>{{ sel.credits ?? sel.host_subject_detail?.credits ?? '—' }}</td>
-                            <td class="text-end">
-                              <button
-                                type="button"
-                                class="btn btn-outline-danger btn-sm"
-                                :disabled="subjectSelectionSaving"
-                                :data-testid="`remove-subject-${sel.id}`"
-                                @click="removeSubjectSelection(sel)"
-                              >
-                                <i class="bi bi-trash"></i>
-                              </button>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  </template>
+                  <ApplicationSubjectsPanel
+                    :application-id="isEditMode ? route.params.id : ''"
+                    :application-status="applicationStatus"
+                    :host-institution-id="form.host_institution"
+                    :is-coordinator="isCoordinator || isAdmin"
+                  />
                 </div>
 
                 <!-- Selected Program Info -->
@@ -878,12 +753,27 @@
                       <li
                         v-for="row in currentStepDocumentTypesDisplay"
                         :key="row.id"
-                        class="list-group-item d-flex justify-content-between align-items-center px-3 py-2"
+                        class="list-group-item px-3 py-2"
                       >
-                        <span>{{ row.name }}</span>
-                        <span :class="documentStepStatusClass(row.status)">
-                          {{ documentStepStatusLabel(row.status) }}
-                        </span>
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                          <div>
+                            <span>{{ row.name }}</span>
+                            <p v-if="row.instructions" class="small text-muted mb-0 mt-1">{{ row.instructions }}</p>
+                          </div>
+                          <div class="d-flex align-items-center gap-2">
+                            <span :class="documentStepStatusClass(row.status)">
+                              {{ documentStepStatusLabel(row.status) }}
+                            </span>
+                            <button
+                              v-if="row.has_template && isEditMode && route.params.id"
+                              type="button"
+                              class="btn btn-sm btn-outline-secondary"
+                              @click="downloadStepTemplate(row)"
+                            >
+                              {{ t('applicationFormPage.downloadTemplate') }}
+                            </button>
+                          </div>
+                        </div>
                       </li>
                     </ul>
                     <router-link
@@ -1048,6 +938,7 @@ import { fieldMeetsVisibleWhen, stepMeetsVisibleWhen } from '@/utils/dynamicForm
 import { eligibilityFailureMessages } from '@/utils/eligibilityMessages'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
+import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -1113,17 +1004,7 @@ const hostAcademicPrograms = ref([])
 const hostInstitutionsLoading = ref(false)
 const hostSchoolsLoading = ref(false)
 const hostAcademicProgramsLoading = ref(false)
-const hostSubjects = ref([])
-const hostSubjectsLoading = ref(false)
-const subjectSelections = ref([])
-const subjectSelectionsLoading = ref(false)
-const subjectSelectionSaving = ref(false)
-const cartaDownloading = ref(false)
-const subjectDraft = ref({
-  host_subject: '',
-  home_course_code: '',
-  home_course_label: '',
-})
+const applicationStatus = ref('')
 let suppressHostCascadeReset = false
 /** For ``visible_when`` rules: ``has_assigned_coordinator`` (program id comes from ``form.program``). */
 const applicationVisibilityContext = ref({
@@ -1537,6 +1418,31 @@ function documentStepStatusLabel(status) {
   return String(status).replace(/_/g, ' ')
 }
 
+async function downloadStepTemplate(row) {
+  const typeId = row?.id
+  const appId = route.params.id
+  if (!typeId || !appId) return
+  try {
+    const response = await api.get(
+      `/api/document-types/${typeId}/download-template/?application=${encodeURIComponent(appId)}`,
+      { responseType: 'blob' },
+    )
+    const blob = new Blob([response.data], { type: 'application/octet-stream' })
+    const objectUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objectUrl
+    a.download = row.name || 'template'
+    a.rel = 'noopener noreferrer'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(objectUrl)
+  } catch (err) {
+    console.error('Template download failed:', err)
+    errorToast(t('applicationDetailPage.downloadTemplateError'))
+  }
+}
+
 function normalizeProgramMatch(value) {
   return String(value || '')
     .trim()
@@ -1816,120 +1722,6 @@ async function fetchHostAcademicPrograms(schoolId) {
   }
 }
 
-const availableHostSubjects = computed(() => {
-  const selectedIds = new Set(subjectSelections.value.map((s) => String(s.host_subject)))
-  return hostSubjects.value.filter((s) => !selectedIds.has(String(s.id)))
-})
-
-function formatHostSubjectOption(subj) {
-  if (!subj || typeof subj !== 'object') return String(subj || '')
-  const code = subj.code ? `${subj.code} — ` : ''
-  const credits = subj.credits != null && subj.credits !== '' ? ` (${subj.credits})` : ''
-  return `${code}${subj.name || ''}${credits}`
-}
-
-async function fetchHostSubjects(academicProgramId) {
-  hostSubjects.value = []
-  if (!academicProgramId) return
-  hostSubjectsLoading.value = true
-  try {
-    const { data } = await api.get(`/api/academic-programs/${academicProgramId}/subjects/`)
-    hostSubjects.value = Array.isArray(data) ? data : (data.results || [])
-  } catch (err) {
-    console.error('Failed to load host subjects:', err)
-    hostSubjects.value = []
-  } finally {
-    hostSubjectsLoading.value = false
-  }
-}
-
-async function fetchSubjectSelections() {
-  subjectSelections.value = []
-  if (!isEditMode.value || !route.params.id) return
-  subjectSelectionsLoading.value = true
-  try {
-    const { data } = await api.get('/api/application-subject-selections/', {
-      params: { application: route.params.id },
-    })
-    subjectSelections.value = Array.isArray(data) ? data : (data.results || [])
-  } catch (err) {
-    console.error('Failed to load subject selections:', err)
-    subjectSelections.value = []
-  } finally {
-    subjectSelectionsLoading.value = false
-  }
-}
-
-async function addSubjectSelection() {
-  if (!isEditMode.value || !route.params.id || !subjectDraft.value.host_subject) return
-  subjectSelectionSaving.value = true
-  try {
-    const { data } = await api.post('/api/application-subject-selections/', {
-      application: route.params.id,
-      host_subject: subjectDraft.value.host_subject,
-      home_course_code: subjectDraft.value.home_course_code || '',
-      home_course_label: subjectDraft.value.home_course_label || '',
-    })
-    subjectSelections.value = [...subjectSelections.value, data]
-    subjectDraft.value = { host_subject: '', home_course_code: '', home_course_label: '' }
-    success(t('applicationFormPage.toastSubjectAdded'))
-  } catch (err) {
-    console.error('Failed to add subject selection:', err)
-    const data = err.response?.data
-    if (applyServerValidationErrors(data)) {
-      errorToast(t('applicationFormPage.toastFixErrors'))
-    } else {
-      errorToast(t('applicationFormPage.toastSubjectAddFailed'))
-    }
-  } finally {
-    subjectSelectionSaving.value = false
-  }
-}
-
-async function removeSubjectSelection(sel) {
-  if (!sel?.id) return
-  subjectSelectionSaving.value = true
-  try {
-    await api.delete(`/api/application-subject-selections/${sel.id}/`)
-    subjectSelections.value = subjectSelections.value.filter((s) => s.id !== sel.id)
-    success(t('applicationFormPage.toastSubjectRemoved'))
-  } catch (err) {
-    console.error('Failed to remove subject selection:', err)
-    errorToast(t('applicationFormPage.toastSubjectRemoveFailed'))
-  } finally {
-    subjectSelectionSaving.value = false
-  }
-}
-
-async function downloadCartaHomologacion() {
-  if (!isEditMode.value || !route.params.id) return
-  cartaDownloading.value = true
-  try {
-    const response = await api.get(`/api/applications/${route.params.id}/carta-homologacion/`, {
-      responseType: 'blob',
-    })
-    const blob = new Blob([response.data], { type: 'application/pdf' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `carta_homologacion_${route.params.id}.pdf`
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    window.URL.revokeObjectURL(url)
-    if (!subjectSelections.value.length) {
-      success(t('applicationFormPage.toastCartaEmpty'))
-    } else {
-      success(t('applicationFormPage.toastCartaDownloaded'))
-    }
-  } catch (err) {
-    console.error('Failed to download Carta de Homologación:', err)
-    errorToast(t('applicationFormPage.toastCartaFailed'))
-  } finally {
-    cartaDownloading.value = false
-  }
-}
-
 function hostDestinationPayload() {
   return {
     host_institution: form.value.host_institution || null,
@@ -1952,6 +1744,7 @@ async function fetchApplication() {
       host_school: response.data.host_school || '',
       host_academic_program: response.data.host_academic_program || '',
     }
+    applicationStatus.value = response.data.status || ''
     applyApplicationVisibilityFromResponse(response.data)
     pendingDynamicResponses.value = response.data.dynamic_form_submission?.responses || null
     applicationDynamicLayout.value = response.data.dynamic_form_layout || null
@@ -1964,12 +1757,6 @@ async function fetchApplication() {
     }
     if (form.value.host_school) {
       await fetchHostAcademicPrograms(form.value.host_school)
-    }
-    if (form.value.host_academic_program) {
-      await Promise.all([
-        fetchHostSubjects(form.value.host_academic_program),
-        fetchSubjectSelections(),
-      ])
     }
     suppressHostCascadeReset = false
   } catch (err) {
@@ -2365,19 +2152,6 @@ watch(
     if (String(schoolId || '') === String(prev || '')) return
     form.value.host_academic_program = ''
     await fetchHostAcademicPrograms(schoolId)
-  },
-)
-
-watch(
-  () => form.value.host_academic_program,
-  async (academicProgramId, prev) => {
-    if (suppressHostCascadeReset) return
-    if (String(academicProgramId || '') === String(prev || '')) return
-    subjectDraft.value = { host_subject: '', home_course_code: '', home_course_label: '' }
-    await fetchHostSubjects(academicProgramId)
-    if (isEditMode.value) {
-      await fetchSubjectSelections()
-    }
   },
 )
 </script>

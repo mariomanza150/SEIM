@@ -29,6 +29,7 @@ SEIM (Student Exchange Information Manager) is a comprehensive Django-based web 
 - [Component Inventory](./component-inventory.md) - Catalog of major components and UI elements
 - [Development Guide](../developer_guide.md) - Maintained development workflow and setup guide
 - [API Contracts](./api-contracts.md) - API endpoints and schemas
+- [Course-level grade translation](./course-grade-translation.md) - Subject grades, carta, and confirm-time translation
 - [Data Models](./data-models.md) - Database schema and models
 - [Project Structure](./PROJECT_STRUCTURE.md) - Comprehensive project structure guide
 

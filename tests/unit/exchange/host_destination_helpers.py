@@ -44,6 +44,8 @@ def attach_host_destination(
     subject = None
     if with_subject:
         subject = HostSubject.objects.create(
+            institution=institution,
+            school=school,
             academic_program=academic,
             code="CS101",
             name="Algorithms",

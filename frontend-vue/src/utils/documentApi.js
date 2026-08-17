@@ -112,6 +112,20 @@ export function documentTypeLabel(type, fallback = '') {
   return fallback
 }
 
+/**
+ * Review status for an uploaded document.
+ *
+ * `is_valid` defaults to false on upload, so false alone is not a rejection.
+ * Staff validation sets `validated_at`; only then is false treated as invalid.
+ *
+ * @returns {'valid' | 'invalid' | 'pending'}
+ */
+export function documentReviewStatus(doc) {
+  if (doc?.is_valid === true) return 'valid'
+  if (doc?.is_valid === false && doc?.validated_at) return 'invalid'
+  return 'pending'
+}
+
 /** Label for application `<select>` options (list API uses `program_name`; FK may be id-only). */
 export function applicationSelectLabel(app, fallback = '') {
   if (app == null || typeof app !== 'object') return fallback || String(app ?? '')

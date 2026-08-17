@@ -14,10 +14,210 @@ from .models import (
 from .services import DocumentService
 
 
+class ProgramRequirementNestedSerializer(serializers.Serializer):
+    """Writable nested program-requirement rows on a document type."""
+
+    id = serializers.IntegerField(required=False, allow_null=True)
+    program = serializers.UUIDField()
+    program_name = serializers.CharField(read_only=True)
+    program_start_date = serializers.DateField(read_only=True)
+    is_required = serializers.BooleanField(required=False, default=True)
+    deadline = serializers.DateField(required=False, allow_null=True)
+    deadline_days_before_program_deadline = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0
+    )
+    deadline_days_after_program_start = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0
+    )
+    instructions_override = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
+    sort_order = serializers.IntegerField(required=False, min_value=0, default=0)
+    resolved_deadline = serializers.DateField(read_only=True)
+
+
 class DocumentTypeSerializer(serializers.ModelSerializer):
+    has_template = serializers.SerializerMethodField()
+    template_filename = serializers.SerializerMethodField()
+    program_requirements = ProgramRequirementNestedSerializer(
+        many=True, required=False, write_only=True
+    )
+    requirement_count = serializers.SerializerMethodField()
+
     class Meta:
         model = DocumentType
-        fields = "__all__"
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "description",
+            "submission_mode",
+            "template_file",
+            "has_template",
+            "template_filename",
+            "instructions",
+            "faq",
+            "accepted_extensions",
+            "max_file_size_mb",
+            "allows_multiple",
+            "program_requirements",
+            "requirement_count",
+        )
+        extra_kwargs = {
+            "template_file": {"write_only": True, "required": False},
+        }
+
+    def get_has_template(self, obj):
+        return bool(obj.template_file)
+
+    def get_template_filename(self, obj):
+        if not obj.template_file:
+            return ""
+        return obj.template_file.name.rsplit("/", 1)[-1]
+
+    def get_requirement_count(self, obj):
+        cached = getattr(obj, "requirement_count", None)
+        if cached is not None:
+            return cached
+        return obj.program_requirements.count()
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        include_reqs = self.context.get("include_program_requirements", True)
+        if not include_reqs:
+            ret.pop("program_requirements", None)
+            return ret
+        reqs = instance.program_requirements.select_related("program").order_by(
+            "sort_order", "id"
+        )
+        ret["program_requirements"] = [
+            {
+                "id": req.id,
+                "program": str(req.program_id),
+                "program_name": req.program.name,
+                "program_start_date": (
+                    req.program.start_date.isoformat()
+                    if req.program.start_date
+                    else None
+                ),
+                "is_required": req.is_required,
+                "deadline": req.deadline.isoformat() if req.deadline else None,
+                "deadline_days_before_program_deadline": (
+                    req.deadline_days_before_program_deadline
+                ),
+                "deadline_days_after_program_start": (
+                    req.deadline_days_after_program_start
+                ),
+                "instructions_override": req.instructions_override or "",
+                "sort_order": req.sort_order,
+                "resolved_deadline": (
+                    req.resolve_deadline().isoformat()
+                    if req.resolve_deadline()
+                    else None
+                ),
+            }
+            for req in reqs
+        ]
+        return ret
+
+    def validate_slug(self, value):
+        if value in ("", None):
+            return None
+        return value
+
+    def validate_accepted_extensions(self, value):
+        if not value:
+            return ""
+        cleaned = [
+            ext.strip().lower().lstrip(".")
+            for ext in str(value).split(",")
+            if ext.strip()
+        ]
+        return ",".join(cleaned)
+
+    def _sync_program_requirements(self, instance, rows):
+        from exchange.models import Program, ProgramDocumentRequirement
+
+        if rows is None:
+            return
+        keep_ids = []
+        for row in rows:
+            program_id = row["program"]
+            try:
+                program = Program.objects.get(pk=program_id)
+            except Program.DoesNotExist as exc:
+                raise serializers.ValidationError(
+                    {"program_requirements": f"Unknown program: {program_id}"}
+                ) from exc
+            defaults = {
+                "is_required": row.get("is_required", True),
+                "deadline": row.get("deadline"),
+                "deadline_days_before_program_deadline": row.get(
+                    "deadline_days_before_program_deadline"
+                ),
+                "deadline_days_after_program_start": row.get(
+                    "deadline_days_after_program_start"
+                ),
+                "instructions_override": row.get("instructions_override") or "",
+                "sort_order": row.get("sort_order") or 0,
+            }
+            req_id = row.get("id")
+            if req_id:
+                updated = ProgramDocumentRequirement.objects.filter(
+                    pk=req_id, document_type=instance
+                ).update(program=program, **defaults)
+                if not updated:
+                    raise serializers.ValidationError(
+                        {
+                            "program_requirements": (
+                                f"Requirement {req_id} does not belong to this type."
+                            )
+                        }
+                    )
+                keep_ids.append(req_id)
+            else:
+                req, _ = ProgramDocumentRequirement.objects.update_or_create(
+                    program=program,
+                    document_type=instance,
+                    defaults=defaults,
+                )
+                keep_ids.append(req.id)
+        ProgramDocumentRequirement.objects.filter(document_type=instance).exclude(
+            pk__in=keep_ids
+        ).delete()
+
+    def create(self, validated_data):
+        rows = validated_data.pop("program_requirements", None)
+        instance = super().create(validated_data)
+        self._sync_program_requirements(instance, rows)
+        return instance
+
+    def update(self, instance, validated_data):
+        rows = validated_data.pop("program_requirements", None)
+        instance = super().update(instance, validated_data)
+        self._sync_program_requirements(instance, rows)
+        return instance
+
+
+class DocumentTypeListSerializer(DocumentTypeSerializer):
+    class Meta(DocumentTypeSerializer.Meta):
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "description",
+            "submission_mode",
+            "has_template",
+            "template_filename",
+            "accepted_extensions",
+            "max_file_size_mb",
+            "allows_multiple",
+            "requirement_count",
+        )
+
+    def to_representation(self, instance):
+        self.context["include_program_requirements"] = False
+        return super().to_representation(instance)
 
 
 class DocumentTypeSummarySerializer(serializers.ModelSerializer):

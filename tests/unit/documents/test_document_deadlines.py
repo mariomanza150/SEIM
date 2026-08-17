@@ -71,6 +71,21 @@ class DocumentDeadlineTests(TestCase):
         expected = self.program.application_deadline - timedelta(days=10)
         self.assertEqual(self.requirement.resolve_deadline(), expected)
 
+    def test_relative_deadline_days_after_program_start(self):
+        self.requirement.deadline = None
+        self.requirement.deadline_days_before_program_deadline = None
+        self.requirement.deadline_days_after_program_start = 14
+        self.requirement.save()
+        expected = self.program.start_date + timedelta(days=14)
+        self.assertEqual(self.requirement.resolve_deadline(), expected)
+
+    def test_absolute_deadline_wins_over_relative(self):
+        absolute = timezone.localdate() + timedelta(days=3)
+        self.requirement.deadline = absolute
+        self.requirement.deadline_days_after_program_start = 14
+        self.requirement.save()
+        self.assertEqual(self.requirement.resolve_deadline(), absolute)
+
     def test_upload_blocked_when_overdue(self):
         pdf = SimpleUploadedFile(
             "late.pdf", b"%PDF-1.4\n", content_type="application/pdf"

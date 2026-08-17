@@ -287,13 +287,25 @@ def seed_mobility_document_types() -> list[DocumentType]:
     return list(by_slug.values())
 
 
-def assign_scheme_document_requirements() -> int:
+def assign_scheme_document_requirements(
+    program_model=None,
+    requirement_model=None,
+    document_type_model=None,
+) -> int:
     """
     Attach ProgramDocumentRequirement rows to the three mobility schemes.
 
     Scholarship docs are optional and only on international schemes.
     Returns number of requirement rows ensured.
+
+    Optional model args exist so migrations can pass historical models whose
+    columns match the schema at that point (live models may already include
+    later fields such as deadline_days_after_program_start).
     """
+    program_cls = program_model or Program
+    requirement_cls = requirement_model or ProgramDocumentRequirement
+    document_type_cls = document_type_model or DocumentType
+
     seed_mobility_document_types()
     schemes = {
         "Movilidad Nacional": "nacional",
@@ -302,7 +314,7 @@ def assign_scheme_document_requirements() -> int:
     }
     created = 0
     for program_name, kind in schemes.items():
-        program = Program.objects.filter(name=program_name).first()
+        program = program_cls.objects.filter(name=program_name).first()
         if not program:
             continue
         rows: list[tuple[int, str, bool]] = [
@@ -315,10 +327,10 @@ def assign_scheme_document_requirements() -> int:
             rows.extend((order, slug, False) for order, slug in SCHOLARSHIP_OPTIONAL)
 
         for sort_order, slug, is_required in rows:
-            dt = DocumentType.objects.filter(slug=slug).first()
+            dt = document_type_cls.objects.filter(slug=slug).first()
             if not dt:
                 continue
-            _, was_created = ProgramDocumentRequirement.objects.update_or_create(
+            _, was_created = requirement_cls.objects.update_or_create(
                 program=program,
                 document_type=dt,
                 defaults={

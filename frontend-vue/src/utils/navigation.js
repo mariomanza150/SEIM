@@ -36,6 +36,7 @@ const EXACT_SPA_ROUTES = {
   '/admin/dynforms': { name: 'AdminDynforms' },
   '/admin/data-management': { name: 'AdminDataManagement' },
   '/admin/workflows': { name: 'AdminWorkflows' },
+  '/admin/documents': { name: 'AdminDocuments' },
   '/grades': { name: 'Profile' },
 }
 
@@ -93,9 +94,19 @@ export function normalizeSpaLocation(url) {
     return { name: 'AdminDynformEditor', params: { id: dynformEditorMatch[1] } }
   }
 
+  const destinationsMatch = spaPath.match(/^\/admin\/programs\/([^/]+)\/destinations$/)
+  if (destinationsMatch) {
+    return { name: 'AdminProgramDestinations', params: { id: destinationsMatch[1] } }
+  }
+
   const workflowEditorMatch = spaPath.match(/^\/admin\/workflows\/([^/]+)$/)
   if (workflowEditorMatch) {
     return { name: 'AdminWorkflowEditor', params: { id: workflowEditorMatch[1] } }
+  }
+
+  const documentTypeEditorMatch = spaPath.match(/^\/admin\/documents\/([^/]+)$/)
+  if (documentTypeEditorMatch) {
+    return { name: 'AdminDocumentTypeEdit', params: { id: documentTypeEditorMatch[1] } }
   }
 
   const adminApplicationMatch = spaPath.match(/^\/admin\/applications\/([^/]+)$/)

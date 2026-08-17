@@ -25,6 +25,7 @@ from exchange.views import (
     HostAcademicProgramViewSet,
     HostInstitutionViewSet,
     HostSchoolViewSet,
+    HostSubjectViewSet,
     ProgramViewSet,
     SavedSearchViewSet,
     TimelineEventViewSet,
@@ -50,6 +51,7 @@ router.register(
     HostAcademicProgramViewSet,
     basename="host-academic-program",
 )
+router.register(r"host-subjects", HostSubjectViewSet, basename="host-subject")
 router.register(r"applications", ApplicationViewSet, basename="application")
 router.register(
     r"application-subject-selections",

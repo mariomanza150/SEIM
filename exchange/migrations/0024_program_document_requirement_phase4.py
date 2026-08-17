@@ -27,14 +27,19 @@ def copy_required_document_m2m(apps, schema_editor):
 
 def seed_mobility_document_catalog(apps, schema_editor):
     """Seed Mexican mobility DocumentTypes and scheme requirements."""
-    # Use real models so catalog helper stays the single source of truth.
     from documents.mobility_document_catalog import (
         assign_scheme_document_requirements,
         seed_mobility_document_types,
     )
 
     seed_mobility_document_types()
-    assign_scheme_document_requirements()
+    assign_scheme_document_requirements(
+        program_model=apps.get_model("exchange", "Program"),
+        requirement_model=apps.get_model(
+            "exchange", "ProgramDocumentRequirement"
+        ),
+        document_type_model=apps.get_model("documents", "DocumentType"),
+    )
 
 
 def drop_legacy_m2m_table(apps, schema_editor):

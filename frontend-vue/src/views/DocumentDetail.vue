@@ -146,6 +146,13 @@
                 >
                   <i class="bi bi-download me-1"></i>{{ t('documentDetailPage.downloadTemplate') }}
                 </button>
+                <router-link
+                  v-if="isAdmin && document.type?.id"
+                  class="btn btn-sm btn-outline-primary ms-2"
+                  :to="{ name: 'AdminDocumentTypeEdit', params: { id: String(document.type.id) } }"
+                >
+                  {{ t('documentDetailPage.editDocumentType') }}
+                </router-link>
               </div>
             </div>
 
@@ -215,7 +222,7 @@
                   </a>
                 </div>
 
-                <div v-if="isStudent" class="mt-4 pt-3 border-top">
+                <div v-if="isStudent || isStaff" class="mt-4 pt-3 border-top">
                   <h6 class="mb-2">{{ t('documentDetailPage.replaceFileHeading') }}</h6>
                   <p class="small text-muted mb-2">
                     {{ t('documentDetailPage.replaceFileHint') }}
@@ -457,6 +464,7 @@ const isStaff = computed(() => {
   const r = authStore.userRole
   return r === 'coordinator' || r === 'admin'
 })
+const isAdmin = computed(() => authStore.userRole === 'admin')
 const isStudent = computed(() => authStore.userRole === 'student')
 
 const typeInstructions = computed(() => document.value?.type?.instructions || '')
@@ -466,7 +474,9 @@ async function downloadTypeTemplate() {
   const typeId = document.value?.type?.id
   if (!typeId) return
   try {
-    const response = await api.get(`/api/document-types/${typeId}/download-template/`, {
+    const appId = documentApplicationId(document.value?.application)
+    const qs = appId ? `?application=${encodeURIComponent(appId)}` : ''
+    const response = await api.get(`/api/document-types/${typeId}/download-template/${qs}`, {
       responseType: 'blob',
     })
     const blob = new Blob([response.data])

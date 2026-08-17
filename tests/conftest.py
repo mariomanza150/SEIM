@@ -701,7 +701,10 @@ def pytest_sessionfinish(session, exitstatus):
     except Exception:
         pass
 
-    close_old_connections()
+    try:
+        close_old_connections()
+    except Exception:
+        pass
     try:
         async_to_sync(database_sync_to_async(connections.close_all))()
     except Exception:
@@ -736,7 +739,10 @@ def pytest_unconfigure(config):
     except Exception:
         pass
 
-    close_old_connections()
+    try:
+        close_old_connections()
+    except Exception:
+        pass
     try:
         async_to_sync(database_sync_to_async(connections.close_all))()
     except Exception:

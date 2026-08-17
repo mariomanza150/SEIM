@@ -90,6 +90,11 @@
                   </router-link>
                 </li>
                 <li>
+                  <router-link class="dropdown-item" :to="{ name: 'AdminDocuments' }">
+                    {{ t('route.names.AdminDocuments') }}
+                  </router-link>
+                </li>
+                <li>
                   <router-link class="dropdown-item" :to="{ name: 'EligibilityRulesets' }">
                     {{ t('route.names.EligibilityRulesets') }}
                   </router-link>
@@ -376,6 +381,12 @@ const adminNavItems = computed(() => [
     to: { name: 'AdminWorkflows' },
     label: t('route.names.AdminWorkflows'),
     iconClass: 'bi bi-diagram-3',
+  },
+  {
+    key: 'adminDocuments',
+    to: { name: 'AdminDocuments' },
+    label: t('route.names.AdminDocuments'),
+    iconClass: 'bi bi-file-earmark-text',
   },
 ])
 

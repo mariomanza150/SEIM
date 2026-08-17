@@ -72,6 +72,10 @@ When creating or editing programs:
 2. Optionally specify which grading scale the requirement is in
 3. The system will compare applicants' grades fairly across different scales
 
+## Course-level translation (homologación)
+
+The same `GradeTranslationService` is used when a coordinator confirms host course grades on an application. The host university's grade scale (set on the destination catalog) is translated into the student's profile grade scale. See [Course-level grade translation](notes/course-grade-translation.md).
+
 ## For Administrators
 
 ### Managing Grade Scales

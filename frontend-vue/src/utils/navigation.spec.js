@@ -33,8 +33,19 @@ describe('normalizeSpaLocation', () => {
       name: 'AdminDynformEditor',
       params: { id: '7' },
     })
+    expect(normalizeSpaLocation('/seim/admin/programs/prog-1/destinations')).toEqual({
+      name: 'AdminProgramDestinations',
+      params: { id: 'prog-1' },
+    })
     expect(normalizeSpaLocation('/seim/admin/data-management')).toEqual({
       name: 'AdminDataManagement',
+    })
+    expect(normalizeSpaLocation('/seim/admin/documents')).toEqual({
+      name: 'AdminDocuments',
+    })
+    expect(normalizeSpaLocation('/seim/admin/documents/9')).toEqual({
+      name: 'AdminDocumentTypeEdit',
+      params: { id: '9' },
     })
     expect(normalizeSpaLocation('/seim/admin')).toEqual({ name: 'AdminPrograms' })
     expect(normalizeSpaLocation('/analytics')).toEqual({ name: 'AnalyticsForecasts' })

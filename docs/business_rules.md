@@ -98,10 +98,11 @@ draft → submitted → under_review → approved/rejected → completed/cancell
 - Documents are scanned for viruses (stub implementation)
 
 ### **Document Types:**
-- Document types are configured by admins
-- Each program can have different required document types
-- Document types can be marked as required or optional
-- Document types can have specific file format requirements
+- Document types are configured by admins in the SPA admin console (`/seim/admin/documents`)
+- Each type can have student instructions, FAQ, an optional Word template, accepted extensions, and a per-type size cap
+- Each program can request different document types, with required/optional flags
+- Submission deadlines can be an absolute date, N days after program start, or N days before the application deadline
+- Word `.docx` templates use MERGEFIELD names (e.g. `FirstName`, `Matricula`, `ProgramName`); student downloads are prefilled for the selected application
 
 ### **Document Replacement Rules:**
 - **Before Submission**: Students can freely replace documents

@@ -228,7 +228,9 @@ Cascade APIs: `/api/programs/{id}/host-institutions/`, `.../host-institutions/{i
 ### ProgramDocumentRequirement
 Through model configuring per-scheme document checklist items.
 
-**Fields:** `program`, `document_type`, `is_required`, `deadline` (absolute) **or** `deadline_days_before_program_deadline`, instruction override, `sort_order`.
+**Fields:** `program`, `document_type`, `is_required`, `deadline` (absolute), `deadline_days_after_program_start`, `deadline_days_before_program_deadline`, instruction override, `sort_order`.
+
+Deadline precedence: absolute `deadline`, then days after program `start_date`, then days before `application_deadline`.
 
 ### Application
 Student application for a mobility scheme.

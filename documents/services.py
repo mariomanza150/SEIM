@@ -505,11 +505,24 @@ class DocumentService:
         eff = DocumentService.intersect_program_required_document_type_ids(program, ids)
         if not eff:
             return []
-        return list(
+        rows = list(
             DocumentType.objects.filter(pk__in=eff)
             .order_by("name")
-            .values("id", "name", "description")
+            .values(
+                "id",
+                "name",
+                "description",
+                "instructions",
+                "faq",
+                "submission_mode",
+                "accepted_extensions",
+                "max_file_size_mb",
+                "template_file",
+            )
         )
+        for row in rows:
+            row["has_template"] = bool(row.pop("template_file"))
+        return rows
 
     @staticmethod
     def enrich_form_steps_for_program(form_type, program):

@@ -59,6 +59,7 @@ function mountView() {
       plugins: [createPinia(), i18n],
       stubs: {
         DocumentUpload: { template: '<div class="document-upload-stub"></div>' },
+        ApplicationSubjectsPanel: { template: '<div class="subjects-panel-stub"></div>' },
         RouterLink: { template: '<a><slot /></a>' },
       },
     },
@@ -364,5 +365,57 @@ describe('ApplicationDetail', () => {
     })
     expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.scholarshipAward.noneYet'))
     expect(wrapper.find('[data-testid="award-save"]').exists()).toBe(true)
+  })
+
+  it('shows uploaded documents as pending until staff validation', async () => {
+    mockAuthStore.userRole = 'student'
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({ data: applicationPayload })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'doc-pending',
+                type: { id: 1, name: 'Transcript' },
+                is_valid: false,
+                validated_at: null,
+              },
+              {
+                id: 'doc-invalid',
+                type: { id: 2, name: 'Passport' },
+                is_valid: false,
+                validated_at: '2026-08-17T12:00:00Z',
+              },
+              {
+                id: 'doc-valid',
+                type: { id: 3, name: 'Motivation letter' },
+                is_valid: true,
+                validated_at: '2026-08-17T12:00:00Z',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.findAll('[data-testid="document-status-badge"]')).toHaveLength(3)
+    })
+
+    const badges = wrapper.findAll('[data-testid="document-status-badge"]')
+    expect(badges[0].text()).toBe(i18n.global.t('applicationDetailPage.docPending'))
+    expect(badges[0].classes()).toContain('bg-warning')
+    expect(badges[1].text()).toBe(i18n.global.t('applicationDetailPage.docInvalid'))
+    expect(badges[1].classes()).toContain('bg-danger')
+    expect(badges[2].text()).toBe(i18n.global.t('applicationDetailPage.docValid'))
+    expect(badges[2].classes()).toContain('bg-success')
+    mockAuthStore.userRole = 'coordinator'
   })
 })

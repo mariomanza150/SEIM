@@ -9,6 +9,11 @@ SEAT_HOLDING_APPLICATION_STATUS_NAMES = frozenset(
     {"submitted", "under_review", "approved", "completed", "nominated"}
 )
 
+# Application statuses in which students may propose host course grades.
+SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES = frozenset(
+    {"approved", "nominated", "completed"}
+)
+
 
 class EligibilityRuleSet(UUIDModel, TimeStampedModel):
     """
@@ -292,6 +297,17 @@ class HostInstitution(UUIDModel, TimeStampedModel):
     name = models.CharField(max_length=255)
     country = models.CharField(max_length=120, blank=True, default="")
     is_active = models.BooleanField(default=True)
+    grade_scale = models.ForeignKey(
+        "grades.GradeScale",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="host_institutions",
+        help_text=_(
+            "Host university grading scale used for subject grade dropdowns "
+            "and course-level translation."
+        ),
+    )
 
     class Meta:
         ordering = ["name"]
@@ -362,12 +378,33 @@ class HostAcademicProgram(UUIDModel, TimeStampedModel):
 
 
 class HostSubject(UUIDModel, TimeStampedModel):
-    """Optional subject / course catalog entry under a host academic program."""
+    """Optional subject / course catalog entry hanging off a host university.
 
+    School and academic program are optional: subjects may be institution-level,
+    school-level, or program-level.
+    """
+
+    institution = models.ForeignKey(
+        HostInstitution,
+        on_delete=models.CASCADE,
+        related_name="subjects",
+        help_text=_("Host university this subject belongs to."),
+    )
+    school = models.ForeignKey(
+        HostSchool,
+        on_delete=models.CASCADE,
+        related_name="subjects",
+        null=True,
+        blank=True,
+        help_text=_("Optional faculty / school. Must belong to the institution."),
+    )
     academic_program = models.ForeignKey(
         HostAcademicProgram,
         on_delete=models.CASCADE,
         related_name="subjects",
+        null=True,
+        blank=True,
+        help_text=_("Optional academic program. Must belong to the school."),
     )
     code = models.CharField(max_length=64, blank=True, default="")
     name = models.CharField(max_length=255)
@@ -386,8 +423,8 @@ class HostSubject(UUIDModel, TimeStampedModel):
         verbose_name_plural = _("Host subjects")
         constraints = [
             models.UniqueConstraint(
-                fields=["academic_program", "name", "code"],
-                name="uniq_host_subject_program_name_code",
+                fields=["institution", "name", "code"],
+                name="uniq_host_subject_institution_name_code",
             )
         ]
 
@@ -395,6 +432,46 @@ class HostSubject(UUIDModel, TimeStampedModel):
         if self.code:
             return f"{self.code} — {self.name}"
         return self.name
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        errors = {}
+        school = self.school if self.school_id else None
+        academic = self.academic_program if self.academic_program_id else None
+
+        if school is not None and self.institution_id:
+            if school.institution_id != self.institution_id:
+                errors["school"] = _(
+                    "Host school must belong to the selected host institution."
+                )
+
+        if academic is not None:
+            if self.school_id is None:
+                self.school_id = academic.school_id
+                school = academic.school
+            elif academic.school_id != self.school_id:
+                errors["academic_program"] = _(
+                    "Host academic program must belong to the selected host school."
+                )
+            if self.institution_id and academic.school.institution_id != self.institution_id:
+                errors["academic_program"] = _(
+                    "Host academic program must belong to the selected host institution."
+                )
+
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        if self.academic_program_id:
+            academic = self.academic_program
+            if not self.school_id:
+                self.school_id = academic.school_id
+            if not self.institution_id:
+                self.institution_id = academic.school.institution_id
+        elif self.school_id and not self.institution_id:
+            self.institution_id = self.school.institution_id
+        super().save(*args, **kwargs)
 
 
 class ProgramDocumentRequirement(models.Model):
@@ -426,6 +503,14 @@ class ProgramDocumentRequirement(models.Model):
             "Relative deadline: N days before the program application_deadline."
         ),
     )
+    deadline_days_after_program_start = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text=_(
+            "Relative deadline: N days after the program start_date "
+            "(e.g. arrival certificates due after mobility begins)."
+        ),
+    )
     instructions_override = models.TextField(
         blank=True,
         default="",
@@ -448,13 +533,20 @@ class ProgramDocumentRequirement(models.Model):
         return f"{self.program} → {self.document_type}"
 
     def resolve_deadline(self):
-        """Return effective deadline date, or None if unset."""
+        """Return effective deadline date, or None if unset.
+
+        Precedence: absolute ``deadline``, then days after program start,
+        then days before the program application deadline.
+        """
+        from datetime import timedelta
+
         if self.deadline:
             return self.deadline
+        after_start = self.deadline_days_after_program_start
+        if after_start is not None and self.program.start_date:
+            return self.program.start_date + timedelta(days=after_start)
         days = self.deadline_days_before_program_deadline
         if days is not None and self.program.application_deadline:
-            from datetime import timedelta
-
             return self.program.application_deadline - timedelta(days=days)
         return None
 
@@ -733,10 +825,17 @@ class Application(UUIDModel, TimeStampedModel):
 
 class ApplicationSubjectSelection(UUIDModel, TimeStampedModel):
     """
-    Optional mapping of a host subject to a home course for homologación.
+    Optional mapping of a host subject (catalog or custom) to a home course.
 
-    Not required for application submit.
+    Not required for application submit. Students propose host grades after
+    approval; coordinators confirm to lock a translated home grade.
     """
+
+    class GradeStatus(models.TextChoices):
+        NONE = "none", _("None")
+        PROPOSED = "proposed", _("Proposed")
+        CONFIRMED = "confirmed", _("Confirmed")
+        REJECTED = "rejected", _("Rejected")
 
     application = models.ForeignKey(
         Application,
@@ -747,6 +846,28 @@ class ApplicationSubjectSelection(UUIDModel, TimeStampedModel):
         HostSubject,
         on_delete=models.PROTECT,
         related_name="application_selections",
+        null=True,
+        blank=True,
+        help_text=_("Catalog host subject. Mutually exclusive with custom course fields."),
+    )
+    custom_code = models.CharField(
+        max_length=64,
+        blank=True,
+        default="",
+        help_text=_("Unlisted host course code (when not using the catalog)."),
+    )
+    custom_name = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text=_("Unlisted host course name (required when not using the catalog)."),
+    )
+    custom_credits = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        help_text=_("Unlisted host course credits."),
     )
     home_course_label = models.CharField(
         max_length=255,
@@ -766,10 +887,56 @@ class ApplicationSubjectSelection(UUIDModel, TimeStampedModel):
         null=True,
         blank=True,
         help_text=_(
-            "Credits used for homologación (defaults to host subject credits)."
+            "Credits used for homologación (defaults to host subject or custom credits)."
         ),
     )
     notes = models.TextField(blank=True, default="")
+    proposed_host_grade = models.ForeignKey(
+        "grades.GradeValue",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="proposed_subject_selections",
+        help_text=_("Host grade proposed by the student."),
+    )
+    confirmed_host_grade = models.ForeignKey(
+        "grades.GradeValue",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="confirmed_subject_selections",
+        help_text=_("Host grade locked after coordinator confirmation."),
+    )
+    home_grade = models.ForeignKey(
+        "grades.GradeValue",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="home_subject_selections",
+        help_text=_("Translated home-scale grade written at confirmation."),
+    )
+    grade_status = models.CharField(
+        max_length=16,
+        choices=GradeStatus.choices,
+        default=GradeStatus.NONE,
+    )
+    proposed_at = models.DateTimeField(null=True, blank=True)
+    proposed_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="proposed_subject_grades",
+    )
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    confirmed_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="confirmed_subject_grades",
+    )
+    confirmation_notes = models.TextField(blank=True, default="")
 
     class Meta:
         ordering = ["created_at"]
@@ -778,30 +945,96 @@ class ApplicationSubjectSelection(UUIDModel, TimeStampedModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["application", "host_subject"],
+                condition=models.Q(host_subject__isnull=False),
                 name="uniq_application_host_subject_selection",
-            )
+            ),
+            models.CheckConstraint(
+                condition=(
+                    (
+                        models.Q(host_subject__isnull=False)
+                        & models.Q(custom_name="")
+                        & models.Q(custom_code="")
+                        & models.Q(custom_credits__isnull=True)
+                    )
+                    | (
+                        models.Q(host_subject__isnull=True)
+                        & ~models.Q(custom_name="")
+                    )
+                ),
+                name="application_subject_catalog_xor_custom",
+            ),
         ]
 
     def __str__(self):
-        return f"{self.application_id}: {self.host_subject}"
+        return f"{self.application_id}: {self.host_course_display}"
+
+    @property
+    def host_course_code(self):
+        if self.host_subject_id:
+            return self.host_subject.code
+        return self.custom_code
+
+    @property
+    def host_course_name(self):
+        if self.host_subject_id:
+            return self.host_subject.name
+        return self.custom_name
+
+    @property
+    def host_course_display(self):
+        code = self.host_course_code
+        name = self.host_course_name
+        if code:
+            return f"{code} — {name}"
+        return name or "—"
 
     def clean(self):
         from django.core.exceptions import ValidationError
 
         errors = {}
-        if self.host_subject_id and self.application_id:
-            app_prog_id = self.application.host_academic_program_id
-            subj_prog_id = self.host_subject.academic_program_id
-            if app_prog_id and subj_prog_id != app_prog_id:
+        has_catalog = bool(self.host_subject_id)
+        custom_name = (self.custom_name or "").strip()
+        custom_code = (self.custom_code or "").strip()
+        has_custom = bool(
+            custom_name or custom_code or self.custom_credits is not None
+        )
+
+        if has_catalog and has_custom:
+            errors["host_subject"] = _(
+                "Choose a catalog subject or a custom host course, not both."
+            )
+        elif not has_catalog and not custom_name:
+            errors["custom_name"] = _(
+                "Provide a custom course name or select a catalog subject."
+            )
+
+        if has_catalog and self.application_id:
+            app = self.application
+            subj = self.host_subject
+            if subj.institution_id != app.host_institution_id:
                 errors["host_subject"] = _(
-                    "Host subject must belong to the application's host academic program."
+                    "Host subject must belong to the application's host institution."
+                )
+            elif subj.school_id and subj.school_id != app.host_school_id:
+                errors["host_subject"] = _(
+                    "Host subject is not available for this destination."
+                )
+            elif (
+                subj.academic_program_id
+                and subj.academic_program_id != app.host_academic_program_id
+            ):
+                errors["host_subject"] = _(
+                    "Host subject is not available for this destination."
                 )
         if errors:
             raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
-        if self.credits is None and self.host_subject_id:
-            self.credits = self.host_subject.credits
+        if self.credits is None:
+            if self.host_subject_id:
+                self.credits = self.host_subject.credits
+            elif self.custom_credits is not None:
+                self.credits = self.custom_credits
         super().save(*args, **kwargs)
 
 
@@ -860,6 +1093,44 @@ def validate_application_host_destination(application, *, require_complete=False
             )
 
     return errors
+
+
+def visible_host_subjects_queryset(
+    *,
+    institution_id,
+    school_id=None,
+    academic_program_id=None,
+    include_inactive=False,
+):
+    """
+    Subjects visible for a destination: institution-level always, plus
+    school-level and program-level when those FKs are set.
+    """
+    if not institution_id:
+        return HostSubject.objects.none()
+
+    q = models.Q(
+        institution_id=institution_id,
+        school__isnull=True,
+        academic_program__isnull=True,
+    )
+    if school_id:
+        q |= models.Q(
+            institution_id=institution_id,
+            school_id=school_id,
+            academic_program__isnull=True,
+        )
+    if academic_program_id:
+        q |= models.Q(
+            institution_id=institution_id,
+            academic_program_id=academic_program_id,
+        )
+    qs = HostSubject.objects.filter(q)
+    if not include_inactive:
+        qs = qs.filter(is_active=True)
+    return qs.select_related(
+        "institution", "school", "academic_program"
+    ).order_by("name", "code")
 
 
 class ApplicationStatus(models.Model):

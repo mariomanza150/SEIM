@@ -142,6 +142,8 @@ class Command(BaseCommand):
             )
         if not HostSubject.objects.filter(academic_program=academic).exists():
             HostSubject.objects.create(
+                institution=institution,
+                school=school,
                 academic_program=academic,
                 code="CS101",
                 name="Algorithms",

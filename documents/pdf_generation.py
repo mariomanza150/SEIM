@@ -209,6 +209,12 @@ def render_carta_homologacion_pdf(application) -> bytes:
         application.subject_selections.select_related(
             "host_subject",
             "host_subject__academic_program",
+            "proposed_host_grade",
+            "proposed_host_grade__grade_scale",
+            "confirmed_host_grade",
+            "confirmed_host_grade__grade_scale",
+            "home_grade",
+            "home_grade__grade_scale",
         ).order_by("created_at")
     )
 
@@ -221,6 +227,7 @@ def render_carta_homologacion_pdf(application) -> bytes:
         topMargin=0.7 * inch,
         bottomMargin=0.7 * inch,
         title="Carta de Homologación",
+        pageCompression=0,
     )
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
@@ -287,43 +294,109 @@ def render_carta_homologacion_pdf(application) -> bytes:
             )
         )
     else:
+        include_grades = any(
+            getattr(sel, "grade_status", "none") in ("proposed", "confirmed", "rejected")
+            or getattr(sel, "proposed_host_grade_id", None)
+            or getattr(sel, "confirmed_host_grade_id", None)
+            for sel in selections
+        )
         header = [
             Paragraph("<b>Código anfitrión</b>", body),
             Paragraph("<b>Asignatura anfitriona</b>", body),
             Paragraph("<b>Créditos</b>", body),
             Paragraph("<b>Código casa</b>", body),
             Paragraph("<b>Asignatura casa</b>", body),
-            Paragraph("<b>Notas</b>", body),
         ]
-        rows = [header]
-        for sel in selections:
-            subj = sel.host_subject
-            rows.append(
+        if include_grades:
+            header.extend(
                 [
-                    Paragraph(_safe_getattr(subj, "code", ""), body),
-                    Paragraph(_safe_getattr(subj, "name"), body),
-                    Paragraph(
-                        _safe_getattr(sel, "credits")
-                        if sel.credits is not None
-                        else _safe_getattr(subj, "credits", ""),
-                        body,
-                    ),
-                    Paragraph(sel.home_course_code or "—", body),
-                    Paragraph(sel.home_course_label or "—", body),
-                    Paragraph(sel.notes or "—", body),
+                    Paragraph("<b>Calificación anfitriona</b>", body),
+                    Paragraph("<b>Calificación casa</b>", body),
+                    Paragraph("<b>Escala</b>", body),
                 ]
             )
-        table = Table(
-            rows,
-            colWidths=[
+        else:
+            header.append(Paragraph("<b>Notas</b>", body))
+        rows = [header]
+        for sel in selections:
+            subj = getattr(sel, "host_subject", None)
+            host_code = (
+                getattr(sel, "host_course_code", None)
+                or _safe_getattr(subj, "code", "")
+                or getattr(sel, "custom_code", "")
+            )
+            host_name = (
+                getattr(sel, "host_course_name", None)
+                or _safe_getattr(subj, "name")
+                or getattr(sel, "custom_name", "")
+            )
+            credits_val = (
+                _safe_getattr(sel, "credits")
+                if sel.credits is not None
+                else (
+                    _safe_getattr(subj, "credits", "")
+                    if subj is not None
+                    else _safe_getattr(sel, "custom_credits", "")
+                )
+            )
+            row = [
+                Paragraph(host_code or "—", body),
+                Paragraph(host_name or "—", body),
+                Paragraph(credits_val, body),
+                Paragraph(sel.home_course_code or "—", body),
+                Paragraph(sel.home_course_label or "—", body),
+            ]
+            if include_grades:
+                confirmed = getattr(sel, "confirmed_host_grade", None)
+                proposed = getattr(sel, "proposed_host_grade", None)
+                host_grade = confirmed or proposed
+                host_label = _safe_getattr(host_grade, "label", "—")
+                status = getattr(sel, "grade_status", "none")
+                if host_grade is not None and status == "proposed":
+                    host_label = f"{host_label} (pendiente)"
+                elif host_grade is not None and status == "rejected":
+                    host_label = f"{host_label} (rechazada)"
+                home_grade = getattr(sel, "home_grade", None)
+                home_label = _safe_getattr(home_grade, "label", "—")
+                host_scale = _safe_getattr(
+                    getattr(host_grade, "grade_scale", None), "name", ""
+                )
+                home_scale = _safe_getattr(
+                    getattr(home_grade, "grade_scale", None), "name", ""
+                )
+                scale_bits = [s for s in (host_scale, home_scale) if s and s != "—"]
+                scale_text = " → ".join(scale_bits) if scale_bits else "—"
+                row.extend(
+                    [
+                        Paragraph(host_label, body),
+                        Paragraph(home_label, body),
+                        Paragraph(scale_text, body),
+                    ]
+                )
+            else:
+                row.append(Paragraph(sel.notes or "—", body))
+            rows.append(row)
+        if include_grades:
+            col_widths = [
+                0.75 * inch,
+                1.2 * inch,
+                0.6 * inch,
+                0.75 * inch,
+                1.1 * inch,
+                1.0 * inch,
+                0.9 * inch,
+                1.1 * inch,
+            ]
+        else:
+            col_widths = [
                 0.9 * inch,
                 1.5 * inch,
                 0.7 * inch,
                 0.9 * inch,
                 1.4 * inch,
                 1.4 * inch,
-            ],
-        )
+            ]
+        table = Table(rows, colWidths=col_widths)
         table.setStyle(
             TableStyle(
                 [

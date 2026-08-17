@@ -26,6 +26,7 @@ PERMISSION_REGISTRY = {
     "validate_document": ["coordinator", "admin"],
     "request_document_resubmission": ["coordinator", "admin"],
     "delete_any_document": ["admin"],
+    "manage_document_types": ["admin"],
     # Program Permissions
     "view_programs": ["student", "coordinator", "admin"],
     "create_program": ["admin"],

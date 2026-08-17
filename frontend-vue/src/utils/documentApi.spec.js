@@ -3,6 +3,7 @@ import {
   applicationSelectLabel,
   documentApplicationId,
   documentApplicationProgramName,
+  documentReviewStatus,
   documentTypeLabel,
 } from './documentApi'
 
@@ -51,6 +52,20 @@ describe('documentApi', () => {
     const broken = '{broken,"id":"app-z","program_name":"Loose \\"Name\\""}'
     expect(documentApplicationId(broken)).toBe('app-z')
     expect(documentApplicationProgramName(broken, [], 'Unknown')).toBe('Loose "Name"')
+  })
+
+  it('documentReviewStatus treats unreviewed uploads as pending, not invalid', () => {
+    expect(documentReviewStatus({ is_valid: false, validated_at: null })).toBe('pending')
+    expect(documentReviewStatus({ is_valid: false })).toBe('pending')
+    expect(documentReviewStatus({ is_valid: false, validated_at: '' })).toBe('pending')
+    expect(documentReviewStatus({ is_valid: false, validated_at: '2026-08-17T12:00:00Z' })).toBe(
+      'invalid',
+    )
+    expect(documentReviewStatus({ is_valid: true, validated_at: null })).toBe('valid')
+    expect(documentReviewStatus({ is_valid: true, validated_at: '2026-08-17T12:00:00Z' })).toBe(
+      'valid',
+    )
+    expect(documentReviewStatus(null)).toBe('pending')
   })
 
   it('applicationSelectLabel prefers program_name then nested program name', () => {

@@ -79,11 +79,11 @@
         <table class="table table-hover align-middle mb-0" data-testid="admin-programs-table">
           <thead>
             <tr>
+              <th scope="col" class="text-nowrap">{{ t('adminCommon.actions') }}</th>
               <th scope="col">{{ t('adminPrograms.columns.name') }}</th>
               <th scope="col" class="text-nowrap">{{ t('adminPrograms.columns.window') }}</th>
               <th scope="col" class="text-nowrap">{{ t('adminPrograms.columns.active') }}</th>
               <th scope="col" class="text-nowrap">{{ t('adminPrograms.columns.capacity') }}</th>
-              <th scope="col" class="text-end">{{ t('adminCommon.actions') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -93,15 +93,43 @@
               </td>
             </tr>
             <tr v-for="p in programs" :key="p.id">
-              <td class="min-w-0">
+              <td class="text-nowrap">
+                <button type="button" class="btn btn-sm btn-outline-secondary me-2" @click="openEdit(p)">
+                  <i class="bi bi-pencil me-1" aria-hidden="true"></i>{{ t('adminCommon.edit') }}
+                </button>
+                <router-link
+                  class="btn btn-sm btn-outline-secondary me-2"
+                  :to="{ name: 'AdminProgramDestinations', params: { id: p.id } }"
+                >
+                  <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ t('adminPrograms.destinations') }}
+                </router-link>
+                <button type="button" class="btn btn-sm btn-outline-primary me-2" @click="cloneProgram(p)" :disabled="mutating">
+                  <i class="bi bi-files me-1" aria-hidden="true"></i>{{ t('adminPrograms.clone') }}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" @click="confirmDelete(p)" :disabled="mutating">
+                  <i class="bi bi-trash me-1" aria-hidden="true"></i>{{ t('adminCommon.delete') }}
+                </button>
+              </td>
+              <td class="program-name-cell min-w-0">
                 <div class="fw-medium text-truncate">{{ p.name }}</div>
-                <div class="text-muted small text-truncate">{{ p.description }}</div>
+                <div
+                  v-if="p.description"
+                  class="program-description-wrap"
+                >
+                  <div
+                    class="program-description text-muted small"
+                    tabindex="0"
+                    data-testid="admin-program-description"
+                  >
+                    {{ p.description }}
+                  </div>
+                </div>
               </td>
               <td class="text-nowrap small">
                 <span class="badge" :class="p.application_window_open ? 'bg-success' : 'bg-secondary'">
                   {{ p.application_window_open ? t('adminPrograms.windowOpen') : t('adminPrograms.windowClosed') }}
                 </span>
-                <div class="text-muted small mt-1">{{ p.application_window_message }}</div>
+                <div class="text-muted small mt-1">{{ formatWindowDates(p) }}</div>
               </td>
               <td class="text-nowrap">
                 <span class="badge" :class="p.is_active ? 'bg-success' : 'bg-secondary'">
@@ -114,17 +142,6 @@
                   {{ p.enrollment_seats_occupied }} / {{ p.enrollment_capacity }}
                   <span class="text-muted">({{ t('adminPrograms.capacityRemaining', { n: p.enrollment_slots_remaining ?? 0 }) }})</span>
                 </span>
-              </td>
-              <td class="text-end text-nowrap">
-                <button type="button" class="btn btn-sm btn-outline-secondary me-2" @click="openEdit(p)">
-                  <i class="bi bi-pencil me-1" aria-hidden="true"></i>{{ t('adminCommon.edit') }}
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-primary me-2" @click="cloneProgram(p)" :disabled="mutating">
-                  <i class="bi bi-files me-1" aria-hidden="true"></i>{{ t('adminPrograms.clone') }}
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-danger" @click="confirmDelete(p)" :disabled="mutating">
-                  <i class="bi bi-trash me-1" aria-hidden="true"></i>{{ t('adminCommon.delete') }}
-                </button>
               </td>
             </tr>
           </tbody>
@@ -151,7 +168,7 @@
             <div class="row g-3">
               <div class="col-md-8">
                 <label class="form-label">{{ t('adminPrograms.fields.name') }}</label>
-                <input v-model="editor.form.name" class="form-control" type="text" />
+                <input v-model="editor.form.name" class="form-control" type="text" required />
               </div>
               <div class="col-md-4">
                 <label class="form-label">{{ t('adminPrograms.fields.active') }}</label>
@@ -163,7 +180,7 @@
 
               <div class="col-12">
                 <label class="form-label">{{ t('adminPrograms.fields.description') }}</label>
-                <textarea v-model="editor.form.description" class="form-control" rows="3"></textarea>
+                <textarea v-model="editor.form.description" class="form-control" rows="3" required></textarea>
               </div>
 
               <div class="col-md-6">
@@ -176,11 +193,11 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label">{{ t('adminPrograms.fields.startDate') }}</label>
-                <input v-model="editor.form.start_date" class="form-control" type="date" />
+                <input v-model="editor.form.start_date" class="form-control" type="date" required />
               </div>
               <div class="col-md-6">
                 <label class="form-label">{{ t('adminPrograms.fields.endDate') }}</label>
-                <input v-model="editor.form.end_date" class="form-control" type="date" />
+                <input v-model="editor.form.end_date" class="form-control" type="date" required />
               </div>
 
               <div class="col-md-6">
@@ -303,9 +320,10 @@ import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import { formatDate } from '@/utils/formatters'
 import PageHeader from '@/components/PageHeader.vue'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { success, error: errorToast } = useToast()
 const { confirm } = useConfirm()
 
@@ -323,6 +341,23 @@ const filters = ref({
 function resetFilters() {
   filters.value = { search: '', is_active: '', ordering: 'name' }
   fetchPrograms()
+}
+
+function formatWindowDate(dateString) {
+  if (!dateString) return ''
+  const value = /^\d{4}-\d{2}-\d{2}/.test(dateString)
+    ? `${String(dateString).slice(0, 10)}T12:00:00`
+    : dateString
+  return formatDate({ dateString: value, locale: locale.value, fallback: '' })
+}
+
+function formatWindowDates(program) {
+  const open = formatWindowDate(program.application_open_date)
+  const close = formatWindowDate(program.application_deadline)
+  if (open && close) return t('adminPrograms.windowRange', { open, close })
+  if (open) return t('adminPrograms.windowFrom', { date: open })
+  if (close) return t('adminPrograms.windowUntil', { date: close })
+  return t('adminPrograms.windowAlways')
 }
 
 const cefrOptions = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
@@ -459,6 +494,20 @@ function closeEditor() {
   editor.value.open = false
 }
 
+function formatApiError(err, fallback) {
+  const data = err?.response?.data
+  if (typeof data?.detail === 'string') return data.detail
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    const parts = []
+    for (const [key, value] of Object.entries(data)) {
+      if (Array.isArray(value)) parts.push(`${key}: ${value.join(' ')}`)
+      else if (typeof value === 'string') parts.push(`${key}: ${value}`)
+    }
+    if (parts.length) return parts.join(' ')
+  }
+  return fallback
+}
+
 function cleanProgramPayload(form) {
   const payload = { ...form }
   if (payload.required_language === '') payload.required_language = null
@@ -494,8 +543,7 @@ async function saveProgram() {
     await fetchPrograms()
   } catch (err) {
     console.error('Failed to save program:', err)
-    const detail = err.response?.data?.detail
-    editor.value.error = typeof detail === 'string' ? detail : t('adminPrograms.saveError')
+    editor.value.error = formatApiError(err, t('adminPrograms.saveError'))
     errorToast(t('adminPrograms.saveToastError'))
   } finally {
     editor.value.saving = false
@@ -556,6 +604,51 @@ onMounted(async () => {
 <style scoped>
 .admin-programs-page {
   min-height: 60vh;
+}
+
+.program-name-cell {
+  position: relative;
+  max-width: 28rem;
+}
+
+.program-name-cell:has(.program-description-wrap:hover),
+.program-name-cell:has(.program-description-wrap:focus-within) {
+  z-index: 5;
+}
+
+.program-description-wrap {
+  position: relative;
+}
+
+.program-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+  overflow: hidden;
+  word-break: break-word;
+  cursor: default;
+}
+
+.program-description-wrap:hover .program-description,
+.program-description-wrap:focus-within .program-description {
+  -webkit-line-clamp: unset;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  padding: 0.35rem 0.5rem;
+  background-color: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  box-shadow: var(--bs-box-shadow);
+  white-space: pre-wrap;
+}
+
+.program-description:focus-visible {
+  outline: 2px solid var(--bs-primary);
+  outline-offset: 2px;
 }
 </style>
 

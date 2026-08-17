@@ -9,7 +9,9 @@ Overview
 The documents module provides:
 
 * Secure file upload and storage
-* Document type configuration
+* Document type configuration (SPA admin at ``/seim/admin/documents``)
+* Student instructions, FAQ, and Word templates with MERGEFIELD prefilling
+* Per-program request workflow and submission deadlines
 * File validation and virus scanning
 * Document replacement workflow
 * Resubmission request handling
