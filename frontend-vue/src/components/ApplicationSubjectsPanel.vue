@@ -12,6 +12,14 @@
 
     <template v-else>
       <div v-if="error" class="alert alert-danger py-2" role="alert">{{ error }}</div>
+      <div
+        v-if="showGradeColumns && hostGradeScaleMissing"
+        class="alert alert-warning py-2"
+        role="alert"
+        data-testid="missing-host-grade-scale"
+      >
+        {{ t('applicationSubjects.missingHostGradeScale') }}
+      </div>
 
       <div v-if="canEditMapping" class="row g-2 align-items-end mb-3">
         <div class="col-md-5">
@@ -119,7 +127,7 @@
               <td>{{ sel.credits ?? sel.custom_credits ?? sel.host_subject_detail?.credits ?? '—' }}</td>
               <td v-if="showGradeColumns">
                 <select
-                  v-if="canProposeGrades && sel.grade_status !== 'confirmed'"
+                  v-if="canProposeGrades && sel.grade_status !== 'confirmed' && !hostGradeScaleMissing"
                   class="form-select form-select-sm"
                   :value="sel.proposed_host_grade || ''"
                   :data-testid="`proposed-grade-${sel.id}`"
@@ -201,7 +209,7 @@
           {{ t('applicationSubjects.rejectGrades') }}
         </button>
       </div>
-      <div v-if="isCoordinator && canReject" class="mb-2">
+      <div v-if="isCoordinator && (canConfirm || canReject)" class="mb-2">
         <label class="form-label" for="grade-notes">{{ t('applicationSubjects.confirmationNotes') }}</label>
         <textarea id="grade-notes" v-model="confirmationNotes" class="form-control form-control-sm" rows="2"></textarea>
       </div>
@@ -238,6 +246,7 @@ const error = ref('')
 const selections = ref([])
 const hostSubjects = ref([])
 const hostGradeValues = ref([])
+const hostGradeScaleMissing = ref(false)
 const confirmationNotes = ref('')
 const catalogDraft = ref({ host_subject: '', home_course_code: '', home_course_label: '' })
 const customDraft = ref({
@@ -257,14 +266,16 @@ const showGradeColumns = computed(() =>
 )
 const canProposeGrades = computed(() =>
   Boolean(props.applicationId)
+  && !props.isCoordinator
   && GRADEABLE.has(props.applicationStatus)
+  && !hostGradeScaleMissing.value
   && selections.value.some((s) => s.grade_status !== 'confirmed'),
 )
 const hasProposedGrade = computed(() =>
   selections.value.some((s) => s.proposed_host_grade && s.grade_status !== 'confirmed'),
 )
 const canConfirm = computed(() =>
-  selections.value.some((s) => s.grade_status === 'proposed' || s.proposed_host_grade),
+  selections.value.some((s) => s.grade_status === 'proposed'),
 )
 const canReject = computed(() =>
   selections.value.some((s) => s.grade_status === 'proposed' || s.grade_status === 'confirmed'),
@@ -347,13 +358,22 @@ async function fetchAvailableSubjects() {
 
 async function fetchHostGradeValues() {
   hostGradeValues.value = []
+  hostGradeScaleMissing.value = false
   if (!props.hostInstitutionId || !props.applicationId) return
   try {
     const { data } = await api.get(`/api/host-institutions/${props.hostInstitutionId}/`)
     const scaleId = data.grade_scale
-    if (!scaleId) return
-    const values = await api.get('/api/grades/values/', { params: { grade_scale: scaleId } })
+    if (!scaleId) {
+      hostGradeScaleMissing.value = GRADEABLE.has(props.applicationStatus)
+      return
+    }
+    const values = await api.get('/api/grades/values/by_scale/', {
+      params: { grade_scale: scaleId },
+    })
     hostGradeValues.value = unwrapList(values.data)
+    hostGradeScaleMissing.value = (
+      GRADEABLE.has(props.applicationStatus) && hostGradeValues.value.length === 0
+    )
   } catch (err) {
     console.error('Failed to load host grade values:', err)
   }
@@ -526,7 +546,7 @@ async function rejectGrades() {
 }
 
 watch(
-  () => [props.applicationId, props.hostInstitutionId],
+  () => [props.applicationId, props.hostInstitutionId, props.applicationStatus],
   async () => {
     await Promise.all([fetchSelections(), fetchAvailableSubjects(), fetchHostGradeValues()])
   },

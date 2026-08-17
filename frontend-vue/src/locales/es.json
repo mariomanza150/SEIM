@@ -357,6 +357,7 @@
     "homeGradeLabel": "Calificación casa",
     "statusLabel": "Estado de calificación",
     "selectGrade": "-- Calificación --",
+    "missingHostGradeScale": "Esta universidad anfitriona no tiene escala de calificaciones (o no tiene valores). Pida a un administrador que asigne una antes de proponer calificaciones.",
     "downloadCarta": "Descargar Carta de Homologación",
     "submitGrades": "Enviar calificaciones para confirmación",
     "confirmGrades": "Confirmar calificaciones",

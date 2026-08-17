@@ -393,27 +393,52 @@ class ApplicationSubjectSelectionSerializer(serializers.ModelSerializer):
                         }
                     )
 
-            if grade_changed and not is_staff:
-                from exchange.models import SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES
+            if grade_changed:
+                proposed = attrs.get("proposed_host_grade")
+                if proposed is not None:
+                    host = getattr(application, "host_institution", None)
+                    host_scale_id = (
+                        getattr(host, "grade_scale_id", None) if host is not None else None
+                    )
+                    if not host_scale_id:
+                        raise serializers.ValidationError(
+                            {
+                                "proposed_host_grade": (
+                                    "Host institution must have a grade scale before "
+                                    "grades can be proposed."
+                                )
+                            }
+                        )
+                    if proposed.grade_scale_id != host_scale_id:
+                        raise serializers.ValidationError(
+                            {
+                                "proposed_host_grade": (
+                                    "Proposed grade must belong to the host "
+                                    "institution grade scale."
+                                )
+                            }
+                        )
+                if not is_staff:
+                    from exchange.models import SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES
 
-                if status_name not in SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES:
-                    raise serializers.ValidationError(
-                        {
-                            "proposed_host_grade": (
-                                "Host grades can only be proposed when the application "
-                                "is approved, nominated, or completed."
-                            )
-                        }
-                    )
-                if row_status == ApplicationSubjectSelection.GradeStatus.CONFIRMED:
-                    raise serializers.ValidationError(
-                        {
-                            "proposed_host_grade": (
-                                "Confirmed grades cannot be edited. Ask a coordinator "
-                                "to reject them first."
-                            )
-                        }
-                    )
+                    if status_name not in SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES:
+                        raise serializers.ValidationError(
+                            {
+                                "proposed_host_grade": (
+                                    "Host grades can only be proposed when the application "
+                                    "is approved, nominated, or completed."
+                                )
+                            }
+                        )
+                    if row_status == ApplicationSubjectSelection.GradeStatus.CONFIRMED:
+                        raise serializers.ValidationError(
+                            {
+                                "proposed_host_grade": (
+                                    "Confirmed grades cannot be edited. Ask a coordinator "
+                                    "to reject them first."
+                                )
+                            }
+                        )
 
         has_catalog = host_subject is not None
         custom_name = (custom_name or "").strip()

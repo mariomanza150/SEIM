@@ -74,4 +74,149 @@ describe('ApplicationSubjectsPanel', () => {
     })
     expect(wrapper.text()).toContain('Custom Algorithms')
   })
+
+  function mockPanelGets({
+    selections = [],
+    subjects = [],
+    gradeScale = 'scale-1',
+    gradeValues = [{ id: 'gv-1', label: 'HostA' }],
+  } = {}) {
+    api.get.mockImplementation((url) => {
+      if (url.includes('available-subjects')) return Promise.resolve({ data: subjects })
+      if (url.includes('application-subject-selections')) {
+        return Promise.resolve({ data: selections })
+      }
+      if (url.includes('/api/host-institutions/')) {
+        return Promise.resolve({ data: { grade_scale: gradeScale } })
+      }
+      if (url.includes('/api/grades/values/')) {
+        return Promise.resolve({ data: gradeValues })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+  }
+
+  it('hides mapping and grade edits when confirmed, and only coordinators confirm/reject', async () => {
+    mockPanelGets({
+      selections: [
+        {
+          id: 'sel-1',
+          custom_name: 'Algorithms',
+          custom_code: 'CS101',
+          credits: '6.00',
+          grade_status: 'confirmed',
+          proposed_host_grade: 'gv-1',
+          proposed_host_grade_label: 'HostA',
+          confirmed_host_grade_label: 'HostA',
+          home_grade_label: 'HomeA',
+        },
+      ],
+    })
+    const wrapper = mount(ApplicationSubjectsPanel, {
+      props: {
+        applicationId: 'app-1',
+        applicationStatus: 'approved',
+        hostInstitutionId: 'inst-1',
+        isCoordinator: true,
+      },
+      global: { plugins: [i18n] },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="subject-selections-table"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="add-custom-subject"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="proposed-grade-sel-1"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="propose-subject-grades"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="confirm-subject-grades"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="reject-subject-grades"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('HostA')
+    expect(wrapper.text()).toContain('HomeA')
+  })
+
+  it('lets students propose grades and hides coordinator actions', async () => {
+    mockPanelGets({
+      selections: [
+        {
+          id: 'sel-1',
+          custom_name: 'Algorithms',
+          custom_code: 'CS101',
+          credits: '6.00',
+          grade_status: 'none',
+          proposed_host_grade: 'gv-1',
+        },
+      ],
+    })
+    const wrapper = mount(ApplicationSubjectsPanel, {
+      props: {
+        applicationId: 'app-1',
+        applicationStatus: 'approved',
+        hostInstitutionId: 'inst-1',
+        isCoordinator: false,
+      },
+      global: { plugins: [i18n] },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="propose-subject-grades"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="proposed-grade-sel-1"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="confirm-subject-grades"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="reject-subject-grades"]').exists()).toBe(false)
+    expect(api.get.mock.calls.some(([url]) => String(url).includes('/api/grades/values/by_scale/'))).toBe(true)
+  })
+
+  it('warns when the host institution has no grade scale', async () => {
+    mockPanelGets({
+      selections: [
+        {
+          id: 'sel-1',
+          custom_name: 'Algorithms',
+          grade_status: 'none',
+        },
+      ],
+      gradeScale: null,
+      gradeValues: [],
+    })
+    const wrapper = mount(ApplicationSubjectsPanel, {
+      props: {
+        applicationId: 'app-1',
+        applicationStatus: 'approved',
+        hostInstitutionId: 'inst-1',
+      },
+      global: { plugins: [i18n] },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="missing-host-grade-scale"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="propose-subject-grades"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="proposed-grade-sel-1"]').exists()).toBe(false)
+  })
+
+  it('shows confirm (not propose) for coordinators after the student submits', async () => {
+    mockPanelGets({
+      selections: [
+        {
+          id: 'sel-1',
+          custom_name: 'Algorithms',
+          grade_status: 'proposed',
+          proposed_host_grade: 'gv-1',
+          proposed_host_grade_label: 'HostA',
+        },
+      ],
+    })
+    const wrapper = mount(ApplicationSubjectsPanel, {
+      props: {
+        applicationId: 'app-1',
+        applicationStatus: 'approved',
+        hostInstitutionId: 'inst-1',
+        isCoordinator: true,
+      },
+      global: { plugins: [i18n] },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="confirm-subject-grades"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="propose-subject-grades"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="reject-subject-grades"]').exists()).toBe(true)
+    expect(wrapper.find('#grade-notes').exists()).toBe(true)
+  })
 })

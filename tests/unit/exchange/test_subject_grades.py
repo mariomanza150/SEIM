@@ -350,3 +350,71 @@ class TestSubjectGradeWorkflow:
             f"/api/applications/{application.id}/confirm-subject-grades/"
         )
         assert resp.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_wrong_scale_grade_rejected(self, student_client, host_tree):
+        student, client = student_client
+        host_scale, _home_scale, _host_a, _home_a = _make_scales()
+        host_tree["institution"].grade_scale = host_scale
+        host_tree["institution"].save(update_fields=["grade_scale"])
+        other_scale = GradeScale.objects.create(
+            name="Other Scale",
+            code="OTHER_SUBJ_WRONG",
+            min_value=0,
+            max_value=4,
+            passing_value=1,
+        )
+        other_val = GradeValue.objects.create(
+            grade_scale=other_scale,
+            label="X",
+            numeric_value=4.0,
+            gpa_equivalent=4.0,
+            order=1,
+        )
+        approved, _ = ApplicationStatus.objects.get_or_create(
+            name="approved", defaults={"order": 5}
+        )
+        application = _draft_application(student, host_tree)
+        application.status = approved
+        application.save(update_fields=["status"])
+        selection = ApplicationSubjectSelection.objects.create(
+            application=application,
+            host_subject=host_tree["subject"],
+            home_course_code="H101",
+            credits=Decimal("6.00"),
+        )
+        patch = client.patch(
+            f"/api/application-subject-selections/{selection.id}/",
+            {"proposed_host_grade": str(other_val.id)},
+            format="json",
+        )
+        assert patch.status_code == status.HTTP_400_BAD_REQUEST
+
+    def test_confirm_requires_proposed_status(
+        self, student_client, coordinator_client, host_tree
+    ):
+        student, _student_api = student_client
+        _, coord_api = coordinator_client
+        host_scale, home_scale, host_a, _home_a = _make_scales()
+        host_tree["institution"].grade_scale = host_scale
+        host_tree["institution"].save(update_fields=["grade_scale"])
+        Profile.objects.update_or_create(
+            user=student, defaults={"grade_scale": home_scale, "gpa": 3.5}
+        )
+        approved, _ = ApplicationStatus.objects.get_or_create(
+            name="approved", defaults={"order": 5}
+        )
+        application = _draft_application(student, host_tree)
+        application.status = approved
+        application.save(update_fields=["status"])
+        selection = ApplicationSubjectSelection.objects.create(
+            application=application,
+            host_subject=host_tree["subject"],
+            proposed_host_grade=host_a,
+            credits=Decimal("6.00"),
+        )
+        confirm = coord_api.post(
+            f"/api/applications/{application.id}/confirm-subject-grades/"
+        )
+        assert confirm.status_code == status.HTTP_400_BAD_REQUEST
+        selection.refresh_from_db()
+        assert selection.grade_status == ApplicationSubjectSelection.GradeStatus.NONE

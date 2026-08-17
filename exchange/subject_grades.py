@@ -23,7 +23,7 @@ def assert_gradeable_status(application) -> None:
     if status_name not in SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES:
         allowed = ", ".join(sorted(SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES))
         raise ValueError(
-            f"Subject grades can only be proposed when the application status "
+            f"Subject grades can only be managed when the application status "
             f"is one of: {allowed}."
         )
 
@@ -109,6 +109,7 @@ def confirm_subject_grades(application, user, notes: str = "") -> int:
     """Translate proposed host grades, lock them, and regenerate the carta."""
     from grades.services import GradeTranslationService
 
+    assert_gradeable_status(application)
     host_institution = application.host_institution
     if host_institution is None or not host_institution.grade_scale_id:
         raise ValueError(
@@ -134,6 +135,25 @@ def confirm_subject_grades(application, user, notes: str = "") -> int:
         raise ValueError(
             "Every subject selection must have a proposed host grade before confirmation."
         )
+    not_proposed = [
+        row
+        for row in rows
+        if row.grade_status != ApplicationSubjectSelection.GradeStatus.PROPOSED
+    ]
+    if not_proposed:
+        raise ValueError(
+            "Every subject selection must be submitted for confirmation before "
+            "grades can be confirmed."
+        )
+    wrong_scale = [
+        row
+        for row in rows
+        if row.proposed_host_grade.grade_scale_id != host_institution.grade_scale_id
+    ]
+    if wrong_scale:
+        raise ValueError(
+            "Proposed grades must belong to the host institution grade scale."
+        )
 
     now = timezone.now()
     notes = notes or ""
@@ -142,8 +162,8 @@ def confirm_subject_grades(application, user, notes: str = "") -> int:
         for row in rows:
             try:
                 home_grade = GradeTranslationService.translate_grade(
-                    str(row.proposed_host_grade_id),
-                    str(home_scale_id),
+                    row.proposed_host_grade_id,
+                    home_scale_id,
                     fallback_to_gpa=True,
                 )
             except ObjectDoesNotExist as exc:

@@ -357,6 +357,7 @@
     "homeGradeLabel": "Home grade",
     "statusLabel": "Grade status",
     "selectGrade": "-- Grade --",
+    "missingHostGradeScale": "This host university has no grade scale (or no grade values). Ask an administrator to assign one before proposing grades.",
     "downloadCarta": "Download Homologation Letter",
     "submitGrades": "Submit grades for confirmation",
     "confirmGrades": "Confirm grades",
