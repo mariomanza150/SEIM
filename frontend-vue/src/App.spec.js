@@ -28,6 +28,7 @@ vi.mock('@/services/uiPreferences', () => ({
   applyUiPreferences: vi.fn(),
   clearUiPreferences: vi.fn(),
   readStoredUiPreferences: vi.fn(() => null),
+  mergeUiPreferencesFromServer: vi.fn((data) => data || {}),
 }))
 
 vi.mock('@/stores/auth', () => ({

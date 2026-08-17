@@ -9,6 +9,13 @@ let toastId = 0
 
 export function useToast() {
   function showToast(message, type = 'info', duration = 5000) {
+    const duplicate = toasts.value.find(
+      (toast) => toast.message === message && toast.type === type,
+    )
+    if (duplicate) {
+      return duplicate.id
+    }
+
     const id = toastId++
     const toast = {
       id,

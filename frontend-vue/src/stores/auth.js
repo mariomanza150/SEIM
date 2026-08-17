@@ -58,21 +58,19 @@ export const useAuthStore = defineStore('auth', () => {
   const isAdmin = computed(() => {
     const u = user.value
     if (!u) return false
+    if (u.role === 'admin' || u.is_superuser === true) return true
+    if (u.role === 'coordinator' || u.role === 'partner' || u.role === 'student') {
+      return false
+    }
     if (typeof u.is_admin === 'boolean') return u.is_admin
-    return (
-      u.role === 'admin' ||
-      u.is_staff === true ||
-      u.is_superuser === true
-    )
+    return false
   })
   const isCoordinator = computed(() => user.value?.role === 'coordinator')
   const canUseStaffReviewQueue = computed(
     () => isAdmin.value || user.value?.role === 'coordinator',
   )
   const isPartner = computed(() => user.value?.role === 'partner')
-  const canUsePartnerPortal = computed(
-    () => isPartner.value || canUseStaffReviewQueue.value,
-  )
+  const canUsePartnerPortal = computed(() => isPartner.value)
   const userName = computed(() => {
     if (!user.value) return ''
     return user.value.full_name || user.value.email || 'User'
@@ -252,26 +250,41 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  let refreshInFlight = null
+
   async function refreshAccessToken() {
-    if (!refreshToken.value) {
-      throw new Error('No refresh token available')
+    if (refreshInFlight) {
+      return refreshInFlight
     }
 
-    try {
-      const response = await axios.post(`${API_BASE_URL}/api/token/refresh/`, {
-        refresh: refreshToken.value,
-      })
+    refreshInFlight = (async () => {
+      if (!refreshToken.value) {
+        throw new Error('No refresh token available')
+      }
 
-      accessToken.value = response.data.access
-      persistToken(ACCESS_TOKEN_KEYS, accessToken.value)
+      try {
+        const response = await axios.post(`${API_BASE_URL}/api/token/refresh/`, {
+          refresh: refreshToken.value,
+        })
 
-      return accessToken.value
-    } catch (err) {
-      console.error('Token refresh error:', err)
-      // Refresh failed - clear everything
-      await logout()
-      throw err
-    }
+        accessToken.value = response.data.access
+        persistToken(ACCESS_TOKEN_KEYS, accessToken.value)
+        if (response.data.refresh) {
+          refreshToken.value = response.data.refresh
+          persistToken(REFRESH_TOKEN_KEYS, response.data.refresh)
+        }
+
+        return accessToken.value
+      } catch (err) {
+        console.error('Token refresh error:', err)
+        await logout()
+        throw err
+      }
+    })().finally(() => {
+      refreshInFlight = null
+    })
+
+    return refreshInFlight
   }
 
   async function fetchUserProfile() {

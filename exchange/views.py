@@ -3,6 +3,7 @@ import uuid
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponse
 from django.urls import reverse
@@ -15,7 +16,12 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from core.cache import CacheManager, cache_api_response
+from core.cache import (
+    CacheManager,
+    application_api_cache_generation,
+    cache_api_response,
+    invalidate_application_api_responses,
+)
 from core.permissions import (
     IsAdminOrReadOnly,
     IsCoordinatorOrAdmin,
@@ -78,25 +84,12 @@ from .services import ApplicationService
 # Create your views here.
 
 
-def _program_list_cache_key(view, request, *args, **kwargs):
-    """Scope program list cache by user + query when eligibility filtering is used."""
-    user = getattr(request, "user", None)
-    user_part = str(getattr(user, "pk", "anon"))
-    qs = request.META.get("QUERY_STRING", "")
-    digest = hashlib.md5(qs.encode(), usedforsecurity=False).hexdigest()[:12]
-    return CacheManager.get_cache_key(
-        "api_response", f"ProgramViewSet.list:{user_part}:{digest}"
-    )
+_PROGRAM_CACHE_GEN_KEY = "api_cache_gen:ProgramViewSet"
 
 
-def _program_active_cache_key(view, request, *args, **kwargs):
-    user = getattr(request, "user", None)
-    user_part = str(getattr(user, "pk", "anon"))
-    qs = request.META.get("QUERY_STRING", "")
-    digest = hashlib.md5(qs.encode(), usedforsecurity=False).hexdigest()[:12]
-    return CacheManager.get_cache_key(
-        "api_response", f"ProgramViewSet.active:{user_part}:{digest}"
-    )
+def _program_cache_generation() -> str:
+    value = cache.get(_PROGRAM_CACHE_GEN_KEY)
+    return str(value if value is not None else 0)
 
 
 def calendar_subscribe_ics(request):
@@ -287,12 +280,13 @@ class EligibilityRuleSetViewSet(viewsets.ModelViewSet):
 
 
 def _program_list_cache_key(*args, **kwargs):
-    """Stable list cache key (path + user) so mutations can invalidate ProgramViewSet entries."""
+    """Stable list cache key (path + user + generation) so mutations bust entries."""
     request = args[1]
     user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
     digest = hashlib.sha256(request.get_full_path().encode()).hexdigest()[:32]
+    gen = _program_cache_generation()
     return CacheManager.get_cache_key(
-        "api_response", f"ProgramViewSet.list:{user_key}:{digest}"
+        "api_response", f"ProgramViewSet.list:{gen}:{user_key}:{digest}"
     )
 
 
@@ -300,8 +294,9 @@ def _program_retrieve_cache_key(*args, **kwargs):
     request = args[1]
     user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
     pk = kwargs.get("pk", "")
+    gen = _program_cache_generation()
     return CacheManager.get_cache_key(
-        "api_response", f"ProgramViewSet.retrieve:{user_key}:{pk}"
+        "api_response", f"ProgramViewSet.retrieve:{gen}:{user_key}:{pk}"
     )
 
 
@@ -309,13 +304,18 @@ def _program_active_cache_key(*args, **kwargs):
     request = args[1]
     user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
     digest = hashlib.sha256(request.get_full_path().encode()).hexdigest()[:32]
+    gen = _program_cache_generation()
     return CacheManager.get_cache_key(
-        "api_response", f"ProgramViewSet.active:{user_key}:{digest}"
+        "api_response", f"ProgramViewSet.active:{gen}:{user_key}:{digest}"
     )
 
 
 def _invalidate_program_api_caches() -> None:
-    """Clear middleware + view-level caches for program list/detail after mutations."""
+    """Bust view-level generation and glob-delete leftover middleware keys."""
+    try:
+        cache.incr(_PROGRAM_CACHE_GEN_KEY)
+    except ValueError:
+        cache.set(_PROGRAM_CACHE_GEN_KEY, 1, timeout=None)
     CacheManager.clear_pattern("api_resp:v1:api_middleware:/api/programs*")
     CacheManager.clear_pattern("api_resp:v1:ProgramViewSet*")
 
@@ -704,22 +704,36 @@ class ProgramViewSet(viewsets.ModelViewSet):
 
 
 def _application_list_cache_key(*args, **kwargs):
-    """Scope cached list per user and full path (default decorator key omitted request user)."""
+    """Scope cached list per user, path, and generation (mutations bump gen)."""
     request = args[1]
     user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
-    identity = f"ApplicationViewSet.list:{user_key}:{request.get_full_path()}"
-    digest = hashlib.sha256(identity.encode()).hexdigest()[:48]
-    return CacheManager.get_cache_key("api_response", digest)
+    digest = hashlib.sha256(request.get_full_path().encode()).hexdigest()[:32]
+    gen = application_api_cache_generation()
+    return CacheManager.get_cache_key(
+        "api_response", f"ApplicationViewSet.list:{gen}:{user_key}:{digest}"
+    )
 
 
 def _application_retrieve_cache_key(*args, **kwargs):
-    """Scope cached detail per user and application id."""
+    """Scope cached detail per user, application id, and generation."""
     request = args[1]
     user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
     pk = kwargs.get("pk", "")
-    identity = f"ApplicationViewSet.retrieve:{user_key}:{pk}"
-    digest = hashlib.sha256(identity.encode()).hexdigest()[:48]
-    return CacheManager.get_cache_key("api_response", digest)
+    gen = application_api_cache_generation()
+    return CacheManager.get_cache_key(
+        "api_response", f"ApplicationViewSet.retrieve:{gen}:{user_key}:{pk}"
+    )
+
+
+def _comment_list_cache_key(*args, **kwargs):
+    """Scope cached comment lists per user, path, and application generation."""
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    digest = hashlib.sha256(request.get_full_path().encode()).hexdigest()[:32]
+    gen = application_api_cache_generation()
+    return CacheManager.get_cache_key(
+        "api_response", f"CommentViewSet.list:{gen}:{user_key}:{digest}"
+    )
 
 
 class ApplicationViewSet(viewsets.ModelViewSet):
@@ -798,6 +812,15 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 }
             )
         serializer.save(student=self.request.user)
+        invalidate_application_api_responses(serializer.instance)
+
+    def perform_update(self, serializer):
+        serializer.save()
+        invalidate_application_api_responses(serializer.instance)
+
+    def perform_destroy(self, instance):
+        invalidate_application_api_responses(instance)
+        instance.delete()
 
     @cache_api_response(timeout=300, key_func=_application_list_cache_key)
     def list(self, request, *args, **kwargs):
@@ -977,7 +1000,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         application = self.get_object()
         try:
             ApplicationService.submit_application(application, request.user)
-            # Invalidate cache after submission
             self._invalidate_application_cache(application)
             return Response({"status": "Application submitted successfully"})
         except ValueError as e:
@@ -1056,6 +1078,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             )
         except ValueError as exc:
             return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        self._invalidate_application_cache(application)
         return Response(
             {
                 "instance": WorkflowInstanceSerializer(snap.instance).data,
@@ -1069,7 +1092,6 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         application = self.get_object()
         try:
             ApplicationService.withdraw_application(application, request.user)
-            # Invalidate cache after withdrawal
             self._invalidate_application_cache(application)
             return Response({"status": "Application withdrawn successfully"})
         except ValueError as e:
@@ -1147,23 +1169,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         return response
 
     def _invalidate_application_cache(self, application):
-        """Drop retrieve/list API caches so the UI sees post-submit status."""
-        user_ids = {"anon"}
-        request = getattr(self, "request", None)
-        user = getattr(request, "user", None) if request is not None else None
-        if user is not None and getattr(user, "is_authenticated", False):
-            user_ids.add(str(user.pk))
-        if getattr(application, "student_id", None):
-            user_ids.add(str(application.student_id))
-        pk = str(application.pk)
-        for user_key in user_ids:
-            identity = f"ApplicationViewSet.retrieve:{user_key}:{pk}"
-            digest = hashlib.sha256(identity.encode()).hexdigest()[:48]
-            CacheManager.delete_cache(
-                CacheManager.get_cache_key("api_response", digest)
-            )
-        CacheManager.clear_pattern("api_resp:v1:api_middleware:/api/applications*")
-        CacheManager.clear_pattern("api_resp:*")
+        """Drop retrieve/list/comment API caches after an application mutation."""
+        invalidate_application_api_responses(application)
 
 
 class HostInstitutionViewSet(viewsets.ReadOnlyModelViewSet):
@@ -1315,22 +1322,30 @@ class CommentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Set author to current user on creation."""
         serializer.save(author=self.request.user)
+        invalidate_application_api_responses(serializer.instance.application)
 
-    @cache_api_response(timeout=300)  # Cache for 5 minutes
+    def perform_update(self, serializer):
+        serializer.save()
+        invalidate_application_api_responses(serializer.instance.application)
+
+    def perform_destroy(self, instance):
+        application = instance.application
+        instance.delete()
+        invalidate_application_api_responses(application)
+
+    @cache_api_response(timeout=300, key_func=_comment_list_cache_key)
     def list(self, request, *args, **kwargs):
         """List comments with caching."""
         return super().list(request, *args, **kwargs)
 
     def create(self, request, *args, **kwargs):
-        """Create a comment and invalidate cache."""
+        """Create a comment and notify subscribers."""
         response = super().create(request, *args, **kwargs)
-        # Invalidate comment cache for the application
         if response.status_code == 201:
-            application_id = request.data.get("application")
+            application_id = request.data.get("application") or response.data.get(
+                "application"
+            )
             if application_id:
-                from core.cache import invalidate_cache_pattern
-
-                invalidate_cache_pattern(f"api:CommentViewSet:*{application_id}*")
                 from notifications.services import NotificationService
 
                 NotificationService.broadcast_application_sync(

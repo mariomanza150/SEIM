@@ -23,6 +23,7 @@ from core.cache import (
     cache_program_data,
     cache_user_data,
     generate_cache_key,
+    invalidate_application_api_responses,
     invalidate_application_cache,
     invalidate_cache_pattern,
     invalidate_program_cache,
@@ -127,6 +128,13 @@ class TestCacheManager(TestCase):
 
     # Note: cache.keys() is not available in all cache backends
     # These tests are skipped as they require Redis-specific functionality
+    @patch("core.cache.cache.delete_pattern", create=True)
+    def test_clear_pattern_uses_delete_pattern(self, mock_delete_pattern):
+        mock_delete_pattern.return_value = 4
+        result = CacheManager.clear_pattern("api_resp:v1:ProgramViewSet*")
+        self.assertEqual(result, 4)
+        mock_delete_pattern.assert_called_once_with("api_resp:v1:ProgramViewSet*")
+
     def test_clear_pattern_success(self):
         """Test successful pattern clearing."""
         # This test is skipped as cache.keys() is not available in test environment
@@ -313,6 +321,16 @@ class TestAPICacheMiddleware(TestCase):
         self.factory = RequestFactory()
         self.middleware = APICacheMiddleware(lambda request: HttpResponse("response"))
 
+    def test_middleware_skips_authenticated_get(self):
+        """Logged-in API GETs must not be served from the middleware cache."""
+        request = self.factory.get("/api/programs/")
+        request.user = Mock(is_authenticated=True, id=1)
+        with patch("core.cache.CacheManager.get_cache") as mock_get:
+            mock_get.return_value = {"stale": True}
+            response = self.middleware(request)
+        mock_get.assert_not_called()
+        self.assertEqual(response.content.decode(), "response")
+
     def test_middleware_get_request(self):
         """Test middleware with GET request."""
         request = self.factory.get("/api/test/")
@@ -467,6 +485,18 @@ class TestCacheFunctions(TestCase):
         mock_delete_cache.return_value = True
         result = invalidate_application_cache(1)
         self.assertTrue(result)
+
+    @patch("core.cache.CacheManager.clear_pattern", return_value=0)
+    @patch("core.cache.cache.incr", return_value=2)
+    def test_invalidate_application_api_responses_increments_generation(
+        self, mock_incr, mock_clear_pattern
+    ):
+        invalidate_application_api_responses()
+        mock_incr.assert_called_once()
+        patterns = [call.args[0] for call in mock_clear_pattern.call_args_list]
+        self.assertIn("api_resp:v1:ApplicationViewSet*", patterns)
+        self.assertIn("api_resp:v1:CommentViewSet*", patterns)
+        self.assertNotIn("api_resp:*", patterns)
 
     def test_generate_cache_key(self):
         """Test cache key generation."""

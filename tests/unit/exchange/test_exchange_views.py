@@ -100,6 +100,39 @@ class TestProgramViews:
         names = [p["name"] for p in refreshed.data.get("results", refreshed.data)]
         assert "Cache Bust Program" in names
 
+    def test_program_cache_generation_changes_list_key(self):
+        from unittest.mock import patch
+
+        from exchange.views import (
+            _invalidate_program_api_caches,
+            _program_list_cache_key,
+        )
+
+        gen = {"v": 0}
+
+        class _Cache:
+            def get(self, key):
+                return gen["v"]
+
+            def incr(self, key):
+                gen["v"] += 1
+                return gen["v"]
+
+            def set(self, *args, **kwargs):
+                gen["v"] = 1
+
+        request = type("Req", (), {})()
+        request.user = type("U", (), {"is_authenticated": True, "pk": 99})()
+        request.get_full_path = lambda: "/api/programs/?ordering=name"
+        with (
+            patch("exchange.views.cache", _Cache()),
+            patch("exchange.views.CacheManager.clear_pattern", return_value=0),
+        ):
+            before = _program_list_cache_key(None, request)
+            _invalidate_program_api_caches()
+            after = _program_list_cache_key(None, request)
+        assert before != after
+
     def test_program_detail_view(self):
         client = APIClient()
         user = User.objects.create_user(

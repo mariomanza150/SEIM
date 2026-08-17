@@ -31,7 +31,7 @@ from .step_template_service import apply_step_template_to_form_type
 
 
 def is_admin(user):
-    """Matches User.is_admin (role, staff, or superuser)."""
+    """Matches User.is_admin (admin role or superuser)."""
     if not getattr(user, "is_authenticated", False):
         return False
     return bool(getattr(user, "is_admin", False))

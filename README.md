@@ -259,6 +259,9 @@ These accounts are created by `docker-compose exec web python manage.py seed_dem
 - **Student**
   - Email: `student@test.com`
   - Password: `student123`
+- **Partner**
+  - Email: `partner@test.com`
+  - Password: `partner123`
 
 ---
 

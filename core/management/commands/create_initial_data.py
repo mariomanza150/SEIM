@@ -5,13 +5,14 @@ This includes ApplicationStatus, DocumentType, NotificationType, and Roles.
 
 from django.core.management.base import BaseCommand
 
-from accounts.models import Role
+from accounts.models import AllowedEmailDomain, Role
 from accounts.profile_catalogs import seed_profile_catalogs
 from documents.mobility_document_catalog import (
     assign_scheme_document_requirements,
     seed_mobility_document_types,
 )
 from documents.models import DocumentType
+from exchange.demo_seed import DEMO_ALLOWED_EMAIL_DOMAINS
 from exchange.mobility_schemes import seed_mobility_schemes
 from exchange.models import ApplicationStatus
 from notifications.models import NotificationType
@@ -20,8 +21,8 @@ from notifications.models import NotificationType
 class Command(BaseCommand):
     help = (
         "Create initial system data (statuses, document types, notification types, "
-        "roles, profile catalogs, three mobility schemes, and MX document catalog "
-        "requirements)"
+        "roles, allowed email domains, profile catalogs, three mobility schemes, "
+        "and MX document catalog requirements)"
     )
 
     def handle(self, *args, **options):
@@ -76,6 +77,13 @@ class Command(BaseCommand):
         for role_name in roles:
             Role.objects.get_or_create(name=role_name)
             self.stdout.write(f"  ✓ Role: {role_name}")
+
+        for ordering, (name, code) in enumerate(DEMO_ALLOWED_EMAIL_DOMAINS):
+            AllowedEmailDomain.objects.update_or_create(
+                name=name,
+                defaults={"code": code, "is_active": True, "ordering": ordering},
+            )
+            self.stdout.write(f"  ✓ AllowedEmailDomain: {name}")
 
         schools, programs, banks = seed_profile_catalogs()
         self.stdout.write(

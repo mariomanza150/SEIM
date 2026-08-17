@@ -132,4 +132,19 @@ describe('NotificationWebSocket reconnect and heartbeat', () => {
     expect(refreshToken).toHaveBeenCalled()
     expect(sockets.at(-1).url).toContain('online-token')
   })
+
+  it('does not refresh JWT on a generic socket drop when an access token is still present', async () => {
+    const refreshToken = vi.fn().mockResolvedValue('fresh-token')
+    const ws = new NotificationWebSocket({
+      getToken: () => 'stale-token',
+      refreshToken,
+    })
+    ws.connect('stale-token')
+    ws._onClose({ code: 1006 })
+
+    await vi.advanceTimersByTimeAsync(2000)
+
+    expect(refreshToken).not.toHaveBeenCalled()
+    expect(sockets.at(-1).url).toContain('stale-token')
+  })
 })

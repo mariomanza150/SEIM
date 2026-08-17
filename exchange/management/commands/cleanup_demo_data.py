@@ -3,9 +3,15 @@ from django.db import transaction
 from django.db.models import Q
 
 from accounts.models import User
+from analytics.models import Report
+from application_forms.models import FormStepTemplate, FormType
 from documents.models import Document
 from exchange.demo_seed import (
     DEMO_AGREEMENT_SPECS,
+    DEMO_ELIGIBILITY_RULESET_NAME,
+    DEMO_FORM_NAME,
+    DEMO_FORM_STEP_TEMPLATE_SLUG,
+    DEMO_WORKFLOW_SLUG,
     demo_emails,
     demo_program_names,
     demo_usernames,
@@ -13,11 +19,13 @@ from exchange.demo_seed import (
 from exchange.models import (
     Application,
     Comment,
+    EligibilityRuleSet,
     ExchangeAgreement,
     Program,
     TimelineEvent,
 )
 from notifications.models import Notification
+from workflows.models import WorkflowDefinition
 
 
 class Command(BaseCommand):
@@ -63,6 +71,14 @@ class Command(BaseCommand):
                 0
             ]
             self.stdout.write(f"  Deleted {prog_count} programs.")
+
+            EligibilityRuleSet.objects.filter(
+                name=DEMO_ELIGIBILITY_RULESET_NAME
+            ).delete()
+            FormType.objects.filter(name=DEMO_FORM_NAME).delete()
+            FormStepTemplate.objects.filter(slug=DEMO_FORM_STEP_TEMPLATE_SLUG).delete()
+            WorkflowDefinition.objects.filter(slug=DEMO_WORKFLOW_SLUG).delete()
+            Report.objects.filter(name="Demo applications by status").delete()
 
             user_count = User.objects.filter(demo_user_filter).delete()[0]
             self.stdout.write(

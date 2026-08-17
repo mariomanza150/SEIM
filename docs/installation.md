@@ -41,6 +41,7 @@ These accounts are created by `seed_demo_readiness`.
 - **Admin**: `admin@test.com` / `admin123`
 - **Coordinator**: `coordinator@test.com` / `coordinator123`
 - **Student**: `student@test.com` / `student123`
+- **Partner**: `partner@test.com` / `partner123`
 
 ### **5. Demo Data (Optional):**
 For demonstration and testing purposes, you can populate the system with sample data:
@@ -51,10 +52,11 @@ docker-compose exec web python manage.py seed_demo_readiness
 ```
 
 This creates:
-- Canonical admin, coordinator, and student demo users
-- Active exchange programs
-- Applications in every major workflow status
-- Documents, comments, timeline events, and notifications
+- Canonical admin, coordinator, student, and partner demo users
+- Active exchange programs (with host destinations, document requirements, and coordinators)
+- Manual QA fixtures: closed-window program (`DEMO-SEED Closed Window - University of Oslo`), submit-gate draft (`DEMO-SEED Submit Gate - University of Lisbon`), open document resubmission (`DEMO-SEED Resubmit - University of Vienna`), and a reserved open program with no student application for Section 8 (`DEMO-SEED Lifecycle - University of Porto`)
+- Applications in every major workflow status, including waitlist
+- Documents, comments, timeline events, notifications, forms, workflows, scholarships, and partner portal data
 
 ### **6. Cleanup Demo Data (Optional):**
 To remove all demo data:

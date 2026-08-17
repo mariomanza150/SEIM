@@ -72,10 +72,10 @@ docker-compose exec web python manage.py create_missing_profiles
 ### **User Profile Management**
 
 #### **Student Profiles:**
-- **Required before starting an application**: matrícula, academic level, school/faculty, home academic program, unidad, gender, date of birth, birthplace, postal code, passport number, mobile phone, secondary email, and RFC.
-- **Eligibility information**: GPA, grade scale, primary language and CEFR level, plus optional additional languages.
+- **Required before starting an application**: matrícula, academic level, school/faculty, home academic program, unidad, gender, date of birth, birthplace, postal code, mobile phone, secondary email, GPA, grade scale, primary language, credits approved %, and program ingress date or current semester. Middle name, maternal last name, passport number, and RFC are optional.
+- **Eligibility information** (GPA, grade scale, language, credits, semester) is required to apply, not optional.
 - **Optional banking information**: bank institution and 18-digit CLABE.
-- The profile API exposes `is_personal_academic_complete` and its client-facing alias `is_ready_to_apply`. Application creation is rejected until the required personal and academic fields are complete.
+- The profile API exposes `is_personal_academic_complete`, `is_eligibility_complete`, `is_ready_to_apply`, and `missing_apply_fields`. Application creation is rejected until `is_ready_to_apply` is true.
 - Notification email is delivered to `secondary_email` when present; otherwise it uses the account email.
 
 #### **Student Profile Catalogs:**

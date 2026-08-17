@@ -35,6 +35,15 @@
       <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
       {{ error }}
     </div>
+    <div
+      v-if="validationMessage"
+      class="alert"
+      :class="validationOk ? 'alert-success' : 'alert-danger'"
+      role="status"
+      data-testid="workflow-validate-result"
+    >
+      {{ validationMessage }}
+    </div>
 
     <div class="row g-3">
       <div class="col-lg-9">
@@ -116,6 +125,8 @@ const currentVersionId = ref(null)
 const currentVersionLabel = ref('')
 const busy = ref(false)
 const error = ref(null)
+const validationMessage = ref('')
+const validationOk = ref(false)
 
 let modeler = null
 
@@ -221,7 +232,8 @@ async function createNewDraftVersion() {
   }
 }
 
-async function saveDraft() {
+async function saveDraft(options = {}) {
+  const silent = Boolean(options && options.silent)
   busy.value = true
   error.value = null
   try {
@@ -229,7 +241,7 @@ async function saveDraft() {
     const { xml } = await modeler.saveXML({ format: true })
     if (currentVersionId.value) {
       await api.patch(`/api/workflow-versions/${currentVersionId.value}/`, { bpmn_xml: xml })
-      success(t('adminWorkflowEditor.toastSaved'))
+      if (!silent) success(t('adminWorkflowEditor.toastSaved'))
       await fetchVersions()
       const row = versions.value.find((v) => String(v.id) === String(currentVersionId.value))
       if (row) currentVersionLabel.value = `v${row.version} — ${row.status}`
@@ -238,12 +250,13 @@ async function saveDraft() {
       await fetchVersions()
       currentVersionId.value = res.data.id
       currentVersionLabel.value = `v${res.data.version} — ${res.data.status}`
-      success(t('adminWorkflowEditor.toastVersionCreated'))
+      if (!silent) success(t('adminWorkflowEditor.toastVersionCreated'))
     }
   } catch (err) {
     console.error('Failed to save workflow draft:', err)
     error.value = t('adminWorkflowEditor.saveError')
     errorToast(t('adminWorkflowEditor.saveToastError'))
+    if (silent) throw err
   } finally {
     busy.value = false
   }
@@ -253,14 +266,20 @@ async function validateBpmn() {
   if (!currentVersionId.value) return
   busy.value = true
   error.value = null
+  validationMessage.value = ''
   try {
-    await saveDraft()
+    await saveDraft({ silent: true })
     await api.post(`/api/workflow-versions/${currentVersionId.value}/validate/`)
+    validationOk.value = true
+    validationMessage.value = t('adminWorkflowEditor.toastValid')
     success(t('adminWorkflowEditor.toastValid'))
   } catch (err) {
     console.error('Validation failed:', err)
     const msg = err.response?.data?.error
-    error.value = typeof msg === 'string' ? msg : t('adminWorkflowEditor.validateError')
+    validationOk.value = false
+    validationMessage.value =
+      typeof msg === 'string' ? msg : t('adminWorkflowEditor.validateError')
+    error.value = validationMessage.value
     errorToast(t('adminWorkflowEditor.validateToastError'))
   } finally {
     busy.value = false
@@ -280,7 +299,7 @@ async function publish() {
   busy.value = true
   error.value = null
   try {
-    await saveDraft()
+    await saveDraft({ silent: true })
     await api.post(`/api/workflow-versions/${currentVersionId.value}/publish/`)
     await fetchVersions()
     const row = versions.value.find((v) => String(v.id) === String(currentVersionId.value))

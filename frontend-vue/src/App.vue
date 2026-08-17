@@ -24,7 +24,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import { useNotificationWebSocket } from '@/services/websocket'
-import { applyUiPreferences, clearUiPreferences, readStoredUiPreferences } from '@/services/uiPreferences'
+import { applyUiPreferences, clearUiPreferences, mergeUiPreferencesFromServer, readStoredUiPreferences } from '@/services/uiPreferences'
 import router from '@/router'
 import { routeBusy } from '@/router/routeBusy'
 import { syncAppMetaDescription, syncAppSocialMeta, syncCanonicalLink } from '@/utils/documentTitle'
@@ -48,10 +48,10 @@ const { connectIfAuthenticated, disconnect } = useNotificationWebSocket(authStor
 async function loadUiPreferences() {
   try {
     const { data } = await api.get('/api/accounts/user-settings/')
-    applyUiPreferences(data)
+    applyUiPreferences(mergeUiPreferencesFromServer(data))
   } catch (error) {
     const stored = readStoredUiPreferences()
-    applyUiPreferences(stored || undefined)
+    applyUiPreferences(stored || { theme: 'light' })
   }
 }
 

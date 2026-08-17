@@ -205,6 +205,38 @@ describe('Auth Store', () => {
       )
     })
 
+    it('stores a rotated refresh token from the refresh response', async () => {
+      localStorage.setItem('seim_refresh_token', 'old_rt')
+      const store = useAuthStore()
+      store.accessToken = 'old_at'
+      axios.post.mockResolvedValueOnce({ data: { access: 'new_at', refresh: 'new_rt' } })
+
+      await store.refreshToken()
+
+      expect(localStorage.getItem('seim_refresh_token')).toBe('new_rt')
+      expect(localStorage.getItem('refresh_token')).toBe('new_rt')
+    })
+
+    it('shares one in-flight refresh across concurrent callers', async () => {
+      localStorage.setItem('seim_refresh_token', 'rt')
+      const store = useAuthStore()
+      store.accessToken = 'old_at'
+      let resolveRefresh
+      axios.post.mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveRefresh = resolve
+          }),
+      )
+
+      const first = store.refreshToken()
+      const second = store.refreshToken()
+      resolveRefresh({ data: { access: 'new_at', refresh: 'new_rt' } })
+      await Promise.all([first, second])
+
+      expect(axios.post).toHaveBeenCalledTimes(1)
+    })
+
     it('throws and clears auth when no refresh token', async () => {
       const store = useAuthStore()
 
@@ -264,7 +296,7 @@ describe('Auth Store', () => {
           id: 1,
           email: 'admin@test.com',
           full_name: 'Admin User',
-          role: 'student',
+          role: 'admin',
           username: 'admin',
           is_admin: true,
           is_staff: true,
@@ -279,6 +311,21 @@ describe('Auth Store', () => {
       expect(store.user?.is_superuser).toBe(true)
       expect(store.isAdmin).toBe(true)
       expect(store.canUseStaffReviewQueue).toBe(true)
+      expect(store.canUsePartnerPortal).toBe(false)
+    })
+
+    it('does not treat coordinator staff as SPA admin or partner (MQ-2026-08-16-001/002)', () => {
+      const store = useAuthStore()
+      store.user = {
+        role: 'coordinator',
+        email: 'coordinator@test.com',
+        is_admin: true,
+        is_staff: true,
+        is_superuser: false,
+      }
+      expect(store.isAdmin).toBe(false)
+      expect(store.canUseStaffReviewQueue).toBe(true)
+      expect(store.canUsePartnerPortal).toBe(false)
     })
 
     it('treats partner role as partner portal access', () => {

@@ -55,6 +55,19 @@ export function readStoredUiPreferences() {
   }
 }
 
+/** Keep an explicit local light/dark choice when the server still says auto. */
+export function mergeUiPreferencesFromServer(serverSettings = {}, stored = readStoredUiPreferences()) {
+  const next = { ...(serverSettings || {}) }
+  const storedTheme = stored?.theme
+  if (
+    (next.theme == null || next.theme === '' || next.theme === 'auto') &&
+    (storedTheme === 'light' || storedTheme === 'dark')
+  ) {
+    next.theme = storedTheme
+  }
+  return next
+}
+
 export function resolveTheme(themePreference = 'auto') {
   if (
     themePreference === 'auto'

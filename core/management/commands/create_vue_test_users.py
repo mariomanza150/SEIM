@@ -34,6 +34,7 @@ class Command(BaseCommand):
                 "role": admin_role,
                 "is_staff": True,
                 "is_superuser": True,
+                "is_email_verified": True,
             },
             {
                 "email": "coordinator@test.com",
@@ -44,6 +45,7 @@ class Command(BaseCommand):
                 "role": coordinator_role,
                 "is_staff": True,
                 "is_superuser": False,
+                "is_email_verified": True,
             },
             {
                 "email": "student@test.com",
@@ -54,6 +56,7 @@ class Command(BaseCommand):
                 "role": student_role,
                 "is_staff": False,
                 "is_superuser": False,
+                "is_email_verified": True,
             },
             {
                 "email": "test@example.com",
@@ -64,6 +67,7 @@ class Command(BaseCommand):
                 "role": student_role,
                 "is_staff": False,
                 "is_superuser": False,
+                "is_email_verified": True,
             },
         ]
 

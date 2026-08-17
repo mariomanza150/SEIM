@@ -108,7 +108,7 @@ workflow_status:
         agent: "architect"
         command: "validate-architecture"
       - id: "implementation-readiness"
-        status: "required"
+        status: "docs/notes/implementation-readiness-report-2026-08-16.md"
         agent: "architect"
         command: "implementation-readiness"
         note: "Validates PRD + UX + Architecture + Epics cohesion before implementation"

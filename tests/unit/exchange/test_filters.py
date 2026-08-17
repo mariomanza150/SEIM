@@ -130,6 +130,67 @@ class TestProgramFilter:
             )
             assert open_ok and deadline_ok
 
+    def test_eligible_for_me_includes_closed_window_when_student_otherwise_matches(
+        self, db
+    ):
+        """Catalog filter skips application_window so QA/students can see closed programs."""
+        from django.contrib.auth import get_user_model
+        from django.test import RequestFactory
+
+        from accounts.models import Profile, Role
+
+        User = get_user_model()
+        role, _ = Role.objects.get_or_create(name="student")
+        student = User.objects.create(
+            username="catalog_closed_window_student",
+            email="catalog_closed_window@test.com",
+            is_active=True,
+            is_email_verified=True,
+        )
+        student.roles.add(role)
+        Profile.objects.update_or_create(
+            user=student,
+            defaults={
+                "gpa": 3.7,
+                "language": "English",
+                "language_level": "C1",
+            },
+        )
+        today = timezone.localdate()
+        closed = Program.objects.create(
+            name="Catalog Closed Window",
+            description="Should remain visible when eligible_for_me=true",
+            start_date=today + timedelta(days=45),
+            end_date=today + timedelta(days=200),
+            is_active=True,
+            min_gpa=3.0,
+            required_language="English",
+            min_language_level="B2",
+            application_open_date=today - timedelta(days=90),
+            application_deadline=today - timedelta(days=7),
+        )
+        too_hard = Program.objects.create(
+            name="Catalog High GPA",
+            description="Student should not match",
+            start_date=today + timedelta(days=45),
+            end_date=today + timedelta(days=200),
+            is_active=True,
+            min_gpa=3.95,
+            required_language="English",
+            min_language_level="C2",
+        )
+        request = RequestFactory().get("/")
+        request.user = student
+        fs = ProgramFilter(
+            data={"eligible_for_me": True},
+            queryset=Program.objects.filter(pk__in=[closed.pk, too_hard.pk]),
+            request=request,
+        )
+        assert fs.is_valid()
+        ids = {p.pk for p in fs.qs}
+        assert closed.pk in ids
+        assert too_hard.pk not in ids
+
 
 @pytest.mark.django_db
 class TestApplicationFilter:

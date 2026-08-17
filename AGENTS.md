@@ -34,7 +34,7 @@ App is at http://localhost:8001/ — SPA `/seim/`, admin `/admin/`, API docs `/a
 - API login is `POST /api/login/` and expects a `login` field (email or username), not `email`. Returns JWT `access`/`refresh`.
 
 ### Demo seed
-`manage.py seed_demo_readiness` seeds deterministic demo users, programs, exchange agreements, applications, documents, and notifications without the removed `partner_reference_id` field. Use `manage.py create_initial_data` first (roles, statuses, document/notification types, mobility schemes, profile catalogs) plus a manually created superuser. Demo credentials: `admin@test.com` / `admin123`, `coordinator@test.com` / `coordinator123`, `student@test.com` / `student123`.
+`manage.py seed_demo_readiness` seeds a walkthrough dataset: demo users (including partner), programs with host destination trees, exchange agreements, applications across statuses (including waitlist), documents, comments, timeline, notifications, eligibility rulesets, dynamic forms, workflows, scholarships, partner portal contacts, reminders, saved searches, and grade translations. Use `manage.py create_initial_data` first (roles, statuses, document/notification types, allowed email domains, mobility schemes, profile catalogs) plus a manually created superuser. Demo credentials: `admin@test.com` / `admin123`, `coordinator@test.com` / `coordinator123`, `student@test.com` / `student123`, `partner@test.com` / `partner123`.
 
 ### Documentation
 Canonical technical docs live in `docs/` (manuals + Sphinx + `docs/notes/`). `documents/` is the Django upload app, not a docs tree. Build Sphinx with `make docs-workflow` (writes `docs/generated/` and `docs/sphinx/build/`).

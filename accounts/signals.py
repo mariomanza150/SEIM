@@ -92,10 +92,3 @@ def create_user_profile(sender, instance, created, **kwargs):
     """Create a profile for new users."""
     if created:
         Profile.objects.get_or_create(user=instance)
-
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    """Save the user's profile when the user is saved."""
-    if hasattr(instance, "profile"):
-        instance.profile.save()

@@ -367,6 +367,86 @@ class TestApplicationSubmissionWorkflow:
         assert comment.text == comment_data["text"]
         assert comment.is_private == comment_data["is_private"]
 
+    def test_student_get_sees_staff_status_and_comment_after_cache(self):
+        """Staff PATCH/comment must not leave the student on a stale cached payload."""
+        from django.core.cache import cache
+        from django.test import override_settings
+
+        locmem = {
+            "default": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "mq-2026-08-17-002",
+            },
+            "sessions": {
+                "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+            },
+            "api": {
+                "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+            },
+            "analytics": {
+                "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+            },
+        }
+        application = Application.objects.create(
+            student=self.student,
+            program=self.program,
+            status=self.submitted_status,
+        )
+        detail_url = f"/api/applications/{application.id}/"
+        comments_url = f"/api/comments/?application={application.id}"
+        comment_text = "Coordinator public note after review."
+
+        with override_settings(CACHES=locmem):
+            cache.clear()
+            student_token = RefreshToken.for_user(self.student).access_token
+            coord_token = RefreshToken.for_user(self.coordinator).access_token
+
+            self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {student_token}")
+            first = self.client.get(detail_url)
+            assert first.status_code == status.HTTP_200_OK
+            assert first.data["status"] == "submitted"
+
+            # Bypass the view so invalidation does not run; locmem must keep
+            # the student retrieve sticky (DummyCache would hide a miss).
+            Application.objects.filter(pk=application.pk).update(
+                status=self.approved_status
+            )
+            sticky = self.client.get(detail_url)
+            assert sticky.status_code == status.HTTP_200_OK
+            assert sticky.data["status"] == "submitted"
+
+            self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {coord_token}")
+            patched = self.client.patch(detail_url, {"status": "approved"})
+            assert patched.status_code == status.HTTP_200_OK
+            assert patched.data["status"] == "approved"
+
+            self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {student_token}")
+            after_status = self.client.get(detail_url)
+            assert after_status.status_code == status.HTTP_200_OK
+            assert after_status.data["status"] == "approved"
+
+            comments_before = self.client.get(comments_url)
+            assert comments_before.status_code == status.HTTP_200_OK
+            before_rows = comments_before.data.get("results", comments_before.data)
+            assert all(row.get("text") != comment_text for row in before_rows)
+
+            self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {coord_token}")
+            created = self.client.post(
+                "/api/comments/",
+                {
+                    "application": application.id,
+                    "text": comment_text,
+                    "is_private": False,
+                },
+            )
+            assert created.status_code == status.HTTP_201_CREATED
+
+            self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {student_token}")
+            comments_after = self.client.get(comments_url)
+            assert comments_after.status_code == status.HTTP_200_OK
+            after_rows = comments_after.data.get("results", comments_after.data)
+            assert any(row.get("text") == comment_text for row in after_rows)
+
 
 @pytest.mark.django_db
 @pytest.mark.unit

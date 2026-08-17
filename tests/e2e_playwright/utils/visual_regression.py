@@ -82,6 +82,29 @@ def compare_screenshot(
     return True
 
 
+def stabilize_dynamic_region(page, selector: str, *, height_px: int = 320) -> None:
+    """Replace a data-dependent region with a fixed-size placeholder.
+
+    Hiding individual widgets is not enough: extra list rows still change
+    page layout. Empty the matching nodes and pin their height.
+    """
+    page.evaluate(
+        """({ selector, heightPx }) => {
+          document.querySelectorAll(selector).forEach((el) => {
+            el.replaceChildren();
+            el.style.backgroundColor = '#e9ecef';
+            el.style.color = 'transparent';
+            el.style.borderColor = '#dee2e6';
+            el.style.height = `${heightPx}px`;
+            el.style.minHeight = `${heightPx}px`;
+            el.style.maxHeight = `${heightPx}px`;
+            el.style.overflow = 'hidden';
+          });
+        }""",
+        {"selector": selector, "heightPx": height_px},
+    )
+
+
 def hide_dynamic_elements(page, selectors: list[str]) -> None:
     """
     Hide dynamic elements before taking screenshot.
@@ -90,12 +113,16 @@ def hide_dynamic_elements(page, selectors: list[str]) -> None:
         page: Playwright page object
         selectors: List of CSS selectors to hide
     """
-    for selector in selectors:
-        page.evaluate(f"""
-            document.querySelectorAll('{selector}').forEach(el => {{
-                el.style.visibility = 'hidden';
-            }});
-        """)
+    page.evaluate(
+        """(selectors) => {
+          selectors.forEach((selector) => {
+            document.querySelectorAll(selector).forEach((el) => {
+              el.style.visibility = 'hidden';
+            });
+          });
+        }""",
+        selectors,
+    )
 
 
 def mask_elements(page, selectors: list[str]) -> None:

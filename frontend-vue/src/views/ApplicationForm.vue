@@ -1183,14 +1183,31 @@ function isIncompleteProfileError(data) {
   )
 }
 
+async function fetchActiveGradeScales() {
+  const listFrom = (data) => {
+    const rows = data?.results || data
+    return Array.isArray(rows) ? rows : []
+  }
+  try {
+    const { data } = await api.get('/api/grades/scales/active/')
+    return listFrom(data)
+  } catch {
+    try {
+      const { data } = await api.get('/grades/api/scales/active/')
+      return listFrom(data)
+    } catch {
+      return []
+    }
+  }
+}
+
 async function loadProfileGate() {
   try {
-    const [{ data: profile }, scalesResponse] = await Promise.all([
+    const [{ data: profile }, scales] = await Promise.all([
       api.get('/api/accounts/profile/'),
-      api.get('/api/grades/scales/active/').catch(() => ({ data: [] })),
+      fetchActiveGradeScales(),
     ])
-    const scales = scalesResponse.data?.results || scalesResponse.data
-    gradeScales.value = Array.isArray(scales) ? scales : []
+    gradeScales.value = scales
 
     if (profile.is_ready_to_apply === false) {
       errorToast(t('applicationFormPage.profileRequiredToast'))

@@ -32,4 +32,31 @@ describe('DocumentUpload', () => {
     expect(wrapper.text()).toContain('Upload document')
     expect(wrapper.find('[data-testid="document-upload-btn"]').text()).toContain('Upload')
   })
+
+  it('loads every document-type page so required types are not dropped', async () => {
+    api.get
+      .mockResolvedValueOnce({
+        data: {
+          count: 21,
+          next: 'http://localhost:8020/api/document-types/?page=2&page_size=100',
+          results: [{ id: 't1', name: 'Kardex Oficial' }],
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          count: 21,
+          next: null,
+          results: [{ id: 't2', name: 'transcript' }],
+        },
+      })
+    const wrapper = mount(DocumentUpload, {
+      props: { applicationId: '1' },
+      global: { plugins: [i18n] },
+    })
+    await flushPromises()
+    const labels = wrapper.findAll('[data-testid="document-type-select"] option').map((o) => o.text())
+    expect(labels).toContain('transcript')
+    expect(api.get).toHaveBeenCalledWith('/api/document-types/?page_size=100')
+    expect(api.get).toHaveBeenCalledWith('/api/document-types/?page=2&page_size=100')
+  })
 })

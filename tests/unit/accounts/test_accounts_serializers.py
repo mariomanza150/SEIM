@@ -2,7 +2,7 @@
 Unit tests for accounts serializers.
 """
 
-from datetime import timedelta
+from datetime import date, timedelta
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -121,6 +121,8 @@ class TestProfileSerializer:
         assert "is_superuser" in data
         assert "gpa" in data
         assert "language" in data
+        assert "missing_apply_fields" in data
+        assert "grade_scale" in data["missing_apply_fields"]
 
     def test_profile_serializer_update(self):
         """Test ProfileSerializer update method."""
@@ -195,6 +197,108 @@ class TestProfileSerializer:
         )
         assert valid.is_valid(), valid.errors
         assert valid.validated_data["matricula"] is None
+
+    def test_profile_serializer_persists_personal_fields(self):
+        user = User.objects.create_user(
+            username="persist-test",
+            email="persist@example.com",
+            password="testpass123",
+        )
+        school = SchoolFaculty.objects.create(name="Engineering")
+        program = HomeAcademicProgram.objects.create(
+            name="Computer Science", school=school
+        )
+        serializer = ProfileSerializer(
+            user.profile,
+            data={
+                "first_name": "Ada",
+                "secondary_email": "alt@example.net",
+                "mobile_phone": "8112345678",
+                "birthplace": "Monterrey",
+                "school": school.id,
+                "home_academic_program": program.id,
+                "date_of_birth": "",
+            },
+            partial=True,
+        )
+        assert serializer.is_valid(), serializer.errors
+        profile = serializer.save()
+        profile.refresh_from_db()
+        profile.user.refresh_from_db()
+        assert profile.user.first_name == "Ada"
+        assert profile.secondary_email == "alt@example.net"
+        assert profile.mobile_phone == "8112345678"
+        assert profile.birthplace == "Monterrey"
+        assert profile.school_id == school.id
+        assert profile.home_academic_program_id == program.id
+        assert profile.date_of_birth is None
+
+    def test_profile_serializer_persists_eligibility_fields(self):
+        from grades.models import GradeScale
+
+        user = User.objects.create_user(
+            username="elig-persist",
+            email="elig-persist@example.com",
+            password="testpass123",
+        )
+        scale = GradeScale.objects.create(
+            name="US GPA 4.0 Scale",
+            code="US_GPA_4_TEST",
+            min_value=0,
+            max_value=4,
+            passing_value=2,
+            is_active=True,
+        )
+        serializer = ProfileSerializer(
+            user.profile,
+            data={
+                "gpa": 4.0,
+                "grade_scale": str(scale.id),
+                "credits_approved_percent": "50.00",
+                "ingress_date": "2024-06-24",
+                "language": "English",
+                "language_level": "C2",
+            },
+            partial=True,
+        )
+        assert serializer.is_valid(), serializer.errors
+        profile = serializer.save()
+        profile.refresh_from_db()
+        data = ProfileSerializer(profile).data
+        assert profile.gpa == 4.0
+        assert profile.grade_scale_id == scale.id
+        assert float(profile.credits_approved_percent) == 50.0
+        assert profile.ingress_date == date(2024, 6, 24)
+        assert data["credits_approved_percent"] == 50.0
+        assert data["grade_scale_name"] == "US GPA 4.0 Scale"
+        assert str(data["grade_scale"]) == str(scale.id)
+
+    def test_optional_identity_fields_may_be_blank(self):
+        user = User.objects.create_user(
+            username="optional-fields",
+            email="optional@example.com",
+            password="testpass123",
+        )
+        serializer = ProfileSerializer(
+            user.profile,
+            data={
+                "first_name": "Ada",
+                "last_name": "Lovelace",
+                "middle_name": "",
+                "mothers_last_name": "",
+                "passport_number": "",
+                "rfc": "",
+            },
+            partial=True,
+        )
+        assert serializer.is_valid(), serializer.errors
+        profile = serializer.save()
+        profile.refresh_from_db()
+        profile.user.refresh_from_db()
+        assert profile.user.middle_name == ""
+        assert profile.user.mothers_last_name == ""
+        assert profile.passport_number == ""
+        assert profile.rfc == ""
 
 
 @pytest.mark.django_db

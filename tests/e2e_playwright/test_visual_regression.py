@@ -55,12 +55,22 @@ class TestVisualRegression:
         from tests.e2e_playwright.utils.visual_regression import (
             hide_dynamic_elements,
             mask_elements,
+            stabilize_dynamic_region,
         )
 
         hide_dynamic_elements(
-            page, [".timestamp", "[data-time]", ".notification-badge"]
+            page,
+            [
+                ".timestamp",
+                "[data-time]",
+                ".notification-badge",
+                "[data-testid=notifications-badge]",
+                "button[aria-label*='Notifications'] .badge",
+            ],
         )
         mask_elements(page, [".user-specific-data"])
+        stabilize_dynamic_region(page, "[data-testid=dashboard-stats], .dashboard .row.mb-4", height_px=180)
+        stabilize_dynamic_region(page, "[data-testid=dashboard-next-steps], .dashboard > .card", height_px=280)
 
         assert assert_visual_match("dashboard_student")
 
@@ -83,9 +93,33 @@ class TestVisualRegression:
         applications_page = ApplicationsPage(page, base_url)
         applications_page.navigate_to_applications()
 
-        from tests.e2e_playwright.utils.visual_regression import hide_dynamic_elements
+        from tests.e2e_playwright.utils.visual_regression import (
+            hide_dynamic_elements,
+            stabilize_dynamic_region,
+        )
 
-        hide_dynamic_elements(page, [".timestamp", "[data-time]", ".status-badge"])
+        hide_dynamic_elements(
+            page,
+            [
+                ".timestamp",
+                "[data-time]",
+                ".status-badge",
+                "[data-testid=notifications-badge]",
+                "button[aria-label*='Notifications'] .badge",
+            ],
+        )
+        page.evaluate(
+            """() => {
+              const card = document.querySelector('.application-card');
+              const row = card && card.closest('.row');
+              if (row) row.setAttribute('data-visual-stabilize', 'applications');
+            }"""
+        )
+        stabilize_dynamic_region(
+            page,
+            "[data-testid=applications-results], [data-visual-stabilize=applications]",
+            height_px=480,
+        )
 
         assert assert_visual_match("applications_list")
 

@@ -66,6 +66,7 @@ docker-compose exec web python manage.py seed_demo_readiness
 - **Admin**: `admin@test.com` / `admin123`
 - **Coordinator**: `coordinator@test.com` / `coordinator123`
 - **Student**: `student@test.com` / `student123`
+- **Partner**: `partner@test.com` / `partner123`
 
 ---
 
@@ -526,8 +527,8 @@ docker-compose logs -f web
 
 ### Overview
 - SEIM uses Redis as the default cache backend for high-performance API response caching.
-- API GET responses are cached automatically via `core.cache.APICacheMiddleware`.
-- Caching is enabled for all `/api/` endpoints by default.
+- Anonymous `GET /api/` JSON responses may be cached via `core.cache.APICacheMiddleware`.
+- Authenticated API traffic is not middleware-cached so admin creates (programs, workflows, forms) appear immediately.
 
 ### Redis Setup
 - Redis is included as a service in `docker-compose.yml`.
@@ -536,8 +537,8 @@ docker-compose logs -f web
 
 ### Cache Middleware
 - `core.cache.APICacheMiddleware` is added to the Django `MIDDLEWARE` stack.
-- It caches GET requests to `/api/` endpoints and serves cached responses when available.
-- Cache keys are user-aware for authenticated requests.
+- It caches anonymous GET requests to `/api/` JSON endpoints only.
+- Authenticated requests skip middleware cache; `ProgramViewSet` and `ApplicationViewSet` still use `@cache_api_response` with a generation key busted on create/update/delete (application comments and document validate/replace/resubmit call the same application helper).
 
 ### Cache Decorators
 - Use `@cache_api_response` for function-based API views to enable fine-grained caching.

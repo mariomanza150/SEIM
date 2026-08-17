@@ -183,7 +183,7 @@ class NotificationWebSocket {
     const token = typeof this.getToken === 'function' ? this.getToken() : null
     if (token || this.refreshToken) {
       this._scheduleReconnect(token, {
-        forceRefresh: Boolean(this.refreshToken) || AUTH_CLOSE_CODES.has(event?.code),
+        forceRefresh: AUTH_CLOSE_CODES.has(event?.code) || !token,
       })
     }
   }

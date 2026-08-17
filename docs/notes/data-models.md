@@ -98,8 +98,9 @@ Extended user profile with additional information.
 **Key Methods:**
 - `calculate_semester_from_ingress()` - `floor(months_since(ingress_date) / 6) + 1`, clamped ≥ 1
 - `get_effective_semester()` - Prefers `current_semester` override when set
-- `is_personal_academic_complete` - Required personal/academic application fields are populated
-- `is_ready_to_apply` - Readiness for apply: catalogs + GPA/scale + language + credits % + semester
+- `is_personal_academic_complete` - Required personal/academic application fields are populated (`middle_name`, `mothers_last_name`, `passport_number`, and `rfc` are optional)
+- `is_ready_to_apply` - `is_personal_academic_complete` and `is_eligibility_complete`
+- `missing_apply_fields()` - Keys still required before apply (GPA, grade scale, language, credits %, semester, plus personal/academic catalogs)
 - `get_gpa_equivalent()` - Convert GPA to 4.0 scale equivalent
 
 **Validation:**

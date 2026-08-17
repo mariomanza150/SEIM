@@ -126,10 +126,21 @@ class CacheManager:
 
     @classmethod
     def clear_pattern(cls, pattern: str) -> int:
-        """Clear cache entries matching a pattern"""
+        """Clear cache entries matching a glob pattern.
+
+        Prefer django-redis ``delete_pattern`` (SCAN + correct KEY_PREFIX).
+        ``cache.keys()`` + ``delete()`` double-prefixes keys on Redis and is a
+        no-op on backends that lack ``keys()``.
+        """
         try:
-            # This is a simplified version - in production, you might want to use Redis SCAN
-            keys = cache.keys(pattern)
+            delete_pattern = getattr(cache, "delete_pattern", None)
+            if callable(delete_pattern):
+                deleted = delete_pattern(pattern)
+                return int(deleted or 0)
+            keys_fn = getattr(cache, "keys", None)
+            if not callable(keys_fn):
+                return 0
+            keys = keys_fn(pattern) or []
             deleted = 0
             for key in keys:
                 if cache.delete(key):
@@ -301,12 +312,10 @@ class APICacheMiddleware:
         self.get_response = get_response
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
-        # Only cache GET requests to API endpoints
-        if request.method == "GET" and request.path.startswith("/api/"):
-            # Generate cache key
+        # Authenticated GETs are skipped: admin create/update must not serve
+        # a 5-minute stale list (programs, workflows, form types, etc.).
+        if self._should_cache_request(request):
             cache_key = self._generate_cache_key(request)
-
-            # Try to get from cache
             cached_response = CacheManager.get_cache(cache_key)
             if cached_response is not None:
                 return HttpResponse(
@@ -317,12 +326,7 @@ class APICacheMiddleware:
 
         response = self.get_response(request)
 
-        # Cache successful JSON GET API responses only (skip CSV, Excel, file streams, etc.)
-        if (
-            request.method == "GET"
-            and request.path.startswith("/api/")
-            and response.status_code == 200
-        ):
+        if self._should_cache_request(request) and response.status_code == 200:
             ctype = (response.get("Content-Type") or "").lower()
             if "application/json" in ctype:
                 try:
@@ -333,6 +337,15 @@ class APICacheMiddleware:
                     pass
 
         return response
+
+    @staticmethod
+    def _should_cache_request(request: HttpRequest) -> bool:
+        if request.method != "GET" or not request.path.startswith("/api/"):
+            return False
+        user = getattr(request, "user", None)
+        if user is not None and getattr(user, "is_authenticated", False):
+            return False
+        return True
 
     def _generate_cache_key(self, request: HttpRequest) -> str:
         """Generate cache key for request"""
@@ -446,6 +459,33 @@ def invalidate_application_cache(application_id: int) -> bool:
     """Invalidate cache for a specific application"""
     cache_key = CacheManager.get_cache_key("application_data", f"app_{application_id}")
     return CacheManager.delete_cache(cache_key)
+
+
+APPLICATION_API_CACHE_GEN_KEY = "api_cache_gen:ApplicationViewSet"
+
+
+def application_api_cache_generation() -> str:
+    """Generation token embedded in Application/Comment view cache keys."""
+    value = cache.get(APPLICATION_API_CACHE_GEN_KEY)
+    return str(value if value is not None else 0)
+
+
+def invalidate_application_api_responses(application=None) -> None:
+    """Bust ApplicationViewSet and CommentViewSet API response caches.
+
+    Staff mutations (status, comments, documents) must drop every user's
+    cached retrieve/list payload, not only the actor's key. Bumping the
+    generation changes key_func output; pattern deletes clean Redis leftovers.
+    Unrelated ``api_resp`` entries (programs, analytics) are left intact.
+    """
+    try:
+        cache.incr(APPLICATION_API_CACHE_GEN_KEY)
+    except ValueError:
+        cache.set(APPLICATION_API_CACHE_GEN_KEY, 1, timeout=None)
+    CacheManager.clear_pattern("api_resp:v1:api_middleware:/api/applications*")
+    CacheManager.clear_pattern("api_resp:v1:api_middleware:/api/comments*")
+    CacheManager.clear_pattern("api_resp:v1:ApplicationViewSet*")
+    CacheManager.clear_pattern("api_resp:v1:CommentViewSet*")
 
 
 def generate_cache_key(prefix: str, *args, **kwargs) -> str:

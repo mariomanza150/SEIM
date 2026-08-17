@@ -32,9 +32,12 @@
         >
           <i class="bi me-2" :class="isReadyToApply ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
           {{ isReadyToApply ? t('profilePage.readyToApply') : t('profilePage.completeRequired') }}
+          <ul v-if="!isReadyToApply && missingApplyFields.length" class="mb-0 mt-2" data-testid="profile-missing-fields">
+            <li v-for="key in missingApplyFields" :key="key">{{ t(`profilePage.missingFields.${key}`) }}</li>
+          </ul>
         </div>
 
-        <form @submit.prevent="handleSubmit">
+        <form autocomplete="off" @submit.prevent="handleSubmit">
           <section class="card mb-4" data-testid="profile-account-section">
             <div class="card-header"><h5 class="mb-0">{{ t('profilePage.accountSection') }}</h5></div>
             <div class="card-body">
@@ -45,23 +48,23 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-matricula">{{ t('profilePage.matricula') }} *</label>
-                  <input id="profile-matricula" v-model="form.matricula" type="text" inputmode="numeric" pattern="[0-9]+" class="form-control" required>
+                  <input id="profile-matricula" v-model="form.matricula" type="text" inputmode="numeric" pattern="[0-9]+" class="form-control" required data-testid="profile-matricula">
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-first-name">{{ t('profilePage.firstName') }} *</label>
                   <input id="profile-first-name" v-model="form.first_name" type="text" class="form-control" name="given-name" autocomplete="given-name" required data-testid="profile-first-name">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-middle-name">{{ t('profilePage.middleName') }} *</label>
-                  <input id="profile-middle-name" v-model="form.middle_name" type="text" class="form-control" autocomplete="additional-name" required data-testid="profile-middle-name">
+                  <label class="form-label" for="profile-middle-name">{{ t('profilePage.middleName') }}</label>
+                  <input id="profile-middle-name" v-model="form.middle_name" type="text" class="form-control" autocomplete="additional-name" data-testid="profile-middle-name">
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-last-name">{{ t('profilePage.lastName') }} *</label>
                   <input id="profile-last-name" v-model="form.last_name" type="text" class="form-control" name="family-name" autocomplete="family-name" required data-testid="profile-last-name">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-mothers-last-name">{{ t('profilePage.mothersLastName') }} *</label>
-                  <input id="profile-mothers-last-name" v-model="form.mothers_last_name" type="text" class="form-control" autocomplete="family-name" required>
+                  <label class="form-label" for="profile-mothers-last-name">{{ t('profilePage.mothersLastName') }}</label>
+                  <input id="profile-mothers-last-name" v-model="form.mothers_last_name" type="text" class="form-control" autocomplete="family-name" data-testid="profile-mothers-last-name">
                 </div>
               </div>
             </div>
@@ -73,7 +76,7 @@
               <div class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label" for="profile-gender">{{ t('profilePage.gender') }} *</label>
-                  <select id="profile-gender" v-model="form.gender" class="form-select" required>
+                  <select id="profile-gender" v-model="form.gender" class="form-select" required data-testid="profile-gender">
                     <option value="">{{ t('profilePage.selectOption') }}</option>
                     <option value="female">{{ t('profilePage.genderFemale') }}</option>
                     <option value="male">{{ t('profilePage.genderMale') }}</option>
@@ -84,31 +87,31 @@
                 </div>
                 <div class="col-md-4">
                   <label class="form-label" for="profile-dob">{{ t('profilePage.dateOfBirth') }} *</label>
-                  <input id="profile-dob" v-model="form.date_of_birth" type="date" class="form-control" required>
+                  <input id="profile-dob" v-model="form.date_of_birth" type="date" class="form-control" required data-testid="profile-dob">
                 </div>
                 <div class="col-md-4">
                   <label class="form-label" for="profile-birthplace">{{ t('profilePage.birthplace') }} *</label>
-                  <input id="profile-birthplace" v-model="form.birthplace" type="text" class="form-control" required>
+                  <input id="profile-birthplace" v-model="form.birthplace" type="text" class="form-control" required data-testid="profile-birthplace">
                 </div>
                 <div class="col-md-4">
                   <label class="form-label" for="profile-postal-code">{{ t('profilePage.postalCode') }} *</label>
-                  <input id="profile-postal-code" v-model="form.postal_code" type="text" class="form-control" autocomplete="postal-code" required>
+                  <input id="profile-postal-code" v-model="form.postal_code" type="text" class="form-control" autocomplete="postal-code" required data-testid="profile-postal-code">
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label" for="profile-passport">{{ t('profilePage.passportNumber') }} *</label>
-                  <input id="profile-passport" v-model="form.passport_number" type="text" class="form-control" required>
+                  <label class="form-label" for="profile-passport">{{ t('profilePage.passportNumber') }}</label>
+                  <input id="profile-passport" v-model="form.passport_number" type="text" class="form-control" data-testid="profile-passport">
                 </div>
                 <div class="col-md-4">
                   <label class="form-label" for="profile-mobile">{{ t('profilePage.mobilePhone') }} *</label>
-                  <input id="profile-mobile" v-model="form.mobile_phone" type="tel" class="form-control" autocomplete="tel" required>
+                  <input id="profile-mobile" v-model="form.mobile_phone" type="tel" class="form-control" autocomplete="tel" required data-testid="profile-mobile">
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-secondary-email">{{ t('profilePage.secondaryEmail') }} *</label>
-                  <input id="profile-secondary-email" v-model="form.secondary_email" type="email" class="form-control" autocomplete="email" required>
+                  <input id="profile-secondary-email" v-model="form.secondary_email" type="email" class="form-control" autocomplete="email" required data-testid="profile-secondary-email">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-rfc">{{ t('profilePage.rfc') }} *</label>
-                  <input id="profile-rfc" v-model="form.rfc" type="text" class="form-control text-uppercase" required>
+                  <label class="form-label" for="profile-rfc">{{ t('profilePage.rfc') }}</label>
+                  <input id="profile-rfc" v-model="form.rfc" type="text" class="form-control text-uppercase" data-testid="profile-rfc">
                 </div>
               </div>
             </div>
@@ -122,28 +125,28 @@
                   <label class="form-label" for="profile-academic-level">{{ t('profilePage.academicLevel') }} *</label>
                   <select id="profile-academic-level" v-model="form.academic_level" class="form-select" required data-testid="profile-academic-level">
                     <option value="">{{ t('profilePage.selectOption') }}</option>
-                    <option v-for="item in catalogs.academicLevels" :key="item.id" :value="item.id">{{ item.name }}</option>
+                    <option v-for="item in catalogs.academicLevels" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
                   </select>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-school">{{ t('profilePage.school') }} *</label>
                   <select id="profile-school" v-model="form.school" class="form-select" required data-testid="profile-school">
                     <option value="">{{ t('profilePage.selectOption') }}</option>
-                    <option v-for="item in catalogs.schools" :key="item.id" :value="item.id">{{ item.name }}</option>
+                    <option v-for="item in catalogs.schools" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
                   </select>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-program">{{ t('profilePage.homeProgram') }} *</label>
                   <select id="profile-program" v-model="form.home_academic_program" class="form-select" :disabled="!form.school || programsLoading" required data-testid="profile-program">
                     <option value="">{{ programsLoading ? t('profilePage.loadingPrograms') : t('profilePage.selectOption') }}</option>
-                    <option v-for="item in catalogs.programs" :key="item.id" :value="item.id">{{ item.name }}</option>
+                    <option v-for="item in catalogs.programs" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
                   </select>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-unidad">{{ t('profilePage.unidad') }} *</label>
                   <select id="profile-unidad" v-model="form.unidad" class="form-select" required data-testid="profile-unidad">
                     <option value="">{{ t('profilePage.selectOption') }}</option>
-                    <option v-for="item in catalogs.unidades" :key="item.id" :value="item.id">{{ item.name }}</option>
+                    <option v-for="item in catalogs.unidades" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
                   </select>
                 </div>
               </div>
@@ -160,7 +163,7 @@
                   <label class="form-label" for="profile-bank">{{ t('profilePage.bank') }}</label>
                   <select id="profile-bank" v-model="form.bank_institution" class="form-select" data-testid="profile-bank">
                     <option value="">{{ t('profilePage.selectOption') }}</option>
-                    <option v-for="item in catalogs.banks" :key="item.id" :value="item.id">{{ item.name }}</option>
+                    <option v-for="item in catalogs.banks" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
                   </select>
                 </div>
                 <div class="col-md-6">
@@ -172,42 +175,42 @@
           </section>
 
           <section class="card mb-4" data-testid="profile-eligibility-section">
-            <div class="card-header"><h5 class="mb-0">{{ t('profilePage.eligibilitySection') }}</h5></div>
+            <div class="card-header"><h5 class="mb-0">{{ t('profilePage.eligibilitySection') }} *</h5></div>
             <div class="card-body">
               <p class="small text-muted">{{ t('profilePage.eligibilityIntro') }}</p>
               <div class="row g-3 mb-3">
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-ingress-date">{{ t('profilePage.ingressDate') }}</label>
-                  <input id="profile-ingress-date" v-model="form.ingress_date" type="date" class="form-control" data-testid="profile-ingress-date">
+                  <label class="form-label" for="profile-ingress-date">{{ t('profilePage.ingressDate') }} *</label>
+                  <input id="profile-ingress-date" v-model="form.ingress_date" type="date" class="form-control" :required="form.current_semester == null" data-testid="profile-ingress-date">
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-current-semester">{{ t('profilePage.currentSemester') }}</label>
-                  <input id="profile-current-semester" v-model.number="form.current_semester" type="number" min="1" step="1" class="form-control" :placeholder="computedSemesterPlaceholder" data-testid="profile-current-semester">
+                  <input id="profile-current-semester" v-model="form.current_semester" type="number" min="1" step="1" class="form-control" :placeholder="computedSemesterPlaceholder" :required="!form.ingress_date" autocomplete="off" data-testid="profile-current-semester">
                   <div class="form-text">{{ t('profilePage.currentSemesterHelp') }}</div>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-credits-percent">{{ t('profilePage.creditsApprovedPercent') }}</label>
-                  <input id="profile-credits-percent" v-model.number="form.credits_approved_percent" type="number" min="0" max="100" step="0.01" class="form-control" data-testid="profile-credits-percent">
+                  <label class="form-label" for="profile-credits-percent">{{ t('profilePage.creditsApprovedPercent') }} *</label>
+                  <input id="profile-credits-percent" v-model="form.credits_approved_percent" type="number" min="0" max="100" step="0.01" class="form-control" required autocomplete="off" data-testid="profile-credits-percent">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-gpa">{{ t('profilePage.gpaLabel') }}</label>
-                  <input id="profile-gpa" v-model.number="form.gpa" type="number" step="0.01" min="0" class="form-control" autocomplete="off" :placeholder="t('profilePage.gpaPlaceholder')" data-testid="profile-gpa">
+                  <label class="form-label" for="profile-gpa">{{ t('profilePage.gpaLabel') }} *</label>
+                  <input id="profile-gpa" v-model="form.gpa" type="number" step="0.01" min="0" class="form-control" autocomplete="off" required :placeholder="t('profilePage.gpaPlaceholder')" data-testid="profile-gpa">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-grade-scale">{{ t('profilePage.gradeScale') }}</label>
-                  <select id="profile-grade-scale" v-model="form.grade_scale" class="form-select">
-                    <option value="">{{ t('profilePage.notSetOption') }}</option>
-                    <option v-for="item in catalogs.gradeScales" :key="item.id" :value="item.id">{{ item.name }}</option>
+                  <label class="form-label" for="profile-grade-scale">{{ t('profilePage.gradeScale') }} *</label>
+                  <select id="profile-grade-scale" v-model="form.grade_scale" class="form-select" required data-testid="profile-grade-scale" :key="`scale-${form.grade_scale}-${catalogs.gradeScales.length}`">
+                    <option value="">{{ t('profilePage.selectOption') }}</option>
+                    <option v-for="item in catalogs.gradeScales" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
                   </select>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-language">{{ t('profilePage.primaryLanguage') }}</label>
-                  <input id="profile-language" v-model="form.language" type="text" class="form-control" autocomplete="language" :placeholder="t('profilePage.languagePlaceholder')" data-testid="profile-language">
+                  <label class="form-label" for="profile-language">{{ t('profilePage.primaryLanguage') }} *</label>
+                  <input id="profile-language" v-model="form.language" type="text" class="form-control" autocomplete="off" required :placeholder="t('profilePage.languagePlaceholder')" data-testid="profile-language">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-language-level">{{ t('profilePage.primaryLevelLabel') }}</label>
-                  <select id="profile-language-level" v-model="form.language_level" class="form-select" autocomplete="off" data-testid="profile-language-level">
-                    <option value="">{{ t('profilePage.notSetOption') }}</option>
+                  <label class="form-label" for="profile-language-level">{{ t('profilePage.primaryLevelLabel') }} *</label>
+                  <select id="profile-language-level" v-model="form.language_level" class="form-select" autocomplete="off" required data-testid="profile-language-level">
+                    <option value="">{{ t('profilePage.selectOption') }}</option>
                     <option v-for="level in cefrLevels" :key="level" :value="level">{{ t(`profilePage.cefr${level}`) }}</option>
                   </select>
                 </div>
@@ -248,7 +251,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
@@ -257,10 +260,10 @@ const { t } = useI18n()
 const { success, error: errorToast } = useToast()
 const cefrLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const loading = ref(true)
+const hydrating = ref(true)
 const saving = ref(false)
 const programsLoading = ref(false)
 const saveError = ref('')
-const isReadyToApply = ref(false)
 const catalogs = reactive({
   academicLevels: [], schools: [], unidades: [], banks: [], programs: [], gradeScales: [],
 })
@@ -270,7 +273,8 @@ const emptyForm = {
   matricula: '', gender: '', date_of_birth: '', birthplace: '', postal_code: '',
   passport_number: '', mobile_phone: '', secondary_email: '', rfc: '',
   academic_level: '', school: '', unidad: '', home_academic_program: '',
-  bank_institution: '', clabe: '', gpa: null, grade_scale: '', language: '',
+  academic_level_name: '', school_name: '', unidad_name: '', home_academic_program_name: '',
+  bank_institution: '', bank_institution_name: '', clabe: '', gpa: null, grade_scale: '', language: '',
   language_level: '', additional_languages: [],
   ingress_date: '', current_semester: null, credits_approved_percent: null,
   computed_semester: null, effective_semester: null,
@@ -285,14 +289,76 @@ const computedSemesterPlaceholder = computed(() => {
   return t('profilePage.semesterOverridePlaceholder')
 })
 
+const missingApplyFields = computed(() => {
+  const missing = []
+  const blank = (value) => value == null || !String(value).trim()
+  if (blank(form.value.first_name)) missing.push('first_name')
+  if (blank(form.value.last_name)) missing.push('last_name')
+  if (blank(form.value.matricula)) missing.push('matricula')
+  if (!form.value.academic_level) missing.push('academic_level')
+  if (!form.value.school) missing.push('school')
+  if (!form.value.unidad) missing.push('unidad')
+  if (!form.value.home_academic_program) missing.push('home_academic_program')
+  if (blank(form.value.gender)) missing.push('gender')
+  if (!form.value.date_of_birth) missing.push('date_of_birth')
+  if (blank(form.value.birthplace)) missing.push('birthplace')
+  if (blank(form.value.postal_code)) missing.push('postal_code')
+  if (blank(form.value.mobile_phone)) missing.push('mobile_phone')
+  if (blank(form.value.secondary_email)) missing.push('secondary_email')
+  if (form.value.gpa == null || form.value.gpa === '') missing.push('gpa')
+  if (!form.value.grade_scale) missing.push('grade_scale')
+  if (blank(form.value.language)) missing.push('language')
+  if (form.value.credits_approved_percent == null || form.value.credits_approved_percent === '') {
+    missing.push('credits_approved_percent')
+  }
+  if (!form.value.ingress_date && (form.value.current_semester == null || form.value.current_semester === '')) {
+    missing.push('semester')
+  }
+  return missing
+})
+const isReadyToApply = computed(() => missingApplyFields.value.length === 0)
+
+const PROFILE_FIELDS = [
+  'first_name', 'middle_name', 'last_name', 'mothers_last_name',
+  'matricula', 'gender', 'date_of_birth', 'birthplace', 'postal_code',
+  'passport_number', 'mobile_phone', 'secondary_email', 'rfc',
+  'academic_level', 'school', 'unidad', 'home_academic_program',
+  'bank_institution', 'clabe', 'gpa', 'grade_scale', 'language',
+  'language_level', 'additional_languages',
+  'ingress_date', 'current_semester', 'credits_approved_percent',
+]
+
 function listFrom(data) {
   const rows = data?.results || data
   return Array.isArray(rows) ? rows : []
 }
 
+function catalogRow(item) {
+  if (!item || item.id == null || item.id === '') return null
+  return { id: String(item.id), name: item.name || String(item.id) }
+}
+
+function catalogList(data) {
+  return listFrom(data).map(catalogRow).filter(Boolean)
+}
+
+function ensureSelected(list, selectedId, selectedName) {
+  const id = idOf(selectedId)
+  if (!id) return list
+  if (list.some((row) => String(row.id) === id)) return list
+  return [{ id, name: selectedName || id }, ...list]
+}
+
 function idOf(value) {
-  if (value && typeof value === 'object') return value.id ?? ''
-  return value ?? ''
+  if (value && typeof value === 'object') {
+    return value.id == null || value.id === '' ? '' : String(value.id)
+  }
+  return value == null || value === '' ? '' : String(value)
+}
+
+function dateOf(value) {
+  if (!value) return ''
+  return String(value).slice(0, 10)
 }
 
 function errorMessage(data) {
@@ -305,71 +371,142 @@ function errorMessage(data) {
 
 async function fetchCatalog(path) {
   const { data } = await api.get(`/api/accounts/catalogs/${path}/`)
-  return listFrom(data)
+  return catalogList(data)
 }
 
-async function fetchPrograms(schoolId, clearSelection = true) {
+async function fetchPrograms(schoolId, clearSelection = true, { notifyError = true } = {}) {
   if (clearSelection) form.value.home_academic_program = ''
-  catalogs.programs = []
-  if (!schoolId) return
+  if (!schoolId) {
+    catalogs.programs = []
+    return
+  }
   programsLoading.value = true
   try {
     const { data } = await api.get('/api/accounts/catalogs/programs/', { params: { school: schoolId } })
-    catalogs.programs = listFrom(data)
+    catalogs.programs = ensureSelected(
+      catalogList(data),
+      form.value.home_academic_program,
+      form.value.home_academic_program_name,
+    )
   } catch {
-    errorToast(t('profilePage.toastCatalogError'))
+    catalogs.programs = ensureSelected(
+      catalogs.programs,
+      form.value.home_academic_program,
+      form.value.home_academic_program_name,
+    )
+    if (notifyError) errorToast(t('profilePage.toastCatalogError'))
   } finally {
     programsLoading.value = false
   }
 }
 
-async function fetchProfileAndCatalogs() {
-  try {
-    const [profileResponse, academicLevels, schools, unidades, banks, gradeScaleResponse] = await Promise.all([
-      api.get('/api/accounts/profile/'),
-      fetchCatalog('academic-levels'),
-      fetchCatalog('schools'),
-      fetchCatalog('unidades'),
-      fetchCatalog('banks'),
-      api.get('/api/grades/scales/active/').catch(() => ({ data: [] })),
-    ])
-    catalogs.academicLevels = academicLevels
-    catalogs.schools = schools
-    catalogs.unidades = unidades
-    catalogs.banks = banks
-    catalogs.gradeScales = listFrom(gradeScaleResponse.data)
+function numberOf(value) {
+  if (value === '' || value == null) return null
+  const n = Number(value)
+  return Number.isNaN(n) ? null : n
+}
 
-    const data = profileResponse.data
-    form.value = {
-      ...emptyForm,
-      ...data,
-      academic_level: idOf(data.academic_level),
-      school: idOf(data.school),
-      unidad: idOf(data.unidad),
-      home_academic_program: idOf(data.home_academic_program),
-      bank_institution: idOf(data.bank_institution),
-      grade_scale: idOf(data.grade_scale),
-      ingress_date: data.ingress_date || '',
-      current_semester: data.current_semester ?? null,
-      credits_approved_percent: data.credits_approved_percent ?? null,
-      computed_semester: data.computed_semester ?? null,
-      effective_semester: data.effective_semester ?? null,
-      additional_languages: Array.isArray(data.additional_languages)
-        ? data.additional_languages.map((row) => ({ name: row?.name || '', level: row?.level || '' }))
-        : [],
+function applyProfile(data) {
+  form.value = {
+    ...emptyForm,
+    email: data.email || '',
+    first_name: data.first_name || '',
+    middle_name: data.middle_name || '',
+    last_name: data.last_name || '',
+    mothers_last_name: data.mothers_last_name || '',
+    matricula: data.matricula || '',
+    gender: data.gender || '',
+    date_of_birth: dateOf(data.date_of_birth),
+    birthplace: data.birthplace || '',
+    postal_code: data.postal_code || '',
+    passport_number: data.passport_number || '',
+    mobile_phone: data.mobile_phone || '',
+    secondary_email: data.secondary_email || '',
+    rfc: data.rfc || '',
+    academic_level: idOf(data.academic_level),
+    academic_level_name: data.academic_level_name || '',
+    school: idOf(data.school),
+    school_name: data.school_name || '',
+    unidad: idOf(data.unidad),
+    unidad_name: data.unidad_name || '',
+    home_academic_program: idOf(data.home_academic_program),
+    home_academic_program_name: data.home_academic_program_name || '',
+    bank_institution: idOf(data.bank_institution),
+    bank_institution_name: data.bank_institution_name || '',
+    clabe: data.clabe || '',
+    gpa: numberOf(data.gpa),
+    grade_scale: idOf(data.grade_scale),
+    language: data.language || '',
+    language_level: data.language_level || '',
+    ingress_date: dateOf(data.ingress_date),
+    current_semester: numberOf(data.current_semester),
+    credits_approved_percent: numberOf(data.credits_approved_percent),
+    computed_semester: data.computed_semester ?? null,
+    effective_semester: data.effective_semester ?? null,
+    additional_languages: Array.isArray(data.additional_languages)
+      ? data.additional_languages.map((row) => ({ name: row?.name || '', level: row?.level || '' }))
+      : [],
+  }
+  catalogs.academicLevels = ensureSelected(catalogs.academicLevels, form.value.academic_level, form.value.academic_level_name)
+  catalogs.schools = ensureSelected(catalogs.schools, form.value.school, form.value.school_name)
+  catalogs.unidades = ensureSelected(catalogs.unidades, form.value.unidad, form.value.unidad_name)
+  catalogs.banks = ensureSelected(catalogs.banks, form.value.bank_institution, form.value.bank_institution_name)
+  catalogs.gradeScales = ensureSelected(catalogs.gradeScales, form.value.grade_scale, data.grade_scale_name)
+}
+
+async function fetchActiveGradeScales() {
+  const load = async (url) => {
+    const { data } = await api.get(url)
+    const rows = catalogList(data)
+    if (!rows.length && !Array.isArray(data) && !Array.isArray(data?.results)) {
+      throw new Error(`Invalid grade scale payload from ${url}`)
     }
-    isReadyToApply.value = Boolean(data.is_ready_to_apply)
-    await fetchPrograms(form.value.school, false)
+    return rows
+  }
+  try {
+    return await load('/api/grades/scales/active/')
+  } catch {
+    return await load('/grades/api/scales/active/')
+  }
+}
+
+async function fetchProfileAndCatalogs() {
+  hydrating.value = true
+  const catalogSettled = await Promise.allSettled([
+    fetchCatalog('academic-levels'),
+    fetchCatalog('schools'),
+    fetchCatalog('unidades'),
+    fetchCatalog('banks'),
+  ])
+  const scalesSettled = await Promise.allSettled([fetchActiveGradeScales()])
+  const catalogFailed = catalogSettled.some((result) => result.status === 'rejected')
+  catalogs.academicLevels = catalogSettled[0].status === 'fulfilled' ? catalogSettled[0].value : []
+  catalogs.schools = catalogSettled[1].status === 'fulfilled' ? catalogSettled[1].value : []
+  catalogs.unidades = catalogSettled[2].status === 'fulfilled' ? catalogSettled[2].value : []
+  catalogs.banks = catalogSettled[3].status === 'fulfilled' ? catalogSettled[3].value : []
+  catalogs.gradeScales = scalesSettled[0].status === 'fulfilled' ? scalesSettled[0].value : []
+  if (catalogFailed) {
+    errorToast(t('profilePage.toastCatalogError'))
+  }
+
+  try {
+    const profileResponse = await api.get('/api/accounts/profile/')
+    applyProfile(profileResponse.data || {})
+    await fetchPrograms(form.value.school, false, { notifyError: !catalogFailed })
+    await nextTick()
   } catch (err) {
     console.error('Failed to load profile:', err)
     errorToast(t('profilePage.toastLoadError'))
   } finally {
     loading.value = false
+    await nextTick()
+    hydrating.value = false
   }
 }
 
 function nullable(value) {
-  return value === '' ? null : value
+  if (value === '' || value === undefined || Number.isNaN(value)) return null
+  return value
 }
 
 function normalizedAdditionalLanguages() {
@@ -379,12 +516,10 @@ function normalizedAdditionalLanguages() {
 }
 
 function buildPayload() {
-  const payload = { ...form.value }
-  delete payload.is_ready_to_apply
-  delete payload.is_eligibility_complete
-  delete payload.is_personal_academic_complete
-  delete payload.computed_semester
-  delete payload.effective_semester
+  const payload = {}
+  for (const key of PROFILE_FIELDS) {
+    payload[key] = form.value[key]
+  }
   payload.academic_level = nullable(payload.academic_level)
   payload.school = nullable(payload.school)
   payload.unidad = nullable(payload.unidad)
@@ -395,10 +530,13 @@ function buildPayload() {
   payload.language = nullable(payload.language)
   payload.language_level = nullable(payload.language_level)
   payload.secondary_email = nullable(payload.secondary_email)
+  payload.date_of_birth = nullable(payload.date_of_birth)
   payload.ingress_date = nullable(payload.ingress_date)
   payload.current_semester = nullable(payload.current_semester)
   payload.credits_approved_percent = nullable(payload.credits_approved_percent)
   payload.additional_languages = normalizedAdditionalLanguages()
+  payload.rfc = String(payload.rfc || '').trim().toUpperCase()
+  payload.clabe = String(payload.clabe || '').trim()
   return payload
 }
 
@@ -407,7 +545,10 @@ async function handleSubmit() {
   saving.value = true
   try {
     const { data } = await api.patch('/api/accounts/profile/', buildPayload())
-    isReadyToApply.value = Boolean(data.is_ready_to_apply)
+    applyProfile(data || {})
+    if (form.value.school) {
+      await fetchPrograms(form.value.school, false)
+    }
     success(t('profilePage.toastSaved'))
   } catch (err) {
     saveError.value = errorMessage(err.response?.data)
@@ -428,7 +569,9 @@ function removeLanguageRow(index) {
 }
 
 watch(() => form.value.school, (school, previous) => {
-  if (!loading.value && String(school) !== String(previous)) fetchPrograms(school)
+  if (loading.value || hydrating.value || saving.value) return
+  if (String(school || '') === String(previous || '')) return
+  fetchPrograms(school)
 })
 
 onMounted(fetchProfileAndCatalogs)

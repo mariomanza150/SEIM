@@ -1,0 +1,49 @@
+{
+  "items": {
+    "2.8": {
+      "result": "Pass",
+      "notes": "Skipped on resume (already passed)"
+    },
+    "3.4": {
+      "result": "Pass",
+      "notes": "Skipped on resume (already passed)"
+    },
+    "3.5": {
+      "result": "Pass",
+      "notes": "Skipped on resume (already passed)"
+    },
+    "8.1": {
+      "result": "Pass",
+      "notes": "Resumed existing draft id=bb40c56f-3cc2-447d-b87b-68dc4de6da64"
+    },
+    "8.2": {
+      "result": "Pass",
+      "notes": "Required documents\n0 / 2 approved\n\nAll listed documents must be uploaded and marked valid by staff before you can submit.\n\ntranscript\n\nAcademic transcript\n\nPending review\nView\npassport\n\nPassport or ID\n\nPending review\nView"
+    },
+    "8.3-gate": {
+      "result": "Pass",
+      "notes": "Submit disabled before staff approval=True"
+    },
+    "8.3b": {
+      "result": "Pass",
+      "notes": "Clicked 2 mark-valid controls on lifecycle draft."
+    },
+    "8.3": {
+      "result": "Fail",
+      "notes": "Submit still blocked after coordinator validate."
+    },
+    "8.4": {
+      "result": "Pass",
+      "notes": "Coordinator posted a public comment on the lifecycle application."
+    },
+    "8.5": {
+      "result": "Pass",
+      "notes": "Student detail/inbox shows the coordinator update."
+    },
+    "error": {
+      "result": "Fail",
+      "notes": "TimeoutError: Timeout 30000ms exceeded."
+    }
+  },
+  "lifecycle_id": "bb40c56f-3cc2-447d-b87b-68dc4de6da64"
+}

@@ -153,9 +153,34 @@ describe('resolveAuthenticatedNavigation', () => {
       isAuthenticated: true,
       isAdmin: true,
       canUseStaffReviewQueue: true,
-      canUsePartnerPortal: true,
+      canUsePartnerPortal: false,
       checkAuth: vi.fn(),
     }
     expect(await resolveAuthenticatedNavigation(adminRoute(), authStore)).toBe('next')
+  })
+
+  it('returns applications when coordinator targets adminOnly route (MQ-2026-08-16-001)', async () => {
+    const authStore = {
+      accessToken: 'jwt',
+      isAuthenticated: true,
+      isAdmin: false,
+      canUseStaffReviewQueue: true,
+      canUsePartnerPortal: false,
+      checkAuth: vi.fn(),
+    }
+    expect(await resolveAuthenticatedNavigation(adminRoute(), authStore)).toBe('applications')
+  })
+
+  it('returns applications when coordinator targets partnerPortal (MQ-2026-08-16-002)', async () => {
+    const authStore = {
+      accessToken: 'jwt',
+      isAuthenticated: true,
+      isAdmin: false,
+      canUseStaffReviewQueue: true,
+      canUsePartnerPortal: false,
+      checkAuth: vi.fn(),
+    }
+    const to = { meta: { requiresAuth: true, partnerPortal: true }, fullPath: '/partner' }
+    expect(await resolveAuthenticatedNavigation(to, authStore)).toBe('applications')
   })
 })

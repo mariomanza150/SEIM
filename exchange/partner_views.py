@@ -7,6 +7,7 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from core.cache import invalidate_application_api_responses
 from documents.models import ExchangeAgreementDocument
 from documents.serializers import ExchangeAgreementDocumentSerializer
 from exchange.models import (
@@ -218,6 +219,7 @@ class PartnerApplicationViewSet(viewsets.ReadOnlyModelViewSet):
         comment = ApplicationService.add_comment(
             application, request.user, text, is_private=False
         )
+        invalidate_application_api_responses(application)
         return Response(
             PartnerCommentSerializer(comment).data, status=status.HTTP_201_CREATED
         )

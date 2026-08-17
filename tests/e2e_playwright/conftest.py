@@ -24,6 +24,16 @@ except ImportError:  # pragma: no cover
         "update_baseline": False,
     }
 
+VISUAL_REGRESSION_CONFIG["update_baseline"] = (
+    os.environ.get("UPDATE_BASELINE", "false").lower() == "true"
+    or VISUAL_REGRESSION_CONFIG.get("update_baseline", False)
+)
+VISUAL_REGRESSION_CONFIG["threshold"] = float(
+    os.environ.get(
+        "VISUAL_THRESHOLD", VISUAL_REGRESSION_CONFIG.get("threshold", 0.1)
+    )
+)
+
 try:
     from playwright.sync_api import (
         Browser,

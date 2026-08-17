@@ -108,7 +108,7 @@
       </div>
 
       <!-- Applications List -->
-      <div v-else-if="applications.length > 0">
+      <div v-else-if="applications.length > 0" data-testid="applications-results">
         <div class="row">
           <div v-for="application in applications" :key="application.id" class="col-md-6 mb-4">
             <div class="card application-card h-100">

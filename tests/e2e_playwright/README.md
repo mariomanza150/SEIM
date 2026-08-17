@@ -65,6 +65,7 @@ Test users (from `seed_demo_readiness`):
 - `student@test.com` / `student123`
 - `coordinator@test.com` / `coordinator123`
 - `admin@test.com` / `admin123`
+- `partner@test.com` / `partner123`
 
 To reseed test data:
 ```bash

@@ -151,7 +151,12 @@ class ProgramFilter(django_filters.FilterSet):
         )
 
     def filter_eligible_for_me(self, queryset, name, value):
-        """Strict catalog filter: keep only schemes the authenticated student currently passes."""
+        """Keep schemes the student currently passes, ignoring application window.
+
+        Window closed/not-yet-open is a separate catalog filter
+        (``accepting_applications``). Students must still see closed programs so
+        the new-application form can show the window-closed state.
+        """
         if value is not True:
             return queryset
         user = getattr(self.request, "user", None)
@@ -159,11 +164,18 @@ class ProgramFilter(django_filters.FilterSet):
             return queryset.none()
         from exchange.eligibility_rules import evaluate_eligibility
 
-        eligible_ids = [
-            program.pk
-            for program in queryset
-            if evaluate_eligibility(user, program).eligible
-        ]
+        eligible_ids = []
+        for program in queryset:
+            evaluation = evaluate_eligibility(user, program)
+            blocking = [
+                rule
+                for rule in evaluation.rules
+                if not rule.skipped
+                and not rule.passed
+                and rule.rule_id != "application_window"
+            ]
+            if not blocking:
+                eligible_ids.append(program.pk)
         return queryset.filter(pk__in=eligible_ids)
 
 

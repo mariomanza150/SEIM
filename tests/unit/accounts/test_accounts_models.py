@@ -253,6 +253,31 @@ class TestUserModel:
 
         assert user.has_role("admin") is False
 
+    def test_is_admin_excludes_staff_coordinator(self):
+        """Coordinators with is_staff must not count as SEIM admin."""
+        admin_role = Role.objects.create(name="admin")
+        coordinator_role = Role.objects.create(name="coordinator")
+
+        admin = User.objects.create_user(
+            username="adminuser",
+            email="admin@example.com",
+            password="testpass123",
+            is_staff=True,
+            is_superuser=True,
+        )
+        admin.roles.add(admin_role)
+        coordinator = User.objects.create_user(
+            username="coorduser",
+            email="coord@example.com",
+            password="testpass123",
+            is_staff=True,
+            is_superuser=False,
+        )
+        coordinator.roles.add(coordinator_role)
+
+        assert admin.is_admin is True
+        assert coordinator.is_admin is False
+
     def test_primary_role_with_roles(self):
         """Test primary_role property when user has roles."""
         user = User.objects.create_user(
@@ -397,6 +422,8 @@ class TestProfileModel:
 
         assert profile.is_personal_academic_complete is True
         assert profile.is_ready_to_apply is False
+        assert "grade_scale" in profile.missing_apply_fields()
+        assert "gpa" in profile.missing_apply_fields()
 
         profile.gpa = 3.5
         profile.language = "Spanish"
@@ -404,9 +431,40 @@ class TestProfileModel:
         profile.ingress_date = date(2024, 1, 15)
         # grade_scale required for readiness; leave unset → still not ready
         assert profile.is_eligibility_complete is False
+        assert "grade_scale" in profile.missing_apply_fields()
+        assert "gpa" not in profile.missing_apply_fields()
 
         profile.secondary_email = ""
         assert profile.is_personal_academic_complete is False
+
+    def test_optional_identity_fields_are_not_required_for_completeness(self):
+        user = User.objects.create_user(
+            username="optional-complete",
+            email="optional-complete@example.com",
+            password="testpass123",
+            first_name="Ada",
+            last_name="Lovelace",
+        )
+        school = SchoolFaculty.objects.create(name="Engineering")
+        program = HomeAcademicProgram.objects.create(
+            name="Computer Science",
+            school=school,
+        )
+        profile = user.profile
+        profile.matricula = "1234567"
+        profile.academic_level = AcademicLevel.objects.create(name="Undergraduate")
+        profile.school = school
+        profile.unidad = Unidad.objects.create(name="Ciudad Universitaria")
+        profile.home_academic_program = program
+        profile.gender = "female"
+        profile.date_of_birth = date(2000, 1, 1)
+        profile.birthplace = "Monterrey"
+        profile.postal_code = "64000"
+        profile.mobile_phone = "8112345678"
+        profile.secondary_email = "ada@example.net"
+        profile.save()
+
+        assert profile.is_personal_academic_complete is True
 
 
 @pytest.mark.django_db

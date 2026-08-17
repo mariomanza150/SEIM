@@ -74,4 +74,22 @@ describe('router beforeEach + resolveAuthenticatedNavigation (MQ-014)', () => {
     await router.push({ name: 'NotificationRouting' })
     expect(router.currentRoute.value.name).toBe('NotificationRouting')
   })
+
+  it('redirects coordinator away from SPA admin and partner portal', async () => {
+    mockAxios.get.mockResolvedValue({
+      data: {
+        ...profileStudent,
+        role: 'coordinator',
+        is_admin: true,
+        is_staff: true,
+      },
+    })
+    localStorage.setItem('access_token', 'coord-jwt')
+    setActivePinia(createPinia())
+    await router.push({ name: 'Login' })
+    await router.push({ name: 'AdminPrograms' })
+    expect(router.currentRoute.value.name).toBe('Applications')
+    await router.push({ name: 'PartnerPortal' })
+    expect(router.currentRoute.value.name).toBe('Applications')
+  })
 })

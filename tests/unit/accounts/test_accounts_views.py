@@ -12,11 +12,14 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from accounts.models import (
+    AcademicLevel,
     AllowedEmailDomain,
+    BankInstitution,
     HomeAcademicProgram,
     Permission,
     Role,
     SchoolFaculty,
+    Unidad,
     UserSession,
     UserSettings,
 )
@@ -465,6 +468,60 @@ class TestProfileView(APITestCase):
         assert response.status_code == status.HTTP_200_OK
         assert response.data["first_name"] == "Updated"
 
+    def test_update_profile_personal_fields_roundtrip(self):
+        """Personal, academic, and banking fields persist across PATCH then GET."""
+        school = SchoolFaculty.objects.create(name="Engineering")
+        program = HomeAcademicProgram.objects.create(
+            name="Computer Science", school=school
+        )
+        level = AcademicLevel.objects.create(name="Undergraduate")
+        unidad = Unidad.objects.create(name="Ciudad Universitaria")
+        bank = BankInstitution.objects.create(name="BBVA")
+        url = reverse("accounts:profile")
+        payload = {
+            "first_name": "Ada",
+            "middle_name": "Byron",
+            "last_name": "Lovelace",
+            "mothers_last_name": "Milbanke",
+            "matricula": "1234567",
+            "secondary_email": "ada.alt@example.net",
+            "mobile_phone": "8112345678",
+            "gender": "female",
+            "date_of_birth": "2000-01-15",
+            "birthplace": "Monterrey",
+            "postal_code": "64000",
+            "passport_number": "P123456",
+            "rfc": "LOVA000115ABC",
+            "academic_level": str(level.id),
+            "school": str(school.id),
+            "home_academic_program": str(program.id),
+            "unidad": str(unidad.id),
+            "bank_institution": str(bank.id),
+            "clabe": "012345678901234567",
+        }
+        patch = self.client.patch(url, payload, format="json")
+        assert patch.status_code == status.HTTP_200_OK, patch.data
+        get = self.client.get(url)
+        assert get.status_code == status.HTTP_200_OK
+        for key, value in payload.items():
+            assert str(get.data[key]) == str(value)
+
+    def test_patch_profile_with_session_and_jwt_skips_csrf(self):
+        """SPA JSON PATCH must succeed with JWT even when a Django session exists."""
+        from rest_framework_simplejwt.tokens import RefreshToken
+
+        client = APIClient(enforce_csrf_checks=True)
+        client.force_login(self.user)
+        access = str(RefreshToken.for_user(self.user).access_token)
+        client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
+        response = client.patch(
+            reverse("accounts:profile"),
+            {"birthplace": "Saltillo", "mobile_phone": "8188888888"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK, response.data
+        assert response.data["birthplace"] == "Saltillo"
+
 
 @pytest.mark.django_db
 @pytest.mark.views
@@ -666,6 +723,26 @@ class TestUserSettingsView(APITestCase):
 
         assert response.status_code == status.HTTP_200_OK
         assert response.data["theme"] == "dark"
+
+    def test_user_settings_roundtrip_json(self):
+        url = reverse("accounts:user_settings")
+        payload = {
+            "theme": "dark",
+            "font_size": "large",
+            "high_contrast": True,
+            "reduce_motion": True,
+            "email_applications": False,
+            "profile_public": True,
+            "share_analytics": False,
+            "notification_digest_frequency": "weekly",
+            "email_notification_digest": True,
+        }
+        patch = self.client.patch(url, payload, format="json")
+        assert patch.status_code == status.HTTP_200_OK, patch.data
+        get = self.client.get(url)
+        assert get.status_code == status.HTTP_200_OK
+        for key, value in payload.items():
+            assert get.data[key] == value
 
 
 @pytest.mark.django_db

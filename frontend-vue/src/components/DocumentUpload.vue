@@ -93,8 +93,19 @@ const fileInput = ref(null)
 
 async function fetchDocumentTypes() {
   try {
-    const response = await api.get('/api/document-types/')
-    documentTypes.value = response.data.results || response.data
+    const all = []
+    let url = '/api/document-types/?page_size=100'
+    while (url) {
+      const response = await api.get(url)
+      const data = response.data
+      const list = data.results || data
+      if (Array.isArray(list)) all.push(...list)
+      const next = data && data.next
+      url = next
+        ? String(next).replace(/^https?:\/\/[^/]+/, '')
+        : null
+    }
+    documentTypes.value = all
   } catch (err) {
     console.error('Failed to fetch document types:', err)
     errorToast(t('documentUpload.toastTypesError'))

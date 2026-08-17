@@ -543,7 +543,7 @@ describe('ApplicationForm', () => {
 
     await vi.waitFor(() => {
       expect(mockErrorToast).toHaveBeenCalledWith(
-        'Complete your personal and academic profile before starting an application.',
+        'Complete eligibility fields on your profile (GPA, grading scale, language, credits %, and semester) before starting an application.',
       )
       expect(mockReplace).toHaveBeenCalledWith({
         name: 'Profile',

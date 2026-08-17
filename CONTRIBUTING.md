@@ -33,7 +33,7 @@ Then open:
 - API docs: http://localhost:8001/api/docs/
 - Django admin: http://localhost:8001/admin/
 
-Demo accounts from `seed_demo_readiness`: `admin@test.com` / `admin123`, `coordinator@test.com` / `coordinator123`, `student@test.com` / `student123`.
+Demo accounts from `seed_demo_readiness`: `admin@test.com` / `admin123`, `coordinator@test.com` / `coordinator123`, `student@test.com` / `student123`, `partner@test.com` / `partner123`.
 
 Full install steps: [docs/installation.md](docs/installation.md).
 

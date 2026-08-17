@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
-from core.cache import cache_api_response
+from core.cache import cache_api_response, invalidate_application_api_responses
 from core.permissions import IsCoordinatorOrAdmin, IsOwnerOrAdmin
 
 from .filters import DocumentFilter, ExchangeAgreementDocumentFilter
@@ -167,6 +167,16 @@ class DocumentViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         """Set uploaded_by to current user on creation."""
         serializer.save(uploaded_by=self.request.user)
+        invalidate_application_api_responses(serializer.instance.application)
+
+    def perform_update(self, serializer):
+        serializer.save()
+        invalidate_application_api_responses(serializer.instance.application)
+
+    def perform_destroy(self, instance):
+        application = instance.application
+        instance.delete()
+        invalidate_application_api_responses(application)
 
     @cache_api_response(timeout=300)
     def list(self, request, *args, **kwargs):
@@ -235,6 +245,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
         try:
             DocumentService.validate_document(document, user, result_val, details)
             document.refresh_from_db()
+            invalidate_application_api_responses(document.application)
             serializer = self.get_serializer(document)
             return Response(serializer.data)
         except Exception as e:
@@ -303,6 +314,16 @@ class DocumentResubmissionRequestViewSet(viewsets.ModelViewSet):
             "document", "document__application", "document__type", "requested_by"
         )
 
+    def perform_create(self, serializer):
+        serializer.save()
+        document = serializer.instance.document
+        invalidate_application_api_responses(document.application)
+
+    def perform_update(self, serializer):
+        serializer.save()
+        document = serializer.instance.document
+        invalidate_application_api_responses(document.application)
+
     @cache_api_response(timeout=300)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
@@ -340,6 +361,7 @@ class DocumentCommentViewSet(viewsets.ModelViewSet):
         if not DocumentService.user_can_access_document(self.request.user, document):
             raise PermissionDenied("You cannot comment on this document.")
         serializer.save(author=self.request.user)
+        invalidate_application_api_responses(document.application)
 
     @cache_api_response(timeout=300)
     def list(self, request, *args, **kwargs):

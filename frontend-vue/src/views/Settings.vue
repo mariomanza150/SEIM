@@ -466,13 +466,20 @@ const notificationFields = computed(() =>
   })),
 )
 
+function applySettings(data) {
+  const next = defaultForm()
+  for (const key of Object.keys(next)) {
+    if (data && Object.prototype.hasOwnProperty.call(data, key) && data[key] !== undefined) {
+      next[key] = data[key]
+    }
+  }
+  form.value = next
+}
+
 async function fetchSettings() {
   try {
     const { data } = await api.get('/api/accounts/user-settings/')
-    form.value = {
-      ...defaultForm(),
-      ...data,
-    }
+    applySettings(data)
     applyUiPreferences(form.value)
   } catch (err) {
     console.error('Failed to fetch settings:', err)
@@ -486,7 +493,8 @@ async function handleSubmit() {
   saveError.value = ''
   saving.value = true
   try {
-    await api.patch('/api/accounts/user-settings/', { ...form.value })
+    const { data } = await api.patch('/api/accounts/user-settings/', { ...form.value })
+    applySettings(data && typeof data === 'object' ? { ...form.value, ...data } : form.value)
     applyUiPreferences(form.value)
     success(t('settings.toastSaved'))
   } catch (err) {

@@ -112,8 +112,12 @@ class User(AbstractUser, UUIDModel, TimeStampedModel):
 
     @property
     def is_admin(self):
-        """SEIM admin: role, Django staff, or superuser (matches SPA admin console access)."""
-        return self.has_role("admin") or self.is_superuser or self.is_staff
+        """SEIM admin: admin role or superuser (SPA admin console).
+
+        Django ``is_staff`` is not enough — coordinators are staff for Django
+        admin / review queues but must not pass SPA ``adminOnly`` gates.
+        """
+        return self.has_role("admin") or self.is_superuser
 
     @property
     def is_coordinator(self):
@@ -525,34 +529,62 @@ class Profile(UUIDModel, TimeStampedModel):
                 }
             )
 
+    def missing_apply_fields(self) -> list[str]:
+        """Field keys still required before the student can start an application."""
+        missing: list[str] = []
+
+        def blank(value) -> bool:
+            return value is None or not str(value).strip()
+
+        if blank(self.user.first_name):
+            missing.append("first_name")
+        if blank(self.user.last_name):
+            missing.append("last_name")
+        if blank(self.matricula):
+            missing.append("matricula")
+        if not self.academic_level_id:
+            missing.append("academic_level")
+        if not self.school_id:
+            missing.append("school")
+        if not self.unidad_id:
+            missing.append("unidad")
+        if not self.home_academic_program_id:
+            missing.append("home_academic_program")
+        if blank(self.gender):
+            missing.append("gender")
+        if not self.date_of_birth:
+            missing.append("date_of_birth")
+        if blank(self.birthplace):
+            missing.append("birthplace")
+        if blank(self.postal_code):
+            missing.append("postal_code")
+        if blank(self.mobile_phone):
+            missing.append("mobile_phone")
+        if blank(self.secondary_email):
+            missing.append("secondary_email")
+        if self.gpa is None:
+            missing.append("gpa")
+        if not self.grade_scale_id:
+            missing.append("grade_scale")
+        if blank(self.language):
+            missing.append("language")
+        if self.credits_approved_percent is None:
+            missing.append("credits_approved_percent")
+        if not self.ingress_date and self.current_semester is None:
+            missing.append("semester")
+        return missing
+
     @property
     def is_personal_academic_complete(self):
         """Whether all personal and academic fields required to apply are present."""
-        user_values = (
-            self.user.first_name,
-            self.user.middle_name,
-            self.user.last_name,
-            self.user.mothers_last_name,
-        )
-        profile_values = (
-            self.matricula,
-            self.academic_level_id,
-            self.school_id,
-            self.unidad_id,
-            self.home_academic_program_id,
-            self.gender,
-            self.date_of_birth,
-            self.birthplace,
-            self.postal_code,
-            self.passport_number,
-            self.mobile_phone,
-            self.secondary_email,
-            self.rfc,
-        )
-        return all(
-            value is not None and bool(str(value).strip())
-            for value in (*user_values, *profile_values)
-        )
+        eligibility = {
+            "gpa",
+            "grade_scale",
+            "language",
+            "credits_approved_percent",
+            "semester",
+        }
+        return not any(field not in eligibility for field in self.missing_apply_fields())
 
     @staticmethod
     def calculate_semester_from_ingress(
@@ -583,16 +615,14 @@ class Profile(UUIDModel, TimeStampedModel):
     @property
     def is_eligibility_complete(self) -> bool:
         """Whether GPA, scale, language, credits %, and semester inputs are present."""
-        has_semester_basis = (
-            bool(self.ingress_date) or self.current_semester is not None
-        )
-        return (
-            self.gpa is not None
-            and bool(self.grade_scale_id)
-            and bool((self.language or "").strip())
-            and self.credits_approved_percent is not None
-            and has_semester_basis
-        )
+        eligibility = {
+            "gpa",
+            "grade_scale",
+            "language",
+            "credits_approved_percent",
+            "semester",
+        }
+        return not any(field in eligibility for field in self.missing_apply_fields())
 
     @property
     def is_ready_to_apply(self):

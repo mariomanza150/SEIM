@@ -119,11 +119,9 @@ class ProgramViewSet(viewsets.ModelViewSet):
     @cache_api_response(timeout=600)  # Cache for 10 minutes
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
-    
-    @cache_api_response(timeout=600)
-    def retrieve(self, request, *args, **kwargs):
-        return super().retrieve(request, *args, **kwargs)
 ```
+
+`APICacheMiddleware` only caches **anonymous** `GET /api/` JSON responses. Authenticated list/detail traffic (admin programs, workflows, form types) is not middleware-cached, so creates and updates show up immediately. `ProgramViewSet` and `ApplicationViewSet` still use view-level `cache_api_response`; mutations bump `api_cache_gen:ProgramViewSet` / `api_cache_gen:ApplicationViewSet` and call `CacheManager.clear_pattern` for those view prefixes (django-redis `delete_pattern`). Staff status/comment/document mutations call `invalidate_application_api_responses()` so a student's cached retrieve/list is not left on a pre-mutation payload.
 
 ### 2. Analytics Data Caching
 

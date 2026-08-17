@@ -10,7 +10,7 @@
       <p class="mt-3 text-muted">{{ t('dashboard.loadingDashboard') }}</p>
     </div>
 
-    <div v-else class="row mb-4">
+    <div v-else class="row mb-4" data-testid="dashboard-stats">
       <div class="col-md-3 mb-3">
         <router-link :to="{ name: 'Applications' }" class="text-decoration-none">
           <div class="card text-center card-hover">
@@ -65,7 +65,7 @@
     </div>
 
     <!-- Next steps -->
-    <div v-if="!loading" class="card">
+    <div v-if="!loading" class="card" data-testid="dashboard-next-steps">
       <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 class="mb-0">{{ t('dashboard.nextStepsTitle') }}</h5>
         <span v-if="nextStepsLoading" class="text-muted small">

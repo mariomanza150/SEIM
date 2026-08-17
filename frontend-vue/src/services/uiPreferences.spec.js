@@ -3,6 +3,7 @@ import {
   applyUiPreferences,
   clearUiPreferences,
   readStoredUiPreferences,
+  mergeUiPreferencesFromServer,
   THEME_COLOR_DARK,
   THEME_COLOR_LIGHT,
 } from './uiPreferences'
@@ -79,5 +80,12 @@ describe('uiPreferences', () => {
     expect(colorSchemeMeta.getAttribute('content')).toBe('light dark')
     clearUiPreferences()
     expect(colorSchemeMeta.getAttribute('content')).toBe('light dark')
+  })
+
+  it('keeps an explicit stored theme when the server still says auto', () => {
+    applyUiPreferences({ theme: 'light', font_size: 'normal' })
+    const merged = mergeUiPreferencesFromServer({ theme: 'auto', font_size: 'large' })
+    expect(merged.theme).toBe('light')
+    expect(merged.font_size).toBe('large')
   })
 })

@@ -93,6 +93,7 @@ class AllowedEmailDomainViewSet(ActiveCatalogViewSet):
     queryset = AllowedEmailDomain.objects.all()
     serializer_class = AllowedEmailDomainSerializer
     permission_classes = [AllowAny]
+    authentication_classes = []
 
 
 class AcademicLevelViewSet(ActiveCatalogViewSet):
@@ -297,8 +298,15 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        # Get or create profile for the user
-        profile, created = Profile.objects.get_or_create(user=self.request.user)
+        profile, _created = Profile.objects.select_related(
+            "user",
+            "academic_level",
+            "school",
+            "unidad",
+            "home_academic_program",
+            "bank_institution",
+            "grade_scale",
+        ).get_or_create(user=self.request.user)
         return profile
 
 

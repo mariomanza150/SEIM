@@ -2,6 +2,8 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.exceptions import AuthenticationFailed
 
+from grades.models import GradeScale
+
 from .models import (
     AcademicLevel,
     AllowedEmailDomain,
@@ -82,11 +84,15 @@ class HomeAcademicProgramSerializer(CatalogSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     first_name = serializers.CharField(source="user.first_name")
-    middle_name = serializers.CharField(source="user.middle_name")
+    middle_name = serializers.CharField(
+        source="user.middle_name", required=False, allow_blank=True
+    )
     last_name = serializers.CharField(source="user.last_name")
-    mothers_last_name = serializers.CharField(source="user.mothers_last_name")
+    mothers_last_name = serializers.CharField(
+        source="user.mothers_last_name", required=False, allow_blank=True
+    )
     full_name = serializers.SerializerMethodField()
-    email = serializers.EmailField(source="user.email")
+    email = serializers.EmailField(source="user.email", read_only=True)
     role = serializers.CharField(source="user.primary_role", read_only=True)
     is_admin = serializers.BooleanField(source="user.is_admin", read_only=True)
     is_staff = serializers.BooleanField(source="user.is_staff", read_only=True)
@@ -132,6 +138,12 @@ class ProfileSerializer(serializers.ModelSerializer):
         required=False,
         allow_null=True,
     )
+    grade_scale = serializers.PrimaryKeyRelatedField(
+        queryset=GradeScale.objects.filter(is_active=True),
+        required=False,
+        allow_null=True,
+    )
+    credits_approved_percent = serializers.FloatField(required=False, allow_null=True)
     academic_level_name = serializers.CharField(
         source="academic_level.name", read_only=True
     )
@@ -143,9 +155,11 @@ class ProfileSerializer(serializers.ModelSerializer):
     bank_institution_name = serializers.CharField(
         source="bank_institution.name", read_only=True
     )
+    grade_scale_name = serializers.CharField(source="grade_scale.name", read_only=True)
     is_personal_academic_complete = serializers.BooleanField(read_only=True)
     is_eligibility_complete = serializers.BooleanField(read_only=True)
     is_ready_to_apply = serializers.BooleanField(read_only=True)
+    missing_apply_fields = serializers.SerializerMethodField()
     computed_semester = serializers.SerializerMethodField()
     effective_semester = serializers.SerializerMethodField()
 
@@ -168,6 +182,9 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def get_effective_semester(self, obj):
         return obj.get_effective_semester()
+
+    def get_missing_apply_fields(self, obj):
+        return obj.missing_apply_fields()
 
     class Meta:
         model = Profile
@@ -205,6 +222,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "clabe",
             "gpa",
             "grade_scale",
+            "grade_scale_name",
             "ingress_date",
             "current_semester",
             "computed_semester",
@@ -216,10 +234,40 @@ class ProfileSerializer(serializers.ModelSerializer):
             "is_personal_academic_complete",
             "is_eligibility_complete",
             "is_ready_to_apply",
+            "missing_apply_fields",
         )
+
+    def to_internal_value(self, data):
+        if hasattr(data, "copy"):
+            data = data.copy()
+        else:
+            data = dict(data)
+        empty_to_null = (
+            "date_of_birth",
+            "ingress_date",
+            "academic_level",
+            "school",
+            "unidad",
+            "home_academic_program",
+            "bank_institution",
+            "grade_scale",
+            "gpa",
+            "current_semester",
+            "credits_approved_percent",
+            "secondary_email",
+            "language",
+            "language_level",
+        )
+        for key in empty_to_null:
+            if key in data and data[key] == "":
+                data[key] = None
+        return super().to_internal_value(data)
 
     def validate_matricula(self, value):
         return value or None
+
+    def validate_clabe(self, value):
+        return value or ""
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
@@ -285,12 +333,14 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         user_data = validated_data.pop("user", {})
-        for attr, value in user_data.items():
-            setattr(instance.user, attr, value)
-        instance.user.save()
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
+        if user_data:
+            user = instance.user
+            for attr, value in user_data.items():
+                setattr(user, attr, value)
+            user.save(update_fields=[*user_data.keys()])
         return instance
 
 
@@ -584,10 +634,14 @@ class UserSettingsSerializer(serializers.ModelSerializer):
             user=user, defaults=validated_data
         )
         if not created:
-            for attr, value in validated_data.items():
-                setattr(settings, attr, value)
-            settings.save()
+            return self.update(settings, validated_data)
         return settings
+
+    def update(self, instance, validated_data):
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 
 class AppearanceSettingsSerializer(serializers.ModelSerializer):
