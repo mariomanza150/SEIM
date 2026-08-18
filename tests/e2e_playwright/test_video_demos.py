@@ -23,6 +23,34 @@ def _login_or_skip(page, base_url, login_fn):
         pytest.skip(str(e))
 
 
+def _click_first_visible(page: Page, selector: str, timeout: int = 8000) -> bool:
+    loc = page.locator(selector)
+    try:
+        count = loc.count()
+    except Exception:
+        return False
+    for i in range(count):
+        item = loc.nth(i)
+        try:
+            if item.is_visible():
+                item.click(timeout=timeout)
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def _open_first_application(page: Page) -> bool:
+    return _click_first_visible(page, "[data-testid=application-detail-link]")
+
+
+def _open_first_program(page: Page) -> bool:
+    return _click_first_visible(
+        page,
+        "[data-testid=program-compare-table] tbody tr, [data-testid=program-card], a[href*='/seim/programs/']",
+    )
+
+
 import time
 
 
@@ -76,9 +104,7 @@ class TestStudentVideoDemos:
         time.sleep(2)  # Show programs
 
         # Step 8: Select a program (if programs exist)
-        program_link = page.locator('.program, .card, a[href*="program"]').first
-        if program_link.count() > 0:
-            program_link.click()
+        if _open_first_program(page):
             page.wait_for_load_state("networkidle")
             time.sleep(1)
 
@@ -111,11 +137,7 @@ class TestStudentVideoDemos:
         time.sleep(2)  # Show applications list
 
         # Step 14: View application status
-        application_link = page.locator(
-            '.application, .card, a[href*="application"]'
-        ).first
-        if application_link.count() > 0:
-            application_link.click()
+        if _open_first_application(page):
             page.wait_for_load_state("networkidle")
             time.sleep(2)  # Show application details
 
@@ -142,11 +164,7 @@ class TestStudentVideoDemos:
         time.sleep(2)  # Show applications list
 
         # Step 4: Check current status
-        application_link = page.locator(
-            '.application, .card, a[href*="application"]'
-        ).first
-        if application_link.count() > 0:
-            application_link.click()
+        if _open_first_application(page):
             page.wait_for_load_state("networkidle")
             time.sleep(2)  # Show application details with status
 
@@ -215,11 +233,7 @@ class TestStudentVideoDemos:
         time.sleep(2)  # Show applications list
 
         # Step 4: Open application details
-        application_link = page.locator(
-            '.application, .card, a[href*="application"]'
-        ).first
-        if application_link.count() > 0:
-            application_link.click()
+        if _open_first_application(page):
             page.wait_for_load_state("networkidle")
             time.sleep(2)  # Show application details
 
@@ -276,11 +290,7 @@ class TestCoordinatorVideoDemos:
             time.sleep(1)
 
         # Step 5: Select an application
-        application_link = page.locator(
-            '.application, .card, a[href*="application"]'
-        ).first
-        if application_link.count() > 0:
-            application_link.click()
+        if _open_first_application(page):
             page.wait_for_load_state("networkidle")
             time.sleep(2)  # Show application details
 
@@ -350,11 +360,7 @@ class TestCoordinatorVideoDemos:
         page.wait_for_load_state("networkidle")
         time.sleep(1)
 
-        application_link = page.locator(
-            '.application, .card, a[href*="application"]'
-        ).first
-        if application_link.count() > 0:
-            application_link.click()
+        if _open_first_application(page):
             page.wait_for_load_state("networkidle")
             time.sleep(2)
 
@@ -419,11 +425,7 @@ class TestCoordinatorVideoDemos:
         time.sleep(1)
 
         # Step 4: Review all application details
-        application_link = page.locator(
-            '.application, .card, a[href*="application"]'
-        ).first
-        if application_link.count() > 0:
-            application_link.click()
+        if _open_first_application(page):
             page.wait_for_load_state("networkidle")
             time.sleep(2)
 
@@ -755,15 +757,11 @@ class TestCrossRoleVideoDemos:
             pass
         time.sleep(2)
 
-        application_link = page.locator(
-            '.application, .card, a[href*="application"]'
-        ).first
-        if application_link.count() > 0:
+        if _open_first_application(page):
             try:
-                application_link.click()
                 page.wait_for_load_state("networkidle", timeout=5000)
                 time.sleep(2)
-            except:
+            except Exception:
                 pass
 
         # Show review and approval workflow

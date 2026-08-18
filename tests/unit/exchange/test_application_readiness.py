@@ -51,3 +51,33 @@ class TestApplicationReadiness:
         assert r["level"] == "attention"
         assert r["document_counts"]["missing"] >= 1
         assert "missing" in r["headline"].lower()
+
+    def test_draft_incomplete_host_is_not_ready(self):
+        from exchange.models import Application, ApplicationStatus
+        from tests.unit.exchange.host_destination_helpers import attach_host_destination
+
+        student = TestUtils.create_test_user(role="student")
+        program = TestUtils.create_test_program()
+        attach_host_destination(program)
+        draft, _ = ApplicationStatus.objects.get_or_create(name="draft")
+        app = Application.objects.create(
+            student=student, program=program, status=draft
+        )
+        r = compute_application_readiness(app, include_dynamic_form=False)
+        assert r["host_destination"]["required"] is True
+        assert r["host_destination"]["complete"] is False
+        assert r["level"] != "ready"
+        assert "host" in r["headline"].lower()
+
+    def test_draft_without_host_tree_does_not_require_destination(self):
+        from exchange.models import Application, ApplicationStatus
+
+        student = TestUtils.create_test_user(role="student")
+        program = TestUtils.create_test_program()
+        draft, _ = ApplicationStatus.objects.get_or_create(name="draft")
+        app = Application.objects.create(
+            student=student, program=program, status=draft
+        )
+        r = compute_application_readiness(app, include_dynamic_form=False)
+        assert r["host_destination"]["required"] is False
+        assert r["host_destination"]["complete"] is True

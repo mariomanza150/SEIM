@@ -259,7 +259,7 @@ Student application for a mobility scheme.
 - One-to-Many: `form_submissions` → application_forms.FormSubmission
 
 **Validation:**
-- `validate_application_host_destination(..., require_complete=True)` on submit / transition to submitted
+- `validate_application_host_destination(..., require_complete=True)` on submit / transition to submitted. Host FKs are required only for levels that exist on the scheme (no host universities → destination is optional).
 - Host school must belong to institution; academic program to school; institution to scheme
 
 **Indexes:**

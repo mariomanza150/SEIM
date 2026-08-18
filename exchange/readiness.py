@@ -10,6 +10,10 @@ from django.utils import timezone
 
 from documents.services import DocumentService
 
+from .models import (
+    program_requires_host_destination,
+    validate_application_host_destination,
+)
 from .services import ApplicationService
 
 
@@ -108,7 +112,11 @@ def _form_progress(application) -> float:
 
 
 def _headline_draft(
-    counts: dict[str, int], window_open: bool, days_left: int | None, form_ok: bool
+    counts: dict[str, int],
+    window_open: bool,
+    days_left: int | None,
+    form_ok: bool,
+    host_ok: bool = True,
 ) -> str:
     if not window_open:
         return "Application window is closed for this program."
@@ -121,6 +129,8 @@ def _headline_draft(
         parts.append(f"{counts['pending_review']} awaiting review")
     if not form_ok:
         parts.append("Program form incomplete")
+    if not host_ok:
+        parts.append("Host destination incomplete")
     if days_left is not None and days_left >= 0:
         if days_left <= 3:
             parts.append(f"Deadline in {days_left} day(s)")
@@ -172,10 +182,25 @@ def compute_application_readiness(
             "window_open": window["is_open"],
             "deadline_days": days_left,
             "document_counts": None,
+            "host_destination": {
+                "required": program_requires_host_destination(program),
+                "complete": True,
+            },
         }
 
     doc_progress, counts = _document_progress(application)
     form_progress = _form_progress(application) if include_dynamic_form else 1.0
+    host_required = program_requires_host_destination(program)
+    host_errors = validate_application_host_destination(
+        application, require_complete=True
+    )
+    host_complete = not bool(host_errors)
+    host_ok = host_complete
+
+    host_destination = {
+        "required": host_required,
+        "complete": host_complete,
+    }
 
     if not window["is_open"]:
         score = max(0, min(30, int(doc_progress * 30)))
@@ -186,6 +211,7 @@ def compute_application_readiness(
             "window_open": False,
             "deadline_days": days_left,
             "document_counts": counts,
+            "host_destination": host_destination,
         }
 
     # Draft + window open
@@ -194,6 +220,8 @@ def compute_application_readiness(
         score = max(25, score - 12)
     if days_left is not None and days_left < 0:
         score = min(score, 20)
+    if host_required and not host_ok:
+        score = min(score, 90)
     score = max(0, min(99, score))
 
     form_ok = form_progress >= 0.99
@@ -202,6 +230,7 @@ def compute_application_readiness(
         window_open=True,
         days_left=days_left,
         form_ok=form_ok,
+        host_ok=host_ok,
     )
 
     docs_ok = counts["required"] == 0 or (
@@ -209,13 +238,14 @@ def compute_application_readiness(
         and counts["resubmit"] == 0
         and counts["pending_review"] == 0
     )
-    if docs_ok and form_ok and (days_left is None or days_left >= 0):
+    if docs_ok and form_ok and host_ok and (days_left is None or days_left >= 0):
         level = "ready"
         score = max(score, 92)
     elif (
         counts["missing"]
         or counts["resubmit"]
         or not form_ok
+        or not host_ok
         or (days_left is not None and days_left <= 7)
     ):
         level = "attention"
@@ -229,4 +259,5 @@ def compute_application_readiness(
         "window_open": True,
         "deadline_days": days_left,
         "document_counts": counts,
+        "host_destination": host_destination,
     }

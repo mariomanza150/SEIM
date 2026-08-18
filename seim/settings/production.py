@@ -290,3 +290,7 @@ LOGGING = {
         },
     },
 }
+
+# Same E2E hatch as development.py. Local-prod sets ALLOW_ANY_HOST=1.
+if os.environ.get("DISABLE_THROTTLE_E2E") or env.bool("ALLOW_ANY_HOST", default=False):
+    REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []

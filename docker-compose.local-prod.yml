@@ -67,6 +67,9 @@ services:
       - DJANGO_ENV=production
       - DEBUG=False
       - DISABLE_PAGE_CACHE_MIDDLEWARE=1
+      # Playwright against :8020 issues hundreds of JWT/profile calls; keep prod-like
+      # throttles off for this local stack (also gated in production.py via ALLOW_ANY_HOST).
+      - DISABLE_THROTTLE_E2E=1
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
       - ALLOW_ANY_HOST=${ALLOW_ANY_HOST:-1}

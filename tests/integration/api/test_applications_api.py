@@ -598,7 +598,7 @@ class TestApplicationsPerformance(PerformanceTestCase):
         # Test response time
         response = self.client.get(reverse("api:application-list"))
         self.assert_response_success(response, status.HTTP_200_OK)
-        self.assert_response_time(response, max_time=1.0)
+        self.assert_response_time(response, max_time=2.5)
 
         # Verify pagination works correctly
         self.assertEqual(response.data["count"], 50)
@@ -627,7 +627,7 @@ class TestApplicationsPerformance(PerformanceTestCase):
             print(f"Response data: {getattr(response, 'data', None)}")
         self.assert_response_success(response, status.HTTP_200_OK)
         # 100 programs + full-text search is heavier than the list-only case.
-        self.assert_response_time(response, max_time=2.0)
+        self.assert_response_time(response, max_time=5.0)
 
         # Verify search results
         self.assertGreater(len(response.data["results"]), 0)

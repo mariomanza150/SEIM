@@ -418,4 +418,40 @@ describe('ApplicationDetail', () => {
     expect(badges[2].classes()).toContain('bg-success')
     mockAuthStore.userRole = 'coordinator'
   })
+
+  it('disables submit when host destination is required but incomplete', async () => {
+    mockAuthStore.userRole = 'student'
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'draft',
+            document_checklist: { required_count: 0, complete: true },
+            readiness: {
+              score: 90,
+              level: 'attention',
+              headline: 'Host destination incomplete.',
+              host_destination: { required: true, complete: false },
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="submit-application-btn"]').exists()).toBe(true)
+    })
+    const btn = wrapper.find('[data-testid="submit-application-btn"]')
+    expect(btn.attributes('disabled')).toBeDefined()
+    expect(btn.attributes('title')).toBe(
+      i18n.global.t('applicationDetailPage.submitBlockedHostTitle')
+    )
+    mockAuthStore.userRole = 'coordinator'
+  })
 })

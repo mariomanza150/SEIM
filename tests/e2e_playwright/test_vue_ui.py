@@ -3,8 +3,8 @@ Vue.js SPA UI E2E tests.
 
 Run against Vue dev server (default http://localhost:5173) with backend at API_URL.
   BASE_URL=http://localhost:5173 API_URL=http://localhost:8001 pytest tests/e2e_playwright/test_vue_ui.py -v
-Or use Django serving built Vue (same origin):
-  BASE_URL=http://localhost:8001 pytest tests/e2e_playwright/test_vue_ui.py -v
+Or Django serving built Vue (same origin; local-prod is 8020):
+  BASE_URL=http://localhost:8020 pytest tests/e2e_playwright/test_vue_ui.py -v
 """
 
 import os
@@ -59,14 +59,18 @@ def _goto_draft_application_detail(page: Page, *, force_new: bool = False) -> st
 def _normalize_vue_base_url(base_url: str) -> str:
     """Use Django's mounted SPA path when BASE_URL points at the backend root."""
     base_url = base_url.rstrip("/")
-    if base_url.endswith(":8001") or base_url.endswith(":8000"):
-        return f"{base_url}/seim"
+    if base_url.endswith("/seim"):
+        return base_url
+    # Dev Compose 8001, image-internal 8000, local-prod 8020/8021.
+    for port in (":8000", ":8001", ":8020", ":8021"):
+        if base_url.endswith(port):
+            return f"{base_url}/seim"
     return base_url
 
 
 def _route_regex(path: str):
-    """Match Vue routes with optional trailing slash from Django."""
-    return re.compile(rf"{re.escape(VUE_BASE_URL)}{re.escape(path)}/?$")
+    """Match Vue routes with optional trailing slash, query, or hash."""
+    return re.compile(rf"{re.escape(VUE_BASE_URL)}{re.escape(path)}/?([?#].*)?$")
 
 
 # Prefer CI/pytest BASE_URL; fall back to Vue Vite only for local `npm run dev`.

@@ -40,7 +40,8 @@ RUN apt-get update && \
     libjpeg-dev \
     libpng-dev \
     libwebp-dev \
-    zlib1g-dev && \
+    zlib1g-dev \
+    curl && \
     rm -rf /var/lib/apt/lists/*
 
 # Note: Selenium tests run from HOST OS, not Docker containers

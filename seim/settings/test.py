@@ -89,6 +89,12 @@ CACHES = {
 # Disable django-cacheops for tests (compatibility with Django 5.1)
 CACHEOPS_ENABLED = False
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    }
+}
+
 # Disable Wagtail and other non-essential apps for E2E tests
 DISABLED_APPS = [
     "cacheops",

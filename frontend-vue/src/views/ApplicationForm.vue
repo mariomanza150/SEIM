@@ -395,8 +395,23 @@
                   <h5 class="mb-3">
                     <i class="bi bi-geo-alt me-2"></i>{{ t('applicationFormPage.hostDestinationTitle') }}
                   </h5>
-                  <p class="text-muted small">{{ t('applicationFormPage.hostDestinationHelp') }}</p>
-                  <div class="row g-3">
+                  <p v-if="hostDestinationConfigured" class="text-muted small">{{ t('applicationFormPage.hostDestinationHelp') }}</p>
+                  <div
+                    v-if="hostInstitutionsLoading"
+                    class="form-text"
+                    data-testid="host-institutions-loading"
+                  >
+                    {{ t('applicationFormPage.loadingHostInstitutions') }}
+                  </div>
+                  <div
+                    v-else-if="!hostDestinationConfigured"
+                    class="alert alert-secondary"
+                    role="status"
+                    data-testid="host-destination-unconfigured"
+                  >
+                    {{ t('applicationFormPage.noHostInstitutions') }}
+                  </div>
+                  <div v-else class="row g-3">
                     <div class="col-md-12">
                       <label for="host-institution" class="form-label">
                         {{ t('applicationFormPage.hostInstitutionLabel') }} <span class="text-danger">*</span>
@@ -418,15 +433,6 @@
                           {{ inst.country ? `${inst.name} (${inst.country})` : inst.name }}
                         </option>
                       </select>
-                      <div v-if="hostInstitutionsLoading" class="form-text">
-                        {{ t('applicationFormPage.loadingHostInstitutions') }}
-                      </div>
-                      <div
-                        v-else-if="form.program && !hostInstitutions.length"
-                        class="form-text text-warning"
-                      >
-                        {{ t('applicationFormPage.noHostInstitutions') }}
-                      </div>
                       <div v-if="errors.host_institution" class="invalid-feedback d-block">
                         {{ flattenFieldMessages(errors.host_institution).join(' ') }}
                       </div>
@@ -1004,6 +1010,7 @@ const hostAcademicPrograms = ref([])
 const hostInstitutionsLoading = ref(false)
 const hostSchoolsLoading = ref(false)
 const hostAcademicProgramsLoading = ref(false)
+const hostDestinationConfigured = computed(() => hostInstitutions.value.length > 0)
 const applicationStatus = ref('')
 let suppressHostCascadeReset = false
 /** For ``visible_when`` rules: ``has_assigned_coordinator`` (program id comes from ``form.program``). */

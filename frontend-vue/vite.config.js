@@ -79,6 +79,9 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     include: ['src/**/*.{spec,test}.{js,ts}'],
+    pool: 'forks',
+    maxForks: 4,
+    testTimeout: 15000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov'],

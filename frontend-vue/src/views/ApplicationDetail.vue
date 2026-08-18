@@ -653,8 +653,8 @@
                   <button
                     v-if="application.status === 'draft'"
                     class="btn btn-success"
-                    :disabled="submitBlockedByDocuments"
-                    :title="submitBlockedByDocuments ? t('applicationDetailPage.submitBlockedTitle') : ''"
+                    :disabled="submitBlocked"
+                    :title="submitBlockedTitle"
                     @click="submitApplication"
                     data-testid="submit-application-btn"
                   >
@@ -823,6 +823,22 @@ const submitBlockedByDocuments = computed(() => {
   const c = application.value?.document_checklist
   if (!c?.required_count) return false
   return !c.complete
+})
+
+const submitBlockedByHost = computed(() => {
+  const host = application.value?.readiness?.host_destination
+  if (!host?.required) return false
+  return !host.complete
+})
+
+const submitBlocked = computed(
+  () => submitBlockedByDocuments.value || submitBlockedByHost.value
+)
+
+const submitBlockedTitle = computed(() => {
+  if (submitBlockedByDocuments.value) return t('applicationDetailPage.submitBlockedTitle')
+  if (submitBlockedByHost.value) return t('applicationDetailPage.submitBlockedHostTitle')
+  return ''
 })
 
 const currentUserId = computed(() => authStore.user?.id || null)

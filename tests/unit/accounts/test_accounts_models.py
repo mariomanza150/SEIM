@@ -255,8 +255,8 @@ class TestUserModel:
 
     def test_is_admin_excludes_staff_coordinator(self):
         """Coordinators with is_staff must not count as SEIM admin."""
-        admin_role = Role.objects.create(name="admin")
-        coordinator_role = Role.objects.create(name="coordinator")
+        admin_role, _ = Role.objects.get_or_create(name="admin")
+        coordinator_role, _ = Role.objects.get_or_create(name="coordinator")
 
         admin = User.objects.create_user(
             username="adminuser",

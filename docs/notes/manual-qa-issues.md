@@ -12,7 +12,11 @@ _Logged during [manual feature & workflow test loop](prompts/manual-feature-work
 
 ## Open
 
-_No open `MQ-*` items._ Rollup: [`qa-runs/2026-08-16-retest-summary.md`](qa-runs/2026-08-16-retest-summary.md). Morning (pre-rebuild) notes: [`qa-runs/2026-08-16-summary.md`](qa-runs/2026-08-16-summary.md). Env: `http://localhost:8020`, Compose `seim-localprod`.
+| ID | Date | Severity | Summary |
+|----|------|----------|---------|
+| — | — | — | No open items. |
+
+Rollup: [`qa-runs/2026-08-16-retest-summary.md`](qa-runs/2026-08-16-retest-summary.md). Evening §8: [`qa-runs/2026-08-17-lifecycle-retest.md`](qa-runs/2026-08-17-lifecycle-retest.md). Env: `http://localhost:8020`, Compose `seim-localprod`.
 
 ### Environment blockers (2026-08-16) — closed on retest
 
@@ -31,6 +35,7 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 |----|---------------|----------------|
 | **MQ-2026-08-17-002** | 2026-08-17 | **Student `GET /api/applications/{id}/` stayed stale after staff mutate:** retrieve/list keys are per-user; staff PATCH/comment/validate did not bust the student's entry. **Fix:** `invalidate_application_api_responses()` bumps `api_cache_gen:ApplicationViewSet` and `delete_pattern`s Application/Comment view prefixes (not all `api_resp:*`). Wired on application CRUD/submit/withdraw/workflow, comments (incl. partner), document create/update/replace/validate/resubmit. Pytest `test_student_get_sees_staff_status_and_comment_after_cache` (8 passed with cache-key tests). Live `8020` Porto `bb40c56f-…`: coordinator comment visible on student GET immediately; status `approved`→`under_review`→`approved` student GET matched without TTL/cache clear. [`qa-runs/2026-08-17-fixtures-lifecycle.md`](qa-runs/2026-08-17-fixtures-lifecycle.md). |
 | **MQ-2026-08-17-001** | 2026-08-17 | **Document upload type dropdown dropped `transcript` / `passport`:** `GET /api/document-types/` is paginated (`PAGE_SIZE` 20); `DocumentUpload.vue` only used `results` from page 1 (mobility types). Required English types live on later pages, so §8 UI upload could not select them. **Fix:** fetch `page_size=100` and follow `next`. Vitest `DocumentUpload.spec.js`. Vue dist copied into `seim-web-local-prod`. [`qa-runs/2026-08-17-fixtures-lifecycle.md`](qa-runs/2026-08-17-fixtures-lifecycle.md). |
+| **MQ-2026-08-17-003** | 2026-08-18 | **Empty host tree no longer blocks submit incorrectly:** `validate_application_host_destination(require_complete=True)` only requires host levels that exist on the scheme; readiness `host_destination` drives Submit disable when a tree exists but is incomplete. Vue hides required cascade when `/host-institutions/` is empty. Pytest `test_host_destination_cascade.py`, `test_application_readiness.py`; Vitest `ApplicationForm.spec.js`, `ApplicationDetail.spec.js`. |
 | **MQ-2026-08-16-001** | 2026-08-16 | **Coordinator `/seim/admin/programs` deny:** `User.is_admin` is admin-role/superuser only (not Django `is_staff`). Vue `isAdmin` does not treat coordinator as admin even if `is_admin` is true; `meta.adminOnly` redirects to applications. Vitest: `auth.spec.js`, `authNavigation.spec.js`, `index.spec.js`. Live: coordinator cold-open `/seim/admin/programs` → `/seim/applications`. [`qa-runs/2026-08-16-retest-coordinator.md`](qa-runs/2026-08-16-retest-coordinator.md). |
 | **MQ-2026-08-16-002** | 2026-08-16 | **Coordinator `/seim/partner` deny:** `canUsePartnerPortal` is partner-role only (staff/admin no longer inherit). Live: coordinator cold-open `/seim/partner` → `/seim/applications`. Partner still reaches `/seim/partner`. [`qa-runs/2026-08-16-retest-partner.md`](qa-runs/2026-08-16-retest-partner.md). |
 | **MQ-2026-08-16-003** | 2026-08-16 | **Django admin agreements 200:** this DB was missing `exchange.0020`+; local-prod entry `migrate` applied `0020` (adds `required_gpa`) through `0029`. Changelist `/seim/django-admin/exchange/exchangeagreement/` 200. No ad-hoc SQL. [`qa-runs/2026-08-16-retest-admin.md`](qa-runs/2026-08-16-retest-admin.md). |
@@ -53,4 +58,4 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 ---
 
-*Last updated: 2026-08-17 — fixtures + §8 lifecycle (`qa-runs/2026-08-17-fixtures-lifecycle.md`). **MQ-2026-08-17-001** and **MQ-2026-08-17-002** resolved. MQ-2026-08-16-001…003 remain closed.*
+*Last updated: 2026-08-18 — **MQ-2026-08-17-003** resolved (host cascade optional when scheme has no destinations; readiness/submit gated when a tree exists).*

@@ -13,9 +13,12 @@ and sets hostname/port from the incoming Host / proxy headers.
 from __future__ import annotations
 
 import copy
+from typing import TYPE_CHECKING
 
 from django.http.request import split_domain_port
-from wagtail.models import Site
+
+if TYPE_CHECKING:
+    from wagtail.models import Site
 
 
 def request_site_identity(request) -> tuple[str, int]:
@@ -46,6 +49,8 @@ class RequestHostWagtailSiteMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        from wagtail.models import Site
+
         site = Site.objects.filter(is_default_site=True).first()
         if site is not None:
             aligned = align_site_with_request(site, request)

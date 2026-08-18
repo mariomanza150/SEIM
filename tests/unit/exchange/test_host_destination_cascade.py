@@ -71,7 +71,15 @@ class TestHostDestinationCascade:
         app = mobility_app["application"]
         errors = validate_application_host_destination(app, require_complete=True)
         assert "host_institution" in errors
+        assert "host_school" not in errors
+
+        tree = mobility_app["host_tree"]
+        app.host_institution = tree["institution"]
+        errors = validate_application_host_destination(app, require_complete=True)
         assert "host_school" in errors
+
+        app.host_school = tree["school"]
+        errors = validate_application_host_destination(app, require_complete=True)
         assert "host_academic_program" in errors
 
     def test_inconsistent_school_rejected(self, mobility_app):
@@ -126,3 +134,29 @@ class TestHostDestinationCascade:
         result.refresh_from_db()
         assert result.status.name == "submitted"
         assert result.submitted_at is not None
+
+    def test_require_complete_skipped_when_scheme_has_no_hosts(self, mobility_app):
+        app = mobility_app["application"]
+        mobility_app["program"].host_institutions.all().delete()
+        errors = validate_application_host_destination(app, require_complete=True)
+        assert errors == {}
+
+    def test_submit_succeeds_when_scheme_has_no_host_tree(self, mobility_app):
+        app = mobility_app["application"]
+        mobility_app["program"].host_institutions.all().delete()
+        app.host_institution = None
+        app.host_school = None
+        app.host_academic_program = None
+        app.save()
+        with (
+            patch("exchange.services.NotificationService.send_notification"),
+            patch("exchange.services.NotificationService.broadcast_application_sync"),
+        ):
+            result = ApplicationService.submit_application(app, mobility_app["student"])
+        result.refresh_from_db()
+        assert result.status.name == "submitted"
+
+    def test_submit_still_requires_hosts_when_tree_exists(self, mobility_app):
+        app = mobility_app["application"]
+        with pytest.raises(ValueError, match="Host destination incomplete"):
+            ApplicationService.submit_application(app, mobility_app["student"])

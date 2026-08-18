@@ -112,11 +112,21 @@ class AuthPage(BasePage):
     def logout(self) -> None:
         """Logout from the application."""
         try:
-            if self.is_visible(self.USER_MENU, timeout=2000):
-                self.click(self.USER_MENU, timeout=5000)
-            self.click(self.LOGOUT_BUTTON, timeout=5000)
+            menu = self.page.locator(self.USER_MENU).first
+            if menu.count() and menu.is_visible():
+                menu.click(timeout=5000)
+            logout_btn = self.page.locator('[data-testid="logout-link"]').first
+            if logout_btn.count():
+                # Bootstrap dropdown items stay display:none until shown.
+                logout_btn.evaluate("el => el.click()")
+            else:
+                self.click(self.LOGOUT_BUTTON, timeout=5000)
+            self.page.wait_for_url("**/login**", timeout=15000)
             self.wait_for_load()
         except Exception:
+            self.page.evaluate(
+                "() => { localStorage.removeItem('access_token'); localStorage.removeItem('refresh_token'); }"
+            )
             self.navigate("login/")
 
     def is_logged_in(self) -> bool:

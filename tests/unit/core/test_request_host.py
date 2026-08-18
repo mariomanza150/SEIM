@@ -3,7 +3,7 @@
 from unittest.mock import Mock
 
 import pytest
-from django.test import RequestFactory
+from django.test import RequestFactory, override_settings
 
 from core.request_host import (
     RequestHostWagtailSiteMiddleware,
@@ -12,18 +12,21 @@ from core.request_host import (
 )
 
 
+@override_settings(ALLOWED_HOSTS=["*"])
 def test_request_site_identity_uses_https_port_443():
     request = RequestFactory().get("/", HTTP_HOST="box.tailnet.ts.net")
     request.is_secure = lambda: True
     assert request_site_identity(request) == ("box.tailnet.ts.net", 443)
 
 
+@override_settings(ALLOWED_HOSTS=["*"])
 def test_request_site_identity_keeps_lan_http_port():
     request = RequestFactory().get("/", HTTP_HOST="192.168.1.20:8020")
     request.is_secure = lambda: False
     assert request_site_identity(request) == ("192.168.1.20", 8020)
 
 
+@override_settings(ALLOWED_HOSTS=["*"])
 def test_align_site_with_request_does_not_mutate_original():
     request = RequestFactory().get("/", HTTP_HOST="box.tailnet.ts.net")
     request.is_secure = lambda: True
@@ -72,7 +75,8 @@ def test_middleware_sets_cached_site_from_request_host():
     middleware = RequestHostWagtailSiteMiddleware(get_response)
     request = RequestFactory().get("/seim/login/", HTTP_HOST="box.tailnet.ts.net")
     request.is_secure = lambda: True
-    middleware(request)
+    with override_settings(ALLOWED_HOSTS=["*"]):
+        middleware(request)
 
     aligned = captured["site"]
     assert aligned is not None

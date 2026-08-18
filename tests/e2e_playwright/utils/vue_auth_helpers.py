@@ -13,11 +13,29 @@ import time
 
 from playwright.sync_api import Page
 
-# API base URL (Django backend) - Vue proxies to this in dev
-API_BASE_URL = os.environ.get(
-    "VITE_API_BASE_URL",
-    os.environ.get("API_URL", os.environ.get("BASE_URL", "http://localhost:8000")),
-)
+def api_base_url() -> str:
+    """Django origin for JWT/API calls (not the Vue `/seim` mount)."""
+    raw = (
+        os.environ.get("API_URL")
+        or os.environ.get("BASE_URL")
+        or "http://localhost:8000"
+    ).rstrip("/")
+    if raw.endswith("/seim"):
+        raw = raw[: -len("/seim")]
+    return raw
+
+
+# Resolved at import for callers that still use the module constant.
+API_BASE_URL = api_base_url()
+
+_TOKEN_PERSIST_JS = """
+(args) => {
+    localStorage.setItem('access_token', args.access);
+    localStorage.setItem('seim_access_token', args.access);
+    localStorage.setItem('refresh_token', args.refresh || '');
+    localStorage.setItem('seim_refresh_token', args.refresh || '');
+}
+"""
 
 # Cache: (email, password) -> (access, refresh, expiry_ts). TTL 5 minutes.
 _JWT_CACHE: dict[tuple[str, str], tuple[str, str, float]] = {}
@@ -39,76 +57,72 @@ def _request_json(page: Page, method: str, url: str, payload=None, headers=None)
     return getattr(page.context.request, method)(url, **kwargs)
 
 
+def _apply_tokens_and_open_dashboard(page: Page, vue_base_url: str, access: str, refresh: str) -> None:
+    from tests.e2e_playwright.utils.auth_helpers import VueAppNotAvailable
+
+    page.goto(vue_base_url)
+    page.wait_for_load_state("domcontentloaded")
+    page.evaluate(_TOKEN_PERSIST_JS, {"access": access, "refresh": refresh})
+    page.goto(f"{vue_base_url}/dashboard")
+    page.wait_for_load_state("domcontentloaded")
+    dashboard = page.locator("[data-testid=dashboard-page]")
+    try:
+        dashboard.wait_for(state="visible", timeout=15000)
+    except Exception as exc:
+        title = (page.title() or "").lower()
+        if "not found" in title:
+            raise VueAppNotAvailable(
+                f"Vue app not available at {vue_base_url}. "
+                "Build frontend-vue or run with BASE_URL=http://localhost:5173"
+            ) from exc
+        if page.locator("[data-testid=login-email]").count():
+            raise VueAppNotAvailable(
+                f"JWT login did not reach dashboard (url={page.url}). "
+                "Profile/API may be throttled (429); set DISABLE_THROTTLE_E2E=1 on the backend."
+            ) from exc
+        raise VueAppNotAvailable(
+            f"Dashboard did not load at {vue_base_url}/dashboard (url={page.url})"
+        ) from exc
+
+
 def login_vue_via_jwt(page: Page, vue_base_url: str, email: str, password: str) -> dict:
     """
     Login via JWT API and set tokens in localStorage, then load Vue app.
     Reuses cached tokens when available to avoid API throttle.
     """
+    from tests.e2e_playwright.utils.auth_helpers import VueAppNotAvailable
+
     key = (email, password)
     now = time.time()
+    origin = api_base_url()
     if key in _JWT_CACHE:
         access, refresh, expiry = _JWT_CACHE[key]
         if now < expiry:
-            page.goto(vue_base_url)
-            page.wait_for_load_state("domcontentloaded")
-            page.evaluate(
-                """
-                (args) => {
-                    localStorage.setItem('access_token', args.access);
-                    localStorage.setItem('refresh_token', args.refresh || '');
-                }
-                """,
-                {"access": access, "refresh": refresh},
-            )
-            page.goto(f"{vue_base_url}/dashboard")
-            page.wait_for_load_state("networkidle")
-            if page.title() and "not found" in page.title().lower():
-                from tests.e2e_playwright.utils.auth_helpers import VueAppNotAvailable
-
-                raise VueAppNotAvailable(
-                    f"Vue app not available at {vue_base_url}. Run with BASE_URL=http://localhost:5173"
-                )
+            _apply_tokens_and_open_dashboard(page, vue_base_url, access, refresh)
             return {"access": access, "refresh": refresh}
 
     response = _request_json(
         page,
         "post",
-        f"{API_BASE_URL}/api/token/",
+        f"{origin}/api/token/",
         {"email": email, "password": password},
     )
     if response.status == 404:
-        from tests.e2e_playwright.utils.auth_helpers import VueAppNotAvailable
-
         raise VueAppNotAvailable(
-            f"API not available at {API_BASE_URL}/api/token/ (404). "
+            f"API not available at {origin}/api/token/ (404). "
             "Start Vue dev server and Django API; run with BASE_URL=http://localhost:5173 API_URL=http://localhost:8001"
+        )
+    if response.status == 429:
+        raise VueAppNotAvailable(
+            f"JWT login throttled (429) at {origin}/api/token/. "
+            "Set DISABLE_THROTTLE_E2E=1 on the backend."
         )
     assert response.ok, f"JWT login failed: {response.status} {response.text()[:200]}"
     data = response.json()
     access = data.get("access", "")
     refresh = data.get("refresh", "")
     _JWT_CACHE[key] = (access, refresh, now + _JWT_CACHE_TTL)
-
-    page.goto(vue_base_url)
-    page.wait_for_load_state("domcontentloaded")
-    page.evaluate(
-        """
-        (args) => {
-            localStorage.setItem('access_token', args.access);
-            localStorage.setItem('refresh_token', args.refresh || '');
-        }
-        """,
-        {"access": access, "refresh": refresh},
-    )
-    page.goto(f"{vue_base_url}/dashboard")
-    page.wait_for_load_state("networkidle")
-    if page.title() and "not found" in page.title().lower():
-        from tests.e2e_playwright.utils.auth_helpers import VueAppNotAvailable
-
-        raise VueAppNotAvailable(
-            f"Vue app not available at {vue_base_url} (dashboard returned Not Found). "
-            "Start Vue dev server and run with BASE_URL=http://localhost:5173"
-        )
+    _apply_tokens_and_open_dashboard(page, vue_base_url, access, refresh)
     return data
 
 
@@ -135,7 +149,7 @@ def _token_for(page: Page, email: str, password: str) -> str | None:
     response = _request_json(
         page,
         "post",
-        f"{API_BASE_URL}/api/token/",
+        f"{api_base_url()}/api/token/",
         {"email": email, "password": password},
     )
     if not response.ok:
@@ -162,7 +176,7 @@ def _first_id(payload) -> str | None:
 def _ensure_host_destination(page: Page, auth: dict, app_id: str) -> None:
     """Fill host university/school/program on a draft so submit can succeed."""
     app_resp = page.context.request.get(
-        f"{API_BASE_URL}/api/applications/{app_id}/",
+        f"{api_base_url()}/api/applications/{app_id}/",
         headers=auth,
     )
     if not app_resp.ok:
@@ -179,7 +193,7 @@ def _ensure_host_destination(page: Page, auth: dict, app_id: str) -> None:
     if not program_id:
         return
     hosts_resp = page.context.request.get(
-        f"{API_BASE_URL}/api/programs/{program_id}/host-institutions/",
+        f"{api_base_url()}/api/programs/{program_id}/host-institutions/",
         headers=auth,
     )
     if not hosts_resp.ok:
@@ -188,7 +202,7 @@ def _ensure_host_destination(page: Page, auth: dict, app_id: str) -> None:
     if not institution_id:
         return
     schools_resp = page.context.request.get(
-        f"{API_BASE_URL}/api/host-institutions/{institution_id}/schools/",
+        f"{api_base_url()}/api/host-institutions/{institution_id}/schools/",
         headers=auth,
     )
     if not schools_resp.ok:
@@ -197,7 +211,7 @@ def _ensure_host_destination(page: Page, auth: dict, app_id: str) -> None:
     if not school_id:
         return
     academic_resp = page.context.request.get(
-        f"{API_BASE_URL}/api/schools/{school_id}/academic-programs/",
+        f"{api_base_url()}/api/schools/{school_id}/academic-programs/",
         headers=auth,
     )
     if not academic_resp.ok:
@@ -208,7 +222,7 @@ def _ensure_host_destination(page: Page, auth: dict, app_id: str) -> None:
     _request_json(
         page,
         "patch",
-        f"{API_BASE_URL}/api/applications/{app_id}/",
+        f"{api_base_url()}/api/applications/{app_id}/",
         {
             "host_institution": institution_id,
             "host_school": school_id,
@@ -237,7 +251,7 @@ def ensure_draft_application_via_api(
 
     if not force_new:
         list_resp = page.context.request.get(
-            f"{API_BASE_URL}/api/applications/",
+            f"{api_base_url()}/api/applications/",
             params={"status": "draft", "withdrawn": False, "page_size": 100},
             headers=auth,
         )
@@ -271,7 +285,7 @@ def ensure_draft_application_via_api(
                 if chosen:
                     _ensure_host_destination(page, auth, chosen)
                     detail = page.context.request.get(
-                        f"{API_BASE_URL}/api/applications/{chosen}/",
+                        f"{api_base_url()}/api/applications/{chosen}/",
                         headers=auth,
                     )
                     if detail.ok:
@@ -285,7 +299,7 @@ def ensure_draft_application_via_api(
                             return chosen
 
     programs_resp = page.context.request.get(
-        f"{API_BASE_URL}/api/programs/",
+        f"{api_base_url()}/api/programs/",
         headers=auth,
     )
     if not programs_resp.ok:
@@ -300,7 +314,7 @@ def ensure_draft_application_via_api(
         return None
 
     existing_resp = page.context.request.get(
-        f"{API_BASE_URL}/api/applications/",
+        f"{api_base_url()}/api/applications/",
         headers=auth,
     )
     used_program_ids: set[str] = set()
@@ -354,7 +368,7 @@ def ensure_draft_application_via_api(
         create_resp = _request_json(
             page,
             "post",
-            f"{API_BASE_URL}/api/applications/",
+            f"{api_base_url()}/api/applications/",
             {"program": program_id},
             auth,
         )
@@ -379,7 +393,7 @@ def withdraw_blocking_applications_via_api(
         return
     auth = {"Authorization": f"Bearer {token}"}
     list_resp = page.context.request.get(
-        f"{API_BASE_URL}/api/applications/",
+        f"{api_base_url()}/api/applications/",
         params={"page_size": 100},
         headers=auth,
     )
@@ -406,7 +420,7 @@ def withdraw_blocking_applications_via_api(
         _request_json(
             page,
             "patch",
-            f"{API_BASE_URL}/api/applications/{item['id']}/",
+            f"{api_base_url()}/api/applications/{item['id']}/",
             {"withdrawn": True},
             auth,
         )
@@ -419,7 +433,7 @@ def ensure_unread_notification_via_api(page: Page, email: str, password: str) ->
         return False
     auth = {"Authorization": f"Bearer {token}"}
     list_resp = page.context.request.get(
-        f"{API_BASE_URL}/api/notifications/",
+        f"{api_base_url()}/api/notifications/",
         headers=auth,
     )
     if not list_resp.ok:
@@ -437,7 +451,7 @@ def ensure_unread_notification_via_api(page: Page, email: str, password: str) ->
     patch_resp = _request_json(
         page,
         "patch",
-        f"{API_BASE_URL}/api/notifications/{target['id']}/",
+        f"{api_base_url()}/api/notifications/{target['id']}/",
         {"is_read": False},
         auth,
     )

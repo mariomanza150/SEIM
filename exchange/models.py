@@ -1104,12 +1104,33 @@ class ApplicationSubjectPlanVersion(UUIDModel, TimeStampedModel):
         return f"{self.application_id} v{self.version_number}"
 
 
+def program_requires_host_destination(program) -> bool:
+    """True when the mobility scheme has at least one active host university."""
+    if program is None:
+        return False
+    cached = getattr(program, "_prefetched_objects_cache", None)
+    if cached is not None and "host_institutions" in cached:
+        return any(inst.is_active for inst in program.host_institutions.all())
+    return program.host_institutions.filter(is_active=True).exists()
+
+
+def _program_for_host_validation(application):
+    program = getattr(application, "program", None)
+    if program is not None:
+        return program
+    program_id = getattr(application, "program_id", None)
+    if not program_id:
+        return None
+    return Program.objects.filter(pk=program_id).first()
+
+
 def validate_application_host_destination(application, *, require_complete=False):
     """
     Validate host destination FK cascade consistency.
 
     Returns a dict of field -> error messages (empty if valid).
-    When ``require_complete`` is True, all three host FKs must be set.
+    When ``require_complete`` is True, require only the host levels that are
+    configured on the scheme (no institutions → host destination is optional).
     """
     errors = {}
     institution = application.host_institution
@@ -1118,16 +1139,34 @@ def validate_application_host_destination(application, *, require_complete=False
     program_id = application.program_id
 
     if require_complete:
-        if not application.host_institution_id:
-            errors["host_institution"] = _(
-                "Select a host university before submitting."
-            )
-        if not application.host_school_id:
-            errors["host_school"] = _("Select a host school before submitting.")
-        if not application.host_academic_program_id:
-            errors["host_academic_program"] = _(
-                "Select a host academic program before submitting."
-            )
+        program = _program_for_host_validation(application)
+        if program_requires_host_destination(program):
+            if not application.host_institution_id:
+                errors["host_institution"] = _(
+                    "Select a host university before submitting."
+                )
+            else:
+                has_schools = HostSchool.objects.filter(
+                    institution_id=application.host_institution_id,
+                    is_active=True,
+                ).exists()
+                if has_schools:
+                    if not application.host_school_id:
+                        errors["host_school"] = _(
+                            "Select a host school before submitting."
+                        )
+                    else:
+                        has_programs = HostAcademicProgram.objects.filter(
+                            school_id=application.host_school_id,
+                            is_active=True,
+                        ).exists()
+                        if (
+                            has_programs
+                            and not application.host_academic_program_id
+                        ):
+                            errors["host_academic_program"] = _(
+                                "Select a host academic program before submitting."
+                            )
 
     if application.host_institution_id and institution is not None:
         if program_id and institution.program_id != program_id:

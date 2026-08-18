@@ -612,4 +612,42 @@ describe('ApplicationForm', () => {
     expect(wrapper.find('[data-testid="subjects-save-first"]').exists()).toBe(true)
     expect(wrapper.text()).toMatch(/optional/i)
   })
+
+  it('does not require host cascade selects when the scheme has no destinations', async () => {
+    api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      const cascade = hostCascadeResponse(url, { institutions: [] })
+      if (cascade) return cascade
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({ data: { eligible: true, message: 'ok' } })
+      }
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-no-hosts',
+                name: 'Manual QA Mobility',
+                description: 'No destinations',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+              },
+            ],
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="program-select"]').setValue('program-no-hosts')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="host-destination-unconfigured"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="host-institution-select"]').exists()).toBe(false)
+  })
 })
