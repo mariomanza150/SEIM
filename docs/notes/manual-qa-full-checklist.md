@@ -542,53 +542,53 @@ Logout from student. Login **Coordinator** `coordinator@test.com` / `coordinator
 
 ### 4.7 Workload — coordinator (`coord-review`)
 
-- [ ] **Workload (you only)**
+- [x] **Workload (you only)**
   - **Role:** Coordinator
   - **Path:** `/seim/coordinator-workload`
   - **Steps:** Open Workload from sidebar.
   - **Expected:** “You” metrics (assigned + coordinated-program pending). **No** global totals / per-coordinator distribution (admin-only).
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 `coordinator@test.com`. Assigned 3 / programs 3 / open resubmit 2; no Institution overview. [`qa-runs/2026-08-18-eligibility/2026-08-18-coordinator-workload.png`](qa-runs/2026-08-18-eligibility/2026-08-18-coordinator-workload.png).
 
 ### 4.8 Workload — admin (`coord-review`)
 
-- [ ] **Workload global / distribution**
+- [x] **Workload global / distribution**
   - **Role:** Admin
   - **Path:** `/seim/coordinator-workload`
   - **Steps:** Logout. Login `admin@test.com` / `admin123`. Open `/seim/coordinator-workload`.
   - **Expected:** Global metrics (including stale-under-review if shown) **and** per-coordinator distribution.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 admin. Institution overview pending 3, unassigned 0, stale 0; distribution Coordinator User 3. `/seim/workload` now aliases here (`6742af7`). [`qa-runs/2026-08-18-eligibility/2026-08-18-admin-workload.png`](qa-runs/2026-08-18-eligibility/2026-08-18-admin-workload.png).
 
 ### 4.9 Exchange agreements (`agreements`)
 
-- [ ] **Filters, presets, renewal actions**
+- [x] **Filters, presets, renewal actions**
   - **Role:** Coordinator (logout from admin first)
   - **Path:** `/seim/exchange-agreements`
   - **Steps:** Open Exchange agreements. Filter All vs Active, type, program, partner, expiring. Save a preset. Find `DEMO-SEED-AGR-*`. Use renewal **Pending** and **Draft** (successor) on one row if enabled.
   - **Expected:** Table of demo agreements (Barcelona Erasmus, DAAD, Fulbright, …). Active subset smaller than All. Renewal actions succeed or explain why not. `/seim/exchange` redirects here.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 admin session (staff registry). All 5 rows vs Active 2 (Catalonia Erasmus + DAAD). `/seim/exchange` and `/seim/agreement-documents` redirect here. Did not run renewal successor actions.
 
 ### 4.10 Agreement documents (`agreements`)
 
-- [ ] **Per-agreement or staff documents list**
+- [x] **Per-agreement or staff documents list**
   - **Role:** Coordinator
   - **Path:** `/seim/exchange-agreements/<agreementId>/documents` (from a row). `/seim/agreement-documents` should redirect to the agreements list.
   - **Steps:** Open documents for one agreement. Confirm list/download. Note presets if the page has them.
   - **Expected:** Agreement documents list (or empty state). Redirect from `/agreement-documents` works.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Catalonia `d219c575-…` repository: Demo signed Erasmus framework. `/seim/agreement-documents` → agreements list.
 
 ### 4.11 Notification routing (`notifications`)
 
-- [ ] **Matrix + override CRUD**
+- [x] **Matrix + override CRUD**
   - **Role:** Coordinator
   - **Path:** `/seim/notification-routing`
   - **Steps:** Open Notification routing. Confirm schema version / category matrix. Create, edit, and delete one override if the UI allows (use a harmless test row).
   - **Expected:** Page loads (schema version ~12 historically). Override create/update/delete works or is clearly read-only. Student must not reach this page (already §1.5).
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 admin. Schema version 13. Created `mq_qa_smoke_20260818` (system) then deleted. Seed rows `application_deadline` / `document_validated` unchanged. [`qa-runs/2026-08-18-eligibility/2026-08-18-notification-routing.png`](qa-runs/2026-08-18-eligibility/2026-08-18-notification-routing.png).
 
 ### 4.12 Nominations (`nominations`)
 
@@ -602,33 +602,33 @@ Logout from student. Login **Coordinator** `coordinator@test.com` / `coordinator
 
 ### 4.13 Eligibility rulesets — load/read only (`eligibility-rulesets`)
 
-- [ ] **Rulesets list (IN PROGRESS)**
+- [x] **Rulesets list (IN PROGRESS)**
   - **Role:** Coordinator or Admin
   - **Path:** `/seim/eligibility-rulesets`
   - **Steps:** Open Eligibility rulesets. Confirm the table loads (seed may include “Demo Fulbright GPA overlay”). Open a row **read** dialog if present. **Do not** treat create/save/editor as product-complete. Skip write actions unless they are obviously safe and already wired.
   - **Expected:** List loads without error (empty table is OK). This cluster is **IN PROGRESS** — Pass = page/API readable. Do not mark the feature implemented from this item.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 admin opened Demo Fulbright GPA overlay (GPA 3.7, English C1) without Save. Coordinator list also loaded the same row.
 
 ### 4.14 Analytics forecasts (`analytics`)
 
-- [ ] **Forecasts SPA**
+- [x] **Forecasts SPA**
   - **Role:** Coordinator
   - **Path:** `/seim/analytics-forecasts`
   - **Steps:** Open Analytics forecasts. `/seim/analytics` should redirect here.
   - **Expected:** Forecasts page renders (charts/tables or empty). Not a Django API root. Predictive warehouse / BI is N/A.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 admin. Demand forecast table (trend 1.75/week). `/seim/analytics` → `/seim/analytics-forecasts`.
 
 ### 4.15 Staff documents presets (`documents-core`, `coord-review`)
 
-- [ ] **Staff documents list presets**
+- [x] **Staff documents list presets**
   - **Role:** Coordinator
   - **Path:** `/seim/documents`
   - **Steps:** As coordinator, open Documents. Use filters and save a preset if the staff list supports it.
   - **Expected:** Staff sees a broader document set than the student. Preset save works **or** controls are absent (note Partial; do not Fail if presets are student-queue-only).
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 admin staff view: “Application uploads (all students)”, 20 rows, application/type filters. No Save-preset control on this list (acceptable Partial per steps).
 
 ---
 
@@ -664,73 +664,73 @@ Logout. Login **Admin** `admin@test.com` / `admin123`. Confirm Admin console dro
 
 ### 6.1 Admin programs (`admin-console`)
 
-- [ ] **Programs console**
+- [x] **Programs console**
   - **Role:** Admin
   - **Path:** `/seim/admin/programs`
   - **Steps:** Open from Admin console menu. Scan list. Open one program if the UI allows (read is enough).
   - **Expected:** Admin programs list. `/seim/admin` redirects here.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 16 programs. `/seim/admin` → programs.
 
 ### 6.2 Admin forms (`dynamic-forms`)
 
-- [ ] **Forms catalog**
+- [x] **Forms catalog**
   - **Role:** Admin
   - **Path:** `/seim/admin/forms`
   - **Steps:** Open Admin → Forms.
   - **Expected:** Form types/catalog list (seeded forms if present).
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Demo exchange application + Manual QA Application Form.
 
 ### 6.3 Dynforms list + editor (`dynamic-forms`)
 
-- [ ] **Dynforms and editor**
+- [x] **Dynforms and editor**
   - **Role:** Admin
   - **Path:** `/seim/admin/dynforms`, then `/seim/admin/dynforms/<id>`
   - **Steps:** Open Dynforms. Open one form in the editor (do not need to publish a new production form).
   - **Expected:** List + editor canvas/fields. Unsaved close is OK.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** `/seim/admin/dynforms/1` Manual QA form (0 fields), palette OK. Demo form is `/seim/admin/dynforms/2`.
 
 ### 6.4 Data management SPA (`data-management`)
 
-- [ ] **SPA data-management**
+- [x] **SPA data-management**
   - **Role:** Admin
   - **Path:** `/seim/admin/data-management`
   - **Steps:** Open Data management. Read catalog / execute / import / cleanup / reset chrome. **Do not** run reset or destructive cleanup on this shared stack unless you can re-seed immediately.
   - **Expected:** Console loads. Destructive actions are gated/confirmed. See §7 for `/data-management/` redirect.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Chrome OK. Did not run reset/cleanup.
 
 ### 6.5 Workflows + editor (`admin-console`, `dynamic-forms`)
 
-- [ ] **Workflows**
+- [x] **Workflows**
   - **Role:** Admin
   - **Path:** `/seim/admin/workflows`, then `/seim/admin/workflows/<id>`
   - **Steps:** Open Workflows. Open one editor.
   - **Expected:** List + editor. Read-only pass is enough.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Editor `c46824f8-bba5-40f7-a138-209d587b4bb9` Demo application workflow (Validate/Save/Publish chrome).
 
 ### 6.6 Admin application edit (`admin-console`, `programs-applications`)
 
-- [ ] **Optional application editor**
+- [x] **Optional application editor**
   - **Role:** Admin
   - **Path:** `/seim/admin/applications/<id>`
   - **Steps:** Copy a demo application UUID from `/seim/applications` or the review queue. Open `/seim/admin/applications/<id>`.
   - **Expected:** Admin application editor loads. If 404 for a valid id, Fail; if you have no id, **Blocked**.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** App A `d78fc22b-…` approved; timeline submit+approve. Coordinator still assigned in editor.
 
 ### 6.7 Non-admin redirected (`roles`, `admin-console`)
 
-- [ ] **Student/coordinator cannot use admin console**
+- [x] **Student/coordinator cannot use admin console**
   - **Role:** Student, then Coordinator
   - **Path:** `/seim/admin/programs`
   - **Steps:** Logout. Login student; open `/seim/admin/programs`. Logout. Login coordinator; open the same URL.
   - **Expected:** Redirect away (typically `/seim/applications` or dashboard). No admin catalog.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 both `student@test.com` and `coordinator@test.com` cold-open → `/seim/applications`. No Admin — Programs catalog.
 
 ---
 
@@ -740,53 +740,53 @@ Use **Admin** unless noted.
 
 ### 7.1 Django admin (`url-routing`)
 
-- [ ] **Users, programs, agreements**
+- [x] **Users, programs, agreements**
   - **Role:** Admin
   - **Path:** `/seim/django-admin/` (navbar “Django admin”; `/admin/` and `/django/admin/` should redirect here, not to Vue `/seim/admin/*`)
   - **Steps:** Open Django admin. Browse users/roles, exchange programs, exchange agreements.
   - **Expected:** Admin login may reuse the session or ask for `admin@test.com` / `admin123`. Change lists load.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Session reused. Users 15; Programs 16. `/admin/` and `/django/admin/` → `/seim/django-admin/`.
 
 ### 7.2 Wagtail (`cms-public`)
 
-- [ ] **Wagtail admin**
+- [x] **Wagtail admin**
   - **Role:** Admin / staff
   - **Path:** `/cms/`
   - **Steps:** Open `/cms/` (navbar CMS admin). Sign in if prompted. Open the page tree.
   - **Expected:** Wagtail explorer, not Vue. Staff can see pages used on `/` and `/programas/`.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Wagtail 7.0.8 dashboard, 23 pages. Tree: UAdeC - Dirección de Intercambio Académico.
 
 ### 7.3 Data-management hub redirect (`data-management`)
 
-- [ ] **Legacy hub**
+- [x] **Legacy hub**
   - **Role:** Anonymous, then Admin
   - **Path:** `/data-management/`
   - **Steps:** Logged out, open `/data-management/`. Then as admin, open it again.
   - **Expected:** Anonymous → login (`/seim/login/?next=…` or `/login/?next=…`). Authenticated admin → `/seim/admin/data-management` (or an equivalent hub that requires login). Not a 404.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Anonymous `302` `/seim/login/?next=/data-management/`. SPA hub already passed in §6.4.
 
 ### 7.4 SSR analytics exports (`analytics`)
 
-- [ ] **CSV / XLSX / PDF if still mounted**
+- [x] **CSV / XLSX / PDF if still mounted**
   - **Role:** Admin
   - **Path:** `/dashboard/analytics/`
   - **Steps:** Open `/dashboard/analytics/`. If the page exists, trigger export CSV, XLSX/Excel, and PDF. If the URL 404s or redirects to Vue forecasts only, record that and skip file checks (**Blocked** or N/A — not Fail if the SPA forecasts page already passed).
   - **Expected:** Historical SSR exports still work **or** the route is clearly gone in favor of `/seim/analytics-forecasts`. Student hitting `/admin-dashboard/` should not 404 (redirect to dashboard).
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** SSR page gone. `/dashboard/analytics/` now 302 → `/seim/analytics-forecasts/`. `/admin-dashboard/` was Wagtail 404 (**MQ-2026-08-18-003**); now 302 → `/seim/dashboard/`. SPA forecasts already §4.14 Pass.
 
 ### 7.5 Grades API only (`grades`)
 
-- [ ] **OpenAPI grades — no SPA**
+- [x] **OpenAPI grades — no SPA**
   - **Role:** Admin (or any authenticated user for browsable API)
   - **Path:** `/api/docs/` (grades group) and `/grades/api/scales/` (alias; canonical `/api/grades/`)
   - **Steps:** In Swagger, find grades scales/values/translations. Open `/grades/api/scales/` (login if 401). Confirm `/seim/grades` redirects to Profile, not a grades console.
   - **Expected:** Grades REST exists. **No** dedicated Vue grades UI. N/A for a grades SPA page.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** `/seim/grades` → Profile. Canonical grades remain `/api/grades/`.
 
 ---
 

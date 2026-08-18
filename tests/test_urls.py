@@ -64,6 +64,22 @@ class UrlConfigurationTests(TestCase):
             self.client.get("/dashboard/", follow=False).headers.get("Location"),
             "/seim/dashboard/",
         )
+        self.assertEqual(
+            self.client.get("/admin-dashboard/", follow=False).status_code, 302
+        )
+        self.assertEqual(
+            self.client.get("/admin-dashboard/", follow=False).headers.get("Location"),
+            "/seim/dashboard/",
+        )
+        self.assertEqual(
+            self.client.get("/dashboard/analytics/", follow=False).status_code, 302
+        )
+        self.assertEqual(
+            self.client.get("/dashboard/analytics/", follow=False).headers.get(
+                "Location"
+            ),
+            "/seim/analytics-forecasts/",
+        )
         self.assertEqual(self.client.get("/login/", follow=False).status_code, 302)
         self.assertEqual(
             self.client.get("/login/", follow=False).headers.get("Location"),

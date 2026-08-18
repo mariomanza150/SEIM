@@ -131,6 +131,16 @@ urlpatterns += [
         name="legacy_dashboard",
     ),
     path(
+        "admin-dashboard/",
+        RedirectView.as_view(url="/seim/dashboard/", permanent=False),
+        name="legacy_admin_dashboard",
+    ),
+    path(
+        "dashboard/analytics/",
+        RedirectView.as_view(url="/seim/analytics-forecasts/", permanent=False),
+        name="legacy_ssr_analytics",
+    ),
+    path(
         "login/",
         RedirectView.as_view(url="/seim/login/", permanent=False),
         name="legacy_login",

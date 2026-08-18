@@ -49,6 +49,7 @@ All SEIM application features are under `/seim/`:
 - `/seim/programs/` - SPA alias that redirects to program compare
 - `/seim/review-queue/` - Staff application review queue (Vue)
 - `/seim/coordinator-workload/` - Staff workload / queue metrics (Vue)
+- `/seim/workload/` - SPA alias that redirects to coordinator-workload
 
 Root leftovers (`/applications/`, `/applications/create/`, `/profile/`, `/calendar/`, `/documents/`, `/notifications/`, and related) redirect into these `/seim/` routes. See `docs/notes/SPA_VS_LEGACY.md`.
 
@@ -61,6 +62,8 @@ Root leftovers (`/applications/`, `/applications/create/`, `/profile/`, `/calend
 - `/seim/django-admin/` - Django admin (`/admin/` redirects here)
 - `/seim/admin` - SPA alias that redirects to `/seim/admin/programs`
 - `/seim/admin-dashboard/` - SPA alias that redirects to `/seim/dashboard/`
+- `/admin-dashboard/` - leftover root alias that redirects to `/seim/dashboard/` (must not 404 via Wagtail)
+- `/dashboard/analytics/` - leftover SSR analytics URL that redirects to `/seim/analytics-forecasts/`
 - `/seim/admin/programs|forms|dynforms|data-management|workflows` - Vue admin console
 - `/seim/admin/dynforms` - Vue visual form builder (admin only; `/dynforms/` redirects here)
 - `/seim/admin/data-management` - Vue data-management console (`/data-management/` redirects here)

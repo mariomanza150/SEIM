@@ -17,7 +17,7 @@
 | Dynforms builder | `/seim/admin/dynforms` and `/seim/admin/dynforms/:id` | `frontend-vue` | **SPA-canonical** visual builder; `/dynforms/` and `/api/application-forms/list|builder/` redirect here |
 | Data management | `/seim/admin/data-management` | `frontend-vue` + `data_management/` API | **SPA-canonical** catalog, execute, import, cleanup, and reset; `/data-management/` redirects here |
 
-Legacy root auth URLs (`/login/`, `/register/`, `/dashboard/`, `/password-reset/`) redirect to `/seim/...`. `/logout/` clears the session and is not a Vue route.
+Legacy root auth URLs (`/login/`, `/register/`, `/dashboard/`, `/admin-dashboard/`, `/dashboard/analytics/`, `/password-reset/`) redirect to `/seim/...`. `/logout/` clears the session and is not a Vue route.
 
 Leftover student/staff bookmarks outside `/seim/` (`/applications/`, `/applications/create/`, `/applications/<uuid>/`, `/profile/`, `/settings/`, `/preferences/`, `/calendar/`, `/documents/`, `/notifications/`, `/review-queue/`, `/programs/compare/`) also redirect into the SPA. See `core/legacy_spa_urls.py`.
 
@@ -25,7 +25,7 @@ Leftover student/staff bookmarks outside `/seim/` (`/applications/`, `/applicati
 
 Mounted at `/seim/` (see `frontend-vue/src/router/index.js`): login, register, verify-email, password-reset, dashboard, applications (list/new/detail/edit), documents, notifications, profile, settings, calendar, program compare, coordinator review/workload, agreements, nominations, eligibility rulesets, analytics forecasts, partner portal, SPA admin (`/seim/admin/programs|forms|dynforms|data-management|workflows`).
 
-SPA aliases (not separate pages): `/seim/admin` → programs admin, `/seim/admin-dashboard` → dashboard, `/seim/analytics` → forecasts, `/seim/grades` → profile, `/seim/programs` → program compare, `/seim/exchange` → exchange agreements.
+SPA aliases (not separate pages): `/seim/admin` → programs admin, `/seim/admin-dashboard` → dashboard, `/seim/analytics` → forecasts, `/seim/grades` → profile, `/seim/programs` → program compare, `/seim/exchange` → exchange agreements, `/seim/workload` → coordinator workload.
 
 ## Parity checklist
 
