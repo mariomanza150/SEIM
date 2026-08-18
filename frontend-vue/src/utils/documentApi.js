@@ -130,6 +130,9 @@ export function documentReviewStatus(doc) {
 export function applicationSelectLabel(app, fallback = '') {
   if (app == null || typeof app !== 'object') return fallback || String(app ?? '')
   const name = app.program_name || app.program?.name
+  const rawStatus = typeof app.status === 'string' ? app.status : app.status?.name
+  const status = rawStatus ? String(rawStatus).replace(/_/g, ' ') : ''
+  if (name && status) return `${name} (${status})`
   if (name) return String(name)
   if (app.id != null) return String(app.id)
   return fallback

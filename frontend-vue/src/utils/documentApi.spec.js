@@ -75,4 +75,21 @@ describe('documentApi', () => {
       '550e8400-e29b-41d4-a716-446655440000',
     )
   })
+
+  it('applicationSelectLabel appends status so duplicate program names stay distinct', () => {
+    expect(
+      applicationSelectLabel({
+        id: 'a',
+        program_name: 'Vue E2E Test Program',
+        status: 'draft',
+      }),
+    ).toBe('Vue E2E Test Program (draft)')
+    expect(
+      applicationSelectLabel({
+        id: 'b',
+        program_name: 'Vue E2E Test Program',
+        status: { name: 'under_review' },
+      }),
+    ).toBe('Vue E2E Test Program (under review)')
+  })
 })

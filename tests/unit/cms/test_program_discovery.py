@@ -101,3 +101,28 @@ class ProgramDiscoveryPageTests(TestCase):
         self.assertIn("France", context["available_locations"])
         self.assertIn("Spanish", context["available_languages"])
         self.assertIn("French", context["available_languages"])
+
+    def test_unlinked_program_page_still_shows_compare_cta(self):
+        unlinked = ProgramPage(
+            title="Universidad de Salamanca",
+            slug="salamanca-unlinked-test",
+            introduction="Marketing page without an exchange.Program FK.",
+            location="Spain",
+            language="Spanish",
+            body=[],
+        )
+        self.index_page.add_child(instance=unlinked)
+        unlinked.save_revision().publish()
+
+        response = self.client.get(unlinked.url)
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn("Comparar con otros programas", html)
+        self.assertIn("/seim/login?redirect=%2Fprograms%2Fcompare", html)
+        self.assertNotIn("%3Fids%3D", html)
+
+    def test_linked_program_page_compare_preselects_program_id(self):
+        response = self.client.get(self.active_page.url)
+        self.assertEqual(response.status_code, 200)
+        html = response.content.decode()
+        self.assertIn(f"%3Fids%3D{self.active_program.id}", html)
