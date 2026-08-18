@@ -32,8 +32,10 @@
                             <div id="faq{{ forloop.counter }}" 
                                  class="accordion-collapse collapse {% if forloop.first %}show{% endif %}"
                                  data-bs-parent="#faqAccordion">
-                                <div class="accordion-body">
-                                    {{ faq.answer|richtext }}
+                                <div class="accordion-body cms-prose">
+                                    {% for block in faq.body %}
+                                        {% include_block block %}
+                                    {% endfor %}
                                 </div>
                             </div>
                         </div>

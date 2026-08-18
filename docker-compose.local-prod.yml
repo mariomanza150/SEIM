@@ -68,7 +68,7 @@ services:
       - DEBUG=False
       - DISABLE_PAGE_CACHE_MIDDLEWARE=1
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
-      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,host.docker.internal
+      - ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,host.docker.internal,desktop-kg5i7pt.tail4dc6e5.ts.net
       - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
@@ -77,8 +77,8 @@ services:
       - SESSION_COOKIE_SECURE=False
       - CSRF_COOKIE_SECURE=False
       - SECURE_HSTS_SECONDS=0
-      - CORS_ALLOWED_ORIGINS=http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020
-      - CSRF_TRUSTED_ORIGINS=http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020
+      - CORS_ALLOWED_ORIGINS=http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://desktop-kg5i7pt.tail4dc6e5.ts.net
+      - CSRF_TRUSTED_ORIGINS=http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://desktop-kg5i7pt.tail4dc6e5.ts.net
 
   celery:
     build:

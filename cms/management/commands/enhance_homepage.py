@@ -3,6 +3,18 @@
 from django.core.management.base import BaseCommand
 
 from cms.models import HomePage
+from cms.utils.official_assets import (
+    download_official_assets,
+    get_or_create_wagtail_image,
+)
+
+CONVOCATORIA_ENTRANTE = "https://www2.uadec.mx/pub/CGRI/ConvocatoriaMIEntrante.pdf"
+CONVOCATORIA_SALIENTE = "https://www2.uadec.mx/pub/CGRI/ConvocatoriaMISaliente.pdf"
+UNIVERSIDADES_CONVENIO = "https://www2.uadec.mx/pub/CGRI/UniversidadesPorConvenio.pdf"
+UNIVERSIDADES_CONAHEC = "https://www2.uadec.mx/pub/CGRI/UniversidadesPorCONAHEC.pdf"
+YOUTUBE_PLAYLIST = (
+    "https://www.youtube.com/playlist?list=PLdq68rAvMCQyPeE5QyjLBwlvDkDr-derl"
+)
 
 
 class Command(BaseCommand):
@@ -17,130 +29,187 @@ class Command(BaseCommand):
             self.stdout.write(self.style.ERROR("  ✗ HomePage not found"))
             return
 
-        # Enhanced homepage content with StreamField blocks
+        try:
+            saved = download_official_assets()
+            hero_image = get_or_create_wagtail_image("mi2026.jpg", saved["mi2026.jpg"])
+            home.hero_image = hero_image
+            self.stdout.write(self.style.SUCCESS("  ✓ Official assets downloaded"))
+        except Exception as exc:
+            self.stdout.write(self.style.WARNING(f"  ⚠ Could not attach hero image: {exc}"))
+
         enhanced_content = [
-            # Hero/Welcome block
             {
                 "type": "hero",
                 "value": {
                     "title": "Vive una Experiencia Internacional",
-                    "subtitle": "Amplía tus horizontes académicos y culturales con nuestros programas de intercambio",
+                    "subtitle": "Amplía tus horizontes académicos y culturales con los programas de movilidad de la CGRI",
                     "background_color": "primary",
                     "button_text": "Ver Programas",
-                    "button_link": "http://localhost:8000/programas/",
+                    "button_link": "/programas/",
                 },
             },
-            # Feature cards for students and teachers
+            {
+                "type": "paragraph",
+                "value": (
+                    "<p>La UAdeC, a través de la Coordinación General de Relaciones "
+                    "Internacionales, promueve la movilidad internacional de "
+                    "estudiantes y académicos, gestiona convenios de colaboración y "
+                    "asesora a quienes desean una estancia en el extranjero o en "
+                    "nuestra universidad.</p>"
+                ),
+            },
             {
                 "type": "card_grid",
                 "value": {
                     "heading": "¿Por qué elegir un intercambio académico?",
-                    "subheading": "Beneficios para tu desarrollo académico y profesional",
+                    "subheading": "Beneficios de la movilidad internacional UAdeC",
                     "columns": "3",
                     "cards": [
                         {
-                            "icon": "bi-globe2",
-                            "title": "Experiencia Internacional",
-                            "text": "Estudia en universidades prestigiosas de Europa y América, ampliando tu perspectiva global y enriqueciendo tu perfil profesional.",
-                            "link": "/sobre-nosotros/",
-                            "link_text": "Conoce más",
+                            "icon": "bi-award",
+                            "title": "Valor curricular",
+                            "text": "Las materias cursadas se homologan con tu plan de estudios mediante el formato oficial de la CGRI.",
+                            "link": "/preguntas-frecuentes/",
+                            "link_text": "Ver requisitos",
                         },
                         {
-                            "icon": "bi-mortarboard",
-                            "title": "Créditos Revalidables",
-                            "text": "Todas las materias cursadas en el extranjero son revalidadas automáticamente. Tu progreso académico continúa sin interrupciones.",
-                            "link": "/preguntas-frecuentes/",
-                            "link_text": "Ver FAQs",
+                            "icon": "bi-globe2",
+                            "title": "Experiencia intercultural",
+                            "text": "Estudia en universidades con convenio en América, Europa y Asia, y construye una red académica internacional.",
+                            "link": "/sobre-nosotros/",
+                            "link_text": "Conoce la CGRI",
                         },
                         {
                             "icon": "bi-people",
-                            "title": "Apoyo Integral",
-                            "text": "Desde la aplicación hasta tu regreso, te acompañamos en cada paso. Orientación académica, trámites y soporte constante.",
+                            "title": "Relaciones y contactos",
+                            "text": "Genera vínculos con docentes y estudiantes de instituciones socias y de redes como CONAHEC.",
                             "link": "/contacto/",
-                            "link_text": "Contacta",
+                            "link_text": "Contacto",
                         },
                         {
-                            "icon": "bi-currency-dollar",
-                            "title": "Becas Disponibles",
-                            "text": "Accede a becas y apoyos económicos para estudiantes destacados. No dejes que el costo sea una barrera.",
-                            "link": "/proceso-aplicacion/",
-                            "link_text": "Aplicar",
-                        },
-                        {
-                            "icon": "bi-translate",
-                            "title": "Desarrollo de Idiomas",
-                            "text": "Perfecciona inglés, italiano, francés u otros idiomas mientras estudias. Inmersión total en el idioma y cultura.",
+                            "icon": "bi-briefcase",
+                            "title": "Visión profesional global",
+                            "text": "Abre oportunidades laborales y académicas con una perspectiva internacional en tu disciplina.",
                             "link": "/programas/",
                             "link_text": "Ver destinos",
                         },
                         {
-                            "icon": "bi-briefcase",
-                            "title": "Ventaja Competitiva",
-                            "text": "Diferénciate en el mercado laboral. Los empleadores valoran altamente la experiencia internacional.",
+                            "icon": "bi-translate",
+                            "title": "Segunda lengua",
+                            "text": "La CGRI promueve el estudio de una segunda lengua como herramienta de crecimiento profesional.",
+                            "link": "/programas/",
+                            "link_text": "Ver programas",
+                        },
+                        {
+                            "icon": "bi-person-check",
+                            "title": "Desarrollo personal",
+                            "text": "Autonomía, resiliencia y competencias interculturales que complementan tu formación en la UAdeC.",
                             "link": "/blog/",
                             "link_text": "Experiencias",
                         },
                     ],
                 },
             },
-            # Call to action for current call
             {
                 "type": "call_to_action",
                 "value": {
-                    "title": "📢 ¡Convocatoria Abierta para Primavera 2026!",
-                    "text": "Las aplicaciones están abiertas hasta el 15 de enero de 2026. No pierdas esta oportunidad única de estudiar en el extranjero.",
-                    "button_text": "Ver Convocatoria",
-                    "button_link": "http://localhost:8000/blog/",
-                    "style": "success",
+                    "title": "Convocatoria de Movilidad Internacional 2026-2",
+                    "text": "Consulta las convocatorias oficiales de movilidad entrante y saliente, y las universidades con convenio o CONAHEC para el periodo 2026-2.",
+                    "button_text": "Convocatoria saliente (PDF)",
+                    "button_link": CONVOCATORIA_SALIENTE,
+                    "style": "primary",
                 },
             },
-            # Process steps for students
+            {
+                "type": "card_grid",
+                "value": {
+                    "heading": "Documentos oficiales CGRI",
+                    "subheading": "Convocatorias y listados publicados por Relaciones Internacionales",
+                    "columns": "2",
+                    "cards": [
+                        {
+                            "icon": "bi-file-earmark-arrow-down",
+                            "title": "Movilidad entrante",
+                            "text": "Convocatoria oficial para estudiantes internacionales que desean una estancia en la UAdeC.",
+                            "link": CONVOCATORIA_ENTRANTE,
+                            "link_text": "Descargar PDF",
+                        },
+                        {
+                            "icon": "bi-file-earmark-arrow-down",
+                            "title": "Movilidad saliente",
+                            "text": "Convocatoria para estudiantes UAdeC que aplican a una estancia en el extranjero.",
+                            "link": CONVOCATORIA_SALIENTE,
+                            "link_text": "Descargar PDF",
+                        },
+                        {
+                            "icon": "bi-building",
+                            "title": "Universidades por convenio 2026-2",
+                            "text": "Listado de instituciones con convenio vigente para movilidad internacional.",
+                            "link": UNIVERSIDADES_CONVENIO,
+                            "link_text": "Ver listado",
+                        },
+                        {
+                            "icon": "bi-diagram-3",
+                            "title": "Universidades CONAHEC 2026-2",
+                            "text": "Opciones de movilidad a través del consorcio CONAHEC.",
+                            "link": UNIVERSIDADES_CONAHEC,
+                            "link_text": "Ver listado",
+                        },
+                    ],
+                },
+            },
+            {
+                "type": "video",
+                "value": {
+                    "video": YOUTUBE_PLAYLIST,
+                    "caption": "CGRI UAdeC — Movilidad Internacional",
+                },
+            },
             {
                 "type": "process_steps",
                 "value": {
                     "heading": "¿Cómo aplicar?",
-                    "subheading": "Sigue estos simples pasos para iniciar tu aventura internacional",
+                    "subheading": "Sigue estos pasos para iniciar tu movilidad a través de SEIM y la CGRI",
                     "steps": [
                         {
                             "number": "1",
                             "title": "Infórmate",
-                            "description": "Consulta los programas disponibles, requisitos y destinos. Asiste a nuestras sesiones informativas.",
+                            "description": "Revisa convocatorias, requisitos y universidades con convenio o CONAHEC.",
                             "icon": "bi-info-circle",
                         },
                         {
                             "number": "2",
-                            "title": "Prepara Documentos",
-                            "description": "Reúne tu historial académico, cartas de recomendación, certificados de idioma y carta de motivos.",
+                            "title": "Prepara documentos",
+                            "description": "Kárdex, carta de motivos, CV, pasaporte, credencial UAdeC y tres cartas de recomendación.",
                             "icon": "bi-file-earmark-text",
                         },
                         {
                             "number": "3",
-                            "title": "Aplica en Línea",
-                            "description": "Completa el formulario de aplicación en nuestro sistema. Asegúrate de incluir toda la información.",
+                            "title": "Aplica en línea",
+                            "description": "Crea tu cuenta en SEIM y envía tu solicitud de movilidad.",
                             "icon": "bi-laptop",
                         },
                         {
                             "number": "4",
                             "title": "Evaluación",
-                            "description": "El comité evaluará tu solicitud. Recibirás notificación de resultados en las fechas establecidas.",
+                            "description": "La CGRI y tu unidad académica revisan expediente, idioma y postulación.",
                             "icon": "bi-clipboard-check",
                         },
                         {
                             "number": "5",
                             "title": "Preparativos",
-                            "description": "Una vez aceptado, realiza trámites de visa, seguro médico y documentación migratoria.",
+                            "description": "Visa, seguro médico, trámites migratorios y homologación de materias.",
                             "icon": "bi-airplane",
                         },
                         {
                             "number": "6",
                             "title": "¡Viaja!",
-                            "description": "Inicia tu experiencia internacional. Te acompañaremos durante toda tu estancia.",
+                            "description": "Inicia tu estancia. La CGRI te acompaña durante el proceso.",
                             "icon": "bi-star",
                         },
                     ],
                 },
             },
-            # Testimonial
             {
                 "type": "testimonial",
                 "value": {
@@ -149,7 +218,6 @@ class Command(BaseCommand):
                     "author_title": "Estudiante de Relaciones Internacionales - Intercambio en España 2024",
                 },
             },
-            # FAQ block
             {
                 "type": "faq",
                 "value": {
@@ -157,44 +225,68 @@ class Command(BaseCommand):
                     "items": [
                         {
                             "question": "¿Cuál es el promedio mínimo requerido?",
-                            "answer": "<p>El promedio mínimo general es de 8.0, aunque algunos programas pueden requerir 8.5 o más. Revisa los requisitos específicos de cada destino.</p>",
+                            "answer": (
+                                "<p>Según la convocatoria oficial: promedio mínimo general de "
+                                "<strong>90</strong> para universidades de habla hispana y "
+                                "<strong>85</strong> para universidades de lengua extranjera, "
+                                "respaldado por Kárdex al momento de aplicar. Debes ser "
+                                "estudiante regular y no estar en el último semestre.</p>"
+                            ),
                         },
                         {
                             "question": "¿Necesito saber el idioma del país?",
-                            "answer": "<p>Sí, debes demostrar un nivel intermedio o avanzado del idioma. Para inglés: TOEFL 79+ o IELTS 6.5+. Para español: DELE B2. Para otros idiomas, consulta los requisitos específicos.</p>",
+                            "answer": (
+                                "<p>Sí. Para universidades de lengua extranjera se requiere "
+                                "inglés nivel B2 o equivalente a 550 puntos TOEFL. Para "
+                                "universidades de habla hispana, mínimo B1 o equivalente a "
+                                "450 TOEFL, más el idioma que pida la institución destino.</p>"
+                            ),
                         },
                         {
                             "question": "¿Cuánto tiempo dura un intercambio?",
-                            "answer": "<p>La mayoría de nuestros programas son de un semestre (4-6 meses). Algunos programas también ofrecen estancias de verano (2-3 meses).</p>",
+                            "answer": (
+                                "<p>La convocatoria es semestral. La mayoría de las estancias "
+                                "son de un semestre (4–6 meses), con opciones de movilidad "
+                                "presencial o virtual según créditos cursados.</p>"
+                            ),
                         },
                         {
                             "question": "¿Puedo elegir mis materias en el extranjero?",
-                            "answer": "<p>Sí, pero deben ser aprobadas previamente por tu coordinador de carrera para asegurar su equivalencia y revalidación.</p>",
+                            "answer": (
+                                "<p>Sí, previa homologación con tu coordinador de carrera "
+                                "usando el formato oficial de Homologación de Materias "
+                                "(FS-HM) publicado por la CGRI.</p>"
+                            ),
                         },
                     ],
                 },
             },
-            # Final CTA
             {
                 "type": "call_to_action",
                 "value": {
                     "title": "¿Listo para tu aventura internacional?",
-                    "text": "Aprende cómo crear tu cuenta y enviar tu solicitud de intercambio. Te guiamos paso a paso en el proceso.",
+                    "text": "Crea tu cuenta en SEIM y envía tu solicitud. Te guiamos paso a paso en el proceso.",
                     "button_text": "¿Cómo Aplicar?",
-                    "button_link": "http://localhost:8000/como-aplicar/",
+                    "button_link": "/como-aplicar/",
                     "style": "primary",
                 },
             },
         ]
 
-        # Update homepage with enhanced content
         home.body = enhanced_content
-        home.save_revision().publish()
+        try:
+            home.save_revision().publish()
+        except Exception as exc:
+            self.stdout.write(
+                self.style.WARNING(f"  ⚠ Full homepage save failed ({exc}); retrying without video")
+            )
+            enhanced_content = [
+                block for block in enhanced_content if block.get("type") != "video"
+            ]
+            home.body = enhanced_content
+            home.save_revision().publish()
 
         self.stdout.write(self.style.SUCCESS("\n✅ Homepage enhanced successfully!"))
         self.stdout.write(
             self.style.SUCCESS(f"   Added {len(enhanced_content)} content blocks")
-        )
-        self.stdout.write(
-            self.style.SUCCESS("   Visit http://localhost:8000/ to see the changes")
         )

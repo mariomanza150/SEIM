@@ -36,7 +36,7 @@ class InstitutionBrandingTests(SimpleTestCase):
 
         self.assertEqual(settings.INSTITUTION_SHORT_NAME, "UAdeC")
         self.assertIn("Coahuila", settings.INSTITUTION_NAME)
-        self.assertEqual(settings.INSTITUTION_THEME["primary"], "#2E5090")
+        self.assertEqual(settings.INSTITUTION_THEME["primary"], "#2E5790")
         self.assertEqual(settings.INSTITUTION_THEME_CSS, "uadec/theme.css")
 
     @override_settings(

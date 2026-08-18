@@ -57,10 +57,13 @@ class Command(BaseCommand):
 
             # Step 3: Enhance homepage
             if not options["skip_enhance"]:
-                self.stdout.write("\n✨ Step 3/3: Enhancing homepage...")
+                self.stdout.write("\n✨ Step 3/4: Enhancing homepage...")
                 call_command("enhance_homepage")
             else:
                 self.stdout.write("\n⏭️  Skipping homepage enhancement")
+
+            self.stdout.write("\n📋 Step 4/4: Creating How to Apply page...")
+            call_command("create_application_page")
 
             # Success summary
             self.stdout.write(self.style.SUCCESS("\n" + "=" * 60))

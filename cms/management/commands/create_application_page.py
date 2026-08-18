@@ -74,12 +74,13 @@ class Command(BaseCommand):
                 "value": """
                 <p>Antes de aplicar, asegúrate de cumplir con los requisitos generales:</p>
                 <ul>
-                    <li>Ser estudiante activo de la UAdeC</li>
-                    <li>Tener un promedio mínimo de 8.0 (varía según el programa)</li>
-                    <li>Haber cursado al menos el 40-50% de tu carrera</li>
-                    <li>Contar con el aval de tu coordinador de carrera</li>
-                    <li>Presentar certificación de idioma del país destino</li>
-                    <li>No tener adeudos académicos o administrativos</li>
+                    <li>Ser estudiante regular de la UAdeC (licenciatura o posgrado)</li>
+                    <li>No estar cursando el último semestre</li>
+                    <li>Promedio mínimo de 90 (habla hispana) o 85 (lengua extranjera)</li>
+                    <li>Licenciatura: 50% de créditos para movilidad presencial (30% si es virtual)</li>
+                    <li>Postulación de la dirección de tu escuela o facultad</li>
+                    <li>Idioma: B2 / TOEFL 550 (lengua extranjera) o B1 / TOEFL 450 (habla hispana)</li>
+                    <li>No tener adeudos con la Universidad</li>
                 </ul>
                 <p><strong>Nota:</strong> Los requisitos específicos pueden variar según la universidad destino.
                 Consulta la página de cada <a href="/programas/">programa</a> para más detalles.</p>
@@ -97,13 +98,13 @@ class Command(BaseCommand):
                 "value": """
                 <p>Prepara los siguientes documentos:</p>
                 <ul>
-                    <li>Historial académico actualizado</li>
-                    <li>Carta de motivos (1-2 páginas explicando por qué quieres participar)</li>
-                    <li>Dos cartas de recomendación académicas</li>
-                    <li>Certificado de idioma (TOEFL, DELE, etc.)</li>
-                    <li>Copia de pasaporte vigente</li>
-                    <li>Fotografías tamaño pasaporte</li>
-                    <li>Carta de aval del coordinador de carrera</li>
+                    <li>Kárdex con historial académico actualizado al último semestre cursado</li>
+                    <li>Carta de exposición de motivos (máximo 1 cuartilla; en inglés si el destino no es de habla hispana)</li>
+                    <li>Currículum vitae actualizado (máximo 2 cuartillas)</li>
+                    <li>Copia del pasaporte mexicano con vigencia mayor a seis meses</li>
+                    <li>Copia de la credencial de estudiante de la UAdeC</li>
+                    <li>Carátula de cuenta Santander con número de cuenta y CLABE</li>
+                    <li>Tres cartas de recomendación de docentes</li>
                 </ul>
                 <p class="alert alert-info">
                     <strong>💡 Consejo:</strong> Comienza a preparar tus documentos con anticipación.
@@ -138,7 +139,7 @@ class Command(BaseCommand):
                     "title": "Crea Tu Cuenta de Aplicación",
                     "text": "Regístrate en nuestro sistema para iniciar tu solicitud de intercambio",
                     "button_text": "Crear Cuenta Ahora",
-                    "button_link": "http://localhost:8000/seim/register/",
+                    "button_link": "/seim/register/",
                     "style": "success",
                 },
             },
@@ -212,17 +213,17 @@ class Command(BaseCommand):
                 "type": "paragraph",
                 "value": """
                 <div class="alert alert-info">
-                    <h5>Convocatoria Primavera 2026</h5>
+                    <h5>Convocatoria Movilidad Internacional 2026-2</h5>
+                    <p>Consulta las convocatorias y listados oficiales publicados por la CGRI:</p>
                     <ul>
-                        <li><strong>Apertura:</strong> 20 de noviembre de 2025</li>
-                        <li><strong>Cierre de aplicaciones:</strong> 15 de enero de 2026</li>
-                        <li><strong>Publicación de resultados:</strong> 1 de febrero de 2026</li>
-                        <li><strong>Sesión de orientación:</strong> 15 de febrero de 2026</li>
-                        <li><strong>Inicio del intercambio:</strong> Marzo de 2026</li>
+                        <li><a href="https://www2.uadec.mx/pub/CGRI/ConvocatoriaMISaliente.pdf" target="_blank" rel="noopener noreferrer">Convocatoria de movilidad saliente</a></li>
+                        <li><a href="https://www2.uadec.mx/pub/CGRI/ConvocatoriaMIEntrante.pdf" target="_blank" rel="noopener noreferrer">Convocatoria de movilidad entrante</a></li>
+                        <li><a href="https://www2.uadec.mx/pub/CGRI/UniversidadesPorConvenio.pdf" target="_blank" rel="noopener noreferrer">Universidades por convenio 2026-2</a></li>
+                        <li><a href="https://www2.uadec.mx/pub/CGRI/UniversidadesPorCONAHEC.pdf" target="_blank" rel="noopener noreferrer">Universidades CONAHEC 2026-2</a></li>
                     </ul>
                 </div>
                 <p class="lead text-center mt-4">
-                    <a href="/blog/" class="btn btn-primary btn-lg">Ver Convocatoria Actual</a>
+                    <a href="/seim/login" class="btn btn-primary btn-lg">Iniciar solicitud en SEIM</a>
                 </p>
                 """,
             },
@@ -245,7 +246,7 @@ class Command(BaseCommand):
                     "title": "¿Listo para Comenzar?",
                     "text": "Crea tu cuenta ahora y da el primer paso hacia tu experiencia internacional",
                     "button_text": "Crear Mi Cuenta",
-                    "button_link": "http://localhost:8000/seim/register/",
+                    "button_link": "/seim/register/",
                     "style": "primary",
                 },
             },

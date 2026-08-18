@@ -490,12 +490,12 @@ INSTITUTION_SOCIAL_TWITTER = _institution_env("INSTITUTION_SOCIAL_TWITTER")
 INSTITUTION_SOCIAL_INSTAGRAM = _institution_env("INSTITUTION_SOCIAL_INSTAGRAM")
 INSTITUTION_THEME_CSS = _institution_env("INSTITUTION_THEME_CSS", "uadec/theme.css")
 INSTITUTION_THEME = {
-    "primary": _institution_env("BRAND_PRIMARY", "#2E5090"),
-    "primary_light": _institution_env("BRAND_PRIMARY_LIGHT", "#3B5FA5"),
+    "primary": _institution_env("BRAND_PRIMARY", "#2E5790"),
+    "primary_light": _institution_env("BRAND_PRIMARY_LIGHT", "#3251AC"),
     "primary_dark": _institution_env("BRAND_PRIMARY_DARK", "#1E3A5F"),
-    "accent": _institution_env("BRAND_ACCENT", "#C7A162"),
-    "accent_light": _institution_env("BRAND_ACCENT_LIGHT", "#D4B177"),
-    "accent_dark": _institution_env("BRAND_ACCENT_DARK", "#B08D4D"),
+    "accent": _institution_env("BRAND_ACCENT", "#BF9B4C"),
+    "accent_light": _institution_env("BRAND_ACCENT_LIGHT", "#EDB621"),
+    "accent_dark": _institution_env("BRAND_ACCENT_DARK", "#A6863D"),
     "navy": _institution_env("BRAND_NAVY", "#1E3A5F"),
     "orange": _institution_env("BRAND_ORANGE", "#E67E22"),
     "text": _institution_env("BRAND_TEXT", "#2C3E50"),

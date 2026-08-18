@@ -1,16 +1,17 @@
 {% extends "cms/base.html" %}
-{% load wagtailcore_tags wagtailimages_tags %}
+{% load static wagtailcore_tags wagtailimages_tags %}
 
 {% block content %}
 <!-- Hero Section -->
 <section class="py-5 mb-0 text-white position-relative overflow-hidden d-flex align-items-center {% if not page.hero_image %}section-blue{% endif %}" style="min-height: 70vh;">
     {% if page.hero_image %}
         {% image page.hero_image fill-1920x900 as hero_bg %}
-        <div class="position-absolute top-0 start-0 w-100 h-100" style="z-index: 0; background-image: linear-gradient(rgba(46, 80, 144, 0.85), rgba(30, 58, 95, 0.88)), url('{{ hero_bg.url }}'); background-size: cover; background-position: center;"></div>
+        <div class="position-absolute top-0 start-0 w-100 h-100 cms-home-hero-bg" style="z-index: 0; background-image: linear-gradient(rgba(46, 87, 144, 0.82), rgba(30, 58, 95, 0.88)), url('{{ hero_bg.url }}'); background-size: cover; background-position: center;"></div>
     {% endif %}
     <div class="container position-relative" style="z-index: 1;">
         <div class="row align-items-center">
             <div class="col-lg-{% if page.hero_image %}10 mx-auto text-center{% else %}8{% endif %}">
+                <img src="{% static 'uadec/logos/cgri-wordmark.png' %}" alt="Coordinación General de Relaciones Internacionales" class="cms-cgri-wordmark mb-4 bg-white rounded px-3 py-2 shadow-sm">
                 <h1 class="display-3 fw-bold text-white mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
                     {{ page.hero_title }}
                 </h1>

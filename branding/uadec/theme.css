@@ -10,12 +10,12 @@
    ============================================ */
 :root {
     /* Primary Colors */
-    --uadec-gold: #C7A162;
-    --uadec-gold-light: #D4B177;
-    --uadec-gold-dark: #B08D4D;
+    --uadec-gold: #BF9B4C;
+    --uadec-gold-light: #EDB621;
+    --uadec-gold-dark: #A6863D;
     
-    --uadec-blue: #2E5090;
-    --uadec-blue-light: #3B5FA5;
+    --uadec-blue: #2E5790;
+    --uadec-blue-light: #3251AC;
     --uadec-blue-dark: #1E3A5F;
     
     /* Secondary Colors */
@@ -55,7 +55,7 @@
    GLOBAL STYLES
    ============================================ */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Montserrat', 'Open Sans', Arial, Helvetica, sans-serif;
     color: var(--uadec-text);
     background-color: var(--uadec-white);
     line-height: 1.6;
@@ -600,6 +600,20 @@ a:hover {
 
 .cms-footer-site-link {
     color: var(--uadec-gold);
+}
+
+.cms-nav-crest {
+    height: 32px;
+    width: auto;
+    max-width: 96px;
+    object-fit: contain;
+}
+
+.cms-cgri-wordmark {
+    max-height: 72px;
+    width: auto;
+    max-width: min(100%, 420px);
+    object-fit: contain;
 }
 
 /* ============================================

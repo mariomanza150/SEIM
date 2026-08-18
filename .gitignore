@@ -280,6 +280,10 @@ frontend-vue/*.local
 # Local institution overlay (packaged example stays committed)
 branding/institution.json
 
+# Downloaded university logos (keep .gitkeep)
+branding/*/logos/*
+!branding/*/logos/.gitkeep
+
 # Playwright-generated artifacts
 tests/e2e_playwright/screenshots/
 tests/e2e_playwright/videos/

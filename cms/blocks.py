@@ -42,6 +42,30 @@ class RichTextBlock(blocks.StructBlock):
         label = "Rich Text"
 
 
+class HeadingBlock(blocks.StructBlock):
+    """Simple heading used by CMS seed commands."""
+
+    heading_text = blocks.CharBlock(required=True, max_length=200)
+    size = blocks.ChoiceBlock(
+        choices=[("2", "H2"), ("3", "H3"), ("4", "H4")],
+        default="2",
+    )
+
+    class Meta:
+        template = "cms/blocks/heading_block.html"
+        icon = "title"
+        label = "Heading"
+
+
+class ParagraphBlock(blocks.RichTextBlock):
+    """Standalone rich-text paragraph used by CMS seed commands."""
+
+    class Meta:
+        template = "cms/blocks/paragraph_block.html"
+        icon = "pilcrow"
+        label = "Paragraph"
+
+
 class ImageBlock(blocks.StructBlock):
     """Image block with caption and alignment options."""
 
@@ -70,7 +94,7 @@ class CallToActionBlock(blocks.StructBlock):
     title = blocks.CharBlock(required=True, max_length=100)
     text = blocks.TextBlock(required=False, max_length=500)
     button_text = blocks.CharBlock(required=True, max_length=50)
-    button_link = blocks.URLBlock(required=False)
+    button_link = blocks.CharBlock(required=False, max_length=250)
     button_page = blocks.PageChooserBlock(required=False)
     style = blocks.ChoiceBlock(
         choices=[
@@ -101,7 +125,7 @@ class CardBlock(blocks.StructBlock):
     )
     title = blocks.CharBlock(required=True, max_length=100)
     text = blocks.TextBlock(required=True, max_length=500)
-    link = blocks.URLBlock(required=False)
+    link = blocks.CharBlock(required=False, max_length=250)
     link_text = blocks.CharBlock(required=False, max_length=50)
 
 
@@ -180,7 +204,7 @@ class HeroBlock(blocks.StructBlock):
         default="primary",
     )
     button_text = blocks.CharBlock(required=False, max_length=50)
-    button_link = blocks.URLBlock(required=False)
+    button_link = blocks.CharBlock(required=False, max_length=250)
     button_page = blocks.PageChooserBlock(required=False)
 
     class Meta:
@@ -286,6 +310,8 @@ class BaseStreamBlock(blocks.StreamBlock):
     """Base StreamBlock with all available blocks."""
 
     rich_text = RichTextBlock()
+    heading = HeadingBlock()
+    paragraph = ParagraphBlock()
     image = ImageBlock()
     call_to_action = CallToActionBlock()
     card_grid = CardGridBlock()

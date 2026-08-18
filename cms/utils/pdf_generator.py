@@ -87,7 +87,7 @@ def create_styles():
             parent=styles["Heading1"],
             fontSize=18,
             textColor=colors.HexColor(
-                _institution_brand()["theme"].get("primary", "#2E5090")
+                _institution_brand()["theme"].get("primary", "#2E5790")
             ),
             spaceAfter=12,
             alignment=TA_CENTER,
@@ -101,7 +101,7 @@ def create_styles():
             parent=styles["Heading2"],
             fontSize=14,
             textColor=colors.HexColor(
-                _institution_brand()["theme"].get("primary", "#2E5090")
+                _institution_brand()["theme"].get("primary", "#2E5790")
             ),
             spaceAfter=10,
             spaceBefore=10,

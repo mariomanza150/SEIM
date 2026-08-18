@@ -55,6 +55,30 @@ class Command(BaseCommand):
     def _brand_value(self, value):
         return apply_institution_tokens_deep(value, self.brand)
 
+    def _upsert_standard_page(self, parent, *, title, slug, content, introduction=""):
+        """Create or update a StandardPage body so stub pages get real copy."""
+        try:
+            page = StandardPage.objects.get(slug=slug)
+            page.title = title
+            if introduction:
+                page.introduction = introduction
+            page.body = self._brand_value(content)
+            page.save_revision().publish()
+            self.stdout.write(self.style.SUCCESS(f"  ✓ Updated page: {title}"))
+            return page
+        except StandardPage.DoesNotExist:
+            page = StandardPage(
+                title=title,
+                slug=slug,
+                show_in_menus=True,
+                introduction=introduction,
+                body=self._brand_value(content),
+            )
+            parent.add_child(instance=page)
+            page.save_revision().publish()
+            self.stdout.write(self.style.SUCCESS(f"  ✓ Created page: {title}"))
+            return page
+
     def handle(self, *args, **options):
         self._load_brand()
         short = self.short
@@ -110,51 +134,118 @@ class Command(BaseCommand):
         )
 
     def create_about_page(self, parent):
-        """Create About page for UAdeC exchange department."""
-        about_slug = "sobre-nosotros"
-
-        try:
-            about_page = StandardPage.objects.get(slug=about_slug)
-            self.stdout.write(self.style.WARNING("  ⚠ About page already exists"))
-        except StandardPage.DoesNotExist:
-            about_page = StandardPage(
-                title="Sobre la Dirección de Intercambio Académico",
-                slug=about_slug,
-                show_in_menus=True,
-            )
-            parent.add_child(instance=about_page)
-
-            # Add content using StreamField
-
-            content_data = [
-                {
-                    "type": "heading",
-                    "value": {"heading_text": "Nuestra Misión", "size": "2"},
-                },
-                {
-                    "type": "paragraph",
-                    "value": "<p>La Dirección de Intercambio Académico de la Universidad Autónoma de Coahuila tiene como misión facilitar experiencias educativas internacionales de alta calidad que enriquezcan la formación académica y personal de nuestros estudiantes, promoviendo el entendimiento intercultural y la excelencia académica.</p>",
-                },
-                {
-                    "type": "heading",
-                    "value": {"heading_text": "Nuestra Visión", "size": "2"},
-                },
-                {
-                    "type": "paragraph",
-                    "value": "<p>Ser reconocidos como líderes en movilidad estudiantil internacional en el norte de México, ofreciendo programas innovadores y diversificados que preparen a nuestros estudiantes para un mundo globalizado.</p>",
-                },
-                {"type": "heading", "value": {"heading_text": "Historia", "size": "2"}},
-                {
-                    "type": "paragraph",
-                    "value": "<p>Desde 1995, la UAdeC ha mantenido convenios de intercambio con más de 80 instituciones en 25 países. Nuestra oficina de intercambio académico trabaja incansablemente para expandir estas oportunidades y garantizar experiencias exitosas para cada participante.</p>",
-                },
-            ]
-
-            about_page.body = self._brand_value(content_data)
-            about_page.save_revision().publish()
-            self.stdout.write(self.style.SUCCESS("  ✓ Created About page"))
-
-        return about_page
+        """Create or update the About page with official CGRI copy."""
+        content_data = [
+            {
+                "type": "heading",
+                "value": {"heading_text": "Responsabilidades", "size": "2"},
+            },
+            {
+                "type": "paragraph",
+                "value": (
+                    "<p>La UAdeC a través de la Coordinación General de Relaciones "
+                    "Internacionales es la responsable de promover la movilidad "
+                    "internacional tanto en académicos como en estudiantes, además de "
+                    "gestionar convenios de colaboración con otras instituciones "
+                    "educativas y científicas de alta calidad. Buscando además "
+                    "acreditar internacionalmente sus programas académicos. "
+                    "Proporcionamos en todo momento asesoría e información a nuestros "
+                    "estudiantes y maestros que desean salir al extranjero así como a "
+                    "los visitantes de otras instituciones del mundo que desean o "
+                    "realizan una estancia académica en nuestra Universidad. "
+                    "Promovemos el estudio de una segunda lengua como herramienta de "
+                    "crecimiento profesional.</p>"
+                ),
+            },
+            {
+                "type": "heading",
+                "value": {"heading_text": "Nuestra Misión", "size": "2"},
+            },
+            {
+                "type": "paragraph",
+                "value": (
+                    "<p>Incorporar la dimensión internacional en los procesos "
+                    "académicos y administrativos de la Universidad, fomentar la "
+                    "interculturalidad, coordinar y administrar los esfuerzos "
+                    "institucionales de cooperación académica, becas de intercambio y "
+                    "movilidad así como coadyuvar la enseñanza de lenguas extranjeras.</p>"
+                ),
+            },
+            {
+                "type": "heading",
+                "value": {"heading_text": "Nuestra Visión", "size": "2"},
+            },
+            {
+                "type": "paragraph",
+                "value": (
+                    "<p>Ser la instancia institucional que ayude a mejorar la calidad "
+                    "académica en la docencia, la investigación y la extensión mediante "
+                    "el desarrollo de características de desempeño internacional de "
+                    "los estudiantes, del personal académico y administrativo. Apoyar "
+                    "en el reconocimiento internacional de planes de estudio y "
+                    "mantener una posición líder en las relaciones académicas con "
+                    "instituciones internacionales.</p>"
+                ),
+            },
+            {
+                "type": "heading",
+                "value": {"heading_text": "Objetivos", "size": "2"},
+            },
+            {
+                "type": "paragraph",
+                "value": (
+                    "<ul>"
+                    "<li>Construir una red internacional académica que ofrezca a los "
+                    "estudiantes la facilidad para interactuar con otros países a "
+                    "través de la movilidad internacional.</li>"
+                    "<li>Desarrollar convenios de cooperación con instituciones "
+                    "internacionales para posicionar a la Universidad dentro de un "
+                    "nivel académico de excelencia.</li>"
+                    "<li>Fomentar la participación de nuestros académicos en "
+                    "experiencias internacionales.</li>"
+                    "<li>Promover la estancia académica de alumnos extranjeros en "
+                    "nuestra universidad.</li>"
+                    "<li>Enriquecer los procesos de enseñanza y aprendizaje mediante "
+                    "estancias de académicos visitantes.</li>"
+                    "</ul>"
+                ),
+            },
+            {
+                "type": "heading",
+                "value": {"heading_text": "Logros", "size": "2"},
+            },
+            {
+                "type": "paragraph",
+                "value": (
+                    "<ul>"
+                    "<li>Colocar estudiantes en universidades del extranjero para "
+                    "estancias académicas.</li>"
+                    "<li>Recibir estudiantes del extranjero para realizar estancias "
+                    "académicas en la Universidad.</li>"
+                    "<li>Eventos masivos para la concientización de la importancia de "
+                    "la movilidad internacional.</li>"
+                    "<li>Convenios con universidades de educación superior alrededor "
+                    "del mundo.</li>"
+                    "<li>Estancias cortas y semestrales de maestros en el extranjero y "
+                    "visita de maestros extranjeros en las facultades de la UAdeC.</li>"
+                    "<li>Participación de académicos en foros de investigación en "
+                    "Estados Unidos.</li>"
+                    "<li>Participación de Bachilleratos en el programa “Jóvenes en "
+                    "Acción” en Estados Unidos.</li>"
+                    "</ul>"
+                ),
+            },
+        ]
+        return self._upsert_standard_page(
+            parent,
+            title="Sobre la Dirección de Intercambio Académico",
+            slug="sobre-nosotros",
+            introduction=(
+                "Coordinación General de Relaciones Internacionales (CGRI) — "
+                "movilidad, convenios y cooperación académica."
+            ),
+            content=content_data,
+        )
 
     def create_blog_content(self, parent):
         """Create blog index and blog posts."""
@@ -466,7 +557,7 @@ class Command(BaseCommand):
             {
                 "title": "¿Cuáles son los requisitos para aplicar?",
                 "slug": "requisitos-aplicar",
-                "answer": "<p>Los requisitos generales para aplicar a un programa de intercambio son:</p><ul><li>Ser estudiante activo de la UAdeC</li><li>Tener un promedio mínimo de 8.0 (puede variar según el programa)</li><li>Haber cursado al menos el 40-50% de tu carrera</li><li>Contar con el aval de tu coordinador de carrera</li><li>Presentar certificación de idioma del país destino</li><li>No tener adeudos académicos o administrativos</li></ul><p>Los requisitos específicos pueden variar según la universidad destino.</p>",
+                "answer": "<p>Los requisitos generales de la convocatoria oficial de movilidad son:</p><ul><li>Ser estudiante regular de licenciatura o posgrado al aplicar y al realizar la movilidad</li><li>No estar cursando el último semestre</li><li>Promedio mínimo general de 90 (universidades de habla hispana) o 85 (lengua extranjera), respaldado por Kárdex</li><li>Licenciatura: 50% de créditos para movilidad presencial (30% si es virtual); posgrado: 25% de créditos</li><li>Postulación de la dirección de tu escuela o facultad</li><li>Idioma: B2 / TOEFL 550 para lengua extranjera; B1 / TOEFL 450 para habla hispana, más el requisito de la institución destino</li><li>No tener adeudos con la UAdeC</li></ul><p>Consulta la convocatoria vigente en <a href=\"https://www.uadec.mx/movilidad/\">uadec.mx/movilidad</a>.</p>",
             },
             {
                 "title": "¿Cuánto cuesta participar en un intercambio?",
@@ -476,7 +567,7 @@ class Command(BaseCommand):
             {
                 "title": "¿Mis créditos serán revalidados?",
                 "slug": "revalidacion-creditos",
-                "answer": "<p>Sí, los créditos cursados en la universidad de intercambio son revalidados de acuerdo a las siguientes consideraciones:</p><ul><li>Las materias deben estar previamente aprobadas por tu coordinador de carrera</li><li>Debes aprobar las materias con calificación mínima de 7.0 (o equivalente)</li><li>Al regresar, presentarás tu certificado oficial de calificaciones</li><li>La Dirección Escolar realizará el proceso de equivalencia</li><li>Los créditos aparecerán en tu historial académico</li></ul><p>Es importante que antes de viajar, apruebes tu carga académica con tu coordinador.</p>",
+                "answer": "<p>Sí. Debes homologar las materias con tu coordinador de carrera antes de viajar, usando el formato oficial de Homologación de Materias (FS-HM) de la CGRI. Al regresar presentas el certificado de calificaciones para la equivalencia en tu historial.</p>",
             },
             {
                 "title": "¿Puedo trabajar durante mi intercambio?",
@@ -486,15 +577,20 @@ class Command(BaseCommand):
             {
                 "title": "¿Qué pasa si tengo una emergencia en el extranjero?",
                 "slug": "emergencia-extranjero",
-                "answer": "<p>La UAdeC y la universidad destino tienen protocolos establecidos:</p><ul><li>Todos los estudiantes deben tener seguro médico internacional</li><li>Contarás con contactos de emergencia 24/7</li><li>La Dirección de Intercambio mantiene comunicación constante</li><li>Las embajadas y consulados mexicanos ofrecen apoyo</li><li>Coordinamos con las familias en caso necesario</li></ul><p>Antes de viajar, recibirás una guía completa de procedimientos de emergencia.</p>",
+                "answer": "<p>La UAdeC y la universidad destino tienen protocolos establecidos:</p><ul><li>Todos los estudiantes deben tener seguro médico internacional</li><li>Contarás con contactos de emergencia 24/7</li><li>La Coordinación General de Relaciones Internacionales mantiene comunicación constante</li><li>Las embajadas y consulados mexicanos ofrecen apoyo</li><li>Coordinamos con las familias en caso necesario</li></ul><p>Antes de viajar, recibirás una guía completa de procedimientos de emergencia.</p>",
             },
         ]
 
         for faq_data in faqs:
             try:
-                FAQPage.objects.get(slug=faq_data["slug"])
+                faq = FAQPage.objects.get(slug=faq_data["slug"])
+                faq.title = faq_data["title"]
+                faq.body = self._brand_value(
+                    [{"type": "paragraph", "value": faq_data["answer"]}]
+                )
+                faq.save_revision().publish()
                 self.stdout.write(
-                    self.style.WARNING(f"  ⚠ FAQ '{faq_data['title']}' already exists")
+                    self.style.SUCCESS(f"  ✓ Updated FAQ: {faq_data['title']}")
                 )
             except FAQPage.DoesNotExist:
                 faq = FAQPage(
@@ -518,33 +614,45 @@ class Command(BaseCommand):
             {
                 "title": "Contacto",
                 "slug": "contacto",
+                "introduction": "Coordinación General de Relaciones Internacionales (CGRI).",
                 "content": [
                     {
                         "type": "heading",
                         "value": {
-                            "heading_text": "Dirección de Intercambio Académico",
+                            "heading_text": "Coordinadora General",
                             "size": "2",
                         },
                     },
                     {
                         "type": "paragraph",
-                        "value": "<p><strong>Universidad Autónoma de Coahuila</strong></p><p>Boulevard V. Carranza y González Lobo s/n<br>Col. República Oriente<br>Saltillo, Coahuila, México<br>C.P. 25280</p>",
+                        "value": (
+                            "<p><strong>Dra. Lourdes Morales Oyervides</strong><br>"
+                            "Coordinadora General de Relaciones Internacionales</p>"
+                            "<p><a href=\"mailto:lourdesmorales@uadec.edu.mx\">"
+                            "lourdesmorales@uadec.edu.mx</a></p>"
+                        ),
                     },
                     {
                         "type": "heading",
-                        "value": {"heading_text": "Horario de Atención", "size": "3"},
+                        "value": {"heading_text": "Contacto CGRI", "size": "3"},
                     },
                     {
                         "type": "paragraph",
-                        "value": "<p>Lunes a Viernes: 9:00 AM - 6:00 PM<br>Teléfono: +52 (844) 412-8800 ext. 2345<br>Email: intercambio@uadec.edu.mx</p>",
-                    },
-                    {
-                        "type": "heading",
-                        "value": {"heading_text": "Redes Sociales", "size": "3"},
-                    },
-                    {
-                        "type": "paragraph",
-                        "value": "<p>Síguenos en nuestras redes sociales para estar al día con convocatorias y noticias:</p><ul><li>Facebook: @IntercambioUAdeC</li><li>Instagram: @intercambio_uadec</li><li>Twitter: @UAdeC_Intercambio</li></ul>",
+                        "value": (
+                            "<p><strong>Universidad Autónoma de Coahuila</strong></p>"
+                            "<p>Lic. Salvador González Lobo s/n<br>"
+                            "Col. República Oriente<br>"
+                            "Saltillo, Coahuila, México<br>C.P. 25280</p>"
+                            "<p>Teléfono: 844 415 3077 | 844 416 9995<br>"
+                            "Email: <a href=\"mailto:relaciones.internacionales@uadec.edu.mx\">"
+                            "relaciones.internacionales@uadec.edu.mx</a><br>"
+                            "Sitio: <a href=\"https://www.uadec.mx/cgri/\" target=\"_blank\" "
+                            "rel=\"noopener noreferrer\">uadec.mx/cgri</a></p>"
+                            "<p>Horario: Lunes a viernes, 9:00 a.m. a 3:00 p.m.</p>"
+                            "<p><a href=\"https://maps.google.com/?q=Coordinacion+de+Relaciones+"
+                            "Internacionales+UADEC+Saltillo\" target=\"_blank\" "
+                            "rel=\"noopener noreferrer\">Ver ubicación en Google Maps</a></p>"
+                        ),
                     },
                 ],
             },
@@ -573,22 +681,10 @@ class Command(BaseCommand):
         ]
 
         for page_data in pages:
-            try:
-                StandardPage.objects.get(slug=page_data["slug"])
-                self.stdout.write(
-                    self.style.WARNING(
-                        f"  ⚠ Page '{page_data['title']}' already exists"
-                    )
-                )
-            except StandardPage.DoesNotExist:
-                page = StandardPage(
-                    title=page_data["title"],
-                    slug=page_data["slug"],
-                    show_in_menus=True,
-                    body=self._brand_value(page_data["content"]),
-                )
-                parent.add_child(instance=page)
-                page.save_revision().publish()
-                self.stdout.write(
-                    self.style.SUCCESS(f"  ✓ Created page: {page_data['title']}")
-                )
+            self._upsert_standard_page(
+                parent,
+                title=page_data["title"],
+                slug=page_data["slug"],
+                introduction=page_data.get("introduction", ""),
+                content=page_data["content"],
+            )

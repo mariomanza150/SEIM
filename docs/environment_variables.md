@@ -226,15 +226,15 @@ UAdeC is the default/example theme. Override to run SEIM for another institution
 | `INSTITUTION_DEPARTMENT` | ❌ | Dirección de Intercambio Académico | Footer + homepage hero |
 | `INSTITUTION_LOCATION` | ❌ | Saltillo, Coahuila, México | Footer location |
 | `INSTITUTION_WEBSITE` | ❌ | https://www.uadec.mx/ | Footer link and asset download source |
-| `INSTITUTION_EMAIL` | ❌ | intercambio@uadec.edu.mx | Seed / contact email |
-| `INSTITUTION_PHONE` | ❌ | +52 (844) 412-8800 ext. 2345 | Seed / contact phone |
-| `INSTITUTION_ADDRESS` | ❌ | Saltillo address HTML | Seed postal address |
-| `INSTITUTION_LOGO_URL` | ❌ | (empty) | Optional navbar logo URL |
+| `INSTITUTION_EMAIL` | ❌ | relaciones.internacionales@uadec.edu.mx | Seed / contact email |
+| `INSTITUTION_PHONE` | ❌ | 844 415 3077 \| 844 416 9995 | Seed / contact phone |
+| `INSTITUTION_ADDRESS` | ❌ | Lic. Salvador González Lobo s/n (HTML) | Seed postal address |
+| `INSTITUTION_LOGO_URL` | ❌ | `/static/uadec/logos/institution-logo.png` | Navbar crest (downloaded, not committed) |
 | `INSTITUTION_THEME_CSS` | ❌ | `uadec/theme.css` | CMS theme stylesheet under `branding\` |
 | `INSTITUTION_CONFIG_FILE` | ❌ | `branding/institution.json` | JSON overlay (env still wins) |
 | `TENANT_CONFIG_FILE` | ❌ | `tenant_config.json` | Root tenant overlay (wins over institution.json) |
-| `BRAND_PRIMARY` | ❌ | `#2E5090` | CMS primary color |
-| `BRAND_ACCENT` | ❌ | `#C7A162` | CMS accent color |
+| `BRAND_PRIMARY` | ❌ | `#2E5790` | CMS primary color |
+| `BRAND_ACCENT` | ❌ | `#BF9B4C` | CMS accent color |
 | `WAGTAIL_SITE_NAME` | ❌ | `SEIM - {short name}` | Wagtail admin site name |
 
 ### **🎨 Frontend Configuration**
