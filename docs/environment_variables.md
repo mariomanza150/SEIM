@@ -196,6 +196,9 @@ CELERY_RESULT_BACKEND=redis://redis:6379/0
 | `SECURE_BROWSER_XSS_FILTER` | ❌ | `False` | Enable XSS filter |
 | `SECURE_CONTENT_TYPE_NOSNIFF` | ❌ | `False` | Prevent MIME sniffing |
 | `X_FRAME_OPTIONS` | ❌ | `DENY` | X-Frame-Options header |
+| `USE_TLS_PROXY_HEADERS` | ❌ | `False` | Trust `X-Forwarded-Proto` / `X-Forwarded-Host` from Tailscale Serve or another TLS terminator |
+| `USE_REQUEST_HOST_FOR_SITE` | ❌ | follows `USE_TLS_PROXY_HEADERS` | Build Wagtail absolute URLs from the current Host instead of `localhost` |
+| `ALLOW_ANY_HOST` | ❌ | `False` | Set `ALLOWED_HOSTS=["*"]` (local-prod LAN/Tailscale only; do not use on the public internet) |
 
 #### **Security Configuration Examples:**
 ```bash
@@ -211,6 +214,12 @@ CSRF_COOKIE_SECURE=True
 SECURE_BROWSER_XSS_FILTER=True
 SECURE_CONTENT_TYPE_NOSNIFF=True
 X_FRAME_OPTIONS=DENY
+
+# Local-prod behind Tailscale Serve (HTTPS to clients, HTTP to Gunicorn)
+USE_TLS_PROXY_HEADERS=1
+USE_REQUEST_HOST_FOR_SITE=1
+ALLOW_ANY_HOST=1
+CSRF_TRUSTED_ORIGINS=http://localhost:8020,https://*.ts.net
 ```
 
 ### **🏛 Institution branding (white-label)**

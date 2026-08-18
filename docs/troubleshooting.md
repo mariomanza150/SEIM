@@ -247,6 +247,22 @@ docker-compose logs db
 
 ---
 
+## 🌐 **Remote HTTPS / certificate errors**
+
+#### **Issue**: Certificate warning or `NET::ERR_CERT_*` when opening `/seim/` from another device
+**Cause**: Gunicorn serves HTTP. Opening `https://<lan-ip>:8020` or pointing Tailscale Serve at `https://localhost:8020` makes the browser expect TLS on a port that speaks plain HTTP. CMS links of the form `{% pageurl %}/child/` can also become `//child/` (protocol-relative) on the site root.
+
+**Solutions**:
+1. **LAN**: use `http://<lan-ip>:8020` (not `https://`).
+2. **Tailscale Serve**: terminate TLS at Tailscale and proxy HTTP to the app:
+   ```powershell
+   tailscale serve http://127.0.0.1:8020
+   ```
+   Open the MagicDNS `https://<machine>.<tailnet>.ts.net` URL, not the raw IP.
+3. Recreate the local-prod web container so `USE_TLS_PROXY_HEADERS=1` and `ALLOW_ANY_HOST=1` from `docker-compose.local-prod.yml` are applied.
+
+---
+
 ## 🐳 **Docker Issues**
 
 ### **Container Won't Start**

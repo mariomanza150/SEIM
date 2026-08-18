@@ -30,6 +30,18 @@ def editor_js():
     )
 
 
+@hooks.register("register_admin_menu_item")
+def register_seim_portal_menu_item():
+    """Always-visible shortcut from Wagtail admin into the SEIM portal."""
+    return MenuItem(
+        "Ir a SEIM",
+        "/seim/",
+        icon_name="redirect",
+        order=50,
+        attrs={"title": "Abrir el portal de solicitudes SEIM"},
+    )
+
+
 @hooks.register("construct_main_menu")
 def add_django_admin_menu_item(request, menu_items):
     """Add link to Django admin in Wagtail menu for system admins."""

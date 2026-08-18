@@ -42,6 +42,7 @@
                     <option value="bilateral" {% if request.GET.type == "bilateral" %}selected{% endif %}>Bilateral</option>
                     <option value="multilateral" {% if request.GET.type == "multilateral" %}selected{% endif %}>Multilateral</option>
                     <option value="erasmus" {% if request.GET.type == "erasmus" %}selected{% endif %}>Erasmus+</option>
+                    <option value="conahec" {% if request.GET.type == "conahec" %}selected{% endif %}>CONAHEC</option>
                     <option value="specific" {% if request.GET.type == "specific" %}selected{% endif %}>Programa Específico</option>
                 </select>
             </div>
@@ -53,6 +54,21 @@
         </form>
     </div>
 </section>
+
+{% if cgri %}
+<section class="py-4">
+    <div class="container">
+        <div class="d-flex flex-wrap gap-2 justify-content-center">
+            <a class="btn btn-outline-primary" href="{{ cgri.files.universidades_convenio }}" target="_blank" rel="noopener">
+                Universidades por Convenio 2026-2
+            </a>
+            <a class="btn btn-outline-primary" href="{{ cgri.files.universidades_conahec }}" target="_blank" rel="noopener">
+                Universidades por CONAHEC 2026-2
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
 
 <!-- Convenios List -->
 <section class="py-5">

@@ -117,6 +117,8 @@ describe('AppShell navbar', () => {
     expect(toggle.attributes('aria-expanded')).toBe('true')
     expect(wrapper.find('#userDropdown').element.closest('.dropdown').querySelector('.dropdown-menu.show')).toBeTruthy()
     expect(wrapper.text()).toContain('Profile')
+    expect(wrapper.get('[data-testid="public-site-link"]').attributes('href')).toBe('/')
+    expect(wrapper.get('[data-testid="public-site-link"]').text()).toContain('Public site')
     wrapper.unmount()
   })
 })

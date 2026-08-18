@@ -147,6 +147,7 @@ urlpatterns += [
     ),
     path("logout/", spa_logout, name="legacy_logout"),
     path("", include("core.legacy_spa_urls")),
+    path("", include("internacional.urls")),
 ]
 
 if _WAGTAIL:

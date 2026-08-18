@@ -16,7 +16,12 @@ All public-facing content is managed through Wagtail CMS:
 - `/sobre-nosotros/` - About page
 - `/contacto/` - Contact information
 - `/proceso-aplicacion/` - Application process guide
+- `/internacional/` - Relaciones Internacionales (CGRI + movilidad)
+- `/internacional/institucional/` - CGRI: misión, equipo, organigrama, acreditaciones, idiomas, asesoría consular, asociaciones, contacto, convenios
+- `/internacional/movilidad-estudiantil/` - Movilidad: programas, requisitos, documentación, entrante, saliente, beneficios, calendario, FAQ
 - Any other CMS-created pages
+
+Legacy aliases `/cgri/` and `/movilidad/` (and selected subpaths) redirect into `/internacional/`.
 
 ### SEIM Application
 All SEIM application features are under `/seim/`:
@@ -101,7 +106,7 @@ API endpoints remain at the root for consistency:
 2. Browse `/programas/` → View available programs
 3. Read `/blog/` → Read news and student experiences
 4. Check `/preguntas-frecuentes/` → Find answers
-5. Click "Iniciar Sesión" → Redirected to `/seim/login/`
+5. Click **Ir a SEIM** (navbar, banner, or footer) → `/seim/login/`
 6. After login → Access `/seim/dashboard/`
 
 ### For Authenticated Students
@@ -110,7 +115,7 @@ API endpoints remain at the root for consistency:
 3. Apply to programs at `/seim/applications/new`
 4. Manage account settings at `/seim/settings/`
 5. Can still browse CMS content at `/`, `/programas/`, etc.
-6. Navigation includes dropdown to access SEIM features
+6. **Ir a SEIM** in the CMS chrome goes to `/seim/dashboard/`; the account dropdown still lists dashboard, applications, compare, profile, settings, and calendar
 
 ### For Staff/Administrators
 1. Login at `/seim/login/` or `/cms/` (Wagtail login)
@@ -142,7 +147,11 @@ Templates have been updated to use the new URL structure:
 - CMS templates link to `/seim/` for application features
 - Spanish labels used in CMS navigation
 - Login/logout links point to `/seim/login/` and `/logout/`
+- Public CMS chrome always includes **Ir a SEIM** (navbar button, integration banner, footer, homepage CTAs)
+- Guests land on `/seim/login/`; authenticated users land on `/seim/dashboard/`
 - CMS account navigation points to the SPA dashboard, applications, program comparison (`/seim/programs/compare`), profile, settings, and calendar (`/seim/calendar/`)
+- Wagtail admin (`/cms/`) includes an **Ir a SEIM** menu item to `/seim/`
+- The Vue app user menu includes **Public site** / **Sitio público** back to `/`
 - Public program index and program detail pages link to the SPA comparison tool (signed-in users directly; others via `/seim/login?redirect=…` including optional `?ids=` preselection)
 
 ### Reverse URL Lookup

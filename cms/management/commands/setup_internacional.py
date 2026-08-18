@@ -1,6 +1,9 @@
 """
 Management command to set up the International section (CGRI & Movilidad)
 Drop-in replacement for /cgri/ and /movilidad/ pages.
+
+Idempotent: creates missing pages under an existing internacional tree unless
+--replace is passed.
 """
 
 from django.conf import settings
@@ -31,6 +34,17 @@ class Command(BaseCommand):
             help="Replace existing internacional page if it exists",
         )
 
+    def _ensure_child(self, parent, model, slug, **fields):
+        existing = parent.get_children().filter(slug=slug).first()
+        if existing:
+            self.stdout.write(self.style.WARNING(f"  ⚠ {slug} already exists"))
+            return existing.specific
+        page = model(slug=slug, **fields)
+        parent.add_child(instance=page)
+        page.save_revision().publish()
+        self.stdout.write(self.style.SUCCESS(f"  ✓ {page.url}"))
+        return page
+
     @transaction.atomic
     def handle(self, *args, **options):
         site = Site.objects.get(is_default_site=True)
@@ -43,57 +57,65 @@ class Command(BaseCommand):
 
         self.stdout.write("\n=== Setting up International Relations Section ===\n")
 
-        # Check if internacional already exists
-        try:
-            internacional = InternationalHomePage.objects.get(slug="internacional")
-            if options["replace"]:
-                self.stdout.write(
-                    self.style.WARNING("Deleting existing 'internacional' page...")
-                )
-                internacional.delete()
-            else:
-                self.stdout.write(
-                    self.style.WARNING(
-                        "Page 'internacional' already exists. Use --replace to recreate it."
-                    )
-                )
-                return
-        except InternationalHomePage.DoesNotExist:
-            pass
+        internacional = InternationalHomePage.objects.filter(slug="internacional").first()
+        if internacional and options["replace"]:
+            self.stdout.write(
+                self.style.WARNING("Deleting existing 'internacional' page...")
+            )
+            internacional.delete()
+            internacional = None
 
-        # 1. Create main International home page
-        self.stdout.write("Creating International Home Page...")
-        internacional = InternationalHomePage(
-            title="Relaciones Internacionales",
-            slug="internacional",
-            hero_title=t("Relaciones Internacionales UAdeC"),
-            hero_subtitle="Tu puerta al mundo académico - Intercambio, movilidad y convenios internacionales",
-            introduction=t(
-                "<p>La Coordinación General de Relaciones Internacionales (CGRI) de la Universidad Autónoma de Coahuila promueve la internacionalización de la universidad a través de programas de movilidad estudiantil, convenios de colaboración académica y oportunidades de intercambio cultural.</p>"
-            ),
-            show_stats=True,
-            stat_programs_count=25,
-            stat_countries_count=15,
-            stat_students_count=150,
-            stat_institutions_count=40,
-            seo_title=t("Relaciones Internacionales - UAdeC"),
-            search_description=t(
-                "Coordinación General de Relaciones Internacionales de la Universidad Autónoma de Coahuila. Programas de intercambio y movilidad estudiantil."
-            ),
-            show_in_menus=True,
-        )
-        root_page.add_child(instance=internacional)
-        internacional.save_revision().publish()
-        self.stdout.write(self.style.SUCCESS(f"✓ Created: {internacional.url}"))
+        if internacional is None:
+            self.stdout.write("Creating International Home Page...")
+            internacional = InternationalHomePage(
+                title="Relaciones Internacionales",
+                slug="internacional",
+                hero_title=t("Relaciones Internacionales UAdeC"),
+                hero_subtitle=(
+                    "Tu puerta al mundo académico - Intercambio, movilidad y "
+                    "convenios internacionales"
+                ),
+                introduction=t(
+                    "<p>La Coordinación General de Relaciones Internacionales (CGRI) "
+                    "de la Universidad Autónoma de Coahuila promueve la "
+                    "internacionalización de la universidad a través de programas de "
+                    "movilidad estudiantil, convenios de colaboración académica y "
+                    "oportunidades de intercambio cultural.</p>"
+                ),
+                show_stats=True,
+                stat_programs_count=25,
+                stat_countries_count=15,
+                stat_students_count=150,
+                stat_institutions_count=40,
+                seo_title=t("Relaciones Internacionales - UAdeC"),
+                search_description=t(
+                    "Coordinación General de Relaciones Internacionales de la "
+                    "Universidad Autónoma de Coahuila. Programas de intercambio y "
+                    "movilidad estudiantil."
+                ),
+                show_in_menus=True,
+            )
+            root_page.add_child(instance=internacional)
+            internacional.save_revision().publish()
+            self.stdout.write(self.style.SUCCESS(f"✓ Created: {internacional.url}"))
+        else:
+            self.stdout.write(
+                self.style.WARNING(
+                    "Page 'internacional' already exists; adding any missing children."
+                )
+            )
 
-        # 2. Create Institutional (CGRI) section
+        # 2. CGRI Institutional section
         self.stdout.write("\nCreating CGRI Institutional Section...")
-        cgri_home = CGRIPage(
+        cgri_home = self._ensure_child(
+            internacional,
+            CGRIPage,
+            "institucional",
             title="Información Institucional",
-            slug="institucional",
             subtitle="Coordinación General de Relaciones Internacionales",
             introduction=t(
-                "La CGRI es responsable de promover y coordinar las actividades de internacionalización de la Universidad Autónoma de Coahuila."
+                "La CGRI es responsable de promover y coordinar las actividades de "
+                "internacionalización de la Universidad Autónoma de Coahuila."
             ),
             show_contact=True,
             contact_name="Coordinación General de Relaciones Internacionales",
@@ -103,11 +125,7 @@ class Command(BaseCommand):
             seo_title="CGRI - Información Institucional",
             show_in_menus=True,
         )
-        internacional.add_child(instance=cgri_home)
-        cgri_home.save_revision().publish()
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {cgri_home.url}"))
 
-        # 2.1 CGRI subpages
         cgri_pages = [
             {
                 "title": "Misión y Visión",
@@ -122,9 +140,40 @@ class Command(BaseCommand):
                 ),
             },
             {
+                "title": "Organigrama",
+                "slug": "organigrama",
+                "introduction": (
+                    "Consulta el organigrama de la Coordinación General de "
+                    "Relaciones Internacionales."
+                ),
+            },
+            {
                 "title": "Acreditaciones",
                 "slug": "acreditaciones",
                 "introduction": "Acreditaciones internacionales de nuestros programas académicos.",
+            },
+            {
+                "title": "Centros de Idiomas",
+                "slug": "centros-de-idiomas",
+                "introduction": t(
+                    "La CGRI coadyuva en la enseñanza de lenguas extranjeras a través "
+                    "de los centros de idiomas de la UAdeC."
+                ),
+            },
+            {
+                "title": "Asesoría Consular",
+                "slug": "asesoria-consular",
+                "introduction": (
+                    "Servicios de asesoría consular e internacionalización de la lengua "
+                    "para trámites de movilidad."
+                ),
+            },
+            {
+                "title": "Asociaciones",
+                "slug": "asociaciones",
+                "introduction": (
+                    "Redes y asociaciones internacionales de las que forma parte la CGRI."
+                ),
             },
             {
                 "title": "Contacto",
@@ -137,43 +186,47 @@ class Command(BaseCommand):
         ]
 
         for page_data in cgri_pages:
-            page = CGRIPage(
+            self._ensure_child(
+                cgri_home,
+                CGRIPage,
+                page_data["slug"],
                 title=page_data["title"],
-                slug=page_data["slug"],
                 introduction=page_data["introduction"],
                 show_contact=page_data.get("show_contact", False),
                 contact_name=page_data.get("contact_name", ""),
                 contact_email=page_data.get("contact_email", ""),
                 show_in_menus=True,
             )
-            cgri_home.add_child(instance=page)
-            page.save_revision().publish()
-            self.stdout.write(self.style.SUCCESS(f"  ✓ {page.url}"))
 
-        # 3. Create Convenios (Agreements) section
         self.stdout.write("\nCreating Convenios Section...")
-        convenios_index = ConvenioIndexPage(
+        convenios_index = self._ensure_child(
+            cgri_home,
+            ConvenioIndexPage,
+            "convenios",
             title="Convenios Internacionales",
-            slug="convenios",
             introduction=t(
-                "<p>La UAdeC mantiene convenios de colaboración con instituciones educativas de todo el mundo, facilitando el intercambio académico y la movilidad estudiantil.</p>"
+                "<p>La UAdeC mantiene convenios de colaboración con instituciones "
+                "educativas de todo el mundo, facilitando el intercambio académico y "
+                "la movilidad estudiantil.</p>"
             ),
             seo_title=t("Convenios Internacionales - UAdeC"),
             show_in_menus=True,
         )
-        cgri_home.add_child(instance=convenios_index)
-        convenios_index.save_revision().publish()
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {convenios_index.url}"))
 
-        # 4. Create Movilidad Estudiantil section
+        # 4. Movilidad Estudiantil
         self.stdout.write("\nCreating Movilidad Estudiantil Section...")
-        movilidad = MovilidadLandingPage(
+        movilidad = self._ensure_child(
+            internacional,
+            MovilidadLandingPage,
+            "movilidad-estudiantil",
             title="Movilidad Estudiantil",
-            slug="movilidad-estudiantil",
             hero_title="Movilidad Estudiantil Internacional",
             hero_subtitle="Vive una experiencia académica única en el extranjero",
             introduction=t(
-                "<p>El programa de movilidad estudiantil de la UAdeC te permite realizar parte de tus estudios en universidades extranjeras con las que tenemos convenios de colaboración. Amplía tus horizontes académicos, culturales y profesionales.</p>"
+                "<p>El programa de movilidad estudiantil de la UAdeC te permite "
+                "realizar parte de tus estudios en universidades extranjeras con las "
+                "que tenemos convenios de colaboración. Amplía tus horizontes "
+                "académicos, culturales y profesionales.</p>"
             ),
             show_quick_links=True,
             show_application_cta=True,
@@ -181,116 +234,139 @@ class Command(BaseCommand):
             seo_title=t("Movilidad Estudiantil - UAdeC"),
             show_in_menus=True,
         )
-        internacional.add_child(instance=movilidad)
-        movilidad.save_revision().publish()
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {movilidad.url}"))
 
-        # 4.1 Movilidad subpages
         self.stdout.write("\nCreating Movilidad Subpages...")
 
-        # Programs Index
-        programas = ProgramIndexPage(
+        programas = self._ensure_child(
+            movilidad,
+            ProgramIndexPage,
+            "programas",
             title="Programas Disponibles",
-            slug="programas",
-            introduction="<p>Explora los programas de intercambio disponibles en universidades de todo el mundo.</p>",
+            introduction=(
+                "<p>Explora los programas de intercambio disponibles en universidades "
+                "de todo el mundo.</p>"
+            ),
             seo_title="Programas de Intercambio",
             show_in_menus=True,
         )
-        movilidad.add_child(instance=programas)
-        programas.save_revision().publish()
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {programas.url}"))
 
-        # How to Apply
-        como_aplicar = StandardPage(
+        como_aplicar = self._ensure_child(
+            movilidad,
+            StandardPage,
+            "como-aplicar",
             title="¿Cómo Aplicar?",
-            slug="como-aplicar",
-            introduction="Guía paso a paso para aplicar a programas de intercambio internacional.",
+            introduction=(
+                "Guía paso a paso para aplicar a programas de intercambio internacional."
+            ),
             show_in_menus=True,
         )
-        movilidad.add_child(instance=como_aplicar)
-        como_aplicar.save_revision().publish()
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {como_aplicar.url}"))
 
-        # Requirements
-        requisitos = StandardPage(
+        requisitos = self._ensure_child(
+            movilidad,
+            StandardPage,
+            "requisitos",
             title="Requisitos",
-            slug="requisitos",
-            introduction="Requisitos académicos, idiomáticos y administrativos para participar en programas de movilidad.",
+            introduction=(
+                "Requisitos académicos, idiomáticos y administrativos para participar "
+                "en programas de movilidad."
+            ),
             show_in_menus=True,
         )
-        movilidad.add_child(instance=requisitos)
-        requisitos.save_revision().publish()
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {requisitos.url}"))
 
-        # Documentation
-        documentacion = StandardPage(
+        documentacion = self._ensure_child(
+            movilidad,
+            StandardPage,
+            "documentacion",
             title="Documentación",
-            slug="documentacion",
             introduction="Lista de documentos necesarios para tu aplicación de intercambio.",
             show_in_menus=True,
         )
-        movilidad.add_child(instance=documentacion)
-        documentacion.save_revision().publish()
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {documentacion.url}"))
 
-        # Benefits
-        beneficios = StandardPage(
-            title="Beneficios y Apoyos",
-            slug="beneficios",
-            introduction="Conoce los beneficios académicos, becas y apoyos disponibles para estudiantes en movilidad.",
+        entrante = self._ensure_child(
+            movilidad,
+            StandardPage,
+            "entrante",
+            title="Movilidad Internacional Entrante",
+            introduction=(
+                "Convocatoria, formularios y formatos para estudiantes internacionales "
+                "que desean realizar movilidad en la UAdeC."
+            ),
             show_in_menus=True,
         )
-        movilidad.add_child(instance=beneficios)
-        beneficios.save_revision().publish()
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {beneficios.url}"))
 
-        # Calendar
-        calendario = StandardPage(
-            title="Calendario y Fechas Importantes",
-            slug="calendario",
-            introduction="Fechas límite para aplicaciones, convocatorias y periodos de intercambio.",
-            show_in_menus=True,
-        )
-        movilidad.add_child(instance=calendario)
-        calendario.save_revision().publish()
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {calendario.url}"))
-
-        # FAQ
-        faq = FAQIndexPage(
-            title="Preguntas Frecuentes",
-            slug="preguntas-frecuentes",
-            introduction="<p>Encuentra respuestas a las preguntas más comunes sobre movilidad estudiantil.</p>",
-            show_in_menus=True,
-        )
-        movilidad.add_child(instance=faq)
-        faq.save_revision().publish()
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {faq.url}"))
-
-        # 5. Create Testimonials section
-        self.stdout.write("\nCreating Testimonials Section...")
-        testimonials = TestimonialIndexPage(
-            title="Testimonios",
-            slug="testimonios",
+        saliente = self._ensure_child(
+            movilidad,
+            StandardPage,
+            "saliente",
+            title="Movilidad Internacional Saliente",
             introduction=t(
-                "<p>Lee las experiencias de estudiantes UAdeC que han vivido un intercambio internacional.</p>"
+                "Convocatoria, formularios y formatos para estudiantes UAdeC que "
+                "desean realizar movilidad en el extranjero."
+            ),
+            show_in_menus=True,
+        )
+
+        beneficios = self._ensure_child(
+            movilidad,
+            StandardPage,
+            "beneficios",
+            title="Beneficios y Apoyos",
+            introduction=(
+                "Conoce los beneficios académicos, becas y apoyos disponibles para "
+                "estudiantes en movilidad."
+            ),
+            show_in_menus=True,
+        )
+
+        calendario = self._ensure_child(
+            movilidad,
+            StandardPage,
+            "calendario",
+            title="Calendario y Fechas Importantes",
+            introduction=(
+                "Fechas límite para aplicaciones, convocatorias y periodos de intercambio."
+            ),
+            show_in_menus=True,
+        )
+
+        faq = self._ensure_child(
+            movilidad,
+            FAQIndexPage,
+            "preguntas-frecuentes",
+            title="Preguntas Frecuentes",
+            introduction=(
+                "<p>Encuentra respuestas a las preguntas más comunes sobre movilidad "
+                "estudiantil.</p>"
+            ),
+            show_in_menus=True,
+        )
+
+        testimonials = self._ensure_child(
+            movilidad,
+            TestimonialIndexPage,
+            "testimonios",
+            title="Testimonios",
+            introduction=t(
+                "<p>Lee las experiencias de estudiantes UAdeC que han vivido un "
+                "intercambio internacional.</p>"
             ),
             seo_title="Testimonios de Estudiantes",
             show_in_menus=True,
         )
-        movilidad.add_child(instance=testimonials)
-        testimonials.save_revision().publish()
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {testimonials.url}"))
 
-        # Summary
         self.stdout.write(self.style.SUCCESS("\n" + "=" * 60))
         self.stdout.write(self.style.SUCCESS("✓ International section setup complete!"))
         self.stdout.write(self.style.SUCCESS("=" * 60))
-        self.stdout.write("\nPage Structure Created:\n")
+        self.stdout.write("\nPage Structure:\n")
         self.stdout.write(f"  • {internacional.url} (Main landing)")
         self.stdout.write(f"    ├── {cgri_home.url} (CGRI - Institutional)")
         self.stdout.write(f"    │   ├── {cgri_home.url}mision-vision/")
         self.stdout.write(f"    │   ├── {cgri_home.url}equipo/")
+        self.stdout.write(f"    │   ├── {cgri_home.url}organigrama/")
         self.stdout.write(f"    │   ├── {cgri_home.url}acreditaciones/")
+        self.stdout.write(f"    │   ├── {cgri_home.url}centros-de-idiomas/")
+        self.stdout.write(f"    │   ├── {cgri_home.url}asesoria-consular/")
+        self.stdout.write(f"    │   ├── {cgri_home.url}asociaciones/")
         self.stdout.write(f"    │   ├── {cgri_home.url}contacto/")
         self.stdout.write(f"    │   └── {convenios_index.url}")
         self.stdout.write(f"    └── {movilidad.url} (Student-facing)")
@@ -298,17 +374,17 @@ class Command(BaseCommand):
         self.stdout.write(f"        ├── {como_aplicar.url}")
         self.stdout.write(f"        ├── {requisitos.url}")
         self.stdout.write(f"        ├── {documentacion.url}")
+        self.stdout.write(f"        ├── {entrante.url}")
+        self.stdout.write(f"        ├── {saliente.url}")
         self.stdout.write(f"        ├── {beneficios.url}")
         self.stdout.write(f"        ├── {calendario.url}")
         self.stdout.write(f"        ├── {faq.url}")
         self.stdout.write(f"        └── {testimonials.url}")
 
         self.stdout.write("\n" + self.style.SUCCESS("Next Steps:"))
-        self.stdout.write("  1. Visit /admin/ to add content to pages")
-        self.stdout.write("  2. Add program pages under /programas/")
-        self.stdout.write("  3. Add convenio pages under /convenios/")
-        self.stdout.write("  4. Add testimonial pages under /testimonios/")
-        self.stdout.write("  5. Configure menu in Wagtail admin")
+        self.stdout.write("  1. python manage.py populate_internacional_content")
+        self.stdout.write("  2. Add convenio pages under /convenios/")
+        self.stdout.write("  3. Configure menu in Wagtail admin")
         self.stdout.write(
             "\n"
             + self.style.WARNING(

@@ -1,0 +1,10 @@
+{% with portal_url=user.is_authenticated|yesno:"/seim/dashboard/,/seim/login/" %}
+<a
+    href="{{ portal_url }}"
+    class="{{ link_class }}"
+    {% if test_id %}data-testid="{{ test_id }}"{% endif %}
+    aria-label="{% if user.is_authenticated %}Ir al portal SEIM{% else %}Iniciar sesión en el portal SEIM{% endif %}"
+>
+    {% if show_icon %}<i class="bi {{ icon_class|default:'bi-box-arrow-up-right' }} me-1" aria-hidden="true"></i>{% endif %}{{ label|default:"Ir a SEIM" }}
+</a>
+{% endwith %}

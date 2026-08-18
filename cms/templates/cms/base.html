@@ -90,6 +90,9 @@
                             <i class="bi bi-file-earmark-check me-1"></i> ¿Cómo Aplicar?
                         </a>
                     </li>
+                    <li class="nav-item">
+                        {% include "cms/includes/seim_portal_link.html" with link_class="nav-link btn cms-seim-cta ms-2 px-4" show_icon=True test_id="cms-goto-seim" %}
+                    </li>
                     {% if user.is_authenticated %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -116,6 +119,16 @@
             </div>
         </div>
     </nav>
+
+    <div class="cms-seim-bar" role="region" aria-label="Portal SEIM">
+        <div class="container d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 py-2">
+            <p class="mb-0 small">
+                Este es el sitio informativo de movilidad.
+                Entra al <strong>portal SEIM</strong> para iniciar sesión, aplicar y dar seguimiento a tus solicitudes.
+            </p>
+            {% include "cms/includes/seim_portal_link.html" with link_class="cms-seim-bar__link fw-semibold" show_icon=True %}
+        </div>
+    </div>
     
     <main id="main-content">
         {% block content %}{% endblock %}
@@ -138,6 +151,7 @@
                 <div class="col-md-4 mb-4 mb-md-0">
                     <h6 class="text-uppercase mb-3 cms-footer-heading-gold">Enlaces Rápidos</h6>
                     <ul class="list-unstyled small">
+                        <li class="mb-2">{% include "cms/includes/seim_portal_link.html" with link_class="text-white-50 text-decoration-none" show_icon=True icon_class="bi-chevron-right" %}</li>
                         <li class="mb-2"><a href="/programas/" class="text-white-50 text-decoration-none"><i class="bi bi-chevron-right me-1"></i>Programas</a></li>
                         <li class="mb-2"><a href="/como-aplicar/" class="text-white-50 text-decoration-none"><i class="bi bi-chevron-right me-1"></i>¿Cómo Aplicar?</a></li>
                         <li class="mb-2"><a href="/preguntas-frecuentes/" class="text-white-50 text-decoration-none"><i class="bi bi-chevron-right me-1"></i>FAQ</a></li>

@@ -8,6 +8,11 @@ import os
 from urllib.parse import urlparse, urlunparse
 
 from .base import *
+from .hosting import (
+    TAILSCALE_CORS_ORIGIN_REGEX,
+    allowed_hosts_with_tailscale,
+    csrf_origins_with_tailscale,
+)
 
 
 def _docker_compose_redis_host_to_localhost(url: str) -> str:
@@ -71,7 +76,28 @@ def _docker_compose_postgres_service_to_localhost(url: str) -> str:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+# Trust X-Forwarded-Proto/Host from Tailscale Serve or another TLS terminator.
+_use_tls_proxy = env.bool("USE_TLS_PROXY_HEADERS", default=False)
+_use_request_host_site = env.bool("USE_REQUEST_HOST_FOR_SITE", default=_use_tls_proxy)
+if _use_tls_proxy:
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    USE_X_FORWARDED_HOST = True
+
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
+if env.bool("ALLOW_ANY_HOST", default=False):
+    ALLOWED_HOSTS = ["*"]
+elif _use_tls_proxy:
+    ALLOWED_HOSTS = allowed_hosts_with_tailscale(ALLOWED_HOSTS)
+
+if _use_request_host_site:
+    _middleware = list(MIDDLEWARE)
+    _insert_at = 1
+    for _i, _mw in enumerate(_middleware):
+        if _mw.endswith("SecurityMiddleware"):
+            _insert_at = _i + 1
+            break
+    _middleware.insert(_insert_at, "core.request_host.RequestHostWagtailSiteMiddleware")
+    MIDDLEWARE = _middleware
 
 # Database (rewrite Docker service hostname when running on the host; see env.example)
 DATABASES = {
@@ -188,12 +214,19 @@ CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
     default=[],  # Must be explicitly set in production
 )
+CORS_ALLOWED_ORIGIN_REGEXES = env.list("CORS_ALLOWED_ORIGIN_REGEXES", default=[])
 
 # CSRF Configuration
 CSRF_TRUSTED_ORIGINS = env.list(
     "CSRF_TRUSTED_ORIGINS",
     default=[],  # Must be explicitly set in production
 )
+
+if _use_tls_proxy:
+    CSRF_TRUSTED_ORIGINS = csrf_origins_with_tailscale(CSRF_TRUSTED_ORIGINS)
+    CORS_ALLOWED_ORIGIN_REGEXES = list(CORS_ALLOWED_ORIGIN_REGEXES)
+    if TAILSCALE_CORS_ORIGIN_REGEX not in CORS_ALLOWED_ORIGIN_REGEXES:
+        CORS_ALLOWED_ORIGIN_REGEXES.append(TAILSCALE_CORS_ORIGIN_REGEX)
 
 # Security Settings (strict for production; overridable e.g. docker-compose.local-prod)
 CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=True)

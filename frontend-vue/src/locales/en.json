@@ -1139,6 +1139,7 @@
     "userMenuAria": "User menu for {name}",
     "djangoAdmin": "Django Admin",
     "cmsAdmin": "CMS Admin",
+    "publicSite": "Public site",
     "logout": "Logout",
     "welcomeUser": "Welcome, {name}!",
     "tagline": "Here's what's happening with your exchange program.",

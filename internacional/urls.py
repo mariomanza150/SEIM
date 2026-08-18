@@ -52,6 +52,27 @@ urlpatterns = [
         ),
         name="cgri_contact_redirect",
     ),
+    path(
+        "cgri/organigrama/",
+        RedirectView.as_view(
+            url="/internacional/institucional/organigrama/", permanent=True
+        ),
+        name="cgri_organigrama_redirect",
+    ),
+    path(
+        "cgri/idiomas/",
+        RedirectView.as_view(
+            url="/internacional/institucional/centros-de-idiomas/", permanent=True
+        ),
+        name="cgri_idiomas_redirect",
+    ),
+    path(
+        "cgri/consular/",
+        RedirectView.as_view(
+            url="/internacional/institucional/asesoria-consular/", permanent=True
+        ),
+        name="cgri_consular_redirect",
+    ),
     # ============================================================================
     # OLD MOVILIDAD URL REDIRECTS
     # ============================================================================
@@ -111,5 +132,19 @@ urlpatterns = [
             permanent=True,
         ),
         name="movilidad_faq_redirect",
+    ),
+    path(
+        "movilidad/incoming/",
+        RedirectView.as_view(
+            url="/internacional/movilidad-estudiantil/entrante/", permanent=True
+        ),
+        name="movilidad_incoming_redirect",
+    ),
+    path(
+        "movilidad/outgoing/",
+        RedirectView.as_view(
+            url="/internacional/movilidad-estudiantil/saliente/", permanent=True
+        ),
+        name="movilidad_outgoing_redirect",
     ),
 ]

@@ -135,6 +135,11 @@
               aria-labelledby="userDropdown"
             >
               <li>
+                <a class="dropdown-item" href="/" data-testid="public-site-link" @click="closeUserMenu">
+                  <i class="bi bi-house me-1" aria-hidden="true"></i>{{ t('dashboard.publicSite') }}
+                </a>
+              </li>
+              <li>
                 <router-link :to="{ name: 'Profile' }" class="dropdown-item" @click="closeUserMenu">
                   {{ t('route.names.Profile') }}
                 </router-link>

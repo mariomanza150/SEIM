@@ -14,8 +14,11 @@ That's it! This command will:
 1. ✅ Set up Wagtail site structure  
 2. ✅ Populate UAdeC content (programs, blog posts, FAQs)
 3. ✅ Enhance the homepage with rich content blocks
+4. ✅ Set up `/internacional/` (CGRI + Movilidad) with official copy and file links
 
-Then visit: **http://localhost:8000/**
+Then visit: **http://localhost:8000/** and **http://localhost:8000/internacional/**
+
+Use `--skip-internacional` to omit step 4, or `--replace-internacional` to recreate that tree.
 
 ---
 
@@ -56,6 +59,8 @@ docker-compose exec web python manage.py restore_cms
 docker-compose exec web python manage.py restore_cms --skip-setup
 docker-compose exec web python manage.py restore_cms --skip-populate
 docker-compose exec web python manage.py restore_cms --skip-enhance
+docker-compose exec web python manage.py restore_cms --skip-internacional
+docker-compose exec web python manage.py restore_cms --replace-internacional
 ```
 
 ### `export_cms` - Save your CMS content

@@ -118,6 +118,13 @@ class InternationalHomePage(SeoMixin, Page):
         verbose_name = "International Home Page"
         verbose_name_plural = "International Home Pages"
 
+    def get_context(self, request, *args, **kwargs):
+        context = super().get_context(request, *args, **kwargs)
+        from cms.uadec_resources import template_context as cgri_context
+
+        context["cgri"] = cgri_context()
+        return context
+
 
 class CGRIPage(SeoMixin, Page):
     """
@@ -186,6 +193,13 @@ class CGRIPage(SeoMixin, Page):
     class Meta:
         verbose_name = "CGRI Page"
         verbose_name_plural = "CGRI Pages"
+
+    def get_context(self, request, *args, **kwargs):
+        context = super().get_context(request, *args, **kwargs)
+        from cms.uadec_resources import template_context as cgri_context
+
+        context["cgri"] = cgri_context()
+        return context
 
 
 class MovilidadLandingPage(SeoMixin, Page):
@@ -268,9 +282,7 @@ class MovilidadLandingPage(SeoMixin, Page):
         # Get active programs from Exchange app
         from exchange.models import Program
 
-        context["active_programs"] = Program.objects.filter(
-            is_active=True
-        ).select_related("destination_university", "destination_country")[:6]
+        context["active_programs"] = Program.objects.filter(is_active=True)[:6]
 
         # Get recent blog posts about mobility
         context["recent_posts"] = (
@@ -279,6 +291,9 @@ class MovilidadLandingPage(SeoMixin, Page):
             .filter(categories__slug="movilidad")[:3]
         )
 
+        from cms.uadec_resources import template_context as cgri_context
+
+        context["cgri"] = cgri_context()
         return context
 
 
@@ -309,6 +324,7 @@ class ConvenioPage(SeoMixin, Page):
             ("bilateral", "Bilateral"),
             ("multilateral", "Multilateral"),
             ("erasmus", "Erasmus+"),
+            ("conahec", "CONAHEC"),
             ("specific", "Specific Program"),
         ],
         default="bilateral",
@@ -433,6 +449,9 @@ class ConvenioIndexPage(SeoMixin, Page):
         context["convenios"] = convenios
         context["countries"] = countries
 
+        from cms.uadec_resources import template_context as cgri_context
+
+        context["cgri"] = cgri_context()
         return context
 
     class Meta:

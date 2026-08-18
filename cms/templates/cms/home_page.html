@@ -45,9 +45,10 @@
         <h2 class="display-5 fw-bold mb-3" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">
             <i class="bi bi-globe-americas me-3"></i>¿Listo para Comenzar tu Aventura Internacional?
         </h2>
-        <p class="lead mb-5" style="font-size: 1.25rem;">Descubre los programas disponibles y aprende cómo aplicar</p>
+        <p class="lead mb-5" style="font-size: 1.25rem;">Descubre los programas disponibles o entra al portal SEIM para aplicar y dar seguimiento</p>
         <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
-            <a href="/como-aplicar/" class="btn btn-primary btn-lg px-5 py-3 shadow">
+            {% include "cms/includes/seim_portal_link.html" with link_class="btn btn-primary btn-lg px-5 py-3 shadow" show_icon=True %}
+            <a href="/como-aplicar/" class="btn btn-outline-light btn-lg px-5 py-3 shadow">
                 <i class="bi bi-file-earmark-check me-2"></i>¿Cómo Aplicar?
             </a>
             <a href="/programas/" class="btn btn-outline-light btn-lg px-5 py-3 shadow">

@@ -107,6 +107,41 @@ body {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
+.navbar-dark .nav-link.cms-seim-cta {
+    background-color: var(--uadec-navy) !important;
+    color: var(--uadec-white) !important;
+    border: 2px solid var(--uadec-white);
+    padding: 0.5rem 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.navbar-dark .nav-link.cms-seim-cta:hover {
+    background-color: var(--uadec-navy-dark) !important;
+    color: var(--uadec-white) !important;
+    border-color: var(--uadec-navy);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
+}
+
+.cms-seim-bar {
+    background-color: var(--uadec-navy);
+    color: var(--uadec-white);
+    border-bottom: 3px solid var(--uadec-gold);
+}
+
+.cms-seim-bar__link {
+    color: var(--uadec-gold-light);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.cms-seim-bar__link:hover,
+.cms-seim-bar__link:focus {
+    color: var(--uadec-white);
+    text-decoration: underline;
+}
+
 /* ============================================
    HERO SECTIONS
    ============================================ */
@@ -622,6 +657,7 @@ a:hover {
 @media print {
     .navbar,
     .cms-skip-link,
+    .cms-seim-bar,
     footer,
     .btn {
         display: none;

@@ -1,9 +1,10 @@
 """
 Single command to restore CMS to a working state.
-Combines setup_wagtail_site, populate_institution_content, and enhance_homepage.
+Combines setup_wagtail_site, populate_institution_content, enhance_homepage,
+and the internacional (CGRI / Movilidad) section.
 
 Usage:
-    python manage.py restore_cms [--skip-setup] [--skip-populate] [--skip-enhance]
+    python manage.py restore_cms [--skip-setup] [--skip-populate] [--skip-enhance] [--skip-internacional]
 """
 
 from django.core.management import call_command
@@ -32,6 +33,16 @@ class Command(BaseCommand):
             action="store_true",
             help="Skip homepage enhancement",
         )
+        parser.add_argument(
+            "--skip-internacional",
+            action="store_true",
+            help="Skip CGRI / Movilidad internacional section",
+        )
+        parser.add_argument(
+            "--replace-internacional",
+            action="store_true",
+            help="Delete and recreate the internacional tree before populating",
+        )
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS("=" * 60))
@@ -41,7 +52,7 @@ class Command(BaseCommand):
         try:
             # Step 1: Setup Wagtail site structure
             if not options["skip_setup"]:
-                self.stdout.write("\n📦 Step 1/3: Setting up Wagtail site structure...")
+                self.stdout.write("\n📦 Step 1/4: Setting up Wagtail site structure...")
                 call_command("setup_wagtail_site")
             else:
                 self.stdout.write("\n⏭️  Skipping Wagtail site setup")
@@ -49,7 +60,7 @@ class Command(BaseCommand):
             # Step 2: Populate example institution content (UAdeC tokens unless overridden)
             if not options["skip_populate"]:
                 self.stdout.write(
-                    "\n📝 Step 2/3: Populating institution example content..."
+                    "\n📝 Step 2/4: Populating institution example content..."
                 )
                 call_command("populate_institution_content")
             else:
@@ -64,6 +75,18 @@ class Command(BaseCommand):
 
             self.stdout.write("\n📋 Step 4/4: Creating How to Apply page...")
             call_command("create_application_page")
+
+            if not options["skip_internacional"]:
+                self.stdout.write(
+                    "\n🌍 Setting up Internacional (CGRI & Movilidad)..."
+                )
+                if options["replace_internacional"]:
+                    call_command("setup_internacional", replace=True)
+                else:
+                    call_command("setup_internacional")
+                call_command("populate_internacional_content")
+            else:
+                self.stdout.write("\n⏭️  Skipping internacional section")
 
             # Success summary
             self.stdout.write(self.style.SUCCESS("\n" + "=" * 60))

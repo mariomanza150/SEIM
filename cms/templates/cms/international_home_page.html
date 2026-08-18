@@ -12,10 +12,11 @@
                 </h1>
                 <p class="lead text-white mb-4" style="font-size: 1.5rem;">{{ page.hero_subtitle }}</p>
                 <div class="d-flex gap-3 flex-wrap">
-                    <a href="{% pageurl page %}/movilidad-estudiantil/" class="btn btn-secondary btn-lg px-5 py-3 shadow">
+                    {% include "cms/includes/seim_portal_link.html" with link_class="btn btn-secondary btn-lg px-5 py-3 shadow" show_icon=True %}
+                    <a href="{{ page.url }}movilidad-estudiantil/" class="btn btn-outline-light btn-lg px-5 py-3 shadow">
                         <i class="bi bi-airplane-fill me-2"></i>Movilidad Estudiantil
                     </a>
-                    <a href="{% pageurl page %}/institucional/" class="btn btn-outline-light btn-lg px-5 py-3 shadow">
+                    <a href="{{ page.url }}institucional/" class="btn btn-outline-light btn-lg px-5 py-3 shadow">
                         <i class="bi bi-building me-2"></i>Información Institucional
                     </a>
                 </div>
@@ -108,7 +109,7 @@
                             <div>
                                 <h3 class="card-title fw-bold mb-3">Para Estudiantes</h3>
                                 <p class="card-text mb-4">Descubre programas de intercambio, revisa requisitos y aplica en línea.</p>
-                                <a href="{% pageurl page %}/movilidad-estudiantil/" class="btn btn-primary">
+                                <a href="{{ page.url }}movilidad-estudiantil/" class="btn btn-primary">
                                     <i class="bi bi-arrow-right me-2"></i>Movilidad Estudiantil
                                 </a>
                             </div>
@@ -124,7 +125,7 @@
                             <div>
                                 <h3 class="card-title fw-bold mb-3">Información Institucional</h3>
                                 <p class="card-text mb-4">Conoce sobre CGRI, convenios internacionales y acreditaciones.</p>
-                                <a href="{% pageurl page %}/institucional/" class="btn btn-secondary">
+                                <a href="{{ page.url }}institucional/" class="btn btn-secondary">
                                     <i class="bi bi-arrow-right me-2"></i>CGRI
                                 </a>
                             </div>
@@ -133,18 +134,57 @@
                 </div>
             </div>
         </div>
+        <div class="row g-4 mt-2">
+            <div class="col-md-3">
+                <a href="{{ page.url }}institucional/centros-de-idiomas/" class="card h-100 shadow-sm hover-card text-decoration-none">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-translate display-5 mb-3" style="color: var(--uadec-gold);"></i>
+                        <h3 class="h6 fw-bold mb-0">Centros de idiomas</h3>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ page.url }}institucional/asesoria-consular/" class="card h-100 shadow-sm hover-card text-decoration-none">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-passport display-5 mb-3" style="color: var(--uadec-blue);"></i>
+                        <h3 class="h6 fw-bold mb-0">Asesoría consular</h3>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ page.url }}institucional/acreditaciones/" class="card h-100 shadow-sm hover-card text-decoration-none">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-award display-5 mb-3" style="color: var(--uadec-gold);"></i>
+                        <h3 class="h6 fw-bold mb-0">Acreditaciones</h3>
+                    </div>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{{ page.url }}institucional/convenios/" class="card h-100 shadow-sm hover-card text-decoration-none">
+                    <div class="card-body text-center p-4">
+                        <i class="bi bi-file-earmark-text display-5 mb-3" style="color: var(--uadec-blue);"></i>
+                        <h3 class="h6 fw-bold mb-0">Convenios</h3>
+                    </div>
+                </a>
+            </div>
+        </div>
     </div>
 </section>
+
+{% include "cms/includes/cgri_contact_footer.html" %}
 
 <!-- Call to Action -->
 <section class="section-gold text-white py-5">
     <div class="container text-center">
         <i class="bi bi-globe-americas display-3 mb-4"></i>
         <h2 class="display-5 fw-bold mb-3">¿Listo para tu Experiencia Internacional?</h2>
-        <p class="lead mb-4" style="font-size: 1.25rem;">Explora oportunidades de intercambio académico y cultural</p>
-        <a href="{% pageurl page %}/movilidad-estudiantil/" class="btn btn-primary btn-lg px-5 py-3 shadow">
-            <i class="bi bi-compass me-2"></i>Explorar Programas
-        </a>
+        <p class="lead mb-4" style="font-size: 1.25rem;">Explora oportunidades de intercambio o entra al portal SEIM para aplicar</p>
+        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+            {% include "cms/includes/seim_portal_link.html" with link_class="btn btn-primary btn-lg px-5 py-3 shadow" show_icon=True %}
+            <a href="{{ page.url }}movilidad-estudiantil/" class="btn btn-outline-light btn-lg px-5 py-3 shadow">
+                <i class="bi bi-compass me-2"></i>Explorar Programas
+            </a>
+        </div>
     </div>
 </section>
 {% endblock %}

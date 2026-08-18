@@ -367,29 +367,69 @@ Description of mobility opportunities and benefits of studying abroad through UA
 
 ---
 
-## 🚀 Next Steps for Content Enhancement
+## Official CGRI files (linked, not copied)
 
-### Phase 1 (Immediate)
-1. Add StreamField blocks for richer formatting in Wagtail admin
-2. Upload university logos for convenios
-3. Add photos from past exchange students
-4. Create FAQ entries
+Base: `http://www2.uadec.mx/pub/CGRI/`
 
-### Phase 2 (Short-term)
-1. Add testimonials from real students
-2. Create convenio pages for each partner institution
-3. Add program pages linked to Exchange database
-4. Upload downloadable forms (PDFs)
+| Resource | URL |
+|----------|-----|
+| Convocatoria entrante | `ConvocatoriaMIEntrante.pdf` |
+| Convocatoria saliente | `ConvocatoriaMISaliente.pdf` |
+| Solicitud participación entrante | `AF.pdf` |
+| Solicitud participación saliente | `FS-SP.pdf` |
+| Lineamientos | `FS-LD.pdf` |
+| Carta compromiso | `FS-CC.docx` |
+| Programa de retorno | `https://www2.uadec.mx/pub/CGRI/FS-PR.docx` |
+| Carta de postulación | `FS-CP.docx` |
+| Homologación de materias | `FS-HM.pdf` |
+| Universidades por convenio 2026-2 | `UniversidadesPorConvenio.pdf` |
+| Universidades CONAHEC 2026-2 | `UniversidadesPorCONAHEC.pdf` |
+| Organigrama | `http://www2.uadec.mx/transparencia/sassit/docs/ORGANIGRAMA_RELACIONES_INTERNACIONALES.pdf` |
 
-### Phase 3 (Long-term)
-1. Add blog posts about exchange experiences
-2. Create video content
-3. Add interactive program comparison tool
-4. Implement scholarship calculator
+Incoming form: `https://forms.cloud.microsoft/r/QBdXdy53Bb`  
+Outgoing form (CGRI): `https://forms.cloud.microsoft/r/pQ7ikwCHME` (SEIM is the primary outgoing apply path)
+
+## CMS page tree
+
+```
+/internacional/
+├── institucional/          CGRI (responsabilidades, misión, visión, objetivos, logros)
+│   ├── mision-vision/
+│   ├── equipo/
+│   ├── organigrama/
+│   ├── acreditaciones/
+│   ├── centros-de-idiomas/   → also https://www.uadec.mx/idiomas/
+│   ├── asesoria-consular/    → also https://www.uadec.mx/ile/
+│   ├── asociaciones/
+│   ├── contacto/
+│   └── convenios/
+└── movilidad-estudiantil/
+    ├── programas/
+    ├── como-aplicar/
+    ├── requisitos/
+    ├── documentacion/
+    ├── entrante/
+    ├── saliente/
+    ├── beneficios/
+    ├── calendario/
+    ├── preguntas-frecuentes/
+    └── testimonios/
+```
+
+Seed: `python manage.py setup_internacional` then `populate_internacional_content`.  
+`restore_cms` runs both unless `--skip-internacional`.
 
 ---
 
-## 📝 Content Management Notes
+## Remaining optional enrichment
+
+- Upload partner logos onto ConvenioPage rows (lists are PDF-linked)
+- Student testimonials and extra FAQ entries
+- Generated demo PDFs via `populate_pdf_forms` if official URLs are unreachable
+
+---
+
+## Content Management Notes
 
 **To Update Content:**
 1. Access Wagtail admin: `/cms/`
@@ -402,28 +442,15 @@ Description of mobility opportunities and benefits of studying abroad through UA
 - Keep contact information current
 - Update statistics annually
 - Review deadlines each semester
-- Keep forms and documents up-to-date
+- Prefer linking official CGRI files over copying binaries
 - Add new testimonials regularly
 
----
-
-## ✅ Content Validation
-
-All content has been:
-- ✅ Scraped from official UAdeC sources
-- ✅ Verified for accuracy
-- ✅ Formatted for Wagtail
-- ✅ Published and live
-- ✅ SEO-optimized
-- ✅ Mobile-responsive
-- ✅ Accessible
-
-**Last Updated**: November 20, 2025  
-**Source URLs**: 
+**Last Updated**: August 18, 2026  
+**Source URLs**:
 - https://www.uadec.mx/cgri/
 - https://www.uadec.mx/movilidad/
 
 ---
 
-**Status**: ✅ **PRODUCTION READY WITH REAL CONTENT**
+**Status**: Seed commands publish StreamField bodies and official file/form links. Staff should still review contact details and convocatoria dates each semester.
 

@@ -1135,6 +1135,7 @@
     "userMenuAria": "Menú de usuario para {name}",
     "djangoAdmin": "Admin Django",
     "cmsAdmin": "Admin CMS",
+    "publicSite": "Sitio público",
     "logout": "Cerrar sesión",
     "welcomeUser": "¡Hola, {name}!",
     "tagline": "Así va tu programa de intercambio.",

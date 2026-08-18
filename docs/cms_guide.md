@@ -34,7 +34,9 @@ SEIM now has two admin interfaces:
 1. **Wagtail CMS** (`/cms/`) - For content management, pages, blog posts, and forms
 2. **Django Admin** (`/admin/`) - For system configuration, user management, and exchange workflows
 
-You can switch between them using the links in the navigation menu.
+You can switch between them using the links in the navigation menu. Wagtail also includes an **Ir a SEIM** menu item that opens the application portal at `/seim/`.
+
+Public CMS pages (navbar, banner, footer, and homepage CTAs) expose the same **Ir a SEIM** entry: guests go to `/seim/login/`, signed-in users go to `/seim/dashboard/`.
 
 ## Page Types
 
@@ -99,6 +101,30 @@ Individual program pages with:
 - Application CTAs
 
 **Template:** `cms/templates/cms/program_page.html`
+
+### CGRIPage
+
+Institutional pages for Coordinación General de Relaciones Internacionales:
+- Introduction, StreamField body, optional contact sidebar
+- Used under `/internacional/institucional/` (misión, equipo, organigrama, acreditaciones, idiomas, asesoría consular, asociaciones, contacto)
+
+**Template:** `cms/templates/cms/cgri_page.html`
+
+### InternationalHomePage
+
+Landing for `/internacional/` with stats, CGRI service tiles, and links to movilidad and información institucional.
+
+**Template:** `cms/templates/cms/international_home_page.html`
+
+### MovilidadLandingPage
+
+Student mobility hub (`/internacional/movilidad-estudiantil/`): convocatorias, formularios, documentación, beneficios, and SEIM apply CTAs.
+
+**Template:** `cms/templates/cms/movilidad_landing_page.html`
+
+### ConvenioIndexPage & ConvenioPage
+
+Partner agreements with country and type filters (including CONAHEC). Official university list PDFs are linked from the index.
 
 ### FormPage
 
