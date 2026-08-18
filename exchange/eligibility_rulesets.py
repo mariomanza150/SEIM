@@ -122,6 +122,13 @@ class ProgramEligibilityProxy:
             self._program.application_deadline = orig_deadline
 
 
+def concrete_program(program):
+    """Return the ORM Program, unwrapping :class:`ProgramEligibilityProxy` if needed."""
+    if isinstance(program, ProgramEligibilityProxy):
+        return program._program
+    return program
+
+
 def parse_ruleset_overrides(
     ruleset: EligibilityRuleSet,
 ) -> EligibilityCriteriaOverrides:

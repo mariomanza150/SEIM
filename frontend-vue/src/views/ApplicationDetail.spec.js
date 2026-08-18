@@ -262,7 +262,7 @@ describe('ApplicationDetail', () => {
         {
           id: 'academic',
           label: 'Academic record',
-          points: 20,
+          points: 19.380000000000003,
           max_points: 25,
           detail: 'GPA (institutional scale): 3.50',
         },
@@ -299,6 +299,8 @@ describe('ApplicationDetail', () => {
       expect(wrapper.find('[data-testid="scholarship-score-panel"]').exists()).toBe(true)
     })
     expect(wrapper.text()).toContain('88.5')
+    expect(wrapper.text()).toContain('19.38')
+    expect(wrapper.text()).not.toContain('19.380000000000003')
     expect(wrapper.text()).toContain('Staff comparison tool only.')
   })
 

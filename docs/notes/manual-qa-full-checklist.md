@@ -482,63 +482,63 @@ Logout from student. Login **Coordinator** `coordinator@test.com` / `coordinator
 
 ### 4.1 Review queue filters (`coord-review`)
 
-- [ ] **Search, status, pending / resubmit / assigned-to-me**
+- [x] **Search, status, pending / resubmit / assigned-to-me**
   - **Role:** Coordinator
   - **Path:** `/seim/review-queue`
   - **Steps:** Open Review queue from sidebar. Search. Filter by status. Toggle pending review, needs document resubmit, assigned-to-me.
   - **Expected:** Queue table/list with **Open** links. Filters change rows (empty state is OK if the flag has no matches).
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 Clear → 20 rows. Submitted 4; Pending review 5; Document resubmit 2; Assigned to me 11. Search `Diego` initially 0 (**MQ-2026-08-18-004**); after `search_fields` include first/last name, Diego Lopez DAAD listed. Evidence: [`qa-runs/2026-08-18-eligibility/2026-08-18-review-queue.png`](qa-runs/2026-08-18-eligibility/2026-08-18-review-queue.png).
 
 ### 4.2 Review queue presets (`coord-review`)
 
-- [ ] **Saved presets**
+- [x] **Saved presets**
   - **Role:** Coordinator
   - **Path:** `/seim/review-queue`
   - **Steps:** Set filters. Save a preset. Reload the page. Apply / set default / delete if safe.
   - **Expected:** Preset persists for this user (`search_type=application`). Default applies on open if set.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Saved `MQ-2026-08-18 Diego`. Existing default “Under review queue” (gold star) explains first load showing Under review only.
 
 ### 4.3 Open application from queue (`coord-review`)
 
-- [ ] **Open application**
+- [x] **Open application**
   - **Role:** Coordinator
   - **Path:** `/seim/review-queue` → `/seim/applications/<id>`
   - **Steps:** Open a queued application (Diego Lopez / review seed if present).
   - **Expected:** Staff can view student application detail (status, docs, comments).
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Diego DAAD `68696218-040f-4fa2-8259-0b1527547451` — under_review, docs, comments, status chrome.
 
 ### 4.4 Status change (`coord-review`)
 
-- [ ] **Change status**
+- [x] **Change status**
   - **Role:** Coordinator
   - **Path:** `/seim/applications/<id>`
   - **Steps:** Move a **submitted** / **under_review** app one legal step (e.g. under review). Prefer a demo review student, not the main student’s only draft if you still need it for §8.
   - **Expected:** Status updates. Student-facing status changes. Illegal transitions are rejected clearly.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Fulbright Harvard `be47793d-8d52-40fe-bc60-bd29eec98d09` submitted → under_review. First PATCH 400 UUID (**MQ-2026-08-18-005**); after staff skip + `concrete_program()` unwrap, PATCH 200. Student GET shows Under review.
 
 ### 4.5 Public vs internal comment (`coord-review`)
 
-- [ ] **Comment visibility**
+- [x] **Comment visibility**
   - **Role:** Coordinator, then Student (logout between)
   - **Path:** `/seim/applications/<id>`
   - **Steps:** Coordinator posts one **public** and one **internal** comment. Logout. Login as the application’s student. Open the same detail.
   - **Expected:** Student sees public, not internal. Coordinator sees both.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Diego DAAD: coordinator sees public + Private internal. `student.review@test.com` sees public passport note only, not internal rank note. Evidence: [`qa-runs/2026-08-18-eligibility/2026-08-18-diego-comments.png`](qa-runs/2026-08-18-eligibility/2026-08-18-diego-comments.png), [`qa-runs/2026-08-18-eligibility/2026-08-18-diego-student-comments.png`](qa-runs/2026-08-18-eligibility/2026-08-18-diego-student-comments.png).
 
 ### 4.6 Document validate / request resubmission (`coord-review`, `documents-core`)
 
-- [ ] **Staff document actions**
+- [x] **Staff document actions**
   - **Role:** Coordinator
   - **Path:** `/seim/documents/<id>` or application checklist
   - **Steps:** Validate/approve one document. Request resubmission on another (or the same after a second file) if the action exists.
   - **Expected:** Validate marks approved. Resubmit request appears for the student. Errors if over limit are explicit.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Diego passport `dedd3708-…` validate valid. Fulbright transcript `f881327d-…` resubmit 201. Student UI: “Resubmission requested” + Replace file. Evidence: [`qa-runs/2026-08-18-eligibility/2026-08-18-transcript-resubmit.png`](qa-runs/2026-08-18-eligibility/2026-08-18-transcript-resubmit.png).
 
 ### 4.7 Workload — coordinator (`coord-review`)
 

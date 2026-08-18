@@ -111,6 +111,26 @@ class TestEligibilityRuleSetsApi(TestCase):
         result = ApplicationService.check_eligibility(self.student, program)
         self.assertTrue(result["eligible"])
 
+    def test_evaluate_eligibility_with_application_unwraps_ruleset_proxy(self):
+        from accounts.models import Profile
+        from exchange.eligibility_rules import evaluate_eligibility
+        from exchange.models import Application, ApplicationStatus
+        from exchange.services import _program_for_eligibility
+
+        Profile.objects.get_or_create(user=self.student)
+        submitted, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
+        app = Application.objects.create(
+            student=self.student, program=self.program, status=submitted
+        )
+        program = Program.objects.select_related("eligibility_ruleset").get(
+            pk=self.program.pk
+        )
+        proxy = _program_for_eligibility(program)
+        ev = evaluate_eligibility(self.student, proxy, application=app)
+        self.assertIsNotNone(ev)
+
     def test_coordinator_can_create_ruleset(self):
         self.client.force_authenticate(user=self.coordinator)
         resp = self.client.post(

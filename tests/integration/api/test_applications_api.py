@@ -431,6 +431,28 @@ class TestApplicationsAPI(APITestCase):
         self.assertEqual(len(response.data["results"]), 1)
         self.assertEqual(response.data["results"][0]["id"], str(app2.id))
 
+    def test_application_search_matches_student_name(self):
+        """Review-queue search placeholder includes student name, not only email/username."""
+        student = self.create_user(
+            role="student", first_name="Diego", last_name="Lopez"
+        )
+        other = self.create_user(role="student", first_name="Elena", last_name="Vargas")
+        program = self.create_program(name="DAAD Name Search Program")
+        app = self.create_application(student=student, program=program)
+        self.create_application(student=other, program=program)
+        coordinator = self.create_user(role="coordinator")
+        self.authenticate_user(coordinator)
+
+        response = self.client.get(f"{self.applications_url}?search=Diego")
+        self.assert_response_success(response, status.HTTP_200_OK)
+        ids = [row["id"] for row in response.data["results"]]
+        self.assertEqual(ids, [str(app.id)])
+
+        response = self.client.get(f"{self.applications_url}?search=Lopez")
+        self.assert_response_success(response, status.HTTP_200_OK)
+        ids = [row["id"] for row in response.data["results"]]
+        self.assertEqual(ids, [str(app.id)])
+
 
 class TestApplicationsIntegration(WorkflowTestCase):
     """Test applications integration scenarios."""

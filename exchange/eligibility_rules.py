@@ -413,16 +413,18 @@ def _rule_required_documents(
     _profile, program: Program, application: Application | None, _student: User
 ) -> RuleOutcome:
     """Program required document types must be approved on the given application (submit parity)."""
+    from exchange.eligibility_rulesets import concrete_program
     from exchange.models import ProgramDocumentRequirement
 
+    orm_program = concrete_program(program)
     has_required = ProgramDocumentRequirement.objects.filter(
-        program=program, is_required=True
+        program=orm_program, is_required=True
     ).exists()
-    if not has_required and not program.required_document_types.exists():
+    if not has_required and not orm_program.required_document_types.exists():
         return RuleOutcome("required_documents", passed=True, skipped=True)
     if application is None:
         return RuleOutcome("required_documents", passed=True, skipped=True)
-    if application.program_id != program.pk:
+    if application.program_id != orm_program.pk:
         return RuleOutcome("required_documents", passed=True, skipped=True)
 
     from documents.services import DocumentService

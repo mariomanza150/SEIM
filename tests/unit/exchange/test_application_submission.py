@@ -242,6 +242,33 @@ class TestApplicationSubmissionWorkflow:
         application.refresh_from_db()
         assert application.status == self.under_review_status
 
+    def test_coordinator_can_review_when_program_has_ruleset(self):
+        """Staff status PATCH must not fail UUID validation via EligibilityRuleSet proxy."""
+        from exchange.models import EligibilityRuleSet
+
+        ruleset = EligibilityRuleSet.objects.create(
+            name="GPA overlay",
+            schema_version=1,
+            rules_json={"program_overrides": {"min_gpa": 3.9}},
+            is_active=True,
+        )
+        self.program.eligibility_ruleset = ruleset
+        self.program.save(update_fields=["eligibility_ruleset"])
+        application = Application.objects.create(
+            student=self.student,
+            program=self.program,
+            status=self.submitted_status,
+        )
+        refresh = RefreshToken.for_user(self.coordinator)
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {refresh.access_token}")
+        response = self.client.patch(
+            f"/api/applications/{application.id}/",
+            {"status": "under_review"},
+        )
+        assert response.status_code == status.HTTP_200_OK, response.data
+        application.refresh_from_db()
+        assert application.status == self.under_review_status
+
     def test_admin_can_approve_reject_application(self):
         """Test that admins can approve or reject applications."""
         application = Application.objects.create(

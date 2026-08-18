@@ -743,10 +743,11 @@ class ApplicationSerializer(serializers.ModelSerializer):
         # For create operations, get student from request context
         # For update operations, student is already set on the instance
         request = self.context.get("request")
-        user = (
+        actor = request.user if request else None
+        student = (
             self.instance.student
             if self.instance
-            else (request.user if request else None)
+            else (actor if actor else None)
         )
         program = data.get("program")
         if self.instance is not None and program is None:
@@ -760,11 +761,24 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
         # Eligibility is enforced on submit (ApplicationService.submit_application).
         # Drafts may be created or edited while the student updates their profile or explores programs.
-        if user and program and user.has_role("student"):
+        # Staff status/review PATCHes must not re-run the student eligibility engine.
+        is_staff_actor = bool(
+            actor
+            and getattr(actor, "is_authenticated", False)
+            and hasattr(actor, "has_any_role")
+            and actor.has_any_role(["coordinator", "admin"])
+        )
+        if (
+            not is_staff_actor
+            and actor
+            and program
+            and hasattr(actor, "has_role")
+            and actor.has_role("student")
+        ):
             is_draft = self.instance is None or self.instance.status.name == "draft"
             if not is_draft:
                 try:
-                    elig_user = self.instance.student if self.instance else user
+                    elig_user = student or actor
                     ApplicationService.check_eligibility(
                         elig_user,
                         program,
@@ -781,7 +795,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
                         else {"program": str(e)}
                     )
             if not ApplicationService.can_submit_application(
-                user, program, exclude_application=self.instance
+                actor, program, exclude_application=self.instance
             ):
                 raise serializers.ValidationError(
                     {"program": "Active application already exists for this program."}

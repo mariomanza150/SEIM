@@ -39,6 +39,15 @@ export function formatDate({ dateString, locale, fallback = 'N/A' }) {
   })
 }
 
+export function formatScorePoints(value) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return value == null ? '' : String(value)
+  return n.toLocaleString('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  })
+}
+
 export function formatDateTime({ dateString, locale, fallback = 'N/A' }) {
   if (!dateString) return fallback
   const date = new Date(dateString)

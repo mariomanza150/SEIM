@@ -778,7 +778,16 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         filters.OrderingFilter,
     ]
     filterset_class = ApplicationFilter  # Use advanced filter
-    search_fields = ["program__name", "student__username", "student__email"]
+    search_fields = [
+        "program__name",
+        "student__username",
+        "student__email",
+        "student__first_name",
+        "student__last_name",
+        "student__middle_name",
+        "student__mothers_last_name",
+        "status__name",
+    ]
     ordering_fields = ["created_at", "submitted_at"]
 
     def get_queryset(self):

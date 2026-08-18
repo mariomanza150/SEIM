@@ -199,8 +199,8 @@
                   <div>
                     <span class="text-muted small d-block">{{ t('applicationDetailPage.scholarshipScoring.totalLabel') }}</span>
                     <span class="fs-4 fw-semibold">
-                      {{ application.scholarship_allocation_score.total_points }}
-                      <span class="text-muted fs-6">/ {{ application.scholarship_allocation_score.max_points }}</span>
+                      {{ formatScorePoints(application.scholarship_allocation_score.total_points) }}
+                      <span class="text-muted fs-6">/ {{ formatScorePoints(application.scholarship_allocation_score.max_points) }}</span>
                     </span>
                   </div>
                   <p v-if="application.scholarship_allocation_score.flags?.withdrawn" class="small text-warning mb-0">
@@ -219,7 +219,7 @@
                     <tbody>
                       <tr v-for="row in application.scholarship_allocation_score.factors" :key="row.id">
                         <td>{{ row.label }}</td>
-                        <td class="text-end text-nowrap">{{ row.points }} / {{ row.max_points }}</td>
+                        <td class="text-end text-nowrap">{{ formatScorePoints(row.points) }} / {{ formatScorePoints(row.max_points) }}</td>
                         <td class="small">{{ row.detail }}</td>
                       </tr>
                     </tbody>
@@ -813,6 +813,7 @@ import {
   applicationStatusBadgeClass,
   formatApplicationStatus,
   formatDateTime as formatDateTimeUtil,
+  formatScorePoints,
 } from '@/utils/formatters'
 
 const route = useRoute()
@@ -1333,6 +1334,7 @@ async function updateApplicationStatus() {
     console.error('Failed to update status:', err)
     const msg =
       err.response?.data?.status?.[0] ||
+      err.response?.data?.non_field_errors?.[0] ||
       err.response?.data?.detail ||
       t('applicationDetailPage.toastUpdateStatusFailed')
     errorToast(msg)

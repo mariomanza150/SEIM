@@ -713,7 +713,14 @@ class ApplicationAdmin(admin.ModelAdmin):
         "submitted_at",
         "withdrawn",
     )
-    search_fields = ("id", "student__email", "student__username", "program__name")
+    search_fields = (
+        "id",
+        "student__email",
+        "student__username",
+        "student__first_name",
+        "student__last_name",
+        "program__name",
+    )
     list_filter = ("status", "withdrawn", "program__required_language")
     list_editable = ("withdrawn",)
     readonly_fields = (
