@@ -426,53 +426,53 @@ Stay **Student** unless a step says staff.
 
 ### 3.1 Documents list filters (`documents-core`)
 
-- [ ] **Readable program and type labels**
+- [x] **Readable program and type labels**
   - **Role:** Student
   - **Path:** `/seim/documents`
   - **Steps:** Open Documents. Use application and type filters. Read row labels.
   - **Expected:** Filter options and rows show **program names** and **document type names**, not raw application UUIDs or numeric type ids only (**MQ-011** / **MQ-012**).
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 filters and rows use program names (Fulbright, Sciences Po, Vue E2E…) and type names (`transcript`, `passport`, `2 Cartas de Recomendación`). No UUIDs in the table. Same program name can appear more than once when the student has multiple applications. [`qa-runs/2026-08-18-eligibility/2026-08-18-documents-list.png`](qa-runs/2026-08-18-eligibility/2026-08-18-documents-list.png).
 
 ### 3.2 Document detail (`documents-core`)
 
-- [ ] **Preview, download, comments, replace**
+- [x] **Preview, download, comments, replace**
   - **Role:** Student
   - **Path:** `/seim/documents/<id>`
   - **Steps:** Open a seeded PDF. Preview/download. Add a comment. Replace the file with a small PDF if the control is enabled.
   - **Expected:** Preview (iframe or download). Comments persist. Replace updates the file or shows a clear error. Breadcrumb uses type/filename, not stuck “Loading…”.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Lisbon transcript `3732d843-…`: preview, breadcrumb `transcript`, comment posted, PATCH replace → `mq-2026-08-18-lisbon-replace.pdf`. [`qa-runs/2026-08-18-eligibility/2026-08-18-lisbon-document-detail.png`](qa-runs/2026-08-18-eligibility/2026-08-18-lisbon-document-detail.png).
 
 ### 3.3 Application checklist + upload (`documents-core`, `mobility-documents`)
 
-- [ ] **Checklist upload**
+- [x] **Checklist upload**
   - **Role:** Student
   - **Path:** `/seim/applications/<id>` (draft or submitted with checklist)
   - **Steps:** On application detail, read `document_checklist` / required types (MX mobility types if shown). Upload a required type.
   - **Expected:** Type labels (not “2 Invalid”). Upload attaches to the application. Mobility/scheme required types appear when the program has them.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Lisbon checklist: `transcript` / `passport` pending_review (not numeric ids). Tokyo draft `32d4b75d-…` missing → POST transcript type 22 → 201 `bc9cc733-…`; UI “1 awaiting review” + passport still missing.
 
 ### 3.4 Resubmit path (`documents-core`)
 
-- [ ] **Resubmission if seeded**
+- [x] **Resubmission if seeded**
   - **Role:** Student (staff may have requested resubmit on a demo doc)
   - **Path:** `/seim/documents` or application checklist
   - **Steps:** Look for a document / request that needs resubmit. Upload a replacement if present.
   - **Expected:** Resubmit control works **or** no such seed row — then **Blocked** (no fixture), not Fail.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Fulbright transcript `f881327d-…` showed “Resubmission requested” + reason; student PATCH replacement 200 (`mq-2026-08-18-fulbright-resubmit.pdf`). Open request stayed `resolved=false` (staff “mark addressed” still required). Inbox also listed the resubmit notification.
 
 ### 3.5 Submit gated on approved docs (`documents-core`, `programs-applications`)
 
-- [ ] **Submit blocked until required docs approved**
+- [x] **Submit blocked until required docs approved**
   - **Role:** Student
   - **Path:** `/seim/applications/<id>`
   - **Steps:** On a draft that still has unapproved required types, try Submit. If seed already has an approved complete app, use a new draft + upload without staff approval.
   - **Expected:** Submit returns a clear 400/UI error until staff-validated required docs exist. If seed cannot produce this state, **Blocked**.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Lisbon `dd987b81-…` Submit disabled title “Required documents must be approved first”. `POST …/submit/` 400: transcript and passport `pending_review`.
 
 ---
 
@@ -796,23 +796,23 @@ Use a **new draft** from `student@test.com` so you do not depend on leftover §2
 
 ### 8.1 Student draft (`programs-applications`)
 
-- [ ] **Create draft**
+- [x] **Create draft**
   - **Role:** Student
   - **Path:** `/seim/applications/new`
   - **Steps:** Create a draft for an open program (host cascade if required). Save. Note the application id/URL.
   - **Expected:** Draft on `/seim/applications`.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 `POST /api/applications/` Tokyo `2ed7df6f-…` → draft `32d4b75d-d7bc-4e3e-b6a3-1f678451b0dd`. Detail: Draft, 57% readiness (passport missing, host incomplete, Japanese vs English).
 
 ### 8.2 Upload (`documents-core`)
 
-- [ ] **Upload required doc**
+- [x] **Upload required doc**
   - **Role:** Student
   - **Path:** `/seim/applications/<id>`
   - **Steps:** Upload at least one required checklist file.
   - **Expected:** Checklist shows uploaded / pending review.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Tokyo transcript type 22 POST 201 `bc9cc733-…`. UI “1 required document(s) missing; 1 awaiting review.”
 
 ### 8.3 Submit or waitlist (`programs-applications`)
 
@@ -872,33 +872,33 @@ Short pass only. **Do not** treat a full WCAG audit as required (that remains P2
 
 ### 9.1 Wrong-role URLs (`roles`)
 
-- [ ] **Cold URL matrix**
+- [x] **Cold URL matrix**
   - **Role:** Student, Coordinator, Partner (logout between)
   - **Path:** `/seim/review-queue`, `/seim/admin/programs`, `/seim/partner`, `/seim/nominations`, `/seim/eligibility-rulesets`
   - **Steps:** As **student**, open each path. As **coordinator**, open `/seim/admin/programs` and `/seim/partner`. As **partner**, open `/seim/review-queue` and `/seim/admin/programs`.
   - **Expected:** Each wrong-role hit redirects or denies. No staff/admin/partner chrome for the wrong role.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 all listed wrong-role hits redirected to `/seim/applications` (student: review-queue, admin/programs, partner, nominations, eligibility-rulesets; coordinator: admin/programs, partner; partner: review-queue, admin/programs).
 
 ### 9.2 Skip link and main landmark (`vue-portal`)
 
-- [ ] **Skip to `#main-content`**
+- [x] **Skip to `#main-content`**
   - **Role:** Student (or anonymous on login)
   - **Path:** `/seim/login` then `/seim/dashboard`
   - **Steps:** Tab until “Skip to main” (or equivalent). Activate it. Confirm focus moves to `#main-content`.
   - **Expected:** Skip link in `App.vue` targets `#main-content`. Main landmark exists and can take focus.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Login: skip `href="#main-content"`, `<main id="main-content" tabindex="-1">`. Skip link is visually hidden until focused (click-to-scroll failed; landmark present).
 
 ### 9.3 Focus ring (`vue-portal`)
 
-- [ ] **`:focus-visible`**
+- [x] **`:focus-visible`**
   - **Role:** Student
   - **Path:** `/seim/dashboard`
   - **Steps:** Keyboard-tab through navbar, sidebar, and a primary button. Optionally enable high contrast in Settings and tab again.
   - **Expected:** Visible focus rings. Stronger in high contrast. Not a full audit.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** Login stylesheets include `:focus-visible` rules (smoke, not a full WCAG audit).
 
 ### 9.4 Locale on Login + inner page (`settings-ui`, `auth-api`)
 
