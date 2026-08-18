@@ -24,7 +24,7 @@
           <div class="row g-3">
             <div class="col-md-4">
               <label class="form-label">{{ t('documentsPage.applicationLabel') }}</label>
-              <select v-model="filters.application" class="form-select" @change="fetchDocuments">
+              <select v-model="filters.application" class="form-select" @change="() => fetchDocuments(1)">
                 <option value="">{{ t('documentsPage.applicationOptionAll') }}</option>
                 <option v-for="app in applications" :key="app.id" :value="app.id">
                   {{ applicationSelectLabel(app) }}
@@ -33,7 +33,7 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('documentsPage.documentTypeLabel') }}</label>
-              <select v-model="filters.type" class="form-select" @change="fetchDocuments">
+              <select v-model="filters.type" class="form-select" @change="() => fetchDocuments(1)">
                 <option value="">{{ t('documentsPage.typeOptionAll') }}</option>
                 <option v-for="dt in documentTypes" :key="dt.id" :value="dt.id">
                   {{ dt.name }}
@@ -42,7 +42,7 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('documentsPage.statusLabel') }}</label>
-              <select v-model="filters.valid" class="form-select" @change="fetchDocuments">
+              <select v-model="filters.valid" class="form-select" @change="() => fetchDocuments(1)">
                 <option value="">{{ t('documentsPage.statusOptionAll') }}</option>
                 <option value="true">{{ t('documentDetailPage.statusValidatedShort') }}</option>
                 <option value="false">{{ t('documentDetailPage.statusPendingShort') }}</option>
@@ -279,6 +279,7 @@ import {
   deserializeDocumentListFilters,
   serializeDocumentListFilters,
 } from '@/utils/staffListSearchPresets'
+import { resolveListPage } from '@/utils/listPage'
 
 const { t, locale } = useI18n()
 const { error: errorToast } = useToast()
@@ -341,11 +342,12 @@ async function fetchDocumentTypes() {
 }
 
 async function fetchDocuments(page = 1) {
+  const pageNumber = resolveListPage(page)
   try {
     loading.value = true
     error.value = null
 
-    const params = { page, ordering: filters.value.ordering || '-created_at' }
+    const params = { page: pageNumber, ordering: filters.value.ordering || '-created_at' }
     if (filters.value.application) params.application = filters.value.application
     if (filters.value.type) params.type = filters.value.type
     if (filters.value.valid !== '') params.is_valid = filters.value.valid
@@ -360,7 +362,7 @@ async function fetchDocuments(page = 1) {
         count: response.data.count,
         next: response.data.next,
         previous: response.data.previous,
-        currentPage: page,
+        currentPage: pageNumber,
         pageSize: pagination.value.pageSize,
       }
     }

@@ -38,7 +38,7 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('applicationsPage.statusLabel') }}</label>
-              <select v-model="filters.status" class="form-select" @change="fetchApplications" data-testid="applications-filter-status">
+              <select v-model="filters.status" class="form-select" @change="() => fetchApplications(1)" data-testid="applications-filter-status">
                 <option value="">{{ t('applicationsPage.statusOptionAll') }}</option>
                 <option value="draft">{{ t('applicationDetailPage.status.draft') }}</option>
                 <option value="submitted">{{ t('applicationDetailPage.status.submitted') }}</option>
@@ -50,7 +50,7 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('applicationsPage.sortLabel') }}</label>
-              <select v-model="filters.ordering" class="form-select" @change="fetchApplications" data-testid="applications-filter-ordering">
+              <select v-model="filters.ordering" class="form-select" @change="() => fetchApplications(1)" data-testid="applications-filter-ordering">
                 <option value="-created_at">{{ t('applicationsPage.sortNewest') }}</option>
                 <option value="created_at">{{ t('applicationsPage.sortOldest') }}</option>
                 <option value="-submitted_at">{{ t('applicationsPage.sortRecentlySubmitted') }}</option>
@@ -225,6 +225,7 @@ import {
   formatApplicationStatus,
   formatDate,
 } from '@/utils/formatters'
+import { resolveListPage } from '@/utils/listPage'
 
 const { t, te, locale } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -257,12 +258,13 @@ function debouncedSearch() {
 }
 
 async function fetchApplications(page = 1) {
+  const pageNumber = resolveListPage(page)
   try {
     loading.value = true
     error.value = null
 
     const params = {
-      page,
+      page: pageNumber,
       ordering: filters.value.ordering,
     }
 
@@ -282,7 +284,7 @@ async function fetchApplications(page = 1) {
         count: response.data.count,
         next: response.data.next,
         previous: response.data.previous,
-        currentPage: page,
+        currentPage: pageNumber,
         pageSize: pagination.value.pageSize,
       }
     }

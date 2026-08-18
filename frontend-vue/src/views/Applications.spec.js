@@ -163,4 +163,22 @@ describe('Applications', () => {
     expect(ariaLabels).toContain(i18n.global.t('pagination.pageNumberAria', { n: 1 }))
     expect(ariaLabels).toContain(i18n.global.t('pagination.pageNumberAria', { n: 2 }))
   })
+
+  it('sends page=1 when status filter changes instead of a DOM event', async () => {
+    api.get.mockResolvedValue({ data: { results: [], count: 0, next: null, previous: null } })
+    const wrapper = mount(Applications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    api.get.mockClear()
+    await wrapper.find('[data-testid="applications-filter-status"]').setValue('draft')
+    await wrapper.find('[data-testid="applications-filter-status"]').trigger('change')
+    await flushPromises()
+    expect(api.get).toHaveBeenCalledWith('/api/applications/', {
+      params: { page: 1, ordering: '-created_at', status: 'draft' },
+    })
+  })
 })

@@ -46,7 +46,7 @@
                     v-model="filters.pending_review"
                     class="form-check-input"
                     type="checkbox"
-                    @change="fetchApplications"
+                    @change="() => fetchApplications(1)"
                   />
                   <label class="form-check-label" for="fq-pending">{{ t('reviewQueuePage.filterPendingReview') }}</label>
                 </div>
@@ -56,7 +56,7 @@
                     v-model="filters.needs_document_resubmit"
                     class="form-check-input"
                     type="checkbox"
-                    @change="fetchApplications"
+                    @change="() => fetchApplications(1)"
                   />
                   <label class="form-check-label" for="fq-resubmit">{{ t('reviewQueuePage.filterDocumentResubmit') }}</label>
                 </div>
@@ -66,7 +66,7 @@
                     v-model="filters.assigned_to_me"
                     class="form-check-input"
                     type="checkbox"
-                    @change="fetchApplications"
+                    @change="() => fetchApplications(1)"
                   />
                   <label class="form-check-label" for="fq-assigned">{{ t('reviewQueuePage.filterAssignedToMe') }}</label>
                 </div>
@@ -74,7 +74,7 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('reviewQueuePage.statusLabel') }}</label>
-              <select v-model="filters.status" class="form-select" @change="fetchApplications">
+              <select v-model="filters.status" class="form-select" @change="() => fetchApplications(1)">
                 <option value="">{{ t('reviewQueuePage.statusAll') }}</option>
                 <option value="draft">{{ t('reviewQueuePage.status.draft') }}</option>
                 <option value="submitted">{{ t('reviewQueuePage.status.submitted') }}</option>
@@ -86,7 +86,7 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('reviewQueuePage.sortLabel') }}</label>
-              <select v-model="filters.ordering" class="form-select" @change="fetchApplications">
+              <select v-model="filters.ordering" class="form-select" @change="() => fetchApplications(1)">
                 <option value="-submitted_at">{{ t('reviewQueuePage.sortRecentlySubmitted') }}</option>
                 <option value="-created_at">{{ t('reviewQueuePage.sortNewest') }}</option>
                 <option value="created_at">{{ t('reviewQueuePage.sortOldest') }}</option>
@@ -265,6 +265,7 @@ import {
   deserializeReviewQueueFilters,
   serializeReviewQueueFilters,
 } from '@/utils/reviewQueuePresets'
+import { resolveListPage } from '@/utils/listPage'
 
 const { t, te, locale } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -303,11 +304,12 @@ function debouncedSearch() {
 }
 
 async function fetchApplications(page = 1) {
+  const pageNumber = resolveListPage(page)
   try {
     loading.value = true
     error.value = null
     const params = {
-      page,
+      page: pageNumber,
       ordering: filters.value.ordering,
     }
     if (filters.value.search) params.search = filters.value.search
@@ -323,7 +325,7 @@ async function fetchApplications(page = 1) {
         count: response.data.count,
         next: response.data.next,
         previous: response.data.previous,
-        currentPage: page,
+        currentPage: pageNumber,
         pageSize: pagination.value.pageSize,
       }
     }

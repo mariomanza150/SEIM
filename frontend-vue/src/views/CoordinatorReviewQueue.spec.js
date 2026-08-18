@@ -126,4 +126,22 @@ describe('CoordinatorReviewQueue', () => {
     expect(draft?.text()).toBe(i18n.global.t('reviewQueuePage.status.draft'))
     expect(wrapper.text()).toContain(i18n.global.t('reviewQueuePage.clearFilters'))
   })
+
+  it('sends page=1 when status filter changes instead of a DOM event', async () => {
+    const wrapper = mount(CoordinatorReviewQueue, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    api.get.mockClear()
+    const statusSelect = wrapper.findAll('select.form-select')[0]
+    await statusSelect.setValue('submitted')
+    await statusSelect.trigger('change')
+    await flushPromises()
+    expect(api.get).toHaveBeenCalledWith('/api/applications/', {
+      params: { page: 1, ordering: '-submitted_at', status: 'submitted' },
+    })
+  })
 })
