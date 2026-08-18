@@ -62,6 +62,8 @@ describe('router beforeEach + resolveAuthenticatedNavigation (MQ-014)', () => {
     expect(router.currentRoute.value.name).toBe('AdminPrograms')
     await router.push('/analytics')
     expect(router.currentRoute.value.name).toBe('AnalyticsForecasts')
+    await router.push('/workload')
+    expect(router.currentRoute.value.name).toBe('CoordinatorWorkload')
   })
 
   it('allows coordinator to reach staff-only route after checkAuth', async () => {

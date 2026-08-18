@@ -111,6 +111,7 @@ const routes = [
         component: CoordinatorWorkload,
         meta: { staffReviewQueue: true },
       },
+      { path: 'workload', redirect: { name: 'CoordinatorWorkload' } },
       {
         path: 'notification-routing',
         name: 'NotificationRouting',

@@ -19,6 +19,7 @@ const EXACT_SPA_ROUTES = {
   '/calendar': { name: 'DeadlinesCalendar' },
   '/review-queue': { name: 'CoordinatorReviewQueue' },
   '/coordinator-workload': { name: 'CoordinatorWorkload' },
+  '/workload': { name: 'CoordinatorWorkload' },
   '/notification-routing': { name: 'NotificationRouting' },
   '/exchange-agreements': { name: 'StaffExchangeAgreements' },
   '/agreement-documents': { name: 'StaffExchangeAgreements' },
