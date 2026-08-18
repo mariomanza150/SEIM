@@ -14,6 +14,9 @@ SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES = frozenset(
     {"approved", "nominated", "completed"}
 )
 
+# Historic subject-plan snapshots kept per application (not counting the live set).
+MAX_SUBJECT_PLAN_VERSIONS = 3
+
 
 class EligibilityRuleSet(UUIDModel, TimeStampedModel):
     """
@@ -1036,6 +1039,69 @@ class ApplicationSubjectSelection(UUIDModel, TimeStampedModel):
             elif self.custom_credits is not None:
                 self.credits = self.custom_credits
         super().save(*args, **kwargs)
+
+
+class ApplicationSubjectPlanVersion(UUIDModel, TimeStampedModel):
+    """
+    Historic snapshot of an application's full subject selection set.
+
+    Live study-plan rows stay on ``ApplicationSubjectSelection``. Each row
+    here stores a JSON list of selection dicts (catalog or custom course,
+    home mapping, credits, notes, and grade fields as of snapshot time).
+    At most ``MAX_SUBJECT_PLAN_VERSIONS`` historic rows are kept per
+    application; see ``exchange.subject_plan_versions``.
+    """
+
+    class Trigger(models.TextChoices):
+        MAPPING_CHANGED = "mapping_changed", _("Mapping changed")
+        GRADES_PROPOSED = "grades_proposed", _("Grades proposed")
+        GRADES_CONFIRMED = "grades_confirmed", _("Grades confirmed")
+        GRADES_REJECTED = "grades_rejected", _("Grades rejected")
+
+    application = models.ForeignKey(
+        Application,
+        on_delete=models.CASCADE,
+        related_name="subject_plan_versions",
+    )
+    version_number = models.PositiveIntegerField()
+    created_by = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="subject_plan_versions_created",
+    )
+    trigger = models.CharField(
+        max_length=32,
+        choices=Trigger.choices,
+        default=Trigger.MAPPING_CHANGED,
+    )
+    payload = models.JSONField(
+        default=list,
+        help_text=_(
+            "JSON list of subject-selection dicts captured at snapshot time."
+        ),
+    )
+
+    class Meta:
+        ordering = ["-version_number"]
+        verbose_name = _("Application subject plan version")
+        verbose_name_plural = _("Application subject plan versions")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["application", "version_number"],
+                name="uniq_application_subject_plan_version_number",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=["application", "-version_number"],
+                name="subj_plan_ver_app_num_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.application_id} v{self.version_number}"
 
 
 def validate_application_host_destination(application, *, require_complete=False):

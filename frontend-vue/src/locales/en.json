@@ -382,7 +382,21 @@
     "toastConfirmed": "Grades confirmed and letter regenerated.",
     "toastConfirmFailed": "Could not confirm grades.",
     "toastRejected": "Grades rejected. The student can edit again.",
-    "toastRejectFailed": "Could not reject grades."
+    "toastRejectFailed": "Could not reject grades.",
+    "previousVersionsTitle": "Previous versions",
+    "previousVersionsHelp": "Read-only snapshots taken before each study-plan change (up to 3 kept).",
+    "previousVersionsEmpty": "No previous versions yet.",
+    "previousVersionsLoading": "Loading version history…",
+    "versionLabel": "Version {n}",
+    "versionSavedAt": "Saved {date}",
+    "versionSavedBy": "by {name}",
+    "versionCourseCount": "{count} course(s)",
+    "versionTrigger": {
+      "mapping_changed": "Mapping changed",
+      "grades_proposed": "Grades proposed",
+      "grades_confirmed": "Grades confirmed",
+      "grades_rejected": "Grades rejected"
+    }
   },
   "adminPrograms": {
     "title": "Program management",

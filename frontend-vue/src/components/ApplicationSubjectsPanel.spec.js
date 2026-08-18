@@ -36,6 +36,7 @@ describe('ApplicationSubjectsPanel', () => {
 
   it('adds a custom host course and lists it', async () => {
     api.get.mockImplementation((url) => {
+      if (url.includes('subject-plan-versions')) return Promise.resolve({ data: [] })
       if (url.includes('available-subjects')) return Promise.resolve({ data: [] })
       if (url.includes('application-subject-selections')) return Promise.resolve({ data: [] })
       if (url.includes('/api/host-institutions/')) return Promise.resolve({ data: { grade_scale: null } })
@@ -80,8 +81,12 @@ describe('ApplicationSubjectsPanel', () => {
     subjects = [],
     gradeScale = 'scale-1',
     gradeValues = [{ id: 'gv-1', label: 'HostA' }],
+    planVersions = [],
   } = {}) {
     api.get.mockImplementation((url) => {
+      if (url.includes('subject-plan-versions')) {
+        return Promise.resolve({ data: planVersions })
+      }
       if (url.includes('available-subjects')) return Promise.resolve({ data: subjects })
       if (url.includes('application-subject-selections')) {
         return Promise.resolve({ data: selections })
@@ -218,5 +223,91 @@ describe('ApplicationSubjectsPanel', () => {
     expect(wrapper.find('[data-testid="propose-subject-grades"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="reject-subject-grades"]').exists()).toBe(true)
     expect(wrapper.find('#grade-notes').exists()).toBe(true)
+  })
+
+  it('shows previous subject plan versions read-only', async () => {
+    mockPanelGets({
+      selections: [
+        {
+          id: 'sel-1',
+          custom_name: 'Algorithms',
+          custom_code: 'CS101',
+          credits: '6.00',
+          grade_status: 'none',
+        },
+      ],
+      planVersions: [
+        {
+          id: 'ver-1',
+          version_number: 1,
+          created_at: '2026-01-15T10:00:00Z',
+          created_by_name: 'Plan Student',
+          payload: [
+            {
+              custom_name: 'Old Course',
+              custom_code: 'OLD1',
+              home_course_code: 'H100',
+              credits: '3.00',
+              grade_status: 'none',
+            },
+          ],
+        },
+      ],
+    })
+    const wrapper = mount(ApplicationSubjectsPanel, {
+      props: {
+        applicationId: 'app-1',
+        applicationStatus: 'draft',
+        hostInstitutionId: 'inst-1',
+      },
+      global: { plugins: [i18n] },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="subject-plan-versions"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="subject-plan-version-1"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Previous versions')
+    expect(wrapper.text()).toContain('Old Course')
+    expect(wrapper.find('[data-testid="subject-plan-versions-empty"]').exists()).toBe(false)
+    expect(
+      api.get.mock.calls.some(([url]) => String(url).includes('subject-plan-versions')),
+    ).toBe(true)
+  })
+
+  it('shows empty state when no previous versions exist', async () => {
+    mockPanelGets({
+      selections: [],
+      planVersions: [],
+    })
+    const wrapper = mount(ApplicationSubjectsPanel, {
+      props: {
+        applicationId: 'app-1',
+        applicationStatus: 'draft',
+        hostInstitutionId: 'inst-1',
+      },
+      global: { plugins: [i18n] },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="subject-plan-versions-empty"]').exists()).toBe(true)
+    })
+    expect(wrapper.text()).toContain('No previous versions yet')
+  })
+
+  it('shows Spanish labels for previous versions', async () => {
+    setAppLocale('es')
+    mockPanelGets({ selections: [], planVersions: [] })
+    const wrapper = mount(ApplicationSubjectsPanel, {
+      props: {
+        applicationId: 'app-1',
+        applicationStatus: 'draft',
+        hostInstitutionId: 'inst-1',
+      },
+      global: { plugins: [i18n] },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="subject-plan-versions-empty"]').exists()).toBe(true)
+    })
+    expect(wrapper.text()).toContain('Versiones anteriores')
+    expect(wrapper.text()).toContain('Aún no hay versiones anteriores')
   })
 })

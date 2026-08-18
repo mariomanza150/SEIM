@@ -213,6 +213,84 @@
         <label class="form-label" for="grade-notes">{{ t('applicationSubjects.confirmationNotes') }}</label>
         <textarea id="grade-notes" v-model="confirmationNotes" class="form-control form-control-sm" rows="2"></textarea>
       </div>
+
+      <div
+        v-if="applicationId"
+        class="border-top pt-3 mt-3"
+        data-testid="subject-plan-versions"
+      >
+        <h6 class="mb-1">{{ t('applicationSubjects.previousVersionsTitle') }}</h6>
+        <p class="text-muted small mb-2">{{ t('applicationSubjects.previousVersionsHelp') }}</p>
+        <div v-if="versionsLoading" class="form-text">
+          {{ t('applicationSubjects.previousVersionsLoading') }}
+        </div>
+        <div
+          v-else-if="!planVersions.length"
+          class="alert alert-light border small mb-0"
+          data-testid="subject-plan-versions-empty"
+        >
+          {{ t('applicationSubjects.previousVersionsEmpty') }}
+        </div>
+        <div v-else class="d-flex flex-column gap-3">
+          <div
+            v-for="ver in planVersions"
+            :key="ver.id"
+            class="border rounded p-3 bg-light"
+            :data-testid="`subject-plan-version-${ver.version_number}`"
+          >
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+              <span class="fw-medium">
+                {{ t('applicationSubjects.versionLabel', { n: ver.version_number }) }}
+              </span>
+              <span v-if="ver.trigger" class="badge text-bg-info">
+                {{ t(`applicationSubjects.versionTrigger.${ver.trigger}`) }}
+              </span>
+              <span class="text-muted small">
+                {{ t('applicationSubjects.versionSavedAt', { date: formatVersionDate(ver.created_at) }) }}
+              </span>
+              <span v-if="ver.created_by_name" class="text-muted small">
+                {{ t('applicationSubjects.versionSavedBy', { name: ver.created_by_name }) }}
+              </span>
+              <span class="badge text-bg-secondary">
+                {{ t('applicationSubjects.versionCourseCount', { count: ver.payload?.length || 0 }) }}
+              </span>
+            </div>
+            <div v-if="!ver.payload?.length" class="text-muted small mb-0">—</div>
+            <div v-else class="table-responsive">
+              <table class="table table-sm table-bordered bg-white mb-0">
+                <thead>
+                  <tr>
+                    <th>{{ t('applicationSubjects.hostSubjectLabel') }}</th>
+                    <th>{{ t('applicationSubjects.homeCourseCodeLabel') }}</th>
+                    <th>{{ t('applicationSubjects.homeCourseLabelLabel') }}</th>
+                    <th>{{ t('applicationSubjects.creditsLabel') }}</th>
+                    <th v-if="showGradeColumns">{{ t('applicationSubjects.hostGradeLabel') }}</th>
+                    <th v-if="showGradeColumns">{{ t('applicationSubjects.homeGradeLabel') }}</th>
+                    <th>{{ t('applicationSubjects.statusLabel') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, idx) in ver.payload" :key="`${ver.id}-${idx}`">
+                    <td>{{ snapshotHostCourseLabel(row) }}</td>
+                    <td>{{ row.home_course_code || '—' }}</td>
+                    <td>{{ row.home_course_label || '—' }}</td>
+                    <td>{{ row.credits ?? row.custom_credits ?? '—' }}</td>
+                    <td v-if="showGradeColumns">
+                      {{ row.confirmed_host_grade_label || row.proposed_host_grade_label || '—' }}
+                    </td>
+                    <td v-if="showGradeColumns">{{ row.home_grade_label || '—' }}</td>
+                    <td>
+                      <span class="badge" :class="gradeStatusBadge(row.grade_status)">
+                        {{ t(`applicationSubjects.gradeStatus.${row.grade_status || 'none'}`) }}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </template>
   </div>
 </template>
@@ -239,11 +317,13 @@ const { t } = useI18n()
 const { success, error: errorToast } = useToast()
 
 const loading = ref(false)
+const versionsLoading = ref(false)
 const saving = ref(false)
 const cartaDownloading = ref(false)
 const hostSubjectsLoading = ref(false)
 const error = ref('')
 const selections = ref([])
+const planVersions = ref([])
 const hostSubjects = ref([])
 const hostGradeValues = ref([])
 const hostGradeScaleMissing = ref(false)
@@ -307,6 +387,30 @@ function hostCourseLabel(sel) {
   return formatHostSubjectOption(sel.host_subject_detail || sel.host_subject)
 }
 
+function snapshotHostCourseLabel(row) {
+  if (row.host_course_code || row.host_course_name) {
+    const code = row.host_course_code ? `${row.host_course_code} — ` : ''
+    return `${code}${row.host_course_name || ''}`.trim() || '—'
+  }
+  if (row.custom_name) {
+    const code = row.custom_code ? `${row.custom_code} — ` : ''
+    return `${code}${row.custom_name}`
+  }
+  return '—'
+}
+
+function formatVersionDate(iso) {
+  if (!iso) return '—'
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(new Date(iso))
+  } catch {
+    return String(iso)
+  }
+}
+
 function gradeStatusBadge(status) {
   if (status === 'confirmed') return 'bg-success'
   if (status === 'proposed') return 'bg-warning text-dark'
@@ -318,6 +422,25 @@ function unwrapList(data) {
   if (Array.isArray(data)) return data
   if (data && Array.isArray(data.results)) return data.results
   return []
+}
+
+async function fetchPlanVersions() {
+  if (!props.applicationId) {
+    planVersions.value = []
+    return
+  }
+  versionsLoading.value = true
+  try {
+    const { data } = await api.get(
+      `/api/applications/${props.applicationId}/subject-plan-versions/`,
+    )
+    planVersions.value = unwrapList(data)
+  } catch (err) {
+    console.error('Failed to load subject plan versions:', err)
+    planVersions.value = []
+  } finally {
+    versionsLoading.value = false
+  }
 }
 
 async function fetchSelections() {
@@ -393,6 +516,7 @@ async function addCatalogSelection() {
     selections.value = [...selections.value, data]
     catalogDraft.value = { host_subject: '', home_course_code: '', home_course_label: '' }
     success(t('applicationSubjects.toastAdded'))
+    await fetchPlanVersions()
     emit('updated')
   } catch (err) {
     console.error('Failed to add subject:', err)
@@ -427,6 +551,7 @@ async function addCustomSelection() {
       home_course_label: '',
     }
     success(t('applicationSubjects.toastAdded'))
+    await fetchPlanVersions()
     emit('updated')
   } catch (err) {
     console.error('Failed to add custom subject:', err)
@@ -443,6 +568,7 @@ async function removeSelection(sel) {
     await api.delete(`/api/application-subject-selections/${sel.id}/`)
     selections.value = selections.value.filter((s) => s.id !== sel.id)
     success(t('applicationSubjects.toastRemoved'))
+    await fetchPlanVersions()
     emit('updated')
   } catch (err) {
     console.error('Failed to remove subject:', err)
@@ -500,7 +626,7 @@ async function proposeGrades() {
   saving.value = true
   try {
     await api.post(`/api/applications/${props.applicationId}/propose-subject-grades/`)
-    await fetchSelections()
+    await Promise.all([fetchSelections(), fetchPlanVersions()])
     success(t('applicationSubjects.toastProposed'))
     emit('updated')
   } catch (err) {
@@ -517,7 +643,7 @@ async function confirmGrades() {
     await api.post(`/api/applications/${props.applicationId}/confirm-subject-grades/`, {
       notes: confirmationNotes.value,
     })
-    await fetchSelections()
+    await Promise.all([fetchSelections(), fetchPlanVersions()])
     success(t('applicationSubjects.toastConfirmed'))
     emit('updated')
   } catch (err) {
@@ -534,7 +660,7 @@ async function rejectGrades() {
     await api.post(`/api/applications/${props.applicationId}/reject-subject-grades/`, {
       notes: confirmationNotes.value,
     })
-    await fetchSelections()
+    await Promise.all([fetchSelections(), fetchPlanVersions()])
     success(t('applicationSubjects.toastRejected'))
     emit('updated')
   } catch (err) {
@@ -548,7 +674,12 @@ async function rejectGrades() {
 watch(
   () => [props.applicationId, props.hostInstitutionId, props.applicationStatus],
   async () => {
-    await Promise.all([fetchSelections(), fetchAvailableSubjects(), fetchHostGradeValues()])
+    await Promise.all([
+      fetchSelections(),
+      fetchPlanVersions(),
+      fetchAvailableSubjects(),
+      fetchHostGradeValues(),
+    ])
   },
   { immediate: true },
 )

@@ -4,6 +4,7 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import Count, Prefetch, Q
 from django.http import HttpResponse
 from django.urls import reverse
@@ -48,6 +49,7 @@ from .models import (
     AgreementComment,
     Application,
     ApplicationStatus,
+    ApplicationSubjectPlanVersion,
     ApplicationSubjectSelection,
     Comment,
     EligibilityRuleSet,
@@ -68,10 +70,15 @@ from .subject_grades import (
     propose_subject_grades,
     reject_subject_grades,
 )
+from .subject_plan_versions import (
+    snapshot_subject_plan,
+    subject_plan_mapping_changed,
+)
 from .serializers import (
     AgreementCommentSerializer,
     ApplicationSerializer,
     ApplicationStatusSerializer,
+    ApplicationSubjectPlanVersionSerializer,
     ApplicationSubjectSelectionSerializer,
     CalendarEventSerializer,
     CommentSerializer,
@@ -1238,6 +1245,30 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         self._invalidate_application_cache(application)
         return Response({"updated": updated, "status": "rejected"})
 
+    @extend_schema(
+        summary="List historic subject-plan snapshots (max 3)",
+        responses={200: ApplicationSubjectPlanVersionSerializer(many=True)},
+    )
+    @action(detail=True, methods=["get"], url_path="subject-plan-versions")
+    def subject_plan_versions(self, request, pk=None):
+        """Read-only historic study plans for the owning student or staff."""
+        user = request.user
+        is_staff = hasattr(user, "has_any_role") and user.has_any_role(
+            ["coordinator", "admin"]
+        )
+        try:
+            application = Application.objects.get(pk=pk)
+        except (Application.DoesNotExist, ValueError, TypeError):
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        if not is_staff and application.student_id != user.pk:
+            return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
+        versions = application.subject_plan_versions.select_related(
+            "created_by"
+        ).order_by("-version_number")
+        return Response(
+            ApplicationSubjectPlanVersionSerializer(versions, many=True).data
+        )
+
     def _invalidate_application_cache(self, application):
         """Drop retrieve/list/comment API caches after an application mutation."""
         invalidate_application_api_responses(application)
@@ -1519,7 +1550,27 @@ class ApplicationSubjectSelectionViewSet(viewsets.ModelViewSet):
                         "application": "You can only add subjects to your own application."
                     }
                 )
-        serializer.save()
+        with transaction.atomic():
+            snapshot_subject_plan(
+                application,
+                user,
+                trigger=ApplicationSubjectPlanVersion.Trigger.MAPPING_CHANGED,
+            )
+            serializer.save()
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        mapping_changed = subject_plan_mapping_changed(
+            instance, serializer.validated_data
+        )
+        with transaction.atomic():
+            if mapping_changed:
+                snapshot_subject_plan(
+                    instance.application,
+                    self.request.user,
+                    trigger=ApplicationSubjectPlanVersion.Trigger.MAPPING_CHANGED,
+                )
+            serializer.save()
 
     def perform_destroy(self, instance):
         user = self.request.user
@@ -1549,7 +1600,13 @@ class ApplicationSubjectSelectionViewSet(viewsets.ModelViewSet):
                         )
                     }
                 )
-        instance.delete()
+        with transaction.atomic():
+            snapshot_subject_plan(
+                instance.application,
+                user,
+                trigger=ApplicationSubjectPlanVersion.Trigger.MAPPING_CHANGED,
+            )
+            instance.delete()
 
 
 class ApplicationStatusViewSet(viewsets.ReadOnlyModelViewSet):

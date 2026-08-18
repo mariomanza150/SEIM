@@ -6,6 +6,7 @@ from .models import (
     AgreementComment,
     Application,
     ApplicationStatus,
+    ApplicationSubjectPlanVersion,
     ApplicationSubjectSelection,
     Comment,
     EligibilityRuleSet,
@@ -510,6 +511,30 @@ class ApplicationSubjectSelectionSerializer(serializers.ModelSerializer):
                 validated_data["credits"] = validated_data["custom_credits"]
         return super().create(validated_data)
 
+
+class ApplicationSubjectPlanVersionSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ApplicationSubjectPlanVersion
+        fields = (
+            "id",
+            "application",
+            "version_number",
+            "created_at",
+            "created_by",
+            "created_by_name",
+            "trigger",
+            "payload",
+        )
+        read_only_fields = fields
+
+    def get_created_by_name(self, obj) -> str | None:
+        user = obj.created_by
+        if user is None:
+            return None
+        full = user.get_full_name().strip() if hasattr(user, "get_full_name") else ""
+        return full or getattr(user, "username", None) or getattr(user, "email", None)
 
 
 class ApplicationSerializer(serializers.ModelSerializer):

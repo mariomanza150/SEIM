@@ -382,7 +382,21 @@
     "toastConfirmed": "Calificaciones confirmadas y carta regenerada.",
     "toastConfirmFailed": "No se pudieron confirmar las calificaciones.",
     "toastRejected": "Calificaciones rechazadas. El estudiante puede editar de nuevo.",
-    "toastRejectFailed": "No se pudieron rechazar las calificaciones."
+    "toastRejectFailed": "No se pudieron rechazar las calificaciones.",
+    "previousVersionsTitle": "Versiones anteriores",
+    "previousVersionsHelp": "Instantáneas de solo lectura tomadas antes de cada cambio al plan (se conservan hasta 3).",
+    "previousVersionsEmpty": "Aún no hay versiones anteriores.",
+    "previousVersionsLoading": "Cargando historial de versiones…",
+    "versionLabel": "Versión {n}",
+    "versionSavedAt": "Guardada {date}",
+    "versionSavedBy": "por {name}",
+    "versionCourseCount": "{count} curso(s)",
+    "versionTrigger": {
+      "mapping_changed": "Cambio de mapeo",
+      "grades_proposed": "Calificaciones propuestas",
+      "grades_confirmed": "Calificaciones confirmadas",
+      "grades_rejected": "Calificaciones rechazadas"
+    }
   },
   "adminPrograms": {
     "title": "Gestión de programas",

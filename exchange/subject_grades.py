@@ -9,9 +9,11 @@ from django.utils import timezone
 
 from exchange.models import (
     SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES,
+    ApplicationSubjectPlanVersion,
     ApplicationSubjectSelection,
     TimelineEvent,
 )
+from exchange.subject_plan_versions import snapshot_subject_plan
 
 
 def _application_status_name(application) -> str | None:
@@ -83,7 +85,17 @@ def propose_subject_grades(application, user) -> int:
     if not to_update:
         raise ValueError("No subject selections have a proposed host grade.")
 
+    status_changing = any(
+        row.grade_status != ApplicationSubjectSelection.GradeStatus.PROPOSED
+        for row in to_update
+    )
     with transaction.atomic():
+        if status_changing:
+            snapshot_subject_plan(
+                application,
+                user,
+                trigger=ApplicationSubjectPlanVersion.Trigger.GRADES_PROPOSED,
+            )
         for row in to_update:
             row.grade_status = ApplicationSubjectSelection.GradeStatus.PROPOSED
             row.proposed_at = now
@@ -157,8 +169,18 @@ def confirm_subject_grades(application, user, notes: str = "") -> int:
 
     now = timezone.now()
     notes = notes or ""
+    status_changing = any(
+        row.grade_status != ApplicationSubjectSelection.GradeStatus.CONFIRMED
+        for row in rows
+    )
 
     with transaction.atomic():
+        if status_changing:
+            snapshot_subject_plan(
+                application,
+                user,
+                trigger=ApplicationSubjectPlanVersion.Trigger.GRADES_CONFIRMED,
+            )
         for row in rows:
             try:
                 home_grade = GradeTranslationService.translate_grade(
@@ -209,7 +231,17 @@ def reject_subject_grades(application, user, notes: str = "") -> int:
     if not rows:
         raise ValueError("This application has no subject selections to reject.")
 
+    status_changing = any(
+        row.grade_status != ApplicationSubjectSelection.GradeStatus.REJECTED
+        for row in rows
+    )
     with transaction.atomic():
+        if status_changing:
+            snapshot_subject_plan(
+                application,
+                user,
+                trigger=ApplicationSubjectPlanVersion.Trigger.GRADES_REJECTED,
+            )
         for row in rows:
             row.grade_status = ApplicationSubjectSelection.GradeStatus.REJECTED
             row.confirmed_host_grade = None
