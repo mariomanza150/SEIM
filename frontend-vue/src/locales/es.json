@@ -1460,6 +1460,7 @@
     "submitApplication": "Enviar solicitud",
     "submitBlockedTitle": "Los documentos obligatorios deben estar aprobados primero",
     "submitBlockedHostTitle": "Selecciona universidad, escuela y programa académico anfitrión antes de enviar",
+    "submitBlockedEligibilityTitle": "No cumples los requisitos de elegibilidad. Actualiza tu perfil antes de enviar.",
     "deleteApplication": "Eliminar solicitud",
     "backToList": "Volver al listado",
     "sidebarApplicationDetails": "Detalles de la solicitud",

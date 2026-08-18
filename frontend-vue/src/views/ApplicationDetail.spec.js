@@ -454,4 +454,47 @@ describe('ApplicationDetail', () => {
     )
     mockAuthStore.userRole = 'coordinator'
   })
+
+  it('disables submit when eligibility is incomplete', async () => {
+    mockAuthStore.userRole = 'student'
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'draft',
+            document_checklist: { required_count: 0, complete: true },
+            readiness: {
+              score: 88,
+              level: 'attention',
+              headline: 'Eligibility requirements not met.',
+              host_destination: { required: false, complete: true },
+              eligibility: {
+                complete: false,
+                issues: ['Language proficiency below requirement. Required: B2, Your level: A2'],
+              },
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="submit-application-btn"]').exists()).toBe(true)
+    })
+    const btn = wrapper.find('[data-testid="submit-application-btn"]')
+    expect(btn.attributes('disabled')).toBeDefined()
+    expect(btn.attributes('title')).toBe(
+      i18n.global.t('applicationDetailPage.submitBlockedEligibilityTitle')
+    )
+    expect(wrapper.find('[data-testid="readiness-eligibility-issues"]').text()).toContain(
+      'Language proficiency'
+    )
+    mockAuthStore.userRole = 'coordinator'
+  })
 })

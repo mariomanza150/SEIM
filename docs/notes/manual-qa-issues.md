@@ -12,11 +12,9 @@ _Logged during [manual feature & workflow test loop](prompts/manual-feature-work
 
 ## Open
 
-| ID | Date | Severity | Summary |
-|----|------|----------|---------|
-| — | — | — | No open items. |
+_None._
 
-Rollup: [`qa-runs/2026-08-16-retest-summary.md`](qa-runs/2026-08-16-retest-summary.md). Evening §8: [`qa-runs/2026-08-17-lifecycle-retest.md`](qa-runs/2026-08-17-lifecycle-retest.md). Env: `http://localhost:8020`, Compose `seim-localprod`.
+Rollup: [`qa-runs/2026-08-16-retest-summary.md`](qa-runs/2026-08-16-retest-summary.md). Evening §8: [`qa-runs/2026-08-17-lifecycle-retest.md`](qa-runs/2026-08-17-lifecycle-retest.md). 2026-08-18: [`qa-runs/2026-08-18-manual-qa.md`](qa-runs/2026-08-18-manual-qa.md). Env: `http://localhost:8020`, Compose `seim-localprod`.
 
 ### Environment blockers (2026-08-16) — closed on retest
 
@@ -33,6 +31,8 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 | ID | Date resolved | Verification |
 |----|---------------|----------------|
+| **MQ-2026-08-18-002** | 2026-08-18 | **Profile PATCH left draft GET stale:** after `PATCH /api/accounts/profile/` (German A2 → English B2), `compute_application_readiness` was `ready` in-process but student `GET /api/applications/{id}/` still returned cached eligibility failures. **Fix:** `ProfileView.perform_update` and `ProfileViewSet.perform_update` call `invalidate_application_api_responses()`. Live: second PATCH then GET `ready` 99, submit 200 → `submitted`. Pytest `test_patch_profile_invalidates_application_api_cache`. [`qa-runs/2026-08-18-manual-qa.md`](qa-runs/2026-08-18-manual-qa.md). |
+| **MQ-2026-08-18-001** | 2026-08-18 | **Draft readiness used a stale eligible snapshot:** App A `d78fc22b-…` profile German A2 vs program English B2, but `language_at_apply=English C1` made `evaluate_eligibility(..., application=app)` pass. UI 99% ready + Submit enabled; submit 400. **Fix:** draft `_eligibility_state` evaluates the **live** profile; Vue disables Submit on `eligibility.complete === false`. Live GET after `invalidate_application_api_responses()`: score 88, `attention`, language issues; Submit disabled. Pytest `test_draft_ineligible_language_is_not_ready` + `test_draft_ignores_stale_eligible_snapshot`. [`qa-runs/2026-08-18-manual-qa.md`](qa-runs/2026-08-18-manual-qa.md). |
 | **MQ-2026-08-17-002** | 2026-08-17 | **Student `GET /api/applications/{id}/` stayed stale after staff mutate:** retrieve/list keys are per-user; staff PATCH/comment/validate did not bust the student's entry. **Fix:** `invalidate_application_api_responses()` bumps `api_cache_gen:ApplicationViewSet` and `delete_pattern`s Application/Comment view prefixes (not all `api_resp:*`). Wired on application CRUD/submit/withdraw/workflow, comments (incl. partner), document create/update/replace/validate/resubmit. Pytest `test_student_get_sees_staff_status_and_comment_after_cache` (8 passed with cache-key tests). Live `8020` Porto `bb40c56f-…`: coordinator comment visible on student GET immediately; status `approved`→`under_review`→`approved` student GET matched without TTL/cache clear. [`qa-runs/2026-08-17-fixtures-lifecycle.md`](qa-runs/2026-08-17-fixtures-lifecycle.md). |
 | **MQ-2026-08-17-001** | 2026-08-17 | **Document upload type dropdown dropped `transcript` / `passport`:** `GET /api/document-types/` is paginated (`PAGE_SIZE` 20); `DocumentUpload.vue` only used `results` from page 1 (mobility types). Required English types live on later pages, so §8 UI upload could not select them. **Fix:** fetch `page_size=100` and follow `next`. Vitest `DocumentUpload.spec.js`. Vue dist copied into `seim-web-local-prod`. [`qa-runs/2026-08-17-fixtures-lifecycle.md`](qa-runs/2026-08-17-fixtures-lifecycle.md). |
 | **MQ-2026-08-17-003** | 2026-08-18 | **Empty host tree no longer blocks submit incorrectly:** `validate_application_host_destination(require_complete=True)` only requires host levels that exist on the scheme; readiness `host_destination` drives Submit disable when a tree exists but is incomplete. Vue hides required cascade when `/host-institutions/` is empty. Pytest `test_host_destination_cascade.py`, `test_application_readiness.py`; Vitest `ApplicationForm.spec.js`, `ApplicationDetail.spec.js`. |
@@ -58,4 +58,4 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 ---
 
-*Last updated: 2026-08-18 — **MQ-2026-08-17-003** resolved (host cascade optional when scheme has no destinations; readiness/submit gated when a tree exists).*
+*Last updated: 2026-08-18 — **MQ-2026-08-18-002** resolved (profile PATCH busts application GET cache so draft eligibility updates immediately).*

@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from core.cache import invalidate_application_api_responses
 from core.permissions import CanManageRoles
 from core.throttling import BurstRateThrottle
 
@@ -77,6 +78,10 @@ class ProfileViewSet(viewsets.ModelViewSet):
         if self.request.user.is_staff:
             return Profile.objects.all()
         return Profile.objects.filter(user=self.request.user)
+
+    def perform_update(self, serializer):
+        serializer.save()
+        invalidate_application_api_responses()
 
 
 class ActiveCatalogViewSet(viewsets.ReadOnlyModelViewSet):
@@ -308,6 +313,12 @@ class ProfileView(generics.RetrieveUpdateAPIView):
             "grade_scale",
         ).get_or_create(user=self.request.user)
         return profile
+
+    def perform_update(self, serializer):
+        serializer.save()
+        # Draft readiness uses the live profile; cached application GET must not
+        # keep a pre-patch eligibility payload (MQ-2026-08-18-002).
+        invalidate_application_api_responses()
 
 
 class ProfileUpdateView(generics.GenericAPIView):

@@ -280,13 +280,13 @@ Use **Student** `student@test.com` unless noted. Logout/login if you were anothe
 
 ### 2.3 Application detail — timeline, comments, readiness (`programs-applications`, `readiness-compare`)
 
-- [ ] **Detail panes**
+- [x] **Detail panes**
   - **Role:** Student
   - **Path:** `/seim/applications/<id>` (open any seeded row)
   - **Steps:** Open detail. Check breadcrumb program title, status, timeline, comments thread, readiness/headline, document checklist chrome.
   - **Expected:** Timeline events with actor names where seeded. Comments visible. Readiness level/score or headline present. Program title, not UUID.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 App A `d78fc22b-…` Manual QA Mobility 2026: Draft, Kardex+passport approved, comments/timeline present. Readiness **88% attention** after MQ-001 (eligibility German A2 vs English B2). Screenshot: [`qa-runs/2026-08-18-eligibility/mq-2026-08-18-001-eligibility-gate.png`](qa-runs/2026-08-18-eligibility/mq-2026-08-18-001-eligibility-gate.png).
 
 ### 2.4 New application — filters and presets (`programs-applications`, `readiness-compare`)
 
@@ -390,33 +390,33 @@ Use **Student** `student@test.com` unless noted. Logout/login if you were anothe
 
 ### 2.14 Calendar (`calendar-ics`)
 
-- [ ] **Events, toggles, saved views, ICS**
+- [x] **Events, toggles, saved views, ICS**
   - **Role:** Student
   - **Path:** `/seim/calendar`
   - **Steps:** Open Calendar / Deadlines. Use type toggles and date range. Save a view if offered. Copy HTTPS ICS and webcal subscribe URLs (do not complete Google OAuth — N/A).
   - **Expected:** Event list or empty state. Toggles filter types. Subscribe fields copyable. No Google OAuth UI required.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 HTTPS + webcal URLs populated. Unchecked Applications hid `Application: Vue E2E` rows; apply windows remained. Saved view `MQ-2026-08-18 no-apps`. [`qa-runs/2026-08-18-eligibility/2026-08-18-calendar.png`](qa-runs/2026-08-18-eligibility/2026-08-18-calendar.png).
 
 ### 2.15 Notifications inbox (`notifications`)
 
-- [ ] **Notification center**
+- [x] **Notification center**
   - **Role:** Student
   - **Path:** `/seim/notifications`
   - **Steps:** Open from sidebar and from the navbar bell. Filter/clear if present. Open one item if seeded.
   - **Expected:** Inbox list (seed creates notifications). Bell dropdown + “view all” reach this page.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 inbox shows App A “submitted successfully” (~2m) and “status has changed to approved” (~1m). Bell count 3.
 
 ### 2.16 SPA 404 (`vue-portal`)
 
-- [ ] **Not found**
+- [x] **Not found**
   - **Role:** Student
   - **Path:** `/seim/this-route-does-not-exist`
   - **Steps:** Open a nonsense `/seim/…` path while logged in.
   - **Expected:** Vue NotFound page (not Django 404 HTML, not a blank shell).
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 title `404 — Page not found - SEIM`, heading 404 / Page Not Found, Go to Dashboard.
 
 ---
 
@@ -592,13 +592,13 @@ Logout from student. Login **Coordinator** `coordinator@test.com` / `coordinator
 
 ### 4.12 Nominations (`nominations`)
 
-- [ ] **Nominations by program (live SPA)**
+- [x] **Nominations by program (live SPA)**
   - **Role:** Coordinator
   - **Path:** `/seim/nominations`
   - **Steps:** Open Nominations (sidebar). Select a seeded program. Read capacity / slots remaining. If rows exist, change a rank and save if a save control exists.
   - **Expected:** Program select, capacity/slots, table or empty state. **In scope** as a live route even if the tracker still lists nominations as P3. Do not Fail for missing matching-cycle product.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 `coordinator@test.com`. Barcelona empty (drafts excluded). DAAD capacity 1 / slots 0; ranks 1+2 saved. Did not run Match to seats. [`qa-runs/2026-08-18-manual-qa.md`](qa-runs/2026-08-18-manual-qa.md).
 
 ### 4.13 Eligibility rulesets — load/read only (`eligibility-rulesets`)
 
@@ -636,13 +636,13 @@ Logout from student. Login **Coordinator** `coordinator@test.com` / `coordinator
 
 ### 5.1 Partner portal (`partner`)
 
-- [ ] **Agreements, documents, thread**
+- [x] **Agreements, documents, thread**
   - **Role:** Partner
   - **Path:** `/seim/partner`
   - **Steps:** Logout. Login `partner@test.com` / `partner123`. Open Partner portal. Confirm agreements table. **View documents** on a row. **Open thread**.
   - **Expected:** Agreements (seed ties partner to `DEMO-SEED-AGR-001` / Erasmus framework). Documents panel and thread UI open. Empty docs/thread is OK if chrome works.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 Ines Partner. Catalonia Erasmus agreement, signed_copy doc, agreement thread post succeeded, applicant thread chrome for Andres G. [`qa-runs/2026-08-18-manual-qa.md`](qa-runs/2026-08-18-manual-qa.md).
 
 ### 5.2 Partner denial already covered
 
@@ -816,53 +816,53 @@ Use a **new draft** from `student@test.com` so you do not depend on leftover §2
 
 ### 8.3 Submit or waitlist (`programs-applications`)
 
-- [ ] **Submit**
+- [x] **Submit**
   - **Role:** Student
   - **Path:** `/seim/applications/<id>`
   - **Steps:** Submit. If required docs are not staff-approved, either get a coordinator to approve first (§8.3b) or record the gate and use a seed app that can submit. If the program is at capacity, waitlist is a Pass.
   - **Expected:** Status **submitted** or **waitlist**, or a clear doc-gate error (then coordinate approve-docs and retry).
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 bumped profile to English B2 (MQ-002 cache bust). App A `d78fc22b-…` `POST …/submit/` 200, status `submitted` at 2026-08-18 15:46.
 
 ### 8.4 Coordinator review + comment (`coord-review`)
 
-- [ ] **Staff review**
+- [x] **Staff review**
   - **Role:** Coordinator
   - **Path:** `/seim/review-queue` → application detail
   - **Steps:** Find the application. Add a **public** comment. Optionally validate the uploaded doc so submit can complete.
   - **Expected:** Comment saved. Queue still lists the app until approved.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 queue Submitted filter listed App A. Public comment posted; then approved (8.6).
 
 ### 8.5 Student sees update (`notifications`, `vue-portal`)
 
-- [ ] **Status / notification / `application.sync`**
+- [x] **Status / notification / `application.sync`**
   - **Role:** Student
   - **Path:** `/seim/applications/<id>`, `/seim/notifications`, dashboard
   - **Steps:** Logout/login student (or keep a second browser if you can). Watch detail status, inbox, toast. If WebSocket is up, a toast/list refresh from `application.sync` is a plus.
   - **Expected:** Student sees the new status and/or a notification. Toast is Pass if it appears; missing toast with updated detail/inbox is still Pass if sync is visible somehow. Total silence is Fail.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** After logout/login, App A shows Approved + coordinator comment. Inbox has submit + approved rows. Bell 3.
 
 ### 8.6 Coordinator approve (`coord-review`)
 
-- [ ] **Approve**
+- [x] **Approve**
   - **Role:** Coordinator
   - **Path:** `/seim/applications/<id>`
   - **Steps:** Set status to **approved** (use this lifecycle app, not an unrelated completed seed unless submit failed).
   - **Expected:** Status approved.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 15:48 Coordinator User. Timeline “Status changed to approved.” [`qa-runs/2026-08-18-eligibility/2026-08-18-app-a-approved.png`](qa-runs/2026-08-18-eligibility/2026-08-18-app-a-approved.png).
 
 ### 8.7 Student sees approved (`programs-applications`)
 
-- [ ] **Approved on detail**
+- [x] **Approved on detail**
   - **Role:** Student
   - **Path:** `/seim/applications/<id>`
   - **Steps:** Open the same application.
   - **Expected:** Detail shows **approved**.
-  - **Result:** `Pass` / `Fail` / `Blocked`
-  - **Evidence notes:**
+  - **Result:** `Pass`
+  - **Evidence notes:** 2026-08-18 student detail 100% “Application approved.” Comment visible. [`qa-runs/2026-08-18-eligibility/2026-08-18-student-approved.png`](qa-runs/2026-08-18-eligibility/2026-08-18-student-approved.png).
 
 ---
 

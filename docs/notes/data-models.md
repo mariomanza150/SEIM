@@ -260,6 +260,7 @@ Student application for a mobility scheme.
 
 **Validation:**
 - `validate_application_host_destination(..., require_complete=True)` on submit / transition to submitted. Host FKs are required only for levels that exist on the scheme (no host universities → destination is optional).
+- `compute_application_readiness` includes `eligibility` (`complete`, `issues`) from the same engine as `POST …/submit/` (`evaluate_eligibility` on the **live** student profile for drafts). Incomplete eligibility is not `ready` and Vue disables Submit. `PATCH /api/accounts/profile/` (and ProfileViewSet updates) call `invalidate_application_api_responses()` so draft GET is not left on a pre-patch eligibility payload.
 - Host school must belong to institution; academic program to school; institution to scheme
 
 **Indexes:**

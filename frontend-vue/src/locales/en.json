@@ -1464,6 +1464,7 @@
     "submitApplication": "Submit application",
     "submitBlockedTitle": "Required documents must be approved first",
     "submitBlockedHostTitle": "Select a host university, school, and academic program before submitting",
+    "submitBlockedEligibilityTitle": "Eligibility requirements are not met. Update your profile before submitting.",
     "deleteApplication": "Delete application",
     "backToList": "Back to list",
     "sidebarApplicationDetails": "Application details",

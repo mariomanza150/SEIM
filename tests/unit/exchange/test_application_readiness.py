@@ -81,3 +81,97 @@ class TestApplicationReadiness:
         r = compute_application_readiness(app, include_dynamic_form=False)
         assert r["host_destination"]["required"] is False
         assert r["host_destination"]["complete"] is True
+
+    def test_draft_ineligible_language_is_not_ready(self):
+        from datetime import date, timedelta
+
+        from accounts.models import Profile, Role
+        from django.contrib.auth import get_user_model
+        from exchange.models import Application, ApplicationStatus, Program
+
+        User = get_user_model()
+        student = User.objects.create(
+            username="elig_ready_stu",
+            email="elig_ready_stu@test.com",
+            password="x",
+        )
+        role, _ = Role.objects.get_or_create(name="student")
+        student.roles.add(role)
+        Profile.objects.update_or_create(
+            user=student,
+            defaults={
+                "gpa": 3.7,
+                "language": "German",
+                "language_level": "A2",
+            },
+        )
+        today = date.today()
+        program = Program.objects.create(
+            name="Language gate program",
+            description="d",
+            start_date=today,
+            end_date=today + timedelta(days=120),
+            application_open_date=today - timedelta(days=7),
+            application_deadline=today + timedelta(days=30),
+            required_language="English",
+            min_language_level="B2",
+            is_active=True,
+        )
+        draft, _ = ApplicationStatus.objects.get_or_create(name="draft")
+        app = Application.objects.create(
+            student=student, program=program, status=draft
+        )
+        r = compute_application_readiness(app, include_dynamic_form=False)
+        assert r["eligibility"]["complete"] is False
+        assert r["eligibility"]["issues"]
+        assert r["level"] != "ready"
+        assert "eligibility" in r["headline"].lower()
+
+    def test_draft_ignores_stale_eligible_snapshot(self):
+        """Draft readiness uses the live profile, not leftover *_at_apply fields."""
+        from datetime import date, timedelta
+
+        from accounts.models import Profile, Role
+        from django.contrib.auth import get_user_model
+        from exchange.models import Application, ApplicationStatus, Program
+
+        User = get_user_model()
+        student = User.objects.create(
+            username="elig_stale_snap",
+            email="elig_stale_snap@test.com",
+            password="x",
+        )
+        role, _ = Role.objects.get_or_create(name="student")
+        student.roles.add(role)
+        Profile.objects.update_or_create(
+            user=student,
+            defaults={
+                "gpa": 3.7,
+                "language": "German",
+                "language_level": "A2",
+            },
+        )
+        today = date.today()
+        program = Program.objects.create(
+            name="Stale snapshot program",
+            description="d",
+            start_date=today,
+            end_date=today + timedelta(days=120),
+            application_open_date=today - timedelta(days=7),
+            application_deadline=today + timedelta(days=30),
+            required_language="English",
+            min_language_level="B2",
+            is_active=True,
+        )
+        draft, _ = ApplicationStatus.objects.get_or_create(name="draft")
+        app = Application.objects.create(
+            student=student,
+            program=program,
+            status=draft,
+            language_at_apply="English",
+            language_level_at_apply="C1",
+        )
+        r = compute_application_readiness(app, include_dynamic_form=False)
+        assert r["eligibility"]["complete"] is False
+        assert r["level"] != "ready"
+        assert any("English" in issue for issue in r["eligibility"]["issues"])

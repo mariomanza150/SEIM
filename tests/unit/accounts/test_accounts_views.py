@@ -468,6 +468,18 @@ class TestProfileView(APITestCase):
         assert response.status_code == status.HTTP_200_OK
         assert response.data["first_name"] == "Updated"
 
+    def test_patch_profile_invalidates_application_api_cache(self):
+        """Profile language/GPA changes must not leave a stale application GET."""
+        from unittest.mock import patch
+
+        url = reverse("accounts:profile")
+        with patch("accounts.views.invalidate_application_api_responses") as mock_inv:
+            response = self.client.patch(
+                url, {"language": "English", "language_level": "B2"}
+            )
+        assert response.status_code == status.HTTP_200_OK
+        mock_inv.assert_called_once()
+
     def test_update_profile_personal_fields_roundtrip(self):
         """Personal, academic, and banking fields persist across PATCH then GET."""
         school = SchoolFaculty.objects.create(name="Engineering")

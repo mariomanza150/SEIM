@@ -112,6 +112,18 @@
                 </div>
                 <div class="flex-grow-1" style="min-width: 220px">
                   <p class="small mb-2">{{ application.readiness.headline }}</p>
+                  <ul
+                    v-if="application.readiness.eligibility?.issues?.length"
+                    class="small mb-2 text-danger"
+                    data-testid="readiness-eligibility-issues"
+                  >
+                    <li
+                      v-for="(issue, idx) in application.readiness.eligibility.issues"
+                      :key="idx"
+                    >
+                      {{ issue }}
+                    </li>
+                  </ul>
                   <div v-if="application.status === 'draft'" class="progress" style="height: 6px">
                     <div
                       class="progress-bar"
@@ -831,13 +843,25 @@ const submitBlockedByHost = computed(() => {
   return !host.complete
 })
 
+const submitBlockedByEligibility = computed(() => {
+  const el = application.value?.readiness?.eligibility
+  if (!el) return false
+  return el.complete === false
+})
+
 const submitBlocked = computed(
-  () => submitBlockedByDocuments.value || submitBlockedByHost.value
+  () =>
+    submitBlockedByDocuments.value
+    || submitBlockedByHost.value
+    || submitBlockedByEligibility.value
 )
 
 const submitBlockedTitle = computed(() => {
   if (submitBlockedByDocuments.value) return t('applicationDetailPage.submitBlockedTitle')
   if (submitBlockedByHost.value) return t('applicationDetailPage.submitBlockedHostTitle')
+  if (submitBlockedByEligibility.value) {
+    return t('applicationDetailPage.submitBlockedEligibilityTitle')
+  }
   return ''
 })
 

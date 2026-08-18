@@ -10,11 +10,12 @@ from django.utils import timezone
 
 from documents.services import DocumentService
 
+from .eligibility_rules import evaluate_eligibility
 from .models import (
     program_requires_host_destination,
     validate_application_host_destination,
 )
-from .services import ApplicationService
+from .services import ApplicationService, _program_for_eligibility
 
 
 def _days_until_deadline(deadline, today) -> int | None:
@@ -111,12 +112,28 @@ def _form_progress(application) -> float:
     return 1.0
 
 
+def _eligibility_state(application) -> dict[str, Any]:
+    """Whether submit-time eligibility would pass (same engine as POST …/submit/).
+
+    Drafts use the **live** profile. Apply-time snapshot fields can be stale from a
+    previous in-transaction capture that rolled back, or from an older profile.
+    ``submit_application`` recaptures from the profile before checking.
+    """
+    eval_program = _program_for_eligibility(application.program)
+    ev = evaluate_eligibility(application.student, eval_program)
+    return {
+        "complete": bool(ev.eligible),
+        "issues": list(ev.failures) if not ev.eligible else [],
+    }
+
+
 def _headline_draft(
     counts: dict[str, int],
     window_open: bool,
     days_left: int | None,
     form_ok: bool,
     host_ok: bool = True,
+    eligibility_ok: bool = True,
 ) -> str:
     if not window_open:
         return "Application window is closed for this program."
@@ -131,6 +148,8 @@ def _headline_draft(
         parts.append("Program form incomplete")
     if not host_ok:
         parts.append("Host destination incomplete")
+    if not eligibility_ok:
+        parts.append("Eligibility requirements not met")
     if days_left is not None and days_left >= 0:
         if days_left <= 3:
             parts.append(f"Deadline in {days_left} day(s)")
@@ -186,6 +205,7 @@ def compute_application_readiness(
                 "required": program_requires_host_destination(program),
                 "complete": True,
             },
+            "eligibility": {"complete": True, "issues": []},
         }
 
     doc_progress, counts = _document_progress(application)
@@ -201,6 +221,8 @@ def compute_application_readiness(
         "required": host_required,
         "complete": host_complete,
     }
+    eligibility = _eligibility_state(application)
+    eligibility_ok = eligibility["complete"]
 
     if not window["is_open"]:
         score = max(0, min(30, int(doc_progress * 30)))
@@ -212,6 +234,7 @@ def compute_application_readiness(
             "deadline_days": days_left,
             "document_counts": counts,
             "host_destination": host_destination,
+            "eligibility": eligibility,
         }
 
     # Draft + window open
@@ -222,6 +245,8 @@ def compute_application_readiness(
         score = min(score, 20)
     if host_required and not host_ok:
         score = min(score, 90)
+    if not eligibility_ok:
+        score = min(score, 88)
     score = max(0, min(99, score))
 
     form_ok = form_progress >= 0.99
@@ -231,6 +256,7 @@ def compute_application_readiness(
         days_left=days_left,
         form_ok=form_ok,
         host_ok=host_ok,
+        eligibility_ok=eligibility_ok,
     )
 
     docs_ok = counts["required"] == 0 or (
@@ -238,7 +264,13 @@ def compute_application_readiness(
         and counts["resubmit"] == 0
         and counts["pending_review"] == 0
     )
-    if docs_ok and form_ok and host_ok and (days_left is None or days_left >= 0):
+    if (
+        docs_ok
+        and form_ok
+        and host_ok
+        and eligibility_ok
+        and (days_left is None or days_left >= 0)
+    ):
         level = "ready"
         score = max(score, 92)
     elif (
@@ -246,6 +278,7 @@ def compute_application_readiness(
         or counts["resubmit"]
         or not form_ok
         or not host_ok
+        or not eligibility_ok
         or (days_left is not None and days_left <= 7)
     ):
         level = "attention"
@@ -260,4 +293,5 @@ def compute_application_readiness(
         "deadline_days": days_left,
         "document_counts": counts,
         "host_destination": host_destination,
+        "eligibility": eligibility,
     }
