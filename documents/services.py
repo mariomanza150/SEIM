@@ -293,6 +293,13 @@ class DocumentService:
         )
 
     @staticmethod
+    def resolve_open_resubmission_requests(document: Document) -> int:
+        """Mark pending resubmission requests as addressed after a new file is uploaded."""
+        return DocumentResubmissionRequest.objects.filter(
+            document=document, resolved=False
+        ).update(resolved=True)
+
+    @staticmethod
     def can_request_resubmission(document):
         """Limit the number of resubmissions per document."""
         return (

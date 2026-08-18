@@ -31,6 +31,7 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 | ID | Date resolved | Verification |
 |----|---------------|----------------|
+| **MQ-2026-08-18-006** | 2026-08-18 | **Student file replace left resubmit request open:** Fulbright transcript PATCH 200 but `DocumentResubmissionRequest.resolved` stayed false, so dashboard/checklist still showed “resubmission requested.” **Fix:** `DocumentService.resolve_open_resubmission_requests` on serializer file replace. Live second PATCH: `open=0`, `resolved=1`. Pytest `test_resolve_open_resubmission_requests_marks_pending`, `test_document_serializer_update_resolves_open_resubmission`. |
 | **MQ-2026-08-18-005** | 2026-08-18 | **Coordinator status PATCH 400 UUID:** Fulbright `be47793d-…` `PATCH {status: under_review}` failed with `ProgramEligibilityProxy … is not a valid UUID` because staff PATCH re-ran student `check_eligibility` and `_rule_required_documents` filtered `ProgramDocumentRequirement` with the proxy. **Fix:** `concrete_program()` unwrap; `ApplicationSerializer.validate` skips eligibility/duplicate checks for coordinator/admin. Live PATCH 200 → `under_review`. Pytest `test_coordinator_can_review_when_program_has_ruleset`, `test_evaluate_eligibility_with_application_unwraps_ruleset_proxy`. |
 | **MQ-2026-08-18-004** | 2026-08-18 | **Review-queue search missed student names:** placeholder says “Student, email, program, status…” but `ApplicationViewSet.search_fields` was only program/username/email. `search=Diego`/`Lopez` → 0. **Fix:** add `student__first_name`, `last_name`, `middle_name`, `mothers_last_name`, `status__name` (Django admin search names too). Live `GET /api/applications/?search=Diego` → Diego Lopez DAAD. Pytest `test_application_search_matches_student_name`. |
 | **MQ-2026-08-18-003** | 2026-08-18 | **Leftover `/admin-dashboard/` and `/dashboard/analytics/` 404'd through Wagtail:** Vue already aliases `/seim/admin-dashboard` → dashboard and `/seim/analytics` → forecasts, but the root leftovers were not registered before Wagtail's catch-all (regression vs 2026-08-16 302s). **Fix:** `seim/urls.py` RedirectView `admin-dashboard/` → `/seim/dashboard/` and `dashboard/analytics/` → `/seim/analytics-forecasts/`. Live HEAD 302. Pytest `tests/test_urls.py` (host pytest needs compose Postgres on 5434; verified via curl on `:8020`). |
@@ -61,4 +62,4 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 ---
 
-*Last updated: 2026-08-18 — **MQ-2026-08-18-004/005** resolved (review-queue name search; coordinator status PATCH UUID).*
+*Last updated: 2026-08-18 — **MQ-2026-08-18-006** resolved (student replace auto-resolves open resubmit requests).*

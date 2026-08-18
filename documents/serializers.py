@@ -411,13 +411,14 @@ class DocumentSerializer(serializers.ModelSerializer):
 
         file_replacing = "file" in validated_data
         instance = super().update(instance, validated_data)
-        if file_replacing and user.has_role("student"):
-            if instance.application.student_id == user.id:
+        if file_replacing:
+            DocumentService.resolve_open_resubmission_requests(instance)
+            if user.has_role("student") and instance.application.student_id == user.id:
                 DocumentService.notify_coordinators_document_replaced(instance)
-        elif file_replacing:
-            NotificationService.broadcast_application_sync(
-                str(instance.application_id), "document_replaced", str(instance.id)
-            )
+            else:
+                NotificationService.broadcast_application_sync(
+                    str(instance.application_id), "document_replaced", str(instance.id)
+                )
         return instance
 
 

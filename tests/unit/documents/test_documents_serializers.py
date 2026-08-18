@@ -8,6 +8,7 @@ from accounts.models import User
 from documents import serializers
 from documents.models import (
     Document,
+    DocumentResubmissionRequest,
     DocumentType,
 )
 from exchange.models import Application, ApplicationStatus, Program
@@ -218,6 +219,66 @@ class TestDocumentSerializer:
                     assert serializer.is_valid()
                     updated_document = serializer.save()
                     assert updated_document == document
+
+    def test_document_serializer_update_resolves_open_resubmission(self):
+        factory = APIRequestFactory()
+        user = User.objects.create_user(
+            username="resubuser", email="resub@example.com"
+        )
+        program = Program.objects.create(
+            name="Resub Program",
+            description="A test program",
+            start_date="2023-01-01",
+            end_date="2023-12-31",
+        )
+        status = ApplicationStatus.objects.get_or_create(name="submitted")[0]
+        application = Application.objects.create(
+            program=program, student=user, status=status
+        )
+        document_type = DocumentType.objects.create(
+            name="Resub Document", description="A test document type"
+        )
+        document = Document.objects.create(
+            application=application,
+            type=document_type,
+            file=SimpleUploadedFile("old.pdf", b"old content"),
+            uploaded_by=user,
+        )
+        req = DocumentResubmissionRequest.objects.create(
+            document=document,
+            requested_by=user,
+            reason="Need a clearer scan",
+            resolved=False,
+        )
+        new_file = SimpleUploadedFile(
+            "new.pdf", b"new content", content_type="application/pdf"
+        )
+        request = factory.get("/")
+        request.user = user
+        with patch(
+            "documents.serializers.DocumentService.can_replace_document",
+            return_value=True,
+        ):
+            with patch(
+                "documents.serializers.DocumentService.validate_file_type_and_size"
+            ):
+                with patch(
+                    "documents.serializers.DocumentService.virus_scan",
+                    return_value=True,
+                ):
+                    with patch(
+                        "documents.serializers.NotificationService.broadcast_application_sync"
+                    ):
+                        serializer = serializers.DocumentSerializer(
+                            document,
+                            data={"file": new_file},
+                            context={"request": request},
+                            partial=True,
+                        )
+                        assert serializer.is_valid(), serializer.errors
+                        serializer.save()
+        req.refresh_from_db()
+        assert req.resolved is True
 
     def test_document_serializer_update_replacement_not_allowed(self):
         """Test DocumentSerializer update when replacement is not allowed."""

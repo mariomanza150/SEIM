@@ -349,3 +349,30 @@ class TestDocumentService(TestCase):
         admin_user.save()
         result = DocumentService.can_replace_document(document, admin_user)
         self.assertTrue(result)
+
+    def test_resolve_open_resubmission_requests_marks_pending(self):
+        document = Document.objects.create(
+            application=self.application,
+            type=self.document_type,
+            uploaded_by=self.user,
+        )
+        open_req = DocumentResubmissionRequest.objects.create(
+            document=document,
+            requested_by=self.user,
+            reason="Need a clearer scan",
+            resolved=False,
+        )
+        already_done = DocumentResubmissionRequest.objects.create(
+            document=document,
+            requested_by=self.user,
+            reason="Previous request",
+            resolved=True,
+        )
+
+        updated = DocumentService.resolve_open_resubmission_requests(document)
+
+        self.assertEqual(updated, 1)
+        open_req.refresh_from_db()
+        already_done.refresh_from_db()
+        self.assertTrue(open_req.resolved)
+        self.assertTrue(already_done.resolved)
