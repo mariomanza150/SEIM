@@ -10,7 +10,7 @@ from exchange.models import Application, ApplicationStatus, Program, TimelineEve
 from notifications.services import NotificationService
 
 POOL_STATUSES = ("submitted", "under_review", "waitlist", "nominated")
-LOCKED_STATUSES = ("approved", "completed")
+LOCKED_STATUSES = ("approved", "completed", "nominated")
 
 
 def nomination_queryset(program: Program):
@@ -49,13 +49,31 @@ def serialize_nomination_row(app: Application) -> dict:
     }
 
 
+def locked_seat_count(program: Program) -> int:
+    """Seats already taken by terminal statuses (not the matching pool)."""
+    return program.application_set.filter(
+        withdrawn=False, status__name__in=LOCKED_STATUSES
+    ).count()
+
+
+def match_slot_count(program: Program) -> int | None:
+    """Slots Match will allocate. Pool apps (submitted/under_review) do not consume these.
+
+    ``Program.enrollment_slots_remaining`` counts seat-holding statuses including
+    under_review, which made DAAD look full (0) while Match still had a slot.
+    """
+    if program.enrollment_capacity is None:
+        return None
+    return max(0, program.enrollment_capacity - locked_seat_count(program))
+
+
 def program_nomination_payload(program: Program) -> dict:
     rows = [serialize_nomination_row(a) for a in nomination_queryset(program)]
     return {
         "program_id": str(program.id),
         "program_name": program.name,
         "enrollment_capacity": program.enrollment_capacity,
-        "slots_remaining": program.enrollment_slots_remaining(),
+        "slots_remaining": match_slot_count(program),
         "applications": rows,
     }
 
@@ -105,14 +123,11 @@ def match_nominations(program: Program, user) -> dict:
         name="waitlist",
         defaults={"order": 15},
     )
-    locked = program.application_set.filter(
-        withdrawn=False, status__name__in=LOCKED_STATUSES
-    ).count()
     pool = list(nomination_queryset(program))
     if program.enrollment_capacity is None:
         slots = sum(1 for a in pool if a.nomination_rank is not None) or len(pool)
     else:
-        slots = max(0, program.enrollment_capacity - locked)
+        slots = match_slot_count(program)
 
     nominated = 0
     waitlisted = 0
@@ -121,6 +136,8 @@ def match_nominations(program: Program, user) -> dict:
             if _set_status(app, "nominated", user):
                 nominated += 1
         elif program.waitlist_when_full:
+            if app.status.name == "nominated":
+                continue
             if _set_status(app, "waitlist", user):
                 waitlisted += 1
     payload = program_nomination_payload(program)

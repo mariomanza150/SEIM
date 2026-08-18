@@ -568,7 +568,7 @@ Logout from student. Login **Coordinator** `coordinator@test.com` / `coordinator
   - **Steps:** Open Exchange agreements. Filter All vs Active, type, program, partner, expiring. Save a preset. Find `DEMO-SEED-AGR-*`. Use renewal **Pending** and **Draft** (successor) on one row if enabled.
   - **Expected:** Table of demo agreements (Barcelona Erasmus, DAAD, Fulbright, …). Active subset smaller than All. Renewal actions succeed or explain why not. `/seim/exchange` redirects here.
   - **Result:** `Pass`
-  - **Evidence notes:** 2026-08-18 admin session (staff registry). All 5 rows vs Active 2 (Catalonia Erasmus + DAAD). `/seim/exchange` and `/seim/agreement-documents` redirect here. Did not run renewal successor actions.
+  - **Evidence notes:** 2026-08-18 admin session (staff registry). All 5 rows vs Active 2 (Catalonia Erasmus + DAAD). `/seim/exchange` and `/seim/agreement-documents` redirect here. Fulbright `renewal_pending` **Draft** created successor `253c30d2-…` (Renewal draft). Evidence: [`qa-runs/2026-08-18-eligibility/2026-08-18-agreement-renewal-draft.png`](qa-runs/2026-08-18-eligibility/2026-08-18-agreement-renewal-draft.png).
 
 ### 4.10 Agreement documents (`agreements`)
 
@@ -598,7 +598,7 @@ Logout from student. Login **Coordinator** `coordinator@test.com` / `coordinator
   - **Steps:** Open Nominations (sidebar). Select a seeded program. Read capacity / slots remaining. If rows exist, change a rank and save if a save control exists.
   - **Expected:** Program select, capacity/slots, table or empty state. **In scope** as a live route even if the tracker still lists nominations as P3. Do not Fail for missing matching-cycle product.
   - **Result:** `Pass`
-  - **Evidence notes:** 2026-08-18 `coordinator@test.com`. Barcelona empty (drafts excluded). DAAD capacity 1 / slots 0; ranks 1+2 saved. Did not run Match to seats. [`qa-runs/2026-08-18-manual-qa.md`](qa-runs/2026-08-18-manual-qa.md).
+  - **Evidence notes:** 2026-08-18 `coordinator@test.com`. Barcelona empty (drafts excluded). DAAD ranks saved; **Match to seats** after MQ-009: Diego nominated, Elena waitlist, slots 0. [`qa-runs/2026-08-18-eligibility/2026-08-18-nominations-match.png`](qa-runs/2026-08-18-eligibility/2026-08-18-nominations-match.png).
 
 ### 4.13 Eligibility rulesets — load/read only (`eligibility-rulesets`)
 
@@ -618,7 +618,7 @@ Logout from student. Login **Coordinator** `coordinator@test.com` / `coordinator
   - **Steps:** Open Analytics forecasts. `/seim/analytics` should redirect here.
   - **Expected:** Forecasts page renders (charts/tables or empty). Not a Django API root. Predictive warehouse / BI is N/A.
   - **Result:** `Pass`
-  - **Evidence notes:** 2026-08-18 admin. Demand forecast table (trend 1.75/week). `/seim/analytics` → `/seim/analytics-forecasts`.
+  - **Evidence notes:** 2026-08-18 coordinator. Demand forecast table; DAAD filter trend 0.17/week; saved preset `MQ-2026-08-18 DAAD forecasts`. `/seim/analytics` → `/seim/analytics-forecasts`. Evidence: [`qa-runs/2026-08-18-eligibility/2026-08-18-analytics-forecasts-preset.png`](qa-runs/2026-08-18-eligibility/2026-08-18-analytics-forecasts-preset.png).
 
 ### 4.15 Staff documents presets (`documents-core`, `coord-review`)
 
@@ -922,7 +922,7 @@ Short pass only. **Do not** treat a full WCAG audit as required (that remains P2
 | Seed | `create_initial_data` + `seed_demo_readiness` (yes) |
 | Tester | Cursor agent + live `:8020` |
 | Clusters completed | Full checklist boxed Pass (see evidence notes) |
-| New `MQ-*` IDs | MQ-2026-08-18-001 … 008 (all resolved) |
+| New `MQ-*` IDs | MQ-2026-08-18-001 … 009 (all resolved) |
 | Blockers | None open |
 
 After execute: copy outcomes into [`feature-test-tracking.md`](feature-test-tracking.md) Notes; file defects in [`manual-qa-issues.md`](manual-qa-issues.md); optional narrative in [`manual-workflow-qa-session-log.md`](manual-workflow-qa-session-log.md). Follow [`prompts/manual-feature-workflow-test-loop-prompt.md`](prompts/manual-feature-workflow-test-loop-prompt.md).

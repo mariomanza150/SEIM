@@ -60,8 +60,40 @@ class TestNominationMatchingAPI(APITestCase):
         names = {self.app_a.status.name, self.app_b.status.name}
         self.assertEqual(names, {"nominated", "waitlist"})
 
+    def test_rematch_does_not_waitlist_existing_nominee(self):
+        self.test_staff_can_rank_and_match()
+        match_url = reverse(
+            "api:program-nominations-match", kwargs={"pk": self.program.pk}
+        )
+        listed = self.client.get(
+            reverse("api:program-nominations", kwargs={"pk": self.program.pk})
+        )
+        self.assertEqual(listed.data["slots_remaining"], 0)
+        rematch = self.client.post(match_url)
+        self.assertEqual(rematch.status_code, 200)
+        self.assertEqual(rematch.data["matched"]["nominated"], 0)
+        self.assertEqual(rematch.data["matched"]["waitlisted"], 0)
+        self.app_a.refresh_from_db()
+        self.app_b.refresh_from_db()
+        names = {self.app_a.status.name, self.app_b.status.name}
+        self.assertEqual(names, {"nominated", "waitlist"})
+
     def test_student_forbidden(self):
         self.authenticate_user(self.student_a)
         url = reverse("api:program-nominations", kwargs={"pk": self.program.pk})
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 403)
+
+    def test_slots_remaining_ignores_under_review_pool_apps(self):
+        """Submit-time occupancy counts under_review; Match slots must not."""
+        under_review, _ = ApplicationStatus.objects.get_or_create(
+            name="under_review", defaults={"order": 20}
+        )
+        self.app_a.status = under_review
+        self.app_a.save(update_fields=["status"])
+        self.authenticate_user(self.coord)
+        url = reverse("api:program-nominations", kwargs={"pk": self.program.pk})
+        listed = self.client.get(url)
+        self.assertEqual(listed.status_code, 200)
+        self.assertEqual(self.program.enrollment_slots_remaining(), 0)
+        self.assertEqual(listed.data["slots_remaining"], 1)
