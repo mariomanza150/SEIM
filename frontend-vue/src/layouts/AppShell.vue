@@ -1,149 +1,158 @@
 <template>
   <div class="seim-app-shell" data-testid="app-shell">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top seim-app-shell__navbar" :aria-label="t('dashboard.mainNavAria')">
-      <div class="container-fluid">
-        <button
-          class="btn btn-outline-light me-2 d-lg-none"
-          type="button"
-          data-bs-toggle="offcanvas"
-          data-bs-target="#seimSidebarOffcanvas"
-          aria-controls="seimSidebarOffcanvas"
-          :aria-label="t('dashboard.toggleNav')"
-        >
-          <i class="bi bi-list" aria-hidden="true" />
-        </button>
-        <button
-          type="button"
-          class="btn btn-outline-light me-2 d-none d-md-inline-flex align-items-center"
-          :aria-pressed="sidebarCollapsed ? 'true' : 'false'"
-          :aria-label="t('dashboard.toggleSidebar')"
-          @click="toggleSidebarCollapsed"
-        >
-          <i
-            :class="sidebarCollapsed ? 'bi bi-layout-sidebar' : 'bi bi-layout-sidebar-inset'"
-            aria-hidden="true"
-          />
-        </button>
-        <router-link class="navbar-brand" :to="{ name: 'Dashboard' }">SEIM</router-link>
-        <button
-          class="navbar-toggler"
-          type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
-          :aria-label="t('dashboard.toggleNav')"
-          aria-controls="navbarNav"
-        >
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto align-items-center">
-            <li class="nav-item d-flex align-items-center">
-              <button
-                type="button"
-                class="btn btn-link nav-link py-2 seim-theme-toggle"
-                data-testid="app-shell-theme-toggle"
-                :aria-label="themeToggleAria"
-                @click="toggleNavTheme"
-              >
-                <i :class="resolvedIsDark ? 'bi bi-sun-fill' : 'bi bi-moon-fill'" aria-hidden="true" />
-              </button>
-            </li>
-            <NotificationDropdown />
-
-            <li class="nav-item dropdown" v-if="authStore.isAdmin">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                id="spaAdminNavDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-                aria-haspopup="menu"
-              >
-                <i class="bi bi-sliders me-1" aria-hidden="true"></i>
-                {{ t('adminNav.consoleMenu') }}
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="spaAdminNavDropdown">
-                <li>
-                  <router-link class="dropdown-item" :to="{ name: 'AdminPrograms' }">
-                    {{ t('route.names.AdminPrograms') }}
-                  </router-link>
-                </li>
-                <li>
-                  <router-link class="dropdown-item" :to="{ name: 'AdminForms' }">
-                    {{ t('route.names.AdminForms') }}
-                  </router-link>
-                </li>
-                <li>
-                  <router-link class="dropdown-item" :to="{ name: 'AdminDynforms' }">
-                    {{ t('route.names.AdminDynforms') }}
-                  </router-link>
-                </li>
-                <li>
-                  <router-link class="dropdown-item" :to="{ name: 'AdminDataManagement' }">
-                    {{ t('route.names.AdminDataManagement') }}
-                  </router-link>
-                </li>
-                <li>
-                  <router-link class="dropdown-item" :to="{ name: 'AdminWorkflows' }">
-                    {{ t('route.names.AdminWorkflows') }}
-                  </router-link>
-                </li>
-                <li>
-                  <router-link class="dropdown-item" :to="{ name: 'AdminDocuments' }">
-                    {{ t('route.names.AdminDocuments') }}
-                  </router-link>
-                </li>
-                <li>
-                  <router-link class="dropdown-item" :to="{ name: 'EligibilityRulesets' }">
-                    {{ t('route.names.EligibilityRulesets') }}
-                  </router-link>
-                </li>
-              </ul>
-            </li>
-            <li class="nav-item" v-if="authStore.isAdmin">
-              <a class="nav-link" href="/seim/django-admin/" target="_blank" rel="noopener noreferrer">
-                <i class="bi bi-gear-wide-connected me-1"></i> {{ t('dashboard.djangoAdmin') }}
-              </a>
-            </li>
-            <li class="nav-item" v-if="authStore.isAdmin">
-              <a class="nav-link" href="/cms/" target="_blank" rel="noopener noreferrer">
-                <i class="bi bi-layout-wtf me-1"></i> {{ t('dashboard.cmsAdmin') }}
-              </a>
-            </li>
-
-            <li class="nav-item dropdown">
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                id="userDropdown"
-                role="button"
-                data-bs-toggle="dropdown"
-                data-testid="user-menu"
-                aria-expanded="false"
-                aria-haspopup="menu"
-                :aria-label="t('dashboard.userMenuAria', { name: userName })"
-              >
-                <i class="bi bi-person-circle me-1"></i>
-                {{ userName }}
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                <li>
-                  <router-link :to="{ name: 'Profile' }" class="dropdown-item">{{ t('route.names.Profile') }}</router-link>
-                </li>
-                <li>
-                  <router-link :to="{ name: 'Settings' }" class="dropdown-item">{{ t('route.names.Settings') }}</router-link>
-                </li>
-                <li><hr class="dropdown-divider" /></li>
-                <li>
-                  <a class="dropdown-item" href="#" @click.prevent="handleLogout" data-testid="logout-link">
-                    {{ t('dashboard.logout') }}
-                  </a>
-                </li>
-              </ul>
-            </li>
-          </ul>
+    <nav
+      class="navbar navbar-dark bg-primary fixed-top seim-app-shell__navbar"
+      data-bs-theme="dark"
+      :aria-label="t('dashboard.mainNavAria')"
+    >
+      <div class="container-fluid seim-app-shell__navbar-inner">
+        <div class="d-flex align-items-center flex-shrink-0">
+          <button
+            class="btn btn-outline-light me-2 d-lg-none"
+            type="button"
+            data-bs-toggle="offcanvas"
+            data-bs-target="#seimSidebarOffcanvas"
+            aria-controls="seimSidebarOffcanvas"
+            :aria-label="t('dashboard.toggleNav')"
+          >
+            <i class="bi bi-list" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-light me-2 d-none d-md-inline-flex align-items-center"
+            :aria-pressed="sidebarCollapsed ? 'true' : 'false'"
+            :aria-label="t('dashboard.toggleSidebar')"
+            @click="toggleSidebarCollapsed"
+          >
+            <i
+              :class="sidebarCollapsed ? 'bi bi-layout-sidebar' : 'bi bi-layout-sidebar-inset'"
+              aria-hidden="true"
+            />
+          </button>
+          <router-link class="navbar-brand mb-0" :to="{ name: 'Dashboard' }">SEIM</router-link>
         </div>
+
+        <ul class="navbar-nav flex-row align-items-center flex-nowrap ms-auto seim-app-shell__utilities">
+          <li class="nav-item d-flex align-items-center">
+            <button
+              type="button"
+              class="btn btn-link nav-link py-2 seim-theme-toggle"
+              data-testid="app-shell-theme-toggle"
+              :aria-label="themeToggleAria"
+              @click="toggleNavTheme"
+            >
+              <i :class="resolvedIsDark ? 'bi bi-sun-fill' : 'bi bi-moon-fill'" aria-hidden="true" />
+            </button>
+          </li>
+          <NotificationDropdown />
+
+          <li v-if="authStore.isAdmin" class="nav-item dropdown" ref="adminMenuRoot">
+            <button
+              type="button"
+              class="nav-link dropdown-toggle seim-nav-text-btn"
+              id="spaAdminNavDropdown"
+              data-testid="admin-menu"
+              :class="{ show: adminMenuOpen }"
+              :aria-expanded="adminMenuOpen ? 'true' : 'false'"
+              aria-haspopup="menu"
+              @click="toggleAdminMenu"
+            >
+              <i class="bi bi-sliders me-1" aria-hidden="true"></i>
+              <span class="d-none d-md-inline">{{ t('adminNav.consoleMenu') }}</span>
+            </button>
+            <ul
+              class="dropdown-menu dropdown-menu-end"
+              :class="{ show: adminMenuOpen }"
+              aria-labelledby="spaAdminNavDropdown"
+            >
+              <li>
+                <router-link class="dropdown-item" :to="{ name: 'AdminPrograms' }" @click="closeAdminMenu">
+                  {{ t('route.names.AdminPrograms') }}
+                </router-link>
+              </li>
+              <li>
+                <router-link class="dropdown-item" :to="{ name: 'AdminForms' }" @click="closeAdminMenu">
+                  {{ t('route.names.AdminForms') }}
+                </router-link>
+              </li>
+              <li>
+                <router-link class="dropdown-item" :to="{ name: 'AdminDynforms' }" @click="closeAdminMenu">
+                  {{ t('route.names.AdminDynforms') }}
+                </router-link>
+              </li>
+              <li>
+                <router-link class="dropdown-item" :to="{ name: 'AdminDataManagement' }" @click="closeAdminMenu">
+                  {{ t('route.names.AdminDataManagement') }}
+                </router-link>
+              </li>
+              <li>
+                <router-link class="dropdown-item" :to="{ name: 'AdminWorkflows' }" @click="closeAdminMenu">
+                  {{ t('route.names.AdminWorkflows') }}
+                </router-link>
+              </li>
+              <li>
+                <router-link class="dropdown-item" :to="{ name: 'AdminDocuments' }" @click="closeAdminMenu">
+                  {{ t('route.names.AdminDocuments') }}
+                </router-link>
+              </li>
+              <li>
+                <router-link class="dropdown-item" :to="{ name: 'EligibilityRulesets' }" @click="closeAdminMenu">
+                  {{ t('route.names.EligibilityRulesets') }}
+                </router-link>
+              </li>
+              <li><hr class="dropdown-divider" /></li>
+              <li>
+                <a class="dropdown-item" href="/seim/django-admin/" target="_blank" rel="noopener noreferrer">
+                  <i class="bi bi-gear-wide-connected me-1" aria-hidden="true"></i>{{ t('dashboard.djangoAdmin') }}
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item" href="/cms/" target="_blank" rel="noopener noreferrer">
+                  <i class="bi bi-layout-wtf me-1" aria-hidden="true"></i>{{ t('dashboard.cmsAdmin') }}
+                </a>
+              </li>
+            </ul>
+          </li>
+
+          <li class="nav-item dropdown" ref="userMenuRoot">
+            <button
+              type="button"
+              class="nav-link dropdown-toggle d-flex align-items-center seim-nav-text-btn"
+              id="userDropdown"
+              data-testid="user-menu"
+              :class="{ show: userMenuOpen }"
+              :aria-expanded="userMenuOpen ? 'true' : 'false'"
+              aria-haspopup="menu"
+              :aria-label="t('dashboard.userMenuAria', { name: userName })"
+              @click="toggleUserMenu"
+            >
+              <i class="bi bi-person-circle me-1" aria-hidden="true"></i>
+              <span class="d-none d-sm-inline text-truncate seim-user-name">{{ userName }}</span>
+            </button>
+            <ul
+              class="dropdown-menu dropdown-menu-end"
+              :class="{ show: userMenuOpen }"
+              aria-labelledby="userDropdown"
+            >
+              <li>
+                <router-link :to="{ name: 'Profile' }" class="dropdown-item" @click="closeUserMenu">
+                  {{ t('route.names.Profile') }}
+                </router-link>
+              </li>
+              <li>
+                <router-link :to="{ name: 'Settings' }" class="dropdown-item" @click="closeUserMenu">
+                  {{ t('route.names.Settings') }}
+                </router-link>
+              </li>
+              <li><hr class="dropdown-divider" /></li>
+              <li>
+                <button class="dropdown-item" type="button" data-testid="logout-link" @click="handleLogout">
+                  {{ t('dashboard.logout') }}
+                </button>
+              </li>
+            </ul>
+          </li>
+        </ul>
       </div>
     </nav>
 
@@ -197,6 +206,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useNavDropdown } from '@/composables/useNavDropdown'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import SidebarNavList from '@/components/nav/SidebarNavList.vue'
 import api from '@/services/api'
@@ -210,6 +220,19 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const userName = computed(() => authStore.userName)
+
+const {
+  open: userMenuOpen,
+  rootEl: userMenuRoot,
+  toggle: toggleUserMenu,
+  close: closeUserMenu,
+} = useNavDropdown()
+const {
+  open: adminMenuOpen,
+  rootEl: adminMenuRoot,
+  toggle: toggleAdminMenu,
+  close: closeAdminMenu,
+} = useNavDropdown()
 
 const sidebarCollapsed = ref(false)
 
@@ -417,6 +440,7 @@ async function toggleNavTheme() {
 }
 
 async function handleLogout() {
+  closeUserMenu()
   await authStore.logout()
   router.push({ name: 'Login' })
 }
@@ -435,6 +459,39 @@ async function handleLogout() {
   z-index: 1030;
   padding-top: env(safe-area-inset-top, 0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: visible;
+}
+
+.seim-app-shell__navbar-inner {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+}
+
+.seim-app-shell__utilities {
+  gap: 0.15rem;
+}
+
+.seim-app-shell__navbar :deep(.nav-link),
+.seim-app-shell__navbar :deep(.navbar-brand) {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.seim-app-shell__navbar :deep(.nav-link:hover),
+.seim-app-shell__navbar :deep(.nav-link:focus-visible),
+.seim-app-shell__navbar :deep(.navbar-brand:hover) {
+  color: #fff;
+}
+
+.seim-nav-text-btn {
+  background: transparent;
+  border: 0;
+}
+
+.seim-user-name {
+  max-width: min(12rem, 30vw);
+  vertical-align: middle;
 }
 
 .seim-app-shell__aside {

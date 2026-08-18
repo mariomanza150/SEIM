@@ -1,5 +1,5 @@
 <template>
-  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999">
+  <div class="toast-container position-fixed end-0 p-3 seim-toast-container">
     <div
       v-for="toast in toasts"
       :key="toast.id"
@@ -58,6 +58,11 @@ function toastTitle(type) {
 </script>
 
 <style scoped>
+.seim-toast-container {
+  top: calc(3.75rem + env(safe-area-inset-top, 0px));
+  z-index: 1080;
+}
+
 .toast {
   min-width: 300px;
   margin-bottom: 0.5rem;

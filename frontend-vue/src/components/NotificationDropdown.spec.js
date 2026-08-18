@@ -48,6 +48,25 @@ describe('NotificationDropdown', () => {
     expect(api.get).toHaveBeenCalled()
   })
 
+  it('opens the menu when the bell is clicked', async () => {
+    const wrapper = mount(NotificationDropdown, {
+      attachTo: document.body,
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const toggle = wrapper.find('#notificationDropdown')
+    expect(toggle.attributes('aria-expanded')).toBe('false')
+    expect(wrapper.find('.dropdown-menu.show').exists()).toBe(false)
+
+    await toggle.trigger('click')
+    expect(toggle.attributes('aria-expanded')).toBe('true')
+    expect(wrapper.find('.dropdown-menu.show').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
   it('uses Spanish strings when locale is es', async () => {
     setAppLocale('es')
     const wrapper = mount(NotificationDropdown, {

@@ -73,7 +73,15 @@ export const useAuthStore = defineStore('auth', () => {
   const canUsePartnerPortal = computed(() => isPartner.value)
   const userName = computed(() => {
     if (!user.value) return ''
-    return user.value.full_name || user.value.email || 'User'
+    if (user.value.full_name) return user.value.full_name
+    const parts = [
+      user.value.first_name,
+      user.value.middle_name,
+      user.value.last_name,
+      user.value.mothers_last_name,
+    ].filter(Boolean)
+    if (parts.length) return parts.join(' ')
+    return user.value.email || user.value.username || 'User'
   })
 
   // Actions

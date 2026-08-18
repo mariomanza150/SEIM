@@ -1,28 +1,33 @@
 <template>
-  <li class="nav-item dropdown">
-    <a
-      class="nav-link dropdown-toggle position-relative"
-      href="#"
+  <li class="nav-item dropdown" ref="rootEl">
+    <button
+      type="button"
+      class="nav-link dropdown-toggle position-relative seim-nav-icon-btn"
       id="notificationDropdown"
-      role="button"
-      data-bs-toggle="dropdown"
-      aria-expanded="false"
+      data-testid="notifications-menu"
+      :class="{ show: open }"
+      :aria-expanded="open ? 'true' : 'false'"
       aria-haspopup="menu"
       :aria-label="t('notifications.dropdownAria')"
+      @click="onToggle"
     >
-      <i class="bi bi-bell fs-5"></i>
+      <i class="bi bi-bell fs-5" aria-hidden="true"></i>
       <span
         v-if="unreadCount > 0"
         class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
-        style="font-size: 0.65rem"
+        data-testid="notifications-badge"
       >
         {{ unreadCount > 99 ? '99+' : unreadCount }}
       </span>
-    </a>
-    <ul class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationDropdown">
+    </button>
+    <ul
+      class="dropdown-menu dropdown-menu-end notification-dropdown"
+      :class="{ show: open }"
+      aria-labelledby="notificationDropdown"
+    >
       <li class="dropdown-header d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
         <span class="fw-bold">{{ t('notifications.dropdownHeader') }}</span>
-        <router-link :to="{ name: 'Notifications' }" class="btn btn-sm btn-link p-0" @click="closeDropdown">
+        <router-link :to="{ name: 'Notifications' }" class="btn btn-sm btn-link p-0" @click="close">
           {{ t('notifications.viewAll') }}
         </router-link>
       </li>
@@ -53,8 +58,8 @@
             <router-link
               v-if="notification.action_url && isSpaUrl(notification.action_url)"
               :to="normalizeSpaLocation(notification.action_url)"
-              class="btn btn-sm btn-outline-primary btn-sm"
-              @click="markAsRead(notification); closeDropdown()"
+              class="btn btn-sm btn-outline-primary"
+              @click="markAsRead(notification); close()"
             >
               {{ notification.action_text || t('notifications.viewAction') }}
             </router-link>
@@ -64,7 +69,7 @@
               :target="isNewTabUrl(notification.action_url) ? '_blank' : null"
               :rel="isNewTabUrl(notification.action_url) ? 'noopener noreferrer' : null"
               class="btn btn-sm btn-outline-primary"
-              @click="markAsRead(notification); closeDropdown()"
+              @click="markAsRead(notification); close()"
             >
               {{ notification.action_text || t('notifications.viewAction') }}
             </a>
@@ -72,7 +77,7 @@
         </li>
       </template>
       <li class="dropdown-footer border-top">
-        <router-link :to="{ name: 'Notifications' }" class="dropdown-item text-center py-2" @click="closeDropdown">
+        <router-link :to="{ name: 'Notifications' }" class="dropdown-item text-center py-2" @click="close">
           <i class="bi bi-bell me-2"></i>{{ t('notifications.allNotificationsLink') }}
         </router-link>
       </li>
@@ -84,11 +89,12 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { isNewTabUrl, isSpaUrl, normalizeSpaLocation } from '@/utils/navigation'
-import { Dropdown } from 'bootstrap'
+import { useNavDropdown } from '@/composables/useNavDropdown'
 import { useNotifications } from '@/composables/useNotifications'
 
 const { t } = useI18n()
 const { fetchNotifications, fetchUnreadCount, markAsRead: apiMarkAsRead, formatTimestampDropdown } = useNotifications()
+const { open, rootEl, toggle, close } = useNavDropdown()
 
 const recent = ref([])
 const unreadCount = ref(0)
@@ -110,6 +116,11 @@ async function fetchRecent() {
   }
 }
 
+async function onToggle(event) {
+  toggle(event)
+  if (open.value) await fetchRecent()
+}
+
 async function markAsRead(notification) {
   if (notification.is_read) return
   try {
@@ -119,13 +130,6 @@ async function markAsRead(notification) {
   } catch (err) {
     console.warn('Failed to mark as read:', err)
   }
-}
-
-function closeDropdown() {
-  const toggle = document.getElementById('notificationDropdown')
-  if (!toggle) return
-  const instance = Dropdown.getInstance(toggle) || new Dropdown(toggle)
-  instance.hide()
 }
 
 onMounted(() => {
@@ -141,8 +145,19 @@ defineExpose({ refresh: fetchRecent })
 </script>
 
 <style scoped>
+.seim-nav-icon-btn {
+  background: transparent;
+  border: 0;
+  padding-right: 0.85rem;
+}
+
+.seim-nav-icon-btn .badge {
+  font-size: 0.65rem;
+}
+
 .notification-dropdown {
   min-width: 320px;
+  max-width: min(360px, calc(100vw - 1.5rem));
   max-height: 400px;
   overflow-y: auto;
 }

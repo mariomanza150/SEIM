@@ -425,5 +425,11 @@ describe('Auth Store', () => {
       store.user = {}
       expect(store.userName).toBe('User')
     })
+
+    it('composes first and last name when full_name is missing', () => {
+      const store = useAuthStore()
+      store.user = { first_name: 'Sofia', last_name: 'Martinez', email: 's@test.com' }
+      expect(store.userName).toBe('Sofia Martinez')
+    })
   })
 })
