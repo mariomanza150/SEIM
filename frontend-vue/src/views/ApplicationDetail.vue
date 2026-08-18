@@ -981,7 +981,10 @@ async function addDisbursement() {
 }
 
 async function downloadScholarshipAwardsExport() {
-  const programId = application.value?.program
+  const programId =
+    typeof application.value?.program === 'object'
+      ? application.value?.program?.id
+      : application.value?.program
   if (!programId) {
     errorToast(t('applicationDetailPage.scholarshipScoring.exportMissingProgram'))
     return

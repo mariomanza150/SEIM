@@ -195,7 +195,7 @@ def transition_award(
     return award
 
 
-def upsert_disbursement(award: ScholarshipAward, payload: dict, disbursement=None):
+def upsert_disbursement(award: ScholarshipAward, payload: dict, disbursement=None, actor=None):
     if disbursement is None:
         disbursement = ScholarshipDisbursement(award=award)
     if "label" in payload or disbursement.pk is None:
@@ -229,10 +229,18 @@ def upsert_disbursement(award: ScholarshipAward, payload: dict, disbursement=Non
                 else disbursement.paid_at
             )
     disbursement.save()
-    if award.status == ScholarshipAward.Status.AWARDED and award.disbursements.exists():
+    # Do not use award.disbursements.exists() here: ApplicationViewSet prefetches
+    # disbursements, so the related manager can stay empty after this insert.
+    has_rows = ScholarshipDisbursement.objects.filter(award_id=award.pk).exists()
+    transition_actor = actor or award.decided_by
+    if (
+        award.status == ScholarshipAward.Status.AWARDED
+        and has_rows
+        and transition_actor is not None
+    ):
         try:
             transition_award(
-                award, award.decided_by, ScholarshipAward.Status.DISBURSING
+                award, transition_actor, ScholarshipAward.Status.DISBURSING
             )
         except ValueError:
             pass

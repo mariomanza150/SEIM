@@ -37,3 +37,16 @@ class TestScholarshipAwards(APITestCase):
         award = upsert_award(self.app, self.coord, status_value="nominated")
         with self.assertRaises(ValueError):
             transition_award(award, self.coord, "disbursed")
+
+    def test_first_disbursement_moves_awarded_to_disbursing_despite_prefetch(self):
+        from exchange.models import ScholarshipAward as AwardModel
+        from exchange.scholarship_awards import upsert_disbursement
+
+        award = upsert_award(self.app, self.coord, status_value="nominated")
+        award = transition_award(award, self.coord, "awarded")
+        cached = AwardModel.objects.prefetch_related("disbursements").get(pk=award.pk)
+        upsert_disbursement(
+            cached, {"label": "Fall disbursement", "amount": "1000"}, actor=self.coord
+        )
+        cached.refresh_from_db()
+        self.assertEqual(cached.status, AwardModel.Status.DISBURSING)

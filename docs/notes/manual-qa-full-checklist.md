@@ -628,7 +628,7 @@ Logout from student. Login **Coordinator** `coordinator@test.com` / `coordinator
   - **Steps:** As coordinator, open Documents. Use filters and save a preset if the staff list supports it.
   - **Expected:** Staff sees a broader document set than the student. Preset save works **or** controls are absent (note Partial; do not Fail if presets are student-queue-only).
   - **Result:** `Pass`
-  - **Evidence notes:** 2026-08-18 admin staff view: “Application uploads (all students)”, 20 rows, application/type filters. No Save-preset control on this list (acceptable Partial per steps).
+  - **Evidence notes:** 2026-08-18 coordinator: presets always visible (no Advanced filters toggle). Saved `MQ-2026-08-18 pending review`. Evidence: [`qa-runs/2026-08-18-eligibility/2026-08-18-documents-presets.png`](qa-runs/2026-08-18-eligibility/2026-08-18-documents-presets.png).
 
 ---
 
@@ -922,7 +922,7 @@ Short pass only. **Do not** treat a full WCAG audit as required (that remains P2
 | Seed | `create_initial_data` + `seed_demo_readiness` (yes) |
 | Tester | Cursor agent + live `:8020` |
 | Clusters completed | Full checklist boxed Pass (see evidence notes) |
-| New `MQ-*` IDs | MQ-2026-08-18-001 … 006 (all resolved) |
+| New `MQ-*` IDs | MQ-2026-08-18-001 … 008 (all resolved) |
 | Blockers | None open |
 
 After execute: copy outcomes into [`feature-test-tracking.md`](feature-test-tracking.md) Notes; file defects in [`manual-qa-issues.md`](manual-qa-issues.md); optional narrative in [`manual-workflow-qa-session-log.md`](manual-workflow-qa-session-log.md). Follow [`prompts/manual-feature-workflow-test-loop-prompt.md`](prompts/manual-feature-workflow-test-loop-prompt.md).

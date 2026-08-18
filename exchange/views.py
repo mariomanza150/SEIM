@@ -1028,7 +1028,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         from exchange.scholarship_awards import serialize_award, upsert_disbursement
 
         try:
-            upsert_disbursement(award, request.data)
+            upsert_disbursement(award, request.data, actor=user)
         except ValueError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         award.refresh_from_db()
