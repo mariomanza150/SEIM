@@ -272,7 +272,17 @@ async function saveEditor() {
     editor.open = false
     await fetchList()
   } catch (err) {
-    editor.error = err.response?.data?.detail || t('eligibilityRulesetsPage.saveError')
+    const data = err.response?.data
+    const detail =
+      (typeof data?.detail === 'string' && data.detail) ||
+      (Array.isArray(data?.non_field_errors) && data.non_field_errors.join(' ')) ||
+      (data && typeof data === 'object'
+        ? Object.values(data)
+            .flat()
+            .filter((v) => typeof v === 'string')
+            .join(' ')
+        : '')
+    editor.error = detail || t('eligibilityRulesetsPage.saveError')
   } finally {
     editor.saving = false
   }

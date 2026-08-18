@@ -10,7 +10,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | User authentication and account management | `accounts`, `api` | Implemented | 2026-04-09 | JWT login, registration, profile, permissions, password flows, and account dashboard stats are wired through the API. **MQ-007:** `LoginView.authentication_classes = []` for JSON login without CSRF when switching users. **MQ-008:** `LogoutView.authentication_classes = [JWTAuthentication]` so `POST /api/accounts/logout/` is not blocked by session CSRF; regression `test_logout_post_json_succeeds_with_django_session_and_jwt_header` in `test_auth_api.py`. |
 | Role management | `accounts` | Implemented | 2026-04-08 | Student, coordinator, and admin roles are modeled and used across permissions and UI flows. |
 | Exchange programs and application workflow | `exchange`, `api` | Implemented | 2026-04-09 | Program catalog, applications, state transitions, timeline events, and coordinator review endpoints exist. **MQ-009** / **MQ-010** resolved (2026-04-09): list uses `program_name`; drafts skip serializer eligibility (submit still checks); see [`manual-qa-issues.md`](manual-qa-issues.md). |
-| Document management | `documents`, `api` | Implemented | 2026-08-18 | Upload, validation, comments, and resubmission APIs are present and used by the application flow. **MQ-012** resolved in source + **manual verify** after `dist` deploy ([`manual-qa-issues.md`](manual-qa-issues.md), [`feature-test-tracking.md`](feature-test-tracking.md) `documents-core`). Documents filter labels include status so duplicate program names stay distinct. **MQ-2026-08-18-006:** file replace auto-resolves open resubmit requests. |
+| Document management | `documents`, `api` | Implemented | 2026-08-18 | Upload, validation, comments, and resubmission APIs are present and used by the application flow. **MQ-012** resolved in source + **manual verify** after `dist` deploy ([`manual-qa-issues.md`](manual-qa-issues.md), [`feature-test-tracking.md`](feature-test-tracking.md) `documents-core`). Documents filter labels include status and a short id when the same program+status appears more than once. **MQ-2026-08-18-006:** file replace auto-resolves open resubmit requests. **MQ-2026-08-18-007:** replace also marks the student’s resubmit inbox item read. |
 | Application comments on detail page | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-08 | The Vue detail page now shows live comments and can post new comments with author metadata. |
 | Notifications center and preferences | `notifications`, `api` | Implemented | 2026-04-08 | Email/in-app notifications, preferences, reminders endpoints, and read-state actions are available. |
 | Real-time notification delivery | `notifications`, `seim`, `frontend-vue` | Implemented | 2026-04-08 | WebSocket consumer, JWT middleware, reconnect logic, and Vue toast/dropdown integration are present. |
@@ -157,11 +157,13 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | API contracts doc: staff notification routing endpoints | `docs`, `notifications`, `api` | Implemented | 2026-04-16 | `docs/api-contracts.md` **Staff notification routing** subsection (parity with manual API doc + OpenAPI). No new automated tests (documentation-only). |
 | Notification Celery email tests: `DEFAULT_FROM_EMAIL` portability | `notifications`, `tests` | Implemented | 2026-04-16 | `test_notifications_tasks` from-address assertions compare `mail.outbox[0].from_email` to `settings.DEFAULT_FROM_EMAIL` (matches `send_mail` in `notifications/tasks.py`) so runs succeed when `.env` overrides the default sender. |
 | Transactional notification route overrides at runtime send | `notifications`, `exchange`, `documents`, `accounts` | Implemented | 2026-04-16 | `resolve_transactional_route_settings_category` + optional `transactional_route_key` on `NotificationService.send_notification`; documented transactional routes (account security, application/document/agreement flows, digest, calendar reminders) pass keys so admin overrides match live UserSettings gating. Tests: `tests/unit/notifications/test_notifications_services.py`. |
+| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Implemented | 2026-08-18 | `EligibilityRuleSet` + staff CRUD `/api/eligibility-rulesets/` + Vue `/seim/eligibility-rulesets`. `check_eligibility?use_ruleset=true` applies scalar `program_overrides` (live Fulbright overlay: English C1 vs student B2). ApplicationForm sends `use_ruleset=true` when the program has a ruleset. Remaining polish (P2): richer JSON schema/versioning, localized per-rule client copy. |
+
 
 ## 🟡 IN PROGRESS 🔄
 | Feature | Module | Status | Started | Assigned |
 |---------|--------|--------|---------|----------|
-| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | In progress | 2026-04-17 | Cursor agent (DB model + migration + admin + staff read API `/api/eligibility-rulesets/`; `check_eligibility` ruleset snapshot + `use_ruleset` scalar overrides; Vue `ApplicationForm` sends `use_ruleset=true` when program has `eligibility_ruleset`; program clone copies `workflow_version` + `eligibility_ruleset`) |
+| _None_ |  |  |  |  |
 
 
 ## 🔵 PENDING IMPLEMENTATION ⏳
@@ -181,7 +183,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Applications, Forms, and Eligibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Promoted from P3: eligibility is implemented, but rules are code-defined. **Progress:** `EligibilityRuleSet` model + migration + admin; staff read API `/api/eligibility-rulesets/` (coordinator/admin) with integration test. **Next:** program evaluation wiring (feature-flagged), ruleset JSON schema + versioning, localized per-rule client copy, and step-level document gates in preview payload (if not already sufficient). |
+| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Staff CRUD + evaluation wiring verified 2026-08-18 (`:8020`). Remaining polish: richer JSON schema/versioning, localized per-rule client copy, step-level document gates in preview if not already sufficient. |
 
 #### Programs, Agreements, and Planning
 | Feature | Module | Notes |

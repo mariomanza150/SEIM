@@ -369,10 +369,31 @@ class TestDocumentService(TestCase):
             resolved=True,
         )
 
+        from notifications.models import Notification
+
+        leftover = Notification.objects.create(
+            recipient=self.user,
+            title="Document resubmission requested",
+            message="Need a clearer scan",
+            action_url=f"/documents/{document.id}/",
+            is_read=False,
+        )
+        other = Notification.objects.create(
+            recipient=self.user,
+            title="Application Submitted",
+            message="Keep me",
+            action_url=f"/applications/{self.application.id}/",
+            is_read=False,
+        )
+
         updated = DocumentService.resolve_open_resubmission_requests(document)
 
         self.assertEqual(updated, 1)
         open_req.refresh_from_db()
         already_done.refresh_from_db()
+        leftover.refresh_from_db()
+        other.refresh_from_db()
         self.assertTrue(open_req.resolved)
         self.assertTrue(already_done.resolved)
+        self.assertTrue(leftover.is_read)
+        self.assertFalse(other.is_read)

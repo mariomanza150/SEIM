@@ -92,4 +92,19 @@ describe('documentApi', () => {
       }),
     ).toBe('Vue E2E Test Program (under review)')
   })
+
+  it('applicationSelectLabel suffixes short ids when the same program+status appears twice', () => {
+    const siblings = [
+      { id: 'c48638a4-2124-4d43-aceb-dadc54796b4b', program_name: 'Vue E2E Test Program', status: 'draft' },
+      { id: '46991ada-6d7a-49f9-8158-fd44b3b63537', program_name: 'Vue E2E Test Program', status: 'draft' },
+      { id: 'unique-1', program_name: 'Tokyo', status: 'draft' },
+    ]
+    expect(applicationSelectLabel(siblings[0], '', siblings)).toBe(
+      'Vue E2E Test Program (draft) · c48638a4',
+    )
+    expect(applicationSelectLabel(siblings[1], '', siblings)).toBe(
+      'Vue E2E Test Program (draft) · 46991ada',
+    )
+    expect(applicationSelectLabel(siblings[2], '', siblings)).toBe('Tokyo (draft)')
+  })
 })

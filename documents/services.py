@@ -293,11 +293,26 @@ class DocumentService:
         )
 
     @staticmethod
+    def mark_resubmission_notifications_read(document: Document) -> int:
+        """Clear leftover student inbox items for this document's resubmit request."""
+        from notifications.models import Notification
+
+        doc_id = str(document.id)
+        return Notification.objects.filter(
+            recipient_id=document.application.student_id,
+            is_read=False,
+            title="Document resubmission requested",
+            action_url__contains=doc_id,
+        ).update(is_read=True)
+
+    @staticmethod
     def resolve_open_resubmission_requests(document: Document) -> int:
         """Mark pending resubmission requests as addressed after a new file is uploaded."""
-        return DocumentResubmissionRequest.objects.filter(
+        updated = DocumentResubmissionRequest.objects.filter(
             document=document, resolved=False
         ).update(resolved=True)
+        DocumentService.mark_resubmission_notifications_read(document)
+        return updated
 
     @staticmethod
     def can_request_resubmission(document):

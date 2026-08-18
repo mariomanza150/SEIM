@@ -126,8 +126,8 @@ export function documentReviewStatus(doc) {
   return 'pending'
 }
 
-/** Label for application `<select>` options (list API uses `program_name`; FK may be id-only). */
-export function applicationSelectLabel(app, fallback = '') {
+/** Base label (program + status) without id suffix. */
+export function applicationSelectBaseLabel(app, fallback = '') {
   if (app == null || typeof app !== 'object') return fallback || String(app ?? '')
   const name = app.program_name || app.program?.name
   const rawStatus = typeof app.status === 'string' ? app.status : app.status?.name
@@ -136,4 +136,15 @@ export function applicationSelectLabel(app, fallback = '') {
   if (name) return String(name)
   if (app.id != null) return String(app.id)
   return fallback
+}
+
+/** Label for application `<select>` options. Pass `siblings` to suffix colliding labels with a short id. */
+export function applicationSelectLabel(app, fallback = '', siblings = null) {
+  const base = applicationSelectBaseLabel(app, fallback)
+  if (!Array.isArray(siblings) || siblings.length < 2 || app == null || typeof app !== 'object' || app.id == null) {
+    return base
+  }
+  const hits = siblings.filter((s) => applicationSelectBaseLabel(s) === base)
+  if (hits.length <= 1) return base
+  return `${base} · ${String(app.id).slice(0, 8)}`
 }
