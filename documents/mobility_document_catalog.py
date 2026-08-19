@@ -308,8 +308,8 @@ def assign_scheme_document_requirements(
 
     seed_mobility_document_types()
     schemes = {
-        "Movilidad Nacional": "nacional",
         "Movilidad Internacional Habla Hispana": "intl_es",
+        "Movilidad Internacional Habla Inglesa": "intl",
         "Movilidad Internacional": "intl",
     }
     created = 0
@@ -320,11 +320,8 @@ def assign_scheme_document_requirements(
         rows: list[tuple[int, str, bool]] = [
             (order, slug, True) for order, slug in CORE_SCHEME_REQUIREMENTS
         ]
-        if kind == "nacional":
-            rows.extend((order, slug, True) for order, slug in NACIONAL_EXTRA)
-        else:
-            rows.extend((order, slug, True) for order, slug in INTERNATIONAL_EXTRA)
-            rows.extend((order, slug, False) for order, slug in SCHOLARSHIP_OPTIONAL)
+        rows.extend((order, slug, True) for order, slug in INTERNATIONAL_EXTRA)
+        rows.extend((order, slug, False) for order, slug in SCHOLARSHIP_OPTIONAL)
 
         for sort_order, slug, is_required in rows:
             dt = document_type_cls.objects.filter(slug=slug).first()

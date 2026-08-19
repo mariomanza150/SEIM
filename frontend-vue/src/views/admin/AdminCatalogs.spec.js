@@ -65,6 +65,13 @@ describe('AdminCatalogs', () => {
           data: { results: [{ id: 42, name: 'Erasmus 2026' }] },
         })
       }
+      if (url === '/api/accounts/catalogs/allowed-email-domains/') {
+        return Promise.resolve({
+          data: {
+            results: [{ id: 'dom-1', name: 'uanl.edu.mx', code: 'uanl', ordering: 0, is_active: true }],
+          },
+        })
+      }
       return Promise.resolve({ data: { results: [] } })
     })
   })
@@ -83,5 +90,13 @@ describe('AdminCatalogs', () => {
     expect(wrapper.get('[data-testid="admin-catalogs-destinations"] a').attributes('href')).toBe(
       '/admin/programs/42/destinations',
     )
+  })
+
+  it('renders allowed email domains without i18n linked-message errors', async () => {
+    const wrapper = await mountPage()
+    await wrapper.get('[data-testid="admin-catalogs-tabs"] [data-tab="domains"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('[data-testid="admin-catalogs-table"]').text()).toContain('uanl.edu.mx')
+    expect(wrapper.text()).toContain('@')
   })
 })

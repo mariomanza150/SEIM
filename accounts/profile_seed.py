@@ -23,23 +23,34 @@ def complete_apply_profile(user) -> None:
             setattr(user, field, value)
         user.save(update_fields=list(updates))
 
-    school, _ = SchoolFaculty.objects.get_or_create(name="Engineering")
+    unidad, _ = Unidad.objects.get_or_create(
+        name="Sureste",
+        defaults={"code": "sureste", "is_active": True, "ordering": 0},
+    )
+    school, _ = SchoolFaculty.objects.get_or_create(
+        unidad=unidad,
+        name="Facultad de Sistemas",
+        defaults={"code": "sureste_sistemas", "is_active": True, "ordering": 0},
+    )
     home_program, _ = HomeAcademicProgram.objects.get_or_create(
-        name="Computer Science",
-        defaults={"school": school},
+        name="Ingeniería en Sistemas Computacionales",
+        school=school,
     )
     if home_program.school_id != school.id:
         home_program.school = school
         home_program.save(update_fields=["school"])
-    level, _ = AcademicLevel.objects.get_or_create(name="Undergraduate")
-    unidad, _ = Unidad.objects.get_or_create(name="Ciudad Universitaria")
+    level, _ = AcademicLevel.objects.get_or_create(
+        name="Licenciatura",
+        defaults={"code": "licenciatura", "is_active": True, "ordering": 0},
+    )
     scale, _ = GradeScale.objects.get_or_create(
-        code="US_GPA_4",
+        code="MX_0_100",
         defaults={
-            "name": "US GPA 4.0 Scale",
+            "name": "Escala Mexicana 0–100",
             "min_value": 0.0,
-            "max_value": 4.0,
-            "passing_value": 2.0,
+            "max_value": 100.0,
+            "passing_value": 70.0,
+            "country": "Mexico",
         },
     )
 
@@ -53,14 +64,15 @@ def complete_apply_profile(user) -> None:
     profile.unidad = unidad
     profile.home_academic_program = home_program
     profile.gender = profile.gender or "prefer_not_to_say"
-    profile.gpa = 3.5 if profile.gpa is None else profile.gpa
+    profile.gpa = 92.0 if profile.gpa is None else profile.gpa
     profile.language = (profile.language or "").strip() or "English"
     profile.language_level = (profile.language_level or "").strip() or "B2"
+    profile.toefl_score = profile.toefl_score or 560
     profile.date_of_birth = profile.date_of_birth or date(2000, 1, 1)
-    profile.birthplace = (profile.birthplace or "").strip() or "Monterrey"
-    profile.postal_code = (profile.postal_code or "").strip() or "64000"
+    profile.birthplace = (profile.birthplace or "").strip() or "Saltillo"
+    profile.postal_code = (profile.postal_code or "").strip() or "25280"
     profile.passport_number = (profile.passport_number or "").strip() or "P1234567"
-    profile.mobile_phone = (profile.mobile_phone or "").strip() or "8112345678"
+    profile.mobile_phone = (profile.mobile_phone or "").strip() or "8441234567"
     profile.secondary_email = (profile.secondary_email or "").strip() or (
         f"alt-{user.username}@example.net"
     )

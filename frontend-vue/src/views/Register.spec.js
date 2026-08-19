@@ -73,7 +73,7 @@ describe('Register', () => {
     })
     await flushPromises()
     expect(wrapper.find('[data-testid="register-email"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="register-username"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="register-username"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="register-first-name"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="register-middle-name"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="register-last-name"]').exists()).toBe(true)
@@ -90,11 +90,8 @@ describe('Register', () => {
 
     await vi.waitFor(() => expect(axios.get).toHaveBeenCalled())
     await wrapper.find('#email').setValue('new@uanl.edu.mx')
-    await wrapper.find('#username').setValue('newuser')
     await wrapper.find('#first_name').setValue('New')
-    await wrapper.find('#middle_name').setValue('Middle')
     await wrapper.find('#last_name').setValue('User')
-    await wrapper.find('#mothers_last_name').setValue('Family')
     await wrapper.find('#password').setValue('Passw0rd!')
     await wrapper.find('#password2').setValue('Passw0rd!')
     await wrapper.find('form').trigger('submit.prevent')
@@ -102,13 +99,12 @@ describe('Register', () => {
 
     expect(mockRegister).toHaveBeenCalledWith({
       email: 'new@uanl.edu.mx',
-      username: 'newuser',
       password: 'Passw0rd!',
       password2: 'Passw0rd!',
       first_name: 'New',
-      middle_name: 'Middle',
+      middle_name: '',
       last_name: 'User',
-      mothers_last_name: 'Family',
+      mothers_last_name: '',
     })
     expect(wrapper.find('[data-testid="register-success"]').exists()).toBe(true)
   })
@@ -117,7 +113,6 @@ describe('Register', () => {
     const wrapper = mountRegister()
 
     await wrapper.find('#email').setValue('new@test.com')
-    await wrapper.find('#username').setValue('newuser')
     await wrapper.find('#password').setValue('Passw0rd!')
     await wrapper.find('#password2').setValue('Different1!')
     await wrapper.find('form').trigger('submit.prevent')

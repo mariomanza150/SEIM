@@ -357,8 +357,23 @@ class AcademicLevel(CatalogModel):
 class SchoolFaculty(CatalogModel):
     """Home school or faculty."""
 
+    unidad = models.ForeignKey(
+        "Unidad",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="school_faculties",
+        help_text="Campus unit this faculty belongs to (UAdeC Unidad Sureste/Laguna/Norte).",
+    )
+
     class Meta(CatalogModel.Meta):
         verbose_name_plural = "School faculties"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["unidad", "name"],
+                name="accounts_schoolfaculty_unidad_name_uniq",
+            ),
+        ]
 
 
 class Unidad(CatalogModel):
@@ -498,6 +513,11 @@ class Profile(UUIDModel, TimeStampedModel):
             ("C2", "Proficient (C2)"),
         ],
         help_text="Language proficiency level (CEFR scale)",
+    )
+    toefl_score = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text="TOEFL score (paper-based or equivalent) for mobility eligibility.",
     )
     date_of_birth = models.DateField(
         null=True, blank=True, help_text="Student's date of birth for age verification"

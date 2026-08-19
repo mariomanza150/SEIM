@@ -63,6 +63,7 @@ describe('Profile', () => {
         return Promise.resolve({ data: [{ id: 'level-1', name: 'Undergraduate' }] })
       }
       if (url === '/api/accounts/catalogs/schools/') {
+        expect(config?.params?.unidad).toBe('unidad-1')
         return Promise.resolve({
           data: [
             { id: 'school-1', name: 'Engineering' },
@@ -118,7 +119,7 @@ describe('Profile', () => {
       i18n.global.t('profilePage.gpaPlaceholder'),
     )
     expect(api.get).toHaveBeenCalledWith('/api/accounts/catalogs/academic-levels/')
-    expect(api.get).toHaveBeenCalledWith('/api/accounts/catalogs/schools/')
+    expect(api.get).toHaveBeenCalledWith('/api/accounts/catalogs/schools/', { params: { unidad: 'unidad-1' } })
     expect(api.get).toHaveBeenCalledWith('/api/accounts/catalogs/unidades/')
     expect(api.get).toHaveBeenCalledWith('/api/accounts/catalogs/banks/')
   })
@@ -456,6 +457,7 @@ describe('Profile', () => {
         return Promise.resolve({ data: [{ id: levelId, name: 'Licenciatura' }] })
       }
       if (url === '/api/accounts/catalogs/schools/') {
+        expect(config?.params?.unidad).toBe(unidadId)
         return Promise.resolve({ data: [{ id: schoolId, name: 'Derecho' }] })
       }
       if (url === '/api/accounts/catalogs/unidades/') {

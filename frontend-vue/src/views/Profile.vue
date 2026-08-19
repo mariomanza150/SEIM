@@ -129,9 +129,16 @@
                   </select>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-school">{{ t('profilePage.school') }} *</label>
-                  <select id="profile-school" v-model="form.school" class="form-select" required data-testid="profile-school">
+                  <label class="form-label" for="profile-unidad">{{ t('profilePage.unidad') }} *</label>
+                  <select id="profile-unidad" v-model="form.unidad" class="form-select" required data-testid="profile-unidad">
                     <option value="">{{ t('profilePage.selectOption') }}</option>
+                    <option v-for="item in catalogs.unidades" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="profile-school">{{ t('profilePage.school') }} *</label>
+                  <select id="profile-school" v-model="form.school" class="form-select" :disabled="!form.unidad || schoolsLoading" required data-testid="profile-school">
+                    <option value="">{{ schoolsLoading ? t('profilePage.loadingPrograms') : t('profilePage.selectOption') }}</option>
                     <option v-for="item in catalogs.schools" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
                   </select>
                 </div>
@@ -140,13 +147,6 @@
                   <select id="profile-program" v-model="form.home_academic_program" class="form-select" :disabled="!form.school || programsLoading" required data-testid="profile-program">
                     <option value="">{{ programsLoading ? t('profilePage.loadingPrograms') : t('profilePage.selectOption') }}</option>
                     <option v-for="item in catalogs.programs" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
-                  </select>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label" for="profile-unidad">{{ t('profilePage.unidad') }} *</label>
-                  <select id="profile-unidad" v-model="form.unidad" class="form-select" required data-testid="profile-unidad">
-                    <option value="">{{ t('profilePage.selectOption') }}</option>
-                    <option v-for="item in catalogs.unidades" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
                   </select>
                 </div>
               </div>
@@ -214,6 +214,10 @@
                     <option v-for="level in cefrLevels" :key="level" :value="level">{{ t(`profilePage.cefr${level}`) }}</option>
                   </select>
                 </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="profile-toefl">{{ t('profilePage.toeflScore') }}</label>
+                  <input id="profile-toefl" v-model="form.toefl_score" type="number" min="0" step="1" class="form-control" autocomplete="off" data-testid="profile-toefl">
+                </div>
               </div>
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <label class="form-label mb-0">{{ t('profilePage.additionalLanguages') }}</label>
@@ -263,6 +267,7 @@ const loading = ref(true)
 const hydrating = ref(true)
 const saving = ref(false)
 const programsLoading = ref(false)
+const schoolsLoading = ref(false)
 const saveError = ref('')
 const catalogs = reactive({
   academicLevels: [], schools: [], unidades: [], banks: [], programs: [], gradeScales: [],
@@ -275,7 +280,7 @@ const emptyForm = {
   academic_level: '', school: '', unidad: '', home_academic_program: '',
   academic_level_name: '', school_name: '', unidad_name: '', home_academic_program_name: '',
   bank_institution: '', bank_institution_name: '', clabe: '', gpa: null, grade_scale: '', language: '',
-  language_level: '', additional_languages: [],
+  language_level: '', toefl_score: null, additional_languages: [],
   ingress_date: '', current_semester: null, credits_approved_percent: null,
   computed_semester: null, effective_semester: null,
 }
@@ -324,7 +329,7 @@ const PROFILE_FIELDS = [
   'passport_number', 'mobile_phone', 'secondary_email', 'rfc',
   'academic_level', 'school', 'unidad', 'home_academic_program',
   'bank_institution', 'clabe', 'gpa', 'grade_scale', 'language',
-  'language_level', 'additional_languages',
+  'language_level', 'toefl_score', 'additional_languages',
   'ingress_date', 'current_semester', 'credits_approved_percent',
 ]
 
@@ -372,6 +377,36 @@ function errorMessage(data) {
 async function fetchCatalog(path) {
   const { data } = await api.get(`/api/accounts/catalogs/${path}/`)
   return catalogList(data)
+}
+
+async function fetchSchools(unidadId, clearSelection = true, { notifyError = true } = {}) {
+  if (clearSelection) {
+    form.value.school = ''
+    form.value.home_academic_program = ''
+    catalogs.programs = []
+  }
+  if (!unidadId) {
+    catalogs.schools = []
+    return
+  }
+  schoolsLoading.value = true
+  try {
+    const { data } = await api.get('/api/accounts/catalogs/schools/', { params: { unidad: unidadId } })
+    catalogs.schools = ensureSelected(
+      catalogList(data),
+      form.value.school,
+      form.value.school_name,
+    )
+  } catch {
+    catalogs.schools = ensureSelected(
+      catalogs.schools,
+      form.value.school,
+      form.value.school_name,
+    )
+    if (notifyError) errorToast(t('profilePage.toastCatalogError'))
+  } finally {
+    schoolsLoading.value = false
+  }
 }
 
 async function fetchPrograms(schoolId, clearSelection = true, { notifyError = true } = {}) {
@@ -438,6 +473,7 @@ function applyProfile(data) {
     grade_scale: idOf(data.grade_scale),
     language: data.language || '',
     language_level: data.language_level || '',
+    toefl_score: numberOf(data.toefl_score),
     ingress_date: dateOf(data.ingress_date),
     current_semester: numberOf(data.current_semester),
     credits_approved_percent: numberOf(data.credits_approved_percent),
@@ -474,16 +510,16 @@ async function fetchProfileAndCatalogs() {
   hydrating.value = true
   const catalogSettled = await Promise.allSettled([
     fetchCatalog('academic-levels'),
-    fetchCatalog('schools'),
     fetchCatalog('unidades'),
     fetchCatalog('banks'),
   ])
   const scalesSettled = await Promise.allSettled([fetchActiveGradeScales()])
   const catalogFailed = catalogSettled.some((result) => result.status === 'rejected')
   catalogs.academicLevels = catalogSettled[0].status === 'fulfilled' ? catalogSettled[0].value : []
-  catalogs.schools = catalogSettled[1].status === 'fulfilled' ? catalogSettled[1].value : []
-  catalogs.unidades = catalogSettled[2].status === 'fulfilled' ? catalogSettled[2].value : []
-  catalogs.banks = catalogSettled[3].status === 'fulfilled' ? catalogSettled[3].value : []
+  catalogs.unidades = catalogSettled[1].status === 'fulfilled' ? catalogSettled[1].value : []
+  catalogs.banks = catalogSettled[2].status === 'fulfilled' ? catalogSettled[2].value : []
+  catalogs.schools = []
+  catalogs.programs = []
   catalogs.gradeScales = scalesSettled[0].status === 'fulfilled' ? scalesSettled[0].value : []
   if (catalogFailed) {
     errorToast(t('profilePage.toastCatalogError'))
@@ -492,7 +528,12 @@ async function fetchProfileAndCatalogs() {
   try {
     const profileResponse = await api.get('/api/accounts/profile/')
     applyProfile(profileResponse.data || {})
-    await fetchPrograms(form.value.school, false, { notifyError: !catalogFailed })
+    if (form.value.unidad) {
+      await fetchSchools(form.value.unidad, false, { notifyError: !catalogFailed })
+    }
+    if (form.value.school) {
+      await fetchPrograms(form.value.school, false, { notifyError: !catalogFailed })
+    }
     await nextTick()
   } catch (err) {
     console.error('Failed to load profile:', err)
@@ -534,6 +575,7 @@ function buildPayload() {
   payload.ingress_date = nullable(payload.ingress_date)
   payload.current_semester = nullable(payload.current_semester)
   payload.credits_approved_percent = nullable(payload.credits_approved_percent)
+  payload.toefl_score = nullable(payload.toefl_score)
   payload.additional_languages = normalizedAdditionalLanguages()
   payload.rfc = String(payload.rfc || '').trim().toUpperCase()
   payload.clabe = String(payload.clabe || '').trim()
@@ -546,6 +588,9 @@ async function handleSubmit() {
   try {
     const { data } = await api.patch('/api/accounts/profile/', buildPayload())
     applyProfile(data || {})
+    if (form.value.unidad) {
+      await fetchSchools(form.value.unidad, false)
+    }
     if (form.value.school) {
       await fetchPrograms(form.value.school, false)
     }
@@ -567,6 +612,12 @@ function addLanguageRow() {
 function removeLanguageRow(index) {
   form.value.additional_languages.splice(index, 1)
 }
+
+watch(() => form.value.unidad, (unidad, previous) => {
+  if (loading.value || hydrating.value || saving.value) return
+  if (String(unidad || '') === String(previous || '')) return
+  fetchSchools(unidad)
+})
 
 watch(() => form.value.school, (school, previous) => {
   if (loading.value || hydrating.value || saving.value) return

@@ -31,7 +31,6 @@ class TestAuthenticationWorkflows:
 
         # Fill and submit registration form
         auth_page.register(
-            username=user_data["username"],
             email=user_data["email"],
             password=user_data["password"],
             confirm_password=user_data["password"],
@@ -56,7 +55,6 @@ class TestAuthenticationWorkflows:
                 "Vue app not available at base_url. Run with BASE_URL=http://localhost:5173"
             )
         auth_page.register(
-            username=user_data["username"],
             email=user_data["email"],
             password=user_data["password"],
             confirm_password="DifferentPassword123!",

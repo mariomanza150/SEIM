@@ -8,28 +8,40 @@ from documents.mobility_document_catalog import (
     seed_mobility_document_types,
 )
 from documents.models import DocumentType
-from exchange.mobility_schemes import MOBILITY_SCHEME_SPECS, seed_mobility_schemes
+from exchange.mobility_schemes import (
+    MOBILITY_SCHEME_HISPANA,
+    MOBILITY_SCHEME_INGLESa,
+    MOBILITY_SCHEME_SPECS,
+    seed_mobility_schemes,
+)
 from exchange.models import Program, ProgramDocumentRequirement
 
 
 @pytest.mark.django_db
 @pytest.mark.unit
 class TestMobilitySeeds:
-    def test_seed_schemes_creates_three_and_updates_eligibility(self):
+    def test_seed_schemes_creates_two_and_updates_eligibility(self):
         programs = seed_mobility_schemes()
-        assert len(programs) == 3
+        assert len(programs) == 2
         names = {p.name for p in programs}
         assert names == {spec["name"] for spec in MOBILITY_SCHEME_SPECS}
 
-        nacional = Program.objects.get(name="Movilidad Nacional")
-        nacional.min_semester = 1
-        nacional.min_gpa = 1.0
-        nacional.save(update_fields=["min_semester", "min_gpa"])
+        hispana = Program.objects.get(name=MOBILITY_SCHEME_HISPANA)
+        hispana.min_semester = 1
+        hispana.min_gpa = 1.0
+        hispana.min_toefl_score = 100
+        hispana.save(update_fields=["min_semester", "min_gpa", "min_toefl_score"])
 
         seed_mobility_schemes()
-        nacional.refresh_from_db()
-        assert nacional.min_semester == 3
-        assert nacional.min_gpa == 3.0
+        hispana.refresh_from_db()
+        assert hispana.min_semester == 4
+        assert hispana.min_gpa == 3.6
+        assert hispana.min_toefl_score == 450
+
+        inglesa = Program.objects.get(name=MOBILITY_SCHEME_INGLESa)
+        assert inglesa.min_gpa == 3.4
+        assert inglesa.min_toefl_score == 550
+        assert not Program.objects.filter(name="Movilidad Nacional", is_active=True).exists()
 
     def test_mx_document_catalog_and_scheme_requirements(self):
         seed_mobility_schemes()
@@ -40,14 +52,9 @@ class TestMobilitySeeds:
         inscription = DocumentType.objects.get(slug="inscripcion_uadec")
         assert inscription.name == "Inscripción UAdeC"
 
-        # First call may create rows; re-run is idempotent (created count may be 0).
         assign_scheme_document_requirements()
         assign_scheme_document_requirements()
-        for name in (
-            "Movilidad Nacional",
-            "Movilidad Internacional Habla Hispana",
-            "Movilidad Internacional",
-        ):
+        for name in (MOBILITY_SCHEME_HISPANA, MOBILITY_SCHEME_INGLESa):
             program = Program.objects.get(name=name)
             assert ProgramDocumentRequirement.objects.filter(program=program).exists()
             assert ProgramDocumentRequirement.objects.filter(

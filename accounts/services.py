@@ -309,6 +309,27 @@ class AccountService:
     # ==========================================
 
     @staticmethod
+    def username_from_email(email: str) -> str:
+        """Derive a Django-valid username from the email local part."""
+        import re
+
+        local = email.strip().lower().split("@", 1)[0]
+        sanitized = re.sub(r"[^\w.@+-]", "_", local).strip("._@+-")
+        return (sanitized or "user")[:150]
+
+    @staticmethod
+    def unique_username_from_email(email: str) -> str:
+        """Return a unique username derived from an email address."""
+        base = AccountService.username_from_email(email)
+        candidate = base
+        suffix = 1
+        while User.objects.filter(username=candidate).exists():
+            tail = f"-{suffix}"
+            candidate = f"{base[: 150 - len(tail)]}{tail}"
+            suffix += 1
+        return candidate
+
+    @staticmethod
     @transaction.atomic
     def register_user(
         username: str,
@@ -343,11 +364,12 @@ class AccountService:
             name__iexact=domain, is_active=True
         ).exists():
             raise ValueError("Email domain is not allowed for registration")
-        if not all(
-            str(value).strip()
-            for value in (first_name, middle_name, last_name, mothers_last_name)
-        ):
-            raise ValueError("All four name fields are required")
+        if not all(str(value).strip() for value in (first_name, last_name)):
+            raise ValueError("First name and last name are required")
+
+        username = (username or "").strip() or AccountService.unique_username_from_email(
+            email
+        )
 
         # Check if username exists
         if User.objects.filter(username=username).exists():

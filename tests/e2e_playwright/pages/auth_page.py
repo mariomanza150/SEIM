@@ -74,7 +74,6 @@ class AuthPage(BasePage):
 
     def register(
         self,
-        username: str,
         email: str,
         password: str,
         confirm_password: str,
@@ -86,7 +85,6 @@ class AuthPage(BasePage):
         Register a new user.
 
         Args:
-            username: Username
             email: Email address
             password: Password
             confirm_password: Password confirmation
@@ -94,14 +92,11 @@ class AuthPage(BasePage):
             last_name: Last name (optional)
             agree_terms: Whether to agree to terms
         """
-        self.fill(self.REGISTER_USERNAME_INPUT, username)
         self.fill(self.REGISTER_EMAIL_INPUT, email)
         self.fill(self.REGISTER_PASSWORD_INPUT, password)
         self.fill(self.REGISTER_CONFIRM_PASSWORD_INPUT, confirm_password)
         self.fill(self.REGISTER_FIRST_NAME_INPUT, first_name or "Test")
-        self.fill(self.REGISTER_MIDDLE_NAME_INPUT, "Q")
         self.fill(self.REGISTER_LAST_NAME_INPUT, last_name or "User")
-        self.fill(self.REGISTER_MOTHERS_LAST_NAME_INPUT, "Garcia")
 
         if agree_terms and self.is_visible(self.REGISTER_AGREE_TERMS_CHECKBOX, timeout=1000):
             self.check(self.REGISTER_AGREE_TERMS_CHECKBOX)

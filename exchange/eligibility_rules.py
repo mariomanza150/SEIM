@@ -381,6 +381,27 @@ def _rule_language_proficiency(
     return RuleOutcome("language_proficiency", passed=True)
 
 
+def _rule_toefl(profile, program: Program, application, _student: User) -> RuleOutcome:
+    min_toefl = getattr(program, "min_toefl_score", None)
+    if not min_toefl:
+        return RuleOutcome("toefl", passed=True, skipped=True)
+    score = profile.toefl_score
+    if score is None:
+        return RuleOutcome("toefl", passed=True, skipped=True)
+    if score < min_toefl:
+        return RuleOutcome(
+            "toefl",
+            passed=False,
+            message=(
+                f"TOEFL score below program minimum. Your score: {score}, "
+                f"Required: {min_toefl}"
+            ),
+            message_key="toefl_below",
+            message_params={"student": str(score), "required": str(min_toefl)},
+        )
+    return RuleOutcome("toefl", passed=True)
+
+
 def _rule_age(profile, program: Program, application, _student: User) -> RuleOutcome:
     if not (program.min_age or program.max_age):
         return RuleOutcome("age", passed=True, skipped=True)
@@ -527,6 +548,7 @@ def evaluate_eligibility(
         _rule_gpa,
         _rule_required_language,
         _rule_language_proficiency,
+        _rule_toefl,
         _rule_age,
     ]
     if program.required_document_types.exists():
@@ -560,6 +582,7 @@ def checks_passed_labels(program: Program) -> list[str | None]:
         "GPA requirement" if program.min_gpa else None,
         "Language requirement" if program.required_language else None,
         "Language proficiency" if program.min_language_level else None,
+        "TOEFL requirement" if getattr(program, "min_toefl_score", None) else None,
         "Age requirements" if (program.min_age or program.max_age) else None,
     ]
     if getattr(program, "pk", None) and program.required_document_types.exists():

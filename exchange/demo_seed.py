@@ -428,7 +428,7 @@ DEMO_APPLICATION_SPECS = [
     },
     {
         "student_username": "student",
-        "program_name": "Movilidad Internacional",
+        "program_name": "Movilidad Internacional Habla Inglesa",
         "status": "draft",
         "submitted_days_ago": None,
         "withdrawn": False,
@@ -489,7 +489,7 @@ DEMO_ALLOWED_EMAIL_DOMAINS = (
     ("example.edu", "example_edu"),
     ("university.edu", "university"),
     ("seim.edu", "seim"),
-    ("uanl.edu.mx", "uanl"),
+    ("uadec.edu.mx", "uadec"),
 )
 
 DEMO_FORM_NAME = "Demo exchange application"
@@ -586,33 +586,35 @@ DEMO_HOST_SPECS = {
         "academic_code": "IR",
         "subjects": ({"code": "IR101", "name": "European Policy", "credits": "6.00"},),
     },
-    "Movilidad Nacional": {
-        "country": "Mexico",
-        "institution": "Universidad Nacional Autónoma de México",
-        "school": "Facultad de Ingeniería",
-        "academic": "Ingeniería en Computación",
-        "academic_code": "IC",
+    "Movilidad Internacional Habla Hispana": {
+        "country": "España",
+        "institution": "Universidad de León",
+        "school": "Facultad / Escuela general",
+        "academic": "Programa académico general",
+        "academic_code": "GEN",
         "subjects": (
-            {"code": "IC101", "name": "Estructuras de Datos", "credits": "8.00"},
+            {"code": "GEN101", "name": "Asignatura general de movilidad", "credits": "6.00"},
         ),
     },
-    "Movilidad Internacional Habla Hispana": {
-        "country": "Spain",
-        "institution": "Universidad Autónoma de Madrid",
-        "school": "Facultad de Ciencias Económicas",
-        "academic": "Administración de Empresas",
-        "academic_code": "ADE",
+    "Movilidad Internacional Habla Inglesa": {
+        "country": "Italia",
+        "institution": "Università degli Studi di Firenze",
+        "school": "Facultad / Escuela general",
+        "academic": "Programa académico general",
+        "academic_code": "GEN",
         "subjects": (
-            {"code": "ADE201", "name": "Economía Internacional", "credits": "6.00"},
+            {"code": "GEN101", "name": "Asignatura general de movilidad", "credits": "6.00"},
         ),
     },
     "Movilidad Internacional": {
-        "country": "Netherlands",
-        "institution": "Delft University of Technology",
-        "school": "Faculty of Electrical Engineering",
-        "academic": "Computer Engineering",
-        "academic_code": "CE",
-        "subjects": ({"code": "CE401", "name": "Embedded Systems", "credits": "5.00"},),
+        "country": "Italia",
+        "institution": "Università degli Studi di Firenze",
+        "school": "Facultad / Escuela general",
+        "academic": "Programa académico general",
+        "academic_code": "GEN",
+        "subjects": (
+            {"code": "GEN101", "name": "Asignatura general de movilidad", "credits": "6.00"},
+        ),
     },
     DEMO_CLOSED_WINDOW_PROGRAM: {
         "country": "Norway",

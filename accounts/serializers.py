@@ -93,8 +93,11 @@ class AcademicLevelSerializer(CatalogSerializer):
 
 
 class SchoolFacultySerializer(CatalogSerializer):
+    unidad_name = serializers.CharField(source="unidad.name", read_only=True)
+
     class Meta(CatalogSerializer.Meta):
         model = SchoolFaculty
+        fields = CatalogSerializer.Meta.fields + ("unidad", "unidad_name")
 
 
 class UnidadSerializer(CatalogSerializer):
@@ -264,6 +267,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "credits_approved_percent",
             "language",
             "language_level",
+            "toefl_score",
             "additional_languages",
             "is_personal_academic_complete",
             "is_eligibility_complete",
@@ -288,6 +292,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "gpa",
             "current_semester",
             "credits_approved_percent",
+            "toefl_score",
             "secondary_email",
             "language",
             "language_level",
@@ -393,10 +398,13 @@ class PermissionSerializer(serializers.ModelSerializer):
 class RegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     password2 = serializers.CharField(write_only=True)
+    username = serializers.CharField(required=False, allow_blank=True)
     first_name = serializers.CharField(required=True, allow_blank=False)
-    middle_name = serializers.CharField(required=True, allow_blank=False)
+    middle_name = serializers.CharField(required=False, allow_blank=True, default="")
     last_name = serializers.CharField(required=True, allow_blank=False)
-    mothers_last_name = serializers.CharField(required=True, allow_blank=False)
+    mothers_last_name = serializers.CharField(
+        required=False, allow_blank=True, default=""
+    )
 
     class Meta:
         model = User
@@ -412,8 +420,17 @@ class RegistrationSerializer(serializers.ModelSerializer):
         )
 
     def validate(self, data):
+        from .services import AccountService
+
         if data["password"] != data["password2"]:
             raise serializers.ValidationError({"password": "Passwords do not match."})
+
+        username = (data.get("username") or "").strip()
+        if not username:
+            data["username"] = AccountService.unique_username_from_email(data["email"])
+        else:
+            data["username"] = username
+
         return data
 
     def validate_password(self, value):

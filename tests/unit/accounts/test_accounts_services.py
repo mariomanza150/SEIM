@@ -318,13 +318,11 @@ class TestUserRegistration(TestCase):
         mock_token.return_value = "test_token"
 
         user = AccountService.register_user(
-            username="minimal",
+            username="",
             email="minimal@test.com",
             password="testpass123",
             first_name="Min",
-            middle_name="A",
             last_name="User",
-            mothers_last_name="Lopez",
         )
 
         self.assertIsNotNone(user.id)

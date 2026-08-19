@@ -123,55 +123,9 @@ class IsAdminOrAllowAnyRead(BasePermission):
 
 
 def _country_options():
-    # Prefer pycountry if available to provide a broad, ISO-aligned list.
-    try:
-        import pycountry  # type: ignore
+    from accounts.country_catalog import country_options
 
-        names = sorted(
-            {country.name for country in pycountry.countries if getattr(country, "name", "")}
-        )
-    except Exception:
-        names = sorted(
-            {
-                "Argentina",
-                "Australia",
-                "Austria",
-                "Belgium",
-                "Brazil",
-                "Canada",
-                "Chile",
-                "China",
-                "Colombia",
-                "Costa Rica",
-                "Czech Republic",
-                "Denmark",
-                "Ecuador",
-                "Finland",
-                "France",
-                "Germany",
-                "Greece",
-                "Hungary",
-                "India",
-                "Ireland",
-                "Italy",
-                "Japan",
-                "Mexico",
-                "Netherlands",
-                "New Zealand",
-                "Norway",
-                "Peru",
-                "Poland",
-                "Portugal",
-                "South Korea",
-                "Spain",
-                "Sweden",
-                "Switzerland",
-                "United Kingdom",
-                "United States",
-                "Uruguay",
-            }
-        )
-    return [{"value": name, "label": name} for name in names]
+    return country_options()
 
 
 class CountryCatalogView(APIView):
@@ -232,8 +186,15 @@ class AcademicLevelViewSet(ActiveCatalogViewSet):
 
 
 class SchoolFacultyViewSet(ActiveCatalogViewSet):
-    queryset = SchoolFaculty.objects.all()
+    queryset = SchoolFaculty.objects.select_related("unidad")
     serializer_class = SchoolFacultySerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        unidad_id = self.request.query_params.get("unidad")
+        if unidad_id:
+            queryset = queryset.filter(unidad_id=unidad_id)
+        return queryset
 
 
 class UnidadViewSet(ActiveCatalogViewSet):
@@ -253,8 +214,11 @@ class HomeAcademicProgramViewSet(ActiveCatalogViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         school_id = self.request.query_params.get("school")
+        unidad_id = self.request.query_params.get("unidad")
         if school_id:
             queryset = queryset.filter(school_id=school_id)
+        if unidad_id:
+            queryset = queryset.filter(school__unidad_id=unidad_id)
         return queryset
 
 

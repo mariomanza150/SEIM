@@ -43,6 +43,12 @@ class Command(BaseCommand):
         # 6. Canadian Percentage Scale
         self._create_canadian_scale()
 
+        # 7. Mexican 0–100 scale (UAdeC kardex)
+        self._create_mx_0_100_scale()
+
+        # 8. Mexican 0–10 scale
+        self._create_mx_0_10_scale()
+
         self.stdout.write(self.style.SUCCESS("Successfully seeded all grade scales"))
 
     def _create_us_gpa_scale(self):
@@ -344,6 +350,86 @@ class Command(BaseCommand):
                     description=desc,
                     order=order,
                     is_passing=(numeric >= 50.0),
+                )
+
+            self.stdout.write(self.style.SUCCESS(f"Created {scale.name}"))
+
+    def _create_mx_0_100_scale(self):
+        """Create Mexican 0–100 scale (UAdeC kardex; passing 70)."""
+        scale, created = GradeScale.objects.get_or_create(
+            code="MX_0_100",
+            defaults={
+                "name": "Escala Mexicana 0–100",
+                "description": "Escala de calificación mexicana 0–100 (aprobatorio 70)",
+                "country": "Mexico",
+                "min_value": 0.0,
+                "max_value": 100.0,
+                "passing_value": 70.0,
+                "is_active": True,
+                "is_reverse_scale": False,
+            },
+        )
+
+        if created:
+            grades = [
+                ("90–100", 95.0, 3.8, 90.0, 100.0, "Excelente", 1),
+                ("80–89", 85.0, 3.4, 80.0, 89.9, "Muy bien", 2),
+                ("70–79", 75.0, 3.0, 70.0, 79.9, "Bien", 3),
+                ("60–69", 65.0, 2.6, 60.0, 69.9, "Suficiente", 4),
+                ("0–59", 30.0, 1.2, 0.0, 59.9, "Reprobatorio", 5),
+            ]
+
+            for label, numeric, gpa, min_pct, max_pct, desc, order in grades:
+                GradeValue.objects.create(
+                    grade_scale=scale,
+                    label=label,
+                    numeric_value=numeric,
+                    gpa_equivalent=gpa,
+                    min_percentage=min_pct,
+                    max_percentage=max_pct,
+                    description=desc,
+                    order=order,
+                    is_passing=(numeric >= 70.0),
+                )
+
+            self.stdout.write(self.style.SUCCESS(f"Created {scale.name}"))
+
+    def _create_mx_0_10_scale(self):
+        """Create Mexican 0–10 scale (passing 7)."""
+        scale, created = GradeScale.objects.get_or_create(
+            code="MX_0_10",
+            defaults={
+                "name": "Escala Mexicana 0–10",
+                "description": "Escala de calificación mexicana 0–10 (aprobatorio 7)",
+                "country": "Mexico",
+                "min_value": 0.0,
+                "max_value": 10.0,
+                "passing_value": 7.0,
+                "is_active": True,
+                "is_reverse_scale": False,
+            },
+        )
+
+        if created:
+            grades = [
+                ("9–10", 9.5, 3.8, 90.0, 100.0, "Excelente", 1),
+                ("8–8.9", 8.5, 3.4, 80.0, 89.9, "Muy bien", 2),
+                ("7–7.9", 7.5, 3.0, 70.0, 79.9, "Bien", 3),
+                ("6–6.9", 6.5, 2.6, 60.0, 69.9, "Suficiente", 4),
+                ("0–5.9", 3.0, 1.2, 0.0, 59.9, "Reprobatorio", 5),
+            ]
+
+            for label, numeric, gpa, min_pct, max_pct, desc, order in grades:
+                GradeValue.objects.create(
+                    grade_scale=scale,
+                    label=label,
+                    numeric_value=numeric,
+                    gpa_equivalent=gpa,
+                    min_percentage=min_pct,
+                    max_percentage=max_pct,
+                    description=desc,
+                    order=order,
+                    is_passing=(numeric >= 7.0),
                 )
 
             self.stdout.write(self.style.SUCCESS(f"Created {scale.name}"))

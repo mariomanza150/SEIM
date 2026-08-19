@@ -223,7 +223,8 @@ class TestProfileCatalogPermissions(APITestCase):
 
         assert authenticated.status_code == status.HTTP_200_OK
         assert isinstance(authenticated.data, list)
-        assert any(item["value"] == "Mexico" for item in authenticated.data)
+        assert any(item["value"] == "España" for item in authenticated.data)
+        assert len(authenticated.data) == 17
         assert all("value" in item and "label" in item for item in authenticated.data)
 
 
@@ -261,6 +262,36 @@ class TestHomeAcademicProgramSchoolFilter(APITestCase):
         ids = {str(row["id"]) for row in response.data}
         assert str(self.program_a.id) in ids
         assert str(self.program_b.id) not in ids
+
+
+@pytest.mark.django_db
+@pytest.mark.views
+class TestSchoolFacultyUnidadFilter(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="unidaduser",
+            email="unidad@example.com",
+            password="testpass123",
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+        self.unidad_a = Unidad.objects.create(name="Sureste", code="sureste")
+        self.unidad_b = Unidad.objects.create(name="Laguna", code="laguna")
+        self.school_a = SchoolFaculty.objects.create(
+            name="Facultad A", code="fa", unidad=self.unidad_a
+        )
+        self.school_b = SchoolFaculty.objects.create(
+            name="Facultad B", code="fb", unidad=self.unidad_b
+        )
+
+    def test_schools_filtered_by_unidad_query_param(self):
+        url = reverse("accounts:school-list")
+        response = self.client.get(url, {"unidad": str(self.unidad_a.id)})
+
+        assert response.status_code == status.HTTP_200_OK
+        ids = {str(row["id"]) for row in response.data}
+        assert str(self.school_a.id) in ids
+        assert str(self.school_b.id) not in ids
 
 
 @pytest.mark.django_db

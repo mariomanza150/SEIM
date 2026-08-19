@@ -98,6 +98,11 @@ class Program(UUIDModel, TimeStampedModel):
         ],
         help_text=_("Minimum language proficiency level (CEFR scale)."),
     )
+    min_toefl_score = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text=_("Minimum TOEFL score required for eligibility (when set)."),
+    )
     max_age = models.PositiveIntegerField(
         null=True, blank=True, help_text=_("Maximum age for eligibility.")
     )

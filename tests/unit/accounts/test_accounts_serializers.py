@@ -411,16 +411,45 @@ class TestRegistrationSerializer:
     def test_registration_serializer_requires_all_name_parts(self):
         data = {
             "email": "newuser@example.com",
-            "username": "newuser",
             "password": "testpass123",
             "password2": "testpass123",
         }
 
         serializer = RegistrationSerializer(data=data)
         assert not serializer.is_valid()
-        assert {"first_name", "middle_name", "last_name", "mothers_last_name"} <= set(
-            serializer.errors
-        )
+        assert {"first_name", "last_name"} <= set(serializer.errors)
+
+    def test_registration_serializer_optional_middle_and_maternal_names(self):
+        data = {
+            "email": "newuser@example.com",
+            "password": "testpass123",
+            "password2": "testpass123",
+            "first_name": "New",
+            "last_name": "User",
+        }
+
+        serializer = RegistrationSerializer(data=data)
+        assert serializer.is_valid()
+
+        user = serializer.save()
+        assert user.username == "newuser"
+        assert user.middle_name == ""
+        assert user.mothers_last_name == ""
+
+    def test_registration_serializer_derives_username_from_email(self):
+        data = {
+            "email": "student.name@example.com",
+            "password": "testpass123",
+            "password2": "testpass123",
+            "first_name": "New",
+            "last_name": "User",
+        }
+
+        serializer = RegistrationSerializer(data=data)
+        assert serializer.is_valid()
+
+        user = serializer.save()
+        assert user.username == "student.name"
 
     def test_registration_serializer_rejects_inactive_or_unknown_domain(self):
         AllowedEmailDomain.objects.create(name="inactive.edu.mx", is_active=False)

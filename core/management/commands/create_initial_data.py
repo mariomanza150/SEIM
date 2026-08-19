@@ -12,6 +12,7 @@ from documents.mobility_document_catalog import (
     seed_mobility_document_types,
 )
 from documents.models import DocumentType
+from exchange.cgri_partner_catalog import seed_cgri_partner_destinations
 from exchange.demo_seed import DEMO_ALLOWED_EMAIL_DOMAINS
 from exchange.mobility_schemes import seed_mobility_schemes
 from exchange.models import ApplicationStatus
@@ -21,8 +22,8 @@ from notifications.models import NotificationType
 class Command(BaseCommand):
     help = (
         "Create initial system data (statuses, document types, notification types, "
-        "roles, allowed email domains, profile catalogs, three mobility schemes, "
-        "and MX document catalog requirements)"
+        "roles, allowed email domains, profile catalogs, two mobility schemes, "
+        "CGRI partner destinations, grade scales, and MX document catalog requirements)"
     )
 
     def handle(self, *args, **options):
@@ -93,6 +94,17 @@ class Command(BaseCommand):
 
         for program in seed_mobility_schemes():
             self.stdout.write(f"  ✓ Mobility scheme: {program.name}")
+
+        partner_counts = seed_cgri_partner_destinations()
+        self.stdout.write(
+            f"  ✓ CGRI partners: {partner_counts['institutions']} institutions, "
+            f"{partner_counts['agreements']} agreements"
+        )
+
+        from django.core.management import call_command
+
+        call_command("seed_grade_scales", verbosity=0)
+        self.stdout.write("  ✓ Grade scales seeded (incl. MX_0_100, MX_0_10)")
 
         for dt in seed_mobility_document_types():
             self.stdout.write(f"  ✓ Mobility DocumentType: {dt.slug or dt.name}")

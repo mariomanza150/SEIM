@@ -121,7 +121,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * Self-service signup. Creates an inactive user pending email verification.
-   * @param {{ email: string, username: string, password: string, password2: string, first_name: string, middle_name: string, last_name: string, mothers_last_name: string }} payload
+   * @param {{ email: string, username?: string, password: string, password2: string, first_name: string, middle_name?: string, last_name: string, mothers_last_name?: string }} payload
    * @returns {Promise<boolean>}
    */
   async function register(payload) {
@@ -131,7 +131,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       await axios.post(`${API_BASE_URL}/api/accounts/register/`, {
         email: payload.email,
-        username: payload.username,
+        ...(payload.username ? { username: payload.username } : {}),
         password: payload.password,
         password2: payload.password2,
         first_name: payload.first_name || '',

@@ -51,22 +51,6 @@
                   </div>
                 </div>
 
-                <div class="mb-3">
-                  <label for="username" class="form-label">{{ t('register.usernameLabel') }}</label>
-                  <input
-                    type="text"
-                    class="form-control"
-                    id="username"
-                    v-model="username"
-                    name="username"
-                    autocomplete="username"
-                    required
-                    :disabled="isLoading"
-                    :placeholder="t('register.usernamePlaceholder')"
-                    data-testid="register-username"
-                  />
-                </div>
-
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label for="first_name" class="form-label">{{ t('register.firstNameLabel') }}</label>
@@ -92,7 +76,6 @@
                       v-model="middleName"
                       name="middle_name"
                       autocomplete="additional-name"
-                      required
                       :disabled="isLoading"
                       :placeholder="t('register.middleNamePlaceholder')"
                       data-testid="register-middle-name"
@@ -122,7 +105,6 @@
                       v-model="mothersLastName"
                       name="mothers_last_name"
                       autocomplete="family-name"
-                      required
                       :disabled="isLoading"
                       :placeholder="t('register.mothersLastNamePlaceholder')"
                       data-testid="register-mothers-last-name"
@@ -211,7 +193,6 @@ const authStore = useAuthStore()
 const { success: successToast, error: errorToast } = useToast()
 
 const email = ref('')
-const username = ref('')
 const firstName = ref('')
 const middleName = ref('')
 const lastName = ref('')
@@ -266,7 +247,6 @@ async function handleRegister() {
   try {
     const ok = await authStore.register({
       email: email.value,
-      username: username.value,
       password: password.value,
       password2: password2.value,
       first_name: firstName.value,

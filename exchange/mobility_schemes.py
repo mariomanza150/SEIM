@@ -1,4 +1,4 @@
-"""Seed helpers for the three mobility scheme Programs (Phase 1)."""
+"""Seed helpers for the two international mobility scheme Programs."""
 
 from __future__ import annotations
 
@@ -9,40 +9,35 @@ from django.utils import timezone
 
 from exchange.models import Program
 
+MOBILITY_SCHEME_HISPANA = "Movilidad Internacional Habla Hispana"
+MOBILITY_SCHEME_INGLESa = "Movilidad Internacional Habla Inglesa"
+LEGACY_SCHEME_INGLESa = "Movilidad Internacional"
+LEGACY_SCHEME_NACIONAL = "Movilidad Nacional"
+
 MOBILITY_SCHEME_SPECS = (
     {
-        "name": "Movilidad Nacional",
+        "name": MOBILITY_SCHEME_HISPANA,
         "description": (
-            "Esquema de movilidad doméstica entre instituciones mexicanas. "
-            "Requisitos mínimos configurables por administración."
+            "Esquema de movilidad internacional en países de habla hispana. "
+            "Promedio mínimo 90 (escala 0–100), TOEFL mínimo 450."
         ),
-        "min_gpa": 3.0,
-        "min_semester": 3,
+        "min_gpa": 3.6,
+        "min_toefl_score": 450,
+        "min_semester": 4,
         "min_credits_approved_percent": Decimal("50.00"),
         "required_language": "Spanish",
         "min_language_level": "B1",
     },
     {
-        "name": "Movilidad Internacional Habla Hispana",
+        "name": MOBILITY_SCHEME_INGLESa,
         "description": (
-            "Esquema de movilidad internacional en países de habla hispana. "
-            "Requisitos mínimos configurables por administración."
+            "Esquema de movilidad internacional en destinos de lengua extranjera. "
+            "Promedio mínimo 85 (escala 0–100), TOEFL mínimo 550."
         ),
-        "min_gpa": 3.2,
+        "min_gpa": 3.4,
+        "min_toefl_score": 550,
         "min_semester": 4,
-        "min_credits_approved_percent": Decimal("60.00"),
-        "required_language": "Spanish",
-        "min_language_level": "B2",
-    },
-    {
-        "name": "Movilidad Internacional",
-        "description": (
-            "Esquema de movilidad internacional general (incluye destinos no hispanohablantes). "
-            "Requisitos mínimos configurables por administración."
-        ),
-        "min_gpa": 3.3,
-        "min_semester": 4,
-        "min_credits_approved_percent": Decimal("60.00"),
+        "min_credits_approved_percent": Decimal("50.00"),
         "required_language": "English",
         "min_language_level": "B2",
     },
@@ -51,8 +46,9 @@ MOBILITY_SCHEME_SPECS = (
 
 def seed_mobility_schemes(*, today: date | None = None) -> list[Program]:
     """
-    Ensure the three mobility scheme programs exist (get_or_create by name).
+    Ensure the two international mobility scheme programs exist (get_or_create by name).
 
+    Deactivates legacy Nacional scheme and renames legacy Internacional when present.
     Returns the Program instances (created or existing).
     """
     today = today or timezone.localdate()
@@ -60,6 +56,15 @@ def seed_mobility_schemes(*, today: date | None = None) -> list[Program]:
     end = start + timedelta(days=180)
     open_date = today
     deadline = start - timedelta(days=30)
+
+    # Deactivate removed scheme.
+    Program.objects.filter(name=LEGACY_SCHEME_NACIONAL).update(is_active=False)
+
+    # Rename legacy English scheme if it exists under the old name.
+    legacy = Program.objects.filter(name=LEGACY_SCHEME_INGLESa).first()
+    if legacy and not Program.objects.filter(name=MOBILITY_SCHEME_INGLESa).exists():
+        legacy.name = MOBILITY_SCHEME_INGLESa
+        legacy.save(update_fields=["name", "updated_at"])
 
     programs: list[Program] = []
     for spec in MOBILITY_SCHEME_SPECS:
@@ -74,6 +79,7 @@ def seed_mobility_schemes(*, today: date | None = None) -> list[Program]:
                 "is_active": True,
                 "recurring": True,
                 "min_gpa": spec["min_gpa"],
+                "min_toefl_score": spec["min_toefl_score"],
                 "min_semester": spec["min_semester"],
                 "min_credits_approved_percent": spec["min_credits_approved_percent"],
                 "required_language": spec["required_language"],
@@ -81,11 +87,11 @@ def seed_mobility_schemes(*, today: date | None = None) -> list[Program]:
             },
         )
         if not created:
-            # Keep windows/dates as configured; refresh eligibility fields for consistency.
             update_fields: list[str] = []
             for field in (
                 "description",
                 "min_gpa",
+                "min_toefl_score",
                 "min_semester",
                 "min_credits_approved_percent",
                 "required_language",
