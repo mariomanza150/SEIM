@@ -40,7 +40,7 @@ concurrency:
 jobs:
   deploy:
     name: Deploy seim-localprod
-    runs-on: [self-hosted, windows, local-prod]
+    runs-on: [self-hosted, Windows, local-prod]
     if: |
       (github.event_name == 'workflow_dispatch') ||
       (github.event.workflow_run.conclusion == 'success' &&
