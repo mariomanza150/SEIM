@@ -375,8 +375,13 @@ describe('ApplicationDetail', () => {
     expect(wrapper.text()).toContain('88.5')
     expect(wrapper.text()).toContain('19.38')
     expect(wrapper.text()).not.toContain('19.380000000000003')
-    expect(wrapper.text()).toContain('Staff comparison tool only.')
-    expect(wrapper.find('[data-testid="scholarship-ruleset-label"]').text()).toBe('Default rubric')
+    expect(wrapper.find('[data-testid="scholarship-disclaimer"]').text()).toBe(
+      i18n.global.t('applicationDetailPage.scholarshipScoring.disclaimerStaff'),
+    )
+    expect(wrapper.find('[data-testid="scholarship-ruleset-label"]').text()).toBe(
+      i18n.global.t('applicationDetailPage.scholarshipScoring.rulesetDefault'),
+    )
+    expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.scholarshipScoring.factors.academic'))
     expect(wrapper.text()).not.toContain('default_v1')
   })
 
@@ -420,6 +425,9 @@ describe('ApplicationDetail', () => {
       expect(wrapper.find('[data-testid="scholarship-score-panel"]').exists()).toBe(true)
     })
     expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.scholarshipScoring.studentTitle'))
+    expect(wrapper.find('[data-testid="scholarship-disclaimer"]').text()).toBe(
+      i18n.global.t('applicationDetailPage.scholarshipScoring.disclaimerStudent'),
+    )
     expect(wrapper.text()).toContain('70')
     expect(wrapper.text()).not.toContain('default_v1')
     expect(wrapper.text()).not.toContain(

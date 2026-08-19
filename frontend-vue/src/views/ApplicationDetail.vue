@@ -193,7 +193,7 @@
               </div>
               <div class="card-body">
                 <p class="small text-muted mb-2" data-testid="scholarship-ruleset-label">
-                  {{ application.scholarship_allocation_score.ruleset_label }}
+                  {{ formatScholarshipRulesetLabel(application.scholarship_allocation_score) }}
                 </p>
                 <div class="d-flex flex-wrap align-items-baseline gap-3 mb-3">
                   <div>
@@ -218,7 +218,7 @@
                     </thead>
                     <tbody>
                       <tr v-for="row in application.scholarship_allocation_score.factors" :key="row.id">
-                        <td>{{ row.label }}</td>
+                        <td>{{ formatScholarshipFactorLabel(row) }}</td>
                         <td class="text-end text-nowrap">{{ formatScorePoints(row.points) }} / {{ formatScorePoints(row.max_points) }}</td>
                         <td class="small">{{ row.detail }}</td>
                       </tr>
@@ -229,8 +229,8 @@
                   <strong>{{ t('applicationDetailPage.scholarshipScoring.tieBreakers') }}</strong>
                   {{ (application.scholarship_allocation_score.tie_breakers || []).join(', ') }}
                 </p>
-                <p class="small text-muted mb-0 fst-italic">
-                  {{ application.scholarship_allocation_score.disclaimer }}
+                <p class="small text-muted mb-0 fst-italic" data-testid="scholarship-disclaimer">
+                  {{ formatScholarshipDisclaimer(application.scholarship_allocation_score) }}
                 </p>
               </div>
             </div>
@@ -312,7 +312,7 @@
                     data-testid="award-evidence-list"
                   >
                     <li v-for="doc in application.scholarship_award.evidence_documents" :key="doc.id">
-                      {{ documentTypeLabel({ name: doc.type_name, description: doc.type_description }, doc.type_name) }} —
+                      {{ documentTypeLabel({ name: doc.type_name, description: doc.type_description, slug: doc.type_name }, doc.type_name, { t, te }) }} —
                       {{ doc.is_valid
                         ? t('applicationDetailPage.scholarshipAward.evidenceValid')
                         : t('applicationDetailPage.scholarshipAward.evidencePending') }}
@@ -472,9 +472,9 @@
                         class="badge bg-light text-muted border ms-1"
                       >{{ t('applicationDetailPage.checklistOptional') }}</span>
                       <p
-                        v-if="item.description && item.description !== checklistItemLabel(item)"
+                        v-if="checklistItemDescription(item)"
                         class="small text-muted mb-0"
-                      >{{ item.description }}</p>
+                      >{{ checklistItemDescription(item) }}</p>
                       <p v-if="item.deadline" class="small mb-0 mt-1" :class="item.is_overdue ? 'text-danger' : 'text-muted'">
                         <i class="bi bi-calendar-event me-1" aria-hidden="true"></i>
                         {{ t('applicationDetailPage.checklistDeadline', { date: formatChecklistDate(item.deadline) }) }}
@@ -799,7 +799,7 @@
                     >
                       <router-link :to="{ name: 'DocumentDetail', params: { id: doc.id } }" class="text-decoration-none">
                         <i class="bi bi-file-earmark me-2"></i>
-                        {{ documentTypeLabel(doc.type, t('documentDetailPage.notAvailable')) }}
+                        {{ documentTypeLabel(doc.type, t('documentDetailPage.notAvailable'), { t, te }) }}
                       </router-link>
                       <span class="d-flex align-items-center gap-1">
                         <span
@@ -859,7 +859,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import api from '@/services/api'
 import { eligibilityFailureMessages } from '@/utils/eligibilityMessages'
 import { formatTimelineEventDescription, formatTimelineEventHeading, timelineHasCreatedEvent } from '@/utils/timelineEvents'
-import { documentReviewStatus, documentTypeLabel } from '@/utils/documentApi'
+import { documentReviewStatus, documentTypeLabel, looksLikeTechnicalDocumentName } from '@/utils/documentApi'
 import { readinessLevelBadgeClass, readinessScoreBarClass, formatReadinessHeadline } from '@/utils/applicationReadiness'
 import {
   applicationProgramDisplayName,
@@ -1223,6 +1223,26 @@ function statusClass(status) {
   return applicationStatusBadgeClass(status)
 }
 
+function formatScholarshipRulesetLabel(score) {
+  if (score?.ruleset_id === 'default_v1') {
+    const key = 'applicationDetailPage.scholarshipScoring.rulesetDefault'
+    if (te(key)) return t(key)
+  }
+  return score?.ruleset_label || ''
+}
+
+function formatScholarshipDisclaimer() {
+  const key = isCoordinator.value
+    ? 'applicationDetailPage.scholarshipScoring.disclaimerStaff'
+    : 'applicationDetailPage.scholarshipScoring.disclaimerStudent'
+  return te(key) ? t(key) : ''
+}
+
+function formatScholarshipFactorLabel(row) {
+  const key = `applicationDetailPage.scholarshipScoring.factors.${row?.id}`
+  return te(key) ? t(key) : row?.label || ''
+}
+
 function formatStatus(status) {
   return formatApplicationStatus({ status, t, te })
 }
@@ -1256,7 +1276,16 @@ function formatCommentAuthor(comment) {
 }
 
 function checklistItemLabel(item) {
-  return documentTypeLabel(item, item?.name || t('documentDetailPage.notAvailable'))
+  return documentTypeLabel(item, item?.name || t('documentDetailPage.notAvailable'), { t, te })
+}
+
+function checklistItemDescription(item) {
+  const description = String(item?.description || '').trim()
+  if (!description) return ''
+  if (description === checklistItemLabel(item)) return ''
+  const slug = String(item?.slug || (looksLikeTechnicalDocumentName(item?.name) ? item.name : '')).toLowerCase()
+  if (slug && te(`documentTypes.${slug}`)) return ''
+  return description
 }
 
 function checklistStatusLabel(status) {

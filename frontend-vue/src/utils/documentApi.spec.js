@@ -30,6 +30,20 @@ describe('documentApi', () => {
     expect(documentTypeLabel(null, 'N/A')).toBe('N/A')
   })
 
+  it('documentTypeLabel prefers i18n for known slugs (MQ-032)', () => {
+    const i18n = {
+      te: (key) => key === 'documentTypes.transcript',
+      t: (key) => (key === 'documentTypes.transcript' ? 'Historial académico' : key),
+    }
+    expect(
+      documentTypeLabel(
+        { id: 1, name: 'transcript', slug: 'transcript', description: 'Academic transcript' },
+        '',
+        i18n,
+      ),
+    ).toBe('Historial académico')
+  })
+
   it('documentTypeLabel prefers description when name is a slug', () => {
     expect(
       documentTypeLabel(

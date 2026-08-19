@@ -105,7 +105,7 @@ export function looksLikeTechnicalDocumentName(name) {
   return /^[a-z0-9]+(?:[_-][a-z0-9]+)*$/.test(String(name || '').trim())
 }
 
-export function documentTypeLabel(type, fallback = '') {
+export function documentTypeLabel(type, fallback = '', i18n) {
   let t = coerceDocumentNested(type)
   if (typeof t === 'string') {
     const looseName = typeNameFromLooseString(t)
@@ -116,6 +116,11 @@ export function documentTypeLabel(type, fallback = '') {
     const name = t.name != null ? String(t.name).trim() : ''
     const description = t.description != null ? String(t.description).trim() : ''
     const slug = t.slug != null ? String(t.slug).trim() : ''
+    const i18nSlug = (slug || (looksLikeTechnicalDocumentName(name) ? name : '')).toLowerCase()
+    if (i18nSlug && i18n?.te && i18n?.t) {
+      const key = `documentTypes.${i18nSlug}`
+      if (i18n.te(key)) return i18n.t(key)
+    }
     if (description && (looksLikeTechnicalDocumentName(name) || (slug && name === slug))) {
       return description
     }

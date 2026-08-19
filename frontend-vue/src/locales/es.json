@@ -2,6 +2,10 @@
   "a11y": {
     "skipToMain": "Saltar al contenido principal"
   },
+  "documentTypes": {
+    "transcript": "Historial académico",
+    "passport": "Pasaporte o identificación"
+  },
   "appMeta": {
     "metaDescription": "SEIM — Gestión de información de intercambio estudiantil: solicitudes, documentos, plazos y notificaciones para programas de intercambio.",
     "socialTitle": "SEIM — Gestión de información de intercambio estudiantil",
@@ -272,6 +276,8 @@
       "AnalyticsForecasts": "Pronósticos de demanda",
       "PartnerPortal": "Portal de socios",
       "AdminPrograms": "Admin — Programas",
+      "AdminCatalogs": "Admin — Catálogos",
+      "AdminGrades": "Admin — Escalas de calificación",
       "AdminForms": "Admin — Formularios",
       "AdminDynforms": "Admin — Constructores de formularios",
       "AdminDynformEditor": "Admin — Constructor visual",
@@ -417,6 +423,7 @@
     "deleteToastError": "No se pudo eliminar el programa",
     "clone": "Clonar",
     "destinations": "Destinos",
+    "destinationsHint": "Las universidades anfitrionas, escuelas, programas académicos y asignaturas están en Destinos de cada programa.",
     "cloneConfirm": "¿Clonar \"{name}\"?",
     "toastCloned": "Programa clonado",
     "cloneToastError": "No se pudo clonar el programa",
@@ -464,7 +471,81 @@
       "coordinators": "Coordinadores",
       "coordinatorsHelp": "Usa Ctrl/⌘ para seleccionar varios",
       "requiredDocs": "Tipos de documento requeridos",
-      "requiredDocsHelp": "Usa Ctrl/⌘ para seleccionar varios"
+      "requiredDocsHelp": "Usa Ctrl/⌘ para seleccionar varios",
+      "eligibilityRuleset": "Conjunto de reglas de elegibilidad",
+      "eligibilityRulesetHelp": "Capa opcional que se aplica sobre los campos de elegibilidad del programa.",
+      "eligibilityRulesetNone": "Ninguno (usar solo los campos del programa)"
+    }
+  },
+  "adminCatalogs": {
+    "title": "Catálogos de perfil",
+    "subtitle": "Listas del perfil del estudiante y un acceso a destinos anfitriones por programa.",
+    "create": "Agregar",
+    "empty": "Aún no hay entradas.",
+    "loadError": "No se pudieron cargar los catálogos.",
+    "saveError": "No se pudo guardar.",
+    "deleteConfirm": "¿Eliminar \"{name}\"?",
+    "toastCreated": "Entrada creada",
+    "toastSaved": "Entrada guardada",
+    "toastDeleted": "Entrada eliminada",
+    "domainHelp": "Solo el dominio, sin @ (ejemplo: uadec.edu.mx).",
+    "destinationsHelp": "Las universidades anfitrionas, escuelas, programas académicos y asignaturas se gestionan por programa de movilidad.",
+    "destinationsEmpty": "Aún no hay programas. Crea un programa primero.",
+    "openDestinations": "Destinos",
+    "tabs": {
+      "levels": "Niveles académicos",
+      "schools": "Escuelas / facultades",
+      "programs": "Programas académicos de origen",
+      "unidades": "Unidades / campus",
+      "banks": "Bancos",
+      "domains": "Dominios de correo permitidos",
+      "destinations": "Destinos anfitriones"
+    },
+    "fields": {
+      "name": "Nombre",
+      "code": "Código",
+      "ordering": "Orden",
+      "active": "Activo",
+      "school": "Escuela"
+    }
+  },
+  "adminGrades": {
+    "title": "Escalas de calificación",
+    "subtitle": "Escalas, valores y traducciones usadas en perfiles y universidades anfitrionas.",
+    "scales": "Escalas",
+    "values": "Valores",
+    "translations": "Traducciones",
+    "createScale": "Nueva escala",
+    "createValue": "Agregar valor",
+    "createTranslation": "Agregar traducción",
+    "emptyScales": "Aún no hay escalas.",
+    "emptyValues": "No hay valores para esta escala.",
+    "emptyTranslations": "Aún no hay traducciones explícitas. El equivalente GPA sigue funcionando.",
+    "loadError": "No se pudieron cargar las escalas.",
+    "saveError": "No se pudo guardar.",
+    "deleteConfirm": "¿Eliminar \"{name}\"?",
+    "toastCreated": "Guardado",
+    "toastDeleted": "Eliminado",
+    "selectScale": "Selecciona una escala para editar sus valores",
+    "fields": {
+      "name": "Nombre",
+      "code": "Código",
+      "country": "País",
+      "description": "Descripción",
+      "minValue": "Mínimo",
+      "maxValue": "Máximo",
+      "passingValue": "Valor aprobatorio",
+      "active": "Activo",
+      "reverse": "Escala inversa (menor es mejor)",
+      "label": "Etiqueta",
+      "numericValue": "Valor numérico",
+      "gpaEquivalent": "Equivalente GPA (4.0)",
+      "order": "Orden",
+      "isPassing": "Aprobatorio",
+      "sourceGrade": "Calificación origen",
+      "targetGrade": "Calificación destino",
+      "confidence": "Confianza",
+      "notes": "Notas"
     }
   },
   "adminForms": {
@@ -1408,7 +1489,17 @@
       "withdrawnNote": "Solicitud retirada — la puntuación es solo de referencia.",
       "exportMissingProgram": "No se puede exportar: falta el id del programa.",
       "exportSuccess": "Exportación de la cohorte descargada.",
-      "exportError": "No se pudo descargar la exportación."
+      "exportError": "No se pudo descargar la exportación.",
+      "rulesetDefault": "Rúbrica de becas por defecto (v1)",
+      "disclaimerStudent": "Esta es una estimación informativa de la rúbrica por defecto. No garantiza financiamiento; el personal toma la decisión final.",
+      "disclaimerStaff": "Herramienta de comparación para personal — no es un compromiso de ayuda. Las rúbricas configurables y el flujo de adjudicación aún no están disponibles.",
+      "factors": {
+        "academic": "Expediente académico",
+        "language": "Idioma",
+        "program_fit": "Ajuste al programa",
+        "application_quality": "Calidad de la solicitud",
+        "timeliness": "Puntualidad (dentro de la convocatoria)"
+      }
     },
     "scholarshipAward": {
       "title": "Adjudicación de beca",

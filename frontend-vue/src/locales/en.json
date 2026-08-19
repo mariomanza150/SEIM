@@ -2,6 +2,10 @@
   "a11y": {
     "skipToMain": "Skip to main content"
   },
+  "documentTypes": {
+    "transcript": "Academic transcript",
+    "passport": "Passport or ID"
+  },
   "appMeta": {
     "metaDescription": "SEIM — Student Exchange Information Management: applications, documents, deadlines, and notifications for exchange programs.",
     "socialTitle": "SEIM — Student Exchange Information Management",
@@ -272,6 +276,8 @@
       "AnalyticsForecasts": "Demand forecasts",
       "PartnerPortal": "Partner portal",
       "AdminPrograms": "Admin — Programs",
+      "AdminCatalogs": "Admin — Catalogs",
+      "AdminGrades": "Admin — Grade scales",
       "AdminForms": "Admin — Forms",
       "AdminDynforms": "Admin — Form builders",
       "AdminDynformEditor": "Admin — Visual form builder",
@@ -417,6 +423,7 @@
     "deleteToastError": "Could not delete program",
     "clone": "Clone",
     "destinations": "Destinations",
+    "destinationsHint": "Host universities, schools, academic programs, and subjects are under Destinations on each program.",
     "cloneConfirm": "Clone \"{name}\"?",
     "toastCloned": "Program cloned",
     "cloneToastError": "Could not clone program",
@@ -464,7 +471,81 @@
       "coordinators": "Coordinators",
       "coordinatorsHelp": "Hold Ctrl/⌘ to select multiple",
       "requiredDocs": "Required document types",
-      "requiredDocsHelp": "Hold Ctrl/⌘ to select multiple"
+      "requiredDocsHelp": "Hold Ctrl/⌘ to select multiple",
+      "eligibilityRuleset": "Eligibility ruleset",
+      "eligibilityRulesetHelp": "Optional overlay applied on top of the program eligibility fields.",
+      "eligibilityRulesetNone": "None (use program fields only)"
+    }
+  },
+  "adminCatalogs": {
+    "title": "Profile catalogs",
+    "subtitle": "Lists used on student profiles, plus a shortcut to host destinations per program.",
+    "create": "Add",
+    "empty": "No entries yet.",
+    "loadError": "Could not load catalogs.",
+    "saveError": "Could not save.",
+    "deleteConfirm": "Delete \"{name}\"?",
+    "toastCreated": "Catalog entry created",
+    "toastSaved": "Catalog entry saved",
+    "toastDeleted": "Catalog entry deleted",
+    "domainHelp": "Domain only, no @ (example: uadec.edu.mx).",
+    "destinationsHelp": "Host universities, schools, academic programs, and subjects are managed per mobility program.",
+    "destinationsEmpty": "No programs yet. Create a program first.",
+    "openDestinations": "Destinations",
+    "tabs": {
+      "levels": "Academic levels",
+      "schools": "Schools / faculties",
+      "programs": "Home academic programs",
+      "unidades": "Campuses (unidades)",
+      "banks": "Banks",
+      "domains": "Allowed email domains",
+      "destinations": "Host destinations"
+    },
+    "fields": {
+      "name": "Name",
+      "code": "Code",
+      "ordering": "Order",
+      "active": "Active",
+      "school": "School"
+    }
+  },
+  "adminGrades": {
+    "title": "Grade scales",
+    "subtitle": "Scales, grade values, and translation mappings used on profiles and host universities.",
+    "scales": "Scales",
+    "values": "Grade values",
+    "translations": "Translations",
+    "createScale": "New scale",
+    "createValue": "Add value",
+    "createTranslation": "Add translation",
+    "emptyScales": "No grade scales yet.",
+    "emptyValues": "No values for this scale.",
+    "emptyTranslations": "No explicit translations yet. GPA-equivalent fallback still works.",
+    "loadError": "Could not load grade scales.",
+    "saveError": "Could not save.",
+    "deleteConfirm": "Delete \"{name}\"?",
+    "toastCreated": "Saved",
+    "toastDeleted": "Deleted",
+    "selectScale": "Select a scale to edit values",
+    "fields": {
+      "name": "Name",
+      "code": "Code",
+      "country": "Country",
+      "description": "Description",
+      "minValue": "Minimum",
+      "maxValue": "Maximum",
+      "passingValue": "Passing value",
+      "active": "Active",
+      "reverse": "Reverse scale (lower is better)",
+      "label": "Label",
+      "numericValue": "Numeric value",
+      "gpaEquivalent": "GPA equivalent (4.0)",
+      "order": "Order",
+      "isPassing": "Passing",
+      "sourceGrade": "Source grade",
+      "targetGrade": "Target grade",
+      "confidence": "Confidence",
+      "notes": "Notes"
     }
   },
   "adminForms": {
@@ -1412,7 +1493,17 @@
       "withdrawnNote": "Withdrawn application — score shown for reference only.",
       "exportMissingProgram": "Cannot export: program id missing.",
       "exportSuccess": "Cohort export downloaded.",
-      "exportError": "Could not download cohort export."
+      "exportError": "Could not download cohort export.",
+      "rulesetDefault": "Default scholarship rubric (v1)",
+      "disclaimerStudent": "This is an informational estimate from the current default rubric. It is not a guarantee of funding; staff make final decisions.",
+      "disclaimerStaff": "Staff comparison tool only — not a commitment of aid. Configurable rulesets and award workflow are not yet available.",
+      "factors": {
+        "academic": "Academic record",
+        "language": "Language",
+        "program_fit": "Program fit",
+        "application_quality": "Application quality",
+        "timeliness": "Timeliness (within apply window)"
+      }
     },
     "scholarshipAward": {
       "title": "Scholarship award",
