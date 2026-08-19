@@ -16,6 +16,11 @@ describe('PartnerPortal', () => {
     setAppLocale('en')
     vi.clearAllMocks()
     api.get.mockImplementation((url) => {
+      if (String(url).includes('/api/partner/agreements/') && String(url).includes('/documents/')) {
+        return Promise.resolve({
+          data: [{ id: 'd1', title: 'Demo signed Erasmus framework', category: 'signed_copy' }],
+        })
+      }
       if (String(url).includes('/api/partner/agreements/') && String(url).includes('/comments/')) {
         return Promise.resolve({
           data: [{ id: 'ac1', text: 'Renewal timing?', author_display_name: 'Coordinator' }],
@@ -62,6 +67,11 @@ describe('PartnerPortal', () => {
     expect(wrapper.text()).toContain('Bilateral MoU')
     expect(wrapper.text()).toContain('Ada L.')
     expect(wrapper.text()).toContain('Erasmus')
+    expect(wrapper.find('[data-testid="partner-agreement-status"]').text()).toBe('Active')
+    expect(wrapper.find('[data-testid="partner-application-status"]').text()).toBe('Submitted')
+    await wrapper.find('[data-testid="partner-view-documents"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="partner-document-category"]').text()).toBe('Signed copy')
   })
 
   it('opens a public message thread for an applicant', async () => {

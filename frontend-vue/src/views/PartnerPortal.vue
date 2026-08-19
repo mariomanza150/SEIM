@@ -37,9 +37,9 @@
               <tr v-for="ag in agreements" :key="ag.id">
                 <td>{{ ag.title }}</td>
                 <td>{{ ag.partner_institution_name }}</td>
-                <td>{{ ag.status }}</td>
+                <td data-testid="partner-agreement-status">{{ formatAgreementStatus(ag.status) }}</td>
                 <td>
-                  <button type="button" class="btn btn-sm btn-outline-primary" @click="loadDocs(ag)">
+                  <button type="button" class="btn btn-sm btn-outline-primary" data-testid="partner-view-documents" @click="loadDocs(ag)">
                     {{ t('partnerPortalPage.viewDocuments') }}
                   </button>
                 </td>
@@ -69,7 +69,7 @@
         <ul class="list-group list-group-flush">
           <li v-for="d in docs" :key="d.id" class="list-group-item">
             {{ d.title || d.file }}
-            <span class="badge bg-secondary ms-2">{{ d.category }}</span>
+            <span class="badge bg-secondary ms-2" data-testid="partner-document-category">{{ formatDocCategory(d.category) }}</span>
           </li>
           <li v-if="!docs.length" class="list-group-item text-muted">{{ t('partnerPortalPage.noDocuments') }}</li>
         </ul>
@@ -92,7 +92,7 @@
               <tr v-for="app in applications" :key="app.id">
                 <td>{{ app.student_display_name }}</td>
                 <td>{{ app.program_name }}</td>
-                <td>{{ app.status_name || app.status }}</td>
+                <td data-testid="partner-application-status">{{ formatAppStatus(app.status_name || app.status) }}</td>
                 <td>
                   <span v-if="app.status_name === 'nominated'" class="badge bg-success me-1">{{
                     t('partnerPortalPage.nominated')
@@ -204,8 +204,9 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
+import { formatApplicationStatus } from '@/utils/formatters'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const loading = ref(true)
 const error = ref('')
 const agreements = ref([])
@@ -222,6 +223,22 @@ const agreementThreadComments = ref([])
 const agreementThreadText = ref('')
 const agreementThreadLoading = ref(false)
 const agreementThreadBusy = ref(false)
+
+function formatAgreementStatus(s) {
+  if (!s) return t('exchangeAgreementsPage.emDash')
+  const key = `exchangeAgreementsPage.status.${s}`
+  return te(key) ? t(key) : String(s).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function formatAppStatus(s) {
+  return formatApplicationStatus({ status: s, t, te })
+}
+
+function formatDocCategory(s) {
+  if (!s) return ''
+  const key = `staffAgreementDocumentsPage.category.${s}`
+  return te(key) ? t(key) : String(s).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
 
 function unwrap(data) {
   if (Array.isArray(data)) return data

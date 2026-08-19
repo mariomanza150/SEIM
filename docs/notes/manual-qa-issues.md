@@ -31,6 +31,8 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 | ID | Date resolved | Verification |
 |----|---------------|----------------|
+| **MQ-2026-08-18-014** | 2026-08-18 | **Application-detail eligibility issues were English-only:** readiness exposed `issues` strings, not `rules` with `message_key`. ApplicationForm already localized via `check_eligibility`. **Fix:** `_eligibility_state` includes `rules`; Vue uses `eligibilityFailureMessages`. Live Tokyo `es`: **No se cumple el idioma…** |
+| **MQ-2026-08-18-013** | 2026-08-18 | **Partner portal showed raw status/category slugs:** agreements `active`, applicants `submitted`, docs `signed_copy`. **Fix:** same i18n formatters as staff agreements / application status. Live: **Active** / **Cancelled** / **Draft** / **Signed copy**. |
 | **MQ-2026-08-18-012** | 2026-08-18 | **Nominations Status column showed raw slugs:** DAAD table rendered `nominated` / `waitlist`. **Fix:** `formatApplicationStatus` + `applicationDetailPage.status.nominated`. Nominated apps also use the success badge class. Live DAAD: Nominated / Waitlist. Vitest asserts Nominated. |
 | **MQ-2026-08-18-011** | 2026-08-18 | **Scholarship awarded/disbursed had no evidence-doc gates:** staff could mark awarded/disbursed with no validated Carta Beca / Oficio / Recibo. **Fix:** when those `DocumentType` slugs exist, `awarded` requires validated `carta_beca` or `oficio_asignacion_beca`; `disbursed` requires validated `recibo_beca`. `awarded`→`disbursing` stays ungated. Vue lists missing gates and disables those statuses. Live Diego: GET gates unsatisfied; PUT disbursed **400**; panel warnings + disabled options. Pytest `test_awarded_requires_validated_letter_when_catalog_present`, `test_disbursed_requires_validated_recibo_when_catalog_present`, `test_upsert_to_awarded_blocked_without_letter`. |
 | **MQ-2026-08-18-010** | 2026-08-18 | **Nominations Submitted column showed raw ISO:** DAAD table rendered `2026-08-07T05:23:31.065839+00:00`. **Fix:** `formatDateTime` in `Nominations.vue`. Live DAAD: `Aug 6, 2026, 11:23 PM` / `Aug 14, 2026, 11:23 PM`. Vitest asserts the cell is not the raw `2026-08-07T` string. |
@@ -67,4 +69,4 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 ---
 
-*Last updated: 2026-08-18 — **MQ-2026-08-18-012** (nominations status labels); awards CSV/XLSX/PDF export.*
+*Last updated: 2026-08-18 — **MQ-2026-08-18-014** (eligibility i18n on detail) and **MQ-2026-08-18-013** (partner status labels).*

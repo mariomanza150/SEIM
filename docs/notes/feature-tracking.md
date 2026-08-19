@@ -20,7 +20,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Standalone user settings page | `frontend-vue` | Implemented | 2026-04-08 | Added a dedicated `/settings` page backed by the existing user settings API for appearance, notification, and privacy preferences. |
 | Admin export actions | `templates\frontend\admin` | Implemented | 2026-04-08 | Replaced the remaining placeholder admin export actions with working client-side downloads for detailed analytics reports and system info. |
 | Vue student/coordinator portal | `frontend-vue` | Implemented | 2026-04-08 | Login, dashboard, applications, documents, notifications, profile, and 404 routes are functional. Profile catalogs/banking/eligibility UI: `profile-catalogs` in [`feature-test-tracking.md`](feature-test-tracking.md). |
-| Partner institution portal | `accounts`, `exchange`, `documents`, `frontend-vue` | Implemented | 2026-08-18 | Partner-role SPA `/seim/partner`: agreements, signed copies, agreement/applicant threads. Manual QA Pass 2026-08-18 (`partner@test.com`). Staff/student denied. |
+| Partner institution portal | `accounts`, `exchange`, `documents`, `frontend-vue` | Implemented | 2026-08-18 | Partner-role SPA `/seim/partner`: agreements, signed copies, agreement/applicant threads. **MQ-013:** status/category labels use staff i18n formatters (Active / Submitted / Signed copy). Staff/student denied. |
 | Wagtail CMS public site | `cms` | Implemented | 2026-08-18 | Public marketing/information pages, navigation, testimonials, programs, movilidad, and convenios templates are present. Unlinked `ProgramPage`s still show Compare → `/seim/programs/compare` (Salamanca/Bologna/Texas A&M have no `exchange.Program` FK). |
 | Dynamic application form builder admin | `application_forms` | Implemented | 2026-04-08 | Form type, submission, schema, and admin-facing builder/list views exist. |
 | Dynamic application form consumption in Vue | `application_forms`, `frontend-vue`, `exchange` | Implemented | 2026-04-08 | The SPA now loads program-linked form schemas, renders supported dynamic fields, prefills saved responses on edit, and submits validated `df_*` payloads that persist with the application. |
@@ -161,7 +161,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | API contracts doc: staff notification routing endpoints | `docs`, `notifications`, `api` | Implemented | 2026-04-16 | `docs/api-contracts.md` **Staff notification routing** subsection (parity with manual API doc + OpenAPI). No new automated tests (documentation-only). |
 | Notification Celery email tests: `DEFAULT_FROM_EMAIL` portability | `notifications`, `tests` | Implemented | 2026-04-16 | `test_notifications_tasks` from-address assertions compare `mail.outbox[0].from_email` to `settings.DEFAULT_FROM_EMAIL` (matches `send_mail` in `notifications/tasks.py`) so runs succeed when `.env` overrides the default sender. |
 | Transactional notification route overrides at runtime send | `notifications`, `exchange`, `documents`, `accounts` | Implemented | 2026-04-16 | `resolve_transactional_route_settings_category` + optional `transactional_route_key` on `NotificationService.send_notification`; documented transactional routes (account security, application/document/agreement flows, digest, calendar reminders) pass keys so admin overrides match live UserSettings gating. Tests: `tests/unit/notifications/test_notifications_services.py`. |
-| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Implemented | 2026-08-18 | `EligibilityRuleSet` + staff CRUD `/api/eligibility-rulesets/` + Vue `/seim/eligibility-rulesets`. `check_eligibility?use_ruleset=true` applies scalar `program_overrides` (live Fulbright overlay: English C1 vs student B2). ApplicationForm sends `use_ruleset=true` when the program has a ruleset. Remaining polish (P2): richer JSON schema/versioning, localized per-rule client copy. |
+| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Implemented | 2026-08-18 | Staff CRUD + Fulbright overlay. Application detail readiness now includes `eligibility.rules` (`message_key`) so Vue localizes per-rule copy (ApplicationForm already did via `check_eligibility`). Remaining: richer JSON schema/versioning. |
 
 
 ## 🟡 IN PROGRESS 🔄
@@ -187,7 +187,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Applications, Forms, and Eligibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Staff CRUD + evaluation wiring verified 2026-08-18 (`:8020`). Remaining polish: richer JSON schema/versioning, localized per-rule client copy, step-level document gates in preview if not already sufficient. |
+| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Staff CRUD + evaluation wiring verified 2026-08-18 (`:8020`). Localized per-rule copy on application detail via `eligibility.rules`. Remaining: richer JSON schema/versioning. |
 
 #### Programs, Agreements, and Planning
 | Feature | Module | Notes |
@@ -219,7 +219,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Partner Ecosystem and Collaboration
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Partner institution portal | `accounts`, `exchange`, `documents`, `frontend-vue` | Shipped 2026-08-18 (see Implemented). Remaining: partner nominations and richer document workflows. |
+| Partner institution portal | `accounts`, `exchange`, `documents`, `frontend-vue` | Shipped 2026-08-18 (see Implemented). Remaining: partner nominations and richer document workflows. Status/category labels now use the same i18n formatters as staff agreements. |
 | Cross-institution communication hub | `notifications`, `accounts`, `exchange`, `frontend-vue` | Centralize conversations among students, coordinators, and partner institutions around applications, agreements, and program logistics. |
 
 #### Advanced Workflow Orchestration
@@ -227,7 +227,7 @@ _All Priority 1 items in this subsection are implemented above._
 |---------|--------|-------|
 | Student nomination and matching workflow | `exchange`, `accounts`, `admin UI` | Shipped ranking + Match to seats 2026-08-18 (see Implemented). Remaining: partner allocations and multi-cycle nomination windows. |
 | Visual workflow designer for applications | `application_forms`, `admin UI` | Give admins a low-code interface to design multi-step application flows, approval paths, and validation gates visually. |
-| Automated eligibility and rules engine | `exchange`, `application_forms`, `accounts` | **Partial:** window, profile, documents, dynamic form, OpenAPI for `check_eligibility` (see Implemented row). **Remaining:** step-level document gates in preview payload, localized per-rule client copy. |
+| Automated eligibility and rules engine | `exchange`, `application_forms`, `accounts` | **Partial:** window, profile, documents, dynamic form, OpenAPI for `check_eligibility` (see Implemented row). **MQ-014:** application detail + ApplicationForm localize failed rules via `message_key`. **Remaining:** step-level document gates in preview payload; richer JSON schema/versioning. |
 
 #### External calendars
 | Feature | Module | Notes |
@@ -249,5 +249,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-08-18 — awards CSV/XLSX/PDF export; nominations status labels (**MQ-012**). QA: [`manual-qa-issues.md`](manual-qa-issues.md).*  
+*Last updated: 2026-08-18 — eligibility rule i18n on detail (**MQ-014**); partner status labels (**MQ-013**). QA: [`manual-qa-issues.md`](manual-qa-issues.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*  

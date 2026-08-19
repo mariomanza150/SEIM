@@ -113,12 +113,12 @@
                 <div class="flex-grow-1" style="min-width: 220px">
                   <p class="small mb-2">{{ application.readiness.headline }}</p>
                   <ul
-                    v-if="application.readiness.eligibility?.issues?.length"
+                    v-if="eligibilityIssueLines.length"
                     class="small mb-2 text-danger"
                     data-testid="readiness-eligibility-issues"
                   >
                     <li
-                      v-for="(issue, idx) in application.readiness.eligibility.issues"
+                      v-for="(issue, idx) in eligibilityIssueLines"
                       :key="idx"
                     >
                       {{ issue }}
@@ -852,8 +852,9 @@ import DocumentUpload from '@/components/DocumentUpload.vue'
 import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import api from '@/services/api'
-import { readinessLevelBadgeClass, readinessScoreBarClass } from '@/utils/applicationReadiness'
+import { eligibilityFailureMessages } from '@/utils/eligibilityMessages'
 import { documentReviewStatus, documentTypeLabel } from '@/utils/documentApi'
+import { readinessLevelBadgeClass, readinessScoreBarClass } from '@/utils/applicationReadiness'
 import {
   applicationProgramDisplayName,
   applicationStatusBadgeClass,
@@ -936,6 +937,14 @@ const scholarshipExportLoading = ref(false)
 const scholarshipAwardBusy = ref(false)
 const awardForm = ref({ status: 'nominated', amount: '', currency: 'MXN', notes: '' })
 const disbursementForm = ref({ label: '', amount: '' })
+
+const eligibilityIssueLines = computed(() => {
+  const el = application.value?.readiness?.eligibility
+  if (!el) return []
+  const fromRules = eligibilityFailureMessages(el, t)
+  if (fromRules.length) return fromRules
+  return Array.isArray(el.issues) ? el.issues : []
+})
 
 const awardEvidenceWarnings = computed(() => {
   const gates = application.value?.scholarship_award?.evidence_gates

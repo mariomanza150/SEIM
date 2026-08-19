@@ -124,6 +124,10 @@ class TestApplicationReadiness:
         r = compute_application_readiness(app, include_dynamic_form=False)
         assert r["eligibility"]["complete"] is False
         assert r["eligibility"]["issues"]
+        assert any(
+            row.get("message_key") == "language_unmet"
+            for row in r["eligibility"]["rules"]
+        )
         assert r["level"] != "ready"
         assert "eligibility" in r["headline"].lower()
 

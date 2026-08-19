@@ -542,4 +542,53 @@ describe('ApplicationDetail', () => {
     )
     mockAuthStore.userRole = 'coordinator'
   })
+
+  it('localizes eligibility issues from message_key', async () => {
+    mockAuthStore.userRole = 'student'
+    setAppLocale('es')
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'draft',
+            document_checklist: { required_count: 0, complete: true },
+            readiness: {
+              score: 88,
+              level: 'attention',
+              headline: 'Eligibility requirements not met.',
+              host_destination: { required: false, complete: true },
+              eligibility: {
+                complete: false,
+                issues: ['Language proficiency below requirement. Required: B2, Your level: A2'],
+                rules: [
+                  {
+                    id: 'min_language_level',
+                    passed: false,
+                    skipped: false,
+                    message_key: 'language_level_below',
+                    message_params: { required: 'B2', student: 'A2' },
+                    message: 'Language proficiency below requirement. Required: B2, Your level: A2',
+                  },
+                ],
+              },
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="readiness-eligibility-issues"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="readiness-eligibility-issues"]').text()).toContain(
+      i18n.global.t('eligibilityRules.language_level_below', { required: 'B2', student: 'A2' }),
+    )
+    setAppLocale('en')
+    mockAuthStore.userRole = 'coordinator'
+  })
 })

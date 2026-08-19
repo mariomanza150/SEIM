@@ -124,6 +124,7 @@ def _eligibility_state(application) -> dict[str, Any]:
     return {
         "complete": bool(ev.eligible),
         "issues": list(ev.failures) if not ev.eligible else [],
+        "rules": ev.rules_as_dicts(),
     }
 
 
