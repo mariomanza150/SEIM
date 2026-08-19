@@ -38,8 +38,8 @@
               </div>
             </div>
             <div class="d-flex align-items-center gap-2">
-              <span class="badge" :class="statusClass(application.status)">
-                {{ application.status || t('adminApplicationEdit.unknownStatus') }}
+              <span class="badge" :class="statusClass(application.status)" data-testid="admin-application-status">
+                {{ formatStatus(application.status) }}
               </span>
               <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="mutating" @click="reload">
                 <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>{{ t('adminCommon.refresh') }}
@@ -56,7 +56,7 @@
               </div>
               <div class="col-md-6">
                 <div class="text-muted small">{{ t('adminApplicationEdit.submittedAt') }}</div>
-                <div class="fw-medium">{{ application.submitted_at || t('adminApplicationEdit.notAvailable') }}</div>
+                <div class="fw-medium">{{ formatSubmittedAt(application.submitted_at) }}</div>
               </div>
 
               <div class="col-md-6">
@@ -162,8 +162,13 @@ import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import PageHeader from '@/components/PageHeader.vue'
+import {
+  applicationStatusBadgeClass,
+  formatApplicationStatus,
+  formatDateTime,
+} from '@/utils/formatters'
 
-const { t } = useI18n()
+const { t, te, locale } = useI18n()
 const route = useRoute()
 const { success, error: errorToast } = useToast()
 
@@ -196,23 +201,30 @@ const timelineEvents = ref([])
 const timelineLoading = ref(false)
 const timelineError = ref(null)
 
-function normalizeApiList(data) {
-  if (data && typeof data === 'object' && Array.isArray(data.results)) return data.results
-  return Array.isArray(data) ? data : []
+function formatStatus(status) {
+  return formatApplicationStatus({
+    status,
+    t,
+    te,
+    unknownKey: 'adminApplicationEdit.unknownStatus',
+  })
 }
 
 function statusClass(status) {
-  const classes = {
-    draft: 'bg-secondary',
-    submitted: 'bg-info',
-    under_review: 'bg-warning',
-    approved: 'bg-success',
-    rejected: 'bg-danger',
-    completed: 'bg-primary',
-    cancelled: 'bg-dark',
-    waitlist: 'bg-secondary',
-  }
-  return classes[status] || 'bg-secondary'
+  return applicationStatusBadgeClass(status)
+}
+
+function formatSubmittedAt(value) {
+  return formatDateTime({
+    dateString: value,
+    locale: locale.value,
+    fallback: t('adminApplicationEdit.notAvailable'),
+  })
+}
+
+function normalizeApiList(data) {
+  if (data && typeof data === 'object' && Array.isArray(data.results)) return data.results
+  return Array.isArray(data) ? data : []
 }
 
 async function fetchApplication() {

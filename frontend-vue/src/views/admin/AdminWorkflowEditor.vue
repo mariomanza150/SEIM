@@ -78,7 +78,7 @@
               :disabled="busy"
               @click="loadVersion(v.id)"
             >
-              <span class="text-truncate">v{{ v.version }} — {{ v.status }}</span>
+              <span class="text-truncate" data-testid="workflow-version-status">{{ versionRowLabel(v) }}</span>
               <i class="bi bi-chevron-right" aria-hidden="true" />
             </button>
           </div>
@@ -109,7 +109,7 @@ import 'bpmn-js/dist/assets/diagram-js.css'
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css'
 import '@bpmn-io/properties-panel/dist/assets/properties-panel.css'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const route = useRoute()
 const { success, error: errorToast } = useToast()
 const { confirm } = useConfirm()
@@ -132,6 +132,20 @@ let modeler = null
 
 const headerTitle = computed(() => definition.value?.name || t('adminWorkflowEditor.loadingTitle'))
 const headerSubtitle = computed(() => definition.value?.description || t('adminWorkflowEditor.subtitle'))
+
+function formatVersionStatus(status) {
+  if (!status) return ''
+  const key = `adminWorkflowEditor.versionStatus.${status}`
+  return te(key) ? t(key) : String(status).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+function versionRowLabel(v) {
+  if (!v) return ''
+  return t('adminWorkflowEditor.versionRow', {
+    version: v.version,
+    status: formatVersionStatus(v.status),
+  })
+}
 
 function defaultBpmnXml(name = 'Workflow') {
   const safe = String(name || 'Workflow').replace(/[<>&"]/g, '')
@@ -203,7 +217,7 @@ async function loadVersion(id) {
     const res = await api.get(`/api/workflow-versions/${id}/`)
     const v = res.data
     currentVersionId.value = v.id
-    currentVersionLabel.value = `v${v.version} — ${v.status}`
+    currentVersionLabel.value = versionRowLabel(v)
     await importXml(v.bpmn_xml || defaultBpmnXml(definition.value?.name))
   } catch (err) {
     console.error('Failed to load workflow version:', err)
@@ -244,12 +258,12 @@ async function saveDraft(options = {}) {
       if (!silent) success(t('adminWorkflowEditor.toastSaved'))
       await fetchVersions()
       const row = versions.value.find((v) => String(v.id) === String(currentVersionId.value))
-      if (row) currentVersionLabel.value = `v${row.version} — ${row.status}`
+      if (row) currentVersionLabel.value = versionRowLabel(row)
     } else {
       const res = await api.post(`/api/workflows/${workflowId.value}/versions/`, { bpmn_xml: xml })
       await fetchVersions()
       currentVersionId.value = res.data.id
-      currentVersionLabel.value = `v${res.data.version} — ${res.data.status}`
+      currentVersionLabel.value = versionRowLabel(res.data)
       if (!silent) success(t('adminWorkflowEditor.toastVersionCreated'))
     }
   } catch (err) {
@@ -303,7 +317,7 @@ async function publish() {
     await api.post(`/api/workflow-versions/${currentVersionId.value}/publish/`)
     await fetchVersions()
     const row = versions.value.find((v) => String(v.id) === String(currentVersionId.value))
-    if (row) currentVersionLabel.value = `v${row.version} — ${row.status}`
+    if (row) currentVersionLabel.value = versionRowLabel(row)
     success(t('adminWorkflowEditor.toastPublished'))
   } catch (err) {
     console.error('Publish failed:', err)

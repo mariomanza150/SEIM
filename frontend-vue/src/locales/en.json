@@ -707,7 +707,13 @@
     "validateToastError": "Validation failed",
     "toastPublished": "Workflow published",
     "publishError": "Could not publish workflow.",
-    "publishToastError": "Could not publish workflow"
+    "publishToastError": "Could not publish workflow",
+    "versionRow": "v{version} — {status}",
+    "versionStatus": {
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    }
   },
   "adminApplicationEdit": {
     "loading": "Loading application…",
@@ -1359,6 +1365,17 @@
     "labelDuration": "Duration",
     "notAvailable": "N/A",
     "readinessLabel": "Readiness",
+    "readinessHeadline": {
+      "submitted": "Application submitted.",
+      "under_review": "Under review with coordinators.",
+      "approved": "Application approved.",
+      "rejected": "Application was not approved.",
+      "completed": "Application completed.",
+      "withdrawn": "Application withdrawn.",
+      "waitlist": "On the waitlist — the program is at capacity.",
+      "nominated": "Nominated for a seat.",
+      "cancelled": "Application cancelled."
+    },
     "scholarshipScoring": {
       "title": "Scholarship allocation score",
       "studentTitle": "Scholarship score estimate",
@@ -1424,7 +1441,8 @@
       "rejected": "Rejected",
       "completed": "Completed",
       "waitlist": "Waitlist",
-      "nominated": "Nominated"
+      "nominated": "Nominated",
+      "cancelled": "Cancelled"
     },
     "labelDescription": "Description",
     "requiredDocuments": "Required documents",

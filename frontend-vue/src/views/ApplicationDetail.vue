@@ -111,7 +111,7 @@
                   </span>
                 </div>
                 <div class="flex-grow-1" style="min-width: 220px">
-                  <p class="small mb-2">{{ application.readiness.headline }}</p>
+                  <p class="small mb-2" data-testid="readiness-headline">{{ readinessHeadlineText }}</p>
                   <ul
                     v-if="eligibilityIssueLines.length"
                     class="small mb-2 text-danger"
@@ -854,7 +854,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import api from '@/services/api'
 import { eligibilityFailureMessages } from '@/utils/eligibilityMessages'
 import { documentReviewStatus, documentTypeLabel } from '@/utils/documentApi'
-import { readinessLevelBadgeClass, readinessScoreBarClass } from '@/utils/applicationReadiness'
+import { readinessLevelBadgeClass, readinessScoreBarClass, formatReadinessHeadline } from '@/utils/applicationReadiness'
 import {
   applicationProgramDisplayName,
   applicationStatusBadgeClass,
@@ -945,6 +945,15 @@ const eligibilityIssueLines = computed(() => {
   if (fromRules.length) return fromRules
   return Array.isArray(el.issues) ? el.issues : []
 })
+
+const readinessHeadlineText = computed(() =>
+  formatReadinessHeadline({
+    status: application.value?.status,
+    headline: application.value?.readiness?.headline,
+    t,
+    te,
+  }),
+)
 
 const awardEvidenceWarnings = computed(() => {
   const gates = application.value?.scholarship_award?.evidence_gates

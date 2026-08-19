@@ -17,3 +17,15 @@ export function readinessScoreBarClass(score) {
   if (score >= 35) return 'bg-warning'
   return 'bg-danger'
 }
+
+/** Localized post-draft headline; drafts keep the API string. */
+export function formatReadinessHeadline({ status, headline, t, te }) {
+  if (status && status !== 'draft') {
+    const key = `applicationDetailPage.readinessHeadline.${status}`
+    if (typeof te === 'function' ? te(key) : true) {
+      const translated = t(key)
+      if (translated && translated !== key) return translated
+    }
+  }
+  return headline || ''
+}

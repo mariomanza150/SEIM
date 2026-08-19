@@ -703,7 +703,13 @@
     "validateToastError": "Falló la validación",
     "toastPublished": "Flujo publicado",
     "publishError": "No se pudo publicar el flujo.",
-    "publishToastError": "No se pudo publicar el flujo"
+    "publishToastError": "No se pudo publicar el flujo",
+    "versionRow": "v{version} — {status}",
+    "versionStatus": {
+      "draft": "Borrador",
+      "published": "Publicada",
+      "archived": "Archivada"
+    }
   },
   "adminApplicationEdit": {
     "loading": "Cargando solicitud…",
@@ -1355,6 +1361,17 @@
     "labelDuration": "Duración",
     "notAvailable": "N/D",
     "readinessLabel": "Preparación",
+    "readinessHeadline": {
+      "submitted": "Solicitud enviada.",
+      "under_review": "En revisión con coordinadores.",
+      "approved": "Solicitud aprobada.",
+      "rejected": "La solicitud no fue aprobada.",
+      "completed": "Solicitud completada.",
+      "withdrawn": "Solicitud retirada.",
+      "waitlist": "En lista de espera — el programa está a capacidad.",
+      "nominated": "Nominada para una plaza.",
+      "cancelled": "Solicitud cancelada."
+    },
     "scholarshipScoring": {
       "title": "Puntuación para asignación de becas",
       "studentTitle": "Estimación de puntuación de beca",
@@ -1420,7 +1437,8 @@
       "rejected": "Rechazada",
       "completed": "Completada",
       "waitlist": "Lista de espera",
-      "nominated": "Nominada"
+      "nominated": "Nominada",
+      "cancelled": "Cancelada"
     },
     "labelDescription": "Descripción",
     "requiredDocuments": "Documentos obligatorios",

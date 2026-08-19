@@ -598,4 +598,34 @@ describe('ApplicationDetail', () => {
     setAppLocale('en')
     mockAuthStore.userRole = 'coordinator'
   })
+
+  it('localizes nominated readiness headline instead of a raw slug', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'nominated',
+            readiness: {
+              score: 100,
+              level: 'done',
+              headline: 'Status: nominated.',
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="readiness-headline"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="readiness-headline"]').text()).toBe(
+      i18n.global.t('applicationDetailPage.readinessHeadline.nominated'),
+    )
+    expect(wrapper.find('[data-testid="readiness-headline"]').text()).not.toMatch(/Status: nominated/)
+  })
 })

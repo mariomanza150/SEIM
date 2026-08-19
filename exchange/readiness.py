@@ -191,6 +191,8 @@ def compute_application_readiness(
             "completed": "Application completed.",
             "withdrawn": "Application withdrawn.",
             "waitlist": "On the waitlist — the program is at capacity.",
+            "nominated": "Nominated for a seat.",
+            "cancelled": "Application cancelled.",
         }
         return {
             "score": 100,

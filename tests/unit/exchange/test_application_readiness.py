@@ -21,6 +21,17 @@ class TestApplicationReadiness:
         r = compute_application_readiness(app, include_dynamic_form=True)
         assert r["level"] == "done"
         assert r["score"] == 100
+        assert r["headline"] == "Application submitted."
+
+    def test_nominated_headline_is_not_raw_status(self):
+        student = TestUtils.create_test_user(role="student")
+        program = TestUtils.create_test_program()
+        app = TestUtils.create_test_application(
+            student=student, program=program, status_name="nominated"
+        )
+        r = compute_application_readiness(app, include_dynamic_form=False)
+        assert r["headline"] == "Nominated for a seat."
+        assert "nominated" not in r["headline"]
 
     def test_draft_window_closed_blocked(self):
         student = TestUtils.create_test_user(role="student")
