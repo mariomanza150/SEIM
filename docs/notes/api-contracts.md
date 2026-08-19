@@ -162,8 +162,12 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `PUT/PATCH/DELETE /api/exchange-agreements/{id}/` - Update/delete
 
 #### Application Statuses
-- `GET /api/application-statuses/` - List all application statuses
-- **Statuses:** draft, submitted, under_review, approved, rejected, completed, cancelled
+- `GET /api/application-statuses/` - List all application statuses (authenticated)
+- `POST /api/application-statuses/` - Create status (admin). **Body:** `{name, order}` — `name` is a lowercase workflow slug (`draft`, `submitted`, …)
+- `GET /api/application-statuses/{id}/` - Retrieve
+- `PUT/PATCH /api/application-statuses/{id}/` - Update (admin)
+- `DELETE /api/application-statuses/{id}/` - Delete (admin). HTTP 400 if applications still use the status (`PROTECT`)
+- **Seeded statuses:** draft, submitted, under_review, approved, rejected, completed, cancelled, waitlist (plus nominated when seeded by demo)
 
 #### Comments
 - `GET /api/comments/` - List comments (filtered by user permissions)
@@ -258,8 +262,11 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `both` - Both in-app and email
 
 #### Notification Types
-- `GET /api/notification-types/` - List notification types
+- `GET /api/notification-types/` - List notification types (authenticated)
+- `POST /api/notification-types/` - Create type (admin). **Body:** `{name}` lowercase slug
 - `GET /api/notification-types/{id}/` - Get notification type details
+- `PUT/PATCH /api/notification-types/{id}/` - Update (admin)
+- `DELETE /api/notification-types/{id}/` - Delete (admin); cascades to matching `NotificationPreference` rows
 
 #### Notification Preferences
 - `GET /api/notification-preferences/` - List user's notification preferences

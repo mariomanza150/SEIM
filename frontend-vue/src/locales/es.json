@@ -313,6 +313,7 @@
       "AdminCatalogs": "Admin — Catálogos",
       "AdminGrades": "Admin — Escalas de calificación",
       "AdminUsers": "Admin — Usuarios",
+      "AdminWorkflowCatalogs": "Admin — Estados y tipos",
       "AdminForms": "Admin — Formularios",
       "AdminDynforms": "Admin — Constructores de formularios",
       "AdminDynformEditor": "Admin — Constructor visual",
@@ -617,6 +618,31 @@
       "verified": "Correo verificado (puede iniciar sesión)",
       "staff": "Staff de Django",
       "staffHelp": "Staff puede usar el admin de Django. La consola SEIM sigue requiriendo el rol admin."
+    }
+  },
+  "adminWorkflowCatalogs": {
+    "title": "Estados y tipos de notificación",
+    "subtitle": "Slugs de estado del flujo y claves de tipo de notificación que usa el resto del sistema.",
+    "create": "Agregar",
+    "empty": "Aún no hay entradas.",
+    "loadError": "No se pudo cargar este catálogo.",
+    "saveError": "No se pudo guardar.",
+    "deleteConfirm": "¿Eliminar \"{name}\"?",
+    "toastCreated": "Creado",
+    "toastSaved": "Guardado",
+    "toastDeleted": "Eliminado",
+    "namePlaceholder": "slug_en_minusculas",
+    "tabs": {
+      "statuses": "Estados de solicitud",
+      "types": "Tipos de notificación"
+    },
+    "help": {
+      "statuses": "Los nombres son slugs de máquina (draft, submitted, nominated). Los flujos y el conteo de plazas dependen de estos valores: cámbialos solo si también actualizas las tareas del flujo.",
+      "types": "Claves usadas por las preferencias de notificación. Eliminar un tipo también quita las preferencias coincidentes."
+    },
+    "fields": {
+      "name": "Slug",
+      "order": "Orden"
     }
   },
   "adminForms": {

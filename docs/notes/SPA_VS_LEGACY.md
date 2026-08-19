@@ -23,7 +23,7 @@ Leftover student/staff bookmarks outside `/seim/` (`/applications/`, `/applicati
 
 ## Vue routes (application UI)
 
-Mounted at `/seim/` (see `frontend-vue/src/router/index.js`): login, register, verify-email, password-reset, dashboard, applications (list/new/detail/edit), documents, notifications, profile, settings, calendar, program compare, coordinator review/workload, agreements, nominations, eligibility rulesets, analytics forecasts, partner portal, SPA admin (`/seim/admin/programs|catalogs|grades|forms|dynforms|data-management|workflows|documents`).
+Mounted at `/seim/` (see `frontend-vue/src/router/index.js`): login, register, verify-email, password-reset, dashboard, applications (list/new/detail/edit), documents, notifications, profile, settings, calendar, program compare, coordinator review/workload, agreements, nominations, eligibility rulesets, analytics forecasts, partner portal, SPA admin (`/seim/admin/programs|catalogs|grades|users|workflow-catalogs|forms|dynforms|data-management|workflows|documents`).
 
 SPA aliases (not separate pages): `/seim/admin` → programs admin, `/seim/admin-dashboard` → dashboard, `/seim/analytics` → forecasts, `/seim/grades` → profile, `/seim/programs` → program compare, `/seim/exchange` → exchange agreements, `/seim/workload` → coordinator workload.
 
@@ -37,7 +37,7 @@ SPA aliases (not separate pages): `/seim/admin` → programs admin, `/seim/admin
 - [x] Staff exchange agreements + agreement documents
 - [x] Notification routing and analytics forecasts
 - [x] Partner portal
-- [x] SPA admin: programs, catalogs, grade scales, users/roles, forms (JSON), visual dynforms builder, data management, workflows, application edit
+- [x] SPA admin: programs, catalogs, grade scales, users/roles, workflow catalogs (application statuses + notification types), forms (JSON), visual dynforms builder, data management, workflows, application edit
 - [x] `/dynforms/` and application-forms HTML list/builder redirect to `/seim/admin/dynforms`
 - [x] `/data-management/` HTML hub and section pages redirect to `/seim/admin/data-management`
 - [x] Analytics HTML dashboard/statistics pages redirect to `/seim/dashboard` or `/seim/analytics-forecasts`

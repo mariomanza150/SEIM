@@ -280,7 +280,7 @@ Status values for application workflow state machine.
 
 **Fields:**
 - `id` (AutoField, primary key)
-- `name` (CharField, max_length=50, unique)
+- `name` (CharField, max_length=50, unique) — workflow slug; SPA admin at `/seim/admin/workflow-catalogs`
 - `order` (PositiveIntegerField, default=0)
 
 **Standard Statuses:**
@@ -417,7 +417,7 @@ Types of notifications (status change, comment, reminder, etc.).
 
 **Fields:**
 - `id` (AutoField, primary key)
-- `name` (CharField, max_length=100, unique)
+- `name` (CharField, max_length=100, unique) — SPA admin at `/seim/admin/workflow-catalogs`
 
 **Relationships:**
 - One-to-Many: `notification_preferences` → NotificationPreference

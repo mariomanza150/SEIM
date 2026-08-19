@@ -313,6 +313,7 @@
       "AdminCatalogs": "Admin — Catalogs",
       "AdminGrades": "Admin — Grade scales",
       "AdminUsers": "Admin — Users",
+      "AdminWorkflowCatalogs": "Admin — Statuses & types",
       "AdminForms": "Admin — Forms",
       "AdminDynforms": "Admin — Form builders",
       "AdminDynformEditor": "Admin — Visual form builder",
@@ -617,6 +618,31 @@
       "verified": "Email verified (can sign in)",
       "staff": "Django staff",
       "staffHelp": "Staff can use Django admin. SEIM console access still requires the admin role."
+    }
+  },
+  "adminWorkflowCatalogs": {
+    "title": "Statuses and notification types",
+    "subtitle": "Workflow status slugs and notification type keys used by the rest of the system.",
+    "create": "Add",
+    "empty": "No entries yet.",
+    "loadError": "Could not load this catalog.",
+    "saveError": "Could not save.",
+    "deleteConfirm": "Delete \"{name}\"?",
+    "toastCreated": "Created",
+    "toastSaved": "Saved",
+    "toastDeleted": "Deleted",
+    "namePlaceholder": "lowercase_slug",
+    "tabs": {
+      "statuses": "Application statuses",
+      "types": "Notification types"
+    },
+    "help": {
+      "statuses": "Names are machine slugs (draft, submitted, nominated). Workflows and seat counts key off these values — rename only if you also update workflow tasks.",
+      "types": "Keys used by notification preferences. Deleting a type also removes matching user preferences."
+    },
+    "fields": {
+      "name": "Slug",
+      "order": "Order"
     }
   },
   "adminForms": {

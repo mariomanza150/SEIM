@@ -52,6 +52,9 @@ describe('normalizeSpaLocation', () => {
     expect(normalizeSpaLocation('/seim/admin/users')).toEqual({
       name: 'AdminUsers',
     })
+    expect(normalizeSpaLocation('/seim/admin/workflow-catalogs')).toEqual({
+      name: 'AdminWorkflowCatalogs',
+    })
     expect(normalizeSpaLocation('/seim/admin/documents/9')).toEqual({
       name: 'AdminDocumentTypeEdit',
       params: { id: '9' },

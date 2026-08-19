@@ -86,6 +86,11 @@
                 </router-link>
               </li>
               <li>
+                <router-link class="dropdown-item" :to="{ name: 'AdminWorkflowCatalogs' }" @click="closeAdminMenu">
+                  {{ t('route.names.AdminWorkflowCatalogs') }}
+                </router-link>
+              </li>
+              <li>
                 <router-link class="dropdown-item" :to="{ name: 'AdminForms' }" @click="closeAdminMenu">
                   {{ t('route.names.AdminForms') }}
                 </router-link>
@@ -418,6 +423,12 @@ const adminNavItems = computed(() => [
     to: { name: 'AdminUsers' },
     label: t('route.names.AdminUsers'),
     iconClass: 'bi bi-people',
+  },
+  {
+    key: 'adminWorkflowCatalogs',
+    to: { name: 'AdminWorkflowCatalogs' },
+    label: t('route.names.AdminWorkflowCatalogs'),
+    iconClass: 'bi bi-list-ol',
   },
   {
     key: 'adminForms',
