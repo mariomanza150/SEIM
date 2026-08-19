@@ -282,7 +282,7 @@ const primaryNavItems = computed(() => [
     to: { name: 'Applications' },
     label: t('route.names.Applications'),
     iconClass: 'bi bi-file-earmark-text',
-    isVisible: true,
+    isVisible: !authStore.canUsePartnerPortal,
   },
   {
     key: 'programCompare',

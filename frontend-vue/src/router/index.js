@@ -98,7 +98,12 @@ const routes = [
     children: [
       { path: '', redirect: { name: 'Dashboard' } },
       { path: 'dashboard', name: 'Dashboard', component: Dashboard },
-      { path: 'applications', name: 'Applications', component: Applications },
+      {
+        path: 'applications',
+        name: 'Applications',
+        component: Applications,
+        meta: { studentApplications: true },
+      },
       {
         path: 'review-queue',
         name: 'CoordinatorReviewQueue',
@@ -135,10 +140,25 @@ const routes = [
         redirect: { name: 'StaffExchangeAgreements' },
       },
       { path: 'programs/compare', name: 'ProgramCompare', component: ProgramCompare },
-      { path: 'applications/new', name: 'ApplicationNew', component: ApplicationForm },
+      {
+        path: 'applications/new',
+        name: 'ApplicationNew',
+        component: ApplicationForm,
+        meta: { studentApplications: true },
+      },
       { path: 'applications/create', redirect: { name: 'ApplicationNew' } },
-      { path: 'applications/:id/edit', name: 'ApplicationEdit', component: ApplicationForm },
-      { path: 'applications/:id', name: 'ApplicationDetail', component: ApplicationDetail },
+      {
+        path: 'applications/:id/edit',
+        name: 'ApplicationEdit',
+        component: ApplicationForm,
+        meta: { studentApplications: true },
+      },
+      {
+        path: 'applications/:id',
+        name: 'ApplicationDetail',
+        component: ApplicationDetail,
+        meta: { studentApplications: true },
+      },
       { path: 'documents', name: 'Documents', component: Documents },
       { path: 'documents/:id', name: 'DocumentDetail', component: DocumentDetail },
       { path: 'notifications', name: 'Notifications', component: Notifications },
@@ -286,6 +306,10 @@ router.beforeEach(async (to, from, next) => {
     }
     if (outcome === 'applications') {
       next({ name: 'Applications', replace: true })
+      return
+    }
+    if (outcome === 'partner') {
+      next({ name: 'PartnerPortal', replace: true })
       return
     }
     next()

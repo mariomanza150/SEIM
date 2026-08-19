@@ -183,4 +183,21 @@ describe('resolveAuthenticatedNavigation', () => {
     const to = { meta: { requiresAuth: true, partnerPortal: true }, fullPath: '/partner' }
     expect(await resolveAuthenticatedNavigation(to, authStore)).toBe('applications')
   })
+
+  it('returns partner when partner targets student Applications (MQ-030)', async () => {
+    const authStore = {
+      accessToken: 'jwt',
+      isAuthenticated: true,
+      isAdmin: false,
+      canUseStaffReviewQueue: false,
+      canUsePartnerPortal: true,
+      checkAuth: vi.fn(),
+    }
+    const to = {
+      meta: { requiresAuth: true, studentApplications: true },
+      matched: [{ meta: { studentApplications: true } }],
+      fullPath: '/applications',
+    }
+    expect(await resolveAuthenticatedNavigation(to, authStore)).toBe('partner')
+  })
 })

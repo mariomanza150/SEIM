@@ -4,7 +4,7 @@
  *
  * @param {import('vue-router').RouteLocationNormalized} to
  * @param {{ isAuthenticated: boolean, accessToken: string | null, canUseStaffReviewQueue: boolean, checkAuth: () => Promise<void> }} authStore
- * @returns {Promise<'next' | 'login' | 'applications'>}
+ * @returns {Promise<'next' | 'login' | 'applications' | 'partner'>}
  */
 export async function resolveAuthenticatedNavigation(to, authStore) {
   if (!authStore.isAuthenticated) {
@@ -26,6 +26,13 @@ export async function resolveAuthenticatedNavigation(to, authStore) {
 
   if (to.meta.partnerPortal && !authStore.canUsePartnerPortal) {
     return 'applications'
+  }
+
+  if (
+    authStore.canUsePartnerPortal
+    && (to.matched?.some((r) => r.meta && r.meta.studentApplications) ?? false)
+  ) {
+    return 'partner'
   }
 
   // Admin-only routes (SPA admin console)
