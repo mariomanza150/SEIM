@@ -107,4 +107,17 @@ describe('router beforeEach + resolveAuthenticatedNavigation (MQ-014)', () => {
     await router.push({ name: 'Documents' })
     expect(router.currentRoute.value.name).toBe('PartnerPortal')
   })
+
+  it('uses the final route for the tab title after a partner redirect', async () => {
+    mockAxios.get.mockResolvedValue({
+      data: { ...profileStudent, role: 'partner', email: 'partner@test.com' },
+    })
+    localStorage.setItem('access_token', 'partner-jwt')
+    setActivePinia(createPinia())
+    await router.push({ name: 'Login' })
+    await router.push({ name: 'PartnerPortal' })
+    await router.push({ name: 'Applications' })
+    expect(router.currentRoute.value.name).toBe('PartnerPortal')
+    expect(document.title).toBe('Partner portal - SEIM')
+  })
 })

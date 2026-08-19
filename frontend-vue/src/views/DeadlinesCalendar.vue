@@ -182,7 +182,7 @@
                   :style="{ borderLeft: `3px solid ${ev.borderColor || '#6c757d'}`, paddingLeft: '0.5rem' }"
                   @click="openEvent(ev)"
                 >
-                  {{ ev.title }}
+                  {{ displayEventTitle(ev) }}
                 </button>
               </li>
             </ul>
@@ -205,9 +205,10 @@ import {
   deserializeCalendarFilters,
   serializeCalendarFilters,
 } from '@/utils/staffListSearchPresets'
+import { formatCalendarEventTitle } from '@/utils/formatters'
 
 const router = useRouter()
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 const authStore = useAuthStore()
 const { error: errorToast, success: successToast } = useToast()
 
@@ -249,6 +250,15 @@ function defaultRange() {
   b.setMonth(b.getMonth() + 6)
   rangeStart.value = a.toISOString().slice(0, 10)
   rangeEnd.value = b.toISOString().slice(0, 10)
+}
+
+function displayEventTitle(ev) {
+  return formatCalendarEventTitle({
+    title: ev?.title,
+    status: ev?.status,
+    t,
+    te,
+  })
 }
 
 function eventCategory(ev) {

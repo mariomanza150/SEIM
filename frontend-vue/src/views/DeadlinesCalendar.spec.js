@@ -99,4 +99,44 @@ describe('DeadlinesCalendar', () => {
     expect(wrapper.find('[data-testid="calendar-show-google"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Office hours')
   })
+
+  it('localizes application status slugs in event titles', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/calendar/events/subscribe-token/') {
+        return Promise.resolve({ data: { ics_url: 'https://example/ics', webcal_url: 'webcal://example' } })
+      }
+      if (url === '/api/saved-searches/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/calendar/events/') {
+        return Promise.resolve({
+          data: [
+            {
+              id: 'application-fulbright',
+              title: 'Application: Fulbright Program (under_review) — apply by',
+              status: 'under_review',
+              start: '2026-09-17T00:00:00.000Z',
+            },
+            {
+              id: 'application-e2e',
+              title: 'Application: Vue E2E Test Program (draft) — program start',
+              status: 'draft',
+              start: '2026-09-17T00:00:00.000Z',
+            },
+          ],
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+    const wrapper = mount(DeadlinesCalendar, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Under review')
+    expect(wrapper.text()).toContain('Draft')
+    expect(wrapper.text()).not.toContain('under_review')
+  })
 })

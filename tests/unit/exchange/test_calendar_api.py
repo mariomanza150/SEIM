@@ -92,6 +92,11 @@ class TestCalendarEventAPI:
 
         # All events should be application-related
         assert all("application" in event["id"] for event in events)
+        for event in events:
+            title = event.get("title") or ""
+            assert "under_review" not in title
+            if event.get("status"):
+                assert f"({event['status']})" not in title
 
     def test_student_sees_only_own_applications(
         self,

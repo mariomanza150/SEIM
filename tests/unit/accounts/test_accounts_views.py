@@ -1134,6 +1134,9 @@ class TestUserSessionViewSet(APITestCase):
         assert listed.status_code == status.HTTP_200_OK
         ids = {row["id"] for row in listed.data["results"]}
         assert self.session.id in ids
+        session_row = next(row for row in listed.data["results"] if row["id"] == self.session.id)
+        assert session_row["user_email"] == self.user.email
+        assert session_row["user_username"] == self.user.username
 
         revoked = self.client.post(
             reverse("accounts:user-session-revoke", args=[self.session.id])

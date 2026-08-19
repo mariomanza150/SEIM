@@ -85,6 +85,22 @@ export function formatApplicationStatus({ status, t, te, unknownKey = 'applicati
   return titleCaseFromSnake(status)
 }
 
+/** Localize `(under_review)` / `(Under Review)` in calendar application event titles. */
+export function formatCalendarEventTitle({ title, status, t, te }) {
+  const raw = String(title || '')
+  const slug = APPLICATION_STATUS_FILTER_VALUES.includes(status)
+    ? status
+    : (raw.match(
+        /\((draft|submitted|under_review|nominated|waitlist|approved|rejected|completed|cancelled|withdrawn)\)/i,
+      ) || [])[1]?.toLowerCase()
+  if (!slug) return raw
+  const label = formatApplicationStatus({ status: slug, t, te })
+  const human = titleCaseFromSnake(slug)
+  return raw
+    .replace(`(${slug})`, `(${label})`)
+    .replace(`(${human})`, `(${label})`)
+}
+
 export function formatDate({ dateString, locale, fallback = 'N/A' }) {
   if (!dateString) return fallback
   const date = new Date(dateString)

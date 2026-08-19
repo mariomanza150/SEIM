@@ -14,7 +14,7 @@ _Logged during [manual feature & workflow test loop](prompts/manual-feature-work
 
 _None._
 
-Rollup: [`qa-runs/2026-08-16-retest-summary.md`](qa-runs/2026-08-16-retest-summary.md). Evening §8: [`qa-runs/2026-08-17-lifecycle-retest.md`](qa-runs/2026-08-17-lifecycle-retest.md). 2026-08-18: [`qa-runs/2026-08-18-manual-qa.md`](qa-runs/2026-08-18-manual-qa.md). Env: `http://localhost:8020`, Compose `seim-localprod`.
+Rollup: [`qa-runs/2026-08-16-retest-summary.md`](qa-runs/2026-08-16-retest-summary.md). Evening §8: [`qa-runs/2026-08-17-lifecycle-retest.md`](qa-runs/2026-08-17-lifecycle-retest.md). 2026-08-18: [`qa-runs/2026-08-18-manual-qa.md`](qa-runs/2026-08-18-manual-qa.md). Role-by-role: [`qa-runs/2026-08-18-role-workflows.md`](qa-runs/2026-08-18-role-workflows.md). Env: `http://localhost:8020`, Compose `seim-localprod`.
 
 ### Environment blockers (2026-08-16) — closed on retest
 
@@ -31,6 +31,9 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 | ID | Date resolved | Verification |
 |----|---------------|----------------|
+| **MQ-2026-08-18-036** | 2026-08-18 | **Tab title followed the denied route after a role redirect:** partner already on `/seim/partner` who opened Applications/Documents kept title `Applications - SEIM` / `Documents - SEIM`. **Fix:** set `document.title` + social/canonical meta in `router.afterEach` (final route only). Live partner: Applications and Documents both settle on **Partner portal - SEIM**. Vitest `index.spec.js`. |
+| **MQ-2026-08-18-035** | 2026-08-18 | **Admin sessions table had blank User cells:** live `/api/user-sessions/` omitted `user` / `user_email` / `user_username` / `ip_address` and had no revoke action; host serializers already exposed those fields. **Fix:** deploy `accounts` + `notifications` session/reminder serializers and admin queryset. Live: `admin@test.com` / `student@test.com` rows + IP; Reminders user picker populated. Pytest `test_admin_can_list_and_revoke_any_session` now asserts email/username. |
+| **MQ-2026-08-18-034** | 2026-08-18 | **Calendar application events showed raw status slugs:** `Application: Fulbright … (under_review)` / `(draft)`. **Fix:** `_humanize_status_name` in `build_calendar_event_dicts` plus Vue `formatCalendarEventTitle`. Live coordinator calendar: **(Draft)** / **(Nominated)** / **(Waitlist)** — no `under_review`. Vitest `DeadlinesCalendar.spec.js`; pytest `test_filter_by_event_type_application`. |
 | **MQ-2026-08-18-033** | 2026-08-18 | **Student inbox showed stored English titles and raw status slugs:** dropdown, Notifications page, and dashboard next-steps rendered `Application Status Update` plus `…changed to under_review.` Seed titles `{program} application is draft`. **Fix:** Vue `formatNotificationCopy` rewrites known templates and status slugs; new status-change emails store `Under Review` not `under_review`. Live partner `es`: **Portal de socios listo**. Student `es`: **En revisión**, **Borrador**, **Historial académico:**. Vitest MQ-033; pytest `test_notification_sent_on_status_change`. |
 | **MQ-2026-08-18-032** | 2026-08-18 | **Tokyo Spanish still showed English scholarship chrome and EN document descriptions:** API disclaimer/ruleset/factor labels plus checklist subtitle `Academic transcript`. **Fix:** Vue i18n for default rubric, student/staff disclaimers, factor ids; `documentTypes.transcript`/`passport`; hide English description when a slug is localized. Live Tokyo `es`: **Rúbrica de becas por defecto (v1)**, localized disclaimer, **Historial académico** / **Pasaporte o identificación**. Vitest MQ-032. |
 | **MQ-2026-08-18-031** | 2026-08-18 | **Partner sidebar Documents showed empty student upload list:** `/seim/documents` empty state “Upload documents from your application detail page.” **Fix:** hide Documents nav for partners; Documents/DocumentDetail redirect to Partner portal; dashboard Documents card same. Live: `/seim/documents` → `/seim/partner`. Vitest MQ-031. |
@@ -87,4 +90,4 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 ---
 
-*Last updated: 2026-08-18 — **MQ-024** program duration + hide scoring ruleset slug; **MQ-023** host institution on application cards; **MQ-022** nominated/waitlist status filters; **MQ-021** workflow status sync; **MQ-020** workflow labels; **MQ-019** document type labels; **MQ-018** draft readiness i18n; **MQ-017** timeline status labels; **MQ-016** nominated headline; **MQ-015** disbursement labels; **MQ-014** eligibility i18n.*
+*Last updated: 2026-08-18 — **MQ-036** tab title after role redirect; **MQ-035** admin session user fields; **MQ-034** calendar status labels.*

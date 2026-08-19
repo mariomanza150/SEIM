@@ -335,13 +335,6 @@ router.beforeEach(async (to, from, next) => {
     return next({ path: to.path.slice(0, -1), query: to.query, hash: to.hash, replace: true })
   }
 
-  document.title = resolveDocumentTitle(to)
-  syncAppSocialMeta((k) => i18n.global.t(k), to)
-  if (typeof window !== 'undefined') {
-    const canonicalHref = new URL(router.resolve(to).href, window.location.origin).href
-    syncCanonicalLink(canonicalHref)
-  }
-
   const requiresAuth = to.matched.some((r) => r.meta && r.meta.requiresAuth)
   if (requiresAuth) {
     const outcome = await resolveAuthenticatedNavigation(to, authStore)
@@ -377,6 +370,12 @@ router.beforeEach(async (to, from, next) => {
 })
 
 router.afterEach((to) => {
+  document.title = resolveDocumentTitle(to)
+  syncAppSocialMeta((k) => i18n.global.t(k), to)
+  if (typeof window !== 'undefined') {
+    const canonicalHref = new URL(router.resolve(to).href, window.location.origin).href
+    syncCanonicalLink(canonicalHref)
+  }
   announceRouteNavigation(to)
   nextTick(() => {
     routeBusy.value = false

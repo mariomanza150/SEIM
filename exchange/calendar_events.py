@@ -9,6 +9,7 @@ from django.db.models import Q
 from django.utils import timezone as dj_tz
 
 from .models import Application, ExchangeAgreement, Program
+from .services import _humanize_status_name
 
 
 def _combine_day(d):
@@ -166,7 +167,8 @@ def build_calendar_event_dicts(user, start_param=None, end_param=None, event_typ
             events.append(
                 {
                     "id": f"application-{application.id}",
-                    "title": f"Application: {p.name} ({sn}){label_suffix}",
+                    "title": f"Application: {p.name} ({_humanize_status_name(sn)}){label_suffix}",
+                    "status": sn,
                     "start": _combine_day(event_date),
                     "spa_path": f"/applications/{application.id}/",
                     "className": f"event-application event-status-{sn}",
