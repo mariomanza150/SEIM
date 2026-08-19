@@ -61,14 +61,19 @@ jobs:
           }
           Set-Location $env:SEIM_REPO
           git fetch origin main
-          git checkout $env:DEPLOY_SHA
-
-          $args = @('-SkipPull')
-          if ('${{ github.event.inputs.no_cache }}' -eq 'true') { $args += '-NoCache' }
-          if ('${{ github.event_name }}' -eq 'workflow_dispatch' -and '${{ github.event.inputs.skip_pull }}' -ne 'true') {
-            $args = @()
+          git checkout main
+          git pull --ff-only origin main
+          if ($env:DEPLOY_SHA) {
+            git checkout $env:DEPLOY_SHA
           }
-          .\scripts\deploy-local-prod.ps1 @args
+
+          $deployArgs = @{ SkipPull = $true }
+          if ('${{ github.event.inputs.no_cache }}' -eq 'true') { $deployArgs.NoCache = $true }
+          if ('${{ github.event_name }}' -eq 'workflow_dispatch' -and '${{ github.event.inputs.skip_pull }}' -ne 'true') {
+            $deployArgs = @{}
+            if ('${{ github.event.inputs.no_cache }}' -eq 'true') { $deployArgs.NoCache = $true }
+          }
+          .\scripts\deploy-local-prod.ps1 @deployArgs
 
       - name: Job summary
         if: always()
