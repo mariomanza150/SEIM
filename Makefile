@@ -1,7 +1,7 @@
 # SEIM Makefile
 # Development and documentation automation
 
-.PHONY: help docs docs-api docs-code docs-db docs-all clean-docs enhance-docs test migrate collectstatic runserver shell cache-test cache-status cache-clear clean clean-all setup format lint type-check security-check quality-check check-deps export-deps download-institution-assets build-prod deploy-prod deploy-prod-update prod-setup prod-secrets prod-backup prod-restore prod-logs prod-shell prod-status prod-health prod-stop prod-clean
+.PHONY: help docs docs-api docs-code docs-db docs-all clean-docs enhance-docs test migrate collectstatic runserver shell cache-test cache-status cache-clear clean clean-all setup format lint type-check security-check quality-check check-deps export-deps download-institution-assets build-prod deploy-prod deploy-prod-update deploy-local-prod deploy-local-prod-update local-prod-status local-prod-logs local-prod-health prod-setup prod-secrets prod-backup prod-restore prod-logs prod-shell prod-status prod-health prod-stop prod-clean
 
 # Default target
 help:
@@ -47,9 +47,14 @@ help:
 	@echo "  e2e-clean          - Clean E2E test artifacts"
 	@echo ""
 	@echo "Production Deployment:"
-	@echo "  build-prod         - Build production Docker images"
-	@echo "  deploy-prod        - Deploy to production environment"
-	@echo "  deploy-prod-update - Update production deployment"
+	@echo "  build-prod              - Build production Docker images (docker-compose.prod.yml)"
+	@echo "  deploy-prod             - Deploy to production environment"
+	@echo "  deploy-prod-update      - Update production deployment"
+	@echo "  deploy-local-prod       - Rebuild + redeploy seim-localprod (localhost:8020)"
+	@echo "  deploy-local-prod-update- Pull + rebuild + redeploy seim-localprod"
+	@echo "  local-prod-status       - Show seim-localprod container status"
+	@echo "  local-prod-logs         - Tail seim-localprod web logs"
+	@echo "  local-prod-health       - Curl local-prod health endpoint"
 	@echo "  prod-setup         - Setup production environment"
 	@echo "  prod-secrets       - Generate production secrets"
 	@echo "  prod-backup        - Backup production database and files"
@@ -502,6 +507,22 @@ deploy-prod-update:
 	docker-compose -f docker-compose.prod.yml pull
 	docker-compose -f docker-compose.prod.yml up -d --build
 	@echo "✅ Production update completed!"
+
+# Local production (docker-compose.local-prod.yml, project seim-localprod, port 8020)
+deploy-local-prod:
+	@powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-local-prod.ps1 -SkipPull
+
+deploy-local-prod-update:
+	@powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-local-prod.ps1
+
+local-prod-status:
+	docker compose -p seim-localprod -f docker-compose.local-prod.yml ps
+
+local-prod-logs:
+	docker compose -p seim-localprod -f docker-compose.local-prod.yml logs -f web
+
+local-prod-health:
+	curl -fsS http://localhost:8020/health/live/ && echo ""
 
 prod-setup:
 	@echo "🔧 Setting up production environment..."

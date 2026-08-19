@@ -1,0 +1,84 @@
+# CD: deploy to the local seim-localprod Docker stack on a self-hosted runner.
+#
+# One-time setup (on this Windows machine):
+#   1. GitHub → Settings → Actions → Runners → New self-hosted runner (Windows).
+#   2. Install with labels: self-hosted, windows, local-prod
+#   3. Or run: .\scripts\setup-local-prod-runner.ps1 (after downloading runner files)
+#
+# Triggers after CI succeeds on main/master, or manual dispatch.
+
+name: Deploy local-prod
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      no_cache:
+        description: "Rebuild images with --no-cache"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+      skip_pull:
+        description: "Skip git pull (deploy current checkout)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+concurrency:
+  group: deploy-local-prod
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy seim-localprod
+    runs-on: [self-hosted, windows, local-prod]
+    if: |
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'master'))
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Verify Docker
+        shell: pwsh
+        run: |
+          docker version
+          docker compose version
+
+      - name: Deploy stack
+        shell: pwsh
+        run: |
+          $args = @()
+          if ('${{ github.event.inputs.no_cache }}' -eq 'true') { $args += '-NoCache' }
+          if ('${{ github.event.inputs.skip_pull }}' -eq 'true') { $args += '-SkipPull' }
+          if ('${{ github.event_name }}' -eq 'workflow_run') {
+            # workflow_run checkout is already at head_sha; avoid pull race.
+            $args += '-SkipPull'
+          }
+          .\scripts\deploy-local-prod.ps1 @args
+
+      - name: Job summary
+        if: always()
+        shell: pwsh
+        run: |
+          $status = if ('${{ job.status }}' -eq 'success') { '✅' } else { '❌' }
+          @"
+          ## Local-prod deploy $status
+          - **URL:** http://localhost:8020/seim/
+          - **Health:** http://localhost:8020/health/live/
+          - **Compose project:** seim-localprod
+          - **Trigger:** ${{ github.event_name }}
+          "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8

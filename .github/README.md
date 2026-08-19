@@ -22,6 +22,36 @@ Runs on: push to `main` / `master`, or `workflow_dispatch`
 
 **Environments:** `staging`, `production` (configure reviewers in repo settings).
 
+### 2b. Deploy local-prod (`deploy-local-prod.yml`)
+
+Runs on: **after CI succeeds** on `main` / `master`, or `workflow_dispatch`
+
+**Target:** Docker Compose project **`seim-localprod`** (`docker-compose.local-prod.yml`) on **this machine** — app at `http://localhost:8020`.
+
+**Runner:** requires a **self-hosted** Windows runner with labels `self-hosted`, `windows`, `local-prod`.
+
+**One-time setup:**
+
+1. Copy `env.local-prod.example` → `.env.local-prod` (if not already done).
+2. GitHub → **Settings → Actions → Runners → New self-hosted runner** (Windows x64). Extract to e.g. `C:\actions-runner\seim-localprod`.
+3. Register with labels `self-hosted,windows,local-prod`:
+   ```powershell
+   $env:RUNNER_TOKEN = "<registration-token>"
+   .\scripts\setup-local-prod-runner.ps1 -RunnerDir "C:\actions-runner\seim-localprod"
+   cd C:\actions-runner\seim-localprod
+   .\svc.cmd install
+   .\svc.cmd start
+   ```
+4. Push to `main` → CI green → **Deploy local-prod** runs automatically.
+
+**Manual deploy (no runner):**
+
+```powershell
+.\scripts\deploy-local-prod.ps1              # pull + rebuild + up
+.\scripts\deploy-local-prod.ps1 -SkipPull    # deploy current checkout
+make deploy-local-prod-update                # same via Makefile
+```
+
 ### 3. E2E — Playwright (`e2e-tests.yml`)
 
 Runs on: **push** to `main`, `develop`, `master`, `feature/vue-migration`; **PR** targeting `main`, `develop`, `master`; plus manual dispatch.
