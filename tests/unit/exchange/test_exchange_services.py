@@ -661,6 +661,8 @@ class TestApplicationService:
             assert (
                 call_args[0][1] == "Application Status Update"
             )  # Second argument is notification title
+            assert "status has changed to Submitted." in call_args[0][2]
+            assert "under_review" not in call_args[0][2]
 
     def test_transaction_rollback_on_error(self, test_data):
         """Test that transaction rolls back on error."""

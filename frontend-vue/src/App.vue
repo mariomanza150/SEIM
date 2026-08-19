@@ -28,10 +28,11 @@ import { applyUiPreferences, clearUiPreferences, mergeUiPreferencesFromServer, r
 import router from '@/router'
 import { routeBusy } from '@/router/routeBusy'
 import { syncAppMetaDescription, syncAppSocialMeta, syncCanonicalLink } from '@/utils/documentTitle'
+import { formatNotificationCopy } from '@/utils/notificationCopy'
 import ToastContainer from '@/components/ToastContainer.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 const authStore = useAuthStore()
 const { info } = useToast()
 let mediaQuery = null
@@ -39,7 +40,8 @@ let mediaQueryListener = null
 
 const { connectIfAuthenticated, disconnect } = useNotificationWebSocket(authStore, {
   onNotification(notification) {
-    const message = notification.message || notification.title || t('notifications.fallbackToast')
+    const copy = formatNotificationCopy(notification, { t, te })
+    const message = copy.message || copy.title || t('notifications.fallbackToast')
     info(message, 6000)
     window.dispatchEvent(new CustomEvent('notification-new', { detail: notification }))
   },

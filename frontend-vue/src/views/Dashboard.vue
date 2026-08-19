@@ -128,7 +128,7 @@ import api from '@/services/api'
 import { fetchDashboardNextSteps } from '@/utils/dashboardNextSteps'
 import PageHeader from '@/components/PageHeader.vue'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const authStore = useAuthStore()
 const { success, error: errorToast } = useToast()
 
@@ -191,6 +191,7 @@ async function loadNextSteps() {
       userRole: authStore.userRole,
       canUseStaffReviewQueue: authStore.canUseStaffReviewQueue,
       t,
+      te,
     })
   } catch {
     nextStepsError.value = t('dashboard.nextStepsLoadError')

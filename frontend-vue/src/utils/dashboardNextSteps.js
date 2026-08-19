@@ -1,4 +1,5 @@
 import { isSpaUrl, normalizeSpaLocation } from '@/utils/navigation'
+import { formatNotificationCopy } from '@/utils/notificationCopy'
 
 export function normalizePaginated(data) {
   if (!data) return []
@@ -25,6 +26,7 @@ function ts(value) {
  * @param {boolean} params.isStudent
  * @param {boolean} params.isStaff
  * @param {function(string, object=): string} params.t vue-i18n translate
+ * @param {function(string): boolean} [params.te] vue-i18n key exists
  */
 export function mergeDashboardNextSteps({
   notifications = [],
@@ -36,6 +38,7 @@ export function mergeDashboardNextSteps({
   isStudent,
   isStaff,
   t,
+  te,
 }) {
   if (typeof t !== 'function') {
     throw new TypeError('mergeDashboardNextSteps: t (i18n translate) is required')
@@ -46,11 +49,12 @@ export function mergeDashboardNextSteps({
   for (const n of notifications) {
     const actionUrl = n.action_url || null
     const spa = actionUrl && isSpaUrl(actionUrl) ? normalizeSpaLocation(actionUrl) : null
+    const copy = formatNotificationCopy(n, { t, te })
     rows.push({
       id: `n-${n.id}`,
       kind: 'notification',
-      title: n.title || t('notifications.defaultTitle'),
-      subtitle: (n.message || '').slice(0, 120),
+      title: copy.title || t('notifications.defaultTitle'),
+      subtitle: (copy.message || '').slice(0, 120),
       spaRoute: spa,
       href: actionUrl && !spa ? actionUrl : null,
       sort: 1000_000_000_000 - ts(n.sent_at),
@@ -137,7 +141,7 @@ export function mergeDashboardNextSteps({
   return rows.slice(0, 14)
 }
 
-export async function fetchDashboardNextSteps(api, { userRole, canUseStaffReviewQueue, t }) {
+export async function fetchDashboardNextSteps(api, { userRole, canUseStaffReviewQueue, t, te }) {
   const isStudent = userRole === 'student'
   const isStaff = Boolean(canUseStaffReviewQueue)
 
@@ -208,6 +212,7 @@ export async function fetchDashboardNextSteps(api, { userRole, canUseStaffReview
       isStudent: true,
       isStaff: false,
       t,
+      te,
     })
   }
 
@@ -221,6 +226,7 @@ export async function fetchDashboardNextSteps(api, { userRole, canUseStaffReview
       isStudent: false,
       isStaff: true,
       t,
+      te,
     })
   }
 
@@ -230,5 +236,6 @@ export async function fetchDashboardNextSteps(api, { userRole, canUseStaffReview
     isStudent: false,
     isStaff: false,
     t,
+    te,
   })
 }

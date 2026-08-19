@@ -34,6 +34,12 @@ def _program_for_eligibility(program: Program):
     return ProgramEligibilityProxy(program, parse_ruleset_overrides(ruleset))
 
 
+def _humanize_status_name(name: str) -> str:
+    """Turn stored status slugs into readable English for emails/inbox."""
+    slug = (name or "").replace("_", " ").replace("-", " ").strip()
+    return slug.title() if slug else name or ""
+
+
 class ApplicationService:
     """
     Service for application workflow: submission, withdrawal, status transitions, comments, timeline events.
@@ -394,7 +400,7 @@ class ApplicationService:
         NotificationService.send_notification(
             application.student,
             "Application Status Update",
-            f"Your application for {application.program.name} status has changed to {new_status_name}.",
+            f"Your application for {application.program.name} status has changed to {_humanize_status_name(new_status_name)}.",
             notification_type="both",
             action_url=f"/applications/{application.id}/",
             action_text="View Application",

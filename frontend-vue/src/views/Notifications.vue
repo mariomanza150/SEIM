@@ -117,13 +117,13 @@
                     aria-hidden="true"
                   ></span>
                   <h6 class="mb-1" :class="{ 'fw-bold': !notification.is_read }">
-                    {{ notification.title || t('notifications.defaultTitle') }}
+                    {{ displayTitle(notification) }}
                   </h6>
                   <span class="badge" :class="categoryClass(notification.category)">
                     {{ formatCategory(notification.category) }}
                   </span>
                 </div>
-                <p class="mb-2 text-muted small">{{ notification.message }}</p>
+                <p class="mb-2 text-muted small">{{ displayMessage(notification) }}</p>
                 <div class="d-flex align-items-center gap-3 flex-wrap">
                   <span class="text-muted small">
                     <i class="bi bi-clock me-1" aria-hidden="true"></i>
@@ -136,7 +136,7 @@
                       class="btn btn-sm btn-outline-primary"
                       @click="markAsRead(notification)"
                     >
-                      {{ notification.action_text || t('notifications.viewAction') }}
+                      {{ displayAction(notification) }}
                     </router-link>
                     <a
                       v-else
@@ -146,7 +146,7 @@
                       class="btn btn-sm btn-outline-primary"
                       @click="markAsRead(notification)"
                     >
-                      {{ notification.action_text || t('notifications.viewAction') }}
+                      {{ displayAction(notification) }}
                     </a>
                   </template>
                   <button
@@ -202,8 +202,26 @@ import Pagination from '@/components/Pagination.vue'
 import LoadingState from '@/components/State/LoadingState.vue'
 import ErrorAlert from '@/components/State/ErrorAlert.vue'
 import EmptyState from '@/components/State/EmptyState.vue'
+import {
+  formatNotificationAction,
+  formatNotificationMessage,
+  formatNotificationTitle,
+} from '@/utils/notificationCopy'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
+const i18nCtx = { t, te }
+
+function displayTitle(notification) {
+  return formatNotificationTitle(notification?.title, i18nCtx) || t('notifications.defaultTitle')
+}
+
+function displayMessage(notification) {
+  return formatNotificationMessage(notification?.message, i18nCtx)
+}
+
+function displayAction(notification) {
+  return formatNotificationAction(notification?.action_text, i18nCtx) || t('notifications.viewAction')
+}
 const { success, error: errorToast } = useToast()
 const {
   fetchNotifications: apiFetchNotifications,

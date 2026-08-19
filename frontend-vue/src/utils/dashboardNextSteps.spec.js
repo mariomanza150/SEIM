@@ -92,6 +92,28 @@ describe('mergeDashboardNextSteps', () => {
     expect(draft.subtitle).toBe('España')
   })
 
+  it('rewrites stored English notification copy for Spanish locale (MQ-033)', () => {
+    setAppLocale('es')
+    const rows = mergeDashboardNextSteps({
+      notifications: [
+        {
+          id: 'n1',
+          title: 'Application Status Update',
+          message: 'Your application for Fulbright status has changed to under_review.',
+          sent_at: '2026-01-02T00:00:00Z',
+          action_url: null,
+        },
+      ],
+      isStudent: false,
+      isStaff: false,
+      t,
+      te: (key) => i18n.global.te(key),
+    })
+    expect(rows[0].title).toBe('Actualización de estado de la solicitud')
+    expect(rows[0].subtitle).toContain('En revisión')
+    expect(rows[0].subtitle).not.toContain('under_review')
+  })
+
   it('throws without translate function', () => {
     expect(() =>
       mergeDashboardNextSteps({

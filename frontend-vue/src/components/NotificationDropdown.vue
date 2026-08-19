@@ -48,9 +48,9 @@
           <div class="d-flex w-100 justify-content-between align-items-start">
             <div class="flex-grow-1 min-w-0">
               <span class="d-block text-truncate fw-medium" :class="{ 'fw-bold': !notification.is_read }">
-                {{ notification.title || t('notifications.defaultTitle') }}
+                {{ displayTitle(notification) }}
               </span>
-              <span class="d-block text-muted small text-truncate">{{ notification.message }}</span>
+              <span class="d-block text-muted small text-truncate">{{ displayMessage(notification) }}</span>
               <span class="d-block text-muted small mt-1">{{ formatTimestampDropdown(notification.sent_at) }}</span>
             </div>
           </div>
@@ -61,7 +61,7 @@
               class="btn btn-sm btn-outline-primary"
               @click="markAsRead(notification); close()"
             >
-              {{ notification.action_text || t('notifications.viewAction') }}
+              {{ displayAction(notification) }}
             </router-link>
             <a
               v-else-if="notification.action_url"
@@ -71,7 +71,7 @@
               class="btn btn-sm btn-outline-primary"
               @click="markAsRead(notification); close()"
             >
-              {{ notification.action_text || t('notifications.viewAction') }}
+              {{ displayAction(notification) }}
             </a>
           </div>
         </li>
@@ -91,8 +91,26 @@ import { useI18n } from 'vue-i18n'
 import { isNewTabUrl, isSpaUrl, normalizeSpaLocation } from '@/utils/navigation'
 import { useNavDropdown } from '@/composables/useNavDropdown'
 import { useNotifications } from '@/composables/useNotifications'
+import {
+  formatNotificationAction,
+  formatNotificationMessage,
+  formatNotificationTitle,
+} from '@/utils/notificationCopy'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
+const i18nCtx = { t, te }
+
+function displayTitle(notification) {
+  return formatNotificationTitle(notification?.title, i18nCtx) || t('notifications.defaultTitle')
+}
+
+function displayMessage(notification) {
+  return formatNotificationMessage(notification?.message, i18nCtx)
+}
+
+function displayAction(notification) {
+  return formatNotificationAction(notification?.action_text, i18nCtx) || t('notifications.viewAction')
+}
 const { fetchNotifications, fetchUnreadCount, markAsRead: apiMarkAsRead, formatTimestampDropdown } = useNotifications()
 const { open, rootEl, toggle, close } = useNavDropdown()
 

@@ -205,4 +205,38 @@ describe('Notifications', () => {
     expect(wrapper.text()).toContain('Gestiona tus notificaciones')
     expect(wrapper.text()).toContain('Limpiar filtros')
   })
+
+  it('localizes stored English status-update copy (MQ-033)', async () => {
+    setAppLocale('es')
+    setupDefaultGets({
+      list: mockNotificationsListResponse({
+        results: [
+          {
+            id: 7,
+            title: 'Application Status Update',
+            message:
+              'Your application for Fulbright Program status has changed to under_review.',
+            is_read: false,
+            category: 'info',
+            sent_at: new Date().toISOString(),
+            action_url: '/seim/applications/1',
+            action_text: 'View Application',
+          },
+        ],
+        count: 1,
+      }),
+      unreadCount: 1,
+    })
+    const wrapper = mount(Notifications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Actualización de estado de la solicitud')
+    expect(wrapper.text()).toContain('En revisión')
+    expect(wrapper.text()).not.toContain('under_review')
+    expect(wrapper.text()).toContain('Ver solicitud')
+  })
 })
