@@ -21,6 +21,27 @@ export function applicationHostCountry(app) {
   return (app.host_institution_country || nested || '').trim()
 }
 
+function parseLocalDate(value) {
+  const iso = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})(?:$|T)/)
+  if (iso) return new Date(Number(iso[1]), Number(iso[2]) - 1, Number(iso[3]))
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+export function applicationProgramDuration({ app, locale, fallback = '' }) {
+  if (!app) return fallback
+  const nested = typeof app.program === 'object' && app.program
+    ? String(app.program.duration || '').trim()
+    : ''
+  if (nested) return nested
+  const start = parseLocalDate(app.program_start_date)
+  const end = parseLocalDate(app.program_end_date)
+  if (!start || !end) return fallback
+  const localeTag = locale === 'es' ? 'es' : 'en-US'
+  const opts = { year: 'numeric', month: 'short', day: 'numeric' }
+  return `${start.toLocaleDateString(localeTag, opts)} – ${end.toLocaleDateString(localeTag, opts)}`
+}
+
 export function applicationStatusBadgeClass(status) {
   const classes = {
     draft: 'bg-secondary',

@@ -64,6 +64,7 @@ def evidence_documents_for_application(application) -> list[dict]:
             {
                 "id": str(doc.id),
                 "type_name": doc.type.name if doc.type_id else "",
+                "type_description": (doc.type.description or "") if doc.type_id else "",
                 "type_slug": slug,
                 "is_valid": bool(doc.is_valid),
                 "file": doc.file.url if doc.file else None,

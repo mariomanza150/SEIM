@@ -192,8 +192,8 @@
                 </div>
               </div>
               <div class="card-body">
-                <p class="small text-muted mb-2">
-                  {{ application.scholarship_allocation_score.ruleset_label }} ({{ application.scholarship_allocation_score.ruleset_id }})
+                <p class="small text-muted mb-2" data-testid="scholarship-ruleset-label">
+                  {{ application.scholarship_allocation_score.ruleset_label }}
                 </p>
                 <div class="d-flex flex-wrap align-items-baseline gap-3 mb-3">
                   <div>
@@ -405,7 +405,7 @@
                   </div>
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('applicationDetailPage.labelDuration') }}</label>
-                    <p class="fw-bold">{{ application.program?.duration || t('applicationDetailPage.notAvailable') }}</p>
+                    <p class="fw-bold" data-testid="program-duration">{{ programDuration(application) || t('applicationDetailPage.notAvailable') }}</p>
                   </div>
                 </div>
                 <div v-if="application.program?.description">
@@ -865,6 +865,7 @@ import {
   applicationProgramDisplayName,
   applicationHostInstitution,
   applicationHostCountry,
+  applicationProgramDuration,
   applicationStatusBadgeClass,
   formatApplicationStatus,
   formatDateTime as formatDateTimeUtil,
@@ -888,6 +889,14 @@ function hostInstitution(app) {
 
 function hostCountry(app) {
   return applicationHostCountry(app)
+}
+
+function programDuration(app) {
+  return applicationProgramDuration({
+    app,
+    locale: locale.value,
+    fallback: '',
+  })
 }
 
 const isCoordinator = computed(() =>

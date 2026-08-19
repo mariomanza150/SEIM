@@ -55,6 +55,9 @@ class TestScholarshipAwards(APITestCase):
         self.assertEqual(award.status, ScholarshipAward.Status.AWARDED)
         payload = serialize_award(award)
         self.assertEqual(payload["status"], "awarded")
+        evidence = payload["evidence_documents"][0]
+        self.assertEqual(evidence["type_name"], "Carta Beca")
+        self.assertIn("type_description", evidence)
         self.assertEqual(
             sorted(payload["allowed_transitions"]),
             ["declined", "disbursing", "withdrawn"],

@@ -283,6 +283,47 @@ describe('ApplicationDetail', () => {
     })
     expect(wrapper.text()).toContain('Technical University of Munich')
     expect(wrapper.text()).toContain('Germany')
+    expect(wrapper.find('[data-testid="program-duration"]').text()).toBe(
+      i18n.global.t('applicationDetailPage.notAvailable'),
+    )
+  })
+
+  it('formats program duration from start and end dates when program is a FK id', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            program: '11111111-1111-1111-1111-111111111111',
+            program_name: 'DAAD Exchange',
+            host_institution_name: 'Technical University of Munich',
+            host_institution_country: 'Germany',
+            program_start_date: '2026-09-01',
+            program_end_date: '2026-12-15',
+          },
+        })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/comments/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/timeline-events/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('DAAD Exchange')
+    })
+    expect(wrapper.find('[data-testid="program-duration"]').text()).toMatch(/Sep 1, 2026/)
+    expect(wrapper.find('[data-testid="program-duration"]').text()).toMatch(/Dec 15, 2026/)
+    expect(wrapper.find('[data-testid="program-duration"]').text()).not.toBe(
+      i18n.global.t('applicationDetailPage.notAvailable'),
+    )
   })
 
   it('shows scholarship scoring panel for coordinators when API returns score', async () => {
@@ -335,6 +376,8 @@ describe('ApplicationDetail', () => {
     expect(wrapper.text()).toContain('19.38')
     expect(wrapper.text()).not.toContain('19.380000000000003')
     expect(wrapper.text()).toContain('Staff comparison tool only.')
+    expect(wrapper.find('[data-testid="scholarship-ruleset-label"]').text()).toBe('Default rubric')
+    expect(wrapper.text()).not.toContain('default_v1')
   })
 
   it('shows scholarship estimate for students without cohort export buttons', async () => {
@@ -378,6 +421,7 @@ describe('ApplicationDetail', () => {
     })
     expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.scholarshipScoring.studentTitle'))
     expect(wrapper.text()).toContain('70')
+    expect(wrapper.text()).not.toContain('default_v1')
     expect(wrapper.text()).not.toContain(
       i18n.global.t('applicationDetailPage.scholarshipScoring.exportCohortCsv'),
     )

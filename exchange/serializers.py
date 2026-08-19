@@ -549,6 +549,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
     student_display_name = serializers.SerializerMethodField()
     student_email = serializers.SerializerMethodField()
     program_name = serializers.SerializerMethodField()
+    program_start_date = serializers.DateField(source="program.start_date", read_only=True)
+    program_end_date = serializers.DateField(source="program.end_date", read_only=True)
     host_institution_name = serializers.SerializerMethodField()
     host_institution_country = serializers.SerializerMethodField()
     readiness = serializers.SerializerMethodField()
@@ -569,6 +571,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "student_display_name",
             "student_email",
             "program_name",
+            "program_start_date",
+            "program_end_date",
             "host_institution_name",
             "host_institution_country",
         )
