@@ -200,4 +200,21 @@ describe('resolveAuthenticatedNavigation', () => {
     }
     expect(await resolveAuthenticatedNavigation(to, authStore)).toBe('partner')
   })
+
+  it('returns partner when partner targets student Documents (MQ-031)', async () => {
+    const authStore = {
+      accessToken: 'jwt',
+      isAuthenticated: true,
+      isAdmin: false,
+      canUseStaffReviewQueue: false,
+      canUsePartnerPortal: true,
+      checkAuth: vi.fn(),
+    }
+    const to = {
+      meta: { requiresAuth: true, studentDocuments: true },
+      matched: [{ meta: { studentDocuments: true } }],
+      fullPath: '/documents',
+    }
+    expect(await resolveAuthenticatedNavigation(to, authStore)).toBe('partner')
+  })
 })

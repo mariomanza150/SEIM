@@ -352,7 +352,7 @@ const primaryNavItems = computed(() => [
     to: { name: 'Documents' },
     label: t('route.names.Documents'),
     iconClass: 'bi bi-folder',
-    isVisible: true,
+    isVisible: !authStore.canUsePartnerPortal,
   },
   {
     key: 'deadlines',

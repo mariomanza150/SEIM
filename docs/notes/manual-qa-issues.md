@@ -31,6 +31,7 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 | ID | Date resolved | Verification |
 |----|---------------|----------------|
+| **MQ-2026-08-18-031** | 2026-08-18 | **Partner sidebar Documents showed empty student upload list:** `/seim/documents` empty state “Upload documents from your application detail page.” **Fix:** hide Documents nav for partners; Documents/DocumentDetail redirect to Partner portal; dashboard Documents card same. Live: `/seim/documents` → `/seim/partner`. Vitest MQ-031. |
 | **MQ-2026-08-18-030** | 2026-08-18 | **Partner sidebar Applications showed empty student list:** partners saw **Solicitudes** nav → `/seim/applications` with “Nueva solicitud” and zero rows. **Fix:** hide Applications nav for `canUsePartnerPortal`; route guard redirects student application routes to Partner portal. Vitest MQ-030. |
 | **MQ-2026-08-18-029** | 2026-08-18 | **Partner dashboard showed 0 applications:** stats API used student branch (`student=user`) for partner role. **Fix:** partner branch counts linked-program applicants + agreement repository docs; Applications stat card links to Partner portal. Live `partner@test.com`: **2** applicants, **1** agreement doc. Pytest + Vitest MQ-029. |
 | **MQ-2026-08-18-028** | 2026-08-18 | **Nominations ignored `?program=` deep links:** `/seim/nominations?program=<uuid>` did not pre-select the program or load ranks. **Fix:** read `route.query.program` after programs load. Vitest MQ-028. |

@@ -30,7 +30,9 @@ export async function resolveAuthenticatedNavigation(to, authStore) {
 
   if (
     authStore.canUsePartnerPortal
-    && (to.matched?.some((r) => r.meta && r.meta.studentApplications) ?? false)
+    && (to.matched?.some(
+      (r) => r.meta && (r.meta.studentApplications || r.meta.studentDocuments),
+    ) ?? false)
   ) {
     return 'partner'
   }

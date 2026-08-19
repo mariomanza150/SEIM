@@ -104,5 +104,7 @@ describe('router beforeEach + resolveAuthenticatedNavigation (MQ-014)', () => {
     await router.push({ name: 'Login' })
     await router.push({ name: 'Applications' })
     expect(router.currentRoute.value.name).toBe('PartnerPortal')
+    await router.push({ name: 'Documents' })
+    expect(router.currentRoute.value.name).toBe('PartnerPortal')
   })
 })

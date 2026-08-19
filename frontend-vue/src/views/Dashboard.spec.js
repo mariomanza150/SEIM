@@ -93,5 +93,7 @@ describe('Dashboard', () => {
     })
     const appsLink = wrapper.findAll('a').find((a) => a.text().includes('Applications'))
     expect(appsLink?.attributes('data-to')).toContain('PartnerPortal')
+    const docsLink = wrapper.findAll('a').find((a) => a.text().includes('Documents'))
+    expect(docsLink?.attributes('data-to')).toContain('PartnerPortal')
   })
 })

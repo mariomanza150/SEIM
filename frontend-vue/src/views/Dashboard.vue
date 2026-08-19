@@ -23,7 +23,7 @@
         </router-link>
       </div>
       <div class="col-md-3 mb-3">
-        <router-link :to="{ name: 'Documents' }" class="text-decoration-none">
+        <router-link :to="documentsStatRoute" class="text-decoration-none">
           <div class="card text-center card-hover">
             <div class="card-body">
               <i class="bi bi-folder fs-1 text-success"></i>
@@ -135,6 +135,9 @@ const { success, error: errorToast } = useToast()
 const userName = computed(() => authStore.userName)
 const applicationsStatRoute = computed(() =>
   authStore.canUsePartnerPortal ? { name: 'PartnerPortal' } : { name: 'Applications' },
+)
+const documentsStatRoute = computed(() =>
+  authStore.canUsePartnerPortal ? { name: 'PartnerPortal' } : { name: 'Documents' },
 )
 const pendingStatRoute = computed(() => {
   if (authStore.canUsePartnerPortal) return { name: 'PartnerPortal' }
