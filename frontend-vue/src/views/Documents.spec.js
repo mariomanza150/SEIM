@@ -211,4 +211,62 @@ describe('Documents', () => {
     expect(ariaLabels).toContain(i18n.global.t('pagination.pageNumberAria', { n: 1 }))
     expect(ariaLabels).toContain(i18n.global.t('pagination.pageNumberAria', { n: 2 }))
   })
+
+  it('application filter options use i18n status labels (MQ-025)', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'diego-1',
+                program_name: 'DAAD Exchange - Munich',
+                status: 'nominated',
+              },
+              {
+                id: 'tokyo-1',
+                program_name: 'Tokyo',
+                status: 'under_review',
+              },
+            ],
+            count: 2,
+          },
+        })
+      }
+      if (url === '/api/document-types/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 1,
+                name: 'carta_beca',
+                slug: 'carta_beca',
+                description: 'Scholarship letter',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({ data: { results: [], count: 0, next: null, previous: null } })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+
+    const wrapper = mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+
+    const appSelect = wrapper.findAll('select')[0]
+    expect(appSelect.text()).toContain('DAAD Exchange - Munich (Nominated)')
+    expect(appSelect.text()).toContain('Tokyo (Under review)')
+
+    const typeSelect = wrapper.findAll('select')[1]
+    expect(typeSelect.text()).toContain('Scholarship letter')
+    expect(typeSelect.text()).not.toContain('carta_beca')
+  })
 })

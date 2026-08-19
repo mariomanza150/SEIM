@@ -140,12 +140,21 @@ export function documentReviewStatus(doc) {
   return 'pending'
 }
 
+function defaultSelectStatusLabel(rawStatus) {
+  return String(rawStatus).replace(/_/g, ' ')
+}
+
 /** Base label (program + status) without id suffix. */
-export function applicationSelectBaseLabel(app, fallback = '') {
+export function applicationSelectBaseLabel(app, fallback = '', formatStatus = defaultSelectStatusLabel) {
   if (app == null || typeof app !== 'object') return fallback || String(app ?? '')
   const name = app.program_name || app.program?.name
   const rawStatus = typeof app.status === 'string' ? app.status : app.status?.name
-  const status = rawStatus ? String(rawStatus).replace(/_/g, ' ') : ''
+  const status =
+    rawStatus && typeof formatStatus === 'function'
+      ? formatStatus(rawStatus)
+      : rawStatus
+        ? defaultSelectStatusLabel(rawStatus)
+        : ''
   if (name && status) return `${name} (${status})`
   if (name) return String(name)
   if (app.id != null) return String(app.id)
@@ -153,12 +162,12 @@ export function applicationSelectBaseLabel(app, fallback = '') {
 }
 
 /** Label for application `<select>` options. Pass `siblings` to suffix colliding labels with a short id. */
-export function applicationSelectLabel(app, fallback = '', siblings = null) {
-  const base = applicationSelectBaseLabel(app, fallback)
+export function applicationSelectLabel(app, fallback = '', siblings = null, formatStatus = defaultSelectStatusLabel) {
+  const base = applicationSelectBaseLabel(app, fallback, formatStatus)
   if (!Array.isArray(siblings) || siblings.length < 2 || app == null || typeof app !== 'object' || app.id == null) {
     return base
   }
-  const hits = siblings.filter((s) => applicationSelectBaseLabel(s) === base)
+  const hits = siblings.filter((s) => applicationSelectBaseLabel(s, fallback, formatStatus) === base)
   if (hits.length <= 1) return base
   return `${base} · ${String(app.id).slice(0, 8)}`
 }

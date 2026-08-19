@@ -105,6 +105,27 @@ describe('documentApi', () => {
     ).toBe('Vue E2E Test Program (under review)')
   })
 
+  it('applicationSelectLabel uses formatStatus callback when provided', () => {
+    const formatStatus = (s) =>
+      String(s).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    expect(
+      applicationSelectLabel(
+        { id: 'a', program_name: 'DAAD', status: 'nominated' },
+        '',
+        null,
+        formatStatus,
+      ),
+    ).toBe('DAAD (Nominated)')
+    expect(
+      applicationSelectLabel(
+        { id: 'b', program_name: 'Vue E2E Test Program', status: 'under_review' },
+        '',
+        null,
+        formatStatus,
+      ),
+    ).toBe('Vue E2E Test Program (Under Review)')
+  })
+
   it('applicationSelectLabel suffixes short ids when the same program+status appears twice', () => {
     const siblings = [
       { id: 'c48638a4-2124-4d43-aceb-dadc54796b4b', program_name: 'Vue E2E Test Program', status: 'draft' },

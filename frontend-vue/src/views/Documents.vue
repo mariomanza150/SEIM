@@ -27,7 +27,7 @@
               <select v-model="filters.application" class="form-select" @change="() => fetchDocuments(1)">
                 <option value="">{{ t('documentsPage.applicationOptionAll') }}</option>
                 <option v-for="app in applications" :key="app.id" :value="app.id">
-                  {{ applicationSelectLabel(app, '', applications) }}
+                  {{ applicationFilterLabel(app) }}
                 </option>
               </select>
             </div>
@@ -36,7 +36,7 @@
               <select v-model="filters.type" class="form-select" @change="() => fetchDocuments(1)">
                 <option value="">{{ t('documentsPage.typeOptionAll') }}</option>
                 <option v-for="dt in documentTypes" :key="dt.id" :value="dt.id">
-                  {{ dt.name }}
+                  {{ documentTypeLabel(dt, dt.name) }}
                 </option>
               </select>
             </div>
@@ -263,6 +263,7 @@ import {
   documentApplicationProgramName,
   documentTypeLabel,
 } from '@/utils/documentApi'
+import { formatApplicationStatus } from '@/utils/formatters'
 import {
   STAFF_SAVED_SEARCH_TYPE,
   deserializeDocumentListFilters,
@@ -270,7 +271,12 @@ import {
 } from '@/utils/staffListSearchPresets'
 import { resolveListPage } from '@/utils/listPage'
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
+
+function applicationFilterLabel(app) {
+  const formatStatus = (status) => formatApplicationStatus({ status, t, te })
+  return applicationSelectLabel(app, '', applications.value, formatStatus)
+}
 const { error: errorToast } = useToast()
 const authStore = useAuthStore()
 const isStaff = computed(() => authStore.canUseStaffReviewQueue)
