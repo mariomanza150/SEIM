@@ -464,6 +464,16 @@ class TestDocumentCommentSerializer:
         assert comment.author == user
         assert comment.text == "This document looks good"
         assert not comment.is_private
+        payload = serializers.DocumentCommentSerializer(comment).data
+        assert payload["author"] == user.username
+        assert payload["author_name"] == user.username
+
+        user.first_name = "Camila"
+        user.last_name = "Coordinator"
+        user.save()
+        named = serializers.DocumentCommentSerializer(comment).data
+        assert named["author"] == user.username
+        assert named["author_name"] == "Camila Coordinator"
 
     def test_document_comment_serializer_private_comment(self):
         """Test DocumentCommentSerializer with private comment."""

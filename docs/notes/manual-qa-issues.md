@@ -14,7 +14,7 @@ _Logged during [manual feature & workflow test loop](prompts/manual-feature-work
 
 _None._
 
-Rollup: [`qa-runs/2026-08-16-retest-summary.md`](qa-runs/2026-08-16-retest-summary.md). Evening §8: [`qa-runs/2026-08-17-lifecycle-retest.md`](qa-runs/2026-08-17-lifecycle-retest.md). 2026-08-18: [`qa-runs/2026-08-18-manual-qa.md`](qa-runs/2026-08-18-manual-qa.md). Role-by-role: [`qa-runs/2026-08-18-role-workflows.md`](qa-runs/2026-08-18-role-workflows.md). Env: `http://localhost:8020`, Compose `seim-localprod`.
+Rollup: [`qa-runs/2026-08-16-retest-summary.md`](qa-runs/2026-08-16-retest-summary.md). Evening §8: [`qa-runs/2026-08-17-lifecycle-retest.md`](qa-runs/2026-08-17-lifecycle-retest.md). 2026-08-18: [`qa-runs/2026-08-18-manual-qa.md`](qa-runs/2026-08-18-manual-qa.md). Role-by-role: [`qa-runs/2026-08-18-role-workflows.md`](qa-runs/2026-08-18-role-workflows.md). Checking/actions: [`qa-runs/2026-08-18-checking-actions.md`](qa-runs/2026-08-18-checking-actions.md). Env: `http://localhost:8020`, Compose `seim-localprod`.
 
 ### Environment blockers (2026-08-16) — closed on retest
 
@@ -31,6 +31,8 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 | ID | Date resolved | Verification |
 |----|---------------|----------------|
+| **MQ-2026-08-18-038** | 2026-08-18 | **Document comments and uploader showed usernames:** Vienna transcript comment author was `coordinator`; Uploaded by was `student`. **Fix:** `DocumentCommentSerializer.author_name` and `DocumentSerializer.uploaded_by_name` (full name, else username); Vue uses those with username fallback. Live student: **Coordinator User** / **Student User**. Pytest `TestDocumentCommentSerializer`; Vitest `DocumentDetail.spec.js`. |
+| **MQ-2026-08-18-037** | 2026-08-18 | **Document review history showed raw `valid`/`invalid` slugs.** **Fix:** `documentDetailPage.validationResult` i18n on the history badge and preview-context line. Live student Vienna transcript: **Valid** (not `valid`). Vitest `DocumentDetail.spec.js`. |
 | **MQ-2026-08-18-036** | 2026-08-18 | **Tab title followed the denied route after a role redirect:** partner already on `/seim/partner` who opened Applications/Documents kept title `Applications - SEIM` / `Documents - SEIM`. **Fix:** set `document.title` + social/canonical meta in `router.afterEach` (final route only). Live partner: Applications and Documents both settle on **Partner portal - SEIM**. Vitest `index.spec.js`. |
 | **MQ-2026-08-18-035** | 2026-08-18 | **Admin sessions table had blank User cells:** live `/api/user-sessions/` omitted `user` / `user_email` / `user_username` / `ip_address` and had no revoke action; host serializers already exposed those fields. **Fix:** deploy `accounts` + `notifications` session/reminder serializers and admin queryset. Live: `admin@test.com` / `student@test.com` rows + IP; Reminders user picker populated. Pytest `test_admin_can_list_and_revoke_any_session` now asserts email/username. |
 | **MQ-2026-08-18-034** | 2026-08-18 | **Calendar application events showed raw status slugs:** `Application: Fulbright … (under_review)` / `(draft)`. **Fix:** `_humanize_status_name` in `build_calendar_event_dicts` plus Vue `formatCalendarEventTitle`. Live coordinator calendar: **(Draft)** / **(Nominated)** / **(Waitlist)** — no `under_review`. Vitest `DeadlinesCalendar.spec.js`; pytest `test_filter_by_event_type_application`. |

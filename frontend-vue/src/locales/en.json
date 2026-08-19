@@ -1508,6 +1508,10 @@
     "reviewHistory": "Review history",
     "noValidationsYet": "No validation records yet.",
     "byValidator": "By {name}",
+    "validationResult": {
+      "valid": "Valid",
+      "invalid": "Invalid"
+    },
     "commentsHeading": "Comments",
     "noCommentsYet": "No comments yet.",
     "staffOnlyBadge": "Staff only",

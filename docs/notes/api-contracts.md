@@ -240,6 +240,7 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `GET /api/document-comments/{id}/` - Get comment details
 - `PUT /api/document-comments/{id}/` - Update comment
 - `DELETE /api/document-comments/{id}/` - Delete comment
+- Comment payloads include `author` (username) and `author_name` (full name, falling back to username). Nested `GET /api/documents/{id}/` comments use the same fields; the document also exposes `uploaded_by_name`.
 
 ### Notifications
 

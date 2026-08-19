@@ -245,6 +245,13 @@ class DocumentTypeSummarySerializer(serializers.ModelSerializer):
         return bool(obj.template_file)
 
 
+def _user_display_name(user):
+    if not user:
+        return ""
+    name = user.get_full_name().strip()
+    return name or user.username or getattr(user, "email", "") or ""
+
+
 class DocumentValidationSerializer(serializers.ModelSerializer):
     validator_name = serializers.SerializerMethodField()
 
@@ -255,11 +262,9 @@ class DocumentValidationSerializer(serializers.ModelSerializer):
         ]
 
     def get_validator_name(self, obj):
-        v = obj.validator
-        if not v:
+        if not obj.validator:
             return None
-        name = v.get_full_name().strip()
-        return name or v.username
+        return _user_display_name(obj.validator)
 
 
 class DocumentResubmissionRequestSerializer(serializers.ModelSerializer):
@@ -282,11 +287,15 @@ class DocumentResubmissionRequestSerializer(serializers.ModelSerializer):
 
 class DocumentCommentSerializer(serializers.ModelSerializer):
     author = serializers.StringRelatedField(read_only=True)
+    author_name = serializers.SerializerMethodField()
 
     class Meta:
         model = DocumentComment
         fields = "__all__"
-        read_only_fields = ["author", "created_at"]
+        read_only_fields = ["author", "author_name", "created_at"]
+
+    def get_author_name(self, obj):
+        return _user_display_name(obj.author)
 
     def create(self, validated_data):
         req = self.context.get("request")
@@ -320,6 +329,7 @@ class DocumentCommentSerializer(serializers.ModelSerializer):
 
 class DocumentSerializer(serializers.ModelSerializer):
     uploaded_by = serializers.StringRelatedField(read_only=True)
+    uploaded_by_name = serializers.SerializerMethodField()
     validations = DocumentValidationSerializer(
         many=True, read_only=True, source="documentvalidation_set"
     )
@@ -334,8 +344,12 @@ class DocumentSerializer(serializers.ModelSerializer):
             "validations",
             "resubmission_requests",
             "comments",
+            "uploaded_by_name",
         ]
-        read_only_fields = ["uploaded_by", "validated_at", "is_valid"]
+        read_only_fields = ["uploaded_by", "uploaded_by_name", "validated_at", "is_valid"]
+
+    def get_uploaded_by_name(self, obj):
+        return _user_display_name(obj.uploaded_by) or None
 
     def get_comments(self, obj):
         qs = obj.documentcomment_set.all().order_by("created_at")

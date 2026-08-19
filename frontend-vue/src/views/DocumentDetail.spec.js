@@ -221,4 +221,68 @@ describe('DocumentDetail', () => {
     const na = i18n.global.t('documentDetailPage.notAvailable')
     expect(wrapper.text().split(na).length - 1).toBeGreaterThanOrEqual(2)
   })
+
+  it('shows display names and i18n validation results instead of slugs', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/') {
+        return Promise.resolve({
+          data: { results: [{ id: 'app-1', program: { name: 'Spring Program' } }], count: 1 },
+        })
+      }
+      if (url === '/api/documents/doc-1/') {
+        return Promise.resolve({
+          data: {
+            id: 'doc-1',
+            application: 'app-1',
+            file: '/media/student/transcript.pdf',
+            is_valid: true,
+            created_at: '2026-01-01T12:00:00Z',
+            updated_at: '2026-01-02T12:00:00Z',
+            type: { name: 'Transcript' },
+            uploaded_by: 'student',
+            uploaded_by_name: 'Sofia Martinez',
+            validations: [
+              {
+                id: 'val-1',
+                result: 'valid',
+                validator_name: 'Camila Coordinator',
+                validated_at: '2026-01-02T12:00:00Z',
+              },
+            ],
+            resubmission_requests: [],
+            comments: [
+              {
+                id: 'c-1',
+                author: 'coordinator',
+                author_name: 'Camila Coordinator',
+                text: 'Stamp is readable.',
+                created_at: '2026-01-02T13:00:00Z',
+              },
+            ],
+          },
+        })
+      }
+      if (String(url).includes('/api/documents/doc-1/preview/')) {
+        return Promise.resolve({
+          data: new Blob(['%PDF'], { type: '' }),
+          headers: { 'content-type': 'application/pdf' },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Sofia Martinez')
+    expect(wrapper.text()).toContain('Camila Coordinator')
+    expect(wrapper.find('[data-testid="validation-result"]').text()).toBe(
+      i18n.global.t('documentDetailPage.validationResult.valid'),
+    )
+    expect(wrapper.text()).toContain('Stamp is readable.')
+  })
 })

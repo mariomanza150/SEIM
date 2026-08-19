@@ -1504,6 +1504,10 @@
     "reviewHistory": "Historial de revisión",
     "noValidationsYet": "Aún no hay registros de validación.",
     "byValidator": "Por {name}",
+    "validationResult": {
+      "valid": "Válido",
+      "invalid": "No válido"
+    },
     "commentsHeading": "Comentarios",
     "noCommentsYet": "Aún no hay comentarios.",
     "staffOnlyBadge": "Solo personal",

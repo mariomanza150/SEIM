@@ -196,7 +196,7 @@
                 <div class="row mb-3">
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('documentDetailPage.labelUploadedBy') }}</label>
-                    <p class="fw-bold">{{ document.uploaded_by || t('documentDetailPage.notAvailable') }}</p>
+                    <p class="fw-bold">{{ document.uploaded_by_name || document.uploaded_by || t('documentDetailPage.notAvailable') }}</p>
                   </div>
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('documentDetailPage.labelUploadedAt') }}</label>
@@ -260,8 +260,12 @@
                     class="list-group-item px-0"
                   >
                     <div class="d-flex justify-content-between">
-                      <span class="badge" :class="v.result === 'valid' ? 'bg-success' : 'bg-secondary'">
-                        {{ v.result }}
+                      <span
+                        class="badge"
+                        :class="v.result === 'valid' ? 'bg-success' : 'bg-secondary'"
+                        data-testid="validation-result"
+                      >
+                        {{ formatValidationResult(v.result) }}
                       </span>
                       <span class="small text-muted">{{ formatDateTime(v.validated_at || v.created_at) }}</span>
                     </div>
@@ -284,7 +288,7 @@
                 </div>
                 <div v-for="c in document.comments" :key="c.id" class="border-bottom pb-2 mb-2">
                   <div class="d-flex justify-content-between">
-                    <strong class="small">{{ c.author }}</strong>
+                    <strong class="small">{{ documentCommentAuthor(c) }}</strong>
                     <span class="small text-muted">{{ formatDateTime(c.created_at) }}</span>
                   </div>
                   <span v-if="c.is_private" class="badge bg-secondary small">{{
@@ -539,7 +543,7 @@ const previewContextLines = computed(() => {
   if (inv?.details) {
     lines.push(t('documentDetailPage.previewContextReviewNote', { note: inv.details }))
   } else if (inv && String(inv.result || '').toLowerCase() !== 'valid') {
-    lines.push(t('documentDetailPage.previewContextValidation', { result: inv.result }))
+    lines.push(t('documentDetailPage.previewContextValidation', { result: formatValidationResult(inv.result) }))
   }
   return lines
 })
@@ -617,6 +621,18 @@ function fileName(fileUrl) {
   if (!fileUrl) return t('documentDetailPage.fileUnknown')
   const parts = fileUrl.split('/')
   return decodeURIComponent(parts[parts.length - 1] || t('documentDetailPage.fileFallback'))
+}
+
+function formatValidationResult(result) {
+  const slug = String(result || '').toLowerCase()
+  if (slug === 'valid' || slug === 'invalid') {
+    return t(`documentDetailPage.validationResult.${slug}`)
+  }
+  return result || ''
+}
+
+function documentCommentAuthor(comment) {
+  return comment.author_name || comment.author || t('documentDetailPage.notAvailable')
 }
 
 function formatDateTime(dateString) {

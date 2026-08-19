@@ -6,6 +6,8 @@ _Companion to [`feature-tracking.md`](feature-tracking.md). Runbook: [`prompts/m
 
 | ID | Date | Cluster | Severity | Summary |
 |----|------|---------|----------|---------|
+| MWL-2026-08-18-005 | 2026-08-18 | `documents-core` | Low | Document comment `author` was username (`coordinator`); uploader same. Promoted to **MQ-2026-08-18-038**. |
+| MWL-2026-08-18-004 | 2026-08-18 | `documents-core` | Low | Document review history rendered raw validation slugs (`valid`). Promoted to **MQ-2026-08-18-037**. |
 | MWL-2026-08-18-001 | 2026-08-18 | `calendar-ics` | Medium | Calendar application events used raw status slugs (`under_review`, `draft`) in titles. Promoted to **MQ-2026-08-18-034**. |
 | MWL-2026-08-18-002 | 2026-08-18 | `admin-console` | Medium | Live `/api/user-sessions/` omitted user identity fields; admin Sessions table showed blank User cells. Promoted to **MQ-2026-08-18-035**. |
 | MWL-2026-08-18-003 | 2026-08-18 | `vue-portal` | Low | Role-denied redirects set the tab title from the blocked route when already on the fallback page. Promoted to **MQ-2026-08-18-036**. |
@@ -27,7 +29,7 @@ _Companion to [`feature-tracking.md`](feature-tracking.md). Runbook: [`prompts/m
 3. Admin (`admin@test.com`) — programs, catalogs, grades, users, forms, dynforms, data-management, workflows, documents, workload overview. Sessions 404 until dist deploy; User column blank until serializer deploy (**MQ-035**). After deploy: sessions list with emails + reminders picker; workflow catalogs. **Pass.**
 4. Partner (`partner@test.com`) — portal Active agreement, 2 applicants, nav without Applications/Documents, cold student/staff/admin routes → portal. Tab title after Applications/Documents (**MQ-036**) fixed in `afterEach`. **Pass.**
 
-**Overall:** **Pass** after MQ-034/035/036. Evidence notes: [`qa-runs/2026-08-18-role-workflows.md`](qa-runs/2026-08-18-role-workflows.md).
+**Overall:** **Pass** after MQ-034/035/036. Evidence notes: [`qa-runs/2026-08-18-role-workflows.md`](qa-runs/2026-08-18-role-workflows.md). Checking/actions follow-up: [`qa-runs/2026-08-18-checking-actions.md`](qa-runs/2026-08-18-checking-actions.md).
 
 **Checked paths (for next run):** student core SPA; coordinator queues/nominations/agreements; admin console including `/seim/admin/sessions` and `/seim/admin/workflow-catalogs`; partner portal + denies.
 
