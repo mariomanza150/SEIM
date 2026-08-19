@@ -1,3 +1,5 @@
+import re
+
 from rest_framework import serializers
 
 from .models import (
@@ -10,10 +12,22 @@ from .models import (
 from .services import NotificationService
 
 
+_TYPE_SLUG_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+
+
 class NotificationTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotificationType
         fields = "__all__"
+
+    def validate_name(self, value):
+        name = (value or "").strip()
+        if not _TYPE_SLUG_RE.match(name):
+            raise serializers.ValidationError(
+                "Use a lowercase slug starting with a letter "
+                "(letters, numbers, and underscores only)."
+            )
+        return name
 
 
 class NotificationSerializer(serializers.ModelSerializer):

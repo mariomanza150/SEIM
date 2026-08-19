@@ -5,7 +5,7 @@ from datetime import timedelta
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db import transaction
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Count, Prefetch, ProtectedError, Q
 from django.http import HttpResponse
 from django.urls import reverse
 from django.utils import timezone as dj_tz
@@ -1627,20 +1627,85 @@ class ApplicationSubjectSelectionViewSet(viewsets.ModelViewSet):
             instance.delete()
 
 
-class ApplicationStatusViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = ApplicationStatus.objects.all().order_by("order")
-    serializer_class = ApplicationStatusSerializer
-    permission_classes = [permissions.IsAuthenticated]
+_STATUS_CACHE_GEN_KEY = "api_cache_gen:ApplicationStatusViewSet"
 
-    @cache_api_response(timeout=1800)  # Cache for 30 minutes (statuses rarely change)
+
+def _status_cache_generation() -> str:
+    value = cache.get(_STATUS_CACHE_GEN_KEY)
+    return str(value if value is not None else 0)
+
+
+def _status_list_cache_key(*args, **kwargs):
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    digest = hashlib.sha256(request.get_full_path().encode()).hexdigest()[:32]
+    gen = _status_cache_generation()
+    return CacheManager.get_cache_key(
+        "api_response", f"ApplicationStatusViewSet.list:{gen}:{user_key}:{digest}"
+    )
+
+
+def _status_retrieve_cache_key(*args, **kwargs):
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    pk = kwargs.get("pk", "")
+    gen = _status_cache_generation()
+    return CacheManager.get_cache_key(
+        "api_response", f"ApplicationStatusViewSet.retrieve:{gen}:{user_key}:{pk}"
+    )
+
+
+def _invalidate_application_status_api_caches() -> None:
+    try:
+        cache.incr(_STATUS_CACHE_GEN_KEY)
+    except ValueError:
+        cache.set(_STATUS_CACHE_GEN_KEY, 1, timeout=None)
+    CacheManager.clear_pattern("api_resp:v1:api_middleware:/api/application-statuses*")
+    CacheManager.clear_pattern("api_resp:v1:ApplicationStatusViewSet*")
+
+
+class ApplicationStatusViewSet(viewsets.ModelViewSet):
+    """Authenticated reads; admin writes. ``name`` is the workflow slug."""
+
+    queryset = ApplicationStatus.objects.all().order_by("order", "name")
+    serializer_class = ApplicationStatusSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = None
+
+    @cache_api_response(timeout=1800, key_func=_status_list_cache_key)
     def list(self, request, *args, **kwargs):
         """List all application statuses with caching."""
         return super().list(request, *args, **kwargs)
 
-    @cache_api_response(timeout=1800)  # Cache for 30 minutes
+    @cache_api_response(timeout=1800, key_func=_status_retrieve_cache_key)
     def retrieve(self, request, *args, **kwargs):
         """Retrieve a specific status with caching."""
         return super().retrieve(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save()
+        _invalidate_application_status_api_caches()
+
+    def perform_update(self, serializer):
+        serializer.save()
+        _invalidate_application_status_api_caches()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            instance.delete()
+        except ProtectedError:
+            return Response(
+                {
+                    "detail": (
+                        "This status cannot be deleted because applications "
+                        "still use it."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        _invalidate_application_status_api_caches()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class CommentViewSet(viewsets.ModelViewSet):

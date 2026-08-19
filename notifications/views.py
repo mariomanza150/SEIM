@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import filters, status, viewsets
@@ -6,8 +7,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.cache import cache_api_response
-from core.permissions import IsCoordinatorOrAdmin
+from core.cache import CacheManager, cache_api_response
+from core.permissions import IsAdminOrReadOnly, IsCoordinatorOrAdmin
 
 from .models import (
     Notification,
@@ -67,17 +68,67 @@ class NotificationRoutingReferenceView(APIView):
         return Response(build_notification_routing_reference())
 
 
-class NotificationTypeViewSet(viewsets.ModelViewSet):
-    queryset = NotificationType.objects.all()
-    serializer_class = NotificationTypeSerializer
+_NOTIFICATION_TYPE_CACHE_GEN_KEY = "api_cache_gen:NotificationTypeViewSet"
 
-    @cache_api_response(timeout=600)
+
+def _notification_type_cache_generation() -> str:
+    value = cache.get(_NOTIFICATION_TYPE_CACHE_GEN_KEY)
+    return str(value if value is not None else 0)
+
+
+def _notification_type_list_cache_key(*args, **kwargs):
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    gen = _notification_type_cache_generation()
+    return CacheManager.get_cache_key(
+        "api_response", f"NotificationTypeViewSet.list:{gen}:{user_key}"
+    )
+
+
+def _notification_type_retrieve_cache_key(*args, **kwargs):
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    pk = kwargs.get("pk", "")
+    gen = _notification_type_cache_generation()
+    return CacheManager.get_cache_key(
+        "api_response", f"NotificationTypeViewSet.retrieve:{gen}:{user_key}:{pk}"
+    )
+
+
+def _invalidate_notification_type_api_caches() -> None:
+    try:
+        cache.incr(_NOTIFICATION_TYPE_CACHE_GEN_KEY)
+    except ValueError:
+        cache.set(_NOTIFICATION_TYPE_CACHE_GEN_KEY, 1, timeout=None)
+    CacheManager.clear_pattern("api_resp:v1:api_middleware:/api/notification-types*")
+    CacheManager.clear_pattern("api_resp:v1:NotificationTypeViewSet*")
+
+
+class NotificationTypeViewSet(viewsets.ModelViewSet):
+    queryset = NotificationType.objects.all().order_by("name")
+    serializer_class = NotificationTypeSerializer
+    permission_classes = [IsAdminOrReadOnly]
+    pagination_class = None
+
+    @cache_api_response(timeout=600, key_func=_notification_type_list_cache_key)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    @cache_api_response(timeout=600)
+    @cache_api_response(timeout=600, key_func=_notification_type_retrieve_cache_key)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save()
+        _invalidate_notification_type_api_caches()
+
+    def perform_update(self, serializer):
+        serializer.save()
+        _invalidate_notification_type_api_caches()
+
+    def perform_destroy(self, instance):
+        instance.delete()
+        _invalidate_notification_type_api_caches()
 
 
 class NotificationViewSet(viewsets.ModelViewSet):

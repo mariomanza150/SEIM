@@ -1,3 +1,5 @@
+import re
+
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from rest_framework import serializers
@@ -959,10 +961,22 @@ class ApplicationSerializer(serializers.ModelSerializer):
         return result
 
 
+_WORKFLOW_SLUG_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+
+
 class ApplicationStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = ApplicationStatus
         fields = "__all__"
+
+    def validate_name(self, value):
+        name = (value or "").strip()
+        if not _WORKFLOW_SLUG_RE.match(name):
+            raise serializers.ValidationError(
+                "Use a lowercase slug starting with a letter "
+                "(letters, numbers, and underscores only)."
+            )
+        return name
 
 
 class CommentSerializer(serializers.ModelSerializer):
