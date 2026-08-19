@@ -52,6 +52,18 @@ Runs on: **after CI succeeds** on `main` / `master`, or `workflow_dispatch`
 make deploy-local-prod-update                # same via Makefile
 ```
 
+**Boot autostart (Windows):**
+
+```powershell
+.\scripts\install-local-prod-boot.ps1
+```
+
+This enables Docker Desktop autostart, registers scheduled tasks for the stack (`SEIM-localprod-stack`, 90s after logon) and runner (`SEIM-github-runner`, at logon). For a true Windows **service** for the runner (optional), approve UAC once:
+
+```text
+scripts\install-github-runner-service-elevated.cmd
+```
+
 ### 3. E2E — Playwright (`e2e-tests.yml`)
 
 Runs on: **push** to `main`, `develop`, `master`, `feature/vue-migration`; **PR** targeting `main`, `develop`, `master`; plus manual dispatch.

@@ -223,6 +223,7 @@ tenant_config.json
 *.bak
 *.backup
 *.tmp
+logs/runner-registration-token.txt
 
 # Node modules (if any frontend build tools)
 node_modules/
