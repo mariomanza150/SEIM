@@ -55,5 +55,6 @@ if ((Get-Service $service.Name).Status -ne "Running") {
 }
 
 Get-Service $service.Name | Format-Table Name, Status, StartType
+Unregister-ScheduledTask -TaskName "SEIM-github-runner" -Confirm:$false -ErrorAction SilentlyContinue
 Remove-Item $TokenFile -Force -ErrorAction SilentlyContinue
-Write-Host "Runner service installed successfully."
+Write-Host "Runner service installed successfully. Logon task SEIM-github-runner removed."
