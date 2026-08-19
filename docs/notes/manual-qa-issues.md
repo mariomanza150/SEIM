@@ -31,6 +31,7 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 | ID | Date resolved | Verification |
 |----|---------------|----------------|
+| **MQ-2026-08-18-029** | 2026-08-18 | **Partner dashboard showed 0 applications:** stats API used student branch (`student=user`) for partner role. **Fix:** partner branch counts linked-program applicants + agreement repository docs; Applications stat card links to Partner portal. Live `partner@test.com`: **2** applicants, **1** agreement doc. Pytest + Vitest MQ-029. |
 | **MQ-2026-08-18-028** | 2026-08-18 | **Nominations ignored `?program=` deep links:** `/seim/nominations?program=<uuid>` did not pre-select the program or load ranks. **Fix:** read `route.query.program` after programs load. Vitest MQ-028. |
 | **MQ-2026-08-18-027** | 2026-08-18 | **Duplicate “Application record created” on timeline:** synthetic row from `application.created_at` plus seeded `application_created` TimelineEvent. **Fix:** hide synthetic row when API already has `application_created`/`created`. Live Diego: one created entry with seed description. Vitest MQ-027. |
 | **MQ-2026-08-18-025** | 2026-08-18 | **Documents application filter showed raw status slugs:** options like `(submitted)` / `(under review)` instead of i18n labels; type filter used raw `name` only. **Fix:** `applicationSelectLabel` accepts `formatStatus`; Documents uses `formatApplicationStatus`; type filter uses `documentTypeLabel`. Live: **Tokyo (Draft)**, **Vue E2E … (Submitted)**. Vitest `Documents.spec.js` + `documentApi.spec.js`. |

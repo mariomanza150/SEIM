@@ -12,8 +12,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from documents.models import Document, DocumentResubmissionRequest
+from documents.models import Document, DocumentResubmissionRequest, ExchangeAgreementDocument
 from exchange.models import Application
+from exchange.partner_views import partner_agreement_ids
 from notifications.models import Notification
 
 User = get_user_model()
@@ -26,6 +27,11 @@ def _is_coordinator_or_admin(user):
     if not callable(has_role):
         return False
     return has_role("coordinator") or has_role("admin")
+
+
+def _is_partner(user):
+    has_role = getattr(user, "has_role", None)
+    return callable(has_role) and has_role("partner")
 
 
 class DashboardStatsView(APIView):
@@ -66,6 +72,22 @@ class DashboardStatsView(APIView):
                 "documents": Document.objects.count(),
                 "notifications": unread,
                 "pending": pending,
+            }
+        elif _is_partner(user):
+            agreement_ids = list(partner_agreement_ids(user))
+            partner_apps = Application.objects.filter(
+                program__exchange_agreements__id__in=agreement_ids
+            ).distinct()
+            stats = {
+                "applications": partner_apps.count(),
+                "documents": ExchangeAgreementDocument.objects.filter(
+                    agreement_id__in=agreement_ids
+                ).count(),
+                "notifications": unread,
+                "pending": partner_apps.filter(
+                    withdrawn=False,
+                    status__name__in=["submitted", "under_review", "nominated"],
+                ).count(),
             }
         else:
             stats = {

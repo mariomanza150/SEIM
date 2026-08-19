@@ -16,14 +16,17 @@ vi.mock('@/utils/dashboardNextSteps', () => ({
   fetchDashboardNextSteps: vi.fn().mockResolvedValue([]),
 }))
 
+const authStoreMock = {
+  userName: 'Alex Student',
+  isAdmin: false,
+  canUseStaffReviewQueue: false,
+  canUsePartnerPortal: false,
+  userRole: 'student',
+  logout: vi.fn().mockResolvedValue(undefined),
+}
+
 vi.mock('@/stores/auth', () => ({
-  useAuthStore: () => ({
-    userName: 'Alex Student',
-    isAdmin: false,
-    canUseStaffReviewQueue: false,
-    userRole: 'student',
-    logout: vi.fn().mockResolvedValue(undefined),
-  }),
+  useAuthStore: () => authStoreMock,
 }))
 
 describe('Dashboard', () => {
@@ -31,6 +34,10 @@ describe('Dashboard', () => {
     setActivePinia(createPinia())
     localStorage.clear()
     setAppLocale('en')
+    authStoreMock.userName = 'Alex Student'
+    authStoreMock.canUseStaffReviewQueue = false
+    authStoreMock.canUsePartnerPortal = false
+    authStoreMock.userRole = 'student'
     vi.clearAllMocks()
     api.get.mockResolvedValue({
       data: { applications: 2, documents: 1, notifications: 3, pending: 0 },
@@ -64,5 +71,27 @@ describe('Dashboard', () => {
     expect(wrapper.text()).toContain("Here's what's happening with your exchange program.")
     expect(wrapper.text()).toContain('Documents')
     expect(api.get).toHaveBeenCalledWith('/api/accounts/dashboard/stats/')
+  })
+
+  it('links applications stat card to partner portal for partner role (MQ-029)', async () => {
+    authStoreMock.userName = 'Ines Partner'
+    authStoreMock.canUsePartnerPortal = true
+    authStoreMock.userRole = 'partner'
+    const wrapper = mount(Dashboard, {
+      global: {
+        plugins: [createPinia(), i18n],
+        stubs: {
+          RouterLink: {
+            props: ['to'],
+            template: '<a :data-to="JSON.stringify(to)"><slot /></a>',
+          },
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('2')
+    })
+    const appsLink = wrapper.findAll('a').find((a) => a.text().includes('Applications'))
+    expect(appsLink?.attributes('data-to')).toContain('PartnerPortal')
   })
 })

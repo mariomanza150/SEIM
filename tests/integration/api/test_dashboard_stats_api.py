@@ -47,3 +47,38 @@ class TestDashboardStatsAPI(APITestCase):
         self.assert_response_success(response)
         self.assertEqual(response.data["applications"], 2)
         self.assertEqual(response.data["pending"], 1)
+
+    def test_partner_counts_linked_program_applicants(self):
+        from documents.models import ExchangeAgreementDocument
+        from exchange.models import ExchangeAgreement, PartnerContact
+
+        partner = self.create_user(role="partner", email="partner-stats@example.com")
+        student = self.create_user(role="student")
+        program = self.create_program()
+        agreement = ExchangeAgreement.objects.create(
+            title="Partner MoU",
+            partner_institution_name="TU Berlin",
+            status=ExchangeAgreement.Status.ACTIVE,
+        )
+        agreement.programs.add(program)
+        PartnerContact.objects.create(user=partner, agreement=agreement, is_active=True)
+        ExchangeAgreementDocument.objects.create(
+            agreement=agreement,
+            category=ExchangeAgreementDocument.Category.SIGNED_COPY,
+            title="Signed MoU",
+            file="agreement_repository/demo.pdf",
+            uploaded_by=partner,
+        )
+        self.create_application(student=student, program=program, status_name="submitted")
+        self.create_application(
+            student=self.create_user(role="student"),
+            program=self.create_program(),
+            status_name="draft",
+        )
+
+        self.authenticate_user(partner)
+        response = self.client.get(self.url)
+        self.assert_response_success(response)
+        self.assertEqual(response.data["applications"], 1)
+        self.assertEqual(response.data["documents"], 1)
+        self.assertEqual(response.data["pending"], 1)

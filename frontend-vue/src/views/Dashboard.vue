@@ -12,7 +12,7 @@
 
     <div v-else class="row mb-4" data-testid="dashboard-stats">
       <div class="col-md-3 mb-3">
-        <router-link :to="{ name: 'Applications' }" class="text-decoration-none">
+        <router-link :to="applicationsStatRoute" class="text-decoration-none">
           <div class="card text-center card-hover">
             <div class="card-body">
               <i class="bi bi-file-earmark-text fs-1 text-primary"></i>
@@ -46,14 +46,14 @@
       </div>
       <div class="col-md-3 mb-3">
         <component
-          :is="authStore.canUseStaffReviewQueue ? 'router-link' : 'div'"
+          :is="pendingStatRoute ? 'router-link' : 'div'"
           v-bind="
-            authStore.canUseStaffReviewQueue
-              ? { to: { name: 'CoordinatorReviewQueue' }, class: 'text-decoration-none' }
+            pendingStatRoute
+              ? { to: pendingStatRoute, class: 'text-decoration-none' }
               : {}
           "
         >
-          <div class="card text-center" :class="{ 'card-hover': authStore.canUseStaffReviewQueue }">
+          <div class="card text-center" :class="{ 'card-hover': pendingStatRoute }">
             <div class="card-body">
               <i class="bi bi-clock-history fs-1 text-info"></i>
               <h3 class="mt-2">{{ stats.pending }}</h3>
@@ -133,6 +133,14 @@ const authStore = useAuthStore()
 const { success, error: errorToast } = useToast()
 
 const userName = computed(() => authStore.userName)
+const applicationsStatRoute = computed(() =>
+  authStore.canUsePartnerPortal ? { name: 'PartnerPortal' } : { name: 'Applications' },
+)
+const pendingStatRoute = computed(() => {
+  if (authStore.canUsePartnerPortal) return { name: 'PartnerPortal' }
+  if (authStore.canUseStaffReviewQueue) return { name: 'CoordinatorReviewQueue' }
+  return null
+})
 const loading = ref(true)
 const error = ref(null)
 const nextSteps = ref([])
