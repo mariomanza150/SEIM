@@ -131,7 +131,7 @@
                       {{ application.readiness.score }}%
                     </span>
                   </div>
-                  <p class="small text-muted mb-0 mt-1">{{ application.readiness.headline }}</p>
+                  <p class="small text-muted mb-0 mt-1">{{ readinessHeadline(application) }}</p>
                 </div>
 
                 <p class="card-text text-muted small mb-3">
@@ -215,7 +215,7 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
-import { readinessLevelBadgeClass } from '@/utils/applicationReadiness'
+import { readinessLevelBadgeClass, formatReadinessHeadline } from '@/utils/applicationReadiness'
 import PageHeader from '@/components/PageHeader.vue'
 import Pagination from '@/components/Pagination.vue'
 import { useConfirm } from '@/composables/useConfirm'
@@ -329,6 +329,17 @@ function formatDateLabel(dateString) {
 
 function programDisplayName(app) {
   return applicationProgramDisplayName(app)
+}
+
+function readinessHeadline(application) {
+  return formatReadinessHeadline({
+    status: application.status,
+    headline: application.readiness?.headline,
+    readiness: application.readiness,
+    t,
+    te,
+    locale: locale.value,
+  })
 }
 
 async function confirmDelete(application) {

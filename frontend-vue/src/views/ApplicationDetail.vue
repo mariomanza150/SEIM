@@ -951,8 +951,10 @@ const readinessHeadlineText = computed(() =>
   formatReadinessHeadline({
     status: application.value?.status,
     headline: application.value?.readiness?.headline,
+    readiness: application.value?.readiness,
     t,
     te,
+    locale: locale.value,
   }),
 )
 

@@ -1370,7 +1370,25 @@
       "withdrawn": "Solicitud retirada.",
       "waitlist": "En lista de espera — el programa está a capacidad.",
       "nominated": "Nominada para una plaza.",
-      "cancelled": "Solicitud cancelada."
+      "cancelled": "Solicitud cancelada.",
+      "draft": {
+        "missingDocsOne": "Falta {n} documento obligatorio",
+        "missingDocsMany": "Faltan {n} documentos obligatorios",
+        "resubmitOne": "{n} documento necesita reenvío",
+        "resubmitMany": "{n} documentos necesitan reenvío",
+        "pendingReviewOne": "{n} en espera de revisión",
+        "pendingReviewMany": "{n} en espera de revisión",
+        "formIncomplete": "Formulario del programa incompleto",
+        "hostIncomplete": "Destino anfitrión incompleto",
+        "eligibilityUnmet": "No se cumplen los requisitos de elegibilidad",
+        "deadlineDaysOne": "Fecha límite en {n} día",
+        "deadlineDaysMany": "Fecha límite en {n} días",
+        "readyNoDocs": "Lista para revisar y enviar cuando quieras.",
+        "ready": "Los requisitos se ven completos — envía cuando estés lista.",
+        "windowClosed": "La convocatoria de este programa está cerrada.",
+        "opensOn": "Las solicitudes abren el {date}.",
+        "closedOn": "Las solicitudes cerraron el {date}."
+      }
     },
     "scholarshipScoring": {
       "title": "Puntuación para asignación de becas",

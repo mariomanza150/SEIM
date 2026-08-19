@@ -1374,7 +1374,25 @@
       "withdrawn": "Application withdrawn.",
       "waitlist": "On the waitlist — the program is at capacity.",
       "nominated": "Nominated for a seat.",
-      "cancelled": "Application cancelled."
+      "cancelled": "Application cancelled.",
+      "draft": {
+        "missingDocsOne": "{n} required document missing",
+        "missingDocsMany": "{n} required documents missing",
+        "resubmitOne": "{n} document needs resubmission",
+        "resubmitMany": "{n} documents need resubmission",
+        "pendingReviewOne": "{n} awaiting review",
+        "pendingReviewMany": "{n} awaiting review",
+        "formIncomplete": "Program form incomplete",
+        "hostIncomplete": "Host destination incomplete",
+        "eligibilityUnmet": "Eligibility requirements not met",
+        "deadlineDaysOne": "Deadline in {n} day",
+        "deadlineDaysMany": "Deadline in {n} days",
+        "readyNoDocs": "Ready to review and submit when you are satisfied.",
+        "ready": "Requirements look complete — submit when ready.",
+        "windowClosed": "Application window is closed for this program.",
+        "opensOn": "Applications open on {date}.",
+        "closedOn": "Applications closed on {date}."
+      }
     },
     "scholarshipScoring": {
       "title": "Scholarship allocation score",

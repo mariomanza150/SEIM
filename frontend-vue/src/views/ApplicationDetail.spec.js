@@ -599,6 +599,45 @@ describe('ApplicationDetail', () => {
     mockAuthStore.userRole = 'coordinator'
   })
 
+  it('localizes draft readiness headlines from structured fields', async () => {
+    mockAuthStore.userRole = 'student'
+    setAppLocale('es')
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'draft',
+            document_checklist: { required_count: 1, complete: false },
+            readiness: {
+              score: 88,
+              level: 'attention',
+              headline: '1 required document(s) missing; Eligibility requirements not met.',
+              window_open: true,
+              document_counts: { missing: 1, resubmit: 0, pending_review: 0, required: 2 },
+              host_destination: { required: false, complete: true },
+              eligibility: { complete: false, issues: [] },
+              form_complete: true,
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="readiness-headline"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="readiness-headline"]').text()).toBe(
+      `${i18n.global.t('applicationDetailPage.readinessHeadline.draft.missingDocsOne', { n: 1 })}; ${i18n.global.t('applicationDetailPage.readinessHeadline.draft.eligibilityUnmet')}.`,
+    )
+    setAppLocale('en')
+    mockAuthStore.userRole = 'coordinator'
+  })
+
   it('localizes nominated readiness headline instead of a raw slug', async () => {
     api.get.mockImplementation((url) => {
       if (url === '/api/applications/test-app/') {

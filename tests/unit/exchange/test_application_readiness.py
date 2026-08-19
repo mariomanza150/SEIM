@@ -47,6 +47,8 @@ class TestApplicationReadiness:
         r = compute_application_readiness(app, today=today, include_dynamic_form=False)
         assert r["level"] == "blocked"
         assert r["window_open"] is False
+        assert r["window_reason"] == "closed"
+        assert r["window_on"] == program.application_deadline.isoformat()
         assert r["score"] <= 30
 
     def test_draft_missing_required_documents_attention(self):

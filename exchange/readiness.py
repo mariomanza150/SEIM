@@ -24,6 +24,19 @@ def _days_until_deadline(deadline, today) -> int | None:
     return (deadline - today).days
 
 
+def _window_meta(program, window: dict[str, Any]) -> dict[str, Any]:
+    reason = window.get("reason") or ""
+    on = None
+    if reason == "not_open_yet":
+        on = getattr(program, "application_open_date", None)
+    elif reason == "closed":
+        on = getattr(program, "application_deadline", None)
+    return {
+        "window_reason": reason,
+        "window_on": on.isoformat() if on else None,
+    }
+
+
 def _resubmission_requests_for(doc):
     rel = getattr(doc, "documentresubmissionrequest_set", None)
     if rel is None:
@@ -209,6 +222,8 @@ def compute_application_readiness(
                 "complete": True,
             },
             "eligibility": {"complete": True, "issues": []},
+            "form_complete": True,
+            **_window_meta(program, window),
         }
 
     doc_progress, counts = _document_progress(application)
@@ -226,6 +241,7 @@ def compute_application_readiness(
     }
     eligibility = _eligibility_state(application)
     eligibility_ok = eligibility["complete"]
+    form_ok = form_progress >= 0.99
 
     if not window["is_open"]:
         score = max(0, min(30, int(doc_progress * 30)))
@@ -238,6 +254,8 @@ def compute_application_readiness(
             "document_counts": counts,
             "host_destination": host_destination,
             "eligibility": eligibility,
+            "form_complete": form_ok,
+            **_window_meta(program, window),
         }
 
     # Draft + window open
@@ -252,7 +270,6 @@ def compute_application_readiness(
         score = min(score, 88)
     score = max(0, min(99, score))
 
-    form_ok = form_progress >= 0.99
     headline = _headline_draft(
         counts,
         window_open=True,
@@ -297,4 +314,6 @@ def compute_application_readiness(
         "document_counts": counts,
         "host_destination": host_destination,
         "eligibility": eligibility,
+        "form_complete": form_ok,
+        **_window_meta(program, window),
     }
