@@ -84,6 +84,13 @@ class UserViewSet(viewsets.ModelViewSet):
     ordering_fields = ["username", "email", "date_joined"]
     http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        role = (self.request.query_params.get("role") or "").strip()
+        if role:
+            queryset = queryset.filter(roles__name=role).distinct()
+        return queryset
+
 
 class ProfileViewSet(viewsets.ModelViewSet):
     """ViewSet for Profile model operations."""
@@ -113,6 +120,67 @@ class IsAdminOrAllowAnyRead(BasePermission):
         if not user or not user.is_authenticated:
             return False
         return user.is_staff or (hasattr(user, "is_admin") and user.is_admin)
+
+
+def _country_options():
+    # Prefer pycountry if available to provide a broad, ISO-aligned list.
+    try:
+        import pycountry  # type: ignore
+
+        names = sorted(
+            {country.name for country in pycountry.countries if getattr(country, "name", "")}
+        )
+    except Exception:
+        names = sorted(
+            {
+                "Argentina",
+                "Australia",
+                "Austria",
+                "Belgium",
+                "Brazil",
+                "Canada",
+                "Chile",
+                "China",
+                "Colombia",
+                "Costa Rica",
+                "Czech Republic",
+                "Denmark",
+                "Ecuador",
+                "Finland",
+                "France",
+                "Germany",
+                "Greece",
+                "Hungary",
+                "India",
+                "Ireland",
+                "Italy",
+                "Japan",
+                "Mexico",
+                "Netherlands",
+                "New Zealand",
+                "Norway",
+                "Peru",
+                "Poland",
+                "Portugal",
+                "South Korea",
+                "Spain",
+                "Sweden",
+                "Switzerland",
+                "United Kingdom",
+                "United States",
+                "Uruguay",
+            }
+        )
+    return [{"value": name, "label": name} for name in names]
+
+
+class CountryCatalogView(APIView):
+    """Read-only country options used by admin searchable selectors."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(_country_options())
 
 
 def _is_catalog_admin(user) -> bool:

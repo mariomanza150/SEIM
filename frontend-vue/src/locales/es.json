@@ -358,6 +358,7 @@
     "addUniversity": "Agregar universidad anfitriona",
     "name": "Nombre",
     "country": "País",
+    "countryPlaceholder": "Buscar y seleccionar país",
     "gradeScale": "Escala de calificaciones",
     "noGradeScale": "Sin escala",
     "empty": "Aún no hay universidades anfitrionas.",
@@ -564,6 +565,7 @@
     "toastCreated": "Guardado",
     "toastDeleted": "Eliminado",
     "selectScale": "Selecciona una escala para editar sus valores",
+    "countryPlaceholder": "Buscar y seleccionar país",
     "fields": {
       "name": "Nombre",
       "code": "Código",
@@ -592,6 +594,7 @@
     "editTitle": "Editar usuario",
     "searchPlaceholder": "Buscar por nombre, correo o usuario…",
     "filterActive": "Activo",
+    "filterRole": "Tipo de rol",
     "sortEmail": "Correo (A–Z)",
     "sortUsername": "Usuario (A–Z)",
     "sortNewest": "Más recientes",

@@ -64,4 +64,26 @@ describe('AdminUsers', () => {
     await flushPromises()
     expect(wrapper.get('[data-testid="admin-users-roles"]').text()).toContain('coordinator')
   })
+
+  it('sends role filter in users query params', async () => {
+    const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', name: 'Dashboard', component: { template: '<div />' } },
+        { path: '/admin/users', name: 'AdminUsers', component: AdminUsers },
+      ],
+    })
+    await router.push({ name: 'AdminUsers' })
+    const wrapper = mount(AdminUsers, { global: { plugins: [i18n, router] } })
+    await flushPromises()
+
+    const roleSelect = wrapper.findAll('select')[1]
+    await roleSelect.setValue('coordinator')
+    await flushPromises()
+
+    expect(mockGet).toHaveBeenLastCalledWith('/api/users/', {
+      params: expect.objectContaining({ role: 'coordinator' }),
+    })
+  })
 })

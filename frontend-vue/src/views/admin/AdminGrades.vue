@@ -44,7 +44,11 @@
               </div>
               <div class="mb-2">
                 <label class="form-label">{{ t('adminGrades.fields.country') }}</label>
-                <input v-model="newScale.country" class="form-control" type="text" />
+                <SearchableSelect
+                  v-model="newScale.country"
+                  :options="countryOptions"
+                  :placeholder="t('adminGrades.countryPlaceholder')"
+                />
               </div>
               <div class="mb-2">
                 <label class="form-label">{{ t('adminGrades.fields.description') }}</label>
@@ -134,7 +138,11 @@
                   </div>
                   <div class="col-md-3">
                     <label class="form-label">{{ t('adminGrades.fields.country') }}</label>
-                    <input v-model="scaleForm.country" class="form-control" type="text" />
+                    <SearchableSelect
+                      v-model="scaleForm.country"
+                      :options="countryOptions"
+                      :placeholder="t('adminGrades.countryPlaceholder')"
+                    />
                   </div>
                   <div class="col-12">
                     <label class="form-label">{{ t('adminGrades.fields.description') }}</label>
@@ -332,6 +340,7 @@ import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import PageHeader from '@/components/PageHeader.vue'
+import SearchableSelect from '@/components/SearchableSelect.vue'
 
 const { t } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -345,6 +354,7 @@ const values = ref([])
 const allValues = ref([])
 const translations = ref([])
 const selectedId = ref(null)
+const countryOptions = ref([])
 
 const newScale = reactive(emptyScale())
 const scaleForm = reactive(emptyScale())
@@ -439,6 +449,11 @@ async function fetchAllValues() {
 async function fetchTranslations() {
   const res = await api.get('/api/grades/translations/')
   translations.value = normalizeApiList(res.data)
+}
+
+async function fetchCountryOptions() {
+  const res = await api.get('/api/accounts/catalogs/countries/')
+  countryOptions.value = normalizeApiList(res.data)
 }
 
 async function reload() {
@@ -645,7 +660,7 @@ async function deleteTranslation(mapping) {
 }
 
 onMounted(() => {
-  reload()
+  Promise.all([reload(), fetchCountryOptions()])
 })
 </script>
 

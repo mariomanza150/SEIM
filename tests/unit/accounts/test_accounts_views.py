@@ -114,6 +114,30 @@ class TestUserViewSet(APITestCase):
         assert "coorduser@example.com" in emails
         assert "user@example.com" not in emails
 
+    def test_admin_can_filter_users_by_role(self):
+        coordinator_role, _ = Role.objects.get_or_create(name="coordinator")
+        student_role, _ = Role.objects.get_or_create(name="student")
+        coordinator_user = User.objects.create_user(
+            username="coordfilter",
+            email="coordfilter@example.com",
+            password="coordpass123",
+        )
+        student_user = User.objects.create_user(
+            username="studfilter",
+            email="studfilter@example.com",
+            password="studpass123",
+        )
+        coordinator_user.roles.add(coordinator_role)
+        student_user.roles.add(student_role)
+
+        self.client.force_authenticate(user=self.admin_user)
+        response = self.client.get(reverse("accounts:user-list"), {"role": "coordinator"})
+
+        assert response.status_code == status.HTTP_200_OK
+        usernames = {row["username"] for row in response.data["results"]}
+        assert "coordfilter" in usernames
+        assert "studfilter" not in usernames
+
     def test_admin_cannot_set_superuser_via_api(self):
         self.client.force_authenticate(user=self.admin_user)
         url = reverse("accounts:user-detail", args=[self.regular_user.id])
@@ -184,6 +208,23 @@ class TestProfileCatalogPermissions(APITestCase):
         assert public_response.status_code == status.HTTP_200_OK
         assert any(row["name"] == "uanl.edu.mx" for row in public_response.data)
         assert protected_response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    def test_country_catalog_requires_auth_and_returns_options(self):
+        unauthenticated = self.client.get(reverse("accounts:catalog-countries"))
+        assert unauthenticated.status_code == status.HTTP_401_UNAUTHORIZED
+
+        user = User.objects.create_user(
+            username="countriesuser",
+            email="countries@example.com",
+            password="countries123",
+        )
+        self.client.force_authenticate(user=user)
+        authenticated = self.client.get(reverse("accounts:catalog-countries"))
+
+        assert authenticated.status_code == status.HTTP_200_OK
+        assert isinstance(authenticated.data, list)
+        assert any(item["value"] == "Mexico" for item in authenticated.data)
+        assert all("value" in item and "label" in item for item in authenticated.data)
 
 
 @pytest.mark.django_db

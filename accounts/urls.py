@@ -7,6 +7,7 @@ from .views import (
     AppearanceSettingsView,
     BankInstitutionViewSet,
     ChangePasswordView,
+    CountryCatalogView,
     DeleteAccountView,
     EmailVerificationView,
     HomeAcademicProgramViewSet,
@@ -63,6 +64,7 @@ catalog_router.register(r"banks", BankInstitutionViewSet, basename="bank")
 urlpatterns = [
     # Include ViewSet URLs
     path("api/", include(router.urls)),
+    path("catalogs/countries/", CountryCatalogView.as_view(), name="catalog-countries"),
     path("catalogs/", include(catalog_router.urls)),
     path("register/", RegistrationView.as_view(), name="register"),
     path("verify-email/", EmailVerificationView.as_view(), name="verify-email"),

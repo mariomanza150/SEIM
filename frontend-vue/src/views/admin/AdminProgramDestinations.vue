@@ -39,7 +39,12 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('adminProgramDestinations.country') }}</label>
-              <input v-model="newUni.country" class="form-control" type="text">
+              <SearchableSelect
+                v-model="newUni.country"
+                :options="countryOptions"
+                :placeholder="t('adminProgramDestinations.countryPlaceholder')"
+                :disabled="busy"
+              />
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('adminProgramDestinations.gradeScale') }}</label>
@@ -86,7 +91,13 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('adminProgramDestinations.country') }}</label>
-              <input v-model="inst.country" class="form-control" @change="saveInstitution(inst)">
+              <SearchableSelect
+                v-model="inst.country"
+                :options="countryOptions"
+                :placeholder="t('adminProgramDestinations.countryPlaceholder')"
+                :disabled="busy"
+                @update:model-value="saveInstitution(inst)"
+              />
             </div>
             <div class="col-md-5">
               <label class="form-label">{{ t('adminProgramDestinations.gradeScale') }}</label>
@@ -186,6 +197,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/PageHeader.vue'
+import SearchableSelect from '@/components/SearchableSelect.vue'
 import api from '@/services/api'
 
 const { t } = useI18n()
@@ -201,6 +213,7 @@ const gradeScales = ref([])
 const schoolsByInst = ref({})
 const programsBySchool = ref({})
 const subjectsByParent = reactive({ institution: {}, school: {}, academic: {} })
+const countryOptions = ref([])
 const schoolDrafts = reactive({})
 const programDrafts = reactive({})
 const newUni = reactive({ name: '', country: '', grade_scale: '' })
@@ -281,6 +294,11 @@ function unwrap(data) {
 async function loadGradeScales() {
   const { data } = await api.get('/api/grades/scales/active/')
   gradeScales.value = unwrap(data)
+}
+
+async function loadCountryOptions() {
+  const { data } = await api.get('/api/accounts/catalogs/countries/')
+  countryOptions.value = unwrap(data)
 }
 
 async function reload() {
@@ -473,7 +491,7 @@ async function toggleSubject(subject) {
 }
 
 onMounted(async () => {
-  await loadGradeScales()
+  await Promise.all([loadGradeScales(), loadCountryOptions()])
   await reload()
 })
 </script>

@@ -43,6 +43,19 @@
             </select>
           </div>
           <div class="col-md-3">
+            <label class="form-label">{{ t('adminUsers.filterRole') }}</label>
+            <select v-model="filters.role" class="form-select" @change="fetchUsers">
+              <option value="">{{ t('adminCommon.filterAll') }}</option>
+              <option
+                v-for="role in catalogRoles"
+                :key="`role-filter-${role.id || role.name}`"
+                :value="role.name"
+              >
+                {{ role.name }}
+              </option>
+            </select>
+          </div>
+          <div class="col-md-3">
             <label class="form-label">{{ t('adminCommon.sortLabel') }}</label>
             <select v-model="filters.ordering" class="form-select" @change="fetchUsers">
               <option value="email">{{ t('adminUsers.sortEmail') }}</option>
@@ -207,7 +220,7 @@ const loading = ref(true)
 const error = ref(null)
 const users = ref([])
 const catalogRoles = ref([])
-const filters = ref({ search: '', is_active: '', ordering: 'email' })
+const filters = ref({ search: '', is_active: '', role: '', ordering: 'email' })
 const editor = ref({
   open: false,
   mode: 'create',
@@ -254,6 +267,7 @@ async function fetchUsers() {
     const params = { ordering: filters.value.ordering, page_size: 100 }
     if (filters.value.search) params.search = filters.value.search
     if (filters.value.is_active) params.is_active = filters.value.is_active
+    if (filters.value.role) params.role = filters.value.role
     const res = await api.get('/api/users/', { params })
     users.value = normalizeApiList(res.data)
   } catch (err) {

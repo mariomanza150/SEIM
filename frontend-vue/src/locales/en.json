@@ -358,6 +358,7 @@
     "addUniversity": "Add host university",
     "name": "Name",
     "country": "Country",
+    "countryPlaceholder": "Search and select country",
     "gradeScale": "Grade scale",
     "noGradeScale": "No scale",
     "empty": "No host universities yet.",
@@ -564,6 +565,7 @@
     "toastCreated": "Saved",
     "toastDeleted": "Deleted",
     "selectScale": "Select a scale to edit values",
+    "countryPlaceholder": "Search and select country",
     "fields": {
       "name": "Name",
       "code": "Code",
@@ -592,6 +594,7 @@
     "editTitle": "Edit user",
     "searchPlaceholder": "Search by name, email, or username…",
     "filterActive": "Active",
+    "filterRole": "Role type",
     "sortEmail": "Email (A–Z)",
     "sortUsername": "Username (A–Z)",
     "sortNewest": "Newest",
