@@ -31,7 +31,8 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 | ID | Date resolved | Verification |
 |----|---------------|----------------|
-| **MQ-2026-08-18-016** | 2026-08-18 | **Nominated readiness headline was a raw slug:** Diego banner showed `Status: nominated.` because post-draft headlines omitted `nominated`/`cancelled`. **Fix:** Python headlines + Vue `formatReadinessHeadline`. Admin application badge and workflow version labels also use i18n. Live: **Nominated for a seat.** / admin **Nominated** / **v1 — Published**. |
+| **MQ-2026-08-18-017** | 2026-08-18 | **Timeline showed Status: Change and stored slugs:** seed `status_change` plus descriptions `…under_review` / `…nominated`. **Fix:** `timelineEvents.js` maps generic change events from the description and rewrites narrated status copy. Admin application timeline uses the same labels + formatted timestamps. Live Diego `68696218-…`: **Status: Under review** / **Status: Nominated**, bodies **Status changed to Under review.** / **Nominated.** Admin same + `Aug 16, 2026, 04:21 AM` / `Aug 18, 2026, 05:48 PM`. No `Status: Change`, no `under_review`. Evidence: [`qa-runs/2026-08-18-eligibility/2026-08-18-diego-timeline-labels.png`](qa-runs/2026-08-18-eligibility/2026-08-18-diego-timeline-labels.png), [`qa-runs/2026-08-18-eligibility/2026-08-18-diego-admin-timeline.png`](qa-runs/2026-08-18-eligibility/2026-08-18-diego-admin-timeline.png). |
+| **MQ-2026-08-18-016** | 2026-08-18 | **Nominated readiness headline was `Status: nominated.`:** post-draft headlines omitted nominated/cancelled. **Fix:** Python `compute_application_readiness` + Vue `formatReadinessHeadline`. Live Diego: **Nominated for a seat.** Admin badge **Nominated**. |
 | **MQ-2026-08-18-015** | 2026-08-18 | **Scholarship disbursement rows showed raw status slugs:** Diego DAAD listed `Fall — pending`. **Fix:** `formatDisbursementStatus` via `scholarshipAward.disbursementStatus.*`. Live: **Pending**. |
 | **MQ-2026-08-18-014** | 2026-08-18 | **Application-detail eligibility issues were English-only:** readiness exposed `issues` strings, not `rules` with `message_key`. ApplicationForm already localized via `check_eligibility`. **Fix:** `_eligibility_state` includes `rules`; Vue uses `eligibilityFailureMessages`. Live Tokyo `es`: **No se cumple el idioma…** |
 | **MQ-2026-08-18-013** | 2026-08-18 | **Partner portal showed raw status/category slugs:** agreements `active`, applicants `submitted`, docs `signed_copy`. **Fix:** same i18n formatters as staff agreements / application status. Live: **Active** / **Cancelled** / **Draft** / **Signed copy**. |
@@ -71,4 +72,4 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 ---
 
-*Last updated: 2026-08-18 — **MQ-016** nominated readiness headline; **MQ-015** disbursement labels; **MQ-014** eligibility i18n; **MQ-013** partner status labels.*
+*Last updated: 2026-08-18 — **MQ-017** timeline status labels; **MQ-016** nominated headline; **MQ-015** disbursement labels; **MQ-014** eligibility i18n.*

@@ -1467,6 +1467,9 @@
     "timeline": {
       "applicationSubmitted": "Solicitud enviada",
       "statusChanged": "Estado: {status}",
+      "statusChangedTo": "Estado cambiado a {status}.",
+      "statusUpdated": "Estado actualizado",
+      "waitlisted": "En lista de espera",
       "programFormActivity": "Actividad del formulario del programa",
       "applicationWithdrawn": "Solicitud retirada",
       "commentRecorded": "Comentario registrado",

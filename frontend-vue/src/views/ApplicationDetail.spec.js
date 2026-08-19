@@ -628,4 +628,52 @@ describe('ApplicationDetail', () => {
     )
     expect(wrapper.find('[data-testid="readiness-headline"]').text()).not.toMatch(/Status: nominated/)
   })
+
+  it('localizes generic status_change timeline events', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({ data: applicationPayload })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'ev-1',
+                event_type: 'status_change',
+                description: 'Application status changed to under_review',
+                created_at: '2026-08-16T10:21:00Z',
+              },
+              {
+                id: 'ev-2',
+                event_type: 'status_nominated',
+                description: 'Nomination matching set status to nominated.',
+                created_at: '2026-08-18T23:48:00Z',
+              },
+            ],
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.findAll('[data-testid="timeline-event-heading"]').length).toBe(2)
+    })
+    const headings = wrapper.findAll('[data-testid="timeline-event-heading"]')
+    expect(headings[0].text()).toBe(
+      i18n.global.t('applicationDetailPage.timeline.statusChanged', {
+        status: i18n.global.t('applicationDetailPage.status.under_review'),
+      }),
+    )
+    expect(headings[1].text()).toBe(
+      i18n.global.t('applicationDetailPage.timeline.statusChanged', {
+        status: i18n.global.t('applicationDetailPage.status.nominated'),
+      }),
+    )
+    expect(wrapper.findAll('[data-testid="timeline-event-description"]')[0].text()).not.toMatch(/under_review/)
+    expect(wrapper.findAll('[data-testid="timeline-event-description"]')[1].text()).not.toMatch(/\bnominated\b/)
+  })
 })

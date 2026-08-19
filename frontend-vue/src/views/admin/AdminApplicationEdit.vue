@@ -99,10 +99,10 @@
               <li v-for="evt in timelineEvents" :key="evt.id" class="list-group-item">
                 <div class="d-flex justify-content-between align-items-start gap-3">
                   <div class="min-w-0">
-                    <div class="fw-medium text-truncate">{{ evt.event_type }}</div>
-                    <div class="text-muted small text-break">{{ evt.description }}</div>
+                    <div class="fw-medium text-truncate" data-testid="admin-timeline-heading">{{ timelineEventHeading(evt) }}</div>
+                    <div class="text-muted small text-break">{{ timelineEventDescription(evt) }}</div>
                   </div>
-                  <div class="text-muted small text-nowrap">{{ evt.created_at }}</div>
+                  <div class="text-muted small text-nowrap">{{ formatTimelineWhen(evt.created_at) }}</div>
                 </div>
               </li>
               <li v-if="!timelineEvents.length" class="list-group-item text-muted">
@@ -167,6 +167,7 @@ import {
   formatApplicationStatus,
   formatDateTime,
 } from '@/utils/formatters'
+import { formatTimelineEventDescription, formatTimelineEventHeading } from '@/utils/timelineEvents'
 
 const { t, te, locale } = useI18n()
 const route = useRoute()
@@ -215,6 +216,22 @@ function statusClass(status) {
 }
 
 function formatSubmittedAt(value) {
+  return formatDateTime({
+    dateString: value,
+    locale: locale.value,
+    fallback: t('adminApplicationEdit.notAvailable'),
+  })
+}
+
+function timelineEventHeading(event) {
+  return formatTimelineEventHeading(event, { t, te })
+}
+
+function timelineEventDescription(event) {
+  return formatTimelineEventDescription(event, { t, te })
+}
+
+function formatTimelineWhen(value) {
   return formatDateTime({
     dateString: value,
     locale: locale.value,

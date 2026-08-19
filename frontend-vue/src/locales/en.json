@@ -1471,6 +1471,9 @@
     "timeline": {
       "applicationSubmitted": "Application submitted",
       "statusChanged": "Status: {status}",
+      "statusChangedTo": "Status changed to {status}.",
+      "statusUpdated": "Status updated",
+      "waitlisted": "Placed on the waitlist",
       "programFormActivity": "Program form activity",
       "applicationWithdrawn": "Application withdrawn",
       "commentRecorded": "Comment recorded",

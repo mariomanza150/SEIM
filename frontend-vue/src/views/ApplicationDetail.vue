@@ -567,8 +567,8 @@
                       <i :class="['bi', timelineIconName(event.event_type)]"></i>
                     </div>
                     <div class="timeline-content">
-                      <h6>{{ timelineEventHeading(event) }}</h6>
-                      <p class="mb-1">{{ event.description }}</p>
+                      <h6 data-testid="timeline-event-heading">{{ timelineEventHeading(event) }}</h6>
+                      <p v-if="timelineEventDescription(event)" class="mb-1" data-testid="timeline-event-description">{{ timelineEventDescription(event) }}</p>
                       <p class="text-muted small mb-0">
                         {{ formatDateTime(event.created_at) }}
                         <span v-if="event.created_by_name"> · {{ event.created_by_name }}</span>
@@ -853,6 +853,7 @@ import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import api from '@/services/api'
 import { eligibilityFailureMessages } from '@/utils/eligibilityMessages'
+import { formatTimelineEventDescription, formatTimelineEventHeading } from '@/utils/timelineEvents'
 import { documentReviewStatus, documentTypeLabel } from '@/utils/documentApi'
 import { readinessLevelBadgeClass, readinessScoreBarClass, formatReadinessHeadline } from '@/utils/applicationReadiness'
 import {
@@ -1322,25 +1323,11 @@ async function downloadDocTemplate(typeId, name) {
 }
 
 function timelineEventHeading(event) {
-  const evtType = event.event_type || ''
-  if (evtType === 'submitted') return t('applicationDetailPage.timeline.applicationSubmitted')
-  if (evtType.startsWith('status_')) {
-    const code = evtType.slice(7)
-    const statusKey = `applicationDetailPage.status.${code}`
-    const label = te(statusKey)
-      ? t(statusKey)
-      : code.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
-    return t('applicationDetailPage.timeline.statusChanged', { status: label })
-  }
-  if (evtType === 'form_submitted') return t('applicationDetailPage.timeline.programFormActivity')
-  if (evtType === 'withdrawn') return t('applicationDetailPage.timeline.applicationWithdrawn')
-  if (evtType === 'comment') return t('applicationDetailPage.timeline.commentRecorded')
-  if (evtType === 'subject_grades_proposed') return t('applicationDetailPage.timeline.subjectGradesProposed')
-  if (evtType === 'subject_grades_confirmed') return t('applicationDetailPage.timeline.subjectGradesConfirmed')
-  if (evtType === 'subject_grades_rejected') return t('applicationDetailPage.timeline.subjectGradesRejected')
-  return (
-    evtType.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || t('applicationDetailPage.status.unknown')
-  )
+  return formatTimelineEventHeading(event, { t, te })
+}
+
+function timelineEventDescription(event) {
+  return formatTimelineEventDescription(event, { t, te })
 }
 
 function timelineIconName(eventType) {
