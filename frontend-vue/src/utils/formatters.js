@@ -9,6 +9,18 @@ export function applicationProgramDisplayName(app) {
   return (app.program_name || app.program?.name || '').trim()
 }
 
+export function applicationHostInstitution(app) {
+  if (!app) return ''
+  const nested = typeof app.program === 'object' && app.program ? app.program.institution : ''
+  return (app.host_institution_name || nested || '').trim()
+}
+
+export function applicationHostCountry(app) {
+  if (!app) return ''
+  const nested = typeof app.program === 'object' && app.program ? app.program.country : ''
+  return (app.host_institution_country || nested || '').trim()
+}
+
 export function applicationStatusBadgeClass(status) {
   const classes = {
     draft: 'bg-secondary',

@@ -138,9 +138,13 @@
                   <p class="small text-muted mb-0 mt-1">{{ readinessHeadline(application) }}</p>
                 </div>
 
-                <p class="card-text text-muted small mb-3">
+                <p
+                  v-if="hostInstitution(application)"
+                  class="card-text text-muted small mb-3"
+                  data-testid="application-host"
+                >
                   <i class="bi bi-building me-1"></i>
-                  {{ application.program?.institution || t('applicationDetailPage.notAvailable') }}
+                  {{ hostInstitution(application) }}
                 </p>
 
                 <div class="row small text-muted mb-3">
@@ -225,6 +229,7 @@ import Pagination from '@/components/Pagination.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import {
   applicationProgramDisplayName,
+  applicationHostInstitution,
   applicationStatusBadgeClass,
   formatApplicationStatus,
   formatDate,
@@ -333,6 +338,10 @@ function formatDateLabel(dateString) {
 
 function programDisplayName(app) {
   return applicationProgramDisplayName(app)
+}
+
+function hostInstitution(app) {
+  return applicationHostInstitution(app)
 }
 
 function readinessHeadline(application) {

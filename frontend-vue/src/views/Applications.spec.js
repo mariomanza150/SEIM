@@ -128,7 +128,8 @@ describe('Applications', () => {
     await flushPromises()
     expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.unknownProgram'))
     const na = i18n.global.t('applicationDetailPage.notAvailable')
-    expect(wrapper.text().split(na).length - 1).toBeGreaterThanOrEqual(2)
+    expect(wrapper.text()).toContain(`${i18n.global.t('applicationDetailPage.created')}: ${na}`)
+    expect(wrapper.find('[data-testid="application-host"]').exists()).toBe(false)
     expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.status.submitted'))
     expect(wrapper.text()).toContain(`${i18n.global.t('applicationDetailPage.created')}:`)
   })
@@ -209,5 +210,36 @@ describe('Applications', () => {
     expect(opts.find((o) => o.element.value === 'nominated')?.text()).toBe(
       i18n.global.t('applicationDetailPage.status.nominated'),
     )
+  })
+
+  it('shows host_institution_name when program is a FK id', async () => {
+    api.get.mockResolvedValue({
+      data: {
+        results: [
+          {
+            id: '1',
+            status: 'nominated',
+            created_at: '2026-01-10T12:00:00Z',
+            program: '00000000-0000-0000-0000-000000000001',
+            program_name: 'DAAD Exchange',
+            host_institution_name: 'Technical University of Munich',
+          },
+        ],
+        count: 1,
+        next: null,
+        previous: null,
+      },
+    })
+    const wrapper = mount(Applications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="application-host"]').text()).toContain(
+      'Technical University of Munich',
+    )
+    expect(wrapper.text()).not.toContain(i18n.global.t('applicationDetailPage.notAvailable'))
   })
 })

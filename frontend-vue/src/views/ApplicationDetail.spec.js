@@ -252,6 +252,39 @@ describe('ApplicationDetail', () => {
     expect(wrapper.text()).not.toContain('Exchange Program')
   })
 
+  it('uses host_institution_name when program is only a FK id', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            program: '11111111-1111-1111-1111-111111111111',
+            program_name: 'DAAD Exchange',
+            host_institution_name: 'Technical University of Munich',
+            host_institution_country: 'Germany',
+          },
+        })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/comments/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/timeline-events/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('DAAD Exchange')
+    })
+    expect(wrapper.text()).toContain('Technical University of Munich')
+    expect(wrapper.text()).toContain('Germany')
+  })
+
   it('shows scholarship scoring panel for coordinators when API returns score', async () => {
     const scholarshipScore = {
       ruleset_id: 'default_v1',

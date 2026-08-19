@@ -184,6 +184,8 @@ class TestApplicationsAPI(APITestCase):
         row = response.data["results"][0]
         self.assertEqual(row["program_name"], "Erasmus Spain List Name")
         self.assertEqual(str(row["program"]), str(program.id))
+        self.assertEqual(row["host_institution_name"], "Host University")
+        self.assertEqual(row["host_institution_country"], "MX")
 
     def test_create_draft_application_when_student_not_eligible(self):
         """Draft POST must succeed without eligibility; submit still enforces requirements (MQ-010)."""

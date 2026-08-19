@@ -83,7 +83,7 @@
       <div v-else-if="application" data-testid="application-detail-page">
         <PageHeader
           :title="programDisplayName(application)"
-          :subtitle="application.program?.institution || t('applicationDetailPage.notAvailable')"
+          :subtitle="hostInstitution(application) || t('applicationDetailPage.notAvailable')"
           icon-class="bi bi-file-earmark-text"
         >
           <template #actions>
@@ -395,13 +395,13 @@
                   </div>
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('applicationDetailPage.labelInstitution') }}</label>
-                    <p class="fw-bold">{{ application.program?.institution }}</p>
+                    <p class="fw-bold">{{ hostInstitution(application) || t('applicationDetailPage.notAvailable') }}</p>
                   </div>
                 </div>
                 <div class="row mb-3">
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('applicationDetailPage.labelCountry') }}</label>
-                    <p class="fw-bold">{{ application.program?.country || t('applicationDetailPage.notAvailable') }}</p>
+                    <p class="fw-bold">{{ hostCountry(application) || t('applicationDetailPage.notAvailable') }}</p>
                   </div>
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('applicationDetailPage.labelDuration') }}</label>
@@ -863,6 +863,8 @@ import { documentReviewStatus, documentTypeLabel } from '@/utils/documentApi'
 import { readinessLevelBadgeClass, readinessScoreBarClass, formatReadinessHeadline } from '@/utils/applicationReadiness'
 import {
   applicationProgramDisplayName,
+  applicationHostInstitution,
+  applicationHostCountry,
   applicationStatusBadgeClass,
   formatApplicationStatus,
   formatDateTime as formatDateTimeUtil,
@@ -878,6 +880,14 @@ const { confirm } = useConfirm()
 
 function programDisplayName(app) {
   return applicationProgramDisplayName(app)
+}
+
+function hostInstitution(app) {
+  return applicationHostInstitution(app)
+}
+
+function hostCountry(app) {
+  return applicationHostCountry(app)
 }
 
 const isCoordinator = computed(() =>

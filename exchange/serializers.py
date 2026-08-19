@@ -549,6 +549,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
     student_display_name = serializers.SerializerMethodField()
     student_email = serializers.SerializerMethodField()
     program_name = serializers.SerializerMethodField()
+    host_institution_name = serializers.SerializerMethodField()
+    host_institution_country = serializers.SerializerMethodField()
     readiness = serializers.SerializerMethodField()
     scholarship_allocation_score = serializers.SerializerMethodField()
     scholarship_award = serializers.SerializerMethodField()
@@ -567,6 +569,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "student_display_name",
             "student_email",
             "program_name",
+            "host_institution_name",
+            "host_institution_country",
         )
 
     def get_dynamic_form_submission(self, obj):
@@ -609,6 +613,16 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
     def get_program_name(self, obj):
         return obj.program.name
+
+    def get_host_institution_name(self, obj):
+        host = obj.host_institution
+        return host.name if host else None
+
+    def get_host_institution_country(self, obj):
+        host = obj.host_institution
+        if not host:
+            return None
+        return host.country or None
 
     def get_readiness(self, obj):
         from exchange.readiness import compute_application_readiness
