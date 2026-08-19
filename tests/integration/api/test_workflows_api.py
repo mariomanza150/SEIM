@@ -7,7 +7,7 @@ from django.urls import reverse
 from rest_framework import status
 
 from tests.utils import APITestCase
-from workflows.models import WorkflowDefinition, WorkflowVersion
+from workflows.models import WorkflowDefinition, WorkflowInstance, WorkflowVersion
 
 
 def _simple_bpmn_with_manual_task(task_name: str = "submitted") -> str:
@@ -116,3 +116,45 @@ class TestWorkflowsAPI(APITestCase):
             action_url, {"action": actions[0]["id"], "payload": {}}, format="json"
         )
         self.assertEqual(act.status_code, status.HTTP_200_OK)
+
+    def test_snapshot_hides_stale_submitted_action_after_nomination(self):
+        from exchange.models import ApplicationStatus
+
+        admin = self.create_user(role="admin")
+        self.authenticate_user(admin)
+
+        wf = WorkflowDefinition.objects.create(name="WF2", slug="wf2", is_active=True)
+        wv = WorkflowVersion.objects.create(
+            definition=wf,
+            version=1,
+            status=WorkflowVersion.Status.PUBLISHED,
+            bpmn_xml=_simple_bpmn_with_manual_task("submitted"),
+            created_by=admin,
+        )
+        program = self.create_program(name="Program WF2", workflow_version=wv)
+        ApplicationStatus.objects.get_or_create(
+            name="nominated", defaults={"order": 16}
+        )
+        app = self.create_application(program=program, status_name="nominated")
+        WorkflowInstance.objects.create(
+            workflow_version=wv,
+            application=app,
+            engine_state={"seeded": True},
+            current_tasks=["submitted"],
+            status="under_review",
+        )
+
+        snap = self.client.get(
+            reverse("api:application-workflow-snapshot", args=[app.id])
+        )
+        self.assertEqual(snap.status_code, status.HTTP_200_OK)
+        self.assertEqual(snap.data["instance"]["status"], "nominated")
+        names = [a.get("name") for a in snap.data["available_actions"]]
+        self.assertNotIn("submitted", names)
+
+        blocked = self.client.post(
+            reverse("api:application-workflow-action", args=[app.id]),
+            {"action": "submitted", "payload": {}},
+            format="json",
+        )
+        self.assertEqual(blocked.status_code, status.HTTP_400_BAD_REQUEST)

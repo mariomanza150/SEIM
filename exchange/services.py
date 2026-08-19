@@ -383,6 +383,13 @@ class ApplicationService:
             str(application.id), "application_status_changed"
         )
 
+        try:
+            from workflows.runtime import WorkflowRuntimeService
+
+            WorkflowRuntimeService.sync_with_application(application)
+        except Exception:
+            pass
+
         # Notify student about status change with link to application
         NotificationService.send_notification(
             application.student,

@@ -110,6 +110,12 @@ def _set_status(application: Application, status_name: str, user) -> bool:
     NotificationService.broadcast_application_sync(
         str(application.id), "application_status_changed"
     )
+    try:
+        from workflows.runtime import WorkflowRuntimeService
+
+        WorkflowRuntimeService.sync_with_application(application)
+    except Exception:
+        pass
     return True
 
 

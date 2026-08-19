@@ -249,5 +249,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-08-18 — document type labels (**MQ-019**); workflow labels (**MQ-020**); draft readiness i18n (**MQ-018**); timeline status labels (**MQ-017**); nominated readiness headline (**MQ-016**); disbursement labels (**MQ-015**). QA: [`manual-qa-issues.md`](manual-qa-issues.md).*  
+*Last updated: 2026-08-18 — workflow status sync (**MQ-021**); document type labels (**MQ-019**); workflow labels (**MQ-020**); draft readiness i18n (**MQ-018**); timeline status labels (**MQ-017**); nominated readiness headline (**MQ-016**); disbursement labels (**MQ-015**). QA: [`manual-qa-issues.md`](manual-qa-issues.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*  

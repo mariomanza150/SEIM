@@ -21,6 +21,21 @@ from .models import WorkflowEvent, WorkflowInstance, WorkflowVersion
 _SERIALIZER_REGISTRY = BpmnWorkflowSerializer.configure(DEFAULT_CONFIG)
 _SERIALIZER = BpmnWorkflowSerializer(_SERIALIZER_REGISTRY)
 
+# Status-named BPMN tasks that sit before nomination / terminal outcomes.
+# Match / staff PATCH can move the application past these without advancing Spiff.
+_EARLY_PIPELINE_STATUSES = frozenset({"draft", "submitted", "under_review"})
+_PAST_EARLY_PIPELINE_STATUSES = frozenset(
+    {
+        "nominated",
+        "waitlist",
+        "approved",
+        "completed",
+        "rejected",
+        "cancelled",
+        "withdrawn",
+    }
+)
+
 
 def _extract_primary_process_id(bpmn_xml: str) -> str:
     root = ET.fromstring(bpmn_xml)
@@ -82,6 +97,27 @@ def _normalize_available_actions(tasks) -> list[dict]:
             name = str(task)
             out.append({"id": name, "name": name, "spec_id": name})
     return out
+
+
+def _application_status_name(application: Application) -> str:
+    return application.status.name if application.status else ""
+
+
+def _is_stale_early_pipeline_action(application: Application, action_name: str) -> bool:
+    current = _application_status_name(application)
+    if current not in _PAST_EARLY_PIPELINE_STATUSES:
+        return False
+    return str(action_name or "") in _EARLY_PIPELINE_STATUSES
+
+
+def _filter_stale_status_actions(
+    application: Application, actions: list[dict]
+) -> list[dict]:
+    return [
+        action
+        for action in actions
+        if not _is_stale_early_pipeline_action(application, action.get("name"))
+    ]
 
 
 def _derive_application_status_from_tasks(
@@ -176,12 +212,32 @@ class WorkflowRuntimeService:
         return _SERIALIZER.deserialize_json(raw)
 
     @staticmethod
+    def sync_with_application(application: Application) -> WorkflowInstance | None:
+        """Keep workflow instance.status aligned with the application.
+
+        Nomination matching and staff PATCH change Application.status without
+        completing BPMN tasks. The admin card reads instance.status.
+        """
+        inst = WorkflowInstance.objects.filter(application=application).first()
+        if inst is None:
+            return None
+        status_name = _application_status_name(application)
+        if inst.status != status_name:
+            inst.status = status_name
+            inst.save(update_fields=["status", "updated_at"])
+        return inst
+
+    @staticmethod
     @transaction.atomic
     def get_snapshot(application: Application, user=None) -> WorkflowSnapshot:
         inst = WorkflowRuntimeService.ensure_instance(application, user=user)
+        WorkflowRuntimeService.sync_with_application(application)
+        inst.refresh_from_db()
         return WorkflowSnapshot(
             instance=inst,
-            available_actions=_normalize_available_actions(inst.current_tasks),
+            available_actions=_filter_stale_status_actions(
+                application, _normalize_available_actions(inst.current_tasks)
+            ),
         )
 
     @staticmethod
@@ -214,6 +270,12 @@ class WorkflowRuntimeService:
                 for t in ready
             ]
             raise ValueError(f"Action not available: {action}. Available: {available}")
+
+        if _is_stale_early_pipeline_action(application, target.task_spec.name):
+            raise ValueError(
+                f"Action not available: {action}. Application is already "
+                f"{_application_status_name(application)}."
+            )
 
         if payload:
             try:
@@ -249,5 +311,10 @@ class WorkflowRuntimeService:
         if st and application.status_id != st.id:
             application.status = st
             application.save(update_fields=["status", "updated_at"])
+        WorkflowRuntimeService.sync_with_application(application)
+        inst.refresh_from_db()
 
-        return WorkflowSnapshot(instance=inst, available_actions=tasks)
+        return WorkflowSnapshot(
+            instance=inst,
+            available_actions=_filter_stale_status_actions(application, tasks),
+        )
