@@ -99,8 +99,9 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - `GET /api/permissions/{id}/` - Get permission details
 
 #### User Sessions
-- `GET /api/user-sessions/` - List user sessions
-- `DELETE /api/user-sessions/{id}/` - Revoke session
+- `GET /api/user-sessions/` - List sessions (own rows; **admins see all**). **Filters:** `is_active`, `search` (email/username/device/location/IP), `ordering=last_activity`
+- `POST /api/user-sessions/{id}/revoke/` - Set `is_active=false` (own session, or any session for admins)
+- `DELETE /api/user-sessions/{id}/` - Delete session row
 
 #### User Settings
 - `GET /api/accounts/user-settings/` - Get current user settings
@@ -275,8 +276,8 @@ Authorization: Bearer YOUR_ACCESS_TOKEN
 - **Optional opt-out by type name:** internal sends may pass a `NotificationType` key (`preference_key`) so `enabled=false` suppresses that category entirely (in addition to the UserSettings email/in-app matrix).
 
 #### Reminders
-- `GET /api/reminders/` - List user's reminders
-- `POST /api/reminders/` - Create reminder
+- `GET /api/reminders/` - List reminders (own rows; **admins see all**). **Filters:** `sent`, `event_type`, `user`; **search:** title/email
+- `POST /api/reminders/` - Create reminder (admins may set `user`)
   - **Event Types:** `application_deadline`, `document_deadline`, `program_start`, `program_end`, `custom`
 - `GET /api/reminders/{id}/` - Get reminder details
 - `PUT /api/reminders/{id}/` - Update reminder

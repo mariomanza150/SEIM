@@ -313,6 +313,7 @@
       "AdminCatalogs": "Admin — Catálogos",
       "AdminGrades": "Admin — Escalas de calificación",
       "AdminUsers": "Admin — Usuarios",
+      "AdminSessions": "Admin — Sesiones",
       "AdminWorkflowCatalogs": "Admin — Estados y tipos",
       "AdminForms": "Admin — Formularios",
       "AdminDynforms": "Admin — Constructores de formularios",
@@ -618,6 +619,44 @@
       "verified": "Correo verificado (puede iniciar sesión)",
       "staff": "Staff de Django",
       "staffHelp": "Staff puede usar el admin de Django. La consola SEIM sigue requiriendo el rol admin."
+    }
+  },
+  "adminSessions": {
+    "title": "Sesiones y recordatorios",
+    "subtitle": "Revoca sesiones iniciadas y gestiona recordatorios de plazos para cualquier cuenta.",
+    "sessionSearch": "Buscar por correo, usuario, dispositivo, ubicación o IP…",
+    "createReminder": "Agregar recordatorio",
+    "revoke": "Revocar",
+    "revokeConfirm": "¿Revocar la sesión activa de {email}?",
+    "deleteConfirm": "¿Eliminar el recordatorio \"{name}\"?",
+    "emptySessions": "No hay sesiones.",
+    "emptyReminders": "No hay recordatorios.",
+    "loadError": "No se pudo cargar esta página.",
+    "saveError": "No se pudo guardar.",
+    "toastRevoked": "Sesión revocada",
+    "toastCreated": "Recordatorio creado",
+    "toastDeleted": "Recordatorio eliminado",
+    "tabs": {
+      "sessions": "Sesiones",
+      "reminders": "Recordatorios"
+    },
+    "fields": {
+      "user": "Usuario",
+      "device": "Dispositivo",
+      "location": "Ubicación",
+      "lastActivity": "Última actividad",
+      "active": "Activa",
+      "title": "Título",
+      "eventType": "Tipo de evento",
+      "remindAt": "Recordar el",
+      "sent": "Enviado"
+    },
+    "eventTypes": {
+      "application_deadline": "Plazo de solicitud",
+      "document_deadline": "Plazo de documento",
+      "program_start": "Inicio de programa",
+      "program_end": "Fin de programa",
+      "custom": "Personalizado"
     }
   },
   "adminWorkflowCatalogs": {

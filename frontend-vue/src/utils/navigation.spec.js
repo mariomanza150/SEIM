@@ -52,6 +52,9 @@ describe('normalizeSpaLocation', () => {
     expect(normalizeSpaLocation('/seim/admin/users')).toEqual({
       name: 'AdminUsers',
     })
+    expect(normalizeSpaLocation('/seim/admin/sessions')).toEqual({
+      name: 'AdminSessions',
+    })
     expect(normalizeSpaLocation('/seim/admin/workflow-catalogs')).toEqual({
       name: 'AdminWorkflowCatalogs',
     })

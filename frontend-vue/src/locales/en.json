@@ -313,6 +313,7 @@
       "AdminCatalogs": "Admin — Catalogs",
       "AdminGrades": "Admin — Grade scales",
       "AdminUsers": "Admin — Users",
+      "AdminSessions": "Admin — Sessions",
       "AdminWorkflowCatalogs": "Admin — Statuses & types",
       "AdminForms": "Admin — Forms",
       "AdminDynforms": "Admin — Form builders",
@@ -618,6 +619,44 @@
       "verified": "Email verified (can sign in)",
       "staff": "Django staff",
       "staffHelp": "Staff can use Django admin. SEIM console access still requires the admin role."
+    }
+  },
+  "adminSessions": {
+    "title": "Sessions and reminders",
+    "subtitle": "Revoke signed-in sessions and manage deadline reminders for any account.",
+    "sessionSearch": "Search by email, username, device, location, or IP…",
+    "createReminder": "Add reminder",
+    "revoke": "Revoke",
+    "revokeConfirm": "Revoke the active session for {email}?",
+    "deleteConfirm": "Delete reminder \"{name}\"?",
+    "emptySessions": "No sessions found.",
+    "emptyReminders": "No reminders found.",
+    "loadError": "Could not load this page.",
+    "saveError": "Could not save.",
+    "toastRevoked": "Session revoked",
+    "toastCreated": "Reminder created",
+    "toastDeleted": "Reminder deleted",
+    "tabs": {
+      "sessions": "Sessions",
+      "reminders": "Reminders"
+    },
+    "fields": {
+      "user": "User",
+      "device": "Device",
+      "location": "Location",
+      "lastActivity": "Last activity",
+      "active": "Active",
+      "title": "Title",
+      "eventType": "Event type",
+      "remindAt": "Remind at",
+      "sent": "Sent"
+    },
+    "eventTypes": {
+      "application_deadline": "Application deadline",
+      "document_deadline": "Document deadline",
+      "program_start": "Program start",
+      "program_end": "Program end",
+      "custom": "Custom"
     }
   },
   "adminWorkflowCatalogs": {

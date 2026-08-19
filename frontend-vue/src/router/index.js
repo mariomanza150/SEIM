@@ -42,6 +42,7 @@ const AdminProgramDestinations = () => import('@/views/admin/AdminProgramDestina
 const AdminCatalogs = () => import('@/views/admin/AdminCatalogs.vue')
 const AdminGrades = () => import('@/views/admin/AdminGrades.vue')
 const AdminUsers = () => import('@/views/admin/AdminUsers.vue')
+const AdminSessions = () => import('@/views/admin/AdminSessions.vue')
 const AdminWorkflowCatalogs = () => import('@/views/admin/AdminWorkflowCatalogs.vue')
 const AdminForms = () => import('@/views/admin/AdminForms.vue')
 const AdminDynforms = () => import('@/views/admin/AdminDynforms.vue')
@@ -240,6 +241,12 @@ const routes = [
         path: 'admin/users',
         name: 'AdminUsers',
         component: AdminUsers,
+        meta: { adminOnly: true },
+      },
+      {
+        path: 'admin/sessions',
+        name: 'AdminSessions',
+        component: AdminSessions,
         meta: { adminOnly: true },
       },
       {

@@ -164,7 +164,7 @@ User preferences and settings.
 - `created_at`, `updated_at` (from TimeStampedModel)
 
 ### UserSession
-Track user sessions for security management.
+Track user sessions for security management. SPA admin list/revoke: `/seim/admin/sessions`.
 
 **Fields:**
 - `id` (AutoField, primary key)
@@ -457,7 +457,7 @@ User preferences for notification types.
 - `created_at`, `updated_at` (from TimeStampedModel)
 
 ### Reminder
-Reminder for events like deadlines.
+Reminder for events like deadlines. SPA admin: `/seim/admin/sessions` (Reminders tab).
 
 **Fields:**
 - `id` (UUID, primary key)

@@ -6,6 +6,7 @@ This project now includes an **admin-only** section inside the Vue SPA for manag
 - **Catalogs** (home profile lists + host destinations hub)
 - **Grade scales** (scales, values, translations)
 - **Users and roles**
+- **Sessions and reminders**
 - **Workflow catalogs** (application status slugs and notification types)
 - **Forms** (`FormType` CRUD with JSON schema / UI schema / step definitions editing)
 - **Workflows** (BPMN modeler with versioning, validate, publish)
@@ -19,6 +20,7 @@ All routes are served under the SPA base (`/seim/`):
 - **Catalogs**: `/seim/admin/catalogs`
 - **Grade scales**: `/seim/admin/grades`
 - **Users**: `/seim/admin/users`
+- **Sessions and reminders**: `/seim/admin/sessions`
 - **Workflow catalogs**: `/seim/admin/workflow-catalogs`
 - **Forms**: `/seim/admin/forms`
 - **Workflows**: `/seim/admin/workflows`
@@ -30,6 +32,9 @@ Routes are guarded via router meta `adminOnly` and require the authenticated use
 ### Backend APIs used
 
 - Programs: `/api/programs/`
+- Users: `/api/users/`
+- Sessions: `/api/user-sessions/` (`POST …/revoke/`)
+- Reminders: `/api/reminders/`
 - Forms: `/api/application-forms/form-types/`
 - Workflows: `/api/workflows/`, `/api/workflow-versions/`
 - Application statuses: `/api/application-statuses/`
