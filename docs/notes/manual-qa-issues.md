@@ -31,6 +31,7 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 | ID | Date resolved | Verification |
 |----|---------------|----------------|
+| **MQ-2026-08-18-012** | 2026-08-18 | **Nominations Status column showed raw slugs:** DAAD table rendered `nominated` / `waitlist`. **Fix:** `formatApplicationStatus` + `applicationDetailPage.status.nominated`. Nominated apps also use the success badge class. Live DAAD: Nominated / Waitlist. Vitest asserts Nominated. |
 | **MQ-2026-08-18-011** | 2026-08-18 | **Scholarship awarded/disbursed had no evidence-doc gates:** staff could mark awarded/disbursed with no validated Carta Beca / Oficio / Recibo. **Fix:** when those `DocumentType` slugs exist, `awarded` requires validated `carta_beca` or `oficio_asignacion_beca`; `disbursed` requires validated `recibo_beca`. `awarded`→`disbursing` stays ungated. Vue lists missing gates and disables those statuses. Live Diego: GET gates unsatisfied; PUT disbursed **400**; panel warnings + disabled options. Pytest `test_awarded_requires_validated_letter_when_catalog_present`, `test_disbursed_requires_validated_recibo_when_catalog_present`, `test_upsert_to_awarded_blocked_without_letter`. |
 | **MQ-2026-08-18-010** | 2026-08-18 | **Nominations Submitted column showed raw ISO:** DAAD table rendered `2026-08-07T05:23:31.065839+00:00`. **Fix:** `formatDateTime` in `Nominations.vue`. Live DAAD: `Aug 6, 2026, 11:23 PM` / `Aug 14, 2026, 11:23 PM`. Vitest asserts the cell is not the raw `2026-08-07T` string. |
 | **MQ-2026-08-18-009** | 2026-08-18 | **Nominations showed 0 slots while Match still had a seat:** DAAD capacity 1, Diego `under_review` counted in `enrollment_slots_remaining` (submit-time occupancy) so the UI said 0, but `match_nominations` only subtracts approved/completed. **Fix:** nominations `slots_remaining` uses locked seats including **nominated**; rematch skips waitlisting existing nominees. Live Match: Diego → nominated, Elena waitlist, then slots **0**. Pytest `test_slots_remaining_ignores_under_review_pool_apps`, `test_rematch_does_not_waitlist_existing_nominee`. Evidence: [`qa-runs/2026-08-18-eligibility/2026-08-18-nominations-match.png`](qa-runs/2026-08-18-eligibility/2026-08-18-nominations-match.png). |
@@ -66,4 +67,4 @@ Cleared after `docker compose -p seim-localprod -f docker-compose.local-prod.yml
 
 ---
 
-*Last updated: 2026-08-18 — **MQ-2026-08-18-011** (scholarship evidence gates) and **MQ-2026-08-18-010** (nominations datetime) resolved.*
+*Last updated: 2026-08-18 — **MQ-2026-08-18-012** (nominations status labels); awards CSV/XLSX/PDF export.*

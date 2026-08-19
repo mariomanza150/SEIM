@@ -915,7 +915,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="scholarship-awards-export")
     def scholarship_awards_export(self, request):
-        """Export scholarship awards for a program cohort (CSV, staff)."""
+        """Export scholarship awards for a program cohort: CSV (default), XLSX, or PDF (staff)."""
         user = request.user
         if not user.is_authenticated or not user.has_any_role(["coordinator", "admin"]):
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
@@ -944,7 +944,16 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         )
         from exchange.scholarship_awards import awards_export_response
 
-        return awards_export_response(program_id, qs, program_name=program.name)
+        export_format = request.query_params.get("export_format", "csv")
+        try:
+            return awards_export_response(
+                program_id,
+                qs,
+                program_name=program.name,
+                export_format=export_format,
+            )
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(
         detail=True,

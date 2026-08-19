@@ -1379,7 +1379,10 @@
     "scholarshipAward": {
       "title": "Scholarship award",
       "noneYet": "No award decision yet.",
-      "exportCsv": "Export awards CSV",
+      "exportGroupAria": "Download awards export",
+      "exportCsv": "CSV",
+      "exportXlsx": "Excel",
+      "exportPdf": "PDF",
       "exportSuccess": "Awards export downloaded.",
       "exportError": "Could not download awards export.",
       "statusLabel": "Status",
@@ -1415,7 +1418,8 @@
       "approved": "Approved",
       "rejected": "Rejected",
       "completed": "Completed",
-      "waitlist": "Waitlist"
+      "waitlist": "Waitlist",
+      "nominated": "Nominated"
     },
     "labelDescription": "Description",
     "requiredDocuments": "Required documents",

@@ -1375,7 +1375,10 @@
     "scholarshipAward": {
       "title": "Adjudicación de beca",
       "noneYet": "Aún no hay una decisión de beca.",
-      "exportCsv": "Exportar becas CSV",
+      "exportGroupAria": "Descargar exportación de becas",
+      "exportCsv": "CSV",
+      "exportXlsx": "Excel",
+      "exportPdf": "PDF",
       "exportSuccess": "Exportación de becas descargada.",
       "exportError": "No se pudo descargar la exportación de becas.",
       "statusLabel": "Estado",
@@ -1411,7 +1414,8 @@
       "approved": "Aprobada",
       "rejected": "Rechazada",
       "completed": "Completada",
-      "waitlist": "Lista de espera"
+      "waitlist": "Lista de espera",
+      "nominated": "Nominada"
     },
     "labelDescription": "Descripción",
     "requiredDocuments": "Documentos obligatorios",

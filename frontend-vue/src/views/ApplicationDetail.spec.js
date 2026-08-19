@@ -368,6 +368,9 @@ describe('ApplicationDetail', () => {
     expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.scholarshipAward.noneYet'))
     expect(wrapper.find('[data-testid="award-save"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="award-evidence-hint"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="scholarship-awards-export"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="scholarship-awards-export-xlsx"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="scholarship-awards-export-pdf"]').exists()).toBe(true)
   })
 
   it('shows scholarship evidence gates when catalog types are missing', async () => {

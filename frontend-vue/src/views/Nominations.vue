@@ -64,7 +64,7 @@
           <tbody>
             <tr v-for="row in rows" :key="row.id">
               <td>{{ row.student_display_name }}</td>
-              <td>{{ row.status }}</td>
+              <td data-testid="nomination-status">{{ formatStatus(row.status) }}</td>
               <td style="max-width: 8rem">
                 <input
                   v-model.number="row.nomination_rank"
@@ -97,9 +97,9 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
-import { formatDateTime as formatDateTimeUtil } from '@/utils/formatters'
+import { formatApplicationStatus, formatDateTime as formatDateTimeUtil } from '@/utils/formatters'
 
-const { t, locale } = useI18n()
+const { t, te, locale } = useI18n()
 const { success: successToast, error: errorToast } = useToast()
 
 const programs = ref([])
@@ -112,6 +112,10 @@ const error = ref('')
 
 function formatSubmittedAt(value) {
   return formatDateTimeUtil({ dateString: value, locale: locale.value, fallback: '—' })
+}
+
+function formatStatus(status) {
+  return formatApplicationStatus({ status, t, te })
 }
 
 function applyPayload(data) {

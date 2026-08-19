@@ -248,16 +248,40 @@
                 <h5 class="mb-0">
                   <i class="bi bi-award me-2"></i>{{ t('applicationDetailPage.scholarshipAward.title') }}
                 </h5>
-                <button
+                <div
                   v-if="isCoordinator"
-                  type="button"
-                  class="btn btn-sm btn-outline-secondary"
-                  :disabled="scholarshipAwardBusy"
-                  data-testid="scholarship-awards-export"
-                  @click="downloadScholarshipAwardsExport"
+                  class="btn-group btn-group-sm"
+                  role="group"
+                  :aria-label="t('applicationDetailPage.scholarshipAward.exportGroupAria')"
                 >
-                  {{ t('applicationDetailPage.scholarshipAward.exportCsv') }}
-                </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    :disabled="scholarshipAwardBusy"
+                    data-testid="scholarship-awards-export"
+                    @click="downloadScholarshipAwardsExport('csv')"
+                  >
+                    {{ t('applicationDetailPage.scholarshipAward.exportCsv') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    :disabled="scholarshipAwardBusy"
+                    data-testid="scholarship-awards-export-xlsx"
+                    @click="downloadScholarshipAwardsExport('xlsx')"
+                  >
+                    {{ t('applicationDetailPage.scholarshipAward.exportXlsx') }}
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    :disabled="scholarshipAwardBusy"
+                    data-testid="scholarship-awards-export-pdf"
+                    @click="downloadScholarshipAwardsExport('pdf')"
+                  >
+                    {{ t('applicationDetailPage.scholarshipAward.exportPdf') }}
+                  </button>
+                </div>
               </div>
               <div class="card-body">
                 <p v-if="!application.scholarship_award" class="text-muted small mb-3">
@@ -1023,7 +1047,7 @@ async function addDisbursement() {
   }
 }
 
-async function downloadScholarshipAwardsExport() {
+async function downloadScholarshipAwardsExport(format = 'csv') {
   const programId =
     typeof application.value?.program === 'object'
       ? application.value?.program?.id
@@ -1032,17 +1056,18 @@ async function downloadScholarshipAwardsExport() {
     errorToast(t('applicationDetailPage.scholarshipScoring.exportMissingProgram'))
     return
   }
+  const fmt = format === 'xlsx' || format === 'pdf' ? format : 'csv'
   scholarshipAwardBusy.value = true
   try {
     const response = await api.get('/api/applications/scholarship-awards-export/', {
-      params: { program: programId },
+      params: { program: programId, export_format: fmt },
       responseType: 'blob',
     })
-    const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8' })
+    const blob = new Blob([response.data], { type: SCHOLARSHIP_EXPORT_MIME[fmt] })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `scholarship-awards-${programId}.csv`
+    a.download = `scholarship-awards-${programId}.${fmt}`
     a.rel = 'noopener noreferrer'
     document.body.appendChild(a)
     a.click()

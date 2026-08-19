@@ -69,6 +69,6 @@ describe('Nominations', () => {
     await wrapper.find('[data-testid="nominations-match"]').trigger('click')
     await flushPromises()
     expect(api.post).toHaveBeenCalledWith('/api/programs/prog-1/nominations/match/')
-    expect(wrapper.text()).toContain('nominated')
+    expect(wrapper.find('[data-testid="nomination-status"]').text()).toBe('Nominated')
   })
 })

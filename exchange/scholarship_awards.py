@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+import io
 from decimal import Decimal, InvalidOperation
 
 from django.http import HttpResponse
@@ -315,32 +317,25 @@ def upsert_disbursement(award: ScholarshipAward, payload: dict, disbursement=Non
     return disbursement
 
 
-def awards_export_response(program_id, queryset, program_name=""):
-    """CSV export of awards for a program cohort."""
-    import csv
-    import io
-
-    buf = io.StringIO()
-    writer = csv.writer(buf)
-    writer.writerow(
-        [
-            "application_id",
-            "student",
-            "email",
-            "program",
-            "award_status",
-            "amount",
-            "currency",
-            "decided_at",
-            "notes",
-        ]
-    )
+def build_awards_export_table(queryset, program_name=""):
+    headers = [
+        "application_id",
+        "student",
+        "email",
+        "program",
+        "award_status",
+        "amount",
+        "currency",
+        "decided_at",
+        "notes",
+    ]
+    rows = []
     for app in queryset:
         award = getattr(app, "scholarship_award", None)
         if not award:
             continue
         student = app.student
-        writer.writerow(
+        rows.append(
             [
                 str(app.id),
                 student.get_full_name().strip() or student.username,
@@ -350,12 +345,99 @@ def awards_export_response(program_id, queryset, program_name=""):
                 award.amount if award.amount is not None else "",
                 award.currency,
                 award.decided_at.isoformat() if award.decided_at else "",
-                award.notes,
+                award.notes or "",
             ]
         )
-    body = buf.getvalue()
-    response = HttpResponse(body, content_type="text/csv; charset=utf-8")
-    response["Content-Disposition"] = (
-        f'attachment; filename="scholarship-awards-{program_id}.csv"'
+    return headers, rows
+
+
+def render_awards_xlsx(headers, rows) -> bytes:
+    from openpyxl import Workbook
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Awards"
+    ws.append(headers)
+    for row in rows:
+        ws.append(list(row))
+    bio = io.BytesIO()
+    wb.save(bio)
+    return bio.getvalue()
+
+
+def render_awards_pdf(headers, rows, *, program_name="") -> bytes:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import landscape, letter
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    pdf_headers = headers[:-1]
+    pdf_rows = [r[:-1] for r in rows]
+    data = [pdf_headers] + [[str(c) for c in r] for r in pdf_rows]
+    buffer = io.BytesIO()
+    page = landscape(letter)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=page,
+        rightMargin=28,
+        leftMargin=28,
+        topMargin=36,
+        bottomMargin=32,
     )
-    return response
+    styles = getSampleStyleSheet()
+    story = []
+    title = "Scholarship awards"
+    if program_name:
+        title += f" — {program_name}"
+    story.append(Paragraph(title, styles["Title"]))
+    story.append(Paragraph("Notes column omitted; use CSV or Excel for full text.", styles["Normal"]))
+    story.append(Spacer(1, 8))
+    tw = page[0] - 56
+    nc = max(len(pdf_headers), 1)
+    col_widths = [tw / nc] * nc
+    tbl = Table(data, colWidths=col_widths, repeatRows=1)
+    tbl.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0d6efd")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
+            ]
+        )
+    )
+    story.append(tbl)
+    doc.build(story)
+    return buffer.getvalue()
+
+
+def awards_export_response(program_id, queryset, program_name="", export_format="csv"):
+    """Awards cohort export: csv (default), xlsx, or pdf."""
+    headers, rows = build_awards_export_table(queryset, program_name=program_name)
+    fmt = (export_format or "csv").lower().strip()
+    base = f"scholarship-awards-{program_id}"
+    if fmt == "csv":
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(headers)
+        writer.writerows(rows)
+        response = HttpResponse(buf.getvalue(), content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = f'attachment; filename="{base}.csv"'
+        return response
+    if fmt == "xlsx":
+        body = render_awards_xlsx(headers, rows)
+        response = HttpResponse(
+            body,
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = f'attachment; filename="{base}.xlsx"'
+        return response
+    if fmt == "pdf":
+        body = render_awards_pdf(headers, rows, program_name=program_name or "")
+        response = HttpResponse(body, content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="{base}.pdf"'
+        return response
+    raise ValueError(f"Unsupported export_format: {export_format!r} (use csv, xlsx, or pdf).")

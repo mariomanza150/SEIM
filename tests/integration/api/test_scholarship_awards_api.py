@@ -52,3 +52,24 @@ class TestScholarshipAwardsAPI(APITestCase):
         url = reverse("api:application-scholarship-awards-export")
         resp = self.client.get(url, {"program": str(self.program.pk)})
         self.assertEqual(resp.status_code, 403)
+
+    def test_export_xlsx_and_pdf(self):
+        ScholarshipAward.objects.create(
+            application=self.app, status=ScholarshipAward.Status.NOMINATED, amount=1000
+        )
+        self.authenticate_user(self.coord)
+        url = reverse("api:application-scholarship-awards-export")
+        xlsx = self.client.get(
+            url, {"program": str(self.program.pk), "export_format": "xlsx"}
+        )
+        self.assertEqual(xlsx.status_code, 200)
+        self.assertIn("spreadsheetml", xlsx["Content-Type"])
+        pdf = self.client.get(
+            url, {"program": str(self.program.pk), "export_format": "pdf"}
+        )
+        self.assertEqual(pdf.status_code, 200)
+        self.assertEqual(pdf["Content-Type"], "application/pdf")
+        bad = self.client.get(
+            url, {"program": str(self.program.pk), "export_format": "exe"}
+        )
+        self.assertEqual(bad.status_code, 400)

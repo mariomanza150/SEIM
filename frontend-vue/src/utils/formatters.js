@@ -15,8 +15,10 @@ export function applicationStatusBadgeClass(status) {
     submitted: 'bg-info',
     under_review: 'bg-warning',
     approved: 'bg-success',
+    nominated: 'bg-success',
     rejected: 'bg-danger',
     completed: 'bg-primary',
+    waitlist: 'bg-secondary',
   }
   return classes[status] || 'bg-secondary'
 }
