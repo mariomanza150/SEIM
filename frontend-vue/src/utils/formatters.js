@@ -20,6 +20,7 @@ export function applicationStatusBadgeClass(status) {
     completed: 'bg-primary',
     waitlist: 'bg-secondary',
     cancelled: 'bg-dark',
+    withdrawn: 'bg-dark',
   }
   return classes[status] || 'bg-secondary'
 }

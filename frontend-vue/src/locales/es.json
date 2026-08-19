@@ -781,7 +781,10 @@
       "approved": "Aprobada",
       "rejected": "Rechazada",
       "completed": "Completada",
-      "waitlist": "Lista de espera"
+      "waitlist": "Lista de espera",
+      "nominated": "Nominada",
+      "cancelled": "Cancelada",
+      "withdrawn": "Retirada"
     },
     "loading": "Cargando…",
     "loadError": "No se pudieron cargar las solicitudes.",
@@ -1456,7 +1459,8 @@
       "completed": "Completada",
       "waitlist": "Lista de espera",
       "nominated": "Nominada",
-      "cancelled": "Cancelada"
+      "cancelled": "Cancelada",
+      "withdrawn": "Retirada"
     },
     "labelDescription": "Descripción",
     "requiredDocuments": "Documentos obligatorios",

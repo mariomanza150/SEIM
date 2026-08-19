@@ -181,4 +181,33 @@ describe('Applications', () => {
       params: { page: 1, ordering: '-created_at', status: 'draft' },
     })
   })
+
+  it('includes nominated, waitlist, cancelled, and withdrawn status filters', async () => {
+    api.get.mockResolvedValue({ data: { results: [], count: 0, next: null, previous: null } })
+    const wrapper = mount(Applications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const opts = wrapper.find('[data-testid="applications-filter-status"]').findAll('option')
+    const values = opts.map((o) => o.element.value)
+    expect(values).toEqual([
+      '',
+      'draft',
+      'submitted',
+      'under_review',
+      'nominated',
+      'waitlist',
+      'approved',
+      'rejected',
+      'completed',
+      'cancelled',
+      'withdrawn',
+    ])
+    expect(opts.find((o) => o.element.value === 'nominated')?.text()).toBe(
+      i18n.global.t('applicationDetailPage.status.nominated'),
+    )
+  })
 })

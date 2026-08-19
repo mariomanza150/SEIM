@@ -680,6 +680,8 @@
                   <select v-model="reviewStatus" class="form-select form-select-sm">
                     <option value="">{{ t('applicationDetailPage.selectNewStatus') }}</option>
                     <option value="under_review">{{ t('applicationDetailPage.status.under_review') }}</option>
+                    <option value="nominated">{{ t('applicationDetailPage.status.nominated') }}</option>
+                    <option value="waitlist">{{ t('applicationDetailPage.status.waitlist') }}</option>
                     <option value="approved">{{ t('applicationDetailPage.status.approved') }}</option>
                     <option value="rejected">{{ t('applicationDetailPage.status.rejected') }}</option>
                     <option value="completed">{{ t('applicationDetailPage.status.completed') }}</option>

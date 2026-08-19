@@ -43,9 +43,13 @@
                 <option value="draft">{{ t('applicationDetailPage.status.draft') }}</option>
                 <option value="submitted">{{ t('applicationDetailPage.status.submitted') }}</option>
                 <option value="under_review">{{ t('applicationDetailPage.status.under_review') }}</option>
+                <option value="nominated">{{ t('applicationDetailPage.status.nominated') }}</option>
+                <option value="waitlist">{{ t('applicationDetailPage.status.waitlist') }}</option>
                 <option value="approved">{{ t('applicationDetailPage.status.approved') }}</option>
                 <option value="rejected">{{ t('applicationDetailPage.status.rejected') }}</option>
                 <option value="completed">{{ t('applicationDetailPage.status.completed') }}</option>
+                <option value="cancelled">{{ t('applicationDetailPage.status.cancelled') }}</option>
+                <option value="withdrawn">{{ t('applicationDetailPage.status.withdrawn') }}</option>
               </select>
             </div>
             <div class="col-md-3">

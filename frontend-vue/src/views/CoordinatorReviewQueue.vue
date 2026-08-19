@@ -74,14 +74,23 @@
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('reviewQueuePage.statusLabel') }}</label>
-              <select v-model="filters.status" class="form-select" @change="() => fetchApplications(1)">
+              <select
+                v-model="filters.status"
+                class="form-select"
+                data-testid="review-queue-filter-status"
+                @change="() => fetchApplications(1)"
+              >
                 <option value="">{{ t('reviewQueuePage.statusAll') }}</option>
                 <option value="draft">{{ t('reviewQueuePage.status.draft') }}</option>
                 <option value="submitted">{{ t('reviewQueuePage.status.submitted') }}</option>
                 <option value="under_review">{{ t('reviewQueuePage.status.under_review') }}</option>
+                <option value="nominated">{{ t('reviewQueuePage.status.nominated') }}</option>
+                <option value="waitlist">{{ t('reviewQueuePage.status.waitlist') }}</option>
                 <option value="approved">{{ t('reviewQueuePage.status.approved') }}</option>
                 <option value="rejected">{{ t('reviewQueuePage.status.rejected') }}</option>
                 <option value="completed">{{ t('reviewQueuePage.status.completed') }}</option>
+                <option value="cancelled">{{ t('reviewQueuePage.status.cancelled') }}</option>
+                <option value="withdrawn">{{ t('reviewQueuePage.status.withdrawn') }}</option>
               </select>
             </div>
             <div class="col-md-3">
@@ -266,6 +275,7 @@ import {
   serializeReviewQueueFilters,
 } from '@/utils/reviewQueuePresets'
 import { resolveListPage } from '@/utils/listPage'
+import { applicationStatusBadgeClass } from '@/utils/formatters'
 
 const { t, te, locale } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -432,15 +442,7 @@ async function setDefaultPreset(p) {
 }
 
 function statusClass(status) {
-  const classes = {
-    draft: 'bg-secondary',
-    submitted: 'bg-info',
-    under_review: 'bg-warning',
-    approved: 'bg-success',
-    rejected: 'bg-danger',
-    completed: 'bg-primary',
-  }
-  return classes[status] || 'bg-secondary'
+  return applicationStatusBadgeClass(status)
 }
 
 function formatStatus(status) {

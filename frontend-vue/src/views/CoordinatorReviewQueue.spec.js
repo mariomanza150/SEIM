@@ -63,13 +63,20 @@ describe('CoordinatorReviewQueue', () => {
       },
     })
     await flushPromises()
-    const selects = wrapper.findAll('select.form-select')
-    expect(selects.length).toBeGreaterThanOrEqual(2)
-    const statusOpts = selects[0].findAll('option')
+    const statusSelect = wrapper.find('[data-testid="review-queue-filter-status"]')
+    const statusOpts = statusSelect.findAll('option')
     const draft = statusOpts.find((o) => o.element.value === 'draft')
     expect(draft?.text()).toBe(i18n.global.t('reviewQueuePage.status.draft'))
     expect(wrapper.text()).toContain(i18n.global.t('reviewQueuePage.sortRecentlySubmitted'))
     expect(wrapper.text()).toContain(i18n.global.t('reviewQueuePage.clearFilters'))
+    const statusValues = statusOpts.map((o) => o.element.value)
+    expect(statusValues).toContain('nominated')
+    expect(statusValues).toContain('waitlist')
+    expect(statusValues).toContain('cancelled')
+    expect(statusValues).toContain('withdrawn')
+    expect(statusOpts.find((o) => o.element.value === 'nominated')?.text()).toBe(
+      i18n.global.t('reviewQueuePage.status.nominated'),
+    )
   })
 
   it('shows shared pagination.previous and pagination.next when queue spans pages', async () => {
@@ -121,8 +128,7 @@ describe('CoordinatorReviewQueue', () => {
       },
     })
     await flushPromises()
-    const selects = wrapper.findAll('select.form-select')
-    const draft = selects[0].findAll('option').find((o) => o.element.value === 'draft')
+    const draft = wrapper.find('[data-testid="review-queue-filter-status"]').findAll('option').find((o) => o.element.value === 'draft')
     expect(draft?.text()).toBe(i18n.global.t('reviewQueuePage.status.draft'))
     expect(wrapper.text()).toContain(i18n.global.t('reviewQueuePage.clearFilters'))
   })
@@ -136,7 +142,7 @@ describe('CoordinatorReviewQueue', () => {
     })
     await flushPromises()
     api.get.mockClear()
-    const statusSelect = wrapper.findAll('select.form-select')[0]
+    const statusSelect = wrapper.find('[data-testid="review-queue-filter-status"]')
     await statusSelect.setValue('submitted')
     await statusSelect.trigger('change')
     await flushPromises()

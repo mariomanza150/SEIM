@@ -785,7 +785,10 @@
       "approved": "Approved",
       "rejected": "Rejected",
       "completed": "Completed",
-      "waitlist": "Waitlist"
+      "waitlist": "Waitlist",
+      "nominated": "Nominated",
+      "cancelled": "Cancelled",
+      "withdrawn": "Withdrawn"
     },
     "loading": "Loading…",
     "loadError": "Failed to load applications.",
@@ -1460,7 +1463,8 @@
       "completed": "Completed",
       "waitlist": "Waitlist",
       "nominated": "Nominated",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "withdrawn": "Withdrawn"
     },
     "labelDescription": "Description",
     "requiredDocuments": "Required documents",
