@@ -55,7 +55,8 @@ Root leftovers (`/applications/`, `/applications/create/`, `/profile/`, `/calend
 
 #### Exchange Management
 - `/seim/exchange/` - SPA alias that redirects to exchange agreements
-- `/seim/grades/` - SPA alias that redirects to profile (grades remain API-only at `/api/grades/`)
+- `/seim/grades/` - SPA alias that redirects to profile (student grade scale lives on the profile)
+- `/seim/admin/grades` - Vue admin console for grade scales, values, and translations
 - `/seim/analytics/` - SPA alias that redirects to `/seim/analytics-forecasts/`
 
 #### Administrative
@@ -64,7 +65,7 @@ Root leftovers (`/applications/`, `/applications/create/`, `/profile/`, `/calend
 - `/seim/admin-dashboard/` - SPA alias that redirects to `/seim/dashboard/`
 - `/admin-dashboard/` - leftover root alias that redirects to `/seim/dashboard/` (must not 404 via Wagtail)
 - `/dashboard/analytics/` - leftover SSR analytics URL that redirects to `/seim/analytics-forecasts/`
-- `/seim/admin/programs|forms|dynforms|data-management|workflows` - Vue admin console
+- `/seim/admin/programs|catalogs|grades|forms|dynforms|data-management|workflows|documents` - Vue admin console
 - `/seim/admin/dynforms` - Vue visual form builder (admin only; `/dynforms/` redirects here)
 - `/seim/admin/data-management` - Vue data-management console (`/data-management/` redirects here)
 
@@ -124,7 +125,7 @@ API endpoints remain at the root for consistency:
 1. Login at `/seim/login/` or `/cms/` (Wagtail login)
 2. Access Wagtail CMS at `/cms/` to manage content
 3. Access Django Admin at `/seim/django-admin/` for system management
-4. Access the Vue admin console at `/seim/admin/programs` (forms, dynforms, data management, workflows)
+4. Access the Vue admin console at `/seim/admin/programs` (catalogs, grades, forms, dynforms, data management, workflows, documents)
 5. Full navigation includes both CMS and SEIM admin links
 
 ## Benefits of This Structure

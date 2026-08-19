@@ -50,6 +50,8 @@ const routeNames = [
   'Profile',
   'Login',
   'AdminPrograms',
+  'AdminCatalogs',
+  'AdminGrades',
   'AdminForms',
   'AdminDynforms',
   'AdminDataManagement',

@@ -33,6 +33,8 @@ const EXACT_SPA_ROUTES = {
   '/partner': { name: 'PartnerPortal' },
   '/admin': { name: 'AdminPrograms' },
   '/admin/programs': { name: 'AdminPrograms' },
+  '/admin/catalogs': { name: 'AdminCatalogs' },
+  '/admin/grades': { name: 'AdminGrades' },
   '/admin/forms': { name: 'AdminForms' },
   '/admin/dynforms': { name: 'AdminDynforms' },
   '/admin/data-management': { name: 'AdminDataManagement' },

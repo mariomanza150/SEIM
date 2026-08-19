@@ -190,6 +190,126 @@ class TestHomeAcademicProgramSchoolFilter(APITestCase):
 
 @pytest.mark.django_db
 @pytest.mark.views
+class TestProfileCatalogCRUD(APITestCase):
+    """Admin write access for profile catalogs; students remain read-only."""
+
+    def setUp(self):
+        self.student = User.objects.create_user(
+            username="catalogstudent",
+            email="catalogstudent@example.com",
+            password="testpass123",
+        )
+        self.admin = User.objects.create_user(
+            username="catalogadmin",
+            email="catalogadmin@example.com",
+            password="adminpass123",
+            is_staff=True,
+        )
+        self.client = APIClient()
+        self.schools_url = reverse("accounts:school-list")
+        self.domains_url = reverse("accounts:allowed-email-domain-list")
+        self.programs_url = reverse("accounts:home-program-list")
+
+    def test_unauthenticated_post_allowed_email_domains_forbidden(self):
+        response = self.client.post(
+            self.domains_url,
+            {"name": "new-domain.edu.mx"},
+            format="json",
+        )
+        assert response.status_code in (
+            status.HTTP_401_UNAUTHORIZED,
+            status.HTTP_403_FORBIDDEN,
+        )
+
+    def test_student_get_schools_ok_post_forbidden_inactive_hidden(self):
+        active = SchoolFaculty.objects.create(name="Active School", code="active")
+        SchoolFaculty.objects.create(
+            name="Inactive School", code="inactive", is_active=False
+        )
+
+        self.client.force_authenticate(user=self.student)
+        get_response = self.client.get(self.schools_url)
+        post_response = self.client.post(
+            self.schools_url,
+            {"name": "Student School", "code": "student"},
+            format="json",
+        )
+
+        assert get_response.status_code == status.HTTP_200_OK
+        names = {row["name"] for row in get_response.data}
+        assert active.name in names
+        assert "Inactive School" not in names
+        assert post_response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_admin_school_crud_and_inactive_visibility(self):
+        SchoolFaculty.objects.create(
+            name="Hidden School", code="hidden", is_active=False
+        )
+        self.client.force_authenticate(user=self.admin)
+
+        create_response = self.client.post(
+            self.schools_url,
+            {"name": "New School", "code": "new", "ordering": 1, "is_active": True},
+            format="json",
+        )
+        assert create_response.status_code == status.HTTP_201_CREATED
+        school_id = create_response.data["id"]
+        assert create_response.data["is_active"] is True
+
+        list_response = self.client.get(self.schools_url)
+        assert list_response.status_code == status.HTTP_200_OK
+        names = {row["name"] for row in list_response.data}
+        assert "New School" in names
+        assert "Hidden School" in names
+
+        detail_url = reverse("accounts:school-detail", args=[school_id])
+        patch_response = self.client.patch(
+            detail_url, {"is_active": False}, format="json"
+        )
+        assert patch_response.status_code == status.HTTP_200_OK
+        assert patch_response.data["is_active"] is False
+
+        delete_response = self.client.delete(detail_url)
+        assert delete_response.status_code == status.HTTP_204_NO_CONTENT
+        assert not SchoolFaculty.objects.filter(id=school_id).exists()
+
+    def test_admin_post_allowed_email_domains(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            self.domains_url,
+            {"name": "admin-domain.edu.mx"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        assert AllowedEmailDomain.objects.filter(name="admin-domain.edu.mx").exists()
+
+    def test_home_program_post_requires_school(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.post(
+            self.programs_url,
+            {"name": "Orphan Program", "code": "orphan"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "school" in response.data
+
+    def test_delete_school_protected_by_profile_returns_400(self):
+        school = SchoolFaculty.objects.create(name="Referenced School", code="ref")
+        profile = self.student.profile
+        profile.school = school
+        profile.save(update_fields=["school"])
+
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.delete(
+            reverse("accounts:school-detail", args=[school.id])
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "detail" in response.data
+        assert SchoolFaculty.objects.filter(id=school.id).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.views
 class TestRegistrationView(APITestCase):
     """Test cases for RegistrationView."""
 

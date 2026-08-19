@@ -45,7 +45,7 @@ _CEFR_LEVELS = frozenset({"A1", "A2", "B1", "B2", "C1", "C2"})
 
 class CatalogSerializer(serializers.ModelSerializer):
     class Meta:
-        fields = ("id", "name", "code", "ordering")
+        fields = ("id", "name", "code", "ordering", "is_active")
 
 
 class AllowedEmailDomainSerializer(CatalogSerializer):

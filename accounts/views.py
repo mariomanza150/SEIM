@@ -1,15 +1,16 @@
 from django.contrib.auth import get_user_model
+from django.db.models import ProtectedError
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, status, viewsets
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.cache import invalidate_application_api_responses
-from core.permissions import CanManageRoles
+from core.permissions import CanManageRoles, IsAdminOrReadOnly
 from core.throttling import BurstRateThrottle
 
 from .models import (
@@ -84,21 +85,59 @@ class ProfileViewSet(viewsets.ModelViewSet):
         invalidate_application_api_responses()
 
 
-class ActiveCatalogViewSet(viewsets.ReadOnlyModelViewSet):
-    """Authenticated, unpaginated access to active profile catalog entries."""
+class IsAdminOrAllowAnyRead(BasePermission):
+    """Public GET/HEAD/OPTIONS; writes require authenticated staff or admin."""
 
-    permission_classes = [IsAuthenticated]
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return True
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        return user.is_staff or (hasattr(user, "is_admin") and user.is_admin)
+
+
+def _is_catalog_admin(user) -> bool:
+    return bool(
+        user
+        and user.is_authenticated
+        and (user.is_staff or (hasattr(user, "is_admin") and user.is_admin))
+    )
+
+
+class ActiveCatalogViewSet(viewsets.ModelViewSet):
+    """Unpaginated catalog CRUD. Admins write; others read active rows only."""
+
+    permission_classes = [IsAdminOrReadOnly]
     pagination_class = None
 
     def get_queryset(self):
-        return super().get_queryset().filter(is_active=True)
+        queryset = super().get_queryset()
+        if _is_catalog_admin(self.request.user):
+            return queryset
+        return queryset.filter(is_active=True)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        try:
+            self.perform_destroy(instance)
+        except ProtectedError:
+            return Response(
+                {
+                    "detail": (
+                        "This catalog entry cannot be deleted because it is "
+                        "still referenced by student profiles or other records."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AllowedEmailDomainViewSet(ActiveCatalogViewSet):
     queryset = AllowedEmailDomain.objects.all()
     serializer_class = AllowedEmailDomainSerializer
-    permission_classes = [AllowAny]
-    authentication_classes = []
+    permission_classes = [IsAdminOrAllowAnyRead]
 
 
 class AcademicLevelViewSet(ActiveCatalogViewSet):

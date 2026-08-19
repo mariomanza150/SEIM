@@ -1,10 +1,11 @@
 """API views for grade translation system."""
 
 from drf_spectacular.utils import OpenApiParameter, extend_schema
-from rest_framework import status, viewsets
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from core.permissions import IsAdminOrReadOnly
 
 from .models import GradeScale, GradeTranslation, GradeValue
 from .serializers import (
@@ -22,11 +23,28 @@ from .serializers import (
 from .services import GradeTranslationService
 
 
+class IsAdminOrGradeCompute(permissions.BasePermission):
+    """Authenticated reads and compute POSTs; mapping writes for staff/admin."""
+
+    COMPUTE_ACTIONS = frozenset({"translate", "convert_gpa", "check_eligibility"})
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        action = getattr(view, "action", None)
+        if action in self.COMPUTE_ACTIONS:
+            return True
+        return user.is_staff or (hasattr(user, "is_admin") and user.is_admin)
+
+
 class GradeScaleViewSet(viewsets.ModelViewSet):
     """ViewSet for managing grade scales."""
 
     queryset = GradeScale.objects.prefetch_related("grade_values").all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     def get_serializer_class(self):
         """Return appropriate serializer based on action."""
@@ -64,7 +82,7 @@ class GradeValueViewSet(viewsets.ModelViewSet):
 
     queryset = GradeValue.objects.select_related("grade_scale").all()
     serializer_class = GradeValueSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrReadOnly]
 
     @extend_schema(
         summary="List all grade values",
@@ -108,7 +126,7 @@ class GradeTranslationViewSet(viewsets.ModelViewSet):
         "created_by",
     ).all()
     serializer_class = GradeTranslationSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminOrGradeCompute]
 
     @extend_schema(
         summary="Translate a grade",

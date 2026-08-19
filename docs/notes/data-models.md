@@ -117,6 +117,8 @@ Administrator-managed catalogs share `id` (UUID), `name`, `code`, `is_active`, `
 - `HomeAcademicProgram` - Program choices; includes a required ForeignKey to `SchoolFaculty`
 - `BankInstitution` - Optional bank choices
 
+Admin CRUD is `/api/accounts/catalogs/` (staff/admin writes; students GET active rows only). Allowed email domains stay publicly readable. SPA editor: `/seim/admin/catalogs`.
+
 ### Role
 User roles for role-based access control.
 

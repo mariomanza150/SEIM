@@ -71,6 +71,16 @@
                 </router-link>
               </li>
               <li>
+                <router-link class="dropdown-item" :to="{ name: 'AdminCatalogs' }" @click="closeAdminMenu">
+                  {{ t('route.names.AdminCatalogs') }}
+                </router-link>
+              </li>
+              <li>
+                <router-link class="dropdown-item" :to="{ name: 'AdminGrades' }" @click="closeAdminMenu">
+                  {{ t('route.names.AdminGrades') }}
+                </router-link>
+              </li>
+              <li>
                 <router-link class="dropdown-item" :to="{ name: 'AdminForms' }" @click="closeAdminMenu">
                   {{ t('route.names.AdminForms') }}
                 </router-link>
@@ -385,6 +395,18 @@ const adminNavItems = computed(() => [
     to: { name: 'AdminPrograms' },
     label: t('route.names.AdminPrograms'),
     iconClass: 'bi bi-mortarboard',
+  },
+  {
+    key: 'adminCatalogs',
+    to: { name: 'AdminCatalogs' },
+    label: t('route.names.AdminCatalogs'),
+    iconClass: 'bi bi-list-ul',
+  },
+  {
+    key: 'adminGrades',
+    to: { name: 'AdminGrades' },
+    label: t('route.names.AdminGrades'),
+    iconClass: 'bi bi-bar-chart-steps',
   },
   {
     key: 'adminForms',

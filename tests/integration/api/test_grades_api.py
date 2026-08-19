@@ -105,3 +105,46 @@ class TestGradesAPI(APITestCase):
 
         legacy = self.client.get("/grades/api/scales/")
         self.assertEqual(legacy.status_code, status.HTTP_200_OK)
+
+    def test_authenticated_student_can_list_grade_scales(self):
+        response = self.client.get("/api/grades/scales/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_student_cannot_create_grade_scale(self):
+        response = self.client.post(
+            "/api/grades/scales/",
+            {
+                "name": "Student Scale",
+                "code": "STUDENT_SCALE",
+                "country": "Test",
+                "min_value": 0.0,
+                "max_value": 4.0,
+                "passing_value": 2.0,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_staff_admin_can_create_grade_scale(self):
+        admin = User.objects.create_user(
+            username="grades-api-admin",
+            email="grades-api-admin@example.com",
+            password="testpass123",
+            is_staff=True,
+            is_superuser=True,
+        )
+        self.client.force_authenticate(user=admin)
+        response = self.client.post(
+            "/api/grades/scales/",
+            {
+                "name": "French 20 Scale",
+                "code": "FR_20_API",
+                "country": "France",
+                "min_value": 0.0,
+                "max_value": 20.0,
+                "passing_value": 10.0,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["code"], "FR_20_API")

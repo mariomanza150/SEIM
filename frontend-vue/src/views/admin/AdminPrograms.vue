@@ -1,6 +1,6 @@
 <template>
   <div class="admin-programs-page">
-    <PageHeader :title="t('adminPrograms.title')" :subtitle="t('adminPrograms.subtitle')">
+    <PageHeader :title="t('adminPrograms.title')">
       <template #breadcrumb>
         <nav aria-label="Breadcrumb">
           <ol class="breadcrumb">
@@ -10,6 +10,11 @@
             <li class="breadcrumb-item active">{{ t('route.names.AdminPrograms') }}</li>
           </ol>
         </nav>
+      </template>
+
+      <template #subtitle>
+        {{ t('adminPrograms.subtitle') }}
+        <span class="d-block mt-1">{{ t('adminPrograms.destinationsHint') }}</span>
       </template>
 
       <template #actions>
@@ -272,6 +277,21 @@
                 <input v-model.number="editor.form.max_age" class="form-control" type="number" min="0" />
               </div>
 
+              <div class="col-12">
+                <label class="form-label">{{ t('adminPrograms.fields.eligibilityRuleset') }}</label>
+                <select
+                  v-model="editor.form.eligibility_ruleset"
+                  class="form-select"
+                  data-testid="admin-program-eligibility-ruleset"
+                >
+                  <option :value="null">{{ t('adminPrograms.fields.eligibilityRulesetNone') }}</option>
+                  <option v-for="rs in visibleEligibilityRulesets" :key="rs.id" :value="rs.id">
+                    {{ rs.name }}
+                  </option>
+                </select>
+                <div class="form-text">{{ t('adminPrograms.fields.eligibilityRulesetHelp') }}</div>
+              </div>
+
               <div class="col-md-6">
                 <label class="form-label">{{ t('adminPrograms.fields.coordinators') }}</label>
                 <select v-model="editor.form.coordinators" class="form-select" multiple>
@@ -315,7 +335,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
@@ -366,6 +386,7 @@ const formTypes = ref([])
 const workflowVersions = ref([])
 const coordinators = ref([])
 const documentTypes = ref([])
+const eligibilityRulesets = ref([])
 
 const editor = ref({
   open: false,
@@ -374,6 +395,11 @@ const editor = ref({
   saving: false,
   error: null,
   form: emptyProgramForm(),
+})
+
+const visibleEligibilityRulesets = computed(() => {
+  const selected = editor.value.form.eligibility_ruleset
+  return eligibilityRulesets.value.filter((rs) => rs.is_active || rs.id === selected)
 })
 
 function emptyProgramForm() {
@@ -398,6 +424,7 @@ function emptyProgramForm() {
     waitlist_when_full: true,
     application_form: null,
     workflow_version: null,
+    eligibility_ruleset: null,
     coordinators: [],
     required_document_types: [],
   }
@@ -432,17 +459,19 @@ async function fetchPrograms() {
 }
 
 async function fetchEditorOptions() {
-  const [ftRes, userRes, dtRes, wvRes] = await Promise.all([
+  const [ftRes, userRes, dtRes, wvRes, rsRes] = await Promise.all([
     api.get('/api/application-forms/form-types/', { params: { ordering: 'name' } }),
     api.get('/api/users/'),
     api.get('/api/document-types/', { params: { ordering: 'name' } }),
     api.get('/api/workflow-versions/', { params: { ordering: '-version' } }),
+    api.get('/api/eligibility-rulesets/', { params: { ordering: 'name' } }),
   ])
   formTypes.value = normalizeApiList(ftRes.data)
   const allUsers = normalizeApiList(userRes.data)
   coordinators.value = allUsers.filter((u) => u.role === 'coordinator')
   documentTypes.value = normalizeApiList(dtRes.data)
   workflowVersions.value = normalizeApiList(wvRes.data).filter((v) => v.status === 'published')
+  eligibilityRulesets.value = normalizeApiList(rsRes.data)
 }
 
 function openCreate() {
@@ -484,6 +513,7 @@ function openEdit(program) {
       waitlist_when_full: Boolean(program.waitlist_when_full),
       application_form: program.application_form ?? null,
       workflow_version: program.workflow_version ?? null,
+      eligibility_ruleset: program.eligibility_ruleset ?? null,
       coordinators: Array.isArray(program.coordinators) ? program.coordinators : [],
       required_document_types: Array.isArray(program.required_document_types) ? program.required_document_types : [],
     },
@@ -518,6 +548,7 @@ function cleanProgramPayload(form) {
   if (payload.end_date === '') payload.end_date = null
   if (payload.application_form === '') payload.application_form = null
   if (payload.workflow_version === '') payload.workflow_version = null
+  if (payload.eligibility_ruleset === '') payload.eligibility_ruleset = null
   if (payload.enrollment_capacity === '') payload.enrollment_capacity = null
   if (payload.min_gpa === '') payload.min_gpa = null
   if (payload.min_semester === '') payload.min_semester = null

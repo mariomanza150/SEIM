@@ -23,7 +23,7 @@ Leftover student/staff bookmarks outside `/seim/` (`/applications/`, `/applicati
 
 ## Vue routes (application UI)
 
-Mounted at `/seim/` (see `frontend-vue/src/router/index.js`): login, register, verify-email, password-reset, dashboard, applications (list/new/detail/edit), documents, notifications, profile, settings, calendar, program compare, coordinator review/workload, agreements, nominations, eligibility rulesets, analytics forecasts, partner portal, SPA admin (`/seim/admin/programs|forms|dynforms|data-management|workflows`).
+Mounted at `/seim/` (see `frontend-vue/src/router/index.js`): login, register, verify-email, password-reset, dashboard, applications (list/new/detail/edit), documents, notifications, profile, settings, calendar, program compare, coordinator review/workload, agreements, nominations, eligibility rulesets, analytics forecasts, partner portal, SPA admin (`/seim/admin/programs|catalogs|grades|forms|dynforms|data-management|workflows|documents`).
 
 SPA aliases (not separate pages): `/seim/admin` → programs admin, `/seim/admin-dashboard` → dashboard, `/seim/analytics` → forecasts, `/seim/grades` → profile, `/seim/programs` → program compare, `/seim/exchange` → exchange agreements, `/seim/workload` → coordinator workload.
 
@@ -37,7 +37,7 @@ SPA aliases (not separate pages): `/seim/admin` → programs admin, `/seim/admin
 - [x] Staff exchange agreements + agreement documents
 - [x] Notification routing and analytics forecasts
 - [x] Partner portal
-- [x] SPA admin: programs, forms (JSON), visual dynforms builder, data management, workflows, application edit
+- [x] SPA admin: programs, catalogs (home lists + host destinations hub), grade scales, forms (JSON), visual dynforms builder, data management, workflows, application edit
 - [x] `/dynforms/` and application-forms HTML list/builder redirect to `/seim/admin/dynforms`
 - [x] `/data-management/` HTML hub and section pages redirect to `/seim/admin/data-management`
 - [x] Analytics HTML dashboard/statistics pages redirect to `/seim/dashboard` or `/seim/analytics-forecasts`
@@ -51,8 +51,7 @@ SPA aliases (not separate pages): `/seim/admin` → programs admin, `/seim/admin
 - [ ] `data_management/templates/**` and `application_forms/templates/**` are unused HTML leftovers (views redirect)
 - [ ] `templates/dynforms/**` leftover after the `/dynforms/` redirect
 - [ ] Root `/documents/<id>/` is **not** redirected (Wagtail files now live at `/cms-documents/`; SPA detail is `/seim/documents/:id`)
-- [ ] Grades remain API-only (`/api/grades/`, `/grades/api/` alias); no dedicated SPA grades console
-- [ ] Django admin remains the system-of-record editor for some catalogs (users, roles, some exchange models)
+- [ ] Django admin remains the system-of-record editor for users, roles, sessions, and other operational models
 - [ ] Agreement-expiration emails still deep-link to Django admin change pages (intentional)
 - [ ] Backend notification `action_url` values are still stored as root paths (`/applications/...`); SPA maps them, but new writes should prefer `/seim/...`
 - [ ] White-labeling / LICENSE / GitHub metadata are out of scope here

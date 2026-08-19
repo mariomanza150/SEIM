@@ -39,6 +39,8 @@ const AnalyticsForecasts = () => import('@/views/AnalyticsForecasts.vue')
 const PartnerPortal = () => import('@/views/PartnerPortal.vue')
 const AdminPrograms = () => import('@/views/admin/AdminPrograms.vue')
 const AdminProgramDestinations = () => import('@/views/admin/AdminProgramDestinations.vue')
+const AdminCatalogs = () => import('@/views/admin/AdminCatalogs.vue')
+const AdminGrades = () => import('@/views/admin/AdminGrades.vue')
 const AdminForms = () => import('@/views/admin/AdminForms.vue')
 const AdminDynforms = () => import('@/views/admin/AdminDynforms.vue')
 const AdminDynformEditor = () => import('@/views/admin/AdminDynformEditor.vue')
@@ -218,6 +220,18 @@ const routes = [
         path: 'admin/programs/:id/destinations',
         name: 'AdminProgramDestinations',
         component: AdminProgramDestinations,
+        meta: { adminOnly: true },
+      },
+      {
+        path: 'admin/catalogs',
+        name: 'AdminCatalogs',
+        component: AdminCatalogs,
+        meta: { adminOnly: true },
+      },
+      {
+        path: 'admin/grades',
+        name: 'AdminGrades',
+        component: AdminGrades,
         meta: { adminOnly: true },
       },
       {
