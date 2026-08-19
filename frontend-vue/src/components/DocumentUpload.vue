@@ -17,7 +17,7 @@
             >
               <option value="">{{ t('documentUpload.selectTypePlaceholder') }}</option>
               <option v-for="dt in documentTypes" :key="dt.id" :value="dt.id">
-                {{ dt.name }}
+                {{ documentTypeLabel(dt, dt.name) }}
               </option>
             </select>
             <div v-if="errors.type" class="invalid-feedback">{{ errors.type }}</div>
@@ -67,6 +67,7 @@ import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
+import { documentTypeLabel } from '@/utils/documentApi'
 
 const { t } = useI18n()
 

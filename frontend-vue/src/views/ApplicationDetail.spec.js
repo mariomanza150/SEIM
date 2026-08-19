@@ -715,4 +715,52 @@ describe('ApplicationDetail', () => {
     expect(wrapper.findAll('[data-testid="timeline-event-description"]')[0].text()).not.toMatch(/under_review/)
     expect(wrapper.findAll('[data-testid="timeline-event-description"]')[1].text()).not.toMatch(/\bnominated\b/)
   })
+
+  it('shows human document type labels instead of slugs on the checklist', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'draft',
+            document_checklist: {
+              required_count: 2,
+              approved_count: 1,
+              complete: false,
+              items: [
+                {
+                  document_type_id: 1,
+                  slug: 'transcript',
+                  name: 'transcript',
+                  description: 'Academic transcript',
+                  status: 'resubmit_requested',
+                  is_required: true,
+                },
+                {
+                  document_type_id: 2,
+                  slug: 'passport',
+                  name: 'passport',
+                  description: 'Passport or ID',
+                  status: 'approved',
+                  is_required: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.findAll('[data-testid="document-checklist-name"]').length).toBe(2)
+    })
+    const names = wrapper.findAll('[data-testid="document-checklist-name"]').map((n) => n.text())
+    expect(names).toEqual(['Academic transcript', 'Passport or ID'])
+    expect(names).not.toContain('transcript')
+    expect(names).not.toContain('passport')
+  })
 })

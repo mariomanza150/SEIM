@@ -46,7 +46,7 @@ describe('DocumentUpload', () => {
         data: {
           count: 21,
           next: null,
-          results: [{ id: 't2', name: 'transcript' }],
+          results: [{ id: 't2', name: 'transcript', description: 'Academic transcript' }],
         },
       })
     const wrapper = mount(DocumentUpload, {
@@ -55,7 +55,8 @@ describe('DocumentUpload', () => {
     })
     await flushPromises()
     const labels = wrapper.findAll('[data-testid="document-type-select"] option').map((o) => o.text())
-    expect(labels).toContain('transcript')
+    expect(labels).toContain('Academic transcript')
+    expect(labels).not.toContain('transcript')
     expect(api.get).toHaveBeenCalledWith('/api/document-types/?page_size=100')
     expect(api.get).toHaveBeenCalledWith('/api/document-types/?page=2&page_size=100')
   })

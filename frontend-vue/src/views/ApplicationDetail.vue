@@ -312,7 +312,7 @@
                     data-testid="award-evidence-list"
                   >
                     <li v-for="doc in application.scholarship_award.evidence_documents" :key="doc.id">
-                      {{ doc.type_name }} —
+                      {{ documentTypeLabel({ name: doc.type_name, description: doc.type_description }, doc.type_name) }} —
                       {{ doc.is_valid
                         ? t('applicationDetailPage.scholarshipAward.evidenceValid')
                         : t('applicationDetailPage.scholarshipAward.evidencePending') }}
@@ -466,12 +466,15 @@
                     data-testid="document-checklist-item"
                   >
                     <div class="me-2" style="min-width: 12rem">
-                      <span class="fw-semibold">{{ item.name }}</span>
+                      <span class="fw-semibold" data-testid="document-checklist-name">{{ checklistItemLabel(item) }}</span>
                       <span
                         v-if="item.is_required === false"
                         class="badge bg-light text-muted border ms-1"
                       >{{ t('applicationDetailPage.checklistOptional') }}</span>
-                      <p v-if="item.description" class="small text-muted mb-0">{{ item.description }}</p>
+                      <p
+                        v-if="item.description && item.description !== checklistItemLabel(item)"
+                        class="small text-muted mb-0"
+                      >{{ item.description }}</p>
                       <p v-if="item.deadline" class="small mb-0 mt-1" :class="item.is_overdue ? 'text-danger' : 'text-muted'">
                         <i class="bi bi-calendar-event me-1" aria-hidden="true"></i>
                         {{ t('applicationDetailPage.checklistDeadline', { date: formatChecklistDate(item.deadline) }) }}
@@ -1229,6 +1232,10 @@ function formatCommentAuthor(comment) {
     return t('applicationDetailPage.commentAuthorYou')
   }
   return comment.author_name || t('applicationDetailPage.unknownUser')
+}
+
+function checklistItemLabel(item) {
+  return documentTypeLabel(item, item?.name || t('documentDetailPage.notAvailable'))
 }
 
 function checklistStatusLabel(status) {

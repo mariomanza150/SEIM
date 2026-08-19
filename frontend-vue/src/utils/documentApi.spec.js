@@ -30,6 +30,18 @@ describe('documentApi', () => {
     expect(documentTypeLabel(null, 'N/A')).toBe('N/A')
   })
 
+  it('documentTypeLabel prefers description when name is a slug', () => {
+    expect(
+      documentTypeLabel(
+        { id: 1, name: 'transcript', slug: 'transcript', description: 'Academic transcript' },
+        '',
+      ),
+    ).toBe('Academic transcript')
+    expect(
+      documentTypeLabel({ id: 2, name: 'Kardex Oficial', description: 'Kardex / historial académico oficial.' }, ''),
+    ).toBe('Kardex Oficial')
+  })
+
   it('coerces stringified JSON application and type (MQ-012)', () => {
     const appRaw = JSON.stringify({ id: 'app-1', program_name: 'Exchange A' })
     expect(documentApplicationProgramName(appRaw, [], '')).toBe('Exchange A')

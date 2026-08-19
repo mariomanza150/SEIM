@@ -117,7 +117,11 @@
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center gap-2">
             <div class="fw-medium">{{ t('adminApplicationEdit.workflow') }}</div>
-            <span v-if="workflow.instance" class="badge bg-secondary">{{ workflow.instance.workflow_definition }}</span>
+            <span
+              v-if="workflow.instance"
+              class="badge bg-secondary"
+              data-testid="admin-workflow-definition"
+            >{{ formatWorkflowLabel(workflow.instance.workflow_definition) }}</span>
           </div>
           <div class="card-body">
             <div v-if="workflowLoading" class="text-center py-3">
@@ -127,6 +131,13 @@
               {{ workflowError }}
             </div>
             <div v-else>
+              <p v-if="workflow.instance?.status" class="mb-2">
+                <span
+                  class="badge"
+                  :class="statusClass(workflow.instance.status)"
+                  data-testid="admin-workflow-state"
+                >{{ formatWorkflowLabel(workflow.instance.status) }}</span>
+              </p>
               <p v-if="!normalizedActions.length" class="text-muted mb-2">
                 {{ t('adminApplicationEdit.noWorkflowActions') }}
               </p>
@@ -137,9 +148,10 @@
                   type="button"
                   class="btn btn-outline-primary"
                   :disabled="mutating"
+                  data-testid="admin-workflow-action"
                   @click="triggerWorkflowAction(a)"
                 >
-                  {{ a.name }}
+                  {{ formatWorkflowLabel(a.name) }}
                 </button>
               </div>
 
@@ -209,6 +221,15 @@ function formatStatus(status) {
     te,
     unknownKey: 'adminApplicationEdit.unknownStatus',
   })
+}
+
+function formatWorkflowLabel(value) {
+  if (!value) return ''
+  const key = `applicationDetailPage.status.${value}`
+  if (te(key)) return t(key)
+  return String(value)
+    .replace(/[-_]/g, ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
 }
 
 function statusClass(status) {

@@ -100,6 +100,11 @@ export function documentApplicationProgramName(application, applicationsList = [
   return fallback || id
 }
 
+/** True when `name` is a machine key (slug) rather than a display phrase. */
+export function looksLikeTechnicalDocumentName(name) {
+  return /^[a-z0-9]+(?:[_-][a-z0-9]+)*$/.test(String(name || '').trim())
+}
+
 export function documentTypeLabel(type, fallback = '') {
   let t = coerceDocumentNested(type)
   if (typeof t === 'string') {
@@ -107,7 +112,16 @@ export function documentTypeLabel(type, fallback = '') {
     if (looseName) return looseName
   }
   if (t == null || t === '') return fallback
-  if (typeof t === 'object' && t !== null && t.name) return String(t.name)
+  if (typeof t === 'object' && t !== null) {
+    const name = t.name != null ? String(t.name).trim() : ''
+    const description = t.description != null ? String(t.description).trim() : ''
+    const slug = t.slug != null ? String(t.slug).trim() : ''
+    if (description && (looksLikeTechnicalDocumentName(name) || (slug && name === slug))) {
+      return description
+    }
+    if (name) return name
+    if (description) return description
+  }
   if (typeof t === 'number' || typeof t === 'string') return String(t)
   return fallback
 }
