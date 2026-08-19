@@ -1,5 +1,6 @@
 import re
 
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from .models import (
@@ -56,7 +57,10 @@ class NotificationPreferenceSerializer(serializers.ModelSerializer):
 class ReminderSerializer(serializers.ModelSerializer):
     """Serializer for Reminder model."""
 
-    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=get_user_model().objects.all(), required=False
+    )
+    user_email = serializers.EmailField(source="user.email", read_only=True)
     notification = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
@@ -64,10 +68,17 @@ class ReminderSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
     def create(self, validated_data):
-        """Set user from request context."""
         request = self.context.get("request")
-        if request and request.user:
-            validated_data["user"] = request.user
+        actor = getattr(request, "user", None)
+        is_admin = bool(
+            actor
+            and actor.is_authenticated
+            and (actor.is_staff or getattr(actor, "is_admin", False))
+        )
+        if actor and actor.is_authenticated and (
+            not is_admin or "user" not in validated_data
+        ):
+            validated_data["user"] = actor
         return super().create(validated_data)
 
 

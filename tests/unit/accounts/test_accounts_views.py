@@ -1105,4 +1105,39 @@ class TestUserSessionViewSet(APITestCase):
         response = self.client.delete(url)
 
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        # Do not refresh_from_db after deletion
+        assert not UserSession.objects.filter(id=self.session.id).exists()
+
+    def test_student_cannot_list_other_user_sessions(self):
+        other = User.objects.create_user(
+            username="other",
+            email="other@example.com",
+            password="testpass123",
+        )
+        UserSession.objects.create(
+            user=other, session_key="other_session_key", device="Phone"
+        )
+        url = reverse("accounts:user-session-list")
+        response = self.client.get(url)
+        assert response.status_code == status.HTTP_200_OK
+        devices = [row["device"] for row in response.data["results"]]
+        assert devices == ["Desktop"]
+
+    def test_admin_can_list_and_revoke_any_session(self):
+        admin = User.objects.create_user(
+            username="sessionadmin",
+            email="sessionadmin@example.com",
+            password="adminpass123",
+            is_staff=True,
+        )
+        self.client.force_authenticate(user=admin)
+        listed = self.client.get(reverse("accounts:user-session-list"))
+        assert listed.status_code == status.HTTP_200_OK
+        ids = {row["id"] for row in listed.data["results"]}
+        assert self.session.id in ids
+
+        revoked = self.client.post(
+            reverse("accounts:user-session-revoke", args=[self.session.id])
+        )
+        assert revoked.status_code == status.HTTP_200_OK
+        self.session.refresh_from_db()
+        assert self.session.is_active is False

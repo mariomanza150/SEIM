@@ -4,6 +4,7 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import filters, generics, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -602,21 +603,49 @@ class PermissionViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class UserSessionViewSet(viewsets.ModelViewSet):
-    """ViewSet for listing and deleting user sessions."""
+    """List and revoke sessions. Users see their own; admins see everyone."""
 
     serializer_class = UserSessionSerializer
     permission_classes = [IsAuthenticated]
+    http_method_names = ["get", "delete", "head", "options", "post"]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_fields = ["is_active"]
+    search_fields = [
+        "user__email",
+        "user__username",
+        "device",
+        "location",
+        "ip_address",
+    ]
+    ordering_fields = ["last_activity"]
+    ordering = ["-last_activity"]
 
     def get_queryset(self):
         # Handle swagger schema generation
         if getattr(self, "swagger_fake_view", False):
             return UserSession.objects.none()
-        return UserSession.objects.filter(user=self.request.user)
+        queryset = UserSession.objects.select_related("user")
+        if _is_catalog_admin(self.request.user):
+            return queryset
+        return queryset.filter(user=self.request.user)
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=True, methods=["post"])
+    def revoke(self, request, pk=None):
+        session = self.get_object()
+        session.is_active = False
+        session.save(update_fields=["is_active"])
+        return Response(
+            {"detail": "Session revoked successfully."}, status=status.HTTP_200_OK
+        )
 
 
 class UserPermissionsView(APIView):

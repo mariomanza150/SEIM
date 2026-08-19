@@ -751,10 +751,33 @@ class PrivacySettingsSerializer(serializers.ModelSerializer):
 class UserSessionSerializer(serializers.ModelSerializer):
     """Serializer for user sessions."""
 
+    user_email = serializers.EmailField(source="user.email", read_only=True)
+    user_username = serializers.CharField(source="user.username", read_only=True)
+
     class Meta:
         model = UserSession
-        fields = ["id", "device", "location", "last_activity", "is_active"]
-        read_only_fields = ["id", "device", "location", "last_activity", "is_active"]
+        fields = [
+            "id",
+            "user",
+            "user_email",
+            "user_username",
+            "device",
+            "location",
+            "ip_address",
+            "last_activity",
+            "is_active",
+        ]
+        read_only_fields = [
+            "id",
+            "user",
+            "user_email",
+            "user_username",
+            "device",
+            "location",
+            "ip_address",
+            "last_activity",
+            "is_active",
+        ]
 
 
 class LogoutSerializer(serializers.Serializer):

@@ -288,24 +288,29 @@ class NotificationRoutingOverrideViewSet(viewsets.ModelViewSet):
 
 
 class ReminderViewSet(viewsets.ModelViewSet):
-    """ViewSet for user reminders."""
+    """ViewSet for user reminders. Admins can list and assign any user."""
 
     queryset = Reminder.objects.all()
     serializer_class = ReminderSerializer
-    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ["sent", "event_type"]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_fields = ["sent", "event_type", "user"]
+    search_fields = ["event_title", "user__email", "user__username"]
     ordering_fields = ["remind_at", "created_at"]
     ordering = ["remind_at"]
 
     def get_queryset(self):
-        """Users can only see their own reminders."""
-        return Reminder.objects.filter(user=self.request.user).select_related(
-            "notification"
-        )
+        queryset = Reminder.objects.select_related("user", "notification")
+        user = self.request.user
+        if user.is_staff or getattr(user, "is_admin", False):
+            return queryset
+        return queryset.filter(user=user)
 
     def perform_create(self, serializer):
-        """Set user from request."""
-        serializer.save(user=self.request.user)
+        serializer.save()
 
     @action(detail=False, methods=["get"])
     def upcoming(self, request):
