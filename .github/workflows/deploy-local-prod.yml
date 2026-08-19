@@ -62,10 +62,7 @@ jobs:
           Set-Location $env:SEIM_REPO
           git fetch origin main
           git checkout main
-          git pull --ff-only origin main
-          if ($env:DEPLOY_SHA) {
-            git checkout $env:DEPLOY_SHA
-          }
+          git reset --hard $env:DEPLOY_SHA
 
           $deployArgs = @{ SkipPull = $true }
           if ('${{ github.event.inputs.no_cache }}' -eq 'true') { $deployArgs.NoCache = $true }
@@ -74,6 +71,9 @@ jobs:
             if ('${{ github.event.inputs.no_cache }}' -eq 'true') { $deployArgs.NoCache = $true }
           }
           .\scripts\deploy-local-prod.ps1 @deployArgs
+
+          git checkout main
+          git reset --hard origin/main
 
       - name: Job summary
         if: always()
