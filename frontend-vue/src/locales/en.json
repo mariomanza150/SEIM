@@ -1408,6 +1408,11 @@
         "disbursing": "Disbursing",
         "disbursed": "Disbursed",
         "withdrawn": "Withdrawn"
+      },
+      "disbursementStatus": {
+        "pending": "Pending",
+        "paid": "Paid",
+        "skipped": "Skipped"
       }
     },
     "status": {

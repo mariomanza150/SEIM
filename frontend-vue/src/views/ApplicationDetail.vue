@@ -298,8 +298,8 @@
                   </p>
                   <p v-if="application.scholarship_award.notes" class="small">{{ application.scholarship_award.notes }}</p>
                   <ul v-if="application.scholarship_award.disbursements?.length" class="small mb-2">
-                    <li v-for="d in application.scholarship_award.disbursements" :key="d.id">
-                      {{ d.label }} — {{ d.status }}
+                    <li v-for="d in application.scholarship_award.disbursements" :key="d.id" data-testid="award-disbursement-row">
+                      {{ d.label }} — {{ formatDisbursementStatus(d.status) }}
                       <span v-if="d.amount"> ({{ d.amount }})</span>
                     </li>
                   </ul>
@@ -1189,6 +1189,12 @@ function statusClass(status) {
 
 function formatStatus(status) {
   return formatApplicationStatus({ status, t, te })
+}
+
+function formatDisbursementStatus(status) {
+  if (!status) return ''
+  const key = `applicationDetailPage.scholarshipAward.disbursementStatus.${status}`
+  return te(key) ? t(key) : String(status).replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 function formatDateTime(dateString) {

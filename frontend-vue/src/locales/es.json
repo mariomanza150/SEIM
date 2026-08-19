@@ -1404,6 +1404,11 @@
         "disbursing": "En desembolso",
         "disbursed": "Desembolsada",
         "withdrawn": "Retirada"
+      },
+      "disbursementStatus": {
+        "pending": "Pendiente",
+        "paid": "Pagado",
+        "skipped": "Omitido"
       }
     },
     "status": {

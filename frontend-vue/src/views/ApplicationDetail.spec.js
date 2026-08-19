@@ -388,7 +388,10 @@ describe('ApplicationDetail', () => {
                 awarded: { any_of: ['carta_beca'], configured: true, satisfied: false },
                 disbursed: { any_of: ['recibo_beca'], configured: true, satisfied: false },
               },
-              disbursements: [],
+              disbursements: [
+                { id: 'd1', label: 'Fall', status: 'pending', amount: '10000' },
+                { id: 'd2', label: 'Spring', status: 'pending', amount: '10000' },
+              ],
             },
           },
         })
@@ -410,6 +413,10 @@ describe('ApplicationDetail', () => {
     )
     const disbursed = wrapper.find('[data-testid="award-status"]').find('option[value="disbursed"]')
     expect(disbursed.attributes('disabled')).toBeDefined()
+    const rows = wrapper.findAll('[data-testid="award-disbursement-row"]')
+    expect(rows).toHaveLength(2)
+    expect(rows[0].text()).toContain(i18n.global.t('applicationDetailPage.scholarshipAward.disbursementStatus.pending'))
+    expect(rows[0].text()).not.toMatch(/\bpending\b/)
   })
 
   it('shows uploaded documents as pending until staff validation', async () => {
