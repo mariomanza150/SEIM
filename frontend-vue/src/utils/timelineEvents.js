@@ -15,6 +15,12 @@ const STATUS_SLUGS = [
 
 const GENERIC_STATUS_CODES = new Set(['change', 'changed'])
 
+export const TIMELINE_CREATED_EVENT_TYPES = new Set(['application_created', 'created'])
+
+export function timelineHasCreatedEvent(events) {
+  return (events || []).some((event) => TIMELINE_CREATED_EVENT_TYPES.has(event?.event_type))
+}
+
 function statusFromType(eventType) {
   const type = String(eventType || '')
   if (!type.startsWith('status_')) return ''

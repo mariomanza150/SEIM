@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   formatTimelineEventDescription,
   formatTimelineEventHeading,
+  timelineHasCreatedEvent,
   timelineStatusSlug,
 } from './timelineEvents'
 import i18n from '@/i18n'
@@ -45,5 +46,13 @@ describe('timelineEvents', () => {
         { t, te },
       ),
     ).not.toMatch(/under_review/)
+  })
+
+  it('detects seeded application_created events', () => {
+    expect(timelineHasCreatedEvent([])).toBe(false)
+    expect(
+      timelineHasCreatedEvent([{ event_type: 'status_change' }, { event_type: 'application_created' }]),
+    ).toBe(true)
+    expect(timelineHasCreatedEvent([{ event_type: 'created' }])).toBe(true)
   })
 })

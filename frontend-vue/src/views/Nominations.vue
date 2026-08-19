@@ -93,6 +93,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
@@ -100,6 +101,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import { formatApplicationStatus, formatDateTime as formatDateTimeUtil } from '@/utils/formatters'
 
 const { t, te, locale } = useI18n()
+const route = useRoute()
 const { success: successToast, error: errorToast } = useToast()
 
 const programs = ref([])
@@ -184,5 +186,12 @@ async function runMatch() {
   }
 }
 
-onMounted(loadPrograms)
+onMounted(async () => {
+  await loadPrograms()
+  const programFromQuery = route.query.program
+  if (typeof programFromQuery === 'string' && programs.value.some((p) => p.id === programFromQuery)) {
+    programId.value = programFromQuery
+    await loadNominations()
+  }
+})
 </script>

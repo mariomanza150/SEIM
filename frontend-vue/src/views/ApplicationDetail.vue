@@ -552,7 +552,7 @@
                   {{ timelineError }}
                 </div>
                 <div v-else class="timeline">
-                  <div class="timeline-item">
+                  <div v-if="!timelineHasCreatedEvent(timelineEvents)" class="timeline-item">
                     <div class="timeline-icon bg-primary">
                       <i class="bi bi-file-earmark-plus"></i>
                     </div>
@@ -858,7 +858,7 @@ import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import api from '@/services/api'
 import { eligibilityFailureMessages } from '@/utils/eligibilityMessages'
-import { formatTimelineEventDescription, formatTimelineEventHeading } from '@/utils/timelineEvents'
+import { formatTimelineEventDescription, formatTimelineEventHeading, timelineHasCreatedEvent } from '@/utils/timelineEvents'
 import { documentReviewStatus, documentTypeLabel } from '@/utils/documentApi'
 import { readinessLevelBadgeClass, readinessScoreBarClass, formatReadinessHeadline } from '@/utils/applicationReadiness'
 import {

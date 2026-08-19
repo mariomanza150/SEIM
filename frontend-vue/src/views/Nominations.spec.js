@@ -15,9 +15,15 @@ vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ success: vi.fn(), error: vi.fn() }),
 }))
 
+const routeQuery = { program: '' }
+vi.mock('vue-router', () => ({
+  useRoute: () => ({ query: routeQuery }),
+}))
+
 describe('Nominations', () => {
   beforeEach(() => {
     setAppLocale('en')
+    routeQuery.program = ''
     vi.clearAllMocks()
     api.get.mockImplementation((url) => {
       if (url === '/api/programs/') {
@@ -70,5 +76,19 @@ describe('Nominations', () => {
     await flushPromises()
     expect(api.post).toHaveBeenCalledWith('/api/programs/prog-1/nominations/match/')
     expect(wrapper.find('[data-testid="nomination-status"]').text()).toBe('Nominated')
+  })
+
+  it('loads nominations when ?program= is present on mount (MQ-028)', async () => {
+    routeQuery.program = 'prog-1'
+    const wrapper = mount(Nominations, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' }, PageHeader: { template: '<div><slot /></div>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="nominations-program"]').element.value).toBe('prog-1')
+    expect(wrapper.find('[data-testid="nominations-table"]').text()).toContain('Ada L.')
+    expect(api.get).toHaveBeenCalledWith('/api/programs/prog-1/nominations/')
   })
 })

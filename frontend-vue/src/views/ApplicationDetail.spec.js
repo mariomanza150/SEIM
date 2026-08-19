@@ -793,6 +793,43 @@ describe('ApplicationDetail', () => {
     expect(wrapper.findAll('[data-testid="timeline-event-description"]')[1].text()).not.toMatch(/\bnominated\b/)
   })
 
+  it('does not duplicate Application record created when API already has application_created (MQ-027)', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({ data: applicationPayload })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'ev-created',
+                event_type: 'application_created',
+                description: 'Application created for demo walkthrough.',
+                created_at: '2026-08-16T10:21:00Z',
+                created_by_name: 'Diego Lopez',
+              },
+            ],
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="timeline-event-heading"]').exists()).toBe(true)
+    })
+    const createdLabels = wrapper
+      .findAll('h6')
+      .filter((node) => node.text() === i18n.global.t('applicationDetailPage.timelineCreated'))
+    expect(createdLabels).toHaveLength(1)
+    expect(wrapper.find('[data-testid="timeline-event-description"]').text()).toContain(
+      'Application created for demo walkthrough.',
+    )
+  })
+
   it('shows human document type labels instead of slugs on the checklist', async () => {
     api.get.mockImplementation((url) => {
       if (url === '/api/applications/test-app/') {
