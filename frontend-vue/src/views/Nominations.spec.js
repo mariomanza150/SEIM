@@ -30,7 +30,13 @@ describe('Nominations', () => {
             enrollment_capacity: 1,
             slots_remaining: 1,
             applications: [
-              { id: 'app-1', student_display_name: 'Ada L.', status: 'submitted', nomination_rank: 1 },
+              {
+                id: 'app-1',
+                student_display_name: 'Ada L.',
+                status: 'submitted',
+                nomination_rank: 1,
+                submitted_at: '2026-08-07T05:23:31.065839+00:00',
+              },
             ],
           },
         })
@@ -58,6 +64,8 @@ describe('Nominations', () => {
     await wrapper.find('[data-testid="nominations-program"]').setValue('prog-1')
     await flushPromises()
     expect(wrapper.find('[data-testid="nominations-table"]').text()).toContain('Ada L.')
+    expect(wrapper.find('[data-testid="nomination-submitted-at"]').text()).not.toContain('2026-08-07T')
+    expect(wrapper.find('[data-testid="nomination-submitted-at"]').text()).not.toBe('—')
     await wrapper.find('[data-testid="nominations-match"]').trigger('click')
     await flushPromises()
     expect(api.post).toHaveBeenCalledWith('/api/programs/prog-1/nominations/match/')

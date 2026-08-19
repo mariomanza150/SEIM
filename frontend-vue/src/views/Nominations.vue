@@ -74,7 +74,7 @@
                   data-testid="nomination-rank"
                 />
               </td>
-              <td class="small text-muted">{{ row.submitted_at || '—' }}</td>
+              <td class="small text-muted" data-testid="nomination-submitted-at">{{ formatSubmittedAt(row.submitted_at) }}</td>
             </tr>
           </tbody>
         </table>
@@ -97,8 +97,9 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
+import { formatDateTime as formatDateTimeUtil } from '@/utils/formatters'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { success: successToast, error: errorToast } = useToast()
 
 const programs = ref([])
@@ -108,6 +109,10 @@ const rows = ref([])
 const loading = ref(false)
 const busy = ref(false)
 const error = ref('')
+
+function formatSubmittedAt(value) {
+  return formatDateTimeUtil({ dateString: value, locale: locale.value, fallback: '—' })
+}
 
 function applyPayload(data) {
   payload.value = data

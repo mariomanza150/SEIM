@@ -1389,6 +1389,11 @@
       "addDisbursement": "Añadir hito",
       "disbursementAdded": "Hito de desembolso añadido.",
       "evidenceCount": "{n} documento(s) de evidencia de beca.",
+      "evidenceHint": "Adjudicada requiere Carta Beca u Oficio de Asignación de Beca validado. Desembolsada requiere Recibo de Beca validado.",
+      "evidenceAwardedGate": "Se requiere Carta Beca u Oficio de Asignación de Beca validado antes de marcar adjudicada.",
+      "evidenceDisbursedGate": "Se requiere Recibo de Beca validado antes de marcar desembolsada.",
+      "evidenceValid": "validado",
+      "evidencePending": "pendiente de validación",
       "status": {
         "nominated": "Nominada",
         "awarded": "Adjudicada",

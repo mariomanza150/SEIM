@@ -279,19 +279,41 @@
                       <span v-if="d.amount"> ({{ d.amount }})</span>
                     </li>
                   </ul>
-                  <p v-if="application.scholarship_award.evidence_documents?.length" class="small text-muted mb-0">
+                  <p v-if="application.scholarship_award.evidence_documents?.length" class="small text-muted mb-1">
                     {{ t('applicationDetailPage.scholarshipAward.evidenceCount', { n: application.scholarship_award.evidence_documents.length }) }}
                   </p>
+                  <ul
+                    v-if="application.scholarship_award.evidence_documents?.length"
+                    class="small mb-2"
+                    data-testid="award-evidence-list"
+                  >
+                    <li v-for="doc in application.scholarship_award.evidence_documents" :key="doc.id">
+                      {{ doc.type_name }} —
+                      {{ doc.is_valid
+                        ? t('applicationDetailPage.scholarshipAward.evidenceValid')
+                        : t('applicationDetailPage.scholarshipAward.evidencePending') }}
+                    </li>
+                  </ul>
+                  <div
+                    v-if="awardEvidenceWarnings.length"
+                    class="alert alert-warning small mb-2"
+                    data-testid="award-evidence-gate"
+                  >
+                    <div v-for="warning in awardEvidenceWarnings" :key="warning">{{ warning }}</div>
+                  </div>
                 </template>
+                <p v-if="isCoordinator" class="small text-muted mb-2" data-testid="award-evidence-hint">
+                  {{ t('applicationDetailPage.scholarshipAward.evidenceHint') }}
+                </p>
                 <form v-if="isCoordinator" class="row g-2 mt-3" @submit.prevent="saveScholarshipAward">
                   <div class="col-md-3">
                     <label class="form-label" for="award-status">{{ t('applicationDetailPage.scholarshipAward.statusLabel') }}</label>
                     <select id="award-status" v-model="awardForm.status" class="form-select" data-testid="award-status">
                       <option value="nominated">{{ t('applicationDetailPage.scholarshipAward.status.nominated') }}</option>
-                      <option value="awarded">{{ t('applicationDetailPage.scholarshipAward.status.awarded') }}</option>
+                      <option value="awarded" :disabled="awardStatusBlocked('awarded')">{{ t('applicationDetailPage.scholarshipAward.status.awarded') }}</option>
                       <option value="declined">{{ t('applicationDetailPage.scholarshipAward.status.declined') }}</option>
                       <option value="disbursing">{{ t('applicationDetailPage.scholarshipAward.status.disbursing') }}</option>
-                      <option value="disbursed">{{ t('applicationDetailPage.scholarshipAward.status.disbursed') }}</option>
+                      <option value="disbursed" :disabled="awardStatusBlocked('disbursed')">{{ t('applicationDetailPage.scholarshipAward.status.disbursed') }}</option>
                       <option value="withdrawn">{{ t('applicationDetailPage.scholarshipAward.status.withdrawn') }}</option>
                     </select>
                   </div>
@@ -890,6 +912,27 @@ const scholarshipExportLoading = ref(false)
 const scholarshipAwardBusy = ref(false)
 const awardForm = ref({ status: 'nominated', amount: '', currency: 'MXN', notes: '' })
 const disbursementForm = ref({ label: '', amount: '' })
+
+const awardEvidenceWarnings = computed(() => {
+  const gates = application.value?.scholarship_award?.evidence_gates
+  if (!gates) return []
+  const out = []
+  if (gates.awarded?.configured && !gates.awarded.satisfied) {
+    out.push(t('applicationDetailPage.scholarshipAward.evidenceAwardedGate'))
+  }
+  if (gates.disbursed?.configured && !gates.disbursed.satisfied) {
+    out.push(t('applicationDetailPage.scholarshipAward.evidenceDisbursedGate'))
+  }
+  return out
+})
+
+function awardStatusBlocked(status) {
+  const gates = application.value?.scholarship_award?.evidence_gates
+  if (!gates) return false
+  if (status === 'awarded' && gates.awarded?.configured && !gates.awarded.satisfied) return true
+  if (status === 'disbursed' && gates.disbursed?.configured && !gates.disbursed.satisfied) return true
+  return false
+}
 
 const SCHOLARSHIP_EXPORT_MIME = {
   csv: 'text/csv;charset=utf-8',

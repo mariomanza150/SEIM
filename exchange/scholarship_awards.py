@@ -29,6 +29,12 @@ ALLOWED_TRANSITIONS = {
 SCHOLARSHIP_EVIDENCE_SLUGS = frozenset(
     {"carta_beca", "oficio_asignacion_beca", "recibo_beca"}
 )
+AWARD_LETTER_SLUGS = frozenset({"carta_beca", "oficio_asignacion_beca"})
+RECEIPT_SLUGS = frozenset({"recibo_beca"})
+EVIDENCE_GATES = {
+    ScholarshipAward.Status.AWARDED: AWARD_LETTER_SLUGS,
+    ScholarshipAward.Status.DISBURSED: RECEIPT_SLUGS,
+}
 
 _NOTIFY_TITLES = {
     ScholarshipAward.Status.NOMINATED: "Scholarship nomination",
@@ -64,6 +70,58 @@ def evidence_documents_for_application(application) -> list[dict]:
     return rows
 
 
+def validated_evidence_slugs(application) -> set[str]:
+    return {
+        row["type_slug"]
+        for row in evidence_documents_for_application(application)
+        if row["is_valid"] and row["type_slug"]
+    }
+
+
+def _catalog_has_any_slug(slugs: frozenset[str]) -> bool:
+    from documents.models import DocumentType
+
+    return DocumentType.objects.filter(slug__in=slugs).exists()
+
+
+def require_evidence_for_status(application, new_status: str) -> None:
+    """Block awarded/disbursed when the MX evidence catalog is present but incomplete.
+
+    Awarded needs a validated carta_beca *or* oficio_asignacion_beca.
+    Disbursed needs a validated recibo_beca. Awarded→disbursing is not gated.
+    Gates are skipped when none of the required slugs exist in DocumentType.
+    """
+    needed = EVIDENCE_GATES.get(new_status)
+    if not needed:
+        return
+    if not _catalog_has_any_slug(needed):
+        return
+    have = validated_evidence_slugs(application)
+    if have & needed:
+        return
+    names = ", ".join(sorted(needed))
+    raise ValueError(
+        f"Validated scholarship evidence is required before {new_status}: {names}."
+    )
+
+
+def evidence_gate_payload(application) -> dict:
+    have = validated_evidence_slugs(application)
+
+    def gate(slugs: frozenset[str]) -> dict:
+        configured = _catalog_has_any_slug(slugs)
+        return {
+            "any_of": sorted(slugs),
+            "configured": configured,
+            "satisfied": (not configured) or bool(have & slugs),
+        }
+
+    return {
+        "awarded": gate(AWARD_LETTER_SLUGS),
+        "disbursed": gate(RECEIPT_SLUGS),
+    }
+
+
 def serialize_award(award: ScholarshipAward) -> dict:
     application = award.application
     disbursements = [
@@ -96,6 +154,7 @@ def serialize_award(award: ScholarshipAward) -> dict:
         "decided_at": award.decided_at.isoformat() if award.decided_at else None,
         "disbursements": disbursements,
         "evidence_documents": evidence_documents_for_application(application),
+        "evidence_gates": evidence_gate_payload(application),
         "allowed_transitions": sorted(ALLOWED_TRANSITIONS.get(award.status, set())),
         "updated_at": award.updated_at.isoformat() if award.updated_at else None,
     }
@@ -150,6 +209,13 @@ def upsert_award(
     application, actor, *, status_value=None, amount=None, currency=None, notes=None
 ):
     """Create or update the award on *application*. Staff only."""
+    previous_existing = (
+        ScholarshipAward.objects.filter(application=application)
+        .values_list("status", flat=True)
+        .first()
+    )
+    if status_value and status_value != previous_existing:
+        require_evidence_for_status(application, status_value)
     award, created = ScholarshipAward.objects.get_or_create(
         application=application,
         defaults={
@@ -186,6 +252,8 @@ def transition_award(
     allowed = ALLOWED_TRANSITIONS.get(award.status, set())
     if new_status not in allowed:
         raise ValueError(f"Cannot transition from {award.status} to {new_status}.")
+    if new_status != award.status:
+        require_evidence_for_status(award.application, new_status)
     previous = award.status
     award.status = new_status
     award.decided_by = actor

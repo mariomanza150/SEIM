@@ -367,6 +367,46 @@ describe('ApplicationDetail', () => {
     })
     expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.scholarshipAward.noneYet'))
     expect(wrapper.find('[data-testid="award-save"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="award-evidence-hint"]').exists()).toBe(true)
+  })
+
+  it('shows scholarship evidence gates when catalog types are missing', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            scholarship_award: {
+              status: 'disbursing',
+              amount: '20000',
+              currency: 'MXN',
+              evidence_documents: [],
+              evidence_gates: {
+                awarded: { any_of: ['carta_beca'], configured: true, satisfied: false },
+                disbursed: { any_of: ['recibo_beca'], configured: true, satisfied: false },
+              },
+              disbursements: [],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="award-evidence-gate"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="award-evidence-gate"]').text()).toContain(
+      i18n.global.t('applicationDetailPage.scholarshipAward.evidenceAwardedGate'),
+    )
+    expect(wrapper.find('[data-testid="award-evidence-gate"]').text()).toContain(
+      i18n.global.t('applicationDetailPage.scholarshipAward.evidenceDisbursedGate'),
+    )
+    const disbursed = wrapper.find('[data-testid="award-status"]').find('option[value="disbursed"]')
+    expect(disbursed.attributes('disabled')).toBeDefined()
   })
 
   it('shows uploaded documents as pending until staff validation', async () => {

@@ -1393,6 +1393,11 @@
       "addDisbursement": "Add milestone",
       "disbursementAdded": "Disbursement added.",
       "evidenceCount": "{n} scholarship evidence document(s).",
+      "evidenceHint": "Awarded requires a validated Carta Beca or Oficio de Asignación de Beca. Disbursed requires a validated Recibo de Beca.",
+      "evidenceAwardedGate": "Validated Carta Beca or Oficio de Asignación de Beca is required before marking awarded.",
+      "evidenceDisbursedGate": "Validated Recibo de Beca is required before marking disbursed.",
+      "evidenceValid": "validated",
+      "evidencePending": "pending validation",
       "status": {
         "nominated": "Nominated",
         "awarded": "Awarded",
