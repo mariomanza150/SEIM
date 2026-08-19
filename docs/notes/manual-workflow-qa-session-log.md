@@ -6,6 +6,7 @@ _Companion to [`feature-tracking.md`](feature-tracking.md). Runbook: [`prompts/m
 
 | ID | Date | Cluster | Severity | Summary |
 |----|------|---------|----------|---------|
+| MWL-2026-08-18-006 | 2026-08-18 | `documents-core` | Medium | Mark invalid did not change the required-document checklist (`pending_review`) and students could not replace without a separate resubmission request. Promoted to **MQ-2026-08-18-039**. |
 | MWL-2026-08-18-005 | 2026-08-18 | `documents-core` | Low | Document comment `author` was username (`coordinator`); uploader same. Promoted to **MQ-2026-08-18-038**. |
 | MWL-2026-08-18-004 | 2026-08-18 | `documents-core` | Low | Document review history rendered raw validation slugs (`valid`). Promoted to **MQ-2026-08-18-037**. |
 | MWL-2026-08-18-001 | 2026-08-18 | `calendar-ics` | Medium | Calendar application events used raw status slugs (`under_review`, `draft`) in titles. Promoted to **MQ-2026-08-18-034**. |

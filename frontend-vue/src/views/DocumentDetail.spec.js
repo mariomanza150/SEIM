@@ -285,4 +285,51 @@ describe('DocumentDetail', () => {
     )
     expect(wrapper.text()).toContain('Stamp is readable.')
   })
+
+  it('shows Invalid instead of Pending after staff rejection', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/') {
+        return Promise.resolve({
+          data: { results: [{ id: 'app-1', program: { name: 'Spring Program' } }], count: 1 },
+        })
+      }
+      if (url === '/api/documents/doc-1/') {
+        return Promise.resolve({
+          data: {
+            id: 'doc-1',
+            application: 'app-1',
+            file: '/media/student/transcript.pdf',
+            is_valid: false,
+            validated_at: '2026-01-02T12:00:00Z',
+            created_at: '2026-01-01T12:00:00Z',
+            updated_at: '2026-01-02T12:00:00Z',
+            type: { name: 'Transcript' },
+            uploaded_by: 'student',
+            validations: [{ id: 'val-1', result: 'invalid', validated_at: '2026-01-02T12:00:00Z' }],
+            resubmission_requests: [],
+            comments: [],
+          },
+        })
+      }
+      if (String(url).includes('/api/documents/doc-1/preview/')) {
+        return Promise.resolve({
+          data: new Blob(['%PDF'], { type: '' }),
+          headers: { 'content-type': 'application/pdf' },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const invalid = i18n.global.t('documentDetailPage.validationResult.invalid')
+    expect(wrapper.text()).toContain(invalid)
+    expect(wrapper.text()).not.toContain(i18n.global.t('documentDetailPage.statusPendingShort'))
+    expect(wrapper.find('[data-testid="validation-result"]').text()).toBe(invalid)
+  })
 })

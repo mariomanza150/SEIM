@@ -1414,6 +1414,7 @@ function documentStepStatusClass(status) {
   if (status === 'approved') return 'text-success text-capitalize small'
   if (status === 'pending_review') return 'text-warning small'
   if (status === 'resubmit_requested') return 'text-danger small'
+  if (status === 'invalid') return 'text-danger small'
   if (status === 'missing') return 'text-muted small'
   return 'text-muted small'
 }

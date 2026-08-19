@@ -12,6 +12,7 @@ sys.modules["magic"] = MagicMock()
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
+from django.utils import timezone
 
 from documents.models import (
     Document,
@@ -323,6 +324,42 @@ class TestDocumentService(TestCase):
         result = DocumentService.can_replace_document(document, self.user)
 
         self.assertFalse(result)
+
+    def test_can_replace_document_when_marked_invalid(self):
+        submitted_status, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
+        self.application.status = submitted_status
+        self.application.save()
+        document = Document.objects.create(
+            application=self.application, type=self.document_type, uploaded_by=self.user
+        )
+        document.is_valid = False
+        document.validated_at = timezone.now()
+        document.save(update_fields=["is_valid", "validated_at"])
+        self.assertTrue(DocumentService.can_replace_document(document, self.user))
+
+    def test_checklist_marks_invalid_after_staff_rejection(self):
+        from exchange.models import ProgramDocumentRequirement
+
+        ProgramDocumentRequirement.objects.get_or_create(
+            program=self.program,
+            document_type=self.document_type,
+            defaults={"is_required": True, "sort_order": 1},
+        )
+        document = Document.objects.create(
+            application=self.application, type=self.document_type, uploaded_by=self.user
+        )
+        document.is_valid = False
+        document.validated_at = timezone.now()
+        document.save(update_fields=["is_valid", "validated_at"])
+        summary = DocumentService.build_application_document_checklist(self.application)
+        item = next(
+            row
+            for row in summary["items"]
+            if row["document_type_id"] == self.document_type.id
+        )
+        self.assertEqual(item["status"], "invalid")
 
     def test_can_replace_document_admin_override(self):
         """Test document replacement with admin override."""

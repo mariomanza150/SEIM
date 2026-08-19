@@ -368,18 +368,15 @@ class DocumentService:
             "approved",
             "rejected",
         ]:
-            # Check if there's a pending resubmission request for this document
             has_pending_request = DocumentResubmissionRequest.objects.filter(
                 document=document, resolved=False
             ).exists()
-
             if has_pending_request:
                 return True
-
-            # Allow admins to override
-            if hasattr(user, "role") and user.role == "admin":
+            if document.validated_at and not document.is_valid:
                 return True
-
+            if getattr(user, "role", None) == "admin":
+                return True
             return False
 
         return False
@@ -390,7 +387,7 @@ class DocumentService:
         Compare program document requirements to uploads on this application.
 
         Status per type (latest upload for that type): missing, pending_review,
-        resubmit_requested, approved, n_a (instructions_only).
+        invalid, resubmit_requested, approved, n_a (instructions_only).
         Includes deadline / overdue flags for UI and coordinator review.
         """
         from exchange.models import ProgramDocumentRequirement
@@ -475,6 +472,8 @@ class DocumentService:
                 entry["status"] = "approved"
                 if is_required:
                     approved_count += 1
+            elif latest.validated_at:
+                entry["status"] = "invalid"
             else:
                 entry["status"] = "pending_review"
             items.append(entry)

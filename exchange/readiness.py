@@ -50,6 +50,8 @@ def _doc_workflow_status(doc) -> str:
             return "resubmit_requested"
     if doc.is_valid:
         return "approved"
+    if doc.validated_at:
+        return "invalid"
     return "pending_review"
 
 
@@ -84,10 +86,11 @@ def _document_progress_via_checklist(application) -> tuple[float, dict[str, int]
             "approved": summary["approved_count"],
             "pending_review": 0,
             "resubmit": 0,
+            "invalid": 0,
             "missing": 0,
         }
     approved = summary["approved_count"]
-    pending = resubmit = missing = 0
+    pending = resubmit = missing = invalid = 0
     for item in summary["items"]:
         if not item.get("is_required", True):
             continue
@@ -96,14 +99,17 @@ def _document_progress_via_checklist(application) -> tuple[float, dict[str, int]
             pending += 1
         elif st == "resubmit_requested":
             resubmit += 1
+        elif st == "invalid":
+            invalid += 1
         elif st == "missing":
             missing += 1
-    weighted = approved + 0.55 * pending + 0.25 * resubmit
+    weighted = approved + 0.55 * pending + 0.25 * resubmit + 0.25 * invalid
     return min(1.0, weighted / req), {
         "required": req,
         "approved": approved,
         "pending_review": pending,
         "resubmit": resubmit,
+        "invalid": invalid,
         "missing": missing,
     }
 
@@ -156,6 +162,8 @@ def _headline_draft(
         parts.append(f"{counts['missing']} required document(s) missing")
     if counts["resubmit"]:
         parts.append(f"{counts['resubmit']} document(s) need resubmission")
+    if counts.get("invalid"):
+        parts.append(f"{counts['invalid']} document(s) marked invalid")
     if counts["pending_review"]:
         parts.append(f"{counts['pending_review']} awaiting review")
     if not form_ok:
@@ -282,6 +290,7 @@ def compute_application_readiness(
     docs_ok = counts["required"] == 0 or (
         counts["approved"] == counts["required"]
         and counts["resubmit"] == 0
+        and counts.get("invalid", 0) == 0
         and counts["pending_review"] == 0
     )
     if (
@@ -296,6 +305,7 @@ def compute_application_readiness(
     elif (
         counts["missing"]
         or counts["resubmit"]
+        or counts.get("invalid", 0)
         or not form_ok
         or not host_ok
         or not eligibility_ok

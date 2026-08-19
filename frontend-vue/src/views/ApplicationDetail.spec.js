@@ -885,4 +885,42 @@ describe('ApplicationDetail', () => {
     expect(names).not.toContain('transcript')
     expect(names).not.toContain('passport')
   })
+
+  it('shows Invalid on the required-document checklist', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'under_review',
+            document_checklist: {
+              required_count: 1,
+              approved_count: 0,
+              complete: false,
+              items: [
+                {
+                  document_type_id: 1,
+                  slug: 'transcript',
+                  name: 'transcript',
+                  status: 'invalid',
+                  is_required: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-item"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="document-checklist-item"]').text()).toContain(
+      i18n.global.t('applicationDetailPage.checklist.invalid'),
+    )
+  })
 })

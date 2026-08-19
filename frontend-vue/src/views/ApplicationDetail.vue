@@ -1299,6 +1299,7 @@ function checklistBadgeClass(status) {
     missing: 'bg-secondary',
     pending_review: 'bg-warning text-dark',
     resubmit_requested: 'bg-danger',
+    invalid: 'bg-danger',
     approved: 'bg-success',
     n_a: 'bg-info text-dark',
   }

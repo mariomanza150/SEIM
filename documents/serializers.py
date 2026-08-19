@@ -400,7 +400,8 @@ class DocumentSerializer(serializers.ModelSerializer):
         user = self.context["request"].user
         if not DocumentService.can_replace_document(instance, user):
             raise serializers.ValidationError(
-                "Document cannot be replaced. A resubmission request is required or you need admin privileges."
+                "Document cannot be replaced. A resubmission request or invalid "
+                "review is required, or you need admin privileges."
             )
 
         if "file" in validated_data:

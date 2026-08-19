@@ -1499,7 +1499,7 @@
     "labelValidatedAt": "Fecha de validación",
     "downloadDocument": "Descargar documento",
     "replaceFileHeading": "Reemplazar archivo",
-    "replaceFileHint": "Sube un archivo nuevo si el personal pidió un reenvío o tu solicitud sigue en borrador.",
+    "replaceFileHint": "Sube un archivo nuevo si el personal pidió un reenvío, marcó el archivo como no válido, o tu solicitud sigue en borrador.",
     "uploadReplacement": "Subir reemplazo",
     "reviewHistory": "Historial de revisión",
     "noValidationsYet": "Aún no hay registros de validación.",
@@ -1600,6 +1600,8 @@
         "missingDocsMany": "Faltan {n} documentos obligatorios",
         "resubmitOne": "{n} documento necesita reenvío",
         "resubmitMany": "{n} documentos necesitan reenvío",
+        "invalidOne": "{n} documento marcado como no válido",
+        "invalidMany": "{n} documentos marcados como no válidos",
         "pendingReviewOne": "{n} en espera de revisión",
         "pendingReviewMany": "{n} en espera de revisión",
         "formIncomplete": "Formulario del programa incompleto",
@@ -1709,6 +1711,7 @@
       "missing": "Falta",
       "pending_review": "Pendiente de revisión",
       "resubmit_requested": "Reenvío necesario",
+      "invalid": "No válido",
       "approved": "Aprobado",
       "n_a": "Solo instrucciones"
     },
@@ -1953,6 +1956,7 @@
       "missing": "falta",
       "pending_review": "pendiente de revisión",
       "resubmit_requested": "reenvío necesario",
+      "invalid": "no válido",
       "approved": "aprobado"
     }
   },

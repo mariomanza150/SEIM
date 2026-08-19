@@ -27,3 +27,4 @@ Coordinator walked Vienna application `0e4c6efc-206a-4bb6-a203-c569a542a0de` (DE
 
 - **MQ-037** review history slug `valid` → **Valid**
 - **MQ-038** comment/uploader usernames → **Coordinator User** / **Student User**
+- **MQ-039** mark invalid: checklist **Invalid** (not Pending review); student can replace without a separate resubmission request; document page status **Invalid** (not Pending)

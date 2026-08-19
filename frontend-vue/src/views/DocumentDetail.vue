@@ -162,12 +162,8 @@
                   <i class="bi bi-file-earmark me-2"></i>
                   {{ fileName(document.file) }}
                 </h5>
-                <span class="badge fs-6" :class="document.is_valid ? 'bg-success' : 'bg-warning'">
-                  {{
-                    document.is_valid
-                      ? t('documentDetailPage.validated')
-                      : t('documentDetailPage.pendingValidation')
-                  }}
+                <span class="badge fs-6" :class="documentPageStatusClass">
+                  {{ documentPageStatusLabel('header') }}
                 </span>
               </div>
               <div class="card-body">
@@ -413,12 +409,8 @@
                 <div class="mb-3">
                   <label class="text-muted small">{{ t('documentDetailPage.statusLabel') }}</label>
                   <p>
-                    <span class="badge" :class="document.is_valid ? 'bg-success' : 'bg-warning'">
-                      {{
-                        document.is_valid
-                          ? t('documentDetailPage.statusValidatedShort')
-                          : t('documentDetailPage.statusPendingShort')
-                      }}
+                    <span class="badge" :class="documentPageStatusClass">
+                      {{ documentPageStatusLabel('short') }}
                     </span>
                   </p>
                 </div>
@@ -443,6 +435,7 @@ import { resolveFileUrl } from '@/utils/apiUrl'
 import {
   documentApplicationId,
   documentApplicationProgramName,
+  documentReviewStatus,
   documentTypeLabel,
 } from '@/utils/documentApi'
 import api from '@/services/api'
@@ -629,6 +622,28 @@ function formatValidationResult(result) {
     return t(`documentDetailPage.validationResult.${slug}`)
   }
   return result || ''
+}
+
+const documentPageStatus = computed(() => documentReviewStatus(document.value))
+
+const documentPageStatusClass = computed(() => {
+  const status = documentPageStatus.value
+  if (status === 'valid') return 'bg-success'
+  if (status === 'invalid') return 'bg-danger'
+  return 'bg-warning text-dark'
+})
+
+function documentPageStatusLabel(kind = 'short') {
+  const status = documentPageStatus.value
+  if (status === 'valid') {
+    return kind === 'header'
+      ? t('documentDetailPage.validated')
+      : t('documentDetailPage.statusValidatedShort')
+  }
+  if (status === 'invalid') return t('documentDetailPage.validationResult.invalid')
+  return kind === 'header'
+    ? t('documentDetailPage.pendingValidation')
+    : t('documentDetailPage.statusPendingShort')
 }
 
 function documentCommentAuthor(comment) {

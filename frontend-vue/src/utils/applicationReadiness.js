@@ -63,6 +63,14 @@ export function formatDraftReadinessHeadline({ readiness, t, locale } = {}) {
       counts.resubmit,
     ))
   }
+  if (counts.invalid) {
+    parts.push(countPhrase(
+      t,
+      'applicationDetailPage.readinessHeadline.draft.invalidOne',
+      'applicationDetailPage.readinessHeadline.draft.invalidMany',
+      counts.invalid,
+    ))
+  }
   if (counts.pending_review) {
     parts.push(countPhrase(
       t,

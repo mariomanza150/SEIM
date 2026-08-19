@@ -1503,7 +1503,7 @@
     "labelValidatedAt": "Validated at",
     "downloadDocument": "Download document",
     "replaceFileHeading": "Replace file",
-    "replaceFileHint": "Upload a new file when staff asked for a resubmission or your application is still in draft.",
+    "replaceFileHint": "Upload a new file when staff asked for a resubmission, marked the file invalid, or your application is still in draft.",
     "uploadReplacement": "Upload replacement",
     "reviewHistory": "Review history",
     "noValidationsYet": "No validation records yet.",
@@ -1604,6 +1604,8 @@
         "missingDocsMany": "{n} required documents missing",
         "resubmitOne": "{n} document needs resubmission",
         "resubmitMany": "{n} documents need resubmission",
+        "invalidOne": "{n} document marked invalid",
+        "invalidMany": "{n} documents marked invalid",
         "pendingReviewOne": "{n} awaiting review",
         "pendingReviewMany": "{n} awaiting review",
         "formIncomplete": "Program form incomplete",
@@ -1713,6 +1715,7 @@
       "missing": "Missing",
       "pending_review": "Pending review",
       "resubmit_requested": "Resubmission needed",
+      "invalid": "Invalid",
       "approved": "Approved",
       "n_a": "Instructions only"
     },
@@ -1957,6 +1960,7 @@
       "missing": "missing",
       "pending_review": "pending review",
       "resubmit_requested": "resubmission needed",
+      "invalid": "invalid",
       "approved": "approved"
     }
   },

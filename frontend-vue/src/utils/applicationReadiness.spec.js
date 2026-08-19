@@ -6,6 +6,11 @@ const messages = {
   'applicationDetailPage.readinessHeadline.draft.eligibilityUnmet': 'Eligibility requirements not met',
   'applicationDetailPage.readinessHeadline.draft.missingDocsOne': '{n} required document missing',
   'applicationDetailPage.readinessHeadline.draft.missingDocsMany': '{n} required documents missing',
+  'applicationDetailPage.readinessHeadline.draft.resubmitOne': '{n} document needs resubmission',
+  'applicationDetailPage.readinessHeadline.draft.resubmitMany': '{n} documents need resubmission',
+  'applicationDetailPage.readinessHeadline.draft.invalidOne': '{n} document marked invalid',
+  'applicationDetailPage.readinessHeadline.draft.invalidMany': '{n} documents marked invalid',
+  'applicationDetailPage.readinessHeadline.draft.pendingReviewOne': '{n} awaiting review',
   'applicationDetailPage.readinessHeadline.draft.hostIncomplete': 'Host destination incomplete',
   'applicationDetailPage.readinessHeadline.draft.closedOn': 'Applications closed on {date}.',
   'applicationDetailPage.readinessHeadline.draft.windowClosed': 'Application window is closed for this program.',
@@ -56,6 +61,23 @@ describe('formatReadinessHeadline', () => {
         locale: 'en',
       }),
     ).toBe('1 required document missing; Eligibility requirements not met.')
+  })
+
+  it('mentions invalid documents in draft headlines', () => {
+    expect(
+      formatReadinessHeadline({
+        status: 'draft',
+        headline: '',
+        readiness: {
+          window_open: true,
+          document_counts: { missing: 0, resubmit: 0, invalid: 1, pending_review: 0, required: 1 },
+          form_complete: true,
+        },
+        t,
+        te,
+        locale: 'en',
+      }),
+    ).toBe('1 document marked invalid.')
   })
 
   it('falls back to the API headline when draft structure is absent', () => {

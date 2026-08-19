@@ -214,7 +214,8 @@ def _application_quality_factor(application) -> dict[str, Any]:
     pts = min(MAX_APPLICATION_QUALITY, doc_pts + form_pts)
     detail_parts = [
         f"Documents weighted progress {doc_progress:.0%} ({counts['approved']}/{counts['required'] or 0} approved"
-        f", pending {counts['pending_review']}, resubmit {counts['resubmit']}, missing {counts['missing']})",
+        f", pending {counts['pending_review']}, resubmit {counts['resubmit']}, "
+        f"invalid {counts.get('invalid', 0)}, missing {counts['missing']})",
         f"dynamic form completeness {form_progress:.0%}",
     ]
     return {
