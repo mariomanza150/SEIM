@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
 from django.db.models import ProtectedError
 from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
-from rest_framework import generics, status, viewsets
+from rest_framework import filters, generics, status, viewsets
 from rest_framework.permissions import SAFE_METHODS, BasePermission, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -62,9 +63,25 @@ from .serializers import (
 class UserViewSet(viewsets.ModelViewSet):
     """ViewSet for User model operations."""
 
-    queryset = get_user_model().objects.all()
+    queryset = get_user_model().objects.prefetch_related("roles").all()
     serializer_class = UserSerializer
-    permission_classes = [CanManageRoles]  # SEIM admins (role-based) can manage users
+    permission_classes = [CanManageRoles]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = [
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+        "middle_name",
+        "mothers_last_name",
+    ]
+    filterset_fields = ["is_active", "is_staff"]
+    ordering_fields = ["username", "email", "date_joined"]
+    http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
 
 class ProfileViewSet(viewsets.ModelViewSet):

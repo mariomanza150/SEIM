@@ -37,7 +37,7 @@ SPA aliases (not separate pages): `/seim/admin` → programs admin, `/seim/admin
 - [x] Staff exchange agreements + agreement documents
 - [x] Notification routing and analytics forecasts
 - [x] Partner portal
-- [x] SPA admin: programs, catalogs (home lists + host destinations hub), grade scales, forms (JSON), visual dynforms builder, data management, workflows, application edit
+- [x] SPA admin: programs, catalogs, grade scales, users/roles, forms (JSON), visual dynforms builder, data management, workflows, application edit
 - [x] `/dynforms/` and application-forms HTML list/builder redirect to `/seim/admin/dynforms`
 - [x] `/data-management/` HTML hub and section pages redirect to `/seim/admin/data-management`
 - [x] Analytics HTML dashboard/statistics pages redirect to `/seim/dashboard` or `/seim/analytics-forecasts`
@@ -51,7 +51,7 @@ SPA aliases (not separate pages): `/seim/admin` → programs admin, `/seim/admin
 - [ ] `data_management/templates/**` and `application_forms/templates/**` are unused HTML leftovers (views redirect)
 - [ ] `templates/dynforms/**` leftover after the `/dynforms/` redirect
 - [ ] Root `/documents/<id>/` is **not** redirected (Wagtail files now live at `/cms-documents/`; SPA detail is `/seim/documents/:id`)
-- [ ] Django admin remains the system-of-record editor for users, roles, sessions, and other operational models
+- [ ] Django admin remains the system-of-record editor for sessions and other operational models
 - [ ] Agreement-expiration emails still deep-link to Django admin change pages (intentional)
 - [ ] Backend notification `action_url` values are still stored as root paths (`/applications/...`); SPA maps them, but new writes should prefer `/seim/...`
 - [ ] White-labeling / LICENSE / GitHub metadata are out of scope here

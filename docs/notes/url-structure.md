@@ -65,7 +65,7 @@ Root leftovers (`/applications/`, `/applications/create/`, `/profile/`, `/calend
 - `/seim/admin-dashboard/` - SPA alias that redirects to `/seim/dashboard/`
 - `/admin-dashboard/` - leftover root alias that redirects to `/seim/dashboard/` (must not 404 via Wagtail)
 - `/dashboard/analytics/` - leftover SSR analytics URL that redirects to `/seim/analytics-forecasts/`
-- `/seim/admin/programs|catalogs|grades|forms|dynforms|data-management|workflows|documents` - Vue admin console
+- `/seim/admin/programs|catalogs|grades|users|forms|dynforms|data-management|workflows|documents` - Vue admin console
 - `/seim/admin/dynforms` - Vue visual form builder (admin only; `/dynforms/` redirects here)
 - `/seim/admin/data-management` - Vue data-management console (`/data-management/` redirects here)
 

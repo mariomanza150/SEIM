@@ -66,6 +66,8 @@ class TestUserSerializer:
         assert "is_staff" in data
         assert "is_superuser" in data
         assert "role" in data
+        assert "roles" in data
+        assert data["roles"] == []
 
     def test_user_serializer_role_field(self):
         """Test UserSerializer role field uses primary_role."""

@@ -87,6 +87,40 @@ class TestUserViewSet(APITestCase):
 
         assert response.status_code == status.HTTP_201_CREATED
         assert User.objects.filter(username="newuser").exists()
+        created = User.objects.get(username="newuser")
+        assert created.check_password("newpass123")
+
+    def test_admin_can_assign_roles_and_search_users(self):
+        Role.objects.get_or_create(name="coordinator")
+        self.client.force_authenticate(user=self.admin_user)
+        create = self.client.post(
+            reverse("accounts:user-list"),
+            {
+                "username": "coorduser",
+                "email": "coorduser@example.com",
+                "password": "coordpass123",
+                "roles": ["coordinator"],
+                "is_email_verified": True,
+            },
+            format="json",
+        )
+        assert create.status_code == status.HTTP_201_CREATED
+        assert create.data["roles"] == ["coordinator"]
+        assert create.data["role"] == "coordinator"
+
+        listed = self.client.get(reverse("accounts:user-list"), {"search": "coorduser"})
+        assert listed.status_code == status.HTTP_200_OK
+        emails = {row["email"] for row in listed.data["results"]}
+        assert "coorduser@example.com" in emails
+        assert "user@example.com" not in emails
+
+    def test_admin_cannot_set_superuser_via_api(self):
+        self.client.force_authenticate(user=self.admin_user)
+        url = reverse("accounts:user-detail", args=[self.regular_user.id])
+        response = self.client.patch(url, {"is_superuser": True}, format="json")
+        assert response.status_code == status.HTTP_200_OK
+        self.regular_user.refresh_from_db()
+        assert self.regular_user.is_superuser is False
 
 
 @pytest.mark.django_db

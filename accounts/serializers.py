@@ -22,6 +22,13 @@ from .models import (
 
 class UserSerializer(serializers.ModelSerializer):
     role = serializers.CharField(source="primary_role", read_only=True)
+    roles = serializers.SlugRelatedField(
+        many=True,
+        slug_field="name",
+        queryset=Role.objects.all(),
+        required=False,
+    )
+    password = serializers.CharField(write_only=True, required=False, allow_blank=False)
 
     class Meta:
         model = User
@@ -36,8 +43,35 @@ class UserSerializer(serializers.ModelSerializer):
             "is_active",
             "is_staff",
             "is_superuser",
+            "is_email_verified",
             "role",
+            "roles",
+            "password",
         )
+        extra_kwargs = {
+            "is_superuser": {"read_only": True},
+        }
+
+    def create(self, validated_data):
+        password = validated_data.pop("password", None)
+        roles = validated_data.pop("roles", [])
+        if not password:
+            raise serializers.ValidationError({"password": "This field is required."})
+        user = User.objects.create_user(password=password, **validated_data)
+        if roles:
+            user.roles.set(roles)
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        roles = validated_data.pop("roles", None)
+        instance = super().update(instance, validated_data)
+        if password:
+            instance.set_password(password)
+            instance.save(update_fields=["password"])
+        if roles is not None:
+            instance.roles.set(roles)
+        return instance
 
 
 _CEFR_LEVELS = frozenset({"A1", "A2", "B1", "B2", "C1", "C2"})

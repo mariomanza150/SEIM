@@ -81,6 +81,11 @@
                 </router-link>
               </li>
               <li>
+                <router-link class="dropdown-item" :to="{ name: 'AdminUsers' }" @click="closeAdminMenu">
+                  {{ t('route.names.AdminUsers') }}
+                </router-link>
+              </li>
+              <li>
                 <router-link class="dropdown-item" :to="{ name: 'AdminForms' }" @click="closeAdminMenu">
                   {{ t('route.names.AdminForms') }}
                 </router-link>
@@ -407,6 +412,12 @@ const adminNavItems = computed(() => [
     to: { name: 'AdminGrades' },
     label: t('route.names.AdminGrades'),
     iconClass: 'bi bi-bar-chart-steps',
+  },
+  {
+    key: 'adminUsers',
+    to: { name: 'AdminUsers' },
+    label: t('route.names.AdminUsers'),
+    iconClass: 'bi bi-people',
   },
   {
     key: 'adminForms',
