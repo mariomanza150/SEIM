@@ -15,10 +15,16 @@ vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ success: vi.fn(), error: vi.fn() }),
 }))
 
+const routeQuery = { status: '' }
+vi.mock('vue-router', () => ({
+  useRoute: () => ({ query: routeQuery }),
+}))
+
 describe('Applications', () => {
   beforeEach(() => {
     localStorage.clear()
     setAppLocale('en')
+    routeQuery.status = ''
     vi.clearAllMocks()
     global.confirm = vi.fn(() => false)
   })
@@ -241,5 +247,21 @@ describe('Applications', () => {
       'Technical University of Munich',
     )
     expect(wrapper.text()).not.toContain(i18n.global.t('applicationDetailPage.notAvailable'))
+  })
+
+  it('applies ?status= from route query on mount (MQ-026)', async () => {
+    routeQuery.status = 'nominated'
+    api.get.mockResolvedValue({ data: { results: [], count: 0, next: null, previous: null } })
+    const wrapper = mount(Applications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="applications-filter-status"]').element.value).toBe('nominated')
+    expect(api.get).toHaveBeenCalledWith('/api/applications/', {
+      params: { page: 1, ordering: '-created_at', status: 'nominated' },
+    })
   })
 })

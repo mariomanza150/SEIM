@@ -15,10 +15,16 @@ vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ success: vi.fn(), error: vi.fn() }),
 }))
 
+const routeQuery = { status: '' }
+vi.mock('vue-router', () => ({
+  useRoute: () => ({ query: routeQuery }),
+}))
+
 describe('CoordinatorReviewQueue', () => {
   beforeEach(() => {
     localStorage.clear()
     setAppLocale('en')
+    routeQuery.status = ''
     vi.clearAllMocks()
     api.get.mockImplementation((url) => {
       if (url === '/api/saved-searches/') {
@@ -148,6 +154,21 @@ describe('CoordinatorReviewQueue', () => {
     await flushPromises()
     expect(api.get).toHaveBeenCalledWith('/api/applications/', {
       params: { page: 1, ordering: '-submitted_at', status: 'submitted' },
+    })
+  })
+
+  it('applies ?status= from route query on mount (MQ-026)', async () => {
+    routeQuery.status = 'nominated'
+    const wrapper = mount(CoordinatorReviewQueue, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="review-queue-filter-status"]').element.value).toBe('nominated')
+    expect(api.get).toHaveBeenCalledWith('/api/applications/', {
+      params: { page: 1, ordering: '-submitted_at', status: 'nominated' },
     })
   })
 })

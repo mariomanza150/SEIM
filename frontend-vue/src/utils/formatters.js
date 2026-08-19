@@ -58,6 +58,26 @@ export function applicationStatusBadgeClass(status) {
   return classes[status] || 'bg-secondary'
 }
 
+export const APPLICATION_STATUS_FILTER_VALUES = [
+  'draft',
+  'submitted',
+  'under_review',
+  'nominated',
+  'waitlist',
+  'approved',
+  'rejected',
+  'completed',
+  'cancelled',
+  'withdrawn',
+]
+
+/** Read a validated application status filter from a route query object. */
+export function applicationStatusFromRouteQuery(query) {
+  const raw = query?.status
+  if (typeof raw !== 'string') return ''
+  return APPLICATION_STATUS_FILTER_VALUES.includes(raw) ? raw : ''
+}
+
 export function formatApplicationStatus({ status, t, te, unknownKey = 'applicationDetailPage.status.unknown' }) {
   if (!status) return t(unknownKey)
   const key = `applicationDetailPage.status.${status}`

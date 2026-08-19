@@ -260,6 +260,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
@@ -275,7 +276,9 @@ import {
   serializeReviewQueueFilters,
 } from '@/utils/reviewQueuePresets'
 import { resolveListPage } from '@/utils/listPage'
-import { applicationStatusBadgeClass } from '@/utils/formatters'
+import { applicationStatusBadgeClass, applicationStatusFromRouteQuery } from '@/utils/formatters'
+
+const route = useRoute()
 
 const { t, te, locale } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -467,6 +470,10 @@ onMounted(async () => {
   const defaultPreset = savedPresets.value.find((p) => p.is_default)
   if (defaultPreset) {
     filters.value = deserializeReviewQueueFilters(defaultPreset.filters)
+  }
+  const statusFromQuery = applicationStatusFromRouteQuery(route.query)
+  if (statusFromQuery) {
+    filters.value.status = statusFromQuery
   }
   await fetchApplications(1)
 })

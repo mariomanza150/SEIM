@@ -220,6 +220,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
@@ -231,10 +232,13 @@ import {
   applicationProgramDisplayName,
   applicationHostInstitution,
   applicationStatusBadgeClass,
+  applicationStatusFromRouteQuery,
   formatApplicationStatus,
   formatDate,
 } from '@/utils/formatters'
 import { resolveListPage } from '@/utils/listPage'
+
+const route = useRoute()
 
 const { t, te, locale } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -380,6 +384,10 @@ async function deleteApplication(id) {
 }
 
 onMounted(() => {
+  const statusFromQuery = applicationStatusFromRouteQuery(route.query)
+  if (statusFromQuery) {
+    filters.value.status = statusFromQuery
+  }
   fetchApplications()
 })
 </script>
