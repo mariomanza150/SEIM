@@ -848,7 +848,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
                     "step_key": str(current_key) if current_key else None,
                     "complete": True,
                     "items": [],
-                }        return {
+                }
+        return {
             "multi_step": ft.is_multi_step(),
             "steps": steps,
             "current_step": obj.dynamic_form_current_step,
