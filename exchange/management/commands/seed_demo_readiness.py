@@ -38,7 +38,7 @@ from exchange.demo_seed import (
     DEMO_WORKFLOW_NAME,
     DEMO_WORKFLOW_SLUG,
 )
-from exchange.eligibility_rules import ELIGIBILITY_SCHEMA_VERSION
+from exchange.eligibility_ruleset_schema import RULESET_DOCUMENT_SCHEMA_VERSION
 from exchange.models import (
     AgreementComment,
     Application,
@@ -261,7 +261,7 @@ class Command(BaseCommand):
             name=DEMO_ELIGIBILITY_RULESET_NAME,
             defaults={
                 "description": "Demo overlay tightening Fulbright GPA/language.",
-                "schema_version": ELIGIBILITY_SCHEMA_VERSION,
+                "schema_version": RULESET_DOCUMENT_SCHEMA_VERSION,
                 "is_active": True,
                 "rules_json": {
                     "program_overrides": {

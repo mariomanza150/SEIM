@@ -24,11 +24,20 @@ class EligibilityRuleSet(UUIDModel, TimeStampedModel):
 
     When a program links an active ruleset, ``ApplicationService.check_eligibility``
     applies ``rules_json.program_overrides`` on top of program scalar fields.
+
+    ``schema_version`` is the *document* format version (see
+    ``exchange.eligibility_ruleset_schema``), not the evaluation engine
+    ``ELIGIBILITY_SCHEMA_VERSION``. ``content_revision`` increments whenever
+    ``rules_json`` changes so staff can track overlay edits.
     """
 
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, default="")
-    schema_version = models.PositiveIntegerField(default=1)
+    schema_version = models.PositiveIntegerField(default=2)
+    content_revision = models.PositiveIntegerField(
+        default=1,
+        help_text=_("Increments when rules_json changes (edit versioning)."),
+    )
     rules_json = models.JSONField(default=dict, blank=True)
     is_active = models.BooleanField(default=True)
 

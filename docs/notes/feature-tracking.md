@@ -44,7 +44,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Inline document preview and review context | `frontend-vue`, `documents` | Implemented | 2026-04-08 | `GET /api/documents/{id}/preview/` streams the file with JWT; Vue document detail loads a blob preview (PDF iframe / image) and shows a short “Review context” list from open resubmissions and latest non-valid validation. `IsOwnerOrAdmin` updated so `Document` checks coordinator/admin role plus application student and uploader. Tests: `tests/integration/api/test_document_preview_api.py`. |
 | Live application and document status sync | `exchange`, `notifications`, `frontend-vue`, `documents` | Implemented | 2026-04-08 | `NotificationService.broadcast_application_sync` + `NotificationConsumer.application_sync` send `application.sync` over the existing `/ws/notifications/` channel to student, assigned coordinator, and program coordinators. Wired from comments, status/submit/withdraw, document upload/validate/resubmit/replace/comment. Vue `websocket.js` dispatches `seim-application-sync`; `ApplicationDetail` soft-refetches; `DocumentDetail` refetches when `application_id` or `document_id` matches. Tests: `test_application_sync_broadcast.py`, `test_websocket_consumer.py`, `websocket.spec.js`. |
 | Action-oriented dashboard with next steps | `frontend-vue`, `accounts`, `exchange`, `documents`, `notifications` | Implemented | 2026-04-08 | Dashboard replaces placeholder activity with “What needs your attention” (unread notifications, student drafts and open document resubmissions, staff assigned/pending review and resubmit-queue links). Stats API is role-aware for coordinator/admin. Listens for `seim-application-sync` to refresh stats and next steps. Tests: `tests/integration/api/test_dashboard_stats_api.py`, `frontend-vue/src/utils/dashboardNextSteps.spec.js`. |
-| Saved searches in Vue review queue | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-08 | Coordinator review queue loads `search_type=application` presets from `/api/saved-searches/`, applies default on open, save/delete/set-default in UI; filters serialized in `reviewQueuePresets.js`. Broader presets for agreements/document queues remain P2. Tests: `frontend-vue/src/utils/reviewQueuePresets.spec.js`. |
+| Saved searches in Vue review queue | `frontend-vue`, `exchange`, `api` | Implemented | 2026-04-08 | Coordinator review queue loads `search_type=application` presets from `/api/saved-searches/`, applies default on open, save/delete/set-default in UI; filters serialized in `reviewQueuePresets.js`. Agreements, agreement-documents, staff documents, calendar, and analytics-forecast presets are Implemented in sibling rows. Tests: `frontend-vue/src/utils/reviewQueuePresets.spec.js`. |
 | Saved searches for staff agreement registry and document lists | `frontend-vue`, `exchange`, `documents`, `api` | Implemented | 2026-08-18 | New staff routes `/exchange-agreements` and `/agreement-documents` with filters + saved presets (`exchange_agreement`, `agreement_document`); staff document list presets on `/documents` (`document`) always visible (no Advanced filters toggle). `SavedSearch` model allows new `search_type` values. `DocumentFilter` + ordering on `DocumentViewSet`. Shared `useStaffSavedPresets` composable and `staffListSearchPresets.js`. Tests: `staffListSearchPresets.spec.js`, `tests/integration/api/test_documents_list_filters.py`. Live save 2026-08-18: `MQ-2026-08-18 pending review`. |
 | Student application readiness scoring | `exchange`, `documents`, `frontend-vue`, `api` | Implemented | 2026-04-08 | `ApplicationSerializer.readiness` via `exchange.readiness.compute_application_readiness`: document checklist progress (prefetch-aware), program application window, optional dynamic form on detail only; list omits form DB lookups. Vue applications cards + application detail banner with score/level/headline. Tests: `tests/unit/exchange/test_application_readiness.py`, `frontend-vue/src/utils/applicationReadiness.spec.js`. |
 | Advanced program filtering UX | `exchange`, `frontend-vue`, `api` | Implemented | 2026-04-08 | New application flow exposes program filters (search, language/CEFR, start dates, “my GPA”, accepting-applications-now, sort) backed by `ProgramFilter`; `accepting_applications=true` filter on `GET /api/programs/`. Edit mode still loads full active list. Tests: `tests/unit/exchange/test_filters.py` (`TestProgramFilter.test_filter_accepting_applications`). |
@@ -165,7 +165,8 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | API contracts doc: staff notification routing endpoints | `docs`, `notifications`, `api` | Implemented | 2026-04-16 | `docs/api-contracts.md` **Staff notification routing** subsection (parity with manual API doc + OpenAPI). No new automated tests (documentation-only). |
 | Notification Celery email tests: `DEFAULT_FROM_EMAIL` portability | `notifications`, `tests` | Implemented | 2026-04-16 | `test_notifications_tasks` from-address assertions compare `mail.outbox[0].from_email` to `settings.DEFAULT_FROM_EMAIL` (matches `send_mail` in `notifications/tasks.py`) so runs succeed when `.env` overrides the default sender. |
 | Transactional notification route overrides at runtime send | `notifications`, `exchange`, `documents`, `accounts` | Implemented | 2026-04-16 | `resolve_transactional_route_settings_category` + optional `transactional_route_key` on `NotificationService.send_notification`; documented transactional routes (account security, application/document/agreement flows, digest, calendar reminders) pass keys so admin overrides match live UserSettings gating. Tests: `tests/unit/notifications/test_notifications_services.py`. |
-| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Implemented | 2026-08-18 | Staff CRUD + Fulbright overlay. Application detail readiness now includes `eligibility.rules` (`message_key`) so Vue localizes per-rule copy (ApplicationForm already did via `check_eligibility`). Remaining: richer JSON schema/versioning. |
+| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Implemented | 2026-08-20 | Staff CRUD + Fulbright overlay. Application detail readiness includes `eligibility.rules` (`message_key`). **Document schema v2** (`exchange/eligibility_ruleset_schema.py`): typed `program_overrides`/`meta`, `content_revision` bump on `rules_json` edits, `GET /api/eligibility-rulesets/document-schema/`, Vue schema/revision columns. Engine payload remains `ELIGIBILITY_SCHEMA_VERSION` 8 (separate). Tests: `test_eligibility_ruleset_schema.py`, `test_eligibility_rulesets_api.py`, `EligibilityRulesets.spec.js`. |
+| Visual workflow designer for applications | `workflows`, `frontend-vue`, `api` | Implemented | 2026-08-20 | Admin SPA BPMN editor at `/seim/admin/workflows`: create, validate, publish; program attach + `WorkflowInstance` on draft. Manual QA Pass 2026-08-20 ([`qa-runs/2026-08-20-admin-forms-workflows.md`](qa-runs/2026-08-20-admin-forms-workflows.md)). Remaining: overlay Validate UX only (API validate/publish OK; toast/BPMN overlay mitigations landed same day — re-verify). Matrix: `admin-console`. |
 
 
 ## 🟡 IN PROGRESS 🔄
@@ -191,7 +192,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Applications, Forms, and Eligibility
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Configurable eligibility rule sets (admin/DB-defined) | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Staff CRUD + evaluation wiring verified 2026-08-18 (`:8020`). Localized per-rule copy on application detail via `eligibility.rules`. Remaining: richer JSON schema/versioning. |
+| Eligibility rulesets — richer JSON schema / versioning | `exchange`, `application_forms`, `accounts`, `frontend-vue`, `api` | Implemented 2026-08-20 (document schema v2 + content_revision; see Implemented row). |
 
 #### Programs, Agreements, and Planning
 | Feature | Module | Notes |
@@ -223,26 +224,24 @@ _All Priority 1 items in this subsection are implemented above._
 #### Partner Ecosystem and Collaboration
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Partner institution portal | `accounts`, `exchange`, `documents`, `frontend-vue` | Shipped 2026-08-18 (see Implemented). Remaining: partner nominations and richer document workflows. Status/category labels now use the same i18n formatters as staff agreements. |
+| Partner nominations + richer partner document workflows | `accounts`, `exchange`, `documents`, `frontend-vue` | Partner portal core shipped 2026-08-18 (see Implemented). **Remaining only:** partner-side nominations and richer partner document workflows. |
 | Cross-institution communication hub | `notifications`, `accounts`, `exchange`, `frontend-vue` | Centralize conversations among students, coordinators, and partner institutions around applications, agreements, and program logistics. |
 
 #### Advanced Workflow Orchestration
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Student nomination and matching workflow | `exchange`, `accounts`, `admin UI` | Shipped ranking + Match to seats 2026-08-18 (see Implemented). Remaining: partner allocations and multi-cycle nomination windows. |
-| Visual workflow designer for applications | `application_forms`, `admin UI` | Give admins a low-code interface to design multi-step application flows, approval paths, and validation gates visually. |
-| Automated eligibility and rules engine | `exchange`, `application_forms`, `accounts` | **Partial:** window, profile, documents, dynamic form, OpenAPI for `check_eligibility` (see Implemented row). **MQ-014:** application detail + ApplicationForm localize failed rules via `message_key`. **Remaining:** step-level document gates in preview payload; richer JSON schema/versioning. |
+| Nomination partner allocations + multi-cycle windows | `exchange`, `accounts`, `admin UI` | Staff ranking + Match to seats shipped 2026-08-18 (see Implemented). **Remaining only:** partner allocations and multi-cycle nomination windows. |
+| Eligibility — step-level document gates in preview payload | `exchange`, `application_forms`, `accounts` | Structured eligibility + rulesets Implemented. **Remaining only:** step-level document gates in preview payload. (Schema/versioning tracked under P2.) |
 
 #### External calendars
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Google Calendar integration | `accounts`, `exchange`, `api`, `frontend-vue` | **Partial:** per-user signed **ICS / webcal** subscribe URL is implemented (import-by-URL in Google Calendar without OAuth). Backlog: OAuth2 / two-way sync or other providers. (See promoted PENDING item.) |
+| Google Calendar OAuth2 / two-way sync | `accounts`, `exchange`, `api`, `frontend-vue` | ICS/webcal subscribe Implemented. **Remaining:** OAuth2 / two-way sync or other providers (see also P2 External calendars). |
 
 #### Intelligence, Analytics, and Institutional Reporting
 | Feature | Module | Notes |
 |---------|--------|-------|
-
-| Predictive analytics for demand and bottlenecks | `analytics`, `exchange`, `notifications` | SPA forecasts shipped 2026-08-18 (see Implemented). Remaining: richer predictive models / warehouse. |
+| Predictive warehouse / richer models | `analytics`, `exchange`, `notifications` | Vue demand forecasts SPA shipped 2026-08-18 (see Implemented). **Remaining only:** richer predictive models / warehouse. |
 
 ## 🔴 DEPRECATED / REJECTED ❌
 | Feature | Module | Removed | Reason |
@@ -253,5 +252,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-08-18 — workflow status sync (**MQ-021**); document type labels (**MQ-019**); workflow labels (**MQ-020**); draft readiness i18n (**MQ-018**); timeline status labels (**MQ-017**); nominated readiness headline (**MQ-016**); disbursement labels (**MQ-015**). QA: [`manual-qa-issues.md`](manual-qa-issues.md).*  
+*Last updated: 2026-08-20 — gap-audit reconcile ([`gap-audit-2026-08-20.md`](gap-audit-2026-08-20.md)): visual workflow designer → Implemented (Admin BPMN + publish QA Pass); trim P2/P3 duplicates (eligibility schema Remaining only; partner/nomination/forecast extensions only); drop stale review-queue “broader presets remain P2” note. Prior 2026-08-18 MQ rollup in [`manual-qa-issues.md`](manual-qa-issues.md).*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*  

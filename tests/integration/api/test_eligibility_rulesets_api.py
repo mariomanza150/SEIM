@@ -139,11 +139,55 @@ class TestEligibilityRuleSetsApi(TestCase):
                 "name": "Strict GPA",
                 "description": "",
                 "is_active": True,
-                "schema_version": 1,
+                "schema_version": 2,
                 "rules_json": {"program_overrides": {"min_gpa": 3.5}},
             },
             format="json",
         )
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
         self.assertEqual(resp.data["name"], "Strict GPA")
+        self.assertEqual(resp.data["schema_version"], 2)
+        self.assertEqual(resp.data["content_revision"], 1)
         self.assertEqual(resp.data["rules_json"]["program_overrides"]["min_gpa"], 3.5)
+
+    def test_ruleset_schema_endpoint(self):
+        self.client.force_authenticate(user=self.coordinator)
+        resp = self.client.get("/api/eligibility-rulesets/document-schema/")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["schema_version"], 2)
+        self.assertIn("min_gpa", resp.data["program_override_keys"])
+
+    def test_create_rejects_invalid_v2_payload(self):
+        self.client.force_authenticate(user=self.coordinator)
+        resp = self.client.post(
+            "/api/eligibility-rulesets/",
+            {
+                "name": "Bad",
+                "schema_version": 2,
+                "rules_json": {"program_overrides": {"min_gpa": 3.0, "bogus": 1}},
+            },
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_patch_bumps_content_revision_when_rules_change(self):
+        self.client.force_authenticate(user=self.coordinator)
+        resp = self.client.patch(
+            f"/api/eligibility-rulesets/{self.ruleset.id}/",
+            {
+                "schema_version": 2,
+                "rules_json": {"program_overrides": {"min_gpa": 3.9}},
+            },
+            format="json",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["content_revision"], 2)
+        self.assertEqual(resp.data["rules_json"]["program_overrides"]["min_gpa"], 3.9)
+
+        resp2 = self.client.patch(
+            f"/api/eligibility-rulesets/{self.ruleset.id}/",
+            {"name": "Default renamed"},
+            format="json",
+        )
+        self.assertEqual(resp2.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp2.data["content_revision"], 2)

@@ -183,24 +183,65 @@ class EligibilityRuleSetSerializer(serializers.ModelSerializer):
             "name",
             "description",
             "schema_version",
+            "content_revision",
             "rules_json",
             "is_active",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "created_at", "updated_at")
+        read_only_fields = ("id", "content_revision", "created_at", "updated_at")
 
-    def validate_rules_json(self, value):
-        if value in (None, ""):
-            return {}
-        if not isinstance(value, dict):
-            raise serializers.ValidationError("Must be a JSON object.")
-        overrides = value.get("program_overrides")
-        if overrides is not None and not isinstance(overrides, dict):
+    def validate_schema_version(self, value):
+        from exchange.eligibility_ruleset_schema import SUPPORTED_RULESET_SCHEMA_VERSIONS
+
+        if value not in SUPPORTED_RULESET_SCHEMA_VERSIONS:
             raise serializers.ValidationError(
-                "program_overrides must be a JSON object."
+                f"Unsupported schema_version; supported: {sorted(SUPPORTED_RULESET_SCHEMA_VERSIONS)}."
             )
         return value
+
+    def validate(self, attrs):
+        from django.core.exceptions import ValidationError as DjangoValidationError
+
+        from exchange.eligibility_ruleset_schema import (
+            RULESET_DOCUMENT_SCHEMA_VERSION,
+            validate_and_normalize_rules_json,
+        )
+
+        schema_version = attrs.get(
+            "schema_version",
+            getattr(self.instance, "schema_version", None)
+            or RULESET_DOCUMENT_SCHEMA_VERSION,
+        )
+        if "rules_json" in attrs or self.instance is None:
+            raw = attrs.get(
+                "rules_json",
+                getattr(self.instance, "rules_json", None) if self.instance else {},
+            )
+            try:
+                attrs["rules_json"] = validate_and_normalize_rules_json(
+                    raw, schema_version=schema_version
+                )
+            except DjangoValidationError as exc:
+                if hasattr(exc, "message_dict"):
+                    raise serializers.ValidationError(exc.message_dict) from exc
+                raise serializers.ValidationError({"rules_json": list(exc.messages)}) from exc
+        attrs.setdefault("schema_version", schema_version)
+        return attrs
+
+    def create(self, validated_data):
+        from exchange.eligibility_ruleset_schema import RULESET_DOCUMENT_SCHEMA_VERSION
+
+        validated_data.setdefault("schema_version", RULESET_DOCUMENT_SCHEMA_VERSION)
+        validated_data.setdefault("content_revision", 1)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        if "rules_json" in validated_data and validated_data["rules_json"] != (
+            instance.rules_json or {}
+        ):
+            validated_data["content_revision"] = (instance.content_revision or 1) + 1
+        return super().update(instance, validated_data)
 
 
 class HostInstitutionSerializer(serializers.ModelSerializer):
@@ -1419,6 +1460,7 @@ class EligibilityRuleSetSnapshotSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     name = serializers.CharField()
     schema_version = serializers.IntegerField()
+    content_revision = serializers.IntegerField(required=False)
 
 
 class ProgramCheckEligibilityResponseSerializer(serializers.Serializer):

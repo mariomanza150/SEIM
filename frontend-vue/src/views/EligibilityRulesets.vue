@@ -33,6 +33,8 @@
           <thead>
             <tr>
               <th>{{ t('eligibilityRulesetsPage.colName') }}</th>
+              <th>{{ t('eligibilityRulesetsPage.colSchema') }}</th>
+              <th>{{ t('eligibilityRulesetsPage.colRevision') }}</th>
               <th>{{ t('eligibilityRulesetsPage.colActive') }}</th>
               <th>{{ t('eligibilityRulesetsPage.colUpdated') }}</th>
               <th class="text-end">{{ t('adminCommon.actions') }}</th>
@@ -41,6 +43,8 @@
           <tbody>
             <tr v-for="row in rows" :key="row.id">
               <td>{{ row.name }}</td>
+              <td data-testid="ruleset-schema-version">v{{ row.schema_version }}</td>
+              <td data-testid="ruleset-content-revision">r{{ row.content_revision ?? 1 }}</td>
               <td>{{ row.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}</td>
               <td>{{ formatDate(row.updated_at) }}</td>
               <td class="text-end">
@@ -50,7 +54,7 @@
               </td>
             </tr>
             <tr v-if="!rows.length">
-              <td colspan="4" class="text-muted text-center py-4">{{ t('eligibilityRulesetsPage.empty') }}</td>
+              <td colspan="6" class="text-muted text-center py-4">{{ t('eligibilityRulesetsPage.empty') }}</td>
             </tr>
           </tbody>
         </table>
@@ -81,6 +85,9 @@
                 <input id="rs-active" v-model="editor.form.is_active" class="form-check-input" type="checkbox" />
                 <label class="form-check-label" for="rs-active">{{ t('eligibilityRulesetsPage.fieldActive') }}</label>
               </div>
+              <p v-if="editor.id" class="small text-muted" data-testid="ruleset-version-meta">
+                {{ t('eligibilityRulesetsPage.versionMeta', { schema: editor.schema_version, revision: editor.content_revision }) }}
+              </p>
               <h6 class="text-muted">{{ t('eligibilityRulesetsPage.overridesHeading') }}</h6>
               <div class="row g-3">
                 <div class="col-md-4">
@@ -155,8 +162,12 @@ const editor = reactive({
   id: null,
   saving: false,
   error: '',
+  schema_version: 2,
+  content_revision: 1,
   form: emptyForm(),
 })
+
+const RULESET_SCHEMA_VERSION = 2
 
 function emptyForm() {
   return {
@@ -241,6 +252,8 @@ function openCreate() {
   editor.open = true
   editor.id = null
   editor.error = ''
+  editor.schema_version = RULESET_SCHEMA_VERSION
+  editor.content_revision = 1
   editor.form = emptyForm()
 }
 
@@ -248,6 +261,8 @@ function openEdit(row) {
   editor.open = true
   editor.id = row.id
   editor.error = ''
+  editor.schema_version = row.schema_version ?? RULESET_SCHEMA_VERSION
+  editor.content_revision = row.content_revision ?? 1
   editor.form = formFromRow(row)
 }
 
@@ -258,7 +273,7 @@ async function saveEditor() {
     name: editor.form.name,
     description: editor.form.description,
     is_active: editor.form.is_active,
-    schema_version: 1,
+    schema_version: RULESET_SCHEMA_VERSION,
     rules_json: { program_overrides: overridesFromForm(editor.form) },
   }
   try {

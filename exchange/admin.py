@@ -1006,10 +1006,17 @@ class SavedSearchAdmin(admin.ModelAdmin):
 
 @admin.register(EligibilityRuleSet)
 class EligibilityRuleSetAdmin(admin.ModelAdmin):
-    list_display = ("name", "schema_version", "is_active", "created_at", "updated_at")
+    list_display = (
+        "name",
+        "schema_version",
+        "content_revision",
+        "is_active",
+        "created_at",
+        "updated_at",
+    )
     list_filter = ("is_active", "schema_version")
     search_fields = ("name", "description")
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("content_revision", "created_at", "updated_at")
 
 
 class ScholarshipDisbursementInline(admin.TabularInline):

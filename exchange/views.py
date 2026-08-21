@@ -287,10 +287,25 @@ class EligibilityRuleSetViewSet(viewsets.ModelViewSet):
     ordering_fields = [
         "name",
         "schema_version",
+        "content_revision",
         "created_at",
         "updated_at",
         "is_active",
     ]
+
+    @extend_schema(
+        summary="Eligibility ruleset JSON schema",
+        description=(
+            "Document format for ``rules_json`` / ``schema_version`` "
+            "(distinct from evaluation ``ELIGIBILITY_SCHEMA_VERSION``)."
+        ),
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    @action(detail=False, methods=["get"], url_path="document-schema")
+    def document_schema(self, request):
+        from exchange.eligibility_ruleset_schema import describe_ruleset_schema
+
+        return Response(describe_ruleset_schema())
 
 
 def _program_list_cache_key(*args, **kwargs):
@@ -545,6 +560,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 "id": rs.id,
                 "name": rs.name,
                 "schema_version": rs.schema_version,
+                "content_revision": getattr(rs, "content_revision", 1),
             }
         use_ruleset_raw = request.query_params.get("use_ruleset")
         use_ruleset = (
