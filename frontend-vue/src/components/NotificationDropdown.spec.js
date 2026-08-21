@@ -67,6 +67,27 @@ describe('NotificationDropdown', () => {
     wrapper.unmount()
   })
 
+  it('keeps the menu as an absolute overlay sibling of the toggle', async () => {
+    const wrapper = mount(NotificationDropdown, {
+      attachTo: document.body,
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const root = wrapper.get('li.nav-item.dropdown')
+    expect(root.classes()).toContain('dropdown')
+    const menu = wrapper.get('.dropdown-menu')
+    expect(menu.classes()).toContain('dropdown-menu-end')
+    expect(menu.classes()).toContain('notification-dropdown')
+    // Menu is a sibling of the toggle (not nested inside it), so absolute
+    // positioning under .navbar-expand can overlay without growing the toggle.
+    expect(menu.element.parentElement).toBe(root.element)
+    expect(wrapper.get('#notificationDropdown').element.parentElement).toBe(root.element)
+    wrapper.unmount()
+  })
+
   it('uses Spanish strings when locale is es', async () => {
     setAppLocale('es')
     const wrapper = mount(NotificationDropdown, {

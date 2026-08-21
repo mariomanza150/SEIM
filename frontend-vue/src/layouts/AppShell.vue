@@ -1,7 +1,7 @@
 <template>
   <div class="seim-app-shell" data-testid="app-shell">
     <nav
-      class="navbar navbar-dark bg-primary fixed-top seim-app-shell__navbar"
+      class="navbar navbar-expand navbar-dark bg-primary fixed-top seim-app-shell__navbar"
       data-bs-theme="dark"
       :aria-label="t('dashboard.mainNavAria')"
     >
@@ -532,6 +532,15 @@ async function handleLogout() {
   padding-top: env(safe-area-inset-top, 0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: visible;
+}
+
+/*
+ * Keep utility dropdowns overlaid. Bootstrap sets .navbar-nav .dropdown-menu to
+ * position:static unless .navbar-expand* is present; reinforce absolute so the
+ * fixed navbar height/width never grow when menus open.
+ */
+.seim-app-shell__navbar :deep(.navbar-nav .dropdown-menu) {
+  position: absolute;
 }
 
 .seim-app-shell__navbar-inner {

@@ -113,6 +113,24 @@ describe('AppShell navbar', () => {
     wrapper.unmount()
   })
 
+  it('uses navbar-expand so utility dropdowns overlay instead of stretching the bar', async () => {
+    const wrapper = await mountShell()
+    const nav = wrapper.get('[data-testid="app-shell"] .navbar')
+    expect(nav.classes()).toContain('navbar-expand')
+    expect(nav.classes()).toContain('seim-app-shell__navbar')
+
+    const userMenu = wrapper.get('#userDropdown').element.closest('.dropdown')
+    const userDropdownMenu = userMenu?.querySelector('.dropdown-menu')
+    expect(userDropdownMenu).toBeTruthy()
+    expect(userDropdownMenu.classList.contains('dropdown-menu-end')).toBe(true)
+
+    const notifMenu = wrapper.get('[data-testid="notifications-menu"]').element.closest('.dropdown')
+    const notifDropdownMenu = notifMenu?.querySelector('.dropdown-menu')
+    expect(notifDropdownMenu).toBeTruthy()
+    expect(notifDropdownMenu.classList.contains('dropdown-menu-end')).toBe(true)
+    wrapper.unmount()
+  })
+
   it('opens the user menu on click', async () => {
     const wrapper = await mountShell()
     const toggle = wrapper.get('[data-testid="user-menu"]')
