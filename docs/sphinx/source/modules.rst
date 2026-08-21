@@ -13,13 +13,15 @@ This section provides detailed documentation for all SEIM modules and their comp
    notifications
    analytics
    core
+   workflows
 
 .. toctree::
    :maxdepth: 4
    :caption: Supporting Modules
 
    api
-   dashboard
+   cms
+   data_management
    frontend
    plugins
 
@@ -36,12 +38,14 @@ SEIM is organized into several Django applications, each responsible for specifi
 * :doc:`notifications` - Email and in-app notifications
 * :doc:`analytics` - Dashboard and reporting
 * :doc:`core` - Shared utilities and base classes
+* :doc:`workflows` - Application workflow engine
 
 **Supporting Applications:**
 
 * :doc:`api` - RESTful API endpoints
-* :doc:`dashboard` - Admin and user dashboards
-* :doc:`frontend` - Django-based frontend
+* :doc:`cms` - Wagtail CMS public site
+* :doc:`data_management` - Import/export operator UI
+* :doc:`frontend` - Vue SPA reference (historical Django frontend removed)
 * :doc:`plugins` - Modular plugin system
 
 Architecture

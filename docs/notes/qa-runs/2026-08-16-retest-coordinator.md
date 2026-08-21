@@ -1,3 +1,5 @@
+> **Snapshot at test time** — ports/URLs reflect the environment when this QA run was recorded.
+
 # Manual QA retest â€” Coordinator (Section 4 + permission leaks)
 
 **Date:** 2026-08-16 (retest after local-prod rebuild)  

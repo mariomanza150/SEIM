@@ -334,7 +334,7 @@ class TestDynformsBuilder(unittest.TestCase):
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--headless")
         self.driver = webdriver.Chrome(options=chrome_options)
-        self.base_url = "http://localhost:8000"
+        self.base_url = "http://localhost:8001"
 
     def test_dynforms_builder_loads(self):
         # Login as admin
@@ -382,7 +382,7 @@ pytest tests/selenium/ --headed
 pytest tests/selenium/ --browser=chrome
 
 # Run with custom base URL
-pytest tests/selenium/ --base-url=http://localhost:8000
+pytest tests/selenium/ --base-url=http://localhost:8001
 ```
 
 ---

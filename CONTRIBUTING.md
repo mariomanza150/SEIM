@@ -2,7 +2,7 @@
 
 Thank you for your interest in contributing to the Student Exchange Information Manager (SEIM).
 
-SEIM is a Django 5.1 + DRF backend that serves a Vue 3 SPA (`/seim/`), a Wagtail CMS (`/`, `/cms/`), and a REST API (`/api/`).
+SEIM is a Django 5.2 + DRF backend that serves a Vue 3 SPA (`/seim/`), a Wagtail CMS (`/`, `/cms/`), and a REST API (`/api/`).
 
 ## Getting Started
 
@@ -31,7 +31,8 @@ Then open:
 - Public / CMS: http://localhost:8001/
 - Vue SPA: http://localhost:8001/seim/
 - API docs: http://localhost:8001/api/docs/
-- Django admin: http://localhost:8001/admin/
+- Django admin: http://localhost:8001/seim/django-admin/ (root `/admin/` redirects here)
+- Vue staff UI: http://localhost:8001/seim/admin/
 
 Demo accounts from `seed_demo_readiness`: `admin@test.com` / `admin123`, `coordinator@test.com` / `coordinator123`, `student@test.com` / `student123`, `partner@test.com` / `partner123`.
 

@@ -1,3 +1,5 @@
+> **Snapshot (October 2025).** Active work is tracked in GitHub Issues and [changelog.md](changelog.md).
+
 # SEIM Backlog
 
 This backlog tracks actionable development tasks, prioritized for sprint planning. Each item is linked to a user story, phase, and acceptance criteria. Update status and sprint as work progresses.

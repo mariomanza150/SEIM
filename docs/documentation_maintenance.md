@@ -1,7 +1,7 @@
 # SEIM Documentation Maintenance Guide
 
-**Last Updated:** November 20, 2025  
-**Version:** 1.0
+**Last Updated:** August 20, 2026  
+**Version:** 1.1
 
 ## Overview
 
@@ -379,7 +379,7 @@ When moving or renaming files:
 - **MAJOR**: Significant restructuring or major updates
 - **MINOR**: Regular updates, new sections, corrections
 
-Current Version: **2.2** (as of November 20, 2025)
+Current Version: **2.3** (as of August 20, 2026)
 
 #### When to Increment Version
 
@@ -733,12 +733,25 @@ markdown-link-check docs/**/*.md
 
 ### Scripts
 
-Location: `scripts/docs/`
+Documentation generation uses Makefile targets (run inside Docker when possible):
 
-- `generate_all_docs.sh` - Generate all documentation
-- `check_links.sh` - Verify all internal links
-- `update_dates.sh` - Update "Last Updated" dates
-- `archive_session.sh` - Archive session documents
+- `make docs-workflow` — Generate API, code, DB, and Sphinx docs
+- `make docs-api` — OpenAPI schema only
+- `make docs-code` — Code documentation markdown
+- `make docs-db` — Database schema markdown
+- `make docs-sphinx-docker` — Sphinx HTML build
+
+Native development (Cursor Cloud VM, no Docker): activate `.venv`, ensure PostgreSQL and Redis are running, then run the same Python management commands documented in [AGENTS.md](../AGENTS.md). Generated artifacts live in `docs/generated/` and `api_schema.yaml` (committed after regen; see Generated docs policy below).
+
+### Generated docs policy
+
+Stable reference outputs may be committed after `make docs-workflow`:
+
+- `docs/generated/code_documentation.md`
+- `docs/generated/database_schema.md`
+- `api_schema.yaml`
+
+Sphinx HTML (`docs/sphinx/build/html/`) remains gitignored unless explicitly needed in-repo. Regenerate before releases; note last-generated date in [docs/README.md](README.md).
 
 ---
 
@@ -760,10 +773,11 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for guidelines on contributing to proj
 
 | Date | Version | Changes |
 |------|---------|---------|
+| 2026-08-20 | 1.1 | Full doc sync pass: stack/URL/E2E updates; Makefile regen policy; native-dev path |
 | 2025-11-20 | 1.0 | Initial documentation maintenance guide created |
 
 ---
 
 **Maintained By**: SEIM Development Team  
-**Next Review**: December 20, 2025
+**Next Review**: November 20, 2026
 

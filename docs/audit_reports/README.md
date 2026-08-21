@@ -1,3 +1,5 @@
+> **October 2025 audit — superseded for coverage/E2E stack.** See [docs/README.md](../README.md) **Current State** (August 2026) for Django 5.2, Playwright, Vitest, and URL ground truth.
+
 # SEIM Codebase Audit Reports
 
 **Audit Date:** October 15, 2025  

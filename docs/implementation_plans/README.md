@@ -1,8 +1,7 @@
 # SEIM Implementation Plans
 
 **Created:** October 15, 2025  
-**Based On:** Comprehensive Code Audit Reports  
-**Purpose:** Detailed, executable plans for fixing critical issues and implementing improvements
+**Status (August 2026):** Plans **01–04 implemented** in codebase (document permissions, CORS, N+1 fixes, AccountService). Treat remaining week/month tables as historical planning context; track active work in GitHub Issues and [changelog.md](../changelog.md).
 
 ---
 

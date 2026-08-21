@@ -2,7 +2,7 @@
 
 ## Cursor Cloud specific instructions
 
-SEIM is a single Django 5.1 + DRF backend that serves a Vue 3 SPA (`/seim/*`), a Wagtail CMS (`/`, `/cms/`), and a REST API (`/api/*`). Although the repo docs recommend Docker, the Cursor Cloud VM runs it **natively** (no Docker) against system PostgreSQL + Redis. The startup update script only refreshes dependencies; the notes below cover everything else.
+SEIM is a single Django 5.2 + DRF backend that serves a Vue 3 SPA (`/seim/*`), a Wagtail CMS (`/`, `/cms/`), and a REST API (`/api/*`). Although the repo docs recommend Docker, the Cursor Cloud VM runs it **natively** (no Docker) against system PostgreSQL + Redis. The startup update script only refreshes dependencies; the notes below cover everything else.
 
 ### Services and how to start them
 Nothing auto-starts on boot. Start PostgreSQL and Redis once per session before running the app or tests:
@@ -20,7 +20,7 @@ export DJANGO_SETTINGS_MODULE=seim.settings.development
 python manage.py runserver 0.0.0.0:8001
 ```
 
-App is at http://localhost:8001/ — SPA `/seim/`, admin `/admin/`, API docs `/api/docs/`, health `/health/`.
+App is at http://localhost:8001/ — SPA `/seim/`, Django admin `/seim/django-admin/` (root `/admin/` redirects here), Vue staff UI `/seim/admin/`, CMS admin `/cms/`, API docs `/api/docs/`, health `/health/`.
 
 ### Environment gotchas (non-obvious)
 - The dev/prod settings **auto-rewrite** the Compose hostnames `db`→`127.0.0.1:5434` and `redis`→`127.0.0.1:6379` only when the host is literally `db`/`redis`. The committed `.env` here uses `localhost:5432` / `localhost:6379` directly (native Postgres listens on the default 5432, not 5434), so no rewrite happens. Keep `.env` pointing at `localhost`.

@@ -166,7 +166,7 @@ pip install -e ".[dev]"
 docker-compose up -d
 
 # 2. Check if server is accessible
-curl http://localhost:8000/
+curl http://localhost:8001/
 
 # 3. Check Docker logs for errors
 docker-compose logs web
@@ -849,7 +849,7 @@ docker-compose exec redis redis-cli ping
 #### **Performance Monitoring**:
 ```bash
 # Check response times
-curl -w "@curl-format.txt" -o /dev/null -s "http://localhost:8000/"
+curl -w "@curl-format.txt" -o /dev/null -s "http://localhost:8001/"
 
 # Monitor database performance
 docker-compose exec db psql -U postgres -c "

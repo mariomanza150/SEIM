@@ -1,3 +1,5 @@
+> **Snapshot at test time** — ports/URLs reflect the environment when this QA run was recorded.
+
 # Manual QA â€” Coordinator / staff (Section 4)
 
 **Date:** 2026-08-16  

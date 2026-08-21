@@ -8,11 +8,11 @@ This guide is for administrators managing the SEIM (Student Exchange Information
 ## 🚀 **Quick Start for Admins**
 
 ### **Initial Setup:**
-1. **Access Admin Interface**: http://localhost:8000/admin/
-2. **Default Credentials**: 
-   - Username: `admin`
-   - Password: `admin123`
-3. **Change Default Password**: Immediately after first login
+1. **Django Admin** (ORM, users, system config): http://localhost:8001/seim/django-admin/ (root `/admin/` redirects here)
+2. **Vue Staff UI** (programs, forms, workflows): http://localhost:8001/seim/admin/
+3. **CMS Admin** (Wagtail content): http://localhost:8001/cms/
+4. **Demo credentials** (from `seed_demo_readiness`): `admin@test.com` / `admin123`
+5. **Change default passwords** after first login
 
 ### **Essential Admin Tasks:**
 - [ ] Create exchange programs

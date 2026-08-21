@@ -94,13 +94,14 @@ class Command(BaseCommand):
             # Generate OpenAPI schema
             schema_format = options["format"]
             schema_file = os.path.join(output_dir, f"api_schema.{schema_format}")
+            spectacular_format = "openapi" if schema_format == "yaml" else schema_format
 
             call_command(
                 "spectacular",
                 "--file",
                 schema_file,
                 "--format",
-                schema_format,
+                spectacular_format,
                 verbosity=0,
             )
 

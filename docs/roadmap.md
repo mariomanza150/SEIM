@@ -1,3 +1,5 @@
+> **Snapshot (October 2025).** Planning doc; completed items are tracked in [changelog.md](changelog.md). Do not treat task lists as current backlog.
+
 # SEIM Roadmap
 
 This roadmap outlines planned features and milestones for the SEIM project. The roadmap will be updated as the project evolves.

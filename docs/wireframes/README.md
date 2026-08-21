@@ -1,3 +1,5 @@
+> **Design reference (as-designed wireframes).** Implemented UI is the **Vue 3 SPA** at `/seim/`; public pages use **Wagtail** templates.
+
 # SEIM Wireframes
 
 This directory contains UI/UX wireframes for the SEIM application, providing visual reference for key user interfaces and workflows.

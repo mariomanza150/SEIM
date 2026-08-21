@@ -1,5 +1,19 @@
 # SEIM Changelog
 
+## [Doc Sync] - 2026-08-20 - Documentation alignment pass
+
+### 📚 Documentation
+Full sync of entry points, canonical manuals, notes index, Sphinx sources, and secondary READMEs with current stack:
+
+- Django **5.2.17**, Vue **3.5 + Vite 7**, Wagtail **7**
+- Dev URL **http://localhost:8001**; local-prod QA **http://localhost:8020**
+- Django admin **`/seim/django-admin/`**; Vue staff UI **`/seim/admin/*`**
+- **Playwright** primary E2E; Selenium deprecated
+- **Vitest** frontend tests; **Ruff** formatter; **`pyproject.toml`** only
+- Regenerated and committed `docs/generated/*.md` and `api_schema.yaml`
+
+---
+
 ## [1.0.1] - 2025-01-XX - Dynforms Form Builder Fix
 
 ### 🔧 Bug Fix: Dynforms Form Builder
@@ -274,7 +288,7 @@ This release marks the completion of the full SEIM implementation, making it pro
 For questions or issues:
 - Check the [Developer Guide](developer_guide.md)
 - Review the [Installation Guide](installation.md)
-- Explore the [API Documentation](http://localhost:8000/api/docs/)
+- Explore the [API Documentation](http://localhost:8001/api/docs/)
 - Contact the development team
 
 ---

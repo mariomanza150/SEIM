@@ -1,3 +1,5 @@
+> **Snapshot at test time** — ports/URLs reflect the environment when this QA run was recorded.
+
 # Manual QA â€” 2026-08-18 (role-by-role workflows)
 
 **Stack:** Compose `seim-localprod` @ `http://localhost:8020`  

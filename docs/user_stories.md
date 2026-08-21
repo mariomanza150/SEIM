@@ -1,3 +1,5 @@
+> **Snapshot (October 2025).** Requirements reference; see [changelog.md](changelog.md) for delivery status.
+
 # SEIM User Stories
 
 > **Note:** Each user story is tagged with its corresponding roadmap phase and whether it is part of the MVP or planned for a future release.

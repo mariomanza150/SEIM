@@ -6,7 +6,7 @@ Welcome to the SEIM (Student Exchange Information Manager) documentation. This d
 About SEIM
 ----------
 
-SEIM is a comprehensive Django-based web application for managing student exchange programs, applications, and workflows. The system features a modern, responsive Django frontend with Bootstrap 5, JWT authentication, and role-based dashboards.
+SEIM is a comprehensive Django-based web application for managing student exchange programs, applications, and workflows. The system features a **Vue 3 SPA** at ``/seim/``, **Wagtail 7** for the public site, JWT authentication, and role-based dashboards.
 
 Key Features:
 

@@ -12,14 +12,11 @@ SEIM (Student Exchange Information Manager) is a Django-based web application de
 ┌────────────────────────────────────────────────────────────────────┐
 │                          Frontend Layer                            │
 │  ┌──────────────────────┐         ┌───────────────────────────┐  │
-│  │  Public Pages        │         │  Authenticated Pages      │  │
-│  │  (Wagtail CMS)       │         │  (Django Templates +      │  │
-│  │  - Home, Blog        │         │   Bootstrap 5 +           │  │
-│  │  - Program Pages     │         │   ES6+ JavaScript)        │  │
-│  │  - Info Pages        │         │  - Dashboard              │  │
-│  └──────────────────────┘         │  - Applications           │  │
-│                                    │  - Documents              │  │
-│                                    └───────────────────────────┘  │
+│  │  Public Site         │         │  Vue 3 SPA (/seim/*)      │  │
+│  │  (Wagtail 7 CMS)     │         │  - Dashboard, apps, docs  │  │
+│  │  - Home, blog, pages │         │  - Vue staff UI           │  │
+│  │  - /cms/ admin       │         │    (/seim/admin/*)        │  │
+│  └──────────────────────┘         └───────────────────────────┘  │
 └────────────────────────────────────────────────────────────────────┘
                                      │
                                      ▼
@@ -27,39 +24,33 @@ SEIM (Student Exchange Information Manager) is a Django-based web application de
 │                     Admin Interfaces                               │
 │  ┌──────────────────────┐         ┌───────────────────────────┐  │
 │  │  Wagtail CMS Admin   │         │  Django Admin             │  │
-│  │  - Content Pages     │         │  - System Config          │  │
-│  │  - Blog Management   │         │  - User Management        │  │
-│  │  - Forms             │         │  - Exchange Workflows     │  │
+│  │  /cms/               │         │  /seim/django-admin/      │  │
+│  │  - Content pages     │         │  - Users, config, ORM     │  │
 │  └──────────────────────┘         └───────────────────────────┘  │
 └────────────────────────────────────────────────────────────────────┘
                                      │
                                      ▼
 ┌────────────────────────────────────────────────────────────────────┐
-│   API Layer (DRF) ◄──────────────────────────────────────┐        │
-│   - REST API                                              │        │
-│   - JWT Authentication                                    │        │
-│   - OpenAPI Documentation                                 │        │
-└───────────────────────────────────────────────────────────┼────────┘
-                                     │                      │
-                                     ▼                      ▼
+│   API Layer (DRF) + WebSockets (ASGI)                              │
+│   - REST /api/*  ·  JWT  ·  OpenAPI  ·  live notifications       │
+└────────────────────────────────────────────────────────────────────┘
+                                     │
+                                     ▼
 ┌────────────────────────────────────────┐   ┌──────────────────────┐
 │   Business Logic Layer (Services)      │   │  External Services   │
-│   - WorkflowService                    │   │  - Email (Celery)    │
-│   - ApplicationService                 │   │  - Redis (Cache)     │
-│   - DocumentService                    │   │  - File Storage      │
+│   - WorkflowService, ApplicationService│   │  - Email (Celery)    │
+│   - DocumentService, GradeTranslation  │   │  - Redis (Cache)     │
 └────────────────────────────────────────┘   └──────────────────────┘
                                      │
                                      ▼
                        ┌──────────────────────────┐
                        │   Data Layer (ORM)       │
-                       │   - Django Models        │
-                       │   - Wagtail Pages        │
+                       │   Django models + Wagtail│
                        └──────────────────────────┘
                                      │
                                      ▼
                        ┌──────────────────────────┐
-                       │   Database               │
-                       │   (PostgreSQL)           │
+                       │   PostgreSQL             │
                        └──────────────────────────┘
 ```
 
@@ -129,6 +120,13 @@ SEIM (Student Exchange Information Manager) is a Django-based web application de
 - **`core/`**: Shared utilities and base classes
   - Base models and mixins
   - Common utilities and helpers
+
+- **`workflows/`**: Application workflow engine
+  - Configurable workflow definitions and transitions
+  - Staff UI at `/seim/admin/workflows`
+
+- **`data_management/`**: Operator import/export tooling
+  - Bulk data operations at `/data-management/`
 
 ---
 

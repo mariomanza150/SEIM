@@ -46,4 +46,17 @@ This document records key architectural decisions and the rationale behind them.
 
 ---
 
+## 8. Vue SPA Migration (Completed 2025–2026)
+
+**Decision:** Replace the Django-template authenticated UI with a **Vue 3 SPA** at `/seim/`, keeping Wagtail for the public site and DRF for all app data.
+
+**Rationale:**
+- Clear split: CMS marketing (`/`) vs application workflows (`/seim/*`)
+- JWT + DRF already power mobile/API clients; SPA aligns with API-first design
+- Staff operator tools live in Vue admin routes (`/seim/admin/*`); Django admin remains at `/seim/django-admin/`
+
+**Status:** Complete. Legacy `frontend` Django app removed. Remaining Django surfaces documented in [notes/SPA_VS_LEGACY.md](notes/SPA_VS_LEGACY.md).
+
+---
+
 > Each major architectural decision is tracked here with rationale. For technical implementation, see [architecture.md](architecture.md). This file will be updated as the project evolves. 

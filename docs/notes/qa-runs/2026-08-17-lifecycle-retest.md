@@ -1,3 +1,5 @@
+> **Snapshot at test time** � ports/URLs reflect the environment when this QA run was recorded.
+
 # Manual QA — Section 8 lifecycle retest — 2026-08-17 evening
 
 **Date:** 2026-08-17 (evening, local)  

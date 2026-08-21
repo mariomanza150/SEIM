@@ -194,7 +194,7 @@ Reports are saved to `test-report-YYYYMMDD-HHMMSS.txt` in the project root.
 
 5. **Django server not running**
    - Start with `docker-compose up web`
-   - Check if accessible at http://localhost:8000
+   - Check if accessible at http://localhost:8001
 
 ### Getting Help
 

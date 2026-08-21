@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/mariomanza150/SEIM/actions/workflows/ci.yml/badge.svg)](https://github.com/mariomanza150/SEIM/actions/workflows/ci.yml)
 
-Student Exchange Information Manager: Django 5.1 + DRF + Vue 3 SPA + Wagtail CMS for student exchange programs.
+Student Exchange Information Manager: Django 5.2 + DRF + Vue 3 SPA + Wagtail CMS for student exchange programs.
 
 **SPA:** `/seim/` (`frontend-vue/`) · **CMS:** `/` and `/cms/` · **API:** `/api/` · [Contributing](CONTRIBUTING.md) · [Issues](https://github.com/mariomanza150/SEIM/issues) · [License](LICENSE)
 
@@ -12,7 +12,7 @@ Student Exchange Information Manager: Django 5.1 + DRF + Vue 3 SPA + Wagtail CMS
 **✅ Wagtail CMS for the public site**  
 **✅ JWT API, Docker, and CI**
 
-SEIM is a Django 5.1 + DRF backend with a Vue 3 SPA (`frontend-vue/`, served at `/seim/`), JWT authentication, and role-based dashboards. Wagtail CMS owns the public site at `/`. The Django template frontend has been removed. Remaining operator leftovers (dynforms builder, data-management UI) are listed in [docs/notes/SPA_VS_LEGACY.md](docs/notes/SPA_VS_LEGACY.md).
+SEIM is a Django 5.2 + DRF backend with a Vue 3 SPA (`frontend-vue/`, served at `/seim/`), JWT authentication, and role-based dashboards. Wagtail CMS owns the public site at `/`. The Django template frontend has been removed. Remaining operator leftovers (dynforms builder, data-management UI) are listed in [docs/notes/SPA_VS_LEGACY.md](docs/notes/SPA_VS_LEGACY.md).
 
 ### 🚀 What's Ready for Production
 - Complete user authentication and authorization
@@ -70,7 +70,8 @@ docker-compose exec web python manage.py import_cms --clear
 ### CMS Access
 - **Public Landing Page**: http://localhost:8001/
 - **CMS Admin**: http://localhost:8001/cms/
-- **Django Admin**: http://localhost:8001/seim/admin/
+- **Django Admin**: http://localhost:8001/seim/django-admin/ (root `/admin/` redirects here)
+- **Vue Staff UI**: http://localhost:8001/seim/admin/
 
 ---
 
@@ -146,12 +147,12 @@ docker-compose exec web python manage.py import_cms --clear
 
 ## 🚀 Quick Start
 
-> **⚠️ Core development outside Docker is not supported, except for Selenium E2E tests which run from the host OS. All other development, testing, and documentation generation must be performed inside Docker containers to avoid host OS issues.**
+> **⚠️ Core development outside Docker is not supported, except for Playwright E2E tests which run from the host OS. All other development, testing, and documentation generation must be performed inside Docker containers to avoid host OS issues.**
 
 ### **Prerequisites**
 - Docker and Docker Compose
 - Git
-- Python 3.12+ (for E2E testing and local development tools)
+- Python 3.12+ (for Playwright E2E and local development tools)
 
 ### **Environment Setup**
 ```bash
@@ -188,13 +189,14 @@ docker-compose exec web python manage.py collectstatic --noinput
 
 # Access the application
 # Web: http://localhost:8001/
-# Admin: http://localhost:8001/seim/admin/  # /admin/ redirects here
+# Django admin: http://localhost:8001/seim/django-admin/  # /admin/ redirects here
+# Vue staff UI: http://localhost:8001/seim/admin/
 # API Docs: http://localhost:8001/api/docs/
 ```
 
 ### **Virtual Environment Setup (E2E Testing & Local Development)**
 
-> **⚠️ Virtual environments are required for Selenium E2E tests and some local development tools that run from the host OS.**
+> **⚠️ Virtual environments are required for Playwright E2E tests and some local development tools that run from the host OS.**
 
 #### **1. Create Virtual Environment (One-time setup):**
 ```bash
@@ -229,15 +231,15 @@ Python pins live in `pyproject.toml`. Install extras with `pip install -e ".[dev
 ```bash
 # Check if Django and other key packages are available
 python -c "import django; print(f'Django {django.get_version()}')"
-python -c "import selenium; print(f'Selenium {selenium.__version__}')"
+python -c "import playwright; print('Playwright OK')"
 ```
 
 ### **When to Use Virtual Environment:**
 
 #### **✅ Required for:**
-- **Selenium E2E Tests**: Browser automation tests that run from host OS
+- **Playwright E2E Tests**: Browser automation tests that run from host OS
 - **Local Development Tools**: Code quality checks, documentation generation
-- **Frontend Testing**: Jest tests and frontend build tools
+- **Frontend Testing**: Vitest tests and frontend build tools
 - **CI/CD Scripts**: Local testing of deployment scripts
 
 #### **❌ Not Required for:**
@@ -306,16 +308,12 @@ make docker-logs
 .venv\Scripts\Activate.ps1  # Windows
 # source .venv/bin/activate  # Linux/macOS
 
-# 2. Run Selenium E2E tests
-make test-selenium
+# 2. Run Playwright E2E tests (primary)
+make e2e-test
 
-# 3. Run standalone Selenium tests
-make test-selenium-standalone
+# 3. Legacy Selenium (deprecated): SEIM_RUN_SELENIUM=1 make test-selenium
 
-# 4. Test Selenium setup
-make test-selenium-setup
-
-# 5. Deactivate when done
+# 4. Deactivate when done
 deactivate
 ```
 
@@ -392,25 +390,17 @@ npm --prefix frontend-vue run test:run
 npm --prefix frontend-vue run test:run -- --coverage
 ```
 
-### **Selenium E2E Testing (HOST OS ONLY)**
+### **Playwright E2E Testing (HOST OS)**
 
 ```bash
-# Setup Selenium environment on host OS
-make setup-selenium-host
-
-# Run Selenium tests (requires Django server running in Docker)
-make test-selenium
-
-# Run standalone Selenium tests
-make test-selenium-standalone
-
-# Test Selenium setup
-make test-selenium-setup
+# Run Playwright E2E tests (requires Django server running in Docker)
+make e2e-test
 ```
 
 - All code quality and test commands must be run inside Docker containers or using the Makefile.
 - Vue tests live in `frontend-vue/` and run with Vitest (`npm --prefix frontend-vue run test:run`).
-- **Selenium E2E tests run from HOST OS, not Docker containers** (requires Chrome browser on host OS).
+- **Playwright E2E tests run from HOST OS** (see [docs/e2e_testing_guide.md](docs/e2e_testing_guide.md)).
+- Legacy Selenium: `SEIM_RUN_SELENIUM=1 make test-selenium` (deprecated; see [docs/selenium_setup.md](docs/selenium_setup.md)).
 - Pre-commit hooks will automatically check formatting, lint, types, and security before each commit.
 
 ---
@@ -563,7 +553,7 @@ SEIM follows a modular, service-oriented architecture with a Vue 3 SPA:
 ## 🔧 Technology Stack
 
 ### **Backend**
-- **Django 5.1.4** - Web framework
+- **Django 5.2.17** - Web framework
 - **Django REST Framework** - API framework
 - **PostgreSQL** - Database (production)
 - **Redis** - Caching and background tasks

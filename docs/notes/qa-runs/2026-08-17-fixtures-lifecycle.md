@@ -1,3 +1,5 @@
+> **Snapshot at test time** � ports/URLs reflect the environment when this QA run was recorded.
+
 # Manual QA — fixtures + Section 8 lifecycle — 2026-08-17
 
 **Date:** 2026-08-17  

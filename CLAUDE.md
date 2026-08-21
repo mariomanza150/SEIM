@@ -13,12 +13,15 @@ SEIM follows a modular, service-oriented architecture using Django, organized in
 - **`grades/`**: Contains logic for international grade scale conversion.
 - **`application_forms/`**: Manages the dynamic form builder for applications.
 - **`api/`**: REST API gateway (URL aggregator). Viewsets live in domain apps.
+- **`workflows/`**: Workflow engine for application state transitions.
+- **`cms/`**: Wagtail CMS pages and public site.
+- **`data_management/`**: Data import/export operator UI.
 - **`frontend-vue/`**: Vue 3 SPA served under `/seim/` (dashboards included). Role-based dashboard APIs live in `accounts/views_dashboard.py`.
 
 The system uses a clear separation of concerns: the **API Layer** handles data contracts (DRF), the **Business Logic Layer** resides in dedicated services (e.g., grade translation), and the **Data Layer** is managed by Django ORM over PostgreSQL.
 
 ### 🌐 Tech Stack Overview
-*   **Backend**: Django 5.1.4, Django REST Framework, PostgreSQL, Redis, Celery.
+*   **Backend**: Django 5.2.17, Django REST Framework, PostgreSQL, Redis, Celery.
 *   **Frontend**: Vue 3 SPA (`frontend-vue/`) under `/seim/`. Wagtail CMS (`cms/templates/`) is the public/CMS templates. Shared tokens: `static/css/utilities/seim-shared-tokens.css`.
 *   **Deployment**: Docker Compose for containerization (`web`, `redis`, `db`, `worker`).
 

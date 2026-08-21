@@ -7,7 +7,7 @@ SEIM (Student Exchange Information Manager) is a Django-based web application fo
 
 ## 🚀 Quick Start (Docker - Required)
 
-> **⚠️ Core development outside Docker is not supported, except for Selenium E2E tests which run from the host OS. All other development, testing, and documentation generation must be performed inside Docker containers to avoid host OS issues.**
+> **⚠️ Core development outside Docker is not supported, except for Playwright E2E tests which run from the host OS. All other development, testing, and documentation generation must be performed inside Docker containers to avoid host OS issues.**
 
 ### **1. Clone and Setup:**
 ```bash
@@ -31,9 +31,10 @@ docker-compose exec web python manage.py seed_demo_readiness
 ```
 
 ### **3. Access the Application:**
-- **Web Application**: http://localhost:8000/
-- **Admin Interface**: http://localhost:8000/admin/
-- **API Documentation**: http://localhost:8000/api/docs/
+- **Web Application**: http://localhost:8001/
+- **Django Admin**: http://localhost:8001/seim/django-admin/ (root `/admin/` redirects here)
+- **Vue Staff UI**: http://localhost:8001/seim/admin/
+- **API Documentation**: http://localhost:8001/api/docs/
 
 ### **4. Demo-Ready Credentials:**
 These accounts are created by `seed_demo_readiness`.
@@ -66,7 +67,7 @@ docker-compose exec web python manage.py cleanup_demo_data
 
 ## 🐍 Virtual Environment Setup (E2E Testing & Local Development)
 
-> **⚠️ Virtual environments are required for Selenium E2E tests and some local development tools that run from the host OS.**
+> **⚠️ Virtual environments are required for Playwright E2E tests and some local development tools that run from the host OS.**
 
 ### **Virtual Environment Setup:**
 
@@ -101,15 +102,15 @@ pip install -e ".[dev]"
 ```bash
 # Check if Django and other key packages are available
 python -c "import django; print(f'Django {django.get_version()}')"
-python -c "import selenium; print(f'Selenium {selenium.__version__}')"
+python -c "import playwright; print('Playwright OK')"
 ```
 
 ### **When to Use Virtual Environment:**
 
 #### **✅ Required for:**
-- **Selenium E2E Tests**: Browser automation tests that run from host OS
+- **Playwright E2E Tests**: Browser automation tests that run from host OS
 - **Local Development Tools**: Code quality checks, documentation generation
-- **Frontend Testing**: Jest tests and frontend build tools
+- **Frontend Testing**: Vitest tests and frontend build tools
 - **CI/CD Scripts**: Local testing of deployment scripts
 
 #### **❌ Not Required for:**
@@ -128,8 +129,8 @@ python -c "import selenium; print(f'Selenium {selenium.__version__}')"
 # 2. Ensure Django server is running in Docker
 docker-compose up -d
 
-# 3. Run Selenium E2E tests
-make test-selenium
+# 3. Run Playwright E2E tests
+make e2e-test
 
 # 4. Deactivate when done
 deactivate
@@ -181,7 +182,7 @@ pip install -e ".[dev]"
 > **Manual setup using virtual environments, pip, or SQLite is not supported for core development.**
 > All contributors must use Docker Compose and PostgreSQL as described above. This avoids common host OS issues and ensures a consistent environment for all developers.
 > 
-> **Exception**: Virtual environments are required for Selenium E2E tests and some local development tools that run from the host OS.
+> **Exception**: Virtual environments are required for Playwright E2E tests and some local development tools that run from the host OS.
 
 ---
 
@@ -399,7 +400,7 @@ See the [README](../README.md) and [docs/README.md](README.md) for more details.
 - **[Developer Guide](developer_guide.md)** - Development workflow and standards
 - **[Architecture](architecture.md)** - System architecture overview
 - **[Deployment Guide](deployment.md)** - Production deployment details
-- **[API Documentation](http://localhost:8000/api/docs/)** - Interactive API docs
+- **[API Documentation](http://localhost:8001/api/docs/)** - Interactive API docs
 
 ---
 

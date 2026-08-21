@@ -43,7 +43,7 @@ Welcome to the SEIM (Student Exchange Information Manager) documentation. This c
 - **[Deployment Guide](deployment.md)** - Production deployment instructions
 - **[CMS Restore Guide](notes/CMS_RESTORE_GUIDE.md)** - Wagtail export/import and restore
 - **[Virus Scanner Setup](virus_scanner_setup.md)** - Document scanning configuration
-- **[Selenium Setup](selenium_setup.md)** - E2E testing setup
+- **[Selenium Setup](selenium_setup.md)** - Legacy E2E (deprecated; see [e2e_testing_guide.md](e2e_testing_guide.md))
 
 ### **📋 Project Information**
 - **[New Features - October 2025](new_features_oct_2025.md)** - Latest enhancements ✨
@@ -111,12 +111,36 @@ SEIM is a comprehensive Django-based web application for managing student exchan
 - **Grade Translation**: International grade scale conversion system
 
 ### **Technology Stack:**
-- **Backend**: Django 5.1.4 with PostgreSQL
-- **Frontend**: Vue 3 SPA at `/seim/` plus Wagtail CMS at `/`
+- **Backend**: Django 5.2.17 with PostgreSQL
+- **Frontend**: Vue 3.5 + Vite 7 SPA at `/seim/` plus Wagtail 7 CMS at `/`
 - **Caching**: Redis for performance optimization
 - **Background Tasks**: Celery for async processing
 - **Containerization**: Docker for consistent deployment
 - **API**: Django REST Framework with OpenAPI documentation
+- **E2E**: Playwright (primary); Selenium deprecated
+- **Formatter**: Ruff (not Black)
+
+---
+
+## 📌 Current State (August 2026)
+
+| Topic | Current repo state |
+|-------|-------------------|
+| Django | **5.2.17** (`pyproject.toml`) |
+| Python | `>=3.11`; Docker/CI use **3.12** |
+| Frontend | **Vue 3.5 + Vite 7** SPA at `/seim/` |
+| Public site | **Wagtail 7** at `/`, admin at `/cms/` |
+| Django admin | **`/seim/django-admin/`** (root `/admin/` redirects here) |
+| Vue staff UI | **`/seim/admin/*`** |
+| Dev URL | **`http://localhost:8001`** |
+| Local-prod QA | **`http://localhost:8020`** |
+| E2E | **Playwright** (`make e2e-test`); Selenium deprecated |
+| Frontend tests | **Vitest** |
+| Backend tests | **pytest**, **80% coverage gate**; `cms` excluded in test settings |
+| Dependencies | **`pyproject.toml` only** |
+| Django apps | `accounts`, `analytics`, `api`, `application_forms`, `cms`, `core`, `data_management`, `documents`, `exchange`, `grades`, `notifications`, `workflows` |
+
+See [notes/SPA_VS_LEGACY.md](notes/SPA_VS_LEGACY.md) for remaining Django-template leftovers.
 
 ---
 
@@ -134,7 +158,8 @@ docker compose exec web python manage.py create_initial_data
 
 # Access the application
 # Web: http://localhost:8001/
-# Admin: http://localhost:8001/seim/admin/
+# Django admin: http://localhost:8001/seim/django-admin/
+# Vue staff UI: http://localhost:8001/seim/admin/
 # API Docs: http://localhost:8001/api/docs/
 ```
 
@@ -171,6 +196,22 @@ make docs-sphinx-docker
 For maintaining and updating documentation, see:
 - **[Documentation Maintenance Guide](documentation_maintenance.md)** - Complete guide for keeping docs up-to-date
 
+### **Generated docs (committed reference outputs)**
+
+Regenerate inside Docker:
+
+```bash
+make docs-workflow
+```
+
+Committed artifacts (last synced **August 2026**):
+
+- `docs/generated/code_documentation.md`
+- `docs/generated/database_schema.md`
+- `api_schema.yaml`
+
+Sphinx HTML stays in `docs/sphinx/build/` (gitignored). See **Current State** above for stack ground truth.
+
 ---
 
 ## 📁 Project Structure
@@ -187,7 +228,10 @@ For maintaining and updating documentation, see:
 | `application_forms/` | Dynamic form builder |
 | `api/` | REST API gateway (URL aggregator) |
 | `core/` | Shared utilities |
-| `frontend-vue/` | Vue 3 SPA at `/seim/` |
+| `cms/` | Wagtail CMS pages and public site |
+| `workflows/` | Application workflow engine |
+| `data_management/` | Data import/export operator UI |
+| `frontend-vue/` | Vue 3 SPA at `/seim/` (repo root, not a Django app) |
 
 ---
 
@@ -217,6 +261,6 @@ This documentation is continuously maintained as part of the SEIM project:
 
 ---
 
-**Last Updated**: November 20, 2025  
-**Version**: 2.2  
+**Last Updated**: August 20, 2026  
+**Version**: 2.3  
 **Maintained By**: SEIM Development Team

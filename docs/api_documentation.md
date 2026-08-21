@@ -6,7 +6,7 @@ The SEIM (Student Exchange Information Manager) API provides a comprehensive RES
 
 ## Base URL
 
-- **Development**: `http://localhost:8000/api/`
+- **Development**: `http://localhost:8001/api/`
 - **Production**: `https://api.seim.local/api/`
 
 ## Authentication
@@ -20,7 +20,7 @@ Authorization: Bearer <your_token>
 ### Getting a Token
 
 ```bash
-curl -X POST http://localhost:8000/api/token/ \
+curl -X POST http://localhost:8001/api/token/ \
   -H "Content-Type: application/json" \
   -d '{"username": "your_username", "password": "your_password"}'
 ```
@@ -28,7 +28,7 @@ curl -X POST http://localhost:8000/api/token/ \
 ### Refreshing a Token
 
 ```bash
-curl -X POST http://localhost:8000/api/token/refresh/ \
+curl -X POST http://localhost:8001/api/token/refresh/ \
   -H "Content-Type: application/json" \
   -d '{"refresh": "your_refresh_token"}'
 ```
@@ -131,7 +131,7 @@ List all exchange programs.
 ```json
 {
   "count": 10,
-  "next": "http://localhost:8000/api/programs/?page=2",
+  "next": "http://localhost:8001/api/programs/?page=2",
   "previous": null,
   "results": [
     {

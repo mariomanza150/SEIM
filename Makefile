@@ -103,7 +103,7 @@ help:
 # Documentation targets
 docs-api:
 	@echo "📚 Generating API documentation..."
-	docker-compose exec web python manage.py generate_docs --format openapi
+	docker-compose exec web python manage.py generate_docs --format yaml
 
 docs-code:
 	@echo "📝 Generating code documentation..."
@@ -119,7 +119,7 @@ docs-sphinx-docker:
 
 docs-all:
 	@echo "🚀 Generating all documentation..."
-	docker-compose exec web python manage.py generate_docs --include-code --include-db --format openapi
+	docker-compose exec web python manage.py generate_docs --include-code --include-db --format yaml
 	$(MAKE) docs-sphinx-docker
 
 enhance-docs:

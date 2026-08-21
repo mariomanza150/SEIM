@@ -1,7 +1,17 @@
 # SEIM Testing Guide
 
 ## Overview
-This guide covers all testing approaches for SEIM, including unit tests, integration tests, frontend tests, and Selenium E2E tests.
+This guide covers all testing approaches for SEIM: pytest unit/integration (Docker), Vitest (Vue), and **Playwright E2E** (primary). Legacy Selenium is deprecated.
+
+---
+
+## 🎭 **Playwright E2E (Primary)**
+
+- **Location**: `tests/e2e_playwright/`
+- **Command**: `make e2e-test`
+- **Guide**: [docs/e2e_testing_guide.md](../docs/e2e_testing_guide.md)
+
+Requires Django running (Docker `docker compose up -d` or native on port **8001**).
 
 ---
 
@@ -17,17 +27,20 @@ This guide covers all testing approaches for SEIM, including unit tests, integra
 - **Environment**: Host OS with Node.js
 - **Command**: `npm --prefix frontend-vue run test:run`
 
-### **3. Selenium E2E Tests (HOST OS ONLY)**
+### **3. Playwright E2E Tests (Primary, HOST OS)**
+- **Location**: `tests/e2e_playwright/`
+- **Environment**: Host OS with Playwright browsers
+- **Command**: `make e2e-test`
+
+### **4. Legacy Selenium E2E (Deprecated)**
 - **Location**: `tests/e2e/`, `tests/selenium/`
-- **Environment**: Host OS (not Docker)
-- **Command**: `make test-selenium`
+- **Command**: `SEIM_RUN_SELENIUM=1 make test-selenium`
 
 ---
 
-## 🌐 **Selenium E2E Testing (HOST OS ONLY)**
+## 🌐 **Legacy Selenium E2E (Deprecated)**
 
-> **⚠️ IMPORTANT: Selenium tests run from the HOST OS, not Docker containers.**
-> This is because Selenium requires direct access to the browser and display system.
+> **Use Playwright (`make e2e-test`) instead.** Selenium remains for opt-in regression only.
 
 ### **Prerequisites**
 - Google Chrome installed on host OS

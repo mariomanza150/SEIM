@@ -1,3 +1,5 @@
+> **DEPRECATED — use Playwright.** Selenium E2E is legacy only (`SEIM_RUN_SELENIUM=1 make test-selenium`). Primary guide: [e2e_testing_guide.md](e2e_testing_guide.md).
+
 # Selenium Setup Guide for Windows
 
 This guide covers setting up Selenium WebDriver with Google Chrome and ChromeDriver on Windows for running browser-based tests in the SEIM project.

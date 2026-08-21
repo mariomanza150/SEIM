@@ -1,6 +1,6 @@
 # SEIM Project Structure Guide
 
-**Last Updated:** 2025-12-05  
+**Last Updated:** 2026-08-20  
 **Purpose:** Comprehensive guide to project directory structure and organization
 
 ---
@@ -29,6 +29,8 @@ SEIM/
 ├── core/                  # Shared utilities and base classes
 ├── documents/             # Document management
 ├── exchange/              # Exchange programs and applications
+├── workflows/             # Application workflow engine
+├── data_management/       # Import/export operator UI
 ├── frontend-vue/          # Vue 3 SPA (served at /seim/)
 ├── grades/                # Grade translation system
 ├── notifications/         # Notification system
@@ -39,8 +41,7 @@ SEIM/
 ├── scripts/               # Utility scripts
 ├── nginx/                 # Nginx configuration
 ├── locale/                # Translation files
-├── docs/                  # Deprecated pointer → docs/ (see docs/README.md)
-├── docs/         # Canonical manuals + Sphinx + notes/
+├── docs/                  # Canonical manuals + Sphinx + notes/
 ├── documents/             # Django document-upload app (not docs)
 ├── LICENSE                # MIT
 ├── .tools/                # AI agent configs and IDE settings

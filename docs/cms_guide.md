@@ -20,7 +20,7 @@ SEIM now includes a comprehensive Content Management System (CMS) powered by Wag
 
 ### Accessing the CMS
 
-The Wagtail CMS admin interface is available at: `http://localhost:8000/cms/`
+The Wagtail CMS admin interface is available at: `http://localhost:8001/cms/`
 
 **Access Requirements:**
 - Staff users (is_staff=True)

@@ -1,3 +1,5 @@
+> **Backlog / next-steps doc (2025).** Many items are done; see [changelog.md](../changelog.md) and [SPA_VS_LEGACY.md](../notes/SPA_VS_LEGACY.md).
+
 # Wagtail CMS Integration - Next Steps
 
 ## Overview
@@ -118,7 +120,7 @@ The `restore_cms` command automatically creates:
 
 To customize content:
 
-1. Access Wagtail admin: `http://localhost:8000/cms/`
+1. Access Wagtail admin: `http://localhost:8001/cms/`
 2. Navigate to Pages
 3. Click "Edit" on any page
 4. Modify content using drag-and-drop StreamFields

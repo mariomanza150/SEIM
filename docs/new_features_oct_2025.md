@@ -1,3 +1,5 @@
+> **Snapshot (October 2025).** Feature release notes; superseded details live in [changelog.md](changelog.md).
+
 # New Features - October 2025
 
 **Release Date**: October 18, 2025  

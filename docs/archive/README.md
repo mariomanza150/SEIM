@@ -1,3 +1,5 @@
+> **Archived content is not maintained.** URLs, ports, and stack references may be stale. See [docs/README.md](../README.md) **Current State** for ground truth.
+
 # SEIM Documentation Archive
 
 This directory contains archived development documentation, session summaries, and historical reports from various development phases of the SEIM project.

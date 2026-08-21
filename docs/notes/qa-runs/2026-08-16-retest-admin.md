@@ -1,3 +1,5 @@
+> **Snapshot at test time** — ports/URLs reflect the environment when this QA run was recorded.
+
 # Manual QA retest â€” Admin (Sections 6, 7, 4.8)
 
 **Date:** 2026-08-16 (retest after local-prod rebuild)  

@@ -57,9 +57,10 @@ docker-compose exec web python manage.py migrate
 docker-compose exec web python manage.py seed_demo_readiness
 
 # Access the application
-# Web: http://localhost:8000/
-# Admin: http://localhost:8000/admin/
-# API Docs: http://localhost:8000/api/docs/
+# Web: http://localhost:8001/
+# Admin: http://localhost:8001/seim/django-admin/  # root /admin/ redirects here
+# Vue staff UI: http://localhost:8001/seim/admin/
+# API Docs: http://localhost:8001/api/docs/
 ```
 
 ### **Admin Access:**
@@ -72,7 +73,7 @@ docker-compose exec web python manage.py seed_demo_readiness
 
 ## 🐍 Virtual Environment Setup (E2E Testing & Local Development)
 
-> **⚠️ Virtual environments are required for Selenium E2E tests and some local development tools that run from the host OS.**
+> **⚠️ Virtual environments are required for Playwright E2E tests and some local development tools that run from the host OS.**
 
 ### **Virtual Environment Setup:**
 
@@ -109,13 +110,13 @@ Python pins live in `pyproject.toml`. Install extras with `pip install -e ".[dev
 ```bash
 # Check if Django and other key packages are available
 python -c "import django; print(f'Django {django.get_version()}')"
-python -c "import selenium; print(f'Selenium {selenium.__version__}')"
+python -c "import playwright; print('Playwright OK')"
 ```
 
 ### **When to Use Virtual Environment:**
 
 #### **✅ Required for:**
-- **Selenium E2E Tests**: Browser automation tests that run from host OS
+- **Playwright E2E Tests**: Browser automation tests that run from host OS
 - **Local Development Tools**: Code quality checks, documentation generation
 - **Frontend Testing**: Vitest (`npm --prefix frontend-vue run test:run`) and Vite builds
 - **CI/CD Scripts**: Local testing of deployment scripts
@@ -136,8 +137,8 @@ python -c "import selenium; print(f'Selenium {selenium.__version__}')"
 # 2. Ensure Django server is running in Docker
 docker-compose up -d
 
-# 3. Run Selenium E2E tests
-make test-selenium
+# 3. Run Playwright E2E tests
+make e2e-test
 
 # 4. Deactivate when done
 deactivate
@@ -231,7 +232,7 @@ deactivate
 ## 🧹 Code Quality, Pre-commit Hooks, and Frontend Testing
 
 ### **Code Quality Workflow**
-- All code must pass formatting (Black, isort), linting (flake8, pylint), type checking (mypy), security (bandit, safety), and complexity checks (radon).
+- All code must pass formatting (Ruff format), linting (Ruff check), type checking (mypy), security (bandit, safety), and complexity checks (radon).
 - Use the Makefile for all code quality commands (inside Docker):
 
 ```bash
@@ -255,7 +256,7 @@ make pre-commit-run
 
 ### **Frontend Testing with Vitest**
 - Vue unit tests live in `frontend-vue/` (Vitest + jsdom).
-- The legacy Django `frontend` app and Jest configs are removed.
+- The legacy Django `frontend` app and Vitest configs are removed.
 - Run tests and view coverage:
 
 ```bash
@@ -321,7 +322,7 @@ static/css/utilities/seim-shared-tokens.css  # Shared Vue + CMS tokens
 ### **Testing API Endpoints:**
 ```bash
 # Test with curl
-curl -X GET http://localhost:8000/api/programs/ \
+curl -X GET http://localhost:8001/api/programs/ \
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Test with Django shell
@@ -469,7 +470,7 @@ See the [README](../README.md) and [docs/README.md](README.md) for more details.
 ### **Documentation:**
 - **[Architecture](architecture.md)** - System design overview
 - **[Business Rules](business_rules.md)** - Business logic reference
-- **[API Documentation](http://localhost:8000/api/docs/)** - Interactive API docs
+- **[API Documentation](http://localhost:8001/api/docs/)** - Interactive API docs
 - **[Wireframes](wireframes/)** - UI/UX reference
 
 ### **Tools:**
@@ -674,35 +675,19 @@ This project overrides Bootstrap's `.bg-*` and `.text-*` utility classes to use 
 - If you add new theme colors, update the utility classes in `colors.css` and `typography.css` accordingly.
 - Avoid using raw Bootstrap color classes if you want full theme consistency. 
 
-## Selenium E2E/Integration Test Setup (Windows Host)
+## Playwright E2E Testing (Primary)
 
-SEIM's Selenium-based tests are configured to run from the HOST OS, not Docker containers. This is because Selenium requires direct access to the browser and display system. The tests connect to a Chrome browser running on your host OS.
+Playwright E2E tests live in `tests/e2e_playwright/` and run from the **host OS** against a running Django server (Docker or native).
 
-### Steps to Run Selenium Tests:
+```bash
+make e2e-test
+```
 
-1. **Install Chrome and ChromeDriver on Windows:**
-   - Download and install Google Chrome (if not already installed).
-   - Download the matching version of ChromeDriver from https://chromedriver.chromium.org/downloads and place it in your PATH.
+See [e2e_testing_guide.md](e2e_testing_guide.md) for setup, env vars, and troubleshooting.
 
-2. **Run Selenium Standalone Server:**
-   - Download Selenium Standalone Server (https://www.selenium.dev/downloads/).
-   - Start the server in a terminal:
-     ```
-     java -jar selenium-server-4.x.x.jar standalone
-     ```
-   - By default, this will listen on `http://localhost:4444/wd/hub`.
+## Legacy: Selenium E2E (Deprecated)
 
-3. **Set the SELENIUM_HOST environment variable (if needed):**
-   - By default, the tests use `host.docker.internal` to connect from Docker to your Windows host.
-   - If this does not work, set the environment variable `SELENIUM_HOST` to your Windows host IP address.
-
-4. **Run the tests as usual (from Docker):**
-   - The tests will connect to the Selenium server on your host and control Chrome there.
-
-### Notes
-- You must keep the Selenium Standalone Server running while tests execute.
-- You can run Chrome in headless mode by uncommenting the `--headless` option in the test setup.
-- This setup is required because Docker containers cannot install Chrome/Chromedriver in this environment. 
+Selenium-based tests in `tests/e2e/` and `tests/selenium/` are **deprecated**. Opt in with `SEIM_RUN_SELENIUM=1 make test-selenium`. Setup: [selenium_setup.md](selenium_setup.md).
 
 ## Program Creation Flow (2025 Update)
 

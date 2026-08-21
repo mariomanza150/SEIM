@@ -1,39 +1,33 @@
 # SEIM - Project Overview
 
-**Date:** 2025-01-27
-**Type:** Web Application
-**Architecture:** Service-Oriented Layered Architecture (Clean Architecture principles)
+**Date:** 2026-08-20  
+**Type:** Web Application  
+**Architecture:** Service-Oriented Layered Architecture
 
 ## Executive Summary
 
-SEIM (Student Exchange Information Manager) is a comprehensive Django-based web application for managing student exchange programs, applications, and workflows. The system features a modern Bootstrap 5 frontend with JWT authentication, role-based dashboards, Wagtail CMS integration, and a complete RESTful API. The application follows Clean Architecture principles with clear separation between presentation, application, domain, and infrastructure layers.
+SEIM manages student exchange programs with a **Django 5.2** backend, **Vue 3.5 SPA** at `/seim/`, **Wagtail 7** public site, JWT auth, and DRF API. Dev server: **http://localhost:8001**.
 
 ## Project Classification
 
 - **Repository Type:** Monolith
-- **Project Type(s):** Web Application (Django Full-Stack)
-- **Primary Language(s):** Python 3.12, JavaScript ES6+
+- **Project Type(s):** Web Application (Django + Vue SPA)
+- **Primary Language(s):** Python 3.12, JavaScript/TypeScript (Vue)
 - **Architecture Pattern:** Service-Oriented Layered Architecture with Clean Architecture principles
 
 ## Technology Stack Summary
 
 | Category | Technology | Version | Justification |
 |----------|-----------|---------|---------------|
-| **Web Framework** | Django | 5.1.4 | Robust ORM, admin interface, mature ecosystem |
-| **API Framework** | Django REST Framework | 3.16.1 | RESTful API with OpenAPI documentation |
-| **Database** | PostgreSQL | 15+ | Production-grade relational database |
-| **Cache/Tasks** | Redis | 7.2+ | Background tasks (Celery) and caching |
-| **Background Jobs** | Celery | 5.5.3 | Async email processing and scheduled tasks |
-| **Authentication** | JWT (djangorestframework-simplejwt) | 5.5.1 | Token-based API authentication |
-| **CMS** | Wagtail | 6.3 | Content management for landing pages |
-| **Frontend Framework** | Bootstrap | 5 | Responsive CSS framework |
-| **Frontend Build** | Webpack | 5.100.0 | JavaScript bundling and optimization |
-| **Testing** | Jest | 29.7.0 | Frontend JavaScript testing |
-| **WSGI Server** | Gunicorn | 23.0.0 | Production WSGI server |
-| **ASGI Server** | Daphne | 4.2.1 | WebSocket support and async requests |
-| **Containerization** | Docker | - | Consistent development and deployment |
-| **Static Files** | WhiteNoise | 6.6.0 | Production static file serving |
-| **API Documentation** | drf-spectacular | 0.29.0 | OpenAPI/Swagger documentation |
+| **Web Framework** | Django | 5.2.17 | ORM, admin, ecosystem |
+| **API Framework** | Django REST Framework | 3.16+ | REST + OpenAPI |
+| **Database** | PostgreSQL | 15+ | Production DB |
+| **Cache/Tasks** | Redis | 7+ | Celery + cache |
+| **CMS** | Wagtail | 7 | Public site `/` |
+| **Frontend** | Vue + Vite | 3.5 / 7 | SPA `/seim/` |
+| **Frontend tests** | Vitest | 3.x | `frontend-vue/` |
+| **E2E** | Playwright | primary | `make e2e-test` |
+| **Dev URL** | Docker Compose | host 8001 | Maps container 8000 |
 
 ## Key Features
 
@@ -77,10 +71,10 @@ SEIM (Student Exchange Information Manager) is a comprehensive Django-based web 
 6. Collect static files: `docker-compose exec web python manage.py collectstatic --noinput`
 
 Access:
-- Web: http://localhost:8000/
-- Admin: http://localhost:8000/seim/admin/
-- CMS Admin: http://localhost:8000/cms/
-- API Docs: http://localhost:8000/api/docs/
+- Web: http://localhost:8001/
+- Admin: http://localhost:8001/seim/admin/
+- CMS Admin: http://localhost:8001/cms/
+- API Docs: http://localhost:8001/api/docs/
 
 ### Key Commands
 

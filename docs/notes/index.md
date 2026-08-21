@@ -11,8 +11,8 @@ SEIM (Student Exchange Information Manager) is a comprehensive Django-based web 
 
 ## Quick Reference
 
-- **Tech Stack:** Django 5.1.4, PostgreSQL 15+, Bootstrap 5, Redis 7.2+, Celery 5.5.3
-- **Entry Point:** `manage.py` (Django), `static/js/main.js` (Frontend)
+- **Tech Stack:** Django 5.2.17, PostgreSQL 15+, Bootstrap 5, Redis 7.2+, Celery 5.5.3
+- **Entry Point:** `manage.py` (Django), `frontend-vue/src/main.js` (Vue SPA)
 - **Architecture Pattern:** Service-Oriented Layered Architecture
 - **Database:** PostgreSQL 15+
 - **Deployment:** Docker & Docker Compose

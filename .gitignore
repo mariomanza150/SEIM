@@ -206,9 +206,10 @@ staticfiles/
 ehthumbs.db
 Thumbs.db
 
-# Generated documentation
-docs/generated/
-api_schema.yaml
+# Generated documentation (commit stable reference outputs after make docs-workflow)
+docs/generated/*
+!docs/generated/code_documentation.md
+!docs/generated/database_schema.md
 
 # Sphinx build
 docs/sphinx/build/
