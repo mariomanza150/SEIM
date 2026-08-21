@@ -195,7 +195,9 @@ class FormSubmissionService:
         return submission
 
     @staticmethod
-    def validate_responses(form_type, responses, *, visibility_context=None):
+    def validate_responses(
+        form_type, responses, *, visibility_context=None, only_keys=None
+    ):
         """
         Validate form responses against the schema.
 
@@ -216,6 +218,8 @@ class FormSubmissionService:
         schema = form_type.schema
         properties = schema.get("properties", {})
         required_fields = schema.get("required", [])
+        if only_keys is not None:
+            required_fields = [key for key in only_keys if key]
         vctx = visibility_context
 
         missing_fields = []

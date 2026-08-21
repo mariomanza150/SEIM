@@ -199,6 +199,8 @@ class ProfileSerializer(serializers.ModelSerializer):
     missing_apply_fields = serializers.SerializerMethodField()
     computed_semester = serializers.SerializerMethodField()
     effective_semester = serializers.SerializerMethodField()
+    due_profile_fields = serializers.SerializerMethodField()
+    apply_start_field_keys = serializers.SerializerMethodField()
 
     def get_full_name(self, obj):
         return " ".join(
@@ -222,6 +224,17 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     def get_missing_apply_fields(self, obj):
         return obj.missing_apply_fields()
+
+    def get_apply_start_field_keys(self, obj):
+        from exchange.lifecycle_requirements import draft_required_profile_keys
+
+        return draft_required_profile_keys(None)
+
+    def get_due_profile_fields(self, obj):
+        from exchange.lifecycle_requirements import due_profile_field_keys_for_user
+
+        user = getattr(obj, "user", None)
+        return due_profile_field_keys_for_user(user)
 
     class Meta:
         model = Profile
@@ -273,13 +286,20 @@ class ProfileSerializer(serializers.ModelSerializer):
             "is_eligibility_complete",
             "is_ready_to_apply",
             "missing_apply_fields",
+            "apply_start_field_keys",
+            "due_profile_fields",
         )
+        extra_kwargs = {
+            "clabe": {"required": False, "allow_blank": True},
+        }
 
     def to_internal_value(self, data):
         if hasattr(data, "copy"):
             data = data.copy()
         else:
             data = dict(data)
+        if "clabe" in data and data["clabe"] is not None:
+            data["clabe"] = "".join(ch for ch in str(data["clabe"]) if ch.isdigit())
         empty_to_null = (
             "date_of_birth",
             "ingress_date",
@@ -306,7 +326,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         return value or None
 
     def validate_clabe(self, value):
-        return value or ""
+        digits = "".join(ch for ch in str(value or "") if ch.isdigit())
+        return digits
 
     def validate(self, attrs):
         attrs = super().validate(attrs)
@@ -338,6 +359,58 @@ class ProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 {"current_semester": "Must be at least 1."}
             )
+        request = self.context.get("request")
+        actor = getattr(request, "user", None) if request else None
+        from exchange.lifecycle_requirements import (
+            is_student_only_actor,
+            due_profile_field_keys_for_user,
+            profile_field_satisfied,
+        )
+
+        if is_student_only_actor(actor) and self.instance is not None:
+            due_keys = due_profile_field_keys_for_user(actor)
+            if due_keys:
+                from types import SimpleNamespace
+
+                user_data = attrs.get("user") or {}
+                user_probe = SimpleNamespace(
+                    first_name=user_data.get(
+                        "first_name", getattr(self.instance.user, "first_name", "")
+                    ),
+                    last_name=user_data.get(
+                        "last_name", getattr(self.instance.user, "last_name", "")
+                    ),
+                )
+                probe = SimpleNamespace(user=user_probe)
+                for key in due_keys:
+                    if key in ("first_name", "last_name"):
+                        continue
+                    if key in attrs:
+                        value = attrs[key]
+                    else:
+                        value = getattr(self.instance, key, None)
+                    setattr(probe, key, value)
+                    if hasattr(self.instance, f"{key}_id"):
+                        if key in attrs:
+                            setattr(
+                                probe,
+                                f"{key}_id",
+                                getattr(value, "pk", value) if value else None,
+                            )
+                        else:
+                            setattr(
+                                probe,
+                                f"{key}_id",
+                                getattr(self.instance, f"{key}_id"),
+                            )
+                errors = {}
+                for key in due_keys:
+                    if not profile_field_satisfied(probe, key):
+                        errors[key] = (
+                            "This field is required for one of your applications."
+                        )
+                if errors:
+                    raise serializers.ValidationError(errors)
         return attrs
 
     def validate_additional_languages(self, value):

@@ -433,8 +433,9 @@ def _rule_age(profile, program: Program, application, _student: User) -> RuleOut
 def _rule_required_documents(
     _profile, program: Program, application: Application | None, _student: User
 ) -> RuleOutcome:
-    """Program required document types must be approved on the given application (submit parity)."""
+    """Submit-due documents must be approved (later-stage docs do not block submit)."""
     from exchange.eligibility_rulesets import concrete_program
+    from exchange.lifecycle_requirements import missing_submit_documents
     from exchange.models import ProgramDocumentRequirement
 
     orm_program = concrete_program(program)
@@ -448,15 +449,11 @@ def _rule_required_documents(
     if application.program_id != orm_program.pk:
         return RuleOutcome("required_documents", passed=True, skipped=True)
 
-    from documents.services import DocumentService
-
-    summary = DocumentService.build_application_document_checklist(application)
-    if summary["complete"]:
+    missing = missing_submit_documents(application)
+    if not missing:
         return RuleOutcome("required_documents", passed=True)
     problems = [
-        f"{item['name']} ({item['status']})"
-        for item in summary["items"]
-        if item["status"] != "approved"
+        f"{item.name} ({item.status or 'missing'})" for item in missing
     ]
     return RuleOutcome(
         "required_documents",

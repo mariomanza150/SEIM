@@ -744,6 +744,17 @@ class TestProfileView(APITestCase):
         for key, value in payload.items():
             assert str(get.data[key]) == str(value)
 
+    def test_update_profile_allows_empty_bank_fields(self):
+        url = reverse("accounts:profile")
+        response = self.client.patch(
+            url,
+            {"bank_institution": "", "clabe": ""},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_200_OK, response.data
+        assert response.data["bank_institution"] is None
+        assert response.data["clabe"] == ""
+
     def test_patch_profile_with_session_and_jwt_skips_csrf(self):
         """SPA JSON PATCH must succeed with JWT even when a Django session exists."""
         from rest_framework_simplejwt.tokens import RefreshToken

@@ -166,6 +166,15 @@ def seed_profile_catalogs(
                 )
                 programs.append(program)
 
+    if unidad_model is not None and school_model is not None:
+        for unidad in unidad_model.objects.filter(is_active=True):
+            has_schools = school_model.objects.filter(
+                unidad_id=unidad.id, is_active=True
+            ).exists()
+            if not has_schools:
+                unidad.is_active = False
+                unidad.save(update_fields=["is_active"])
+
     return schools, programs, _seed_banks(bank_model)
 
 

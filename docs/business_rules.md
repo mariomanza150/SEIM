@@ -65,16 +65,15 @@ This document outlines the business rules and logic implemented in the SEIM (Stu
 
 ### **Application Status Transitions:**
 ```
-draft → submitted → under_review → approved/rejected → completed/cancelled
+draft → submitted → under_review → nominated → approved → completed
 ```
+Side statuses: `waitlist`, `rejected`, `cancelled`, `withdrawn` (they do not inherit later pipeline requirements).
 
 #### **Status Transition Rules:**
-- **draft → submitted**: Student can submit when all required documents are uploaded
-- **submitted → under_review**: Automatic transition when application is submitted
-- **under_review → approved/rejected**: Only coordinators/admins can make this transition
-- **approved → completed**: Automatic when program ends
-- **rejected → cancelled**: Automatic when application is rejected
-- **draft → cancelled**: Student can withdraw draft applications
+- **draft → submitted**: Student can submit when items due at **submitted** are complete (documents + scheduled fields + existing host/form/eligibility). Documents required from a later status (e.g. approved) do **not** block submit.
+- Staff `PATCH` of status is **not** blocked by the lifecycle schedule; missing later-stage items remain due on the student checklist.
+- After a staff or workflow status change, if items are due now and still missing, the student gets an in-app/email reminder (`lifecycle_requirements_due`). The same application + status + missing-item set is not sent twice.
+- **draft → cancelled / withdrawn**: Student workflow actions do not require pipeline items.
 
 ### **Application Withdrawal:**
 - Only draft applications can be withdrawn
@@ -100,8 +99,9 @@ draft → submitted → under_review → approved/rejected → completed/cancell
 ### **Document Types:**
 - Document types are configured by admins in the SPA admin console (`/seim/admin/documents`)
 - Each type can have student instructions, FAQ, an optional Word template, accepted extensions, and a per-type size cap
-- Each program can request different document types, with required/optional flags
+- Each program can request different document types. `is_required=False` is optional throughout; `is_required=True` with no `required_from_status` is required from submitted; otherwise required from the chosen success-pipeline status (not `draft`).
 - Submission deadlines can be an absolute date, N days after program start, or N days before the application deadline
+- Profile/application/form fields can be scheduled per program via `ProgramFieldRequirement` (admin: program editor Field requirements table, including `source=form` keys from the program's application form schema). Student PATCH of a due field cannot clear it; staff profile edits are unrestricted.
 - Word `.docx` templates use MERGEFIELD names (e.g. `FirstName`, `Matricula`, `ProgramName`); student downloads are prefilled for the selected application
 
 ### **Document Replacement Rules:**

@@ -207,6 +207,15 @@ class ApplicationService:
                 "Host destination incomplete or inconsistent:\n- "
                 + "\n- ".join(messages)
             )
+        from exchange.lifecycle_requirements import (
+            is_student_only_actor,
+            student_submit_field_errors,
+        )
+
+        if is_student_only_actor(user):
+            field_errors = student_submit_field_errors(application)
+            if field_errors:
+                raise ValueError(field_errors[0])
         ApplicationService.capture_eligibility_snapshot(application)
         ApplicationService.check_eligibility(
             application.student,
@@ -354,6 +363,10 @@ class ApplicationService:
             raise ValueError("You do not have permission to perform this transition.")
 
         if new_status_name == "submitted":
+            from exchange.lifecycle_requirements import (
+                is_student_only_actor,
+                student_submit_field_errors,
+            )
             from exchange.models import validate_application_host_destination
 
             host_errors = validate_application_host_destination(
@@ -365,6 +378,10 @@ class ApplicationService:
                     "Host destination incomplete or inconsistent:\n- "
                     + "\n- ".join(messages)
                 )
+            if is_student_only_actor(user):
+                field_errors = student_submit_field_errors(application)
+                if field_errors:
+                    raise ValueError(field_errors[0])
             ApplicationService.check_eligibility(
                 application.student,
                 application.program,
@@ -407,6 +424,10 @@ class ApplicationService:
             settings_category="applications",
             transactional_route_key="application_status_update",
         )
+
+        from exchange.lifecycle_requirements import notify_due_now_after_status_change
+
+        notify_due_now_after_status_change(application)
 
         return application
 

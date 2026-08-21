@@ -394,7 +394,7 @@ class DocumentService:
 
         requirements = list(
             ProgramDocumentRequirement.objects.filter(program=application.program)
-            .select_related("document_type")
+            .select_related("document_type", "required_from_status")
             .order_by("sort_order", "id")
         )
         if not requirements:
@@ -408,10 +408,23 @@ class DocumentService:
         items = []
         approved_count = 0
         required_count = 0
+        from exchange.lifecycle_requirements import (
+            document_completeness_gate,
+            document_is_due,
+            effective_document_required_from,
+        )
+
+        current_status = (
+            application.status.name if getattr(application, "status", None) else "draft"
+        )
+        gate_status = document_completeness_gate(current_status)
         for req in requirements:
             dt = req.document_type
-            is_required = bool(getattr(req, "is_required", True))
-            if is_required:
+            scheduled_required = bool(getattr(req, "is_required", True))
+            required_from = effective_document_required_from(req)
+            due_now = document_is_due(req, current_status)
+            counts_toward_complete = document_is_due(req, gate_status)
+            if counts_toward_complete:
                 required_count += 1
 
             deadline = req.resolve_deadline()
@@ -425,7 +438,10 @@ class DocumentService:
                 "name": dt.name,
                 "description": dt.description or "",
                 "submission_mode": dt.submission_mode,
-                "is_required": is_required,
+                "is_required": scheduled_required,
+                "required_from_status": required_from,
+                "due_now": due_now,
+                "counts_toward_complete": counts_toward_complete,
                 "status": "missing",
                 "document_id": None,
                 "resubmission_reason": None,
@@ -441,7 +457,7 @@ class DocumentService:
 
             if dt.submission_mode == DocumentType.SubmissionMode.INSTRUCTIONS_ONLY:
                 entry["status"] = "n_a"
-                if is_required:
+                if counts_toward_complete:
                     approved_count += 1
                 items.append(entry)
                 continue
@@ -470,7 +486,7 @@ class DocumentService:
                 entry["resubmission_reason"] = open_req.reason
             elif latest.is_valid:
                 entry["status"] = "approved"
-                if is_required:
+                if counts_toward_complete:
                     approved_count += 1
             elif latest.validated_at:
                 entry["status"] = "invalid"

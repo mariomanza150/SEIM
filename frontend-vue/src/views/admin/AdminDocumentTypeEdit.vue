@@ -175,7 +175,7 @@
                 <thead>
                   <tr>
                     <th>{{ t('adminDocuments.req.program') }}</th>
-                    <th>{{ t('adminDocuments.req.required') }}</th>
+                    <th>{{ t('adminDocuments.req.requiredFrom') }}</th>
                     <th>{{ t('adminDocuments.req.daysAfterStart') }}</th>
                     <th>{{ t('adminDocuments.req.daysBeforeDeadline') }}</th>
                     <th>{{ t('adminDocuments.req.absolute') }}</th>
@@ -200,7 +200,17 @@
                       />
                     </td>
                     <td>
-                      <input v-model="req.is_required" class="form-check-input" type="checkbox" />
+                      <select
+                        v-model="req.required_from_status"
+                        class="form-select form-select-sm"
+                        data-testid="admin-document-required-from"
+                        @change="onRequiredFromChange(req)"
+                      >
+                        <option value="">{{ t('adminDocuments.req.optionalThroughout') }}</option>
+                        <option v-for="st in documentPipelineStatuses" :key="st" :value="st">
+                          {{ t(`applicationDetailPage.status.${st}`) }}
+                        </option>
+                      </select>
                     </td>
                     <td>
                       <input v-model.number="req.deadline_days_after_program_start" class="form-control form-control-sm" type="number" min="0" />
@@ -279,6 +289,20 @@ const hasTemplate = ref(false)
 const templateFilename = ref('')
 
 const form = ref(emptyForm())
+const documentPipelineStatuses = ['submitted', 'under_review', 'nominated', 'approved', 'completed']
+
+function normalizeRequirementRow(row) {
+  const requiredFrom = row.is_required === false ? '' : (row.required_from_status || 'submitted')
+  return {
+    ...row,
+    required_from_status: requiredFrom,
+    is_required: Boolean(requiredFrom),
+  }
+}
+
+function onRequiredFromChange(req) {
+  req.is_required = Boolean(req.required_from_status)
+}
 
 const submissionModes = computed(() => [
   { value: 'upload', label: t('adminDocuments.modes.upload') },
@@ -352,7 +376,7 @@ async function load() {
       accepted_extensions: dt.accepted_extensions || '',
       max_file_size_mb: dt.max_file_size_mb,
       allows_multiple: Boolean(dt.allows_multiple),
-      program_requirements: (dt.program_requirements || []).map((row) => ({ ...row })),
+      program_requirements: (dt.program_requirements || []).map((row) => normalizeRequirementRow(row)),
     }
     hasTemplate.value = Boolean(dt.has_template)
     templateFilename.value = dt.template_filename || ''
@@ -373,6 +397,7 @@ function addRequirement() {
     program: program.id,
     program_name: program.name,
     is_required: true,
+    required_from_status: 'submitted',
     deadline: null,
     deadline_days_before_program_deadline: null,
     deadline_days_after_program_start: null,
@@ -443,7 +468,8 @@ async function save() {
       program_requirements: form.value.program_requirements.map((row, idx) => ({
         id: row.id || undefined,
         program: row.program,
-        is_required: Boolean(row.is_required),
+        is_required: Boolean(row.required_from_status),
+        required_from_status: row.required_from_status || null,
         deadline: emptyToNull(row.deadline),
         deadline_days_before_program_deadline: emptyToNull(row.deadline_days_before_program_deadline),
         deadline_days_after_program_start: emptyToNull(row.deadline_days_after_program_start),
@@ -452,7 +478,9 @@ async function save() {
       })),
     }
     const res = await api.patch(`/api/document-types/${route.params.id}/`, payload)
-    form.value.program_requirements = (res.data.program_requirements || []).map((row) => ({ ...row }))
+    form.value.program_requirements = (res.data.program_requirements || []).map((row) =>
+      normalizeRequirementRow(row),
+    )
     success(t('adminDocuments.toastSaved'))
   } catch (err) {
     console.error('Failed to save document type:', err)

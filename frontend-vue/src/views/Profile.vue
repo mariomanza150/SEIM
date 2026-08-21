@@ -98,7 +98,7 @@
                   <input id="profile-postal-code" v-model="form.postal_code" type="text" class="form-control" autocomplete="postal-code" required data-testid="profile-postal-code">
                 </div>
                 <div class="col-md-4">
-                  <label class="form-label" for="profile-passport">{{ t('profilePage.passportNumber') }}</label>
+                  <label class="form-label" for="profile-passport">{{ t('profilePage.passportNumber') }}<span v-if="fieldIsRequired('passport_number')"> *</span></label>
                   <input id="profile-passport" v-model="form.passport_number" type="text" class="form-control" data-testid="profile-passport">
                 </div>
                 <div class="col-md-4">
@@ -110,7 +110,7 @@
                   <input id="profile-secondary-email" v-model="form.secondary_email" type="email" class="form-control" autocomplete="email" required data-testid="profile-secondary-email">
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-rfc">{{ t('profilePage.rfc') }}</label>
+                  <label class="form-label" for="profile-rfc">{{ t('profilePage.rfc') }}<span v-if="fieldIsRequired('rfc')"> *</span></label>
                   <input id="profile-rfc" v-model="form.rfc" type="text" class="form-control text-uppercase" data-testid="profile-rfc">
                 </div>
               </div>
@@ -141,6 +141,13 @@
                     <option value="">{{ schoolsLoading ? t('profilePage.loadingPrograms') : t('profilePage.selectOption') }}</option>
                     <option v-for="item in catalogs.schools" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
                   </select>
+                  <div
+                    v-if="form.unidad && !schoolsLoading && catalogs.schools.length === 0"
+                    class="form-text text-warning"
+                    data-testid="profile-no-schools-warning"
+                  >
+                    {{ t('profilePage.noSchoolsForUnidad') }}
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-program">{{ t('profilePage.homeProgram') }} *</label>
@@ -155,20 +162,36 @@
 
           <section class="card mb-4" data-testid="profile-banking-section">
             <div class="card-header">
-              <h5 class="mb-0">{{ t('profilePage.bankingSection') }} <span class="small text-muted">({{ t('profilePage.optional') }})</span></h5>
+              <h5 class="mb-0">
+                {{ t('profilePage.bankingSection') }}
+                <span v-if="!fieldIsRequired('clabe') && !fieldIsRequired('bank_institution')" class="small text-muted">({{ t('profilePage.optional') }})</span>
+              </h5>
             </div>
             <div class="card-body">
               <div class="row g-3">
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-bank">{{ t('profilePage.bank') }}</label>
+                  <label class="form-label" for="profile-bank">{{ t('profilePage.bank') }}<span v-if="fieldIsRequired('bank_institution')"> *</span></label>
                   <select id="profile-bank" v-model="form.bank_institution" class="form-select" data-testid="profile-bank">
                     <option value="">{{ t('profilePage.selectOption') }}</option>
                     <option v-for="item in catalogs.banks" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
                   </select>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-clabe">{{ t('profilePage.clabe') }}</label>
-                  <input id="profile-clabe" v-model="form.clabe" type="text" inputmode="numeric" pattern="[0-9]{18}" maxlength="18" class="form-control" data-testid="profile-clabe">
+                  <label class="form-label" for="profile-clabe">{{ t('profilePage.clabe') }}<span v-if="fieldIsRequired('clabe')"> *</span></label>
+                  <input
+                    id="profile-clabe"
+                    :value="form.clabe"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="18"
+                    class="form-control"
+                    autocomplete="off"
+                    :placeholder="t('profilePage.clabePlaceholder')"
+                    :title="t('profilePage.clabeHelp')"
+                    data-testid="profile-clabe"
+                    @input="onClabeInput"
+                  >
+                  <div class="form-text" data-testid="profile-clabe-help">{{ t('profilePage.clabeHelp') }}</div>
                 </div>
               </div>
             </div>
@@ -294,31 +317,49 @@ const computedSemesterPlaceholder = computed(() => {
   return t('profilePage.semesterOverridePlaceholder')
 })
 
+const DEFAULT_APPLY_START = [
+  'first_name', 'last_name', 'matricula', 'academic_level', 'school', 'unidad',
+  'home_academic_program', 'gender', 'date_of_birth', 'birthplace', 'postal_code',
+  'mobile_phone', 'secondary_email', 'gpa', 'grade_scale', 'language',
+  'credits_approved_percent', 'semester',
+]
+const applyStartKeys = ref(new Set(DEFAULT_APPLY_START))
+const dueProfileKeys = ref(new Set())
+
+function fieldIsRequired(key) {
+  return applyStartKeys.value.has(key) || dueProfileKeys.value.has(key)
+}
+
 const missingApplyFields = computed(() => {
   const missing = []
   const blank = (value) => value == null || !String(value).trim()
-  if (blank(form.value.first_name)) missing.push('first_name')
-  if (blank(form.value.last_name)) missing.push('last_name')
-  if (blank(form.value.matricula)) missing.push('matricula')
-  if (!form.value.academic_level) missing.push('academic_level')
-  if (!form.value.school) missing.push('school')
-  if (!form.value.unidad) missing.push('unidad')
-  if (!form.value.home_academic_program) missing.push('home_academic_program')
-  if (blank(form.value.gender)) missing.push('gender')
-  if (!form.value.date_of_birth) missing.push('date_of_birth')
-  if (blank(form.value.birthplace)) missing.push('birthplace')
-  if (blank(form.value.postal_code)) missing.push('postal_code')
-  if (blank(form.value.mobile_phone)) missing.push('mobile_phone')
-  if (blank(form.value.secondary_email)) missing.push('secondary_email')
-  if (form.value.gpa == null || form.value.gpa === '') missing.push('gpa')
-  if (!form.value.grade_scale) missing.push('grade_scale')
-  if (blank(form.value.language)) missing.push('language')
-  if (form.value.credits_approved_percent == null || form.value.credits_approved_percent === '') {
+  const need = (key) => fieldIsRequired(key)
+  if (need('first_name') && blank(form.value.first_name)) missing.push('first_name')
+  if (need('last_name') && blank(form.value.last_name)) missing.push('last_name')
+  if (need('matricula') && blank(form.value.matricula)) missing.push('matricula')
+  if (need('academic_level') && !form.value.academic_level) missing.push('academic_level')
+  if (need('school') && !form.value.school) missing.push('school')
+  if (need('unidad') && !form.value.unidad) missing.push('unidad')
+  if (need('home_academic_program') && !form.value.home_academic_program) missing.push('home_academic_program')
+  if (need('gender') && blank(form.value.gender)) missing.push('gender')
+  if (need('date_of_birth') && !form.value.date_of_birth) missing.push('date_of_birth')
+  if (need('birthplace') && blank(form.value.birthplace)) missing.push('birthplace')
+  if (need('postal_code') && blank(form.value.postal_code)) missing.push('postal_code')
+  if (need('mobile_phone') && blank(form.value.mobile_phone)) missing.push('mobile_phone')
+  if (need('secondary_email') && blank(form.value.secondary_email)) missing.push('secondary_email')
+  if (need('gpa') && (form.value.gpa == null || form.value.gpa === '')) missing.push('gpa')
+  if (need('grade_scale') && !form.value.grade_scale) missing.push('grade_scale')
+  if (need('language') && blank(form.value.language)) missing.push('language')
+  if (need('credits_approved_percent') && (form.value.credits_approved_percent == null || form.value.credits_approved_percent === '')) {
     missing.push('credits_approved_percent')
   }
-  if (!form.value.ingress_date && (form.value.current_semester == null || form.value.current_semester === '')) {
+  if (need('semester') && !form.value.ingress_date && (form.value.current_semester == null || form.value.current_semester === '')) {
     missing.push('semester')
   }
+  if (need('passport_number') && blank(form.value.passport_number)) missing.push('passport_number')
+  if (need('rfc') && blank(form.value.rfc)) missing.push('rfc')
+  if (need('bank_institution') && !form.value.bank_institution) missing.push('bank_institution')
+  if (need('clabe') && String(form.value.clabe || '').replace(/\D/g, '').length !== 18) missing.push('clabe')
   return missing
 })
 const isReadyToApply = computed(() => missingApplyFields.value.length === 0)
@@ -442,6 +483,8 @@ function numberOf(value) {
 }
 
 function applyProfile(data) {
+  applyStartKeys.value = new Set(data.apply_start_field_keys || DEFAULT_APPLY_START)
+  dueProfileKeys.value = new Set(data.due_profile_fields || [])
   form.value = {
     ...emptyForm,
     email: data.email || '',
@@ -578,8 +621,13 @@ function buildPayload() {
   payload.toefl_score = nullable(payload.toefl_score)
   payload.additional_languages = normalizedAdditionalLanguages()
   payload.rfc = String(payload.rfc || '').trim().toUpperCase()
-  payload.clabe = String(payload.clabe || '').trim()
+  const clabeDigits = String(payload.clabe || '').replace(/\D/g, '')
+  payload.clabe = clabeDigits.length === 18 ? clabeDigits : ''
   return payload
+}
+
+function onClabeInput(event) {
+  form.value.clabe = String(event.target.value || '').replace(/\D/g, '').slice(0, 18)
 }
 
 async function handleSubmit() {

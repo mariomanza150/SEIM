@@ -22,6 +22,9 @@ class ProgramRequirementNestedSerializer(serializers.Serializer):
     program_name = serializers.CharField(read_only=True)
     program_start_date = serializers.DateField(read_only=True)
     is_required = serializers.BooleanField(required=False, default=True)
+    required_from_status = serializers.CharField(
+        required=False, allow_null=True, allow_blank=True
+    )
     deadline = serializers.DateField(required=False, allow_null=True)
     deadline_days_before_program_deadline = serializers.IntegerField(
         required=False, allow_null=True, min_value=0
@@ -87,7 +90,9 @@ class DocumentTypeSerializer(serializers.ModelSerializer):
         if not include_reqs:
             ret.pop("program_requirements", None)
             return ret
-        reqs = instance.program_requirements.select_related("program").order_by(
+        reqs = instance.program_requirements.select_related(
+            "program", "required_from_status"
+        ).order_by(
             "sort_order", "id"
         )
         ret["program_requirements"] = [
@@ -101,6 +106,11 @@ class DocumentTypeSerializer(serializers.ModelSerializer):
                     else None
                 ),
                 "is_required": req.is_required,
+                "required_from_status": (
+                    req.required_from_status.name
+                    if req.required_from_status_id
+                    else None
+                ),
                 "deadline": req.deadline.isoformat() if req.deadline else None,
                 "deadline_days_before_program_deadline": (
                     req.deadline_days_before_program_deadline
@@ -161,6 +171,22 @@ class DocumentTypeSerializer(serializers.ModelSerializer):
                 "instructions_override": row.get("instructions_override") or "",
                 "sort_order": row.get("sort_order") or 0,
             }
+            status_name = row.get("required_from_status") or None
+            if status_name:
+                from exchange.models import ApplicationStatus
+
+                try:
+                    defaults["required_from_status"] = ApplicationStatus.objects.get(
+                        name=status_name
+                    )
+                except ApplicationStatus.DoesNotExist as exc:
+                    raise serializers.ValidationError(
+                        {"program_requirements": f"Unknown status: {status_name}"}
+                    ) from exc
+            else:
+                defaults["required_from_status"] = None
+            if not defaults["is_required"]:
+                defaults["required_from_status"] = None
             req_id = row.get("id")
             if req_id:
                 updated = ProgramDocumentRequirement.objects.filter(

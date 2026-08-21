@@ -338,6 +338,27 @@ describe('Profile', () => {
     expect(api.patch.mock.calls[0][1].email).toBeUndefined()
   })
 
+  it('saves without bank or CLABE when those fields are left empty', async () => {
+    const wrapper = mount(Profile, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="profile-bank"]').setValue('')
+    await wrapper.find('[data-testid="profile-clabe"]').setValue('123')
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(api.patch).toHaveBeenCalledWith(
+      '/api/accounts/profile/',
+      expect.objectContaining({
+        bank_institution: null,
+        clabe: '',
+      }),
+    )
+  })
+
   it('renders bank options and the CLABE input in the banking section', async () => {
     const wrapper = mount(Profile, {
       global: {
@@ -353,7 +374,11 @@ describe('Profile', () => {
     const clabe = wrapper.find('[data-testid="profile-clabe"]')
     expect(clabe.exists()).toBe(true)
     expect(clabe.attributes('maxlength')).toBe('18')
+    expect(clabe.attributes('pattern')).toBeUndefined()
+    expect(clabe.attributes('required')).toBeUndefined()
     expect(clabe.element.value).toBe('012345678901234567')
+    expect(wrapper.find('[data-testid="profile-clabe-help"]').text()).toContain('18')
+    expect(wrapper.find('[data-testid="profile-bank"]').attributes('required')).toBeUndefined()
   })
 
   it('shows primary CEFR labels from locale', async () => {

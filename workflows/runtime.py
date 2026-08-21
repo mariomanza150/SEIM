@@ -277,6 +277,19 @@ class WorkflowRuntimeService:
                 f"{_application_status_name(application)}."
             )
 
+        from exchange.lifecycle_requirements import (
+            is_student_only_actor,
+            student_submit_field_errors,
+        )
+
+        if (
+            str(target.task_spec.name or "") == "submitted"
+            and is_student_only_actor(user)
+        ):
+            field_errors = student_submit_field_errors(application)
+            if field_errors:
+                raise ValueError(field_errors[0])
+
         if payload:
             try:
                 target.set_data(payload)
@@ -308,11 +321,19 @@ class WorkflowRuntimeService:
         )
 
         st = _derive_application_status_from_tasks(application, tasks)
+        status_changed = False
         if st and application.status_id != st.id:
             application.status = st
             application.save(update_fields=["status", "updated_at"])
+            status_changed = True
         WorkflowRuntimeService.sync_with_application(application)
         inst.refresh_from_db()
+        if status_changed:
+            from exchange.lifecycle_requirements import (
+                notify_due_now_after_status_change,
+            )
+
+            notify_due_now_after_status_change(application)
 
         return WorkflowSnapshot(
             instance=inst,

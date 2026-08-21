@@ -19,6 +19,7 @@ from .models import (
     HostSubject,
     PartnerContact,
     Program,
+    ProgramFieldRequirement,
     SavedSearch,
     TimelineEvent,
     visible_host_subjects_queryset,
@@ -35,12 +36,50 @@ _APPLICATION_MODEL_FIELDS = tuple(f.name for f in Application._meta.fields) + tu
 )
 
 
+class ProgramFieldRequirementSerializer(serializers.ModelSerializer):
+    required_from_status = serializers.SlugRelatedField(
+        slug_field="name",
+        queryset=ApplicationStatus.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+
+    class Meta:
+        model = ProgramFieldRequirement
+        fields = ("id", "source", "field_key", "required_from_status")
+        extra_kwargs = {"id": {"required": False, "read_only": False}}
+
+    def validate(self, attrs):
+        from exchange.lifecycle_requirements import SOURCE_FORM, allowed_field_keys
+
+        source = attrs.get("source", getattr(self.instance, "source", None))
+        key = (attrs.get("field_key") or getattr(self.instance, "field_key", "") or "").strip()
+        attrs["field_key"] = key
+        allowed = allowed_field_keys(source)
+        if not key:
+            raise serializers.ValidationError({"field_key": "Field key is required."})
+        if allowed is not None and key not in allowed:
+            raise serializers.ValidationError(
+                {"field_key": "Unknown field key for this source."}
+            )
+        if source == SOURCE_FORM and not key:
+            raise serializers.ValidationError({"field_key": "Form field key is required."})
+        return attrs
+
+
 class ProgramSerializer(serializers.ModelSerializer):
     application_window_open = serializers.SerializerMethodField()
     application_window_message = serializers.SerializerMethodField()
     coordinator_details = serializers.SerializerMethodField()
     enrollment_slots_remaining = serializers.SerializerMethodField()
     enrollment_seats_occupied = serializers.SerializerMethodField()
+    field_requirements = ProgramFieldRequirementSerializer(many=True, required=False)
+    field_requirement_catalog = serializers.SerializerMethodField()
+
+    def get_field_requirement_catalog(self, obj):
+        from exchange.lifecycle_requirements import field_requirement_catalog
+
+        return field_requirement_catalog(obj)
 
     def get_application_window_open(self, obj):
         return obj.is_application_open()
@@ -82,6 +121,54 @@ class ProgramSerializer(serializers.ModelSerializer):
                 f"Only users with the coordinator role can be assigned to programs: {', '.join(invalid_users)}."
             )
         return value
+
+    def _sync_field_requirements(self, program, rows):
+        if rows is None:
+            return
+        keep_ids = []
+        for row in rows:
+            source = row["source"]
+            field_key = row["field_key"]
+            defaults = {
+                "required_from_status": row.get("required_from_status"),
+            }
+            req_id = row.get("id")
+            if req_id:
+                updated = ProgramFieldRequirement.objects.filter(
+                    pk=req_id, program=program
+                ).update(source=source, field_key=field_key, **defaults)
+                if not updated:
+                    raise serializers.ValidationError(
+                        {
+                            "field_requirements": (
+                                f"Requirement {req_id} does not belong to this program."
+                            )
+                        }
+                    )
+                keep_ids.append(req_id)
+            else:
+                req, _ = ProgramFieldRequirement.objects.update_or_create(
+                    program=program,
+                    source=source,
+                    field_key=field_key,
+                    defaults=defaults,
+                )
+                keep_ids.append(req.id)
+        ProgramFieldRequirement.objects.filter(program=program).exclude(
+            pk__in=keep_ids
+        ).delete()
+
+    def create(self, validated_data):
+        rows = validated_data.pop("field_requirements", None)
+        program = super().create(validated_data)
+        self._sync_field_requirements(program, rows)
+        return program
+
+    def update(self, instance, validated_data):
+        rows = validated_data.pop("field_requirements", None)
+        program = super().update(instance, validated_data)
+        self._sync_field_requirements(program, rows)
+        return program
 
     class Meta:
         model = Program
@@ -860,6 +947,70 @@ class ApplicationSerializer(serializers.ModelSerializer):
             )
             if host_errors:
                 raise serializers.ValidationError(host_errors)
+
+        from exchange.lifecycle_requirements import (
+            SOURCE_APPLICATION,
+            application_field_satisfied,
+            is_due,
+            is_student_only_actor,
+        )
+
+        if is_student_only_actor(actor) and self.instance and program:
+            from exchange.models import ProgramFieldRequirement
+
+            status_name = self.instance.status.name if self.instance.status else ""
+            field_errors = {}
+            probe = self.instance
+            if any(
+                k in data
+                for k in (
+                    "host_institution",
+                    "host_school",
+                    "host_academic_program",
+                )
+            ):
+
+                class _DueProbe:
+                    pass
+
+                probe = _DueProbe()
+                probe.program_id = self.instance.program_id
+                probe.program = self.instance.program
+                for key in (
+                    "host_institution",
+                    "host_school",
+                    "host_academic_program",
+                ):
+                    if key in data:
+                        setattr(probe, key, data[key])
+                        setattr(
+                            probe,
+                            f"{key}_id",
+                            getattr(data[key], "id", None) if data[key] else None,
+                        )
+                    else:
+                        setattr(probe, key, getattr(self.instance, key))
+                        setattr(
+                            probe,
+                            f"{key}_id",
+                            getattr(self.instance, f"{key}_id"),
+                        )
+            for row in ProgramFieldRequirement.objects.filter(
+                program=program, source=SOURCE_APPLICATION
+            ).select_related("required_from_status"):
+                req_from = (
+                    row.required_from_status.name
+                    if row.required_from_status_id
+                    else None
+                )
+                if not is_due(req_from, status_name):
+                    continue
+                if not application_field_satisfied(probe, row.field_key):
+                    field_errors[row.field_key] = (
+                        "This field is required at the current application status."
+                    )
+            if field_errors:
+                raise serializers.ValidationError(field_errors)
 
         return data
 

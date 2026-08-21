@@ -200,6 +200,22 @@ class TestProfileSerializer:
         assert valid.is_valid(), valid.errors
         assert valid.validated_data["matricula"] is None
 
+        blank = ProfileSerializer(
+            user.profile,
+            data={"clabe": "", "bank_institution": None},
+            partial=True,
+        )
+        assert blank.is_valid(), blank.errors
+        assert blank.validated_data["clabe"] == ""
+
+        spaced = ProfileSerializer(
+            user.profile,
+            data={"clabe": "0121-8000-1234-5678-97"},
+            partial=True,
+        )
+        assert spaced.is_valid(), spaced.errors
+        assert spaced.validated_data["clabe"] == "012180001234567897"
+
     def test_profile_serializer_persists_personal_fields(self):
         user = User.objects.create_user(
             username="persist-test",

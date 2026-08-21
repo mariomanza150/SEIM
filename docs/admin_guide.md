@@ -75,7 +75,8 @@ docker-compose exec web python manage.py create_missing_profiles
 - **Required before starting an application**: matrícula, academic level, school/faculty, home academic program, unidad, gender, date of birth, birthplace, postal code, mobile phone, secondary email, GPA, grade scale, primary language, credits approved %, and program ingress date or current semester. Middle name, maternal last name, passport number, and RFC are optional.
 - **Eligibility information** (GPA, grade scale, language, credits, semester) is required to apply, not optional.
 - **Optional banking information**: bank institution and 18-digit CLABE.
-- The profile API exposes `is_personal_academic_complete`, `is_eligibility_complete`, `is_ready_to_apply`, and `missing_apply_fields`. Application creation is rejected until `is_ready_to_apply` is true.
+- The profile API exposes `is_personal_academic_complete`, `is_eligibility_complete`, `is_ready_to_apply`, `missing_apply_fields`, `apply_start_field_keys`, and `due_profile_fields`. Application creation is rejected until apply-start fields are complete (program extras apply when a program is selected).
+- Document type editor: per-program **Required from** (optional throughout, or a pipeline status from submitted onward). Program editor: **Field requirements** table. Django admin inlines match. Do not change Santander carátula seed off submit-required without an explicit policy decision.
 - Notification email is delivered to `secondary_email` when present; otherwise it uses the account email.
 
 #### **Student Profile Catalogs:**
@@ -137,7 +138,13 @@ Only active catalog entries are shown in the student UI. Allowed email domains a
 - **Is Recurring**: Annual/semester programs
 - **Application Fee**: Cost to apply (if any)
 
-### **Program Workflow Configuration**
+#### **Program Workflow Configuration**
+
+Document and field **lifecycle requirements** (when an item becomes mandatory) are configured on the program / document type, not via `ApplicationStatus.order`. Staff can still advance status when later-stage items are missing; students see Due now / Required from on the checklist.
+
+**Field requirements (SPA Programs editor and Django inline):** source can be profile, application, or form. Form keys are the JSON Schema `properties` of the program's `application_form`. Cloning a program (SPA API or Django admin clone action) copies document and field requirement rows.
+
+When staff (or a workflow action) moves an application onto a pipeline status and items are still missing, the student receives a requirements-due notification. Repeating the same status with the same missing items does not send another copy.
 
 #### **Application Statuses:**
 1. **Draft**: Student working on application

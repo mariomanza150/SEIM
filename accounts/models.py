@@ -549,50 +549,18 @@ class Profile(UUIDModel, TimeStampedModel):
                 }
             )
 
-    def missing_apply_fields(self) -> list[str]:
+    def missing_apply_fields(self, program=None) -> list[str]:
         """Field keys still required before the student can start an application."""
-        missing: list[str] = []
+        from exchange.lifecycle_requirements import (
+            draft_required_profile_keys,
+            profile_field_satisfied,
+        )
 
-        def blank(value) -> bool:
-            return value is None or not str(value).strip()
-
-        if blank(self.user.first_name):
-            missing.append("first_name")
-        if blank(self.user.last_name):
-            missing.append("last_name")
-        if blank(self.matricula):
-            missing.append("matricula")
-        if not self.academic_level_id:
-            missing.append("academic_level")
-        if not self.school_id:
-            missing.append("school")
-        if not self.unidad_id:
-            missing.append("unidad")
-        if not self.home_academic_program_id:
-            missing.append("home_academic_program")
-        if blank(self.gender):
-            missing.append("gender")
-        if not self.date_of_birth:
-            missing.append("date_of_birth")
-        if blank(self.birthplace):
-            missing.append("birthplace")
-        if blank(self.postal_code):
-            missing.append("postal_code")
-        if blank(self.mobile_phone):
-            missing.append("mobile_phone")
-        if blank(self.secondary_email):
-            missing.append("secondary_email")
-        if self.gpa is None:
-            missing.append("gpa")
-        if not self.grade_scale_id:
-            missing.append("grade_scale")
-        if blank(self.language):
-            missing.append("language")
-        if self.credits_approved_percent is None:
-            missing.append("credits_approved_percent")
-        if not self.ingress_date and self.current_semester is None:
-            missing.append("semester")
-        return missing
+        return [
+            key
+            for key in draft_required_profile_keys(program)
+            if not profile_field_satisfied(self, key)
+        ]
 
     @property
     def is_personal_academic_complete(self):

@@ -98,9 +98,9 @@ Extended user profile with additional information.
 **Key Methods:**
 - `calculate_semester_from_ingress()` - `floor(months_since(ingress_date) / 6) + 1`, clamped ≥ 1
 - `get_effective_semester()` - Prefers `current_semester` override when set
-- `is_personal_academic_complete` - Required personal/academic application fields are populated (`middle_name`, `mothers_last_name`, `passport_number`, and `rfc` are optional)
+- `is_personal_academic_complete` - Required personal/academic application fields are populated (`middle_name`, `mothers_last_name`, `passport_number`, and `rfc` are optional unless a program field schedule requires them)
 - `is_ready_to_apply` - `is_personal_academic_complete` and `is_eligibility_complete`
-- `missing_apply_fields()` - Keys still required before apply (GPA, grade scale, language, credits %, semester, plus personal/academic catalogs)
+- `missing_apply_fields()` - Keys still required before apply. Institution defaults match the historic apply-start list; `ProgramFieldRequirement` (`source=profile`, `required_from_status=draft`) can add keys, and a later/optional schedule can drop defaults once a program is selected.
 - `get_gpa_equivalent()` - Convert GPA to 4.0 scale equivalent
 
 **Validation:**
@@ -230,9 +230,26 @@ Cascade APIs: `/api/programs/{id}/host-institutions/`, `.../host-institutions/{i
 ### ProgramDocumentRequirement
 Through model configuring per-scheme document checklist items.
 
-**Fields:** `program`, `document_type`, `is_required`, `deadline` (absolute), `deadline_days_after_program_start`, `deadline_days_before_program_deadline`, instruction override, `sort_order`.
+**Fields:** `program`, `document_type`, `is_required`, `required_from_status` (nullable FK to `ApplicationStatus`), `deadline` (absolute), `deadline_days_after_program_start`, `deadline_days_before_program_deadline`, instruction override, `sort_order`.
+
+- `is_required=False` → optional throughout.
+- `is_required=True` and `required_from_status` null → required from **submitted** (legacy submit gate).
+- `is_required=True` with a pipeline status → required from that status. Documents cannot be required at `draft`.
 
 Deadline precedence: absolute `deadline`, then days after program `start_date`, then days before `application_deadline`.
+
+Success pipeline (do **not** use `ApplicationStatus.order`): `draft` → `submitted` → `under_review` → `nominated` → `approved` → `completed`. Side statuses (`waitlist`, `rejected`, `cancelled`, `withdrawn`) do not inherit onward requirements.
+
+Evaluator: `exchange/lifecycle_requirements.py`. Student submit only blocks items due at `submitted`. Staff status PATCH is not blocked by the schedule. After a status change, `notify_due_now_after_status_change` sends a student reminder listing due-now missing items (deduped on application + status + item set).
+
+### ProgramFieldRequirement
+Per-program schedule for non-document fields. Unique on `(program, source, field_key)`.
+
+**Fields:** `program`, `source` (`profile` | `application` | `form`), `field_key`, `required_from_status` (null = optional throughout).
+
+Profile catalog includes apply-start keys plus `passport_number`, `rfc`, `bank_institution`, `clabe`. Application catalog is the host cascade. `source=form` uses dynamic form property names from the program's `application_form` schema (`field_requirement_catalog` on the program API; SPA Field requirements table). Django admin inline accepts the same keys.
+
+Program clone (REST `POST /api/programs/{id}/clone/` and Django admin clone action) copies `ProgramDocumentRequirement` and `ProgramFieldRequirement` rows.
 
 ### Application
 Student application for a mobility scheme.

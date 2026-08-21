@@ -92,7 +92,7 @@ def _document_progress_via_checklist(application) -> tuple[float, dict[str, int]
     approved = summary["approved_count"]
     pending = resubmit = missing = invalid = 0
     for item in summary["items"]:
-        if not item.get("is_required", True):
+        if not item.get("counts_toward_complete", item.get("is_required", True)):
             continue
         st = item["status"]
         if st == "pending_review":
@@ -184,6 +184,16 @@ def _headline_draft(
     return "; ".join(parts) + "."
 
 
+def _lifecycle_payload(application) -> dict[str, Any]:
+    from exchange.lifecycle_requirements import SUBMITTED, evaluate
+
+    current = evaluate(application)
+    data = current.payload()
+    submit = evaluate(application, target_status=SUBMITTED)
+    data["missing_at_submit"] = [i.as_dict() for i in submit.missing_now()]
+    return data
+
+
 def compute_application_readiness(
     application,
     *,
@@ -231,6 +241,7 @@ def compute_application_readiness(
             },
             "eligibility": {"complete": True, "issues": []},
             "form_complete": True,
+            "lifecycle": _lifecycle_payload(application),
             **_window_meta(program, window),
         }
 
@@ -263,6 +274,7 @@ def compute_application_readiness(
             "host_destination": host_destination,
             "eligibility": eligibility,
             "form_complete": form_ok,
+            "lifecycle": _lifecycle_payload(application),
             **_window_meta(program, window),
         }
 
@@ -325,5 +337,6 @@ def compute_application_readiness(
         "host_destination": host_destination,
         "eligibility": eligibility,
         "form_complete": form_ok,
+        "lifecycle": _lifecycle_payload(application),
         **_window_meta(program, window),
     }

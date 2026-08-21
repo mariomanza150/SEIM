@@ -169,8 +169,8 @@ class AuthPage(BasePage):
     def assert_register_page_loaded(self) -> None:
         """Assert that register page is loaded."""
         self.assert_url_contains("register")
-        self.assert_element_visible(self.REGISTER_USERNAME_INPUT)
         self.assert_element_visible(self.REGISTER_EMAIL_INPUT)
+        self.assert_element_visible(self.REGISTER_FIRST_NAME_INPUT)
 
     def assert_logged_in(self) -> None:
         """Assert that user is logged in."""

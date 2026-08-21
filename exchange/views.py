@@ -354,7 +354,10 @@ class ProgramViewSet(viewsets.ModelViewSet):
             application__withdrawn=False,
             application__status__name__in=SEAT_HOLDING_APPLICATION_STATUS_NAMES,
         )
-        return Program.objects.prefetch_related("coordinators").annotate(
+        return Program.objects.select_related("application_form").prefetch_related(
+            "coordinators",
+            "field_requirements__required_from_status",
+        ).annotate(
             _seat_holding_count=Count("application", filter=seat_filter)
         )
 
@@ -460,6 +463,9 @@ class ProgramViewSet(viewsets.ModelViewSet):
             waitlist_when_full=original_program.waitlist_when_full,
         )
         cloned_program.coordinators.set(original_program.coordinators.all())
+        from exchange.program_clone import copy_program_requirement_schedule
+
+        copy_program_requirement_schedule(original_program, cloned_program)
 
         _invalidate_program_api_caches()
 
@@ -840,7 +846,13 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             profile = self.request.user.profile
         except Profile.DoesNotExist:
             profile = None
-        if not profile or not profile.is_ready_to_apply:
+        program = serializer.validated_data.get("program")
+        missing = (
+            profile.missing_apply_fields(program=program)
+            if profile
+            else ["profile"]
+        )
+        if not profile or missing:
             raise ValidationError(
                 {
                     "detail": (
@@ -849,6 +861,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                         "starting an application."
                     ),
                     "code": "profile_incomplete",
+                    "missing_apply_fields": missing,
                 }
             )
         serializer.save(student=self.request.user)

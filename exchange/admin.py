@@ -22,6 +22,7 @@ from .models import (
     PartnerContact,
     Program,
     ProgramDocumentRequirement,
+    ProgramFieldRequirement,
     SavedSearch,
     ScholarshipAward,
     ScholarshipDisbursement,
@@ -287,10 +288,11 @@ class ExchangeAgreementAdmin(admin.ModelAdmin):
 class ProgramDocumentRequirementInline(admin.TabularInline):
     model = ProgramDocumentRequirement
     extra = 0
-    autocomplete_fields = ("document_type",)
+    autocomplete_fields = ("document_type", "required_from_status")
     fields = (
         "document_type",
         "is_required",
+        "required_from_status",
         "sort_order",
         "deadline",
         "deadline_days_before_program_deadline",
@@ -298,6 +300,17 @@ class ProgramDocumentRequirementInline(admin.TabularInline):
         "instructions_override",
     )
     ordering = ("sort_order", "id")
+
+
+class ProgramFieldRequirementInline(admin.TabularInline):
+    model = ProgramFieldRequirement
+    extra = 0
+    autocomplete_fields = ("required_from_status",)
+    fields = ("source", "field_key", "required_from_status")
+    verbose_name_plural = (
+        "Field requirements (source=form uses JSON Schema property names "
+        "from this program's application form)"
+    )
 
 
 @admin.register(Program)
@@ -335,7 +348,11 @@ class ProgramAdmin(admin.ModelAdmin):
         "create_draft_cms_program_pages",
         "sync_operational_data_to_cms_pages",
     ]
-    inlines = [HostInstitutionInline, ProgramDocumentRequirementInline]
+    inlines = [
+        HostInstitutionInline,
+        ProgramDocumentRequirementInline,
+        ProgramFieldRequirementInline,
+    ]
 
     fieldsets = (
         (None, {"fields": ("name", "description", "is_active", "recurring")}),
@@ -549,6 +566,9 @@ class ProgramAdmin(admin.ModelAdmin):
                 application_form=program.application_form,
             )
             cloned_program.coordinators.set(program.coordinators.all())
+            from exchange.program_clone import copy_program_requirement_schedule
+
+            copy_program_requirement_schedule(program, cloned_program)
             cloned_count += 1
 
         self.message_user(

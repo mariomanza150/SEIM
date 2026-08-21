@@ -32,13 +32,30 @@ describe('AdminPrograms', () => {
                 eligibility_ruleset: null,
                 application_window_open: true,
                 enrollment_capacity: null,
+                application_form: 'form-1',
+                field_requirements: [],
+                field_requirement_catalog: {
+                  profile: ['clabe', 'bank_institution'],
+                  application: ['host_institution'],
+                  form: ['motivation_letter'],
+                },
               },
             ],
           },
         })
       }
       if (url === '/api/application-forms/form-types/') {
-        return Promise.resolve({ data: { results: [] } })
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'form-1',
+                name: 'Exchange form',
+                schema: { properties: { motivation_letter: { type: 'string' } } },
+              },
+            ],
+          },
+        })
       }
       if (url === '/api/users/') {
         return Promise.resolve({ data: { results: [] } })
@@ -82,5 +99,34 @@ describe('AdminPrograms', () => {
     const select = wrapper.get('[data-testid="admin-program-eligibility-ruleset"]')
     expect(select.exists()).toBe(true)
     expect(select.text()).toContain('GPA overlay')
+    expect(wrapper.find('[data-testid="admin-program-field-requirements"]').exists()).toBe(true)
+  })
+
+  it('offers dynamic form keys when source is form', async () => {
+    const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', name: 'Dashboard', component: { template: '<div />' } },
+        { path: '/admin/programs', name: 'AdminPrograms', component: AdminPrograms },
+        {
+          path: '/admin/programs/:id/destinations',
+          name: 'AdminProgramDestinations',
+          component: { template: '<div />' },
+        },
+      ],
+    })
+    await router.push({ name: 'AdminPrograms' })
+    const wrapper = mount(AdminPrograms, { global: { plugins: [i18n, router] } })
+    await flushPromises()
+    await wrapper.get('[data-testid="admin-programs-table"]').find('button').trigger('click')
+    await flushPromises()
+    await wrapper.get('[data-testid="admin-program-add-field-req"]').trigger('click')
+    const sourceSelect = wrapper.get('[data-testid="admin-program-field-source"]')
+    await sourceSelect.setValue('form')
+    await flushPromises()
+    const keySelect = wrapper.get('[data-testid="admin-program-field-key"]')
+    expect(keySelect.text()).toContain('motivation_letter')
+    expect(sourceSelect.text()).toContain('Form')
   })
 })

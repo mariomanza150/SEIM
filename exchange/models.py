@@ -497,7 +497,21 @@ class ProgramDocumentRequirement(models.Model):
     )
     is_required = models.BooleanField(
         default=True,
-        help_text=_("When false, shown on checklist but not required for submit."),
+        help_text=_(
+            "When false, shown on checklist but optional throughout. "
+            "When true with required_from_status unset, required from submitted."
+        ),
+    )
+    required_from_status = models.ForeignKey(
+        "ApplicationStatus",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="gated_document_requirements",
+        help_text=_(
+            "Pipeline status from which this document is required for students. "
+            "Ignored when is_required is false. Null with is_required means submitted."
+        ),
     )
     deadline = models.DateField(
         null=True,
@@ -564,6 +578,82 @@ class ProgramDocumentRequirement(models.Model):
             return False
         today = on_date or timezone.localdate()
         return today > effective
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        super().clean()
+        if not self.is_required:
+            return
+        name = getattr(self.required_from_status, "name", None)
+        if name == "draft":
+            raise ValidationError(
+                {
+                    "required_from_status": _(
+                        "Documents cannot be required at draft; the earliest gate is submitted."
+                    )
+                }
+            )
+
+
+class ProgramFieldRequirement(models.Model):
+    """When a profile, application, or dynamic-form field becomes required."""
+
+    class Source(models.TextChoices):
+        PROFILE = "profile", _("Profile")
+        APPLICATION = "application", _("Application")
+        FORM = "form", _("Form")
+
+    program = models.ForeignKey(
+        Program,
+        on_delete=models.CASCADE,
+        related_name="field_requirements",
+    )
+    source = models.CharField(max_length=20, choices=Source.choices)
+    field_key = models.CharField(max_length=100)
+    required_from_status = models.ForeignKey(
+        "ApplicationStatus",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="program_field_requirements",
+        help_text=_(
+            "Pipeline status from which this field is required. "
+            "Null means optional throughout."
+        ),
+    )
+
+    class Meta:
+        ordering = ["source", "field_key", "id"]
+        verbose_name = _("Program field requirement")
+        verbose_name_plural = _("Program field requirements")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["program", "source", "field_key"],
+                name="uniq_program_field_requirement",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.program} → {self.source}:{self.field_key}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        from exchange.lifecycle_requirements import allowed_field_keys
+
+        super().clean()
+        allowed = allowed_field_keys(self.source)
+        key = (self.field_key or "").strip()
+        if not key:
+            raise ValidationError({"field_key": _("Field key is required.")})
+        self.field_key = key
+        if allowed is not None and key not in allowed:
+            raise ValidationError(
+                {"field_key": _("Unknown field key for this source.")}
+            )
+        if self.source == self.Source.FORM and not key:
+            raise ValidationError({"field_key": _("Form field key is required.")})
 
 
 class ExchangeAgreement(UUIDModel, TimeStampedModel):

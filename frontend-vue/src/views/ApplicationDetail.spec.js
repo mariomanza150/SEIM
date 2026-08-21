@@ -923,4 +923,56 @@ describe('ApplicationDetail', () => {
       i18n.global.t('applicationDetailPage.checklist.invalid'),
     )
   })
+
+  it('shows required-from and due-now checklist labels', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'approved',
+            document_checklist: {
+              required_count: 2,
+              approved_count: 0,
+              complete: false,
+              items: [
+                {
+                  document_type_id: 1,
+                  slug: 'transcript',
+                  name: 'Transcript',
+                  status: 'missing',
+                  is_required: true,
+                  required_from_status: 'submitted',
+                  due_now: true,
+                },
+                {
+                  document_type_id: 2,
+                  slug: 'santander',
+                  name: 'Santander cover',
+                  status: 'missing',
+                  is_required: true,
+                  required_from_status: 'completed',
+                  due_now: false,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-due-now"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="document-checklist-due-now"]').text()).toBe(
+      i18n.global.t('applicationDetailPage.checklistDueNow'),
+    )
+    expect(wrapper.find('[data-testid="document-checklist-required-from"]').text()).toContain(
+      i18n.global.t('applicationDetailPage.status.completed'),
+    )
+  })
 })

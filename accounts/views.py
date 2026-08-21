@@ -201,6 +201,14 @@ class UnidadViewSet(ActiveCatalogViewSet):
     queryset = Unidad.objects.all()
     serializer_class = UnidadSerializer
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if _is_catalog_admin(self.request.user):
+            return queryset
+        return queryset.filter(
+            school_faculties__is_active=True,
+        ).distinct()
+
 
 class BankInstitutionViewSet(ActiveCatalogViewSet):
     queryset = BankInstitution.objects.all()

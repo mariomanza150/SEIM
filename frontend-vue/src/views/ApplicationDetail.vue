@@ -113,6 +113,16 @@
                 <div class="flex-grow-1" style="min-width: 220px">
                   <p class="small mb-2" data-testid="readiness-headline">{{ readinessHeadlineText }}</p>
                   <ul
+                    v-if="lifecycleMissingNow.length"
+                    class="small mb-2"
+                    data-testid="lifecycle-missing-now"
+                  >
+                    <li v-for="item in lifecycleMissingNow" :key="`${item.kind}-${item.key}`">
+                      {{ item.name || item.key }}
+                      <span class="text-muted">— {{ t('applicationDetailPage.checklistDueNow') }}</span>
+                    </li>
+                  </ul>
+                  <ul
                     v-if="eligibilityIssueLines.length"
                     class="small mb-2 text-danger"
                     data-testid="readiness-eligibility-issues"
@@ -471,6 +481,16 @@
                         v-if="item.is_required === false"
                         class="badge bg-light text-muted border ms-1"
                       >{{ t('applicationDetailPage.checklistOptional') }}</span>
+                      <span
+                        v-else-if="item.due_now && item.status !== 'approved' && item.status !== 'n_a'"
+                        class="badge bg-warning text-dark ms-1"
+                        data-testid="document-checklist-due-now"
+                      >{{ t('applicationDetailPage.checklistDueNow') }}</span>
+                      <span
+                        v-else-if="item.required_from_status"
+                        class="badge bg-light text-muted border ms-1"
+                        data-testid="document-checklist-required-from"
+                      >{{ t('applicationDetailPage.checklistRequiredFrom', { status: t(`applicationDetailPage.status.${item.required_from_status}`) }) }}</span>
                       <p
                         v-if="checklistItemDescription(item)"
                         class="small text-muted mb-0"
@@ -969,6 +989,17 @@ const eligibilityIssueLines = computed(() => {
   const fromRules = eligibilityFailureMessages(el, t)
   if (fromRules.length) return fromRules
   return Array.isArray(el.issues) ? el.issues : []
+})
+
+const lifecycleMissingNow = computed(() => {
+  const life = application.value?.readiness?.lifecycle
+  const now = Array.isArray(life?.missing_now) ? life.missing_now : []
+  if (now.length) return now.filter((item) => item.kind !== 'document')
+  if (application.value?.status === 'draft') {
+    const submit = Array.isArray(life?.missing_at_submit) ? life.missing_at_submit : []
+    return submit.filter((item) => item.kind !== 'document')
+  }
+  return []
 })
 
 const readinessHeadlineText = computed(() =>

@@ -117,6 +117,42 @@ class TestWorkflowsAPI(APITestCase):
         )
         self.assertEqual(act.status_code, status.HTTP_200_OK)
 
+    def test_student_submitted_workflow_action_requires_submit_due_fields(self):
+        from exchange.models import ApplicationStatus, ProgramFieldRequirement
+
+        admin = self.create_user(role="admin")
+        student = self.create_user(role="student")
+        self.authenticate_user(admin)
+        wf = WorkflowDefinition.objects.create(name="WF3", slug="wf3", is_active=True)
+        wv = WorkflowVersion.objects.create(
+            definition=wf,
+            version=1,
+            status=WorkflowVersion.Status.PUBLISHED,
+            bpmn_xml=_simple_bpmn_with_manual_task("submitted"),
+            created_by=admin,
+        )
+        program = self.create_program(name="Program WF3", workflow_version=wv)
+        submitted, _ = ApplicationStatus.objects.get_or_create(
+            name="submitted", defaults={"order": 2}
+        )
+        ProgramFieldRequirement.objects.create(
+            program=program,
+            source="profile",
+            field_key="clabe",
+            required_from_status=submitted,
+        )
+        app = self.create_application(
+            student=student, program=program, status_name="draft"
+        )
+        self.authenticate_user(student)
+        blocked = self.client.post(
+            reverse("api:application-workflow-action", args=[app.id]),
+            {"action": "submitted", "payload": {}},
+            format="json",
+        )
+        self.assertEqual(blocked.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("clabe", str(blocked.data).lower())
+
     def test_snapshot_hides_stale_submitted_action_after_nomination(self):
         from exchange.models import ApplicationStatus
 

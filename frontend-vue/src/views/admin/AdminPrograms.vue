@@ -312,10 +312,72 @@
               </div>
 
               <div class="col-12">
-                <div class="form-check mt-2">
-                  <input id="autoReject" v-model="editor.form.auto_reject_ineligible" class="form-check-input" type="checkbox" />
-                  <label class="form-check-label" for="autoReject">{{ t('adminPrograms.fields.autoReject') }}</label>
+                <label class="form-label">{{ t('adminPrograms.fields.fieldRequirements') }}</label>
+                <p class="form-text mt-0">{{ t('adminPrograms.fields.fieldRequirementsHelp') }}</p>
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle" data-testid="admin-program-field-requirements">
+                    <thead>
+                      <tr>
+                        <th>{{ t('adminPrograms.fields.fieldSource') }}</th>
+                        <th>{{ t('adminPrograms.fields.fieldKey') }}</th>
+                        <th>{{ t('adminPrograms.fields.requiredFrom') }}</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-if="!editor.form.field_requirements.length">
+                        <td colspan="4" class="text-muted small">{{ t('adminPrograms.fields.fieldRequirementsEmpty') }}</td>
+                      </tr>
+                      <tr v-for="(row, idx) in editor.form.field_requirements" :key="`${row.source}-${row.field_key}-${idx}`">
+                        <td>
+                          <select
+                            v-model="row.source"
+                            class="form-select form-select-sm"
+                            data-testid="admin-program-field-source"
+                            @change="onFieldSourceChange(row)"
+                          >
+                            <option value="profile">{{ t('adminPrograms.fields.sourceProfile') }}</option>
+                            <option value="application">{{ t('adminPrograms.fields.sourceApplication') }}</option>
+                            <option value="form">{{ t('adminPrograms.fields.sourceForm') }}</option>
+                          </select>
+                        </td>
+                        <td>
+                          <select
+                            v-model="row.field_key"
+                            class="form-select form-select-sm"
+                            data-testid="admin-program-field-key"
+                          >
+                            <option
+                              v-if="row.source === 'form' && !fieldKeysForSource('form').length"
+                              value=""
+                              disabled
+                            >
+                              {{ t('adminPrograms.fields.noFormKeys') }}
+                            </option>
+                            <option v-for="key in fieldKeysForSource(row.source)" :key="key" :value="key">{{ key }}</option>
+                          </select>
+                        </td>
+                        <td>
+                          <select v-model="row.required_from_status" class="form-select form-select-sm">
+                            <option :value="null">{{ t('adminPrograms.fields.optionalThroughout') }}</option>
+                            <option v-for="st in fieldPipelineStatuses" :key="st" :value="st">
+                              {{ t(`applicationDetailPage.status.${st}`) }}
+                            </option>
+                          </select>
+                        </td>
+                        <td class="text-end">
+                          <button type="button" class="btn btn-sm btn-outline-danger" @click="editor.form.field_requirements.splice(idx, 1)">
+                            {{ t('adminCommon.delete') }}
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
+                <p class="form-text mb-0">{{ t('adminPrograms.fields.fieldRequirementsFormHelp') }}</p>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-testid="admin-program-add-field-req" @click="addFieldRequirement">
+                  {{ t('adminPrograms.fields.addFieldRequirement') }}
+                </button>
               </div>
             </div>
           </div>
@@ -335,7 +397,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
@@ -381,6 +443,49 @@ function formatWindowDates(program) {
 }
 
 const cefrOptions = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
+const fieldPipelineStatuses = ['draft', 'submitted', 'under_review', 'nominated', 'approved', 'completed']
+const defaultFieldCatalog = {
+  profile: ['passport_number', 'rfc', 'bank_institution', 'clabe'],
+  application: ['host_institution', 'host_school', 'host_academic_program', 'host_destination'],
+  form: [],
+}
+
+function formKeysFromSelectedForm() {
+  const formId = editor.value.form.application_form
+  const ft = formTypes.value.find((f) => String(f.id) === String(formId))
+  const properties = ft?.schema?.properties
+  if (!properties || typeof properties !== 'object') return []
+  return Object.keys(properties)
+}
+
+function refreshFormCatalog() {
+  const catalog = { ...(editor.value.form._catalog || defaultFieldCatalog) }
+  catalog.form = formKeysFromSelectedForm()
+  editor.value.form._catalog = catalog
+}
+
+function fieldKeysForSource(source) {
+  const catalog = editor.value.form._catalog || defaultFieldCatalog
+  if (source === 'application') return catalog.application || defaultFieldCatalog.application
+  if (source === 'form') return catalog.form || []
+  return catalog.profile || defaultFieldCatalog.profile
+}
+
+function onFieldSourceChange(row) {
+  const keys = fieldKeysForSource(row.source)
+  if (!keys.includes(row.field_key)) {
+    row.field_key = keys[0] || ''
+  }
+}
+
+function addFieldRequirement() {
+  const keys = fieldKeysForSource('profile')
+  editor.value.form.field_requirements.push({
+    source: 'profile',
+    field_key: keys[0] || 'clabe',
+    required_from_status: 'approved',
+  })
+}
 
 const formTypes = ref([])
 const workflowVersions = ref([])
@@ -396,6 +501,13 @@ const editor = ref({
   error: null,
   form: emptyProgramForm(),
 })
+
+watch(
+  () => [editor.value.form.application_form, formTypes.value],
+  () => {
+    refreshFormCatalog()
+  },
+)
 
 const visibleEligibilityRulesets = computed(() => {
   const selected = editor.value.form.eligibility_ruleset
@@ -427,6 +539,8 @@ function emptyProgramForm() {
     eligibility_ruleset: null,
     coordinators: [],
     required_document_types: [],
+    field_requirements: [],
+    _catalog: defaultFieldCatalog,
   }
 }
 
@@ -516,8 +630,19 @@ function openEdit(program) {
       eligibility_ruleset: program.eligibility_ruleset ?? null,
       coordinators: Array.isArray(program.coordinators) ? program.coordinators : [],
       required_document_types: Array.isArray(program.required_document_types) ? program.required_document_types : [],
+      field_requirements: (program.field_requirements || []).map((row) => ({
+        id: row.id,
+        source: row.source,
+        field_key: row.field_key,
+        required_from_status: row.required_from_status || null,
+      })),
+      _catalog: {
+        ...defaultFieldCatalog,
+        ...(program.field_requirement_catalog || {}),
+      },
     },
   }
+  refreshFormCatalog()
 }
 
 function closeEditor() {
@@ -540,6 +665,15 @@ function formatApiError(err, fallback) {
 
 function cleanProgramPayload(form) {
   const payload = { ...form }
+  delete payload._catalog
+  if (Array.isArray(payload.field_requirements)) {
+    payload.field_requirements = payload.field_requirements.map((row) => ({
+      id: row.id || undefined,
+      source: row.source,
+      field_key: row.field_key,
+      required_from_status: row.required_from_status || null,
+    }))
+  }
   if (payload.required_language === '') payload.required_language = null
   if (payload.min_language_level === '') payload.min_language_level = null
   if (payload.application_open_date === '') payload.application_open_date = null

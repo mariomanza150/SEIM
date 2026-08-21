@@ -45,7 +45,8 @@ REMINDER_EVENT_TYPE_RECIPIENT_SUMMARIES: dict[str, str] = {
 # Short staff-facing hints: what transactional sends usually flow through each group.
 SETTINGS_CATEGORY_TYPICAL_TRIGGERS: dict[str, str] = {
     "applications": (
-        "Application lifecycle (submit, withdraw, status changes, waitlist) and "
+        "Application lifecycle (submit, withdraw, status changes, waitlist, "
+        "due-now requirement reminders after a gate) and "
         "coordinator/student signals tied to a specific application."
     ),
     "documents": (
@@ -221,6 +222,17 @@ TRANSACTIONAL_NOTIFICATION_ROUTES: list[dict[str, object]] = [
         "recipient_summary": "The application student.",
         "summary": "Student notified when document validation result is invalid / not accepted.",
         "source": "documents.services.DocumentService.validate_document",
+    },
+    {
+        "route_key": "lifecycle_requirements_due",
+        "settings_category": "applications",
+        "recipient_summary": "The application student.",
+        "summary": (
+            "Student reminded when application status crosses a lifecycle gate "
+            "and documents or scheduled fields are still missing. Deduplicated "
+            "per application, status, and missing-item set."
+        ),
+        "source": "exchange.lifecycle_requirements.notify_due_now_after_status_change",
     },
     {
         "route_key": "notification_digest_unread_summary",

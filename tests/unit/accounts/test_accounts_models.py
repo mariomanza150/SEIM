@@ -437,6 +437,44 @@ class TestProfileModel:
         profile.secondary_email = ""
         assert profile.is_personal_academic_complete is False
 
+    def test_missing_apply_fields_honors_program_field_schedule(self):
+        from exchange.models import ApplicationStatus, Program, ProgramFieldRequirement
+
+        user = User.objects.create_user(
+            username="sched-apply",
+            email="sched-apply@example.com",
+            password="testpass123",
+            first_name="Ada",
+            last_name="Lovelace",
+        )
+        profile = user.profile
+        program = Program.objects.create(
+            name="Sched",
+            description="d",
+            start_date=date.today(),
+            end_date=date.today(),
+        )
+        approved, _ = ApplicationStatus.objects.get_or_create(
+            name="approved", defaults={"order": 4}
+        )
+        ProgramFieldRequirement.objects.create(
+            program=program,
+            source="profile",
+            field_key="postal_code",
+            required_from_status=approved,
+        )
+        ProgramFieldRequirement.objects.create(
+            program=program,
+            source="profile",
+            field_key="passport_number",
+            required_from_status=ApplicationStatus.objects.get_or_create(
+                name="draft", defaults={"order": 1}
+            )[0],
+        )
+        missing = profile.missing_apply_fields(program=program)
+        assert "postal_code" not in missing
+        assert "passport_number" in missing
+
     def test_optional_identity_fields_are_not_required_for_completeness(self):
         user = User.objects.create_user(
             username="optional-complete",
