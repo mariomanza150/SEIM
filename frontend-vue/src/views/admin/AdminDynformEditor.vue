@@ -61,13 +61,17 @@
           <div class="card-header">{{ t('adminDynforms.canvas') }}</div>
           <div class="list-group list-group-flush" data-testid="dynforms-canvas">
             <div v-if="!fields.length" class="list-group-item text-muted">{{ t('adminDynforms.emptyCanvas') }}</div>
-            <button
+            <div
               v-for="(field, index) in fields"
               :key="field.id"
-              type="button"
               class="list-group-item list-group-item-action"
               :class="{ active: selectedId === field.id }"
-              @click="selectedId = field.id"
+              role="button"
+              tabindex="0"
+              :aria-pressed="selectedId === field.id ? 'true' : 'false'"
+              @click="selectField(field.id)"
+              @keydown.enter.prevent="selectField(field.id)"
+              @keydown.space.prevent="selectField(field.id)"
             >
               <div class="d-flex justify-content-between align-items-start gap-2">
                 <div>
@@ -80,17 +84,24 @@
                   <button type="button" class="btn btn-outline-danger" @click.stop="removeField(index)">×</button>
                 </div>
               </div>
-            </button>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="col-lg-4">
-        <div v-if="selected" class="card mb-3">
+        <div v-if="selected" :key="selected.id" class="card mb-3" data-testid="dynforms-field-settings">
           <div class="card-header">{{ t('adminDynforms.fieldSettings') }}</div>
           <div class="card-body">
-            <label class="form-label">{{ t('adminDynforms.fieldLabel') }}</label>
-            <input v-model="selected.label" class="form-control mb-3" type="text" data-testid="dynforms-field-label" />
+            <label class="form-label" for="dynforms-field-label">{{ t('adminDynforms.fieldLabel') }}</label>
+            <input
+              id="dynforms-field-label"
+              ref="labelInput"
+              v-model="selected.label"
+              class="form-control mb-3"
+              type="text"
+              data-testid="dynforms-field-label"
+            />
             <div class="form-check mb-3">
               <input id="fieldRequired" v-model="selected.required" class="form-check-input" type="checkbox" />
               <label class="form-check-label" for="fieldRequired">{{ t('adminDynforms.required') }}</label>
@@ -147,7 +158,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
@@ -171,21 +182,33 @@ const stepDefinitions = ref([])
 const fields = ref([])
 const selectedId = ref(null)
 const showPreview = ref(true)
+const labelInput = ref(null)
 
 const selected = computed(() => fields.value.find((field) => field.id === selectedId.value) || null)
 const optionsText = computed(() =>
   (selected.value?.options || []).map((opt) => `${opt.label}|${opt.value}`).join('\n'),
 )
 
+async function selectField(id) {
+  selectedId.value = id
+  await nextTick()
+  labelInput.value?.focus?.()
+  labelInput.value?.select?.()
+}
+
 function addField(type) {
   const field = createField(type)
   fields.value.push(field)
-  selectedId.value = field.id
+  selectField(field.id)
 }
 
 function removeField(index) {
   const [removed] = fields.value.splice(index, 1)
-  if (selectedId.value === removed?.id) selectedId.value = fields.value[0]?.id || null
+  if (selectedId.value === removed?.id) {
+    const nextId = fields.value[0]?.id || null
+    if (nextId) selectField(nextId)
+    else selectedId.value = null
+  }
 }
 
 function moveField(index, delta) {

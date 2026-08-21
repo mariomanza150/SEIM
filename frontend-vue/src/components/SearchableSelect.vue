@@ -6,19 +6,23 @@
       class="form-control"
       :placeholder="placeholder"
       :disabled="disabled"
+      :aria-expanded="isOpen ? 'true' : 'false'"
+      aria-autocomplete="list"
       @focus="isOpen = true"
       @input="isOpen = true"
       @keydown.down.prevent="moveHighlight(1)"
       @keydown.up.prevent="moveHighlight(-1)"
       @keydown.enter.prevent="selectHighlighted"
-      @blur="closeDropdown"
+      @blur="onBlur"
     >
-    <ul v-if="isOpen && filteredOptions.length" class="searchable-select-dropdown list-group">
+    <ul v-if="isOpen && filteredOptions.length" class="searchable-select-dropdown list-group" role="listbox">
       <li
         v-for="(option, index) in filteredOptions"
         :key="`${option.value}-${index}`"
         class="list-group-item list-group-item-action"
         :class="{ active: index === highlightedIndex }"
+        role="option"
+        :aria-selected="index === highlightedIndex"
         @mousedown.prevent="selectOption(option)"
       >
         {{ option.label }}
@@ -47,18 +51,25 @@ const normalizedOptions = computed(() =>
     .map((option) => ({
       value: String(option?.value ?? ''),
       label: String(option?.label ?? option?.value ?? ''),
+      aliases: Array.isArray(option?.aliases)
+        ? option.aliases.map((alias) => String(alias || '').trim()).filter(Boolean)
+        : [],
     }))
     .filter((option) => option.value && option.label),
 )
 
+function optionMatches(option, term) {
+  if (!term) return true
+  if (option.label.toLowerCase().includes(term) || option.value.toLowerCase().includes(term)) {
+    return true
+  }
+  return option.aliases.some((alias) => alias.toLowerCase().includes(term))
+}
+
 const filteredOptions = computed(() => {
   const term = query.value.trim().toLowerCase()
   if (!term) return normalizedOptions.value
-  return normalizedOptions.value.filter(
-    (option) =>
-      option.label.toLowerCase().includes(term) ||
-      option.value.toLowerCase().includes(term),
-  )
+  return normalizedOptions.value.filter((option) => optionMatches(option, term))
 })
 
 watch(
@@ -80,13 +91,37 @@ function selectOption(option) {
   isOpen.value = false
 }
 
-function closeDropdown() {
+function resolveTypedOption(term) {
+  const needle = String(term || '').trim().toLowerCase()
+  if (!needle) return null
+
+  const exact = normalizedOptions.value.find((option) => {
+    if (option.label.toLowerCase() === needle || option.value.toLowerCase() === needle) {
+      return true
+    }
+    return option.aliases.some((alias) => alias.toLowerCase() === needle)
+  })
+  if (exact) return exact
+
+  const filtered = filteredOptions.value
+  if (filtered.length === 1) return filtered[0]
+  return null
+}
+
+function syncQueryToSelection() {
+  const selected = normalizedOptions.value.find((option) => option.value === props.modelValue)
+  query.value = selected?.label || props.modelValue || ''
+}
+
+function onBlur() {
   setTimeout(() => {
     isOpen.value = false
-    const selected = normalizedOptions.value.find(
-      (option) => option.value === props.modelValue,
-    )
-    query.value = selected?.label || props.modelValue || ''
+    const resolved = resolveTypedOption(query.value)
+    if (resolved && resolved.value !== props.modelValue) {
+      selectOption(resolved)
+      return
+    }
+    syncQueryToSelection()
   }, 100)
 }
 
@@ -101,9 +136,12 @@ function moveHighlight(step) {
 }
 
 function selectHighlighted() {
-  if (!isOpen.value || highlightedIndex.value < 0) return
-  const option = filteredOptions.value[highlightedIndex.value]
-  if (option) selectOption(option)
+  if (highlightedIndex.value >= 0 && filteredOptions.value[highlightedIndex.value]) {
+    selectOption(filteredOptions.value[highlightedIndex.value])
+    return
+  }
+  const resolved = resolveTypedOption(query.value)
+  if (resolved) selectOption(resolved)
 }
 </script>
 

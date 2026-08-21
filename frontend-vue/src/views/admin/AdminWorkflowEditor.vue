@@ -19,7 +19,13 @@
         <button type="button" class="btn btn-outline-secondary" :disabled="busy" @click="reload">
           <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>{{ t('adminCommon.refresh') }}
         </button>
-        <button type="button" class="btn btn-outline-secondary" :disabled="busy || !currentVersionId" @click="validateBpmn">
+        <button
+          type="button"
+          class="btn btn-outline-secondary"
+          data-testid="workflow-validate"
+          :disabled="busy || !currentVersionId"
+          @click="validateBpmn"
+        >
           <i class="bi bi-check2-circle me-1" aria-hidden="true"></i>{{ t('adminWorkflowEditor.validate') }}
         </button>
         <button type="button" class="btn btn-primary" :disabled="busy" @click="saveDraft">
@@ -352,12 +358,24 @@ onBeforeUnmount(() => {
   min-height: 70vh;
 }
 
+/* Keep Validate / Save / Publish above bpmn-js overlays that escape the canvas. */
+.admin-workflow-editor-page :deep(header.seim-page-header) {
+  position: relative;
+  z-index: 5;
+}
+
 .bpmn-canvas {
+  position: relative;
+  z-index: 1;
   height: 70vh;
   width: 100%;
+  overflow: hidden;
+  isolation: isolate;
 }
 
 .bpmn-properties {
+  position: relative;
+  z-index: 1;
   min-height: 70vh;
   overflow: auto;
 }

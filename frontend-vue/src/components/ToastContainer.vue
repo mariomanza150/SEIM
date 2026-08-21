@@ -84,3 +84,14 @@ function toastTitle(type) {
   color: var(--seim-surface-text);
 }
 </style>
+
+<!-- Unscoped so empty toast padding cannot intercept header action clicks. -->
+<style>
+.seim-toast-container {
+  pointer-events: none;
+}
+
+.seim-toast-container .toast {
+  pointer-events: auto;
+}
+</style>

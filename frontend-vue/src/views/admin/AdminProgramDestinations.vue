@@ -56,7 +56,13 @@
               </select>
             </div>
             <div class="col-md-2">
-              <button type="button" class="btn btn-primary w-100" :disabled="busy || !newUni.name" @click="createUniversity">
+              <button
+                type="button"
+                class="btn btn-primary w-100"
+                data-testid="add-university-save"
+                :disabled="busy || !newUni.name.trim() || !newUni.country"
+                @click="createUniversity"
+              >
                 {{ t('adminCommon.save') }}
               </button>
             </div>
@@ -349,10 +355,15 @@ async function loadInstitutionTree(inst) {
 }
 
 async function createUniversity() {
+  if (!newUni.name.trim() || !newUni.country) {
+    error.value = t('adminProgramDestinations.countryRequired')
+    return
+  }
   busy.value = true
+  error.value = ''
   try {
     await api.post(`/api/programs/${programId.value}/host-institutions/`, {
-      name: newUni.name,
+      name: newUni.name.trim(),
       country: newUni.country,
       grade_scale: newUni.grade_scale || null,
       is_active: true,

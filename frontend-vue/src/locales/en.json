@@ -359,6 +359,7 @@
     "name": "Name",
     "country": "Country",
     "countryPlaceholder": "Search and select country",
+    "countryRequired": "Select a country from the list before saving.",
     "gradeScale": "Grade scale",
     "noGradeScale": "No scale",
     "empty": "No host universities yet.",

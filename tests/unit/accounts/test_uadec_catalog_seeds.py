@@ -57,6 +57,8 @@ class TestCgriCountryCatalog:
         names = [row["value"] for row in response.data]
         assert names == list(CGRI_COUNTRY_NAMES)
         assert len(names) == 17
+        spain = next(row for row in response.data if row["value"] == "España")
+        assert "Spain" in spain.get("aliases", [])
 
 
 @pytest.mark.django_db

@@ -48,11 +48,18 @@ describe('AdminDynformEditor', () => {
     expect(wrapper.get('[data-testid="dynforms-canvas"]').text()).toContain('Email')
     expect(wrapper.get('[data-testid="dynforms-preview"]').text()).toContain('Email')
 
+    await wrapper.get('[data-testid="dynforms-field-label"]').setValue('Contact email')
+    expect(wrapper.get('[data-testid="dynforms-canvas"]').text()).toContain('Contact email')
+
+    await wrapper.get('[data-testid="dynforms-add-date"]').trigger('click')
+    await wrapper.get('[data-testid="dynforms-field-label"]').setValue('Preferred start')
+    expect(wrapper.get('[data-testid="dynforms-field-label"]').element.value).toBe('Preferred start')
+
     await wrapper.get('[data-testid="dynforms-save"]').trigger('click')
     await flushPromises()
     expect(mockPatch).toHaveBeenCalled()
     const payload = mockPatch.mock.calls[0][1]
-    const fieldId = Object.keys(payload.schema.properties)[0]
-    expect(payload.schema.properties[fieldId].format).toBe('email')
+    const titles = Object.values(payload.schema.properties).map((p) => p.title)
+    expect(titles).toEqual(expect.arrayContaining(['Contact email', 'Preferred start']))
   })
 })

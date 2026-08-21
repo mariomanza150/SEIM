@@ -359,6 +359,7 @@
     "name": "Nombre",
     "country": "País",
     "countryPlaceholder": "Buscar y seleccionar país",
+    "countryRequired": "Selecciona un país de la lista antes de guardar.",
     "gradeScale": "Escala de calificaciones",
     "noGradeScale": "Sin escala",
     "empty": "Aún no hay universidades anfitrionas.",
