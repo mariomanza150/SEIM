@@ -63,15 +63,58 @@
       </div>
 
       <div v-if="docsAgreement" class="card mb-4" data-testid="partner-docs">
-        <div class="card-header">
+        <div class="card-header d-flex flex-wrap align-items-center gap-2 justify-content-between">
           <h5 class="mb-0">{{ t('partnerPortalPage.docsHeading', { title: docsAgreement.title }) }}</h5>
+          <div class="form-check mb-0">
+            <input
+              id="partner-docs-current-only"
+              v-model="docsCurrentOnly"
+              class="form-check-input"
+              type="checkbox"
+              data-testid="partner-docs-current-only"
+              @change="reloadDocs"
+            />
+            <label class="form-check-label" for="partner-docs-current-only">
+              {{ t('partnerPortalPage.currentOnly') }}
+            </label>
+          </div>
         </div>
         <ul class="list-group list-group-flush">
           <li v-for="d in docs" :key="d.id" class="list-group-item d-flex flex-wrap align-items-center gap-2">
             <span class="me-auto">
-              {{ d.title || d.file }}
+              {{ docLabel(d) }}
               <span class="badge bg-secondary ms-2" data-testid="partner-document-category">{{ formatDocCategory(d.category) }}</span>
+              <span
+                v-if="isSuperseded(d)"
+                class="badge bg-warning text-dark ms-1"
+                data-testid="partner-document-superseded"
+              >
+                {{ t('partnerPortalPage.supersededBadge') }}
+              </span>
+              <span
+                v-else-if="canSupersedeCategory(d.category)"
+                class="badge bg-success ms-1"
+                data-testid="partner-document-current"
+              >
+                {{ t('partnerPortalPage.currentBadge') }}
+              </span>
+              <span
+                v-if="d.supersedes"
+                class="text-muted small ms-2"
+                data-testid="partner-document-replaces"
+              >
+                {{ t('partnerPortalPage.replacesLabel', { title: supersedesLabel(d.supersedes) }) }}
+              </span>
             </span>
+            <button
+              v-if="!isSuperseded(d) && canSupersedeCategory(d.category)"
+              type="button"
+              class="btn btn-sm btn-outline-primary"
+              data-testid="partner-document-supersede"
+              @click="startSupersede(d)"
+            >
+              {{ t('partnerPortalPage.supersedeAction') }}
+            </button>
             <a
               v-if="d.file"
               :href="d.file"
@@ -98,6 +141,7 @@
                 v-model="uploadForm.category"
                 class="form-select"
                 data-testid="partner-doc-category"
+                @change="onUploadCategoryChange"
               >
                 <option
                   v-for="opt in uploadCategories"
@@ -117,6 +161,18 @@
                 class="form-control"
                 data-testid="partner-doc-title"
               />
+            </div>
+            <div v-if="supersedesChoices.length" class="col-md-4">
+              <label class="form-label" for="partner-doc-supersedes">{{ t('partnerPortalPage.supersedesLabel') }}</label>
+              <select
+                id="partner-doc-supersedes"
+                v-model="uploadForm.supersedes"
+                class="form-select"
+                data-testid="partner-doc-supersedes"
+              >
+                <option value="">{{ t('partnerPortalPage.supersedesNone') }}</option>
+                <option v-for="o in supersedesChoices" :key="o.id" :value="o.id">{{ o.label }}</option>
+              </select>
             </div>
             <div class="col-md-4">
               <label class="form-label" for="partner-doc-file">{{ t('partnerPortalPage.uploadFile') }}</label>
@@ -286,7 +342,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
@@ -298,12 +354,15 @@ const error = ref('')
 const agreements = ref([])
 const applications = ref([])
 const docs = ref([])
+const allDocsForVersioning = ref([])
 const docsAgreement = ref(null)
-const uploadForm = ref({ category: 'signed_copy', title: '', file: null })
+const docsCurrentOnly = ref(false)
+const uploadForm = ref({ category: 'signed_copy', title: '', file: null, supersedes: '' })
 const uploadBusy = ref(false)
 const uploadError = ref('')
 const uploadFileInput = ref(null)
 const uploadCategories = ['signed_copy', 'correspondence', 'amendment', 'other']
+const SUPERSEDE_CATEGORIES = new Set(['signed_copy', 'amendment'])
 const threadApp = ref(null)
 const threadComments = ref([])
 const threadText = ref('')
@@ -338,6 +397,37 @@ function unwrap(data) {
   return []
 }
 
+function docLabel(d) {
+  if (!d) return ''
+  const title = (d.title || '').trim()
+  if (title) return title
+  const file = d.file || ''
+  if (typeof file === 'string' && file.includes('/')) return file.split('/').pop() || file
+  return file || String(d.id)
+}
+
+function canSupersedeCategory(category) {
+  return SUPERSEDE_CATEGORIES.has(category)
+}
+
+function isSuperseded(doc) {
+  if (!doc?.id) return false
+  return allDocsForVersioning.value.some((row) => String(row.supersedes) === String(doc.id))
+}
+
+function supersedesLabel(supersedesId) {
+  const prior = allDocsForVersioning.value.find((row) => String(row.id) === String(supersedesId))
+  return prior ? docLabel(prior) : String(supersedesId)
+}
+
+const supersedesChoices = computed(() => {
+  const category = uploadForm.value.category
+  if (!canSupersedeCategory(category)) return []
+  return allDocsForVersioning.value
+    .filter((row) => row.category === category && !isSuperseded(row))
+    .map((row) => ({ id: row.id, label: docLabel(row) }))
+})
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -355,22 +445,58 @@ async function load() {
   }
 }
 
-async function loadDocs(ag) {
-  docsAgreement.value = ag
-  uploadError.value = ''
-  uploadForm.value = { category: 'signed_copy', title: '', file: null }
-  if (uploadFileInput.value) uploadFileInput.value.value = ''
+async function fetchAgreementDocs(agreementId, { currentOnly = false } = {}) {
+  const params = currentOnly ? { current_only: 'true' } : undefined
+  const { data } = await api.get(`/api/partner/agreements/${agreementId}/documents/`, { params })
+  return Array.isArray(data) ? data : unwrap(data)
+}
+
+async function reloadDocs() {
+  if (!docsAgreement.value) return
   try {
-    const { data } = await api.get(`/api/partner/agreements/${ag.id}/documents/`)
-    docs.value = Array.isArray(data) ? data : unwrap(data)
+    const [listed, all] = await Promise.all([
+      fetchAgreementDocs(docsAgreement.value.id, { currentOnly: docsCurrentOnly.value }),
+      docsCurrentOnly.value
+        ? fetchAgreementDocs(docsAgreement.value.id)
+        : Promise.resolve(null),
+    ])
+    docs.value = listed
+    allDocsForVersioning.value = all || listed
   } catch {
     docs.value = []
+    allDocsForVersioning.value = []
   }
+}
+
+async function loadDocs(ag) {
+  docsAgreement.value = ag
+  docsCurrentOnly.value = false
+  uploadError.value = ''
+  uploadForm.value = { category: 'signed_copy', title: '', file: null, supersedes: '' }
+  if (uploadFileInput.value) uploadFileInput.value.value = ''
+  await reloadDocs()
+}
+
+function onUploadCategoryChange() {
+  uploadForm.value = { ...uploadForm.value, supersedes: '' }
 }
 
 function onUploadFileChange(event) {
   const file = event?.target?.files?.[0] || null
   uploadForm.value = { ...uploadForm.value, file }
+}
+
+function startSupersede(doc) {
+  uploadForm.value = {
+    category: doc.category,
+    title: '',
+    file: null,
+    supersedes: String(doc.id),
+  }
+  if (uploadFileInput.value) {
+    uploadFileInput.value.value = ''
+    uploadFileInput.value.focus()
+  }
 }
 
 async function uploadDocument() {
@@ -382,18 +508,20 @@ async function uploadDocument() {
     fd.append('category', uploadForm.value.category)
     if (uploadForm.value.title?.trim()) fd.append('title', uploadForm.value.title.trim())
     fd.append('file', uploadForm.value.file)
-    const { data } = await api.post(
+    if (uploadForm.value.supersedes) fd.append('supersedes', uploadForm.value.supersedes)
+    await api.post(
       `/api/partner/agreements/${docsAgreement.value.id}/documents/`,
       fd,
       { headers: { 'Content-Type': 'multipart/form-data' } },
     )
-    docs.value = [data, ...docs.value]
-    uploadForm.value = { category: uploadForm.value.category, title: '', file: null }
+    uploadForm.value = { category: uploadForm.value.category, title: '', file: null, supersedes: '' }
     if (uploadFileInput.value) uploadFileInput.value.value = ''
+    await reloadDocs()
   } catch (e) {
     uploadError.value =
       e.response?.data?.file?.[0] ||
       e.response?.data?.category?.[0] ||
+      e.response?.data?.supersedes?.[0] ||
       e.response?.data?.detail ||
       t('partnerPortalPage.uploadError')
   } finally {

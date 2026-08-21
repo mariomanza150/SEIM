@@ -20,7 +20,7 @@ _Manual browser QA defects and environment blockers: [`manual-qa-issues.md`](man
 | Standalone user settings page | `frontend-vue` | Implemented | 2026-04-08 | Added a dedicated `/settings` page backed by the existing user settings API for appearance, notification, and privacy preferences. |
 | Admin export actions | `templates\frontend\admin` | Implemented | 2026-04-08 | Replaced the remaining placeholder admin export actions with working client-side downloads for detailed analytics reports and system info. |
 | Vue student/coordinator portal | `frontend-vue` | Implemented | 2026-04-08 | Login, dashboard, applications, documents, notifications, profile, and 404 routes are functional. Profile catalogs/banking/eligibility UI: `profile-catalogs` in [`feature-test-tracking.md`](feature-test-tracking.md). |
-| Partner institution portal | `accounts`, `exchange`, `documents`, `frontend-vue` | Implemented | 2026-08-20 | Partner-role SPA `/seim/partner`: agreements, signed copies, agreement/applicant threads, nomination acknowledge. **2026-08-20:** partner `POST …/agreements/{id}/documents/` upload (signed_copy/correspondence/amendment/other) + portal upload/download UI. Staff/student denied. Tests: `test_partner_portal_api.py`, `PartnerPortal.spec.js`. |
+| Partner institution portal | `accounts`, `exchange`, `documents`, `frontend-vue` | Implemented | 2026-08-20 | Partner-role SPA `/seim/partner`: agreements, signed copies, agreement/applicant threads, nomination acknowledge. **2026-08-20:** partner document upload + **supersede/version UX** (`supersedes`, `current_only`, Replace action). Staff/student denied. Tests: `test_partner_portal_api.py`, `PartnerPortal.spec.js`. |
 | Wagtail CMS public site | `cms` | Implemented | 2026-08-18 | Public marketing/information pages, navigation, testimonials, programs, movilidad, and convenios templates are present. Unlinked `ProgramPage`s still show Compare → `/seim/programs/compare` (Salamanca/Bologna/Texas A&M have no `exchange.Program` FK). |
 | Dynamic application form builder admin | `application_forms` | Implemented | 2026-04-08 | Form type, submission, schema, and admin-facing builder/list views exist. |
 | Dynamic application form consumption in Vue | `application_forms`, `frontend-vue`, `exchange` | Implemented | 2026-04-08 | The SPA now loads program-linked form schemas, renders supported dynamic fields, prefills saved responses on edit, and submits validated `df_*` payloads that persist with the application. |
@@ -224,7 +224,7 @@ _All Priority 1 items in this subsection are implemented above._
 #### Partner Ecosystem and Collaboration
 | Feature | Module | Notes |
 |---------|--------|-------|
-| Partner nominations + richer partner document workflows | `accounts`, `exchange`, `documents`, `frontend-vue` | Partner nomination acknowledge + agreement document upload/download shipped 2026-08-20. **Remaining:** supersede/version UX in portal; partner visibility into applicant checklist uploads; staff review of partner-uploaded docs beyond repository list. |
+| Partner nominations + richer partner document workflows | `accounts`, `exchange`, `documents`, `frontend-vue` | Partner nomination acknowledge + agreement document upload/download + **supersede/version UX** shipped 2026-08-20. **Remaining:** partner visibility into applicant checklist uploads; staff review of partner-uploaded docs beyond repository list. |
 | Cross-institution communication hub | `notifications`, `accounts`, `exchange`, `frontend-vue` | Centralize conversations among students, coordinators, and partner institutions around applications, agreements, and program logistics. |
 
 #### Advanced Workflow Orchestration
@@ -252,5 +252,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-08-20 — partner agreement document upload (P3 docs depth partial; supersede/applicant-checklist visibility remain). Prior: nomination cycles/allocations + acknowledge; eligibility schema v2; gap-audit reconcile.*  
+*Last updated: 2026-08-20 — partner supersede/version UX (P3 docs depth partial; applicant-checklist visibility remains). Prior: agreement upload; nomination cycles/allocations + acknowledge; eligibility schema v2; gap-audit reconcile.*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*  

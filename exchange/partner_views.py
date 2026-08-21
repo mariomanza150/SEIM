@@ -126,6 +126,20 @@ class PartnerAgreementViewSet(viewsets.ReadOnlyModelViewSet):
             docs = ExchangeAgreementDocument.objects.filter(
                 agreement=agreement
             ).select_related("agreement", "uploaded_by", "supersedes")
+            current_only = str(request.query_params.get("current_only") or "").lower() in (
+                "1",
+                "true",
+                "yes",
+            )
+            if current_only:
+                from django.db.models import Exists, OuterRef
+
+                successor = ExchangeAgreementDocument.objects.filter(
+                    supersedes_id=OuterRef("pk")
+                )
+                docs = docs.annotate(_has_newer=Exists(successor)).filter(
+                    _has_newer=False
+                )
             return Response(
                 ExchangeAgreementDocumentSerializer(
                     docs, many=True, context={"request": request}

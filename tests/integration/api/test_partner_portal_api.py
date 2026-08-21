@@ -257,3 +257,52 @@ class TestPartnerPortalAPI(APITestCase):
         )
         self.assertEqual(resp.status_code, 400)
         self.assertIn("category", resp.data)
+
+    @patch("documents.serializers.DocumentService.virus_scan", return_value=True)
+    @patch("documents.serializers.DocumentService.validate_file_type_and_size")
+    def test_partner_can_supersede_signed_copy(self, _mock_validate, _mock_virus):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        from documents.models import ExchangeAgreementDocument
+
+        PartnerContact.objects.create(user=self.partner, agreement=self.agreement)
+        old_file = SimpleUploadedFile(
+            "prior.pdf", b"%PDF-1.4", content_type="application/pdf"
+        )
+        old = ExchangeAgreementDocument.objects.create(
+            agreement=self.agreement,
+            category=ExchangeAgreementDocument.Category.SIGNED_COPY,
+            title="Prior signed",
+            file=old_file,
+            uploaded_by=self.coord,
+        )
+        self.authenticate_user(self.partner)
+        url = reverse(
+            "api:partner-agreement-documents", kwargs={"pk": self.agreement.pk}
+        )
+        pdf = SimpleUploadedFile(
+            "signed-v2.pdf", b"%PDF-1.4", content_type="application/pdf"
+        )
+        resp = self.client.post(
+            url,
+            {
+                "category": ExchangeAgreementDocument.Category.SIGNED_COPY,
+                "title": "Updated signed",
+                "file": pdf,
+                "supersedes": str(old.id),
+            },
+            format="multipart",
+        )
+        self.assertEqual(resp.status_code, 201, resp.data)
+        self.assertEqual(str(resp.data["supersedes"]), str(old.id))
+        new = ExchangeAgreementDocument.objects.get(title="Updated signed")
+        self.assertEqual(new.supersedes_id, old.id)
+
+        listed = self.client.get(url)
+        self.assertEqual(listed.status_code, 200)
+        self.assertEqual(len(listed.data), 2)
+
+        current = self.client.get(url, {"current_only": "true"})
+        self.assertEqual(current.status_code, 200)
+        self.assertEqual(len(current.data), 1)
+        self.assertEqual(current.data[0]["title"], "Updated signed")

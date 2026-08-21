@@ -148,13 +148,35 @@ describe('PartnerPortal', () => {
   })
 
   it('uploads an agreement document from the docs panel', async () => {
-    api.post.mockResolvedValue({
-      data: {
+    let docsPayload = [
+      { id: 'd1', title: 'Demo signed Erasmus framework', category: 'signed_copy', file: '/media/old.pdf' },
+    ]
+    api.get.mockImplementation((url) => {
+      if (String(url).includes('/api/partner/agreements/') && String(url).includes('/documents/')) {
+        return Promise.resolve({ data: docsPayload })
+      }
+      if (String(url).includes('/api/partner/agreements/') && String(url).includes('/comments/')) {
+        return Promise.resolve({ data: [] })
+      }
+      if (String(url).includes('/api/partner/agreements/')) {
+        return Promise.resolve({
+          data: { results: [{ id: 'ag-1', title: 'Bilateral MoU', partner_institution_name: 'TU Berlin', status: 'active' }] },
+        })
+      }
+      if (String(url).includes('/api/partner/applications/')) {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      return Promise.reject(new Error(url))
+    })
+    api.post.mockImplementation(() => {
+      const created = {
         id: 'd2',
         title: 'Partner signed',
         category: 'signed_copy',
         file: '/media/agreement_repository/signed.pdf',
-      },
+      }
+      docsPayload = [created, ...docsPayload]
+      return Promise.resolve({ data: created })
     })
     const wrapper = mount(PartnerPortal, {
       global: {
@@ -179,8 +201,75 @@ describe('PartnerPortal', () => {
     )
     expect(url).toBe('/api/partner/agreements/ag-1/documents/')
     expect(body).toBeInstanceOf(FormData)
+    expect(body.get('supersedes')).toBeNull()
     expect(config.headers['Content-Type']).toBe('multipart/form-data')
     expect(wrapper.text()).toContain('Partner signed')
     expect(wrapper.find('[data-testid="partner-document-download"]').exists()).toBe(true)
+  })
+
+  it('lets a partner supersede the current signed copy', async () => {
+    let docsPayload = [
+      { id: 'd1', title: 'Demo signed Erasmus framework', category: 'signed_copy', file: '/media/old.pdf' },
+      {
+        id: 'd2',
+        title: 'Updated signed',
+        category: 'signed_copy',
+        supersedes: 'd1',
+        file: '/media/new.pdf',
+      },
+    ]
+    api.get.mockImplementation((url, config) => {
+      if (String(url).includes('/api/partner/agreements/') && String(url).includes('/documents/')) {
+        const currentOnly = config?.params?.current_only === 'true'
+        return Promise.resolve({
+          data: currentOnly ? docsPayload.filter((r) => r.id === 'd2' || r.id === 'd3') : docsPayload,
+        })
+      }
+      if (String(url).includes('/api/partner/agreements/') && String(url).includes('/comments/')) {
+        return Promise.resolve({ data: [] })
+      }
+      if (String(url).includes('/api/partner/agreements/')) {
+        return Promise.resolve({
+          data: { results: [{ id: 'ag-1', title: 'Bilateral MoU', partner_institution_name: 'TU Berlin', status: 'active' }] },
+        })
+      }
+      if (String(url).includes('/api/partner/applications/')) {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      return Promise.reject(new Error(url))
+    })
+    api.post.mockImplementation(() => {
+      const created = {
+        id: 'd3',
+        title: 'Partner replacement',
+        category: 'signed_copy',
+        supersedes: 'd2',
+        file: '/media/agreement_repository/v3.pdf',
+      }
+      docsPayload = [created, ...docsPayload]
+      return Promise.resolve({ data: created })
+    })
+    const wrapper = mount(PartnerPortal, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' }, PageHeader: { template: '<div><slot /></div>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="partner-view-documents"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="partner-document-superseded"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-testid="partner-document-current"]').length).toBe(1)
+    await wrapper.find('[data-testid="partner-document-supersede"]').trigger('click')
+    expect(wrapper.find('[data-testid="partner-doc-supersedes"]').element.value).toBe('d2')
+    const file = new File(['%PDF-1.4'], 'v3.pdf', { type: 'application/pdf' })
+    const input = wrapper.find('[data-testid="partner-doc-file"]')
+    Object.defineProperty(input.element, 'files', { value: [file] })
+    await input.trigger('change')
+    await wrapper.find('[data-testid="partner-doc-upload"]').find('form').trigger('submit')
+    await flushPromises()
+    const call = api.post.mock.calls.find((c) => String(c[0]).includes('/documents/'))
+    expect(call[1].get('supersedes')).toBe('d2')
+    expect(call[1].get('category')).toBe('signed_copy')
   })
 })
