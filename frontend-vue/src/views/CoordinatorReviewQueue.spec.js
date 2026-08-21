@@ -15,16 +15,61 @@ vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ success: vi.fn(), error: vi.fn() }),
 }))
 
+vi.mock('@/composables/useConfirm', () => ({
+  useConfirm: () => ({ confirm: vi.fn() }),
+}))
+
 const routeQuery = { status: '' }
+const routerPush = vi.fn()
 vi.mock('vue-router', () => ({
   useRoute: () => ({ query: routeQuery }),
+  useRouter: () => ({ push: routerPush }),
 }))
+
+function mockQueueApps(results) {
+  api.get.mockImplementation((url) => {
+    if (url === '/api/saved-searches/') {
+      return Promise.resolve({ data: { results: [] } })
+    }
+    if (url === '/api/applications/') {
+      return Promise.resolve({
+        data: {
+          results,
+          count: results.length,
+          next: null,
+          previous: null,
+        },
+      })
+    }
+    return Promise.reject(new Error(`Unexpected GET ${url}`))
+  })
+}
+
+const sampleApps = [
+  {
+    id: 11,
+    status: 'submitted',
+    program_name: 'P1',
+    student_display_name: 'Ada',
+    student_email: 'ada@test.com',
+    submitted_at: null,
+  },
+  {
+    id: 22,
+    status: 'under_review',
+    program_name: 'P2',
+    student_display_name: 'Bob',
+    student_email: 'bob@test.com',
+    submitted_at: null,
+  },
+]
 
 describe('CoordinatorReviewQueue', () => {
   beforeEach(() => {
     localStorage.clear()
     setAppLocale('en')
     routeQuery.status = ''
+    routerPush.mockReset()
     vi.clearAllMocks()
     api.get.mockImplementation((url) => {
       if (url === '/api/saved-searches/') {
@@ -171,5 +216,70 @@ describe('CoordinatorReviewQueue', () => {
     expect(api.get).toHaveBeenCalledWith('/api/applications/', {
       params: { page: 1, ordering: '-submitted_at', status: 'nominated' },
     })
+  })
+
+  it('supports multi-select with sticky selection bar and open selected', async () => {
+    mockQueueApps(sampleApps)
+    const wrapper = mount(CoordinatorReviewQueue, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+      attachTo: document.body,
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="review-queue-selection-bar"]').exists()).toBe(false)
+    const checks = wrapper.findAll('[data-testid="review-queue-row-select"]')
+    await checks[0].setValue(true)
+    await checks[1].setValue(true)
+    expect(wrapper.find('[data-testid="review-queue-selection-bar"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="review-queue-selection-count"]').text()).toContain('2')
+    await wrapper.find('[data-testid="review-queue-open-selected"]').trigger('click')
+    expect(routerPush).toHaveBeenCalledWith({ name: 'ApplicationDetail', params: { id: 11 } })
+    await wrapper.find('[data-testid="review-queue-clear-selection"]').trigger('click')
+    expect(wrapper.find('[data-testid="review-queue-selection-bar"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('moves focus with j/k and opens focused row with Enter', async () => {
+    mockQueueApps(sampleApps)
+    const wrapper = mount(CoordinatorReviewQueue, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+      attachTo: document.body,
+    })
+    await flushPromises()
+    const rows = wrapper.findAll('[data-testid="review-queue-row"]')
+    expect(rows[0].classes()).toContain('table-active')
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', bubbles: true }))
+    await flushPromises()
+    expect(rows[1].classes()).toContain('table-active')
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x', bubbles: true }))
+    await flushPromises()
+    expect(wrapper.find('[data-testid="review-queue-selection-count"]').text()).toContain('1')
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+    expect(routerPush).toHaveBeenCalledWith({ name: 'ApplicationDetail', params: { id: 22 } })
+    wrapper.unmount()
+  })
+
+  it('shows Spanish selection and keyboard copy', async () => {
+    setAppLocale('es')
+    mockQueueApps(sampleApps)
+    const wrapper = mount(CoordinatorReviewQueue, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="review-queue-keyboard-hint"]').text()).toBe(
+      i18n.global.t('reviewQueuePage.keyboardHint'),
+    )
+    await wrapper.findAll('[data-testid="review-queue-row-select"]')[0].setValue(true)
+    expect(wrapper.find('[data-testid="review-queue-open-selected"]').text()).toBe(
+      i18n.global.t('reviewQueuePage.openSelected'),
+    )
   })
 })

@@ -194,20 +194,48 @@
         test-id="review-queue-empty"
         :body="t('reviewQueuePage.empty')"
       />
-      <div v-else class="table-responsive card">
-        <table class="table table-hover mb-0">
+      <div v-else class="table-responsive card" data-testid="review-queue-table">
+        <table class="table table-hover mb-0" role="grid" :aria-label="t('reviewQueuePage.tableAria')">
           <thead class="table-light">
             <tr>
-              <th>{{ t('reviewQueuePage.colStudent') }}</th>
-              <th>{{ t('reviewQueuePage.colProgram') }}</th>
-              <th>{{ t('reviewQueuePage.colStatus') }}</th>
-              <th>{{ t('reviewQueuePage.colCoordinator') }}</th>
-              <th>{{ t('reviewQueuePage.colSubmitted') }}</th>
-              <th></th>
+              <th scope="col" class="review-queue-select-col">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  :checked="allPageSelected"
+                  :indeterminate.prop="somePageSelected && !allPageSelected"
+                  :aria-label="t('reviewQueuePage.selectAllAria')"
+                  data-testid="review-queue-select-all"
+                  @change="toggleSelectAllPage"
+                />
+              </th>
+              <th scope="col">{{ t('reviewQueuePage.colStudent') }}</th>
+              <th scope="col">{{ t('reviewQueuePage.colProgram') }}</th>
+              <th scope="col">{{ t('reviewQueuePage.colStatus') }}</th>
+              <th scope="col">{{ t('reviewQueuePage.colCoordinator') }}</th>
+              <th scope="col">{{ t('reviewQueuePage.colSubmitted') }}</th>
+              <th scope="col"></th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="app in applications" :key="app.id">
+            <tr
+              v-for="(app, index) in applications"
+              :key="app.id"
+              :class="{ 'table-active': focusedIndex === index, 'review-queue-row--selected': isSelected(app.id) }"
+              :aria-selected="focusedIndex === index ? 'true' : 'false'"
+              data-testid="review-queue-row"
+              @click="focusRow(index)"
+            >
+              <td class="review-queue-select-col" @click.stop>
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  :checked="isSelected(app.id)"
+                  :aria-label="t('reviewQueuePage.selectRowAria', { name: app.student_display_name || app.id })"
+                  data-testid="review-queue-row-select"
+                  @change="toggleSelect(app.id)"
+                />
+              </td>
               <td>
                 <div class="fw-medium">{{ app.student_display_name || t('reviewQueuePage.emDash') }}</div>
                 <div class="small text-muted">{{ app.student_email }}</div>
@@ -225,6 +253,7 @@
                   :to="{ name: 'ApplicationDetail', params: { id: app.id } }"
                   class="btn btn-sm btn-outline-primary"
                   data-testid="review-queue-open-detail"
+                  @click.stop
                 >
                   {{ t('reviewQueuePage.openDetail') }}
                 </router-link>
@@ -232,6 +261,9 @@
             </tr>
           </tbody>
         </table>
+        <p class="small text-muted mb-0 px-3 py-2 border-top" data-testid="review-queue-keyboard-hint">
+          {{ t('reviewQueuePage.keyboardHint') }}
+        </p>
       </div>
 
       <Pagination
@@ -245,12 +277,42 @@
         ul-class="mt-3"
         @page-change="goToPage"
       />
+
+      <div
+        v-if="selectedCount > 0"
+        class="review-queue-selection-bar"
+        role="region"
+        :aria-label="t('reviewQueuePage.selectionBarAria')"
+        data-testid="review-queue-selection-bar"
+      >
+        <span class="fw-medium" data-testid="review-queue-selection-count">
+          {{ t('reviewQueuePage.selectedCount', { count: selectedCount }) }}
+        </span>
+        <div class="d-flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="btn btn-sm btn-primary"
+            data-testid="review-queue-open-selected"
+            @click="openSelected"
+          >
+            {{ t('reviewQueuePage.openSelected') }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            data-testid="review-queue-clear-selection"
+            @click="clearSelection"
+          >
+            {{ t('reviewQueuePage.clearSelection') }}
+          </button>
+        </div>
+      </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
@@ -271,6 +333,7 @@ import { resolveListPage } from '@/utils/listPage'
 import { applicationStatusBadgeClass, applicationStatusFromRouteQuery } from '@/utils/formatters'
 
 const route = useRoute()
+const router = useRouter()
 
 const { t, te, locale } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -283,6 +346,8 @@ const savedPresets = ref([])
 const presetsLoading = ref(false)
 const newPresetName = ref('')
 const saveAsDefault = ref(false)
+const selectedIds = ref([])
+const focusedIndex = ref(-1)
 
 const filters = ref({
   search: '',
@@ -301,10 +366,117 @@ const pagination = ref({
   pageSize: 20,
 })
 
+const selectedCount = computed(() => selectedIds.value.length)
+const pageIds = computed(() => applications.value.map((app) => app.id))
+const allPageSelected = computed(
+  () => pageIds.value.length > 0 && pageIds.value.every((id) => selectedIds.value.includes(id)),
+)
+const somePageSelected = computed(() => pageIds.value.some((id) => selectedIds.value.includes(id)))
+
 let searchTimeout = null
 function debouncedSearch() {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => fetchApplications(), 400)
+}
+
+function isSelected(id) {
+  return selectedIds.value.includes(id)
+}
+
+function toggleSelect(id) {
+  if (selectedIds.value.includes(id)) {
+    selectedIds.value = selectedIds.value.filter((x) => x !== id)
+  } else {
+    selectedIds.value = [...selectedIds.value, id]
+  }
+}
+
+function toggleSelectAllPage() {
+  if (allPageSelected.value) {
+    const pageSet = new Set(pageIds.value)
+    selectedIds.value = selectedIds.value.filter((id) => !pageSet.has(id))
+  } else {
+    const merged = new Set([...selectedIds.value, ...pageIds.value])
+    selectedIds.value = [...merged]
+  }
+}
+
+function clearSelection() {
+  selectedIds.value = []
+}
+
+function focusRow(index) {
+  if (index < 0 || index >= applications.value.length) return
+  focusedIndex.value = index
+}
+
+function moveFocus(delta) {
+  if (!applications.value.length) return
+  const next =
+    focusedIndex.value < 0
+      ? delta > 0
+        ? 0
+        : applications.value.length - 1
+      : Math.min(applications.value.length - 1, Math.max(0, focusedIndex.value + delta))
+  focusedIndex.value = next
+}
+
+function openApplication(id) {
+  if (id == null) return
+  router.push({ name: 'ApplicationDetail', params: { id } })
+}
+
+function openFocused() {
+  const app = applications.value[focusedIndex.value]
+  if (app) openApplication(app.id)
+}
+
+function openSelected() {
+  const ordered = applications.value.filter((app) => selectedIds.value.includes(app.id))
+  const first = ordered[0] || applications.value.find((app) => selectedIds.value.includes(app.id))
+  if (first) openApplication(first.id)
+}
+
+function toggleFocusedSelect() {
+  const app = applications.value[focusedIndex.value]
+  if (app) toggleSelect(app.id)
+}
+
+function isTypingTarget(el) {
+  if (!el || typeof el.closest !== 'function') return false
+  const tag = el.tagName
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'BUTTON' || tag === 'A') {
+    return true
+  }
+  if (el.isContentEditable) return true
+  return Boolean(el.closest('input, textarea, select, button, a, [contenteditable="true"]'))
+}
+
+function onQueueKeydown(event) {
+  if (loading.value || !applications.value.length) return
+  if (isTypingTarget(event.target)) return
+  const key = event.key
+  if (key === 'ArrowDown' || key === 'j' || key === 'J') {
+    event.preventDefault()
+    moveFocus(1)
+    return
+  }
+  if (key === 'ArrowUp' || key === 'k' || key === 'K') {
+    event.preventDefault()
+    moveFocus(-1)
+    return
+  }
+  if (key === 'Enter' || key === 'o' || key === 'O') {
+    if (focusedIndex.value < 0) return
+    event.preventDefault()
+    openFocused()
+    return
+  }
+  if (key === 'x' || key === 'X') {
+    if (focusedIndex.value < 0) return
+    event.preventDefault()
+    toggleFocusedSelect()
+  }
 }
 
 async function fetchApplications(page = 1) {
@@ -324,6 +496,8 @@ async function fetchApplications(page = 1) {
 
     const response = await api.get('/api/applications/', { params })
     applications.value = response.data.results || response.data
+    selectedIds.value = []
+    focusedIndex.value = applications.value.length ? 0 : -1
     if (response.data.count !== undefined) {
       pagination.value = {
         count: response.data.count,
@@ -457,6 +631,7 @@ function formatDate(dateString) {
 }
 
 onMounted(async () => {
+  window.addEventListener('keydown', onQueueKeydown)
   await loadPresets()
   const defaultPreset = savedPresets.value.find((p) => p.is_default)
   if (defaultPreset) {
@@ -468,11 +643,42 @@ onMounted(async () => {
   }
   await fetchApplications(1)
 })
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onQueueKeydown)
+})
 </script>
 
 <style scoped>
 .review-queue-page {
   min-height: 100vh;
   background-color: var(--seim-app-bg);
+  padding-bottom: 4.5rem;
+}
+
+.review-queue-select-col {
+  width: 2.5rem;
+  vertical-align: middle;
+}
+
+.review-queue-row--selected {
+  background-color: color-mix(in srgb, var(--bs-primary, #0d6efd) 8%, transparent);
+}
+
+.review-queue-selection-bar {
+  position: sticky;
+  bottom: 0.75rem;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--seim-border, #dee2e6);
+  border-radius: 0.5rem;
+  background: var(--seim-surface, #fff);
+  box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.08);
 }
 </style>
