@@ -111,6 +111,7 @@
                 <router-link
                   class="btn btn-sm btn-outline-primary"
                   :to="{ name: 'AdminWorkflowEditor', params: { id: wf.id } }"
+                  data-testid="admin-workflows-open-editor"
                 >
                   <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{{ t('adminWorkflows.openEditor') }}
                 </router-link>

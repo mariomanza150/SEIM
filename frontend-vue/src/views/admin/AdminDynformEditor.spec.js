@@ -62,4 +62,27 @@ describe('AdminDynformEditor', () => {
     const titles = Object.values(payload.schema.properties).map((p) => p.title)
     expect(titles).toEqual(expect.arrayContaining(['Contact email', 'Preferred start']))
   })
+
+  it('removes a field and toggles the live preview', async () => {
+    const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/admin/dynforms', name: 'AdminDynforms', component: { template: '<div />' } },
+        { path: '/admin/dynforms/:id', name: 'AdminDynformEditor', component: AdminDynformEditor },
+      ],
+    })
+    await router.push({ name: 'AdminDynformEditor', params: { id: '7' } })
+    const wrapper = mount(AdminDynformEditor, { global: { plugins: [i18n, router] } })
+    await flushPromises()
+
+    await wrapper.get('[data-testid="dynforms-add-email"]').trigger('click')
+    expect(wrapper.get('[data-testid="dynforms-preview"]').text()).toContain('Email')
+    await wrapper.get('[data-testid="dynforms-remove-field"]').trigger('click')
+    expect(wrapper.get('[data-testid="dynforms-canvas"]').text()).not.toContain('Email')
+
+    expect(wrapper.find('[data-testid="dynforms-preview"]').exists()).toBe(true)
+    await wrapper.get('[data-testid="dynforms-preview-toggle"]').trigger('click')
+    expect(wrapper.find('[data-testid="dynforms-preview"]').exists()).toBe(false)
+  })
 })

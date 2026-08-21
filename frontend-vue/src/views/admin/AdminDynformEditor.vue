@@ -81,7 +81,14 @@
                 <div class="btn-group btn-group-sm">
                   <button type="button" class="btn btn-outline-secondary" :disabled="index === 0" @click.stop="moveField(index, -1)">↑</button>
                   <button type="button" class="btn btn-outline-secondary" :disabled="index === fields.length - 1" @click.stop="moveField(index, 1)">↓</button>
-                  <button type="button" class="btn btn-outline-danger" @click.stop="removeField(index)">×</button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-danger"
+                    data-testid="dynforms-remove-field"
+                    @click.stop="removeField(index)"
+                  >
+                    ×
+                  </button>
                 </div>
               </div>
             </div>
