@@ -1,19 +1,14 @@
 <template>
   <div class="application-form-page">
     <!-- Breadcrumb -->
-    <nav :aria-label="t('applicationFormPage.breadcrumbAria')">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-        </li>
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Applications' }">{{ t('route.names.Applications') }}</router-link>
-        </li>
-        <li class="breadcrumb-item active">
-          {{ isEditMode ? t('applicationFormPage.breadcrumbEdit') : t('applicationFormPage.breadcrumbNew') }}
-        </li>
-      </ol>
-    </nav>
+    <PageBreadcrumb
+      :aria-label="t('applicationFormPage.breadcrumbAria')"
+      :items="[
+        { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+        { to: { name: 'Applications' }, label: t('route.names.Applications') },
+        { label: isEditMode ? t('applicationFormPage.breadcrumbEdit') : t('applicationFormPage.breadcrumbNew') },
+      ]"
+    />
 
       <!-- Header -->
       <div class="row mb-4">
@@ -150,18 +145,33 @@
                   <label for="program" class="form-label">
                     {{ t('applicationFormPage.programLabel') }} <span class="text-danger">*</span>
                   </label>
-                  <div v-if="!isEditMode" class="card mb-3 border-0 bg-light">
-                    <div class="card-body py-3">
-                      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-                        <span class="small text-muted fw-semibold">{{ t('applicationFormPage.filterPrograms') }}</span>
-                        <button
-                          type="button"
-                          class="btn btn-link btn-sm p-0"
-                          @click="clearProgramFilters"
-                        >
-                          {{ t('applicationFormPage.clearFilters') }}
-                        </button>
-                      </div>
+                  <select
+                    id="program"
+                    v-model="form.program"
+                    class="form-select"
+                    :class="{ 'is-invalid': programIssueMessages.length }"
+                    :aria-invalid="programIssueMessages.length ? 'true' : 'false'"
+                    :aria-describedby="programIssueMessages.length ? 'application-form-program-feedback' : undefined"
+                    required
+                    :disabled="isEditMode"
+                    data-testid="program-select"
+                  >
+                    <option value="">{{ t('applicationFormPage.selectProgram') }}</option>
+                    <option v-for="program in programs" :key="program.id" :value="program.id">
+                      {{ program.name }}
+                    </option>
+                  </select>
+                  <CompactFilterBar
+                    v-if="!isEditMode"
+                    class="mt-3"
+                    embedded
+                    :sticky="false"
+                    test-id="program-filters"
+                    :clear-label="t('applicationFormPage.clearFilters')"
+                    :toggle-label="t('applicationFormPage.filterPrograms')"
+                    @clear="clearProgramFilters"
+                  >
+                    <template #advanced>
                       <div class="row g-2">
                         <div class="col-md-6">
                           <label class="form-label small mb-0" for="program-filter-search">{{ t('applicationFormPage.search') }}</label>
@@ -269,7 +279,8 @@
                             : t('applicationFormPage.programsMatchMany', { n: programs.length })
                         }}
                       </p>
-                      <div class="border-top pt-3 mt-3">
+                    </template>
+                    <template #presets>
                         <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                           <div class="flex-grow-1" style="min-width: 200px">
                             <label class="form-label small text-muted mb-1">{{ t('applicationFormPage.savePresetLabel') }}</label>
@@ -346,25 +357,8 @@
                             </button>
                           </span>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                  <select
-                    id="program"
-                    v-model="form.program"
-                    class="form-select"
-                    :class="{ 'is-invalid': programIssueMessages.length }"
-                    :aria-invalid="programIssueMessages.length ? 'true' : 'false'"
-                    :aria-describedby="programIssueMessages.length ? 'application-form-program-feedback' : undefined"
-                    required
-                    :disabled="isEditMode"
-                    data-testid="program-select"
-                  >
-                    <option value="">{{ t('applicationFormPage.selectProgram') }}</option>
-                    <option v-for="program in programs" :key="program.id" :value="program.id">
-                      {{ program.name }}
-                    </option>
-                  </select>
+                    </template>
+                  </CompactFilterBar>
                   <div
                     v-if="programIssueMessages.length"
                     id="application-form-program-feedback"
@@ -945,6 +939,8 @@ import { eligibilityFailureMessages } from '@/utils/eligibilityMessages'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
 
 const route = useRoute()
 const router = useRouter()

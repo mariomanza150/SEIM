@@ -17,6 +17,7 @@
             class="btn btn-outline-secondary"
             :class="{ 'btn-sm': embedded }"
             data-testid="compact-filter-clear"
+            :aria-label="resolvedClear"
             @click="$emit('clear')"
           >
             <i class="bi bi-x-circle me-1" aria-hidden="true" />{{ resolvedClear }}

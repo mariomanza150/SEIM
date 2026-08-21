@@ -85,6 +85,7 @@ describe('StaffExchangeAgreements', () => {
     expect(wrapper.find('[data-testid="agreements-empty"]').text()).toContain(
       'No agreements match these filters',
     )
+    await wrapper.get('[data-testid="compact-filter-advanced-toggle"]').trigger('click')
     expect(wrapper.find('[data-testid="agreements-preset-name"]').attributes('placeholder')).toBe(
       i18n.global.t('exchangeAgreementsPage.presetNamePlaceholder'),
     )

@@ -1,13 +1,12 @@
 <template>
   <div class="staff-agreements-page">
-    <nav :aria-label="t('exchangeAgreementsPage.breadcrumbAria')">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-        </li>
-        <li class="breadcrumb-item active">{{ t('route.names.StaffExchangeAgreements') }}</li>
-      </ol>
-    </nav>
+    <PageBreadcrumb
+      :aria-label="t('exchangeAgreementsPage.breadcrumbAria')"
+      :items="[
+        { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+        { label: t('route.names.StaffExchangeAgreements') },
+      ]"
+    />
 
       <div class="row mb-4">
         <div class="col">
@@ -18,9 +17,8 @@
         </div>
       </div>
 
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="row g-3 align-items-end">
+      <CompactFilterBar :clear-label="t('exchangeAgreementsPage.clearFilters')" @clear="clearFilters">
+        <template #primary>
             <div class="col-md-4">
               <label class="form-label">{{ t('exchangeAgreementsPage.searchLabel') }}</label>
               <input
@@ -45,6 +43,9 @@
                 <option v-for="ty in typeChoices" :key="ty.value" :value="ty.value">{{ ty.label }}</option>
               </select>
             </div>
+        </template>
+        <template #advanced>
+            <div class="row g-2">
             <div class="col-md-4">
               <label class="form-label">{{ t('exchangeAgreementsPage.linkedProgramLabel') }}</label>
               <select v-model="filters.program" class="form-select" @change="fetchAgreements(1)">
@@ -89,12 +90,9 @@
                 <option value="partner_institution_name">{{ t('exchangeAgreementsPage.sortPartnerAz') }}</option>
               </select>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-outline-secondary w-100" @click="clearFilters">
-                {{ t('exchangeAgreementsPage.clearFilters') }}
-              </button>
             </div>
-            <div class="col-12 border-top pt-3 mt-2">
+        </template>
+        <template #presets>
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
                   <label class="form-label small text-muted mb-1">{{ t('exchangeAgreementsPage.presetSaveLabel') }}</label>
@@ -158,10 +156,8 @@
                   </button>
                 </span>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        </template>
+      </CompactFilterBar>
 
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
@@ -369,6 +365,8 @@ import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
 import { useConfirm } from '@/composables/useConfirm'
 import api from '@/services/api'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import {
   STAFF_SAVED_SEARCH_TYPE,
   deserializeExchangeAgreementFilters,

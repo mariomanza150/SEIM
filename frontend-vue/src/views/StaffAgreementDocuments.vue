@@ -1,20 +1,13 @@
 <template>
   <div class="staff-agreement-docs-page">
-    <nav :aria-label="t('staffAgreementDocumentsPage.breadcrumbAria')">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-        </li>
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'StaffExchangeAgreements' }">{{
-            t('route.names.StaffExchangeAgreements')
-          }}</router-link>
-        </li>
-        <li class="breadcrumb-item active" aria-current="page">
-          {{ agreement?.title || t('route.names.StaffAgreementDocuments') }}
-        </li>
-      </ol>
-    </nav>
+    <PageBreadcrumb
+      :aria-label="t('staffAgreementDocumentsPage.breadcrumbAria')"
+      :items="[
+        { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+        { to: { name: 'StaffExchangeAgreements' }, label: t('route.names.StaffExchangeAgreements') },
+        { label: agreement?.title || t('route.names.StaffAgreementDocuments'), truncate: true },
+      ]"
+    />
 
     <div v-if="routeInvalid" class="alert alert-warning">
       {{ t('staffAgreementDocumentsPage.invalidRoute') }}
@@ -88,9 +81,8 @@
         </div>
       </div>
 
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="row g-3 align-items-end">
+      <CompactFilterBar :clear-label="t('staffAgreementDocumentsPage.clearFilters')" @clear="clearFilters">
+        <template #primary>
             <div class="col-md-4">
               <label class="form-label">{{ t('exchangeAgreementsPage.searchLabel') }}</label>
               <input
@@ -120,6 +112,9 @@
                 <label class="form-check-label" for="cur-only">{{ t('staffAgreementDocumentsPage.currentOnly') }}</label>
               </div>
             </div>
+        </template>
+        <template #advanced>
+            <div class="row g-2">
             <div class="col-md-3">
               <label class="form-label">{{ t('exchangeAgreementsPage.sortLabel') }}</label>
               <select v-model="filters.ordering" class="form-select" @change="fetchRows(1)">
@@ -128,12 +123,9 @@
                 <option value="category">{{ t('staffAgreementDocumentsPage.sortCategory') }}</option>
               </select>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-outline-secondary w-100" @click="clearFilters">
-                {{ t('staffAgreementDocumentsPage.clearFilters') }}
-              </button>
             </div>
-            <div class="col-12 border-top pt-3 mt-2">
+        </template>
+        <template #presets>
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
                   <label class="form-label small text-muted mb-1">{{ t('staffAgreementDocumentsPage.presetSaveLabel') }}</label>
@@ -197,10 +189,8 @@
                   </button>
                 </span>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        </template>
+      </CompactFilterBar>
 
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
@@ -423,6 +413,8 @@ import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
 import { useConfirm } from '@/composables/useConfirm'
 import api from '@/services/api'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import { resolveFileUrl } from '@/utils/apiUrl'
 import {
   STAFF_SAVED_SEARCH_TYPE,

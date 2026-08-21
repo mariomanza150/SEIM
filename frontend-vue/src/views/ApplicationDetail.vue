@@ -2,25 +2,17 @@
   <div class="application-detail">
   <div class="container-fluid mt-4">
       <!-- Breadcrumb -->
-      <nav :aria-label="t('applicationDetailPage.breadcrumbAria')">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-          </li>
-          <li class="breadcrumb-item">
-            <router-link :to="{ name: 'Applications' }">{{ t('route.names.Applications') }}</router-link>
-          </li>
-          <li
-            class="breadcrumb-item active seim-breadcrumb-truncate"
-            aria-current="page"
-            :title="programDisplayName(application) || t('applicationDetailPage.loadingProgram')"
-          >
-            <span class="seim-breadcrumb-truncate__text">
-              {{ programDisplayName(application) || t('applicationDetailPage.loadingProgram') }}
-            </span>
-          </li>
-        </ol>
-      </nav>
+      <PageBreadcrumb
+        :aria-label="t('applicationDetailPage.breadcrumbAria')"
+        :items="[
+          { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+          { to: { name: 'Applications' }, label: t('route.names.Applications') },
+          {
+            label: programDisplayName(application) || t('applicationDetailPage.loadingProgram'),
+            truncate: true,
+          },
+        ]"
+      />
 
       <!-- Loading -->
       <div v-if="loading" class="text-center py-5">
@@ -876,6 +868,7 @@ import { useConfirm } from '@/composables/useConfirm'
 import DocumentUpload from '@/components/DocumentUpload.vue'
 import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import api from '@/services/api'
 import { eligibilityFailureMessages } from '@/utils/eligibilityMessages'
 import { formatTimelineEventDescription, formatTimelineEventHeading, timelineHasCreatedEvent } from '@/utils/timelineEvents'
@@ -1579,20 +1572,6 @@ onBeforeUnmount(() => {
 .application-detail {
   min-height: 100vh;
   background-color: var(--seim-app-bg);
-}
-
-.seim-breadcrumb-truncate {
-  max-width: min(520px, 70vw);
-  display: inline-block;
-  vertical-align: bottom;
-}
-
-.seim-breadcrumb-truncate__text {
-  display: inline-block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .timeline {

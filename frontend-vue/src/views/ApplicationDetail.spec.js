@@ -124,6 +124,10 @@ describe('ApplicationDetail', () => {
     expect(wrapper.text()).toContain('Please upload the missing transcript.')
     expect(wrapper.find('#commentText').exists()).toBe(true)
     expect(wrapper.find('#privateComment').exists()).toBe(true)
+    const crumb = wrapper.get('[aria-current="page"]')
+    expect(crumb.classes()).toContain('seim-page-breadcrumb__item--truncate')
+    expect(crumb.text()).toBe('Exchange Program')
+    expect(crumb.get('.seim-page-breadcrumb__text').attributes('title')).toBe('Exchange Program')
   })
 
   it('submits a new comment and refreshes the list', async () => {

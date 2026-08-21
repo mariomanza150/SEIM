@@ -650,4 +650,34 @@ describe('ApplicationForm', () => {
     })
     expect(wrapper.find('[data-testid="host-institution-select"]').exists()).toBe(false)
   })
+
+  it('keeps program select above collapsed program filters', async () => {
+    api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
+      if (url === '/api/saved-searches/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [{ id: 'program-1', name: 'Exchange Program', start_date: '2026-09-01', end_date: '2027-01-15' }],
+          },
+        })
+      }
+      return Promise.resolve({ data: {} })
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('#program-filter-search').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="program-filter-preset-name"]').exists()).toBe(false)
+    await wrapper.get('[data-testid="compact-filter-advanced-toggle"]').trigger('click')
+    expect(wrapper.find('#program-filter-search').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="program-filter-preset-name"]').exists()).toBe(true)
+  })
 })

@@ -264,4 +264,19 @@ describe('Applications', () => {
       params: { page: 1, ordering: '-created_at', status: 'nominated' },
     })
   })
+
+  it('uses a compact filter bar with clear next to primary filters', async () => {
+    api.get.mockResolvedValue({ data: { results: [], count: 0, next: null, previous: null } })
+    const wrapper = mount(Applications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="applications-filters"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="compact-filter-clear"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="compact-filter-advanced-toggle"]').exists()).toBe(false)
+    expect(wrapper.find('.seim-page-breadcrumb').exists()).toBe(true)
+  })
 })

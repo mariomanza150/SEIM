@@ -54,7 +54,7 @@ describe('CoordinatorReviewQueue', () => {
       'No applications match these filters'
     )
     expect(wrapper.text()).toContain('Application review queue')
-    const advancedToggle = wrapper.find('button.btn-link')
+    const advancedToggle = wrapper.find('[data-testid="compact-filter-advanced-toggle"]')
     await advancedToggle.trigger('click')
     expect(wrapper.find('[data-testid="review-queue-preset-name"]').attributes('placeholder')).toBe(
       i18n.global.t('reviewQueuePage.presetNamePlaceholder'),
@@ -73,8 +73,9 @@ describe('CoordinatorReviewQueue', () => {
     const statusOpts = statusSelect.findAll('option')
     const draft = statusOpts.find((o) => o.element.value === 'draft')
     expect(draft?.text()).toBe(i18n.global.t('reviewQueuePage.status.draft'))
-    expect(wrapper.text()).toContain(i18n.global.t('reviewQueuePage.sortRecentlySubmitted'))
     expect(wrapper.text()).toContain(i18n.global.t('reviewQueuePage.clearFilters'))
+    await wrapper.get('[data-testid="compact-filter-advanced-toggle"]').trigger('click')
+    expect(wrapper.text()).toContain(i18n.global.t('reviewQueuePage.sortRecentlySubmitted'))
     const statusValues = statusOpts.map((o) => o.element.value)
     expect(statusValues).toContain('nominated')
     expect(statusValues).toContain('waitlist')

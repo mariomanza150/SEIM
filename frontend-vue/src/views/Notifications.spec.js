@@ -65,6 +65,9 @@ describe('Notifications', () => {
     })
     await flushPromises()
     expect(wrapper.find('nav').attributes('aria-label')).toBe(i18n.global.t('notifications.breadcrumbAria'))
+    expect(wrapper.find('[data-testid="compact-filter-clear"]').attributes('aria-label')).toBe(
+      i18n.global.t('notifications.clearFilters'),
+    )
     expect(wrapper.find('[data-testid="notifications-heading"]').text()).toContain('Notifications')
     expect(wrapper.text()).toContain('No notifications')
     expect(wrapper.text()).toContain('Manage your notifications')
