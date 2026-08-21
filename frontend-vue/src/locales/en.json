@@ -2132,7 +2132,7 @@
   },
   "eligibilityRulesetsPage": {
     "title": "Eligibility rulesets",
-    "subtitle": "Define scalar eligibility overrides that programs can link.",
+    "subtitle": "Define scalar eligibility overrides that programs can link. Schema and revision are frozen onto applications at submit.",
     "breadcrumbAria": "Breadcrumb",
     "create": "New ruleset",
     "editTitle": "Edit ruleset",
@@ -2146,7 +2146,7 @@
     "saveError": "Could not save ruleset.",
     "toastCreated": "Ruleset created",
     "toastSaved": "Ruleset saved",
-    "versionMeta": "Document schema v{schema} · content revision r{revision}",
+    "versionMeta": "Document schema v{schema} · content revision r{revision} (frozen on submit)",
     "fieldName": "Name",
     "fieldDescription": "Description",
     "fieldActive": "Active",

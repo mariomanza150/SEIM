@@ -505,6 +505,8 @@ class Command(BaseCommand):
                 "host_academic_program": academic,
             }
             if profile and spec["status"] != "draft":
+                from exchange.eligibility_rulesets import build_ruleset_snapshot
+
                 defaults.update(
                     {
                         "semester_at_apply": profile.get_effective_semester(),
@@ -513,6 +515,9 @@ class Command(BaseCommand):
                         "credits_percent_at_apply": profile.credits_approved_percent,
                         "language_at_apply": profile.language,
                         "language_level_at_apply": profile.language_level,
+                        "eligibility_ruleset_snapshot": build_ruleset_snapshot(
+                            getattr(program, "eligibility_ruleset", None)
+                        ),
                     }
                 )
 

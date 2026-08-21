@@ -2128,7 +2128,7 @@
   },
   "eligibilityRulesetsPage": {
     "title": "Conjuntos de reglas de elegibilidad",
-    "subtitle": "Define overrides de elegibilidad que los programas pueden vincular.",
+    "subtitle": "Define overrides de elegibilidad que los programas pueden vincular. El esquema y la revisión se congelan en la solicitud al enviar.",
     "breadcrumbAria": "Migas de pan",
     "create": "Nuevo conjunto",
     "editTitle": "Editar conjunto",
@@ -2142,7 +2142,7 @@
     "saveError": "No se pudo guardar el conjunto.",
     "toastCreated": "Conjunto creado",
     "toastSaved": "Conjunto guardado",
-    "versionMeta": "Esquema del documento v{schema} · revisión de contenido r{revision}",
+    "versionMeta": "Esquema del documento v{schema} · revisión de contenido r{revision} (congelado al enviar)",
     "fieldName": "Nombre",
     "fieldDescription": "Descripción",
     "fieldActive": "Activo",
