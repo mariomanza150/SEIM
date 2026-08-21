@@ -40,7 +40,7 @@ Core (apply, review, documents, partner portal, admin catalogs/forms/workflows) 
 - ~~Eligibility rulesets: richer JSON schema / versioning~~ — shipped 2026-08-20 (document schema v2).
 - Full manual a11y audit (P2 Remaining).
 - ~~Richer partner document workflows — applicant checklist visibility~~ — shipped 2026-08-20 (supersede/version + checklist). Staff review of partner uploads remains P3 Remaining.
-- Eligibility step-level document gates in preview (P3).
+- ~~Eligibility step-level document gates in preview~~ — shipped 2026-08-20.
 - Cross-institution communication hub (P3 — large; not “UX polish”).
 - Google Calendar OAuth2 (P2) — skip unless explicit product bet; ICS/webcal is enough.
 - Predictive warehouse (P3) — skip; SPA forecasts exist.

@@ -839,12 +839,16 @@ class ApplicationSerializer(serializers.ModelSerializer):
                     it for it in full["items"] if it["document_type_id"] in eff_ids
                 ]
                 current_step_documents = {
+                    "step_key": str(current_key) if current_key else None,
                     "complete": all(it["status"] == "approved" for it in sub_items),
                     "items": sub_items,
                 }
             else:
-                current_step_documents = {"complete": True, "items": []}
-        return {
+                current_step_documents = {
+                    "step_key": str(current_key) if current_key else None,
+                    "complete": True,
+                    "items": [],
+                }        return {
             "multi_step": ft.is_multi_step(),
             "steps": steps,
             "current_step": obj.dynamic_form_current_step,

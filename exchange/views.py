@@ -608,52 +608,59 @@ class ProgramViewSet(viewsets.ModelViewSet):
 
             # When an application is provided, return step-level context to support
             # multi-step document gates and UX parity with the application detail layout.
-            try:
-                from documents.services import DocumentService
+            from documents.services import DocumentService
 
-                full_app = (
-                    Application.objects.select_related("program", "student")
-                    .only("id", "program_id", "student_id", "dynamic_form_current_step")
-                    .get(pk=application_obj.pk)
+            full_app = (
+                Application.objects.select_related(
+                    "program",
+                    "program__application_form",
+                    "student",
+                    "status",
                 )
-                checklist = DocumentService.build_application_document_checklist(
-                    full_app
-                )
-                current_step_documents = None
-                ft = getattr(program, "application_form", None)
-                if ft and ft.is_multi_step():
-                    current_key = full_app.dynamic_form_current_step
-                    eff_ids = []
-                    if current_key:
-                        for s in ft.get_multi_step_layout():
-                            if str(s.get("key")) == str(current_key):
-                                eff_ids = DocumentService.intersect_program_required_document_type_ids(
-                                    program, s.get("required_document_type_ids") or []
-                                )
-                                break
-                    if eff_ids:
-                        sub_items = [
-                            it
-                            for it in (checklist.get("items") or [])
-                            if it.get("document_type_id") in eff_ids
-                        ]
-                        current_step_documents = {
-                            "complete": all(
-                                it.get("status") == "approved" for it in sub_items
-                            ),
-                            "items": sub_items,
-                        }
-                    else:
-                        current_step_documents = {"complete": True, "items": []}
-                application_context = {
-                    "application_id": str(full_app.id),
-                    "dynamic_form_current_step": full_app.dynamic_form_current_step,
-                    "document_checklist": checklist,
-                    "current_step_documents": current_step_documents,
-                }
-            except Exception:
-                application_context = None
-
+                .prefetch_related("document_set", "document_set__type")
+                .get(pk=application_obj.pk)
+            )
+            checklist = DocumentService.build_application_document_checklist(full_app)
+            current_step_documents = None
+            ft = getattr(full_app.program, "application_form", None) or getattr(
+                program, "application_form", None
+            )
+            if ft and ft.is_multi_step():
+                current_key = full_app.dynamic_form_current_step
+                eff_ids = []
+                if current_key:
+                    for s in ft.get_multi_step_layout():
+                        if str(s.get("key")) == str(current_key):
+                            eff_ids = DocumentService.intersect_program_required_document_type_ids(
+                                full_app.program,
+                                s.get("required_document_type_ids") or [],
+                            )
+                            break
+                if eff_ids:
+                    sub_items = [
+                        it
+                        for it in (checklist.get("items") or [])
+                        if it.get("document_type_id") in eff_ids
+                    ]
+                    current_step_documents = {
+                        "step_key": str(current_key) if current_key else None,
+                        "complete": all(
+                            it.get("status") == "approved" for it in sub_items
+                        ),
+                        "items": sub_items,
+                    }
+                else:
+                    current_step_documents = {
+                        "step_key": str(current_key) if current_key else None,
+                        "complete": True,
+                        "items": [],
+                    }
+            application_context = {
+                "application_id": str(full_app.id),
+                "dynamic_form_current_step": full_app.dynamic_form_current_step,
+                "document_checklist": checklist,
+                "current_step_documents": current_step_documents,
+            }
         ev = evaluate_eligibility(
             request.user, eval_program, application=application_obj
         )

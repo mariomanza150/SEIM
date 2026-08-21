@@ -231,7 +231,7 @@ _All Priority 1 items in this subsection are implemented above._
 | Feature | Module | Notes |
 |---------|--------|-------|
 | Nomination partner allocations + multi-cycle windows | `exchange`, `accounts`, `admin UI` | Implemented 2026-08-20 — `NominationCycle` + `NominationPartnerAllocation` APIs + Match/UI (see Student nomination ranking row). |
-| Eligibility — step-level document gates in preview payload | `exchange`, `application_forms`, `accounts` | Structured eligibility + rulesets Implemented. **Remaining only:** step-level document gates in preview payload. (Schema/versioning tracked under P2.) |
+| Eligibility — step-level document gates in preview payload | `exchange`, `application_forms`, `accounts` | Implemented 2026-08-20 — `GET …/check_eligibility/?application=` returns `application_context.current_step_documents` (`step_key`, `complete`, `items`). |
 
 #### External calendars
 | Feature | Module | Notes |
@@ -252,5 +252,5 @@ _All Priority 1 items in this subsection are implemented above._
 
 ---
 
-*Last updated: 2026-08-20 — partner applicant checklist visibility + supersede/version UX (P3 docs depth; staff review of partner uploads remains). Prior: agreement upload; nomination cycles/allocations + acknowledge; eligibility schema v2; gap-audit reconcile.*  
+*Last updated: 2026-08-20 — eligibility step-level document gates in preview; partner checklist + supersede UX. Prior: agreement upload; nomination cycles; eligibility schema v2; gap-audit reconcile.*  
 *This file is manually editable; preserve developer changes and update statuses deliberately.*  

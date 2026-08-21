@@ -62,6 +62,61 @@ class TestAPIViews(TestCase):
         ctx = response.data["application_context"]
         self.assertEqual(ctx["application_id"], str(application.id))
         self.assertIn("document_checklist", ctx)
+        self.assertIn("current_step_documents", ctx)
+        self.assertIsNone(ctx["current_step_documents"])
+
+    def test_check_eligibility_preview_includes_step_document_gates(self):
+        from application_forms.models import FormType
+        from documents.models import DocumentType
+
+        dt = DocumentType.objects.create(name="Step Passport", description="")
+        self.program.required_document_types.add(dt)
+        form = FormType.objects.create(
+            name="Multi Step Eligibility Form",
+            form_type="application",
+            schema={
+                "type": "object",
+                "properties": {
+                    "motivation": {"type": "string", "title": "Motivation"},
+                    "goals": {"type": "string", "title": "Goals"},
+                },
+            },
+            ui_schema={},
+            is_active=True,
+            step_definitions=[
+                {
+                    "key": "s1",
+                    "title": "Step 1",
+                    "field_names": ["motivation"],
+                    "required_document_type_ids": [dt.id],
+                },
+                {"key": "s2", "title": "Step 2", "field_names": ["goals"]},
+            ],
+            created_by=self.user,
+        )
+        self.program.application_form = form
+        self.program.save(update_fields=["application_form"])
+        application = Application.objects.create(
+            program=self.program,
+            student=self.user,
+            status=self.application_status,
+            dynamic_form_current_step="s1",
+        )
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            f"/api/programs/{self.program.id}/check_eligibility/",
+            {"application": str(application.id)},
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        ctx = response.data["application_context"]
+        step_docs = ctx["current_step_documents"]
+        self.assertIsNotNone(step_docs)
+        self.assertEqual(step_docs["step_key"], "s1")
+        self.assertFalse(step_docs["complete"])
+        self.assertEqual(len(step_docs["items"]), 1)
+        self.assertEqual(step_docs["items"][0]["name"], "Step Passport")
+        self.assertEqual(step_docs["items"][0]["status"], "missing")
+        self.assertEqual(ctx["dynamic_form_current_step"], "s1")
 
     def test_api_schema(self):
         """Test API schema endpoint"""
