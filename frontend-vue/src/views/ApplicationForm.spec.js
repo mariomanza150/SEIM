@@ -528,6 +528,64 @@ describe('ApplicationForm', () => {
     })
     expect(wrapper.text()).toContain('German')
     expect(wrapper.text()).toContain('English')
+    expect(wrapper.find('[data-testid="eligibility-fix-action"]').text()).toBe(
+      i18n.global.t('eligibilityFix.openProfile'),
+    )
+  })
+
+  it('orders eligibility fix list from check_eligibility rules', async () => {
+    api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({
+          data: {
+            eligible: false,
+            message: 'Eligibility requirements not met',
+            rules: [
+              {
+                id: 'required_documents',
+                passed: false,
+                skipped: false,
+                message_key: 'documents_incomplete',
+                message_params: { items: 'transcript' },
+              },
+              {
+                id: 'gpa',
+                passed: false,
+                skipped: false,
+                message_key: 'gpa_below',
+                message_params: { student: '2.1', required: '3.0' },
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [{ id: 'p-gaps', name: 'Exchange Program', start_date: '2026-09-01', end_date: '2027-01-15' }],
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="program-select"]').setValue('p-gaps')
+    await vi.waitFor(() => {
+      expect(wrapper.findAll('[data-testid="eligibility-fix-item"]').length).toBe(2)
+    })
+    const rows = wrapper.findAll('[data-testid="eligibility-fix-item"]')
+    expect(rows[0].text()).toContain('GPA')
+    expect(rows[1].text()).toContain('transcript')
+    expect(rows[0].text()).toContain(i18n.global.t('eligibilityFix.openProfile'))
+    expect(rows[1].text()).toContain(i18n.global.t('eligibilityFix.uploadDocuments'))
   })
 
   it('redirects to profile when readiness check reports an incomplete profile', async () => {

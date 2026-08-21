@@ -636,6 +636,9 @@ describe('ApplicationDetail', () => {
     expect(wrapper.find('[data-testid="readiness-eligibility-issues"]').text()).toContain(
       'Language proficiency'
     )
+    expect(wrapper.find('[data-testid="eligibility-fix-action"]').text()).toBe(
+      i18n.global.t('eligibilityFix.openProfile'),
+    )
     mockAuthStore.userRole = 'coordinator'
   })
 
@@ -978,5 +981,8 @@ describe('ApplicationDetail', () => {
     expect(wrapper.find('[data-testid="document-checklist-required-from"]').text()).toContain(
       i18n.global.t('applicationDetailPage.status.completed'),
     )
+    expect(wrapper.find('[data-testid="document-progress-rail"]').exists()).toBe(true)
+    expect(wrapper.findAll('[data-testid="document-progress-rail-due-item"]')).toHaveLength(1)
+    expect(wrapper.findAll('[data-testid="document-progress-rail-later-item"]')).toHaveLength(1)
   })
 })

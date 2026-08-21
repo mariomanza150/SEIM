@@ -35,6 +35,16 @@
     "clearFilters": "Clear",
     "advancedFilters": "Advanced filters"
   },
+  "eligibilityFix": {
+    "heading": "What to fix",
+    "openProfile": "Update profile",
+    "uploadDocuments": "Upload documents",
+    "completeForm": "Complete form",
+    "railTitle": "Document progress",
+    "railDueNow": "Due now ({done}/{total})",
+    "railLater": "Later ({n})",
+    "railComplete": "All required documents are approved."
+  },
   "notifications": {
     "breadcrumbAria": "Breadcrumb",
     "fallbackToast": "New notification",

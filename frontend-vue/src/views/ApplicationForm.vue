@@ -371,9 +371,7 @@
                     <h6 class="alert-heading mb-2">
                       <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ t('applicationFormPage.eligibilityHeading') }}
                     </h6>
-                    <ul class="mb-0 ps-3">
-                      <li v-for="(msg, i) in programIssueMessages" :key="i">{{ msg }}</li>
-                    </ul>
+                    <EligibilityFixList :items="eligibilityFixDisplayItems" />
                   </div>
                   <div v-else class="form-text">
                     {{ isEditMode ? t('applicationFormPage.programHelpEdit') : t('applicationFormPage.programHelpNew') }}
@@ -935,12 +933,18 @@ import {
   deserializeApplicationProgramFilters,
 } from '@/utils/applicationProgramFilterPresets'
 import { fieldMeetsVisibleWhen, stepMeetsVisibleWhen } from '@/utils/dynamicFormVisibility'
-import { eligibilityFailureMessages } from '@/utils/eligibilityMessages'
+import {
+  eligibilityFailureMessages,
+  eligibilityFixActionKey,
+  eligibilityFixItems,
+  eligibilityFixLink,
+} from '@/utils/eligibilityMessages'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
+import EligibilityFixList from '@/components/EligibilityFixList.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -1014,8 +1018,8 @@ const applicationVisibilityContext = ref({
   has_assigned_coordinator: false,
 })
 const errors = ref({})
-/** Lines from `GET /api/programs/:id/check_eligibility/` when student is not yet eligible (draft save still allowed). */
-const eligibilityPreviewMessages = ref([])
+/** Payload from `GET /api/programs/:id/check_eligibility/` when student is not yet eligible (draft save still allowed). */
+const eligibilityPreviewPayload = ref(null)
 let eligibilityCheckTimer = null
 let eligibilityCheckSeq = 0
 const eligibilityAlertRef = ref(null)
@@ -1162,6 +1166,10 @@ async function persistProfileEligibility() {
   }
 }
 
+const eligibilityPreviewMessages = computed(() => (
+  eligibilityPreviewPayload.value ? eligibilityFailureMessages(eligibilityPreviewPayload.value, t) : []
+))
+
 /** Eligibility preview (API) + save validation on `program` / `non_field_errors`, deduped for assertive alert + `aria-describedby`. */
 const programIssueMessages = computed(() => {
   const fromProg = flattenFieldMessages(errors.value?.program)
@@ -1172,6 +1180,26 @@ const programIssueMessages = computed(() => {
     if (x && !merged.includes(x)) merged.push(x)
   }
   return merged
+})
+
+const eligibilityFixDisplayItems = computed(() => {
+  const fromApi = eligibilityFixItems(eligibilityPreviewPayload.value, t)
+  const seen = new Set(fromApi.map((row) => row.message))
+  const extras = programIssueMessages.value
+    .filter((msg) => msg && !seen.has(msg))
+    .map((message, index) => ({ key: `extra-${index}`, message, action: null }))
+  return [...fromApi, ...extras].map((row) => {
+    const to = eligibilityFixLink(row.action, {
+      applicationId: isEditMode.value ? route.params.id : undefined,
+      nextPath: route.fullPath,
+    })
+    const actionKey = eligibilityFixActionKey(row.action)
+    return {
+      ...row,
+      to,
+      actionLabel: actionKey ? t(actionKey) : '',
+    }
+  })
 })
 
 // Errors for other fields (exclude program and dynamic-form specific messages) as list of strings
@@ -1277,7 +1305,7 @@ watch(
     appId: route.params.id,
   }),
   ({ pid, edit, appId }) => {
-    eligibilityPreviewMessages.value = []
+    eligibilityPreviewPayload.value = null
     const next = { ...errors.value }
     delete next.program
     delete next.non_field_errors
@@ -1299,14 +1327,10 @@ watch(
         const url = `/api/programs/${pid}/check_eligibility/${qs ? `?${qs}` : ''}`
         const { data } = await api.get(url)
         if (seq !== eligibilityCheckSeq) return
-        if (data.eligible === false && data.message) {
-          eligibilityPreviewMessages.value = eligibilityFailureMessages(data, t)
-        } else {
-          eligibilityPreviewMessages.value = []
-        }
+        eligibilityPreviewPayload.value = data.eligible === false ? data : null
       } catch {
         if (seq !== eligibilityCheckSeq) return
-        eligibilityPreviewMessages.value = []
+        eligibilityPreviewPayload.value = null
       }
     }, 250)
   },

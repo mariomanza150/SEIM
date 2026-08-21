@@ -35,6 +35,16 @@
     "clearFilters": "Limpiar",
     "advancedFilters": "Filtros avanzados"
   },
+  "eligibilityFix": {
+    "heading": "Qué corregir",
+    "openProfile": "Actualizar perfil",
+    "uploadDocuments": "Subir documentos",
+    "completeForm": "Completar formulario",
+    "railTitle": "Progreso de documentos",
+    "railDueNow": "Vence ahora ({done}/{total})",
+    "railLater": "Más adelante ({n})",
+    "railComplete": "Todos los documentos obligatorios están aprobados."
+  },
   "notifications": {
     "breadcrumbAria": "Migas de pan",
     "fallbackToast": "Nueva notificación",

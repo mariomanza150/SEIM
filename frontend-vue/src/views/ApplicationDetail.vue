@@ -114,18 +114,14 @@
                       <span class="text-muted">— {{ t('applicationDetailPage.checklistDueNow') }}</span>
                     </li>
                   </ul>
-                  <ul
-                    v-if="eligibilityIssueLines.length"
+                  <div
+                    v-if="eligibilityFixDisplayItems.length"
                     class="small mb-2 text-danger"
                     data-testid="readiness-eligibility-issues"
                   >
-                    <li
-                      v-for="(issue, idx) in eligibilityIssueLines"
-                      :key="idx"
-                    >
-                      {{ issue }}
-                    </li>
-                  </ul>
+                    <p class="fw-semibold mb-1">{{ t('eligibilityFix.heading') }}</p>
+                    <EligibilityFixList :items="eligibilityFixDisplayItems" />
+                  </div>
                   <div v-if="application.status === 'draft'" class="progress" style="height: 6px">
                     <div
                       class="progress-bar"
@@ -437,6 +433,7 @@
             <!-- Required documents checklist -->
             <div
               v-if="application.document_checklist && application.document_checklist.required_count > 0"
+              id="document-checklist-card"
               class="card mb-4"
               data-testid="document-checklist-card"
             >
@@ -464,6 +461,7 @@
                   <li
                     v-for="item in application.document_checklist.items"
                     :key="item.document_type_id"
+                    :id="`checklist-item-${item.document_type_id}`"
                     class="list-group-item px-0 d-flex justify-content-between align-items-start flex-wrap gap-2"
                     data-testid="document-checklist-item"
                   >
@@ -678,6 +676,7 @@
 
           <!-- Sidebar -->
           <div class="col-lg-4">
+            <DocumentProgressRail :checklist="application.document_checklist" />
             <!-- Coordinator: Review / Status update -->
             <div
               v-if="isCoordinator && application.status !== 'draft' && application.status !== 'cancelled'"
@@ -783,7 +782,11 @@
             </div>
 
             <!-- Upload Document -->
-            <div v-if="application.status === 'draft' || application.status === 'submitted'" class="card mb-4">
+            <div
+              v-if="application.status === 'draft' || application.status === 'submitted'"
+              id="document-upload"
+              class="card mb-4"
+            >
               <DocumentUpload
                 :application-id="application.id"
                 @uploaded="fetchApplication"
@@ -869,8 +872,14 @@ import DocumentUpload from '@/components/DocumentUpload.vue'
 import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import EligibilityFixList from '@/components/EligibilityFixList.vue'
+import DocumentProgressRail from '@/components/DocumentProgressRail.vue'
 import api from '@/services/api'
-import { eligibilityFailureMessages } from '@/utils/eligibilityMessages'
+import {
+  eligibilityFixActionKey,
+  eligibilityFixItems,
+  eligibilityFixLink,
+} from '@/utils/eligibilityMessages'
 import { formatTimelineEventDescription, formatTimelineEventHeading, timelineHasCreatedEvent } from '@/utils/timelineEvents'
 import { documentReviewStatus, documentTypeLabel, looksLikeTechnicalDocumentName } from '@/utils/documentApi'
 import { readinessLevelBadgeClass, readinessScoreBarClass, formatReadinessHeadline } from '@/utils/applicationReadiness'
@@ -976,12 +985,21 @@ const scholarshipAwardBusy = ref(false)
 const awardForm = ref({ status: 'nominated', amount: '', currency: 'MXN', notes: '' })
 const disbursementForm = ref({ label: '', amount: '' })
 
-const eligibilityIssueLines = computed(() => {
+const eligibilityFixDisplayItems = computed(() => {
   const el = application.value?.readiness?.eligibility
   if (!el) return []
-  const fromRules = eligibilityFailureMessages(el, t)
-  if (fromRules.length) return fromRules
-  return Array.isArray(el.issues) ? el.issues : []
+  return eligibilityFixItems(el, t).map((row) => {
+    const to = eligibilityFixLink(row.action, {
+      applicationId: application.value?.id,
+      nextPath: route.fullPath,
+    })
+    const actionKey = eligibilityFixActionKey(row.action)
+    return {
+      ...row,
+      to,
+      actionLabel: actionKey ? t(actionKey) : '',
+    }
+  })
 })
 
 const lifecycleMissingNow = computed(() => {
