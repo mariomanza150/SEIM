@@ -67,12 +67,81 @@
           <h5 class="mb-0">{{ t('partnerPortalPage.docsHeading', { title: docsAgreement.title }) }}</h5>
         </div>
         <ul class="list-group list-group-flush">
-          <li v-for="d in docs" :key="d.id" class="list-group-item">
-            {{ d.title || d.file }}
-            <span class="badge bg-secondary ms-2" data-testid="partner-document-category">{{ formatDocCategory(d.category) }}</span>
+          <li v-for="d in docs" :key="d.id" class="list-group-item d-flex flex-wrap align-items-center gap-2">
+            <span class="me-auto">
+              {{ d.title || d.file }}
+              <span class="badge bg-secondary ms-2" data-testid="partner-document-category">{{ formatDocCategory(d.category) }}</span>
+            </span>
+            <a
+              v-if="d.file"
+              :href="d.file"
+              class="btn btn-sm btn-outline-secondary"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="partner-document-download"
+            >
+              {{ t('partnerPortalPage.downloadDocument') }}
+            </a>
           </li>
           <li v-if="!docs.length" class="list-group-item text-muted">{{ t('partnerPortalPage.noDocuments') }}</li>
         </ul>
+        <div class="card-body border-top" data-testid="partner-doc-upload">
+          <h6 class="mb-3">{{ t('partnerPortalPage.uploadHeading') }}</h6>
+          <div v-if="uploadError" class="alert alert-danger py-2" data-testid="partner-doc-upload-error">
+            {{ uploadError }}
+          </div>
+          <form class="row g-3 align-items-end" @submit.prevent="uploadDocument">
+            <div class="col-md-3">
+              <label class="form-label" for="partner-doc-category">{{ t('partnerPortalPage.uploadCategory') }}</label>
+              <select
+                id="partner-doc-category"
+                v-model="uploadForm.category"
+                class="form-select"
+                data-testid="partner-doc-category"
+              >
+                <option
+                  v-for="opt in uploadCategories"
+                  :key="opt"
+                  :value="opt"
+                >
+                  {{ formatDocCategory(opt) }}
+                </option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label" for="partner-doc-title">{{ t('partnerPortalPage.uploadTitle') }}</label>
+              <input
+                id="partner-doc-title"
+                v-model="uploadForm.title"
+                type="text"
+                class="form-control"
+                data-testid="partner-doc-title"
+              />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="partner-doc-file">{{ t('partnerPortalPage.uploadFile') }}</label>
+              <input
+                id="partner-doc-file"
+                ref="uploadFileInput"
+                type="file"
+                class="form-control"
+                required
+                data-testid="partner-doc-file"
+                @change="onUploadFileChange"
+              />
+            </div>
+            <div class="col-md-2">
+              <button
+                type="submit"
+                class="btn btn-primary w-100"
+                :disabled="uploadBusy || !uploadForm.file"
+                data-testid="partner-doc-upload-submit"
+              >
+                {{ t('partnerPortalPage.uploadSubmit') }}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
 
       <div class="card">
@@ -230,6 +299,11 @@ const agreements = ref([])
 const applications = ref([])
 const docs = ref([])
 const docsAgreement = ref(null)
+const uploadForm = ref({ category: 'signed_copy', title: '', file: null })
+const uploadBusy = ref(false)
+const uploadError = ref('')
+const uploadFileInput = ref(null)
+const uploadCategories = ['signed_copy', 'correspondence', 'amendment', 'other']
 const threadApp = ref(null)
 const threadComments = ref([])
 const threadText = ref('')
@@ -283,11 +357,47 @@ async function load() {
 
 async function loadDocs(ag) {
   docsAgreement.value = ag
+  uploadError.value = ''
+  uploadForm.value = { category: 'signed_copy', title: '', file: null }
+  if (uploadFileInput.value) uploadFileInput.value.value = ''
   try {
     const { data } = await api.get(`/api/partner/agreements/${ag.id}/documents/`)
     docs.value = Array.isArray(data) ? data : unwrap(data)
   } catch {
     docs.value = []
+  }
+}
+
+function onUploadFileChange(event) {
+  const file = event?.target?.files?.[0] || null
+  uploadForm.value = { ...uploadForm.value, file }
+}
+
+async function uploadDocument() {
+  if (!docsAgreement.value || !uploadForm.value.file) return
+  uploadBusy.value = true
+  uploadError.value = ''
+  try {
+    const fd = new FormData()
+    fd.append('category', uploadForm.value.category)
+    if (uploadForm.value.title?.trim()) fd.append('title', uploadForm.value.title.trim())
+    fd.append('file', uploadForm.value.file)
+    const { data } = await api.post(
+      `/api/partner/agreements/${docsAgreement.value.id}/documents/`,
+      fd,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
+    )
+    docs.value = [data, ...docs.value]
+    uploadForm.value = { category: uploadForm.value.category, title: '', file: null }
+    if (uploadFileInput.value) uploadFileInput.value.value = ''
+  } catch (e) {
+    uploadError.value =
+      e.response?.data?.file?.[0] ||
+      e.response?.data?.category?.[0] ||
+      e.response?.data?.detail ||
+      t('partnerPortalPage.uploadError')
+  } finally {
+    uploadBusy.value = false
   }
 }
 

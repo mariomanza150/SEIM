@@ -146,4 +146,41 @@ describe('PartnerPortal', () => {
     )
     expect(wrapper.text()).toContain('We can sign in June')
   })
+
+  it('uploads an agreement document from the docs panel', async () => {
+    api.post.mockResolvedValue({
+      data: {
+        id: 'd2',
+        title: 'Partner signed',
+        category: 'signed_copy',
+        file: '/media/agreement_repository/signed.pdf',
+      },
+    })
+    const wrapper = mount(PartnerPortal, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' }, PageHeader: { template: '<div><slot /></div>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="partner-view-documents"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="partner-doc-upload"]').exists()).toBe(true)
+    await wrapper.find('[data-testid="partner-doc-title"]').setValue('Partner signed')
+    const file = new File(['%PDF-1.4'], 'signed.pdf', { type: 'application/pdf' })
+    const input = wrapper.find('[data-testid="partner-doc-file"]')
+    Object.defineProperty(input.element, 'files', { value: [file] })
+    await input.trigger('change')
+    await wrapper.find('[data-testid="partner-doc-upload"]').find('form').trigger('submit')
+    await flushPromises()
+    expect(api.post).toHaveBeenCalled()
+    const [url, body, config] = api.post.mock.calls.find((c) =>
+      String(c[0]).includes('/documents/'),
+    )
+    expect(url).toBe('/api/partner/agreements/ag-1/documents/')
+    expect(body).toBeInstanceOf(FormData)
+    expect(config.headers['Content-Type']).toBe('multipart/form-data')
+    expect(wrapper.text()).toContain('Partner signed')
+    expect(wrapper.find('[data-testid="partner-document-download"]').exists()).toBe(true)
+  })
 })

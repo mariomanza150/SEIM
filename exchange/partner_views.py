@@ -5,6 +5,7 @@ from __future__ import annotations
 from django.db.models import Prefetch
 from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
 from core.cache import invalidate_application_api_responses
@@ -24,6 +25,16 @@ from exchange.serializers import (
     PartnerApplicationSerializer,
     PartnerCommentSerializer,
     PartnerContactSerializer,
+)
+
+# Partner-facing upload surface (staff keep full catalog via /api/agreement-documents/).
+PARTNER_UPLOAD_CATEGORIES = frozenset(
+    {
+        ExchangeAgreementDocument.Category.SIGNED_COPY,
+        ExchangeAgreementDocument.Category.CORRESPONDENCE,
+        ExchangeAgreementDocument.Category.AMENDMENT,
+        ExchangeAgreementDocument.Category.OTHER,
+    }
 )
 
 
@@ -102,13 +113,62 @@ class PartnerAgreementViewSet(viewsets.ReadOnlyModelViewSet):
             return qs.all()
         return qs.filter(id__in=partner_agreement_ids(user))
 
-    @action(detail=True, methods=["get"], url_path="documents")
+    @action(
+        detail=True,
+        methods=["get", "post"],
+        url_path="documents",
+        parser_classes=[MultiPartParser, FormParser, JSONParser],
+    )
     def documents(self, request, pk=None):
+        """List or upload repository files for a linked agreement."""
         agreement = self.get_object()
-        docs = ExchangeAgreementDocument.objects.filter(
-            agreement=agreement
-        ).select_related("agreement", "uploaded_by", "supersedes")
-        return Response(ExchangeAgreementDocumentSerializer(docs, many=True).data)
+        if request.method == "GET":
+            docs = ExchangeAgreementDocument.objects.filter(
+                agreement=agreement
+            ).select_related("agreement", "uploaded_by", "supersedes")
+            return Response(
+                ExchangeAgreementDocumentSerializer(
+                    docs, many=True, context={"request": request}
+                ).data
+            )
+
+        upload = request.FILES.get("file") or request.data.get("file")
+        if not upload:
+            return Response(
+                {"file": ["A file is required."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        category = (
+            request.data.get("category")
+            or ExchangeAgreementDocument.Category.SIGNED_COPY
+        )
+        if category not in PARTNER_UPLOAD_CATEGORIES:
+            return Response(
+                {
+                    "category": [
+                        "Partners may upload: "
+                        + ", ".join(sorted(PARTNER_UPLOAD_CATEGORIES))
+                        + "."
+                    ]
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        payload = {
+            "agreement": agreement.id,
+            "category": category,
+            "title": request.data.get("title") or "",
+            "notes": request.data.get("notes") or "",
+            "file": upload,
+        }
+        supersedes = request.data.get("supersedes")
+        if supersedes:
+            payload["supersedes"] = supersedes
+        serializer = ExchangeAgreementDocumentSerializer(
+            data=payload, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["post"], url_path="partner-contacts")
     def add_partner_contact(self, request, pk=None):

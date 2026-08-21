@@ -1,5 +1,7 @@
 """Partner portal API."""
 
+from unittest.mock import patch
+
 from django.urls import reverse
 
 from accounts.models import Role
@@ -182,3 +184,76 @@ class TestPartnerPortalAPI(APITestCase):
         )
         resp = self.client.get(url)
         self.assertEqual(resp.status_code, 404)
+
+    @patch("documents.serializers.DocumentService.virus_scan", return_value=True)
+    @patch("documents.serializers.DocumentService.validate_file_type_and_size")
+    def test_partner_can_upload_agreement_document(self, _mock_validate, _mock_virus):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        from documents.models import ExchangeAgreementDocument
+
+        PartnerContact.objects.create(user=self.partner, agreement=self.agreement)
+        self.authenticate_user(self.partner)
+        url = reverse(
+            "api:partner-agreement-documents", kwargs={"pk": self.agreement.pk}
+        )
+        pdf = SimpleUploadedFile(
+            "signed.pdf", b"%PDF-1.4", content_type="application/pdf"
+        )
+        resp = self.client.post(
+            url,
+            {
+                "category": ExchangeAgreementDocument.Category.SIGNED_COPY,
+                "title": "Partner signed copy",
+                "file": pdf,
+            },
+            format="multipart",
+        )
+        self.assertEqual(resp.status_code, 201, resp.data)
+        self.assertEqual(resp.data["title"], "Partner signed copy")
+        self.assertEqual(resp.data["category"], "signed_copy")
+        row = ExchangeAgreementDocument.objects.get()
+        self.assertEqual(row.agreement_id, self.agreement.id)
+        self.assertEqual(row.uploaded_by_id, self.partner.id)
+
+        listed = self.client.get(url)
+        self.assertEqual(listed.status_code, 200)
+        self.assertEqual(len(listed.data), 1)
+
+    def test_unlinked_partner_cannot_upload_agreement_document(self):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        self.authenticate_user(self.partner)
+        url = reverse(
+            "api:partner-agreement-documents", kwargs={"pk": self.agreement.pk}
+        )
+        pdf = SimpleUploadedFile(
+            "signed.pdf", b"%PDF-1.4", content_type="application/pdf"
+        )
+        resp = self.client.post(
+            url,
+            {"category": "signed_copy", "file": pdf},
+            format="multipart",
+        )
+        self.assertEqual(resp.status_code, 404)
+
+    @patch("documents.serializers.DocumentService.virus_scan", return_value=True)
+    @patch("documents.serializers.DocumentService.validate_file_type_and_size")
+    def test_partner_cannot_upload_staff_only_category(self, _mock_validate, _mock_virus):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+
+        PartnerContact.objects.create(user=self.partner, agreement=self.agreement)
+        self.authenticate_user(self.partner)
+        url = reverse(
+            "api:partner-agreement-documents", kwargs={"pk": self.agreement.pk}
+        )
+        pdf = SimpleUploadedFile(
+            "mou.pdf", b"%PDF-1.4", content_type="application/pdf"
+        )
+        resp = self.client.post(
+            url,
+            {"category": "mou", "file": pdf},
+            format="multipart",
+        )
+        self.assertEqual(resp.status_code, 400)
+        self.assertIn("category", resp.data)
