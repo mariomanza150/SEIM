@@ -44,7 +44,8 @@ describe('PartnerPortal', () => {
                 id: 'app-1',
                 student_display_name: 'Ada L.',
                 program_name: 'Erasmus',
-                status_name: 'submitted',
+                status_name: 'nominated',
+                partner_nomination_acknowledged_at: null,
                 document_checklist: { complete: false, items: [] },
               },
             ],
@@ -68,10 +69,32 @@ describe('PartnerPortal', () => {
     expect(wrapper.text()).toContain('Ada L.')
     expect(wrapper.text()).toContain('Erasmus')
     expect(wrapper.find('[data-testid="partner-agreement-status"]').text()).toBe('Active')
-    expect(wrapper.find('[data-testid="partner-application-status"]').text()).toBe('Submitted')
+    expect(wrapper.find('[data-testid="partner-application-status"]').text()).toBe('Nominated')
     await wrapper.find('[data-testid="partner-view-documents"]').trigger('click')
     await flushPromises()
     expect(wrapper.find('[data-testid="partner-document-category"]').text()).toBe('Signed copy')
+  })
+
+  it('acknowledges a nominated applicant', async () => {
+    api.post.mockResolvedValue({
+      data: {
+        id: 'app-1',
+        status_name: 'nominated',
+        partner_nomination_acknowledged_at: '2026-08-20T12:00:00Z',
+      },
+    })
+    const wrapper = mount(PartnerPortal, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' }, PageHeader: { template: '<div><slot /></div>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="partner-ack-nomination"]').exists()).toBe(true)
+    await wrapper.find('[data-testid="partner-ack-nomination"]').trigger('click')
+    await flushPromises()
+    expect(api.post).toHaveBeenCalledWith('/api/partner/applications/app-1/acknowledge-nomination/')
+    expect(wrapper.find('[data-testid="partner-nomination-acked"]').exists()).toBe(true)
   })
 
   it('opens a public message thread for an applicant', async () => {

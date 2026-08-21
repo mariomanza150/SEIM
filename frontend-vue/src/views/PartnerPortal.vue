@@ -97,13 +97,30 @@
                   <span v-if="app.status_name === 'nominated'" class="badge bg-success me-1">{{
                     t('partnerPortalPage.nominated')
                   }}</span>
+                  <span
+                    v-if="app.partner_nomination_acknowledged_at"
+                    class="badge bg-secondary me-1"
+                    data-testid="partner-nomination-acked"
+                  >
+                    {{ t('partnerPortalPage.ackBadge') }}
+                  </span>
                   {{
                     app.document_checklist?.complete
                       ? t('partnerPortalPage.docsComplete')
                       : t('partnerPortalPage.docsIncomplete')
                   }}
                 </td>
-                <td>
+                <td class="text-nowrap">
+                  <button
+                    v-if="app.status_name === 'nominated' && !app.partner_nomination_acknowledged_at"
+                    type="button"
+                    class="btn btn-sm btn-outline-success me-1"
+                    data-testid="partner-ack-nomination"
+                    :disabled="ackBusyId === app.id"
+                    @click="acknowledgeNomination(app)"
+                  >
+                    {{ t('partnerPortalPage.acknowledge') }}
+                  </button>
                   <button
                     type="button"
                     class="btn btn-sm btn-outline-primary"
@@ -223,6 +240,7 @@ const agreementThreadComments = ref([])
 const agreementThreadText = ref('')
 const agreementThreadLoading = ref(false)
 const agreementThreadBusy = ref(false)
+const ackBusyId = ref(null)
 
 function formatAgreementStatus(s) {
   if (!s) return t('exchangeAgreementsPage.emDash')
@@ -270,6 +288,18 @@ async function loadDocs(ag) {
     docs.value = Array.isArray(data) ? data : unwrap(data)
   } catch {
     docs.value = []
+  }
+}
+
+async function acknowledgeNomination(app) {
+  ackBusyId.value = app.id
+  try {
+    const { data } = await api.post(`/api/partner/applications/${app.id}/acknowledge-nomination/`)
+    applications.value = applications.value.map((row) =>
+      row.id === app.id ? { ...row, ...data } : row,
+    )
+  } finally {
+    ackBusyId.value = null
   }
 }
 

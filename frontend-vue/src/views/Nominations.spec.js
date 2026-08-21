@@ -35,6 +35,20 @@ describe('Nominations', () => {
             program_id: 'prog-1',
             enrollment_capacity: 1,
             slots_remaining: 1,
+            active_cycle: {
+              id: 'cyc-1',
+              name: 'Fall 2026',
+              seat_quota: 1,
+              is_open: true,
+            },
+            partner_allocations: [
+              {
+                id: 'alloc-1',
+                partner_institution_name: 'TU Berlin',
+                agreement_title: 'MoU',
+                seat_quota: 1,
+              },
+            ],
             applications: [
               {
                 id: 'app-1',
@@ -70,6 +84,8 @@ describe('Nominations', () => {
     await wrapper.find('[data-testid="nominations-program"]').setValue('prog-1')
     await flushPromises()
     expect(wrapper.find('[data-testid="nominations-table"]').text()).toContain('Ada L.')
+    expect(wrapper.find('[data-testid="nominations-active-cycle"]').text()).toContain('Fall 2026')
+    expect(wrapper.find('[data-testid="nominations-partner-allocations"]').text()).toContain('TU Berlin')
     expect(wrapper.find('[data-testid="nomination-submitted-at"]').text()).not.toContain('2026-08-07T')
     expect(wrapper.find('[data-testid="nomination-submitted-at"]').text()).not.toBe('—')
     await wrapper.find('[data-testid="nominations-match"]').trigger('click')

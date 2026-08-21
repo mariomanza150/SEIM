@@ -16,6 +16,7 @@ from exchange.models import (
     Comment,
     ExchangeAgreement,
     PartnerContact,
+    TimelineEvent,
 )
 from exchange.serializers import (
     ExchangeAgreementSerializer,
@@ -223,3 +224,28 @@ class PartnerApplicationViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(
             PartnerCommentSerializer(comment).data, status=status.HTTP_201_CREATED
         )
+
+    @action(detail=True, methods=["post"], url_path="acknowledge-nomination")
+    def acknowledge_nomination(self, request, pk=None):
+        """Partner acknowledges a nominated applicant for their linked programs."""
+        from django.utils import timezone as dj_tz
+
+        application = self.get_object()
+        if application.status.name != "nominated":
+            return Response(
+                {"detail": "Only nominated applications can be acknowledged."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if application.partner_nomination_acknowledged_at:
+            return Response(PartnerApplicationSerializer(application).data)
+        application.partner_nomination_acknowledged_at = dj_tz.now()
+        application.save(
+            update_fields=["partner_nomination_acknowledged_at", "updated_at"]
+        )
+        TimelineEvent.objects.create(
+            application=application,
+            event_type="partner_nomination_acknowledged",
+            description="Partner acknowledged nomination.",
+            created_by=request.user,
+        )
+        return Response(PartnerApplicationSerializer(application).data)

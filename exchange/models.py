@@ -867,6 +867,19 @@ class Application(UUIDModel, TimeStampedModel):
             "Staff ranking for nomination matching (lower is higher priority)."
         ),
     )
+    nomination_cycle = models.ForeignKey(
+        "NominationCycle",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="applications",
+        help_text=_("Nomination cycle that produced the current nominated/waitlist status."),
+    )
+    partner_nomination_acknowledged_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text=_("When a partner contact acknowledged this nomination."),
+    )
     # Host destination hierarchy (required before submit).
     host_institution = models.ForeignKey(
         "HostInstitution",
@@ -1579,3 +1592,84 @@ class AgreementComment(UUIDModel, TimeStampedModel):
 
     def __str__(self):
         return f"Comment by {self.author} on {self.agreement}"
+
+
+class NominationCycle(UUIDModel, TimeStampedModel):
+    """Named nomination window for a program (multi-cycle matching)."""
+
+    program = models.ForeignKey(
+        Program,
+        on_delete=models.CASCADE,
+        related_name="nomination_cycles",
+    )
+    name = models.CharField(max_length=120)
+    opens_at = models.DateField(null=True, blank=True)
+    closes_at = models.DateField(null=True, blank=True)
+    seat_quota = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text=_(
+            "Optional Match slot override for this cycle. When set, Match uses this "
+            "quota instead of program.enrollment_capacity."
+        ),
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text=_("At most one active cycle should be used for Match at a time."),
+    )
+
+    class Meta:
+        ordering = ["-opens_at", "-created_at"]
+        verbose_name = _("Nomination cycle")
+        verbose_name_plural = _("Nomination cycles")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["program", "name"],
+                name="uniq_nomination_cycle_program_name",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.name} ({self.program_id})"
+
+    def is_open_on(self, on_date=None) -> bool:
+        from django.utils import timezone as dj_tz
+
+        day = on_date or dj_tz.localdate()
+        if self.opens_at and day < self.opens_at:
+            return False
+        if self.closes_at and day > self.closes_at:
+            return False
+        return True
+
+
+class NominationPartnerAllocation(UUIDModel, TimeStampedModel):
+    """Per-partner seat allocation within a nomination cycle."""
+
+    cycle = models.ForeignKey(
+        NominationCycle,
+        on_delete=models.CASCADE,
+        related_name="partner_allocations",
+    )
+    agreement = models.ForeignKey(
+        ExchangeAgreement,
+        on_delete=models.CASCADE,
+        related_name="nomination_allocations",
+    )
+    seat_quota = models.PositiveIntegerField(
+        help_text=_("Seats reserved for this partner under the cycle."),
+    )
+
+    class Meta:
+        ordering = ["agreement__partner_institution_name", "created_at"]
+        verbose_name = _("Nomination partner allocation")
+        verbose_name_plural = _("Nomination partner allocations")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["cycle", "agreement"],
+                name="uniq_nomination_partner_alloc_cycle_agreement",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.agreement_id} @ {self.cycle_id}: {self.seat_quota}"

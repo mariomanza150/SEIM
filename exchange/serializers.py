@@ -1326,6 +1326,28 @@ class PartnerContactSerializer(serializers.ModelSerializer):
         return user
 
 
+class NominationCycleSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=120)
+    opens_at = serializers.DateField(required=False, allow_null=True)
+    closes_at = serializers.DateField(required=False, allow_null=True)
+    seat_quota = serializers.IntegerField(required=False, allow_null=True, min_value=0)
+    is_active = serializers.BooleanField(required=False, default=True)
+
+    def validate(self, attrs):
+        opens = attrs.get("opens_at")
+        closes = attrs.get("closes_at")
+        if opens and closes and closes < opens:
+            raise serializers.ValidationError(
+                {"closes_at": "closes_at must be on or after opens_at."}
+            )
+        return attrs
+
+
+class NominationPartnerAllocationSerializer(serializers.Serializer):
+    agreement_id = serializers.UUIDField()
+    seat_quota = serializers.IntegerField(min_value=0)
+
+
 class PartnerApplicationSerializer(serializers.ModelSerializer):
     """Limited applicant payload for partner-institution users."""
 
@@ -1347,6 +1369,7 @@ class PartnerApplicationSerializer(serializers.ModelSerializer):
             "student_display_name",
             "document_checklist",
             "nomination_rank",
+            "partner_nomination_acknowledged_at",
             "created_at",
             "updated_at",
         )

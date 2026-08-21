@@ -97,3 +97,75 @@ class TestNominationMatchingAPI(APITestCase):
         self.assertEqual(listed.status_code, 200)
         self.assertEqual(self.program.enrollment_slots_remaining(), 0)
         self.assertEqual(listed.data["slots_remaining"], 1)
+
+    def test_nomination_cycle_quota_and_partner_allocation(self):
+        from datetime import date, timedelta
+
+        from exchange.models import ExchangeAgreement, NominationCycle
+
+        self.authenticate_user(self.coord)
+        today = date.today()
+        cycles_url = reverse(
+            "api:program-nomination-cycles", kwargs={"pk": self.program.pk}
+        )
+        created = self.client.post(
+            cycles_url,
+            {
+                "name": "Fall 2026",
+                "opens_at": today.isoformat(),
+                "closes_at": (today + timedelta(days=30)).isoformat(),
+                "seat_quota": 1,
+                "is_active": True,
+            },
+            format="json",
+        )
+        self.assertEqual(created.status_code, 201)
+        cycle_id = created.data["id"]
+        agreement = ExchangeAgreement.objects.create(
+            title="Partner MoU",
+            partner_institution_name="TU Berlin",
+            status=ExchangeAgreement.Status.ACTIVE,
+            start_date=today,
+            end_date=today + timedelta(days=365),
+        )
+        agreement.programs.add(self.program)
+        alloc_url = reverse(
+            "api:program-nomination-partner-allocations",
+            kwargs={"pk": self.program.pk, "cycle_id": cycle_id},
+        )
+        alloc = self.client.post(
+            alloc_url,
+            {"agreement_id": str(agreement.id), "seat_quota": 1},
+            format="json",
+        )
+        self.assertEqual(alloc.status_code, 200)
+        self.assertEqual(alloc.data["allocation"]["seat_quota"], 1)
+
+        listed = self.client.get(
+            reverse("api:program-nominations", kwargs={"pk": self.program.pk})
+        )
+        self.assertEqual(listed.status_code, 200)
+        self.assertEqual(listed.data["active_cycle"]["name"], "Fall 2026")
+        self.assertEqual(listed.data["slots_remaining"], 1)
+        self.assertEqual(len(listed.data["partner_allocations"]), 1)
+
+        self.client.put(
+            reverse("api:program-nominations", kwargs={"pk": self.program.pk}),
+            {
+                "ranks": [
+                    {"id": str(self.app_a.id), "rank": 1},
+                    {"id": str(self.app_b.id), "rank": 2},
+                ]
+            },
+            format="json",
+        )
+        matched = self.client.post(
+            reverse("api:program-nominations-match", kwargs={"pk": self.program.pk})
+        )
+        self.assertEqual(matched.status_code, 200)
+        self.assertEqual(matched.data["matched"]["nominated"], 1)
+        self.assertEqual(matched.data["matched"]["cycle_id"], cycle_id)
+        self.app_a.refresh_from_db()
+        self.app_b.refresh_from_db()
+        nominee = self.app_a if self.app_a.status.name == "nominated" else self.app_b
+        self.assertEqual(str(nominee.nomination_cycle_id), cycle_id)

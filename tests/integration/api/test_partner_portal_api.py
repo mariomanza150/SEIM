@@ -57,6 +57,26 @@ class TestPartnerPortalAPI(APITestCase):
         self.assertNotIn("student_email", row)
         self.assertIn("document_checklist", row)
 
+    def test_partner_can_acknowledge_nomination(self):
+        from exchange.models import ApplicationStatus
+
+        PartnerContact.objects.create(user=self.partner, agreement=self.agreement)
+        nominated, _ = ApplicationStatus.objects.get_or_create(
+            name="nominated", defaults={"order": 16}
+        )
+        self.app.status = nominated
+        self.app.save(update_fields=["status"])
+        self.authenticate_user(self.partner)
+        url = reverse(
+            "api:partner-application-acknowledge-nomination",
+            kwargs={"pk": self.app.pk},
+        )
+        resp = self.client.post(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertIsNotNone(resp.data.get("partner_nomination_acknowledged_at"))
+        self.app.refresh_from_db()
+        self.assertIsNotNone(self.app.partner_nomination_acknowledged_at)
+
     def test_student_forbidden(self):
         self.authenticate_user(self.student)
         url = reverse("api:partner-agreement-list")

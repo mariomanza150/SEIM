@@ -39,8 +39,37 @@
           <div v-if="payload.slots_remaining != null">
             {{ t('nominationsPage.slotsRemaining', { n: payload.slots_remaining }) }}
           </div>
+          <div v-if="payload.active_cycle" data-testid="nominations-active-cycle">
+            {{
+              t('nominationsPage.activeCycle', {
+                name: payload.active_cycle.name,
+                open: payload.active_cycle.is_open ? t('nominationsPage.cycleOpen') : t('nominationsPage.cycleClosed'),
+              })
+            }}
+            <span v-if="payload.active_cycle.seat_quota != null">
+              · {{ t('nominationsPage.cycleQuota', { n: payload.active_cycle.seat_quota }) }}
+            </span>
+          </div>
         </div>
       </div>
+    </div>
+
+    <div
+      v-if="payload?.partner_allocations?.length"
+      class="card mb-4"
+      data-testid="nominations-partner-allocations"
+    >
+      <div class="card-header fw-medium">{{ t('nominationsPage.partnerAllocations') }}</div>
+      <ul class="list-group list-group-flush">
+        <li
+          v-for="alloc in payload.partner_allocations"
+          :key="alloc.id"
+          class="list-group-item d-flex justify-content-between"
+        >
+          <span>{{ alloc.partner_institution_name }} — {{ alloc.agreement_title }}</span>
+          <span class="text-muted">{{ t('nominationsPage.allocationSeats', { n: alloc.seat_quota }) }}</span>
+        </li>
+      </ul>
     </div>
 
     <div v-if="loading" class="text-center py-4">

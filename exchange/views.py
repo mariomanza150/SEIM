@@ -752,7 +752,88 @@ class ProgramViewSet(viewsets.ModelViewSet):
         from exchange.nomination_matching import match_nominations
 
         program = self.get_object()
-        return Response(match_nominations(program, request.user))
+        try:
+            return Response(match_nominations(program, request.user))
+        except ValueError as exc:
+            return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        detail=True,
+        methods=["get", "post"],
+        url_path="nomination-cycles",
+        permission_classes=[IsCoordinatorOrAdmin],
+    )
+    def nomination_cycles(self, request, pk=None):
+        """List or create nomination cycles (multi-cycle windows) for a program."""
+        from exchange.models import NominationCycle
+        from exchange.nomination_matching import serialize_cycle
+        from exchange.serializers import NominationCycleSerializer
+
+        program = self.get_object()
+        if request.method == "GET":
+            cycles = NominationCycle.objects.filter(program=program).order_by(
+                "-opens_at", "-created_at"
+            )
+            return Response([serialize_cycle(c) for c in cycles])
+
+        ser = NominationCycleSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        data = ser.validated_data
+        if data.get("is_active"):
+            NominationCycle.objects.filter(program=program, is_active=True).update(
+                is_active=False
+            )
+        cycle = NominationCycle.objects.create(program=program, **data)
+        return Response(serialize_cycle(cycle), status=status.HTTP_201_CREATED)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path=r"nomination-cycles/(?P<cycle_id>[^/.]+)/partner-allocations",
+        permission_classes=[IsCoordinatorOrAdmin],
+    )
+    def nomination_partner_allocations(self, request, pk=None, cycle_id=None):
+        """Create/update a partner seat allocation on a nomination cycle."""
+        from exchange.models import ExchangeAgreement, NominationCycle, NominationPartnerAllocation
+        from exchange.nomination_matching import serialize_partner_allocations
+        from exchange.serializers import NominationPartnerAllocationSerializer
+
+        program = self.get_object()
+        cycle = NominationCycle.objects.filter(program=program, pk=cycle_id).first()
+        if not cycle:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        ser = NominationPartnerAllocationSerializer(data=request.data)
+        ser.is_valid(raise_exception=True)
+        agreement_id = ser.validated_data["agreement_id"]
+        agreement = ExchangeAgreement.objects.filter(pk=agreement_id).first()
+        if not agreement:
+            return Response(
+                {"agreement_id": ["Unknown agreement."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not agreement.programs.filter(pk=program.pk).exists():
+            return Response(
+                {"agreement_id": ["Agreement is not linked to this program."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        alloc, _created = NominationPartnerAllocation.objects.update_or_create(
+            cycle=cycle,
+            agreement=agreement,
+            defaults={"seat_quota": ser.validated_data["seat_quota"]},
+        )
+        return Response(
+            {
+                "allocation": {
+                    "id": str(alloc.id),
+                    "agreement_id": str(alloc.agreement_id),
+                    "partner_institution_name": agreement.partner_institution_name,
+                    "agreement_title": agreement.title,
+                    "seat_quota": alloc.seat_quota,
+                },
+                "partner_allocations": serialize_partner_allocations(cycle),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 def _application_list_cache_key(*args, **kwargs):
