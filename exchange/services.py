@@ -12,7 +12,9 @@ from exchange.eligibility_rules import (
 )
 from exchange.eligibility_rulesets import (
     ProgramEligibilityProxy,
+    build_ruleset_snapshot,
     parse_ruleset_overrides,
+    parse_ruleset_overrides_from_snapshot,
 )
 from notifications.services import NotificationService
 
@@ -21,13 +23,30 @@ from .models import (
     Application,
     ApplicationStatus,
     Comment,
+    EligibilityRuleSet,
     Program,
     TimelineEvent,
 )
 
 
-def _program_for_eligibility(program: Program):
-    """Use an active linked EligibilityRuleSet's scalar overrides when present."""
+def _program_for_eligibility(
+    program: Program,
+    application: Application | None = None,
+):
+    """
+    Use eligibility ruleset scalar overrides when present.
+
+    Prefer a frozen ``application.eligibility_ruleset_snapshot`` (apply/submit)
+    so later staff edits to the live ruleset do not rewrite historical checks.
+    Otherwise use the program's active linked ``EligibilityRuleSet``.
+    """
+    if application is not None:
+        frozen = parse_ruleset_overrides_from_snapshot(
+            getattr(application, "eligibility_ruleset_snapshot", None)
+        )
+        if frozen is not None:
+            return ProgramEligibilityProxy(program, frozen)
+
     ruleset = getattr(program, "eligibility_ruleset", None)
     if ruleset is None or not getattr(ruleset, "is_active", False):
         return program
@@ -67,7 +86,7 @@ class ApplicationService:
         Returns:
             dict: Detailed eligibility result with status, ``rules``, and legacy ``checks_passed``.
         """
-        eval_program = _program_for_eligibility(program)
+        eval_program = _program_for_eligibility(program, application=application)
         ev = evaluate_eligibility(student, eval_program, application=application)
         if not ev.eligible:
             if (
@@ -93,7 +112,7 @@ class ApplicationService:
         *,
         semester_override: int | None = None,
     ) -> Application:
-        """Snapshot profile eligibility fields onto the application at apply time."""
+        """Snapshot profile + active ruleset onto the application at apply time."""
         if profile is None:
             profile = Profile.objects.filter(user_id=application.student_id).first()
         if profile is None:
@@ -113,6 +132,17 @@ class ApplicationService:
         application.additional_languages_at_apply = list(
             profile.additional_languages or []
         )
+
+        program = application.program
+        # Prefer already-selected related object when present.
+        ruleset = getattr(program, "eligibility_ruleset", None)
+        if ruleset is None and getattr(program, "eligibility_ruleset_id", None):
+            ruleset = (
+                EligibilityRuleSet.objects.filter(pk=program.eligibility_ruleset_id)
+                .first()
+            )
+        application.eligibility_ruleset_snapshot = build_ruleset_snapshot(ruleset)
+
         application.save(
             update_fields=[
                 "semester_at_apply",
@@ -122,6 +152,7 @@ class ApplicationService:
                 "language_at_apply",
                 "language_level_at_apply",
                 "additional_languages_at_apply",
+                "eligibility_ruleset_snapshot",
                 "updated_at",
             ]
         )

@@ -914,6 +914,15 @@ class Application(UUIDModel, TimeStampedModel):
     language_at_apply = models.CharField(max_length=64, null=True, blank=True)
     language_level_at_apply = models.CharField(max_length=10, null=True, blank=True)
     additional_languages_at_apply = models.JSONField(default=list, blank=True)
+    eligibility_ruleset_snapshot = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=_(
+            "Frozen eligibility ruleset document at apply/submit "
+            "(id, schema_version, content_revision, rules_json). "
+            "Re-evaluations prefer this over the live program ruleset."
+        ),
+    )
     nomination_rank = models.PositiveIntegerField(
         null=True,
         blank=True,

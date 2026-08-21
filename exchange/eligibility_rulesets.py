@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any
 
@@ -129,11 +130,9 @@ def concrete_program(program):
     return program
 
 
-def parse_ruleset_overrides(
-    ruleset: EligibilityRuleSet,
-) -> EligibilityCriteriaOverrides:
-    raw = ruleset.rules_json or {}
-    prog = raw.get("program_overrides") or {}
+def parse_overrides_dict(prog: dict[str, Any] | None) -> EligibilityCriteriaOverrides:
+    """Build scalar overrides from a ``program_overrides`` mapping."""
+    prog = prog or {}
     open_raw = prog.get("application_open_date")
     deadline_raw = prog.get("application_deadline")
     open_date = parse_date(open_raw) if isinstance(open_raw, str) else open_raw
@@ -151,3 +150,56 @@ def parse_ruleset_overrides(
         min_age=prog.get("min_age"),
         max_age=prog.get("max_age"),
     )
+
+
+def parse_ruleset_overrides(
+    ruleset: EligibilityRuleSet,
+) -> EligibilityCriteriaOverrides:
+    raw = ruleset.rules_json or {}
+    return parse_overrides_dict(raw.get("program_overrides") or {})
+
+
+def build_ruleset_snapshot(ruleset: EligibilityRuleSet | None) -> dict[str, Any] | None:
+    """
+    Serialize an active ruleset for apply-time freeze.
+
+    Returns ``None`` when there is no active ruleset (no overlay applied).
+    """
+    if ruleset is None or not getattr(ruleset, "is_active", False):
+        return None
+    return {
+        "id": str(ruleset.id),
+        "name": ruleset.name,
+        "schema_version": int(ruleset.schema_version or 1),
+        "content_revision": int(getattr(ruleset, "content_revision", 1) or 1),
+        "is_active": True,
+        "rules_json": deepcopy(ruleset.rules_json or {}),
+    }
+
+
+def parse_ruleset_overrides_from_snapshot(
+    snapshot: dict[str, Any] | None,
+) -> EligibilityCriteriaOverrides | None:
+    """Return overrides from a frozen snapshot, or ``None`` if unusable."""
+    if not isinstance(snapshot, dict):
+        return None
+    raw = snapshot.get("rules_json")
+    if not isinstance(raw, dict):
+        return None
+    return parse_overrides_dict(raw.get("program_overrides") or {})
+
+
+def ruleset_meta_from_snapshot(snapshot: dict[str, Any] | None) -> dict[str, Any] | None:
+    """Public meta subset for API responses (no full rules_json dump required)."""
+    if not isinstance(snapshot, dict):
+        return None
+    sid = snapshot.get("id")
+    if not sid:
+        return None
+    return {
+        "id": sid,
+        "name": snapshot.get("name") or "",
+        "schema_version": snapshot.get("schema_version"),
+        "content_revision": snapshot.get("content_revision", 1),
+        "frozen": True,
+    }

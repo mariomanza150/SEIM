@@ -49,7 +49,10 @@ def describe_ruleset_schema() -> dict[str, Any]:
         "min_language_level_values": sorted(CEFR_LEVELS),
         "notes": (
             "program_overrides overlay Program scalar eligibility fields when the "
-            "ruleset is active. meta is optional free-form metadata (strings only)."
+            "ruleset is active. meta is optional free-form metadata (strings only). "
+            "On apply/submit, Application.eligibility_ruleset_snapshot freezes the "
+            "active ruleset document (schema_version + content_revision + rules_json) "
+            "so later edits do not rewrite historical evaluations."
         ),
     }
 

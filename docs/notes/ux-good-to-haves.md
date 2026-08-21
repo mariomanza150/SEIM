@@ -37,7 +37,7 @@ Core (apply, review, documents, partner portal, admin catalogs/forms/workflows) 
 
 **Tier 2 — already in tracker**
 
-- ~~Eligibility rulesets: richer JSON schema / versioning~~ — shipped 2026-08-20 (document schema v2).
+- ~~Eligibility rulesets: richer JSON schema / versioning~~ — shipped 2026-08-20 (document schema v2 + apply-time ruleset snapshot freeze).
 - Full manual a11y audit (P2 Remaining).
 - ~~Richer partner document workflows — applicant checklist visibility~~ — shipped 2026-08-20 (supersede/version + checklist). Staff review of partner uploads remains P3 Remaining.
 - ~~Eligibility step-level document gates in preview~~ — shipped 2026-08-20.

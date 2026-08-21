@@ -191,3 +191,63 @@ class TestEligibilityRuleSetsApi(TestCase):
         )
         self.assertEqual(resp2.status_code, status.HTTP_200_OK)
         self.assertEqual(resp2.data["content_revision"], 2)
+
+    def test_submit_freezes_ruleset_and_survives_edit(self):
+        from accounts.models import Profile
+        from exchange.models import Application, ApplicationStatus
+        from exchange.services import ApplicationService
+
+        Profile.objects.update_or_create(
+            user=self.student,
+            defaults={"language": "English", "language_level": "C1", "gpa": 3.5},
+        )
+        self.ruleset.schema_version = 2
+        self.ruleset.rules_json = {
+            "program_overrides": {"required_language": "English", "min_gpa": 3.0}
+        }
+        self.ruleset.save()
+        draft, _ = ApplicationStatus.objects.get_or_create(
+            name="draft", defaults={"order": 1}
+        )
+        ApplicationStatus.objects.get_or_create(name="submitted", defaults={"order": 2})
+        app = Application.objects.create(
+            student=self.student, program=self.program, status=draft
+        )
+        ApplicationService.submit_application(app, self.student)
+        app.refresh_from_db()
+        self.assertIsNotNone(app.eligibility_ruleset_snapshot)
+        self.assertEqual(
+            app.eligibility_ruleset_snapshot["rules_json"]["program_overrides"][
+                "required_language"
+            ],
+            "English",
+        )
+
+        self.ruleset.rules_json = {
+            "program_overrides": {"required_language": "Klingon", "min_gpa": 3.0}
+        }
+        self.ruleset.content_revision = (self.ruleset.content_revision or 1) + 1
+        self.ruleset.save()
+
+        # Live program check without application fails under new overlay.
+        with self.assertRaises(ValueError):
+            ApplicationService.check_eligibility(self.student, self.program)
+
+        # Historical re-check still uses frozen English overlay.
+        result = ApplicationService.check_eligibility(
+            self.student, self.program, application=app
+        )
+        self.assertTrue(result["eligible"])
+
+        self.client.force_authenticate(user=self.student)
+        resp = self.client.get(
+            f"/api/programs/{self.program.id}/check_eligibility/",
+            {"application": str(app.id)},
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertTrue(resp.data.get("eligible"))
+        self.assertTrue(resp.data.get("ruleset", {}).get("frozen"))
+        self.assertEqual(
+            resp.data["ruleset"]["content_revision"],
+            app.eligibility_ruleset_snapshot["content_revision"],
+        )

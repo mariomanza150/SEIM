@@ -592,29 +592,9 @@ class ProgramViewSet(viewsets.ModelViewSet):
         """
         program = self.get_object()
         ruleset_snapshot = None
-        rs = getattr(program, "eligibility_ruleset", None)
-        if rs is not None and getattr(rs, "is_active", True):
-            ruleset_snapshot = {
-                "id": rs.id,
-                "name": rs.name,
-                "schema_version": rs.schema_version,
-                "content_revision": getattr(rs, "content_revision", 1),
-            }
-        use_ruleset_raw = request.query_params.get("use_ruleset")
-        use_ruleset = (
-            bool(ruleset_snapshot)
-            and use_ruleset_raw is not None
-            and str(use_ruleset_raw).strip().lower() in ("1", "true", "yes", "on")
-        )
-        eval_program = (
-            ProgramEligibilityProxy(program, parse_ruleset_overrides(rs))
-            if use_ruleset and rs is not None
-            else program
-        )
-
-        application_obj = None
-        application_context = None
+        ruleset_frozen = False
         raw_app = request.query_params.get("application")
+        application_obj = None
         if raw_app:
             try:
                 aid = uuid.UUID(str(raw_app))
@@ -625,7 +605,12 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 )
             application_obj = (
                 Application.objects.filter(pk=aid)
-                .only("id", "student_id", "program_id")
+                .only(
+                    "id",
+                    "student_id",
+                    "program_id",
+                    "eligibility_ruleset_snapshot",
+                )
                 .first()
             )
             if not application_obj:
@@ -644,6 +629,46 @@ class ProgramViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
+        from exchange.eligibility_rulesets import (
+            ruleset_meta_from_snapshot,
+        )
+        from exchange.services import _program_for_eligibility
+
+        frozen_meta = (
+            ruleset_meta_from_snapshot(
+                getattr(application_obj, "eligibility_ruleset_snapshot", None)
+            )
+            if application_obj is not None
+            else None
+        )
+        rs = getattr(program, "eligibility_ruleset", None)
+        if frozen_meta is not None:
+            ruleset_snapshot = frozen_meta
+            ruleset_frozen = True
+        elif rs is not None and getattr(rs, "is_active", True):
+            ruleset_snapshot = {
+                "id": rs.id,
+                "name": rs.name,
+                "schema_version": rs.schema_version,
+                "content_revision": getattr(rs, "content_revision", 1),
+            }
+        use_ruleset_raw = request.query_params.get("use_ruleset")
+        use_ruleset = (
+            bool(ruleset_snapshot)
+            and use_ruleset_raw is not None
+            and str(use_ruleset_raw).strip().lower() in ("1", "true", "yes", "on")
+        )
+        # Frozen snapshot always applies when present; otherwise honor use_ruleset toggle.
+        if application_obj is not None and frozen_meta is not None:
+            eval_program = _program_for_eligibility(program, application=application_obj)
+            use_ruleset = True
+        elif use_ruleset and rs is not None:
+            eval_program = ProgramEligibilityProxy(program, parse_ruleset_overrides(rs))
+        else:
+            eval_program = program
+
+        application_context = None
+        if application_obj is not None:
             # When an application is provided, return step-level context to support
             # multi-step document gates and UX parity with the application detail layout.
             from documents.services import DocumentService
@@ -658,6 +683,12 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 .prefetch_related("document_set", "document_set__type")
                 .get(pk=application_obj.pk)
             )
+            # Keep frozen snapshot on the instance used for evaluation.
+            if getattr(application_obj, "eligibility_ruleset_snapshot", None) is not None:
+                full_app.eligibility_ruleset_snapshot = (
+                    application_obj.eligibility_ruleset_snapshot
+                )
+            application_obj = full_app
             checklist = DocumentService.build_application_document_checklist(full_app)
             current_step_documents = None
             ft = getattr(full_app.program, "application_form", None) or getattr(
@@ -699,6 +730,12 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 "document_checklist": checklist,
                 "current_step_documents": current_step_documents,
             }
+            # Re-resolve eval program after loading full app (snapshot may be present).
+            if frozen_meta is not None:
+                eval_program = _program_for_eligibility(
+                    program, application=application_obj
+                )
+
         ev = evaluate_eligibility(
             request.user, eval_program, application=application_obj
         )
@@ -716,6 +753,11 @@ class ProgramViewSet(viewsets.ModelViewSet):
             "min_age": program.min_age,
             "max_age": program.max_age,
         }
+        ruleset_payload = (
+            {**ruleset_snapshot, "frozen": True}
+            if ruleset_frozen and ruleset_snapshot
+            else ruleset_snapshot
+        )
         if ev.eligible:
             return Response(
                 {
@@ -724,7 +766,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
                     "checks_passed": checks_passed_labels(program),
                     "rules": ev.rules_as_dicts(),
                     "schema_version": ELIGIBILITY_SCHEMA_VERSION,
-                    **({"ruleset": ruleset_snapshot} if ruleset_snapshot else {}),
+                    **({"ruleset": ruleset_payload} if ruleset_payload else {}),
                     **({"using_ruleset": True} if use_ruleset else {}),
                     **(
                         {"application_context": application_context}
@@ -749,7 +791,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 "rules": ev.rules_as_dicts(),
                 "program": program_snapshot,
                 "schema_version": ELIGIBILITY_SCHEMA_VERSION,
-                **({"ruleset": ruleset_snapshot} if ruleset_snapshot else {}),
+                **({"ruleset": ruleset_payload} if ruleset_payload else {}),
                 **({"using_ruleset": True} if use_ruleset else {}),
                 **(
                     {"application_context": application_context}

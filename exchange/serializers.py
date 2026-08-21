@@ -761,6 +761,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
     readiness = serializers.SerializerMethodField()
     scholarship_allocation_score = serializers.SerializerMethodField()
     scholarship_award = serializers.SerializerMethodField()
+    eligibility_ruleset_snapshot = serializers.JSONField(read_only=True, allow_null=True)
 
     class Meta:
         model = Application
@@ -1570,6 +1571,7 @@ class EligibilityRuleSetSnapshotSerializer(serializers.Serializer):
     name = serializers.CharField()
     schema_version = serializers.IntegerField()
     content_revision = serializers.IntegerField(required=False)
+    frozen = serializers.BooleanField(required=False)
 
 
 class ProgramCheckEligibilityResponseSerializer(serializers.Serializer):
