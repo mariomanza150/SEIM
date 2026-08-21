@@ -54,6 +54,7 @@ SEIM (Student Exchange Information Manager) is a comprehensive Django-based web 
 ### Frontend Migration Notes
 
 - [SPA vs leftover Django](./SPA_VS_LEGACY.md) - **Current** Vue SPA vs remaining Django surfaces
+- [UX good-to-haves](./ux-good-to-haves.md) - Ranked polish backlog (density, canonical SPA, a11y pass)
 - [Archived Vue-SSR notes](./archive/README.md) - Historical migration checklists (not current work)
 - [Vue Test Results](./VUE_TEST_RESULTS.md) - Current Vue testing status and rerun instructions
 

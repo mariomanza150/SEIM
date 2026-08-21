@@ -7,21 +7,18 @@
       test-id="documents-heading"
     >
       <template #breadcrumb>
-        <nav :aria-label="t('documentsPage.breadcrumbAria')">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.Documents') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('documentsPage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.Documents') },
+          ]"
+        />
       </template>
     </PageHeader>
 
-      <!-- Filters -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="row g-3">
+      <CompactFilterBar :clear-label="t('documentsPage.clearFilters')" @clear="clearFilters">
+        <template #primary>
             <div class="col-md-4">
               <label class="form-label">{{ t('documentsPage.applicationLabel') }}</label>
               <select v-model="filters.application" class="form-select" @change="() => fetchDocuments(1)">
@@ -48,12 +45,9 @@
                 <option value="false">{{ t('documentDetailPage.statusPendingShort') }}</option>
               </select>
             </div>
-            <div class="col-md-2 d-flex align-items-end">
-              <button type="button" class="btn btn-outline-secondary w-100" @click="clearFilters">
-                <i class="bi bi-x-circle me-1"></i>{{ t('documentsPage.clearFilters') }}
-              </button>
-            </div>
-            <div v-if="isStaff" class="col-12 d-flex flex-wrap gap-2">
+        </template>
+        <template v-if="isStaff" #advanced>
+            <div class="d-flex flex-wrap gap-2">
               <button
                 type="button"
                 class="btn btn-sm"
@@ -73,7 +67,8 @@
                 <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>{{ t('documentsPage.filterOverdue') }}
               </button>
             </div>
-            <div v-if="isStaff" class="col-12 border-top pt-3 mt-2">
+        </template>
+        <template v-if="isStaff" #presets>
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
                   <label class="form-label small text-muted mb-1">{{ t('documentsPage.presetSaveLabel') }}</label>
@@ -129,10 +124,8 @@
                   </button>
                 </span>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        </template>
+      </CompactFilterBar>
 
       <!-- Loading -->
       <LoadingState
@@ -253,6 +246,8 @@ import { useAuthStore } from '@/stores/auth'
 import { resolveFileUrl } from '@/utils/apiUrl'
 import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import Pagination from '@/components/Pagination.vue'
 import LoadingState from '@/components/State/LoadingState.vue'
 import ErrorAlert from '@/components/State/ErrorAlert.vue'

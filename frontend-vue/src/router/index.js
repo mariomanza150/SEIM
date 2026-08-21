@@ -205,6 +205,8 @@ const routes = [
         meta: { partnerPortal: true },
       },
       { path: 'preferences', redirect: { name: 'Settings' } },
+      { path: 'sessions', redirect: { name: 'Settings' } },
+      { path: 'coordinator-dashboard', redirect: { name: 'Dashboard' } },
       { path: 'admin', redirect: { name: 'AdminPrograms' } },
       { path: 'admin-dashboard', redirect: { name: 'Dashboard' } },
       { path: 'analytics', redirect: { name: 'AnalyticsForecasts' } },

@@ -142,6 +142,8 @@ class UrlConfigurationTests(TestCase):
             ("/profile/", "/seim/profile/"),
             ("/settings/", "/seim/settings/"),
             ("/preferences/", "/seim/settings/"),
+            ("/sessions/", "/seim/settings/"),
+            ("/coordinator-dashboard/", "/seim/dashboard/"),
             ("/calendar/", "/seim/calendar/"),
             ("/documents/", "/seim/documents/"),
             ("/notifications/", "/seim/notifications/"),

@@ -2,14 +2,13 @@
   <div class="applications-page">
     <PageHeader :title="t('applicationsPage.title')" :subtitle="t('applicationsPage.tagline')" icon-class="bi bi-file-earmark-text">
       <template #breadcrumb>
-        <nav :aria-label="t('applicationsPage.breadcrumbAria')">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.Applications') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('applicationsPage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.Applications') },
+          ]"
+        />
       </template>
       <template #actions>
         <router-link :to="{ name: 'ProgramCompare' }" class="btn btn-outline-secondary">
@@ -21,10 +20,12 @@
       </template>
     </PageHeader>
 
-      <!-- Filters -->
-      <div class="card mb-4" data-testid="applications-filters">
-        <div class="card-body">
-          <div class="row g-3">
+      <CompactFilterBar
+        test-id="applications-filters"
+        :clear-label="t('applicationsPage.clearFilters')"
+        @clear="clearFilters"
+      >
+        <template #primary>
             <div class="col-md-4">
               <label class="form-label">{{ t('applicationsPage.searchLabel') }}</label>
               <input
@@ -60,14 +61,8 @@
                 <option value="-submitted_at">{{ t('applicationsPage.sortRecentlySubmitted') }}</option>
               </select>
             </div>
-            <div class="col-md-2 d-flex align-items-end">
-              <button class="btn btn-outline-secondary w-100" @click="clearFilters">
-                <i class="bi bi-x-circle me-1"></i>{{ t('applicationsPage.clearFilters') }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+        </template>
+      </CompactFilterBar>
 
       <!-- Loading -->
       <div v-if="loading" class="text-center py-5">
@@ -226,6 +221,8 @@ import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import { readinessLevelBadgeClass, formatReadinessHeadline } from '@/utils/applicationReadiness'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import Pagination from '@/components/Pagination.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import {

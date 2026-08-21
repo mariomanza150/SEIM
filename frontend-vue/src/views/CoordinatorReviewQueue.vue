@@ -7,14 +7,13 @@
       test-id="review-queue-heading"
     >
       <template #breadcrumb>
-        <nav :aria-label="t('reviewQueuePage.breadcrumbAria')">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.CoordinatorReviewQueue') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('reviewQueuePage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.CoordinatorReviewQueue') },
+          ]"
+        />
       </template>
       <template #actions>
         <router-link :to="{ name: 'Applications' }" class="btn btn-outline-secondary">
@@ -23,9 +22,13 @@
       </template>
     </PageHeader>
 
-      <div class="card mb-4" data-testid="review-queue-filters">
-        <div class="card-body">
-          <div class="row g-3 align-items-end">
+      <CompactFilterBar
+        test-id="review-queue-filters"
+        :clear-label="t('reviewQueuePage.clearFilters')"
+        :toggle-label="t('reviewQueuePage.advancedFiltersToggle')"
+        @clear="clearFilters"
+      >
+        <template #primary>
             <div class="col-md-4">
               <label class="form-label">{{ t('reviewQueuePage.searchLabel') }}</label>
               <input
@@ -37,7 +40,7 @@
                 data-testid="review-queue-search"
               />
             </div>
-            <div class="col-md-8">
+            <div class="col-md-4">
               <label class="form-label d-block">{{ t('reviewQueuePage.quickFilters') }}</label>
               <div class="d-flex flex-wrap gap-2">
                 <div class="form-check form-check-inline">
@@ -93,6 +96,9 @@
                 <option value="withdrawn">{{ t('reviewQueuePage.status.withdrawn') }}</option>
               </select>
             </div>
+        </template>
+        <template #advanced>
+            <div class="row g-2">
             <div class="col-md-3">
               <label class="form-label">{{ t('reviewQueuePage.sortLabel') }}</label>
               <select v-model="filters.ordering" class="form-select" @change="() => fetchApplications(1)">
@@ -101,23 +107,9 @@
                 <option value="created_at">{{ t('reviewQueuePage.sortOldest') }}</option>
               </select>
             </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-outline-secondary w-100" @click="clearFilters">
-                {{ t('reviewQueuePage.clearFilters') }}
-              </button>
             </div>
-            <div class="col-12 d-flex justify-content-end pt-1">
-              <button
-                type="button"
-                class="btn btn-link btn-sm px-0"
-                :aria-expanded="advancedFiltersOpen ? 'true' : 'false'"
-                @click="advancedFiltersOpen = !advancedFiltersOpen"
-              >
-                <i class="bi" :class="advancedFiltersOpen ? 'bi-chevron-up' : 'bi-chevron-down'" aria-hidden="true"></i>
-                <span class="ms-1">{{ t('reviewQueuePage.advancedFiltersToggle') }}</span>
-              </button>
-            </div>
-            <div v-if="advancedFiltersOpen" class="col-12 border-top pt-3 mt-2">
+        </template>
+        <template #presets>
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
                 <div class="flex-grow-1" style="min-width: 200px">
                   <label class="form-label small text-muted mb-1">{{ t('reviewQueuePage.presetSaveLabel') }}</label>
@@ -192,10 +184,8 @@
                   </button>
                 </span>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        </template>
+      </CompactFilterBar>
 
       <LoadingState v-if="loading" :spinner-label="t('reviewQueuePage.loading')" />
       <ErrorAlert v-else-if="error" :message="error" />
@@ -266,6 +256,8 @@ import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import Pagination from '@/components/Pagination.vue'
 import LoadingState from '@/components/State/LoadingState.vue'
 import ErrorAlert from '@/components/State/ErrorAlert.vue'
@@ -287,7 +279,6 @@ const { confirm } = useConfirm()
 const applications = ref([])
 const loading = ref(true)
 const error = ref(null)
-const advancedFiltersOpen = ref(false)
 const savedPresets = ref([])
 const presetsLoading = ref(false)
 const newPresetName = ref('')

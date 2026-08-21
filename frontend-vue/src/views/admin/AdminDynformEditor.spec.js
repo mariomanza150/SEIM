@@ -63,6 +63,52 @@ describe('AdminDynformEditor', () => {
     expect(titles).toEqual(expect.arrayContaining(['Contact email', 'Preferred start']))
   })
 
+  it('focuses the latest field label when switching canvas rows quickly', async () => {
+    const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/admin/dynforms', name: 'AdminDynforms', component: { template: '<div />' } },
+        { path: '/admin/dynforms/:id', name: 'AdminDynformEditor', component: AdminDynformEditor },
+      ],
+    })
+    await router.push({ name: 'AdminDynformEditor', params: { id: '7' } })
+    const wrapper = mount(AdminDynformEditor, {
+      global: { plugins: [i18n, router] },
+      attachTo: document.body,
+    })
+    await flushPromises()
+
+    await wrapper.get('[data-testid="dynforms-add-select"]').trigger('click')
+    await wrapper.get('[data-testid="dynforms-add-date"]').trigger('click')
+    await flushPromises()
+
+    const rows = wrapper.findAll('[data-testid="dynforms-canvas"] [role="button"]')
+    expect(rows).toHaveLength(2)
+
+    const focusCalls = []
+    const originalFocus = HTMLInputElement.prototype.focus
+    HTMLInputElement.prototype.focus = function focusStub(options) {
+      focusCalls.push(this.getAttribute('data-testid'))
+      return originalFocus.call(this, options)
+    }
+    try {
+      await rows[0].trigger('mousedown')
+      rows[0].trigger('click')
+      await rows[1].trigger('mousedown')
+      await rows[1].trigger('click')
+      await flushPromises()
+    } finally {
+      HTMLInputElement.prototype.focus = originalFocus
+    }
+
+    const label = wrapper.get('[data-testid="dynforms-field-label"]')
+    expect(label.element.value).toBe('Date')
+    expect(focusCalls.at(-1)).toBe('dynforms-field-label')
+    expect(document.activeElement).toBe(label.element)
+    wrapper.unmount()
+  })
+
   it('removes a field and toggles the live preview', async () => {
     const i18n = createI18n({ legacy: false, locale: 'en', messages: { en } })
     const router = createRouter({

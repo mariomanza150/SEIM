@@ -31,7 +31,9 @@
     "pageNumberAria": "Page {n}"
   },
   "common": {
-    "close": "Close"
+    "close": "Close",
+    "clearFilters": "Clear",
+    "advancedFilters": "Advanced filters"
   },
   "notifications": {
     "breadcrumbAria": "Breadcrumb",

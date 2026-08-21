@@ -7,14 +7,13 @@
       test-id="notifications-heading"
     >
       <template #breadcrumb>
-        <nav :aria-label="t('notifications.breadcrumbAria')">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">{{ t('route.names.Notifications') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('notifications.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.Notifications') },
+          ]"
+        />
       </template>
       <template #actions>
         <button
@@ -38,10 +37,8 @@
       </template>
     </PageHeader>
 
-      <!-- Filters -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="row g-3">
+      <CompactFilterBar :clear-label="t('notifications.clearFilters')" @clear="clearFilters">
+        <template #primary>
             <div class="col-md-4">
               <label class="form-label" for="notifications-filter-status">{{ t('notifications.filterReadStateLabel') }}</label>
               <select
@@ -72,19 +69,8 @@
                 <option value="error">{{ t('notifications.categoryError') }}</option>
               </select>
             </div>
-            <div class="col-md-4 d-flex align-items-end">
-              <button
-                type="button"
-                class="btn btn-outline-secondary w-100"
-                :aria-label="t('notifications.clearFilters')"
-                @click="clearFilters"
-              >
-                <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{{ t('notifications.clearFilters') }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+        </template>
+      </CompactFilterBar>
 
       <!-- Loading -->
       <LoadingState
@@ -197,6 +183,8 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { isNewTabUrl, isSpaUrl, normalizeSpaLocation } from '@/utils/navigation'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import { useNotifications } from '@/composables/useNotifications'
 import Pagination from '@/components/Pagination.vue'
 import LoadingState from '@/components/State/LoadingState.vue'

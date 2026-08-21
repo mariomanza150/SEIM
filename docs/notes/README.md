@@ -7,6 +7,7 @@ This subtree holds generated analysis, status reports, UI audits, and Vue/CMS wo
 | [`docs/README.md`](../README.md) | Canonical manuals (install, architecture, testing, Sphinx) |
 | [`index.md`](index.md) | Index of notes in this folder |
 | [`SPA_VS_LEGACY.md`](SPA_VS_LEGACY.md) | Current Vue SPA vs leftover Django surfaces |
+| [`ux-good-to-haves.md`](ux-good-to-haves.md) | Ranked UX polish backlog; SPA is canonical for authenticated work |
 | [`url-structure.md`](url-structure.md) | Public CMS vs `/seim/` URL map |
 | [`archive/`](archive/README.md) | Superseded Vue-SSR plans (not current work) |
 | [`PROJECT_STRUCTURE.md`](PROJECT_STRUCTURE.md) | Directory map |

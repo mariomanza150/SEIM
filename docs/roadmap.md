@@ -1,4 +1,4 @@
-> **Snapshot (October 2025).** Planning doc; completed items are tracked in [changelog.md](changelog.md). Do not treat task lists as current backlog.
+> **Snapshot (October 2025).** Planning doc; completed items are tracked in [changelog.md](changelog.md). Do not treat task lists as current backlog. **Superseded for gap/priority decisions by** [`notes/gap-audit-2026-08-20.md`](notes/gap-audit-2026-08-20.md) (+ [`notes/feature-tracking.md`](notes/feature-tracking.md)).
 
 # SEIM Roadmap
 

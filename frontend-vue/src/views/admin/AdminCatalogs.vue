@@ -83,20 +83,20 @@
           <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
           <div class="row g-2 align-items-end">
             <div class="col-md-3">
-              <label class="form-label">{{ t('adminCatalogs.fields.name') }}</label>
-              <input v-model="draft.name" class="form-control" type="text" required>
+              <label class="form-label" for="catalog-create-name">{{ t('adminCatalogs.fields.name') }}</label>
+              <input id="catalog-create-name" v-model="draft.name" class="form-control" type="text" required>
             </div>
             <div class="col-md-2">
-              <label class="form-label">{{ t('adminCatalogs.fields.code') }}</label>
-              <input v-model="draft.code" class="form-control" type="text">
+              <label class="form-label" for="catalog-create-code">{{ t('adminCatalogs.fields.code') }}</label>
+              <input id="catalog-create-code" v-model="draft.code" class="form-control" type="text">
             </div>
             <div class="col-md-2">
-              <label class="form-label">{{ t('adminCatalogs.fields.ordering') }}</label>
-              <input v-model.number="draft.ordering" class="form-control" type="number" min="0" step="1">
+              <label class="form-label" for="catalog-create-ordering">{{ t('adminCatalogs.fields.ordering') }}</label>
+              <input id="catalog-create-ordering" v-model.number="draft.ordering" class="form-control" type="number" min="0" step="1">
             </div>
             <div v-if="activeTab === 'programs'" class="col-md-3">
-              <label class="form-label">{{ t('adminCatalogs.fields.school') }}</label>
-              <select v-model="draft.school" class="form-select" required>
+              <label class="form-label" for="catalog-create-school">{{ t('adminCatalogs.fields.school') }}</label>
+              <select id="catalog-create-school" v-model="draft.school" class="form-select" required>
                 <option value="">{{ t('adminCommon.notSet') }}</option>
                 <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
               </select>
@@ -177,7 +177,8 @@
                   <button
                     type="button"
                     class="btn btn-sm btn-outline-secondary me-2"
-                    :disabled="saving"
+                    data-testid="admin-catalogs-save-row"
+                    :disabled="saving || !(item.name || '').trim()"
                     @click="saveRow(item)"
                   >
                     {{ t('adminCommon.save') }}
@@ -201,7 +202,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
@@ -279,11 +280,14 @@ function payloadFrom(source) {
   return payload
 }
 
-function selectTab(tab) {
+async function selectTab(tab) {
   activeTab.value = tab
   formError.value = null
   resetDraft()
-  load()
+  await load()
+  await nextTick()
+  if (activeTab.value === 'destinations') return
+  document.getElementById('catalog-create-name')?.focus?.()
 }
 
 async function load() {
@@ -327,6 +331,7 @@ async function createItem() {
 }
 
 async function saveRow(item) {
+  if (!(item.name || '').trim()) return
   saving.value = true
   try {
     await api.patch(itemUrl(item.id), payloadFrom(item))
@@ -383,5 +388,10 @@ onMounted(() => {
 <style scoped>
 .admin-catalogs-page {
   min-height: 60vh;
+}
+
+.admin-catalogs-page :deep(header.seim-page-header) {
+  position: relative;
+  z-index: 5;
 }
 </style>

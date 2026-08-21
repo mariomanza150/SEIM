@@ -29,6 +29,17 @@ describe('ToastContainer', () => {
     expect(wrapper.text()).toContain('Saved.')
   })
 
+  it('does not let empty toast padding intercept clicks', () => {
+    useToast().showToast('Saved.', 'success', 0)
+    const wrapper = mount(ToastContainer, {
+      global: { plugins: [i18n] },
+    })
+    const container = wrapper.get('[data-testid="toast-container"]')
+    expect(container.attributes('style')).toContain('pointer-events: none')
+    expect(wrapper.get('.toast').attributes('style')).toContain('pointer-events: auto')
+    expect(container.classes()).toContain('seim-toast-container')
+  })
+
   it('uses Spanish labels when locale is es', () => {
     setAppLocale('es')
     useToast().showToast('Listo', 'success', 0)

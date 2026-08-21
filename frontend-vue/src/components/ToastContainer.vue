@@ -1,11 +1,16 @@
 <template>
-  <div class="toast-container position-fixed end-0 p-3 seim-toast-container">
+  <div
+    class="toast-container position-fixed end-0 p-3 seim-toast-container"
+    data-testid="toast-container"
+    style="pointer-events: none"
+  >
     <div
       v-for="toast in toasts"
       :key="toast.id"
       class="toast show"
       role="alert"
       :class="`toast-${toast.type}`"
+      style="pointer-events: auto"
     >
       <div class="toast-header">
         <i
@@ -59,7 +64,8 @@ function toastTitle(type) {
 
 <style scoped>
 .seim-toast-container {
-  top: calc(3.75rem + env(safe-area-inset-top, 0px));
+  /* Sit below navbar + page-header actions so Validate/Save stay clickable. */
+  top: calc(9.25rem + env(safe-area-inset-top, 0px));
   z-index: 1080;
 }
 

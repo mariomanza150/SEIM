@@ -31,7 +31,9 @@
     "pageNumberAria": "Página {n}"
   },
   "common": {
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "clearFilters": "Limpiar",
+    "advancedFilters": "Filtros avanzados"
   },
   "notifications": {
     "breadcrumbAria": "Migas de pan",

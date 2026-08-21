@@ -92,6 +92,16 @@ describe('AdminCatalogs', () => {
     )
   })
 
+  it('wires create-form labels and disables empty-row save', async () => {
+    const wrapper = await mountPage()
+    expect(wrapper.get('label[for="catalog-create-name"]').exists()).toBe(true)
+    expect(wrapper.get('#catalog-create-name').element.tagName).toBe('INPUT')
+    const save = wrapper.get('[data-testid="admin-catalogs-save-row"]')
+    expect(save.attributes('disabled')).toBeUndefined()
+    await wrapper.get('[data-testid="admin-catalogs-table"] input').setValue('')
+    expect(wrapper.get('[data-testid="admin-catalogs-save-row"]').attributes('disabled')).toBeDefined()
+  })
+
   it('renders allowed email domains without i18n linked-message errors', async () => {
     const wrapper = await mountPage()
     await wrapper.get('[data-testid="admin-catalogs-tabs"] [data-tab="domains"]').trigger('click')

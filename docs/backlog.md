@@ -1,4 +1,4 @@
-> **Snapshot (October 2025).** Active work is tracked in GitHub Issues and [changelog.md](changelog.md).
+> **Snapshot (October 2025).** Active work is tracked in GitHub Issues and [changelog.md](changelog.md). **Superseded for gap/priority decisions by** [`notes/gap-audit-2026-08-20.md`](notes/gap-audit-2026-08-20.md) (+ [`notes/feature-tracking.md`](notes/feature-tracking.md)).
 
 # SEIM Backlog
 

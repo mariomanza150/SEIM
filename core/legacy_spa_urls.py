@@ -46,6 +46,12 @@ urlpatterns = [
     path("profile/", _spa("profile/"), name="legacy_profile"),
     path("settings/", _spa("settings/"), name="legacy_settings"),
     path("preferences/", _spa("settings/"), name="legacy_preferences"),
+    path("sessions/", _spa("settings/"), name="legacy_sessions"),
+    path(
+        "coordinator-dashboard/",
+        _spa("dashboard/"),
+        name="legacy_coordinator_dashboard",
+    ),
     path("calendar/", _spa("calendar/"), name="legacy_calendar"),
     path("documents/", _spa("documents/"), name="legacy_documents"),
     path("notifications/", _spa("notifications/"), name="legacy_notifications"),

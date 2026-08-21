@@ -65,6 +65,8 @@ describe('normalizeSpaLocation', () => {
     expect(normalizeSpaLocation('/seim/admin')).toEqual({ name: 'AdminPrograms' })
     expect(normalizeSpaLocation('/analytics')).toEqual({ name: 'AnalyticsForecasts' })
     expect(normalizeSpaLocation('/seim/workload')).toEqual({ name: 'CoordinatorWorkload' })
+    expect(normalizeSpaLocation('/sessions')).toEqual({ name: 'Settings' })
+    expect(normalizeSpaLocation('/seim/coordinator-dashboard')).toEqual({ name: 'Dashboard' })
     expect(isSpaUrl('/seim/review-queue')).toBe(true)
   })
 })

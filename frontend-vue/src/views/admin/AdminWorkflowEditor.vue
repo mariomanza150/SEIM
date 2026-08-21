@@ -361,7 +361,12 @@ onBeforeUnmount(() => {
 /* Keep Validate / Save / Publish above bpmn-js overlays that escape the canvas. */
 .admin-workflow-editor-page :deep(header.seim-page-header) {
   position: relative;
-  z-index: 5;
+  z-index: 20;
+}
+
+.admin-workflow-editor-page :deep(header.seim-page-header .btn) {
+  position: relative;
+  z-index: 21;
 }
 
 .bpmn-canvas {
@@ -371,6 +376,14 @@ onBeforeUnmount(() => {
   width: 100%;
   overflow: hidden;
   isolation: isolate;
+  contain: layout paint;
+}
+
+.bpmn-canvas :deep(.bjs-container),
+.bpmn-canvas :deep(.djs-container),
+.bpmn-canvas :deep(.djs-overlay-container) {
+  max-height: 100%;
+  overflow: hidden;
 }
 
 .bpmn-properties {

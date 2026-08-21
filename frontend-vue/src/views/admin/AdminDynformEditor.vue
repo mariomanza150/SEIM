@@ -69,6 +69,8 @@
               role="button"
               tabindex="0"
               :aria-pressed="selectedId === field.id ? 'true' : 'false'"
+              :data-testid="`dynforms-canvas-field-${field.id}`"
+              @mousedown="onCanvasRowMouseDown"
               @click="selectField(field.id)"
               @keydown.enter.prevent="selectField(field.id)"
               @keydown.space.prevent="selectField(field.id)"
@@ -100,9 +102,9 @@
         <div v-if="selected" :key="selected.id" class="card mb-3" data-testid="dynforms-field-settings">
           <div class="card-header">{{ t('adminDynforms.fieldSettings') }}</div>
           <div class="card-body">
-            <label class="form-label" for="dynforms-field-label">{{ t('adminDynforms.fieldLabel') }}</label>
+            <label class="form-label" :for="`dynforms-field-label-${selected.id}`">{{ t('adminDynforms.fieldLabel') }}</label>
             <input
-              id="dynforms-field-label"
+              :id="`dynforms-field-label-${selected.id}`"
               ref="labelInput"
               v-model="selected.label"
               class="form-control mb-3"
@@ -196,11 +198,22 @@ const optionsText = computed(() =>
   (selected.value?.options || []).map((opt) => `${opt.label}|${opt.value}`).join('\n'),
 )
 
+let labelFocusSeq = 0
+
+function onCanvasRowMouseDown(event) {
+  if (event.target.closest('button')) return
+  event.preventDefault()
+}
+
 async function selectField(id) {
+  const seq = ++labelFocusSeq
   selectedId.value = id
   await nextTick()
-  labelInput.value?.focus?.()
-  labelInput.value?.select?.()
+  if (seq !== labelFocusSeq) return
+  const el = labelInput.value
+  if (!el || typeof el.focus !== 'function') return
+  el.focus({ preventScroll: true })
+  if (typeof el.select === 'function') el.select()
 }
 
 function addField(type) {

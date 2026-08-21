@@ -150,6 +150,15 @@ describe('AdminWorkflowEditor', () => {
     expect(mockSuccess).toHaveBeenCalledWith('Workflow published')
   })
 
+  it('keeps the Validate control enabled above a contained BPMN canvas', async () => {
+    const wrapper = await mountEditor()
+    const validate = wrapper.get('[data-testid="workflow-validate"]')
+    expect(validate.attributes('disabled')).toBeUndefined()
+    const canvas = wrapper.get('[data-testid="bpmn-canvas"]')
+    expect(canvas.classes()).toContain('bpmn-canvas')
+    expect(canvas.element.parentElement.classList.contains('card-body')).toBe(true)
+  })
+
   it('surfaces validation API errors in the result alert', async () => {
     const wrapper = await mountEditor()
     mockPost.mockRejectedValue({ response: { data: { error: 'Missing end event' } } })

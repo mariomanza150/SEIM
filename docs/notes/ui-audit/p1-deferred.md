@@ -13,8 +13,5 @@ _These are P1 issues identified during the UI audit that were **not** addressed 
   - Suggestion: CSS ellipsis with max-width + tooltip, preserve accessible name.
 
 ## SSR vs SPA duplication/parity
-- **Legacy SSR pages overlapping SPA surfaces**
-  - Preferences (`/preferences/`) overlaps with SPA Settings.
-  - Sessions/coordinator/admin dashboards use different visual language and theming.
-  - Suggestion: decide canonical surface per feature; redirect legacy pages or align styling tokens.
+- **Legacy SSR bookmarks overlapping SPA surfaces** — decided: SPA is canonical. Redirects: [`ux-good-to-haves.md`](../ux-good-to-haves.md) (Preferences/sessions → Settings; coordinator overview → Dashboard; analytics HTML → forecasts/dashboard). No dual theming; no new student-sessions or coordinator-overview SPA pages.
 

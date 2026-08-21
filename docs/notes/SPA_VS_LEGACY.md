@@ -19,13 +19,13 @@
 
 Legacy root auth URLs (`/login/`, `/register/`, `/dashboard/`, `/admin-dashboard/`, `/dashboard/analytics/`, `/password-reset/`) redirect to `/seim/...`. `/logout/` clears the session and is not a Vue route.
 
-Leftover student/staff bookmarks outside `/seim/` (`/applications/`, `/applications/create/`, `/applications/<uuid>/`, `/profile/`, `/settings/`, `/preferences/`, `/calendar/`, `/documents/`, `/notifications/`, `/review-queue/`, `/programs/compare/`) also redirect into the SPA. See `core/legacy_spa_urls.py`.
+Leftover student/staff bookmarks outside `/seim/` (`/applications/`, `/applications/create/`, `/applications/<uuid>/`, `/profile/`, `/settings/`, `/preferences/`, `/sessions/`, `/coordinator-dashboard/`, `/calendar/`, `/documents/`, `/notifications/`, `/review-queue/`, `/programs/compare/`) also redirect into the SPA. See `core/legacy_spa_urls.py`. Canonical mapping: [`ux-good-to-haves.md`](ux-good-to-haves.md).
 
 ## Vue routes (application UI)
 
 Mounted at `/seim/` (see `frontend-vue/src/router/index.js`): login, register, verify-email, password-reset, dashboard, applications (list/new/detail/edit), documents, notifications, profile, settings, calendar, program compare, coordinator review/workload, agreements, nominations, eligibility rulesets, analytics forecasts, partner portal, SPA admin (`/seim/admin/programs|catalogs|grades|users|sessions|workflow-catalogs|forms|dynforms|data-management|workflows|documents`).
 
-SPA aliases (not separate pages): `/seim/admin` → programs admin, `/seim/admin-dashboard` → dashboard, `/seim/analytics` → forecasts, `/seim/grades` → profile, `/seim/programs` → program compare, `/seim/exchange` → exchange agreements, `/seim/workload` → coordinator workload.
+SPA aliases (not separate pages): `/seim/admin` → programs admin, `/seim/admin-dashboard` → dashboard, `/seim/coordinator-dashboard` → dashboard, `/seim/sessions` and `/seim/preferences` → settings, `/seim/analytics` → forecasts, `/seim/grades` → profile, `/seim/programs` → program compare, `/seim/exchange` → exchange agreements, `/seim/workload` → coordinator workload.
 
 ## Parity checklist
 
@@ -42,6 +42,7 @@ SPA aliases (not separate pages): `/seim/admin` → programs admin, `/seim/admin
 - [x] `/data-management/` HTML hub and section pages redirect to `/seim/admin/data-management`
 - [x] Analytics HTML dashboard/statistics pages redirect to `/seim/dashboard` or `/seim/analytics-forecasts`
 - [x] Root leftover app URLs listed above redirect into `/seim/`
+- [x] `/sessions/` → `/seim/settings/`; `/coordinator-dashboard/` → `/seim/dashboard/` (no new student-sessions or coordinator-overview SPA pages)
 - [x] Notification `action_url` values such as `/applications/<id>/` resolve inside the SPA (`frontend-vue/src/utils/navigation.js`)
 - [x] Admin Forms list links through to the visual builder
 
