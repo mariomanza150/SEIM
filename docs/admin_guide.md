@@ -26,15 +26,15 @@ This guide is for administrators managing the SEIM (Student Exchange Information
 
 ## SPA Help Center
 
-In-app help at `/seim/help` is edited in Wagtail (`/cms/`) as FAQ pages:
+In-app help at `/seim/help` is edited in Wagtail (`/cms/`) as FAQ pages (same `FAQPage` model as the public FAQ site):
 
-1. Put SPA-only articles under the SPA help index (`index_kind = spa_help`).
-2. Set **Surfaces** to include `spa` (omit `public` for staff-only copy).
-3. Set **Audiences** for the roles that may see the article.
-4. Optionally set **Contextual keys** to Vue route names so the `?` on that screen filters help.
-5. Seed/refresh catalog: `python manage.py seed_spa_help`.
+1. Put SPA-only articles under the SPA help index (`index_kind = spa_help`, slug typically `ayuda-seim`).
+2. Set **Surfaces** to include `spa` (omit `public` for coordinator/partner/admin-only copy).
+3. Set **Audiences** for the roles that may see the article (`student`, `coordinator`, `partner`, `admin`, `all`). SPA role `responsible` maps to coordinator.
+4. Set **Topic** for hub grouping and optionally **Contextual keys** to Vue route names so the `?` on that screen filters help.
+5. Publish the page. Seed/refresh the default catalog: `python manage.py seed_spa_help`.
 
-Do not rely on public `/api/cms/pages/` for SPA help; use `/api/help/`.
+Do not rely on public `/api/cms/pages/` for SPA help (spa-only pages are hidden there). The SPA uses authenticated `/api/help/articles/`. Field details: `docs/cms_guide.md`.
 
 ## 👥 **User Management**
 

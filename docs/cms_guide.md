@@ -150,14 +150,14 @@ Frequently Asked Questions pages with:
 
 `FAQPage` also stores:
 
-- `audiences`: `student`, `coordinator`, `partner`, `admin`, `all` (SPA role `responsible` maps to coordinator)
-- `surfaces`: `public` and/or `spa`
-- `topic`: hub grouping key
+- `audiences`: `student`, `coordinator`, `partner`, `admin`, `all` (SPA role `responsible` maps to coordinator audience)
+- `surfaces`: `public` and/or `spa` (omit `public` for staff/partner-only copy)
+- `topic`: hub grouping key (`getting_started`, `applications`, `documents`, `review`, `partner`, `admin`, `account`)
 - `contextual_keys`: comma-separated Vue route names for the page `?` button
 
-`FAQIndexPage.index_kind` is `public` or `spa_help`. SPA-only pages and `spa_help` indexes return 404 on the public site and are excluded from `/api/cms/pages/`.
+`FAQIndexPage.index_kind` is `public` or `spa_help`. Put SPA-only articles under an `spa_help` index (not in public nav). SPA-only pages and `spa_help` indexes return 404 on the public site and are excluded from `/api/cms/pages/`.
 
-Authenticated SPA catalog: `GET /api/help/articles/` and `GET /api/help/articles/<slug>/` (JWT). Seed with `python manage.py seed_spa_help`.
+Authenticated SPA catalog: `GET /api/help/articles/` and `GET /api/help/articles/<slug>/` (JWT; filters by caller role). Optional query params: `q`, `key`, `topic`. Seed with `python manage.py seed_spa_help`. Staff editing steps: `docs/admin_guide.md` (SPA Help Center).
 
 
 ## Content Blocks

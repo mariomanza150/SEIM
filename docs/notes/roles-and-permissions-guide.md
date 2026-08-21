@@ -560,6 +560,14 @@ POST /api/accounts/sessions/{session_id}/revoke/
 
 ---
 
+## SPA help center
+
+Role-filtered in-app help (`/seim/help`) is served from Wagtail FAQ pages via authenticated `GET /api/help/articles/`. Audience mapping: student → student+all; responsible → coordinator+student+all; partner → partner+all; admin → admin+coordinator+student+all. Partners do not receive student application articles.
+
+See `docs/cms_guide.md` (audiences/surfaces) and `docs/admin_guide.md` (how staff edit help).
+
+---
+
 ## Support
 
 For issues or questions:
@@ -573,8 +581,4 @@ For issues or questions:
 **Last Updated**: 2025-11-20  
 **Version**: 2.0  
 **Author**: SEIM Development Team
-
-## SPA help center
-
-Role-filtered help articles are served from Wagtail FAQ pages via authenticated `GET /api/help/articles/`. Audience mapping: student → student+all; responsible → coordinator+student+all; partner → partner+all; admin → admin+coordinator+student+all. Partners do not receive student application articles.
 

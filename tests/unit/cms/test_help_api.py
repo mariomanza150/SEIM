@@ -1,4 +1,9 @@
-﻿"""SPA help-center API and public FAQ surface guards."""
+"""SPA help-center API and public FAQ surface guards.
+
+Requires Wagtail + cms::
+
+    DJANGO_SETTINGS_MODULE=seim.settings.test_cms
+"""
 
 import pytest
 from django.conf import settings
@@ -6,14 +11,10 @@ from django.test import Client
 from django.urls import reverse
 from rest_framework import status
 
+if "wagtail" not in settings.INSTALLED_APPS or "cms" not in settings.INSTALLED_APPS:
+    pytest.skip("Wagtail disabled in test settings", allow_module_level=True)
+
 from tests.utils import APITestCase
-
-
-def _require_cms():
-    if "cms" not in settings.INSTALLED_APPS or not any(
-        a.startswith("wagtail") for a in settings.INSTALLED_APPS
-    ):
-        pytest.skip("Wagtail/CMS not in INSTALLED_APPS for this settings module")
 
 
 def _publish_help_tree():
@@ -50,6 +51,15 @@ def _publish_help_tree():
     )
     home.add_child(instance=spa_index)
     spa_index.save_revision().publish()
+
+    public_index = FAQIndexPage(
+        title="Public FAQ",
+        slug="preguntas-frecuentes-test",
+        introduction="Public",
+        index_kind="public",
+    )
+    home.add_child(instance=public_index)
+    public_index.save_revision().publish()
 
     student = FAQPage(
         title="Student apply help",
@@ -91,7 +101,7 @@ def _publish_help_tree():
     shared.save_revision().publish()
 
     public_faq = FAQPage(
-        title="Public FAQ",
+        title="Public FAQ article",
         slug="public-faq-help-test",
         introduction="Public",
         audiences=[FAQ_AUDIENCE_STUDENT],
@@ -100,7 +110,7 @@ def _publish_help_tree():
         contextual_keys="",
         body=[{"type": "paragraph", "value": "<p>Public</p>"}],
     )
-    spa_index.add_child(instance=public_faq)
+    public_index.add_child(instance=public_faq)
     public_faq.save_revision().publish()
 
     return {
@@ -109,16 +119,20 @@ def _publish_help_tree():
         "shared": shared,
         "public_faq": public_faq,
         "spa_index": spa_index,
+        "public_index": public_index,
     }
 
 
 class TestHelpArticlesAPI(APITestCase):
     def setUp(self):
         super().setUp()
-        _require_cms()
         self.pages = _publish_help_tree()
-        self.student = self.create_user(role="student", username="help-stu", email="help-stu@test.com")
-        self.partner = self.create_user(role="partner", username="help-par", email="help-par@test.com")
+        self.student = self.create_user(
+            role="student", username="help-stu", email="help-stu@test.com"
+        )
+        self.partner = self.create_user(
+            role="partner", username="help-par", email="help-par@test.com"
+        )
         self.coord = self.create_user(
             role="responsible", username="help-coord", email="help-coord@test.com"
         )
@@ -126,7 +140,9 @@ class TestHelpArticlesAPI(APITestCase):
     def test_unauthenticated_rejected(self):
         url = reverse("api:help-article-list")
         resp = self.client.get(url)
-        self.assertIn(resp.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN))
+        self.assertIn(
+            resp.status_code, (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN)
+        )
 
     def test_student_list_excludes_partner_only(self):
         self.authenticate_user(self.student)
@@ -169,7 +185,6 @@ class TestHelpArticlesAPI(APITestCase):
 
 @pytest.mark.django_db
 def test_spa_only_faq_404_on_public_serve():
-    _require_cms()
     pages = _publish_help_tree()
     client = Client()
     url = pages["student"].url
@@ -180,10 +195,39 @@ def test_spa_only_faq_404_on_public_serve():
 
 @pytest.mark.django_db
 def test_spa_help_index_404_on_public_serve():
-    _require_cms()
     pages = _publish_help_tree()
     client = Client()
     url = pages["spa_index"].url
     assert url
     resp = client.get(url)
     assert resp.status_code == 404
+
+
+@pytest.mark.django_db
+def test_public_surface_faq_still_serves():
+    pages = _publish_help_tree()
+    client = Client()
+    url = pages["public_faq"].url
+    assert url
+    resp = client.get(url)
+    assert resp.status_code == 200
+
+
+@pytest.mark.django_db
+def test_spa_only_pages_excluded_from_wagtail_pages_api_queryset():
+    """PublicPagesAPIViewSet must not list spa-only FAQ pages or spa_help indexes."""
+    from django.test import RequestFactory
+
+    from cms.wagtail_api import PublicPagesAPIViewSet
+
+    pages = _publish_help_tree()
+    request = RequestFactory().get("/api/cms/pages/")
+    view = PublicPagesAPIViewSet()
+    view.request = request
+    view.action = "listing"
+    ids = set(view.get_queryset().values_list("pk", flat=True))
+    assert pages["student"].id not in ids
+    assert pages["partner"].id not in ids
+    assert pages["spa_index"].id not in ids
+    assert pages["public_faq"].id in ids
+    assert pages["public_index"].id in ids
