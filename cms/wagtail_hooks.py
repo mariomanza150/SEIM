@@ -93,7 +93,7 @@ def hide_userbar_for_non_editors(request, items):
         or request.user.is_superuser
         or (
             hasattr(request.user, "has_role")
-            and (request.user.has_role("admin") or request.user.has_role("coordinator"))
+            and (request.user.has_role("admin") or request.user.has_role("responsible"))
         )
     ):
         items.clear()

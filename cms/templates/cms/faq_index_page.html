@@ -18,7 +18,7 @@
         <div class="row">
             <div class="col-lg-8 mx-auto">
                 <div class="accordion" id="faqAccordion">
-                    {% for faq in page.get_children.live.specific %}
+                    {% for faq in faq_pages %}
                         <div class="accordion-item">
                             <h2 class="accordion-header">
                                 <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 

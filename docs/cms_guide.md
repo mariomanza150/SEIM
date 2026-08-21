@@ -146,6 +146,20 @@ Frequently Asked Questions pages with:
 
 **Templates:** `cms/templates/cms/faq_index_page.html`, `cms/templates/cms/faq_page.html`
 
+### SPA help center fields
+
+`FAQPage` also stores:
+
+- `audiences`: `student`, `coordinator`, `partner`, `admin`, `all` (SPA role `responsible` maps to coordinator)
+- `surfaces`: `public` and/or `spa`
+- `topic`: hub grouping key
+- `contextual_keys`: comma-separated Vue route names for the page `?` button
+
+`FAQIndexPage.index_kind` is `public` or `spa_help`. SPA-only pages and `spa_help` indexes return 404 on the public site and are excluded from `/api/cms/pages/`.
+
+Authenticated SPA catalog: `GET /api/help/articles/` and `GET /api/help/articles/<slug>/` (JWT). Seed with `python manage.py seed_spa_help`.
+
+
 ## Content Blocks
 
 Wagtail StreamFields provide flexible, structured content blocks:

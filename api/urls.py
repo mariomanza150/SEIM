@@ -4,6 +4,7 @@ Domain viewsets live in their apps. Exchange routes are included from
 ``exchange.urls``; other apps register on the router below.
 """
 
+from django.apps import apps
 from django.urls import include, path
 from rest_framework import routers
 from rest_framework_simplejwt.views import TokenRefreshView
@@ -140,3 +141,5 @@ urlpatterns = [
         include(("data_management.api_urls", "data_management_api")),
     ),
 ]
+if apps.is_installed("cms"):
+    urlpatterns.append(path("help/", include("cms.help_urls")))

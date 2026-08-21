@@ -368,6 +368,15 @@
               </router-link>
             </div>
           </div>
+          <div class="card mb-4" data-testid="settings-help-card">
+            <div class="card-header"><h6 class="mb-0"><i class="bi bi-question-circle me-2"></i>{{ t('settings.sidebarHelpTitle') }}</h6></div>
+            <div class="card-body small">
+              <p class="mb-3">{{ t('settings.sidebarHelpBody') }}</p>
+              <router-link :to="{ name: 'HelpCenter' }" class="btn btn-outline-primary btn-sm" data-testid="settings-help-link">
+                {{ t('settings.sidebarHelpCta') }}
+              </router-link>
+            </div>
+          </div>
           <div class="card">
             <div class="card-header"><h6 class="mb-0"><i class="bi bi-shield-check me-2"></i>{{ t('settings.sidebarNoteTitle') }}</h6></div>
             <div class="card-body small">

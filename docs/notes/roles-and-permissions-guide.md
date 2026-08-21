@@ -16,7 +16,7 @@
 SEIM uses a comprehensive multi-role and permissions system that allows:
 - **Multi-Role Support**: Users can have multiple roles simultaneously
 - **Granular Permissions**: Fine-grained control over what users can do
-- **Hierarchical Access**: Admin > Coordinator > Student
+- **Hierarchical Access**: Admin > Responsible > Student
 - **Dynamic UI**: Interface adapts based on user permissions
 - **Session Management**: View and revoke active login sessions
 
@@ -37,8 +37,10 @@ SEIM uses a comprehensive multi-role and permissions system that allows:
 
 **Dashboard**: Shows my applications, available programs, and deadlines
 
-### Coordinator
-**Purpose**: Staff members who review and manage applications
+### Responsible
+**Purpose**: Exchange-office staff who review and manage applications.
+
+Department heads are called coordinators in institutional language; that is not a SEIM login role.
 
 **Capabilities**:
 - All Student capabilities, PLUS:
@@ -50,13 +52,13 @@ SEIM uses a comprehensive multi-role and permissions system that allows:
 - View all user profiles
 - See user login times and sessions
 
-**Dashboard**: Coordinator dashboard with pending reviews and documents
+**Dashboard**: Responsible dashboard with pending reviews and documents
 
 ### Admin (Highest Role)
 **Purpose**: System administrators with full access
 
 **Capabilities**:
-- All Coordinator capabilities, PLUS:
+- All Responsible capabilities, PLUS:
 - Manage exchange programs (create, edit, delete)
 - Manage users and assign roles
 - Access Django admin interface
@@ -142,8 +144,8 @@ def my_view(request):
         pass
     
     # Check multiple roles
-    if user.has_any_role(['coordinator', 'admin']):
-        # For coordinators and admins
+    if user.has_any_role(['responsible', 'admin']):
+        # For responsible staff and admins
         pass
     
     # Check permission
@@ -155,8 +157,8 @@ def my_view(request):
     if user.is_admin:
         # Admin user
         pass
-    if user.is_coordinator:
-        # Coordinator
+    if user.is_responsible:
+        # Responsible
         pass
     if user.is_student:
         # Student
@@ -176,7 +178,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         
-        if user.has_any_role(['coordinator', 'admin']):
+        if user.has_any_role(['responsible', 'admin']):
             return Application.objects.all()
         else:
             return Application.objects.filter(student=user)
@@ -198,7 +200,7 @@ permissions = PermissionManager.get_user_permissions(user)
 
 # Get all roles
 roles = user.get_all_roles()
-# Returns: ['student', 'coordinator']
+# Returns: ['student', 'responsible']
 ```
 
 ### Checking Permissions in Templates
@@ -211,8 +213,8 @@ roles = user.get_all_roles()
     <a href="{% url 'admin:index' %}">Admin Panel</a>
 {% endif %}
 
-{# Check coordinator or admin #}
-{% if user.is_coordinator or user.is_admin %}
+{# Check responsible or admin #}
+{% if user.is_responsible or user.is_admin %}
     <a href="{% url 'frontend:coordinator_dashboard' %}">Reviews</a>
 {% endif %}
 
@@ -245,8 +247,8 @@ if (Auth.hasRole('admin')) {
 }
 
 // Check if user has any of multiple roles
-if (Auth.hasAnyRole(['coordinator', 'admin'])) {
-    // Show coordinator/admin features
+if (Auth.hasAnyRole(['responsible', 'admin'])) {
+    // Show responsible/admin features
 }
 
 // Get user's permissions
@@ -255,18 +257,18 @@ const permissions = Auth.getPermissions();
 
 // Get user's roles
 const roles = Auth.getRoles();
-// Returns: ['student', 'coordinator']
+// Returns: ['student', 'responsible']
 
 // Get primary role
 const primaryRole = Auth.getPrimaryRole();
-// Returns: 'coordinator' (highest priority role)
+// Returns: 'responsible' (highest priority role)
 
 // Use convenience methods
 if (Auth.isAdmin()) {
     // Admin user
 }
-if (Auth.isCoordinator()) {
-    // Coordinator
+if (Auth.isResponsible()) {
+    // Responsible
 }
 if (Auth.isStudent()) {
     // Student
@@ -283,7 +285,7 @@ PERMISSION_REGISTRY = {
     
     # Add new permission
     'approve_budget': ['admin'],  # Only admins can approve budgets
-    'submit_report': ['coordinator', 'admin'],  # Coordinators and admins
+    'submit_report': ['responsible', 'admin'],  # Responsibles and admins
 }
 ```
 
@@ -338,21 +340,21 @@ if (Auth.hasPermission('approve_budget')) {
 ### Default Role Assignments
 
 - New users automatically get **Student** role
-- Coordinators must be assigned by admins
+- Responsible users must be assigned by admins
 - Admins must be assigned by superusers
 
 ### Multi-Role Users
 
 Users can have multiple roles. Priority order:
 1. Admin (highest)
-2. Coordinator
+2. Responsible
 3. Student (lowest)
 
-Example: A user with both Student and Coordinator roles:
+Example: A user with both Student and Responsible roles:
 - Has all Student permissions
-- Has all Coordinator permissions
-- Primary role shown: "Coordinator"
-- Sees both student and coordinator navigation
+- Has all Responsible permissions
+- Primary role shown: "Responsible"
+- Sees both student and responsible navigation
 
 ### Session Management
 
@@ -361,7 +363,7 @@ Example: A user with both Student and Coordinator roles:
 - Can revoke individual sessions
 - Can revoke all other sessions
 
-#### For Admins/Coordinators
+#### For Admins/Responsible staff
 - View all users' login times at `/seim/user-management/`
 - See active session counts
 - Filter by role
@@ -372,28 +374,28 @@ Example: A user with both Student and Coordinator roles:
 
 ## Examples
 
-### Example 1: Adding a New Coordinator
+### Example 1: Adding a New Responsible
 
 ```python
 # In Django shell or admin action
 from accounts.models import User, Role
 
 user = User.objects.get(email='coordinator@example.com')
-coordinator_role = Role.objects.get(name='coordinator')
-user.roles.add(coordinator_role)
+responsible_role = Role.objects.get(name='responsible')
+user.roles.add(responsible_role)
 ```
 
 ### Example 2: Checking Multi-Role Access
 
 ```python
-# User has both student and coordinator roles
+# User has both student and responsible roles
 user = User.objects.get(username='john')
 
 print(user.get_all_roles())
-# Output: ['student', 'coordinator']
+# Output: ['student', 'responsible']
 
 print(user.primary_role)
-# Output: 'coordinator' (higher priority)
+# Output: 'responsible' (higher priority)
 
 print(user.has_role('student'))
 # Output: True
@@ -401,7 +403,7 @@ print(user.has_role('student'))
 print(user.has_role('admin'))
 # Output: False
 
-print(user.has_any_role(['coordinator', 'admin']))
+print(user.has_any_role(['responsible', 'admin']))
 # Output: True
 ```
 
@@ -410,7 +412,7 @@ print(user.has_any_role(['coordinator', 'admin']))
 ```python
 from core.permissions import PermissionManager
 
-# View requiring coordinator or admin
+# View requiring responsible or admin
 @login_required
 def review_dashboard_view(request):
     if not PermissionManager.user_has_permission(request.user, 'review_application'):
@@ -433,7 +435,7 @@ def review_dashboard_view(request):
             <a href="{% url 'frontend:applications' %}">My Applications</a>
         {% endif %}
         
-        {% if user.is_coordinator %}
+        {% if user.is_responsible %}
             <a href="{% url 'frontend:coordinator_dashboard' %}">Reviews</a>
         {% endif %}
         
@@ -513,8 +515,8 @@ GET /api/accounts/permissions/
 **Response**:
 ```json
 {
-  "roles": ["student", "coordinator"],
-  "primary_role": "coordinator",
+  "roles": ["student", "responsible"],
+  "primary_role": "responsible",
   "permissions": [
     "view_own_applications",
     "view_all_applications",
@@ -523,7 +525,7 @@ GET /api/accounts/permissions/
     ...
   ],
   "is_admin": false,
-  "is_coordinator": true,
+  "is_responsible": true,
   "is_student": true
 }
 ```
@@ -571,4 +573,8 @@ For issues or questions:
 **Last Updated**: 2025-11-20  
 **Version**: 2.0  
 **Author**: SEIM Development Team
+
+## SPA help center
+
+Role-filtered help articles are served from Wagtail FAQ pages via authenticated `GET /api/help/articles/`. Audience mapping: student → student+all; responsible → coordinator+student+all; partner → partner+all; admin → admin+coordinator+student+all. Partners do not receive student application articles.
 

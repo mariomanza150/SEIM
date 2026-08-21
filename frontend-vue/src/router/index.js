@@ -54,6 +54,8 @@ const AdminWorkflowEditor = () => import('@/views/admin/AdminWorkflowEditor.vue'
 const AdminDocuments = () => import('@/views/admin/AdminDocuments.vue')
 const AdminDocumentTypeEdit = () => import('@/views/admin/AdminDocumentTypeEdit.vue')
 const AdminApplicationEdit = () => import('@/views/admin/AdminApplicationEdit.vue')
+const HelpCenter = () => import('@/views/HelpCenter.vue')
+const HelpArticle = () => import('@/views/HelpArticle.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
 const routes = [
@@ -180,6 +182,8 @@ const routes = [
       { path: 'notifications', name: 'Notifications', component: Notifications },
       { path: 'profile', name: 'Profile', component: Profile },
       { path: 'settings', name: 'Settings', component: Settings },
+      { path: 'help', name: 'HelpCenter', component: HelpCenter },
+      { path: 'help/:slug', name: 'HelpArticle', component: HelpArticle },
       { path: 'calendar', name: 'DeadlinesCalendar', component: DeadlinesCalendar },
       {
         path: 'eligibility-rulesets',

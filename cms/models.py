@@ -10,13 +10,16 @@ Wagtail page models for content management, including:
 - FAQPage & FAQIndexPage: FAQ system
 """
 
+from django import forms
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import models
 from django.db.models import Q
+from django.http import Http404
 from django.shortcuts import render
 from modelcluster.contrib.taggit import ClusterTaggableManager
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from taggit.models import TaggedItemBase
+from wagtail.admin.forms import WagtailAdminPageForm
 from wagtail.admin.panels import FieldPanel, InlinePanel, MultiFieldPanel
 from wagtail.contrib.forms.models import AbstractEmailForm, AbstractFormField
 from wagtail.contrib.forms.panels import FormSubmissionsPanel
@@ -27,6 +30,18 @@ from wagtail.snippets.models import register_snippet
 from wagtailseo.models import SeoMixin
 
 from .blocks import BaseStreamBlock
+from .help import (
+    FAQ_AUDIENCE_CHOICES,
+    FAQ_INDEX_KIND_CHOICES,
+    FAQ_INDEX_KIND_PUBLIC,
+    FAQ_SURFACE_CHOICES,
+    FAQ_SURFACE_PUBLIC,
+    FAQ_TOPIC_CHOICES,
+    default_faq_audiences,
+    default_faq_surfaces,
+    is_publicly_servable_faq,
+    is_spa_help_index,
+)
 
 # ============================================================================
 # INTERNATIONAL SECTION - CGRI & MOVILIDAD
@@ -1067,28 +1082,73 @@ class ProgramPage(SeoMixin, Page):
 # ============================================================================
 
 
+class FAQPageForm(WagtailAdminPageForm):
+    """Checkbox multi-selects for JSON audience/surface lists."""
+
+    audiences = forms.MultipleChoiceField(
+        choices=FAQ_AUDIENCE_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+    )
+    surfaces = forms.MultipleChoiceField(
+        choices=FAQ_SURFACE_CHOICES,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        instance = getattr(self, "instance", None)
+        if instance is not None:
+            self.fields["audiences"].initial = instance.audiences or []
+            self.fields["surfaces"].initial = instance.surfaces or []
+
+    def clean_audiences(self):
+        return list(self.cleaned_data.get("audiences") or [])
+
+    def clean_surfaces(self):
+        return list(self.cleaned_data.get("surfaces") or [])
+
+
 class FAQIndexPage(SeoMixin, Page):
     """
     Index page for FAQs organized by category.
     """
 
     introduction = RichTextField(blank=True)
+    index_kind = models.CharField(
+        max_length=32,
+        choices=FAQ_INDEX_KIND_CHOICES,
+        default=FAQ_INDEX_KIND_PUBLIC,
+        help_text="Public indexes appear on the marketing site. SPA help indexes 404 publicly.",
+    )
 
     content_panels = Page.content_panels + [
         FieldPanel("introduction"),
+        FieldPanel("index_kind"),
     ]
 
     promote_panels = SeoMixin.seo_panels
+    subpage_types = ["cms.FAQPage"]
+
+    def get_public_faq_pages(self):
+        return (
+            FAQPage.objects.child_of(self)
+            .live()
+            .public()
+            .filter(surfaces__contains=[FAQ_SURFACE_PUBLIC])
+            .order_by("title")
+        )
 
     def get_context(self, request, *args, **kwargs):
         context = super().get_context(request, *args, **kwargs)
-
-        # Get all published FAQ pages
-        faqs = FAQPage.objects.live().public().order_by("title")
-
-        context["faq_pages"] = faqs
-
+        context["faq_pages"] = self.get_public_faq_pages()
         return context
+
+    def serve(self, request, *args, **kwargs):
+        if is_spa_help_index(self):
+            raise Http404()
+        return super().serve(request, *args, **kwargs)
 
     class Meta:
         verbose_name = "FAQ Index Page"
@@ -1107,19 +1167,60 @@ class FAQPage(SeoMixin, Page):
         help_text="FAQ content (use FAQ blocks for Q&A sections)",
     )
 
+    audiences = models.JSONField(
+        default=default_faq_audiences,
+        blank=True,
+        help_text="Who may see this article in the SPA help hub.",
+    )
+    surfaces = models.JSONField(
+        default=default_faq_surfaces,
+        blank=True,
+        help_text="Where this article is published (public site and/or SPA).",
+    )
+    topic = models.CharField(
+        max_length=32,
+        choices=FAQ_TOPIC_CHOICES,
+        blank=True,
+        default="",
+        help_text="Grouping key for the SPA help hub.",
+    )
+    contextual_keys = models.CharField(
+        max_length=500,
+        blank=True,
+        default="",
+        help_text="Comma-separated Vue route names (e.g. ApplicationNew,ApplicationEdit).",
+    )
+
     search_fields = Page.search_fields + [
         index.SearchField("introduction"),
         index.SearchField("body"),
+        index.SearchField("topic"),
+        index.SearchField("contextual_keys"),
     ]
 
     content_panels = Page.content_panels + [
         FieldPanel("introduction"),
         FieldPanel("body"),
+        MultiFieldPanel(
+            [
+                FieldPanel("audiences"),
+                FieldPanel("surfaces"),
+                FieldPanel("topic"),
+                FieldPanel("contextual_keys"),
+            ],
+            heading="Help center",
+        ),
     ]
 
     promote_panels = SeoMixin.seo_panels
 
     parent_page_types = ["cms.FAQIndexPage"]
+    base_form_class = FAQPageForm
+
+    def serve(self, request, *args, **kwargs):
+        if not is_publicly_servable_faq(self):
+            raise Http404()
+        return super().serve(request, *args, **kwargs)
 
     class Meta:
         verbose_name = "FAQ Page"

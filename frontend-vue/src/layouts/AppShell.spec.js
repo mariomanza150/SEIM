@@ -46,6 +46,8 @@ const routeNames = [
   'Documents',
   'DeadlinesCalendar',
   'Notifications',
+  'HelpCenter',
+  'HelpArticle',
   'Settings',
   'Profile',
   'Login',
@@ -142,6 +144,14 @@ describe('AppShell navbar', () => {
     expect(wrapper.text()).toContain('Profile')
     expect(wrapper.get('[data-testid="public-site-link"]').attributes('href')).toBe('/')
     expect(wrapper.get('[data-testid="public-site-link"]').text()).toContain('Public site')
+    wrapper.unmount()
+  })
+
+  it('shows Help in the primary sidebar nav', async () => {
+    const wrapper = await mountShell()
+    const helpLinks = wrapper.findAll('a').filter((a) => a.text().includes('Help'))
+    expect(helpLinks.length).toBeGreaterThan(0)
+    expect(helpLinks[0].attributes('href')).toContain('/HelpCenter')
     wrapper.unmount()
   })
 })

@@ -406,6 +406,13 @@ const primaryNavItems = computed(() => [
     isVisible: true,
   },
   {
+    key: 'help',
+    to: { name: 'HelpCenter' },
+    label: t('route.names.HelpCenter'),
+    iconClass: 'bi bi-question-circle',
+    isVisible: true,
+  },
+  {
     key: 'settings',
     to: { name: 'Settings' },
     label: t('route.names.Settings'),

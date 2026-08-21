@@ -25,13 +25,14 @@ if _WAGTAIL:
     from wagtail import urls as wagtail_urls
     from wagtail.admin import urls as wagtailadmin_urls
     from wagtail.api.v2.router import WagtailAPIRouter
-    from wagtail.api.v2.views import PagesAPIViewSet
     from wagtail.documents import urls as wagtaildocs_urls
     from wagtail.documents.api.v2.views import DocumentsAPIViewSet
     from wagtail.images.api.v2.views import ImagesAPIViewSet
 
+    from cms.wagtail_api import PublicPagesAPIViewSet
+
     wagtail_api_router = WagtailAPIRouter("wagtailapi")
-    wagtail_api_router.register_endpoint("pages", PagesAPIViewSet)
+    wagtail_api_router.register_endpoint("pages", PublicPagesAPIViewSet)
     wagtail_api_router.register_endpoint("images", ImagesAPIViewSet)
     wagtail_api_router.register_endpoint("documents", DocumentsAPIViewSet)
 

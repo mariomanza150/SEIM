@@ -15,9 +15,22 @@
         </p>
       </div>
 
-      <div v-if="$slots.actions" class="col-12 col-md-4 d-flex justify-content-md-end">
-        <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+      <div
+        v-if="$slots.actions || showHelp"
+        class="col-12 col-md-4 d-flex justify-content-md-end"
+      >
+        <div class="d-flex flex-wrap gap-2 justify-content-md-end align-items-start">
           <slot name="actions" />
+          <router-link
+            v-if="showHelp"
+            :to="helpTo"
+            class="btn btn-outline-secondary"
+            data-testid="page-help"
+            :aria-label="t('help.pageHelpAria')"
+            :title="t('help.pageHelpAria')"
+          >
+            ?
+          </router-link>
         </div>
       </div>
     </div>
@@ -25,12 +38,40 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
+
+const props = defineProps({
   title: { type: String, default: '' },
   subtitle: { type: String, default: '' },
   iconClass: { type: String, default: '' },
   testId: { type: String, default: undefined },
+  helpKey: { type: [String, Boolean], default: undefined },
 })
+
+const { t } = useI18n()
+
+function readRoute() {
+  try {
+    return useRoute()
+  } catch {
+    return null
+  }
+}
+
+const route = readRoute()
+
+const resolvedHelpKey = computed(() => {
+  if (props.helpKey === false) return ''
+  if (typeof props.helpKey === 'string' && props.helpKey) return props.helpKey
+  const name = route?.name
+  if (!name || name === 'HelpCenter' || name === 'HelpArticle') return ''
+  return String(name)
+})
+
+const showHelp = computed(() => Boolean(resolvedHelpKey.value))
+const helpTo = computed(() => ({ name: 'HelpCenter', query: { key: resolvedHelpKey.value } }))
 </script>
 
 <style scoped>
@@ -42,4 +83,3 @@ defineProps({
   line-height: 1.2;
 }
 </style>
-

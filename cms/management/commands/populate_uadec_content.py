@@ -13,6 +13,12 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from cms.help import (
+    FAQ_AUDIENCE_STUDENT,
+    FAQ_INDEX_KIND_PUBLIC,
+    FAQ_SURFACE_PUBLIC,
+    FAQ_SURFACE_SPA,
+)
 from cms.models import (
     BlogCategory,
     BlogIndexPage,
@@ -542,11 +548,14 @@ class Command(BaseCommand):
         # Get or create FAQ index
         try:
             faq_index = FAQIndexPage.objects.get(slug="preguntas-frecuentes")
+            faq_index.index_kind = FAQ_INDEX_KIND_PUBLIC
+            faq_index.save_revision().publish()
         except FAQIndexPage.DoesNotExist:
             faq_index = FAQIndexPage(
                 title="Preguntas Frecuentes",
                 slug="preguntas-frecuentes",
                 show_in_menus=True,
+                index_kind=FAQ_INDEX_KIND_PUBLIC,
             )
             parent.add_child(instance=faq_index)
             faq_index.save_revision().publish()
@@ -581,13 +590,32 @@ class Command(BaseCommand):
             },
         ]
 
+        public_faq_meta = {
+            "requisitos-aplicar": (
+                "applications",
+                "ApplicationNew,ApplicationEdit,ApplicationForm,Applications",
+            ),
+            "costo-intercambio": ("applications", "Applications,ProgramCompare"),
+            "revalidacion-creditos": (
+                "applications",
+                "ApplicationDetail,Applications",
+            ),
+            "trabajar-intercambio": ("getting_started", "ProgramCompare,Dashboard"),
+            "emergencia-extranjero": ("getting_started", "Dashboard,Profile"),
+        }
+
         for faq_data in faqs:
+            topic, keys = public_faq_meta[faq_data["slug"]]
             try:
                 faq = FAQPage.objects.get(slug=faq_data["slug"])
                 faq.title = faq_data["title"]
                 faq.body = self._brand_value(
                     [{"type": "paragraph", "value": faq_data["answer"]}]
                 )
+                faq.audiences = [FAQ_AUDIENCE_STUDENT]
+                faq.surfaces = [FAQ_SURFACE_PUBLIC, FAQ_SURFACE_SPA]
+                faq.topic = topic
+                faq.contextual_keys = keys
                 faq.save_revision().publish()
                 self.stdout.write(
                     self.style.SUCCESS(f"  ✓ Updated FAQ: {faq_data['title']}")
@@ -599,6 +627,10 @@ class Command(BaseCommand):
                     body=self._brand_value(
                         [{"type": "paragraph", "value": faq_data["answer"]}]
                     ),
+                    audiences=[FAQ_AUDIENCE_STUDENT],
+                    surfaces=[FAQ_SURFACE_PUBLIC, FAQ_SURFACE_SPA],
+                    topic=topic,
+                    contextual_keys=keys,
                 )
                 faq_index.add_child(instance=faq)
                 faq.save_revision().publish()

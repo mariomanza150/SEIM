@@ -1,5 +1,20 @@
 # SEIM Changelog
 
+## [Feature] - 2026-08-20 - SPA role help center
+
+### Added
+Authenticated help hub at /seim/help backed by Wagtail FAQ pages with audiences/surfaces/topic/contextual_keys, GET /api/help/articles/, contextual page ? via PageHeader, and seed_spa_help catalog.
+
+## [Role] - 2026-08-20 - Rename coordinator role to responsible
+
+### Changed
+The application-review login role slug is now **`responsible`**. Institutional “coordinator” means department head and is not a SEIM role.
+
+- Existing `accounts.Role` rows named `coordinator` are renamed by migration `0024_rename_coordinator_role_to_responsible`
+- Demo login remains `coordinator@test.com` / `coordinator123` (username unchanged)
+
+---
+
 ## [Doc Sync] - 2026-08-20 - Documentation alignment pass
 
 ### 📚 Documentation
