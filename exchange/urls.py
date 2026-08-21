@@ -28,6 +28,7 @@ from exchange.views import (
     HostSubjectViewSet,
     ProgramViewSet,
     SavedSearchViewSet,
+    ScholarshipScoringRulesetViewSet,
     TimelineEventViewSet,
     calendar_subscribe_ics,
 )
@@ -36,6 +37,11 @@ router = SimpleRouter()
 router.register(r"programs", ProgramViewSet)
 router.register(
     r"eligibility-rulesets", EligibilityRuleSetViewSet, basename="eligibility-ruleset"
+)
+router.register(
+    r"scholarship-scoring-rulesets",
+    ScholarshipScoringRulesetViewSet,
+    basename="scholarship-scoring-ruleset",
 )
 router.register(
     r"exchange-agreements",

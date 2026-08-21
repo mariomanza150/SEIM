@@ -125,6 +125,11 @@
                   {{ t('route.names.EligibilityRulesets') }}
                 </router-link>
               </li>
+              <li>
+                <router-link class="dropdown-item" :to="{ name: 'ScholarshipScoringRulesets' }" @click="closeAdminMenu">
+                  {{ t('route.names.ScholarshipScoringRulesets') }}
+                </router-link>
+              </li>
               <li><hr class="dropdown-divider" /></li>
               <li>
                 <a class="dropdown-item" href="/seim/django-admin/" target="_blank" rel="noopener noreferrer">
@@ -349,6 +354,13 @@ const primaryNavItems = computed(() => [
     to: { name: 'EligibilityRulesets' },
     label: t('route.names.EligibilityRulesets'),
     iconClass: 'bi bi-funnel',
+    isVisible: authStore.canUseStaffReviewQueue,
+  },
+  {
+    key: 'scholarshipScoringRulesets',
+    to: { name: 'ScholarshipScoringRulesets' },
+    label: t('route.names.ScholarshipScoringRulesets'),
+    iconClass: 'bi bi-pie-chart',
     isVisible: authStore.canUseStaffReviewQueue,
   },
   {

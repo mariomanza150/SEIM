@@ -21,6 +21,7 @@ from .models import (
     Program,
     ProgramFieldRequirement,
     SavedSearch,
+    ScholarshipScoringRuleset,
     TimelineEvent,
     visible_host_subjects_queryset,
     validate_application_host_destination,
@@ -242,6 +243,80 @@ class EligibilityRuleSetSerializer(serializers.ModelSerializer):
         ):
             validated_data["content_revision"] = (instance.content_revision or 1) + 1
         return super().update(instance, validated_data)
+
+
+class ScholarshipScoringRulesetSerializer(serializers.ModelSerializer):
+    """Staff CRUD for scholarship allocation factor max weights."""
+
+    factor_catalog = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ScholarshipScoringRuleset
+        fields = (
+            "id",
+            "slug",
+            "label",
+            "description",
+            "factor_weights",
+            "factor_catalog",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "factor_catalog", "created_at", "updated_at")
+
+    def get_factor_catalog(self, obj):
+        from exchange.scholarship_scoring import DEFAULT_FACTOR_MAX, FACTOR_IDS
+
+        labels = {
+            "academic": "Academic record",
+            "language": "Language proficiency",
+            "program_fit": "Program / language fit",
+            "application_quality": "Application quality (documents & form)",
+            "timeliness": "Timeliness (within apply window)",
+        }
+        weights = obj.normalized_weights() if hasattr(obj, "normalized_weights") else {}
+        return [
+            {
+                "id": fid,
+                "label": labels.get(fid, fid),
+                "max_points": weights.get(fid, DEFAULT_FACTOR_MAX.get(fid, 0)),
+                "default_max_points": DEFAULT_FACTOR_MAX.get(fid, 0),
+            }
+            for fid in FACTOR_IDS
+        ]
+
+    def validate_factor_weights(self, value):
+        from exchange.scholarship_scoring import DEFAULT_FACTOR_MAX, FACTOR_IDS
+
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("factor_weights must be an object.")
+        cleaned: dict[str, float] = {}
+        for fid in FACTOR_IDS:
+            raw = value.get(fid, DEFAULT_FACTOR_MAX[fid])
+            try:
+                num = float(raw)
+            except (TypeError, ValueError) as exc:
+                raise serializers.ValidationError(
+                    {fid: "Must be a number."}
+                ) from exc
+            if num <= 0 or num > 200:
+                raise serializers.ValidationError(
+                    {fid: "Must be greater than 0 and at most 200."}
+                )
+            cleaned[fid] = round(num, 2)
+        unknown = set(value.keys()) - set(FACTOR_IDS)
+        if unknown:
+            raise serializers.ValidationError(
+                f"Unknown factor keys: {', '.join(sorted(unknown))}."
+            )
+        return cleaned
+
+    def validate_slug(self, value):
+        slug = (value or "").strip().lower()
+        if not slug:
+            raise serializers.ValidationError("Slug is required.")
+        return slug
 
 
 class HostInstitutionSerializer(serializers.ModelSerializer):

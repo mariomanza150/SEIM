@@ -60,6 +60,7 @@ from .models import (
     HostSubject,
     Program,
     SavedSearch,
+    ScholarshipScoringRuleset,
     TimelineEvent,
     visible_host_subjects_queryset,
 )
@@ -91,6 +92,7 @@ from .serializers import (
     ProgramCheckEligibilityResponseSerializer,
     ProgramSerializer,
     SavedSearchSerializer,
+    ScholarshipScoringRulesetSerializer,
     TimelineEventSerializer,
 )
 from .services import ApplicationService
@@ -306,6 +308,42 @@ class EligibilityRuleSetViewSet(viewsets.ModelViewSet):
         from exchange.eligibility_ruleset_schema import describe_ruleset_schema
 
         return Response(describe_ruleset_schema())
+
+
+class ScholarshipScoringRulesetViewSet(viewsets.ModelViewSet):
+    """Staff CRUD for scholarship allocation factor max weights."""
+
+    queryset = ScholarshipScoringRuleset.objects.all()
+    serializer_class = ScholarshipScoringRulesetSerializer
+    permission_classes = [IsCoordinatorOrAdmin]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["slug", "label", "description"]
+    filterset_fields = ["is_active", "slug"]
+    ordering_fields = ["label", "slug", "created_at", "updated_at", "is_active"]
+    http_method_names = ["get", "post", "put", "patch", "head", "options"]
+
+    @extend_schema(
+        summary="Active scholarship scoring ruleset",
+        responses={200: ScholarshipScoringRulesetSerializer},
+    )
+    @action(detail=False, methods=["get"], url_path="active")
+    def active(self, request):
+        from exchange.scholarship_scoring import get_active_scholarship_ruleset_config
+
+        # Ensure default row exists, then return the active model instance.
+        get_active_scholarship_ruleset_config()
+        obj = (
+            ScholarshipScoringRuleset.objects.filter(is_active=True)
+            .order_by("-updated_at")
+            .first()
+        )
+        if obj is None:
+            obj = ScholarshipScoringRuleset.objects.order_by("created_at").first()
+        return Response(self.get_serializer(obj).data)
 
 
 def _program_list_cache_key(*args, **kwargs):

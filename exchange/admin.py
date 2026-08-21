@@ -26,6 +26,7 @@ from .models import (
     SavedSearch,
     ScholarshipAward,
     ScholarshipDisbursement,
+    ScholarshipScoringRuleset,
     TimelineEvent,
 )
 
@@ -1017,6 +1018,14 @@ class EligibilityRuleSetAdmin(admin.ModelAdmin):
     list_filter = ("is_active", "schema_version")
     search_fields = ("name", "description")
     readonly_fields = ("content_revision", "created_at", "updated_at")
+
+
+@admin.register(ScholarshipScoringRuleset)
+class ScholarshipScoringRulesetAdmin(admin.ModelAdmin):
+    list_display = ("label", "slug", "is_active", "updated_at")
+    list_filter = ("is_active",)
+    search_fields = ("slug", "label", "description")
+    readonly_fields = ("created_at", "updated_at")
 
 
 class ScholarshipDisbursementInline(admin.TabularInline):

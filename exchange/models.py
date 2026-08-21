@@ -48,6 +48,60 @@ class EligibilityRuleSet(UUIDModel, TimeStampedModel):
         return self.name
 
 
+def default_scholarship_factor_weights():
+    """Default max points per factor for scholarship allocation scoring v1."""
+    return {
+        "academic": 25.0,
+        "language": 20.0,
+        "program_fit": 15.0,
+        "application_quality": 25.0,
+        "timeliness": 15.0,
+    }
+
+
+class ScholarshipScoringRuleset(UUIDModel, TimeStampedModel):
+    """
+    Staff-editable scholarship allocation rubric (factor max weights).
+
+    Scoring still uses the default_v1 factor logic; only per-factor ceilings
+    (and label/slug) are configurable. At most one ruleset should be active.
+    """
+
+    slug = models.SlugField(max_length=64, unique=True)
+    label = models.CharField(max_length=255)
+    description = models.TextField(blank=True, default="")
+    factor_weights = models.JSONField(default=default_scholarship_factor_weights)
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    class Meta:
+        ordering = ["label", "-created_at"]
+        verbose_name = _("Scholarship scoring ruleset")
+        verbose_name_plural = _("Scholarship scoring rulesets")
+
+    def __str__(self):
+        return self.label
+
+    def save(self, *args, **kwargs):
+        if self.is_active:
+            ScholarshipScoringRuleset.objects.filter(is_active=True).exclude(
+                pk=self.pk
+            ).update(is_active=False)
+        super().save(*args, **kwargs)
+
+    def normalized_weights(self) -> dict[str, float]:
+        """Return float weights for all known factors (fallback to defaults)."""
+        defaults = default_scholarship_factor_weights()
+        raw = self.factor_weights or {}
+        out: dict[str, float] = {}
+        for key, default_val in defaults.items():
+            try:
+                val = float(raw.get(key, default_val))
+            except (TypeError, ValueError):
+                val = default_val
+            out[key] = max(0.0, val)
+        return out
+
+
 class Program(UUIDModel, TimeStampedModel):
     """Represents an exchange program (e.g., Erasmus, semester abroad)."""
 

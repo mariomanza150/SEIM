@@ -13,6 +13,7 @@ from exchange.scholarship_scoring import (
     render_scholarship_scores_xlsx,
     scholarship_scores_export_response,
 )
+from exchange.models import ScholarshipScoringRuleset
 from tests.utils import TestUtils
 
 
@@ -78,6 +79,33 @@ class TestScholarshipScoringCompute:
         out = compute_scholarship_allocation_score(app)
         tim = next(f for f in out["factors"] if f["id"] == "timeliness")
         assert tim["points"] == 15.0
+
+    def test_custom_factor_weights_scale_academic_max(self):
+        ScholarshipScoringRuleset.objects.filter(is_active=True).update(is_active=False)
+        ScholarshipScoringRuleset.objects.create(
+            slug="heavy_academic",
+            label="Heavy academic",
+            factor_weights={
+                "academic": 40.0,
+                "language": 20.0,
+                "program_fit": 15.0,
+                "application_quality": 25.0,
+                "timeliness": 15.0,
+            },
+            is_active=True,
+        )
+        student = TestUtils.create_test_user(role="student")
+        student.profile.gpa = 4.0
+        student.profile.save(update_fields=["gpa"])
+        program = TestUtils.create_test_program()
+        app = TestUtils.create_test_application(
+            student=student, program=program, status_name="submitted"
+        )
+        out = compute_scholarship_allocation_score(app)
+        assert out["ruleset_id"] == "heavy_academic"
+        ac = next(f for f in out["factors"] if f["id"] == "academic")
+        assert ac["max_points"] == 40.0
+        assert ac["points"] == 40.0
 
 
 @pytest.mark.django_db

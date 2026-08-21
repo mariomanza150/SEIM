@@ -33,7 +33,7 @@ Core (apply, review, documents, partner portal, admin catalogs/forms/workflows) 
 - Eligibility “fix list”: ordered gaps with links to Profile / upload.
 - Document checklist as a persistent progress rail on application detail.
 - Staff review: multi-select + next/prev (not in tracker).
-- Scholarship ruleset editor ([`feature-tracking.md`](feature-tracking.md) Phase-1 backlog).
+- ~~Scholarship ruleset editor~~ — shipped 2026-08-20 (factor max weights MVP; formula/workflow hooks deferred).
 
 **Tier 2 — already in tracker**
 

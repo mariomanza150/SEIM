@@ -29,6 +29,7 @@ const EXACT_SPA_ROUTES = {
   '/programs/compare': { name: 'ProgramCompare' },
   '/programs': { name: 'ProgramCompare' },
   '/eligibility-rulesets': { name: 'EligibilityRulesets' },
+  '/scholarship-scoring-rulesets': { name: 'ScholarshipScoringRulesets' },
   '/nominations': { name: 'Nominations' },
   '/analytics-forecasts': { name: 'AnalyticsForecasts' },
   '/analytics': { name: 'AnalyticsForecasts' },

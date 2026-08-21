@@ -34,6 +34,7 @@ const Profile = () => import('@/views/Profile.vue')
 const Settings = () => import('@/views/Settings.vue')
 const DeadlinesCalendar = () => import('@/views/DeadlinesCalendar.vue')
 const EligibilityRulesets = () => import('@/views/EligibilityRulesets.vue')
+const ScholarshipScoringRulesets = () => import('@/views/ScholarshipScoringRulesets.vue')
 const Nominations = () => import('@/views/Nominations.vue')
 const AnalyticsForecasts = () => import('@/views/AnalyticsForecasts.vue')
 const PartnerPortal = () => import('@/views/PartnerPortal.vue')
@@ -184,6 +185,12 @@ const routes = [
         path: 'eligibility-rulesets',
         name: 'EligibilityRulesets',
         component: EligibilityRulesets,
+        meta: { staffReviewQueue: true },
+      },
+      {
+        path: 'scholarship-scoring-rulesets',
+        name: 'ScholarshipScoringRulesets',
+        component: ScholarshipScoringRulesets,
         meta: { staffReviewQueue: true },
       },
       {
