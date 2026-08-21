@@ -158,7 +158,7 @@ pytest tests/e2e_playwright/ --headed
 pytest tests/e2e_playwright/ -n auto
 
 # Run with base URL
-pytest tests/e2e_playwright/ --base-url=http://localhost:8000
+pytest tests/e2e_playwright/ --base-url=http://localhost:8001
 
 # Generate HTML report
 pytest tests/e2e_playwright/ --html=report.html --self-contained-html

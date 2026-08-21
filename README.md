@@ -78,7 +78,7 @@ docker-compose exec web python manage.py import_cms --clear
 ## ✨ Features
 
 ### **Frontend Interface**
-- **Modern Bootstrap 5 Design**: Responsive, mobile-first interface
+- **Vue 3 SPA with Bootstrap 5**: Responsive, mobile-first interface at `/seim/`
 - **Role-based Dashboards**: Tailored experience for Students, Coordinators, and Admins
 - **JWT Authentication**: Secure token-based authentication with automatic refresh
 - **Interactive Forms**: Real-time validation and user feedback

@@ -282,7 +282,7 @@ docker-compose logs redis
 1. **Port Conflicts**:
    ```bash
    # Check if ports are in use
-   netstat -tulpn | grep :8000
+   netstat -tulpn | grep :8001
    netstat -tulpn | grep :5432
    
    # Stop conflicting services

@@ -68,7 +68,7 @@ scripts\install-github-runner-service-elevated.cmd
 
 Runs on: **push** to `main`, `develop`, `master`, `feature/vue-migration`; **PR** targeting `main`, `develop`, `master`; plus manual dispatch.
 
-Playwright against Django on port 8000; `RUN_SEED_VUE_E2E=1` enables session seed via `tests/e2e_playwright/conftest.py`.
+Playwright against Django in CI (container port 8000). Local dev via Compose uses **http://localhost:8001**. `RUN_SEED_VUE_E2E=1` enables session seed via `tests/e2e_playwright/conftest.py`.
 
 ### 4. E2E — Selenium (`e2e-selenium-scheduled.yml`)
 
