@@ -1390,11 +1390,17 @@ class PartnerApplicationSerializer(serializers.ModelSerializer):
             {
                 "name": it.get("name"),
                 "status": it.get("status"),
-                "required": it.get("required", True),
+                "required": bool(it.get("is_required", True)),
+                "due_now": bool(it.get("due_now")),
             }
             for it in (full.get("items") or [])
         ]
-        return {"complete": full.get("complete"), "items": items}
+        return {
+            "complete": full.get("complete"),
+            "required_count": full.get("required_count"),
+            "approved_count": full.get("approved_count"),
+            "items": items,
+        }
 
 
 def _author_display_name(user):

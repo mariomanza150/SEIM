@@ -248,6 +248,14 @@
                   </button>
                   <button
                     type="button"
+                    class="btn btn-sm btn-outline-secondary me-1"
+                    data-testid="partner-view-checklist"
+                    @click="openChecklist(app)"
+                  >
+                    {{ t('partnerPortalPage.viewChecklist') }}
+                  </button>
+                  <button
+                    type="button"
                     class="btn btn-sm btn-outline-primary"
                     data-testid="partner-open-thread"
                     @click="openThread(app)"
@@ -262,6 +270,62 @@
             </tbody>
           </table>
         </div>
+      </div>
+
+      <div v-if="checklistApp" class="card mt-4" data-testid="partner-checklist">
+        <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+          <h5 class="mb-0">
+            {{ t('partnerPortalPage.checklistHeading', { name: checklistApp.student_display_name }) }}
+          </h5>
+          <span
+            class="badge"
+            :class="checklistApp.document_checklist?.complete ? 'bg-success' : 'bg-warning text-dark'"
+            data-testid="partner-checklist-summary"
+          >
+            {{
+              checklistApp.document_checklist?.complete
+                ? t('partnerPortalPage.docsComplete')
+                : t('partnerPortalPage.docsIncomplete')
+            }}
+            <template v-if="checklistApp.document_checklist?.required_count != null">
+              —
+              {{
+                t('partnerPortalPage.checklistCounts', {
+                  approved: checklistApp.document_checklist.approved_count ?? 0,
+                  required: checklistApp.document_checklist.required_count ?? 0,
+                })
+              }}
+            </template>
+          </span>
+        </div>
+        <ul class="list-group list-group-flush">
+          <li
+            v-for="(item, idx) in checklistApp.document_checklist?.items || []"
+            :key="`${item.name}-${idx}`"
+            class="list-group-item d-flex flex-wrap align-items-center gap-2"
+            data-testid="partner-checklist-item"
+          >
+            <span class="me-auto">
+              <span class="fw-semibold" data-testid="partner-checklist-name">{{ item.name }}</span>
+              <span v-if="item.required === false" class="badge bg-light text-muted border ms-2">
+                {{ t('partnerPortalPage.checklistOptional') }}
+              </span>
+              <span v-if="item.due_now" class="badge bg-info text-dark ms-2">
+                {{ t('partnerPortalPage.checklistDueNow') }}
+              </span>
+            </span>
+            <span class="badge" :class="checklistBadgeClass(item.status)" data-testid="partner-checklist-status">
+              {{ checklistStatusLabel(item.status) }}
+            </span>
+          </li>
+          <li
+            v-if="!(checklistApp.document_checklist?.items || []).length"
+            class="list-group-item text-muted"
+            data-testid="partner-checklist-empty"
+          >
+            {{ t('partnerPortalPage.checklistEmpty') }}
+          </li>
+        </ul>
       </div>
 
       <div v-if="threadApp" class="card mt-4" data-testid="partner-thread">
@@ -363,6 +427,7 @@ const uploadError = ref('')
 const uploadFileInput = ref(null)
 const uploadCategories = ['signed_copy', 'correspondence', 'amendment', 'other']
 const SUPERSEDE_CATEGORIES = new Set(['signed_copy', 'amendment'])
+const checklistApp = ref(null)
 const threadApp = ref(null)
 const threadComments = ref([])
 const threadText = ref('')
@@ -536,8 +601,37 @@ async function acknowledgeNomination(app) {
     applications.value = applications.value.map((row) =>
       row.id === app.id ? { ...row, ...data } : row,
     )
+    if (checklistApp.value?.id === app.id) {
+      checklistApp.value = { ...checklistApp.value, ...data }
+    }
   } finally {
     ackBusyId.value = null
+  }
+}
+
+function openChecklist(app) {
+  checklistApp.value = app
+}
+
+function checklistStatusLabel(status) {
+  if (!status) return ''
+  const key = `applicationDetailPage.checklist.${status}`
+  return te(key) ? t(key) : String(status).replace(/_/g, ' ')
+}
+
+function checklistBadgeClass(status) {
+  switch (status) {
+    case 'approved':
+    case 'n_a':
+      return 'bg-success'
+    case 'pending_review':
+      return 'bg-warning text-dark'
+    case 'resubmit_requested':
+    case 'invalid':
+      return 'bg-danger'
+    case 'missing':
+    default:
+      return 'bg-secondary'
   }
 }
 

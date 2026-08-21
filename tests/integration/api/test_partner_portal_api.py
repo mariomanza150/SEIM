@@ -59,6 +59,30 @@ class TestPartnerPortalAPI(APITestCase):
         self.assertNotIn("student_email", row)
         self.assertIn("document_checklist", row)
 
+    def test_partner_checklist_is_read_only_summary(self):
+        from documents.models import DocumentType
+
+        doc_type = DocumentType.objects.create(name="Official Transcript")
+        self.program.required_document_types.add(doc_type)
+        PartnerContact.objects.create(user=self.partner, agreement=self.agreement)
+        self.authenticate_user(self.partner)
+        url = reverse("api:partner-application-list")
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        results = resp.data["results"] if isinstance(resp.data, dict) else resp.data
+        checklist = results[0]["document_checklist"]
+        self.assertFalse(checklist["complete"])
+        self.assertEqual(checklist["required_count"], 1)
+        self.assertEqual(checklist["approved_count"], 0)
+        self.assertEqual(len(checklist["items"]), 1)
+        item = checklist["items"][0]
+        self.assertEqual(item["name"], "Official Transcript")
+        self.assertEqual(item["status"], "missing")
+        self.assertTrue(item["required"])
+        self.assertNotIn("document_id", item)
+        self.assertNotIn("instructions", item)
+        self.assertNotIn("faq", item)
+
     def test_partner_can_acknowledge_nomination(self):
         from exchange.models import ApplicationStatus
 

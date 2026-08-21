@@ -46,7 +46,14 @@ describe('PartnerPortal', () => {
                 program_name: 'Erasmus',
                 status_name: 'nominated',
                 partner_nomination_acknowledged_at: null,
-                document_checklist: { complete: false, items: [] },
+                document_checklist: {
+                  complete: false,
+                  required_count: 1,
+                  approved_count: 0,
+                  items: [
+                    { name: 'Official Transcript', status: 'missing', required: true, due_now: true },
+                  ],
+                },
               },
             ],
           },
@@ -73,6 +80,21 @@ describe('PartnerPortal', () => {
     await wrapper.find('[data-testid="partner-view-documents"]').trigger('click')
     await flushPromises()
     expect(wrapper.find('[data-testid="partner-document-category"]').text()).toBe('Signed copy')
+  })
+
+  it('shows a read-only applicant document checklist', async () => {
+    const wrapper = mount(PartnerPortal, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' }, PageHeader: { template: '<div><slot /></div>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="partner-view-checklist"]').trigger('click')
+    expect(wrapper.find('[data-testid="partner-checklist"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="partner-checklist-name"]').text()).toBe('Official Transcript')
+    expect(wrapper.find('[data-testid="partner-checklist-status"]').text()).toBe('Missing')
+    expect(wrapper.find('[data-testid="partner-checklist-summary"]').text()).toContain('Incomplete')
   })
 
   it('acknowledges a nominated applicant', async () => {
