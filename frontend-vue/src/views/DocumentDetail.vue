@@ -1,41 +1,26 @@
 <template>
   <div class="document-detail">
-    <nav :aria-label="t('documentDetailPage.breadcrumbAria')">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-        </li>
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Documents' }">{{ t('route.names.Documents') }}</router-link>
-        </li>
-        <li class="breadcrumb-item active" aria-current="page">
-          {{
-            loading
-              ? t('documentDetailPage.loadingType')
-              : documentTypeLabel(document?.type, '') ||
-                fileName(document?.file) ||
-                t('documentDetailPage.fileUnknown')
-          }}
-        </li>
-      </ol>
-    </nav>
+    <PageHeader
+      :title="fileName(document?.file) || t('documentDetailPage.fileUnknown')"
+      icon-class="bi bi-file-earmark"
+    >
+      <template #breadcrumb>
+        <PageBreadcrumb
+          :aria-label="t('documentDetailPage.breadcrumbAria')"
+          :items="breadcrumbItems"
+        />
+      </template>
+    </PageHeader>
 
-      <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('documentDetailPage.loadingSpinner') }}</span>
-        </div>
-        <p class="mt-3 text-muted">{{ t('documentDetailPage.loadingDocument') }}</p>
-      </div>
-
-      <div v-else-if="error" class="alert alert-danger">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        {{ error }}
-        <router-link :to="{ name: 'Documents' }" class="btn btn-sm btn-outline-danger ms-3">
-          {{ t('documentDetailPage.backToDocuments') }}
-        </router-link>
-      </div>
-
-      <div v-else-if="document" data-testid="document-detail-page">
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      :empty="!document && !loading && !error"
+      :empty-title="t('documentDetailPage.loadError')"
+      skeleton="cards"
+      :loading-label="t('documentDetailPage.loadingDocument')"
+    >
+      <div v-if="document" data-testid="document-detail-page">
         <div
           v-for="req in openResubmissions"
           :key="req.id"
@@ -423,6 +408,7 @@
           </div>
         </div>
       </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -440,6 +426,9 @@ import {
 } from '@/utils/documentApi'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 
 const route = useRoute()
 const { t, locale } = useI18n()
@@ -463,6 +452,19 @@ const isStaff = computed(() => {
 })
 const isAdmin = computed(() => authStore.userRole === 'admin')
 const isStudent = computed(() => authStore.userRole === 'student')
+
+const breadcrumbItems = computed(() => {
+  const lastLabel = loading.value
+    ? t('documentDetailPage.loadingType')
+    : documentTypeLabel(document.value?.type, '') ||
+      fileName(document.value?.file) ||
+      t('documentDetailPage.fileUnknown')
+  return [
+    { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+    { to: { name: 'Documents' }, label: t('route.names.Documents') },
+    { label: lastLabel, truncate: true },
+  ]
+})
 
 const typeInstructions = computed(() => document.value?.type?.instructions || '')
 const typeFaq = computed(() => document.value?.type?.faq || '')
@@ -829,7 +831,6 @@ onUnmounted(() => {
 
 <style scoped>
 .document-detail {
-  min-height: 100vh;
   background-color: var(--seim-app-bg);
 }
 

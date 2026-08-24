@@ -2,14 +2,13 @@
   <div class="admin-dynforms-page">
     <PageHeader :title="t('adminDynforms.title')" :subtitle="t('adminDynforms.subtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminDynforms') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.AdminDynforms') },
+          ]"
+        />
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="fetchForms">
@@ -21,13 +20,50 @@
       </template>
     </PageHeader>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-    <div v-else class="card">
+    <CompactFilterBar test-id="admin-dynforms-filters" @clear="clearFilters">
+      <template #primary>
+        <div class="col-md-6">
+          <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
+          <input
+            v-model="filters.search"
+            class="form-control"
+            type="text"
+            :placeholder="t('adminForms.searchPlaceholder')"
+            @input="debouncedSearch"
+          />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">{{ t('adminForms.filterType') }}</label>
+          <select v-model="filters.form_type" class="form-select" @change="fetchForms">
+            <option value="">{{ t('adminCommon.filterAll') }}</option>
+            <option v-for="opt in formTypeOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+      </template>
+      <template #advanced>
+        <div class="col-md-4">
+          <label class="form-label">{{ t('adminCommon.sortLabel') }}</label>
+          <select v-model="filters.ordering" class="form-select" @change="fetchForms">
+            <option value="name">{{ t('adminForms.sortNameAsc') }}</option>
+            <option value="-created_at">{{ t('adminForms.sortNewest') }}</option>
+          </select>
+        </div>
+      </template>
+    </CompactFilterBar>
+
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      :empty="!forms.length"
+      :empty-title="t('adminDynforms.empty')"
+      skeleton="table"
+      :loading-label="t('adminCommon.loading')"
+      :skeleton-columns="4"
+    >
+    <div class="card">
+      <ResponsiveList :items="forms" :columns="mobileColumns" mobile-test-id="admin-dynforms-mobile">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0" data-testid="dynforms-table">
           <thead>
@@ -39,9 +75,6 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="!forms.length">
-              <td colspan="4" class="text-muted text-center py-4">{{ t('adminDynforms.empty') }}</td>
-            </tr>
             <tr v-for="ft in forms" :key="ft.id">
               <td>
                 <div class="fw-medium">{{ ft.name }}</div>
@@ -65,46 +98,62 @@
           </tbody>
         </table>
       </div>
+      <template #col-name="{ item }">
+        <div class="fw-medium">{{ item.name }}</div>
+        <div v-if="item.description" class="text-muted small">{{ item.description }}</div>
+      </template>
+      <template #col-type="{ item }">
+        <span class="badge bg-secondary">{{ item.form_type }}</span>
+      </template>
+      <template #col-fields="{ item }">{{ item.field_count ?? 0 }}</template>
+      <template #actions="{ item }">
+        <router-link
+          class="btn btn-sm btn-primary"
+          :to="{ name: 'AdminDynformEditor', params: { id: String(item.id) } }"
+          data-testid="dynforms-open-builder"
+        >
+          {{ t('adminDynforms.openBuilder') }}
+        </router-link>
+        <button type="button" class="btn btn-sm btn-outline-danger" :disabled="mutating" @click="confirmDelete(item)">
+          {{ t('adminCommon.delete') }}
+        </button>
+      </template>
+      </ResponsiveList>
     </div>
+    </PageStateShell>
 
-    <div v-if="creator.open" class="modal-backdrop show"></div>
-    <div v-if="creator.open" class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ t('adminDynforms.create') }}</h5>
-            <button type="button" class="btn-close" :aria-label="t('adminCommon.close')" @click="creator.open = false" />
-          </div>
-          <div class="modal-body">
-            <div v-if="creator.error" class="alert alert-danger">{{ creator.error }}</div>
-            <label class="form-label">{{ t('adminForms.fields.name') }}</label>
-            <input v-model="creator.form.name" class="form-control mb-3" type="text" data-testid="dynforms-create-name" />
-            <label class="form-label">{{ t('adminForms.fields.type') }}</label>
-            <select v-model="creator.form.form_type" class="form-select mb-3">
-              <option v-for="opt in formTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </select>
-            <label class="form-label">{{ t('adminForms.fields.description') }}</label>
-            <textarea v-model="creator.form.description" class="form-control" rows="2" />
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" @click="creator.open = false">
-              {{ t('adminCommon.cancel') }}
-            </button>
-            <button type="button" class="btn btn-primary" :disabled="creator.saving" data-testid="dynforms-create-save" @click="createForm">
-              {{ t('adminDynforms.createAndBuild') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <FormModal
+      :open="creator.open"
+      :title="t('adminDynforms.create')"
+      :error="creator.error || ''"
+      :saving="creator.saving"
+      :submit-label="t('adminDynforms.createAndBuild')"
+      size="md"
+      @close="closeCreator"
+      @submit="createForm"
+    >
+      <label class="form-label">{{ t('adminForms.fields.name') }}</label>
+      <input v-model="creator.form.name" class="form-control mb-3" type="text" data-testid="dynforms-create-name" />
+      <label class="form-label">{{ t('adminForms.fields.type') }}</label>
+      <select v-model="creator.form.form_type" class="form-select mb-3">
+        <option v-for="opt in formTypeOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+      </select>
+      <label class="form-label">{{ t('adminForms.fields.description') }}</label>
+      <textarea v-model="creator.form.description" class="form-control" rows="2" />
+    </FormModal>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import FormModal from '@/components/FormModal.vue'
 import api from '@/services/api'
 import { useConfirm } from '@/composables/useConfirm'
 import { useToast } from '@/composables/useToast'
@@ -118,6 +167,14 @@ const loading = ref(true)
 const error = ref(null)
 const forms = ref([])
 const mutating = ref(false)
+const filters = ref({ search: '', form_type: '', ordering: 'name' })
+
+const mobileColumns = computed(() => [
+  { key: 'name', label: t('adminForms.columns.name') },
+  { key: 'type', label: t('adminForms.columns.type') },
+  { key: 'fields', label: t('adminForms.columns.fields') },
+])
+
 const formTypeOptions = [
   { value: 'application', label: 'Application' },
   { value: 'survey', label: 'Survey' },
@@ -136,11 +193,25 @@ function normalizeApiList(data) {
   return Array.isArray(data) ? data : []
 }
 
+let searchTimeout = null
+function debouncedSearch() {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => fetchForms(), 400)
+}
+
+function clearFilters() {
+  filters.value = { search: '', form_type: '', ordering: 'name' }
+  fetchForms()
+}
+
 async function fetchForms() {
   loading.value = true
   error.value = null
   try {
-    const response = await api.get('/api/application-forms/form-types/', { params: { ordering: 'name' } })
+    const params = { ordering: filters.value.ordering }
+    if (filters.value.search) params.search = filters.value.search
+    if (filters.value.form_type) params.form_type = filters.value.form_type
+    const response = await api.get('/api/application-forms/form-types/', { params })
     forms.value = normalizeApiList(response.data)
   } catch {
     error.value = t('adminDynforms.loadError')
@@ -156,6 +227,10 @@ function openCreate() {
     error: null,
     form: { name: '', form_type: 'application', description: '' },
   }
+}
+
+function closeCreator() {
+  creator.value.open = false
 }
 
 async function createForm() {

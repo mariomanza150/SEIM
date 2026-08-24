@@ -2,14 +2,13 @@
   <div class="eligibility-rulesets-page">
     <PageHeader :title="t('eligibilityRulesetsPage.title')" :subtitle="t('eligibilityRulesetsPage.subtitle')">
       <template #breadcrumb>
-        <nav :aria-label="t('eligibilityRulesetsPage.breadcrumbAria')">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.EligibilityRulesets') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('eligibilityRulesetsPage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.EligibilityRulesets') },
+          ]"
+        />
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="fetchList">
@@ -21,58 +20,70 @@
       </template>
     </PageHeader>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-    <div v-else class="card" data-testid="eligibility-rulesets-page">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead>
-            <tr>
-              <th>{{ t('eligibilityRulesetsPage.colName') }}</th>
-              <th>{{ t('eligibilityRulesetsPage.colSchema') }}</th>
-              <th>{{ t('eligibilityRulesetsPage.colRevision') }}</th>
-              <th>{{ t('eligibilityRulesetsPage.colActive') }}</th>
-              <th>{{ t('eligibilityRulesetsPage.colUpdated') }}</th>
-              <th class="text-end">{{ t('adminCommon.actions') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in rows" :key="row.id">
-              <td>{{ row.name }}</td>
-              <td data-testid="ruleset-schema-version">v{{ row.schema_version }}</td>
-              <td data-testid="ruleset-content-revision">r{{ row.content_revision ?? 1 }}</td>
-              <td>{{ row.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}</td>
-              <td>{{ formatDate(row.updated_at) }}</td>
-              <td class="text-end">
-                <button type="button" class="btn btn-sm btn-outline-primary" @click="openEdit(row)">
-                  {{ t('adminCommon.edit') }}
-                </button>
-              </td>
-            </tr>
-            <tr v-if="!rows.length">
-              <td colspan="6" class="text-muted text-center py-4">{{ t('eligibilityRulesetsPage.empty') }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div v-if="editor.open" class="modal d-block" tabindex="-1" role="dialog" data-testid="ruleset-editor">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              {{ editor.id ? t('eligibilityRulesetsPage.editTitle') : t('eligibilityRulesetsPage.create') }}
-            </h5>
-            <button type="button" class="btn-close" :aria-label="t('adminCommon.close')" @click="editor.open = false"></button>
+    <RulesetListShell
+      :loading="loading"
+      :error="error"
+      :empty="!loading && !error && rows.length === 0"
+      :empty-body="t('eligibilityRulesetsPage.empty')"
+      :loading-label="t('adminCommon.loading')"
+      :skeleton-columns="6"
+      :items="rows"
+      :columns="rulesetColumns"
+      mobile-test-id="eligibility-ruleset"
+    >
+      <template #table>
+        <div class="card" data-testid="eligibility-rulesets-page">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>{{ t('eligibilityRulesetsPage.colName') }}</th>
+                  <th>{{ t('eligibilityRulesetsPage.colSchema') }}</th>
+                  <th>{{ t('eligibilityRulesetsPage.colRevision') }}</th>
+                  <th>{{ t('eligibilityRulesetsPage.colActive') }}</th>
+                  <th>{{ t('eligibilityRulesetsPage.colUpdated') }}</th>
+                  <th class="text-end">{{ t('adminCommon.actions') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in rows" :key="row.id">
+                  <td>{{ row.name }}</td>
+                  <td data-testid="ruleset-schema-version">v{{ row.schema_version }}</td>
+                  <td data-testid="ruleset-content-revision">r{{ row.content_revision ?? 1 }}</td>
+                  <td>{{ row.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}</td>
+                  <td>{{ formatDate(row.updated_at) }}</td>
+                  <td class="text-end">
+                    <button type="button" class="btn btn-sm btn-outline-primary" @click="openEdit(row)">
+                      {{ t('adminCommon.edit') }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <form @submit.prevent="saveEditor">
-            <div class="modal-body">
-              <div v-if="editor.error" class="alert alert-danger">{{ editor.error }}</div>
+        </div>
+      </template>
+      <template #col-schema_version="{ item }">v{{ item.schema_version }}</template>
+      <template #col-content_revision="{ item }">r{{ item.content_revision ?? 1 }}</template>
+      <template #col-is_active="{ item }">{{ item.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}</template>
+      <template #col-updated_at="{ item }">{{ formatDate(item.updated_at) }}</template>
+      <template #actions="{ item }">
+        <button type="button" class="btn btn-sm btn-outline-primary" @click="openEdit(item)">
+          {{ t('adminCommon.edit') }}
+        </button>
+      </template>
+    </RulesetListShell>
+
+    <FormModal
+      :open="editor.open"
+      :title="editor.id ? t('eligibilityRulesetsPage.editTitle') : t('eligibilityRulesetsPage.create')"
+      :error="editor.error"
+      :saving="editor.saving"
+      data-testid="ruleset-editor"
+      @close="editor.open = false"
+      @submit="saveEditor"
+    >
+      <form id="eligibility-ruleset-form" @submit.prevent="saveEditor">
               <div class="mb-3">
                 <label class="form-label" for="rs-name">{{ t('eligibilityRulesetsPage.fieldName') }}</label>
                 <input id="rs-name" v-model.trim="editor.form.name" class="form-control" required data-testid="ruleset-name" />
@@ -135,18 +146,8 @@
                   <input id="rs-deadline" v-model="editor.form.application_deadline" class="form-control" type="date" />
                 </div>
               </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-outline-secondary" @click="editor.open = false">{{ t('adminCommon.cancel') }}</button>
-              <button type="submit" class="btn btn-primary" :disabled="editor.saving" data-testid="ruleset-save">
-                {{ t('adminCommon.save') }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-    <div v-if="editor.open" class="modal-backdrop fade show"></div>
+      </form>
+    </FormModal>
   </div>
 </template>
 
@@ -158,6 +159,9 @@ import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
 import SearchableSelect from '@/components/SearchableSelect.vue'
 import { spokenLanguageSelectOptions } from '@/utils/spokenLanguageOptions'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import RulesetListShell from '@/components/RulesetListShell.vue'
+import FormModal from '@/components/FormModal.vue'
 
 const { t, locale } = useI18n()
 const toast = useToast()
@@ -166,6 +170,14 @@ const error = ref('')
 const rows = ref([])
 const spokenLanguages = ref([])
 const spokenLanguageOptions = computed(() => spokenLanguageSelectOptions(spokenLanguages.value))
+
+const rulesetColumns = computed(() => [
+  { key: 'name', label: t('eligibilityRulesetsPage.colName') },
+  { key: 'schema_version', label: t('eligibilityRulesetsPage.colSchema') },
+  { key: 'content_revision', label: t('eligibilityRulesetsPage.colRevision') },
+  { key: 'is_active', label: t('eligibilityRulesetsPage.colActive') },
+  { key: 'updated_at', label: t('eligibilityRulesetsPage.colUpdated') },
+])
 const editor = reactive({
   open: false,
   id: null,

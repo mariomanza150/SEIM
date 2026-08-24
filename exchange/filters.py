@@ -162,11 +162,14 @@ class ProgramFilter(django_filters.FilterSet):
         user = getattr(self.request, "user", None)
         if not user or not user.is_authenticated:
             return queryset.none()
+        from accounts.models import Profile
         from exchange.eligibility_rules import evaluate_eligibility
 
+        profile = Profile.objects.filter(user_id=user.pk).first()
+        programs = list(queryset.prefetch_related("required_document_types"))
         eligible_ids = []
-        for program in queryset:
-            evaluation = evaluate_eligibility(user, program)
+        for program in programs:
+            evaluation = evaluate_eligibility(user, program, profile=profile)
             blocking = [
                 rule
                 for rule in evaluation.rules

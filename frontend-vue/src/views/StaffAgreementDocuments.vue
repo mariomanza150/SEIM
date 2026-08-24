@@ -1,37 +1,41 @@
 <template>
   <div class="staff-agreement-docs-page">
-    <PageBreadcrumb
-      :aria-label="t('staffAgreementDocumentsPage.breadcrumbAria')"
-      :items="[
-        { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
-        { to: { name: 'StaffExchangeAgreements' }, label: t('route.names.StaffExchangeAgreements') },
-        { label: agreement?.title || t('route.names.StaffAgreementDocuments'), truncate: true },
-      ]"
-    />
-
     <div v-if="routeInvalid" class="alert alert-warning">
       {{ t('staffAgreementDocumentsPage.invalidRoute') }}
       <router-link :to="{ name: 'StaffExchangeAgreements' }">{{ t('route.names.StaffExchangeAgreements') }}</router-link>
     </div>
 
     <template v-else>
-      <div class="row mb-4">
-        <div class="col">
-          <h2>
-            <i class="bi bi-archive me-2"></i>{{ t('route.names.StaffAgreementDocuments') }}
-          </h2>
-          <p v-if="agreement" class="text-muted mb-0">
+      <PageHeader
+        :title="t('route.names.StaffAgreementDocuments')"
+        icon-class="bi bi-archive"
+      >
+        <template #breadcrumb>
+          <PageBreadcrumb
+            :aria-label="t('staffAgreementDocumentsPage.breadcrumbAria')"
+            :items="[
+              { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+              { to: { name: 'StaffExchangeAgreements' }, label: t('route.names.StaffExchangeAgreements') },
+              { label: agreement?.title || t('route.names.StaffAgreementDocuments'), truncate: true },
+            ]"
+          />
+        </template>
+        <template #subtitle>
+          <template v-if="agreement">
             <span class="fw-medium">{{ agreement.title }}</span>
             <span class="mx-1">·</span>
             <span>{{ agreement.partner_institution_name }}</span>
-          </p>
-          <p v-else-if="!agreementLoading" class="text-muted">{{ t('staffAgreementDocumentsPage.pageSubtitle') }}</p>
-        </div>
-      </div>
+          </template>
+          <template v-else-if="!agreementLoading">{{ t('staffAgreementDocumentsPage.pageSubtitle') }}</template>
+        </template>
+      </PageHeader>
 
-      <div v-if="agreementError" class="alert alert-danger">{{ agreementError }}</div>
-
-      <div class="card mb-4">
+      <PageStateShell
+        :loading="agreementLoading"
+        :error="agreementError || ''"
+        :loading-label="t('staffAgreementDocumentsPage.pageLoading')"
+      >
+        <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
           <span class="fw-medium">{{ t('staffAgreementDocumentsPage.addSectionTitle') }}</span>
         </div>
@@ -192,76 +196,115 @@
         </template>
       </CompactFilterBar>
 
-      <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('staffAgreementDocumentsPage.loadingSpinner') }}</span>
+      <PageStateShell
+        :loading="loading"
+        :error="error || ''"
+        :empty="!rows.length"
+        :empty-title="t('staffAgreementDocumentsPage.emptyFiltered')"
+        skeleton="table"
+        :loading-label="t('staffAgreementDocumentsPage.pageLoading')"
+        :skeleton-columns="4"
+        data-testid="agreement-docs-list"
+      >
+        <div class="card">
+          <ResponsiveList :items="rows" :columns="mobileColumns" mobile-test-id="agreement-docs-mobile">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="seim-table-head">
+                <tr>
+                  <th>{{ t('staffAgreementDocumentsPage.colTitle') }}</th>
+                  <th>{{ t('staffAgreementDocumentsPage.colCategory') }}</th>
+                  <th>{{ t('staffAgreementDocumentsPage.colUploaded') }}</th>
+                  <th class="text-end">{{ t('staffAgreementDocumentsPage.colActions') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="d in rows" :key="d.id">
+                  <td class="fw-medium">{{ d.title || fileLabel(d.file) }}</td>
+                  <td><span class="badge bg-secondary">{{ formatCategory(d.category) }}</span></td>
+                  <td class="small text-muted">{{ formatDate(d.created_at) }}</td>
+                  <td class="text-end text-nowrap">
+                    <div class="btn-group btn-group-sm" role="group">
+                      <button
+                        v-if="d.file"
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        :title="t('staffAgreementDocumentsPage.previewTitle')"
+                        :aria-label="t('staffAgreementDocumentsPage.previewTitle')"
+                        @click="openPreview(d)"
+                      >
+                        <i class="bi bi-eye"></i>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-outline-secondary"
+                        :title="t('staffAgreementDocumentsPage.editTitle')"
+                        :aria-label="t('staffAgreementDocumentsPage.editTitle')"
+                        @click="openEdit(d)"
+                      >
+                        <i class="bi bi-pencil"></i>
+                      </button>
+                      <a
+                        v-if="d.file"
+                        :href="resolveFileUrl(d.file)"
+                        class="btn btn-outline-secondary"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        :aria-label="t('staffAgreementDocumentsPage.downloadTitle')"
+                      >
+                        <i class="bi bi-download"></i>
+                      </a>
+                      <button
+                        type="button"
+                        class="btn btn-outline-danger"
+                        :title="t('staffAgreementDocumentsPage.deleteTitle')"
+                        :aria-label="t('staffAgreementDocumentsPage.deleteTitle')"
+                        @click="onDelete(d)"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <template #col-title="{ item }">{{ item.title || fileLabel(item.file) }}</template>
+          <template #col-category="{ item }">
+            <span class="badge bg-secondary">{{ formatCategory(item.category) }}</span>
+          </template>
+          <template #col-uploaded="{ item }">
+            <span class="small text-muted">{{ formatDate(item.created_at) }}</span>
+          </template>
+          <template #actions="{ item }">
+            <button
+              v-if="item.file"
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              :title="t('staffAgreementDocumentsPage.previewTitle')"
+              @click="openPreview(item)"
+            >
+              <i class="bi bi-eye"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary" @click="openEdit(item)">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <a
+              v-if="item.file"
+              :href="resolveFileUrl(item.file)"
+              class="btn btn-sm btn-outline-secondary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i class="bi bi-download"></i>
+            </a>
+            <button type="button" class="btn btn-sm btn-outline-danger" @click="onDelete(item)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </template>
+          </ResponsiveList>
         </div>
-      </div>
-      <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-      <div v-else-if="rows.length === 0" class="card" data-testid="agreement-docs-empty">
-        <div class="card-body text-center text-muted py-5">{{ t('staffAgreementDocumentsPage.emptyFiltered') }}</div>
-      </div>
-      <div v-else class="table-responsive card">
-        <table class="table table-hover mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>{{ t('staffAgreementDocumentsPage.colTitle') }}</th>
-              <th>{{ t('staffAgreementDocumentsPage.colCategory') }}</th>
-              <th>{{ t('staffAgreementDocumentsPage.colUploaded') }}</th>
-              <th class="text-end">{{ t('staffAgreementDocumentsPage.colActions') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="d in rows" :key="d.id">
-              <td class="fw-medium">{{ d.title || fileLabel(d.file) }}</td>
-              <td><span class="badge bg-secondary">{{ formatCategory(d.category) }}</span></td>
-              <td class="small text-muted">{{ formatDate(d.created_at) }}</td>
-              <td class="text-end text-nowrap">
-                <div class="btn-group btn-group-sm" role="group">
-                  <button
-                    v-if="d.file"
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    :title="t('staffAgreementDocumentsPage.previewTitle')"
-                    :aria-label="t('staffAgreementDocumentsPage.previewTitle')"
-                    @click="openPreview(d)"
-                  >
-                    <i class="bi bi-eye"></i>
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-outline-secondary"
-                    :title="t('staffAgreementDocumentsPage.editTitle')"
-                    :aria-label="t('staffAgreementDocumentsPage.editTitle')"
-                    @click="openEdit(d)"
-                  >
-                    <i class="bi bi-pencil"></i>
-                  </button>
-                  <a
-                    v-if="d.file"
-                    :href="resolveFileUrl(d.file)"
-                    class="btn btn-outline-secondary"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    :aria-label="t('staffAgreementDocumentsPage.downloadTitle')"
-                  >
-                    <i class="bi bi-download"></i>
-                  </a>
-                  <button
-                    type="button"
-                    class="btn btn-outline-danger"
-                    :title="t('staffAgreementDocumentsPage.deleteTitle')"
-                    :aria-label="t('staffAgreementDocumentsPage.deleteTitle')"
-                    @click="onDelete(d)"
-                  >
-                    <i class="bi bi-trash"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      </PageStateShell>
 
       <nav
         v-if="!loading && pagination.count > pagination.pageSize"
@@ -309,6 +352,7 @@
           </li>
         </ul>
       </nav>
+      </PageStateShell>
     </template>
 
     <div
@@ -413,8 +457,11 @@ import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
 import { useConfirm } from '@/composables/useConfirm'
 import api from '@/services/api'
+import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import { resolveFileUrl } from '@/utils/apiUrl'
 import {
   STAFF_SAVED_SEARCH_TYPE,
@@ -506,6 +553,12 @@ const pagination = ref({
 
 const totalPages = computed(() => Math.ceil(pagination.value.count / pagination.value.pageSize) || 1)
 
+const mobileColumns = computed(() => [
+  { key: 'title', label: t('staffAgreementDocumentsPage.colTitle') },
+  { key: 'category', label: t('staffAgreementDocumentsPage.colCategory') },
+  { key: 'uploaded', label: t('staffAgreementDocumentsPage.colUploaded') },
+])
+
 let debounceTimer = null
 function debouncedFetch() {
   clearTimeout(debounceTimer)
@@ -548,7 +601,7 @@ async function loadSupersedesOptions() {
         agreement: agreementId.value,
         category: createForm.value.category,
         current_only: 'true',
-        page_size: 200,
+        page_size: 100,
       },
     })
     const list = data.results ?? data ?? []
@@ -794,9 +847,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.staff-agreement-docs-page {
-  min-height: 100vh;
-  background-color: var(--seim-app-bg);
-}
-</style>

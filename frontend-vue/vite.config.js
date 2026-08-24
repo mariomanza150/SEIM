@@ -63,10 +63,28 @@ export default defineConfig({
     
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': ['vue', 'vue-router', 'pinia'],
-          'bootstrap': ['bootstrap'],
-        }
+        manualChunks(id) {
+          if (id.includes('node_modules/bpmn-js') || id.includes('node_modules/bpmn-moddle')) {
+            return 'bpmn'
+          }
+          if (id.includes('node_modules/vue-i18n') || id.includes('node_modules/@intlify')) {
+            return 'i18n'
+          }
+          if (id.includes('node_modules/axios')) {
+            return 'axios'
+          }
+          if (
+            id.includes('node_modules/vue/') ||
+            id.includes('node_modules/vue-router') ||
+            id.includes('node_modules/pinia')
+          ) {
+            return 'vendor'
+          }
+          if (id.includes('node_modules/bootstrap')) {
+            return 'bootstrap'
+          }
+          return undefined
+        },
       }
     }
   },

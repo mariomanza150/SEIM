@@ -518,15 +518,18 @@ def evaluate_eligibility(
     student: User,
     program: Program,
     application: Application | None = None,
+    profile: Profile | None = None,
 ) -> EligibilityEvaluation:
     """
     Run all eligibility rules; return structured outcome (no exceptions for failures).
 
     Profile is loaded with a queryset read so results are not stale when the ``User``
     instance still holds a cached ``profile`` from an earlier access (e.g. signals on
-    user create followed by ``Profile.objects.update_or_create``).
+    user create followed by ``Profile.objects.update_or_create``). Pass ``profile`` to
+    reuse a preloaded instance when evaluating many programs for the same student.
     """
-    profile = Profile.objects.filter(user_id=student.pk).first()
+    if profile is None or getattr(profile, "user_id", None) != student.pk:
+        profile = Profile.objects.filter(user_id=student.pk).first()
     if not profile:
         return EligibilityEvaluation(
             eligible=False,

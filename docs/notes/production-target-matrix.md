@@ -1,17 +1,29 @@
 # Production target matrix (recommended sizing)
 
-This document recommends **host sizing** and **Compose-scale knobs** for SEIM when deploying with `docker-compose.prod.yml` and `.env.prod` (see `env.prod.example`). Values are starting points; tune using metrics (latency, queue depth, DB connections, Redis memory, ClamAV scan time).
+This document recommends **host sizing** and **Compose-scale knobs** for SEIM.
 
-**Related:** `docs/deployment.md`, `docker-compose.prod.yml`, `env.prod.example`.
+**Canonical AWS tiers (Ultra-Lean / Minimum / Recommended):** see **[docs/deployment.md](../deployment.md)** — default Ultra-Lean uses `docker-compose.lean.yml` on EC2 `t4g.small` (~$15/mo). ClamAV is omitted from base AWS profiles.
+
+The tables below remain useful for **larger** single-host or campus-scale deployments that still use `docker-compose.prod.yml` and `.env.prod` (`env.prod.example`). Values are starting points; tune using metrics (latency, queue depth, DB connections, Redis memory).
+
+**Related:** `docs/deployment.md`, `docker-compose.lean.yml`, `docker-compose.prod.yml`, `env.lean.example`, `env.prod.example`.
 
 ## Assumptions
 
 - **Web tier:** Gunicorn WSGI (`seim.wsgi:application`) as in production compose.
-- **Workers:** Celery for email, notifications, and background work; **Celery Beat** runs as a **single** scheduler (`celery-beat` service).
-- **Data:** PostgreSQL 15, Redis 7.2 (broker + cache + sessions), optional ClamAV for uploads.
+- **Workers:** Celery for email, notifications, and background work; Ultra-Lean runs **worker+beat in one container**; Minimum/Recommended keep a **single** `celery-beat` scheduler.
+- **Data:** PostgreSQL 15, Redis 7.2 (broker + cache + sessions). ClamAV is **optional** (`--profile clamav`), not part of base AWS profiles.
 - **WebSockets:** Dev uses Daphne (ASGI). Production compose uses **Gunicorn WSGI**; if you need Channels/WebSockets in production, plan a separate ASGI deployment path and Nginx WebSocket proxying (not covered by default prod compose).
 
-## Tier summary
+## AWS tier summary (preferred)
+
+| Tier | Monthly Est. | Hardware | Compose |
+|------|--------------|----------|---------|
+| **Ultra-Lean (default)** | ~$15 | `t4g.small` 2 GB + 30 GB gp3 | `docker-compose.lean.yml` |
+| **Minimum** | ~$65 | `t4g.medium` 4 GB + 40 GB gp3 | `docker-compose.prod.yml` |
+| **Recommended** | ~$180–$220 | `t4g.medium` + RDS `db.t4g.small` + ElastiCache | App Compose + managed data |
+
+## Campus-scale tier summary (optional)
 
 | Tier | Typical use | Approx. concurrent users* | vCPU | RAM | SSD (data + logs + backups) |
 |------|-------------|---------------------------|------|-----|---------------------------|
@@ -69,20 +81,22 @@ Used for: Django cache, sessions (`django_redis`), Celery broker/result backend,
 
 Prod compose uses **AOF** (`--appendonly yes`) and **password** auth—plan disk for AOF growth.
 
-## ClamAV
+## ClamAV (optional)
 
-Virus scanning is CPU- and memory-sensitive during definition updates and concurrent scans.
+**Base AWS profiles omit ClamAV** (saves ~1.2–1.5 GB RAM). Enable only with Compose profile `clamav` on hosts with spare memory (`docs/deployment.md`, `docs/virus_scanner_setup.md`).
 
 | Tier | Notes |
 |------|--------|
-| **Light** | Single `clamav` container; stagger heavy upload tests. |
-| **Standard** | Same; monitor scan latency and web timeouts (`GUNICORN_TIMEOUT`, Nginx `proxy_read_timeout`). |
-| **High** | Ensure ClamAV has reserved RAM; consider async scan queues (already Celery-friendly for large files—see `docs/virus_scanner_setup.md`). |
+| **Ultra-Lean / Minimum** | Keep `VIRUS_SCANNER_TYPE=mock`. Do not enable ClamAV on 2 GB hosts. |
+| **Campus Light+** | Optional single `clamav` container via `--profile clamav`; stagger heavy upload tests. |
+| **High** | Ensure ClamAV has reserved RAM; consider async scan queues. |
 
 ## Quick selection
 
-- **First production cut:** **Standard** row for `.env.prod` scaling + **8 GB RAM** host minimum; move to **16 GB** if you run **2 web replicas** and **2 celery replicas** with defaults.
-- **Cost-sensitive pilot:** **Light** row, single replica, off-peak backups, monitor disk and Celery queue depth.
+- **University SEIM default (~120 applicants/year):** **Ultra-Lean** — `docker-compose.lean.yml` on `t4g.small` (~$15/mo). See `docs/deployment.md`.
+- **Need Elastic IP + separated Celery + CloudWatch:** **Minimum** on `t4g.medium` with `docker-compose.prod.yml`.
+- **Managed DB/Redis:** **Recommended** split tier (RDS + ElastiCache).
+- **Campus-scale Compose on a large VM:** use the Light/Standard/High rows above for `.env.prod` knobs.
 
 ## Scenario: coordination office (~500 applicants per semester)
 

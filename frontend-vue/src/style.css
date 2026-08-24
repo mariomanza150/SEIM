@@ -51,6 +51,24 @@ html[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
 
+/* Semantic surfaces (theme-aware; prefer these over bg-light / table-light) */
+.seim-table-head {
+  background-color: var(--seim-muted-bg, #f8f9fa);
+  color: var(--seim-surface-text, inherit);
+}
+
+.seim-surface-muted {
+  background-color: var(--seim-muted-bg, #f8f9fa);
+  color: inherit;
+}
+
+html[data-theme='dark'] .seim-table-head,
+html[data-theme='dark'] .seim-surface-muted {
+  background-color: #111827;
+  color: var(--seim-surface-text);
+  border-color: var(--seim-border-color);
+}
+
 /* Bootstrap surfaces that need explicit dark adjustments */
 html[data-theme='dark'] .table-light {
   --bs-table-bg: #111827;
@@ -217,14 +235,6 @@ html[data-theme='dark'] .btn-close {
   opacity: 0;
 }
 
-/* Loading spinner */
-.spinner-wrapper {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
-}
-
 /* Card hover effect */
 .card-hover {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -235,31 +245,8 @@ html[data-theme='dark'] .btn-close {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-/* Button loading state */
-.btn-loading {
-  position: relative;
-  pointer-events: none;
-}
-
-.btn-loading::after {
-  content: '';
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  top: 50%;
-  left: 50%;
-  margin-left: -8px;
-  margin-top: -8px;
-  border: 2px solid #fff;
-  border-radius: 50%;
-  border-top-color: transparent;
-  animation: spinner 0.6s linear infinite;
-}
-
-@keyframes spinner {
-  to {
-    transform: rotate(360deg);
-  }
+html[data-reduce-motion='true'] .card-hover:hover {
+  transform: none;
 }
 
 /* Utility classes */
@@ -297,4 +284,198 @@ html[data-theme='dark'] .seim-notification-unread {
   .hide-desktop {
     display: none !important;
   }
+}
+
+/* App shell + route chrome (from App.vue) */
+#app {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100%;
+  background-color: var(--seim-app-bg);
+  color: var(--seim-surface-text);
+}
+
+html,
+body {
+  height: 100%;
+  background-color: var(--seim-app-bg);
+  color: var(--seim-surface-text);
+}
+
+body,
+.card,
+.dropdown-menu,
+.list-group-item,
+.modal-content,
+.offcanvas,
+.table,
+.table th,
+.table td {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+html[data-theme='dark'] body,
+html[data-theme='dark'] .card,
+html[data-theme='dark'] .dropdown-menu,
+html[data-theme='dark'] .list-group-item,
+html[data-theme='dark'] .modal-content,
+html[data-theme='dark'] .offcanvas,
+html[data-theme='dark'] .table,
+html[data-theme='dark'] .table th,
+html[data-theme='dark'] .table td,
+html[data-theme='dark'] .breadcrumb,
+html[data-theme='dark'] .alert-light {
+  background-color: var(--seim-surface-bg);
+  color: var(--seim-surface-text);
+  border-color: var(--seim-border-color);
+}
+
+html[data-theme='dark'] .form-control,
+html[data-theme='dark'] .form-select {
+  background-color: #111827;
+  color: var(--seim-surface-text);
+  border-color: var(--seim-border-color);
+}
+
+html[data-theme='dark'] .form-control::placeholder {
+  color: var(--seim-muted);
+  opacity: 1;
+}
+
+html[data-theme='dark'] .text-muted,
+html[data-theme='dark'] .form-text,
+html[data-theme='dark'] .breadcrumb-item,
+html[data-theme='dark'] .breadcrumb-item a {
+  color: var(--seim-muted) !important;
+}
+
+html[data-theme='dark'] .table-striped > tbody > tr:nth-of-type(odd) > * {
+  --bs-table-bg-type: rgba(255, 255, 255, 0.04);
+  color: var(--seim-surface-text);
+}
+
+html[data-theme='dark'] .table-hover > tbody > tr:hover > * {
+  --bs-table-bg-state: rgba(255, 255, 255, 0.06);
+  color: var(--seim-surface-text);
+}
+
+html[data-theme='dark'] .seim-compact-filter-bar .offcanvas,
+html[data-theme='dark'] .modal-backdrop.show {
+  background-color: rgba(0, 0, 0, 0.65);
+}
+
+.seim-route-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 1020;
+  pointer-events: none;
+  opacity: 0;
+  background: transparent;
+  transition: opacity 0.15s ease;
+}
+
+.seim-route-progress.is-active {
+  opacity: 1;
+}
+
+.seim-route-progress__bar {
+  height: 100%;
+  width: 35%;
+  background: var(--bs-primary, #0d6efd);
+  border-radius: 999px;
+  transform: translateX(-120%);
+  animation: seim-route-progress-indeterminate 0.95s ease-in-out infinite;
+}
+
+@keyframes seim-route-progress-indeterminate {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(320%);
+  }
+}
+
+html[data-high-contrast='true'] .card,
+html[data-high-contrast='true'] .form-control,
+html[data-high-contrast='true'] .form-select,
+html[data-high-contrast='true'] .btn,
+html[data-high-contrast='true'] .list-group-item {
+  border-width: 2px;
+}
+
+html[data-reduce-motion='true'] *,
+html[data-reduce-motion='true'] *::before,
+html[data-reduce-motion='true'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+  transition-duration: 0.01ms !important;
+}
+
+html[data-reduce-motion='true'] .seim-route-progress__bar {
+  animation: none !important;
+  transform: translateX(0);
+  width: 100%;
+}
+
+.seim-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1080;
+  padding: 0.5rem 1rem;
+  background: var(--seim-surface-bg);
+  color: var(--seim-surface-text);
+  border: 2px solid var(--seim-border-color);
+  border-radius: 0.25rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.seim-skip-link:focus,
+.seim-skip-link:focus-visible {
+  left: 0.75rem;
+  top: 0.75rem;
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bs-primary, #0d6efd) 45%, transparent);
+}
+
+#main-content:focus {
+  outline: none;
+}
+
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible,
+.form-check-input:focus-visible,
+.nav-link:focus-visible,
+.dropdown-item:focus-visible,
+[role='button']:focus-visible {
+  outline: 2px solid var(--bs-primary, #0d6efd);
+  outline-offset: 2px;
+}
+
+html[data-high-contrast='true'] a:focus-visible,
+html[data-high-contrast='true'] button:focus-visible,
+html[data-high-contrast='true'] .btn:focus-visible,
+html[data-high-contrast='true'] .form-control:focus-visible,
+html[data-high-contrast='true'] .form-select:focus-visible,
+html[data-high-contrast='true'] .form-check-input:focus-visible,
+html[data-high-contrast='true'] .nav-link:focus-visible,
+html[data-high-contrast='true'] .dropdown-item:focus-visible,
+html[data-high-contrast='true'] [role='button']:focus-visible {
+  outline-width: 3px;
+  outline-color: #000000;
+}
+
+.seim-nav-text-btn.active {
+  background-color: rgba(255, 255, 255, 0.14);
+  border-radius: 0.375rem;
 }

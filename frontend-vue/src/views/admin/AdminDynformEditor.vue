@@ -2,14 +2,13 @@
   <div class="admin-dynform-editor">
     <PageHeader :title="formName || t('adminDynforms.builderTitle')" :subtitle="t('adminDynforms.builderSubtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'AdminDynforms' }">{{ t('route.names.AdminDynforms') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminDynformEditor') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'AdminDynforms' }, label: t('route.names.AdminDynforms') },
+            { label: t('route.names.AdminDynformEditor') },
+          ]"
+        />
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" data-testid="dynforms-preview-toggle" @click="showPreview = !showPreview">
@@ -21,13 +20,13 @@
       </template>
     </PageHeader>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-    <div v-else class="row g-3">
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      skeleton="none"
+      :loading-label="t('adminCommon.loading')"
+    >
+    <div class="row g-3">
       <div class="col-lg-3">
         <div class="card">
           <div class="card-header">{{ t('adminDynforms.palette') }}</div>
@@ -163,6 +162,7 @@
         </div>
       </div>
     </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -171,6 +171,8 @@ import { computed, nextTick, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import { FIELD_TYPES, createField, fieldsFromSchema, schemaFromFields } from '@/utils/formBuilderSchema'

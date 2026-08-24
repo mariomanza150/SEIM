@@ -187,16 +187,25 @@
         </template>
       </CompactFilterBar>
 
-      <LoadingState v-if="loading" :spinner-label="t('reviewQueuePage.loading')" />
-      <ErrorAlert v-else-if="error" :message="error" />
-      <EmptyState
-        v-else-if="applications.length === 0"
-        test-id="review-queue-empty"
-        :body="t('reviewQueuePage.empty')"
-      />
-      <div v-else class="table-responsive card" data-testid="review-queue-table">
+      <PageStateShell
+        :loading="loading"
+        :error="error"
+        :empty="!applications.length"
+        :empty-body="t('reviewQueuePage.empty')"
+        empty-test-id="review-queue-empty"
+        skeleton="table"
+        :loading-label="t('reviewQueuePage.loading')"
+        :skeleton-columns="7"
+      >
+      <ResponsiveList
+        :items="applications"
+        item-key="id"
+        mobile-test-id="review-queue-mobile"
+        :columns="reviewQueueMobileColumns"
+      >
+      <div class="table-responsive card" data-testid="review-queue-table">
         <table class="table table-hover mb-0" role="grid" :aria-label="t('reviewQueuePage.tableAria')">
-          <thead class="table-light">
+          <thead class="seim-table-head">
             <tr>
               <th scope="col" class="review-queue-select-col">
                 <input
@@ -265,9 +274,32 @@
           {{ t('reviewQueuePage.keyboardHint') }}
         </p>
       </div>
+        <template #mobile-card="{ item: app }">
+          <div class="fw-medium">{{ app.student_display_name || t('reviewQueuePage.emDash') }}</div>
+          <div class="small text-muted mb-2">{{ app.student_email }}</div>
+          <dl class="row mb-0 small">
+            <dt class="col-5 text-muted">{{ t('reviewQueuePage.colProgram') }}</dt>
+            <dd class="col-7">{{ app.program_name || app.program?.name || t('reviewQueuePage.emDash') }}</dd>
+            <dt class="col-5 text-muted">{{ t('reviewQueuePage.colStatus') }}</dt>
+            <dd class="col-7">
+              <span class="badge" :class="statusClass(app.status)">{{ formatStatus(app.status) }}</span>
+            </dd>
+            <dt class="col-5 text-muted">{{ t('reviewQueuePage.colSubmitted') }}</dt>
+            <dd class="col-7">{{ formatDate(app.submitted_at) }}</dd>
+          </dl>
+          <router-link
+            :to="{ name: 'ApplicationDetail', params: { id: app.id } }"
+            class="btn btn-sm btn-outline-primary mt-3"
+            data-testid="review-queue-open-detail-mobile"
+          >
+            {{ t('reviewQueuePage.openDetail') }}
+          </router-link>
+        </template>
+      </ResponsiveList>
+      </PageStateShell>
 
       <Pagination
-        v-if="!loading"
+        v-if="!loading && !error"
         :count="pagination.count"
         :page-size="pagination.pageSize"
         :current-page="pagination.currentPage"
@@ -311,7 +343,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, onActivated } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
@@ -321,9 +353,8 @@ import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import Pagination from '@/components/Pagination.vue'
-import LoadingState from '@/components/State/LoadingState.vue'
-import ErrorAlert from '@/components/State/ErrorAlert.vue'
-import EmptyState from '@/components/State/EmptyState.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import {
   REVIEW_QUEUE_SEARCH_TYPE,
   deserializeReviewQueueFilters,
@@ -331,6 +362,8 @@ import {
 } from '@/utils/reviewQueuePresets'
 import { resolveListPage } from '@/utils/listPage'
 import { applicationStatusBadgeClass, applicationStatusFromRouteQuery } from '@/utils/formatters'
+
+defineOptions({ name: 'CoordinatorReviewQueue' })
 
 const route = useRoute()
 const router = useRouter()
@@ -372,6 +405,12 @@ const allPageSelected = computed(
   () => pageIds.value.length > 0 && pageIds.value.every((id) => selectedIds.value.includes(id)),
 )
 const somePageSelected = computed(() => pageIds.value.some((id) => selectedIds.value.includes(id)))
+
+const reviewQueueMobileColumns = computed(() => [
+  { key: 'student_display_name', label: t('reviewQueuePage.colStudent') },
+  { key: 'program_name', label: t('reviewQueuePage.colProgram') },
+  { key: 'status', label: t('reviewQueuePage.colStatus') },
+])
 
 let searchTimeout = null
 function debouncedSearch() {
@@ -644,6 +683,10 @@ onMounted(async () => {
   await fetchApplications(1)
 })
 
+onActivated(() => {
+  fetchApplications(pagination.value.currentPage)
+})
+
 onUnmounted(() => {
   window.removeEventListener('keydown', onQueueKeydown)
 })
@@ -651,8 +694,6 @@ onUnmounted(() => {
 
 <style scoped>
 .review-queue-page {
-  min-height: 100vh;
-  background-color: var(--seim-app-bg);
   padding-bottom: 4.5rem;
 }
 
@@ -676,9 +717,9 @@ onUnmounted(() => {
   gap: 0.75rem;
   margin-top: 1rem;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--seim-border, #dee2e6);
+  border: 1px solid var(--seim-border-color, #dee2e6);
   border-radius: 0.5rem;
-  background: var(--seim-surface, #fff);
+  background: var(--seim-surface-bg, #fff);
   box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.08);
 }
 </style>

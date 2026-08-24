@@ -168,7 +168,7 @@ describe('resolveAuthenticatedNavigation', () => {
       canUsePartnerPortal: false,
       checkAuth: vi.fn(),
     }
-    expect(await resolveAuthenticatedNavigation(adminRoute(), authStore)).toBe('applications')
+    expect(await resolveAuthenticatedNavigation(adminRoute(), authStore)).toBe('dashboard')
   })
 
   it('returns applications when coordinator targets partnerPortal (MQ-2026-08-16-002)', async () => {
@@ -181,7 +181,7 @@ describe('resolveAuthenticatedNavigation', () => {
       checkAuth: vi.fn(),
     }
     const to = { meta: { requiresAuth: true, partnerPortal: true }, fullPath: '/partner' }
-    expect(await resolveAuthenticatedNavigation(to, authStore)).toBe('applications')
+    expect(await resolveAuthenticatedNavigation(to, authStore)).toBe('reviewQueue')
   })
 
   it('returns partner when partner targets student Applications (MQ-030)', async () => {

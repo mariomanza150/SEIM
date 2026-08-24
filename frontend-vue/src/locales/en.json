@@ -33,7 +33,12 @@
   "common": {
     "close": "Close",
     "clearFilters": "Clear",
-    "advancedFilters": "Advanced filters"
+    "advancedFilters": "Advanced filters",
+    "filters": "Filters",
+    "applyFilters": "Apply filters",
+    "loading": "Loading…",
+    "requestFailed": "Request failed",
+    "fieldRequired": "This field is required."
   },
   "eligibilityFix": {
     "heading": "What to fix",
@@ -381,9 +386,19 @@
   },
   "adminNav": {
     "sectionTitle": "Admin",
-    "consoleMenu": "App admin"
+    "consoleMenu": "App admin",
+    "allToolsHint": "Use the sidebar Admin section for all configuration tools."
+  },
+  "nav": {
+    "sections": {
+      "main": "Main",
+      "staff": "Staff tools",
+      "account": "Account",
+      "admin": "Admin"
+    }
   },
   "adminCommon": {
+    "breadcrumbAria": "Admin breadcrumb",
     "refresh": "Refresh",
     "searchLabel": "Search",
     "filterAll": "All",
@@ -1307,6 +1322,7 @@
   },
   "staffAgreementDocumentsPage": {
     "breadcrumbAria": "Breadcrumb",
+    "pageLoading": "Loading agreement…",
     "pageSubtitle": "Files linked to exchange agreements (staff)",
     "invalidRoute": "Missing agreement. Return to ",
     "agreementLoadError": "Could not load this agreement.",
@@ -1412,6 +1428,7 @@
     "loadingSpinner": "Loading",
     "loadingPrograms": "Loading programs…",
     "loadError": "Could not load programs.",
+    "emptyPrograms": "No active programs available to compare.",
     "pickerLabel": "Programs to compare ({current} / {max})",
     "clearSelection": "Clear selection",
     "hintChooseTwo": "Choose at least two programs to see a comparison table.",
@@ -1441,6 +1458,7 @@
     "toggleSidebar": "Collapse or expand sidebar",
     "themeToggleAriaLight": "Switch to light theme",
     "themeToggleAriaDark": "Switch to dark theme",
+    "localeToggleAria": "Switch language",
     "userMenuAria": "User menu for {name}",
     "djangoAdmin": "Django Admin",
     "cmsAdmin": "CMS Admin",
@@ -1804,6 +1822,7 @@
     "activityTimeline": "Activity timeline",
     "loadingTimeline": "Loading timeline…",
     "timelineLoadError": "Could not load activity timeline.",
+    "documentsLoadError": "Could not load uploaded documents.",
     "timelineCreated": "Application record created",
     "timeline": {
       "applicationSubmitted": "Application submitted",
@@ -2286,6 +2305,8 @@
   },
   "nominationsPage": {
     "subtitle": "Rank applicants and allocate seats for programs with limited capacity.",
+    "breadcrumbAria": "Breadcrumb",
+    "loading": "Loading nominations…",
     "programLabel": "Program",
     "programPlaceholder": "Select a program",
     "capacity": "Capacity: {n}",
@@ -2310,6 +2331,8 @@
   },
   "analyticsForecastsPage": {
     "subtitle": "Projected application demand, review bottlenecks, and programs nearing deadlines.",
+    "breadcrumbAria": "Breadcrumb",
+    "loading": "Loading forecasts…",
     "loadError": "Could not load forecasts.",
     "demandHeading": "Demand forecast",
     "trend": "Trend: {n} applications/week",

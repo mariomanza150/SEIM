@@ -1,3 +1,4 @@
+import hashlib
 import mimetypes
 import os
 
@@ -11,7 +12,12 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 
-from core.cache import cache_api_response, invalidate_application_api_responses
+from core.cache import (
+    CacheManager,
+    application_api_cache_generation,
+    cache_api_response,
+    invalidate_application_api_responses,
+)
 from core.permissions import IsAdminOrReadOnly, IsCoordinatorOrAdmin, IsOwnerOrAdmin
 
 from .filters import DocumentFilter, ExchangeAgreementDocumentFilter
@@ -213,6 +219,75 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
         return response
 
 
+def _document_user_path_cache_key(prefix, *args, **kwargs):
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    digest = hashlib.sha256(request.get_full_path().encode()).hexdigest()[:32]
+    gen = application_api_cache_generation()
+    return CacheManager.get_cache_key(
+        "api_response", f"{prefix}:{gen}:{user_key}:{digest}"
+    )
+
+
+def _document_list_cache_key(*args, **kwargs):
+    return _document_user_path_cache_key("DocumentViewSet.list", *args, **kwargs)
+
+
+def _document_retrieve_cache_key(*args, **kwargs):
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    pk = kwargs.get("pk", "")
+    gen = application_api_cache_generation()
+    return CacheManager.get_cache_key(
+        "api_response", f"DocumentViewSet.retrieve:{gen}:{user_key}:{pk}"
+    )
+
+
+def _document_validation_list_cache_key(*args, **kwargs):
+    return _document_user_path_cache_key("DocumentValidationViewSet.list", *args, **kwargs)
+
+
+def _document_validation_retrieve_cache_key(*args, **kwargs):
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    pk = kwargs.get("pk", "")
+    gen = application_api_cache_generation()
+    return CacheManager.get_cache_key(
+        "api_response", f"DocumentValidationViewSet.retrieve:{gen}:{user_key}:{pk}"
+    )
+
+
+def _document_resub_list_cache_key(*args, **kwargs):
+    return _document_user_path_cache_key(
+        "DocumentResubmissionRequestViewSet.list", *args, **kwargs
+    )
+
+
+def _document_resub_retrieve_cache_key(*args, **kwargs):
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    pk = kwargs.get("pk", "")
+    gen = application_api_cache_generation()
+    return CacheManager.get_cache_key(
+        "api_response",
+        f"DocumentResubmissionRequestViewSet.retrieve:{gen}:{user_key}:{pk}",
+    )
+
+
+def _document_comment_list_cache_key(*args, **kwargs):
+    return _document_user_path_cache_key("DocumentCommentViewSet.list", *args, **kwargs)
+
+
+def _document_comment_retrieve_cache_key(*args, **kwargs):
+    request = args[1]
+    user_key = str(request.user.pk) if request.user.is_authenticated else "anon"
+    pk = kwargs.get("pk", "")
+    gen = application_api_cache_generation()
+    return CacheManager.get_cache_key(
+        "api_response", f"DocumentCommentViewSet.retrieve:{gen}:{user_key}:{pk}"
+    )
+
+
 class DocumentViewSet(viewsets.ModelViewSet):
     """ViewSet for documents with role-based permissions and filtering."""
 
@@ -293,11 +368,11 @@ class DocumentViewSet(viewsets.ModelViewSet):
         instance.delete()
         invalidate_application_api_responses(application)
 
-    @cache_api_response(timeout=300)
+    @cache_api_response(timeout=300, key_func=_document_list_cache_key)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    @cache_api_response(timeout=300)
+    @cache_api_response(timeout=300, key_func=_document_retrieve_cache_key)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
@@ -395,11 +470,11 @@ class DocumentValidationViewSet(viewsets.ModelViewSet):
             "document", "document__application", "document__type", "validator"
         )
 
-    @cache_api_response(timeout=300)
+    @cache_api_response(timeout=300, key_func=_document_validation_list_cache_key)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    @cache_api_response(timeout=300)
+    @cache_api_response(timeout=300, key_func=_document_validation_retrieve_cache_key)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
@@ -439,11 +514,11 @@ class DocumentResubmissionRequestViewSet(viewsets.ModelViewSet):
         document = serializer.instance.document
         invalidate_application_api_responses(document.application)
 
-    @cache_api_response(timeout=300)
+    @cache_api_response(timeout=300, key_func=_document_resub_list_cache_key)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    @cache_api_response(timeout=300)
+    @cache_api_response(timeout=300, key_func=_document_resub_retrieve_cache_key)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)
 
@@ -478,10 +553,10 @@ class DocumentCommentViewSet(viewsets.ModelViewSet):
         serializer.save(author=self.request.user)
         invalidate_application_api_responses(document.application)
 
-    @cache_api_response(timeout=300)
+    @cache_api_response(timeout=300, key_func=_document_comment_list_cache_key)
     def list(self, request, *args, **kwargs):
         return super().list(request, *args, **kwargs)
 
-    @cache_api_response(timeout=300)
+    @cache_api_response(timeout=300, key_func=_document_comment_retrieve_cache_key)
     def retrieve(self, request, *args, **kwargs):
         return super().retrieve(request, *args, **kwargs)

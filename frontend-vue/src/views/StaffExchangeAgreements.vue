@@ -1,21 +1,20 @@
 <template>
   <div class="staff-agreements-page">
-    <PageBreadcrumb
-      :aria-label="t('exchangeAgreementsPage.breadcrumbAria')"
-      :items="[
-        { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
-        { label: t('route.names.StaffExchangeAgreements') },
-      ]"
-    />
-
-      <div class="row mb-4">
-        <div class="col">
-          <h2>
-            <i class="bi bi-file-earmark-richtext me-2"></i>{{ t('route.names.StaffExchangeAgreements') }}
-          </h2>
-          <p class="text-muted">{{ t('exchangeAgreementsPage.pageSubtitle') }}</p>
-        </div>
-      </div>
+    <PageHeader
+      :title="t('route.names.StaffExchangeAgreements')"
+      :subtitle="t('exchangeAgreementsPage.pageSubtitle')"
+      icon-class="bi bi-file-earmark-richtext"
+    >
+      <template #breadcrumb>
+        <PageBreadcrumb
+          :aria-label="t('exchangeAgreementsPage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.StaffExchangeAgreements') },
+          ]"
+        />
+      </template>
+    </PageHeader>
 
       <CompactFilterBar :clear-label="t('exchangeAgreementsPage.clearFilters')" @clear="clearFilters">
         <template #primary>
@@ -159,109 +158,145 @@
         </template>
       </CompactFilterBar>
 
-      <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('exchangeAgreementsPage.loading') }}</span>
-        </div>
-      </div>
-      <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-      <div v-else-if="rows.length === 0" class="card" data-testid="agreements-empty">
-        <div class="card-body text-center text-muted py-5">{{ t('exchangeAgreementsPage.emptyFiltered') }}</div>
-      </div>
-      <div v-else class="table-responsive card">
-        <table class="table table-hover mb-0">
-          <thead class="table-light">
-            <tr>
-              <th>{{ t('exchangeAgreementsPage.colTitle') }}</th>
-              <th>{{ t('exchangeAgreementsPage.colPartner') }}</th>
-              <th>{{ t('exchangeAgreementsPage.colStatus') }}</th>
-              <th>{{ t('exchangeAgreementsPage.colType') }}</th>
-              <th>{{ t('exchangeAgreementsPage.colEnd') }}</th>
-              <th>{{ t('exchangeAgreementsPage.colPrograms') }}</th>
-              <th>{{ t('exchangeAgreementsPage.colRepository') }}</th>
-              <th>{{ t('exchangeAgreementsPage.colMessages') }}</th>
-              <th>{{ t('exchangeAgreementsPage.colPortal') }}</th>
-              <th class="text-end">{{ t('exchangeAgreementsPage.colRenewal') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="a in rows" :key="a.id">
-              <td class="fw-medium">{{ a.title }}</td>
-              <td>{{ a.partner_institution_name }}</td>
-              <td>
-                <span class="badge" :class="statusBadge(a.status)">{{ formatAgreementStatus(a.status) }}</span>
-              </td>
-              <td class="small">{{ formatAgreementType(a.agreement_type) }}</td>
-              <td class="small text-muted">{{ a.end_date || t('exchangeAgreementsPage.emDash') }}</td>
-              <td class="small">{{ (a.programs && a.programs.length) || 0 }}</td>
-              <td>
-                <router-link
-                  class="btn btn-sm btn-outline-primary"
-                  :to="{ name: 'StaffAgreementDocuments', params: { agreementId: String(a.id) } }"
-                >
-                  {{ t('exchangeAgreementsPage.openRepository') }}
-                </router-link>
-              </td>
-              <td>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-primary"
-                  data-testid="agreements-open-thread"
-                  @click="openThread(a)"
-                >
-                  {{ t('exchangeAgreementsPage.openThread') }}
-                </button>
-              </td>
-              <td class="small" style="min-width: 220px">
-                <div v-if="(a.partner_contacts || []).length" class="mb-1">
-                  <div v-for="c in a.partner_contacts" :key="c.id" class="text-truncate">
-                    {{ c.user_email || c.user_name }}
-                  </div>
-                </div>
-                <div v-else class="text-muted mb-1">{{ t('exchangeAgreementsPage.addPartnerEmpty') }}</div>
-                <form class="d-flex gap-1" @submit.prevent="addPartnerByEmail(a)">
-                  <input
-                    v-model="partnerEmails[a.id]"
-                    type="email"
-                    class="form-control form-control-sm"
-                    required
-                    :placeholder="t('exchangeAgreementsPage.addPartnerEmailPlaceholder')"
-                    :aria-label="t('exchangeAgreementsPage.addPartnerAria', { title: a.title })"
-                    data-testid="add-partner-email"
-                  />
-                  <button
-                    type="submit"
-                    class="btn btn-sm btn-outline-primary"
-                    :disabled="!!partnerBusy[a.id]"
-                    data-testid="add-partner-submit"
-                  >
-                    {{ t('exchangeAgreementsPage.addPartnerSubmit') }}
-                  </button>
-                </form>
-              </td>
-              <td class="text-end text-nowrap">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-primary"
-                  :title="t('exchangeAgreementsPage.renewalPendingTitle')"
-                  @click="onMarkRenewalPending(a)"
-                >
-                  {{ t('exchangeAgreementsPage.renewalPendingShort') }}
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-secondary ms-1"
-                  :title="t('exchangeAgreementsPage.renewalDraftTitle')"
-                  :disabled="!!a.renewal_draft_successor_id"
-                  @click="onCreateRenewalSuccessor(a)"
-                >
-                  {{ t('exchangeAgreementsPage.renewalDraftShort') }}
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <PageStateShell
+        :loading="loading"
+        :error="error || ''"
+        :empty="!loading && !error && rows.length === 0"
+        :empty-body="t('exchangeAgreementsPage.emptyFiltered')"
+        empty-test-id="agreements-empty"
+        :loading-label="t('exchangeAgreementsPage.loading')"
+        skeleton="table"
+        :skeleton-columns="10"
+      >
+        <ResponsiveList
+          :items="rows"
+          :columns="agreementColumns"
+          mobile-test-id="agreements-mobile"
+        >
+          <div class="table-responsive card">
+            <table class="table table-hover mb-0">
+              <thead class="seim-table-head">
+                <tr>
+                  <th>{{ t('exchangeAgreementsPage.colTitle') }}</th>
+                  <th>{{ t('exchangeAgreementsPage.colPartner') }}</th>
+                  <th>{{ t('exchangeAgreementsPage.colStatus') }}</th>
+                  <th>{{ t('exchangeAgreementsPage.colType') }}</th>
+                  <th>{{ t('exchangeAgreementsPage.colEnd') }}</th>
+                  <th>{{ t('exchangeAgreementsPage.colPrograms') }}</th>
+                  <th>{{ t('exchangeAgreementsPage.colRepository') }}</th>
+                  <th>{{ t('exchangeAgreementsPage.colMessages') }}</th>
+                  <th>{{ t('exchangeAgreementsPage.colPortal') }}</th>
+                  <th class="text-end">{{ t('exchangeAgreementsPage.colRenewal') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="a in rows" :key="a.id">
+                  <td class="fw-medium">{{ a.title }}</td>
+                  <td>{{ a.partner_institution_name }}</td>
+                  <td>
+                    <span class="badge" :class="statusBadge(a.status)">{{ formatAgreementStatus(a.status) }}</span>
+                  </td>
+                  <td class="small">{{ formatAgreementType(a.agreement_type) }}</td>
+                  <td class="small text-muted">{{ a.end_date || t('exchangeAgreementsPage.emDash') }}</td>
+                  <td class="small">{{ (a.programs && a.programs.length) || 0 }}</td>
+                  <td>
+                    <router-link
+                      class="btn btn-sm btn-outline-primary"
+                      :to="{ name: 'StaffAgreementDocuments', params: { agreementId: String(a.id) } }"
+                    >
+                      {{ t('exchangeAgreementsPage.openRepository') }}
+                    </router-link>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      data-testid="agreements-open-thread"
+                      @click="openThread(a)"
+                    >
+                      {{ t('exchangeAgreementsPage.openThread') }}
+                    </button>
+                  </td>
+                  <td class="small" style="min-width: 220px">
+                    <div v-if="(a.partner_contacts || []).length" class="mb-1">
+                      <div v-for="c in a.partner_contacts" :key="c.id" class="text-truncate">
+                        {{ c.user_email || c.user_name }}
+                      </div>
+                    </div>
+                    <div v-else class="text-muted mb-1">{{ t('exchangeAgreementsPage.addPartnerEmpty') }}</div>
+                    <form class="d-flex gap-1" @submit.prevent="addPartnerByEmail(a)">
+                      <input
+                        v-model="partnerEmails[a.id]"
+                        type="email"
+                        class="form-control form-control-sm"
+                        required
+                        :placeholder="t('exchangeAgreementsPage.addPartnerEmailPlaceholder')"
+                        :aria-label="t('exchangeAgreementsPage.addPartnerAria', { title: a.title })"
+                        data-testid="add-partner-email"
+                      />
+                      <button
+                        type="submit"
+                        class="btn btn-sm btn-outline-primary"
+                        :disabled="!!partnerBusy[a.id]"
+                        data-testid="add-partner-submit"
+                      >
+                        {{ t('exchangeAgreementsPage.addPartnerSubmit') }}
+                      </button>
+                    </form>
+                  </td>
+                  <td class="text-end text-nowrap">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      :title="t('exchangeAgreementsPage.renewalPendingTitle')"
+                      @click="onMarkRenewalPending(a)"
+                    >
+                      {{ t('exchangeAgreementsPage.renewalPendingShort') }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-secondary ms-1"
+                      :title="t('exchangeAgreementsPage.renewalDraftTitle')"
+                      :disabled="!!a.renewal_draft_successor_id"
+                      @click="onCreateRenewalSuccessor(a)"
+                    >
+                      {{ t('exchangeAgreementsPage.renewalDraftShort') }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <template #col-status="{ item }">
+            <span class="badge" :class="statusBadge(item.status)">{{ formatAgreementStatus(item.status) }}</span>
+          </template>
+          <template #col-agreement_type="{ item }">
+            {{ formatAgreementType(item.agreement_type) }}
+          </template>
+          <template #col-end_date="{ item }">
+            {{ item.end_date || t('exchangeAgreementsPage.emDash') }}
+          </template>
+          <template #col-programs="{ item }">
+            {{ (item.programs && item.programs.length) || 0 }}
+          </template>
+          <template #actions="{ item }">
+            <router-link
+              class="btn btn-sm btn-outline-primary"
+              :to="{ name: 'StaffAgreementDocuments', params: { agreementId: String(item.id) } }"
+            >
+              {{ t('exchangeAgreementsPage.openRepository') }}
+            </router-link>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-primary"
+              data-testid="agreements-open-thread"
+              @click="openThread(item)"
+            >
+              {{ t('exchangeAgreementsPage.openThread') }}
+            </button>
+          </template>
+        </ResponsiveList>
+      </PageStateShell>
 
       <div v-if="threadAgreement" class="card mt-3" data-testid="agreements-thread">
         <div class="card-header">
@@ -365,7 +400,10 @@ import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
 import { useConfirm } from '@/composables/useConfirm'
 import api from '@/services/api'
+import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import {
   STAFF_SAVED_SEARCH_TYPE,
@@ -404,6 +442,15 @@ const typeChoices = computed(() =>
     label: t(`exchangeAgreementsPage.agreementType.${value}`),
   })),
 )
+
+const agreementColumns = computed(() => [
+  { key: 'title', label: t('exchangeAgreementsPage.colTitle') },
+  { key: 'partner_institution_name', label: t('exchangeAgreementsPage.colPartner') },
+  { key: 'status', label: t('exchangeAgreementsPage.colStatus') },
+  { key: 'agreement_type', label: t('exchangeAgreementsPage.colType') },
+  { key: 'end_date', label: t('exchangeAgreementsPage.colEnd') },
+  { key: 'programs', label: t('exchangeAgreementsPage.colPrograms') },
+])
 
 const programs = ref([])
 const rows = ref([])
@@ -463,7 +510,7 @@ function formatAgreementType(s) {
 
 async function loadPrograms() {
   try {
-    const { data } = await api.get('/api/programs/', { params: { page_size: 200, ordering: 'name' } })
+    const { data } = await api.get('/api/programs/', { params: { page_size: 100, ordering: 'name' } })
     programs.value = data.results ?? data ?? []
   } catch {
     programs.value = []
@@ -648,9 +695,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.staff-agreements-page {
-  min-height: 100vh;
-  background-color: var(--seim-app-bg);
-}
-</style>

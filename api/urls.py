@@ -49,6 +49,7 @@ from notifications.views import (
     NotificationViewSet,
     ReminderViewSet,
 )
+from core.views import branding_api
 from workflows.views import WorkflowDefinitionViewSet, WorkflowVersionViewSet
 
 router = routers.DefaultRouter()
@@ -96,6 +97,7 @@ router.register(
 )
 
 urlpatterns = [
+    path("branding/", branding_api, name="branding"),
     # Exchange viewsets + calendar ICS (owned by exchange.urls)
     path("", include("exchange.urls")),
     path(

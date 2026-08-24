@@ -50,11 +50,14 @@ services:
         reservations:
           memory: 256M
 
-  # ClamAV Virus Scanner
+  # ClamAV Virus Scanner (optional — omitted from base AWS profiles to save ~1.2–1.5 GB RAM).
+  # Enable with: docker compose -f docker-compose.prod.yml --profile clamav up -d
   clamav:
     image: clamav/clamav:1.0-alpine
     container_name: seim-clamav-prod
     restart: unless-stopped
+    profiles:
+      - clamav
     volumes:
       - clamav_data:/var/lib/clamav
     networks:
@@ -109,8 +112,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-      clamav:
-        condition: service_healthy
     environment:
       - DJANGO_ENV=production
       - DEBUG=false
@@ -119,12 +120,14 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - VIRUS_SCANNER_TYPE=clamav
-      - VIRUS_SCANNER_HOST=clamav
-      - VIRUS_SCANNER_PORT=3310
+      - VIRUS_SCANNER_TYPE=${VIRUS_SCANNER_TYPE:-mock}
+      - VIRUS_SCANNER_HOST=${VIRUS_SCANNER_HOST:-clamav}
+      - VIRUS_SCANNER_PORT=${VIRUS_SCANNER_PORT:-3310}
       - AWS_ACCESS_KEY_ID_FILE=/run/secrets/aws_access_key_id
       - AWS_SECRET_ACCESS_KEY_FILE=/run/secrets/aws_secret_access_key
       - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
+      - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME:-us-east-1}
+      - USE_S3=${USE_S3:-true}
       - EMAIL_HOST_USER_FILE=/run/secrets/email_host_user
       - EMAIL_HOST_PASSWORD_FILE=/run/secrets/email_host_password
     secrets:
@@ -141,7 +144,7 @@ services:
           memory: 2G
         reservations:
           memory: 1G
-      replicas: ${WEB_REPLICAS:-2}
+      replicas: ${WEB_REPLICAS:-1}
 
   # Celery Worker
   celery:
@@ -175,12 +178,14 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - VIRUS_SCANNER_TYPE=clamav
-      - VIRUS_SCANNER_HOST=clamav
-      - VIRUS_SCANNER_PORT=3310
+      - VIRUS_SCANNER_TYPE=${VIRUS_SCANNER_TYPE:-mock}
+      - VIRUS_SCANNER_HOST=${VIRUS_SCANNER_HOST:-clamav}
+      - VIRUS_SCANNER_PORT=${VIRUS_SCANNER_PORT:-3310}
       - AWS_ACCESS_KEY_ID_FILE=/run/secrets/aws_access_key_id
       - AWS_SECRET_ACCESS_KEY_FILE=/run/secrets/aws_secret_access_key
       - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
+      - AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME:-us-east-1}
+      - USE_S3=${USE_S3:-true}
     secrets:
       - django_secret_key
       - db_password
@@ -193,7 +198,7 @@ services:
           memory: 1G
         reservations:
           memory: 512M
-      replicas: ${CELERY_REPLICAS:-2}
+      replicas: ${CELERY_REPLICAS:-1}
 
   # Celery Beat Scheduler
   celery-beat:

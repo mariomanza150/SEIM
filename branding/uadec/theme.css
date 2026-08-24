@@ -651,9 +651,189 @@ a:hover {
     object-fit: contain;
 }
 
-/* ============================================
-   PRINT STYLES
-   ============================================ */
+.cms-hero--home-visual .cms-cgri-wordmark {
+    max-height: 180px;
+    max-width: min(100%, 860px);
+}
+
+@media (min-width: 768px) {
+    .cms-hero--home-visual .cms-cgri-wordmark {
+        max-height: 240px;
+        max-width: min(100%, 1040px);
+    }
+}
+
+/* CGRI service carousel (uadec.mx/movilidad) */
+.cms-cgri-carousel__track {
+    max-height: 420px;
+}
+
+.cms-cgri-carousel__img {
+    object-fit: cover;
+    height: 360px;
+}
+
+.cms-cgri-carousel__caption {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 1.25rem 1.5rem;
+    background: linear-gradient(transparent, rgba(30, 58, 95, 0.92));
+    color: var(--uadec-white);
+}
+
+.cms-cgri-carousel__link:hover .cms-cgri-carousel__caption {
+    background: linear-gradient(transparent, rgba(46, 87, 144, 0.95));
+}
+
+.cms-cgri-carousel .carousel-indicators [data-bs-target] {
+    background-color: var(--uadec-gold);
+}
+
+/* Homepage campus slides (uadec.mx) */
+.cms-home-slides__img {
+    object-fit: cover;
+    height: 320px;
+}
+
+@media (min-width: 768px) {
+    .cms-home-slides__img {
+        height: 420px;
+    }
+    .cms-cgri-carousel__img {
+        height: 400px;
+    }
+}
+
+/* Hero overlays */
+.cms-movilidad-hero,
+.cms-internacional-hero,
+.cms-home-hero-bg {
+    background-color: var(--uadec-blue-dark);
+}
+
+.cms-service-card__img {
+    object-fit: cover;
+    height: 140px;
+}
+
+.cms-service-card:hover .cms-service-card__img {
+    opacity: 0.92;
+}
+
+.cms-service-card__fallback {
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--uadec-light-gray);
+    color: var(--uadec-blue);
+    font-size: 2.5rem;
+}
+
+/* Shared hero section */
+.cms-hero {
+    min-height: min(70vh, 520px);
+}
+
+.cms-hero--home-visual {
+    min-height: min(86vh, 780px);
+}
+
+.cms-hero--medium {
+    min-height: min(55vh, 460px);
+}
+
+.cms-hero__content {
+    z-index: 1;
+}
+
+.cms-hero-overlay {
+    background-color: var(--uadec-blue-dark);
+}
+
+.cms-hero__lead {
+    font-size: 1.5rem;
+}
+
+@media (max-width: 767px) {
+    .cms-hero .display-3 {
+        font-size: clamp(1.75rem, 6vw, 2.5rem);
+    }
+
+    .cms-hero__lead {
+        font-size: 1.1rem;
+    }
+}
+
+/* Card hover lift (shared across CMS templates) */
+.hover-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Carousel controls */
+.cms-carousel__pause {
+    font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cms-carousel .carousel-item {
+        transition: none;
+    }
+}
+
+/* YouTube click-to-play facade */
+.cms-youtube-facade__trigger {
+    background: var(--uadec-navy-dark);
+    cursor: pointer;
+}
+
+.cms-youtube-facade__thumb {
+    object-fit: cover;
+    opacity: 0.85;
+}
+
+.cms-youtube-facade__play {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: var(--uadec-white);
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+    pointer-events: none;
+}
+
+.cms-youtube-facade__trigger:hover .cms-youtube-facade__play,
+.cms-youtube-facade__trigger:focus-visible .cms-youtube-facade__play {
+    color: var(--uadec-gold-light);
+}
+
+/* Movilidad mobile accordion for dense link lists */
+.cms-movilidad-accordion .accordion-button {
+    font-weight: 600;
+    color: var(--uadec-blue);
+}
+
+@media (min-width: 768px) {
+    .cms-movilidad-accordion {
+        display: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .cms-movilidad-docs-desktop {
+        display: none;
+    }
+}
+
 @media print {
     .navbar,
     .cms-skip-link,

@@ -4,45 +4,17 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import axios from 'axios'
+import { formatApiErrorResponse, fieldErrorsFromResponse } from '@/utils/apiErrors'
+import {
+  ACCESS_TOKEN_KEYS,
+  REFRESH_TOKEN_KEYS,
+  getStoredToken,
+  persistToken,
+} from '@/utils/authTokens'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
-const ACCESS_TOKEN_KEYS = ['access_token', 'seim_access_token']
-const REFRESH_TOKEN_KEYS = ['refresh_token', 'seim_refresh_token']
 
-function getStoredToken(keys) {
-  return keys.map(key => localStorage.getItem(key)).find(Boolean) || null
-}
-
-function persistToken(keys, value) {
-  keys.forEach((key) => {
-    if (value) {
-      localStorage.setItem(key, value)
-    } else {
-      localStorage.removeItem(key)
-    }
-  })
-}
-
-/** Normalize DRF / Django error payloads for display (MQ-006). */
-function formatAuthErrorResponse(data) {
-  if (data == null || typeof data !== 'object') return null
-  if (typeof data.detail === 'string') return data.detail
-  if (Array.isArray(data.detail)) return data.detail.map(String).join(' ')
-  if (Array.isArray(data.non_field_errors)) return data.non_field_errors.join(' ')
-  const parts = []
-  for (const [key, val] of Object.entries(data)) {
-    if (key === 'detail' && val && typeof val === 'object' && !Array.isArray(val)) {
-      for (const inner of Object.values(val)) {
-        if (Array.isArray(inner)) parts.push(...inner.map(String))
-        else if (inner != null) parts.push(String(inner))
-      }
-      continue
-    }
-    if (Array.isArray(val)) parts.push(...val.map(String))
-    else if (typeof val === 'string') parts.push(val)
-  }
-  return parts.length ? parts.join(' ') : null
-}
+const formatAuthErrorResponse = formatApiErrorResponse
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -51,6 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
   const refreshToken = ref(getStoredToken(REFRESH_TOKEN_KEYS))
   const isLoading = ref(false)
   const error = ref(null)
+  const fieldErrors = ref({})
 
   // Getters
   const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
@@ -88,6 +61,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function login(email, password) {
     isLoading.value = true
     error.value = null
+    fieldErrors.value = {}
 
     try {
       // Create a Django session and JWTs together for cross-system navigation.
@@ -108,6 +82,7 @@ export const useAuthStore = defineStore('auth', () => {
       return true
     } catch (err) {
       const body = err.response?.data
+      fieldErrors.value = fieldErrorsFromResponse(body)
       error.value =
         formatAuthErrorResponse(body) ||
         (typeof body === 'string' ? body : null) ||
@@ -127,6 +102,7 @@ export const useAuthStore = defineStore('auth', () => {
   async function register(payload) {
     isLoading.value = true
     error.value = null
+    fieldErrors.value = {}
 
     try {
       await axios.post(`${API_BASE_URL}/api/accounts/register/`, {
@@ -142,6 +118,7 @@ export const useAuthStore = defineStore('auth', () => {
       return true
     } catch (err) {
       const body = err.response?.data
+      fieldErrors.value = fieldErrorsFromResponse(body)
       error.value =
         formatAuthErrorResponse(body) ||
         (typeof body === 'string' ? body : null) ||
@@ -360,6 +337,7 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken,
     isLoading,
     error,
+    fieldErrors,
     // Getters
     isAuthenticated,
     userRole,

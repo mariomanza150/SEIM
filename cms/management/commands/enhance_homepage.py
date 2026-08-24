@@ -31,11 +31,16 @@ class Command(BaseCommand):
 
         try:
             saved = download_official_assets()
-            hero_image = get_or_create_wagtail_image("mi2026.jpg", saved["mi2026.jpg"])
-            home.hero_image = hero_image
+            hero_path = saved.get("mi2026.jpg")
+            if hero_path:
+                hero_image = get_or_create_wagtail_image("mi2026.jpg", hero_path)
+                home.hero_image = hero_image
             self.stdout.write(self.style.SUCCESS("  ✓ Official assets downloaded"))
         except Exception as exc:
             self.stdout.write(self.style.WARNING(f"  ⚠ Could not attach hero image: {exc}"))
+            self.stdout.write(
+                self.style.WARNING("  Run: python manage.py sync_uadec_cms_assets")
+            )
 
         enhanced_content = [
             {

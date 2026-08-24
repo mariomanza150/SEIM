@@ -1,38 +1,28 @@
 <template>
   <div class="application-form-page">
-    <!-- Breadcrumb -->
-    <PageBreadcrumb
-      :aria-label="t('applicationFormPage.breadcrumbAria')"
-      :items="[
-        { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
-        { to: { name: 'Applications' }, label: t('route.names.Applications') },
-        { label: isEditMode ? t('applicationFormPage.breadcrumbEdit') : t('applicationFormPage.breadcrumbNew') },
-      ]"
-    />
+    <PageHeader
+      :title="isEditMode ? t('applicationFormPage.titleEdit') : t('applicationFormPage.titleNew')"
+      :subtitle="isEditMode ? t('applicationFormPage.subtitleEdit') : t('applicationFormPage.subtitleNew')"
+      icon-class="bi bi-file-earmark-plus"
+    >
+      <template #breadcrumb>
+        <PageBreadcrumb
+          :aria-label="t('applicationFormPage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { to: { name: 'Applications' }, label: t('route.names.Applications') },
+            { label: isEditMode ? t('applicationFormPage.breadcrumbEdit') : t('applicationFormPage.breadcrumbNew') },
+          ]"
+        />
+      </template>
+    </PageHeader>
 
-      <!-- Header -->
-      <div class="row mb-4">
-        <div class="col-md-8">
-          <h2>
-            <i class="bi bi-file-earmark-plus me-2"></i>
-            {{ isEditMode ? t('applicationFormPage.titleEdit') : t('applicationFormPage.titleNew') }}
-          </h2>
-          <p class="text-muted">
-            {{ isEditMode ? t('applicationFormPage.subtitleEdit') : t('applicationFormPage.subtitleNew') }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Loading -->
-      <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('applicationFormPage.loadingSpinner') }}</span>
-        </div>
-        <p class="mt-3 text-muted">{{ loadingMessage }}</p>
-      </div>
-
-      <!-- Form -->
-      <div v-else class="row">
+    <PageStateShell
+      :loading="loading"
+      skeleton="cards"
+      :loading-label="loadingMessage"
+    >
+      <div class="row">
         <div class="col-lg-8">
           <div class="card">
             <div class="card-body">
@@ -148,7 +138,7 @@
                     id="program"
                     v-model="form.program"
                     class="form-select"
-                    :class="{ 'is-invalid': programIssueMessages.length }"
+                    :class="{ 'is-invalid': programIssueMessages.length || errors.program }"
                     :aria-invalid="programIssueMessages.length ? 'true' : 'false'"
                     :aria-describedby="programIssueMessages.length ? 'application-form-program-feedback' : undefined"
                     required
@@ -589,7 +579,7 @@
                         <span v-if="currentStepTitle"> — {{ currentStepTitle }}</span>
                       </p>
                     </div>
-                    <span class="badge bg-light text-dark border">
+                    <span class="badge seim-surface-muted text-body border">
                       {{
                         visibleDynamicFields.length === 1
                           ? t('applicationFormPage.fieldCountOne', { n: visibleDynamicFields.length })
@@ -916,6 +906,7 @@
           </div>
         </div>
       </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -940,8 +931,17 @@ import {
 } from '@/utils/eligibilityMessages'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
+import { flattenFieldMessages } from '@/utils/apiErrors'
+import {
+  applyServerValidationErrors,
+  catalogId,
+  isIncompleteProfileError,
+  useHostDestinations,
+} from '@/composables/useApplicationForm'
 import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
+import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import EligibilityFixList from '@/components/EligibilityFixList.vue'
 import SearchableSelect from '@/components/SearchableSelect.vue'
@@ -1007,13 +1007,19 @@ const form = ref({
   host_school: '',
   host_academic_program: '',
 })
-const hostInstitutions = ref([])
-const hostSchools = ref([])
-const hostAcademicPrograms = ref([])
-const hostInstitutionsLoading = ref(false)
-const hostSchoolsLoading = ref(false)
-const hostAcademicProgramsLoading = ref(false)
-const hostDestinationConfigured = computed(() => hostInstitutions.value.length > 0)
+const {
+  hostInstitutions,
+  hostSchools,
+  hostAcademicPrograms,
+  hostInstitutionsLoading,
+  hostSchoolsLoading,
+  hostAcademicProgramsLoading,
+  hostDestinationConfigured,
+  fetchHostInstitutions,
+  fetchHostSchools,
+  fetchHostAcademicPrograms,
+  hostDestinationPayload,
+} = useHostDestinations(form)
 const applicationStatus = ref('')
 let suppressHostCascadeReset = false
 /** For ``visible_when`` rules: ``has_assigned_coordinator`` (program id comes from ``form.program``). */
@@ -1045,34 +1051,6 @@ const dynamicFormLoadError = ref('')
 const pendingDynamicResponses = ref(null)
 const applicationDynamicLayout = ref(null)
 const currentStepIndex = ref(0)
-
-function flattenFieldMessages(raw) {
-  if (raw == null) return []
-  if (typeof raw === 'string') return [raw]
-  if (Array.isArray(raw)) {
-    return raw.flatMap((item) => flattenFieldMessages(item))
-  }
-  if (typeof raw === 'object') {
-    return Object.values(raw).flatMap((v) => flattenFieldMessages(v))
-  }
-  return [String(raw)]
-}
-
-function catalogId(value) {
-  if (value && typeof value === 'object') return value.id ?? ''
-  return value ?? ''
-}
-
-function isIncompleteProfileError(data) {
-  const code = data?.code || data?.error_code || data?.detail?.code
-  if (['profile_incomplete', 'incomplete_profile', 'profile_not_ready'].includes(code)) return true
-  const message = flattenFieldMessages(data).join(' ').toLowerCase()
-  return message.includes('profile') && (
-    message.includes('incomplete') ||
-    message.includes('complete your') ||
-    message.includes('not ready')
-  )
-}
 
 async function fetchActiveGradeScales() {
   const listFrom = (data) => {
@@ -1707,62 +1685,6 @@ function applyApplicationVisibilityFromResponse(data) {
   }
 }
 
-async function fetchHostInstitutions(programId) {
-  hostInstitutions.value = []
-  hostSchools.value = []
-  hostAcademicPrograms.value = []
-  if (!programId) return
-  hostInstitutionsLoading.value = true
-  try {
-    const { data } = await api.get(`/api/programs/${programId}/host-institutions/`)
-    hostInstitutions.value = Array.isArray(data) ? data : (data.results || [])
-  } catch (err) {
-    console.error('Failed to load host institutions:', err)
-    hostInstitutions.value = []
-  } finally {
-    hostInstitutionsLoading.value = false
-  }
-}
-
-async function fetchHostSchools(institutionId) {
-  hostSchools.value = []
-  hostAcademicPrograms.value = []
-  if (!institutionId) return
-  hostSchoolsLoading.value = true
-  try {
-    const { data } = await api.get(`/api/host-institutions/${institutionId}/schools/`)
-    hostSchools.value = Array.isArray(data) ? data : (data.results || [])
-  } catch (err) {
-    console.error('Failed to load host schools:', err)
-    hostSchools.value = []
-  } finally {
-    hostSchoolsLoading.value = false
-  }
-}
-
-async function fetchHostAcademicPrograms(schoolId) {
-  hostAcademicPrograms.value = []
-  if (!schoolId) return
-  hostAcademicProgramsLoading.value = true
-  try {
-    const { data } = await api.get(`/api/schools/${schoolId}/academic-programs/`)
-    hostAcademicPrograms.value = Array.isArray(data) ? data : (data.results || [])
-  } catch (err) {
-    console.error('Failed to load host academic programs:', err)
-    hostAcademicPrograms.value = []
-  } finally {
-    hostAcademicProgramsLoading.value = false
-  }
-}
-
-function hostDestinationPayload() {
-  return {
-    host_institution: form.value.host_institution || null,
-    host_school: form.value.host_school || null,
-    host_academic_program: form.value.host_academic_program || null,
-  }
-}
-
 async function fetchApplication() {
   if (!isEditMode.value) return
 
@@ -1889,15 +1811,6 @@ function buildDynamicPayload(fieldList) {
   return payload
 }
 
-function applyServerValidationErrors(raw) {
-  if (raw === undefined || raw === null) return false
-  const data = raw
-  errors.value = typeof data === 'string' ? { program: [data] } : { ...data }
-  const df = typeof data === 'object' && data !== null ? data.dynamic_form : undefined
-  dynamicFormErrors.value = Array.isArray(df) ? df : (df ? [df] : [])
-  return true
-}
-
 async function scrollToFirstValidationAlert() {
   await nextTick()
   eligibilityAlertRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
@@ -1979,7 +1892,7 @@ async function handleSubmit() {
       await router.replace({ name: 'Profile', query: { next: route.fullPath } })
       return
     }
-    if (applyServerValidationErrors(data)) {
+    if (applyServerValidationErrors(data, errors, dynamicFormErrors)) {
       errorToast(t('applicationFormPage.toastFixErrors'))
       await scrollToFirstValidationAlert()
     } else {
@@ -2047,7 +1960,7 @@ async function saveDraft() {
       await router.replace({ name: 'Profile', query: { next: route.fullPath } })
       return
     }
-    if (applyServerValidationErrors(data)) {
+    if (applyServerValidationErrors(data, errors, dynamicFormErrors)) {
       errorToast(t('applicationFormPage.toastFixErrors'))
       await scrollToFirstValidationAlert()
     } else {
@@ -2191,7 +2104,6 @@ watch(
 
 <style scoped>
 .application-form-page {
-  min-height: 100vh;
   background-color: var(--seim-app-bg);
 }
 

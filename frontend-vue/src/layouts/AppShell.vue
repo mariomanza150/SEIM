@@ -29,10 +29,25 @@
               aria-hidden="true"
             />
           </button>
-          <router-link class="navbar-brand mb-0" :to="{ name: 'Dashboard' }">SEIM</router-link>
+          <router-link class="navbar-brand mb-0 d-flex align-items-center gap-2 seim-navbar-brand" :to="{ name: 'Dashboard' }">
+            <img
+              v-if="brandLogoUrl"
+              :src="brandLogoUrl"
+              :alt="brandLabel"
+              class="seim-navbar-brand__logo"
+              height="28"
+            />
+            <span class="seim-navbar-brand__text">{{ brandLabel }}</span>
+          </router-link>
         </div>
 
         <ul class="navbar-nav flex-row align-items-center flex-nowrap ms-auto seim-app-shell__utilities">
+          <li class="nav-item d-flex align-items-center me-1">
+            <LocaleSwitcher
+              active-class="btn-light btn-sm"
+              inactive-class="btn-outline-light btn-sm"
+            />
+          </li>
           <li class="nav-item d-flex align-items-center">
             <button
               type="button"
@@ -52,7 +67,7 @@
               class="nav-link dropdown-toggle seim-nav-text-btn"
               id="spaAdminNavDropdown"
               data-testid="admin-menu"
-              :class="{ show: adminMenuOpen }"
+              :class="{ show: adminMenuOpen, active: isAdminRouteActive }"
               :aria-expanded="adminMenuOpen ? 'true' : 'false'"
               aria-haspopup="menu"
               @click="toggleAdminMenu"
@@ -71,28 +86,13 @@
                 </router-link>
               </li>
               <li>
-                <router-link class="dropdown-item" :to="{ name: 'AdminCatalogs' }" @click="closeAdminMenu">
-                  {{ t('route.names.AdminCatalogs') }}
-                </router-link>
-              </li>
-              <li>
-                <router-link class="dropdown-item" :to="{ name: 'AdminGrades' }" @click="closeAdminMenu">
-                  {{ t('route.names.AdminGrades') }}
-                </router-link>
-              </li>
-              <li>
                 <router-link class="dropdown-item" :to="{ name: 'AdminUsers' }" @click="closeAdminMenu">
                   {{ t('route.names.AdminUsers') }}
                 </router-link>
               </li>
               <li>
-                <router-link class="dropdown-item" :to="{ name: 'AdminSessions' }" @click="closeAdminMenu">
-                  {{ t('route.names.AdminSessions') }}
-                </router-link>
-              </li>
-              <li>
-                <router-link class="dropdown-item" :to="{ name: 'AdminWorkflowCatalogs' }" @click="closeAdminMenu">
-                  {{ t('route.names.AdminWorkflowCatalogs') }}
+                <router-link class="dropdown-item" :to="{ name: 'AdminWorkflows' }" @click="closeAdminMenu">
+                  {{ t('route.names.AdminWorkflows') }}
                 </router-link>
               </li>
               <li>
@@ -106,29 +106,7 @@
                 </router-link>
               </li>
               <li>
-                <router-link class="dropdown-item" :to="{ name: 'AdminDataManagement' }" @click="closeAdminMenu">
-                  {{ t('route.names.AdminDataManagement') }}
-                </router-link>
-              </li>
-              <li>
-                <router-link class="dropdown-item" :to="{ name: 'AdminWorkflows' }" @click="closeAdminMenu">
-                  {{ t('route.names.AdminWorkflows') }}
-                </router-link>
-              </li>
-              <li>
-                <router-link class="dropdown-item" :to="{ name: 'AdminDocuments' }" @click="closeAdminMenu">
-                  {{ t('route.names.AdminDocuments') }}
-                </router-link>
-              </li>
-              <li>
-                <router-link class="dropdown-item" :to="{ name: 'EligibilityRulesets' }" @click="closeAdminMenu">
-                  {{ t('route.names.EligibilityRulesets') }}
-                </router-link>
-              </li>
-              <li>
-                <router-link class="dropdown-item" :to="{ name: 'ScholarshipScoringRulesets' }" @click="closeAdminMenu">
-                  {{ t('route.names.ScholarshipScoringRulesets') }}
-                </router-link>
+                <span class="dropdown-item-text small text-muted px-3 py-1">{{ t('adminNav.allToolsHint') }}</span>
               </li>
               <li><hr class="dropdown-divider" /></li>
               <li>
@@ -198,16 +176,12 @@
       :aria-label="t('dashboard.mainNavAria')"
     >
       <div class="offcanvas-header">
-        <h5 class="offcanvas-title">SEIM</h5>
+        <h5 class="offcanvas-title">{{ brandLabel }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" :aria-label="t('common.close')" />
       </div>
       <div class="offcanvas-body pt-0">
         <SidebarNavList
-          :aria-label="t('dashboard.mainNavAria')"
-          :primary-items="primaryNavItemsVisible"
-          :admin-items="adminNavItems"
-          :show-admin="authStore.isAdmin"
-          :admin-section-label="t('adminNav.sectionTitle')"
+          :sections="navSections"
           @navigate="closeSidebarOffcanvas"
         />
       </div>
@@ -219,17 +193,15 @@
           v-show="!sidebarCollapsed"
           class="col-md-3 col-lg-2 d-none d-md-block seim-app-shell__aside"
         >
-          <SidebarNavList
-            :aria-label="t('dashboard.mainNavAria')"
-            :primary-items="primaryNavItemsVisible"
-            :admin-items="adminNavItems"
-            :show-admin="authStore.isAdmin"
-            :admin-section-label="t('adminNav.sectionTitle')"
-          />
+          <SidebarNavList :sections="navSections" />
         </aside>
 
         <section class="col-12" :class="sidebarCollapsed ? '' : 'col-md-9 col-lg-10'">
-          <router-view />
+          <router-view v-slot="{ Component }">
+            <keep-alive :include="keptAliveViews">
+              <component :is="Component" :key="route.name" />
+            </keep-alive>
+          </router-view>
         </section>
       </div>
     </div>
@@ -239,22 +211,34 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useNavDropdown } from '@/composables/useNavDropdown'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
+import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import SidebarNavList from '@/components/nav/SidebarNavList.vue'
-import api from '@/services/api'
-import { applyUiPreferences, readStoredUiPreferences, resolveTheme } from '@/services/uiPreferences'
+import { useBranding } from '@/composables/useBranding'
+import { useThemeToggle } from '@/composables/useThemeToggle'
 import { Offcanvas } from 'bootstrap'
 
 const SIDEBAR_COLLAPSED_KEY = 'seim.sidebarCollapsed'
 
 const { t } = useI18n()
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
+const keptAliveViews = [
+  'Applications',
+  'CoordinatorReviewQueue',
+  'Documents',
+  'PartnerPortal',
+  'AdminPrograms',
+  'AdminUsers',
+]
 
 const userName = computed(() => authStore.userName)
+
+const isAdminRouteActive = computed(() => String(route.name || '').startsWith('Admin'))
 
 const {
   open: userMenuOpen,
@@ -271,13 +255,20 @@ const {
 
 const sidebarCollapsed = ref(false)
 
+const { branding, loadBranding } = useBranding()
+const { resolvedIsDark, themeToggleAria, toggleTheme: toggleNavTheme } = useThemeToggle()
+
 onMounted(() => {
+  loadBranding()
   try {
     sidebarCollapsed.value = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1'
   } catch {
     sidebarCollapsed.value = false
   }
 })
+
+const brandLogoUrl = computed(() => branding.value?.logo_url || '')
+const brandLabel = computed(() => branding.value?.nav_brand || branding.value?.short_name || 'SEIM')
 
 function toggleSidebarCollapsed() {
   sidebarCollapsed.value = !sidebarCollapsed.value
@@ -288,140 +279,141 @@ function toggleSidebarCollapsed() {
   }
 }
 
-const themeUiTick = ref(0)
-const resolvedIsDark = computed(() => {
-  themeUiTick.value
-  const cur = readStoredUiPreferences() || {}
-  return resolveTheme(cur.theme || 'auto') === 'dark'
+const navSections = computed(() => {
+  const sections = [
+    {
+      key: 'main',
+      label: t('nav.sections.main'),
+      items: [
+        {
+          key: 'dashboard',
+          to: { name: 'Dashboard' },
+          label: t('route.names.Dashboard'),
+          iconClass: 'bi bi-house-door',
+          isVisible: true,
+        },
+        {
+          key: 'applications',
+          to: { name: 'Applications' },
+          label: t('route.names.Applications'),
+          iconClass: 'bi bi-file-earmark-text',
+          isVisible: !authStore.canUsePartnerPortal,
+        },
+        {
+          key: 'programCompare',
+          to: { name: 'ProgramCompare' },
+          label: t('route.names.ProgramCompare'),
+          iconClass: 'bi bi-columns-gap',
+          isVisible: !authStore.canUsePartnerPortal,
+        },
+        {
+          key: 'documents',
+          to: { name: 'Documents' },
+          label: t('route.names.Documents'),
+          iconClass: 'bi bi-folder',
+          isVisible: !authStore.canUsePartnerPortal,
+        },
+        {
+          key: 'deadlines',
+          to: { name: 'DeadlinesCalendar' },
+          label: t('dashboard.nav.deadlines'),
+          iconClass: 'bi bi-calendar3',
+          isVisible: !authStore.canUsePartnerPortal,
+        },
+        {
+          key: 'partnerPortal',
+          to: { name: 'PartnerPortal' },
+          label: t('route.names.PartnerPortal'),
+          iconClass: 'bi bi-building',
+          isVisible: authStore.canUsePartnerPortal,
+        },
+      ],
+    },
+    {
+      key: 'staff',
+      label: t('nav.sections.staff'),
+      isVisible: authStore.canUseStaffReviewQueue,
+      items: [
+        {
+          key: 'reviewQueue',
+          to: { name: 'CoordinatorReviewQueue' },
+          label: t('route.names.CoordinatorReviewQueue'),
+          iconClass: 'bi bi-clipboard-check',
+        },
+        {
+          key: 'workload',
+          to: { name: 'CoordinatorWorkload' },
+          label: t('dashboard.nav.workload'),
+          iconClass: 'bi bi-graph-up-arrow',
+        },
+        {
+          key: 'notificationRouting',
+          to: { name: 'NotificationRouting' },
+          label: t('dashboard.nav.notificationRouting'),
+          iconClass: 'bi bi-diagram-3',
+        },
+        {
+          key: 'exchangeAgreements',
+          to: { name: 'StaffExchangeAgreements' },
+          label: t('route.names.StaffExchangeAgreements'),
+          iconClass: 'bi bi-file-earmark-richtext',
+        },
+        {
+          key: 'eligibilityRulesets',
+          to: { name: 'EligibilityRulesets' },
+          label: t('route.names.EligibilityRulesets'),
+          iconClass: 'bi bi-funnel',
+        },
+        {
+          key: 'scholarshipScoringRulesets',
+          to: { name: 'ScholarshipScoringRulesets' },
+          label: t('route.names.ScholarshipScoringRulesets'),
+          iconClass: 'bi bi-pie-chart',
+        },
+        {
+          key: 'nominations',
+          to: { name: 'Nominations' },
+          label: t('route.names.Nominations'),
+          iconClass: 'bi bi-trophy',
+        },
+        {
+          key: 'analyticsForecasts',
+          to: { name: 'AnalyticsForecasts' },
+          label: t('route.names.AnalyticsForecasts'),
+          iconClass: 'bi bi-graph-up',
+        },
+      ],
+    },
+    {
+      key: 'account',
+      label: t('nav.sections.account'),
+      items: [
+        {
+          key: 'notifications',
+          to: { name: 'Notifications' },
+          label: t('route.names.Notifications'),
+          iconClass: 'bi bi-bell',
+        },
+        {
+          key: 'help',
+          to: { name: 'HelpCenter' },
+          label: t('route.names.HelpCenter'),
+          iconClass: 'bi bi-question-circle',
+        },
+      ],
+    },
+  ]
+
+  if (authStore.isAdmin) {
+    sections.push({
+      key: 'admin',
+      label: t('nav.sections.admin'),
+      items: adminNavItems.value,
+    })
+  }
+
+  return sections
 })
-
-const themeToggleAria = computed(() =>
-  resolvedIsDark.value ? t('dashboard.themeToggleAriaLight') : t('dashboard.themeToggleAriaDark'),
-)
-
-const primaryNavItems = computed(() => [
-  {
-    key: 'dashboard',
-    to: { name: 'Dashboard' },
-    label: t('route.names.Dashboard'),
-    iconClass: 'bi bi-house-door',
-    isVisible: true,
-  },
-  {
-    key: 'applications',
-    to: { name: 'Applications' },
-    label: t('route.names.Applications'),
-    iconClass: 'bi bi-file-earmark-text',
-    isVisible: !authStore.canUsePartnerPortal,
-  },
-  {
-    key: 'programCompare',
-    to: { name: 'ProgramCompare' },
-    label: t('route.names.ProgramCompare'),
-    iconClass: 'bi bi-columns-gap',
-    isVisible: true,
-  },
-  {
-    key: 'reviewQueue',
-    to: { name: 'CoordinatorReviewQueue' },
-    label: t('route.names.CoordinatorReviewQueue'),
-    iconClass: 'bi bi-clipboard-check',
-    isVisible: authStore.canUseStaffReviewQueue,
-  },
-  {
-    key: 'workload',
-    to: { name: 'CoordinatorWorkload' },
-    label: t('dashboard.nav.workload'),
-    iconClass: 'bi bi-graph-up-arrow',
-    isVisible: authStore.canUseStaffReviewQueue,
-  },
-  {
-    key: 'notificationRouting',
-    to: { name: 'NotificationRouting' },
-    label: t('dashboard.nav.notificationRouting'),
-    iconClass: 'bi bi-diagram-3',
-    isVisible: authStore.canUseStaffReviewQueue,
-  },
-  {
-    key: 'exchangeAgreements',
-    to: { name: 'StaffExchangeAgreements' },
-    label: t('route.names.StaffExchangeAgreements'),
-    iconClass: 'bi bi-file-earmark-richtext',
-    isVisible: authStore.canUseStaffReviewQueue,
-  },
-  {
-    key: 'eligibilityRulesets',
-    to: { name: 'EligibilityRulesets' },
-    label: t('route.names.EligibilityRulesets'),
-    iconClass: 'bi bi-funnel',
-    isVisible: authStore.canUseStaffReviewQueue,
-  },
-  {
-    key: 'scholarshipScoringRulesets',
-    to: { name: 'ScholarshipScoringRulesets' },
-    label: t('route.names.ScholarshipScoringRulesets'),
-    iconClass: 'bi bi-pie-chart',
-    isVisible: authStore.canUseStaffReviewQueue,
-  },
-  {
-    key: 'nominations',
-    to: { name: 'Nominations' },
-    label: t('route.names.Nominations'),
-    iconClass: 'bi bi-trophy',
-    isVisible: authStore.canUseStaffReviewQueue,
-  },
-  {
-    key: 'analyticsForecasts',
-    to: { name: 'AnalyticsForecasts' },
-    label: t('route.names.AnalyticsForecasts'),
-    iconClass: 'bi bi-graph-up',
-    isVisible: authStore.canUseStaffReviewQueue,
-  },
-  {
-    key: 'partnerPortal',
-    to: { name: 'PartnerPortal' },
-    label: t('route.names.PartnerPortal'),
-    iconClass: 'bi bi-building',
-    isVisible: authStore.canUsePartnerPortal,
-  },
-  {
-    key: 'documents',
-    to: { name: 'Documents' },
-    label: t('route.names.Documents'),
-    iconClass: 'bi bi-folder',
-    isVisible: !authStore.canUsePartnerPortal,
-  },
-  {
-    key: 'deadlines',
-    to: { name: 'DeadlinesCalendar' },
-    label: t('dashboard.nav.deadlines'),
-    iconClass: 'bi bi-calendar3',
-    isVisible: true,
-  },
-  {
-    key: 'notifications',
-    to: { name: 'Notifications' },
-    label: t('route.names.Notifications'),
-    iconClass: 'bi bi-bell',
-    isVisible: true,
-  },
-  {
-    key: 'help',
-    to: { name: 'HelpCenter' },
-    label: t('route.names.HelpCenter'),
-    iconClass: 'bi bi-question-circle',
-    isVisible: true,
-  },
-  {
-    key: 'settings',
-    to: { name: 'Settings' },
-    label: t('route.names.Settings'),
-    iconClass: 'bi bi-gear',
-    isVisible: true,
-  },
-])
-
-const primaryNavItemsVisible = computed(() => primaryNavItems.value.filter((item) => item.isVisible))
 
 const adminNavItems = computed(() => [
   {
@@ -499,25 +491,6 @@ function closeSidebarOffcanvas() {
   instance.hide()
 }
 
-async function toggleNavTheme() {
-  const cur = readStoredUiPreferences() || {}
-  const resolved = resolveTheme(cur.theme || 'auto')
-  const nextTheme = resolved === 'dark' ? 'light' : 'dark'
-  applyUiPreferences({
-    ...cur,
-    theme: nextTheme,
-    font_size: cur.font_size || 'normal',
-    high_contrast: Boolean(cur.high_contrast),
-    reduce_motion: Boolean(cur.reduce_motion),
-  })
-  themeUiTick.value += 1
-  try {
-    await api.patch('/api/accounts/user-settings/', { theme: nextTheme })
-  } catch {
-    /* local preference already applied */
-  }
-}
-
 async function handleLogout() {
   closeUserMenu()
   await authStore.logout()
@@ -559,6 +532,26 @@ async function handleLogout() {
 
 .seim-app-shell__utilities {
   gap: 0.15rem;
+}
+
+.seim-navbar-brand__logo {
+  max-height: 28px;
+  width: auto;
+}
+
+.seim-navbar-brand__text {
+  font-size: 1rem;
+  line-height: 1.2;
+  max-width: min(12rem, 40vw);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .seim-navbar-brand__text {
+    max-width: 16rem;
+  }
 }
 
 .seim-app-shell__navbar :deep(.nav-link),

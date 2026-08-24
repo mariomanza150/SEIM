@@ -2,16 +2,15 @@
   <div class="dashboard" data-testid="dashboard-page">
     <PageHeader :title="t('dashboard.welcomeUser', { name: userName })" :subtitle="t('dashboard.tagline')" />
 
-    <!-- Stats Cards -->
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('dashboard.loadingSpinner') }}</span>
-      </div>
-      <p class="mt-3 text-muted">{{ t('dashboard.loadingDashboard') }}</p>
-    </div>
-
-    <div v-else class="row mb-4" data-testid="dashboard-stats">
-      <div class="col-md-3 mb-3">
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      skeleton="stats"
+      :skeleton-count="4"
+      :loading-label="t('dashboard.loadingDashboard')"
+    >
+    <div class="row mb-4" data-testid="dashboard-stats">
+      <div class="col-6 col-md-3 mb-3">
         <router-link :to="applicationsStatRoute" class="text-decoration-none">
           <div class="card text-center card-hover">
             <div class="card-body">
@@ -22,7 +21,7 @@
           </div>
         </router-link>
       </div>
-      <div class="col-md-3 mb-3">
+      <div class="col-6 col-md-3 mb-3">
         <router-link :to="documentsStatRoute" class="text-decoration-none">
           <div class="card text-center card-hover">
             <div class="card-body">
@@ -33,7 +32,7 @@
           </div>
         </router-link>
       </div>
-      <div class="col-md-3 mb-3">
+      <div class="col-6 col-md-3 mb-3">
         <router-link :to="{ name: 'Notifications' }" class="text-decoration-none">
           <div class="card text-center card-hover">
             <div class="card-body">
@@ -44,7 +43,7 @@
           </div>
         </router-link>
       </div>
-      <div class="col-md-3 mb-3">
+      <div class="col-6 col-md-3 mb-3">
         <component
           :is="pendingStatRoute ? 'router-link' : 'div'"
           v-bind="
@@ -65,7 +64,7 @@
     </div>
 
     <!-- Next steps -->
-    <div v-if="!loading" class="card" data-testid="dashboard-next-steps">
+    <div class="card" data-testid="dashboard-next-steps">
       <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
         <h5 class="mb-0">{{ t('dashboard.nextStepsTitle') }}</h5>
         <span v-if="nextStepsLoading" class="text-muted small">
@@ -74,11 +73,6 @@
         </span>
       </div>
       <div class="card-body">
-        <div v-if="error" class="alert alert-warning alert-dismissible fade show" role="alert">
-          <i class="bi bi-exclamation-triangle me-2"></i>
-          {{ error }}
-          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
         <p v-if="nextStepsError" class="text-warning small mb-3">{{ nextStepsError }}</p>
         <ul v-if="nextSteps.length" class="list-group list-group-flush border rounded">
           <li
@@ -94,7 +88,7 @@
               <router-link
                 v-if="row.spaRoute"
                 :to="row.spaRoute"
-                class="btn btn-sm btn-primary"
+                class="btn btn-sm btn-outline-primary"
               >
                 {{ t('dashboard.open') }}
               </router-link>
@@ -116,6 +110,7 @@
         </p>
       </div>
     </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -127,6 +122,7 @@ import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import { fetchDashboardNextSteps } from '@/utils/dashboardNextSteps'
 import PageHeader from '@/components/PageHeader.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 
 const { t, te } = useI18n()
 const authStore = useAuthStore()
@@ -215,7 +211,6 @@ onUnmounted(() => {
 
 <style scoped>
 .dashboard {
-  min-height: 100vh;
   background-color: var(--seim-app-bg);
 }
 

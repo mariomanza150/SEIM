@@ -2,14 +2,13 @@
   <div class="nominations-page">
     <PageHeader :title="t('route.names.Nominations')" :subtitle="t('nominationsPage.subtitle')">
       <template #breadcrumb>
-        <nav :aria-label="t('exchangeAgreementsPage.breadcrumbAria')">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.Nominations') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('nominationsPage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.Nominations') },
+          ]"
+        />
       </template>
     </PageHeader>
 
@@ -72,66 +71,103 @@
       </ul>
     </div>
 
-    <div v-if="loading" class="text-center py-4">
-      <div class="spinner-border text-primary" role="status"></div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-    <div v-else-if="programId && rows.length === 0" class="alert alert-info" data-testid="nominations-empty">
-      {{ t('nominationsPage.empty') }}
-    </div>
-    <div v-else-if="rows.length" class="card" data-testid="nominations-table">
-      <div class="table-responsive">
-        <table class="table mb-0">
-          <thead>
-            <tr>
-              <th>{{ t('nominationsPage.colStudent') }}</th>
-              <th>{{ t('nominationsPage.colStatus') }}</th>
-              <th>{{ t('nominationsPage.colRank') }}</th>
-              <th>{{ t('nominationsPage.colSubmitted') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in rows" :key="row.id">
-              <td>{{ row.student_display_name }}</td>
-              <td data-testid="nomination-status">{{ formatStatus(row.status) }}</td>
-              <td style="max-width: 8rem">
-                <input
-                  v-model.number="row.nomination_rank"
-                  type="number"
-                  min="1"
-                  class="form-control form-control-sm"
-                  data-testid="nomination-rank"
-                />
-              </td>
-              <td class="small text-muted" data-testid="nomination-submitted-at">{{ formatSubmittedAt(row.submitted_at) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="card-footer d-flex gap-2">
-        <button type="button" class="btn btn-outline-primary" :disabled="busy" data-testid="nominations-save" @click="saveRanks">
-          {{ t('nominationsPage.saveRanks') }}
-        </button>
-        <button type="button" class="btn btn-primary" :disabled="busy" data-testid="nominations-match" @click="runMatch">
-          {{ t('nominationsPage.runMatch') }}
-        </button>
-      </div>
-    </div>
+    <PageStateShell
+      v-if="programId"
+      :loading="loading"
+      :error="error"
+      :empty="!loading && !error && rows.length === 0"
+      :empty-body="t('nominationsPage.empty')"
+      empty-test-id="nominations-empty"
+      :loading-label="t('nominationsPage.loading')"
+      skeleton="table"
+      :skeleton-columns="4"
+    >
+      <ResponsiveList
+        v-if="rows.length"
+        :items="rows"
+        :columns="nominationColumns"
+        mobile-test-id="nominations-mobile"
+      >
+        <div class="card" data-testid="nominations-table">
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead>
+                <tr>
+                  <th>{{ t('nominationsPage.colStudent') }}</th>
+                  <th>{{ t('nominationsPage.colStatus') }}</th>
+                  <th>{{ t('nominationsPage.colRank') }}</th>
+                  <th>{{ t('nominationsPage.colSubmitted') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in rows" :key="row.id">
+                  <td>{{ row.student_display_name }}</td>
+                  <td data-testid="nomination-status">{{ formatStatus(row.status) }}</td>
+                  <td style="max-width: 8rem">
+                    <input
+                      v-model.number="row.nomination_rank"
+                      type="number"
+                      min="1"
+                      class="form-control form-control-sm"
+                      data-testid="nomination-rank"
+                    />
+                  </td>
+                  <td class="small text-muted" data-testid="nomination-submitted-at">{{ formatSubmittedAt(row.submitted_at) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card-footer d-flex gap-2">
+            <button type="button" class="btn btn-outline-primary" :disabled="busy" data-testid="nominations-save" @click="saveRanks">
+              {{ t('nominationsPage.saveRanks') }}
+            </button>
+            <button type="button" class="btn btn-primary" :disabled="busy" data-testid="nominations-match" @click="runMatch">
+              {{ t('nominationsPage.runMatch') }}
+            </button>
+          </div>
+        </div>
+        <template #col-status="{ item }">
+          {{ formatStatus(item.status) }}
+        </template>
+        <template #col-nomination_rank="{ item }">
+          <input
+            v-model.number="item.nomination_rank"
+            type="number"
+            min="1"
+            class="form-control form-control-sm"
+            data-testid="nomination-rank"
+          />
+        </template>
+        <template #col-submitted_at="{ item }">
+          <span class="small text-muted">{{ formatSubmittedAt(item.submitted_at) }}</span>
+        </template>
+      </ResponsiveList>
+    </PageStateShell>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import { formatApplicationStatus, formatDateTime as formatDateTimeUtil } from '@/utils/formatters'
 
 const { t, te, locale } = useI18n()
 const route = useRoute()
 const { success: successToast, error: errorToast } = useToast()
+
+const nominationColumns = computed(() => [
+  { key: 'student_display_name', label: t('nominationsPage.colStudent') },
+  { key: 'status', label: t('nominationsPage.colStatus') },
+  { key: 'nomination_rank', label: t('nominationsPage.colRank') },
+  { key: 'submitted_at', label: t('nominationsPage.colSubmitted') },
+])
 
 const programs = ref([])
 const programId = ref('')
@@ -155,7 +191,7 @@ function applyPayload(data) {
 }
 
 async function loadPrograms() {
-  const { data } = await api.get('/api/programs/', { params: { page_size: 200, ordering: 'name' } })
+    const { data } = await api.get('/api/programs/', { params: { page_size: 100, ordering: 'name' } })
   programs.value = data.results ?? data ?? []
 }
 

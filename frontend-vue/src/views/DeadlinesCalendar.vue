@@ -1,56 +1,54 @@
 <template>
   <div class="deadlines-calendar-page" data-testid="deadlines-calendar-page">
-    <nav :aria-label="t('calendarPage.breadcrumbAria')">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-        </li>
-        <li class="breadcrumb-item active">{{ t('route.names.DeadlinesCalendar') }}</li>
-      </ol>
-    </nav>
-
-      <div class="row mb-4">
-        <div class="col-lg-8">
-          <h2><i class="bi bi-calendar3 me-2"></i>{{ t('route.names.DeadlinesCalendar') }}</h2>
-          <p class="text-muted mb-0">
-            {{ t('calendarPage.pageSubtitle') }}
-          </p>
-        </div>
-        <div class="col-lg-4 mt-3 mt-lg-0">
-          <div class="card border-secondary-subtle h-100">
-            <div class="card-body py-3">
-              <div class="fw-semibold mb-2">
-                <i class="bi bi-rss me-1" aria-hidden="true" />{{ t('calendarPage.subscribeHeading') }}
-              </div>
-              <p class="small text-muted mb-2">
-                {{ t('calendarPage.subscribeBody') }}
-              </p>
-              <div v-if="subscribeLoading" class="small text-muted">{{ t('calendarPage.subscribeLoading') }}</div>
-              <template v-else-if="subscribeUrls">
-                <label class="form-label small text-muted mb-1" for="cal-ics-url">{{
-                  t('calendarPage.subscribeLabelHttps')
-                }}</label>
-                <div class="input-group input-group-sm mb-2">
-                  <input id="cal-ics-url" :value="subscribeUrls.ics_url" type="text" class="form-control font-monospace small" readonly>
-                  <button type="button" class="btn btn-outline-secondary" @click="copySubscribe(subscribeUrls.ics_url)">
-                    {{ t('calendarPage.copy') }}
-                  </button>
-                </div>
-                <label class="form-label small text-muted mb-1" for="cal-webcal-url">{{
-                  t('calendarPage.subscribeLabelWebcal')
-                }}</label>
-                <div class="input-group input-group-sm">
-                  <input id="cal-webcal-url" :value="subscribeUrls.webcal_url" type="text" class="form-control font-monospace small" readonly>
-                  <button type="button" class="btn btn-outline-secondary" @click="copySubscribe(subscribeUrls.webcal_url)">
-                    {{ t('calendarPage.copy') }}
-                  </button>
-                </div>
-              </template>
-              <div v-else class="small text-danger">{{ t('calendarPage.subscribeLoadError') }}</div>
+    <PageHeader
+      :title="t('route.names.DeadlinesCalendar')"
+      :subtitle="t('calendarPage.pageSubtitle')"
+      icon-class="bi bi-calendar3"
+    >
+      <template #breadcrumb>
+        <PageBreadcrumb
+          :aria-label="t('calendarPage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.DeadlinesCalendar') },
+          ]"
+        />
+      </template>
+      <template #actions>
+        <div class="card border-secondary-subtle" style="min-width: 280px">
+          <div class="card-body py-3">
+            <div class="fw-semibold mb-2">
+              <i class="bi bi-rss me-1" aria-hidden="true" />{{ t('calendarPage.subscribeHeading') }}
             </div>
+            <p class="small text-muted mb-2">
+              {{ t('calendarPage.subscribeBody') }}
+            </p>
+            <div v-if="subscribeLoading" class="small text-muted">{{ t('calendarPage.subscribeLoading') }}</div>
+            <template v-else-if="subscribeUrls">
+              <label class="form-label small text-muted mb-1" for="cal-ics-url">{{
+                t('calendarPage.subscribeLabelHttps')
+              }}</label>
+              <div class="input-group input-group-sm mb-2">
+                <input id="cal-ics-url" :value="subscribeUrls.ics_url" type="text" class="form-control font-monospace small" readonly>
+                <button type="button" class="btn btn-sm btn-outline-secondary" @click="copySubscribe(subscribeUrls.ics_url)">
+                  {{ t('calendarPage.copy') }}
+                </button>
+              </div>
+              <label class="form-label small text-muted mb-1" for="cal-webcal-url">{{
+                t('calendarPage.subscribeLabelWebcal')
+              }}</label>
+              <div class="input-group input-group-sm">
+                <input id="cal-webcal-url" :value="subscribeUrls.webcal_url" type="text" class="form-control font-monospace small" readonly>
+                <button type="button" class="btn btn-sm btn-outline-secondary" @click="copySubscribe(subscribeUrls.webcal_url)">
+                  {{ t('calendarPage.copy') }}
+                </button>
+              </div>
+            </template>
+            <div v-else class="small text-danger">{{ t('calendarPage.subscribeLoadError') }}</div>
           </div>
         </div>
-      </div>
+      </template>
+    </PageHeader>
 
       <div class="card mb-4">
         <div class="card-body">
@@ -161,16 +159,16 @@
         </div>
       </div>
 
-      <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('calendarPage.loading') }}</span>
-        </div>
-      </div>
-      <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-      <div v-else-if="!groupedDays.length" class="alert alert-info mb-0" data-testid="calendar-empty">
-        {{ t('calendarPage.emptyRange') }}
-      </div>
-      <div v-else class="card">
+      <PageStateShell
+        :loading="loading"
+        :error="error"
+        :empty="!groupedDays.length"
+        :empty-title="t('calendarPage.emptyRange')"
+        empty-test-id="calendar-empty"
+        skeleton="table"
+        :loading-label="t('calendarPage.loading')"
+      >
+      <div class="card">
         <ul class="list-group list-group-flush">
           <li v-for="day in groupedDays" :key="day.key" class="list-group-item">
             <div class="fw-semibold mb-2">{{ day.label }}</div>
@@ -189,6 +187,7 @@
           </li>
         </ul>
       </div>
+      </PageStateShell>
   </div>
 </template>
 
@@ -200,6 +199,9 @@ import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
+import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import {
   STAFF_SAVED_SEARCH_TYPE,
   deserializeCalendarFilters,
@@ -382,7 +384,6 @@ onMounted(async () => {
 
 <style scoped>
 .deadlines-calendar-page {
-  min-height: 100vh;
   background-color: var(--seim-app-bg, #f8f9fa);
 }
 </style>

@@ -59,6 +59,7 @@ from .models import (
     HostSchool,
     HostSubject,
     Program,
+    ProgramDocumentRequirement,
     SavedSearch,
     ScholarshipScoringRuleset,
     TimelineEvent,
@@ -77,6 +78,7 @@ from .subject_plan_versions import (
 )
 from .serializers import (
     AgreementCommentSerializer,
+    ApplicationListSerializer,
     ApplicationSerializer,
     ApplicationStatusSerializer,
     ApplicationSubjectPlanVersionSerializer,
@@ -443,6 +445,10 @@ class ProgramViewSet(viewsets.ModelViewSet):
         active_programs = self.filter_queryset(
             self.get_queryset().filter(is_active=True)
         )
+        page = self.paginate_queryset(active_programs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(active_programs, many=True)
         return Response(serializer.data)
 
@@ -980,6 +986,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     ]
     ordering_fields = ["created_at", "submitted_at"]
 
+    def get_serializer_class(self):
+        if self.action == "list":
+            return ApplicationListSerializer
+        return ApplicationSerializer
+
     def get_queryset(self):
         """
         Filter queryset based on user role with optimized queries.
@@ -989,38 +1000,64 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         """
         user = self.request.user
 
-        # Base queryset with all optimizations
         base_qs = Application.objects.select_related(
-            "program",  # ForeignKey - use select_related
-            "student",  # ForeignKey
+            "program",
+            "student",
             "assigned_coordinator",
-            "status",  # ForeignKey
+            "status",
             "host_institution",
             "host_institution__grade_scale",
             "host_school",
             "host_academic_program",
-        ).prefetch_related(
-            "program__coordinators",
-            "program__required_document_types",
-            "student__roles",  # ManyToMany through student
-            "comments",
-            "comments__author",
-            "comments__author__roles",
-            "timeline_events",  # Reverse FK: events for this application
-            "timeline_events__created_by",
-            "document_set",  # Reverse ForeignKey (documents)
-            "document_set__type",  # Document types
-            "document_set__uploaded_by",  # Who uploaded them
-            "scholarship_award",
-            "scholarship_award__disbursements",
-            "scholarship_award__decided_by",
         )
 
-        # Filter based on role
+        from documents.models import Document
+
+        list_doc_prefetch = Prefetch(
+            "document_set",
+            queryset=Document.objects.select_related("type").prefetch_related(
+                "documentresubmissionrequest_set"
+            ),
+        )
+        detail_doc_prefetch = Prefetch(
+            "document_set",
+            queryset=Document.objects.select_related(
+                "type", "uploaded_by"
+            ).prefetch_related("documentresubmissionrequest_set"),
+        )
+        req_prefetch = Prefetch(
+            "program__program_document_requirements",
+            queryset=ProgramDocumentRequirement.objects.select_related(
+                "document_type", "required_from_status"
+            ),
+        )
+
+        if self.action == "list":
+            base_qs = base_qs.prefetch_related(
+                req_prefetch,
+                "student__roles",
+                list_doc_prefetch,
+            )
+        else:
+            base_qs = base_qs.prefetch_related(
+                "program__coordinators",
+                req_prefetch,
+                "program__required_document_types",
+                "student__roles",
+                "comments",
+                "comments__author",
+                "comments__author__roles",
+                "timeline_events",
+                "timeline_events__created_by",
+                detail_doc_prefetch,
+                "scholarship_award",
+                "scholarship_award__disbursements",
+                "scholarship_award__decided_by",
+            )
+
         if user.has_role("coordinator") or user.has_role("admin"):
             return base_qs
-        else:
-            return base_qs.filter(student=user)
+        return base_qs.filter(student=user)
 
     def perform_create(self, serializer):
         """Set the student after enforcing apply-readiness (catalogs + eligibility)."""
@@ -1510,7 +1547,6 @@ class HostInstitutionViewSet(viewsets.ModelViewSet):
 
     serializer_class = HostInstitutionSerializer
     permission_classes = [IsAdminOrReadOnly]
-    pagination_class = None
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["program", "is_active"]
     http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
@@ -1596,7 +1632,6 @@ class HostSchoolViewSet(viewsets.ModelViewSet):
 
     serializer_class = HostSchoolSerializer
     permission_classes = [IsAdminOrReadOnly]
-    pagination_class = None
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["institution", "is_active"]
     http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
@@ -1658,7 +1693,6 @@ class HostAcademicProgramViewSet(viewsets.ModelViewSet):
 
     serializer_class = HostAcademicProgramSerializer
     permission_classes = [IsAdminOrReadOnly]
-    pagination_class = None
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["school", "is_active"]
     http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
@@ -1706,7 +1740,6 @@ class HostSubjectViewSet(viewsets.ModelViewSet):
 
     serializer_class = HostSubjectSerializer
     permission_classes = [IsAdminOrReadOnly]
-    pagination_class = None
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["institution", "school", "academic_program", "is_active"]
     http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]

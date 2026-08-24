@@ -68,8 +68,10 @@ class DashboardStatsView(APIView):
                 .count()
             )
             stats = {
-                "applications": Application.objects.count(),
-                "documents": Document.objects.count(),
+                "applications": Application.objects.filter(withdrawn=False).count(),
+                "documents": Document.objects.filter(
+                    application__withdrawn=False
+                ).count(),
                 "notifications": unread,
                 "pending": pending,
             }

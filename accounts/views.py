@@ -103,9 +103,18 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Filter profiles based on user permissions."""
+        qs = Profile.objects.select_related(
+            "user",
+            "academic_level",
+            "school",
+            "unidad",
+            "home_academic_program",
+            "bank_institution",
+            "grade_scale",
+        ).prefetch_related("user__roles")
         if self.request.user.is_staff:
-            return Profile.objects.all()
-        return Profile.objects.filter(user=self.request.user)
+            return qs
+        return qs.filter(user=self.request.user)
 
     def perform_update(self, serializer):
         serializer.save()

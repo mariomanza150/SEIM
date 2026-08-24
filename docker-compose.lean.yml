@@ -1,0 +1,259 @@
+# Ultra-Lean AWS profile — single-host Docker Compose for EC2 t4g.small (2 GB RAM).
+# Target: ~120 applicants/year, ~10 staff, Cloudflare Free proxy, S3 for private media.
+# ClamAV is intentionally omitted (~1.2–1.5 GB idle RAM). Use VIRUS_SCANNER_TYPE=mock.
+#
+# Usage:
+#   cp env.lean.example .env.lean
+#   docker compose -f docker-compose.lean.yml --env-file .env.lean up -d --build
+#
+# See docs/deployment.md (Ultra-Lean tier).
+
+name: seim-lean
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: seim-postgres-lean
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-seim}
+      POSTGRES_USER: ${POSTGRES_USER:-seimuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.lean}
+      # Cap planner/cache for ~512 MB container RAM
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - effective_cache_size=256MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=50
+      - -c
+      - wal_buffers=4MB
+      - -c
+      - checkpoint_completion_target=0.9
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - min_wal_size=80MB
+      - -c
+      - max_wal_size=256MB
+    volumes:
+      - postgres_lean_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - seim-lean-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-seimuser} -d ${POSTGRES_DB:-seim}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    mem_limit: 512m
+    mem_reservation: 384m
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 384M
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: seim-redis-lean
+    restart: unless-stopped
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env.lean}
+    volumes:
+      - redis_lean_data:/data
+    networks:
+      - seim-lean-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep -q PONG",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env.lean}
+    mem_limit: 160m
+    mem_reservation: 128m
+    deploy:
+      resources:
+        limits:
+          memory: 160M
+        reservations:
+          memory: 128M
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: seim-web-lean
+    restart: unless-stopped
+    env_file:
+      - path: .env.lean
+        required: false
+    command:
+      - sh
+      - -c
+      - |
+          set -e
+          python manage.py migrate --noinput
+          python manage.py collectstatic --noinput
+          exec gunicorn seim.wsgi:application \
+            --bind 0.0.0.0:8000 \
+            --workers ${GUNICORN_WORKERS:-2} \
+            --worker-class ${GUNICORN_WORKER_CLASS:-sync} \
+            --max-requests ${GUNICORN_MAX_REQUESTS:-500} \
+            --max-requests-jitter ${GUNICORN_MAX_REQUESTS_JITTER:-50} \
+            --timeout ${GUNICORN_TIMEOUT:-30} \
+            --keep-alive ${GUNICORN_KEEP_ALIVE:-2} \
+            --access-logfile - \
+            --error-logfile - \
+            --log-level ${GUNICORN_LOG_LEVEL:-info}
+    volumes:
+      - static_lean_volume:/app/staticfiles
+      - logs_lean_volume:/var/log/seim
+    networks:
+      - seim-lean-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_SETTINGS_MODULE: seim.settings.production
+      DJANGO_ENV: production
+      DEBUG: "false"
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env.lean}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-seimuser}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-seim}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
+      VIRUS_SCANNER_TYPE: ${VIRUS_SCANNER_TYPE:-mock}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME:-}
+      AWS_S3_REGION_NAME: ${AWS_S3_REGION_NAME:-us-east-1}
+      AWS_DEFAULT_ACL: ${AWS_DEFAULT_ACL:-private}
+      USE_S3: ${USE_S3:-true}
+    mem_limit: 512m
+    mem_reservation: 384m
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 384M
+
+  # Combined worker + beat (single process) to save RAM on t4g.small.
+  celery:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    container_name: seim-celery-lean
+    restart: unless-stopped
+    env_file:
+      - path: .env.lean
+        required: false
+    command: >
+      celery -A seim worker
+      --beat
+      --loglevel=info
+      --concurrency=${CELERY_CONCURRENCY:-2}
+      --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - logs_lean_volume:/var/log/seim
+    networks:
+      - seim-lean-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "celery inspect ping -d celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+    environment:
+      DJANGO_SETTINGS_MODULE: seim.settings.production
+      DJANGO_ENV: production
+      DEBUG: "false"
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env.lean}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-seimuser}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-seim}
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
+      VIRUS_SCANNER_TYPE: ${VIRUS_SCANNER_TYPE:-mock}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME:-}
+      AWS_S3_REGION_NAME: ${AWS_S3_REGION_NAME:-us-east-1}
+      USE_S3: ${USE_S3:-true}
+    mem_limit: 384m
+    mem_reservation: 256m
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+        reservations:
+          memory: 256M
+
+  nginx:
+    image: nginx:1.25-alpine
+    container_name: seim-nginx-lean
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - static_lean_volume:/app/staticfiles:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - logs_lean_volume:/var/log/nginx
+    networks:
+      - seim-lean-network
+    depends_on:
+      - web
+    mem_limit: 128m
+    mem_reservation: 64m
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+
+volumes:
+  postgres_lean_data:
+    driver: local
+  redis_lean_data:
+    driver: local
+  static_lean_volume:
+    driver: local
+  logs_lean_volume:
+    driver: local
+
+networks:
+  seim-lean-network:
+    driver: bridge

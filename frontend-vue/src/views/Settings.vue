@@ -2,27 +2,23 @@
   <div class="settings-page">
     <PageHeader :title="t('route.names.Settings')" :subtitle="t('settings.pageSubtitle')" icon-class="bi bi-gear">
       <template #breadcrumb>
-        <nav :aria-label="t('settings.breadcrumbAria')">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.Settings') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('settings.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.Settings') },
+          ]"
+        />
       </template>
     </PageHeader>
 
-      <div v-if="loading" class="text-center py-5">
-        <div
-          class="spinner-border text-primary"
-          role="status"
-          :aria-label="t('settings.loading')"
-        ></div>
-        <p class="mt-3 text-muted">{{ t('settings.loading') }}</p>
-      </div>
-
-      <div v-else class="row">
+    <PageStateShell
+      :loading="loading"
+      :error="loadError"
+      skeleton="cards"
+      :loading-label="t('settings.loading')"
+    >
+      <div class="row">
         <div class="col-lg-8">
           <div class="card">
             <div class="card-body">
@@ -216,7 +212,7 @@
                   </label>
                 </div>
 
-                <div v-if="saveError" class="alert alert-danger">{{ saveError }}</div>
+                <div v-if="saveError" class="alert alert-danger" role="alert">{{ saveError }}</div>
                 <div class="d-flex justify-content-between mt-4">
                   <router-link :to="{ name: 'Dashboard' }" class="btn btn-outline-secondary">{{ t('settings.cancel') }}</router-link>
                   <button
@@ -385,6 +381,7 @@
           </div>
         </div>
       </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -396,6 +393,8 @@ import { useToast } from '@/composables/useToast'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import { applyUiPreferences } from '@/services/uiPreferences'
 import { setAppLocale } from '@/i18n'
 import router from '@/router'
@@ -413,6 +412,7 @@ function onLocaleChange() {
 
 const { success, error: errorToast } = useToast()
 const loading = ref(true)
+const loadError = ref('')
 const saving = ref(false)
 const saveError = ref('')
 const changingPassword = ref(false)
@@ -486,13 +486,14 @@ function applySettings(data) {
 }
 
 async function fetchSettings() {
+  loadError.value = ''
   try {
     const { data } = await api.get('/api/accounts/user-settings/')
     applySettings(data)
     applyUiPreferences(form.value)
   } catch (err) {
     console.error('Failed to fetch settings:', err)
-    errorToast(t('settings.toastLoadError'))
+    loadError.value = t('settings.toastLoadError')
   } finally {
     loading.value = false
   }
@@ -614,6 +615,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.settings-page { min-height: 100vh; background-color: var(--seim-app-bg); }
+.settings-page { background-color: var(--seim-app-bg); }
 .card { border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
 </style>

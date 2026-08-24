@@ -8,9 +8,9 @@
 */
 
 :root {
-    /* Brand */
-    --seim-brand-primary: #667eea;
-    --seim-brand-secondary: #764ba2;
+    /* Brand (institution theme.css sets --brand-*; purple is SPA fallback) */
+    --seim-brand-primary: var(--brand-primary, #667eea);
+    --seim-brand-secondary: var(--brand-accent, #764ba2);
 
     /* Bootstrap-compatible theme variables (applies to both Django + SPA) */
     --bs-primary: var(--seim-brand-primary);

@@ -16,6 +16,7 @@ const Register = () => import('@/views/Register.vue')
 const VerifyEmail = () => import('@/views/VerifyEmail.vue')
 const PasswordReset = () => import('@/views/PasswordReset.vue')
 const PasswordResetConfirm = () => import('@/views/PasswordResetConfirm.vue')
+const AuthLayout = () => import('@/layouts/AuthLayout.vue')
 const AppShell = () => import('@/layouts/AppShell.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
 const Applications = () => import('@/views/Applications.vue')
@@ -61,43 +62,77 @@ const NotFound = () => import('@/views/NotFound.vue')
 const routes = [
   {
     path: '/login',
-    name: 'Login',
-    component: Login,
-    meta: {
-      requiresAuth: false,
-    },
+    component: AuthLayout,
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: '',
+        name: 'Login',
+        component: Login,
+        meta: { authSubtitleKey: 'login.subtitle' },
+      },
+    ],
   },
   {
     path: '/register',
-    name: 'Register',
-    component: Register,
-    meta: {
-      requiresAuth: false,
-    },
+    component: AuthLayout,
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: '',
+        name: 'Register',
+        component: Register,
+        meta: {
+          authSubtitleKey: 'register.subtitle',
+          authColClass: 'col-md-6 col-lg-5',
+        },
+      },
+    ],
   },
   {
     path: '/verify-email',
-    name: 'VerifyEmail',
-    component: VerifyEmail,
-    meta: {
-      requiresAuth: false,
-    },
+    component: AuthLayout,
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: '',
+        name: 'VerifyEmail',
+        component: VerifyEmail,
+        meta: {
+          authSubtitleKey: 'verifyEmail.subtitle',
+          authShowVersion: false,
+        },
+      },
+    ],
   },
   {
     path: '/password-reset',
-    name: 'PasswordReset',
-    component: PasswordReset,
-    meta: {
-      requiresAuth: false,
-    },
+    component: AuthLayout,
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: '',
+        name: 'PasswordReset',
+        component: PasswordReset,
+        meta: { authSubtitleKey: 'passwordReset.subtitle' },
+      },
+    ],
   },
   {
     path: '/password-reset/confirm',
-    name: 'PasswordResetConfirm',
-    component: PasswordResetConfirm,
-    meta: {
-      requiresAuth: false,
-    },
+    component: AuthLayout,
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: '',
+        name: 'PasswordResetConfirm',
+        component: PasswordResetConfirm,
+        meta: {
+          authSubtitleKey: 'passwordResetConfirm.subtitle',
+          authColClass: 'col-md-6 col-lg-5',
+        },
+      },
+    ],
   },
   {
     path: '/',
@@ -322,13 +357,12 @@ const routes = [
         component: AdminApplicationEdit,
         meta: { adminOnly: true },
       },
+      {
+        path: ':pathMatch(.*)*',
+        name: 'NotFound',
+        component: NotFound,
+      },
     ],
-  },
-  // Catch-all 404
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'NotFound',
-    component: NotFound,
   },
 ]
 
@@ -357,6 +391,14 @@ router.beforeEach(async (to, from, next) => {
     }
     if (outcome === 'applications') {
       next({ name: 'Applications', replace: true })
+      return
+    }
+    if (outcome === 'dashboard') {
+      next({ name: 'Dashboard', replace: true })
+      return
+    }
+    if (outcome === 'reviewQueue') {
+      next({ name: 'CoordinatorReviewQueue', replace: true })
       return
     }
     if (outcome === 'partner') {

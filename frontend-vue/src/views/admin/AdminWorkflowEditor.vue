@@ -2,17 +2,14 @@
   <div class="admin-workflow-editor-page">
     <PageHeader :title="headerTitle" :subtitle="headerSubtitle">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'AdminWorkflows' }">{{ t('route.names.AdminWorkflows') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ headerTitle }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { to: { name: 'AdminWorkflows' }, label: t('route.names.AdminWorkflows') },
+            { label: headerTitle, truncate: true },
+          ]"
+        />
       </template>
 
       <template #actions>
@@ -37,10 +34,12 @@
       </template>
     </PageHeader>
 
-    <div v-if="error" class="alert alert-danger" role="alert">
-      <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
-      {{ error }}
-    </div>
+    <PageStateShell
+      :loading="busy && !definition"
+      :error="error || ''"
+      skeleton="none"
+      :loading-label="t('adminCommon.loading')"
+    >
     <div
       v-if="validationMessage"
       class="alert"
@@ -96,6 +95,7 @@
         </div>
       </div>
     </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -107,6 +107,8 @@ import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 
 import BpmnModeler from 'bpmn-js/lib/Modeler'
 import { BpmnPropertiesPanelModule, BpmnPropertiesProviderModule } from 'bpmn-js-properties-panel'

@@ -1,6 +1,5 @@
 <template>
   <div class="application-detail">
-  <div class="container-fluid mt-4">
       <!-- Breadcrumb -->
       <PageBreadcrumb
         :aria-label="t('applicationDetailPage.breadcrumbAria')"
@@ -14,65 +13,19 @@
         ]"
       />
 
-      <!-- Loading -->
-      <div v-if="loading" class="text-center py-5">
-        <div class="visually-hidden" role="status" aria-live="polite">
-          {{ t('applicationDetailPage.loadingDetails') }}
-        </div>
-        <div class="placeholder-glow text-start" aria-hidden="true">
-          <div class="mb-4">
-            <h2 class="mb-1"><span class="placeholder col-6"></span></h2>
-            <p class="text-muted mb-0"><span class="placeholder col-4"></span></p>
-          </div>
-          <div class="row">
-            <div class="col-lg-8">
-              <div class="card mb-4">
-                <div class="card-header"><span class="placeholder col-4"></span></div>
-                <div class="card-body">
-                  <p><span class="placeholder col-8"></span></p>
-                  <p><span class="placeholder col-6"></span></p>
-                  <p class="mb-0"><span class="placeholder col-7"></span></p>
-                </div>
-              </div>
-              <div class="card mb-4">
-                <div class="card-header"><span class="placeholder col-5"></span></div>
-                <div class="card-body">
-                  <p><span class="placeholder col-9"></span></p>
-                  <p class="mb-0"><span class="placeholder col-7"></span></p>
-                </div>
-              </div>
-            </div>
-            <div class="col-lg-4">
-              <div class="card mb-4">
-                <div class="card-header"><span class="placeholder col-6"></span></div>
-                <div class="card-body">
-                  <p><span class="placeholder col-9"></span></p>
-                  <p class="mb-0"><span class="placeholder col-8"></span></p>
-                </div>
-              </div>
-              <div class="card">
-                <div class="card-header"><span class="placeholder col-6"></span></div>
-                <div class="card-body">
-                  <p><span class="placeholder col-10"></span></p>
-                  <p class="mb-0"><span class="placeholder col-7"></span></p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <ErrorAlert v-if="error" :message="error">
+      <router-link :to="{ name: 'Applications' }" class="btn btn-sm btn-outline-danger ms-3">
+        {{ t('applicationDetailPage.backToApplications') }}
+      </router-link>
+    </ErrorAlert>
 
-      <!-- Error -->
-      <div v-else-if="error" class="alert alert-danger">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        {{ error }}
-        <router-link :to="{ name: 'Applications' }" class="btn btn-sm btn-outline-danger ms-3">
-          {{ t('applicationDetailPage.backToApplications') }}
-        </router-link>
-      </div>
-
-      <!-- Application Details -->
-      <div v-else-if="application" data-testid="application-detail-page">
+    <PageStateShell
+      v-else
+      :loading="loading"
+      skeleton="detail"
+      :loading-label="t('applicationDetailPage.loadingDetails')"
+    >
+      <div v-if="application" data-testid="application-detail-page">
         <PageHeader
           :title="programDisplayName(application)"
           :subtitle="hostInstitution(application) || t('applicationDetailPage.notAvailable')"
@@ -207,7 +160,7 @@
                 </div>
                 <div class="table-responsive">
                   <table class="table table-sm table-bordered mb-0">
-                    <thead class="table-light">
+                    <thead class="seim-table-head">
                       <tr>
                         <th scope="col">{{ t('applicationDetailPage.scholarshipScoring.colFactor') }}</th>
                         <th scope="col" class="text-end">{{ t('applicationDetailPage.scholarshipScoring.colPoints') }}</th>
@@ -469,7 +422,7 @@
                       <span class="fw-semibold" data-testid="document-checklist-name">{{ checklistItemLabel(item) }}</span>
                       <span
                         v-if="item.is_required === false"
-                        class="badge bg-light text-muted border ms-1"
+                        class="badge seim-surface-muted text-muted border ms-1"
                       >{{ t('applicationDetailPage.checklistOptional') }}</span>
                       <span
                         v-else-if="item.due_now && item.status !== 'approved' && item.status !== 'n_a'"
@@ -478,7 +431,7 @@
                       >{{ t('applicationDetailPage.checklistDueNow') }}</span>
                       <span
                         v-else-if="item.required_from_status"
-                        class="badge bg-light text-muted border ms-1"
+                        class="badge seim-surface-muted text-muted border ms-1"
                         data-testid="document-checklist-required-from"
                       >{{ t('applicationDetailPage.checklistRequiredFrom', { status: t(`applicationDetailPage.status.${item.required_from_status}`) }) }}</span>
                       <p
@@ -617,7 +570,7 @@
                       <div>
                         <div class="fw-semibold d-flex align-items-center flex-wrap gap-2">
                           <span>{{ formatCommentAuthor(comment) }}</span>
-                          <span class="badge text-bg-light">{{ formatRole(comment.author_role) }}</span>
+                          <span class="badge seim-surface-muted text-body">{{ formatRole(comment.author_role) }}</span>
                           <span v-if="comment.is_private" class="badge text-bg-warning">{{
                             t('applicationDetailPage.privateBadge')
                           }}</span>
@@ -803,7 +756,12 @@
               </div>
               <div class="card-body">
                 <div v-if="documentsLoading" class="text-center py-3">
-                  <div class="spinner-border spinner-border-sm text-primary"></div>
+                  <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="visually-hidden">{{ t('common.loading') }}</span>
+                  </div>
+                </div>
+                <div v-else-if="documentsError" class="alert alert-warning small mb-0" role="alert">
+                  {{ documentsError }}
                 </div>
                 <div v-else-if="applicationDocuments.length > 0">
                   <ul class="list-group list-group-flush">
@@ -858,7 +816,8 @@
           </div>
         </div>
       </div>
-  </div></div>
+    </PageStateShell>
+  </div>
 </template>
 
 <script setup>
@@ -872,6 +831,8 @@ import DocumentUpload from '@/components/DocumentUpload.vue'
 import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import ErrorAlert from '@/components/State/ErrorAlert.vue'
 import EligibilityFixList from '@/components/EligibilityFixList.vue'
 import DocumentProgressRail from '@/components/DocumentProgressRail.vue'
 import api from '@/services/api'
@@ -884,15 +845,13 @@ import { formatTimelineEventDescription, formatTimelineEventHeading, timelineHas
 import { documentReviewStatus, documentTypeLabel, looksLikeTechnicalDocumentName } from '@/utils/documentApi'
 import { readinessLevelBadgeClass, readinessScoreBarClass, formatReadinessHeadline } from '@/utils/applicationReadiness'
 import {
-  applicationProgramDisplayName,
-  applicationHostInstitution,
-  applicationHostCountry,
-  applicationProgramDuration,
   applicationStatusBadgeClass,
   formatApplicationStatus,
   formatDateTime as formatDateTimeUtil,
   formatScorePoints,
 } from '@/utils/formatters'
+import { useApplicationDisplay } from '@/composables/useApplicationDetail'
+import { useApplicationDetailLoader } from '@/composables/useApplicationDetailLoader'
 
 const route = useRoute()
 const router = useRouter()
@@ -901,55 +860,22 @@ const authStore = useAuthStore()
 const { success, error: errorToast } = useToast()
 const { confirm } = useConfirm()
 
-function programDisplayName(app) {
-  return applicationProgramDisplayName(app)
-}
-
-function hostInstitution(app) {
-  return applicationHostInstitution(app)
-}
-
-function hostCountry(app) {
-  return applicationHostCountry(app)
-}
-
-function programDuration(app) {
-  return applicationProgramDuration({
-    app,
-    locale: locale.value,
-    fallback: '',
-  })
-}
+const { application, loading, error, loadApplication, softReload } = useApplicationDetailLoader()
+const {
+  programDisplayName,
+  hostInstitution,
+  hostCountry,
+  programDuration,
+  submitBlockedByDocuments,
+  submitBlockedByHost,
+  submitBlockedByEligibility,
+  submitBlocked,
+} = useApplicationDisplay(application, locale)
 
 const isCoordinator = computed(() =>
   authStore.userRole === 'coordinator' || authStore.userRole === 'admin'
 )
 const isStudent = computed(() => authStore.userRole === 'student')
-
-const submitBlockedByDocuments = computed(() => {
-  const c = application.value?.document_checklist
-  if (!c?.required_count) return false
-  return !c.complete
-})
-
-const submitBlockedByHost = computed(() => {
-  const host = application.value?.readiness?.host_destination
-  if (!host?.required) return false
-  return !host.complete
-})
-
-const submitBlockedByEligibility = computed(() => {
-  const el = application.value?.readiness?.eligibility
-  if (!el) return false
-  return el.complete === false
-})
-
-const submitBlocked = computed(
-  () =>
-    submitBlockedByDocuments.value
-    || submitBlockedByHost.value
-    || submitBlockedByEligibility.value
-)
 
 const submitBlockedTitle = computed(() => {
   if (submitBlockedByDocuments.value) return t('applicationDetailPage.submitBlockedTitle')
@@ -963,7 +889,6 @@ const submitBlockedTitle = computed(() => {
 const currentUserId = computed(() => authStore.user?.id || null)
 const canPostPrivateComment = computed(() => isCoordinator.value)
 
-const application = ref(null)
 const comments = ref([])
 const commentsLoading = ref(false)
 const commentsError = ref(null)
@@ -975,11 +900,10 @@ const updatingStatus = ref(false)
 const docValidatingId = ref(null)
 const applicationDocuments = ref([])
 const documentsLoading = ref(false)
+const documentsError = ref(null)
 const timelineEvents = ref([])
 const timelineLoading = ref(false)
 const timelineError = ref(null)
-const loading = ref(true)
-const error = ref(null)
 const scholarshipExportLoading = ref(false)
 const scholarshipAwardBusy = ref(false)
 const awardForm = ref({ status: 'nominated', amount: '', currency: 'MXN', notes: '' })
@@ -1170,33 +1094,21 @@ async function downloadScholarshipAwardsExport(format = 'csv') {
 
 async function fetchApplication() {
   try {
-    loading.value = true
-    error.value = null
-
-    const response = await api.get(`/api/applications/${route.params.id}/`)
-    application.value = response.data
+    await loadApplication()
     syncAwardForm(application.value)
     await Promise.all([fetchApplicationDocuments(), fetchComments(), fetchTimelineEvents()])
-  } catch (err) {
-    console.error('Failed to fetch application:', err)
-    error.value = t('applicationDetailPage.loadError')
-    errorToast(t('applicationDetailPage.loadToastError'))
-  } finally {
-    loading.value = false
+  } catch {
+    /* loadApplication sets error state */
   }
 }
 
 /** Refetch without full-page loading spinner (WebSocket application.sync). */
 async function softRefreshFromSync() {
   if (!application.value?.id) return
-  try {
-    const response = await api.get(`/api/applications/${route.params.id}/`)
-    application.value = response.data
-    syncAwardForm(application.value)
-    await Promise.all([fetchApplicationDocuments(), fetchComments(), fetchTimelineEvents()])
-  } catch (err) {
-    console.warn('Live sync refresh failed:', err)
-  }
+  const data = await softReload()
+  if (!data) return
+  syncAwardForm(application.value)
+  await Promise.all([fetchApplicationDocuments(), fetchComments(), fetchTimelineEvents()])
 }
 
 function onApplicationSyncEvent(ev) {
@@ -1230,6 +1142,7 @@ async function fetchApplicationDocuments() {
   if (!application.value?.id) return
   try {
     documentsLoading.value = true
+    documentsError.value = null
     const response = await api.get('/api/documents/', {
       params: { application: application.value.id },
     })
@@ -1237,6 +1150,7 @@ async function fetchApplicationDocuments() {
   } catch (err) {
     console.warn('Failed to fetch documents:', err)
     applicationDocuments.value = []
+    documentsError.value = t('applicationDetailPage.documentsLoadError')
   } finally {
     documentsLoading.value = false
   }

@@ -1,7 +1,7 @@
 # SEIM Makefile
 # Development and documentation automation
 
-.PHONY: help docs docs-api docs-code docs-db docs-all clean-docs enhance-docs test migrate collectstatic runserver shell cache-test cache-status cache-clear clean clean-all setup format lint type-check security-check quality-check check-deps export-deps download-institution-assets build-prod deploy-prod deploy-prod-update deploy-local-prod deploy-local-prod-update local-prod-status local-prod-logs local-prod-health prod-setup prod-secrets prod-backup prod-restore prod-logs prod-shell prod-status prod-health prod-stop prod-clean
+.PHONY: help docs docs-api docs-code docs-db docs-all clean-docs enhance-docs test migrate collectstatic runserver shell cache-test cache-status cache-clear clean clean-all setup format lint type-check security-check quality-check check-deps export-deps download-institution-assets build-prod deploy-prod deploy-prod-update deploy-local-prod deploy-local-prod-update local-prod-status local-prod-logs local-prod-health lean-setup lean-deploy lean-status lean-logs lean-health lean-stop prod-setup prod-secrets prod-backup prod-restore prod-logs prod-shell prod-status prod-health prod-stop prod-clean
 
 # Default target
 help:
@@ -48,8 +48,11 @@ help:
 	@echo ""
 	@echo "Production Deployment:"
 	@echo "  build-prod              - Build production Docker images (docker-compose.prod.yml)"
-	@echo "  deploy-prod             - Deploy to production environment"
+	@echo "  deploy-prod             - Deploy Minimum AWS tier (docker-compose.prod.yml)"
 	@echo "  deploy-prod-update      - Update production deployment"
+	@echo "  lean-setup              - Setup Ultra-Lean env (.env.lean from env.lean.example)"
+	@echo "  lean-deploy             - Deploy Ultra-Lean AWS tier (docker-compose.lean.yml)"
+	@echo "  lean-status / lean-logs / lean-health / lean-stop"
 	@echo "  deploy-local-prod       - Rebuild + redeploy seim-localprod (localhost:8020)"
 	@echo "  deploy-local-prod-update- Pull + rebuild + redeploy seim-localprod"
 	@echo "  local-prod-status       - Show seim-localprod container status"
@@ -524,6 +527,44 @@ local-prod-logs:
 local-prod-health:
 	curl -fsS http://localhost:8020/health/live/ && echo ""
 
+# Ultra-Lean AWS tier (t4g.small) — see docs/deployment.md
+lean-setup:
+	@echo "Setting up Ultra-Lean environment..."
+	@if [ ! -f .env.lean ]; then \
+		cp env.lean.example .env.lean; \
+		echo "Created .env.lean — edit secrets, hosts, and AWS_* before deploy."; \
+	else \
+		echo ".env.lean already exists."; \
+	fi
+	mkdir -p backups nginx/ssl
+	@echo "Next: edit .env.lean, then make lean-deploy"
+	@echo "Daily backups: crontab scripts/backup_db_s3.sh (docs/deployment.md)"
+
+lean-deploy:
+	@echo "Deploying Ultra-Lean stack..."
+	@if [ ! -f .env.lean ]; then \
+		echo ".env.lean missing. Run: make lean-setup"; \
+		exit 1; \
+	fi
+	docker compose -f docker-compose.lean.yml --env-file .env.lean up -d --build
+	@echo "Ultra-Lean deploy complete. Check: make lean-status / make lean-health"
+
+lean-status:
+	docker compose -f docker-compose.lean.yml --env-file .env.lean ps
+
+lean-logs:
+	docker compose -f docker-compose.lean.yml --env-file .env.lean logs -f
+
+lean-health:
+	@echo "Ultra-Lean health:"
+	@docker compose -f docker-compose.lean.yml --env-file .env.lean exec web curl -f http://localhost:8000/health/ || echo "Web unhealthy"
+	@docker compose -f docker-compose.lean.yml --env-file .env.lean exec postgres pg_isready -U $${POSTGRES_USER:-seimuser} -d $${POSTGRES_DB:-seim} || echo "Postgres unhealthy"
+	@docker compose -f docker-compose.lean.yml --env-file .env.lean exec redis redis-cli -a "$${REDIS_PASSWORD}" ping || echo "Redis unhealthy"
+
+lean-stop:
+	docker compose -f docker-compose.lean.yml --env-file .env.lean down
+	@echo "Ultra-Lean services stopped."
+
 prod-setup:
 	@echo "🔧 Setting up production environment..."
 	@if [ ! -f .env.prod ]; then \
@@ -612,8 +653,12 @@ prod-health:
 	docker-compose -f docker-compose.prod.yml exec db pg_isready -U seimuser -d seim || echo "❌ Database unhealthy"
 	@echo "Redis health:"
 	docker-compose -f docker-compose.prod.yml exec redis redis-cli ping || echo "❌ Redis unhealthy"
-	@echo "ClamAV health:"
-	docker-compose -f docker-compose.prod.yml exec clamav clamdscan --ping || echo "❌ ClamAV unhealthy"
+	@if docker-compose -f docker-compose.prod.yml ps --services --filter status=running 2>/dev/null | grep -qx clamav; then \
+		echo "ClamAV health:"; \
+		docker-compose -f docker-compose.prod.yml exec clamav clamdscan --ping || echo "❌ ClamAV unhealthy"; \
+	else \
+		echo "ClamAV: not running (optional profile; base AWS profiles omit it)"; \
+	fi
 
 prod-stop:
 	@echo "🛑 Stopping production services..."
