@@ -72,18 +72,19 @@
         </template>
       </CompactFilterBar>
 
-      <!-- Loading -->
-      <LoadingState
-        v-if="loading"
-        :spinner-label="t('notifications.loadingSpinner')"
-        :hint="t('notifications.pageLoadingHint')"
-      />
-
-      <!-- Error -->
-      <ErrorAlert v-else-if="error" :message="error" />
-
-      <!-- Notifications List -->
-      <div v-else-if="notifications.length > 0">
+      <PageStateShell
+        :loading="loading"
+        :error="error"
+        :empty="!notifications.length"
+        :empty-title="t('notifications.emptyTitle')"
+        :empty-body="t('notifications.emptyBody')"
+        empty-icon-class="bi bi-bell-slash"
+        skeleton="cards"
+        :skeleton-count="4"
+        :loading-label="t('notifications.loadingSpinner')"
+        :loading-hint="t('notifications.pageLoadingHint')"
+      >
+      <div v-if="notifications.length > 0">
         <div class="list-group" role="list" :aria-label="t('notifications.dropdownHeader')">
           <div
             v-for="notification in notifications"
@@ -166,14 +167,7 @@
           @page-change="goToPage"
         />
       </div>
-
-      <!-- Empty State -->
-      <EmptyState
-        v-else
-        icon-class="bi bi-bell-slash"
-        :title="t('notifications.emptyTitle')"
-        :body="t('notifications.emptyBody')"
-      />
+      </PageStateShell>
   </div>
 </template>
 
@@ -187,9 +181,7 @@ import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import { useNotifications } from '@/composables/useNotifications'
 import Pagination from '@/components/Pagination.vue'
-import LoadingState from '@/components/State/LoadingState.vue'
-import ErrorAlert from '@/components/State/ErrorAlert.vue'
-import EmptyState from '@/components/State/EmptyState.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import {
   formatNotificationAction,
   formatNotificationMessage,

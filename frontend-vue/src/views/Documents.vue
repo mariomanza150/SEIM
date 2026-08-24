@@ -127,21 +127,23 @@
         </template>
       </CompactFilterBar>
 
-      <!-- Loading -->
-      <LoadingState
-        v-if="loading"
-        :spinner-label="t('documentsPage.loadingSpinner')"
-        :hint="t('documentsPage.loadingList')"
-      />
-
-      <!-- Error -->
-      <ErrorAlert v-else-if="error" :message="error" />
-
-      <!-- Documents List -->
-      <div v-else-if="documents.length > 0">
+      <PageStateShell
+        :loading="loading"
+        :error="error"
+        :empty="!documents.length"
+        :empty-title="t('documentsPage.emptyTitle')"
+        :empty-body="t('documentsPage.emptyBody')"
+        empty-icon-class="bi bi-folder-x"
+        skeleton="table"
+        :loading-label="t('documentsPage.loadingSpinner')"
+        :loading-hint="t('documentsPage.loadingList')"
+        :skeleton-columns="6"
+      >
+      <ResponsiveList :items="documents" item-key="id" mobile-test-id="documents-mobile">
+      <div v-if="documents.length > 0">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
-            <thead class="table-light">
+            <thead class="seim-table-head">
               <tr>
                 <th>{{ t('documentsPage.colDocument') }}</th>
                 <th>{{ t('documentsPage.colType') }}</th>
@@ -220,25 +222,19 @@
           @page-change="goToPage"
         />
       </div>
+      </ResponsiveList>
 
-      <!-- Empty State -->
-      <EmptyState
-        v-else
-        icon-class="bi bi-folder-x"
-        :title="t('documentsPage.emptyTitle')"
-        :body="t('documentsPage.emptyBody')"
-      >
-        <template #actions>
+        <template #emptyActions>
           <router-link :to="{ name: 'Applications' }" class="btn btn-primary">
             <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>{{ t('documentsPage.goToApplications') }}
           </router-link>
         </template>
-      </EmptyState>
+      </PageStateShell>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
@@ -249,9 +245,8 @@ import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import Pagination from '@/components/Pagination.vue'
-import LoadingState from '@/components/State/LoadingState.vue'
-import ErrorAlert from '@/components/State/ErrorAlert.vue'
-import EmptyState from '@/components/State/EmptyState.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import {
   applicationSelectLabel,
   documentApplicationId,
@@ -265,6 +260,8 @@ import {
   serializeDocumentListFilters,
 } from '@/utils/staffListSearchPresets'
 import { resolveListPage } from '@/utils/listPage'
+
+defineOptions({ name: 'Documents' })
 
 const { t, te, locale } = useI18n()
 
@@ -313,7 +310,7 @@ const pagination = ref({
 async function fetchApplications() {
   try {
     const response = await api.get('/api/applications/', {
-      params: { page_size: isStaff.value ? 200 : 100 },
+      params: { page_size: 100 },
     })
     applications.value = response.data.results || response.data
   } catch {
@@ -424,6 +421,10 @@ onMounted(async () => {
     }
   }
   await fetchDocuments()
+})
+
+onActivated(() => {
+  fetchDocuments(pagination.value.currentPage)
 })
 </script>
 

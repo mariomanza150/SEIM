@@ -839,7 +839,12 @@ class ApplicationSerializer(serializers.ModelSerializer):
 
         view = self.context.get("view")
         for_list = bool(view and getattr(view, "action", None) == "list")
-        return compute_application_readiness(obj, include_dynamic_form=not for_list)
+        return compute_application_readiness(
+            obj,
+            include_dynamic_form=not for_list,
+            include_lifecycle=not for_list,
+            include_eligibility=not for_list,
+        )
 
     def get_scholarship_allocation_score(self, obj):
         request = self.context.get("request")
@@ -1232,6 +1237,32 @@ class ApplicationSerializer(serializers.ModelSerializer):
                 )
 
         return result
+
+
+class ApplicationListSerializer(ApplicationSerializer):
+    """Slim list payload: omit per-row form layout, submissions, and scholarship."""
+
+    class Meta(ApplicationSerializer.Meta):
+        fields = (
+            "id",
+            "status",
+            "created_at",
+            "submitted_at",
+            "withdrawn",
+            "program",
+            "student",
+            "host_institution",
+            "assigned_coordinator",
+            "assigned_coordinator_name",
+            "student_display_name",
+            "student_email",
+            "program_name",
+            "program_start_date",
+            "program_end_date",
+            "host_institution_name",
+            "host_institution_country",
+            "readiness",
+        )
 
 
 _WORKFLOW_SLUG_RE = re.compile(r"^[a-z][a-z0-9_]*$")

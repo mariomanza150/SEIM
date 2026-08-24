@@ -1,39 +1,38 @@
 <template>
   <div class="coordinator-workload-page">
-    <nav :aria-label="t('workloadPage.breadcrumbAria')">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-        </li>
-        <li class="breadcrumb-item active">{{ t('route.names.CoordinatorWorkload') }}</li>
-      </ol>
-    </nav>
+    <PageHeader
+      :title="t('route.names.CoordinatorWorkload')"
+      icon-class="bi bi-graph-up-arrow"
+    >
+      <template #breadcrumb>
+        <PageBreadcrumb
+          :aria-label="t('workloadPage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.CoordinatorWorkload') },
+          ]"
+        />
+      </template>
+      <template #subtitle>
+        {{ t('workloadPage.pageSubtitleBefore') }}<strong>{{ t('workloadPage.pageSubtitleStatusSubmitted') }}</strong
+        >{{ t('workloadPage.pageSubtitleOr') }}<strong>{{ t('workloadPage.pageSubtitleStatusUnderReview') }}</strong
+        >{{ t('workloadPage.pageSubtitleAfter') }}
+      </template>
+      <template #actions>
+        <router-link :to="{ name: 'CoordinatorReviewQueue' }" class="btn btn-outline-primary">
+          <i class="bi bi-clipboard-check me-1" aria-hidden="true"></i>{{ t('route.names.CoordinatorReviewQueue') }}
+        </router-link>
+      </template>
+    </PageHeader>
 
-      <div class="row mb-4">
-        <div class="col-md-8">
-          <h2>
-            <i class="bi bi-graph-up-arrow me-2"></i>{{ t('route.names.CoordinatorWorkload') }}
-          </h2>
-          <p class="text-muted mb-0">
-            {{ t('workloadPage.pageSubtitleBefore') }}<strong>{{ t('workloadPage.pageSubtitleStatusSubmitted') }}</strong
-            >{{ t('workloadPage.pageSubtitleOr') }}<strong>{{ t('workloadPage.pageSubtitleStatusUnderReview') }}</strong
-            >{{ t('workloadPage.pageSubtitleAfter') }}
-          </p>
-        </div>
-        <div class="col-md-4 text-md-end mt-2 mt-md-0">
-          <router-link :to="{ name: 'CoordinatorReviewQueue' }" class="btn btn-outline-primary">
-            <i class="bi bi-clipboard-check me-1"></i>{{ t('route.names.CoordinatorReviewQueue') }}
-          </router-link>
-        </div>
-      </div>
-
-      <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('workloadPage.loading') }}</span>
-        </div>
-      </div>
-      <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-      <template v-else-if="data">
+    <PageStateShell
+      :loading="loading"
+      :error="error"
+      :loading-label="t('workloadPage.loading')"
+      skeleton="stats"
+      :skeleton-count="4"
+    >
+      <template v-if="data">
         <h3 class="h5 mb-3">{{ t('workloadPage.yourWorkload') }}</h3>
         <div class="row g-3 mb-4">
           <div class="col-md-6 col-xl-3">
@@ -102,47 +101,62 @@
           </div>
 
           <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-light">
+            <div class="card-header seim-surface-muted">
               <span class="fw-semibold">{{ t('workloadPage.pendingByCoordinator') }}</span>
             </div>
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>{{ t('workloadPage.colCoordinator') }}</th>
-                    <th class="text-end">{{ t('workloadPage.colAssignedPending') }}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-if="!data.distribution.length">
-                    <td colspan="2" class="text-muted small">{{ t('workloadPage.distributionEmpty') }}</td>
-                  </tr>
-                  <template v-else>
+            <ResponsiveList
+              :items="data.distribution"
+              :columns="distributionColumns"
+              item-key="coordinator_id"
+              mobile-test-id="workload-distribution"
+            >
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead class="seim-table-head">
+                    <tr>
+                      <th>{{ t('workloadPage.colCoordinator') }}</th>
+                      <th class="text-end">{{ t('workloadPage.colAssignedPending') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-if="!data.distribution.length">
+                      <td colspan="2" class="text-muted small">{{ t('workloadPage.distributionEmpty') }}</td>
+                    </tr>
                     <tr v-for="row in data.distribution" :key="row.coordinator_id">
                       <td>{{ row.display_name }}</td>
                       <td class="text-end">{{ row.assigned_pending_review }}</td>
                     </tr>
-                  </template>
-                </tbody>
-              </table>
-            </div>
+                  </tbody>
+                </table>
+              </div>
+            </ResponsiveList>
           </div>
         </template>
       </template>
+    </PageStateShell>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 
 const { t } = useI18n()
 const { error: errorToast } = useToast()
 const loading = ref(true)
 const error = ref('')
 const data = ref(null)
+
+const distributionColumns = computed(() => [
+  { key: 'display_name', label: t('workloadPage.colCoordinator') },
+  { key: 'assigned_pending_review', label: t('workloadPage.colAssignedPending') },
+])
 
 onMounted(async () => {
   try {
@@ -157,10 +171,3 @@ onMounted(async () => {
   }
 })
 </script>
-
-<style scoped>
-.coordinator-workload-page {
-  min-height: 100vh;
-  background-color: var(--seim-app-bg, #f8f9fa);
-}
-</style>

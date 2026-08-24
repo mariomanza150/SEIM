@@ -56,24 +56,47 @@ class User(AbstractUser, UUIDModel, TimeStampedModel):
         verbose_name="user permissions",
     )
 
+    def _role_names_if_prefetched(self):
+        """Return role names only when ``roles`` was prefetch_related (one query per request)."""
+        cache = getattr(self, "_prefetched_objects_cache", None)
+        if not cache or "roles" not in cache:
+            return None
+        names = getattr(self, "_role_names_cache", None)
+        if names is None:
+            names = frozenset(role.name for role in self.roles.all())
+            self._role_names_cache = names
+        return names
+
     def has_role(self, role_name):
         """Check if user has specific role."""
+        names = self._role_names_if_prefetched()
+        if names is not None:
+            return role_name in names
         return self.roles.filter(name=role_name).exists()
 
     def has_any_role(self, role_names):
         """Check if user has any of the specified roles."""
         if isinstance(role_names, str):
             role_names = [role_names]
+        names = self._role_names_if_prefetched()
+        if names is not None:
+            return any(name in names for name in role_names)
         return self.roles.filter(name__in=role_names).exists()
 
     def has_all_roles(self, role_names):
         """Check if user has all of the specified roles."""
         if isinstance(role_names, str):
             role_names = [role_names]
+        names = self._role_names_if_prefetched()
+        if names is not None:
+            return all(name in names for name in role_names)
         return all(self.has_role(role) for role in role_names)
 
     def get_all_roles(self):
         """Get list of all role names."""
+        names = self._role_names_if_prefetched()
+        if names is not None:
+            return list(names)
         return list(self.roles.values_list("name", flat=True))
 
     def has_permission(self, permission_name):

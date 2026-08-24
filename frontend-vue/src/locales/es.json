@@ -33,7 +33,12 @@
   "common": {
     "close": "Cerrar",
     "clearFilters": "Limpiar",
-    "advancedFilters": "Filtros avanzados"
+    "advancedFilters": "Filtros avanzados",
+    "filters": "Filtros",
+    "applyFilters": "Aplicar filtros",
+    "loading": "Cargando…",
+    "requestFailed": "La solicitud falló",
+    "fieldRequired": "Este campo es obligatorio."
   },
   "eligibilityFix": {
     "heading": "Qué corregir",
@@ -381,9 +386,19 @@
   },
   "adminNav": {
     "sectionTitle": "Admin",
-    "consoleMenu": "Admin de la app"
+    "consoleMenu": "Admin de la app",
+    "allToolsHint": "Use la sección Admin del menú lateral para todas las herramientas de configuración."
+  },
+  "nav": {
+    "sections": {
+      "main": "Principal",
+      "staff": "Herramientas del personal",
+      "account": "Cuenta",
+      "admin": "Admin"
+    }
   },
   "adminCommon": {
+    "breadcrumbAria": "Miga de pan de administración",
     "refresh": "Actualizar",
     "searchLabel": "Buscar",
     "filterAll": "Todos",
@@ -949,6 +964,10 @@
     "title": "Gestión de flujos",
     "subtitle": "Diseña y publica flujos de solicitud (arrastrar y soltar).",
     "create": "Nuevo flujo",
+    "searchPlaceholder": "Buscar por nombre o descripción…",
+    "filterActive": "Activo",
+    "sortNameAsc": "Nombre (A–Z)",
+    "sortNewest": "Más recientes",
     "loadingList": "Cargando flujos…",
     "loadError": "No se pudieron cargar los flujos.",
     "createError": "No se pudo crear el flujo.",
@@ -1300,6 +1319,7 @@
   },
   "staffAgreementDocumentsPage": {
     "breadcrumbAria": "Migas de pan",
+    "pageLoading": "Cargando convenio…",
     "pageSubtitle": "Archivos vinculados a convenios de intercambio (personal)",
     "invalidRoute": "Falta el convenio. Vuelva a ",
     "agreementLoadError": "No se pudo cargar este convenio.",
@@ -1405,6 +1425,7 @@
     "loadingSpinner": "Cargando",
     "loadingPrograms": "Cargando programas…",
     "loadError": "No se pudieron cargar los programas.",
+    "emptyPrograms": "No hay programas activos disponibles para comparar.",
     "pickerLabel": "Programas a comparar ({current} / {max})",
     "clearSelection": "Borrar selección",
     "hintChooseTwo": "Elige al menos dos programas para ver la tabla comparativa.",
@@ -1434,6 +1455,7 @@
     "toggleSidebar": "Contraer o expandir la barra lateral",
     "themeToggleAriaLight": "Cambiar a tema claro",
     "themeToggleAriaDark": "Cambiar a tema oscuro",
+    "localeToggleAria": "Cambiar idioma",
     "userMenuAria": "Menú de usuario para {name}",
     "djangoAdmin": "Admin Django",
     "cmsAdmin": "Admin CMS",
@@ -1797,6 +1819,7 @@
     "activityTimeline": "Línea de tiempo",
     "loadingTimeline": "Cargando línea de tiempo…",
     "timelineLoadError": "No se pudo cargar la línea de tiempo.",
+    "documentsLoadError": "No se pudieron cargar los documentos subidos.",
     "timelineCreated": "Registro de solicitud creado",
     "timeline": {
       "applicationSubmitted": "Solicitud enviada",
@@ -2279,6 +2302,8 @@
   },
   "nominationsPage": {
     "subtitle": "Ordena postulantes y asigna plazas en programas con cupo limitado.",
+    "breadcrumbAria": "Migas de pan",
+    "loading": "Cargando nominaciones…",
     "programLabel": "Programa",
     "programPlaceholder": "Selecciona un programa",
     "capacity": "Cupo: {n}",
@@ -2303,6 +2328,8 @@
   },
   "analyticsForecastsPage": {
     "subtitle": "Demanda prevista, cuellos de botella de revisión y programas con plazos cercanos.",
+    "breadcrumbAria": "Migas de pan",
+    "loading": "Cargando pronósticos…",
     "loadError": "No se pudieron cargar los pronósticos.",
     "demandHeading": "Pronóstico de demanda",
     "trend": "Tendencia: {n} solicitudes/semana",

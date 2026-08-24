@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "international_base_url": "/internacional/",
+  "cgri_carousel": [
+    {
+      "title": "Centros de Idiomas",
+      "alt": "Centros de Idiomas",
+      "static_path": "uadec/images/cgri-centros-idiomas.jpg",
+      "url_suffix": "institucional/centros-de-idiomas/",
+      "width": 1200,
+      "height": 400,
+      "webp_path": "uadec/images/cgri-centros-idiomas.webp"
+    },
+    {
+      "title": "Movilidad Internacional",
+      "alt": "Movilidad Internacional",
+      "static_path": "uadec/images/cgri-movilidad.jpg",
+      "url_suffix": "movilidad-estudiantil/",
+      "width": 1200,
+      "height": 400,
+      "webp_path": "uadec/images/cgri-movilidad.webp"
+    },
+    {
+      "title": "Asesoría Consular",
+      "alt": "Asesoría Consular",
+      "static_path": "uadec/images/cgri-asesoria-consular.jpg",
+      "url_suffix": "institucional/asesoria-consular/",
+      "width": 1200,
+      "height": 400,
+      "webp_path": "uadec/images/cgri-asesoria-consular.webp"
+    },
+    {
+      "title": "Acreditaciones Internacionales",
+      "alt": "Acreditaciones Internacionales",
+      "static_path": "uadec/images/cgri-acreditaciones.jpg",
+      "url_suffix": "institucional/acreditaciones/",
+      "width": 1200,
+      "height": 400,
+      "webp_path": "uadec/images/cgri-acreditaciones.webp"
+    },
+    {
+      "title": "Convenios de Cooperación",
+      "alt": "Convenios de Cooperación",
+      "static_path": "uadec/images/cgri-convenios.jpg",
+      "url_suffix": "institucional/convenios/",
+      "width": 1200,
+      "height": 400,
+      "webp_path": "uadec/images/cgri-convenios.webp"
+    }
+  ],
+  "homepage_slides": [
+    {
+      "static_path": "uadec/images/homepage-slide-1.png",
+      "alt": "Vista del campus UAdeC 1",
+      "width": 1920,
+      "height": 420,
+      "webp_path": "uadec/images/homepage-slide-1.webp"
+    },
+    {
+      "static_path": "uadec/images/homepage-slide-2.png",
+      "alt": "Vista del campus UAdeC 2",
+      "width": 1920,
+      "height": 420,
+      "webp_path": "uadec/images/homepage-slide-2.webp"
+    },
+    {
+      "static_path": "uadec/images/homepage-slide-3.png",
+      "alt": "Vista del campus UAdeC 3",
+      "width": 1920,
+      "height": 420,
+      "webp_path": "uadec/images/homepage-slide-3.webp"
+    },
+    {
+      "static_path": "uadec/images/homepage-slide-4.png",
+      "alt": "Vista del campus UAdeC 4",
+      "width": 1920,
+      "height": 420,
+      "webp_path": "uadec/images/homepage-slide-4.webp"
+    },
+    {
+      "static_path": "uadec/images/homepage-slide-5.png",
+      "alt": "Vista del campus UAdeC 5",
+      "width": 1920,
+      "height": 420,
+      "webp_path": "uadec/images/homepage-slide-5.webp"
+    },
+    {
+      "static_path": "uadec/images/homepage-slide-6.png",
+      "alt": "Vista del campus UAdeC 6",
+      "width": 1920,
+      "height": 420,
+      "webp_path": "uadec/images/homepage-slide-6.webp"
+    }
+  ],
+  "service_cards": [
+    {
+      "title": "Centros de idiomas",
+      "alt": "Centros de idiomas",
+      "static_path": "uadec/images/cgri-centros-idiomas.jpg",
+      "url_suffix": "institucional/centros-de-idiomas/",
+      "icon": "bi-translate",
+      "width": 400,
+      "height": 140,
+      "webp_path": "uadec/images/cgri-centros-idiomas.webp"
+    },
+    {
+      "title": "Asesoría consular",
+      "alt": "Asesoría consular",
+      "static_path": "uadec/images/cgri-asesoria-consular.jpg",
+      "url_suffix": "institucional/asesoria-consular/",
+      "icon": "bi-passport",
+      "width": 400,
+      "height": 140,
+      "webp_path": "uadec/images/cgri-asesoria-consular.webp"
+    },
+    {
+      "title": "Acreditaciones",
+      "alt": "Acreditaciones",
+      "static_path": "uadec/images/cgri-acreditaciones.jpg",
+      "url_suffix": "institucional/acreditaciones/",
+      "icon": "bi-award",
+      "width": 400,
+      "height": 140,
+      "webp_path": "uadec/images/cgri-acreditaciones.webp"
+    },
+    {
+      "title": "Convenios",
+      "alt": "Convenios",
+      "static_path": "uadec/images/cgri-convenios.jpg",
+      "url_suffix": "institucional/convenios/",
+      "icon": "bi-handshake",
+      "width": 400,
+      "height": 140,
+      "webp_path": "uadec/images/cgri-convenios.webp"
+    }
+  ]
+}

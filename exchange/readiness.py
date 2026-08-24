@@ -67,17 +67,8 @@ def _latest_document_per_type(application):
     return by_type
 
 
-def _document_progress_from_prefetch(application) -> tuple[float, dict[str, int]]:
-    """
-    Returns (progress 0..1, counts).
-
-    Prefer checklist (honors is_required / instructions_only); prefetch path is a fallback.
-    """
-    # Checklist is authoritative after Phase 4 (deadlines, optional, instructions_only).
-    return _document_progress_via_checklist(application)
-
-
 def _document_progress_via_checklist(application) -> tuple[float, dict[str, int]]:
+    """Derive progress from checklist (uses prefetch + per-request cache when available)."""
     summary = DocumentService.build_application_document_checklist(application)
     req = summary["required_count"]
     if req == 0:
@@ -114,8 +105,17 @@ def _document_progress_via_checklist(application) -> tuple[float, dict[str, int]
     }
 
 
-def _document_progress(application) -> tuple[float, dict[str, int]]:
+def _document_progress_from_prefetch(application) -> tuple[float, dict[str, int]]:
+    """
+    Returns (progress 0..1, counts).
+
+    When requirements/documents are prefetched, checklist builds without N+1 queries.
+    """
     return _document_progress_via_checklist(application)
+
+
+def _document_progress(application) -> tuple[float, dict[str, int]]:
+    return _document_progress_from_prefetch(application)
 
 
 def _form_progress(application) -> float:
@@ -198,6 +198,8 @@ def compute_application_readiness(
     application,
     *,
     include_dynamic_form: bool = True,
+    include_lifecycle: bool = True,
+    include_eligibility: bool = True,
     today=None,
 ) -> dict[str, Any]:
     """
@@ -241,7 +243,11 @@ def compute_application_readiness(
             },
             "eligibility": {"complete": True, "issues": []},
             "form_complete": True,
-            "lifecycle": _lifecycle_payload(application),
+            "lifecycle": (
+                _lifecycle_payload(application)
+                if include_lifecycle
+                else {"missing_now": [], "missing_at_submit": []}
+            ),
             **_window_meta(program, window),
         }
 
@@ -258,7 +264,11 @@ def compute_application_readiness(
         "required": host_required,
         "complete": host_complete,
     }
-    eligibility = _eligibility_state(application)
+    eligibility = (
+        _eligibility_state(application)
+        if include_eligibility
+        else {"complete": True, "issues": []}
+    )
     eligibility_ok = eligibility["complete"]
     form_ok = form_progress >= 0.99
 
@@ -274,7 +284,11 @@ def compute_application_readiness(
             "host_destination": host_destination,
             "eligibility": eligibility,
             "form_complete": form_ok,
-            "lifecycle": _lifecycle_payload(application),
+            "lifecycle": (
+                _lifecycle_payload(application)
+                if include_lifecycle
+                else {"missing_now": [], "missing_at_submit": []}
+            ),
             **_window_meta(program, window),
         }
 
@@ -337,6 +351,10 @@ def compute_application_readiness(
         "host_destination": host_destination,
         "eligibility": eligibility,
         "form_complete": form_ok,
-        "lifecycle": _lifecycle_payload(application),
+        "lifecycle": (
+            _lifecycle_payload(application)
+            if include_lifecycle
+            else {"missing_now": [], "missing_at_submit": []}
+        ),
         **_window_meta(program, window),
     }

@@ -1,52 +1,21 @@
 {% extends "cms/base.html" %}
-{% load wagtailcore_tags wagtailimages_tags %}
+{% load static wagtailcore_tags wagtailimages_tags %}
+
+{% block extra_css %}
+{% include "cms/includes/hero_preload.html" %}
+{% endblock %}
 
 {% block content %}
 {% include "cms/includes/breadcrumbs.html" %}
-<!-- Hero Section -->
-<section class="section-blue text-white py-5" style="min-height: 50vh; display: flex; align-items: center;">
-    <div class="container">
-        <div class="row align-items-center g-4">
-            <div class="col-lg-{% if cgri.youtube_playlist_embed %}7{% else %}8{% endif %}">
-                <h1 class="display-3 fw-bold text-white mb-4" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">
-                    {{ page.hero_title }}
-                </h1>
-                <p class="lead text-white mb-4" style="font-size: 1.5rem;">{{ page.hero_subtitle }}</p>
-                
-                {% if user.is_authenticated %}
-                    <a href="/seim/dashboard/" class="btn btn-secondary btn-lg px-5 py-3 shadow">
-                        <i class="bi bi-speedometer2 me-2"></i>Mi Panel
-                    </a>
-                {% else %}
-                    <div class="d-flex gap-3 flex-wrap">
-                        <a href="/seim/register/" class="btn btn-secondary btn-lg px-5 py-3 shadow">
-                            <i class="bi bi-person-plus me-2"></i>Crear Cuenta
-                        </a>
-                        <a href="/seim/login/" class="btn btn-outline-light btn-lg px-4 py-3 shadow">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
-                        </a>
-                    </div>
-                {% endif %}
-            </div>
-            {% if cgri.youtube_playlist_embed %}
-            <div class="col-lg-5">
-                <div class="ratio ratio-16x9 rounded shadow-lg overflow-hidden">
-                    <iframe
-                        src="{{ cgri.youtube_playlist_embed }}"
-                        title="CGRI UAdeC. Movilidad Internacional"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowfullscreen
-                    ></iframe>
-                </div>
-            </div>
-            {% elif page.hero_image %}
-            <div class="col-lg-4">
-                {% image page.hero_image fill-500x500 class="img-fluid rounded shadow-lg" %}
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</section>
+{% if cgri.youtube_playlist_embed %}
+{% include "cms/includes/cms_hero_section.html" with hero_modifier="cms-movilidad-hero" hero_height_class="cms-hero--medium" hero_gradient_start="rgba(46, 87, 144, 0.75)" hero_gradient_end="rgba(30, 58, 95, 0.85)" content_col="7" youtube_embed_url=cgri.youtube_playlist_embed hero_cta_include="cms/includes/hero_ctas/movilidad.html" %}
+{% else %}
+{% include "cms/includes/cms_hero_section.html" with hero_modifier="cms-movilidad-hero" hero_height_class="cms-hero--medium" hero_gradient_start="rgba(46, 87, 144, 0.75)" hero_gradient_end="rgba(30, 58, 95, 0.85)" hero_cta_include="cms/includes/hero_ctas/movilidad.html" %}
+{% endif %}
+
+{% if has_cgri_carousel %}
+{% include "cms/includes/cgri_service_carousel.html" %}
+{% endif %}
 
 <!-- Introduction -->
 {% if page.introduction %}
@@ -102,7 +71,48 @@
 
 <section class="py-5 bg-light">
     <div class="container">
-        <div class="row g-4">
+        <div class="accordion cms-movilidad-accordion" id="movilidadDocsAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#movilidadDocsRequired" aria-expanded="false" aria-controls="movilidadDocsRequired">
+                        Documentación requerida
+                    </button>
+                </h2>
+                <div id="movilidadDocsRequired" class="accordion-collapse collapse" data-bs-parent="#movilidadDocsAccordion">
+                    <div class="accordion-body">
+                        <ul class="mb-3">
+                            {% for item in cgri.required_documents %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                        <a href="{{ page.url }}documentacion/" class="btn btn-primary btn-sm">Ver documentación y formatos</a>
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#movilidadDocsFormats" aria-expanded="false" aria-controls="movilidadDocsFormats">
+                        Formatos de movilidad
+                    </button>
+                </h2>
+                <div id="movilidadDocsFormats" class="accordion-collapse collapse" data-bs-parent="#movilidadDocsAccordion">
+                    <div class="accordion-body">
+                        <h3 class="h6 fw-bold text-primary">Movilidad Entrante</h3>
+                        <p><a href="{{ cgri.files.solicitud_participacion_entrante }}" target="_blank" rel="noopener">Solicitud de Participación</a></p>
+                        <h3 class="h6 fw-bold text-primary mt-3">Movilidad Saliente</h3>
+                        <ul class="mb-0">
+                            <li><a href="{{ cgri.files.solicitud_participacion_saliente }}" target="_blank" rel="noopener">Solicitud de Participación</a></li>
+                            <li><a href="{{ cgri.files.lineamientos }}" target="_blank" rel="noopener">Lineamientos y Disposiciones</a></li>
+                            <li><a href="{{ cgri.files.carta_compromiso }}" target="_blank" rel="noopener">Carta Compromiso</a></li>
+                            <li><a href="{{ cgri.files.carta_retorno }}" target="_blank" rel="noopener">Carta Compromiso de Adhesión al Programa de Retorno</a></li>
+                            <li><a href="{{ cgri.files.carta_postulacion }}" target="_blank" rel="noopener">Carta de Postulación</a></li>
+                            <li><a href="{{ cgri.files.homologacion }}" target="_blank" rel="noopener">Homologación de Materias</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-4 cms-movilidad-docs-desktop">
             <div class="col-lg-6">
                 <h2 class="h4 fw-bold text-primary mb-3">Documentación Requerida para Trámites de Movilidad</h2>
                 <ul>
@@ -309,7 +319,7 @@
     <div class="container text-center">
         <i class="bi bi-rocket-takeoff display-3 mb-4"></i>
         <h2 class="display-5 fw-bold mb-3">¿Listo para Aplicar?</h2>
-        <p class="lead mb-4" style="font-size: 1.25rem;">
+        <p class="lead mb-4 cms-hero-subtitle-lead">
             {% if user.is_authenticated %}
             Comienza tu aplicación ahora y da el primer paso hacia tu experiencia internacional
             {% else %}
@@ -328,16 +338,4 @@
     </div>
 </section>
 {% endif %}
-{% endblock %}
-
-{% block extra_css %}
-<style>
-.hover-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.hover-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
-}
-</style>
 {% endblock %}

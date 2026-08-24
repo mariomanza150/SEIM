@@ -2,64 +2,86 @@
   <div class="partner-portal-page">
     <PageHeader :title="t('partnerPortalPage.title')" :subtitle="t('partnerPortalPage.subtitle')">
       <template #breadcrumb>
-        <nav :aria-label="t('partnerPortalPage.breadcrumbAria')">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.PartnerPortal') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('partnerPortalPage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.PartnerPortal') },
+          ]"
+        />
       </template>
     </PageHeader>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('partnerPortalPage.loading') }}</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-    <div v-else data-testid="partner-portal-page">
+    <PageStateShell
+      :loading="loading"
+      :error="error"
+      :loading-label="t('partnerPortalPage.loading')"
+      skeleton="table"
+      :skeleton-columns="5"
+    >
+    <div data-testid="partner-portal-page">
       <div class="card mb-4">
         <div class="card-header"><h5 class="mb-0">{{ t('partnerPortalPage.agreementsHeading') }}</h5></div>
-        <div class="table-responsive">
-          <table class="table mb-0">
-            <thead>
-              <tr>
-                <th>{{ t('partnerPortalPage.colTitle') }}</th>
-                <th>{{ t('partnerPortalPage.colInstitution') }}</th>
-                <th>{{ t('partnerPortalPage.colStatus') }}</th>
-                <th>{{ t('partnerPortalPage.colDocuments') }}</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="ag in agreements" :key="ag.id">
-                <td>{{ ag.title }}</td>
-                <td>{{ ag.partner_institution_name }}</td>
-                <td data-testid="partner-agreement-status">{{ formatAgreementStatus(ag.status) }}</td>
-                <td>
-                  <button type="button" class="btn btn-sm btn-outline-primary" data-testid="partner-view-documents" @click="loadDocs(ag)">
-                    {{ t('partnerPortalPage.viewDocuments') }}
-                  </button>
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-primary"
-                    data-testid="partner-open-agreement-thread"
-                    @click="openAgreementThread(ag)"
-                  >
-                    {{ t('partnerPortalPage.openThread') }}
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="!agreements.length">
-                <td colspan="5" class="text-muted text-center py-3">{{ t('partnerPortalPage.noAgreements') }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveList
+          :items="agreements"
+          :columns="agreementColumns"
+          mobile-test-id="partner-agreement"
+        >
+          <div class="table-responsive">
+            <table class="table mb-0">
+              <thead>
+                <tr>
+                  <th>{{ t('partnerPortalPage.colTitle') }}</th>
+                  <th>{{ t('partnerPortalPage.colInstitution') }}</th>
+                  <th>{{ t('partnerPortalPage.colStatus') }}</th>
+                  <th>{{ t('partnerPortalPage.colDocuments') }}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="ag in agreements" :key="ag.id">
+                  <td>{{ ag.title }}</td>
+                  <td>{{ ag.partner_institution_name }}</td>
+                  <td data-testid="partner-agreement-status">{{ formatAgreementStatus(ag.status) }}</td>
+                  <td>
+                    <button type="button" class="btn btn-sm btn-outline-primary" data-testid="partner-view-documents" @click="loadDocs(ag)">
+                      {{ t('partnerPortalPage.viewDocuments') }}
+                    </button>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      data-testid="partner-open-agreement-thread"
+                      @click="openAgreementThread(ag)"
+                    >
+                      {{ t('partnerPortalPage.openThread') }}
+                    </button>
+                  </td>
+                </tr>
+                <tr v-if="!agreements.length">
+                  <td colspan="5" class="text-muted text-center py-3">{{ t('partnerPortalPage.noAgreements') }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <template #col-status="{ item }">
+            <span data-testid="partner-agreement-status">{{ formatAgreementStatus(item.status) }}</span>
+          </template>
+          <template #actions="{ item }">
+            <button type="button" class="btn btn-sm btn-outline-primary" data-testid="partner-view-documents" @click="loadDocs(item)">
+              {{ t('partnerPortalPage.viewDocuments') }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-primary"
+              data-testid="partner-open-agreement-thread"
+              @click="openAgreementThread(item)"
+            >
+              {{ t('partnerPortalPage.openThread') }}
+            </button>
+          </template>
+        </ResponsiveList>
       </div>
 
       <div v-if="docsAgreement" class="card mb-4" data-testid="partner-docs">
@@ -202,74 +224,111 @@
 
       <div class="card">
         <div class="card-header"><h5 class="mb-0">{{ t('partnerPortalPage.applicantsHeading') }}</h5></div>
-        <div class="table-responsive">
-          <table class="table mb-0" data-testid="partner-applications">
-            <thead>
-              <tr>
-                <th>{{ t('partnerPortalPage.colStudent') }}</th>
-                <th>{{ t('partnerPortalPage.colProgram') }}</th>
-                <th>{{ t('partnerPortalPage.colStatus') }}</th>
-                <th>{{ t('partnerPortalPage.colDocs') }}</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="app in applications" :key="app.id">
-                <td>{{ app.student_display_name }}</td>
-                <td>{{ app.program_name }}</td>
-                <td data-testid="partner-application-status">{{ formatAppStatus(app.status_name || app.status) }}</td>
-                <td>
-                  <span v-if="app.status_name === 'nominated'" class="badge bg-success me-1">{{
-                    t('partnerPortalPage.nominated')
-                  }}</span>
-                  <span
-                    v-if="app.partner_nomination_acknowledged_at"
-                    class="badge bg-secondary me-1"
-                    data-testid="partner-nomination-acked"
-                  >
-                    {{ t('partnerPortalPage.ackBadge') }}
-                  </span>
-                  {{
-                    app.document_checklist?.complete
-                      ? t('partnerPortalPage.docsComplete')
-                      : t('partnerPortalPage.docsIncomplete')
-                  }}
-                </td>
-                <td class="text-nowrap">
-                  <button
-                    v-if="app.status_name === 'nominated' && !app.partner_nomination_acknowledged_at"
-                    type="button"
-                    class="btn btn-sm btn-outline-success me-1"
-                    data-testid="partner-ack-nomination"
-                    :disabled="ackBusyId === app.id"
-                    @click="acknowledgeNomination(app)"
-                  >
-                    {{ t('partnerPortalPage.acknowledge') }}
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-secondary me-1"
-                    data-testid="partner-view-checklist"
-                    @click="openChecklist(app)"
-                  >
-                    {{ t('partnerPortalPage.viewChecklist') }}
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-primary"
-                    data-testid="partner-open-thread"
-                    @click="openThread(app)"
-                  >
-                    {{ t('partnerPortalPage.openThread') }}
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="!applications.length">
-                <td colspan="5" class="text-muted text-center py-3">{{ t('partnerPortalPage.noApplicants') }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveList
+          :items="applications"
+          :columns="applicationColumns"
+          mobile-test-id="partner-application"
+        >
+          <div class="table-responsive">
+            <table class="table mb-0" data-testid="partner-applications">
+              <thead>
+                <tr>
+                  <th>{{ t('partnerPortalPage.colStudent') }}</th>
+                  <th>{{ t('partnerPortalPage.colProgram') }}</th>
+                  <th>{{ t('partnerPortalPage.colStatus') }}</th>
+                  <th>{{ t('partnerPortalPage.colDocs') }}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="app in applications" :key="app.id">
+                  <td>{{ app.student_display_name }}</td>
+                  <td>{{ app.program_name }}</td>
+                  <td data-testid="partner-application-status">{{ formatAppStatus(app.status_name || app.status) }}</td>
+                  <td>
+                    <span v-if="app.status_name === 'nominated'" class="badge bg-success me-1">{{
+                      t('partnerPortalPage.nominated')
+                    }}</span>
+                    <span
+                      v-if="app.partner_nomination_acknowledged_at"
+                      class="badge bg-secondary me-1"
+                      data-testid="partner-nomination-acked"
+                    >
+                      {{ t('partnerPortalPage.ackBadge') }}
+                    </span>
+                    {{
+                      app.document_checklist?.complete
+                        ? t('partnerPortalPage.docsComplete')
+                        : t('partnerPortalPage.docsIncomplete')
+                    }}
+                  </td>
+                  <td class="text-nowrap">
+                    <button
+                      v-if="app.status_name === 'nominated' && !app.partner_nomination_acknowledged_at"
+                      type="button"
+                      class="btn btn-sm btn-outline-success me-1"
+                      data-testid="partner-ack-nomination"
+                      :disabled="ackBusyId === app.id"
+                      @click="acknowledgeNomination(app)"
+                    >
+                      {{ t('partnerPortalPage.acknowledge') }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-secondary me-1"
+                      data-testid="partner-view-checklist"
+                      @click="openChecklist(app)"
+                    >
+                      {{ t('partnerPortalPage.viewChecklist') }}
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      data-testid="partner-open-thread"
+                      @click="openThread(app)"
+                    >
+                      {{ t('partnerPortalPage.openThread') }}
+                    </button>
+                  </td>
+                </tr>
+                <tr v-if="!applications.length">
+                  <td colspan="5" class="text-muted text-center py-3">{{ t('partnerPortalPage.noApplicants') }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <template #col-status="{ item }">
+            <span data-testid="partner-application-status">{{ formatAppStatus(item.status_name || item.status) }}</span>
+          </template>
+          <template #actions="{ item }">
+            <button
+              v-if="item.status_name === 'nominated' && !item.partner_nomination_acknowledged_at"
+              type="button"
+              class="btn btn-sm btn-outline-success"
+              data-testid="partner-ack-nomination"
+              :disabled="ackBusyId === item.id"
+              @click="acknowledgeNomination(item)"
+            >
+              {{ t('partnerPortalPage.acknowledge') }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              data-testid="partner-view-checklist"
+              @click="openChecklist(item)"
+            >
+              {{ t('partnerPortalPage.viewChecklist') }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-primary"
+              data-testid="partner-open-thread"
+              @click="openThread(item)"
+            >
+              {{ t('partnerPortalPage.openThread') }}
+            </button>
+          </template>
+        </ResponsiveList>
       </div>
 
       <div v-if="checklistApp" class="card mt-4" data-testid="partner-checklist">
@@ -307,7 +366,7 @@
           >
             <span class="me-auto">
               <span class="fw-semibold" data-testid="partner-checklist-name">{{ item.name }}</span>
-              <span v-if="item.required === false" class="badge bg-light text-muted border ms-2">
+              <span v-if="item.required === false" class="badge seim-surface-muted text-muted border ms-2">
                 {{ t('partnerPortalPage.checklistOptional') }}
               </span>
               <span v-if="item.due_now" class="badge bg-info text-dark ms-2">
@@ -402,6 +461,7 @@
         </div>
       </div>
     </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -410,7 +470,12 @@ import { computed, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import { formatApplicationStatus } from '@/utils/formatters'
+
+defineOptions({ name: 'PartnerPortal' })
 
 const { t, te } = useI18n()
 const loading = ref(true)
@@ -439,6 +504,18 @@ const agreementThreadText = ref('')
 const agreementThreadLoading = ref(false)
 const agreementThreadBusy = ref(false)
 const ackBusyId = ref(null)
+
+const agreementColumns = computed(() => [
+  { key: 'title', label: t('partnerPortalPage.colTitle') },
+  { key: 'partner_institution_name', label: t('partnerPortalPage.colInstitution') },
+  { key: 'status', label: t('partnerPortalPage.colStatus') },
+])
+
+const applicationColumns = computed(() => [
+  { key: 'student_display_name', label: t('partnerPortalPage.colStudent') },
+  { key: 'program_name', label: t('partnerPortalPage.colProgram') },
+  { key: 'status', label: t('partnerPortalPage.colStatus') },
+])
 
 function formatAgreementStatus(s) {
   if (!s) return t('exchangeAgreementsPage.emDash')

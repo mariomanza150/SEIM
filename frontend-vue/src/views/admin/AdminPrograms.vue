@@ -2,14 +2,13 @@
   <div class="admin-programs-page">
     <PageHeader :title="t('adminPrograms.title')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminPrograms') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.AdminPrograms') },
+          ]"
+        />
       </template>
 
       <template #subtitle>
@@ -27,59 +26,53 @@
       </template>
     </PageHeader>
 
-    <div class="card mb-3" data-testid="admin-programs-filters">
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
-            <input
-              v-model="filters.search"
-              class="form-control"
-              type="text"
-              :placeholder="t('adminPrograms.searchPlaceholder')"
-              @input="debouncedSearch"
-            />
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">{{ t('adminPrograms.filterActive') }}</label>
-            <select v-model="filters.is_active" class="form-select" @change="fetchPrograms">
-              <option value="">{{ t('adminCommon.filterAll') }}</option>
-              <option value="true">{{ t('adminCommon.yes') }}</option>
-              <option value="false">{{ t('adminCommon.no') }}</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">{{ t('adminCommon.sortLabel') }}</label>
-            <select v-model="filters.ordering" class="form-select" @change="fetchPrograms">
-              <option value="name">{{ t('adminPrograms.sortNameAsc') }}</option>
-              <option value="-created_at">{{ t('adminPrograms.sortNewest') }}</option>
-            </select>
-          </div>
+    <CompactFilterBar test-id="admin-programs-filters" @clear="clearFilters">
+      <template #primary>
+        <div class="col-md-6">
+          <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
+          <input
+            v-model="filters.search"
+            class="form-control"
+            type="text"
+            :placeholder="t('adminPrograms.searchPlaceholder')"
+            @input="debouncedSearch"
+          />
         </div>
-      </div>
-    </div>
-
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-      <p class="mt-3 text-muted">{{ t('adminPrograms.loadingList') }}</p>
-    </div>
-
-    <div v-else-if="error" class="alert alert-danger" role="alert">
-      <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
-      {{ error }}
-    </div>
-
-    <div v-else class="card">
-      <div class="card-header bg-transparent d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div class="text-muted small">
-          {{ programs.length }}
+        <div class="col-md-3">
+          <label class="form-label">{{ t('adminPrograms.filterActive') }}</label>
+          <select v-model="filters.is_active" class="form-select" @change="fetchPrograms">
+            <option value="">{{ t('adminCommon.filterAll') }}</option>
+            <option value="true">{{ t('adminCommon.yes') }}</option>
+            <option value="false">{{ t('adminCommon.no') }}</option>
+          </select>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-secondary" @click="resetFilters" :disabled="loading">
-          <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{{ t('adminCommon.resetFilters') }}
-        </button>
-      </div>
+      </template>
+      <template #advanced>
+        <div class="col-md-4">
+          <label class="form-label">{{ t('adminCommon.sortLabel') }}</label>
+          <select v-model="filters.ordering" class="form-select" @change="fetchPrograms">
+            <option value="name">{{ t('adminPrograms.sortNameAsc') }}</option>
+            <option value="-created_at">{{ t('adminPrograms.sortNewest') }}</option>
+          </select>
+        </div>
+      </template>
+    </CompactFilterBar>
+
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      :empty="!programs.length"
+      :empty-title="t('adminPrograms.empty')"
+      skeleton="table"
+      :loading-label="t('adminPrograms.loadingList')"
+      :skeleton-columns="5"
+    >
+    <div class="card">
+      <ResponsiveList
+        :items="programs"
+        :columns="mobileColumns"
+        mobile-test-id="admin-programs-mobile"
+      >
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0" data-testid="admin-programs-table">
           <thead>
@@ -92,11 +85,6 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="!programs.length">
-              <td colspan="5" class="text-muted text-center py-4">
-                {{ t('adminPrograms.empty') }}
-              </td>
-            </tr>
             <tr v-for="p in programs" :key="p.id">
               <td class="text-nowrap">
                 <button type="button" class="btn btn-sm btn-outline-secondary me-2" @click="openEdit(p)">
@@ -152,25 +140,58 @@
           </tbody>
         </table>
       </div>
+      <template #col-name="{ item }">
+        <div class="fw-medium">{{ item.name }}</div>
+        <div v-if="item.description" class="text-muted small">{{ item.description }}</div>
+      </template>
+      <template #col-window="{ item }">
+        <span class="badge" :class="item.application_window_open ? 'bg-success' : 'bg-secondary'">
+          {{ item.application_window_open ? t('adminPrograms.windowOpen') : t('adminPrograms.windowClosed') }}
+        </span>
+        <div class="text-muted small mt-1">{{ formatWindowDates(item) }}</div>
+      </template>
+      <template #col-active="{ item }">
+        <span class="badge" :class="item.is_active ? 'bg-success' : 'bg-secondary'">
+          {{ item.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}
+        </span>
+      </template>
+      <template #col-capacity="{ item }">
+        <span v-if="item.enrollment_capacity == null" class="text-muted">{{ t('adminPrograms.capacityUnlimited') }}</span>
+        <span v-else>
+          {{ item.enrollment_seats_occupied }} / {{ item.enrollment_capacity }}
+          <span class="text-muted">({{ t('adminPrograms.capacityRemaining', { n: item.enrollment_slots_remaining ?? 0 }) }})</span>
+        </span>
+      </template>
+      <template #actions="{ item }">
+        <button type="button" class="btn btn-sm btn-outline-secondary" @click="openEdit(item)">
+          <i class="bi bi-pencil me-1" aria-hidden="true"></i>{{ t('adminCommon.edit') }}
+        </button>
+        <router-link
+          class="btn btn-sm btn-outline-secondary"
+          :to="{ name: 'AdminProgramDestinations', params: { id: item.id } }"
+        >
+          <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ t('adminPrograms.destinations') }}
+        </router-link>
+        <button type="button" class="btn btn-sm btn-outline-primary" @click="cloneProgram(item)" :disabled="mutating">
+          <i class="bi bi-files me-1" aria-hidden="true"></i>{{ t('adminPrograms.clone') }}
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-danger" @click="confirmDelete(item)" :disabled="mutating">
+          <i class="bi bi-trash me-1" aria-hidden="true"></i>{{ t('adminCommon.delete') }}
+        </button>
+      </template>
+      </ResponsiveList>
     </div>
+    </PageStateShell>
 
-    <!-- Editor -->
-    <div v-if="editor.open" class="modal-backdrop show"></div>
-    <div v-if="editor.open" class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
-      <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              {{ editor.mode === 'create' ? t('adminPrograms.create') : t('adminPrograms.editTitle') }}
-            </h5>
-            <button type="button" class="btn-close" :aria-label="t('adminCommon.close')" @click="closeEditor" />
-          </div>
-          <div class="modal-body">
-            <div v-if="editor.error" class="alert alert-danger" role="alert">
-              {{ editor.error }}
-            </div>
-
-            <div class="row g-3">
+    <FormModal
+      :open="editor.open"
+      :title="editor.mode === 'create' ? t('adminPrograms.create') : t('adminPrograms.editTitle')"
+      :error="editor.error || ''"
+      :saving="editor.saving"
+      @close="closeEditor"
+      @submit="saveProgram"
+    >
+      <div class="row g-3">
               <div class="col-md-8">
                 <label class="form-label">{{ t('adminPrograms.fields.name') }}</label>
                 <input v-model="editor.form.name" class="form-control" type="text" required />
@@ -379,20 +400,8 @@
                   {{ t('adminPrograms.fields.addFieldRequirement') }}
                 </button>
               </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" @click="closeEditor">
-              {{ t('adminCommon.cancel') }}
-            </button>
-            <button type="button" class="btn btn-primary" :disabled="editor.saving" @click="saveProgram">
-              <span v-if="editor.saving" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
-              {{ t('adminCommon.save') }}
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
+    </FormModal>
   </div>
 </template>
 
@@ -404,6 +413,13 @@ import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { formatDate } from '@/utils/formatters'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
+import FormModal from '@/components/FormModal.vue'
+
+defineOptions({ name: 'AdminPrograms' })
 
 const { t, locale } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -420,7 +436,14 @@ const filters = ref({
   ordering: 'name',
 })
 
-function resetFilters() {
+const mobileColumns = computed(() => [
+  { key: 'name', label: t('adminPrograms.columns.name') },
+  { key: 'window', label: t('adminPrograms.columns.window') },
+  { key: 'active', label: t('adminPrograms.columns.active') },
+  { key: 'capacity', label: t('adminPrograms.columns.capacity') },
+])
+
+function clearFilters() {
   filters.value = { search: '', is_active: '', ordering: 'name' }
   fetchPrograms()
 }

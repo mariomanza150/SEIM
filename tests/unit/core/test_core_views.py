@@ -16,6 +16,22 @@ from core.views import DynamicFormFromSchema
 User = get_user_model()
 
 
+class TestBrandingApi(SimpleTestCase):
+    """Public branding endpoint for SPA shell."""
+
+    def test_branding_api_returns_institution_fields(self):
+        response = self.client.get("/api/branding/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertIn("logo_url", data)
+        self.assertIn("nav_brand", data)
+        self.assertIn("short_name", data)
+        self.assertIn("name", data)
+        self.assertIn("theme_css", data)
+        self.assertIn("theme", data)
+        self.assertIn("primary", data["theme"])
+
+
 class TestHealthLiveView(SimpleTestCase):
     """Liveness endpoint must not depend on Postgres/Redis."""
 

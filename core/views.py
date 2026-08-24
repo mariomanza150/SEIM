@@ -14,6 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from application_forms.models import FormType
+from core.branding import brand_from_settings
 
 logger = logging.getLogger(__name__)
 
@@ -116,6 +117,24 @@ class DynamicFormFromSchema(forms.Form):
                 )
 
             self.fields[field_name] = field
+
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def branding_api(request):
+    """Public institution branding for SPA shell (logo, nav label)."""
+    brand = brand_from_settings(settings)
+    theme = brand.get("theme") or {}
+    return JsonResponse(
+        {
+            "logo_url": brand.get("logo_url") or "",
+            "nav_brand": brand.get("nav_brand") or "",
+            "short_name": brand.get("short_name") or "",
+            "name": brand.get("name") or "",
+            "theme_css": brand.get("theme_css") or "uadec/theme.css",
+            "theme": theme,
+        }
+    )
 
 
 @csrf_exempt

@@ -1,0 +1,45 @@
+{% load static %}
+{# CGRI service carousel inspired by uadec.mx/movilidad hero slider #}
+<section class="cms-cgri-carousel py-5 bg-light" aria-label="Servicios CGRI">
+    <div class="container">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
+            <h2 class="mb-0 fw-bold text-primary">Relaciones Internacionales UAdeC</h2>
+            <button type="button" class="btn btn-sm btn-outline-primary cms-carousel__pause" data-cms-carousel-pause aria-pressed="false">
+                Pausar
+            </button>
+        </div>
+        <div id="cgriServiceCarousel" class="carousel slide cms-cgri-carousel__track cms-carousel shadow-lg rounded overflow-hidden" data-bs-ride="carousel" data-bs-interval="6000">
+            <div class="carousel-indicators">
+                {% for slide in cgri_carousel_slides %}
+                <button type="button" data-bs-target="#cgriServiceCarousel" data-bs-slide-to="{{ forloop.counter0 }}"
+                    {% if forloop.first %}class="active" aria-current="true"{% endif %}
+                    aria-label="{{ slide.title }}"></button>
+                {% endfor %}
+            </div>
+            <div class="carousel-inner">
+                {% for slide in cgri_carousel_slides %}
+                <div class="carousel-item{% if forloop.first %} active{% endif %}">
+                    <a href="{{ slide.url }}" class="cms-cgri-carousel__link d-block position-relative text-decoration-none">
+                        {% if forloop.first %}
+                        {% include "cms/includes/cms_responsive_image.html" with static_path=slide.static_path webp_path=slide.webp_path alt=slide.alt img_class="d-block w-100 cms-cgri-carousel__img" width=slide.width height=slide.height lazy=False %}
+                        {% else %}
+                        {% include "cms/includes/cms_responsive_image.html" with static_path=slide.static_path webp_path=slide.webp_path alt=slide.alt img_class="d-block w-100 cms-cgri-carousel__img" width=slide.width height=slide.height lazy=True %}
+                        {% endif %}
+                        <div class="cms-cgri-carousel__caption">
+                            <h3 class="h4 fw-bold mb-0">{{ slide.title }}</h3>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            <button class="carousel-control-prev" type="button" data-bs-target="#cgriServiceCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Anterior</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#cgriServiceCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Siguiente</span>
+            </button>
+        </div>
+    </div>
+</section>

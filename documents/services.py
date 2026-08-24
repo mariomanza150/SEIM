@@ -382,6 +382,64 @@ class DocumentService:
         return False
 
     @staticmethod
+    def _related_is_prefetched(instance, lookup: str) -> bool:
+        cache = getattr(instance, "_prefetched_objects_cache", None)
+        return bool(cache and lookup in cache)
+
+    @staticmethod
+    def _program_document_requirements(program):
+        """Prefer prefetched through-model rows; otherwise query once."""
+        from exchange.models import ProgramDocumentRequirement
+
+        if DocumentService._related_is_prefetched(
+            program, "program_document_requirements"
+        ):
+            reqs = list(program.program_document_requirements.all())
+            reqs.sort(key=lambda r: (r.sort_order, r.id))
+            return reqs
+        return list(
+            ProgramDocumentRequirement.objects.filter(program=program)
+            .select_related("document_type", "required_from_status")
+            .order_by("sort_order", "id")
+        )
+
+    @staticmethod
+    def _uploads_by_type(application):
+        """Group uploads by type_id using prefetch when available."""
+        if DocumentService._related_is_prefetched(application, "document_set"):
+            docs = list(application.document_set.all())
+        else:
+            docs = list(
+                Document.objects.filter(application=application).select_related("type")
+            )
+        docs.sort(key=lambda d: d.created_at, reverse=True)
+        by_type: dict = {}
+        for doc in docs:
+            by_type.setdefault(doc.type_id, []).append(doc)
+        return by_type
+
+    @staticmethod
+    def _open_resubmission_for(document):
+        """Latest unresolved resubmission; use prefetch when present."""
+        if DocumentService._related_is_prefetched(
+            document, "documentresubmissionrequest_set"
+        ):
+            open_reqs = [
+                r
+                for r in document.documentresubmissionrequest_set.all()
+                if not r.resolved
+            ]
+            open_reqs.sort(key=lambda r: r.requested_at, reverse=True)
+            return open_reqs[0] if open_reqs else None
+        return (
+            DocumentResubmissionRequest.objects.filter(
+                document=document, resolved=False
+            )
+            .order_by("-requested_at")
+            .first()
+        )
+
+    @staticmethod
     def build_application_document_checklist(application):
         """
         Compare program document requirements to uploads on this application.
@@ -389,21 +447,25 @@ class DocumentService:
         Status per type (latest upload for that type): missing, pending_review,
         invalid, resubmit_requested, approved, n_a (instructions_only).
         Includes deadline / overdue flags for UI and coordinator review.
-        """
-        from exchange.models import ProgramDocumentRequirement
 
-        requirements = list(
-            ProgramDocumentRequirement.objects.filter(program=application.program)
-            .select_related("document_type", "required_from_status")
-            .order_by("sort_order", "id")
-        )
+        Results are cached on ``application._document_checklist_cache`` for the
+        request so readiness / checklist / form-step fields do not rebuild.
+        Uses prefetched requirements, documents, and resubmissions when present.
+        """
+        cached = getattr(application, "_document_checklist_cache", None)
+        if cached is not None:
+            return cached
+
+        requirements = DocumentService._program_document_requirements(application.program)
         if not requirements:
-            return {
+            result = {
                 "complete": True,
                 "required_count": 0,
                 "approved_count": 0,
                 "items": [],
             }
+            application._document_checklist_cache = result
+            return result
 
         items = []
         approved_count = 0
@@ -418,6 +480,8 @@ class DocumentService:
             application.status.name if getattr(application, "status", None) else "draft"
         )
         gate_status = document_completeness_gate(current_status)
+        uploads_by_type = DocumentService._uploads_by_type(application)
+
         for req in requirements:
             dt = req.document_type
             scheduled_required = bool(getattr(req, "is_required", True))
@@ -462,11 +526,7 @@ class DocumentService:
                 items.append(entry)
                 continue
 
-            uploads = list(
-                Document.objects.filter(application=application, type=dt).order_by(
-                    "-created_at"
-                )
-            )
+            uploads = uploads_by_type.get(dt.id, [])
             entry["upload_count"] = len(uploads)
             latest = uploads[0] if uploads else None
             if not latest:
@@ -474,13 +534,7 @@ class DocumentService:
                 continue
 
             entry["document_id"] = str(latest.id)
-            open_req = (
-                DocumentResubmissionRequest.objects.filter(
-                    document=latest, resolved=False
-                )
-                .order_by("-requested_at")
-                .first()
-            )
+            open_req = DocumentService._open_resubmission_for(latest)
             if open_req:
                 entry["status"] = "resubmit_requested"
                 entry["resubmission_reason"] = open_req.reason
@@ -494,12 +548,14 @@ class DocumentService:
                 entry["status"] = "pending_review"
             items.append(entry)
 
-        return {
+        result = {
             "complete": approved_count == required_count,
             "required_count": required_count,
             "approved_count": approved_count,
             "items": items,
         }
+        application._document_checklist_cache = result
+        return result
 
     @staticmethod
     def ensure_required_documents_approved(application):

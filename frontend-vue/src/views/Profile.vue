@@ -1,29 +1,28 @@
 <template>
   <div class="profile-page">
-    <nav :aria-label="t('profilePage.breadcrumbAria')">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-        </li>
-        <li class="breadcrumb-item active">{{ t('route.names.Profile') }}</li>
-      </ol>
-    </nav>
+    <PageHeader
+      :title="t('route.names.Profile')"
+      :subtitle="t('profilePage.pageSubtitle')"
+      icon-class="bi bi-person-gear"
+      test-id="profile-page-heading"
+    >
+      <template #breadcrumb>
+        <PageBreadcrumb
+          :aria-label="t('profilePage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.Profile') },
+          ]"
+        />
+      </template>
+    </PageHeader>
 
-    <div class="row mb-4">
-      <div class="col-md-8">
-        <h2 data-testid="profile-page-heading">
-          <i class="bi bi-person-gear me-2"></i>{{ t('route.names.Profile') }}
-        </h2>
-        <p class="text-muted">{{ t('profilePage.pageSubtitle') }}</p>
-      </div>
-    </div>
-
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status" :aria-label="t('profilePage.loadingSpinner')"></div>
-      <p class="mt-3 text-muted">{{ t('profilePage.loadingProfile') }}</p>
-    </div>
-
-    <div v-else class="row">
+    <PageStateShell
+      :loading="loading"
+      skeleton="cards"
+      :loading-label="t('profilePage.loadingProfile')"
+    >
+    <div class="row">
       <div class="col-lg-9">
         <div
           class="alert"
@@ -48,11 +47,39 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-matricula">{{ t('profilePage.matricula') }} *</label>
-                  <input id="profile-matricula" v-model="form.matricula" type="text" inputmode="numeric" pattern="[0-9]+" class="form-control" required data-testid="profile-matricula">
+                  <input
+                    id="profile-matricula"
+                    v-model="form.matricula"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]+"
+                    :class="fieldClass('matricula')"
+                    :aria-invalid="ariaInvalid('matricula')"
+                    :aria-describedby="describeId('matricula')"
+                    required
+                    data-testid="profile-matricula"
+                  >
+                  <div v-if="fieldErrors.matricula" :id="describeId('matricula')" class="invalid-feedback d-block">
+                    {{ fieldErrors.matricula }}
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-first-name">{{ t('profilePage.firstName') }} *</label>
-                  <input id="profile-first-name" v-model="form.first_name" type="text" class="form-control" name="given-name" autocomplete="given-name" required data-testid="profile-first-name">
+                  <input
+                    id="profile-first-name"
+                    v-model="form.first_name"
+                    type="text"
+                    :class="fieldClass('first_name')"
+                    :aria-invalid="ariaInvalid('first_name')"
+                    :aria-describedby="describeId('first_name')"
+                    name="given-name"
+                    autocomplete="given-name"
+                    required
+                    data-testid="profile-first-name"
+                  >
+                  <div v-if="fieldErrors.first_name" :id="describeId('first_name')" class="invalid-feedback d-block">
+                    {{ fieldErrors.first_name }}
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-middle-name">{{ t('profilePage.middleName') }}</label>
@@ -60,7 +87,21 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-last-name">{{ t('profilePage.lastName') }} *</label>
-                  <input id="profile-last-name" v-model="form.last_name" type="text" class="form-control" name="family-name" autocomplete="family-name" required data-testid="profile-last-name">
+                  <input
+                    id="profile-last-name"
+                    v-model="form.last_name"
+                    type="text"
+                    :class="fieldClass('last_name')"
+                    :aria-invalid="ariaInvalid('last_name')"
+                    :aria-describedby="describeId('last_name')"
+                    name="family-name"
+                    autocomplete="family-name"
+                    required
+                    data-testid="profile-last-name"
+                  >
+                  <div v-if="fieldErrors.last_name" :id="describeId('last_name')" class="invalid-feedback d-block">
+                    {{ fieldErrors.last_name }}
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-mothers-last-name">{{ t('profilePage.mothersLastName') }}</label>
@@ -76,7 +117,15 @@
               <div class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label" for="profile-gender">{{ t('profilePage.gender') }} *</label>
-                  <select id="profile-gender" v-model="form.gender" class="form-select" required data-testid="profile-gender">
+                  <select
+                    id="profile-gender"
+                    v-model="form.gender"
+                    :class="selectClass('gender')"
+                    :aria-invalid="ariaInvalid('gender')"
+                    :aria-describedby="describeId('gender')"
+                    required
+                    data-testid="profile-gender"
+                  >
                     <option value="">{{ t('profilePage.selectOption') }}</option>
                     <option value="female">{{ t('profilePage.genderFemale') }}</option>
                     <option value="male">{{ t('profilePage.genderMale') }}</option>
@@ -84,6 +133,9 @@
                     <option value="other">{{ t('profilePage.genderOther') }}</option>
                     <option value="prefer_not_to_say">{{ t('profilePage.genderPreferNot') }}</option>
                   </select>
+                  <div v-if="fieldErrors.gender" :id="describeId('gender')" class="invalid-feedback d-block">
+                    {{ fieldErrors.gender }}
+                  </div>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label" for="profile-dob">{{ t('profilePage.dateOfBirth') }} *</label>
@@ -274,6 +326,7 @@
         </form>
       </div>
     </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -282,9 +335,23 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
+import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import { useFormFields } from '@/composables/useFormFields'
 
 const { t } = useI18n()
 const { success, error: errorToast } = useToast()
+const {
+  fieldErrors,
+  setFieldError,
+  clearFieldErrors,
+  fieldClass,
+  selectClass,
+  ariaInvalid,
+  describeId,
+  applyApiFieldErrors,
+} = useFormFields()
 const cefrLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const loading = ref(true)
 const hydrating = ref(true)
@@ -632,6 +699,14 @@ function onClabeInput(event) {
 
 async function handleSubmit() {
   saveError.value = ''
+  clearFieldErrors()
+  for (const key of missingApplyFields.value) {
+    setFieldError(key, t(`profilePage.missingFields.${key}`))
+  }
+  if (missingApplyFields.value.length) {
+    saveError.value = t('profilePage.completeRequired')
+    return
+  }
   saving.value = true
   try {
     const { data } = await api.patch('/api/accounts/profile/', buildPayload())
@@ -644,6 +719,7 @@ async function handleSubmit() {
     }
     success(t('profilePage.toastSaved'))
   } catch (err) {
+    applyApiFieldErrors(err.response?.data)
     saveError.value = errorMessage(err.response?.data)
     errorToast(t('profilePage.toastSaveError'))
   } finally {
@@ -677,7 +753,7 @@ onMounted(fetchProfileAndCatalogs)
 </script>
 
 <style scoped>
-.profile-page { min-height: 100vh; background-color: var(--seim-app-bg); }
+.profile-page { background-color: var(--seim-app-bg); }
 .card { border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
 .card-header { background: var(--bs-body-bg); border-bottom: 1px solid var(--bs-border-color); }
 </style>

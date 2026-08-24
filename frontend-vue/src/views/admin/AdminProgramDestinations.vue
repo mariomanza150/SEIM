@@ -2,17 +2,14 @@
   <div class="admin-program-destinations-page">
     <PageHeader :title="headerTitle" :subtitle="t('adminProgramDestinations.subtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'AdminPrograms' }">{{ t('route.names.AdminPrograms') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminProgramDestinations') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { to: { name: 'AdminPrograms' }, label: t('route.names.AdminPrograms') },
+            { label: t('route.names.AdminProgramDestinations') },
+          ]"
+        />
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" :disabled="busy" @click="reload">
@@ -21,14 +18,12 @@
       </template>
     </PageHeader>
 
-    <div v-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-    <div v-else-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-    </div>
-
-    <template v-else>
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      skeleton="none"
+      :loading-label="t('adminCommon.loading')"
+    >
       <div class="card mb-3" data-testid="add-university-card">
         <div class="card-header fw-medium">{{ t('adminProgramDestinations.addUniversity') }}</div>
         <div class="card-body">
@@ -194,7 +189,7 @@
           </div>
         </div>
       </div>
-    </template>
+    </PageStateShell>
   </div>
 </template>
 
@@ -203,6 +198,8 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import SearchableSelect from '@/components/SearchableSelect.vue'
 import api from '@/services/api'
 

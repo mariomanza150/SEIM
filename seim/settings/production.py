@@ -105,6 +105,7 @@ DATABASES = {
         _docker_compose_postgres_service_to_localhost(env("DATABASE_URL"))
     )
 }
+DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)
 
 # Redis/Celery config
 REDIS_URL = _docker_compose_redis_host_to_localhost(env("REDIS_URL"))

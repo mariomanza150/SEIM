@@ -2,14 +2,13 @@
   <div class="admin-data-management-page">
     <PageHeader :title="t('adminData.title')" :subtitle="t('adminData.subtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminDataManagement') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.AdminDataManagement') },
+          ]"
+        />
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="load">
@@ -18,13 +17,12 @@
       </template>
     </PageHeader>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-    <div v-else>
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      skeleton="none"
+      :loading-label="t('adminCommon.loading')"
+    >
       <div class="row g-3 mb-4">
         <div v-for="section in sections" :key="section.key" class="col-md-6 col-xl-4">
           <button
@@ -84,6 +82,7 @@
             <div v-if="resourcesLoading" class="text-muted">{{ t('adminCommon.loading') }}</div>
             <div v-else-if="!items.length" class="text-muted">{{ t('adminData.noItems') }}</div>
             <div v-else class="table-responsive">
+              <ResponsiveList :items="items" :columns="itemMobileColumns" mobile-test-id="data-management-items-mobile">
               <table class="table align-middle mb-0" data-testid="data-management-items">
                 <thead>
                   <tr>
@@ -122,14 +121,39 @@
                   </tr>
                 </tbody>
               </table>
+              <template #col-name="{ item }">
+                <div class="fw-medium">{{ item.name }}</div>
+                <div class="small text-muted">{{ item.description }}</div>
+              </template>
+              <template #col-detail="{ item }">{{ item.format || item.operation_type || item.model_name || '—' }}</template>
+              <template v-if="selectedSection === 'data_import'" #col-file="{ item }">
+                <input
+                  class="form-control form-control-sm"
+                  type="file"
+                  :data-testid="`data-import-file-${item.id}`"
+                  @change="onFileChange(item.id, $event)"
+                />
+              </template>
+              <template #actions="{ item }">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary"
+                  :disabled="running"
+                  data-testid="data-execute"
+                  @click="runItem(item)"
+                >
+                  {{ t('adminData.execute') }}
+                </button>
+              </template>
+              </ResponsiveList>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
     <div class="card">
       <div class="card-header">{{ t('adminData.recentLogs') }}</div>
+      <ResponsiveList :items="logs" :columns="logMobileColumns" mobile-test-id="data-management-logs-mobile">
       <div class="table-responsive">
         <table class="table table-sm mb-0" data-testid="data-management-logs">
           <thead>
@@ -147,13 +171,16 @@
               <td>{{ log.status }}</td>
               <td>{{ log.user || '—' }}</td>
             </tr>
-            <tr v-if="!logs.length">
-              <td colspan="4" class="text-muted">{{ t('adminData.noLogs') }}</td>
-            </tr>
           </tbody>
         </table>
       </div>
+      <template #col-operation_type="{ item }">{{ item.operation_type }}</template>
+      <template #col-model_name="{ item }">{{ item.model_name }}</template>
+      <template #col-status="{ item }">{{ item.status }}</template>
+      <template #col-user="{ item }">{{ item.user || '—' }}</template>
+      </ResponsiveList>
     </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -162,6 +189,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import api from '@/services/api'
 
 const { t } = useI18n()
@@ -187,6 +217,24 @@ const cleanup = ref({
 
 const selectedSection = computed(() => String(route.query.section || ''))
 const currentSection = computed(() => sections.value.find((row) => row.key === selectedSection.value))
+
+const itemMobileColumns = computed(() => {
+  const cols = [
+    { key: 'name', label: t('adminData.itemName') },
+    { key: 'detail', label: t('adminData.itemDetail') },
+  ]
+  if (selectedSection.value === 'data_import') {
+    cols.push({ key: 'file', label: t('adminData.file') })
+  }
+  return cols
+})
+
+const logMobileColumns = computed(() => [
+  { key: 'operation_type', label: t('adminData.logType') },
+  { key: 'model_name', label: t('adminData.logModel') },
+  { key: 'status', label: t('adminData.logStatus') },
+  { key: 'user', label: t('adminData.logUser') },
+])
 
 function selectSection(key) {
   router.replace({ query: { ...route.query, section: key } })

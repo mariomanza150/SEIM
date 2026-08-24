@@ -64,53 +64,20 @@
         </template>
       </CompactFilterBar>
 
-      <!-- Loading -->
-      <div v-if="loading" class="text-center py-5">
-        <div class="visually-hidden" role="status" aria-live="polite">
-          {{ t('applicationsPage.loadingList') }}
-        </div>
-        <div class="row" aria-hidden="true">
-          <div v-for="n in 6" :key="n" class="col-md-6 mb-4">
-            <div class="card h-100">
-              <div class="card-body placeholder-glow">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                  <span class="placeholder col-7"></span>
-                  <span class="placeholder col-3"></span>
-                </div>
-                <div class="mb-3">
-                  <span class="placeholder col-4"></span>
-                  <div class="mt-2">
-                    <span class="placeholder col-9"></span>
-                  </div>
-                </div>
-                <div class="mb-3">
-                  <span class="placeholder col-6"></span>
-                </div>
-                <div class="row mb-3">
-                  <div class="col-6"><span class="placeholder col-10"></span></div>
-                  <div class="col-6"><span class="placeholder col-10"></span></div>
-                </div>
-                <div class="d-flex justify-content-between align-items-center">
-                  <span class="placeholder col-4"></span>
-                  <span class="placeholder col-3"></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Error -->
-      <div v-else-if="error" class="alert alert-danger">
-        <i class="bi bi-exclamation-triangle me-2"></i>
-        {{ error }}
-      </div>
-
-      <!-- Applications List -->
-      <div v-else-if="applications.length > 0" data-testid="applications-results">
+      <PageStateShell
+        :loading="loading"
+        :error="error"
+        :empty="!applications.length"
+        :empty-title="t('applicationsPage.emptyTitle')"
+        :empty-body="t('applicationsPage.emptyBody')"
+        empty-icon-class="bi bi-inbox"
+        skeleton="cards"
+        :loading-label="t('applicationsPage.loadingList')"
+      >
+        <div v-if="applications.length > 0" data-testid="applications-results">
         <div class="row">
           <div v-for="application in applications" :key="application.id" class="col-md-6 mb-4">
-            <div class="card application-card h-100">
+            <div class="card application-card h-100 card-hover">
               <div class="card-body">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                   <h5 class="card-title mb-0">{{ programDisplayName(application) || t('applicationDetailPage.unknownProgram') }}</h5>
@@ -197,33 +164,32 @@
           :aria-label="t('applicationsPage.paginationAria')"
           @page-change="goToPage"
         />
-      </div>
+        </div>
 
-      <!-- Empty State -->
-      <div v-else class="card">
-        <div class="card-body text-center py-5">
-          <i class="bi bi-inbox display-1 text-muted"></i>
-          <h4 class="mt-3">{{ t('applicationsPage.emptyTitle') }}</h4>
-          <p class="text-muted">{{ t('applicationsPage.emptyBody') }}</p>
-          <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary mt-3">
+        <template #emptyActions>
+          <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary">
             <i class="bi bi-plus-circle me-2"></i>{{ t('applicationsPage.createApplication') }}
           </router-link>
-        </div>
-      </div>
+        </template>
+      </PageStateShell>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onActivated } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
+import { useResourceCacheStore } from '@/stores/resourceCache'
+import { unwrapPaginatedResults } from '@/utils/apiList'
+import { getApiErrorMessage } from '@/utils/apiErrors'
 import { readinessLevelBadgeClass, formatReadinessHeadline } from '@/utils/applicationReadiness'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import Pagination from '@/components/Pagination.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import {
   applicationProgramDisplayName,
@@ -235,11 +201,14 @@ import {
 } from '@/utils/formatters'
 import { resolveListPage } from '@/utils/listPage'
 
+defineOptions({ name: 'Applications' })
+
 const route = useRoute()
 
 const { t, te, locale } = useI18n()
 const { success, error: errorToast } = useToast()
 const { confirm } = useConfirm()
+const resourceCache = useResourceCacheStore()
 
 const applications = ref([])
 const loading = ref(true)
@@ -285,22 +254,21 @@ async function fetchApplications(page = 1) {
       params.status = filters.value.status
     }
 
-    const response = await api.get('/api/applications/', { params })
-    
-    applications.value = response.data.results || response.data
-    
-    if (response.data.count !== undefined) {
+    const data = await resourceCache.get('/api/applications/', params, { force: true, ttlMs: 15000 })
+    applications.value = unwrapPaginatedResults(data)
+
+    if (data.count !== undefined) {
       pagination.value = {
-        count: response.data.count,
-        next: response.data.next,
-        previous: response.data.previous,
+        count: data.count,
+        next: data.next,
+        previous: data.previous,
         currentPage: pageNumber,
         pageSize: pagination.value.pageSize,
       }
     }
   } catch (err) {
     console.error('Failed to fetch applications:', err)
-    error.value = t('applicationsPage.loadError')
+    error.value = getApiErrorMessage(err, t('applicationsPage.loadError'))
     errorToast(t('applicationsPage.loadToastError'))
   } finally {
     loading.value = false
@@ -372,6 +340,7 @@ async function confirmDelete(application) {
 async function deleteApplication(id) {
   try {
     await api.delete(`/api/applications/${id}/`)
+    resourceCache.invalidatePrefix('/api/applications/')
     success(t('applicationsPage.deletedToast'))
     fetchApplications(pagination.value.currentPage)
   } catch (err) {
@@ -386,6 +355,12 @@ onMounted(() => {
     filters.value.status = statusFromQuery
   }
   fetchApplications()
+})
+
+onActivated(() => {
+  if (!loading.value) {
+    fetchApplications(pagination.value.currentPage)
+  }
 })
 </script>
 

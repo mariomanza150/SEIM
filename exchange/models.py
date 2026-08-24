@@ -242,6 +242,9 @@ class Program(UUIDModel, TimeStampedModel):
 
     class Meta:
         ordering = ["name"]
+        indexes = [
+            models.Index(fields=["name"], name="program_name_idx"),
+        ]
 
     def __str__(self):
         return self.name

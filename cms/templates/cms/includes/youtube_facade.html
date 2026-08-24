@@ -1,0 +1,21 @@
+{% load static %}
+<div class="cms-youtube-facade ratio ratio-16x9 rounded shadow-lg overflow-hidden" data-cms-youtube-facade>
+    <button
+        type="button"
+        class="cms-youtube-facade__trigger btn p-0 border-0 w-100 h-100 position-relative"
+        data-embed-url="{{ embed_url }}"
+        aria-label="Reproducir video: {{ video_title|default:'Video CGRI' }}"
+    >
+        <img
+            src="https://i.ytimg.com/vi/hqdefault.jpg"
+            alt=""
+            class="cms-youtube-facade__thumb w-100 h-100 object-fit-cover"
+            loading="lazy"
+            decoding="async"
+            aria-hidden="true"
+        >
+        <span class="cms-youtube-facade__play" aria-hidden="true">
+            <i class="bi bi-play-circle-fill"></i>
+        </span>
+    </button>
+</div>

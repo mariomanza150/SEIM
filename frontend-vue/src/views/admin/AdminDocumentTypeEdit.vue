@@ -2,17 +2,14 @@
   <div class="admin-document-type-edit">
     <PageHeader :title="pageTitle" :subtitle="t('adminDocuments.editorSubtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'AdminDocuments' }">{{ t('route.names.AdminDocuments') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ pageTitle }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { to: { name: 'AdminDocuments' }, label: t('route.names.AdminDocuments') },
+            { label: pageTitle, truncate: true },
+          ]"
+        />
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" :disabled="saving" @click="load">
@@ -31,13 +28,13 @@
       </template>
     </PageHeader>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-    <div v-else class="row g-4">
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      skeleton="none"
+      :loading-label="t('adminCommon.loading')"
+    >
+    <div class="row g-4">
       <div class="col-lg-8">
         <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
 
@@ -257,6 +254,7 @@
         </div>
       </div>
     </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -268,6 +266,8 @@ import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -362,7 +362,7 @@ async function load() {
   try {
     const [typeRes, programRes, fieldsRes] = await Promise.all([
       api.get(`/api/document-types/${route.params.id}/`),
-      api.get('/api/programs/', { params: { ordering: 'name', page_size: 200 } }),
+      api.get('/api/programs/', { params: { ordering: 'name', page_size: 100 } }),
       api.get('/api/document-types/merge-fields/'),
     ])
     const dt = typeRes.data || {}
