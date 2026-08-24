@@ -40,7 +40,7 @@ Welcome to the SEIM (Student Exchange Information Manager) documentation. This c
 
 ### **⚙️ Administration**
 - **[Admin Guide](admin_guide.md)** - System administration and operations
-- **[Deployment Guide](deployment.md)** - Production deployment instructions
+- **[Deployment Guide](deployment.md)** - AWS Ultra-Lean / Minimum / Recommended profiles + Compose
 - **[CMS Restore Guide](notes/CMS_RESTORE_GUIDE.md)** - Wagtail export/import and restore
 - **[Virus Scanner Setup](virus_scanner_setup.md)** - Document scanning configuration
 - **[Selenium Setup](selenium_setup.md)** - Legacy E2E (deprecated; see [e2e_testing_guide.md](e2e_testing_guide.md))

@@ -149,22 +149,28 @@ AWS_SES_SECRET_ACCESS_KEY=your-secret-key
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `AWS_ACCESS_KEY_ID` | ❌ | - | AWS access key |
+| `USE_S3` | ❌ | `false` (dev) / `true` (AWS profiles) | Prefer S3 for private media (presigned uploads) |
+| `AWS_ACCESS_KEY_ID` | ❌ | - | AWS access key (or use EC2 instance role) |
 | `AWS_SECRET_ACCESS_KEY` | ❌ | - | AWS secret key |
-| `AWS_STORAGE_BUCKET_NAME` | ❌ | - | S3 bucket for file storage |
-| `AWS_S3_REGION_NAME` | ❌ | `us-east-1` | AWS region |
+| `AWS_STORAGE_BUCKET_NAME` | ❌ | - | S3 bucket for private student documents |
+| `AWS_BACKUP_BUCKET` | ❌ | - | Private S3 bucket for `scripts/backup_db_s3.sh` dumps |
+| `AWS_S3_REGION_NAME` | ❌ | `us-east-1` | AWS region (AWS profiles use us-east-1) |
 | `AWS_S3_CUSTOM_DOMAIN` | ❌ | - | Custom S3 domain |
 | `AWS_DEFAULT_ACL` | ❌ | `private` | Default ACL for S3 objects |
 
 #### **AWS S3 Configuration:**
 ```bash
-# For file storage
+# Private media (see docs/deployment.md)
+USE_S3=true
 AWS_ACCESS_KEY_ID=your-aws-access-key
 AWS_SECRET_ACCESS_KEY=your-aws-secret-key
 AWS_STORAGE_BUCKET_NAME=seim-media-bucket
+AWS_BACKUP_BUCKET=seim-backup-bucket
 AWS_S3_REGION_NAME=us-east-1
 AWS_DEFAULT_ACL=private
 ```
+
+AWS deployment env templates: `env.lean.example` (Ultra-Lean), `env.prod.example` (Minimum / Recommended).
 
 ### **🔧 Celery Configuration**
 
