@@ -258,7 +258,11 @@
               </div>
               <div class="col-md-6">
                 <label class="form-label">{{ t('adminPrograms.fields.requiredLanguage') }}</label>
-                <input v-model="editor.form.required_language" class="form-control" type="text" />
+                <SearchableSelect
+                  v-model="editor.form.required_language"
+                  :options="spokenLanguageOptions"
+                  :placeholder="t('adminCommon.notSet')"
+                />
               </div>
               <div class="col-md-6">
                 <label class="form-label">{{ t('adminPrograms.fields.minLanguageLevel') }}</label>
@@ -404,6 +408,8 @@ import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
 import { formatDate } from '@/utils/formatters'
 import PageHeader from '@/components/PageHeader.vue'
+import SearchableSelect from '@/components/SearchableSelect.vue'
+import { spokenLanguageSelectOptions } from '@/utils/spokenLanguageOptions'
 
 const { t, locale } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -491,7 +497,10 @@ const formTypes = ref([])
 const workflowVersions = ref([])
 const coordinators = ref([])
 const documentTypes = ref([])
+const spokenLanguages = ref([])
 const eligibilityRulesets = ref([])
+
+const spokenLanguageOptions = computed(() => spokenLanguageSelectOptions(spokenLanguages.value))
 
 const editor = ref({
   open: false,
@@ -573,12 +582,13 @@ async function fetchPrograms() {
 }
 
 async function fetchEditorOptions() {
-  const [ftRes, userRes, dtRes, wvRes, rsRes] = await Promise.all([
+  const [ftRes, userRes, dtRes, wvRes, rsRes, langRes] = await Promise.all([
     api.get('/api/application-forms/form-types/', { params: { ordering: 'name' } }),
     api.get('/api/users/'),
     api.get('/api/document-types/', { params: { ordering: 'name' } }),
     api.get('/api/workflow-versions/', { params: { ordering: '-version' } }),
     api.get('/api/eligibility-rulesets/', { params: { ordering: 'name' } }),
+    api.get('/api/accounts/catalogs/spoken-languages/'),
   ])
   formTypes.value = normalizeApiList(ftRes.data)
   const allUsers = normalizeApiList(userRes.data)
@@ -586,6 +596,7 @@ async function fetchEditorOptions() {
   documentTypes.value = normalizeApiList(dtRes.data)
   workflowVersions.value = normalizeApiList(wvRes.data).filter((v) => v.status === 'published')
   eligibilityRulesets.value = normalizeApiList(rsRes.data)
+  spokenLanguages.value = normalizeApiList(langRes.data)
 }
 
 function openCreate() {

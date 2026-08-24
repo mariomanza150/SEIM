@@ -113,13 +113,12 @@
                       </div>
                       <div class="col-md-6">
                         <label for="application-profile-language" class="form-label">{{ t('profilePage.primaryLanguage') }} *</label>
-                        <input
+                        <SearchableSelect
                           id="application-profile-language"
                           v-model="profileEligibility.language"
-                          type="text"
-                          class="form-control"
-                          required
-                        >
+                          :options="spokenLanguageOptions"
+                          :placeholder="t('profilePage.languagePlaceholder')"
+                        />
                       </div>
                       <div class="col-md-6">
                         <label for="application-profile-language-level" class="form-label">{{ t('profilePage.primaryLevelLabel') }} *</label>
@@ -945,6 +944,8 @@ import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import EligibilityFixList from '@/components/EligibilityFixList.vue'
+import SearchableSelect from '@/components/SearchableSelect.vue'
+import { spokenLanguageSelectOptions } from '@/utils/spokenLanguageOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -972,6 +973,8 @@ const submitting = ref(false)
 const eligibilityRequired = ref(false)
 const profileEligibilityError = ref('')
 const gradeScales = ref([])
+const spokenLanguages = ref([])
+const spokenLanguageOptions = computed(() => spokenLanguageSelectOptions(spokenLanguages.value))
 const profileEligibility = ref({
   gpa: null,
   grade_scale: '',
@@ -1091,11 +1094,13 @@ async function fetchActiveGradeScales() {
 
 async function loadProfileGate() {
   try {
-    const [{ data: profile }, scales] = await Promise.all([
+    const [{ data: profile }, scales, langRes] = await Promise.all([
       api.get('/api/accounts/profile/'),
       fetchActiveGradeScales(),
+      api.get('/api/accounts/catalogs/spoken-languages/'),
     ])
     gradeScales.value = scales
+    spokenLanguages.value = listFrom(langRes.data)
 
     if (profile.is_ready_to_apply === false) {
       errorToast(t('applicationFormPage.profileRequiredToast'))

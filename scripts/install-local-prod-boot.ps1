@@ -1,7 +1,8 @@
 # Install boot-time autostart for:
 #   1. Docker Desktop (user setting)
 #   2. seim-localprod Docker stack (Scheduled Task, delayed after logon)
-#   3. GitHub Actions self-hosted runner as a Windows service (requires admin)
+#   3. Cloudflare Quick Tunnel to :8020 (logon + every 15m)
+#   4. GitHub Actions self-hosted runner as a Windows service (requires admin)
 #
 # Usage (elevated PowerShell recommended):
 #   .\scripts\install-local-prod-boot.ps1
@@ -16,6 +17,8 @@ param(
 $ErrorActionPreference = "Stop"
 $ProjectRoot = Split-Path -Parent $PSScriptRoot
 $StackScript = Join-Path $ProjectRoot "scripts\start-local-prod-stack.ps1"
+$TunnelTaskName = "SEIM-cloudflare-tunnel"
+$TunnelScript = Join-Path $ProjectRoot "scripts\ensure-cloudflare-tunnel.ps1"
 $StackTaskName = "SEIM-localprod-stack"
 $RunnerTaskName = "SEIM-github-runner"
 $LogDir = Join-Path $ProjectRoot "logs"
@@ -83,6 +86,42 @@ function Install-StackScheduledTask {
         -Force | Out-Null
 
     Write-Host "Scheduled task '$StackTaskName' registered (At logon, ${StackDelaySec}s delay)"
+}
+
+function Install-CloudflareTunnelScheduledTask {
+    if (-not (Test-Path $TunnelScript)) {
+        Write-Warning "Missing $TunnelScript - skip Cloudflare tunnel task"
+        return
+    }
+
+    $action = New-ScheduledTaskAction `
+        -Execute "powershell.exe" `
+        -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$TunnelScript`"" `
+        -WorkingDirectory $ProjectRoot
+
+    # After stack (stack delay + buffer), then every 15 minutes.
+    $tunnelDelaySec = [Math]::Max($StackDelaySec + 60, 150)
+    $logon = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+    $logon.Delay = "PT${tunnelDelaySec}S"
+    $repeat = New-ScheduledTaskTrigger -Once -At (Get-Date).Date.AddMinutes(5) `
+        -RepetitionInterval (New-TimeSpan -Minutes 15) `
+        -RepetitionDuration (New-TimeSpan -Days 3650)
+
+    $settings = New-ScheduledTaskSettingsSet `
+        -AllowStartIfOnBatteries `
+        -DontStopIfGoingOnBatteries `
+        -StartWhenAvailable `
+        -MultipleInstances IgnoreNew
+
+    Register-ScheduledTask `
+        -TaskName $TunnelTaskName `
+        -Action $action `
+        -Trigger @($logon, $repeat) `
+        -Settings $settings `
+        -Description "Ensure Cloudflare Quick Tunnel to seim-localprod :8020" `
+        -Force | Out-Null
+
+    Write-Host "Scheduled task '$TunnelTaskName' registered (logon + every 15m)"
 }
 
 function Install-RunnerFallbackTask([string]$Dir) {
@@ -164,6 +203,9 @@ Set-DockerDesktopAutoStart
 Write-Step "Installing seim-localprod stack scheduled task"
 Install-StackScheduledTask
 
+Write-Step "Installing Cloudflare Tunnel scheduled task"
+Install-CloudflareTunnelScheduledTask
+
 if (-not $SkipRunnerService) {
     if (Test-IsAdmin) {
         Write-Step "Installing GitHub runner as Windows service (admin)"
@@ -179,5 +221,7 @@ if (-not $SkipRunnerService) {
 
 Write-Step "Boot autostart setup complete"
 Write-Host "Stack task : Get-ScheduledTask -TaskName '$StackTaskName'"
+Write-Host "Tunnel task: Get-ScheduledTask -TaskName '$TunnelTaskName'"
 Write-Host "Runner     : Get-Service 'actions.runner.*' or task '$RunnerTaskName'"
 Write-Host "Test stack : .\scripts\start-local-prod-stack.ps1"
+Write-Host "Test tunnel: .\scripts\ensure-cloudflare-tunnel.ps1"

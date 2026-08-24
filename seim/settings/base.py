@@ -26,7 +26,8 @@ SECRET_KEY = env("SECRET_KEY")
 # SMTP/SES settings files may override this when those backends are selected.
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@seim.local")
 
-# Public origin for SPA links in emails (no trailing slash). Paths use /seim/...
+# Fallback origin for SPA links in emails (no trailing slash). Paths use /seim/...
+# HTTP views prefer the current request origin so tunnel/Tailscale hosts work.
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="http://localhost:8001").rstrip(
     "/"
 )

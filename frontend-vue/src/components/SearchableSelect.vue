@@ -6,6 +6,8 @@
       class="form-control"
       :placeholder="placeholder"
       :disabled="disabled"
+      :data-testid="dataTestid || undefined"
+      autocomplete="off"
       :aria-expanded="isOpen ? 'true' : 'false'"
       aria-autocomplete="list"
       @focus="isOpen = true"
@@ -39,6 +41,7 @@ const props = defineProps({
   options: { type: Array, default: () => [] },
   placeholder: { type: String, default: '' },
   disabled: { type: Boolean, default: false },
+  dataTestid: { type: String, default: '' },
 })
 
 const emit = defineEmits(['update:modelValue'])

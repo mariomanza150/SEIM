@@ -228,7 +228,12 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-language">{{ t('profilePage.primaryLanguage') }} *</label>
-                  <input id="profile-language" v-model="form.language" type="text" class="form-control" autocomplete="off" required :placeholder="t('profilePage.languagePlaceholder')" data-testid="profile-language">
+                  <SearchableSelect
+                    v-model="form.language"
+                    :options="spokenLanguageOptions"
+                    :placeholder="t('profilePage.languagePlaceholder')"
+                    data-testid="profile-language"
+                  />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-language-level">{{ t('profilePage.primaryLevelLabel') }} *</label>
@@ -249,7 +254,13 @@
                 </button>
               </div>
               <div v-for="(row, idx) in form.additional_languages" :key="idx" class="row g-2 mb-2">
-                <div class="col-md-5"><input v-model="row.name" type="text" class="form-control form-control-sm" :placeholder="t('profilePage.languagePlaceholder')"></div>
+                <div class="col-md-5">
+                  <SearchableSelect
+                    v-model="row.name"
+                    :options="spokenLanguageOptions"
+                    :placeholder="t('profilePage.languagePlaceholder')"
+                  />
+                </div>
                 <div class="col-md-5">
                   <select v-model="row.level" class="form-select form-select-sm">
                     <option value="">{{ t('profilePage.notSetOption') }}</option>
@@ -282,6 +293,8 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
+import SearchableSelect from '@/components/SearchableSelect.vue'
+import { spokenLanguageSelectOptions } from '@/utils/spokenLanguageOptions'
 
 const { t } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -293,8 +306,10 @@ const programsLoading = ref(false)
 const schoolsLoading = ref(false)
 const saveError = ref('')
 const catalogs = reactive({
-  academicLevels: [], schools: [], unidades: [], banks: [], programs: [], gradeScales: [],
+  academicLevels: [], schools: [], unidades: [], banks: [], programs: [], gradeScales: [], spokenLanguages: [],
 })
+
+const spokenLanguageOptions = computed(() => spokenLanguageSelectOptions(catalogs.spokenLanguages))
 
 const emptyForm = {
   email: '', first_name: '', middle_name: '', last_name: '', mothers_last_name: '',
@@ -555,12 +570,14 @@ async function fetchProfileAndCatalogs() {
     fetchCatalog('academic-levels'),
     fetchCatalog('unidades'),
     fetchCatalog('banks'),
+    fetchCatalog('spoken-languages'),
   ])
   const scalesSettled = await Promise.allSettled([fetchActiveGradeScales()])
   const catalogFailed = catalogSettled.some((result) => result.status === 'rejected')
   catalogs.academicLevels = catalogSettled[0].status === 'fulfilled' ? catalogSettled[0].value : []
   catalogs.unidades = catalogSettled[1].status === 'fulfilled' ? catalogSettled[1].value : []
   catalogs.banks = catalogSettled[2].status === 'fulfilled' ? catalogSettled[2].value : []
+  catalogs.spokenLanguages = catalogSettled[3].status === 'fulfilled' ? catalogSettled[3].value : []
   catalogs.schools = []
   catalogs.programs = []
   catalogs.gradeScales = scalesSettled[0].status === 'fulfilled' ? scalesSettled[0].value : []

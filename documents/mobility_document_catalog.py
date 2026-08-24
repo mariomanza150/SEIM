@@ -293,7 +293,7 @@ def assign_scheme_document_requirements(
     document_type_model=None,
 ) -> int:
     """
-    Attach ProgramDocumentRequirement rows to the three mobility schemes.
+    Attach ProgramDocumentRequirement rows to mobility schemes.
 
     Scholarship docs are optional and only on international schemes.
     Returns number of requirement rows ensured.
@@ -311,6 +311,7 @@ def assign_scheme_document_requirements(
         "Movilidad Internacional Habla Hispana": "intl_es",
         "Movilidad Internacional Habla Inglesa": "intl",
         "Movilidad Internacional": "intl",
+        "Movilidad Maestría": "maestria",
     }
     created = 0
     for program_name, kind in schemes.items():
@@ -320,8 +321,9 @@ def assign_scheme_document_requirements(
         rows: list[tuple[int, str, bool]] = [
             (order, slug, True) for order, slug in CORE_SCHEME_REQUIREMENTS
         ]
-        rows.extend((order, slug, True) for order, slug in INTERNATIONAL_EXTRA)
-        rows.extend((order, slug, False) for order, slug in SCHOLARSHIP_OPTIONAL)
+        if kind in ("intl_es", "intl", "maestria"):
+            rows.extend((order, slug, True) for order, slug in INTERNATIONAL_EXTRA)
+            rows.extend((order, slug, False) for order, slug in SCHOLARSHIP_OPTIONAL)
 
         for sort_order, slug, is_required in rows:
             dt = document_type_cls.objects.filter(slug=slug).first()

@@ -38,6 +38,7 @@ REDIS_URL=redis://localhost:6379/0
 | `DEBUG` | ❌ | `True` (dev) | Enable Django debug mode |
 | `ALLOWED_HOSTS` | ❌ | `localhost,127.0.0.1` | Comma-separated list of allowed hosts |
 | `CSRF_TRUSTED_ORIGINS` | ❌ | - | Comma-separated list of trusted origins for CSRF |
+| `FRONTEND_BASE_URL` | ❌ | `http://localhost:8001` | Fallback public SPA origin for email links. Registration, resend-verification, and password-reset emails use the current request host when available (so Cloudflare Tunnel / Tailscale URLs work without a restart). |
 
 #### **Examples:**
 ```bash

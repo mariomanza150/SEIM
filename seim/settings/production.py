@@ -9,9 +9,10 @@ from urllib.parse import urlparse, urlunparse
 
 from .base import *
 from .hosting import (
+    CLOUDFLARE_CORS_ORIGIN_REGEX,
     TAILSCALE_CORS_ORIGIN_REGEX,
     allowed_hosts_with_tailscale,
-    csrf_origins_with_tailscale,
+    csrf_origins_with_tls_proxies,
 )
 
 
@@ -223,10 +224,11 @@ CSRF_TRUSTED_ORIGINS = env.list(
 )
 
 if _use_tls_proxy:
-    CSRF_TRUSTED_ORIGINS = csrf_origins_with_tailscale(CSRF_TRUSTED_ORIGINS)
+    CSRF_TRUSTED_ORIGINS = csrf_origins_with_tls_proxies(CSRF_TRUSTED_ORIGINS)
     CORS_ALLOWED_ORIGIN_REGEXES = list(CORS_ALLOWED_ORIGIN_REGEXES)
-    if TAILSCALE_CORS_ORIGIN_REGEX not in CORS_ALLOWED_ORIGIN_REGEXES:
-        CORS_ALLOWED_ORIGIN_REGEXES.append(TAILSCALE_CORS_ORIGIN_REGEX)
+    for _cors_re in (TAILSCALE_CORS_ORIGIN_REGEX, CLOUDFLARE_CORS_ORIGIN_REGEX):
+        if _cors_re not in CORS_ALLOWED_ORIGIN_REGEXES:
+            CORS_ALLOWED_ORIGIN_REGEXES.append(_cors_re)
 
 # Security Settings (strict for production; overridable e.g. docker-compose.local-prod)
 CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=True)

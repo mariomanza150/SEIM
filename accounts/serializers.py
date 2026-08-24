@@ -13,6 +13,7 @@ from .models import (
     Profile,
     Role,
     SchoolFaculty,
+    SpokenLanguage,
     Unidad,
     User,
     UserSession,
@@ -116,6 +117,32 @@ class HomeAcademicProgramSerializer(CatalogSerializer):
     class Meta(CatalogSerializer.Meta):
         model = HomeAcademicProgram
         fields = CatalogSerializer.Meta.fields + ("school", "school_name")
+
+
+class SpokenLanguageSerializer(CatalogSerializer):
+    aliases = serializers.ListField(
+        child=serializers.CharField(max_length=64),
+        required=False,
+        allow_empty=True,
+    )
+
+    class Meta(CatalogSerializer.Meta):
+        model = SpokenLanguage
+        fields = CatalogSerializer.Meta.fields + ("aliases",)
+
+    def validate_aliases(self, value):
+        cleaned = []
+        seen = set()
+        for item in value or []:
+            text = str(item or "").strip()
+            if not text:
+                continue
+            key = text.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            cleaned.append(text)
+        return cleaned
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -413,6 +440,18 @@ class ProfileSerializer(serializers.ModelSerializer):
                     raise serializers.ValidationError(errors)
         return attrs
 
+    def validate_language(self, value):
+        if value is None or value == "":
+            return value
+        from accounts.language_catalog import canonical_language_name
+
+        canonical = canonical_language_name(value)
+        if not canonical:
+            raise serializers.ValidationError(
+                "Select a language from the catalog or use a recognized spelling."
+            )
+        return canonical
+
     def validate_additional_languages(self, value):
         if value is None:
             return []
@@ -420,6 +459,8 @@ class ProfileSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Must be a list.")
         if len(value) > 20:
             raise serializers.ValidationError("At most 20 additional languages.")
+        from accounts.language_catalog import canonical_language_name
+
         cleaned = []
         for i, item in enumerate(value):
             if not isinstance(item, dict):
@@ -431,7 +472,12 @@ class ProfileSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     f"Entry {i + 1}: language name is required."
                 )
-            if len(name) > 64:
+            canonical = canonical_language_name(name)
+            if not canonical:
+                raise serializers.ValidationError(
+                    f"Entry {i + 1}: select a language from the catalog."
+                )
+            if len(canonical) > 64:
                 raise serializers.ValidationError(
                     f"Entry {i + 1}: language name is too long."
                 )
@@ -440,7 +486,7 @@ class ProfileSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     f"Entry {i + 1}: level must be one of {', '.join(sorted(_CEFR_LEVELS))} or empty."
                 )
-            cleaned.append({"name": name, "level": level})
+            cleaned.append({"name": canonical, "level": level})
         return cleaned
 
     def update(self, instance, validated_data):
@@ -546,6 +592,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
                 middle_name=middle_name,
                 last_name=last_name,
                 mothers_last_name=mothers_last_name,
+                request=self.context.get("request"),
             )
             return user
         except ValueError as e:
@@ -629,7 +676,9 @@ class PasswordResetRequestSerializer(serializers.Serializer):
         from .services import AccountService
 
         email = self.validated_data["email"]
-        AccountService.initiate_password_reset(email)
+        AccountService.initiate_password_reset(
+            email, request=self.context.get("request")
+        )
         return {"detail": "Password reset email sent"}
 
 

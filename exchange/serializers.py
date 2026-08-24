@@ -123,6 +123,18 @@ class ProgramSerializer(serializers.ModelSerializer):
             )
         return value
 
+    def validate_required_language(self, value):
+        if value is None or value == "":
+            return None
+        from accounts.language_catalog import canonical_language_name
+
+        canonical = canonical_language_name(value)
+        if not canonical:
+            raise serializers.ValidationError(
+                "Select a language from the catalog or use a recognized spelling."
+            )
+        return canonical
+
     def _sync_field_requirements(self, program, rows):
         if rows is None:
             return

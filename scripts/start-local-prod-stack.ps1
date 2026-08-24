@@ -68,3 +68,19 @@ if (-not $healthy) {
 }
 
 Write-Step "seim-localprod is up at http://localhost:8020/seim/"
+
+$EnsureTunnel = Join-Path $PSScriptRoot "ensure-cloudflare-tunnel.ps1"
+if (Test-Path $EnsureTunnel) {
+    Write-Step "Ensuring Cloudflare Tunnel"
+    try {
+        & $EnsureTunnel
+        $urlFile = Join-Path $ProjectRoot "logs\cloudflare-tunnel.url"
+        if (Test-Path $urlFile) {
+            $publicUrl = (Get-Content $urlFile | Select-Object -First 1).Trim()
+            Write-Step "Public HTTPS: $publicUrl/seim/"
+        }
+    }
+    catch {
+        Write-Warning "Cloudflare Tunnel not started: $($_.Exception.Message)"
+    }
+}

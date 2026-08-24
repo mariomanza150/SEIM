@@ -101,6 +101,16 @@
                 <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
               </select>
             </div>
+            <div v-if="activeTab === 'languages'" class="col-md-4">
+              <label class="form-label" for="catalog-create-aliases">{{ t('adminCatalogs.fields.aliases') }}</label>
+              <input
+                id="catalog-create-aliases"
+                v-model="draft.aliasesText"
+                class="form-control"
+                type="text"
+                :placeholder="t('adminCatalogs.fields.aliasesPlaceholder')"
+              >
+            </div>
             <div class="col-md-2">
               <div class="form-check mt-2">
                 <input id="catalog-create-active" v-model="draft.is_active" class="form-check-input" type="checkbox">
@@ -125,13 +135,14 @@
                 <th scope="col">{{ t('adminCatalogs.fields.code') }}</th>
                 <th scope="col">{{ t('adminCatalogs.fields.ordering') }}</th>
                 <th v-if="activeTab === 'programs'" scope="col">{{ t('adminCatalogs.fields.school') }}</th>
+                <th v-if="activeTab === 'languages'" scope="col">{{ t('adminCatalogs.fields.aliases') }}</th>
                 <th scope="col">{{ t('adminCatalogs.fields.active') }}</th>
                 <th scope="col" class="text-end">{{ t('adminCommon.actions') }}</th>
               </tr>
             </thead>
             <tbody>
               <tr v-if="!items.length">
-                <td :colspan="activeTab === 'programs' ? 6 : 5" class="text-muted text-center py-4">
+                <td :colspan="activeTab === 'programs' ? 6 : activeTab === 'languages' ? 6 : 5" class="text-muted text-center py-4">
                   {{ t('adminCatalogs.empty') }}
                 </td>
               </tr>
@@ -158,6 +169,15 @@
                     <option value="">{{ t('adminCommon.notSet') }}</option>
                     <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
                   </select>
+                </td>
+                <td v-if="activeTab === 'languages'">
+                  <input
+                    v-model="item.aliasesText"
+                    class="form-control form-control-sm"
+                    type="text"
+                    :placeholder="t('adminCatalogs.fields.aliasesPlaceholder')"
+                    @change="saveRow(item)"
+                  >
                 </td>
                 <td>
                   <div class="form-check mb-0">
@@ -216,9 +236,10 @@ const CATALOG_ENDPOINTS = {
   unidades: '/api/accounts/catalogs/unidades/',
   banks: '/api/accounts/catalogs/banks/',
   domains: '/api/accounts/catalogs/allowed-email-domains/',
+  languages: '/api/accounts/catalogs/spoken-languages/',
 }
 
-const tabKeys = ['levels', 'schools', 'programs', 'unidades', 'banks', 'domains', 'destinations']
+const tabKeys = ['levels', 'schools', 'programs', 'unidades', 'banks', 'languages', 'domains', 'destinations']
 
 const { t } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -242,7 +263,18 @@ const canCreate = computed(() => {
 })
 
 function emptyDraft() {
-  return { name: '', code: '', ordering: 0, is_active: true, school: '' }
+  return { name: '', code: '', ordering: 0, is_active: true, school: '', aliasesText: '' }
+}
+
+function parseAliasesText(text) {
+  return String(text || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
+
+function aliasesToText(value) {
+  return Array.isArray(value) ? value.join(', ') : ''
 }
 
 function resetDraft() {
@@ -262,6 +294,7 @@ function normalizeItem(row) {
     ordering: row.ordering ?? 0,
     is_active: row.is_active !== false,
     school: row.school || '',
+    aliasesText: aliasesToText(row.aliases),
   }
 }
 
@@ -277,6 +310,7 @@ function payloadFrom(source) {
     is_active: Boolean(source.is_active),
   }
   if (activeTab.value === 'programs') payload.school = source.school
+  if (activeTab.value === 'languages') payload.aliases = parseAliasesText(source.aliasesText)
   return payload
 }
 

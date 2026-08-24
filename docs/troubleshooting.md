@@ -254,12 +254,29 @@ docker-compose logs db
 
 **Solutions**:
 1. **LAN**: use `http://<lan-ip>:8020` (not `https://`).
-2. **Tailscale Serve**: terminate TLS at Tailscale and proxy HTTP to the app:
+2. **Cloudflare Tunnel (preferred public path for local-prod)**:
    ```powershell
-   tailscale serve http://127.0.0.1:8020
+   .\scripts\ensure-cloudflare-tunnel.ps1
+   Get-Content .\logs\cloudflare-tunnel.url
    ```
-   Open the MagicDNS `https://<machine>.<tailnet>.ts.net` URL, not the raw IP.
-3. Recreate the local-prod web container so `USE_TLS_PROXY_HEADERS=1` and `ALLOW_ANY_HOST=1` from `docker-compose.local-prod.yml` are applied.
+   Open the printed `https://….trycloudflare.com/seim/` URL from any client. Quick Tunnel URLs change when the process restarts; the URL file is the source of truth. Boot/install: `.\scripts\install-local-prod-boot.ps1` registers task `SEIM-cloudflare-tunnel`.
+3. **Tailscale Serve** (devices on the same tailnet only):
+   ```powershell
+   tailscale serve --bg http://127.0.0.1:8020
+   ```
+   Open the MagicDNS `https://<machine>.<tailnet>.ts.net` URL. Prefer Serve over Funnel on UDP-blocked networks.
+4. Recreate the local-prod web container so `USE_TLS_PROXY_HEADERS=1` and `ALLOW_ANY_HOST=1` from `docker-compose.local-prod.yml` are applied.
+
+#### **Issue**: Account confirmation / password-reset email links still point at `localhost` after the public URL changed
+**Cause**: Emails used a static `FRONTEND_BASE_URL` (often `http://localhost:8020`) instead of the Cloudflare Tunnel or Tailscale host the user opened.
+**Solutions**:
+1. Register or resend verification from the public HTTPS URL (not `http://localhost:8020`). New emails use that request host.
+2. Set `FRONTEND_BASE_URL` in `.env.local-prod` to the public origin (no trailing slash) as a fallback, then recreate `web` (and `celery` if it sends mail).
+3. Named/quick tunnel scripts update `FRONTEND_BASE_URL` in `.env.local-prod` when they print the public URL.
+
+#### **Issue**: Tailscale Funnel works on this PC but fails from other clients after a few hours
+**Cause**: On UDP-blocked networks (Cisco Umbrella / `tailscale netcheck` → `UDP: false`), Funnel public DNS can go NXDOMAIN and Funnel edges can stall TLS while MagicDNS/Serve still look healthy locally.
+**Solution**: Use Cloudflare Tunnel (`ensure-cloudflare-tunnel.ps1`) for public access. Disable Funnel if unused: `tailscale funnel --https=443 off`.
 
 ---
 

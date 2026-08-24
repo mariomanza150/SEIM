@@ -104,7 +104,12 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="rs-lang">{{ t('eligibilityRulesetsPage.fieldLanguage') }}</label>
-                  <input id="rs-lang" v-model.trim="editor.form.required_language" class="form-control" />
+                  <SearchableSelect
+                    id="rs-lang"
+                    v-model="editor.form.required_language"
+                    :options="spokenLanguageOptions"
+                    :placeholder="t('adminCommon.notSet')"
+                  />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="rs-cefr">{{ t('eligibilityRulesetsPage.fieldMinLevel') }}</label>
@@ -146,17 +151,21 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from 'vue'
+import { computed, reactive, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
+import SearchableSelect from '@/components/SearchableSelect.vue'
+import { spokenLanguageSelectOptions } from '@/utils/spokenLanguageOptions'
 
 const { t, locale } = useI18n()
 const toast = useToast()
 const loading = ref(true)
 const error = ref('')
 const rows = ref([])
+const spokenLanguages = ref([])
+const spokenLanguageOptions = computed(() => spokenLanguageSelectOptions(spokenLanguages.value))
 const editor = reactive({
   open: false,
   id: null,
@@ -303,5 +312,16 @@ async function saveEditor() {
   }
 }
 
-onMounted(fetchList)
+async function fetchSpokenLanguages() {
+  try {
+    const { data } = await api.get('/api/accounts/catalogs/spoken-languages/')
+    spokenLanguages.value = data.results || data || []
+  } catch {
+    spokenLanguages.value = []
+  }
+}
+
+onMounted(async () => {
+  await Promise.all([fetchList(), fetchSpokenLanguages()])
+})
 </script>

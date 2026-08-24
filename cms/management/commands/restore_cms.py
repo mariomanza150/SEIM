@@ -1,10 +1,11 @@
 """
 Single command to restore CMS to a working state.
 Combines setup_wagtail_site, populate_institution_content, enhance_homepage,
-and the internacional (CGRI / Movilidad) section.
+the internacional (CGRI / Movilidad) section, and SPA help-center articles.
 
 Usage:
-    python manage.py restore_cms [--skip-setup] [--skip-populate] [--skip-enhance] [--skip-internacional]
+    python manage.py restore_cms [--skip-setup] [--skip-populate] [--skip-enhance]
+        [--skip-internacional] [--skip-spa-help]
 """
 
 from django.core.management import call_command
@@ -43,6 +44,11 @@ class Command(BaseCommand):
             action="store_true",
             help="Delete and recreate the internacional tree before populating",
         )
+        parser.add_argument(
+            "--skip-spa-help",
+            action="store_true",
+            help="Skip SPA help-center FAQ catalog (seed_spa_help)",
+        )
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.SUCCESS("=" * 60))
@@ -52,7 +58,7 @@ class Command(BaseCommand):
         try:
             # Step 1: Setup Wagtail site structure
             if not options["skip_setup"]:
-                self.stdout.write("\n📦 Step 1/4: Setting up Wagtail site structure...")
+                self.stdout.write("\n📦 Step 1/5: Setting up Wagtail site structure...")
                 call_command("setup_wagtail_site")
             else:
                 self.stdout.write("\n⏭️  Skipping Wagtail site setup")
@@ -60,7 +66,7 @@ class Command(BaseCommand):
             # Step 2: Populate example institution content (UAdeC tokens unless overridden)
             if not options["skip_populate"]:
                 self.stdout.write(
-                    "\n📝 Step 2/4: Populating institution example content..."
+                    "\n📝 Step 2/5: Populating institution example content..."
                 )
                 call_command("populate_institution_content")
             else:
@@ -68,12 +74,12 @@ class Command(BaseCommand):
 
             # Step 3: Enhance homepage
             if not options["skip_enhance"]:
-                self.stdout.write("\n✨ Step 3/4: Enhancing homepage...")
+                self.stdout.write("\n✨ Step 3/5: Enhancing homepage...")
                 call_command("enhance_homepage")
             else:
                 self.stdout.write("\n⏭️  Skipping homepage enhancement")
 
-            self.stdout.write("\n📋 Step 4/4: Creating How to Apply page...")
+            self.stdout.write("\n📋 Step 4/5: Creating How to Apply page...")
             call_command("create_application_page")
 
             if not options["skip_internacional"]:
@@ -88,6 +94,13 @@ class Command(BaseCommand):
             else:
                 self.stdout.write("\n⏭️  Skipping internacional section")
 
+            # After public FAQs exist so seed_spa_help can retag them
+            if not options["skip_spa_help"]:
+                self.stdout.write("\n❓ Step 5/5: Seeding SPA help-center articles...")
+                call_command("seed_spa_help")
+            else:
+                self.stdout.write("\n⏭️  Skipping SPA help-center seed")
+
             # Success summary
             self.stdout.write(self.style.SUCCESS("\n" + "=" * 60))
             self.stdout.write(self.style.SUCCESS("✅ CMS RESTORED SUCCESSFULLY!"))
@@ -96,6 +109,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS("🌐 Visit: http://localhost:8000/"))
             self.stdout.write(
                 self.style.SUCCESS("🎨 CMS Admin: http://localhost:8000/cms/")
+            )
+            self.stdout.write(
+                self.style.SUCCESS("❓ SPA Help: http://localhost:8000/seim/help")
             )
             self.stdout.write("")
 

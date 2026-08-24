@@ -77,7 +77,7 @@ SPA_HELP_ARTICLES = [
         "introduction": "Del catálogo al borrador de solicitud.",
         "topic": "applications",
         "audiences": [FAQ_AUDIENCE_STUDENT],
-        "contextual_keys": "Applications,ApplicationNew,ApplicationForm",
+        "contextual_keys": "Applications,ApplicationNew",
         "body": "<p>Revisa el catálogo, compara destinos y pulsa aplicar en el programa elegido. Se crea un borrador ligado a tu cuenta.</p><p>No envíes hasta completar el formulario dinámico y la lista de documentos. Puedes guardar y volver más tarde.</p>",
     },
     {
@@ -86,7 +86,7 @@ SPA_HELP_ARTICLES = [
         "introduction": "Qué revisar antes de enviar.",
         "topic": "applications",
         "audiences": [FAQ_AUDIENCE_STUDENT],
-        "contextual_keys": "ApplicationNew,ApplicationEdit,ApplicationForm",
+        "contextual_keys": "ApplicationNew,ApplicationEdit",
         "body": "<p>El borrador guarda respuestas del formulario. Las reglas de elegibilidad pueden bloquear el envío si faltan créditos, idioma o promedio.</p><p>Corrige los campos marcados y vuelve a enviar. Después del envío, algunos datos se bloquean hasta que coordinación pida cambios.</p>",
     },
     {
@@ -239,8 +239,8 @@ SPA_HELP_ARTICLES = [
         "introduction": "Alta de programas y árbol de destinos.",
         "topic": "admin",
         "audiences": [FAQ_AUDIENCE_ADMIN],
-        "contextual_keys": "AdminPrograms,AdminProgramDestinations",
-        "body": "<p>En administración SPA creas programas, periodos y destinos anfitriones (campus, facultad o ciudad según tu modelo).</p><p>Publicar un programa no sustituye el convenio vigente ni las reglas de elegibilidad. Revisa ambos antes de abrir convocatoria.</p>",
+        "contextual_keys": "AdminPrograms,AdminProgramDestinations,AdminApplicationEdit",
+        "body": "<p>En administración SPA creas programas, periodos y destinos anfitriones (campus, facultad o ciudad según tu modelo).</p><p>Desde el editor de solicitud de admin puedes corregir datos operativos de un expediente concreto. Publicar un programa no sustituye el convenio vigente ni las reglas de elegibilidad. Revisa ambos antes de abrir convocatoria.</p>",
     },
     {
         "title": "Catálogos",
@@ -266,8 +266,8 @@ SPA_HELP_ARTICLES = [
         "introduction": "Estados de solicitud vs campos del expediente.",
         "topic": "admin",
         "audiences": [FAQ_AUDIENCE_ADMIN],
-        "contextual_keys": "AdminWorkflows,AdminWorkflowEditor,AdminDynforms,AdminForms",
-        "body": "<p>El flujo define transiciones de estado (borrador, enviado, en revisión). El constructor de formularios define pasos y campos que llena el estudiante.</p><p>Cambia el flujo cuando el proceso institucional cambie. Cambia el formulario cuando cambien los datos a capturar. No mezcles ambos en un solo editor.</p>",
+        "contextual_keys": "AdminWorkflows,AdminWorkflowEditor,AdminWorkflowCatalogs,AdminDynforms,AdminDynformEditor,AdminForms",
+        "body": "<p>El flujo define transiciones de estado (borrador, enviado, en revisión). Los catálogos de flujo cubren estados y tipos. El constructor de formularios (lista y editor visual) define pasos y campos que llena el estudiante.</p><p>Cambia el flujo cuando el proceso institucional cambie. Cambia el formulario cuando cambien los datos a capturar. No mezcles ambos en un solo editor.</p>",
     },
     {
         "title": "Tipos de documento",
@@ -310,7 +310,7 @@ SPA_HELP_ARTICLES = [
 PUBLIC_FAQ_RETAG = {
     "requisitos-aplicar": {
         "topic": "applications",
-        "contextual_keys": "ApplicationNew,ApplicationEdit,ApplicationForm,Applications",
+        "contextual_keys": "ApplicationNew,ApplicationEdit,Applications",
     },
     "costo-intercambio": {
         "topic": "applications",

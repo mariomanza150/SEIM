@@ -397,6 +397,16 @@ class BankInstitution(CatalogModel):
     """Bank available for optional student payment details."""
 
 
+class SpokenLanguage(CatalogModel):
+    """Admin-managed spoken language for student profiles and program eligibility."""
+
+    aliases = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Alternate spellings that resolve to this language (case-insensitive).",
+    )
+
+
 class Profile(UUIDModel, TimeStampedModel):
     """Profile for additional user info."""
 

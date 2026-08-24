@@ -8,8 +8,17 @@ from django.test import RequestFactory, override_settings
 from core.request_host import (
     RequestHostWagtailSiteMiddleware,
     align_site_with_request,
+    request_frontend_origin,
     request_site_identity,
 )
+
+
+@override_settings(ALLOWED_HOSTS=["*"])
+def test_request_frontend_origin_uses_https_host():
+    request = RequestFactory().get(
+        "/", HTTP_HOST="app.trycloudflare.com", secure=True
+    )
+    assert request_frontend_origin(request) == "https://app.trycloudflare.com"
 
 
 @override_settings(ALLOWED_HOSTS=["*"])

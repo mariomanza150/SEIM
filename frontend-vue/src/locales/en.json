@@ -599,6 +599,7 @@
       "programs": "Home academic programs",
       "unidades": "Campuses (unidades)",
       "banks": "Banks",
+      "languages": "Spoken languages",
       "domains": "Allowed email domains",
       "destinations": "Host destinations"
     },
@@ -607,7 +608,9 @@
       "code": "Code",
       "ordering": "Order",
       "active": "Active",
-      "school": "School"
+      "school": "School",
+      "aliases": "Aliases",
+      "aliasesPlaceholder": "Comma-separated (e.g. Español, Espanol)"
     }
   },
   "adminGrades": {

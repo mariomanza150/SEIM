@@ -11,6 +11,7 @@ from documents.models import DocumentType
 from exchange.mobility_schemes import (
     MOBILITY_SCHEME_HISPANA,
     MOBILITY_SCHEME_INGLESa,
+    MOBILITY_SCHEME_MAESTRIA,
     MOBILITY_SCHEME_SPECS,
     seed_mobility_schemes,
 )
@@ -20,9 +21,9 @@ from exchange.models import Program, ProgramDocumentRequirement
 @pytest.mark.django_db
 @pytest.mark.unit
 class TestMobilitySeeds:
-    def test_seed_schemes_creates_two_and_updates_eligibility(self):
+    def test_seed_schemes_creates_three_and_updates_eligibility(self):
         programs = seed_mobility_schemes()
-        assert len(programs) == 2
+        assert len(programs) == 3
         names = {p.name for p in programs}
         assert names == {spec["name"] for spec in MOBILITY_SCHEME_SPECS}
 
@@ -43,6 +44,11 @@ class TestMobilitySeeds:
         assert inglesa.min_toefl_score == 550
         assert not Program.objects.filter(name="Movilidad Nacional", is_active=True).exists()
 
+        maestria = Program.objects.get(name=MOBILITY_SCHEME_MAESTRIA)
+        assert maestria.min_semester == 1
+        assert maestria.min_credits_approved_percent is None
+        assert maestria.is_active is True
+
     def test_mx_document_catalog_and_scheme_requirements(self):
         seed_mobility_schemes()
         types = seed_mobility_document_types()
@@ -54,7 +60,7 @@ class TestMobilitySeeds:
 
         assign_scheme_document_requirements()
         assign_scheme_document_requirements()
-        for name in (MOBILITY_SCHEME_HISPANA, MOBILITY_SCHEME_INGLESa):
+        for name in (MOBILITY_SCHEME_HISPANA, MOBILITY_SCHEME_INGLESa, MOBILITY_SCHEME_MAESTRIA):
             program = Program.objects.get(name=name)
             assert ProgramDocumentRequirement.objects.filter(program=program).exists()
             assert ProgramDocumentRequirement.objects.filter(

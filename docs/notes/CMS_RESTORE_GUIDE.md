@@ -15,10 +15,11 @@ That's it! This command will:
 2. ✅ Populate UAdeC content (programs, blog posts, FAQs)
 3. ✅ Enhance the homepage with rich content blocks
 4. ✅ Set up `/internacional/` (CGRI + Movilidad) with official copy and file links
+5. ✅ Seed SPA help-center articles for `/seim/help` (`seed_spa_help`)
 
-Then visit: **http://localhost:8000/** and **http://localhost:8000/internacional/**
+Then visit: **http://localhost:8000/**, **http://localhost:8000/internacional/**, and **http://localhost:8000/seim/help**
 
-Use `--skip-internacional` to omit step 4, or `--replace-internacional` to recreate that tree.
+Use `--skip-internacional` to omit step 4, `--skip-spa-help` to omit step 5, or `--replace-internacional` to recreate the internacional tree.
 
 ---
 
@@ -60,7 +61,14 @@ docker-compose exec web python manage.py restore_cms --skip-setup
 docker-compose exec web python manage.py restore_cms --skip-populate
 docker-compose exec web python manage.py restore_cms --skip-enhance
 docker-compose exec web python manage.py restore_cms --skip-internacional
+docker-compose exec web python manage.py restore_cms --skip-spa-help
 docker-compose exec web python manage.py restore_cms --replace-internacional
+```
+
+Standalone SPA help refresh (idempotent upsert):
+
+```bash
+docker-compose exec web python manage.py seed_spa_help
 ```
 
 ### `export_cms` - Save your CMS content

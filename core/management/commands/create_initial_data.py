@@ -6,6 +6,7 @@ This includes ApplicationStatus, DocumentType, NotificationType, and Roles.
 from django.core.management.base import BaseCommand
 
 from accounts.models import AllowedEmailDomain, Role
+from accounts.language_catalog import seed_spoken_languages
 from accounts.profile_catalogs import seed_profile_catalogs
 from documents.mobility_document_catalog import (
     assign_scheme_document_requirements,
@@ -22,7 +23,7 @@ from notifications.models import NotificationType
 class Command(BaseCommand):
     help = (
         "Create initial system data (statuses, document types, notification types, "
-        "roles, allowed email domains, profile catalogs, two mobility schemes, "
+        "roles, allowed email domains, profile catalogs, mobility schemes, "
         "CGRI partner destinations, grade scales, and MX document catalog requirements)"
     )
 
@@ -91,6 +92,9 @@ class Command(BaseCommand):
             f"  ✓ Profile catalogs: {len(schools)} schools, "
             f"{len(programs)} programs, {len(banks)} banks"
         )
+
+        spoken_languages = seed_spoken_languages()
+        self.stdout.write(f"  ✓ Spoken languages: {len(spoken_languages)} entries")
 
         for program in seed_mobility_schemes():
             self.stdout.write(f"  ✓ Mobility scheme: {program.name}")

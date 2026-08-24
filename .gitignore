@@ -225,6 +225,15 @@ tenant_config.json
 *.backup
 *.tmp
 logs/runner-registration-token.txt
+logs/cloudflare-tunnel.url
+logs/cloudflare-tunnel.log
+logs/cloudflare-tunnel.pid
+logs/cloudflare-login.log
+logs/cloudflare-login.err
+tools/cloudflared/cloudflared.exe
+config/cloudflared/config.yml
+config/cloudflared/*.json
+config/cloudflared/tunnel-state.json
 
 # Node modules (if any frontend build tools)
 node_modules/

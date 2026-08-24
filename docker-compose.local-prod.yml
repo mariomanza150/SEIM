@@ -81,12 +81,12 @@ services:
       - SESSION_COOKIE_SECURE=False
       - CSRF_COOKIE_SECURE=False
       - SECURE_HSTS_SECONDS=0
-      # Tailscale Serve/Funnel terminates TLS and proxies HTTP to this container.
-      # Serve the HTTP backend, e.g. ``tailscale serve http://127.0.0.1:8020`` — not https://.
+      # TLS terminators (Cloudflare Tunnel / Tailscale Serve) proxy HTTP to this container.
+      # Backend is plain HTTP: ``http://127.0.0.1:8020`` — not https://.
       - USE_TLS_PROXY_HEADERS=1
       - USE_REQUEST_HOST_FOR_SITE=1
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://desktop-kg5i7pt.tail4dc6e5.ts.net}
-      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://desktop-kg5i7pt.tail4dc6e5.ts.net}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://desktop-kg5i7pt.tail4dc6e5.ts.net,https://*.trycloudflare.com,https://*.cfargotunnel.com}
 
   celery:
     build:

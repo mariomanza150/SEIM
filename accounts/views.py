@@ -24,6 +24,7 @@ from .models import (
     Profile,
     Role,
     SchoolFaculty,
+    SpokenLanguage,
     Unidad,
     UserSession,
     UserSettings,
@@ -52,6 +53,7 @@ from .serializers import (
     RevokeSessionResponseSerializer,
     RoleSerializer,
     SchoolFacultySerializer,
+    SpokenLanguageSerializer,
     UnidadSerializer,
     UserSerializer,
     UserSessionSerializer,
@@ -228,6 +230,11 @@ class HomeAcademicProgramViewSet(ActiveCatalogViewSet):
         if unidad_id:
             queryset = queryset.filter(school__unidad_id=unidad_id)
         return queryset
+
+
+class SpokenLanguageViewSet(ActiveCatalogViewSet):
+    queryset = SpokenLanguage.objects.all()
+    serializer_class = SpokenLanguageSerializer
 
 
 class RegistrationView(generics.CreateAPIView):
@@ -796,7 +803,7 @@ class ResendVerificationEmailView(APIView):
         from accounts.services import AccountService
 
         token = AccountService.generate_email_verification_token(user)
-        AccountService.send_verification_email(user, token)
+        AccountService.send_verification_email(user, token, request=request)
 
         return Response(
             {"message": "Verification email sent successfully."},

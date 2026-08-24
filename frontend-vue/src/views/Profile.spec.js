@@ -77,6 +77,15 @@ describe('Profile', () => {
       if (url === '/api/accounts/catalogs/banks/') {
         return Promise.resolve({ data: [{ id: 'bank-1', name: 'BBVA' }] })
       }
+      if (url === '/api/accounts/catalogs/spoken-languages/') {
+        return Promise.resolve({
+          data: [
+            { id: 'lang-en', name: 'English', aliases: ['Ingles', 'Inglés'] },
+            { id: 'lang-es', name: 'Spanish', aliases: ['Español', 'Espanol'] },
+            { id: 'lang-fr', name: 'French', aliases: [] },
+          ],
+        })
+      }
       if (url === '/api/accounts/catalogs/programs/') {
         const school = config?.params?.school
         if (school === 'school-2') {
