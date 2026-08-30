@@ -57,6 +57,7 @@ const AdminDocumentTypeEdit = () => import('@/views/admin/AdminDocumentTypeEdit.
 const AdminApplicationEdit = () => import('@/views/admin/AdminApplicationEdit.vue')
 const HelpCenter = () => import('@/views/HelpCenter.vue')
 const HelpArticle = () => import('@/views/HelpArticle.vue')
+const ToeflPractice = () => import('@/views/ToeflPractice.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
 const routes = [
@@ -207,6 +208,11 @@ const routes = [
         name: 'Documents',
         component: Documents,
         meta: { studentDocuments: true },
+      },
+      {
+        path: 'toefl-practice',
+        name: 'ToeflPractice',
+        component: ToeflPractice,
       },
       {
         path: 'documents/:id',

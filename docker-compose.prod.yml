@@ -130,6 +130,13 @@ services:
       - USE_S3=${USE_S3:-true}
       - EMAIL_HOST_USER_FILE=/run/secrets/email_host_user
       - EMAIL_HOST_PASSWORD_FILE=/run/secrets/email_host_password
+      - TOEFL_API_BASE_URL=${TOEFL_API_BASE_URL:-http://toefl:5000}
+      - TOEFL_API_KEY=${TOEFL_API_KEY}
+      - TOEFL_SIGNING_SECRET=${TOEFL_SIGNING_SECRET}
+      - TOEFL_PUBLIC_BASE_URL=${TOEFL_PUBLIC_BASE_URL}
+      - TOEFL_CALLBACK_URL=${TOEFL_CALLBACK_URL:-http://web:8000/api/toefl/webhook/}
+      - TOEFL_RETURN_URL=${TOEFL_RETURN_URL}
+      - TOEFL_DEFAULT_EXAM_CODE=${TOEFL_DEFAULT_EXAM_CODE:-director_extracted}
     secrets:
       - django_secret_key
       - db_password
@@ -261,12 +268,37 @@ services:
       - seim-network
     depends_on:
       - web
+      - toefl
     deploy:
       resources:
         limits:
           memory: 512M
         reservations:
           memory: 256M
+
+  toefl:
+    build:
+      context: ${TOEFL_CONTEXT:-../GitHub/TOEFL PRACTICE/TOEFL-Practice}
+      dockerfile: Dockerfile
+    container_name: seim-toefl-prod
+    restart: unless-stopped
+    volumes:
+      - toefl_sessions:/app/data/sessions
+    networks:
+      - seim-network
+    environment:
+      - SECRET_KEY=${TOEFL_SECRET_KEY}
+      - API_KEY=${TOEFL_API_KEY}
+      - API_SIGNING_SECRET=${TOEFL_SIGNING_SECRET}
+      - ADMIN_PASSWORD=${TOEFL_ADMIN_PASSWORD:-}
+      - PUBLIC_BASE_URL=${TOEFL_PUBLIC_BASE_URL}
+      - APPLICATION_ROOT=${TOEFL_APPLICATION_ROOT:-/toefl}
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
 
   # Log Aggregation (Optional)
   fluentd:
@@ -299,6 +331,8 @@ volumes:
   media_volume:
     driver: local
   logs_volume:
+    driver: local
+  toefl_sessions:
     driver: local
 
 networks:

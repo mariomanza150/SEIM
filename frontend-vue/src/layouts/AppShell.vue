@@ -314,6 +314,13 @@ const navSections = computed(() => {
           isVisible: !authStore.canUsePartnerPortal,
         },
         {
+          key: 'toeflPractice',
+          to: { name: 'ToeflPractice' },
+          label: t('route.names.ToeflPractice'),
+          iconClass: 'bi bi-journal-text',
+          isVisible: !authStore.canUsePartnerPortal,
+        },
+        {
           key: 'deadlines',
           to: { name: 'DeadlinesCalendar' },
           label: t('dashboard.nav.deadlines'),

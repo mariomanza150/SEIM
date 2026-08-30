@@ -91,6 +91,7 @@ LOCAL_APPS = [
     "application_forms",  # Custom form types and submissions (separate from dynforms package)
     "workflows",
     "data_management",
+    "toefl",
 ]
 
 INSTALLED_APPS = (
@@ -590,3 +591,14 @@ WAGTAILDOCS_EXTENSIONS = [
 SEO_JS_ENABLED = False  # Disable JavaScript SEO checks for better performance
 SEO_TWITTER_CARD_TYPE = "summary_large_image"  # Default Twitter card type
 SEO_DEFAULT_IMAGE = None  # Will be set per environment if needed
+
+# TOEFL Practice sidecar (partner launch + HMAC webhook). Does not write Profile.toefl_score.
+TOEFL_API_BASE_URL = env("TOEFL_API_BASE_URL", default="")
+TOEFL_API_KEY = env("TOEFL_API_KEY", default="")
+TOEFL_SIGNING_SECRET = env("TOEFL_SIGNING_SECRET", default="")
+TOEFL_PUBLIC_BASE_URL = env("TOEFL_PUBLIC_BASE_URL", default="")
+TOEFL_CALLBACK_URL = env(
+    "TOEFL_CALLBACK_URL", default="http://web:8000/api/toefl/webhook/"
+)
+TOEFL_RETURN_URL = env("TOEFL_RETURN_URL", default="")
+TOEFL_DEFAULT_EXAM_CODE = env("TOEFL_DEFAULT_EXAM_CODE", default="director_extracted")

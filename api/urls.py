@@ -142,6 +142,7 @@ urlpatterns = [
         "data-management/",
         include(("data_management.api_urls", "data_management_api")),
     ),
+    path("toefl/", include(("toefl.urls", "toefl"))),
 ]
 if apps.is_installed("cms"):
     urlpatterns.append(path("help/", include("cms.help_urls")))

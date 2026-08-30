@@ -44,6 +44,7 @@ const routeNames = [
   'AnalyticsForecasts',
   'PartnerPortal',
   'Documents',
+  'ToeflPractice',
   'DeadlinesCalendar',
   'Notifications',
   'HelpCenter',

@@ -87,6 +87,13 @@ services:
       - USE_REQUEST_HOST_FOR_SITE=1
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://desktop-kg5i7pt.tail4dc6e5.ts.net}
       - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://desktop-kg5i7pt.tail4dc6e5.ts.net,https://*.trycloudflare.com,https://*.cfargotunnel.com}
+      - TOEFL_API_BASE_URL=${TOEFL_API_BASE_URL:-http://toefl:5000}
+      - TOEFL_API_KEY=${TOEFL_API_KEY:-toefl-api-key-change-me}
+      - TOEFL_SIGNING_SECRET=${TOEFL_SIGNING_SECRET:-toefl-signing-secret-change-me}
+      - TOEFL_PUBLIC_BASE_URL=${TOEFL_PUBLIC_BASE_URL:-http://localhost:5020}
+      - TOEFL_CALLBACK_URL=${TOEFL_CALLBACK_URL:-http://web:8000/api/toefl/webhook/}
+      - TOEFL_RETURN_URL=${TOEFL_RETURN_URL:-http://localhost:8020/seim/toefl-practice}
+      - TOEFL_DEFAULT_EXAM_CODE=${TOEFL_DEFAULT_EXAM_CODE:-director_extracted}
 
   celery:
     build:
@@ -154,6 +161,27 @@ services:
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
 
+
+  toefl:
+    build:
+      context: ${TOEFL_CONTEXT:-../GitHub/TOEFL PRACTICE/TOEFL-Practice}
+      dockerfile: Dockerfile
+    container_name: seim-toefl-local-prod
+    restart: unless-stopped
+    ports:
+      - "5020:5000"
+    volumes:
+      - toefl_sessions_prod:/app/data/sessions
+    networks:
+      - seim-prod-network
+    environment:
+      - SECRET_KEY=${TOEFL_SECRET_KEY:-toefl-secret-key-change-me}
+      - API_KEY=${TOEFL_API_KEY:-toefl-api-key-change-me}
+      - API_SIGNING_SECRET=${TOEFL_SIGNING_SECRET:-toefl-signing-secret-change-me}
+      - ADMIN_PASSWORD=${TOEFL_ADMIN_PASSWORD:-admin}
+      - PUBLIC_BASE_URL=${TOEFL_PUBLIC_BASE_URL:-http://localhost:5020}
+      - APPLICATION_ROOT=${TOEFL_APPLICATION_ROOT:-}
+
 volumes:
   postgres_prod_data:
     driver: local
@@ -162,6 +190,8 @@ volumes:
   static_prod_volume:
     driver: local
   media_prod_volume:
+    driver: local
+  toefl_sessions_prod:
     driver: local
 
 networks:

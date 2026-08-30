@@ -320,6 +320,7 @@
       "ApplicationEdit": "Editar solicitud",
       "ApplicationDetail": "Detalle de la solicitud",
       "Documents": "Documentos",
+      "ToeflPractice": "Práctica TOEFL",
       "DocumentDetail": "Detalle del documento",
       "Notifications": "Notificaciones",
       "Profile": "Perfil",
@@ -1526,6 +1527,21 @@
     "deleteToastError": "No se pudo eliminar la solicitud",
     "editAria": "Editar solicitud",
     "deleteAria": "Eliminar solicitud"
+  },
+  "toeflPracticePage": {
+    "breadcrumbAria": "Migas de pan",
+    "subtitle": "Practica gramática y estructura; los resultados se guardan en tu historial SEIM (no en tu TOEFL oficial).",
+    "startButton": "Iniciar práctica",
+    "historyHeading": "Historial de práctica",
+    "loading": "Cargando intentos…",
+    "empty": "Aún no hay intentos. Inicia una sesión para ver resultados aquí.",
+    "loadError": "No se pudo cargar el historial de práctica.",
+    "launchError": "No se pudo iniciar la sesión de práctica.",
+    "returnNotice": "Bienvenido de nuevo. Actualizando tu último resultado…",
+    "colDate": "Fecha",
+    "colExam": "Examen",
+    "colScore": "Puntaje",
+    "colWeak": "Áreas débiles"
   },
   "documentsPage": {
     "breadcrumbAria": "Migas de pan",

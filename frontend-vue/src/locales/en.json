@@ -320,6 +320,7 @@
       "ApplicationEdit": "Edit application",
       "ApplicationDetail": "Application details",
       "Documents": "Documents",
+      "ToeflPractice": "TOEFL practice",
       "DocumentDetail": "Document details",
       "Notifications": "Notifications",
       "Profile": "Profile",
@@ -1526,6 +1527,21 @@
     "deleteToastError": "Failed to delete application",
     "editAria": "Edit application",
     "deleteAria": "Delete application"
+  },
+  "toeflPracticePage": {
+    "breadcrumbAria": "Breadcrumb",
+    "subtitle": "Practice grammar and structure; scores are saved to your SEIM history (not your official TOEFL score).",
+    "startButton": "Start practice",
+    "historyHeading": "Practice history",
+    "loading": "Loading attempts…",
+    "empty": "No practice attempts yet. Start a session to see results here.",
+    "loadError": "Could not load practice history.",
+    "launchError": "Could not start a practice session.",
+    "returnNotice": "Welcome back. Refreshing your latest practice result…",
+    "colDate": "Date",
+    "colExam": "Exam",
+    "colScore": "Score",
+    "colWeak": "Weak areas"
   },
   "documentsPage": {
     "breadcrumbAria": "Breadcrumb",
