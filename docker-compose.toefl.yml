@@ -1,0 +1,26 @@
+# TOEFL Practice sidecar for the default SEIM compose project.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.toefl.yml up -d --build
+services:
+  toefl:
+    build:
+      context: ${TOEFL_CONTEXT:-../toefl-practice}
+      dockerfile: Dockerfile
+    container_name: seim-toefl
+    restart: unless-stopped
+    ports:
+      - "5020:5000"
+    volumes:
+      - toefl_sessions:/app/data/sessions
+    environment:
+      - SECRET_KEY=${TOEFL_SECRET_KEY:-toefl-secret-key-change-me}
+      - API_KEY=${TOEFL_API_KEY:-toefl-api-key-change-me}
+      - API_SIGNING_SECRET=${TOEFL_SIGNING_SECRET:-toefl-signing-secret-change-me}
+      - ADMIN_PASSWORD=${TOEFL_ADMIN_PASSWORD:-admin}
+      - PUBLIC_BASE_URL=${TOEFL_PUBLIC_BASE_URL:-http://localhost:5020}
+      - APPLICATION_ROOT=${TOEFL_APPLICATION_ROOT:-}
+      - API_CORS_ORIGINS=${TOEFL_API_CORS_ORIGINS:-*}
+
+volumes:
+  toefl_sessions:
+    driver: local

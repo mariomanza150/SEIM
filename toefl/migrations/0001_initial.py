@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("accounts", "0024_rename_coordinator_role_to_responsible"),
+        ("accounts", "0024_spokenlanguage_catalog"),
     ]
 
     operations = [
