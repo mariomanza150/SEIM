@@ -932,6 +932,7 @@ import {
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import { flattenFieldMessages } from '@/utils/apiErrors'
+import { unwrapPaginatedResults } from '@/utils/apiList'
 import {
   applyServerValidationErrors,
   catalogId,
@@ -1053,17 +1054,13 @@ const applicationDynamicLayout = ref(null)
 const currentStepIndex = ref(0)
 
 async function fetchActiveGradeScales() {
-  const listFrom = (data) => {
-    const rows = data?.results || data
-    return Array.isArray(rows) ? rows : []
-  }
   try {
     const { data } = await api.get('/api/grades/scales/active/')
-    return listFrom(data)
+    return unwrapPaginatedResults(data)
   } catch {
     try {
       const { data } = await api.get('/grades/api/scales/active/')
-      return listFrom(data)
+      return unwrapPaginatedResults(data)
     } catch {
       return []
     }
@@ -1071,45 +1068,50 @@ async function fetchActiveGradeScales() {
 }
 
 async function loadProfileGate() {
+  let profile
   try {
-    const [{ data: profile }, scales, langRes] = await Promise.all([
-      api.get('/api/accounts/profile/'),
-      fetchActiveGradeScales(),
-      api.get('/api/accounts/catalogs/spoken-languages/'),
-    ])
-    gradeScales.value = scales
-    spokenLanguages.value = listFrom(langRes.data)
-
-    if (profile.is_ready_to_apply === false) {
-      errorToast(t('applicationFormPage.profileRequiredToast'))
-      await router.replace({ name: 'Profile', query: { next: route.fullPath } })
-      return false
-    }
-
-    profileEligibility.value = {
-      gpa: profile.gpa ?? null,
-      grade_scale: catalogId(profile.grade_scale),
-      language: profile.language ?? '',
-      language_level: profile.language_level ?? '',
-      ingress_date: profile.ingress_date || '',
-      current_semester: profile.current_semester ?? null,
-      credits_approved_percent: profile.credits_approved_percent ?? null,
-      computed_semester: profile.computed_semester ?? null,
-    }
-    eligibilityRequired.value = !profileEligibility.value.gpa
-      || !profileEligibility.value.grade_scale
-      || !profileEligibility.value.language
-      || !profileEligibility.value.language_level
-      || !profileEligibility.value.ingress_date
-      || profileEligibility.value.credits_approved_percent == null
-      || profileEligibility.value.credits_approved_percent === ''
-    return true
+    const { data } = await api.get('/api/accounts/profile/')
+    profile = data
   } catch (err) {
     console.error('Failed to check profile readiness:', err)
     errorToast(t('applicationFormPage.profileLoadFailed'))
     await router.replace({ name: 'Profile', query: { next: route.fullPath } })
     return false
   }
+
+  if (profile.is_ready_to_apply === false) {
+    errorToast(t('applicationFormPage.profileRequiredToast'))
+    await router.replace({ name: 'Profile', query: { next: route.fullPath } })
+    return false
+  }
+
+  const [scalesResult, langResult] = await Promise.allSettled([
+    fetchActiveGradeScales(),
+    api.get('/api/accounts/catalogs/spoken-languages/'),
+  ])
+  gradeScales.value = scalesResult.status === 'fulfilled' ? scalesResult.value : []
+  spokenLanguages.value = langResult.status === 'fulfilled'
+    ? unwrapPaginatedResults(langResult.value.data)
+    : []
+
+  profileEligibility.value = {
+    gpa: profile.gpa ?? null,
+    grade_scale: catalogId(profile.grade_scale),
+    language: profile.language ?? '',
+    language_level: profile.language_level ?? '',
+    ingress_date: profile.ingress_date || '',
+    current_semester: profile.current_semester ?? null,
+    credits_approved_percent: profile.credits_approved_percent ?? null,
+    computed_semester: profile.computed_semester ?? null,
+  }
+  eligibilityRequired.value = !profileEligibility.value.gpa
+    || !profileEligibility.value.grade_scale
+    || !profileEligibility.value.language
+    || !profileEligibility.value.language_level
+    || !profileEligibility.value.ingress_date
+    || profileEligibility.value.credits_approved_percent == null
+    || profileEligibility.value.credits_approved_percent === ''
+  return true
 }
 
 async function persistProfileEligibility() {

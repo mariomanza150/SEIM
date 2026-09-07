@@ -82,6 +82,11 @@ function profileGateResponse(url) {
       data: [{ id: 'scale-1', name: '4.0 Scale', scale_type: '4.0' }],
     })
   }
+  if (url === '/api/accounts/catalogs/spoken-languages/') {
+    return Promise.resolve({
+      data: [{ id: 'lang-en', name: 'English' }],
+    })
+  }
   return null
 }
 
@@ -594,6 +599,7 @@ describe('ApplicationForm', () => {
         return Promise.resolve({ data: { is_ready_to_apply: false } })
       }
       if (url === '/api/grades/scales/active/') return Promise.resolve({ data: [] })
+      if (url === '/api/accounts/catalogs/spoken-languages/') return Promise.resolve({ data: [] })
       return Promise.reject(new Error(`Unexpected GET ${url}`))
     })
 
@@ -609,6 +615,85 @@ describe('ApplicationForm', () => {
       })
     })
     expect(api.get).not.toHaveBeenCalledWith('/api/programs/')
+  })
+
+  it('allows starting an application when the profile is ready', async () => {
+    api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-ready',
+                name: 'Movilidad Nacional',
+                description: 'Domestic',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/saved-searches/' || url === '/api/accounts/saved-searches/') {
+        return Promise.resolve({ data: [] })
+      }
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    expect(mockReplace).not.toHaveBeenCalledWith({
+      name: 'Profile',
+      query: { next: '/applications/new' },
+    })
+    expect(mockErrorToast).not.toHaveBeenCalledWith(
+      'Complete eligibility fields on your profile (GPA, grading scale, language, credits %, and semester) before starting an application.',
+    )
+    expect(mockErrorToast).not.toHaveBeenCalledWith(
+      'Your profile could not be checked. Complete it before applying.',
+    )
+  })
+
+  it('still opens apply form when spoken-language catalog fails but profile is ready', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/accounts/catalogs/spoken-languages/') {
+        return Promise.reject(new Error('catalog unavailable'))
+      }
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-catalog-blip',
+                name: 'Exchange Program',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+              },
+            ],
+          },
+        })
+      }
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    expect(mockReplace).not.toHaveBeenCalledWith({
+      name: 'Profile',
+      query: { next: '/applications/new' },
+    })
   })
 
   it('loads host destination cascade after program selection', async () => {
