@@ -28,7 +28,7 @@
             <div class="card-body">
               <form data-testid="application-form" @submit.prevent="handleSubmit">
                 <div
-                  v-if="eligibilityRequired || !isEditMode"
+                  v-if="eligibilityRequired"
                   class="card border border-warning mb-4"
                   data-testid="application-eligibility-section"
                 >
@@ -41,17 +41,24 @@
                     <p class="text-muted small">{{ t('applicationFormPage.profileEligibilityIntro') }}</p>
                     <div class="row g-3">
                       <div class="col-md-6">
-                        <label for="application-profile-ingress" class="form-label">{{ t('profilePage.ingressDate') }} *</label>
+                        <label for="application-profile-ingress" class="form-label">
+                          {{ t('profilePage.ingressDate') }}
+                          <span v-if="!hasProfileSemesterOverride">*</span>
+                        </label>
                         <input
                           id="application-profile-ingress"
                           v-model="profileEligibility.ingress_date"
                           type="date"
                           class="form-control"
-                          required
+                          :required="!hasProfileSemesterOverride"
+                          data-testid="application-profile-ingress"
                         >
                       </div>
                       <div class="col-md-6">
-                        <label for="application-profile-semester" class="form-label">{{ t('profilePage.currentSemester') }}</label>
+                        <label for="application-profile-semester" class="form-label">
+                          {{ t('profilePage.currentSemester') }}
+                          <span v-if="!profileEligibility.ingress_date">*</span>
+                        </label>
                         <input
                           id="application-profile-semester"
                           v-model.number="profileEligibility.current_semester"
@@ -59,9 +66,11 @@
                           min="1"
                           step="1"
                           class="form-control"
+                          :required="!profileEligibility.ingress_date"
                           :placeholder="profileEligibility.computed_semester != null
                             ? t('profilePage.computedSemesterPlaceholder', { n: profileEligibility.computed_semester })
                             : t('profilePage.semesterOverridePlaceholder')"
+                          data-testid="application-profile-semester"
                         >
                       </div>
                       <div class="col-md-6">
@@ -111,12 +120,12 @@
                         />
                       </div>
                       <div class="col-md-6">
-                        <label for="application-profile-language-level" class="form-label">{{ t('profilePage.primaryLevelLabel') }} *</label>
+                        <label for="application-profile-language-level" class="form-label">{{ t('profilePage.primaryLevelLabel') }}</label>
                         <select
                           id="application-profile-language-level"
                           v-model="profileEligibility.language_level"
                           class="form-select"
-                          required
+                          data-testid="application-profile-language-level"
                         >
                           <option value="">{{ t('profilePage.selectOption') }}</option>
                           <option v-for="level in ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']" :key="level" :value="level">{{ level }}</option>
@@ -987,6 +996,27 @@ const profileEligibility = ref({
   computed_semester: null,
 })
 
+/** Match backend apply-start: ingress date OR current semester. */
+function hasProfileSemester(values = profileEligibility.value) {
+  if (values?.ingress_date) return true
+  return values?.current_semester != null && values.current_semester !== ''
+}
+
+const hasProfileSemesterOverride = computed(() => (
+  profileEligibility.value.current_semester != null
+  && profileEligibility.value.current_semester !== ''
+))
+
+/** Soft-gate fields aligned with ``is_ready_to_apply`` eligibility keys (not language_level). */
+function eligibilityFieldsMissing(values = profileEligibility.value) {
+  return !values.gpa
+    || !values.grade_scale
+    || !String(values.language || '').trim()
+    || values.credits_approved_percent == null
+    || values.credits_approved_percent === ''
+    || !hasProfileSemester(values)
+}
+
 const programs = ref([])
 const programsLoading = ref(false)
 const programFilters = ref({
@@ -1104,42 +1134,31 @@ async function loadProfileGate() {
     credits_approved_percent: profile.credits_approved_percent ?? null,
     computed_semester: profile.computed_semester ?? null,
   }
-  eligibilityRequired.value = !profileEligibility.value.gpa
-    || !profileEligibility.value.grade_scale
-    || !profileEligibility.value.language
-    || !profileEligibility.value.language_level
-    || !profileEligibility.value.ingress_date
-    || profileEligibility.value.credits_approved_percent == null
-    || profileEligibility.value.credits_approved_percent === ''
+  eligibilityRequired.value = eligibilityFieldsMissing(profileEligibility.value)
   return true
 }
 
 async function persistProfileEligibility() {
-  if (isEditMode.value && !eligibilityRequired.value) return true
+  if (!eligibilityRequired.value) return true
   profileEligibilityError.value = ''
   const values = profileEligibility.value
-  if (
-    !values.gpa
-    || !values.grade_scale
-    || !values.language.trim()
-    || !values.language_level
-    || !values.ingress_date
-    || values.credits_approved_percent == null
-    || values.credits_approved_percent === ''
-  ) {
+  if (eligibilityFieldsMissing(values)) {
     profileEligibilityError.value = t('applicationFormPage.profileEligibilityRequired')
     return false
   }
   try {
-    await api.patch('/api/accounts/profile/', {
+    const payload = {
       gpa: values.gpa,
       grade_scale: values.grade_scale,
       language: values.language.trim(),
-      language_level: values.language_level,
-      ingress_date: values.ingress_date,
+      ingress_date: values.ingress_date || null,
       current_semester: values.current_semester === '' ? null : values.current_semester,
       credits_approved_percent: values.credits_approved_percent,
-    })
+    }
+    if (values.language_level) {
+      payload.language_level = values.language_level
+    }
+    await api.patch('/api/accounts/profile/', payload)
     eligibilityRequired.value = false
     await authStore.fetchUserProfile()
     if (!isEditMode.value) await fetchPrograms()

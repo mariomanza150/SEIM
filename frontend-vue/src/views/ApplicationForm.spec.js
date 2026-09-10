@@ -660,6 +660,77 @@ describe('ApplicationForm', () => {
     )
   })
 
+  it('hides eligibility soft-gate when ready profile has semester without ingress date', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/accounts/profile/') {
+        return Promise.resolve({
+          data: {
+            is_ready_to_apply: true,
+            gpa: 3.5,
+            grade_scale: 'scale-1',
+            language: 'English',
+            language_level: '',
+            ingress_date: null,
+            current_semester: 5,
+            computed_semester: null,
+            credits_approved_percent: 70,
+          },
+        })
+      }
+      if (url === '/api/grades/scales/active/') {
+        return Promise.resolve({
+          data: [{ id: 'scale-1', name: '4.0 Scale', scale_type: '4.0' }],
+        })
+      }
+      if (url === '/api/accounts/catalogs/spoken-languages/') {
+        return Promise.resolve({ data: [{ id: 'lang-en', name: 'English' }] })
+      }
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-semester-only',
+                name: 'Semester Ready Program',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/saved-searches/' || url === '/api/accounts/saved-searches/') {
+        return Promise.resolve({ data: [] })
+      }
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({ data: { eligible: true, message: 'ok' } })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    api.post.mockResolvedValue({
+      data: { id: 'app-semester-only', dynamic_form_layout: null },
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="application-eligibility-section"]').exists()).toBe(false)
+
+    await wrapper.find('[data-testid="program-select"]').setValue('program-semester-only')
+    await wrapper.find('[data-testid="application-form"]').trigger('submit.prevent')
+    await vi.waitFor(() => {
+      expect(api.post).toHaveBeenCalled()
+    })
+    expect(api.patch).not.toHaveBeenCalledWith(
+      '/api/accounts/profile/',
+      expect.anything(),
+    )
+    expect(api.post.mock.calls.some(([url]) => url === '/api/applications/')).toBe(true)
+  })
+
   it('still opens apply form when spoken-language catalog fails but profile is ready', async () => {
     api.get.mockImplementation((url) => {
       if (url === '/api/accounts/catalogs/spoken-languages/') {
