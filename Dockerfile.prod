@@ -17,11 +17,11 @@ COPY frontend-vue/package*.json ./
 # Full install: Vite and @vitejs/plugin-vue are devDependencies but required for `npm run build`.
 RUN npm ci
 
-# Copy frontend source
+# Copy frontend source (dist excluded via .dockerignore)
 COPY frontend-vue/ ./
 
-# Build Vue.js for production
-RUN npm run build
+# Drop any leftover build output, then compile a clean SPA
+RUN rm -rf dist && npm run build
 
 # =============================================================================
 # STAGE 2: Python/Django Application
