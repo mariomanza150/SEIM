@@ -1104,9 +1104,18 @@ async function loadProfileGate() {
     profile = data
   } catch (err) {
     console.error('Failed to check profile readiness:', err)
-    errorToast(t('applicationFormPage.profileLoadFailed'))
-    await router.replace({ name: 'Profile', query: { next: route.fullPath } })
-    return false
+    // Login/shell often already hydrated readiness; do not bounce ready students on a flaky GET.
+    if (authStore.user?.is_ready_to_apply === true) {
+      profile = { ...authStore.user, is_ready_to_apply: true }
+    } else if (authStore.user?.is_ready_to_apply === false) {
+      errorToast(t('applicationFormPage.profileRequiredToast'))
+      await router.replace({ name: 'Profile', query: { next: route.fullPath } })
+      return false
+    } else {
+      errorToast(t('applicationFormPage.profileLoadFailed'))
+      await router.replace({ name: 'Profile', query: { next: route.fullPath } })
+      return false
+    }
   }
 
   if (profile.is_ready_to_apply === false) {
@@ -1115,14 +1124,20 @@ async function loadProfileGate() {
     return false
   }
 
-  const [scalesResult, langResult] = await Promise.allSettled([
-    fetchActiveGradeScales(),
-    api.get('/api/accounts/catalogs/spoken-languages/'),
-  ])
-  gradeScales.value = scalesResult.status === 'fulfilled' ? scalesResult.value : []
-  spokenLanguages.value = langResult.status === 'fulfilled'
-    ? unwrapPaginatedResults(langResult.value.data)
-    : []
+  try {
+    const [scalesResult, langResult] = await Promise.allSettled([
+      fetchActiveGradeScales(),
+      api.get('/api/accounts/catalogs/spoken-languages/'),
+    ])
+    gradeScales.value = scalesResult.status === 'fulfilled' ? scalesResult.value : []
+    spokenLanguages.value = langResult.status === 'fulfilled'
+      ? unwrapPaginatedResults(langResult.value.data)
+      : []
+  } catch (err) {
+    console.error('Failed to load apply-form catalogs:', err)
+    gradeScales.value = []
+    spokenLanguages.value = []
+  }
 
   profileEligibility.value = {
     gpa: profile.gpa ?? null,

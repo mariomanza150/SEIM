@@ -13,6 +13,7 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import include, path, re_path
+from django.views.decorators.cache import never_cache
 from django.views.generic import RedirectView, TemplateView
 from django_js_reverse.views import urls_js
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
@@ -107,10 +108,12 @@ urlpatterns += [
     # ============================================
     # SEIM APPLICATION (Vue.js SPA)
     # ============================================
-    # Vue.js SPA lives exclusively under /seim/ namespace - catch all subpaths
+    # Vue.js SPA lives exclusively under /seim/ namespace - catch all subpaths.
+    # never_cache: mobile/CDN must not keep an old shell that points at stale hashed chunks
+    # (e.g. ApplicationForm still calling removed listFrom → false "profile could not be checked").
     re_path(
         r"^seim(?:/.*)?/?$",
-        TemplateView.as_view(template_name="index.html"),
+        never_cache(TemplateView.as_view(template_name="index.html")),
         name="vue-app",
     ),
     # ============================================

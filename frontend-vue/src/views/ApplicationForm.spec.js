@@ -660,6 +660,76 @@ describe('ApplicationForm', () => {
     )
   })
 
+  it('uses auth-store readiness when profile GET fails but user is already ready', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/accounts/profile/') {
+        return Promise.reject(new Error('profile blip'))
+      }
+      if (url === '/api/grades/scales/active/') {
+        return Promise.resolve({
+          data: [{ id: 'scale-1', name: '4.0 Scale', scale_type: '4.0' }],
+        })
+      }
+      if (url === '/api/accounts/catalogs/spoken-languages/') {
+        return Promise.resolve({ data: [{ id: 'lang-en', name: 'English' }] })
+      }
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-auth-fallback',
+                name: 'Auth Fallback Program',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/saved-searches/' || url === '/api/accounts/saved-searches/') {
+        return Promise.resolve({ data: [] })
+      }
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const authStore = useAuthStore()
+    authStore.user = {
+      is_ready_to_apply: true,
+      gpa: 3.5,
+      grade_scale: 'scale-1',
+      language: 'English',
+      language_level: 'B2',
+      ingress_date: '2023-08-01',
+      current_semester: 5,
+      credits_approved_percent: 70,
+    }
+    authStore.fetchUserProfile = vi.fn().mockResolvedValue(authStore.user)
+
+    const wrapper = mount(ApplicationForm, {
+      global: {
+        plugins: [pinia, i18n],
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    expect(mockReplace).not.toHaveBeenCalledWith({
+      name: 'Profile',
+      query: { next: '/applications/new' },
+    })
+    expect(mockErrorToast).not.toHaveBeenCalledWith(
+      'Your profile could not be checked. Complete it before applying.',
+    )
+  })
+
   it('hides eligibility soft-gate when ready profile has semester without ingress date', async () => {
     api.get.mockImplementation((url) => {
       if (url === '/api/accounts/profile/') {

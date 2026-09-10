@@ -37,6 +37,12 @@ class UrlConfigurationTests(TestCase):
         response = self.client.get("/seim/")
         self.assertEqual(response.status_code, 200)
         self.assertIn('id="app"', str(response.content))
+        # SPA shell must not be cached; stale HTML keeps pointing at old hashed chunks.
+        cache_control = response.headers.get("Cache-Control", "")
+        self.assertTrue(
+            any(token in cache_control.lower() for token in ("no-cache", "no-store", "max-age=0")),
+            f"expected no-cache Cache-Control on /seim/, got {cache_control!r}",
+        )
 
     def test_django_admin_legacy_path_redirects(self):
         """``/django/admin/`` redirects to Django admin at ``/seim/django-admin/``."""
