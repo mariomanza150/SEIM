@@ -39,9 +39,22 @@ if (-not $dockerReady) {
     throw "Docker did not become ready within ${DockerTimeoutSec}s"
 }
 
+function Get-LocalProdTunnelToken {
+    if ($env:CLOUDFLARE_TUNNEL_TOKEN) {
+        return $env:CLOUDFLARE_TUNNEL_TOKEN.Trim()
+    }
+    $line = Get-Content $EnvFile | Where-Object { $_ -match '^\s*CLOUDFLARE_TUNNEL_TOKEN\s*=' } | Select-Object -First 1
+    if ($line -and $line -match '^\s*CLOUDFLARE_TUNNEL_TOKEN\s*=\s*(.*)$') {
+        return $Matches[1].Trim().Trim('"').Trim("'")
+    }
+    return ""
+}
+
 Set-Location $ProjectRoot
-Write-Step "Starting seim-localprod stack"
-docker compose -p $ProjectName -f $ComposeFile --env-file $EnvFile up -d --remove-orphans
+$token = Get-LocalProdTunnelToken
+$tunnelProfile = if (-not [string]::IsNullOrWhiteSpace($token)) { "cloudflare" } else { "cloudflare-quick" }
+Write-Step "Starting seim-localprod stack (profile: $tunnelProfile)"
+docker compose -p $ProjectName -f $ComposeFile --env-file $EnvFile --profile $tunnelProfile up -d --remove-orphans
 if ($LASTEXITCODE -ne 0) {
     throw "docker compose up failed (exit $LASTEXITCODE)"
 }

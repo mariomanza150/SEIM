@@ -1,7 +1,7 @@
 # Install boot-time autostart for:
 #   1. Docker Desktop (user setting)
 #   2. seim-localprod Docker stack (Scheduled Task, delayed after logon)
-#   3. Cloudflare Quick Tunnel to :8020 (logon + every 15m)
+#   3. Cloudflare Tunnel via Compose profile (logon + every 15m)
 #   4. GitHub Actions self-hosted runner as a Windows service (requires admin)
 #
 # Usage (elevated PowerShell recommended):
@@ -118,7 +118,7 @@ function Install-CloudflareTunnelScheduledTask {
         -Action $action `
         -Trigger @($logon, $repeat) `
         -Settings $settings `
-        -Description "Ensure Cloudflare Quick Tunnel to seim-localprod :8020" `
+        -Description "Ensure Cloudflare Tunnel (Docker cloudflared) for seim-localprod" `
         -Force | Out-Null
 
     Write-Host "Scheduled task '$TunnelTaskName' registered (logon + every 15m)"

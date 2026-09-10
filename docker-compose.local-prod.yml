@@ -164,7 +164,7 @@ services:
 
   toefl:
     build:
-      context: ${TOEFL_CONTEXT:-../GitHub/TOEFL PRACTICE/TOEFL-Practice}
+      context: ${TOEFL_CONTEXT:-../toefl-practice}
       dockerfile: Dockerfile
     container_name: seim-toefl-local-prod
     restart: unless-stopped
@@ -181,6 +181,35 @@ services:
       - ADMIN_PASSWORD=${TOEFL_ADMIN_PASSWORD:-admin}
       - PUBLIC_BASE_URL=${TOEFL_PUBLIC_BASE_URL:-http://localhost:5020}
       - APPLICATION_ROOT=${TOEFL_APPLICATION_ROOT:-}
+
+  # Managed Cloudflare Tunnel (Zero Trust token). Dashboard public hostname → http://localhost:8000
+  #   docker compose -p seim-localprod -f docker-compose.local-prod.yml --profile cloudflare --env-file .env.local-prod up -d
+  cloudflared:
+    image: cloudflare/cloudflared:2026.8.2
+    container_name: seim-cloudflared-local-prod
+    profiles: ["cloudflare"]
+    network_mode: "service:web"
+    command: tunnel --no-autoupdate --protocol http2 run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Ephemeral Quick Tunnel (*.trycloudflare.com). URL is in container logs / logs/cloudflare-tunnel.url
+  #   docker compose -p seim-localprod -f docker-compose.local-prod.yml --profile cloudflare-quick --env-file .env.local-prod up -d
+  cloudflared-quick:
+    image: cloudflare/cloudflared:2026.8.2
+    container_name: seim-cloudflared-quick-local-prod
+    profiles: ["cloudflare-quick"]
+    command: tunnel --no-autoupdate --protocol http2 --url http://web:8000
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - seim-prod-network
+    restart: unless-stopped
 
 volumes:
   postgres_prod_data:

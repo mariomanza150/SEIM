@@ -254,12 +254,13 @@ docker-compose logs db
 
 **Solutions**:
 1. **LAN**: use `http://<lan-ip>:8020` (not `https://`).
-2. **Cloudflare Tunnel (preferred public path for local-prod)**:
+2. **Cloudflare Tunnel (preferred public path for local-prod)** — Compose profile `cloudflare-quick` (or `cloudflare` with `CLOUDFLARE_TUNNEL_TOKEN`):
    ```powershell
    .\scripts\ensure-cloudflare-tunnel.ps1
    Get-Content .\logs\cloudflare-tunnel.url
+   # or: docker compose -p seim-localprod -f docker-compose.local-prod.yml --profile cloudflare-quick logs -f cloudflared-quick
    ```
-   Open the printed `https://….trycloudflare.com/seim/` URL from any client. Quick Tunnel URLs change when the process restarts; the URL file is the source of truth. Boot/install: `.\scripts\install-local-prod-boot.ps1` registers task `SEIM-cloudflare-tunnel`.
+   Open the printed `https://….trycloudflare.com/seim/` URL from any client. Quick Tunnel URLs change when the container restarts; the URL file is the source of truth. Boot/install: `.\scripts\install-local-prod-boot.ps1` registers task `SEIM-cloudflare-tunnel`.
 3. **Tailscale Serve** (devices on the same tailnet only):
    ```powershell
    tailscale serve --bg http://127.0.0.1:8020

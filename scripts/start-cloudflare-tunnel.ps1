@@ -1,4 +1,11 @@
-# Start Cloudflare Tunnel for seim-localprod (named tunnel preferred, Quick Tunnel fallback).
+# Start Cloudflare Tunnel on the host for seim-localprod.
+#
+# Prefer Docker profiles via ensure-cloudflare-tunnel.ps1 / start-local-prod-stack.ps1:
+#   --profile cloudflare-quick  (ephemeral *.trycloudflare.com)
+#   --profile cloudflare        (CLOUDFLARE_TUNNEL_TOKEN)
+#
+# This host script is for named tunnels from setup-named-cloudflare-tunnel.ps1,
+# or as a fallback when the Docker cloudflared services are not used.
 #
 # Named (stable hostname): run setup-named-cloudflare-tunnel.ps1 first.
 # Quick: temporary https://*.trycloudflare.com (changes each restart).
@@ -155,7 +162,7 @@ if ($useNamed) {
 }
 
 # --- Quick Tunnel fallback ---
-Write-Step "No named config at $ConfigFile — starting Quick Tunnel (ephemeral URL)"
+Write-Step "No named config at $ConfigFile - starting Quick Tunnel (ephemeral URL)"
 Write-Step "For a stable hostname: .\scripts\setup-named-cloudflare-tunnel.ps1 -Hostname seim.example.com"
 $arg = "/c `"`"$Cloudflared`" tunnel --url $BackendUrl --protocol http2 --no-autoupdate >`"$LogFile`" 2>&1`""
 $proc = Start-Process -FilePath "cmd.exe" -ArgumentList $arg -WindowStyle Hidden -PassThru
