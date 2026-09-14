@@ -3,15 +3,12 @@
 from django.core.management.base import BaseCommand
 
 from cms.models import HomePage
+from cms.uadec_resources import file_url
 from cms.utils.official_assets import (
     download_official_assets,
     get_or_create_wagtail_image,
 )
 
-CONVOCATORIA_ENTRANTE = "https://www2.uadec.mx/pub/CGRI/ConvocatoriaMIEntrante.pdf"
-CONVOCATORIA_SALIENTE = "https://www2.uadec.mx/pub/CGRI/ConvocatoriaMISaliente.pdf"
-UNIVERSIDADES_CONVENIO = "https://www2.uadec.mx/pub/CGRI/UniversidadesPorConvenio.pdf"
-UNIVERSIDADES_CONAHEC = "https://www2.uadec.mx/pub/CGRI/UniversidadesPorCONAHEC.pdf"
 YOUTUBE_PLAYLIST = (
     "https://www.youtube.com/playlist?list=PLdq68rAvMCQyPeE5QyjLBwlvDkDr-derl"
 )
@@ -121,7 +118,7 @@ class Command(BaseCommand):
                     "title": "Convocatoria de Movilidad Internacional 2026-2",
                     "text": "Consulta las convocatorias oficiales de movilidad entrante y saliente, y las universidades con convenio o CONAHEC para el periodo 2026-2.",
                     "button_text": "Convocatoria saliente (PDF)",
-                    "button_link": CONVOCATORIA_SALIENTE,
+                    "button_link": file_url("convocatoria_saliente"),
                     "style": "primary",
                 },
             },
@@ -136,28 +133,28 @@ class Command(BaseCommand):
                             "icon": "bi-file-earmark-arrow-down",
                             "title": "Movilidad entrante",
                             "text": "Convocatoria oficial para estudiantes internacionales que desean una estancia en la UAdeC.",
-                            "link": CONVOCATORIA_ENTRANTE,
+                            "link": file_url("convocatoria_entrante"),
                             "link_text": "Descargar PDF",
                         },
                         {
                             "icon": "bi-file-earmark-arrow-down",
                             "title": "Movilidad saliente",
                             "text": "Convocatoria para estudiantes UAdeC que aplican a una estancia en el extranjero.",
-                            "link": CONVOCATORIA_SALIENTE,
+                            "link": file_url("convocatoria_saliente"),
                             "link_text": "Descargar PDF",
                         },
                         {
                             "icon": "bi-building",
                             "title": "Universidades por convenio 2026-2",
                             "text": "Listado de instituciones con convenio vigente para movilidad internacional.",
-                            "link": UNIVERSIDADES_CONVENIO,
+                            "link": file_url("universidades_convenio"),
                             "link_text": "Ver listado",
                         },
                         {
                             "icon": "bi-diagram-3",
                             "title": "Universidades CONAHEC 2026-2",
                             "text": "Opciones de movilidad a través del consorcio CONAHEC.",
-                            "link": UNIVERSIDADES_CONAHEC,
+                            "link": file_url("universidades_conahec"),
                             "link_text": "Ver listado",
                         },
                     ],

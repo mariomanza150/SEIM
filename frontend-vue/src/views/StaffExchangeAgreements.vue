@@ -427,7 +427,7 @@ const {
 } = useStaffSavedPresets(STAFF_SAVED_SEARCH_TYPE.EXCHANGE_AGREEMENT)
 
 const STATUS_VALUES = ['draft', 'active', 'suspended', 'expired', 'terminated', 'renewal_pending']
-const TYPE_VALUES = ['bilateral', 'multilateral', 'erasmus', 'specific', 'other']
+const TYPE_VALUES = ['bilateral', 'multilateral', 'erasmus', 'conahec', 'specific', 'other']
 
 const statusChoices = computed(() =>
   STATUS_VALUES.map((value) => ({

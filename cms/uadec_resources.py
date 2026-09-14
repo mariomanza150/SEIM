@@ -1,7 +1,10 @@
 """Official UAdeC CGRI / Movilidad URLs and copy for CMS seed and templates.
 
-Links point at www2.uadec.mx / uadec.mx; binaries are not copied into the repo.
+Remote www2.uadec.mx URLs remain the fallback. After ``ingest_cgri_samples``,
+``file_url(key)`` prefers locally hosted Wagtail Documents tagged cgri-key:<key>.
 """
+
+from __future__ import annotations
 
 CGRI_FILES_BASE = "http://www2.uadec.mx/pub/CGRI/"
 
@@ -18,6 +21,24 @@ FILES = {
     "universidades_convenio": f"{CGRI_FILES_BASE}UniversidadesPorConvenio.pdf",
     "universidades_conahec": f"{CGRI_FILES_BASE}UniversidadesPorCONAHEC.pdf",
 }
+
+
+def file_url(key: str) -> str:
+    """Prefer Wagtail Document for key; else remote FILES fallback."""
+    fallback = FILES.get(key, "")
+    try:
+        from wagtail.documents.models import Document
+
+        from cms.cgri_samples import key_tag
+
+        doc = Document.objects.filter(tags__name=key_tag(key)).order_by("-id").first()
+        if doc is not None and doc.file:
+            return doc.url
+    except Exception:
+        # Import/DB unavailable during early setup — use remote URL.
+        pass
+    return fallback
+
 
 FORMS = {
     "solicitud_entrante": "https://forms.cloud.microsoft/r/QBdXdy53Bb",
@@ -195,7 +216,7 @@ ACHIEVEMENTS = [
 def template_context() -> dict:
     """Context dict for CGRI/Movilidad templates."""
     return {
-        "files": FILES,
+        "files": {key: file_url(key) for key in FILES},
         "forms": FORMS,
         "organigrama_pdf": ORGANIGRAMA_PDF,
         "directorio_url": DIRECTORIO_URL,

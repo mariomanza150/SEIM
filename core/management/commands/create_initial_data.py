@@ -39,6 +39,7 @@ class Command(BaseCommand):
             ("rejected", 5),
             ("completed", 6),
             ("cancelled", 7),
+            ("nominated", 16),
             ("waitlist", 15),
         ]
         for name, order in statuses:
@@ -114,6 +115,9 @@ class Command(BaseCommand):
             self.stdout.write(f"  ✓ Mobility DocumentType: {dt.slug or dt.name}")
         n_req = assign_scheme_document_requirements()
         self.stdout.write(f"  ✓ Scheme document requirements ensured (+{n_req} new)")
+
+        call_command("ingest_cgri_samples", verbosity=1)
+        self.stdout.write("  ✓ CGRI samples ingest attempted (SAMPLES/ if present)")
 
         self.stdout.write(
             self.style.SUCCESS("Initial system data created successfully!")

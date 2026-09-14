@@ -59,12 +59,13 @@ MOBILITY_DOCUMENT_TYPES = (
     {
         "slug": "carta_postulacion",
         "name": "Carta de Postulación",
-        "description": "Carta de postulación emitida por la facultad (instrucciones).",
-        "submission_mode": DocumentType.SubmissionMode.INSTRUCTIONS_ONLY,
+        "description": "Carta de postulación emitida por la facultad.",
+        "submission_mode": DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD,
         "instructions": (
-            "Solicite la carta de postulación a la dirección de su facultad. "
-            "No se carga en esta plataforma; conserve el original para trámites externos."
+            "Descargue el formato oficial, solicite la firma de la dirección de su facultad "
+            "y conserve el original para trámites externos."
         ),
+        "accepted_extensions": "pdf,docx",
     },
     {
         "slug": "seguro_gastos_medicos",
@@ -112,12 +113,27 @@ MOBILITY_DOCUMENT_TYPES = (
     {
         "slug": "reglamento_movilidad",
         "name": "Reglamento de Movilidad",
-        "description": "Acuse de conocimiento del reglamento de movilidad.",
-        "submission_mode": DocumentType.SubmissionMode.INSTRUCTIONS_ONLY,
+        "description": "Lineamientos y disposiciones del programa de movilidad.",
+        "submission_mode": DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD,
         "instructions": (
-            "Lea el Reglamento de Movilidad institucional. "
+            "Descargue y lea los Lineamientos y Disposiciones oficiales. "
             "Su participación implica aceptación de las disposiciones vigentes."
         ),
+        "accepted_extensions": "pdf",
+    },
+    {
+        "slug": "carta_retorno_programa",
+        "name": "Carta Compromiso Programa de Retorno",
+        "description": (
+            "Carta compromiso de adhesión al programa de retorno "
+            "(formato oficial CGRI)."
+        ),
+        "submission_mode": DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD,
+        "instructions": (
+            "Descargue la plantilla de adhesión al programa de retorno, "
+            "fírmela y súbala en PDF cuando corresponda."
+        ),
+        "accepted_extensions": "pdf",
     },
     {
         # Stable legacy slug; display name is branded at seed time.
@@ -214,6 +230,9 @@ INTERNATIONAL_EXTRA = (
     (160, "carta_homologacion"),
     (170, "caratula_cuenta_santander"),
 )
+
+# Optional return-program commitment (international schemes).
+RETURN_PROGRAM_OPTIONAL = ((180, "carta_retorno_programa"),)
 
 # Optional scholarship docs (international schemes only).
 SCHOLARSHIP_OPTIONAL = (
@@ -323,6 +342,7 @@ def assign_scheme_document_requirements(
         ]
         if kind in ("intl_es", "intl", "maestria"):
             rows.extend((order, slug, True) for order, slug in INTERNATIONAL_EXTRA)
+            rows.extend((order, slug, False) for order, slug in RETURN_PROGRAM_OPTIONAL)
             rows.extend((order, slug, False) for order, slug in SCHOLARSHIP_OPTIONAL)
 
         for sort_order, slug, is_required in rows:

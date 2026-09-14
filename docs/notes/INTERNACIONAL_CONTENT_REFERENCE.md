@@ -367,24 +367,43 @@ Description of mobility opportunities and benefits of studying abroad through UA
 
 ---
 
-## Official CGRI files (linked, not copied)
+## Official CGRI files
 
-Base: `http://www2.uadec.mx/pub/CGRI/`
+Remote fallback base: `http://www2.uadec.mx/pub/CGRI/`
 
-| Resource | URL |
-|----------|-----|
-| Convocatoria entrante | `ConvocatoriaMIEntrante.pdf` |
-| Convocatoria saliente | `ConvocatoriaMISaliente.pdf` |
-| Solicitud participación entrante | `AF.pdf` |
-| Solicitud participación saliente | `FS-SP.pdf` |
-| Lineamientos | `FS-LD.pdf` |
-| Carta compromiso | `FS-CC.docx` |
-| Programa de retorno | `https://www2.uadec.mx/pub/CGRI/FS-PR.docx` |
-| Carta de postulación | `FS-CP.docx` |
-| Homologación de materias | `FS-HM.pdf` |
-| Universidades por convenio 2026-2 | `UniversidadesPorConvenio.pdf` |
-| Universidades CONAHEC 2026-2 | `UniversidadesPorCONAHEC.pdf` |
-| Organigrama | `http://www2.uadec.mx/transparencia/sassit/docs/ORGANIGRAMA_RELACIONES_INTERNACIONALES.pdf` |
+Local copies live under `SAMPLES/` (same logical files). Ingest with:
+
+```bash
+python manage.py ingest_cgri_samples
+```
+
+(Implemented in `documents`; also invoked from `create_initial_data` / `restore_cms`.)
+
+This uploads Wagtail Documents (tag `cgri-key:<resource>`), attaches SPA
+`DocumentType.template_file` rows, and seeds `HostInstitution` /
+`ExchangeAgreement` from:
+
+- `exchange/data/universidades_por_convenio.json`
+- `exchange/data/universidades_por_conahec.json`
+
+`cms.uadec_resources.file_url(key)` prefers the Wagtail document when present,
+otherwise the remote URL. `create_initial_data` and `restore_cms` call ingest
+when `SAMPLES/` exists.
+
+| Resource | Key / sample filename |
+|----------|----------------------|
+| Convocatoria entrante | `convocatoria_entrante` / `ConvocatoriaMIEntrante.pdf` |
+| Convocatoria saliente | `convocatoria_saliente` / `ConvocatoriaMISaliente.pdf` |
+| Solicitud participación entrante | `solicitud_participacion_entrante` / `AF_Solicitud de Participacion.pdf` |
+| Solicitud participación saliente | `solicitud_participacion_saliente` / `FS-SP …` |
+| Lineamientos | `lineamientos` / `FS-LD …` |
+| Carta compromiso | `carta_compromiso` / `FS-CC …` |
+| Programa de retorno | `carta_retorno` / `FS-PR …` |
+| Carta de postulación | `carta_postulacion` / `FS-CP …` |
+| Homologación de materias | `homologacion` / `FS-HM …` |
+| Universidades por convenio 2026-2 | `universidades_convenio` |
+| Universidades CONAHEC 2026-2 | `universidades_conahec` |
+| Organigrama | remote only (`ORGANIGRAMA_…pdf`) |
 
 Incoming form: `https://forms.cloud.microsoft/r/QBdXdy53Bb`  
 Outgoing form (CGRI): `https://forms.cloud.microsoft/r/pQ7ikwCHME` (SEIM is the primary outgoing apply path)
@@ -416,16 +435,17 @@ Outgoing form (CGRI): `https://forms.cloud.microsoft/r/pQ7ikwCHME` (SEIM is the 
     └── testimonios/
 ```
 
-Seed: `python manage.py setup_internacional` then `populate_internacional_content`.  
-`restore_cms` runs both unless `--skip-internacional`.
+Seed: `python manage.py setup_internacional` then `ingest_cgri_samples` then
+`populate_internacional_content`.  
+`restore_cms` runs setup + ingest + populate unless `--skip-internacional`.
 
 ---
 
 ## Remaining optional enrichment
 
-- Upload partner logos onto ConvenioPage rows (lists are PDF-linked)
+- Upload partner logos onto ConvenioPage rows (lists are PDF-linked and also seeded as HostInstitution)
 - Student testimonials and extra FAQ entries
-- Generated demo PDFs via `populate_pdf_forms` if official URLs are unreachable
+- Generated demo PDFs via `populate_pdf_forms` if official URLs/SAMPLES are unreachable
 
 ---
 
@@ -442,10 +462,10 @@ Seed: `python manage.py setup_internacional` then `populate_internacional_conten
 - Keep contact information current
 - Update statistics annually
 - Review deadlines each semester
-- Prefer linking official CGRI files over copying binaries
+- Prefer `SAMPLES/` + `ingest_cgri_samples` for offline/local fidelity; remote CGRI URLs remain the fallback
 - Add new testimonials regularly
 
-**Last Updated**: August 18, 2026  
+**Last Updated**: September 14, 2026  
 **Source URLs**:
 - https://www.uadec.mx/cgri/
 - https://www.uadec.mx/movilidad/

@@ -1,0 +1,49 @@
+[
+  {"name": "Langara College", "country": "Canada", "source": "conahec", "scheme": "inglesa"},
+  {"name": "Georgian College", "country": "Canada", "source": "conahec", "scheme": "inglesa"},
+  {"name": "University of the Fraser Valley", "country": "Canada", "source": "conahec", "scheme": "inglesa"},
+  {"name": "University of Regina", "country": "Canada", "source": "conahec", "scheme": "inglesa"},
+  {"name": "Eastern New Mexico University", "country": "United States", "source": "conahec", "scheme": "inglesa"},
+  {"name": "Lenoir-Rhyne University", "country": "United States", "source": "conahec", "scheme": "inglesa"},
+  {"name": "Methodist University", "country": "United States", "source": "conahec", "scheme": "inglesa"},
+  {"name": "New Mexico State University", "country": "United States", "source": "conahec", "scheme": "inglesa"},
+  {"name": "The University of Texas at El Paso", "country": "United States", "source": "conahec", "scheme": "inglesa"},
+  {"name": "Western New Mexico University", "country": "United States", "source": "conahec", "scheme": "inglesa"},
+  {"name": "West Virginia University", "country": "United States", "source": "conahec", "scheme": "inglesa"},
+  {"name": "Universidad Nacional de Quilmes", "country": "Argentina", "source": "conahec", "scheme": "hispana"},
+  {"name": "Universidad Católica Boliviana San Pablo", "country": "Bolivia", "source": "conahec", "scheme": "hispana"},
+  {"name": "Universidad del Valle", "country": "Bolivia", "source": "conahec", "scheme": "hispana"},
+  {"name": "Universidad de Santiago de Chile", "country": "Chile", "source": "conahec", "scheme": "hispana"},
+  {"name": "Universidad San Sebastián", "country": "Chile", "source": "conahec", "scheme": "hispana"},
+  {"name": "Universidad Estadual Paulista", "country": "Brasil", "source": "conahec", "scheme": "inglesa"},
+  {
+    "name": "Fundación Universitaria Navarra - UNINAVARRA",
+    "country": "Colombia",
+    "source": "conahec",
+    "scheme": "hispana"
+  },
+  {"name": "Pontificia Universidad Javeriana", "country": "Colombia", "source": "conahec", "scheme": "hispana"},
+  {"name": "Universidad del Norte", "country": "Colombia", "source": "conahec", "scheme": "hispana"},
+  {"name": "Universidad Simón Bolívar", "country": "Colombia", "source": "conahec", "scheme": "hispana"},
+  {
+    "name": "Instituto Tecnológico de Santo Domingo",
+    "country": "Dominican Republic",
+    "source": "conahec",
+    "scheme": "hispana"
+  },
+  {"name": "Universidad Ecotec", "country": "Ecuador", "source": "conahec", "scheme": "hispana"},
+  {"name": "Universidad Técnica Particular de Loja", "country": "Ecuador", "source": "conahec", "scheme": "hispana"},
+  {
+    "name": "Hankuk University of Foreign Studies (Seoul Campus)",
+    "country": "South Korea",
+    "source": "conahec",
+    "scheme": "inglesa"
+  },
+  {
+    "name": "Hanyang University (ERICA Campus)",
+    "country": "South Korea",
+    "source": "conahec",
+    "scheme": "inglesa"
+  },
+  {"name": "Universidad de Oviedo", "country": "España", "source": "conahec", "scheme": "hispana"}
+]

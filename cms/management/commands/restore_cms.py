@@ -90,6 +90,8 @@ class Command(BaseCommand):
                     call_command("setup_internacional", replace=True)
                 else:
                     call_command("setup_internacional")
+                self.stdout.write("\n📎 Ingesting CGRI sample files (if present)...")
+                call_command("ingest_cgri_samples")
                 call_command("populate_internacional_content")
             else:
                 self.stdout.write("\n⏭️  Skipping internacional section")

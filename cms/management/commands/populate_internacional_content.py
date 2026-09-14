@@ -2,7 +2,7 @@
 Populate International section with UAdeC CGRI / Movilidad content.
 
 Sources: https://www.uadec.mx/cgri/ and https://www.uadec.mx/movilidad/
-Official files are linked (not copied) from www2.uadec.mx/pub/CGRI/.
+Official files resolve via ``file_url`` (Wagtail after ingest, else www2.uadec.mx).
 """
 
 from django.conf import settings
@@ -25,7 +25,6 @@ from cms.uadec_resources import (
     CALL_REQUIREMENTS,
     CONTACT,
     DIRECTORIO_URL,
-    FILES,
     FORMS,
     IDIOMAS_URL,
     ILE_URL,
@@ -37,6 +36,7 @@ from cms.uadec_resources import (
     RESPONSIBILITIES,
     VIRTUAL_COOPERATION,
     VISION,
+    file_url,
 )
 from core.branding import apply_institution_tokens_deep, brand_from_settings
 
@@ -374,11 +374,11 @@ class Command(BaseCommand):
                 "<ul>"
                 + _file_link(
                     "Universidades con Convenio para Movilidad Internacional 2026-2",
-                    FILES["universidades_convenio"],
+                    file_url("universidades_convenio"),
                 )
                 + _file_link(
                     "Universidades CONAHEC para Movilidad Internacional 2026-2",
-                    FILES["universidades_conahec"],
+                    file_url("universidades_conahec"),
                 )
                 + "</ul>"
             )
@@ -448,21 +448,21 @@ class Command(BaseCommand):
                 "<h2>Formatos de Movilidad Entrante</h2><ul>"
                 + _file_link(
                     "Solicitud de Participación",
-                    FILES["solicitud_participacion_entrante"],
+                    file_url("solicitud_participacion_entrante"),
                 )
                 + "</ul><h2>Formatos de Movilidad Saliente</h2><ul>"
                 + _file_link(
                     "Solicitud de Participación",
-                    FILES["solicitud_participacion_saliente"],
+                    file_url("solicitud_participacion_saliente"),
                 )
-                + _file_link("Lineamientos y Disposiciones", FILES["lineamientos"])
-                + _file_link("Carta Compromiso", FILES["carta_compromiso"])
+                + _file_link("Lineamientos y Disposiciones", file_url("lineamientos"))
+                + _file_link("Carta Compromiso", file_url("carta_compromiso"))
                 + _file_link(
                     "Carta Compromiso de Adhesión al Programa de Retorno",
-                    FILES["carta_retorno"],
+                    file_url("carta_retorno"),
                 )
-                + _file_link("Carta de Postulación", FILES["carta_postulacion"])
-                + _file_link("Homologación de Materias", FILES["homologacion"])
+                + _file_link("Carta de Postulación", file_url("carta_postulacion"))
+                + _file_link("Homologación de Materias", file_url("homologacion"))
                 + "</ul>"
             )
             self._publish_body(documentacion, [_rich(docs_html), _rich(formats_html)])
@@ -481,7 +481,7 @@ class Command(BaseCommand):
                         "Convocatoria",
                         "Descarga la convocatoria oficial de movilidad entrante.",
                         "Descargar convocatoria",
-                        FILES["convocatoria_entrante"],
+                        file_url("convocatoria_entrante"),
                     ),
                     _cta(
                         "Solicitud en línea",
@@ -493,7 +493,7 @@ class Command(BaseCommand):
                         "Solicitud de Participación",
                         "Formato AF para movilidad entrante.",
                         "Descargar formato",
-                        FILES["solicitud_participacion_entrante"],
+                        file_url("solicitud_participacion_entrante"),
                         "secondary",
                     ),
                 ],
@@ -515,7 +515,7 @@ class Command(BaseCommand):
                         "Convocatoria",
                         "Descarga la convocatoria oficial de movilidad saliente.",
                         "Descargar convocatoria",
-                        FILES["convocatoria_saliente"],
+                        file_url("convocatoria_saliente"),
                         "secondary",
                     ),
                     _cta(
@@ -529,18 +529,18 @@ class Command(BaseCommand):
                         "<h3>Formatos oficiales</h3><ul>"
                         + _file_link(
                             "Solicitud de Participación",
-                            FILES["solicitud_participacion_saliente"],
+                            file_url("solicitud_participacion_saliente"),
                         )
                         + _file_link(
-                            "Lineamientos y Disposiciones", FILES["lineamientos"]
+                            "Lineamientos y Disposiciones", file_url("lineamientos")
                         )
-                        + _file_link("Carta Compromiso", FILES["carta_compromiso"])
+                        + _file_link("Carta Compromiso", file_url("carta_compromiso"))
                         + _file_link(
                             "Carta Compromiso de Adhesión al Programa de Retorno",
-                            FILES["carta_retorno"],
+                            file_url("carta_retorno"),
                         )
-                        + _file_link("Carta de Postulación", FILES["carta_postulacion"])
-                        + _file_link("Homologación de Materias", FILES["homologacion"])
+                        + _file_link("Carta de Postulación", file_url("carta_postulacion"))
+                        + _file_link("Homologación de Materias", file_url("homologacion"))
                         + "</ul>"
                     ),
                 ],

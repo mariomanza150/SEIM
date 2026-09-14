@@ -1,0 +1,25 @@
+[
+  {"name": "Universidad de León", "country": "España", "source": "convenio", "scheme": "hispana"},
+  {"name": "Universidad de Cádiz", "country": "España", "source": "convenio", "scheme": "hispana"},
+  {"name": "Universidad de Salamanca", "country": "España", "source": "convenio", "scheme": "hispana"},
+  {"name": "Universidad Politécnica de Cartagena", "country": "España", "source": "convenio", "scheme": "hispana"},
+  {"name": "Universidad Internacional de Cataluña", "country": "España", "source": "convenio", "scheme": "hispana"},
+  {"name": "Universidad de Burgos", "country": "España", "source": "convenio", "scheme": "hispana"},
+  {"name": "Universidad de Granada", "country": "España", "source": "convenio", "scheme": "hispana"},
+  {"name": "Università degli Studi di Firenze", "country": "Italia", "source": "convenio", "scheme": "inglesa"},
+  {"name": "Università degli Studi di Torino", "country": "Italia", "source": "convenio", "scheme": "inglesa"},
+  {"name": "Università degli Studi di Siena", "country": "Italia", "source": "convenio", "scheme": "inglesa"},
+  {
+    "name": "Duale Hochschule Baden-Württemberg (Stuttgart/Mosbach)",
+    "country": "Alemania",
+    "source": "convenio",
+    "scheme": "inglesa"
+  },
+  {"name": "Universidade de Ouro Preto", "country": "Brasil", "source": "convenio", "scheme": "inglesa"},
+  {"name": "Universidade Cruzeiro do Sul (São Paulo)", "country": "Brasil", "source": "convenio", "scheme": "inglesa"},
+  {"name": "Pontificia Universidad Javeriana", "country": "Colombia", "source": "convenio", "scheme": "hispana"},
+  {"name": "Universidad de Córdoba", "country": "Colombia", "source": "convenio", "scheme": "hispana"},
+  {"name": "Universidad Militar Nueva Granada", "country": "Colombia", "source": "convenio", "scheme": "hispana"},
+  {"name": "Beijing Institute of Technology", "country": "China", "source": "convenio", "scheme": "inglesa"},
+  {"name": "Universidad Internacional del Ecuador", "country": "Ecuador", "source": "convenio", "scheme": "hispana"}
+]

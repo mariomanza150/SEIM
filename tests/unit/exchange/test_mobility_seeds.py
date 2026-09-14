@@ -55,6 +55,11 @@ class TestMobilitySeeds:
         assert len(types) == len(MOBILITY_DOCUMENT_TYPES)
         assert DocumentType.objects.filter(slug="solicitud_participacion").exists()
         assert DocumentType.objects.filter(slug="carta_homologacion").exists()
+        assert DocumentType.objects.filter(slug="carta_retorno_programa").exists()
+        postulacion = DocumentType.objects.get(slug="carta_postulacion")
+        assert postulacion.submission_mode == DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD
+        reglamento = DocumentType.objects.get(slug="reglamento_movilidad")
+        assert reglamento.submission_mode == DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD
         inscription = DocumentType.objects.get(slug="inscripcion_uadec")
         assert inscription.name == "Inscripción UAdeC"
 
@@ -67,6 +72,11 @@ class TestMobilitySeeds:
                 program=program,
                 document_type__slug="solicitud_participacion",
                 is_required=True,
+            ).exists()
+            assert ProgramDocumentRequirement.objects.filter(
+                program=program,
+                document_type__slug="carta_retorno_programa",
+                is_required=False,
             ).exists()
 
     def test_inscription_label_uses_institution_short_name(self, settings):

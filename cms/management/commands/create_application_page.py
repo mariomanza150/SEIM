@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from cms.models import HomePage, StandardPage
+from cms.uadec_resources import file_url
 from core.branding import (
     apply_institution_tokens,
     apply_institution_tokens_deep,
@@ -211,15 +212,15 @@ class Command(BaseCommand):
             },
             {
                 "type": "paragraph",
-                "value": """
+                "value": f"""
                 <div class="alert alert-info">
                     <h5>Convocatoria Movilidad Internacional 2026-2</h5>
                     <p>Consulta las convocatorias y listados oficiales publicados por la CGRI:</p>
                     <ul>
-                        <li><a href="https://www2.uadec.mx/pub/CGRI/ConvocatoriaMISaliente.pdf" target="_blank" rel="noopener noreferrer">Convocatoria de movilidad saliente</a></li>
-                        <li><a href="https://www2.uadec.mx/pub/CGRI/ConvocatoriaMIEntrante.pdf" target="_blank" rel="noopener noreferrer">Convocatoria de movilidad entrante</a></li>
-                        <li><a href="https://www2.uadec.mx/pub/CGRI/UniversidadesPorConvenio.pdf" target="_blank" rel="noopener noreferrer">Universidades por convenio 2026-2</a></li>
-                        <li><a href="https://www2.uadec.mx/pub/CGRI/UniversidadesPorCONAHEC.pdf" target="_blank" rel="noopener noreferrer">Universidades CONAHEC 2026-2</a></li>
+                        <li><a href="{file_url("convocatoria_saliente")}" target="_blank" rel="noopener noreferrer">Convocatoria de movilidad saliente</a></li>
+                        <li><a href="{file_url("convocatoria_entrante")}" target="_blank" rel="noopener noreferrer">Convocatoria de movilidad entrante</a></li>
+                        <li><a href="{file_url("universidades_convenio")}" target="_blank" rel="noopener noreferrer">Universidades por convenio 2026-2</a></li>
+                        <li><a href="{file_url("universidades_conahec")}" target="_blank" rel="noopener noreferrer">Universidades CONAHEC 2026-2</a></li>
                     </ul>
                 </div>
                 <p class="lead text-center mt-4">

@@ -737,6 +737,7 @@ class ExchangeAgreement(UUIDModel, TimeStampedModel):
         BILATERAL = "bilateral", _("Bilateral")
         MULTILATERAL = "multilateral", _("Multilateral")
         ERASMUS = "erasmus", _("Erasmus+")
+        CONAHEC = "conahec", _("CONAHEC")
         SPECIFIC = "specific", _("Specific program")
         OTHER = "other", _("Other")
 
