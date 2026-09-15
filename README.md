@@ -670,3 +670,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 **SEIM** - Making student exchange programs accessible and efficient for everyone.
+## Security
+
+See [SECURITY.md](SECURITY.md) for vulnerability reporting.
