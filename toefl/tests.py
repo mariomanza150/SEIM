@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -63,6 +64,29 @@ class ToeflWebhookTests(TestCase):
         self.user.profile.refresh_from_db()
         self.assertEqual(self.user.profile.toefl_score, 550)
 
+    def test_webhook_upsert_is_idempotent(self):
+        payload = {
+            "session_id": "sess-upsert",
+            "client_ref": str(self.user.pk),
+            "exam_code": "director_extracted",
+            "score": {"earned": 5, "total": 10, "percent": 50.0},
+            "categories": [{"name": "verbs"}],
+            "weakest": [],
+            "items": [],
+        }
+        first = self._signed_post(payload)
+        self.assertIn(first.status_code, (200, 201))
+        payload["score"] = {"earned": 9, "total": 10, "percent": 90.0}
+        second = self._signed_post(payload)
+        self.assertIn(second.status_code, (200, 201))
+        self.assertEqual(
+            PracticeAttempt.objects.filter(external_session_id="sess-upsert").count(),
+            1,
+        )
+        attempt = PracticeAttempt.objects.get(external_session_id="sess-upsert")
+        self.assertEqual(attempt.earned, 9)
+        self.assertEqual(attempt.percent, 90.0)
+
     def test_webhook_rejects_bad_signature(self):
         payload = {
             "session_id": "sess-bad",
@@ -71,7 +95,9 @@ class ToeflWebhookTests(TestCase):
         }
         resp = self._signed_post(payload, secret="wrong-secret")
         self.assertEqual(resp.status_code, 401)
-        self.assertFalse(PracticeAttempt.objects.filter(external_session_id="sess-bad").exists())
+        self.assertFalse(
+            PracticeAttempt.objects.filter(external_session_id="sess-bad").exists()
+        )
 
     def test_attempts_list_requires_auth_and_scopes_to_owner(self):
         PracticeAttempt.objects.create(
@@ -97,3 +123,54 @@ class ToeflWebhookTests(TestCase):
         results = resp.data.get("results", resp.data)
         ids = {row["external_session_id"] for row in results}
         self.assertEqual(ids, {"sess-1"})
+
+
+@override_settings(
+    TOEFL_SIGNING_SECRET="test-signing-secret",
+    TOEFL_API_BASE_URL="http://toefl.test",
+    TOEFL_API_KEY="test-api-key",
+    TOEFL_CALLBACK_URL="http://web:8000/api/toefl/webhook/",
+    TOEFL_RETURN_URL="http://localhost/seim/toefl-practice",
+    TOEFL_DEFAULT_EXAM_CODE="director_extracted",
+)
+class ToeflLaunchTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username="launcher",
+            email="launcher@example.com",
+            password="pass12345",
+        )
+        self.client.force_authenticate(user=self.user)
+
+    @patch("toefl.views.create_launch_token")
+    def test_launch_happy_path(self, mock_create):
+        mock_create.return_value = {
+            "launch_url": "https://toefl.example/launch?token=tok",
+            "token": "tok",
+        }
+        resp = self.client.post("/api/toefl/launch/", {"n": 20}, format="json")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["launch_url"], "https://toefl.example/launch?token=tok")
+        mock_create.assert_called_once()
+        kwargs = mock_create.call_args.kwargs
+        self.assertEqual(kwargs["client_ref"], str(self.user.pk))
+        self.assertEqual(kwargs["exam_code"], "director_extracted")
+        self.assertEqual(kwargs["n"], 20)
+        self.assertEqual(
+            kwargs["callback_url"], "http://web:8000/api/toefl/webhook/"
+        )
+        self.assertEqual(
+            kwargs["return_url"], "http://localhost/seim/toefl-practice"
+        )
+
+    @override_settings(TOEFL_CALLBACK_URL="", TOEFL_RETURN_URL="")
+    def test_launch_missing_config_returns_503(self):
+        resp = self.client.post("/api/toefl/launch/", {"n": 20}, format="json")
+        self.assertEqual(resp.status_code, 503)
+        self.assertIn("not configured", resp.data["detail"].lower())
+
+    def test_launch_requires_auth(self):
+        self.client.force_authenticate(user=None)
+        resp = self.client.post("/api/toefl/launch/", {"n": 20}, format="json")
+        self.assertIn(resp.status_code, (401, 403))

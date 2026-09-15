@@ -12,6 +12,7 @@ from accounts.models import Profile, Role, UserSettings
 from accounts.profile_seed import complete_apply_profile
 from analytics.models import DashboardConfig, Metric, Report
 from application_forms.models import FormStepTemplate, FormSubmission, FormType
+from data_management.models import DataOperationLog, DemoDataSet
 from documents.models import (
     Document,
     DocumentComment,
@@ -25,15 +26,20 @@ from exchange.demo_seed import (
     DEMO_APPLICATION_SPECS,
     DEMO_BPMN_XML,
     DEMO_CLOSED_WINDOW_PROGRAM,
+    DEMO_DAAD_PROGRAM_NAME,
+    DEMO_DATASET_NAME,
     DEMO_ELIGIBILITY_RULESET_NAME,
     DEMO_FORM_NAME,
     DEMO_FORM_STEP_TEMPLATE_SLUG,
     DEMO_HOST_SPECS,
     DEMO_LIFECYCLE_PROGRAM,
+    DEMO_NOMINATION_CYCLE_NAME,
     DEMO_PARTNER_AGREEMENT_REF,
+    DEMO_PRACTICE_ATTEMPT_SPECS,
     DEMO_PROGRAM_SPECS,
     DEMO_RESUBMIT_PROGRAM,
     DEMO_SUBMIT_GATE_PROGRAM,
+    DEMO_TUM_AGREEMENT_REF,
     DEMO_USER_SPECS,
     DEMO_WORKFLOW_NAME,
     DEMO_WORKFLOW_SLUG,
@@ -43,6 +49,7 @@ from exchange.models import (
     AgreementComment,
     Application,
     ApplicationStatus,
+    ApplicationSubjectPlanVersion,
     ApplicationSubjectSelection,
     Comment,
     EligibilityRuleSet,
@@ -51,6 +58,8 @@ from exchange.models import (
     HostInstitution,
     HostSchool,
     HostSubject,
+    NominationCycle,
+    NominationPartnerAllocation,
     PartnerContact,
     Program,
     ProgramDocumentRequirement,
@@ -59,6 +68,7 @@ from exchange.models import (
     ScholarshipDisbursement,
     TimelineEvent,
 )
+from exchange.subject_plan_versions import snapshot_subject_plan
 from grades.models import GradeScale, GradeTranslation, GradeValue
 from notifications.models import (
     Notification,
@@ -67,6 +77,7 @@ from notifications.models import (
     NotificationType,
     Reminder,
 )
+from toefl.models import PracticeAttempt
 from workflows.models import (
     WorkflowDefinition,
     WorkflowEvent,
@@ -100,9 +111,10 @@ class Command(BaseCommand):
             )
             self._create_host_destinations(programs)
             self._create_exchange_agreements(programs)
+            daad_cycle = self._create_nomination_cycles(programs)
             self._create_partner_portal(users)
-            applications = self._create_applications(users, programs)
-            self._create_subject_selections(applications)
+            applications = self._create_applications(users, programs, daad_cycle)
+            self._create_subject_selections(applications, users)
             self._create_documents(applications, users)
             self._create_comments_and_events(applications, users)
             self._create_notifications(applications, users)
@@ -114,6 +126,29 @@ class Command(BaseCommand):
             self._create_notification_routing()
             self._create_analytics(users)
             self._create_grade_translations(users)
+            self._create_toefl_practice_attempts(users)
+            self._create_data_management_samples(users)
+
+        from django.conf import settings as dj_settings
+
+        # Wagtail restore is slow and not needed for unit/integration seed tests.
+        if not getattr(dj_settings, "TESTING", False):
+            try:
+                call_command("restore_cms", verbosity=0)
+                self.stdout.write(
+                    "  Ensured CMS content via restore_cms (includes seed_spa_help)"
+                )
+            except Exception as exc:  # pragma: no cover - best effort
+                self.stdout.write(self.style.WARNING(f"  Skipped restore_cms: {exc}"))
+                try:
+                    call_command("seed_spa_help", verbosity=0)
+                    self.stdout.write("  Ensured SPA help catalog via seed_spa_help")
+                except Exception as help_exc:  # pragma: no cover - best effort
+                    self.stdout.write(
+                        self.style.WARNING(f"  Skipped seed_spa_help: {help_exc}")
+                    )
+        else:
+            self.stdout.write("  Skipped CMS restore under TESTING settings")
 
         try:
             from exchange.views import _invalidate_program_api_caches
@@ -133,6 +168,9 @@ class Command(BaseCommand):
         self.stdout.write("  Coordinator: coordinator@test.com / coordinator123")
         self.stdout.write("  Student: student@test.com / student123")
         self.stdout.write("  Partner: partner@test.com / partner123")
+        self.stdout.write(
+            "  Nominated (partner ack): student.nominated@test.com / student123"
+        )
 
     def _create_users(self):
         users = {}
@@ -421,6 +459,33 @@ class Command(BaseCommand):
             f"  Ensured {len(DEMO_AGREEMENT_SPECS)} demo exchange agreements"
         )
 
+    def _create_nomination_cycles(self, programs):
+        daad = programs.get(DEMO_DAAD_PROGRAM_NAME)
+        if daad is None:
+            return None
+        today = timezone.localdate()
+        cycle, _ = NominationCycle.objects.update_or_create(
+            program=daad,
+            name=DEMO_NOMINATION_CYCLE_NAME,
+            defaults={
+                "opens_at": today - timedelta(days=30),
+                "closes_at": today + timedelta(days=60),
+                "seat_quota": daad.enrollment_capacity or 1,
+                "is_active": True,
+            },
+        )
+        tum_agreement = ExchangeAgreement.objects.filter(
+            internal_reference=DEMO_TUM_AGREEMENT_REF
+        ).first()
+        if tum_agreement is not None:
+            NominationPartnerAllocation.objects.update_or_create(
+                cycle=cycle,
+                agreement=tum_agreement,
+                defaults={"seat_quota": cycle.seat_quota or 1},
+            )
+        self.stdout.write("  Ensured DAAD nomination cycle and partner allocation")
+        return cycle
+
     def _create_partner_portal(self, users):
         agreement = ExchangeAgreement.objects.filter(
             internal_reference=DEMO_PARTNER_AGREEMENT_REF
@@ -432,6 +497,15 @@ class Command(BaseCommand):
             agreement=agreement,
             defaults={"title": "International office liaison", "is_active": True},
         )
+        tum_agreement = ExchangeAgreement.objects.filter(
+            internal_reference=DEMO_TUM_AGREEMENT_REF
+        ).first()
+        if tum_agreement is not None:
+            PartnerContact.objects.update_or_create(
+                user=users["partner"],
+                agreement=tum_agreement,
+                defaults={"title": "DAAD liaison", "is_active": True},
+            )
         AgreementComment.objects.update_or_create(
             agreement=agreement,
             author=users["coordinator"],
@@ -442,6 +516,12 @@ class Command(BaseCommand):
             agreement=agreement,
             author=users["partner"],
             text="Nomination package received. We will confirm seats next week.",
+            defaults={"is_private": False},
+        )
+        AgreementComment.objects.update_or_create(
+            agreement=agreement,
+            author=users["partner"],
+            text="Public update: seat confirmations for spring nominees are in progress.",
             defaults={"is_private": False},
         )
         fake_file = SimpleUploadedFile(
@@ -457,6 +537,21 @@ class Command(BaseCommand):
                 "file": fake_file,
                 "notes": "Seeded signed copy for the agreement repository.",
                 "uploaded_by": users["admin"],
+            },
+        )
+        draft_file = SimpleUploadedFile(
+            "demo-erasmus-draft-annex.pdf",
+            self._build_pdf_bytes_text("Demo draft annex for Erasmus framework"),
+            content_type="application/pdf",
+        )
+        ExchangeAgreementDocument.objects.get_or_create(
+            agreement=agreement,
+            title="Demo draft annex",
+            defaults={
+                "category": ExchangeAgreementDocument.Category.ANNEX,
+                "file": draft_file,
+                "notes": "Seeded draft annex for partner portal richness.",
+                "uploaded_by": users["coordinator"],
             },
         )
         self.stdout.write(
@@ -475,7 +570,7 @@ class Command(BaseCommand):
         )
         return institution, school, academic
 
-    def _create_applications(self, users, programs):
+    def _create_applications(self, users, programs, daad_cycle=None):
         applications = []
         status_map = {status.name: status for status in ApplicationStatus.objects.all()}
         coordinator = users["coordinator"]
@@ -504,6 +599,16 @@ class Command(BaseCommand):
                 "host_school": school,
                 "host_academic_program": academic,
             }
+            if spec.get("attach_daad_cycle") and daad_cycle is not None:
+                defaults["nomination_cycle"] = daad_cycle
+            if spec["status"] == "nominated":
+                if spec.get("partner_acknowledged"):
+                    days_ago = spec.get("partner_acknowledged_days_ago", 5)
+                    defaults["partner_nomination_acknowledged_at"] = (
+                        timezone.now() - timedelta(days=days_ago)
+                    )
+                else:
+                    defaults["partner_nomination_acknowledged_at"] = None
             if profile and spec["status"] != "draft":
                 from exchange.eligibility_rulesets import build_ruleset_snapshot
 
@@ -539,10 +644,24 @@ class Command(BaseCommand):
         )
         return applications
 
-    def _create_subject_selections(self, applications):
+    def _create_subject_selections(self, applications, users):
         count = 0
+        version_count = 0
+        coordinator = users["coordinator"]
+        ects_a = GradeValue.objects.filter(
+            grade_scale__code="ECTS", label="A"
+        ).first()
+        us_a = GradeValue.objects.filter(
+            grade_scale__code="US_GPA_4", label="A"
+        ).first()
+
         for application in applications:
-            if application.status.name not in {"approved", "completed", "under_review"}:
+            if application.status.name not in {
+                "approved",
+                "completed",
+                "under_review",
+                "nominated",
+            }:
                 continue
             if not application.host_academic_program_id:
                 continue
@@ -551,17 +670,74 @@ class Command(BaseCommand):
             ).first()
             if subject is None:
                 continue
+            defaults = {
+                "home_course_label": "Home equivalent course",
+                "home_course_code": "HOME101",
+                "credits": subject.credits,
+            }
+            if application.status.name == "completed" and ects_a and us_a:
+                defaults.update(
+                    {
+                        "proposed_host_grade": ects_a,
+                        "confirmed_host_grade": ects_a,
+                        "home_grade": us_a,
+                        "grade_status": ApplicationSubjectSelection.GradeStatus.CONFIRMED,
+                        "proposed_at": timezone.now() - timedelta(days=20),
+                        "proposed_by": application.student,
+                        "confirmed_at": timezone.now() - timedelta(days=15),
+                        "confirmed_by": coordinator,
+                        "confirmation_notes": "Demo confirmed host grade.",
+                    }
+                )
+            elif application.status.name == "approved" and ects_a:
+                defaults.update(
+                    {
+                        "proposed_host_grade": ects_a,
+                        "grade_status": ApplicationSubjectSelection.GradeStatus.PROPOSED,
+                        "proposed_at": timezone.now() - timedelta(days=5),
+                        "proposed_by": application.student,
+                    }
+                )
+
             ApplicationSubjectSelection.objects.update_or_create(
                 application=application,
                 host_subject=subject,
-                defaults={
-                    "home_course_label": "Home equivalent course",
-                    "home_course_code": "HOME101",
-                    "credits": subject.credits,
-                },
+                defaults=defaults,
             )
             count += 1
-        self.stdout.write(f"  Ensured {count} host subject selections")
+
+            if application.status.name in {"approved", "completed"}:
+                snap = snapshot_subject_plan(
+                    application,
+                    coordinator,
+                    trigger=ApplicationSubjectPlanVersion.Trigger.MAPPING_CHANGED,
+                )
+                if snap:
+                    version_count += 1
+                if application.status.name == "completed":
+                    snap2 = snapshot_subject_plan(
+                        application,
+                        coordinator,
+                        trigger=ApplicationSubjectPlanVersion.Trigger.GRADES_PROPOSED,
+                    )
+                    # Force a second distinct version when payload matches by
+                    # bumping notes then snapshotting grades_confirmed.
+                    selection = application.subject_selections.first()
+                    if selection and snap2 is None:
+                        selection.notes = "Demo study-plan note for version history."
+                        selection.save(update_fields=["notes", "updated_at"])
+                        snap2 = snapshot_subject_plan(
+                            application,
+                            coordinator,
+                            trigger=ApplicationSubjectPlanVersion.Trigger.GRADES_CONFIRMED,
+                        )
+                    if snap2:
+                        version_count += 1
+
+        self.stdout.write(
+            f"  Ensured {count} host subject selections "
+            f"({version_count} plan versions)"
+        )
 
     def _create_documents(self, applications, users):
         document_types = {
@@ -580,7 +756,7 @@ class Command(BaseCommand):
                     application=application,
                     doc_type=document_types["transcript"],
                     is_valid=application.status.name
-                    in {"under_review", "approved", "completed"},
+                    in {"under_review", "approved", "completed", "nominated"},
                 )
             )
 
@@ -595,7 +771,8 @@ class Command(BaseCommand):
                         is_valid=(
                             False
                             if seed_all_required_unapproved
-                            else application.status.name in {"approved", "completed"}
+                            else application.status.name
+                            in {"approved", "completed", "nominated"}
                         ),
                     )
                 )
@@ -1060,8 +1237,105 @@ class Command(BaseCommand):
                 created += 1
         self.stdout.write(f"  Ensured grade translations (+{created} new)")
 
+    def _create_toefl_practice_attempts(self, users):
+        created = 0
+        for spec in DEMO_PRACTICE_ATTEMPT_SPECS:
+            user = users.get(spec["username"])
+            if user is None:
+                continue
+            completed_at = timezone.now() - timedelta(days=spec["completed_days_ago"])
+            _, was_created = PracticeAttempt.objects.update_or_create(
+                external_session_id=spec["external_session_id"],
+                defaults={
+                    "user": user,
+                    "exam_code": spec["exam_code"],
+                    "macro_id": spec["macro_id"],
+                    "client_ref": spec["client_ref"],
+                    "earned": spec["earned"],
+                    "total": spec["total"],
+                    "percent": spec["percent"],
+                    "categories": spec["categories"],
+                    "weakest": spec["weakest"],
+                    "items": [],
+                    "completed_at": completed_at,
+                    "raw_payload": {
+                        "source": "seed_demo_readiness",
+                        "exam_code": spec["exam_code"],
+                        "earned": spec["earned"],
+                        "total": spec["total"],
+                    },
+                },
+            )
+            if was_created:
+                created += 1
+        self.stdout.write(
+            f"  Ensured TOEFL practice attempts "
+            f"({len(DEMO_PRACTICE_ATTEMPT_SPECS)} total, +{created} new)"
+        )
+
+    def _create_data_management_samples(self, users):
+        admin = users["admin"]
+        DemoDataSet.objects.update_or_create(
+            name=DEMO_DATASET_NAME,
+            defaults={
+                "description": (
+                    "Canonical showcase dataset created by seed_demo_readiness. "
+                    "Re-run that command to refresh idempotently."
+                ),
+                "data_config": {
+                    "command": "seed_demo_readiness",
+                    "cleanup_command": "cleanup_demo_data",
+                },
+                "is_active": True,
+                "created_by": admin,
+            },
+        )
+        log_specs = [
+            {
+                "operation_type": "DEMO_SETUP",
+                "model_name": "seed_demo_readiness",
+                "record_count": len(DEMO_APPLICATION_SPECS),
+                "status": "COMPLETED",
+                "operation_details": {"source": "seed_demo_readiness"},
+                "error_message": None,
+            },
+            {
+                "operation_type": "EXPORT",
+                "model_name": "Application",
+                "record_count": len(DEMO_APPLICATION_SPECS),
+                "status": "COMPLETED",
+                "operation_details": {
+                    "source": "seed_demo_readiness",
+                    "format": "JSON",
+                },
+                "error_message": None,
+            },
+            {
+                "operation_type": "IMPORT",
+                "model_name": "Program",
+                "record_count": 0,
+                "status": "FAILED",
+                "operation_details": {"source": "seed_demo_readiness"},
+                "error_message": "Demo failure sample: invalid CSV header.",
+            },
+        ]
+        for spec in log_specs:
+            existing = DataOperationLog.objects.filter(
+                user=admin,
+                operation_type=spec["operation_type"],
+                model_name=spec["model_name"],
+                operation_details__source="seed_demo_readiness",
+            ).first()
+            if existing:
+                for field, value in spec.items():
+                    setattr(existing, field, value)
+                existing.save()
+            else:
+                DataOperationLog.objects.create(user=admin, **spec)
+        self.stdout.write("  Ensured data management demo dataset and operation logs")
+
     def _notification_category(self, status_name):
-        if status_name in {"approved", "completed"}:
+        if status_name in {"approved", "completed", "nominated"}:
             return "success"
         if status_name in {"rejected", "cancelled"}:
             return "warning"

@@ -3,15 +3,20 @@ from django.test import TestCase
 
 from accounts.models import AllowedEmailDomain, User
 from application_forms.models import FormType
+from data_management.models import DataOperationLog, DemoDataSet
 from documents.models import Document, DocumentResubmissionRequest, ExchangeAgreementDocument
 from exchange.demo_seed import (
     DEMO_AGREEMENT_SPECS,
     DEMO_APPLICATION_SPECS,
     DEMO_CLOSED_WINDOW_PROGRAM,
+    DEMO_DAAD_PROGRAM_NAME,
+    DEMO_DATASET_NAME,
     DEMO_ELIGIBILITY_RULESET_NAME,
     DEMO_FORM_NAME,
     DEMO_HOST_SPECS,
     DEMO_LIFECYCLE_PROGRAM,
+    DEMO_NOMINATION_CYCLE_NAME,
+    DEMO_PRACTICE_ATTEMPT_SPECS,
     DEMO_PROGRAM_SPECS,
     DEMO_RESUBMIT_PROGRAM,
     DEMO_SUBMIT_GATE_PROGRAM,
@@ -20,10 +25,13 @@ from exchange.demo_seed import (
 )
 from exchange.models import (
     Application,
+    ApplicationSubjectPlanVersion,
     Comment,
     EligibilityRuleSet,
     ExchangeAgreement,
     HostInstitution,
+    NominationCycle,
+    NominationPartnerAllocation,
     PartnerContact,
     Program,
     SavedSearch,
@@ -32,6 +40,7 @@ from exchange.models import (
 )
 from grades.models import GradeTranslation
 from notifications.models import Notification, Reminder
+from toefl.models import PracticeAttempt
 from workflows.models import WorkflowDefinition, WorkflowInstance
 
 
@@ -67,6 +76,7 @@ class TestSeedDemoReadinessCommand(TestCase):
             statuses,
             {spec["status"] for spec in DEMO_APPLICATION_SPECS},
         )
+        self.assertIn("nominated", statuses)
 
         self.assertGreaterEqual(Document.objects.count(), len(DEMO_APPLICATION_SPECS))
         self.assertEqual(
@@ -106,6 +116,17 @@ class TestSeedDemoReadinessCommand(TestCase):
                 student__username="student_waitlist", status__name="waitlist"
             ).exists()
         )
+        pending_nom = Application.objects.get(
+            student__username="student_nominated",
+            status__name="nominated",
+        )
+        self.assertIsNone(pending_nom.partner_nomination_acknowledged_at)
+        ack_nom = Application.objects.get(
+            student__username="student_approved",
+            program__name="Erasmus+ Exchange - University of Barcelona, Spain",
+            status__name="nominated",
+        )
+        self.assertIsNotNone(ack_nom.partner_nomination_acknowledged_at)
         self.assertGreaterEqual(
             HostInstitution.objects.filter(program__name__in=DEMO_HOST_SPECS).count(),
             6,
@@ -125,8 +146,9 @@ class TestSeedDemoReadinessCommand(TestCase):
         )
         self.assertGreater(WorkflowInstance.objects.count(), 0)
         self.assertGreater(ScholarshipAward.objects.count(), 0)
-        self.assertTrue(
-            PartnerContact.objects.filter(user__username="partner").exists()
+        self.assertEqual(
+            PartnerContact.objects.filter(user__username="partner").count(),
+            2,
         )
         self.assertGreater(ExchangeAgreementDocument.objects.count(), 0)
         self.assertGreater(SavedSearch.objects.count(), 0)
@@ -135,11 +157,38 @@ class TestSeedDemoReadinessCommand(TestCase):
         self.assertTrue(
             AllowedEmailDomain.objects.filter(name="test.com", is_active=True).exists()
         )
-        daad = Program.objects.get(
-            name="DAAD Exchange - Technical University of Munich, Germany"
-        )
+        daad = Program.objects.get(name=DEMO_DAAD_PROGRAM_NAME)
         self.assertEqual(daad.enrollment_capacity, 1)
         self.assertTrue(daad.coordinators.filter(username="coordinator").exists())
+        cycle = NominationCycle.objects.get(
+            program=daad, name=DEMO_NOMINATION_CYCLE_NAME
+        )
+        self.assertTrue(cycle.is_active)
+        self.assertTrue(
+            NominationPartnerAllocation.objects.filter(cycle=cycle).exists()
+        )
+        self.assertTrue(
+            Application.objects.filter(
+                student__username="student_waitlist",
+                nomination_cycle=cycle,
+            ).exists()
+        )
+        self.assertGreater(ApplicationSubjectPlanVersion.objects.count(), 0)
+        self.assertEqual(
+            PracticeAttempt.objects.filter(
+                external_session_id__in=[
+                    s["external_session_id"] for s in DEMO_PRACTICE_ATTEMPT_SPECS
+                ]
+            ).count(),
+            len(DEMO_PRACTICE_ATTEMPT_SPECS),
+        )
+        self.assertTrue(DemoDataSet.objects.filter(name=DEMO_DATASET_NAME).exists())
+        self.assertGreaterEqual(
+            DataOperationLog.objects.filter(
+                operation_details__source="seed_demo_readiness"
+            ).count(),
+            3,
+        )
 
         closed = Program.objects.get(name=DEMO_CLOSED_WINDOW_PROGRAM)
         self.assertTrue(closed.is_active)
@@ -188,3 +237,16 @@ class TestSeedDemoReadinessCommand(TestCase):
             ).count(),
             len(DEMO_AGREEMENT_SPECS),
         )
+        self.assertEqual(
+            PracticeAttempt.objects.filter(
+                external_session_id__in=[
+                    s["external_session_id"] for s in DEMO_PRACTICE_ATTEMPT_SPECS
+                ]
+            ).count(),
+            len(DEMO_PRACTICE_ATTEMPT_SPECS),
+        )
+        self.assertEqual(
+            NominationCycle.objects.filter(name=DEMO_NOMINATION_CYCLE_NAME).count(),
+            1,
+        )
+        self.assertEqual(DemoDataSet.objects.filter(name=DEMO_DATASET_NAME).count(), 1)
