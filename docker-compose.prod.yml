@@ -278,7 +278,7 @@ services:
 
   toefl:
     build:
-      context: ${TOEFL_CONTEXT:-../GitHub/TOEFL PRACTICE/TOEFL-Practice}
+      context: ${TOEFL_CONTEXT:-../toefl-practice}
       dockerfile: Dockerfile
     container_name: seim-toefl-prod
     restart: unless-stopped

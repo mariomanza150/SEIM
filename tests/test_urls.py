@@ -40,7 +40,10 @@ class UrlConfigurationTests(TestCase):
         # SPA shell must not be cached; stale HTML keeps pointing at old hashed chunks.
         cache_control = response.headers.get("Cache-Control", "")
         self.assertTrue(
-            any(token in cache_control.lower() for token in ("no-cache", "no-store", "max-age=0")),
+            any(
+                token in cache_control.lower()
+                for token in ("no-cache", "no-store", "max-age=0")
+            ),
             f"expected no-cache Cache-Control on /seim/, got {cache_control!r}",
         )
 

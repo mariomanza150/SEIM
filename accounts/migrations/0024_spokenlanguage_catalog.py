@@ -28,7 +28,10 @@ def _build_index(languages):
 def seed_and_normalize_languages(apps, schema_editor):
     SpokenLanguage = apps.get_model("accounts", "SpokenLanguage")
     Profile = apps.get_model("accounts", "Profile")
-    Program = apps.get_model("exchange", "Program")
+    try:
+        Program = apps.get_model("exchange", "Program")
+    except LookupError:
+        Program = None
 
     seed_spoken_languages(spoken_language_model=SpokenLanguage)
     index = _build_index(
@@ -64,18 +67,19 @@ def seed_and_normalize_languages(apps, schema_editor):
             profile.additional_languages = normalized
             profile.save(update_fields=["additional_languages", "updated_at"])
 
-    for program in Program.objects.exclude(required_language__isnull=True).exclude(
-        required_language=""
-    ):
-        canonical = index.get(_norm(program.required_language))
-        if canonical and program.required_language != canonical:
-            program.required_language = canonical
-            program.save(update_fields=["required_language", "updated_at"])
+    if Program is not None:
+        for program in Program.objects.exclude(required_language__isnull=True).exclude(
+            required_language=""
+        ):
+            canonical = index.get(_norm(program.required_language))
+            if canonical and program.required_language != canonical:
+                program.required_language = canonical
+                program.save(update_fields=["required_language", "updated_at"])
 
-    Program.objects.filter(name__icontains="Maestria").update(
-        required_language=None,
-        min_language_level=None,
-    )
+        Program.objects.filter(name__icontains="Maestria").update(
+            required_language=None,
+            min_language_level=None,
+        )
 
     try:
         from exchange.views import _invalidate_program_api_caches
@@ -88,6 +92,7 @@ def seed_and_normalize_languages(apps, schema_editor):
 class Migration(migrations.Migration):
     dependencies = [
         ("accounts", "0023_deactivate_orphan_unidades"),
+        ("exchange", "0038_application_eligibility_ruleset_snapshot"),
     ]
 
     operations = [

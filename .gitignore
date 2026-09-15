@@ -299,3 +299,8 @@ branding/*/logos/*
 tests/e2e_playwright/screenshots/
 tests/e2e_playwright/videos/
 tests/e2e_playwright/reports/
+
+# Local Tailscale / TLS host certs (never commit)
+*.ts.net.crt
+*.ts.net.key
+*.ts.net.pem

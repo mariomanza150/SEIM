@@ -13,6 +13,7 @@ from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+TESTING = True
 
 # Use DATABASE_URL if available (for E2E tests in Docker), otherwise SQLite for unit tests
 import environ
