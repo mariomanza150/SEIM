@@ -9,7 +9,7 @@
       :skeleton-count="4"
       :loading-label="t('dashboard.loadingDashboard')"
     >
-    <div class="row mb-4" data-testid="dashboard-stats">
+    <div class="row mb-4" data-testid="dashboard-stats" data-tour="dashboard-stats">
       <div class="col-6 col-md-3 mb-3">
         <router-link :to="applicationsStatRoute" class="text-decoration-none">
           <div class="card text-center card-hover">

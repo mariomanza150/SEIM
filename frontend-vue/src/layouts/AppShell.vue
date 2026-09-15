@@ -43,6 +43,20 @@
 
         <ul class="navbar-nav flex-row align-items-center flex-nowrap ms-auto seim-app-shell__utilities">
           <li class="nav-item d-flex align-items-center me-1">
+            <button
+              type="button"
+              class="btn btn-outline-light btn-sm d-inline-flex align-items-center gap-1"
+              data-testid="app-shell-command-palette"
+              data-tour="command-palette"
+              :aria-label="t('commandPalette.openAria')"
+              @click="openPalette"
+            >
+              <i class="bi bi-search" aria-hidden="true" />
+              <span class="d-none d-lg-inline">{{ t('commandPalette.openLabel') }}</span>
+              <kbd class="d-none d-xl-inline seim-command-palette-kbd">{{ commandPaletteShortcut }}</kbd>
+            </button>
+          </li>
+          <li class="nav-item d-flex align-items-center me-1">
             <LocaleSwitcher
               active-class="btn-light btn-sm"
               inactive-class="btn-outline-light btn-sm"
@@ -67,6 +81,7 @@
               class="nav-link dropdown-toggle seim-nav-text-btn"
               id="spaAdminNavDropdown"
               data-testid="admin-menu"
+              data-tour="admin-menu"
               :class="{ show: adminMenuOpen, active: isAdminRouteActive }"
               :aria-expanded="adminMenuOpen ? 'true' : 'false'"
               aria-haspopup="menu"
@@ -182,6 +197,7 @@
       <div class="offcanvas-body pt-0">
         <SidebarNavList
           :sections="navSections"
+          data-tour="sidebar-nav"
           @navigate="closeSidebarOffcanvas"
         />
       </div>
@@ -192,6 +208,7 @@
         <aside
           v-show="!sidebarCollapsed"
           class="col-md-3 col-lg-2 d-none d-md-block seim-app-shell__aside"
+          data-tour="sidebar-nav"
         >
           <SidebarNavList :sections="navSections" />
         </aside>
@@ -219,6 +236,7 @@ import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import SidebarNavList from '@/components/nav/SidebarNavList.vue'
 import { useBranding } from '@/composables/useBranding'
 import { useThemeToggle } from '@/composables/useThemeToggle'
+import { useCommandPalette } from '@/composables/useCommandPalette'
 import { Offcanvas } from 'bootstrap'
 
 const SIDEBAR_COLLAPSED_KEY = 'seim.sidebarCollapsed'
@@ -257,6 +275,14 @@ const sidebarCollapsed = ref(false)
 
 const { branding, loadBranding } = useBranding()
 const { resolvedIsDark, themeToggleAria, toggleTheme: toggleNavTheme } = useThemeToggle()
+const { openPalette } = useCommandPalette()
+
+const commandPaletteShortcut = computed(() => {
+  if (typeof navigator !== 'undefined' && /Mac|iPhone|iPad|iPod/i.test(navigator.platform || '')) {
+    return '⌘K'
+  }
+  return 'Ctrl+K'
+})
 
 onMounted(() => {
   loadBranding()
@@ -584,6 +610,14 @@ async function handleLogout() {
 
 .seim-app-shell__aside {
   align-self: flex-start;
+}
+
+.seim-command-palette-kbd {
+  font-size: 0.7rem;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 0.25rem;
+  opacity: 0.9;
 }
 
 .seim-theme-toggle {

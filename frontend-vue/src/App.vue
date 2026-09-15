@@ -15,6 +15,8 @@
   </main>
   <ToastContainer />
   <ConfirmDialog />
+  <CommandPalette />
+  <ProductTour />
 </template>
 
 <script setup>
@@ -32,6 +34,8 @@ import { formatNotificationCopy } from '@/utils/notificationCopy'
 import { useBranding } from '@/composables/useBranding'
 import ToastContainer from '@/components/ToastContainer.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import CommandPalette from '@/components/CommandPalette.vue'
+import ProductTour from '@/components/ProductTour.vue'
 
 const { t, te, locale } = useI18n()
 const authStore = useAuthStore()

@@ -184,6 +184,7 @@
     "sidebarHelpTitle": "Ayuda",
     "sidebarHelpBody": "Guías de este portal, filtradas según tu rol.",
     "sidebarHelpCta": "Abrir el centro de ayuda",
+    "replayTour": "Repetir el tour del producto",
     "sidebarNoteTitle": "Nota",
     "sidebarNoteBody": "Estos ajustes se guardan en tu cuenta y se aplican en todo el portal SEIM.",
     "toastLoadError": "No se pudieron cargar los ajustes",
@@ -399,6 +400,77 @@
       "staff": "Herramientas del personal",
       "account": "Cuenta",
       "admin": "Admin"
+    }
+  },
+  "commandPalette": {
+    "ariaLabel": "Paleta de comandos",
+    "openAria": "Abrir paleta de comandos",
+    "openLabel": "Buscar",
+    "searchLabel": "Buscar comandos",
+    "searchPlaceholder": "Ir a una página o ejecutar una acción…",
+    "hint": "Usa ↑↓ para moverte, Enter para seleccionar, Esc para cerrar",
+    "resultsAria": "Resultados de comandos",
+    "empty": "No hay comandos coincidentes",
+    "sectionActions": "Acciones",
+    "actionToggleTheme": "Cambiar tema",
+    "actionOpenHelp": "Abrir centro de ayuda",
+    "actionLogout": "Cerrar sesión"
+  },
+  "tours": {
+    "progress": "Paso {current} de {total}",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "skip": "Omitir",
+    "done": "Listo",
+    "student": {
+      "steps": {
+        "sidebarTitle": "Tu navegación",
+        "sidebarBody": "Usa la barra lateral para moverte entre solicitudes, documentos y plazos.",
+        "paletteTitle": "Búsqueda rápida",
+        "paletteBody": "Pulsa Ctrl+K (⌘K en Mac) en cualquier momento para ir a una página o acción.",
+        "statsTitle": "Tu panel",
+        "statsBody": "Estas tarjetas muestran conteos de solicitudes, documentos y notificaciones.",
+        "applicationsTitle": "Solicitudes",
+        "applicationsBody": "Inicia o continúa solicitudes de intercambio desde aquí."
+      }
+    },
+    "staff": {
+      "steps": {
+        "sidebarTitle": "Herramientas del personal",
+        "sidebarBody": "La cola de revisión, carga de trabajo, convenios y nominaciones están en la barra lateral.",
+        "paletteTitle": "Búsqueda rápida",
+        "paletteBody": "Pulsa Ctrl+K para ir a la cola de revisión, herramientas de admin u otras páginas.",
+        "statsTitle": "Resumen",
+        "statsBody": "Las estadísticas del panel ayudan a ver el trabajo pendiente.",
+        "reviewTitle": "Cola de revisión",
+        "reviewBody": "Abre la cola para priorizar solicitudes. En pantallas grandes, el detalle se abre en panel dividido."
+      }
+    },
+    "admin": {
+      "steps": {
+        "sidebarTitle": "Navegación de administración",
+        "sidebarBody": "Las herramientas de personal y la consola de admin aparecen en la barra lateral si tienes acceso.",
+        "paletteTitle": "Búsqueda rápida",
+        "paletteBody": "Usa Ctrl+K para llegar rápido a programas, usuarios, flujos y formularios.",
+        "statsTitle": "Resumen",
+        "statsBody": "Supervisa el volumen de solicitudes y documentos desde el panel.",
+        "reviewTitle": "Cola de revisión",
+        "reviewBody": "Coordinadores y administradores comparten la cola de revisión.",
+        "adminTitle": "Consola de administración",
+        "adminBody": "Abre el menú de admin para programas, usuarios, flujos y datos."
+      }
+    },
+    "partner": {
+      "steps": {
+        "sidebarTitle": "Navegación de socio",
+        "sidebarBody": "El portal de socios y las herramientas de cuenta están en la barra lateral.",
+        "paletteTitle": "Búsqueda rápida",
+        "paletteBody": "Pulsa Ctrl+K para ir al portal de socios, ayuda o ajustes.",
+        "statsTitle": "Resumen",
+        "statsBody": "Las tarjetas del panel resumen elementos relevantes para tu rol de socio.",
+        "portalTitle": "Portal de socios",
+        "portalBody": "Confirma nominaciones y gestiona documentos de socio desde el portal."
+      }
     }
   },
   "adminCommon": {
@@ -1108,6 +1180,8 @@
     "colCoordinator": "Responsable",
     "colSubmitted": "Enviada",
     "openDetail": "Abrir",
+    "openFullPage": "Abrir página completa",
+    "splitPaneAria": "Vista previa de la solicitud",
     "tableAria": "Solicitudes en espera de revisión",
     "selectAllAria": "Seleccionar todas las solicitudes de esta página",
     "selectRowAria": "Seleccionar solicitud de {name}",
@@ -1721,6 +1795,7 @@
     "queuePrev": "Anterior en la cola",
     "queueNext": "Siguiente en la cola",
     "queuePosition": "{current} de {total}",
+    "openFullPage": "Abrir página completa",
     "programInfo": "Información del programa",
     "labelProgramName": "Nombre del programa",
     "unknownProgram": "Programa desconocido",

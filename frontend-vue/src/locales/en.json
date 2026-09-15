@@ -184,6 +184,7 @@
     "sidebarHelpTitle": "Help",
     "sidebarHelpBody": "Guides for this portal, filtered for your role.",
     "sidebarHelpCta": "Open help center",
+    "replayTour": "Replay product tour",
     "sidebarNoteTitle": "Note",
     "sidebarNoteBody": "These settings are saved to your account and apply across the SEIM portal.",
     "toastLoadError": "Failed to load settings",
@@ -399,6 +400,77 @@
       "staff": "Staff tools",
       "account": "Account",
       "admin": "Admin"
+    }
+  },
+  "commandPalette": {
+    "ariaLabel": "Command palette",
+    "openAria": "Open command palette",
+    "openLabel": "Search",
+    "searchLabel": "Search commands",
+    "searchPlaceholder": "Go to a page or run an action…",
+    "hint": "Use ↑↓ to move, Enter to select, Esc to close",
+    "resultsAria": "Command results",
+    "empty": "No matching commands",
+    "sectionActions": "Actions",
+    "actionToggleTheme": "Toggle theme",
+    "actionOpenHelp": "Open help center",
+    "actionLogout": "Log out"
+  },
+  "tours": {
+    "progress": "Step {current} of {total}",
+    "next": "Next",
+    "back": "Back",
+    "skip": "Skip",
+    "done": "Done",
+    "student": {
+      "steps": {
+        "sidebarTitle": "Your navigation",
+        "sidebarBody": "Use the sidebar to move between applications, documents, and deadlines.",
+        "paletteTitle": "Quick search",
+        "paletteBody": "Press Ctrl+K (⌘K on Mac) anytime to jump to a page or action.",
+        "statsTitle": "Your dashboard",
+        "statsBody": "These cards show counts for applications, documents, and notifications.",
+        "applicationsTitle": "Applications",
+        "applicationsBody": "Start or continue exchange applications from here."
+      }
+    },
+    "staff": {
+      "steps": {
+        "sidebarTitle": "Staff tools",
+        "sidebarBody": "Review queue, workload, agreements, and nominations live in the sidebar.",
+        "paletteTitle": "Quick search",
+        "paletteBody": "Press Ctrl+K to jump to review queue, admin tools, or other pages.",
+        "statsTitle": "Overview",
+        "statsBody": "Dashboard stats help you spot backlog and pending work.",
+        "reviewTitle": "Review queue",
+        "reviewBody": "Open the queue to triage applications. On large screens, details open in a split pane."
+      }
+    },
+    "admin": {
+      "steps": {
+        "sidebarTitle": "Admin navigation",
+        "sidebarBody": "Staff tools plus admin console routes appear in the sidebar when you have access.",
+        "paletteTitle": "Quick search",
+        "paletteBody": "Use Ctrl+K to reach programs, users, workflows, and forms quickly.",
+        "statsTitle": "Overview",
+        "statsBody": "Monitor volume across applications and documents from the dashboard.",
+        "reviewTitle": "Review queue",
+        "reviewBody": "Coordinators and admins share the review queue for application triage.",
+        "adminTitle": "Admin console",
+        "adminBody": "Open the admin menu for programs, users, workflows, and data tools."
+      }
+    },
+    "partner": {
+      "steps": {
+        "sidebarTitle": "Partner navigation",
+        "sidebarBody": "Partner portal and account tools are available from the sidebar.",
+        "paletteTitle": "Quick search",
+        "paletteBody": "Press Ctrl+K to jump to the partner portal, help, or settings.",
+        "statsTitle": "Overview",
+        "statsBody": "Dashboard cards summarize items relevant to your partner role.",
+        "portalTitle": "Partner portal",
+        "portalBody": "Acknowledge nominations and manage partner documents from the portal."
+      }
     }
   },
   "adminCommon": {
@@ -1108,6 +1180,8 @@
     "colCoordinator": "Responsible",
     "colSubmitted": "Submitted",
     "openDetail": "Open",
+    "openFullPage": "Open full page",
+    "splitPaneAria": "Application preview",
     "tableAria": "Applications awaiting review",
     "selectAllAria": "Select all applications on this page",
     "selectRowAria": "Select application for {name}",
@@ -1721,6 +1795,7 @@
     "queuePrev": "Previous in queue",
     "queueNext": "Next in queue",
     "queuePosition": "{current} of {total}",
+    "openFullPage": "Open full page",
     "programInfo": "Program information",
     "labelProgramName": "Program name",
     "unknownProgram": "Unknown program",

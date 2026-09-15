@@ -8,16 +8,27 @@ import api from '@/services/api'
 /**
  * Loads the primary application record for ApplicationDetail.
  * Secondary resources (timeline, documents, comments) stay in the view.
+ *
+ * @param {(() => string|number|null|undefined)|null} [resolveId] Optional id override (embedded mode).
  */
-export function useApplicationDetailLoader() {
+export function useApplicationDetailLoader(resolveId = null) {
   const route = useRoute()
   const { t } = useI18n()
   const { error: errorToast } = useToast()
   const application = shallowRef(null)
 
+  function currentId() {
+    if (typeof resolveId === 'function') {
+      const override = resolveId()
+      if (override != null && override !== '') return override
+    }
+    return route.params.id
+  }
+
   const { loading, error, run } = usePageState(
     async () => {
-      const response = await api.get(`/api/applications/${route.params.id}/`)
+      const id = currentId()
+      const response = await api.get(`/api/applications/${id}/`)
       application.value = response.data
       return response.data
     },
@@ -35,7 +46,8 @@ export function useApplicationDetailLoader() {
 
   async function softReload() {
     try {
-      const response = await api.get(`/api/applications/${route.params.id}/`)
+      const id = currentId()
+      const response = await api.get(`/api/applications/${id}/`)
       application.value = response.data
       return response.data
     } catch (err) {
@@ -50,5 +62,6 @@ export function useApplicationDetailLoader() {
     error,
     loadApplication,
     softReload,
+    currentId,
   }
 }

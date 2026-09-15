@@ -11,6 +11,7 @@
           :to="item.to"
           class="list-group-item list-group-item-action"
           active-class="active"
+          :data-tour="tourAttrFor(item.key)"
           @click="emitNavigate"
         >
           <i :class="item.iconClass" class="me-2" aria-hidden="true" />{{ item.label }}
@@ -32,6 +33,12 @@ const props = defineProps({
 
 const emit = defineEmits(['navigate'])
 
+const TOUR_ATTRS = {
+  applications: 'nav-applications',
+  reviewQueue: 'nav-review-queue',
+  partnerPortal: 'nav-partner',
+}
+
 const visibleSections = computed(() =>
   props.sections
     .filter((section) => section.isVisible !== false)
@@ -41,6 +48,10 @@ const visibleSections = computed(() =>
     }))
     .filter((section) => section.items.length > 0),
 )
+
+function tourAttrFor(key) {
+  return TOUR_ATTRS[key] || undefined
+}
 
 function emitNavigate() {
   emit('navigate')

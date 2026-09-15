@@ -1,7 +1,8 @@
 <template>
-  <div class="application-detail">
+  <div class="application-detail" :class="{ 'application-detail--embedded': embedded }">
       <!-- Breadcrumb -->
       <PageBreadcrumb
+        v-if="!embedded"
         :aria-label="t('applicationDetailPage.breadcrumbAria')"
         :items="[
           { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
@@ -71,6 +72,14 @@
                 <i class="bi bi-chevron-right" aria-hidden="true"></i>
               </button>
             </div>
+            <router-link
+              v-if="embedded"
+              :to="{ name: 'ApplicationDetail', params: { id: resolvedApplicationId } }"
+              class="btn btn-outline-primary btn-sm"
+              data-testid="application-detail-open-full"
+            >
+              {{ t('applicationDetailPage.openFullPage') }}
+            </router-link>
             <span class="badge fs-6" :class="statusClass(application.status)">
               {{ formatStatus(application.status) }}
             </span>
@@ -860,7 +869,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
@@ -893,6 +902,13 @@ import { useApplicationDisplay } from '@/composables/useApplicationDetail'
 import { useApplicationDetailLoader } from '@/composables/useApplicationDetailLoader'
 import { getReviewQueueNav, syncReviewQueueNavIndex } from '@/utils/reviewQueueNav'
 
+const props = defineProps({
+  applicationId: { type: [String, Number], default: null },
+  embedded: { type: Boolean, default: false },
+})
+
+const emit = defineEmits(['select-sibling'])
+
 const route = useRoute()
 const router = useRouter()
 const { t, te, locale } = useI18n()
@@ -900,7 +916,14 @@ const authStore = useAuthStore()
 const { success, error: errorToast } = useToast()
 const { confirm } = useConfirm()
 
-const { application, loading, error, loadApplication, softReload } = useApplicationDetailLoader()
+const resolvedApplicationId = computed(() => {
+  if (props.applicationId != null && props.applicationId !== '') return props.applicationId
+  return route.params.id
+})
+
+const { application, loading, error, loadApplication, softReload } = useApplicationDetailLoader(
+  () => resolvedApplicationId.value,
+)
 const {
   programDisplayName,
   hostInstitution,
@@ -930,7 +953,7 @@ const currentUserId = computed(() => authStore.user?.id || null)
 const canPostPrivateComment = computed(() => isCoordinator.value)
 
 const reviewQueueNav = computed(() => {
-  const id = application.value?.id || route.params.id
+  const id = application.value?.id || resolvedApplicationId.value
   if (!id) return null
   return getReviewQueueNav(id)
 })
@@ -938,6 +961,10 @@ const reviewQueueNav = computed(() => {
 function goReviewQueueSibling(id) {
   if (!id) return
   syncReviewQueueNavIndex(id)
+  if (props.embedded) {
+    emit('select-sibling', id)
+    return
+  }
   router.push({ name: 'ApplicationDetail', params: { id } })
 }
 
@@ -1165,7 +1192,7 @@ async function softRefreshFromSync() {
 
 function onApplicationSyncEvent(ev) {
   const id = ev.detail?.applicationId
-  if (!id || String(id) !== String(route.params.id)) return
+  if (!id || String(id) !== String(resolvedApplicationId.value)) return
   softRefreshFromSync()
 }
 
@@ -1439,7 +1466,7 @@ async function submitApplication() {
   if (!ok) return
 
   try {
-    await api.post(`/api/applications/${route.params.id}/submit/`)
+    await api.post(`/api/applications/${resolvedApplicationId.value}/submit/`)
     success(t('applicationDetailPage.toastSubmitted'))
     await fetchApplication()
   } catch (err) {
@@ -1463,7 +1490,7 @@ async function confirmDelete() {
 
 async function deleteApplication() {
   try {
-    await api.delete(`/api/applications/${route.params.id}/`)
+    await api.delete(`/api/applications/${resolvedApplicationId.value}/`)
     success(t('applicationDetailPage.toastDeleted'))
     router.push({ name: 'Applications' })
   } catch (err) {
@@ -1476,7 +1503,7 @@ async function updateApplicationStatus() {
   if (!reviewStatus.value) return
   try {
     updatingStatus.value = true
-    await api.patch(`/api/applications/${route.params.id}/`, { status: reviewStatus.value })
+    await api.patch(`/api/applications/${resolvedApplicationId.value}/`, { status: reviewStatus.value })
     success(t('applicationDetailPage.toastStatusUpdated'))
     reviewStatus.value = ''
     await fetchApplication()
@@ -1545,6 +1572,16 @@ onMounted(() => {
   }
 })
 
+watch(
+  () => resolvedApplicationId.value,
+  (next, prev) => {
+    if (!props.embedded) return
+    if (next == null || next === '') return
+    if (String(next) === String(prev)) return
+    fetchApplication()
+  },
+)
+
 onBeforeUnmount(() => {
   if (typeof window !== 'undefined') {
     window.removeEventListener('seim-application-sync', onApplicationSyncEvent)
@@ -1556,6 +1593,11 @@ onBeforeUnmount(() => {
 .application-detail {
   min-height: 100vh;
   background-color: var(--seim-app-bg);
+}
+
+.application-detail--embedded {
+  min-height: 0;
+  background-color: transparent;
 }
 
 .timeline {

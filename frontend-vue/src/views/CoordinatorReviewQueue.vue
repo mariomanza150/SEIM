@@ -187,6 +187,12 @@
         </template>
       </CompactFilterBar>
 
+      <div
+        class="review-queue-layout"
+        :class="{ 'review-queue-layout--split': splitEnabled && previewId }"
+        data-testid="review-queue-layout"
+      >
+      <div class="review-queue-layout__list">
       <PageStateShell
         :loading="loading"
         :error="error"
@@ -230,10 +236,14 @@
             <tr
               v-for="(app, index) in applications"
               :key="app.id"
-              :class="{ 'table-active': focusedIndex === index, 'review-queue-row--selected': isSelected(app.id) }"
+              :class="{
+                'table-active': focusedIndex === index,
+                'review-queue-row--selected': isSelected(app.id),
+                'review-queue-row--preview': isPreview(app.id),
+              }"
               :aria-selected="focusedIndex === index ? 'true' : 'false'"
               data-testid="review-queue-row"
-              @click="focusRow(index)"
+              @click="onRowActivate(index)"
             >
               <td class="review-queue-select-col" @click.stop>
                 <input
@@ -262,9 +272,9 @@
                   :to="{ name: 'ApplicationDetail', params: { id: app.id } }"
                   class="btn btn-sm btn-outline-primary"
                   data-testid="review-queue-open-detail"
-                  @click.stop
+                  @click.stop="onOpenFullPage(app.id)"
                 >
-                  {{ t('reviewQueuePage.openDetail') }}
+                  {{ splitEnabled ? t('reviewQueuePage.openFullPage') : t('reviewQueuePage.openDetail') }}
                 </router-link>
               </td>
             </tr>
@@ -291,6 +301,7 @@
             :to="{ name: 'ApplicationDetail', params: { id: app.id } }"
             class="btn btn-sm btn-outline-primary mt-3"
             data-testid="review-queue-open-detail-mobile"
+            @click="onOpenFullPage(app.id)"
           >
             {{ t('reviewQueuePage.openDetail') }}
           </router-link>
@@ -309,6 +320,22 @@
         ul-class="mt-3"
         @page-change="goToPage"
       />
+      </div>
+
+      <aside
+        v-if="splitEnabled && previewId"
+        class="review-queue-layout__detail"
+        data-testid="review-queue-split-pane"
+        :aria-label="t('reviewQueuePage.splitPaneAria')"
+      >
+        <ApplicationDetail
+          :key="previewId"
+          :application-id="previewId"
+          embedded
+          @select-sibling="selectInPane"
+        />
+      </aside>
+      </div>
 
       <div
         v-if="selectedCount > 0"
@@ -355,6 +382,7 @@ import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import Pagination from '@/components/Pagination.vue'
 import PageStateShell from '@/components/State/PageStateShell.vue'
 import ResponsiveList from '@/components/ResponsiveList.vue'
+import ApplicationDetail from '@/views/ApplicationDetail.vue'
 import {
   REVIEW_QUEUE_SEARCH_TYPE,
   deserializeReviewQueueFilters,
@@ -365,6 +393,8 @@ import { applicationStatusBadgeClass, applicationStatusFromRouteQuery } from '@/
 import { setReviewQueueNav } from '@/utils/reviewQueueNav'
 
 defineOptions({ name: 'CoordinatorReviewQueue' })
+
+const SPLIT_MQ = '(min-width: 992px)'
 
 const route = useRoute()
 const router = useRouter()
@@ -382,6 +412,9 @@ const newPresetName = ref('')
 const saveAsDefault = ref(false)
 const selectedIds = ref([])
 const focusedIndex = ref(-1)
+const previewId = ref(null)
+const splitEnabled = ref(false)
+let splitMedia = null
 
 const filters = ref({
   search: '',
@@ -423,6 +456,10 @@ function isSelected(id) {
   return selectedIds.value.includes(id)
 }
 
+function isPreview(id) {
+  return previewId.value != null && String(previewId.value) === String(id)
+}
+
 function toggleSelect(id) {
   if (selectedIds.value.includes(id)) {
     selectedIds.value = selectedIds.value.filter((x) => x !== id)
@@ -445,9 +482,32 @@ function clearSelection() {
   selectedIds.value = []
 }
 
+function updateSplitEnabled() {
+  splitEnabled.value = Boolean(splitMedia?.matches)
+}
+
+function selectInPane(id) {
+  if (id == null) return
+  const next = String(id)
+  previewId.value = next
+  const ids = applications.value.length ? applications.value.map((app) => app.id) : [id]
+  setReviewQueueNav(ids, id)
+  const query = { ...route.query, selected: next }
+  router.replace({ query })
+}
+
 function focusRow(index) {
   if (index < 0 || index >= applications.value.length) return
   focusedIndex.value = index
+}
+
+function onRowActivate(index) {
+  focusRow(index)
+  const app = applications.value[index]
+  if (!app) return
+  if (splitEnabled.value) {
+    selectInPane(app.id)
+  }
 }
 
 function moveFocus(delta) {
@@ -459,6 +519,15 @@ function moveFocus(delta) {
         : applications.value.length - 1
       : Math.min(applications.value.length - 1, Math.max(0, focusedIndex.value + delta))
   focusedIndex.value = next
+  if (splitEnabled.value) {
+    const app = applications.value[next]
+    if (app) selectInPane(app.id)
+  }
+}
+
+function onOpenFullPage(id) {
+  const ids = applications.value.length ? applications.value.map((app) => app.id) : [id]
+  setReviewQueueNav(ids, id)
 }
 
 function openApplication(id, queueIds = null) {
@@ -467,6 +536,10 @@ function openApplication(id, queueIds = null) {
     queueIds ||
     (applications.value.length ? applications.value.map((app) => app.id) : [id])
   setReviewQueueNav(ids, id)
+  if (splitEnabled.value) {
+    selectInPane(id)
+    return
+  }
   router.push({ name: 'ApplicationDetail', params: { id } })
 }
 
@@ -552,12 +625,30 @@ async function fetchApplications(page = 1) {
         pageSize: pagination.value.pageSize,
       }
     }
+    syncPreviewFromQuery()
   } catch (err) {
     const msg = t('reviewQueuePage.loadError')
     error.value = msg
     errorToast(msg)
   } finally {
     loading.value = false
+  }
+}
+
+function syncPreviewFromQuery() {
+  const selected = route.query.selected
+  if (selected == null || selected === '') {
+    if (!splitEnabled.value) previewId.value = null
+    return
+  }
+  previewId.value = String(selected)
+  const idx = applications.value.findIndex((app) => String(app.id) === String(selected))
+  if (idx >= 0) focusedIndex.value = idx
+  if (applications.value.length) {
+    setReviewQueueNav(
+      applications.value.map((app) => app.id),
+      selected,
+    )
   }
 }
 
@@ -676,6 +767,11 @@ function formatDate(dateString) {
 }
 
 onMounted(async () => {
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    splitMedia = window.matchMedia(SPLIT_MQ)
+    updateSplitEnabled()
+    splitMedia.addEventListener('change', updateSplitEnabled)
+  }
   window.addEventListener('keydown', onQueueKeydown)
   await loadPresets()
   const defaultPreset = savedPresets.value.find((p) => p.is_default)
@@ -686,6 +782,9 @@ onMounted(async () => {
   if (statusFromQuery) {
     filters.value.status = statusFromQuery
   }
+  if (route.query.selected != null && route.query.selected !== '') {
+    previewId.value = String(route.query.selected)
+  }
   await fetchApplications(1)
 })
 
@@ -695,12 +794,34 @@ onActivated(() => {
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onQueueKeydown)
+  if (splitMedia) {
+    splitMedia.removeEventListener('change', updateSplitEnabled)
+    splitMedia = null
+  }
 })
 </script>
 
 <style scoped>
 .review-queue-page {
   padding-bottom: 4.5rem;
+}
+
+.review-queue-layout--split {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.review-queue-layout__detail {
+  position: sticky;
+  top: 4.5rem;
+  max-height: calc(100vh - 5.5rem);
+  overflow: auto;
+  border: 1px solid var(--seim-border-color, #dee2e6);
+  border-radius: 0.5rem;
+  background: var(--seim-surface-bg, #fff);
+  padding: 0.75rem;
 }
 
 .review-queue-select-col {
@@ -710,6 +831,11 @@ onUnmounted(() => {
 
 .review-queue-row--selected {
   background-color: color-mix(in srgb, var(--bs-primary, #0d6efd) 8%, transparent);
+}
+
+.review-queue-row--preview {
+  outline: 2px solid color-mix(in srgb, var(--bs-primary, #0d6efd) 45%, transparent);
+  outline-offset: -2px;
 }
 
 .review-queue-selection-bar {

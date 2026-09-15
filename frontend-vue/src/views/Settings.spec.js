@@ -84,7 +84,7 @@ describe('Settings', () => {
     localStorage.clear()
   })
 
-  it('exposes accessible loading spinner label while fetching', async () => {
+  it('shows card skeletons while fetching settings', async () => {
     let resolveGet
     api.get.mockImplementation(
       () =>
@@ -93,13 +93,12 @@ describe('Settings', () => {
         }),
     )
     const wrapper = mountView()
-    const spinner = wrapper.find('.spinner-border')
-    expect(spinner.exists()).toBe(true)
-    expect(spinner.attributes('role')).toBe('status')
-    expect(spinner.attributes('aria-label')).toBe(i18n.global.t('settings.loading'))
+    expect(wrapper.find('.placeholder').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="settings-theme"]').exists()).toBe(false)
     resolveGet({ data: defaultSettingsPayload })
     await flushPromises()
-    expect(wrapper.find('.spinner-border').exists()).toBe(false)
+    expect(wrapper.find('.placeholder').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="settings-theme"]').exists()).toBe(true)
   })
 
   it('binds label[for], name, and autocomplete on appearance and digest selects', async () => {

@@ -49,9 +49,9 @@ Core (apply, review, documents, partner portal, admin catalogs/forms/workflows) 
 
 **Tier 3 — later / optional**
 
-- Command palette for staff/admin.
-- Review-queue split pane.
-- First-run tours.
+- ~~Command palette for staff/admin.~~ — shipped (Ctrl/Cmd+K + navbar search; role-filtered routes/actions).
+- ~~Review-queue split pane.~~ — shipped (desktop `lg+` list + embedded detail via `?selected=`; mobile keeps full-page open).
+- ~~First-run tours.~~ — shipped (role-based ProductTour; Settings replay; `localStorage` completion).
 - CMS ↔ SPA token alignment; unlinked `ProgramPage` Compare already known.
 - Mobile native app — reject; PWA/responsive SPA is enough.
 - Deprecated (stay rejected): e-sign, document intelligence, BI warehouse.
@@ -78,4 +78,4 @@ There is no student sessions SPA page (old SSR is unmounted). Bookmarks go to Se
 
 ## Suggested next increment
 
-**Tier 2:** full manual a11y audit (WCAG), then staff review of partner-uploaded documents (P3 Remaining). Skip Calendar OAuth / hub / warehouse unless an explicit product bet.
+**Tier 2:** full manual a11y audit (WCAG), then staff review of partner-uploaded documents (P3 Remaining). Skip Calendar OAuth / hub / warehouse unless an explicit product bet. Tier 3 command palette, review-queue split pane, and first-run tours are shipped.

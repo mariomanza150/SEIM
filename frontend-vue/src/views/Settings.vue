@@ -368,9 +368,19 @@
             <div class="card-header"><h6 class="mb-0"><i class="bi bi-question-circle me-2"></i>{{ t('settings.sidebarHelpTitle') }}</h6></div>
             <div class="card-body small">
               <p class="mb-3">{{ t('settings.sidebarHelpBody') }}</p>
-              <router-link :to="{ name: 'HelpCenter' }" class="btn btn-outline-primary btn-sm" data-testid="settings-help-link">
-                {{ t('settings.sidebarHelpCta') }}
-              </router-link>
+              <div class="d-flex flex-wrap gap-2">
+                <router-link :to="{ name: 'HelpCenter' }" class="btn btn-outline-primary btn-sm" data-testid="settings-help-link">
+                  {{ t('settings.sidebarHelpCta') }}
+                </router-link>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  data-testid="settings-replay-tour"
+                  @click="replayProductTour"
+                >
+                  {{ t('settings.replayTour') }}
+                </button>
+              </div>
             </div>
           </div>
           <div class="card">
@@ -399,15 +409,33 @@ import { applyUiPreferences } from '@/services/uiPreferences'
 import { setAppLocale } from '@/i18n'
 import router from '@/router'
 import { resolveDocumentTitle, syncAppSocialMeta } from '@/utils/documentTitle'
+import { useProductTour } from '@/composables/useProductTour'
+import {
+  clearTourCompletion,
+  resolveTourRole,
+  tourIdForRole,
+  tourStorageUserKey,
+} from '@/utils/tourDefinitions'
 
 const authStore = useAuthStore()
 const route = useRoute()
 const { t, locale } = useI18n()
+const { openTour } = useProductTour()
 
 function onLocaleChange() {
   setAppLocale(locale.value)
   document.title = resolveDocumentTitle(router.currentRoute.value)
   syncAppSocialMeta(t, router.currentRoute.value)
+}
+
+function replayProductTour() {
+  if (!authStore.isAuthenticated) return
+  const userKey = tourStorageUserKey(authStore.user)
+  if (!userKey) return
+  const role = resolveTourRole(authStore)
+  const tourId = tourIdForRole(role)
+  clearTourCompletion(userKey, tourId)
+  openTour({ role, tourId, force: true })
 }
 
 const { success, error: errorToast } = useToast()
