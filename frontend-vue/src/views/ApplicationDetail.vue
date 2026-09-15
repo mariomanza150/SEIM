@@ -32,6 +32,45 @@
           icon-class="bi bi-file-earmark-text"
         >
           <template #actions>
+            <div
+              v-if="reviewQueueNav"
+              class="btn-group"
+              role="group"
+              :aria-label="t('applicationDetailPage.queuePosition', {
+                current: reviewQueueNav.index + 1,
+                total: reviewQueueNav.ids.length,
+              })"
+              data-testid="review-queue-nav"
+            >
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                data-testid="review-queue-prev"
+                :disabled="!reviewQueueNav.prevId"
+                @click="goReviewQueueSibling(reviewQueueNav.prevId)"
+              >
+                <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                {{ t('applicationDetailPage.queuePrev') }}
+              </button>
+              <span class="btn btn-outline-secondary btn-sm disabled" data-testid="review-queue-position">
+                {{
+                  t('applicationDetailPage.queuePosition', {
+                    current: reviewQueueNav.index + 1,
+                    total: reviewQueueNav.ids.length,
+                  })
+                }}
+              </span>
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm"
+                data-testid="review-queue-next"
+                :disabled="!reviewQueueNav.nextId"
+                @click="goReviewQueueSibling(reviewQueueNav.nextId)"
+              >
+                {{ t('applicationDetailPage.queueNext') }}
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </button>
+            </div>
             <span class="badge fs-6" :class="statusClass(application.status)">
               {{ formatStatus(application.status) }}
             </span>
@@ -852,6 +891,7 @@ import {
 } from '@/utils/formatters'
 import { useApplicationDisplay } from '@/composables/useApplicationDetail'
 import { useApplicationDetailLoader } from '@/composables/useApplicationDetailLoader'
+import { getReviewQueueNav, syncReviewQueueNavIndex } from '@/utils/reviewQueueNav'
 
 const route = useRoute()
 const router = useRouter()
@@ -888,6 +928,18 @@ const submitBlockedTitle = computed(() => {
 
 const currentUserId = computed(() => authStore.user?.id || null)
 const canPostPrivateComment = computed(() => isCoordinator.value)
+
+const reviewQueueNav = computed(() => {
+  const id = application.value?.id || route.params.id
+  if (!id) return null
+  return getReviewQueueNav(id)
+})
+
+function goReviewQueueSibling(id) {
+  if (!id) return
+  syncReviewQueueNavIndex(id)
+  router.push({ name: 'ApplicationDetail', params: { id } })
+}
 
 const comments = ref([])
 const commentsLoading = ref(false)

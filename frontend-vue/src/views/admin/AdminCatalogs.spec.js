@@ -30,6 +30,7 @@ async function mountPage() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'Dashboard', component: { template: '<div />' } },
+      { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
       { path: '/admin/catalogs', name: 'AdminCatalogs', component: AdminCatalogs },
       { path: '/admin/programs', name: 'AdminPrograms', component: { template: '<div />' } },
       {

@@ -82,6 +82,15 @@
       skeleton="table"
       :skeleton-columns="4"
     >
+      <template #emptyActions>
+        <router-link
+          :to="{ name: 'CoordinatorReviewQueue' }"
+          class="btn btn-primary"
+          data-testid="nominations-empty-cta"
+        >
+          {{ t('nominationsPage.emptyCtaReviewQueue') }}
+        </router-link>
+      </template>
       <ResponsiveList
         v-if="rows.length"
         :items="rows"

@@ -1,6 +1,6 @@
 # UX themes and good-to-haves
 
-_Captured 2026-08-20 from the polish backlog (not a rebuild). Canonical product state: [`gap-audit-2026-08-20.md`](gap-audit-2026-08-20.md), [`feature-tracking.md`](feature-tracking.md), [`ui-audit/`](ui-audit/). April UI audit is stale in places (dark-mode page bg, PDF preview recovery); re-verify before treating old P0/P1 as open. Admin console (`/seim/admin/*`) was never in that audit._
+_Captured 2026-08-20 from the polish backlog (not a rebuild). Updated 2026-08-31 after Tier 0+1 remaining polish. Canonical product state: [`gap-audit-2026-08-20.md`](gap-audit-2026-08-20.md), [`feature-tracking.md`](feature-tracking.md), [`ui-audit/`](ui-audit/). April UI audit is stale in places (dark-mode page bg, PDF preview recovery); re-verify before treating old P0/P1 as open. Admin console (`/seim/admin/*`) was never in that audit._
 
 Core (apply, review, documents, partner portal, admin catalogs/forms/workflows) is **Implemented**. Open MQ list is empty. Treat this as **polish + expansion**, not MVP.
 
@@ -20,19 +20,21 @@ Core (apply, review, documents, partner portal, admin catalogs/forms/workflows) 
 
 **Tier 0 — cheap UX wins**
 
-- Collapsible/sticky compact filters on Applications, Documents, Notifications, Review queue, Agreements, Agreement documents ([`ui-audit/p1-deferred.md`](ui-audit/p1-deferred.md)).
-- Breadcrumb truncation + shared styling (application detail program name).
-- Re-verify workflow editor Validate overlay + form-builder label focus ([gap audit unfiled nits](gap-audit-2026-08-20.md)); ship only if still broken.
-- Empty-state copy on workload, nominations, admin catalogs.
-- Admin console pass: `AdminWorkflowEditor.vue`, `AdminDynformEditor.vue`, catalogs hub — overlay z-index, focus, save affordances.
+- ~~Collapsible/sticky compact filters on Applications, Documents, Notifications, Review queue, Agreements, Agreement documents~~ — shipped (`CompactFilterBar`).
+- ~~Breadcrumb truncation + shared styling (application detail program name)~~ — shipped (`PageBreadcrumb` truncate).
+- ~~Re-verify workflow editor Validate overlay + form-builder label focus~~ — re-verified 2026-08-31; overlay z-index + label focus already fixed; no further change.
+- ~~Empty-state copy on workload, nominations, admin catalogs~~ — shipped 2026-08-31 (CTAs + create form visible when catalogs empty).
+- ~~Admin console pass: `AdminWorkflowEditor.vue`, `AdminDynformEditor.vue`, catalogs hub~~ — overlay/focus/save already in place; catalogs empty CTA shipped 2026-08-31.
+- ~~Confirm dialog i18n defaults + focus trap~~ — shipped 2026-08-31.
+- ~~ToeflPractice on `PageStateShell`~~ — shipped 2026-08-31.
 
 **Tier 1 — daily use**
 
-- **SSR vs SPA:** Preferences → Settings; leftover sessions / coordinator overview / analytics bookmarks → SPA (see mapping below). Stop dual theming.
-- Student apply: collapse program filters so program select is above the fold ([`ui-audit/pages/application-form.md`](ui-audit/pages/application-form.md)).
-- Eligibility “fix list”: ordered gaps with links to Profile / upload.
-- Document checklist as a persistent progress rail on application detail.
-- Staff review: multi-select + next/prev (not in tracker).
+- ~~**SSR vs SPA:** Preferences → Settings; leftover sessions / coordinator overview / analytics bookmarks → SPA~~ — shipped (Vue redirects + `core/legacy_spa_urls.py` + analytics HTML views redirect to forecasts/dashboard).
+- ~~Student apply: collapse program filters so program select is above the fold~~ — shipped (program select first; filters in collapsed advanced).
+- ~~Eligibility “fix list”: ordered gaps with links to Profile / upload~~ — shipped (`EligibilityFixList`).
+- ~~Document checklist as a persistent progress rail on application detail~~ — shipped (`DocumentProgressRail`).
+- ~~Staff review: multi-select + next/prev~~ — multi-select shipped earlier; detail prev/next via `sessionStorage` queue nav shipped 2026-08-31.
 - ~~Scholarship ruleset editor~~ — shipped 2026-08-20 (factor max weights MVP; formula/workflow hooks deferred).
 
 **Tier 2 — already in tracker**
@@ -76,4 +78,4 @@ There is no student sessions SPA page (old SSR is unmounted). Bookmarks go to Se
 
 ## Suggested next increment
 
-One **density + wayfinding** slice: shared compact filter bar + breadcrumb component on the six list pages + application form program panel. No new product features.
+**Tier 2:** full manual a11y audit (WCAG), then staff review of partner-uploaded documents (P3 Remaining). Skip Calendar OAuth / hub / warehouse unless an explicit product bet.

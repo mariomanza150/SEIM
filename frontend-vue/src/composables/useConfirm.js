@@ -1,21 +1,30 @@
 import { reactive, readonly } from 'vue'
+import i18n from '@/i18n'
 
 const state = reactive({
   open: false,
   title: '',
   message: '',
-  confirmText: 'OK',
-  cancelText: 'Cancel',
+  confirmText: '',
+  cancelText: '',
   variant: 'danger', // 'danger' | 'primary'
   resolve: null,
 })
+
+function defaultConfirmText() {
+  return i18n.global.t('common.ok')
+}
+
+function defaultCancelText() {
+  return i18n.global.t('common.cancel')
+}
 
 export function useConfirm() {
   function confirm({
     title = '',
     message = '',
-    confirmText = 'OK',
-    cancelText = 'Cancel',
+    confirmText,
+    cancelText,
     variant = 'danger',
   } = {}) {
     // If a dialog is already open, resolve it as cancelled.
@@ -26,8 +35,8 @@ export function useConfirm() {
     state.open = true
     state.title = title
     state.message = message
-    state.confirmText = confirmText
-    state.cancelText = cancelText
+    state.confirmText = confirmText || defaultConfirmText()
+    state.cancelText = cancelText || defaultCancelText()
     state.variant = variant === 'primary' ? 'primary' : 'danger'
 
     return new Promise((resolve) => {
@@ -50,4 +59,3 @@ export function resolveConfirm(result) {
   state.resolve = null
   if (typeof resolve === 'function') resolve(Boolean(result))
 }
-

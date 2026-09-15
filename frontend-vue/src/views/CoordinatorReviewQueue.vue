@@ -362,6 +362,7 @@ import {
 } from '@/utils/reviewQueuePresets'
 import { resolveListPage } from '@/utils/listPage'
 import { applicationStatusBadgeClass, applicationStatusFromRouteQuery } from '@/utils/formatters'
+import { setReviewQueueNav } from '@/utils/reviewQueueNav'
 
 defineOptions({ name: 'CoordinatorReviewQueue' })
 
@@ -460,8 +461,12 @@ function moveFocus(delta) {
   focusedIndex.value = next
 }
 
-function openApplication(id) {
+function openApplication(id, queueIds = null) {
   if (id == null) return
+  const ids =
+    queueIds ||
+    (applications.value.length ? applications.value.map((app) => app.id) : [id])
+  setReviewQueueNav(ids, id)
   router.push({ name: 'ApplicationDetail', params: { id } })
 }
 
@@ -472,8 +477,9 @@ function openFocused() {
 
 function openSelected() {
   const ordered = applications.value.filter((app) => selectedIds.value.includes(app.id))
+  const ids = ordered.map((app) => app.id)
   const first = ordered[0] || applications.value.find((app) => selectedIds.value.includes(app.id))
-  if (first) openApplication(first.id)
+  if (first) openApplication(first.id, ids.length ? ids : null)
 }
 
 function toggleFocusedSelect() {

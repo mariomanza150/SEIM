@@ -33,56 +33,7 @@
       </li>
     </ul>
 
-    <PageStateShell
-      :loading="loading"
-      :error="error || ''"
-      :empty="activeTab === 'destinations' ? !programs.length : !items.length"
-      :empty-title="activeTab === 'destinations' ? t('adminCatalogs.destinationsEmpty') : t('adminCatalogs.empty')"
-      skeleton="table"
-      :loading-label="t('adminCommon.loading')"
-      :skeleton-columns="5"
-    >
-    <template v-if="activeTab === 'destinations'">
-      <p class="text-muted">{{ t('adminCatalogs.destinationsHelp') }}</p>
-      <div class="card">
-        <ResponsiveList :items="programs" :columns="destinationMobileColumns" mobile-test-id="admin-catalogs-destinations-mobile">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0" data-testid="admin-catalogs-destinations">
-            <thead>
-              <tr>
-                <th scope="col">{{ t('adminCatalogs.fields.name') }}</th>
-                <th scope="col" class="text-end">{{ t('adminCommon.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="program in programs" :key="program.id">
-                <td class="fw-medium">{{ program.name }}</td>
-                <td class="text-end text-nowrap">
-                  <router-link
-                    class="btn btn-sm btn-outline-secondary"
-                    :to="{ name: 'AdminProgramDestinations', params: { id: program.id } }"
-                  >
-                    <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ t('adminCatalogs.openDestinations') }}
-                  </router-link>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <template #col-name="{ item }">{{ item.name }}</template>
-        <template #actions="{ item }">
-          <router-link
-            class="btn btn-sm btn-outline-secondary"
-            :to="{ name: 'AdminProgramDestinations', params: { id: item.id } }"
-          >
-            <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ t('adminCatalogs.openDestinations') }}
-          </router-link>
-        </template>
-        </ResponsiveList>
-      </div>
-    </template>
-
-    <template v-else>
+    <template v-if="activeTab !== 'destinations' && !loading && !error">
       <p v-if="activeTab === 'domains'" class="text-muted">{{ t('adminCatalogs.domainHelp') }}</p>
 
       <form class="card mb-3" data-testid="admin-catalogs-create" @submit.prevent="createItem">
@@ -132,7 +83,77 @@
           </div>
         </div>
       </form>
+    </template>
 
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      :empty="activeTab === 'destinations' ? !programs.length : !items.length"
+      :empty-title="activeTab === 'destinations' ? t('adminCatalogs.destinationsEmpty') : t('adminCatalogs.empty')"
+      skeleton="table"
+      :loading-label="t('adminCommon.loading')"
+      :skeleton-columns="5"
+    >
+      <template #emptyActions>
+        <button
+          v-if="activeTab !== 'destinations'"
+          type="button"
+          class="btn btn-primary"
+          data-testid="admin-catalogs-empty-cta"
+          @click="focusCreateForm"
+        >
+          {{ t('adminCatalogs.emptyCtaCreate') }}
+        </button>
+        <router-link
+          v-else
+          :to="{ name: 'AdminPrograms' }"
+          class="btn btn-primary"
+          data-testid="admin-catalogs-empty-programs-cta"
+        >
+          {{ t('adminCatalogs.emptyCtaPrograms') }}
+        </router-link>
+      </template>
+    <template v-if="activeTab === 'destinations'">
+      <p class="text-muted">{{ t('adminCatalogs.destinationsHelp') }}</p>
+      <div class="card">
+        <ResponsiveList :items="programs" :columns="destinationMobileColumns" mobile-test-id="admin-catalogs-destinations-mobile">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" data-testid="admin-catalogs-destinations">
+            <thead>
+              <tr>
+                <th scope="col">{{ t('adminCatalogs.fields.name') }}</th>
+                <th scope="col" class="text-end">{{ t('adminCommon.actions') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="program in programs" :key="program.id">
+                <td class="fw-medium">{{ program.name }}</td>
+                <td class="text-end text-nowrap">
+                  <router-link
+                    class="btn btn-sm btn-outline-secondary"
+                    :to="{ name: 'AdminProgramDestinations', params: { id: program.id } }"
+                  >
+                    <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ t('adminCatalogs.openDestinations') }}
+                  </router-link>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <template #col-name="{ item }">{{ item.name }}</template>
+        <template #actions="{ item }">
+          <router-link
+            class="btn btn-sm btn-outline-secondary"
+            :to="{ name: 'AdminProgramDestinations', params: { id: item.id } }"
+          >
+            <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ t('adminCatalogs.openDestinations') }}
+          </router-link>
+        </template>
+        </ResponsiveList>
+      </div>
+    </template>
+
+    <template v-else>
       <div class="card">
         <ResponsiveList :items="items" :columns="catalogMobileColumns" mobile-test-id="admin-catalogs-mobile">
         <div class="table-responsive">
@@ -348,6 +369,14 @@ function aliasesToText(value) {
 
 function resetDraft() {
   Object.assign(draft, emptyDraft())
+}
+
+function focusCreateForm() {
+  const input = document.getElementById('catalog-create-name')
+  if (input) {
+    input.focus()
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 }
 
 function normalizeApiList(data) {

@@ -236,6 +236,10 @@ describe('CoordinatorReviewQueue', () => {
     expect(wrapper.find('[data-testid="review-queue-selection-count"]').text()).toContain('2')
     await wrapper.find('[data-testid="review-queue-open-selected"]').trigger('click')
     expect(routerPush).toHaveBeenCalledWith({ name: 'ApplicationDetail', params: { id: 11 } })
+    expect(JSON.parse(sessionStorage.getItem('seim.reviewQueue.nav'))).toMatchObject({
+      ids: ['11', '22'],
+      index: 0,
+    })
     await wrapper.find('[data-testid="review-queue-clear-selection"]').trigger('click')
     expect(wrapper.find('[data-testid="review-queue-selection-bar"]').exists()).toBe(false)
     wrapper.unmount()

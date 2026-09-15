@@ -28,10 +28,23 @@
     <PageStateShell
       :loading="loading"
       :error="error"
+      :empty="!loading && !error && isZeroWorkload"
+      :empty-title="t('workloadPage.emptyTitle')"
+      :empty-body="t('workloadPage.emptyBody')"
+      empty-test-id="workload-empty"
       :loading-label="t('workloadPage.loading')"
       skeleton="stats"
       :skeleton-count="4"
     >
+      <template #emptyActions>
+        <router-link
+          :to="{ name: 'CoordinatorReviewQueue' }"
+          class="btn btn-primary"
+          data-testid="workload-empty-cta"
+        >
+          {{ t('workloadPage.emptyCtaReviewQueue') }}
+        </router-link>
+      </template>
       <template v-if="data">
         <h3 class="h5 mb-3">{{ t('workloadPage.yourWorkload') }}</h3>
         <div class="row g-3 mb-4">
@@ -152,6 +165,15 @@ const { error: errorToast } = useToast()
 const loading = ref(true)
 const error = ref('')
 const data = ref(null)
+
+const isZeroWorkload = computed(() => {
+  const you = data.value?.you
+  if (!you) return false
+  return (
+    Number(you.assigned_pending_review || 0) === 0 &&
+    Number(you.coordinated_programs_pending || 0) === 0
+  )
+})
 
 const distributionColumns = computed(() => [
   { key: 'display_name', label: t('workloadPage.colCoordinator') },

@@ -75,6 +75,7 @@ async function flushPromises() {
 describe('ApplicationDetail', () => {
   beforeEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
     setAppLocale('en')
     setActivePinia(createPinia())
     vi.clearAllMocks()
@@ -83,6 +84,7 @@ describe('ApplicationDetail', () => {
   afterEach(() => {
     setAppLocale('en')
     localStorage.clear()
+    sessionStorage.clear()
   })
 
   it('renders existing comments with author metadata', async () => {
@@ -984,5 +986,28 @@ describe('ApplicationDetail', () => {
     expect(wrapper.find('[data-testid="document-progress-rail"]').exists()).toBe(true)
     expect(wrapper.findAll('[data-testid="document-progress-rail-due-item"]')).toHaveLength(1)
     expect(wrapper.findAll('[data-testid="document-progress-rail-later-item"]')).toHaveLength(1)
+  })
+
+  it('shows review-queue prev/next when sessionStorage queue includes current id', async () => {
+    sessionStorage.setItem(
+      'seim.reviewQueue.nav',
+      JSON.stringify({ ids: ['prev-app', 'test-app', 'next-app'], index: 1 }),
+    )
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({ data: applicationPayload })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="review-queue-nav"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="review-queue-position"]').text()).toContain('2 of 3')
+    await wrapper.find('[data-testid="review-queue-next"]').trigger('click')
+    expect(mockPush).toHaveBeenCalledWith({ name: 'ApplicationDetail', params: { id: 'next-app' } })
   })
 })
