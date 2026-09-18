@@ -124,6 +124,8 @@ services:
       - DJANGO_ENV=production
       - DEBUG=False
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
+      - ALLOW_ANY_HOST=${ALLOW_ANY_HOST:-1}
       - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
@@ -156,6 +158,8 @@ services:
       - DJANGO_ENV=production
       - DEBUG=False
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
+      - ALLOW_ANY_HOST=${ALLOW_ANY_HOST:-1}
       - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0

@@ -124,6 +124,7 @@
         } catch (e) {}
         var resolvedTheme = resolveShellTheme(themePref)
         document.documentElement.dataset.theme = resolvedTheme
+        document.documentElement.setAttribute('data-bs-theme', resolvedTheme)
         document.documentElement.dataset.themePreference = themePref
         var tc = document.querySelector('meta[name="theme-color"]')
         if (tc) tc.setAttribute('content', resolvedTheme === 'dark' ? THEME_DARK : THEME_LIGHT)

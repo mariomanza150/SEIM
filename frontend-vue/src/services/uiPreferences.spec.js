@@ -38,11 +38,19 @@ describe('uiPreferences', () => {
     })
 
     expect(document.documentElement.dataset.theme).toBe('dark')
+    expect(document.documentElement.getAttribute('data-bs-theme')).toBe('dark')
     expect(document.documentElement.dataset.themePreference).toBe('dark')
     expect(document.documentElement.dataset.fontSize).toBe('x-large')
     expect(document.documentElement.dataset.highContrast).toBe('true')
     expect(document.documentElement.dataset.reduceMotion).toBe('true')
     expect(document.documentElement.style.fontSize).toBe('20px')
+  })
+
+  it('clears data-bs-theme when preferences are cleared', () => {
+    applyUiPreferences({ theme: 'dark', font_size: 'normal' })
+    expect(document.documentElement.getAttribute('data-bs-theme')).toBe('dark')
+    clearUiPreferences()
+    expect(document.documentElement.getAttribute('data-bs-theme')).toBeNull()
   })
 
   it('persists and reloads stored preferences', () => {

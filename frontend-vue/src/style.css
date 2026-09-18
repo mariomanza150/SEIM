@@ -331,6 +331,47 @@ html[data-theme='dark'] .alert-light {
   border-color: var(--seim-border-color);
 }
 
+/* Match Django accessibility.css so semantic alerts stay readable on dark surfaces */
+html[data-theme='dark'] .alert-success {
+  --bs-alert-color: #75b798;
+  --bs-alert-bg: #051b11;
+  --bs-alert-border-color: #198754;
+  --bs-alert-link-color: #75b798;
+  color: var(--bs-alert-color);
+  background-color: var(--bs-alert-bg);
+  border-color: var(--bs-alert-border-color);
+}
+
+html[data-theme='dark'] .alert-warning {
+  --bs-alert-color: #ffda6a;
+  --bs-alert-bg: #332701;
+  --bs-alert-border-color: #ffc107;
+  --bs-alert-link-color: #ffda6a;
+  color: var(--bs-alert-color);
+  background-color: var(--bs-alert-bg);
+  border-color: var(--bs-alert-border-color);
+}
+
+html[data-theme='dark'] .alert-danger {
+  --bs-alert-color: #ea868f;
+  --bs-alert-bg: #2c0b0e;
+  --bs-alert-border-color: #dc3545;
+  --bs-alert-link-color: #ea868f;
+  color: var(--bs-alert-color);
+  background-color: var(--bs-alert-bg);
+  border-color: var(--bs-alert-border-color);
+}
+
+html[data-theme='dark'] .alert-info {
+  --bs-alert-color: #6edff6;
+  --bs-alert-bg: #032830;
+  --bs-alert-border-color: #0dcaf0;
+  --bs-alert-link-color: #6edff6;
+  color: var(--bs-alert-color);
+  background-color: var(--bs-alert-bg);
+  border-color: var(--bs-alert-border-color);
+}
+
 html[data-theme='dark'] .form-control,
 html[data-theme='dark'] .form-select {
   background-color: #111827;

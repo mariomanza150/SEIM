@@ -133,6 +133,7 @@ describe('frontend-vue/index.html', () => {
       },
     })
     expect(dom.window.document.documentElement.dataset.theme).toBe('dark')
+    expect(dom.window.document.documentElement.getAttribute('data-bs-theme')).toBe('dark')
     expect(dom.window.document.documentElement.dataset.themePreference).toBe('dark')
   })
 
