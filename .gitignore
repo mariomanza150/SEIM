@@ -53,6 +53,10 @@ coverage.xml
 cover/
 test_docs/
 test_output.txt
+test-out.txt
+test-out*.txt
+test-vitest-out*.txt
+*-probe.pdf
 test_deployment_*.log
 test_app_*.txt
 temp_*.txt
