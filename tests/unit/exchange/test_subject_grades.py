@@ -320,8 +320,10 @@ class TestSubjectGradeWorkflow:
 
         pdf = render_carta_homologacion_pdf(application)
         assert pdf[:4] == b"%PDF"
-        assert b"HostA" in pdf
-        assert b"HomeA" in pdf
+        # FS-HM layout markers + filled origen/destino course cells.
+        assert b"CGRI-MAT" in pdf
+        assert b"Algoritmos" in pdf
+        assert b"H101" in pdf
 
         student_propose_again = student_api.post(
             f"/api/applications/{application.id}/propose-subject-grades/"

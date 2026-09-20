@@ -36,7 +36,7 @@ def persist_carta_homologacion(application, user) -> bytes:
     from documents.pdf_generation import render_carta_homologacion_pdf
 
     pdf_bytes = render_carta_homologacion_pdf(application)
-    filename = f"carta_homologacion_{application.id}.pdf"
+    filename = f"FS-HM_Homologacion_Materias_{application.id}.pdf"
     doc_type = DocumentType.objects.filter(slug="carta_homologacion").first()
     if doc_type is None:
         doc_type, _ = DocumentType.objects.get_or_create(

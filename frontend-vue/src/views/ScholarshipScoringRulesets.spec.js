@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import ScholarshipScoringRulesets from './ScholarshipScoringRulesets.vue'
 import api from '@/services/api'
@@ -30,23 +30,39 @@ const sampleRow = {
   },
 }
 
+const teleportStub = { template: '<div><slot /></div>' }
+
+function mountPage(extraStubs = {}) {
+  return mount(ScholarshipScoringRulesets, {
+    global: {
+      plugins: [i18n],
+      stubs: {
+        RouterLink: { template: '<a><slot /></a>' },
+        PageHeader: { template: '<div><slot /><slot name="actions" /></div>' },
+        Teleport: teleportStub,
+        ...extraStubs,
+      },
+    },
+    attachTo: document.body,
+  })
+}
+
 describe('ScholarshipScoringRulesets', () => {
+  let wrapper
+
   beforeEach(() => {
     setAppLocale('en')
     vi.clearAllMocks()
     api.get.mockResolvedValue({ data: { results: [sampleRow] } })
   })
 
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+  })
+
   it('lists rulesets for staff', async () => {
-    const wrapper = mount(ScholarshipScoringRulesets, {
-      global: {
-        plugins: [i18n],
-        stubs: {
-          RouterLink: { template: '<a><slot /></a>' },
-          PageHeader: { template: '<div><slot /><slot name="actions" /></div>' },
-        },
-      },
-    })
+    wrapper = mountPage()
     await flushPromises()
     expect(wrapper.find('[data-testid="scholarship-scoring-rulesets-page"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Default scholarship rubric (v1)')
@@ -54,37 +70,23 @@ describe('ScholarshipScoringRulesets', () => {
   })
 
   it('opens editor with factor weight inputs', async () => {
-    const wrapper = mount(ScholarshipScoringRulesets, {
-      global: {
-        plugins: [i18n],
-        stubs: {
-          RouterLink: { template: '<a><slot /></a>' },
-          PageHeader: { template: '<div><slot /><slot name="actions" /></div>' },
-        },
-      },
-    })
+    wrapper = mountPage()
     await flushPromises()
     await wrapper.find('[data-testid="scholarship-ruleset-edit"]').trigger('click')
-    expect(wrapper.find('[data-testid="scholarship-ruleset-editor"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="form-modal"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="scholarship-weight-academic"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="scholarship-ruleset-mvp-note"]').exists()).toBe(true)
   })
 
   it('patches factor weights on save', async () => {
-    api.patch.mockResolvedValue({ data: { ...sampleRow, factor_weights: { ...sampleRow.factor_weights, academic: 30 } } })
-    const wrapper = mount(ScholarshipScoringRulesets, {
-      global: {
-        plugins: [i18n],
-        stubs: {
-          RouterLink: { template: '<a><slot /></a>' },
-          PageHeader: { template: '<div><slot /><slot name="actions" /></div>' },
-        },
-      },
+    api.patch.mockResolvedValue({
+      data: { ...sampleRow, factor_weights: { ...sampleRow.factor_weights, academic: 30 } },
     })
+    wrapper = mountPage()
     await flushPromises()
     await wrapper.find('[data-testid="scholarship-ruleset-edit"]').trigger('click')
     await wrapper.find('[data-testid="scholarship-weight-academic"]').setValue(30)
-    await wrapper.find('form').trigger('submit.prevent')
+    await wrapper.find('[data-testid="form-modal-submit"]').trigger('click')
     await flushPromises()
     expect(api.patch).toHaveBeenCalled()
     const [url, payload] = api.patch.mock.calls[0]
@@ -95,16 +97,10 @@ describe('ScholarshipScoringRulesets', () => {
 
   it('localizes chrome in Spanish', async () => {
     setAppLocale('es')
-    const wrapper = mount(ScholarshipScoringRulesets, {
-      global: {
-        plugins: [i18n],
-        stubs: {
-          RouterLink: { template: '<a><slot /></a>' },
-          PageHeader: {
-            props: ['title'],
-            template: '<div><h1>{{ title }}</h1><slot name="actions" /><slot /></div>',
-          },
-        },
+    wrapper = mountPage({
+      PageHeader: {
+        props: ['title'],
+        template: '<div><h1>{{ title }}</h1><slot name="actions" /><slot /></div>',
       },
     })
     await flushPromises()

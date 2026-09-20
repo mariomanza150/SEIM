@@ -224,5 +224,6 @@ REST_FRAMEWORK = {
         "anon": "1000/hour",
         "user": "10000/hour",
         "burst": "1000/minute",  # Keep burst rate definition to avoid KeyError
+        "resend_verification": "1000/hour",
     },
 }

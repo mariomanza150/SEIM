@@ -15,7 +15,7 @@
         />
       </template>
       <template #actions>
-        <div class="card border-secondary-subtle" style="min-width: 280px">
+        <div class="card border-secondary-subtle w-100" style="max-width: 22rem; min-width: min(280px, 100%)">
           <div class="card-body py-3">
             <div class="fw-semibold mb-2">
               <i class="bi bi-rss me-1" aria-hidden="true" />{{ t('calendarPage.subscribeHeading') }}
@@ -94,7 +94,7 @@
             <div class="col-12 border-top pt-3 mt-2">
               <span class="form-label small text-muted d-block mb-2">{{ t('calendarPage.savedViewsLabel') }}</span>
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
-                <div class="flex-grow-1" style="min-width: 200px">
+                <div class="flex-grow-1 seim-min-w-filter">
                   <input
                     v-model="newPresetName"
                     type="text"

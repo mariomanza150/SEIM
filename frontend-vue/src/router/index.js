@@ -9,6 +9,7 @@ import i18n from '@/i18n'
 import { resolveDocumentTitle, syncAppSocialMeta, syncCanonicalLink } from '@/utils/documentTitle'
 import { resolveAuthenticatedNavigation } from '@/router/authNavigation'
 import { routeBusy } from '@/router/routeBusy'
+import { useFeatures } from '@/composables/useFeatures'
 
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
@@ -55,6 +56,7 @@ const AdminWorkflowEditor = () => import('@/views/admin/AdminWorkflowEditor.vue'
 const AdminDocuments = () => import('@/views/admin/AdminDocuments.vue')
 const AdminDocumentTypeEdit = () => import('@/views/admin/AdminDocumentTypeEdit.vue')
 const AdminApplicationEdit = () => import('@/views/admin/AdminApplicationEdit.vue')
+const AdminFeatures = () => import('@/views/admin/AdminFeatures.vue')
 const HelpCenter = () => import('@/views/HelpCenter.vue')
 const HelpArticle = () => import('@/views/HelpArticle.vue')
 const ToeflPractice = () => import('@/views/ToeflPractice.vue')
@@ -236,7 +238,7 @@ const routes = [
         path: 'scholarship-scoring-rulesets',
         name: 'ScholarshipScoringRulesets',
         component: ScholarshipScoringRulesets,
-        meta: { staffReviewQueue: true },
+        meta: { staffReviewQueue: true, scholarshipsFeature: true },
       },
       {
         path: 'nominations',
@@ -358,6 +360,12 @@ const routes = [
         meta: { adminOnly: true },
       },
       {
+        path: 'admin/features',
+        name: 'AdminFeatures',
+        component: AdminFeatures,
+        meta: { adminOnly: true },
+      },
+      {
         path: 'admin/applications/:id',
         name: 'AdminApplicationEdit',
         component: AdminApplicationEdit,
@@ -390,7 +398,11 @@ router.beforeEach(async (to, from, next) => {
 
   const requiresAuth = to.matched.some((r) => r.meta && r.meta.requiresAuth)
   if (requiresAuth) {
-    const outcome = await resolveAuthenticatedNavigation(to, authStore)
+    const { loadFeatures, scholarshipsEnabled } = useFeatures()
+    await loadFeatures()
+    const outcome = await resolveAuthenticatedNavigation(to, authStore, {
+      scholarshipsEnabled: scholarshipsEnabled.value,
+    })
     if (outcome === 'login') {
       next({ name: 'Login', query: { redirect: to.fullPath } })
       return

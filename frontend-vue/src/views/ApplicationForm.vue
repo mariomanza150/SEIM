@@ -280,7 +280,7 @@
                     </template>
                     <template #presets>
                         <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
-                          <div class="flex-grow-1" style="min-width: 200px">
+                          <div class="flex-grow-1 seim-min-w-filter">
                             <label class="form-label small text-muted mb-1">{{ t('applicationFormPage.savePresetLabel') }}</label>
                             <div class="input-group input-group-sm">
                               <input
@@ -431,7 +431,20 @@
                       <label for="host-school" class="form-label">
                         {{ t('applicationFormPage.hostSchoolLabel') }} <span class="text-danger">*</span>
                       </label>
+                      <input
+                        v-if="hostSchoolNeedsFreeText"
+                        id="host-school"
+                        v-model="form.host_school_name"
+                        type="text"
+                        class="form-control"
+                        :class="{ 'is-invalid': errors.host_school || errors.host_school_name }"
+                        :placeholder="t('applicationFormPage.hostSchoolFreeTextPlaceholder')"
+                        data-testid="host-school-input"
+                        maxlength="255"
+                        required
+                      >
                       <select
+                        v-else
                         id="host-school"
                         v-model="form.host_school"
                         class="form-select"
@@ -444,18 +457,35 @@
                           {{ school.name }}
                         </option>
                       </select>
+                      <div v-if="hostSchoolNeedsFreeText" class="form-text">
+                        {{ t('applicationFormPage.hostSchoolFreeTextHelp') }}
+                      </div>
                       <div v-if="hostSchoolsLoading" class="form-text">
                         {{ t('applicationFormPage.loadingHostSchools') }}
                       </div>
-                      <div v-if="errors.host_school" class="invalid-feedback d-block">
-                        {{ flattenFieldMessages(errors.host_school).join(' ') }}
+                      <div v-if="errors.host_school || errors.host_school_name" class="invalid-feedback d-block">
+                        {{ flattenFieldMessages(errors.host_school || errors.host_school_name).join(' ') }}
                       </div>
                     </div>
                     <div class="col-md-6">
                       <label for="host-academic-program" class="form-label">
                         {{ t('applicationFormPage.hostAcademicProgramLabel') }} <span class="text-danger">*</span>
                       </label>
+                      <input
+                        v-if="hostAcademicProgramNeedsFreeText"
+                        id="host-academic-program"
+                        v-model="form.host_academic_program_name"
+                        type="text"
+                        class="form-control"
+                        :class="{ 'is-invalid': errors.host_academic_program || errors.host_academic_program_name }"
+                        :placeholder="t('applicationFormPage.hostAcademicProgramFreeTextPlaceholder')"
+                        data-testid="host-academic-program-input"
+                        maxlength="255"
+                        :disabled="!form.host_institution || (!hostSchoolNeedsFreeText && !form.host_school)"
+                        required
+                      >
                       <select
+                        v-else
                         id="host-academic-program"
                         v-model="form.host_academic_program"
                         class="form-select"
@@ -472,11 +502,14 @@
                           {{ ap.code ? `${ap.name} (${ap.code})` : ap.name }}
                         </option>
                       </select>
+                      <div v-if="hostAcademicProgramNeedsFreeText" class="form-text">
+                        {{ t('applicationFormPage.hostAcademicProgramFreeTextHelp') }}
+                      </div>
                       <div v-if="hostAcademicProgramsLoading" class="form-text">
                         {{ t('applicationFormPage.loadingHostAcademicPrograms') }}
                       </div>
-                      <div v-if="errors.host_academic_program" class="invalid-feedback d-block">
-                        {{ flattenFieldMessages(errors.host_academic_program).join(' ') }}
+                      <div v-if="errors.host_academic_program || errors.host_academic_program_name" class="invalid-feedback d-block">
+                        {{ flattenFieldMessages(errors.host_academic_program || errors.host_academic_program_name).join(' ') }}
                       </div>
                     </div>
                   </div>
@@ -761,9 +794,10 @@
                               {{ documentStepStatusLabel(row.status) }}
                             </span>
                             <button
-                              v-if="row.has_template && isEditMode && route.params.id"
+                              v-if="row.has_template && isEditMode && route.params.id && row.status !== 'approved'"
                               type="button"
                               class="btn btn-sm btn-outline-secondary"
+                              data-testid="download-step-template"
                               @click="downloadStepTemplate(row)"
                             >
                               {{ t('applicationFormPage.downloadTemplate') }}
@@ -942,6 +976,7 @@ import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
 import { flattenFieldMessages } from '@/utils/apiErrors'
 import { unwrapPaginatedResults } from '@/utils/apiList'
+import { filenameFromContentDisposition } from '@/utils/documentApi'
 import {
   applyServerValidationErrors,
   catalogId,
@@ -1037,6 +1072,8 @@ const form = ref({
   host_institution: '',
   host_school: '',
   host_academic_program: '',
+  host_school_name: '',
+  host_academic_program_name: '',
 })
 const {
   hostInstitutions,
@@ -1046,6 +1083,8 @@ const {
   hostSchoolsLoading,
   hostAcademicProgramsLoading,
   hostDestinationConfigured,
+  hostSchoolNeedsFreeText,
+  hostAcademicProgramNeedsFreeText,
   fetchHostInstitutions,
   fetchHostSchools,
   fetchHostAcademicPrograms,
@@ -1466,6 +1505,7 @@ function documentStepStatusLabel(status) {
 }
 
 async function downloadStepTemplate(row) {
+  if (row?.status === 'approved') return
   const typeId = row?.id
   const appId = route.params.id
   if (!typeId || !appId) return
@@ -1478,7 +1518,10 @@ async function downloadStepTemplate(row) {
     const objectUrl = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = objectUrl
-    a.download = row.name || 'template'
+    a.download = filenameFromContentDisposition(
+      response.headers?.['content-disposition'],
+      `${row.name || 'template'}.docx`,
+    )
     a.rel = 'noopener noreferrer'
     document.body.appendChild(a)
     a.click()
@@ -1734,6 +1777,8 @@ async function fetchApplication() {
       host_institution: response.data.host_institution || '',
       host_school: response.data.host_school || '',
       host_academic_program: response.data.host_academic_program || '',
+      host_school_name: '',
+      host_academic_program_name: '',
     }
     applicationStatus.value = response.data.status || ''
     applyApplicationVisibilityFromResponse(response.data)
@@ -1855,12 +1900,46 @@ async function scrollToFirstValidationAlert() {
   }
 }
 
+function validateHostDestinationClient() {
+  if (!hostDestinationConfigured.value || !form.value.host_institution) return true
+  const nextErrors = { ...errors.value }
+  let ok = true
+  if (hostSchoolNeedsFreeText.value) {
+    if (!String(form.value.host_school_name || '').trim()) {
+      nextErrors.host_school_name = [t('applicationFormPage.hostSchoolFreeTextPlaceholder')]
+      ok = false
+    }
+  } else if (!form.value.host_school) {
+    nextErrors.host_school = [t('applicationFormPage.selectHostSchool')]
+    ok = false
+  }
+  if (hostAcademicProgramNeedsFreeText.value) {
+    if (!String(form.value.host_academic_program_name || '').trim()) {
+      nextErrors.host_academic_program_name = [
+        t('applicationFormPage.hostAcademicProgramFreeTextPlaceholder'),
+      ]
+      ok = false
+    }
+  } else if (!form.value.host_academic_program) {
+    nextErrors.host_academic_program = [t('applicationFormPage.selectHostAcademicProgram')]
+    ok = false
+  }
+  if (!ok) errors.value = nextErrors
+  return ok
+}
+
 async function handleSubmit() {
   errors.value = {}
   dynamicFormErrors.value = []
 
   if (!(await persistProfileEligibility())) {
     errorToast(t('applicationFormPage.toastFixErrors'))
+    return
+  }
+
+  if (!validateHostDestinationClient()) {
+    errorToast(t('applicationFormPage.toastFixErrors'))
+    await scrollToFirstValidationAlert()
     return
   }
 
@@ -2112,6 +2191,8 @@ watch(
     form.value.host_institution = ''
     form.value.host_school = ''
     form.value.host_academic_program = ''
+    form.value.host_school_name = ''
+    form.value.host_academic_program_name = ''
     await fetchHostInstitutions(programId)
   },
 )
@@ -2123,6 +2204,8 @@ watch(
     if (String(institutionId || '') === String(prev || '')) return
     form.value.host_school = ''
     form.value.host_academic_program = ''
+    form.value.host_school_name = ''
+    form.value.host_academic_program_name = ''
     await fetchHostSchools(institutionId)
   },
 )
@@ -2133,6 +2216,7 @@ watch(
     if (suppressHostCascadeReset) return
     if (String(schoolId || '') === String(prev || '')) return
     form.value.host_academic_program = ''
+    form.value.host_academic_program_name = ''
     await fetchHostAcademicPrograms(schoolId)
   },
 )

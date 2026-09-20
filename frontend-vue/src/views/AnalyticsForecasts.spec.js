@@ -75,6 +75,7 @@ describe('AnalyticsForecasts', () => {
     expect(wrapper.text()).toContain('Erasmus')
     expect(wrapper.text()).toContain('4')
     expect(api.get).toHaveBeenCalledWith('/api/admin/dashboard/forecasts/', { params: {} })
+    await wrapper.find('[data-testid="compact-filter-advanced-toggle"]').trigger('click')
     expect(wrapper.find('[data-testid="forecasts-preset-name"]').attributes('placeholder')).toBe(
       i18n.global.t('analyticsForecastsPage.presetNamePlaceholder'),
     )
@@ -111,6 +112,7 @@ describe('AnalyticsForecasts', () => {
     expect(api.get).toHaveBeenCalledWith('/api/admin/dashboard/forecasts/', {
       params: { program: 'p1' },
     })
+    await wrapper.find('[data-testid="compact-filter-advanced-toggle"]').trigger('click')
     expect(wrapper.find('[data-testid="forecasts-preset-apply"]').text()).toBe('Erasmus only')
   })
 })

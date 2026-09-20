@@ -10,7 +10,24 @@ import i18n, { setAppLocale } from '@/i18n'
 
 vi.mock('@/services/api', () => ({
   default: {
-    get: vi.fn().mockResolvedValue({ data: { results: [], count: 0 } }),
+    get: vi.fn().mockImplementation((url) => {
+      if (url === '/api/features/') {
+        return Promise.resolve({ data: { scholarships_enabled: true } })
+      }
+      if (url === '/api/branding/') {
+        return Promise.resolve({
+          data: {
+            logo_url: '',
+            nav_brand: 'SEIM',
+            short_name: 'SEIM',
+            name: 'SEIM',
+            theme_css: 'uadec/theme.css',
+            theme: {},
+          },
+        })
+      }
+      return Promise.resolve({ data: { results: [], count: 0 } })
+    }),
     patch: vi.fn().mockResolvedValue({ data: {} }),
   },
 }))
@@ -21,14 +38,16 @@ vi.mock('bootstrap', () => ({
   },
 }))
 
+const authStoreMock = {
+  userName: 'Sofia Martinez',
+  isAdmin: false,
+  canUseStaffReviewQueue: false,
+  canUsePartnerPortal: false,
+  logout: vi.fn().mockResolvedValue(undefined),
+}
+
 vi.mock('@/stores/auth', () => ({
-  useAuthStore: () => ({
-    userName: 'Sofia Martinez',
-    isAdmin: false,
-    canUseStaffReviewQueue: false,
-    canUsePartnerPortal: false,
-    logout: vi.fn().mockResolvedValue(undefined),
-  }),
+  useAuthStore: () => authStoreMock,
 }))
 
 const routeNames = [
@@ -63,6 +82,7 @@ const routeNames = [
   'AdminDataManagement',
   'AdminWorkflows',
   'AdminDocuments',
+  'AdminFeatures',
 ]
 
 function makeRouter() {
@@ -92,8 +112,9 @@ describe('AppShell navbar', () => {
     localStorage.clear()
   })
 
-  async function mountShell() {
+  async function mountShell(startName = 'Dashboard') {
     const router = makeRouter()
+    await router.push({ name: startName })
     const wrapper = mount(AppShell, {
       attachTo: document.body,
       global: {
@@ -105,11 +126,11 @@ describe('AppShell navbar', () => {
     })
     await router.isReady()
     await flushPromises()
-    return wrapper
+    return { wrapper, router }
   }
 
   it('always shows notifications and the user name outside the collapse', async () => {
-    const wrapper = await mountShell()
+    const { wrapper } = await mountShell()
     expect(wrapper.find('.navbar-collapse').exists()).toBe(false)
     expect(wrapper.find('[data-testid="notifications-menu"]').exists()).toBe(true)
     expect(wrapper.get('[data-testid="user-menu"]').text()).toContain('Sofia Martinez')
@@ -117,7 +138,7 @@ describe('AppShell navbar', () => {
   })
 
   it('uses navbar-expand so utility dropdowns overlay instead of stretching the bar', async () => {
-    const wrapper = await mountShell()
+    const { wrapper } = await mountShell()
     const nav = wrapper.get('[data-testid="app-shell"] .navbar')
     expect(nav.classes()).toContain('navbar-expand')
     expect(nav.classes()).toContain('seim-app-shell__navbar')
@@ -135,7 +156,7 @@ describe('AppShell navbar', () => {
   })
 
   it('opens the user menu on click', async () => {
-    const wrapper = await mountShell()
+    const { wrapper } = await mountShell()
     const toggle = wrapper.get('[data-testid="user-menu"]')
     expect(toggle.attributes('aria-expanded')).toBe('false')
 
@@ -148,8 +169,20 @@ describe('AppShell navbar', () => {
     wrapper.unmount()
   })
 
+  it('logs out and navigates to the Login route', async () => {
+    authStoreMock.logout.mockClear()
+    const { wrapper, router } = await mountShell('Dashboard')
+    await wrapper.get('[data-testid="user-menu"]').trigger('click')
+    await wrapper.get('[data-testid="logout-link"]').trigger('click')
+    await flushPromises()
+
+    expect(authStoreMock.logout).toHaveBeenCalled()
+    expect(router.currentRoute.value.name).toBe('Login')
+    wrapper.unmount()
+  })
+
   it('shows Help in the primary sidebar nav', async () => {
-    const wrapper = await mountShell()
+    const { wrapper } = await mountShell()
     const helpLinks = wrapper.findAll('a').filter((a) => a.text().includes('Help'))
     expect(helpLinks.length).toBeGreaterThan(0)
     expect(helpLinks[0].attributes('href')).toContain('/HelpCenter')

@@ -13,7 +13,7 @@
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" :disabled="busy" @click="reload">
-          <i class="bi bi-arrow-clockwise me-1"></i>{{ t('adminCommon.refresh') }}
+          <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>{{ t('adminCommon.refresh') }}
         </button>
       </template>
     </PageHeader>
@@ -24,31 +24,50 @@
       skeleton="none"
       :loading-label="t('adminCommon.loading')"
     >
-      <div class="card mb-3" data-testid="add-university-card">
-        <div class="card-header fw-medium">{{ t('adminProgramDestinations.addUniversity') }}</div>
+      <div class="card mb-4 shadow-sm" data-testid="add-university-card">
+        <div class="card-header d-flex flex-wrap align-items-center gap-2">
+          <span class="fw-medium">{{ t('adminProgramDestinations.addUniversity') }}</span>
+          <span class="text-muted small ms-md-auto">{{ t('adminProgramDestinations.addUniversityHint') }}</span>
+        </div>
         <div class="card-body">
-          <div class="row g-2 align-items-end">
+          <div class="row g-3 align-items-end">
             <div class="col-md-4">
               <label class="form-label">{{ t('adminProgramDestinations.name') }}</label>
-              <input v-model="newUni.name" class="form-control" type="text">
+              <SearchableSelect
+                :model-value="newUni.name"
+                :options="newUniNameOptions"
+                :placeholder="t('adminProgramDestinations.namePlaceholder')"
+                :disabled="busy"
+                allow-custom
+                data-testid="add-university-name"
+                @update:model-value="onNewUniNameUpdate"
+                @query-change="onNewUniNameQuery"
+              />
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('adminProgramDestinations.country') }}</label>
               <SearchableSelect
                 v-model="newUni.country"
-                :options="countryOptions"
+                :options="filteredNewUniCountries"
                 :placeholder="t('adminProgramDestinations.countryPlaceholder')"
                 :disabled="busy"
+                data-testid="add-university-country"
+                @update:model-value="onNewUniCountryChange"
               />
             </div>
             <div class="col-md-3">
               <label class="form-label">{{ t('adminProgramDestinations.gradeScale') }}</label>
-              <select v-model="newUni.grade_scale" class="form-select">
-                <option value="">{{ t('adminProgramDestinations.noGradeScale') }}</option>
-                <option v-for="scale in gradeScales" :key="scale.id" :value="scale.id">
-                  {{ scale.name }}
-                </option>
-              </select>
+              <SearchableSelect
+                :model-value="newUni.grade_scale"
+                :options="newUniGradeScaleOptions"
+                :placeholder="t('adminProgramDestinations.gradeScalePlaceholder')"
+                :disabled="busy"
+                data-testid="add-university-grade-scale"
+                @update:model-value="onNewUniGradeScaleUpdate"
+              />
+              <div v-if="newUni.country && !filteredNewUniScales.length" class="form-text text-muted">
+                {{ t('adminProgramDestinations.noMatchingGradeScales') }}
+              </div>
             </div>
             <div class="col-md-2">
               <button
@@ -58,150 +77,258 @@
                 :disabled="busy || !newUni.name.trim() || !newUni.country"
                 @click="createUniversity"
               >
-                {{ t('adminCommon.save') }}
+                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{{ t('adminCommon.save') }}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <div v-if="!institutions.length" class="alert alert-light border">
-        {{ t('adminProgramDestinations.empty') }}
+      <div v-if="institutions.length" class="row g-2 align-items-end mb-3">
+        <div class="col-md-6">
+          <label class="form-label" for="destinations-search">{{ t('adminCommon.searchLabel') }}</label>
+          <input
+            id="destinations-search"
+            v-model="listSearch"
+            class="form-control"
+            type="search"
+            data-testid="destinations-search"
+            :placeholder="t('adminProgramDestinations.searchPlaceholder')"
+          >
+        </div>
+        <div class="col-md-6 text-md-end text-muted small pb-2">
+          {{ t('adminProgramDestinations.listCount', { shown: filteredInstitutions.length, total: institutions.length }) }}
+        </div>
+      </div>
+
+      <div v-if="!institutions.length" class="alert alert-light border" data-testid="destinations-empty">
+        <div class="fw-medium mb-1">{{ t('adminProgramDestinations.empty') }}</div>
+        <div class="text-muted small">{{ t('adminProgramDestinations.emptyHint') }}</div>
       </div>
 
       <div
-        v-for="inst in institutions"
-        :key="inst.id"
-        class="card mb-3"
-        :data-testid="`institution-${inst.id}`"
+        v-else-if="!filteredInstitutions.length"
+        class="alert alert-light border"
+        data-testid="destinations-search-empty"
       >
-        <div class="card-header d-flex flex-wrap gap-2 align-items-center">
-          <strong class="me-auto">{{ inst.name }}</strong>
-          <span class="badge" :class="inst.is_active ? 'bg-success' : 'bg-secondary'">
-            {{ inst.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}
+        {{ t('adminProgramDestinations.searchEmpty') }}
+      </div>
+
+      <CollapsibleCard
+        v-for="inst in filteredInstitutions"
+        :key="inst.id"
+        :default-open="filteredInstitutions.length <= 3"
+        :test-id="`institution-${inst.id}`"
+        title-class="mb-0 fw-medium text-truncate"
+        compact-header
+      >
+        <template #title>
+          <span class="d-inline-flex flex-wrap align-items-center gap-2 min-w-0">
+            <span class="text-truncate">{{ inst.name }}</span>
+            <span v-if="inst.country" class="badge text-bg-light border fw-normal">{{ inst.country }}</span>
+            <span
+              class="badge"
+              :class="inst.is_active ? 'bg-success' : 'bg-secondary'"
+            >
+              {{ inst.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}
+            </span>
           </span>
-          <button type="button" class="btn btn-sm btn-outline-secondary" @click="toggleActive(inst)">
+        </template>
+        <template #header-extra>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            :disabled="busy"
+            @click.stop="toggleActive(inst)"
+          >
             {{ inst.is_active ? t('adminProgramDestinations.deactivate') : t('adminProgramDestinations.activate') }}
           </button>
-        </div>
-        <div class="card-body">
-          <div class="row g-2 mb-3">
-            <div class="col-md-4">
-              <label class="form-label">{{ t('adminProgramDestinations.name') }}</label>
-              <input v-model="inst.name" class="form-control" @change="saveInstitution(inst)">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">{{ t('adminProgramDestinations.country') }}</label>
-              <SearchableSelect
-                v-model="inst.country"
-                :options="countryOptions"
-                :placeholder="t('adminProgramDestinations.countryPlaceholder')"
-                :disabled="busy"
-                @update:model-value="saveInstitution(inst)"
-              />
-            </div>
-            <div class="col-md-5">
-              <label class="form-label">{{ t('adminProgramDestinations.gradeScale') }}</label>
-              <select v-model="inst.grade_scale" class="form-select" @change="saveInstitution(inst)">
-                <option value="">{{ t('adminProgramDestinations.noGradeScale') }}</option>
-                <option v-for="scale in gradeScales" :key="scale.id" :value="scale.id">
-                  {{ scale.name }}
-                </option>
-              </select>
-            </div>
-          </div>
+        </template>
 
-          <h6>{{ t('adminProgramDestinations.universitySubjects') }}</h6>
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label">{{ t('adminProgramDestinations.name') }}</label>
+            <input v-model="inst.name" class="form-control" :disabled="busy" @change="saveInstitution(inst)">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">{{ t('adminProgramDestinations.country') }}</label>
+            <SearchableSelect
+              v-model="inst.country"
+              :options="countryOptions"
+              :placeholder="t('adminProgramDestinations.countryPlaceholder')"
+              :disabled="busy"
+              @update:model-value="onInstitutionCountryChange(inst)"
+            />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">{{ t('adminProgramDestinations.gradeScale') }}</label>
+            <SearchableSelect
+              :model-value="inst.grade_scale || ''"
+              :options="gradeScaleOptionsFor(inst.country, inst.grade_scale)"
+              :placeholder="t('adminProgramDestinations.gradeScalePlaceholder')"
+              :disabled="busy"
+              @update:model-value="(value) => onInstitutionGradeScaleUpdate(inst, value)"
+            />
+          </div>
+        </div>
+
+        <h6 class="text-uppercase text-muted small fw-semibold mb-2">
+          {{ t('adminProgramDestinations.universitySubjects') }}
+        </h6>
+        <SubjectEditor
+          :subjects="subjectsByParent.institution[inst.id] || []"
+          parent-level="institution"
+          :busy="busy"
+          @create="(payload) => createSubject({ ...payload, institution: inst.id })"
+          @toggle="toggleSubject"
+        />
+
+        <h6 class="text-uppercase text-muted small fw-semibold mt-4 mb-2">
+          {{ t('adminProgramDestinations.schools') }}
+        </h6>
+        <div class="row g-2 mb-3 align-items-end">
+          <div class="col-md-7">
+            <label class="form-label visually-hidden">
+              {{ t('adminProgramDestinations.newSchool') }}
+            </label>
+            <SearchableSelect
+              :model-value="schoolDrafts[inst.id] || ''"
+              :options="schoolNameOptions"
+              :placeholder="t('adminProgramDestinations.newSchool')"
+              :disabled="busy"
+              allow-custom
+              @update:model-value="(value) => { schoolDrafts[inst.id] = decodePlainName(value) }"
+            />
+          </div>
+          <div class="col-md-5 col-lg-3">
+            <button
+              type="button"
+              class="btn btn-outline-primary w-100"
+              :disabled="busy || !(schoolDrafts[inst.id] || '').trim()"
+              @click="createSchool(inst)"
+            >
+              <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{{ t('adminProgramDestinations.addSchool') }}
+            </button>
+          </div>
+        </div>
+
+        <div
+          v-for="school in schoolsByInst[inst.id] || []"
+          :key="school.id"
+          class="border rounded-3 p-3 mb-3 seim-surface-muted"
+        >
+          <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+            <input
+              v-model="school.name"
+              class="form-control flex-grow-1"
+              style="min-width: 12rem"
+              :disabled="busy"
+              @change="saveSchool(school)"
+            >
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              :disabled="busy"
+              @click="toggleActive(school, 'school')"
+            >
+              {{ school.is_active ? t('adminProgramDestinations.deactivate') : t('adminProgramDestinations.activate') }}
+            </button>
+          </div>
           <SubjectEditor
-            :subjects="subjectsByParent.institution[inst.id] || []"
-            parent-level="institution"
+            :subjects="subjectsByParent.school[school.id] || []"
+            parent-level="school"
             :busy="busy"
-            @create="(payload) => createSubject({ ...payload, institution: inst.id })"
+            @create="(payload) => createSubject({ ...payload, institution: inst.id, school: school.id })"
             @toggle="toggleSubject"
           />
-
-          <h6 class="mt-4">{{ t('adminProgramDestinations.schools') }}</h6>
-          <div class="row g-2 mb-2">
-            <div class="col-md-6">
-              <input v-model="schoolDrafts[inst.id]" class="form-control" :placeholder="t('adminProgramDestinations.newSchool')">
+          <div class="row g-2 mt-3 align-items-end">
+            <div class="col-md-7">
+              <SearchableSelect
+                :model-value="programDrafts[school.id] || ''"
+                :options="academicProgramNameOptions"
+                :placeholder="t('adminProgramDestinations.newProgram')"
+                :disabled="busy"
+                allow-custom
+                @update:model-value="(value) => { programDrafts[school.id] = decodePlainName(value) }"
+              />
             </div>
-            <div class="col-md-3">
+            <div class="col-md-5 col-lg-3">
               <button
                 type="button"
-                class="btn btn-outline-primary"
-                :disabled="busy || !schoolDrafts[inst.id]"
-                @click="createSchool(inst)"
+                class="btn btn-outline-primary btn-sm w-100"
+                :disabled="busy || !(programDrafts[school.id] || '').trim()"
+                @click="createAcademic(school)"
               >
-                {{ t('adminProgramDestinations.addSchool') }}
+                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>{{ t('adminProgramDestinations.addProgram') }}
               </button>
             </div>
           </div>
-          <div v-for="school in schoolsByInst[inst.id] || []" :key="school.id" class="border rounded p-3 mb-2">
-            <div class="d-flex gap-2 align-items-center mb-2">
-              <input v-model="school.name" class="form-control" @change="saveSchool(school)">
-              <button type="button" class="btn btn-sm btn-outline-secondary" @click="toggleActive(school, 'school')">
-                {{ school.is_active ? t('adminProgramDestinations.deactivate') : t('adminProgramDestinations.activate') }}
+          <div
+            v-for="ap in programsBySchool[school.id] || []"
+            :key="ap.id"
+            class="ms-0 ms-md-3 mt-3 border-start border-2 ps-3"
+          >
+            <div class="d-flex flex-wrap gap-2 align-items-center mb-2">
+              <input
+                v-model="ap.name"
+                class="form-control flex-grow-1"
+                style="min-width: 10rem"
+                :disabled="busy"
+                @change="saveAcademic(ap)"
+              >
+              <input
+                v-model="ap.code"
+                class="form-control"
+                style="max-width: 8rem"
+                :placeholder="t('adminProgramDestinations.subjectCode')"
+                :disabled="busy"
+                @change="saveAcademic(ap)"
+              >
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                :disabled="busy"
+                @click="toggleActive(ap, 'academic')"
+              >
+                {{ ap.is_active ? t('adminProgramDestinations.deactivate') : t('adminProgramDestinations.activate') }}
               </button>
             </div>
             <SubjectEditor
-              :subjects="subjectsByParent.school[school.id] || []"
-              parent-level="school"
+              :subjects="subjectsByParent.academic[ap.id] || []"
+              parent-level="program"
               :busy="busy"
-              @create="(payload) => createSubject({ ...payload, institution: inst.id, school: school.id })"
+              @create="(payload) => createSubject({
+                ...payload,
+                institution: inst.id,
+                school: school.id,
+                academic_program: ap.id,
+              })"
               @toggle="toggleSubject"
             />
-            <div class="row g-2 mt-2">
-              <div class="col-md-6">
-                <input v-model="programDrafts[school.id]" class="form-control" :placeholder="t('adminProgramDestinations.newProgram')">
-              </div>
-              <div class="col-md-3">
-                <button
-                  type="button"
-                  class="btn btn-outline-primary btn-sm"
-                  :disabled="busy || !programDrafts[school.id]"
-                  @click="createAcademic(school)"
-                >
-                  {{ t('adminProgramDestinations.addProgram') }}
-                </button>
-              </div>
-            </div>
-            <div v-for="ap in programsBySchool[school.id] || []" :key="ap.id" class="ms-3 mt-2 border-start ps-3">
-              <div class="d-flex gap-2 align-items-center mb-2">
-                <input v-model="ap.name" class="form-control" @change="saveAcademic(ap)">
-                <input v-model="ap.code" class="form-control" style="max-width: 8rem" @change="saveAcademic(ap)">
-                <button type="button" class="btn btn-sm btn-outline-secondary" @click="toggleActive(ap, 'academic')">
-                  {{ ap.is_active ? t('adminProgramDestinations.deactivate') : t('adminProgramDestinations.activate') }}
-                </button>
-              </div>
-              <SubjectEditor
-                :subjects="subjectsByParent.academic[ap.id] || []"
-                parent-level="program"
-                :busy="busy"
-                @create="(payload) => createSubject({
-                  ...payload,
-                  institution: inst.id,
-                  school: school.id,
-                  academic_program: ap.id,
-                })"
-                @toggle="toggleSubject"
-              />
-            </div>
           </div>
         </div>
-      </div>
+      </CollapsibleCard>
     </PageStateShell>
   </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import PageStateShell from '@/components/State/PageStateShell.vue'
 import SearchableSelect from '@/components/SearchableSelect.vue'
+import CollapsibleCard from '@/components/CollapsibleCard.vue'
 import api from '@/services/api'
+import {
+  buildHostNameOptions,
+  decodeHostSuggestion,
+  filterCountryOptionsByHostName,
+  filterGradeScalesByCountry,
+  filterInstitutionsBySearch,
+} from '@/utils/hostDestinationCatalog'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -212,6 +339,7 @@ const busy = ref(false)
 const error = ref('')
 const programName = ref('')
 const institutions = ref([])
+const catalogInstitutions = ref([])
 const gradeScales = ref([])
 const schoolsByInst = ref({})
 const programsBySchool = ref({})
@@ -220,12 +348,73 @@ const countryOptions = ref([])
 const schoolDrafts = reactive({})
 const programDrafts = reactive({})
 const newUni = reactive({ name: '', country: '', grade_scale: '' })
+const newUniNameQuery = ref('')
+const listSearch = ref('')
 
 const headerTitle = computed(() =>
   programName.value
     ? t('adminProgramDestinations.titleNamed', { name: programName.value })
     : t('adminProgramDestinations.title'),
 )
+
+const filteredInstitutions = computed(() =>
+  filterInstitutionsBySearch(institutions.value, listSearch.value),
+)
+
+const filteredNewUniCountries = computed(() =>
+  filterCountryOptionsByHostName(
+    countryOptions.value,
+    catalogInstitutions.value,
+    newUniNameQuery.value || newUni.name,
+  ),
+)
+
+const filteredNewUniScales = computed(() =>
+  filterGradeScalesByCountry(gradeScales.value, newUni.country, countryOptions.value),
+)
+
+const newUniNameOptions = computed(() =>
+  buildHostNameOptions(catalogInstitutions.value, {
+    country: newUni.country,
+    query: '',
+  }),
+)
+
+const noneGradeScaleOption = computed(() => ({
+  value: '',
+  label: t('adminProgramDestinations.noGradeScale'),
+}))
+
+const newUniGradeScaleOptions = computed(() => [
+  noneGradeScaleOption.value,
+  ...filteredNewUniScales.value.map(scaleToOption),
+])
+
+const schoolNameOptions = computed(() => {
+  const names = new Set()
+  for (const schools of Object.values(schoolsByInst.value)) {
+    for (const school of schools || []) {
+      const name = String(school?.name || '').trim()
+      if (name) names.add(name)
+    }
+  }
+  return [...names]
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    .map((name) => ({ value: name, label: name }))
+})
+
+const academicProgramNameOptions = computed(() => {
+  const names = new Set()
+  for (const programs of Object.values(programsBySchool.value)) {
+    for (const ap of programs || []) {
+      const name = String(ap?.name || '').trim()
+      if (name) names.add(name)
+    }
+  }
+  return [...names]
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    .map((name) => ({ value: name, label: name }))
+})
 
 const SubjectEditor = {
   name: 'SubjectEditor',
@@ -288,20 +477,118 @@ const SubjectEditor = {
   },
 }
 
+function scaleToOption(scale) {
+  const country = String(scale.country || '').trim()
+  return {
+    value: String(scale.id),
+    label: country ? `${scale.name} (${country})` : scale.name,
+    aliases: [scale.code, scale.name].filter(Boolean),
+  }
+}
+
+function gradeScaleOptionsFor(country, currentScaleId) {
+  const filtered = filterGradeScalesByCountry(gradeScales.value, country, countryOptions.value)
+  const options = [noneGradeScaleOption.value, ...filtered.map(scaleToOption)]
+  if (currentScaleId) {
+    const id = String(currentScaleId)
+    if (!options.some((opt) => opt.value === id)) {
+      const current = gradeScales.value.find((s) => String(s.id) === id)
+      if (current) options.splice(1, 0, scaleToOption(current))
+    }
+  }
+  return options
+}
+
+function decodePlainName(value) {
+  const decoded = decodeHostSuggestion(value)
+  return decoded?.name || String(value || '').trim()
+}
+
+function pruneNewUniGradeScale() {
+  if (!newUni.grade_scale) return
+  const ok = filteredNewUniScales.value.some((s) => String(s.id) === String(newUni.grade_scale))
+  if (!ok) newUni.grade_scale = ''
+}
+
+function onNewUniNameUpdate(value) {
+  const decoded = decodeHostSuggestion(value)
+  if (!decoded) {
+    newUni.name = ''
+    newUniNameQuery.value = ''
+    return
+  }
+  newUni.name = decoded.name
+  newUniNameQuery.value = decoded.name
+  if (decoded.country) newUni.country = decoded.country
+  if (decoded.grade_scale) {
+    newUni.grade_scale = String(decoded.grade_scale)
+  } else {
+    pruneNewUniGradeScale()
+  }
+}
+
+function onNewUniNameQuery(query) {
+  // Labels look like "Name · Country"; keep the name portion for country narrowing.
+  newUniNameQuery.value = String(query || '').split(' · ')[0].trim()
+}
+
+function onNewUniCountryChange() {
+  pruneNewUniGradeScale()
+}
+
+function onNewUniGradeScaleUpdate(value) {
+  newUni.grade_scale = value || ''
+}
+
+function onInstitutionCountryChange(inst) {
+  const allowed = filterGradeScalesByCountry(gradeScales.value, inst.country, countryOptions.value)
+  if (inst.grade_scale && !allowed.some((s) => String(s.id) === String(inst.grade_scale))) {
+    inst.grade_scale = ''
+  }
+  saveInstitution(inst)
+}
+
+function onInstitutionGradeScaleUpdate(inst, value) {
+  inst.grade_scale = value || ''
+  saveInstitution(inst)
+}
+
+watch(
+  () => newUni.country,
+  () => pruneNewUniGradeScale(),
+)
+
 function unwrap(data) {
   if (Array.isArray(data)) return data
   if (data?.results) return data.results
   return []
 }
 
+async function fetchAllPages(url, params = {}) {
+  const acc = []
+  let page = 1
+  for (;;) {
+    const { data } = await api.get(url, { params: { ...params, page, page_size: 100 } })
+    const chunk = unwrap(data)
+    acc.push(...chunk)
+    if (!data?.next) break
+    page += 1
+    if (page > 50) break
+  }
+  return acc
+}
+
 async function loadGradeScales() {
-  const { data } = await api.get('/api/grades/scales/active/')
-  gradeScales.value = unwrap(data)
+  gradeScales.value = await fetchAllPages('/api/grades/scales/active/')
 }
 
 async function loadCountryOptions() {
   const { data } = await api.get('/api/accounts/catalogs/countries/')
   countryOptions.value = unwrap(data)
+}
+
+async function loadCatalogInstitutions() {
+  catalogInstitutions.value = await fetchAllPages('/api/host-institutions/', { is_active: true })
 }
 
 async function reload() {
@@ -368,7 +655,8 @@ async function createUniversity() {
     newUni.name = ''
     newUni.country = ''
     newUni.grade_scale = ''
-    await reload()
+    newUniNameQuery.value = ''
+    await Promise.all([reload(), loadCatalogInstitutions()])
   } catch (err) {
     console.error(err)
     error.value = t('adminProgramDestinations.saveError')
@@ -412,10 +700,12 @@ async function toggleActive(obj, kind = 'institution') {
 }
 
 async function createSchool(inst) {
+  const name = String(schoolDrafts[inst.id] || '').trim()
+  if (!name) return
   busy.value = true
   try {
     await api.post(`/api/host-institutions/${inst.id}/schools/`, {
-      name: schoolDrafts[inst.id],
+      name,
       is_active: true,
     })
     schoolDrafts[inst.id] = ''
@@ -438,10 +728,12 @@ async function saveSchool(school) {
 }
 
 async function createAcademic(school) {
+  const name = String(programDrafts[school.id] || '').trim()
+  if (!name) return
   busy.value = true
   try {
     await api.post(`/api/schools/${school.id}/academic-programs/`, {
-      name: programDrafts[school.id],
+      name,
       is_active: true,
     })
     programDrafts[school.id] = ''
@@ -499,7 +791,7 @@ async function toggleSubject(subject) {
 }
 
 onMounted(async () => {
-  await Promise.all([loadGradeScales(), loadCountryOptions()])
+  await Promise.all([loadGradeScales(), loadCountryOptions(), loadCatalogInstitutions()])
   await reload()
 })
 </script>

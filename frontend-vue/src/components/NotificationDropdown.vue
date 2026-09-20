@@ -1,5 +1,5 @@
 <template>
-  <li class="nav-item dropdown" ref="rootEl">
+  <li class="nav-item dropdown seim-notification-nav" ref="rootEl">
     <button
       type="button"
       class="nav-link dropdown-toggle position-relative seim-nav-icon-btn"
@@ -14,7 +14,7 @@
       <i class="bi bi-bell fs-5" aria-hidden="true"></i>
       <span
         v-if="unreadCount > 0"
-        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+        class="badge rounded-pill bg-danger seim-notification-badge"
         data-testid="notifications-badge"
       >
         {{ unreadCount > 99 ? '99+' : unreadCount }}
@@ -24,10 +24,11 @@
       class="dropdown-menu dropdown-menu-end notification-dropdown"
       :class="{ show: open }"
       aria-labelledby="notificationDropdown"
+      data-testid="notifications-dropdown-menu"
     >
-      <li class="dropdown-header d-flex justify-content-between align-items-center px-3 py-2 border-bottom">
-        <span class="fw-bold">{{ t('notifications.dropdownHeader') }}</span>
-        <router-link :to="{ name: 'Notifications' }" class="btn btn-sm btn-link p-0" @click="close">
+      <li class="dropdown-header d-flex justify-content-between align-items-center px-3 py-2 border-bottom gap-2">
+        <span class="fw-bold text-truncate">{{ t('notifications.dropdownHeader') }}</span>
+        <router-link :to="{ name: 'Notifications' }" class="btn btn-sm btn-link p-0 flex-shrink-0" @click="close">
           {{ t('notifications.viewAll') }}
         </router-link>
       </li>
@@ -45,7 +46,7 @@
           class="dropdown-item notification-item py-2"
           :class="{ 'seim-notification-unread': !notification.is_read }"
         >
-          <div class="d-flex w-100 justify-content-between align-items-start">
+          <div class="d-flex w-100 justify-content-between align-items-start gap-2">
             <div class="flex-grow-1 min-w-0">
               <span class="d-block text-truncate fw-medium" :class="{ 'fw-bold': !notification.is_read }">
                 {{ displayTitle(notification) }}
@@ -53,8 +54,15 @@
               <span class="d-block text-muted small text-truncate">{{ displayMessage(notification) }}</span>
               <span class="d-block text-muted small mt-1">{{ formatTimestampDropdown(notification.sent_at) }}</span>
             </div>
+            <button
+              type="button"
+              class="btn-close btn-close-sm flex-shrink-0 mt-1"
+              data-testid="notification-dismiss"
+              :aria-label="t('notifications.dismissAria')"
+              @click.stop="dismiss(notification)"
+            ></button>
           </div>
-          <div class="mt-2">
+          <div class="mt-2 d-flex flex-wrap gap-2">
             <router-link
               v-if="notification.action_url && isSpaUrl(notification.action_url)"
               :to="normalizeSpaLocation(notification.action_url)"
@@ -73,6 +81,16 @@
             >
               {{ displayAction(notification) }}
             </a>
+            <button
+              v-if="!notification.is_read"
+              type="button"
+              class="btn btn-sm btn-outline-secondary"
+              data-testid="notification-mark-read"
+              :aria-label="t('notifications.markAsReadAria')"
+              @click.stop="markAsRead(notification)"
+            >
+              {{ t('notifications.markAsRead') }}
+            </button>
           </div>
         </li>
       </template>
@@ -111,7 +129,13 @@ function displayMessage(notification) {
 function displayAction(notification) {
   return formatNotificationAction(notification?.action_text, i18nCtx) || t('notifications.viewAction')
 }
-const { fetchNotifications, fetchUnreadCount, markAsRead: apiMarkAsRead, formatTimestampDropdown } = useNotifications()
+const {
+  fetchNotifications,
+  fetchUnreadCount,
+  markAsRead: apiMarkAsRead,
+  dismissNotification: apiDismiss,
+  formatTimestampDropdown,
+} = useNotifications()
 const { open, rootEl, toggle, close } = useNavDropdown()
 
 const recent = ref([])
@@ -150,6 +174,18 @@ async function markAsRead(notification) {
   }
 }
 
+async function dismiss(notification) {
+  try {
+    await apiDismiss(notification.id)
+    if (!notification.is_read) {
+      unreadCount.value = Math.max(0, unreadCount.value - 1)
+    }
+    recent.value = recent.value.filter((n) => n.id !== notification.id)
+  } catch (err) {
+    console.warn('Failed to dismiss notification:', err)
+  }
+}
+
 onMounted(() => {
   fetchRecent()
   window.addEventListener('notification-new', fetchRecent)
@@ -163,26 +199,53 @@ defineExpose({ refresh: fetchRecent })
 </script>
 
 <style scoped>
+.seim-notification-nav {
+  position: relative;
+}
+
 .seim-nav-icon-btn {
   background: transparent;
   border: 0;
   padding-right: 0.85rem;
 }
 
-.seim-nav-icon-btn .badge {
+.seim-notification-badge {
+  position: absolute;
+  top: 0.2rem;
+  right: 0.15rem;
   font-size: 0.65rem;
+  transform: none;
+  /* Keep badge inside the button so it does not push past the viewport edge. */
 }
 
 .notification-dropdown {
-  min-width: 320px;
-  max-width: min(360px, calc(100vw - 1.5rem));
-  max-height: 400px;
+  /* Open toward the page interior (left) from the right-side bell. */
+  right: 0;
+  left: auto;
+  width: min(22rem, calc(100vw - 1.5rem));
+  min-width: 0;
+  max-width: min(22rem, calc(100vw - 1.5rem));
+  max-height: min(400px, calc(100vh - 5rem));
+  overflow-x: hidden;
   overflow-y: auto;
+  box-sizing: border-box;
 }
 
 .notification-item {
   white-space: normal;
   max-width: 100%;
+}
+
+.btn-close-sm {
+  width: 0.65rem;
+  height: 0.65rem;
+  padding: 0.45rem;
+  background-size: 0.55em;
+  opacity: 0.55;
+}
+
+.btn-close-sm:hover {
+  opacity: 1;
 }
 
 .dropdown-item.notification-item:hover {

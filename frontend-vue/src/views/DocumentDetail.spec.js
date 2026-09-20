@@ -9,24 +9,34 @@ import i18n, { setAppLocale } from '@/i18n'
 
 vi.mock('vue-router', () => ({
   useRoute: () => ({ params: { id: 'doc-1' } }),
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }))
+
+const mockAuthStore = {
+  userRole: 'student',
+  checkAuth: vi.fn().mockResolvedValue(undefined),
+}
 
 vi.mock('@/stores/auth', () => ({
-  useAuthStore: () => ({
-    userRole: 'student',
-    checkAuth: vi.fn().mockResolvedValue(undefined),
-  }),
+  useAuthStore: () => mockAuthStore,
 }))
 
+const mockToastError = vi.fn()
+const mockToastSuccess = vi.fn()
 vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({ success: vi.fn(), error: vi.fn() }),
+  useToast: () => ({ success: mockToastSuccess, error: mockToastError }),
+}))
+
+const mockConfirm = vi.fn().mockResolvedValue(true)
+vi.mock('@/composables/useConfirm', () => ({
+  useConfirm: () => ({ confirm: mockConfirm }),
 }))
 
 vi.mock('@/services/api', () => ({
   default: { get: vi.fn(), post: vi.fn(), patch: vi.fn() },
 }))
 
-function mockSuccessFlow() {
+function mockSuccessFlow(overrides = {}) {
   api.get.mockImplementation((url, config) => {
     if (url === '/api/applications/') {
       return Promise.resolve({
@@ -39,14 +49,24 @@ function mockSuccessFlow() {
           id: 'doc-1',
           application: 'app-1',
           file: '/media/student/transcript.pdf',
-          is_valid: true,
+          is_valid: false,
+          validated_at: null,
           created_at: '2026-01-01T12:00:00Z',
           updated_at: '2026-01-02T12:00:00Z',
-          type: { name: 'Transcript' },
+          type: {
+            name: 'Transcript',
+            has_template: true,
+            id: 9,
+            resolved_accepted_extensions: 'pdf',
+            accepted_extensions: '',
+            max_file_size_mb: 5,
+          },
           uploaded_by: 'student@test.edu',
           validations: [],
           resubmission_requests: [],
           comments: [],
+          can_replace: true,
+          ...overrides,
         },
       })
     }
@@ -64,6 +84,8 @@ describe('DocumentDetail', () => {
   beforeEach(() => {
     localStorage.clear()
     setAppLocale('en')
+    mockAuthStore.userRole = 'student'
+    mockConfirm.mockResolvedValue(true)
     vi.clearAllMocks()
     mockSuccessFlow()
     vi.stubGlobal('URL', {
@@ -89,9 +111,14 @@ describe('DocumentDetail', () => {
     expect(wrapper.find('[data-testid="document-detail-page"]').exists()).toBe(true)
     expect(wrapper.text()).toContain('Transcript')
     expect(wrapper.text()).toContain('Spring Program')
-    expect(wrapper.text()).toContain('Validated')
+    expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.pendingValidation'))
     expect(wrapper.text()).toContain('Preview')
-    expect(wrapper.text()).toContain('Replace file')
+    expect(wrapper.find('[data-testid="replace-file-section"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="replace-accepted-hint"]').text()).toBe(
+      'Accepted: PDF (max 5MB)',
+    )
+    expect(wrapper.find('[data-testid="replace-file-input"]').attributes('accept')).toBe('.pdf')
+    expect(wrapper.find('[data-testid="download-type-template"]').exists()).toBe(true)
     for (const a of wrapper.findAll('a[target="_blank"]')) {
       expect(a.attributes('rel')).toBe('noopener noreferrer')
     }
@@ -116,7 +143,6 @@ describe('DocumentDetail', () => {
     })
     await flushPromises()
     expect(wrapper.text()).toContain('Failed to load document')
-    expect(wrapper.text()).toContain('Back to Documents')
   })
 
   it('when preview returns non-PDF body for a PDF, shows recovery download and open-in-new-tab actions', async () => {
@@ -329,7 +355,112 @@ describe('DocumentDetail', () => {
     await flushPromises()
     const invalid = i18n.global.t('documentDetailPage.validationResult.invalid')
     expect(wrapper.text()).toContain(invalid)
-    expect(wrapper.text()).not.toContain(i18n.global.t('documentDetailPage.statusPendingShort'))
+    expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.checklist.invalid'))
+    expect(wrapper.text()).not.toContain(i18n.global.t('applicationDetailPage.checklist.pending_review'))
     expect(wrapper.find('[data-testid="validation-result"]').text()).toBe(invalid)
+  })
+
+  it('hides replace and template download when the document is approved', async () => {
+    mockSuccessFlow({
+      is_valid: true,
+      validated_at: '2026-01-02T12:00:00Z',
+      can_replace: false,
+      type: { name: 'Transcript', has_template: true, id: 9 },
+    })
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="replace-file-section"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="download-type-template"]').exists()).toBe(false)
+  })
+
+  it('shows template download again when staff requested resubmission', async () => {
+    mockSuccessFlow({
+      is_valid: true,
+      validated_at: '2026-01-02T12:00:00Z',
+      can_replace: true,
+      resubmission_requests: [{ id: 'rr-1', resolved: false, reason: 'Clearer scan' }],
+      type: { name: 'Transcript', has_template: true, id: 9 },
+    })
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="replace-file-section"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="download-type-template"]').exists()).toBe(true)
+  })
+
+  it('requires a rejection note before marking invalid', async () => {
+    mockAuthStore.userRole = 'coordinator'
+    api.post.mockResolvedValue({ data: {} })
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const buttons = wrapper.findAll('button')
+    const invalidBtn = buttons.find((b) => b.text().includes(i18n.global.t('documentDetailPage.markInvalid')))
+    expect(invalidBtn).toBeTruthy()
+    await invalidBtn.trigger('click')
+    await flushPromises()
+    expect(mockToastError).toHaveBeenCalledWith(i18n.global.t('documentDetailPage.invalidNoteRequired'))
+    expect(api.post).not.toHaveBeenCalled()
+    expect(mockConfirm).not.toHaveBeenCalled()
+  })
+
+  it('confirms and posts invalid with note details', async () => {
+    mockAuthStore.userRole = 'coordinator'
+    api.post.mockResolvedValue({ data: {} })
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const noteField = wrapper.findAll('textarea').find((ta) =>
+      ta.attributes('placeholder') === i18n.global.t('documentDetailPage.validationNotePlaceholder'),
+    )
+    expect(noteField).toBeTruthy()
+    await noteField.setValue('Blurry scan — please reupload')
+    const buttons = wrapper.findAll('button')
+    const invalidBtn = buttons.find((b) => b.text().includes(i18n.global.t('documentDetailPage.markInvalid')))
+    await invalidBtn.trigger('click')
+    await flushPromises()
+    expect(mockConfirm).toHaveBeenCalled()
+    expect(api.post).toHaveBeenCalledWith('/api/documents/doc-1/validate_document/', {
+      result: 'invalid',
+      details: 'Blurry scan — please reupload',
+    })
+  })
+
+  it('soft-confirms before marking valid', async () => {
+    mockAuthStore.userRole = 'coordinator'
+    api.post.mockResolvedValue({ data: {} })
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const buttons = wrapper.findAll('button')
+    const validBtn = buttons.find((b) => b.text().includes(i18n.global.t('documentDetailPage.markValid')))
+    await validBtn.trigger('click')
+    await flushPromises()
+    expect(mockConfirm).toHaveBeenCalled()
+    expect(api.post).toHaveBeenCalledWith('/api/documents/doc-1/validate_document/', {
+      result: 'valid',
+      details: '',
+    })
   })
 })

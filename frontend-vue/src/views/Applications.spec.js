@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import Applications from './Applications.vue'
 import api from '@/services/api'
 import i18n, { setAppLocale } from '@/i18n'
@@ -20,8 +21,18 @@ vi.mock('vue-router', () => ({
   useRoute: () => ({ query: routeQuery }),
 }))
 
+function mountApplications() {
+  return mount(Applications, {
+    global: {
+      plugins: [createPinia(), i18n],
+      stubs: { RouterLink: { template: '<a><slot /></a>' } },
+    },
+  })
+}
+
 describe('Applications', () => {
   beforeEach(() => {
+    setActivePinia(createPinia())
     localStorage.clear()
     setAppLocale('en')
     routeQuery.status = ''
@@ -36,12 +47,7 @@ describe('Applications', () => {
 
   it('shows translated empty state when list is empty', async () => {
     api.get.mockResolvedValue({ data: { results: [], count: 0, next: null, previous: null } })
-    const wrapper = mount(Applications, {
-      global: {
-        plugins: [i18n],
-        stubs: { RouterLink: { template: '<a><slot /></a>' } },
-      },
-    })
+    const wrapper = mountApplications()
     await flushPromises()
     expect(wrapper.find('nav').attributes('aria-label')).toBe(i18n.global.t('applicationsPage.breadcrumbAria'))
     expect(wrapper.text()).toContain('No applications yet')
@@ -65,12 +71,7 @@ describe('Applications', () => {
         previous: null,
       },
     })
-    const wrapper = mount(Applications, {
-      global: {
-        plugins: [i18n],
-        stubs: { RouterLink: { template: '<a><slot /></a>' } },
-      },
-    })
+    const wrapper = mountApplications()
     await flushPromises()
     expect(wrapper.text()).toContain('Test Program')
     expect(wrapper.text()).toContain('Draft')
@@ -97,12 +98,7 @@ describe('Applications', () => {
         previous: null,
       },
     })
-    const wrapper = mount(Applications, {
-      global: {
-        plugins: [i18n],
-        stubs: { RouterLink: { template: '<a><slot /></a>' } },
-      },
-    })
+    const wrapper = mountApplications()
     await flushPromises()
     expect(wrapper.text()).toContain('DAAD Exchange')
     expect(wrapper.text()).not.toContain(i18n.global.t('applicationDetailPage.unknownProgram'))
@@ -125,12 +121,7 @@ describe('Applications', () => {
         previous: null,
       },
     })
-    const wrapper = mount(Applications, {
-      global: {
-        plugins: [i18n],
-        stubs: { RouterLink: { template: '<a><slot /></a>' } },
-      },
-    })
+    const wrapper = mountApplications()
     await flushPromises()
     expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.unknownProgram'))
     const na = i18n.global.t('applicationDetailPage.notAvailable')
@@ -155,12 +146,7 @@ describe('Applications', () => {
         previous: null,
       },
     })
-    const wrapper = mount(Applications, {
-      global: {
-        plugins: [i18n],
-        stubs: { RouterLink: { template: '<a><slot /></a>' } },
-      },
-    })
+    const wrapper = mountApplications()
     await flushPromises()
     expect(wrapper.text()).toContain(i18n.global.t('pagination.previous'))
     expect(wrapper.text()).toContain(i18n.global.t('pagination.next'))
@@ -173,12 +159,7 @@ describe('Applications', () => {
 
   it('sends page=1 when status filter changes instead of a DOM event', async () => {
     api.get.mockResolvedValue({ data: { results: [], count: 0, next: null, previous: null } })
-    const wrapper = mount(Applications, {
-      global: {
-        plugins: [i18n],
-        stubs: { RouterLink: { template: '<a><slot /></a>' } },
-      },
-    })
+    const wrapper = mountApplications()
     await flushPromises()
     api.get.mockClear()
     await wrapper.find('[data-testid="applications-filter-status"]').setValue('draft')
@@ -191,12 +172,7 @@ describe('Applications', () => {
 
   it('includes nominated, waitlist, cancelled, and withdrawn status filters', async () => {
     api.get.mockResolvedValue({ data: { results: [], count: 0, next: null, previous: null } })
-    const wrapper = mount(Applications, {
-      global: {
-        plugins: [i18n],
-        stubs: { RouterLink: { template: '<a><slot /></a>' } },
-      },
-    })
+    const wrapper = mountApplications()
     await flushPromises()
     const opts = wrapper.find('[data-testid="applications-filter-status"]').findAll('option')
     const values = opts.map((o) => o.element.value)
@@ -236,12 +212,7 @@ describe('Applications', () => {
         previous: null,
       },
     })
-    const wrapper = mount(Applications, {
-      global: {
-        plugins: [i18n],
-        stubs: { RouterLink: { template: '<a><slot /></a>' } },
-      },
-    })
+    const wrapper = mountApplications()
     await flushPromises()
     expect(wrapper.find('[data-testid="application-host"]').text()).toContain(
       'Technical University of Munich',
@@ -252,12 +223,7 @@ describe('Applications', () => {
   it('applies ?status= from route query on mount (MQ-026)', async () => {
     routeQuery.status = 'nominated'
     api.get.mockResolvedValue({ data: { results: [], count: 0, next: null, previous: null } })
-    const wrapper = mount(Applications, {
-      global: {
-        plugins: [i18n],
-        stubs: { RouterLink: { template: '<a><slot /></a>' } },
-      },
-    })
+    const wrapper = mountApplications()
     await flushPromises()
     expect(wrapper.find('[data-testid="applications-filter-status"]').element.value).toBe('nominated')
     expect(api.get).toHaveBeenCalledWith('/api/applications/', {
@@ -267,12 +233,7 @@ describe('Applications', () => {
 
   it('uses a compact filter bar with clear next to primary filters', async () => {
     api.get.mockResolvedValue({ data: { results: [], count: 0, next: null, previous: null } })
-    const wrapper = mount(Applications, {
-      global: {
-        plugins: [i18n],
-        stubs: { RouterLink: { template: '<a><slot /></a>' } },
-      },
-    })
+    const wrapper = mountApplications()
     await flushPromises()
     expect(wrapper.find('[data-testid="applications-filters"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="compact-filter-clear"]').exists()).toBe(true)

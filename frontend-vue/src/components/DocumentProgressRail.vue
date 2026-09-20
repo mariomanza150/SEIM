@@ -1,14 +1,19 @@
 <template>
-  <aside
+  <CollapsibleCard
     v-if="hasItems"
-    class="card mb-4 document-progress-rail"
-    data-testid="document-progress-rail"
+    test-id="document-progress-rail"
+    card-class="document-progress-rail"
+    body-class="py-3"
+    title-class="h6 mb-0"
+    compact-header
+    :default-open="false"
   >
-    <div class="card-header d-flex justify-content-between align-items-center gap-2">
-      <h6 class="mb-0">{{ t('eligibilityFix.railTitle') }}</h6>
+    <template #title>{{ t('eligibilityFix.railTitle') }}</template>
+    <template #header-extra>
       <span
         class="badge"
         :class="complete ? 'bg-success' : 'bg-warning text-dark'"
+        data-testid="document-progress-rail-badge"
       >
         {{
           t('applicationDetailPage.approvedFraction', {
@@ -17,56 +22,66 @@
           })
         }}
       </span>
+    </template>
+
+    <div class="progress mb-3" style="height: 6px">
+      <div
+        class="progress-bar"
+        :class="complete ? 'bg-success' : 'bg-primary'"
+        role="progressbar"
+        :style="{ width: `${progressPercent}%` }"
+        :aria-valuenow="progressPercent"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      />
     </div>
-    <div class="card-body py-3">
-      <div class="progress mb-3" style="height: 6px">
-        <div
-          class="progress-bar"
-          :class="complete ? 'bg-success' : 'bg-primary'"
-          role="progressbar"
-          :style="{ width: `${progressPercent}%` }"
-          :aria-valuenow="progressPercent"
-          aria-valuemin="0"
-          aria-valuemax="100"
-        />
-      </div>
-      <p v-if="complete" class="small text-muted mb-0">{{ t('eligibilityFix.railComplete') }}</p>
-      <template v-else>
-        <p class="small fw-semibold mb-1">
-          {{ t('eligibilityFix.railDueNow', { done: dueNowDone, total: dueNowItems.length }) }}
-        </p>
-        <ul v-if="dueNowItems.length" class="list-unstyled small mb-3">
-          <li
-            v-for="item in dueNowItems"
-            :key="`due-${item.document_type_id}`"
-            class="mb-1"
-            data-testid="document-progress-rail-due-item"
-          >
-            <a :href="itemHref(item)" class="text-decoration-none">{{ itemLabel(item) }}</a>
-            <span class="text-muted"> — {{ statusLabel(item) }}</span>
-          </li>
-        </ul>
-        <p v-if="laterItems.length" class="small fw-semibold mb-1">
-          {{ t('eligibilityFix.railLater', { n: laterItems.length }) }}
-        </p>
-        <ul v-if="laterItems.length" class="list-unstyled small mb-0">
-          <li
-            v-for="item in laterItems"
-            :key="`later-${item.document_type_id}`"
-            class="mb-1 text-muted"
-            data-testid="document-progress-rail-later-item"
-          >
-            <a :href="itemHref(item)" class="text-decoration-none text-muted">{{ itemLabel(item) }}</a>
-          </li>
-        </ul>
-      </template>
-    </div>
-  </aside>
+    <p v-if="complete" class="small text-muted mb-0">{{ t('eligibilityFix.railComplete') }}</p>
+    <template v-else>
+      <p class="small fw-semibold mb-1">
+        {{ t('eligibilityFix.railDueNow', { done: dueNowDone, total: dueNowItems.length }) }}
+      </p>
+      <ul v-if="dueNowItems.length" class="list-unstyled small mb-3">
+        <li
+          v-for="item in dueNowItems"
+          :key="`due-${item.document_type_id}`"
+          class="mb-1"
+          data-testid="document-progress-rail-due-item"
+        >
+          <a
+            :href="itemHref(item)"
+            class="text-decoration-none"
+            data-testid="document-progress-rail-link"
+            @click.prevent="onItemClick(item)"
+          >{{ itemLabel(item) }}</a>
+          <span class="text-muted"> — {{ statusLabel(item) }}</span>
+        </li>
+      </ul>
+      <p v-if="laterItems.length" class="small fw-semibold mb-1">
+        {{ t('eligibilityFix.railLater', { n: laterItems.length }) }}
+      </p>
+      <ul v-if="laterItems.length" class="list-unstyled small mb-0">
+        <li
+          v-for="item in laterItems"
+          :key="`later-${item.document_type_id}`"
+          class="mb-1 text-muted"
+          data-testid="document-progress-rail-later-item"
+        >
+          <a
+            :href="itemHref(item)"
+            class="text-decoration-none text-muted"
+            data-testid="document-progress-rail-link"
+            @click.prevent="onItemClick(item)"
+          >{{ itemLabel(item) }}</a>
+        </li>
+      </ul>
+    </template>
+  </CollapsibleCard>
 </template>
 
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import CollapsibleCard from '@/components/CollapsibleCard.vue'
 import { documentTypeLabel } from '@/utils/documentApi'
 
 const props = defineProps({
@@ -75,6 +90,8 @@ const props = defineProps({
     default: null,
   },
 })
+
+const emit = defineEmits(['navigate-item'])
 
 const { t, te } = useI18n()
 
@@ -108,6 +125,10 @@ function itemHref(item) {
   return `#checklist-item-${item.document_type_id}`
 }
 
+function onItemClick(item) {
+  emit('navigate-item', item)
+}
+
 function itemLabel(item) {
   return documentTypeLabel(item, item?.name || t('documentDetailPage.notAvailable'), { t, te })
 }
@@ -120,7 +141,7 @@ function statusLabel(item) {
 </script>
 
 <style scoped>
-.document-progress-rail {
+:deep(.document-progress-rail) {
   position: sticky;
   top: 4.5rem;
   z-index: 10;

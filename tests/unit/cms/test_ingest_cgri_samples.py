@@ -1,4 +1,9 @@
-"""Tests for CGRI sample ingest, file_url, and official university list seeding."""
+"""Tests for CGRI sample ingest, file_url, and official university list seeding.
+
+Wagtail Document tagging tests require::
+
+    DJANGO_SETTINGS_MODULE=seim.settings.test_cms
+"""
 
 from __future__ import annotations
 
@@ -19,12 +24,40 @@ from exchange.cgri_partner_catalog import (
 from exchange.mobility_schemes import seed_mobility_schemes
 from exchange.models import ExchangeAgreement, HostInstitution
 
+# Keys the CMS must serve from SAMPLES (not SEIM-generated PDFs).
+_CMS_STATIC_KEYS = {
+    "solicitud_participacion_entrante": "AF_Solicitud de Participacion.pdf",
+    "lineamientos": "FS-LD Lineamientos y disposiciones.pdf",
+    "convocatoria_entrante": "ConvocatoriaMIEntrante.pdf",
+    "convocatoria_saliente": "ConvocatoriaMISaliente.pdf",
+    "universidades_convenio": "UniversidadesPorConvenio.pdf",
+    "universidades_conahec": "UniversidadesPorCONAHEC.pdf",
+}
+
 
 def _require_wagtail():
     if "cms" not in settings.INSTALLED_APPS or not any(
         a.startswith("wagtail") for a in settings.INSTALLED_APPS
     ):
         pytest.skip("Wagtail/CMS not in INSTALLED_APPS for this settings module")
+
+
+@pytest.mark.unit
+class TestCgriSampleSpecs:
+    def test_cms_static_keys_map_to_expected_filenames(self):
+        by_key = {s["key"]: s for s in CGRI_SAMPLE_SPECS}
+        for key, filename in _CMS_STATIC_KEYS.items():
+            assert key in by_key, f"missing CGRI sample spec for {key}"
+            assert by_key[key]["filename"] == filename
+            assert key in FILES, f"missing remote fallback FILES[{key}]"
+
+    def test_af_entrante_is_cms_only_fs_sp_not_document_type_template(self):
+        by_key = {s["key"]: s for s in CGRI_SAMPLE_SPECS}
+        assert by_key["solicitud_participacion_entrante"]["document_type_slug"] is None
+        # Blank FS-SP stays Wagtail-only; outgoing uses system-generated PDF.
+        assert by_key["solicitud_participacion_saliente"]["document_type_slug"] is None
+        assert by_key["homologacion"]["document_type_slug"] is None
+        assert by_key["lineamientos"]["document_type_slug"] == "reglamento_movilidad"
 
 
 @pytest.mark.django_db
@@ -120,3 +153,31 @@ class TestIngestCgriSamples:
         for spec in present:
             dt = DocumentType.objects.get(slug=spec["document_type_slug"])
             assert dt.template_file, f"expected template on {spec['document_type_slug']}"
+
+        # System-generated solicitud must not receive the blank FS-SP as template.
+        solicitud = DocumentType.objects.get(slug="solicitud_participacion")
+        assert solicitud.submission_mode == DocumentType.SubmissionMode.SYSTEM_GENERATED
+        assert not solicitud.template_file
+
+    def test_wagtail_tags_cms_static_keys(self):
+        _require_wagtail()
+        base = samples_dir()
+        if not base.is_dir():
+            pytest.skip("SAMPLES/ not present in this environment")
+
+        missing = [
+            key
+            for key, filename in _CMS_STATIC_KEYS.items()
+            if not (base / filename).is_file()
+        ]
+        if missing:
+            pytest.skip(f"Missing sample files for: {', '.join(missing)}")
+
+        from wagtail.documents.models import Document
+
+        ingest_cgri_samples(skip_universities=True, skip_templates=True)
+        for key in _CMS_STATIC_KEYS:
+            doc = Document.objects.filter(tags__name=key_tag(key)).first()
+            assert doc is not None, f"expected Wagtail Document tagged {key_tag(key)}"
+            assert doc.file, f"expected file on Wagtail Document for {key}"
+            assert file_url(key) != FILES[key]

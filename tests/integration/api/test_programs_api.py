@@ -157,6 +157,33 @@ class TestProgramsAPI(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assert_model_not_exists(Program, id=program.id)
 
+    def test_program_deletion_impact_admin_only(self):
+        """Admins can preview cascade counts before deleting a program."""
+        from exchange.models import HostInstitution
+
+        program = self.create_program(name="Impact Preview Program")
+        student = self.create_user(role="student")
+        self.create_application(student=student, program=program)
+        HostInstitution.objects.create(program=program, name="Host U", country="MX")
+
+        impact_url = reverse("api:program-deletion-impact", args=[program.id])
+
+        self.authenticate_user(student)
+        response = self.client.get(impact_url)
+        self.assert_response_unauthorized(response)
+
+        admin = self.create_user(role="admin")
+        self.authenticate_user(admin)
+        response = self.client.get(impact_url)
+        self.assert_response_success(response, status.HTTP_200_OK)
+        self.assertEqual(response.data["program"]["name"], "Impact Preview Program")
+        models = {row["model"]: row["count"] for row in response.data["related"]}
+        self.assertGreaterEqual(models.get("exchange.application", 0), 1)
+        self.assertGreaterEqual(models.get("exchange.hostinstitution", 0), 1)
+        self.assertGreaterEqual(response.data["total_related"], 2)
+        self.assertIn("can_delete", response.data)
+        self.assertIsInstance(response.data["protected"], list)
+
     def test_program_filtering(self):
         """Test program filtering functionality."""
         from django.core.cache import cache

@@ -103,7 +103,7 @@
                     {{ application.readiness.score }}%
                   </span>
                 </div>
-                <div class="flex-grow-1" style="min-width: 220px">
+                <div class="flex-grow-1 seim-min-w-filter">
                   <p class="small mb-2" data-testid="readiness-headline">{{ readinessHeadlineText }}</p>
                   <ul
                     v-if="lifecycleMissingNow.length"
@@ -138,7 +138,7 @@
         </div>
 
         <div
-          v-if="(isCoordinator || isStudent) && application.scholarship_allocation_score"
+          v-if="scholarshipsEnabled && (isCoordinator || isStudent) && application.scholarship_allocation_score"
           class="row mb-3"
           data-testid="scholarship-score-panel"
         >
@@ -237,7 +237,7 @@
         </div>
 
         <div
-          v-if="application.scholarship_award || isCoordinator"
+          v-if="scholarshipsEnabled && (application.scholarship_award || isCoordinator)"
           class="row mb-3"
           data-testid="scholarship-award-panel"
         >
@@ -382,12 +382,15 @@
           <!-- Main Content -->
           <div class="col-lg-8">
             <!-- Program Information -->
-            <div class="card mb-4">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>{{ t('applicationDetailPage.programInfo') }}</h5>
-              </div>
-              <div class="card-body">
-                <div class="row mb-3">
+            <CollapsibleCard
+              test-id="program-info-card"
+              title-class="h5 mb-0"
+              :default-open="false"
+            >
+              <template #title>
+                <i class="bi bi-info-circle me-2" aria-hidden="true"></i>{{ t('applicationDetailPage.programInfo') }}
+              </template>
+              <div class="row mb-3">
                   <div class="col-md-6">
                     <label class="text-muted small">{{ t('applicationDetailPage.labelProgramName') }}</label>
                     <p class="fw-bold">{{ programDisplayName(application) }}</p>
@@ -411,25 +414,24 @@
                   <label class="text-muted small">{{ t('applicationDetailPage.labelDescription') }}</label>
                   <p>{{ application.program.description }}</p>
                 </div>
-              </div>
-            </div>
+            </CollapsibleCard>
 
-            <div class="card mb-4" data-testid="application-subjects-card">
-              <div class="card-header">
-                <h5 class="mb-0">
-                  <i class="bi bi-journal-text me-2"></i>{{ t('applicationSubjects.title') }}
-                </h5>
-              </div>
-              <div class="card-body">
-                <ApplicationSubjectsPanel
-                  :application-id="application.id"
-                  :application-status="application.status"
-                  :host-institution-id="application.host_institution"
-                  :is-coordinator="isCoordinator"
-                  :show-heading="false"
-                />
-              </div>
-            </div>
+            <CollapsibleCard
+              test-id="application-subjects-card"
+              title-class="h5 mb-0"
+              :default-open="false"
+            >
+              <template #title>
+                <i class="bi bi-journal-text me-2" aria-hidden="true"></i>{{ t('applicationSubjects.title') }}
+              </template>
+              <ApplicationSubjectsPanel
+                :application-id="application.id"
+                :application-status="application.status"
+                :host-institution-id="application.host_institution"
+                :is-coordinator="isCoordinator"
+                :show-heading="false"
+              />
+            </CollapsibleCard>
 
             <!-- Required documents checklist -->
             <div
@@ -458,103 +460,185 @@
                 <p v-if="application.status === 'draft' && !application.document_checklist.complete" class="text-muted small">
                   {{ t('applicationDetailPage.checklistDraftHint') }}
                 </p>
-                <ul class="list-group list-group-flush">
-                  <li
-                    v-for="item in application.document_checklist.items"
-                    :key="item.document_type_id"
-                    :id="`checklist-item-${item.document_type_id}`"
-                    class="list-group-item px-0 d-flex justify-content-between align-items-start flex-wrap gap-2"
-                    data-testid="document-checklist-item"
+                <div
+                  v-for="section in checklistSections"
+                  :key="section.id"
+                  class="document-checklist-section mb-2"
+                  :data-testid="`document-checklist-section-${section.id}`"
+                >
+                  <button
+                    type="button"
+                    class="btn btn-link text-decoration-none text-body w-100 px-0 py-2 d-flex align-items-center gap-2"
+                    :id="`checklist-section-toggle-${section.id}`"
+                    :aria-expanded="isChecklistSectionOpen(section.id) ? 'true' : 'false'"
+                    :aria-controls="`checklist-section-panel-${section.id}`"
+                    data-testid="document-checklist-section-toggle"
+                    @click="toggleChecklistSection(section.id)"
                   >
-                    <div class="me-2" style="min-width: 12rem">
-                      <span class="fw-semibold" data-testid="document-checklist-name">{{ checklistItemLabel(item) }}</span>
-                      <span
-                        v-if="item.is_required === false"
-                        class="badge seim-surface-muted text-muted border ms-1"
-                      >{{ t('applicationDetailPage.checklistOptional') }}</span>
-                      <span
-                        v-else-if="item.due_now && item.status !== 'approved' && item.status !== 'n_a'"
-                        class="badge bg-warning text-dark ms-1"
-                        data-testid="document-checklist-due-now"
-                      >{{ t('applicationDetailPage.checklistDueNow') }}</span>
-                      <span
-                        v-else-if="item.required_from_status"
-                        class="badge seim-surface-muted text-muted border ms-1"
-                        data-testid="document-checklist-required-from"
-                      >{{ t('applicationDetailPage.checklistRequiredFrom', { status: t(`applicationDetailPage.status.${item.required_from_status}`) }) }}</span>
-                      <p
-                        v-if="checklistItemDescription(item)"
-                        class="small text-muted mb-0"
-                      >{{ checklistItemDescription(item) }}</p>
-                      <p v-if="item.deadline" class="small mb-0 mt-1" :class="item.is_overdue ? 'text-danger' : 'text-muted'">
-                        <i class="bi bi-calendar-event me-1" aria-hidden="true"></i>
-                        {{ t('applicationDetailPage.checklistDeadline', { date: formatChecklistDate(item.deadline) }) }}
-                        <span v-if="item.is_overdue" class="badge bg-danger ms-1">{{ t('applicationDetailPage.checklistOverdue') }}</span>
-                      </p>
-                      <p
-                        v-if="item.status === 'resubmit_requested' && item.resubmission_reason"
-                        class="small text-danger mb-0 mt-1"
-                      >
-                        {{ item.resubmission_reason }}
-                      </p>
-                      <details v-if="item.instructions || item.faq" class="small mt-1">
-                        <summary class="text-primary" style="cursor: pointer">
-                          {{ t('applicationDetailPage.checklistInstructions') }}
-                        </summary>
-                        <p v-if="item.instructions" class="mb-1 mt-1 text-muted">{{ item.instructions }}</p>
-                        <p v-if="item.faq" class="mb-0 text-muted">{{ item.faq }}</p>
-                      </details>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
-                      <span class="badge" :class="checklistBadgeClass(item.status)">
-                        {{ checklistStatusLabel(item.status) }}
-                      </span>
-                      <button
-                        v-if="item.slug === 'solicitud_participacion'"
-                        type="button"
-                        class="btn btn-sm btn-outline-secondary"
-                        data-testid="download-solicitud-pdf"
-                        @click="downloadSolicitudPdf"
-                      >
-                        <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>{{ t('applicationDetailPage.downloadSolicitud') }}
-                      </button>
-                      <button
-                        v-else-if="item.slug === 'carta_homologacion'"
-                        type="button"
-                        class="btn btn-sm btn-outline-secondary"
-                        data-testid="download-carta-checklist"
-                        @click="downloadCartaPdf"
-                      >
-                        <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>{{ t('applicationSubjects.downloadCarta') }}
-                      </button>
-                      <button
-                        v-else-if="item.has_template"
-                        type="button"
-                        class="btn btn-sm btn-outline-secondary"
-                        @click="downloadDocTemplate(item.document_type_id, item.name)"
-                      >
-                        <i class="bi bi-download me-1" aria-hidden="true"></i>{{ t('applicationDetailPage.downloadTemplate') }}
-                      </button>
-                      <router-link
-                        v-if="item.document_id"
-                        :to="{ name: 'DocumentDetail', params: { id: item.document_id } }"
-                        class="btn btn-sm btn-outline-primary"
-                      >
-                        {{ t('applicationDetailPage.view') }}
-                      </router-link>
-                    </div>
-                  </li>
-                </ul>
+                    <i
+                      class="bi"
+                      :class="isChecklistSectionOpen(section.id) ? 'bi-chevron-down' : 'bi-chevron-right'"
+                      aria-hidden="true"
+                    ></i>
+                    <span class="fw-semibold flex-grow-1 text-start">
+                      {{ t(`applicationDetailPage.checklistSections.${section.id}`) }}
+                    </span>
+                    <span
+                      class="badge"
+                      :class="section.badgeClass"
+                      data-testid="document-checklist-section-count"
+                    >{{ section.count }}</span>
+                  </button>
+                  <ul
+                    v-if="isChecklistSectionOpen(section.id)"
+                    :id="`checklist-section-panel-${section.id}`"
+                    class="list-group list-group-flush"
+                    role="region"
+                    :aria-labelledby="`checklist-section-toggle-${section.id}`"
+                    data-testid="document-checklist-section-panel"
+                  >
+                    <li
+                      v-for="item in section.items"
+                      :key="item.document_type_id"
+                      :id="`checklist-item-${item.document_type_id}`"
+                      :ref="(el) => setChecklistItemRef(item.document_type_id, el)"
+                      class="list-group-item px-0 d-flex justify-content-between align-items-start flex-wrap gap-2"
+                      data-testid="document-checklist-item"
+                    >
+                      <div class="me-2 seim-min-w-checklist">
+                        <span class="fw-semibold" data-testid="document-checklist-name">{{ checklistItemLabel(item) }}</span>
+                        <span
+                          v-if="item.is_required === false"
+                          class="badge seim-surface-muted text-muted border ms-1"
+                        >{{ t('applicationDetailPage.checklistOptional') }}</span>
+                        <span
+                          v-else-if="item.due_now && item.status !== 'approved' && item.status !== 'n_a'"
+                          class="badge bg-warning text-dark ms-1"
+                          data-testid="document-checklist-due-now"
+                        >{{ t('applicationDetailPage.checklistDueNow') }}</span>
+                        <span
+                          v-else-if="item.required_from_status"
+                          class="badge seim-surface-muted text-muted border ms-1"
+                          data-testid="document-checklist-required-from"
+                        >{{ t('applicationDetailPage.checklistRequiredFrom', { status: t(`applicationDetailPage.status.${item.required_from_status}`) }) }}</span>
+                        <p
+                          v-if="checklistItemDescription(item)"
+                          class="small text-muted mb-0"
+                        >{{ checklistItemDescription(item) }}</p>
+                        <p
+                          v-if="checklistAcceptedHint(item)"
+                          class="small text-muted mb-0 mt-1"
+                          data-testid="document-checklist-accepted-hint"
+                        >{{ checklistAcceptedHint(item) }}</p>
+                        <ul
+                          v-if="checklistSiblingUploads(item).length"
+                          class="list-unstyled small mb-0 mt-1"
+                          data-testid="document-checklist-uploads"
+                        >
+                          <li
+                            v-for="upload in checklistSiblingUploads(item)"
+                            :key="upload.document_id"
+                            class="d-flex align-items-center gap-2"
+                          >
+                            <router-link
+                              :to="{ name: 'DocumentDetail', params: { id: upload.document_id } }"
+                              class="link-primary"
+                            >
+                              {{ t('applicationDetailPage.viewUpload', { status: checklistStatusLabel(upload.status) }) }}
+                            </router-link>
+                          </li>
+                        </ul>
+                        <p v-if="item.deadline" class="small mb-0 mt-1" :class="item.is_overdue ? 'text-danger' : 'text-muted'">
+                          <i class="bi bi-calendar-event me-1" aria-hidden="true"></i>
+                          {{ t('applicationDetailPage.checklistDeadline', { date: formatChecklistDate(item.deadline) }) }}
+                          <span v-if="item.is_overdue" class="badge bg-danger ms-1">{{ t('applicationDetailPage.checklistOverdue') }}</span>
+                        </p>
+                        <p
+                          v-if="item.status === 'resubmit_requested' && item.resubmission_reason"
+                          class="small text-danger mb-0 mt-1"
+                        >
+                          {{ item.resubmission_reason }}
+                        </p>
+                        <details v-if="item.instructions || item.faq" class="small mt-1">
+                          <summary class="text-primary" style="cursor: pointer">
+                            {{ t('applicationDetailPage.checklistInstructions') }}
+                          </summary>
+                          <p v-if="item.instructions" class="mb-1 mt-1 text-muted">{{ item.instructions }}</p>
+                          <p v-if="item.faq" class="mb-0 text-muted">{{ item.faq }}</p>
+                        </details>
+                      </div>
+                      <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                        <span class="badge" :class="checklistBadgeClass(item.status)">
+                          {{ checklistStatusLabel(item.status) }}
+                        </span>
+                        <button
+                          v-if="item.slug === 'solicitud_participacion'"
+                          type="button"
+                          class="btn btn-sm btn-outline-secondary"
+                          data-testid="download-solicitud-pdf"
+                          @click="downloadSolicitudPdf"
+                        >
+                          <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>{{ t('applicationDetailPage.downloadDocument') }}
+                        </button>
+                        <button
+                          v-else-if="item.slug === 'carta_homologacion'"
+                          type="button"
+                          class="btn btn-sm btn-outline-secondary"
+                          data-testid="download-carta-checklist"
+                          @click="downloadCartaPdf"
+                        >
+                          <i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i>{{ t('applicationDetailPage.downloadDocument') }}
+                        </button>
+                        <button
+                          v-else-if="item.has_template && canDownloadChecklistTemplate(item)"
+                          type="button"
+                          class="btn btn-sm btn-outline-secondary"
+                          data-testid="download-checklist-template"
+                          @click="downloadDocTemplate(item.document_type_id, item.name)"
+                        >
+                          <i class="bi bi-download me-1" aria-hidden="true"></i>{{ t('applicationDetailPage.downloadTemplate') }}
+                        </button>
+                        <button
+                          v-if="canUploadChecklistItem(item)"
+                          type="button"
+                          class="btn btn-sm btn-primary"
+                          data-testid="checklist-upload-shortcut"
+                          @click="startChecklistUpload(item)"
+                        >
+                          <i class="bi bi-cloud-upload me-1" aria-hidden="true"></i>{{ checklistUploadShortcutLabel(item) }}
+                        </button>
+                        <router-link
+                          v-if="item.document_id"
+                          :to="{ name: 'DocumentDetail', params: { id: item.document_id } }"
+                          class="btn btn-sm btn-outline-primary"
+                        >
+                          {{ t('applicationDetailPage.view') }}
+                        </router-link>
+                        <router-link
+                          v-if="canReplaceChecklistItem(item)"
+                          :to="{ name: 'DocumentDetail', params: { id: item.document_id } }"
+                          class="btn btn-sm btn-warning"
+                          data-testid="checklist-replace-cta"
+                        >
+                          {{ t('applicationDetailPage.replaceDocument') }}
+                        </router-link>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
               </div>
             </div>
 
             <!-- Activity timeline (server TimelineEvent rows + record start) -->
-            <div class="card mb-4" data-testid="activity-timeline-card">
-              <div class="card-header">
-                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>{{ t('applicationDetailPage.activityTimeline') }}</h5>
-              </div>
-              <div class="card-body">
-                <div v-if="timelineLoading" class="text-center py-3">
+            <CollapsibleCard
+              test-id="activity-timeline-card"
+              title-class="h5 mb-0"
+              :default-open="false"
+            >
+              <template #title>
+                <i class="bi bi-clock-history me-2" aria-hidden="true"></i>{{ t('applicationDetailPage.activityTimeline') }}
+              </template>
+              <div v-if="timelineLoading" class="text-center py-3">
                   <div class="spinner-border spinner-border-sm text-primary" role="status">
                     <span class="visually-hidden">{{ t('applicationDetailPage.loadingTimeline') }}</span>
                   </div>
@@ -590,8 +674,7 @@
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
+            </CollapsibleCard>
 
             <!-- Comments Section -->
             <div class="card mb-4">
@@ -677,7 +760,10 @@
 
           <!-- Sidebar -->
           <div class="col-lg-4">
-            <DocumentProgressRail :checklist="application.document_checklist" />
+            <DocumentProgressRail
+              :checklist="application.document_checklist"
+              @navigate-item="onProgressRailNavigate"
+            />
             <!-- Coordinator: Review / Status update -->
             <div
               v-if="isCoordinator && application.status !== 'draft' && application.status !== 'cancelled'"
@@ -782,15 +868,20 @@
               </div>
             </div>
 
-            <!-- Upload Document -->
+            <!-- Upload Document (applicant only — staff review, do not upload as student) -->
             <div
-              v-if="application.status === 'draft' || application.status === 'submitted'"
+              v-if="showDocumentUploadCard"
               id="document-upload"
               class="card mb-4"
+              :class="{ 'border-primary shadow': Boolean(uploadPrefillTypeId) }"
+              data-testid="document-upload-card"
             >
               <DocumentUpload
+                ref="documentUploadRef"
                 :application-id="application.id"
-                @uploaded="fetchApplication"
+                :checklist="application.document_checklist"
+                :preselected-type-id="uploadPrefillTypeId"
+                @uploaded="onDocumentUploaded"
               />
             </div>
 
@@ -869,14 +960,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, nextTick, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import { useFeatures } from '@/composables/useFeatures'
 import DocumentUpload from '@/components/DocumentUpload.vue'
 import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
+import CollapsibleCard from '@/components/CollapsibleCard.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import PageStateShell from '@/components/State/PageStateShell.vue'
@@ -890,8 +983,19 @@ import {
   eligibilityFixLink,
 } from '@/utils/eligibilityMessages'
 import { formatTimelineEventDescription, formatTimelineEventHeading, timelineHasCreatedEvent } from '@/utils/timelineEvents'
-import { documentReviewStatus, documentTypeLabel, looksLikeTechnicalDocumentName } from '@/utils/documentApi'
+import {
+  CHECKLIST_UPLOAD_GAP_STATUSES,
+  checklistUploadGaps,
+  checklistUploadTargets,
+  documentReviewStatusBadgeClass,
+  documentReviewStatusLabel,
+  documentTypeAcceptedHintText,
+  documentTypeLabel,
+  filenameFromContentDisposition,
+  looksLikeTechnicalDocumentName,
+} from '@/utils/documentApi'
 import { readinessLevelBadgeClass, readinessScoreBarClass, formatReadinessHeadline } from '@/utils/applicationReadiness'
+import { resolveSectionDefaultOpen, resolveSectionDefaultsMap } from '@/utils/sectionDefaults'
 import {
   applicationStatusBadgeClass,
   formatApplicationStatus,
@@ -915,6 +1019,7 @@ const { t, te, locale } = useI18n()
 const authStore = useAuthStore()
 const { success, error: errorToast } = useToast()
 const { confirm } = useConfirm()
+const { scholarshipsEnabled, loadFeatures } = useFeatures()
 
 const resolvedApplicationId = computed(() => {
   if (props.applicationId != null && props.applicationId !== '') return props.applicationId
@@ -935,10 +1040,29 @@ const {
   submitBlocked,
 } = useApplicationDisplay(application, locale)
 
-const isCoordinator = computed(() =>
-  authStore.userRole === 'coordinator' || authStore.userRole === 'admin'
+/** Staff review capabilities (coordinator + admin), aligned with canUseStaffReviewQueue. */
+const isCoordinator = computed(
+  () =>
+    Boolean(authStore.canUseStaffReviewQueue) ||
+    authStore.userRole === 'coordinator' ||
+    authStore.userRole === 'admin' ||
+    Boolean(authStore.isAdmin),
+)
+const isAdmin = computed(
+  () => Boolean(authStore.isAdmin) || authStore.userRole === 'admin',
 )
 const isStudent = computed(() => authStore.userRole === 'student')
+
+const documentUploadRef = ref(null)
+const uploadPrefillTypeId = ref(null)
+
+const showDocumentUploadCard = computed(() => {
+  if (!isStudent.value || !application.value) return false
+  const status = application.value.status
+  if (status === 'cancelled' || status === 'completed') return false
+  if (checklistUploadTargets(application.value.document_checklist).length > 0) return true
+  return status === 'draft' || status === 'submitted'
+})
 
 const submitBlockedTitle = computed(() => {
   if (submitBlockedByDocuments.value) return t('applicationDetailPage.submitBlockedTitle')
@@ -953,13 +1077,16 @@ const currentUserId = computed(() => authStore.user?.id || null)
 const canPostPrivateComment = computed(() => isCoordinator.value)
 
 const reviewQueueNav = computed(() => {
+  // Staff-only: leftover sessionStorage from a shared browser must not expose
+  // prev/next links to applications the student cannot open.
+  if (!isCoordinator.value) return null
   const id = application.value?.id || resolvedApplicationId.value
   if (!id) return null
   return getReviewQueueNav(id)
 })
 
 function goReviewQueueSibling(id) {
-  if (!id) return
+  if (!id || !isCoordinator.value) return
   syncReviewQueueNavIndex(id)
   if (props.embedded) {
     emit('select-sibling', id)
@@ -987,6 +1114,161 @@ const scholarshipExportLoading = ref(false)
 const scholarshipAwardBusy = ref(false)
 const awardForm = ref({ status: 'nominated', amount: '', currency: 'MXN', notes: '' })
 const disbursementForm = ref({ label: '', amount: '' })
+
+const CHECKLIST_SECTION_DEFS = [
+  {
+    id: 'action',
+    statuses: new Set(['missing', 'resubmit_requested', 'invalid']),
+    badgeClass: 'bg-warning text-dark',
+    defaultOpen: true,
+  },
+  {
+    id: 'pending_review',
+    statuses: new Set(['pending_review']),
+    badgeClass: 'bg-info text-dark',
+    // Open by default for staff so review queue work is visible immediately.
+    defaultOpen: false,
+    defaultOpenForStaff: true,
+  },
+  {
+    id: 'instructions',
+    statuses: new Set(['n_a']),
+    badgeClass: 'bg-secondary',
+    defaultOpen: false,
+  },
+  {
+    id: 'done',
+    statuses: new Set(['approved']),
+    badgeClass: 'bg-success',
+    defaultOpen: false,
+  },
+]
+
+const checklistSectionOpen = ref({})
+
+function sectionDefaultOpen(def) {
+  return resolveSectionDefaultOpen(
+    def,
+    { isAdmin: isAdmin.value, isCoordinator: isCoordinator.value },
+  )
+}
+
+function defaultChecklistSectionOpen() {
+  return resolveSectionDefaultsMap(
+    CHECKLIST_SECTION_DEFS,
+    { isAdmin: isAdmin.value, isCoordinator: isCoordinator.value },
+  )
+}
+
+function checklistSectionIdForStatus(status) {
+  const matched = CHECKLIST_SECTION_DEFS.find((def) => def.statuses.has(status))
+  return matched?.id || 'action'
+}
+
+const checklistSections = computed(() => {
+  const items = application.value?.document_checklist?.items || []
+  return CHECKLIST_SECTION_DEFS.map((def) => {
+    const sectionItems = items.filter((item) => checklistSectionIdForStatus(item.status) === def.id)
+    return {
+      id: def.id,
+      items: sectionItems,
+      count: sectionItems.length,
+      badgeClass: def.badgeClass,
+    }
+  }).filter((section) => section.count > 0)
+})
+
+function isChecklistSectionOpen(sectionId) {
+  if (Object.prototype.hasOwnProperty.call(checklistSectionOpen.value, sectionId)) {
+    return Boolean(checklistSectionOpen.value[sectionId])
+  }
+  const def = CHECKLIST_SECTION_DEFS.find((entry) => entry.id === sectionId)
+  return def ? sectionDefaultOpen(def) : false
+}
+
+function toggleChecklistSection(sectionId) {
+  checklistSectionOpen.value = {
+    ...defaultChecklistSectionOpen(),
+    ...checklistSectionOpen.value,
+    [sectionId]: !isChecklistSectionOpen(sectionId),
+  }
+}
+
+function expandChecklistSection(sectionId) {
+  checklistSectionOpen.value = {
+    ...defaultChecklistSectionOpen(),
+    ...checklistSectionOpen.value,
+    [sectionId]: true,
+  }
+}
+
+const checklistItemEls = new Map()
+
+function setChecklistItemRef(documentTypeId, el) {
+  const key = String(documentTypeId)
+  if (el) checklistItemEls.set(key, el)
+  else checklistItemEls.delete(key)
+}
+
+async function onProgressRailNavigate(item) {
+  const typeId = item?.document_type_id
+  if (typeId == null) return
+  const sectionId = checklistSectionIdForStatus(item.status)
+  expandChecklistSection(sectionId)
+  await nextTick()
+  const el = checklistItemEls.get(String(typeId))
+  if (el && typeof el.scrollIntoView === 'function') {
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+  if (canUploadChecklistItem(item)) {
+    await startChecklistUpload(item, { scrollToChecklist: false })
+  }
+}
+
+function canUploadChecklistItem(item) {
+  if (!isStudent.value || !showDocumentUploadCard.value || !item) return false
+  if (item.submission_mode === 'instructions_only' || item.status === 'n_a') return false
+  if (CHECKLIST_UPLOAD_GAP_STATUSES.has(item.status)) return true
+  return Boolean(item.allows_multiple)
+}
+
+function checklistUploadShortcutLabel(item) {
+  if (item?.status === 'resubmit_requested' || item?.status === 'invalid') {
+    return t('applicationDetailPage.uploadDocumentShortcutResubmit')
+  }
+  if (item?.allows_multiple && (item.upload_count || 0) > 0) {
+    return t('applicationDetailPage.uploadDocumentShortcutAnother')
+  }
+  return t('applicationDetailPage.uploadDocumentShortcut')
+}
+
+async function startChecklistUpload(item, { scrollToChecklist = true } = {}) {
+  if (!canUploadChecklistItem(item)) return
+  uploadPrefillTypeId.value = String(item.document_type_id)
+  if (scrollToChecklist) {
+    const sectionId = checklistSectionIdForStatus(item.status)
+    expandChecklistSection(sectionId)
+  }
+  await nextTick()
+  const uploadCard = document.getElementById('document-upload')
+  if (uploadCard && typeof uploadCard.scrollIntoView === 'function') {
+    uploadCard.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  await nextTick()
+  documentUploadRef.value?.focusUploadForm?.()
+}
+
+function onDocumentUploaded() {
+  uploadPrefillTypeId.value = null
+  fetchApplication()
+}
+
+watch(
+  () => application.value?.id,
+  () => {
+    checklistSectionOpen.value = defaultChecklistSectionOpen()
+  },
+)
 
 const eligibilityFixDisplayItems = computed(() => {
   const el = application.value?.readiness?.eligibility
@@ -1323,6 +1605,25 @@ function checklistItemDescription(item) {
   return description
 }
 
+function checklistAcceptedHint(item) {
+  if (!item) return ''
+  if (item.submission_mode === 'instructions_only' || item.status === 'n_a') return ''
+  return documentTypeAcceptedHintText(
+    {
+      accepted_extensions: item.accepted_extensions || '',
+      resolved_accepted_extensions: item.accepted_extensions || '',
+      max_file_size_mb: item.max_file_size_mb ?? null,
+    },
+    t,
+  )
+}
+
+function checklistSiblingUploads(item) {
+  const uploads = Array.isArray(item?.uploads) ? item.uploads : []
+  if (item?.allows_multiple) return uploads
+  return uploads.length > 1 ? uploads : []
+}
+
 function checklistStatusLabel(status) {
   const key = `applicationDetailPage.checklist.${status}`
   if (te(key)) return t(key)
@@ -1341,18 +1642,29 @@ function checklistBadgeClass(status) {
   return classes[status] || 'bg-secondary'
 }
 
+/** Students may not redownload templates after the requirement is approved. */
+function canDownloadChecklistTemplate(item) {
+  if (!item?.has_template) return false
+  if (isStudent.value) return item.status !== 'approved'
+  return true
+}
+
+/** Replace CTA when applicant may still swap the file for this checklist row. */
+function canReplaceChecklistItem(item) {
+  if (!isStudent.value || !item?.document_id) return false
+  if (item.status === 'approved' || item.status === 'n_a') return false
+  const appStatus = application.value?.status
+  if (appStatus === 'cancelled' || appStatus === 'completed') return false
+  if (appStatus === 'draft') return true
+  return item.status === 'invalid' || item.status === 'resubmit_requested'
+}
+
 function documentStatusLabel(doc) {
-  const status = documentReviewStatus(doc)
-  if (status === 'valid') return t('applicationDetailPage.docValid')
-  if (status === 'invalid') return t('applicationDetailPage.docInvalid')
-  return t('applicationDetailPage.docPending')
+  return documentReviewStatusLabel(doc, { t, te })
 }
 
 function documentStatusBadgeClass(doc) {
-  const status = documentReviewStatus(doc)
-  if (status === 'valid') return 'bg-success'
-  if (status === 'invalid') return 'bg-danger'
-  return 'bg-warning text-dark'
+  return documentReviewStatusBadgeClass(doc)
 }
 
 function formatChecklistDate(iso) {
@@ -1368,7 +1680,10 @@ async function downloadBlobUrl(url, filename, mime = 'application/pdf') {
   const objectUrl = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = objectUrl
-  a.download = filename
+  a.download = filenameFromContentDisposition(
+    response.headers?.['content-disposition'],
+    filename,
+  )
   a.rel = 'noopener noreferrer'
   document.body.appendChild(a)
   a.click()
@@ -1381,7 +1696,7 @@ async function downloadSolicitudPdf() {
   try {
     await downloadBlobUrl(
       `/api/applications/${application.value.id}/solicitud-participacion/`,
-      `solicitud_participacion_${application.value.id}.pdf`,
+      `FS-SP_Solicitud_Participacion_${application.value.id}.pdf`,
     )
   } catch (err) {
     console.error('Solicitud PDF download failed:', err)
@@ -1394,7 +1709,7 @@ async function downloadCartaPdf() {
   try {
     await downloadBlobUrl(
       `/api/applications/${application.value.id}/carta-homologacion/`,
-      `carta_homologacion_${application.value.id}.pdf`,
+      `FS-HM_Homologacion_Materias_${application.value.id}.pdf`,
     )
   } catch (err) {
     console.error('Carta PDF download failed:', err)
@@ -1403,6 +1718,10 @@ async function downloadCartaPdf() {
 }
 
 async function downloadDocTemplate(typeId, name) {
+  const item = (application.value?.document_checklist?.items || []).find(
+    (row) => String(row.document_type_id) === String(typeId),
+  )
+  if (item && !canDownloadChecklistTemplate(item)) return
   try {
     const appId = application.value?.id
     const qs = appId ? `?application=${encodeURIComponent(appId)}` : ''
@@ -1548,9 +1867,38 @@ async function submitComment() {
 }
 
 async function validateDocument(docId, result) {
+  let details = ''
+  if (result === 'invalid') {
+    const raw =
+      typeof window !== 'undefined'
+        ? window.prompt(t('applicationDetailPage.invalidNotePrompt'), '')
+        : null
+    if (raw == null) return
+    details = String(raw).trim()
+    if (!details) {
+      errorToast(t('applicationDetailPage.invalidNoteRequired'))
+      return
+    }
+    const ok = await confirm({
+      title: t('applicationDetailPage.confirmInvalidTitle'),
+      message: t('applicationDetailPage.confirmInvalidMessage'),
+      confirmText: t('applicationDetailPage.markInvalidTitle'),
+      variant: 'danger',
+    })
+    if (!ok) return
+  } else if (result === 'valid') {
+    const ok = await confirm({
+      title: t('applicationDetailPage.confirmValidTitle'),
+      message: t('applicationDetailPage.confirmValidMessage'),
+      confirmText: t('applicationDetailPage.markValidTitle'),
+      variant: 'primary',
+    })
+    if (!ok) return
+  }
+
   try {
     docValidatingId.value = docId
-    await api.post(`/api/documents/${docId}/validate_document/`, { result, details: '' })
+    await api.post(`/api/documents/${docId}/validate_document/`, { result, details })
     success(
       result === 'valid'
         ? t('applicationDetailPage.toastValidateValid')
@@ -1566,16 +1914,18 @@ async function validateDocument(docId, result) {
 }
 
 onMounted(() => {
+  loadFeatures()
   fetchApplication()
   if (typeof window !== 'undefined') {
     window.addEventListener('seim-application-sync', onApplicationSyncEvent)
   }
 })
 
+// AppShell keys by route.name, so full-page ApplicationDetail is reused when
+// queue next/prev only changes :id — must reload for both embedded and full page.
 watch(
   () => resolvedApplicationId.value,
   (next, prev) => {
-    if (!props.embedded) return
     if (next == null || next === '') return
     if (String(next) === String(prev)) return
     fetchApplication()

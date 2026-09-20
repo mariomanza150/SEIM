@@ -286,21 +286,43 @@ html[data-theme='dark'] .seim-notification-unread {
   }
 }
 
-/* App shell + route chrome (from App.vue) */
-#app {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  min-height: 100%;
-  background-color: var(--seim-app-bg);
-  color: var(--seim-surface-text);
-}
-
 html,
 body {
   height: 100%;
   background-color: var(--seim-app-bg);
   color: var(--seim-surface-text);
+  /* Prevent horizontal page bleed from badges, fixed toasts, wide tables, etc. */
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+#app {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  background-color: var(--seim-app-bg);
+  color: var(--seim-surface-text);
+}
+
+/* Prefer wrapping when clip is unsupported (older Safari). */
+@supports not (overflow: clip) {
+  html,
+  body,
+  #app {
+    overflow-x: hidden;
+  }
+}
+
+/* Soft min-widths that never force horizontal page bleed on narrow viewports. */
+.seim-min-w-filter {
+  min-width: min(220px, 100%);
+}
+
+.seim-min-w-checklist {
+  min-width: min(12rem, 100%);
 }
 
 body,

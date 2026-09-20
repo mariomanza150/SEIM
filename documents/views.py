@@ -23,6 +23,7 @@ from core.permissions import IsAdminOrReadOnly, IsCoordinatorOrAdmin, IsOwnerOrA
 from .filters import DocumentFilter, ExchangeAgreementDocumentFilter
 from .mailmerge import (
     MERGE_FIELD_CATALOG,
+    docx_has_fillable_fields,
     is_docx_filename,
     merge_docx,
     merge_values_for_application,
@@ -93,7 +94,7 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         qs = DocumentType.objects.all().annotate(
             requirement_count=Count("program_requirements")
-        )
+        ).prefetch_related("file_type_families")
         if self.action == "retrieve":
             return qs.prefetch_related("program_requirements__program")
         return qs
@@ -113,6 +114,21 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
     def merge_fields(self, request):
         """Word MERGEFIELD names available for template prefilling."""
         return Response({"fields": MERGE_FIELD_CATALOG})
+
+    @action(detail=False, methods=["get"], url_path="file-type-families")
+    def file_type_families(self, request):
+        """Umbrella file-type groups (Image, Word, PDF) and their extensions."""
+        from .file_type_families import seed_file_type_families
+        from .models import FileTypeFamily
+        from .serializers import FileTypeFamilySerializer
+
+        if not FileTypeFamily.objects.exists():
+            families = seed_file_type_families()
+        else:
+            families = FileTypeFamily.objects.filter(is_active=True).order_by(
+                "sort_order", "name"
+            )
+        return Response({"results": FileTypeFamilySerializer(families, many=True).data})
 
     @action(
         detail=True,
@@ -160,24 +176,44 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"], url_path="download-template")
     def download_template(self, request, pk=None):
-        """Download template; .docx files are prefilled when ?application= is set."""
-        doc_type = self.get_object()
-        if not doc_type.template_file:
-            return Response(
-                {"detail": "No template file available for this document type."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        try:
-            handle = doc_type.template_file.open("rb")
-            raw = handle.read()
-            handle.close()
-        except FileNotFoundError:
-            return Response(
-                {"detail": "Template file missing on server."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        """Download template; .docx files are prefilled when ?application= is set.
 
-        filename = os.path.basename(doc_type.template_file.name)
+        Official blank CGRI Word forms (no MERGEFIELD / ``{{…}}`` placeholders)
+        are served as exact sample bytes — mail-merge is skipped so the file
+        stays identical to ``SAMPLES/``.
+        """
+        from cms.cgri_samples import (
+            official_sample_path,
+            official_template_download_name,
+        )
+
+        doc_type = self.get_object()
+        raw = None
+        if doc_type.template_file:
+            try:
+                handle = doc_type.template_file.open("rb")
+                raw = handle.read()
+                handle.close()
+            except FileNotFoundError:
+                raw = None
+
+        if raw is None:
+            sample_path = official_sample_path(doc_type.slug)
+            if sample_path is None:
+                return Response(
+                    {"detail": "No template file available for this document type."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            raw = sample_path.read_bytes()
+
+        filename = (
+            official_template_download_name(doc_type.slug)
+            or (
+                os.path.basename(doc_type.template_file.name)
+                if doc_type.template_file
+                else "template.docx"
+            )
+        )
         application_id = request.query_params.get("application")
         if application_id and is_docx_filename(filename):
             from exchange.models import Application
@@ -206,8 +242,14 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
                 raise PermissionDenied(
                     "You cannot download a prefilled template for this application."
                 )
-            values = merge_values_for_application(application)
-            raw = merge_docx(raw, values)
+            if not DocumentService.can_download_template(application, doc_type, user):
+                raise PermissionDenied(
+                    "Template download is not available after this document "
+                    "has been approved. Contact staff if a resubmission is needed."
+                )
+            if docx_has_fillable_fields(raw):
+                values = merge_values_for_application(application)
+                raw = merge_docx(raw, values)
             stem, ext = os.path.splitext(filename)
             filename = f"{stem}_{application.student.username}{ext}"
 
@@ -298,6 +340,13 @@ class DocumentViewSet(viewsets.ModelViewSet):
     filterset_class = DocumentFilter
     ordering_fields = ["created_at", "validated_at"]
 
+    def get_permissions(self):
+        # validate_document is a staff review write; IsOwnerOrAdmin only allows
+        # applicant writes (upload/replace), which incorrectly blocked admins.
+        if getattr(self, "action", None) == "validate_document":
+            return [permissions.IsAuthenticated(), IsCoordinatorOrAdmin()]
+        return super().get_permissions()
+
     def get_queryset(self):
         """
         Filter documents based on user permissions.
@@ -317,26 +366,8 @@ class DocumentViewSet(viewsets.ModelViewSet):
             "created_at"
         )
 
-        # Coordinators and admins can see all documents
-        if hasattr(user, "has_role") and (
-            user.has_role("coordinator") or user.has_role("admin")
-        ):
-            return Document.objects.select_related(
-                "application",
-                "application__student",
-                "application__program",
-                "application__status",
-                "type",
-                "uploaded_by",
-            ).prefetch_related(
-                "uploaded_by__roles",
-                Prefetch("documentvalidation_set", queryset=val_qs),
-                Prefetch("documentresubmissionrequest_set", queryset=resub_qs),
-                Prefetch("documentcomment_set", queryset=comment_qs),
-            )
-
         # Students can only see their own documents
-        return (
+        qs = (
             Document.objects.filter(Q(uploaded_by=user) | Q(application__student=user))
             .select_related(
                 "application",
@@ -353,6 +384,33 @@ class DocumentViewSet(viewsets.ModelViewSet):
                 Prefetch("documentcomment_set", queryset=comment_qs),
             )
         )
+
+        # Coordinators and admins can see all documents
+        if user.is_staff or user.is_superuser or (
+            hasattr(user, "has_role")
+            and (user.has_role("coordinator") or user.has_role("admin"))
+        ):
+            qs = Document.objects.select_related(
+                "application",
+                "application__student",
+                "application__program",
+                "application__status",
+                "type",
+                "uploaded_by",
+            ).prefetch_related(
+                "uploaded_by__roles",
+                Prefetch("documentvalidation_set", queryset=val_qs),
+                Prefetch("documentresubmissionrequest_set", queryset=resub_qs),
+                Prefetch("documentcomment_set", queryset=comment_qs),
+            )
+
+        include_superseded = str(
+            self.request.query_params.get("include_superseded", "")
+        ).lower() in {"1", "true", "yes"}
+        # List defaults to current uploads only; retrieve by id still finds prior versions.
+        if getattr(self, "action", None) == "list" and not include_superseded:
+            qs = qs.filter(successors__isnull=True)
+        return qs
 
     def perform_create(self, serializer):
         """Set uploaded_by to current user on creation."""
@@ -417,14 +475,6 @@ class DocumentViewSet(viewsets.ModelViewSet):
         """
         document = self.get_object()
         user = request.user
-        if not (
-            getattr(user, "has_role", None)
-            and (user.has_role("coordinator") or user.has_role("admin"))
-        ):
-            return Response(
-                {"detail": "Only coordinators or admins can validate documents."},
-                status=status.HTTP_403_FORBIDDEN,
-            )
         result_val = (request.data.get("result") or "").lower()
         if result_val not in ("valid", "invalid"):
             return Response(

@@ -43,8 +43,9 @@
               <button
                 ref="submitButton"
                 type="button"
-                class="btn btn-primary"
-                :disabled="saving"
+                class="btn"
+                :class="submitVariant === 'danger' ? 'btn-danger' : 'btn-primary'"
+                :disabled="saving || submitDisabled"
                 data-testid="form-modal-submit"
                 @click="$emit('submit')"
               >
@@ -72,6 +73,12 @@ const props = defineProps({
   submitLabel: { type: String, default: '' },
   cancelLabel: { type: String, default: '' },
   closeLabel: { type: String, default: '' },
+  submitVariant: {
+    type: String,
+    default: 'primary',
+    validator: (v) => ['primary', 'danger'].includes(v),
+  },
+  submitDisabled: { type: Boolean, default: false },
   size: {
     type: String,
     default: 'lg',

@@ -25,6 +25,7 @@ from .models import (
     TimelineEvent,
     visible_host_subjects_queryset,
     validate_application_host_destination,
+    resolve_host_destination_names,
 )
 
 _TIMELINE_EVENT_FIELDS = tuple(f.name for f in TimelineEvent._meta.fields) + (
@@ -770,6 +771,12 @@ class ApplicationSerializer(serializers.ModelSerializer):
     program_end_date = serializers.DateField(source="program.end_date", read_only=True)
     host_institution_name = serializers.SerializerMethodField()
     host_institution_country = serializers.SerializerMethodField()
+    host_school_name = serializers.CharField(
+        write_only=True, required=False, allow_blank=True, max_length=255
+    )
+    host_academic_program_name = serializers.CharField(
+        write_only=True, required=False, allow_blank=True, max_length=255
+    )
     readiness = serializers.SerializerMethodField()
     scholarship_allocation_score = serializers.SerializerMethodField()
     scholarship_award = serializers.SerializerMethodField()
@@ -793,6 +800,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "program_end_date",
             "host_institution_name",
             "host_institution_country",
+            "host_school_name",
+            "host_academic_program_name",
         )
 
     def get_dynamic_form_submission(self, obj):
@@ -859,6 +868,10 @@ class ApplicationSerializer(serializers.ModelSerializer):
         )
 
     def get_scholarship_allocation_score(self, obj):
+        from core.feature_settings import scholarships_enabled
+
+        if not scholarships_enabled():
+            return None
         request = self.context.get("request")
         view = self.context.get("view")
         if not request or not request.user.is_authenticated:
@@ -883,6 +896,10 @@ class ApplicationSerializer(serializers.ModelSerializer):
         return payload
 
     def get_scholarship_award(self, obj):
+        from core.feature_settings import scholarships_enabled
+
+        if not scholarships_enabled():
+            return None
         request = self.context.get("request")
         view = self.context.get("view")
         if not request or not request.user.is_authenticated:
@@ -902,6 +919,15 @@ class ApplicationSerializer(serializers.ModelSerializer):
         from exchange.scholarship_awards import serialize_award
 
         return serialize_award(award)
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        from core.feature_settings import scholarships_enabled
+
+        if not scholarships_enabled():
+            data.pop("scholarship_allocation_score", None)
+            data.pop("scholarship_award", None)
+        return data
 
     def get_dynamic_form_layout(self, obj):
         from documents.services import DocumentService
@@ -1046,6 +1072,31 @@ class ApplicationSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"program": "Active application already exists for this program."}
                 )
+
+        # Resolve free-text host school / program names into catalog FKs.
+        school_name = (data.pop("host_school_name", "") or "").strip()
+        academic_name = (data.pop("host_academic_program_name", "") or "").strip()
+        if school_name or academic_name:
+            institution = data.get("host_institution")
+            if institution is None and self.instance is not None:
+                institution = self.instance.host_institution
+            school = data.get("host_school")
+            if school is None and "host_school" not in data and self.instance is not None:
+                school = self.instance.host_school
+            resolved_school, resolved_academic, name_errors = (
+                resolve_host_destination_names(
+                    institution=institution,
+                    school=school,
+                    school_name=school_name,
+                    academic_program_name=academic_name,
+                )
+            )
+            if name_errors:
+                raise serializers.ValidationError(name_errors)
+            if school_name:
+                data["host_school"] = resolved_school
+            if academic_name:
+                data["host_academic_program"] = resolved_academic
 
         # Cascade-validate host destination when any host field is present / being set.
         host_keys = (

@@ -649,8 +649,16 @@ class LoginSerializer(serializers.Serializer):
             data["user"] = auth_user
             return data
         except ValueError as e:
-            # Re-raise as serializer validation error
-            raise AuthenticationFailed(str(e))
+            message = str(e)
+            if "not verified" in message.lower():
+                # Dict detail becomes the response body so clients get a stable code.
+                raise AuthenticationFailed(
+                    detail={
+                        "detail": message,
+                        "code": "email_not_verified",
+                    }
+                )
+            raise AuthenticationFailed(message)
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):

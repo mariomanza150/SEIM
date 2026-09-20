@@ -1,45 +1,61 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import FormModal from './FormModal.vue'
 import i18n from '@/i18n'
 
 describe('FormModal', () => {
+  let wrapper
+
+  afterEach(() => {
+    wrapper?.unmount()
+    wrapper = undefined
+  })
+
   it('renders when open with title and emits close on cancel', async () => {
-    const wrapper = mount(FormModal, {
+    wrapper = mount(FormModal, {
       props: {
         open: true,
         title: 'Edit user',
       },
       global: { plugins: [i18n] },
+      attachTo: document.body,
     })
-    expect(wrapper.get('[data-testid="form-modal"]').attributes('aria-modal')).toBe('true')
-    expect(wrapper.text()).toContain('Edit user')
-    await wrapper.get('[data-testid="form-modal-cancel"]').trigger('click')
+    const modal = document.querySelector('[data-testid="form-modal"]')
+    expect(modal).toBeTruthy()
+    expect(modal.getAttribute('aria-modal')).toBe('true')
+    expect(modal.textContent).toContain('Edit user')
+    document.querySelector('[data-testid="form-modal-cancel"]').click()
+    await wrapper.vm.$nextTick()
     expect(wrapper.emitted('close')).toBeTruthy()
   })
 
   it('shows error alert and emits submit', async () => {
-    const wrapper = mount(FormModal, {
+    wrapper = mount(FormModal, {
       props: {
         open: true,
         title: 'Create',
         error: 'Validation failed',
       },
       global: { plugins: [i18n] },
+      attachTo: document.body,
     })
-    expect(wrapper.get('[data-testid="form-modal-error"]').text()).toContain('Validation failed')
-    await wrapper.get('[data-testid="form-modal-submit"]').trigger('click')
+    expect(document.querySelector('[data-testid="form-modal-error"]').textContent).toContain(
+      'Validation failed',
+    )
+    document.querySelector('[data-testid="form-modal-submit"]').click()
+    await wrapper.vm.$nextTick()
     expect(wrapper.emitted('submit')).toBeTruthy()
   })
 
   it('does not render when closed', () => {
-    const wrapper = mount(FormModal, {
+    wrapper = mount(FormModal, {
       props: { open: false, title: 'Hidden' },
       global: { plugins: [i18n] },
+      attachTo: document.body,
     })
-    expect(wrapper.find('[data-testid="form-modal"]').exists()).toBe(false)
+    expect(document.querySelector('[data-testid="form-modal"]')).toBeNull()
   })
 })

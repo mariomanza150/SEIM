@@ -301,7 +301,6 @@ async function validateBpmn() {
     validationOk.value = false
     validationMessage.value =
       typeof msg === 'string' ? msg : t('adminWorkflowEditor.validateError')
-    error.value = validationMessage.value
     errorToast(t('adminWorkflowEditor.validateToastError'))
   } finally {
     busy.value = false

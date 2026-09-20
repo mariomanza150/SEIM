@@ -8,6 +8,7 @@ from django.core.management.base import BaseCommand
 from accounts.models import AllowedEmailDomain, Role
 from accounts.language_catalog import seed_spoken_languages
 from accounts.profile_catalogs import seed_profile_catalogs
+from documents.file_type_families import seed_file_type_families
 from documents.mobility_document_catalog import (
     assign_scheme_document_requirements,
     seed_mobility_document_types,
@@ -47,6 +48,9 @@ class Command(BaseCommand):
                 name=name, defaults={"order": order}
             )
             self.stdout.write(f"  ✓ ApplicationStatus: {name}")
+
+        seed_file_type_families()
+        self.stdout.write("  ✓ File type families seeded (PDF, Image, Word, …)")
 
         # Legacy English seeds (kept for older tests/fixtures); mapped by Phase 4 catalog.
         document_types = [

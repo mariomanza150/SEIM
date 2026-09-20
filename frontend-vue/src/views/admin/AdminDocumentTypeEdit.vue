@@ -38,9 +38,12 @@
       <div class="col-lg-8">
         <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
 
-        <div class="card mb-4">
-          <div class="card-header">{{ t('adminDocuments.sections.identity') }}</div>
-          <div class="card-body row g-3">
+        <CollapsibleCard
+          test-id="admin-document-section-identity"
+          :default-open="sectionOpen.identity"
+        >
+          <template #title>{{ t('adminDocuments.sections.identity') }}</template>
+          <div class="row g-3">
             <div class="col-md-8">
               <label class="form-label">{{ t('adminDocuments.fields.name') }}</label>
               <input v-model="form.name" class="form-control" type="text" data-testid="admin-document-type-name" />
@@ -66,12 +69,75 @@
                 <label class="form-check-label" for="allowsMultiple">{{ t('adminDocuments.fields.allowsMultipleHelp') }}</label>
               </div>
             </div>
+            <div class="col-md-6">
+              <label class="form-label">{{ t('adminDocuments.fields.versionHistoryVisibility') }}</label>
+              <select
+                v-model="form.version_history_visibility"
+                class="form-select"
+                data-testid="admin-document-version-history-visibility"
+              >
+                <option value="inherit">{{ t('adminDocuments.versionHistoryModes.inherit') }}</option>
+                <option value="hidden">{{ t('adminDocuments.versionHistoryModes.hidden') }}</option>
+                <option value="custom">{{ t('adminDocuments.versionHistoryModes.custom') }}</option>
+              </select>
+              <div class="form-text">{{ t('adminDocuments.fields.versionHistoryVisibilityHelp') }}</div>
+            </div>
+            <div
+              v-if="form.version_history_visibility === 'custom'"
+              class="col-12"
+              data-testid="admin-document-version-history-custom"
+            >
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input
+                      id="vh-student"
+                      v-model="form.version_history_student"
+                      class="form-check-input"
+                      type="checkbox"
+                      :true-value="true"
+                      :false-value="false"
+                    />
+                    <label class="form-check-label" for="vh-student">{{ t('adminDocuments.fields.versionHistoryStudent') }}</label>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input
+                      id="vh-coordinator"
+                      v-model="form.version_history_coordinator"
+                      class="form-check-input"
+                      type="checkbox"
+                      :true-value="true"
+                      :false-value="false"
+                    />
+                    <label class="form-check-label" for="vh-coordinator">{{ t('adminDocuments.fields.versionHistoryCoordinator') }}</label>
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <div class="form-check">
+                    <input
+                      id="vh-admin"
+                      v-model="form.version_history_admin"
+                      class="form-check-input"
+                      type="checkbox"
+                      :true-value="true"
+                      :false-value="false"
+                    />
+                    <label class="form-check-label" for="vh-admin">{{ t('adminDocuments.fields.versionHistoryAdmin') }}</label>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </CollapsibleCard>
 
-        <div class="card mb-4">
-          <div class="card-header">{{ t('adminDocuments.sections.instructions') }}</div>
-          <div class="card-body row g-3">
+        <CollapsibleCard
+          test-id="admin-document-section-instructions"
+          :default-open="sectionOpen.instructions"
+        >
+          <template #title>{{ t('adminDocuments.sections.instructions') }}</template>
+          <div class="row g-3">
             <div class="col-12">
               <label class="form-label">{{ t('adminDocuments.fields.instructions') }}</label>
               <textarea
@@ -87,12 +153,24 @@
               <textarea v-model="form.faq" class="form-control" rows="3" />
             </div>
           </div>
-        </div>
+        </CollapsibleCard>
 
-        <div class="card mb-4">
-          <div class="card-header">{{ t('adminDocuments.sections.constraints') }}</div>
-          <div class="card-body row g-3">
+        <CollapsibleCard
+          test-id="admin-document-section-constraints"
+          :default-open="sectionOpen.constraints"
+        >
+          <template #title>{{ t('adminDocuments.sections.constraints') }}</template>
+          <div class="row g-3">
             <div class="col-md-8">
+              <label class="form-label">{{ t('adminDocuments.fields.fileTypeFamilies') }}</label>
+              <FileTypeFamilyPicker
+                v-model="form.file_type_family_ids"
+                :families="fileTypeFamilies"
+                :search-placeholder="t('adminDocuments.fields.fileTypeFamiliesSearch')"
+                :help-text="t('adminDocuments.fields.fileTypeFamiliesHelp')"
+              />
+            </div>
+            <div class="col-12">
               <label class="form-label">{{ t('adminDocuments.fields.acceptedExtensions') }}</label>
               <input
                 v-model="form.accepted_extensions"
@@ -108,145 +186,170 @@
               <div class="form-text">{{ t('adminDocuments.fields.maxFileSizeMbHelp') }}</div>
             </div>
           </div>
-        </div>
+        </CollapsibleCard>
 
-        <div class="card mb-4">
-          <div class="card-header">{{ t('adminDocuments.sections.template') }}</div>
-          <div class="card-body">
-            <p class="small text-muted">{{ t('adminDocuments.fields.templateHelp') }}</p>
-            <p v-if="hasTemplate" class="mb-2">
-              <i class="bi bi-file-earmark-word me-1" aria-hidden="true"></i>
-              {{ templateFilename || t('adminDocuments.templateAttached') }}
-            </p>
-            <p v-else class="text-muted small">{{ t('adminDocuments.noTemplate') }}</p>
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-              <input
-                ref="templateInput"
-                class="form-control"
-                type="file"
-                accept=".docx,.doc,.pdf,.odt,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                data-testid="admin-document-type-template"
-                @change="onTemplateChosen"
-              />
-              <button
-                type="button"
-                class="btn btn-outline-primary"
-                :disabled="templateBusy || !pendingTemplate"
-                @click="uploadTemplate"
-              >
-                {{ t('adminDocuments.uploadTemplate') }}
-              </button>
-              <button
-                v-if="hasTemplate"
-                type="button"
-                class="btn btn-outline-danger"
-                :disabled="templateBusy"
-                @click="removeTemplate"
-              >
-                {{ t('adminDocuments.removeTemplate') }}
+        <CollapsibleCard
+          test-id="admin-document-section-template"
+          :default-open="sectionOpen.template"
+        >
+          <template #title>{{ t('adminDocuments.sections.template') }}</template>
+          <template v-if="hasTemplate" #header-extra>
+            <span class="badge bg-secondary">{{ t('adminDocuments.templateAttached') }}</span>
+          </template>
+          <p class="small text-muted">{{ t('adminDocuments.fields.templateHelp') }}</p>
+          <p v-if="hasTemplate" class="mb-2">
+            <i class="bi bi-file-earmark-word me-1" aria-hidden="true"></i>
+            {{ templateFilename || t('adminDocuments.templateAttached') }}
+          </p>
+          <p v-else class="text-muted small">{{ t('adminDocuments.noTemplate') }}</p>
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <input
+              ref="templateInput"
+              class="form-control"
+              type="file"
+              accept=".docx,.doc,.pdf,.odt,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              data-testid="admin-document-type-template"
+              @change="onTemplateChosen"
+            />
+            <button
+              type="button"
+              class="btn btn-outline-primary"
+              :disabled="templateBusy || !pendingTemplate"
+              @click="uploadTemplate"
+            >
+              {{ t('adminDocuments.uploadTemplate') }}
+            </button>
+            <button
+              v-if="hasTemplate"
+              type="button"
+              class="btn btn-outline-danger"
+              :disabled="templateBusy"
+              @click="removeTemplate"
+            >
+              {{ t('adminDocuments.removeTemplate') }}
+            </button>
+          </div>
+        </CollapsibleCard>
+
+        <CollapsibleCard
+          test-id="admin-document-requirements"
+          :default-open="sectionOpen.workflow"
+        >
+          <template #title>{{ t('adminDocuments.sections.workflow') }}</template>
+          <template v-if="form.program_requirements.length" #header-extra>
+            <span class="badge bg-secondary">{{ form.program_requirements.length }}</span>
+          </template>
+          <p class="small text-muted">{{ t('adminDocuments.workflowHelp') }}</p>
+          <div class="row g-2 align-items-end mb-3">
+            <div class="col-md-8">
+              <label class="form-label">{{ t('adminDocuments.addProgram') }}</label>
+              <select v-model="addProgramId" class="form-select" data-testid="admin-document-add-program">
+                <option value="">{{ t('adminCommon.notSet') }}</option>
+                <option v-for="p in availablePrograms" :key="p.id" :value="p.id">{{ p.name }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <button type="button" class="btn btn-outline-primary w-100" :disabled="!addProgramId" @click="addRequirement">
+                {{ t('adminDocuments.addRequirement') }}
               </button>
             </div>
           </div>
-        </div>
-
-        <div class="card mb-4" data-testid="admin-document-requirements">
-          <div class="card-header">{{ t('adminDocuments.sections.workflow') }}</div>
-          <div class="card-body">
-            <p class="small text-muted">{{ t('adminDocuments.workflowHelp') }}</p>
-            <div class="row g-2 align-items-end mb-3">
-              <div class="col-md-8">
-                <label class="form-label">{{ t('adminDocuments.addProgram') }}</label>
-                <select v-model="addProgramId" class="form-select" data-testid="admin-document-add-program">
-                  <option value="">{{ t('adminCommon.notSet') }}</option>
-                  <option v-for="p in availablePrograms" :key="p.id" :value="p.id">{{ p.name }}</option>
-                </select>
-              </div>
-              <div class="col-md-4">
-                <button type="button" class="btn btn-outline-primary w-100" :disabled="!addProgramId" @click="addRequirement">
-                  {{ t('adminDocuments.addRequirement') }}
-                </button>
-              </div>
-            </div>
-            <div class="table-responsive">
-              <table class="table table-sm align-middle mb-0">
-                <thead>
-                  <tr>
-                    <th>{{ t('adminDocuments.req.program') }}</th>
-                    <th>{{ t('adminDocuments.req.requiredFrom') }}</th>
-                    <th>{{ t('adminDocuments.req.daysAfterStart') }}</th>
-                    <th>{{ t('adminDocuments.req.daysBeforeDeadline') }}</th>
-                    <th>{{ t('adminDocuments.req.absolute') }}</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-if="!form.program_requirements.length">
-                    <td colspan="6" class="text-muted text-center py-3">{{ t('adminDocuments.req.empty') }}</td>
-                  </tr>
-                  <tr v-for="(req, idx) in form.program_requirements" :key="req.program">
-                    <td>
-                      <div class="fw-medium">{{ req.program_name }}</div>
-                      <div class="small text-muted">
-                        {{ t('adminDocuments.req.resolved', { date: req.resolved_deadline || t('adminCommon.notSet') }) }}
-                      </div>
-                      <textarea
-                        v-model="req.instructions_override"
-                        class="form-control form-control-sm mt-1"
-                        rows="2"
-                        :placeholder="t('adminDocuments.req.instructionsOverride')"
-                      />
-                    </td>
-                    <td>
-                      <select
-                        v-model="req.required_from_status"
-                        class="form-select form-select-sm"
-                        data-testid="admin-document-required-from"
-                        @change="onRequiredFromChange(req)"
-                      >
-                        <option value="">{{ t('adminDocuments.req.optionalThroughout') }}</option>
-                        <option v-for="st in documentPipelineStatuses" :key="st" :value="st">
-                          {{ t(`applicationDetailPage.status.${st}`) }}
-                        </option>
-                      </select>
-                    </td>
-                    <td>
-                      <input v-model.number="req.deadline_days_after_program_start" class="form-control form-control-sm" type="number" min="0" />
-                    </td>
-                    <td>
-                      <input v-model.number="req.deadline_days_before_program_deadline" class="form-control form-control-sm" type="number" min="0" />
-                    </td>
-                    <td>
-                      <input v-model="req.deadline" class="form-control form-control-sm" type="date" />
-                    </td>
-                    <td class="text-end">
-                      <button type="button" class="btn btn-sm btn-outline-danger" @click="removeRequirement(idx)">
-                        {{ t('adminCommon.delete') }}
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>{{ t('adminDocuments.req.program') }}</th>
+                  <th>{{ t('adminDocuments.req.requiredFrom') }}</th>
+                  <th>{{ t('adminDocuments.req.daysAfterStart') }}</th>
+                  <th>{{ t('adminDocuments.req.daysBeforeDeadline') }}</th>
+                  <th>{{ t('adminDocuments.req.absolute') }}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-if="!form.program_requirements.length">
+                  <td colspan="6" class="text-muted text-center py-3">{{ t('adminDocuments.req.empty') }}</td>
+                </tr>
+                <tr v-for="(req, idx) in form.program_requirements" :key="req.program">
+                  <td>
+                    <div class="fw-medium">{{ req.program_name }}</div>
+                    <div class="small text-muted">
+                      {{ t('adminDocuments.req.resolved', { date: req.resolved_deadline || t('adminCommon.notSet') }) }}
+                    </div>
+                    <textarea
+                      v-model="req.instructions_override"
+                      class="form-control form-control-sm mt-1"
+                      rows="2"
+                      :placeholder="t('adminDocuments.req.instructionsOverride')"
+                    />
+                  </td>
+                  <td>
+                    <select
+                      v-model="req.required_from_status"
+                      class="form-select form-select-sm"
+                      data-testid="admin-document-required-from"
+                      @change="onRequiredFromChange(req)"
+                    >
+                      <option value="">{{ t('adminDocuments.req.optionalThroughout') }}</option>
+                      <option v-for="st in documentPipelineStatuses" :key="st" :value="st">
+                        {{ t(`applicationDetailPage.status.${st}`) }}
+                      </option>
+                    </select>
+                  </td>
+                  <td>
+                    <input v-model.number="req.deadline_days_after_program_start" class="form-control form-control-sm" type="number" min="0" />
+                  </td>
+                  <td>
+                    <input v-model.number="req.deadline_days_before_program_deadline" class="form-control form-control-sm" type="number" min="0" />
+                  </td>
+                  <td>
+                    <input v-model="req.deadline" class="form-control form-control-sm" type="date" />
+                  </td>
+                  <td class="text-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger" @click="removeRequirement(idx)">
+                      {{ t('adminCommon.delete') }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-        </div>
+        </CollapsibleCard>
       </div>
 
       <div class="col-lg-4">
-        <div class="card mb-4">
-          <div class="card-header">{{ t('adminDocuments.sections.mergeFields') }}</div>
-          <div class="card-body">
-            <p class="small text-muted">{{ t('adminDocuments.mergeFieldsHelp') }}</p>
-            <div v-for="group in mergeFieldGroups" :key="group.key" class="mb-3">
-              <div class="fw-semibold small text-uppercase text-muted mb-1">{{ group.label }}</div>
-              <ul class="list-unstyled small mb-0">
-                <li v-for="field in group.fields" :key="field.name" class="mb-1">
-                  <code>{{ field.name }}</code>
-                  <span class="text-muted"> — {{ field.description }}</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
+        <CollapsibleCard
+          test-id="admin-document-section-merge-fields"
+          :default-open="sectionOpen.mergeFields"
+          card-class="merge-fields-card"
+        >
+          <template #title>{{ t('adminDocuments.sections.mergeFields') }}</template>
+          <template v-if="mergeFieldCount" #header-extra>
+            <span class="badge bg-secondary">{{ mergeFieldCount }}</span>
+          </template>
+          <p class="small text-muted">{{ t('adminDocuments.mergeFieldsHelp') }}</p>
+          <CollapsibleCard
+            v-for="group in mergeFieldGroups"
+            :key="group.key"
+            :test-id="`admin-document-merge-group-${group.key}`"
+            :default-open="false"
+            compact-header
+            :with-margin="false"
+            card-class="mb-2 border merge-fields-group"
+            title-class="mb-0 small text-uppercase text-muted"
+          >
+            <template #title>{{ group.label }}</template>
+            <template #header-extra>
+              <span class="badge bg-light text-dark border">{{ group.fields.length }}</span>
+            </template>
+            <ul class="list-unstyled small mb-0">
+              <li v-for="field in group.fields" :key="field.name" class="mb-1">
+                <code>{{ field.name }}</code>
+                <span class="text-muted"> — {{ field.description }}</span>
+              </li>
+            </ul>
+          </CollapsibleCard>
+        </CollapsibleCard>
         <div class="d-grid">
           <button type="button" class="btn btn-outline-danger" :disabled="saving" @click="confirmDelete">
             {{ t('adminDocuments.deleteType') }}
@@ -268,6 +371,9 @@ import { useConfirm } from '@/composables/useConfirm'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import PageStateShell from '@/components/State/PageStateShell.vue'
+import FileTypeFamilyPicker from '@/components/FileTypeFamilyPicker.vue'
+import CollapsibleCard from '@/components/CollapsibleCard.vue'
+import { resolveSectionDefaultsMap } from '@/utils/sectionDefaults'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -281,6 +387,7 @@ const error = ref(null)
 const formError = ref(null)
 const programs = ref([])
 const mergeFields = ref([])
+const fileTypeFamilies = ref([])
 const addProgramId = ref('')
 const templateInput = ref(null)
 const pendingTemplate = ref(null)
@@ -290,6 +397,35 @@ const templateFilename = ref('')
 
 const form = ref(emptyForm())
 const documentPipelineStatuses = ['submitted', 'under_review', 'nominated', 'approved', 'completed']
+
+/** Admin editor: open task-relevant sections via context; density-first otherwise. */
+const EDITOR_SECTION_DEFS = [
+  { id: 'identity', openWhen: () => true },
+  { id: 'instructions', defaultOpen: false },
+  { id: 'constraints', defaultOpen: false },
+  { id: 'template', openWhen: () => true },
+  {
+    id: 'workflow',
+    defaultOpen: false,
+    openWhen: (ctx) => Boolean(ctx.hasRequirements),
+  },
+  {
+    id: 'mergeFields',
+    defaultOpen: false,
+    openWhen: (ctx) => Boolean(ctx.hasTemplate),
+  },
+]
+
+const sectionContext = computed(() => ({
+  hasTemplate: hasTemplate.value,
+  hasRequirements: form.value.program_requirements.length > 0,
+}))
+
+const sectionOpen = computed(() =>
+  resolveSectionDefaultsMap(EDITOR_SECTION_DEFS, { isAdmin: true }, sectionContext.value),
+)
+
+const mergeFieldCount = computed(() => mergeFields.value.length)
 
 function normalizeRequirementRow(row) {
   const requiredFrom = row.is_required === false ? '' : (row.required_from_status || 'submitted')
@@ -340,8 +476,13 @@ function emptyForm() {
     instructions: '',
     faq: '',
     accepted_extensions: '',
+    file_type_family_ids: [],
     max_file_size_mb: null,
     allows_multiple: false,
+    version_history_visibility: 'inherit',
+    version_history_student: false,
+    version_history_coordinator: true,
+    version_history_admin: true,
     program_requirements: [],
   }
 }
@@ -360,10 +501,11 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    const [typeRes, programRes, fieldsRes] = await Promise.all([
+    const [typeRes, programRes, fieldsRes, familyRes] = await Promise.all([
       api.get(`/api/document-types/${route.params.id}/`),
       api.get('/api/programs/', { params: { ordering: 'name', page_size: 100 } }),
       api.get('/api/document-types/merge-fields/'),
+      api.get('/api/document-types/file-type-families/'),
     ])
     const dt = typeRes.data || {}
     form.value = {
@@ -374,14 +516,22 @@ async function load() {
       instructions: dt.instructions || '',
       faq: dt.faq || '',
       accepted_extensions: dt.accepted_extensions || '',
+      file_type_family_ids: (dt.file_type_family_ids || (dt.file_type_families || []).map((f) => f.id)).map(
+        (id) => Number(id),
+      ),
       max_file_size_mb: dt.max_file_size_mb,
       allows_multiple: Boolean(dt.allows_multiple),
+      version_history_visibility: dt.version_history_visibility || 'inherit',
+      version_history_student: dt.version_history_student ?? false,
+      version_history_coordinator: dt.version_history_coordinator ?? true,
+      version_history_admin: dt.version_history_admin ?? true,
       program_requirements: (dt.program_requirements || []).map((row) => normalizeRequirementRow(row)),
     }
     hasTemplate.value = Boolean(dt.has_template)
     templateFilename.value = dt.template_filename || ''
     programs.value = normalizeApiList(programRes.data)
     mergeFields.value = fieldsRes.data?.fields || []
+    fileTypeFamilies.value = normalizeApiList(familyRes.data)
   } catch (err) {
     console.error('Failed to load document type:', err)
     error.value = t('adminDocuments.loadDetailError')
@@ -463,8 +613,22 @@ async function save() {
       instructions: form.value.instructions,
       faq: form.value.faq,
       accepted_extensions: form.value.accepted_extensions,
+      file_type_family_ids: form.value.file_type_family_ids,
       max_file_size_mb: emptyToNull(form.value.max_file_size_mb),
       allows_multiple: Boolean(form.value.allows_multiple),
+      version_history_visibility: form.value.version_history_visibility || 'inherit',
+      version_history_student:
+        form.value.version_history_visibility === 'custom'
+          ? Boolean(form.value.version_history_student)
+          : null,
+      version_history_coordinator:
+        form.value.version_history_visibility === 'custom'
+          ? Boolean(form.value.version_history_coordinator)
+          : null,
+      version_history_admin:
+        form.value.version_history_visibility === 'custom'
+          ? Boolean(form.value.version_history_admin)
+          : null,
       program_requirements: form.value.program_requirements.map((row, idx) => ({
         id: row.id || undefined,
         program: row.program,
@@ -521,5 +685,9 @@ onMounted(() => {
 <style scoped>
 .admin-document-type-edit {
   min-height: 60vh;
+}
+
+.merge-fields-group :deep(.card-header) {
+  background-color: transparent;
 }
 </style>

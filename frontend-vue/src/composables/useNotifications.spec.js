@@ -12,6 +12,7 @@ vi.mock('@/services/api', () => ({
   default: {
     get: vi.fn(),
     post: vi.fn(),
+    delete: vi.fn(),
   },
 }))
 
@@ -50,6 +51,13 @@ describe('useNotifications', () => {
     const n = mountComposable()
     await n.markAsRead(123)
     expect(api.post).toHaveBeenCalledWith('/api/notifications/123/mark_read/')
+  })
+
+  it('dismissNotification deletes via delete_notification action', async () => {
+    api.delete.mockResolvedValue({ data: {} })
+    const n = mountComposable()
+    await n.dismissNotification(55)
+    expect(api.delete).toHaveBeenCalledWith('/api/notifications/55/delete_notification/')
   })
 
   it('formatTimestampDropdown uses relative time for recent notifications', async () => {

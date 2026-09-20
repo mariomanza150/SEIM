@@ -131,7 +131,7 @@
         </template>
         <template #presets>
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
-                <div class="flex-grow-1" style="min-width: 200px">
+                <div class="flex-grow-1 seim-min-w-filter">
                   <label class="form-label small text-muted mb-1">{{ t('staffAgreementDocumentsPage.presetSaveLabel') }}</label>
                   <div class="input-group input-group-sm">
                     <input
@@ -201,6 +201,7 @@
         :error="error || ''"
         :empty="!rows.length"
         :empty-title="t('staffAgreementDocumentsPage.emptyFiltered')"
+        empty-test-id="agreement-docs-empty"
         skeleton="table"
         :loading-label="t('staffAgreementDocumentsPage.pageLoading')"
         :skeleton-columns="4"

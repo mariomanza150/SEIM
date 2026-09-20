@@ -121,6 +121,11 @@
                 </router-link>
               </li>
               <li>
+                <router-link class="dropdown-item" :to="{ name: 'AdminFeatures' }" @click="closeAdminMenu">
+                  {{ t('route.names.AdminFeatures') }}
+                </router-link>
+              </li>
+              <li>
                 <span class="dropdown-item-text small text-muted px-3 py-1">{{ t('adminNav.allToolsHint') }}</span>
               </li>
               <li><hr class="dropdown-divider" /></li>
@@ -213,7 +218,10 @@
           <SidebarNavList :sections="navSections" />
         </aside>
 
-        <section class="col-12" :class="sidebarCollapsed ? '' : 'col-md-9 col-lg-10'">
+        <section
+          class="col-12 seim-app-shell__main-col"
+          :class="sidebarCollapsed ? '' : 'col-md-9 col-lg-10'"
+        >
           <router-view v-slot="{ Component }">
             <keep-alive :include="keptAliveViews">
               <component :is="Component" :key="route.name" />
@@ -235,6 +243,7 @@ import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import SidebarNavList from '@/components/nav/SidebarNavList.vue'
 import { useBranding } from '@/composables/useBranding'
+import { useFeatures } from '@/composables/useFeatures'
 import { useThemeToggle } from '@/composables/useThemeToggle'
 import { useCommandPalette } from '@/composables/useCommandPalette'
 import { Offcanvas } from 'bootstrap'
@@ -274,6 +283,7 @@ const {
 const sidebarCollapsed = ref(false)
 
 const { branding, loadBranding } = useBranding()
+const { scholarshipsEnabled, loadFeatures } = useFeatures()
 const { resolvedIsDark, themeToggleAria, toggleTheme: toggleNavTheme } = useThemeToggle()
 const { openPalette } = useCommandPalette()
 
@@ -286,6 +296,7 @@ const commandPaletteShortcut = computed(() => {
 
 onMounted(() => {
   loadBranding()
+  loadFeatures()
   try {
     sidebarCollapsed.value = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1'
   } catch {
@@ -402,6 +413,7 @@ const navSections = computed(() => {
           to: { name: 'ScholarshipScoringRulesets' },
           label: t('route.names.ScholarshipScoringRulesets'),
           iconClass: 'bi bi-pie-chart',
+          isVisible: scholarshipsEnabled.value,
         },
         {
           key: 'nominations',
@@ -515,6 +527,12 @@ const adminNavItems = computed(() => [
     label: t('route.names.AdminDocuments'),
     iconClass: 'bi bi-file-earmark-text',
   },
+  {
+    key: 'adminFeatures',
+    to: { name: 'AdminFeatures' },
+    label: t('route.names.AdminFeatures'),
+    iconClass: 'bi bi-toggles',
+  },
 ])
 
 function closeSidebarOffcanvas() {
@@ -527,7 +545,7 @@ function closeSidebarOffcanvas() {
 async function handleLogout() {
   closeUserMenu()
   await authStore.logout()
-  router.push({ name: 'Login' })
+  await router.replace({ name: 'Login' })
 }
 </script>
 
@@ -536,6 +554,8 @@ async function handleLogout() {
   /* Space for fixed-top navbar (flow is removed from document) */
   padding-top: calc(3.75rem + env(safe-area-inset-top, 0px));
   min-height: 100vh;
+  max-width: 100%;
+  overflow-x: clip;
   background-color: var(--seim-app-bg);
 }
 
@@ -554,6 +574,9 @@ async function handleLogout() {
  */
 .seim-app-shell__navbar :deep(.navbar-nav .dropdown-menu) {
   position: absolute;
+  right: 0;
+  left: auto;
+  max-width: min(22rem, calc(100vw - 1.5rem));
 }
 
 .seim-app-shell__navbar-inner {
@@ -561,10 +584,18 @@ async function handleLogout() {
   align-items: center;
   flex-wrap: nowrap;
   gap: 0.5rem;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.seim-app-shell__main-col {
+  min-width: 0;
 }
 
 .seim-app-shell__utilities {
   gap: 0.15rem;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .seim-navbar-brand__logo {
@@ -610,6 +641,7 @@ async function handleLogout() {
 
 .seim-app-shell__aside {
   align-self: flex-start;
+  min-width: 0;
 }
 
 .seim-command-palette-kbd {

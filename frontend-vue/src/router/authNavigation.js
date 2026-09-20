@@ -4,9 +4,10 @@
  *
  * @param {import('vue-router').RouteLocationNormalized} to
  * @param {{ isAuthenticated: boolean, accessToken: string | null, canUseStaffReviewQueue: boolean, checkAuth: () => Promise<void> }} authStore
+ * @param {{ scholarshipsEnabled?: boolean }} [features]
  * @returns {Promise<'next' | 'login' | 'applications' | 'partner' | 'dashboard' | 'reviewQueue'>}
  */
-export async function resolveAuthenticatedNavigation(to, authStore) {
+export async function resolveAuthenticatedNavigation(to, authStore, features = {}) {
   if (!authStore.isAuthenticated) {
     if (authStore.accessToken) {
       try {
@@ -42,6 +43,11 @@ export async function resolveAuthenticatedNavigation(to, authStore) {
   // Admin-only routes (SPA admin console)
   if (to.meta.adminOnly && !authStore.isAdmin) {
     if (authStore.canUsePartnerPortal) return 'partner'
+    if (authStore.canUseStaffReviewQueue) return 'dashboard'
+    return 'applications'
+  }
+
+  if (to.meta.scholarshipsFeature && features.scholarshipsEnabled === false) {
     if (authStore.canUseStaffReviewQueue) return 'dashboard'
     return 'applications'
   }

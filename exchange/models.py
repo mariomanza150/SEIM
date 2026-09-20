@@ -1313,8 +1313,9 @@ def validate_application_host_destination(application, *, require_complete=False
     Validate host destination FK cascade consistency.
 
     Returns a dict of field -> error messages (empty if valid).
-    When ``require_complete`` is True, require only the host levels that are
-    configured on the scheme (no institutions → host destination is optional).
+    When ``require_complete`` is True and the scheme has host universities,
+    require institution plus school and academic program (catalog select or
+    free-text resolved via ``resolve_host_destination_names``).
     """
     errors = {}
     institution = application.host_institution
@@ -1330,27 +1331,14 @@ def validate_application_host_destination(application, *, require_complete=False
                     "Select a host university before submitting."
                 )
             else:
-                has_schools = HostSchool.objects.filter(
-                    institution_id=application.host_institution_id,
-                    is_active=True,
-                ).exists()
-                if has_schools:
-                    if not application.host_school_id:
-                        errors["host_school"] = _(
-                            "Select a host school before submitting."
-                        )
-                    else:
-                        has_programs = HostAcademicProgram.objects.filter(
-                            school_id=application.host_school_id,
-                            is_active=True,
-                        ).exists()
-                        if (
-                            has_programs
-                            and not application.host_academic_program_id
-                        ):
-                            errors["host_academic_program"] = _(
-                                "Select a host academic program before submitting."
-                            )
+                if not application.host_school_id:
+                    errors["host_school"] = _(
+                        "Select or enter a host school / faculty before submitting."
+                    )
+                if not application.host_academic_program_id:
+                    errors["host_academic_program"] = _(
+                        "Select or enter a host academic program before submitting."
+                    )
 
     if application.host_institution_id and institution is not None:
         if program_id and institution.program_id != program_id:
@@ -1382,6 +1370,59 @@ def validate_application_host_destination(application, *, require_complete=False
             )
 
     return errors
+
+
+def resolve_host_destination_names(
+    *,
+    institution=None,
+    school=None,
+    school_name="",
+    academic_program_name="",
+):
+    """
+    Resolve free-text host school / academic program names to catalog rows.
+
+    Returns ``(school, academic_program, errors)`` where ``errors`` maps field
+    names to messages. Empty name strings are ignored (caller still validates
+    completeness separately).
+    """
+    errors = {}
+    school_name = (school_name or "").strip()
+    academic_program_name = (academic_program_name or "").strip()
+    resolved_school = school
+    resolved_academic = None
+
+    if school_name:
+        if institution is None:
+            errors["host_school_name"] = _(
+                "Select a host university before entering a school / faculty."
+            )
+        else:
+            resolved_school, _created = HostSchool.objects.get_or_create(
+                institution=institution,
+                name=school_name,
+                defaults={"is_active": True},
+            )
+            if not resolved_school.is_active:
+                resolved_school.is_active = True
+                resolved_school.save(update_fields=["is_active"])
+
+    if academic_program_name:
+        if resolved_school is None:
+            errors["host_academic_program_name"] = _(
+                "Select or enter a host school / faculty before entering a program."
+            )
+        else:
+            resolved_academic, _created = HostAcademicProgram.objects.get_or_create(
+                school=resolved_school,
+                name=academic_program_name,
+                defaults={"is_active": True},
+            )
+            if not resolved_academic.is_active:
+                resolved_academic.is_active = True
+                resolved_academic.save(update_fields=["is_active"])
+
+    return resolved_school, resolved_academic, errors
 
 
 def visible_host_subjects_queryset(

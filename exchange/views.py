@@ -23,8 +23,10 @@ from core.cache import (
     cache_api_response,
     invalidate_application_api_responses,
 )
+from core.feature_settings import scholarships_disabled_response, scholarships_enabled
 from core.permissions import (
     IsAdminOrReadOnly,
+    IsAdminRole,
     IsCoordinatorOrAdmin,
     IsStudentOrReadOnly,
 )
@@ -328,6 +330,13 @@ class ScholarshipScoringRulesetViewSet(viewsets.ModelViewSet):
     ordering_fields = ["label", "slug", "created_at", "updated_at", "is_active"]
     http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
+    def initial(self, request, *args, **kwargs):
+        if not scholarships_enabled():
+            from rest_framework.exceptions import NotFound
+
+            raise NotFound(detail="Not found.")
+        super().initial(request, *args, **kwargs)
+
     @extend_schema(
         summary="Active scholarship scoring ruleset",
         responses={200: ScholarshipScoringRulesetSerializer},
@@ -533,6 +542,27 @@ class ProgramViewSet(viewsets.ModelViewSet):
             {"status": "Program cloned successfully", "program": serializer.data},
             status=status.HTTP_201_CREATED,
         )
+
+    @extend_schema(
+        summary="Preview cascade impact of deleting this program",
+        description=(
+            "Admin-only preview of related objects that would be cascade-deleted "
+            "with this program. Use before confirming DELETE."
+        ),
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="deletion-impact",
+        permission_classes=[IsAdminRole],
+    )
+    def deletion_impact(self, request, pk=None):
+        """Return related-object counts that cascade-delete with this program."""
+        from exchange.program_deletion import get_program_deletion_impact
+
+        program = self.get_object()
+        return Response(get_program_deletion_impact(program))
 
     @extend_schema(
         summary="Check eligibility for this program",
@@ -1109,6 +1139,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="scholarship-scores-export")
     def scholarship_scores_export(self, request):
         """Export scholarship scores for a program cohort: CSV (default), XLSX, or PDF (staff)."""
+        if not scholarships_enabled():
+            return scholarships_disabled_response()
         user = request.user
         if not user.is_authenticated or not user.has_any_role(["coordinator", "admin"]):
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
@@ -1150,6 +1182,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="scholarship-awards-export")
     def scholarship_awards_export(self, request):
         """Export scholarship awards for a program cohort: CSV (default), XLSX, or PDF (staff)."""
+        if not scholarships_enabled():
+            return scholarships_disabled_response()
         user = request.user
         if not user.is_authenticated or not user.has_any_role(["coordinator", "admin"]):
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
@@ -1196,6 +1230,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     )
     def scholarship_award(self, request, pk=None):
         """Read or upsert the scholarship award on this application."""
+        if not scholarships_enabled():
+            return scholarships_disabled_response()
         application = self.get_object()
         from exchange.scholarship_awards import serialize_award, upsert_award
 
@@ -1228,6 +1264,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         url_path="scholarship-award/transition",
     )
     def scholarship_award_transition(self, request, pk=None):
+        if not scholarships_enabled():
+            return scholarships_disabled_response()
         application = self.get_object()
         user = request.user
         if not user.has_any_role(["coordinator", "admin"]):
@@ -1258,6 +1296,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         url_path="scholarship-award/disbursements",
     )
     def scholarship_award_disbursement(self, request, pk=None):
+        if not scholarships_enabled():
+            return scholarships_disabled_response()
         application = self.get_object()
         user = request.user
         if not user.has_any_role(["coordinator", "admin"]):
@@ -1295,8 +1335,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     )
     def solicitud_participacion(self, request, pk=None):
         """
-        Download system-generated Solicitud de Participación PDF
-        (profile + application + destination when host FKs exist).
+        Download system-generated Solicitud de Participación PDF (FS-SP / CGRI-SP).
+        Prefills profile + application + destination when host FKs exist.
         """
         from django.http import HttpResponse
 
@@ -1304,7 +1344,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
         application = self.get_object()
         pdf_bytes = render_solicitud_participacion_pdf(application)
-        filename = f"solicitud_participacion_{application.id}.pdf"
+        filename = f"FS-SP_Solicitud_Participacion_{application.id}.pdf"
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
@@ -1402,7 +1442,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
 
         pdf_bytes = persist_carta_homologacion(application, user)
-        filename = f"carta_homologacion_{application.id}.pdf"
+        filename = f"FS-HM_Homologacion_Materias_{application.id}.pdf"
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         selection_count = application.subject_selections.count()

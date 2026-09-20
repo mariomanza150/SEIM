@@ -46,6 +46,7 @@ const EXACT_SPA_ROUTES = {
   '/admin/data-management': { name: 'AdminDataManagement' },
   '/admin/workflows': { name: 'AdminWorkflows' },
   '/admin/documents': { name: 'AdminDocuments' },
+  '/admin/features': { name: 'AdminFeatures' },
   '/grades': { name: 'Profile' },
 }
 

@@ -196,6 +196,32 @@ def is_docx_filename(name: str | None) -> bool:
     return bool(name) and str(name).lower().endswith(".docx")
 
 
+def docx_has_fillable_fields(template_bytes: bytes) -> bool:
+    """True when the package contains MERGEFIELD or ``{{Name}}`` placeholders.
+
+    Official blank CGRI forms (FS-CC / FS-CP / FS-PR) have neither; calling
+    ``merge_docx`` on them rewrites XML/ZIP bytes and must be skipped.
+    """
+    try:
+        with zipfile.ZipFile(io.BytesIO(template_bytes), "r") as src:
+            for name in src.namelist():
+                if not (name.startswith("word/") and name.endswith(".xml")):
+                    continue
+                base = name.rsplit("/", 1)[-1]
+                if not (
+                    base == "document.xml"
+                    or base.startswith("header")
+                    or base.startswith("footer")
+                ):
+                    continue
+                text = src.read(name).decode("utf-8", errors="ignore")
+                if FLD_INSTR_RE.search(text) or PLACEHOLDER_RE.search(text):
+                    return True
+    except zipfile.BadZipFile:
+        return False
+    return False
+
+
 def _set_run_text(run, text: str) -> None:
     """Replace all w:t nodes in a run with a single text node."""
     texts = run.findall(f"{{{W_NS}}}t")

@@ -935,6 +935,61 @@ describe('ApplicationForm', () => {
     expect(wrapper.find('[data-testid="host-institution-select"]').exists()).toBe(false)
   })
 
+  it('shows free-text faculty and program when host university has no catalog lists', async () => {
+    api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      const cascade = hostCascadeResponse(url, {
+        institutions: [{ id: 'inst-empty', name: 'Bare Host U', country: 'MX' }],
+        schools: [],
+        academics: [],
+      })
+      if (cascade) return cascade
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({ data: { eligible: true, message: 'ok' } })
+      }
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-bare-host',
+                name: 'Movilidad',
+                description: 'Bare hosts',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+              },
+            ],
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    api.post.mockResolvedValue({ data: { id: 'app-1', status: 'draft' } })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="program-select"]').setValue('program-bare-host')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="host-institution-select"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="host-institution-select"]').setValue('inst-empty')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="host-school-input"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="host-academic-program-input"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="host-school-select"]').exists()).toBe(false)
+
+    await wrapper.find('[data-testid="host-school-input"]').setValue('Faculty of Arts')
+    await wrapper.find('[data-testid="host-academic-program-input"]').setValue('Fine Arts BA')
+    expect(wrapper.find('[data-testid="host-school-input"]').element.value).toBe('Faculty of Arts')
+    expect(wrapper.find('[data-testid="host-academic-program-input"]').element.value).toBe(
+      'Fine Arts BA',
+    )
+  })
+
   it('keeps program select above collapsed program filters', async () => {
     api.get.mockImplementation((url) => {
       const profileResponse = profileGateResponse(url)

@@ -58,6 +58,15 @@ class TestMobilitySeeds:
         assert DocumentType.objects.filter(slug="carta_retorno_programa").exists()
         postulacion = DocumentType.objects.get(slug="carta_postulacion")
         assert postulacion.submission_mode == DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD
+        assert set(postulacion.file_type_families.values_list("slug", flat=True)) == {
+            "pdf",
+            "word",
+        }
+        passport = DocumentType.objects.get(slug="pasaporte_vigente")
+        assert set(passport.file_type_families.values_list("slug", flat=True)) == {
+            "pdf",
+            "image",
+        }
         reglamento = DocumentType.objects.get(slug="reglamento_movilidad")
         assert reglamento.submission_mode == DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD
         inscription = DocumentType.objects.get(slug="inscripcion_uadec")

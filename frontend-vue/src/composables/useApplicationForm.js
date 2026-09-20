@@ -35,6 +35,16 @@ export function useHostDestinations(form) {
   const hostSchoolsLoading = ref(false)
   const hostAcademicProgramsLoading = ref(false)
   const hostDestinationConfigured = computed(() => hostInstitutions.value.length > 0)
+  const hostSchoolNeedsFreeText = computed(
+    () => Boolean(form.value.host_institution)
+      && !hostSchoolsLoading.value
+      && hostSchools.value.length === 0,
+  )
+  const hostAcademicProgramNeedsFreeText = computed(() => {
+    if (hostSchoolNeedsFreeText.value) return true
+    if (!form.value.host_school) return false
+    return !hostAcademicProgramsLoading.value && hostAcademicPrograms.value.length === 0
+  })
 
   async function fetchHostInstitutions(programId) {
     hostInstitutions.value = []
@@ -85,11 +95,24 @@ export function useHostDestinations(form) {
   }
 
   function hostDestinationPayload() {
-    return {
+    const payload = {
       host_institution: form.value.host_institution || null,
-      host_school: form.value.host_school || null,
-      host_academic_program: form.value.host_academic_program || null,
+      host_school: hostSchoolNeedsFreeText.value
+        ? null
+        : (form.value.host_school || null),
+      host_academic_program: hostAcademicProgramNeedsFreeText.value
+        ? null
+        : (form.value.host_academic_program || null),
     }
+    if (hostSchoolNeedsFreeText.value) {
+      payload.host_school_name = String(form.value.host_school_name || '').trim()
+    }
+    if (hostAcademicProgramNeedsFreeText.value) {
+      payload.host_academic_program_name = String(
+        form.value.host_academic_program_name || '',
+      ).trim()
+    }
+    return payload
   }
 
   return {
@@ -100,6 +123,8 @@ export function useHostDestinations(form) {
     hostSchoolsLoading,
     hostAcademicProgramsLoading,
     hostDestinationConfigured,
+    hostSchoolNeedsFreeText,
+    hostAcademicProgramNeedsFreeText,
     fetchHostInstitutions,
     fetchHostSchools,
     fetchHostAcademicPrograms,

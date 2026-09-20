@@ -253,6 +253,8 @@ REST_FRAMEWORK = {
         "anon": "100/hour",  # Anonymous users: 100 requests per hour
         "user": "1000/hour",  # Authenticated users: 1000 requests per hour
         "burst": "10/minute",  # Burst rate for login/register endpoints
+        # IP safety net for resend-verification; per-email 1/5min is in accounts.resend_verification
+        "resend_verification": "10/hour",
     },
 }
 

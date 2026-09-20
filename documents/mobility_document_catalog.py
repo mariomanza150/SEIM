@@ -6,7 +6,13 @@ Maps legacy English DocumentType.name seeds to Spanish display names + stable sl
 
 from __future__ import annotations
 
-from documents.models import DocumentType
+from django.db import connection
+
+from documents.file_type_families import (
+    infer_family_slugs_from_extensions,
+    seed_file_type_families,
+)
+from documents.models import DocumentType, FileTypeFamily
 from exchange.models import Program, ProgramDocumentRequirement
 
 # Legacy English seed name → new slug (overlapping types are renamed in place).
@@ -262,24 +268,35 @@ def _branded_document_spec(spec: dict) -> dict:
     return branded
 
 
-def seed_mobility_document_types() -> list[DocumentType]:
-    """Create/update Mexican mobility DocumentType rows; map legacy English names."""
-    by_slug: dict[str, DocumentType] = {}
+def seed_mobility_document_types(document_type_model=None) -> list:
+    """Create/update Mexican mobility DocumentType rows; map legacy English names.
+
+    Pass a historical ``document_type_model`` from migration RunPython so INSERT
+    only uses columns present at that migration state.
+    """
+    DocumentTypeModel = document_type_model or DocumentType
+    family_ready = "documents_filetypefamily" in connection.introspection.table_names()
+    families_by_slug = {}
+    if family_ready:
+        seed_file_type_families()
+        families_by_slug = {f.slug: f for f in FileTypeFamily.objects.all()}
+    by_slug = {}
+    model_field_names = {f.name for f in DocumentTypeModel._meta.local_fields}
     for spec in MOBILITY_DOCUMENT_TYPES:
         spec = _branded_document_spec(spec)
         slug = spec["slug"]
         legacy_names = spec.get("legacy_names") or ()
-        existing = DocumentType.objects.filter(slug=slug).first()
+        existing = DocumentTypeModel.objects.filter(slug=slug).first()
         if not existing:
             for legacy in legacy_names:
-                existing = DocumentType.objects.filter(
+                existing = DocumentTypeModel.objects.filter(
                     name=legacy, slug__isnull=True
                 ).first()
                 if existing:
                     break
             if not existing:
                 for legacy in legacy_names:
-                    existing = DocumentType.objects.filter(name=legacy).first()
+                    existing = DocumentTypeModel.objects.filter(name=legacy).first()
                     if existing:
                         break
 
@@ -295,13 +312,26 @@ def seed_mobility_document_types() -> list[DocumentType]:
             "accepted_extensions": spec.get("accepted_extensions", ""),
             "allows_multiple": spec.get("allows_multiple", False),
         }
+        defaults = {k: v for k, v in defaults.items() if k in model_field_names}
         if existing:
+            update_fields = []
             for key, value in defaults.items():
                 setattr(existing, key, value)
-            existing.save()
+                update_fields.append(key)
+            existing.save(update_fields=update_fields or None)
             dt = existing
         else:
-            dt, _ = DocumentType.objects.update_or_create(slug=slug, defaults=defaults)
+            dt = DocumentTypeModel.objects.create(**defaults)
+        family_slugs = spec.get("file_type_families")
+        if family_slugs is None:
+            family_slugs = infer_family_slugs_from_extensions(
+                spec.get("accepted_extensions", "")
+            )
+        family_objs = [
+            families_by_slug[s] for s in family_slugs if s in families_by_slug
+        ]
+        if family_ready and hasattr(dt, "file_type_families"):
+            dt.file_type_families.set(family_objs)
         by_slug[slug] = dt
     return list(by_slug.values())
 
@@ -325,7 +355,7 @@ def assign_scheme_document_requirements(
     requirement_cls = requirement_model or ProgramDocumentRequirement
     document_type_cls = document_type_model or DocumentType
 
-    seed_mobility_document_types()
+    seed_mobility_document_types(document_type_model=document_type_cls)
     schemes = {
         "Movilidad Internacional Habla Hispana": "intl_es",
         "Movilidad Internacional Habla Inglesa": "intl",
@@ -333,6 +363,7 @@ def assign_scheme_document_requirements(
         "Movilidad Maestría": "maestria",
     }
     created = 0
+    req_field_names = {f.name for f in requirement_cls._meta.local_fields}
     for program_name, kind in schemes.items():
         program = program_cls.objects.filter(name=program_name).first()
         if not program:
@@ -349,14 +380,18 @@ def assign_scheme_document_requirements(
             dt = document_type_cls.objects.filter(slug=slug).first()
             if not dt:
                 continue
+            defaults = {
+                "is_required": is_required,
+                "sort_order": sort_order,
+            }
+            if "deadline_days_before_program_deadline" in req_field_names:
+                defaults["deadline_days_before_program_deadline"] = (
+                    0 if is_required else None
+                )
             _, was_created = requirement_cls.objects.update_or_create(
                 program=program,
                 document_type=dt,
-                defaults={
-                    "is_required": is_required,
-                    "sort_order": sort_order,
-                    "deadline_days_before_program_deadline": 0 if is_required else None,
-                },
+                defaults=defaults,
             )
             if was_created:
                 created += 1

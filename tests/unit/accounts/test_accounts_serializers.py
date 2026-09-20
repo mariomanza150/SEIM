@@ -2,6 +2,7 @@
 Unit tests for accounts serializers.
 """
 
+import uuid
 from datetime import date, timedelta
 
 import pytest
@@ -628,21 +629,25 @@ class TestLoginSerializer:
 
     def test_login_serializer_unverified_email(self):
         """Test LoginSerializer with unverified email."""
+        uid = uuid.uuid4().hex[:8]
         user = User.objects.create_user(
-            username="testuser",
-            email="test@example.com",
+            username=f"unverified_{uid}",
+            email=f"unverified_{uid}@example.com",
             password="testpass123",
         )
         user.is_email_verified = False
         user.save()
 
-        data = {"login": "testuser", "password": "testpass123"}
+        data = {"login": user.username, "password": "testpass123"}
         serializer = LoginSerializer(data=data)
 
-        with pytest.raises(AuthenticationFailed):
+        with pytest.raises(AuthenticationFailed) as exc_info:
             serializer.is_valid()
 
-    def test_login_serializer_locked_account(self):
+        detail = exc_info.value.detail
+        assert isinstance(detail, dict)
+        assert detail.get("code") == "email_not_verified"
+        assert "not verified" in str(detail.get("detail", "")).lower()
         """Test LoginSerializer with locked account."""
         user = User.objects.create_user(
             username="testuser",

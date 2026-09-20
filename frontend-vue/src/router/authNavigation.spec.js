@@ -201,20 +201,21 @@ describe('resolveAuthenticatedNavigation', () => {
     expect(await resolveAuthenticatedNavigation(to, authStore)).toBe('partner')
   })
 
-  it('returns partner when partner targets student Documents (MQ-031)', async () => {
+  it('returns dashboard for scholarshipsFeature route when scholarships are disabled', async () => {
     const authStore = {
       accessToken: 'jwt',
       isAuthenticated: true,
       isAdmin: false,
-      canUseStaffReviewQueue: false,
-      canUsePartnerPortal: true,
+      canUseStaffReviewQueue: true,
+      canUsePartnerPortal: false,
       checkAuth: vi.fn(),
     }
     const to = {
-      meta: { requiresAuth: true, studentDocuments: true },
-      matched: [{ meta: { studentDocuments: true } }],
-      fullPath: '/documents',
+      meta: { requiresAuth: true, staffReviewQueue: true, scholarshipsFeature: true },
+      fullPath: '/scholarship-scoring-rulesets',
     }
-    expect(await resolveAuthenticatedNavigation(to, authStore)).toBe('partner')
+    expect(
+      await resolveAuthenticatedNavigation(to, authStore, { scholarshipsEnabled: false }),
+    ).toBe('dashboard')
   })
 })

@@ -86,6 +86,7 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeToggle } from '@/composables/useThemeToggle'
+import { useFeatures } from '@/composables/useFeatures'
 import {
   handleCommandPaletteShortcut,
   useCommandPalette,
@@ -102,6 +103,7 @@ const { t } = useI18n()
 const router = useRouter()
 const authStore = useAuthStore()
 const { toggleTheme } = useThemeToggle()
+const { scholarshipsEnabled, loadFeatures } = useFeatures()
 const { paletteState, openPalette, closePalette, togglePalette } = useCommandPalette()
 
 const query = ref('')
@@ -116,6 +118,7 @@ const allItems = computed(() =>
     canUsePartnerPortal: authStore.canUsePartnerPortal,
     canUseStaffReviewQueue: authStore.canUseStaffReviewQueue,
     isAdmin: authStore.isAdmin,
+    scholarshipsEnabled: scholarshipsEnabled.value,
   }),
 )
 
@@ -194,7 +197,7 @@ async function runItem(item) {
   }
   if (item.action === 'logout') {
     await authStore.logout()
-    await router.push({ name: 'Login' })
+    await router.replace({ name: 'Login' })
   }
 }
 
@@ -232,6 +235,7 @@ function onGlobalKeydown(event) {
 }
 
 onMounted(() => {
+  loadFeatures()
   window.addEventListener('keydown', onGlobalKeydown)
 })
 

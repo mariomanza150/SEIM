@@ -44,6 +44,11 @@ export function useNotifications() {
     await api.post('/api/notifications/mark_all_read/')
   }
 
+  async function dismissNotification(notificationId) {
+    if (!notificationId) return
+    await api.delete(`/api/notifications/${notificationId}/delete_notification/`)
+  }
+
   function formatTimestampDropdown(dateString) {
     if (!dateString) return ''
     const date = new Date(dateString)
@@ -81,6 +86,7 @@ export function useNotifications() {
     fetchUnreadCount,
     markAsRead,
     markAllRead,
+    dismissNotification,
     formatTimestampDropdown,
     formatTimestampPage,
   }

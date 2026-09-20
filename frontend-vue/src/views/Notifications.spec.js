@@ -8,7 +8,7 @@ import api from '@/services/api'
 import i18n, { setAppLocale } from '@/i18n'
 
 vi.mock('@/services/api', () => ({
-  default: { get: vi.fn(), post: vi.fn() },
+  default: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
 }))
 
 const success = vi.fn()
@@ -130,6 +130,41 @@ describe('Notifications', () => {
     await flushPromises()
     expect(api.post).toHaveBeenCalledWith('/api/notifications/42/mark_read/')
     expect(success).toHaveBeenCalledWith('Notification marked as read')
+  })
+
+  it('dismisses a notification from the list', async () => {
+    setupDefaultGets({
+      list: mockNotificationsListResponse({
+        results: [
+          {
+            id: 42,
+            title: 'Doc approved',
+            message: 'Your document was approved',
+            is_read: true,
+            category: 'success',
+            sent_at: new Date().toISOString(),
+          },
+        ],
+        count: 1,
+      }),
+      unreadCount: 0,
+    })
+    api.delete.mockResolvedValue({})
+
+    const wrapper = mount(Notifications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const btn = wrapper.find('[data-testid="dismiss-notification-btn"]')
+    expect(btn.exists()).toBe(true)
+    await btn.trigger('click')
+    await flushPromises()
+    expect(api.delete).toHaveBeenCalledWith('/api/notifications/42/delete_notification/')
+    expect(success).toHaveBeenCalledWith('Notification dismissed')
+    expect(wrapper.text()).not.toContain('Doc approved')
   })
 
   it('status filter refetch sends numeric page 1', async () => {

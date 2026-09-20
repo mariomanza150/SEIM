@@ -70,7 +70,7 @@
         </template>
         <template v-if="isStaff" #presets>
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
-                <div class="flex-grow-1" style="min-width: 200px">
+                <div class="flex-grow-1 seim-min-w-filter">
                   <label class="form-label small text-muted mb-1">{{ t('documentsPage.presetSaveLabel') }}</label>
                   <div class="input-group input-group-sm">
                     <input v-model="newPresetName" type="text" class="form-control" :placeholder="t('documentsPage.presetNamePlaceholder')" />
@@ -179,8 +179,12 @@
                   </router-link>
                 </td>
                 <td>
-                  <span class="badge" :class="doc.is_valid ? 'bg-success' : 'bg-warning'">
-                    {{ doc.is_valid ? t('documentDetailPage.statusValidatedShort') : t('documentDetailPage.statusPendingShort') }}
+                  <span
+                    class="badge"
+                    :class="documentReviewStatusBadgeClass(doc)"
+                    data-testid="documents-status-badge"
+                  >
+                    {{ documentReviewStatusLabel(doc, { t, te }) }}
                   </span>
                 </td>
                 <td class="text-muted small">{{ formatDate(doc.created_at) }}</td>
@@ -193,17 +197,18 @@
                   >
                     <i class="bi bi-eye" aria-hidden="true"></i>
                   </router-link>
-                  <a
+                  <button
                     v-if="doc.file"
-                    :href="resolveFileUrl(doc.file)"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    type="button"
                     class="btn btn-sm btn-outline-secondary"
                     :title="t('documentsPage.downloadTitle')"
                     :aria-label="t('documentsPage.downloadTitle')"
+                    :disabled="downloadingId === doc.id"
+                    data-testid="document-download"
+                    @click="downloadDocument(doc)"
                   >
                     <i class="bi bi-download" aria-hidden="true"></i>
-                  </a>
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -239,7 +244,6 @@ import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
 import { useAuthStore } from '@/stores/auth'
-import { resolveFileUrl } from '@/utils/apiUrl'
 import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
@@ -251,7 +255,10 @@ import {
   applicationSelectLabel,
   documentApplicationId,
   documentApplicationProgramName,
+  documentReviewStatusBadgeClass,
+  documentReviewStatusLabel,
   documentTypeLabel,
+  filenameFromContentDisposition,
 } from '@/utils/documentApi'
 import { formatApplicationStatus } from '@/utils/formatters'
 import {
@@ -289,6 +296,7 @@ const applications = ref([])
 const documentTypes = ref([])
 const loading = ref(true)
 const error = ref(null)
+const downloadingId = ref(null)
 
 const filters = ref({
   application: '',
@@ -398,6 +406,35 @@ function fileName(fileUrl) {
   if (!fileUrl) return t('documentDetailPage.fileUnknown')
   const parts = fileUrl.split('/')
   return decodeURIComponent(parts[parts.length - 1] || 'document')
+}
+
+async function downloadDocument(doc) {
+  if (!doc?.id || downloadingId.value === doc.id) return
+  downloadingId.value = doc.id
+  try {
+    const response = await api.get(`/api/documents/${doc.id}/preview/`, {
+      responseType: 'blob',
+    })
+    const blob = new Blob([response.data], {
+      type: response.headers['content-type'] || 'application/octet-stream',
+    })
+    const objectUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objectUrl
+    a.download = filenameFromContentDisposition(
+      response.headers['content-disposition'],
+      fileName(doc.file),
+    )
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(objectUrl)
+  } catch (err) {
+    console.error('Document download failed:', err)
+    errorToast(t('documentsPage.downloadError'))
+  } finally {
+    downloadingId.value = null
+  }
 }
 
 function formatDate(dateString) {

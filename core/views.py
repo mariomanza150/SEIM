@@ -15,6 +15,12 @@ from django.views.decorators.http import require_http_methods
 
 from application_forms.models import FormType
 from core.branding import brand_from_settings
+from core.models import InstitutionFeatureSettings
+from core.permissions import IsAdminRole
+from core.serializers import InstitutionFeatureSettingsSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 
@@ -135,6 +141,28 @@ def branding_api(request):
             "theme": theme,
         }
     )
+
+
+class InstitutionFeaturesAPIView(APIView):
+    """GET authenticated feature flags; PATCH admin-only."""
+
+    def get_permissions(self):
+        if self.request.method in ("PATCH", "PUT"):
+            return [IsAuthenticated(), IsAdminRole()]
+        return [IsAuthenticated()]
+
+    def get(self, request):
+        settings_obj = InstitutionFeatureSettings.get_solo()
+        return Response(InstitutionFeatureSettingsSerializer(settings_obj).data)
+
+    def patch(self, request):
+        settings_obj = InstitutionFeatureSettings.get_solo()
+        serializer = InstitutionFeatureSettingsSerializer(
+            settings_obj, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 @csrf_exempt

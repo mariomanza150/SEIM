@@ -35,6 +35,7 @@ vi.mock('@/stores/auth', () => ({
   useAuthStore: () => ({
     isAuthenticated: false,
     accessToken: null,
+    user: null,
     checkAuth: vi.fn().mockResolvedValue(undefined),
   }),
 }))
@@ -64,6 +65,8 @@ describe('App shell accessibility', () => {
         stubs: {
           RouterView: { template: '<div data-testid="rv">page</div>' },
           ToastContainer: { template: '<div />' },
+          ProductTour: true,
+          CommandPalette: true,
         },
       },
     })
@@ -91,6 +94,8 @@ describe('App shell accessibility', () => {
         stubs: {
           RouterView: { template: '<div data-testid="rv">page</div>' },
           ToastContainer: { template: '<div />' },
+          ProductTour: true,
+          CommandPalette: true,
         },
       },
     })
@@ -111,6 +116,8 @@ describe('App shell accessibility', () => {
         stubs: {
           RouterView: { template: '<div data-testid="rv">page</div>' },
           ToastContainer: { template: '<div />' },
+          ProductTour: true,
+          CommandPalette: true,
         },
       },
     })

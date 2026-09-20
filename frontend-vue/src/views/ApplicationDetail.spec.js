@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
+import { reactive, ref } from 'vue'
 import ApplicationDetail from './ApplicationDetail.vue'
 import api from '@/services/api'
 import i18n, { setAppLocale } from '@/i18n'
@@ -8,16 +9,32 @@ import i18n, { setAppLocale } from '@/i18n'
 const mockPush = vi.fn()
 const mockSuccessToast = vi.fn()
 const mockErrorToast = vi.fn()
+const mockConfirm = vi.fn().mockResolvedValue(true)
+const routeParams = reactive({ id: 'test-app' })
 const mockAuthStore = {
   userRole: 'coordinator',
+  canUseStaffReviewQueue: true,
+  isAdmin: false,
   user: {
     id: 'current-user',
   },
 }
 
 vi.mock('vue-router', () => ({
-  useRoute: () => ({ params: { id: 'test-app' } }),
-  useRouter: () => ({ push: mockPush }),
+  useRoute: () => ({
+    params: routeParams,
+    get fullPath() {
+      return `/applications/${routeParams.id}`
+    },
+  }),
+  useRouter: () => ({
+    push: (to) => {
+      mockPush(to)
+      if (to?.params?.id != null) {
+        routeParams.id = String(to.params.id)
+      }
+    },
+  }),
 }))
 
 vi.mock('@/stores/auth', () => ({
@@ -26,6 +43,23 @@ vi.mock('@/stores/auth', () => ({
 
 vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ success: mockSuccessToast, error: mockErrorToast }),
+}))
+
+vi.mock('@/composables/useConfirm', () => ({
+  useConfirm: () => ({ confirm: mockConfirm }),
+}))
+
+const scholarshipsEnabledRef = ref(true)
+vi.mock('@/composables/useFeatures', () => ({
+  useFeatures: () => ({
+    scholarshipsEnabled: scholarshipsEnabledRef,
+    loadFeatures: vi.fn().mockResolvedValue({ scholarships_enabled: true }),
+    features: { value: { scholarships_enabled: true } },
+    loading: { value: false },
+    error: { value: '' },
+    updateFeatures: vi.fn(),
+    _resetFeaturesState: vi.fn(),
+  }),
 }))
 
 vi.mock('@/services/api', () => ({
@@ -58,12 +92,25 @@ function mountView() {
     global: {
       plugins: [createPinia(), i18n],
       stubs: {
-        DocumentUpload: { template: '<div class="document-upload-stub"></div>' },
+        DocumentUpload: {
+          props: ['applicationId', 'checklist', 'preselectedTypeId'],
+          template:
+            '<div class="document-upload-stub" data-testid="document-upload-stub" :data-prefill="preselectedTypeId == null ? \'\' : String(preselectedTypeId)"></div>',
+        },
         ApplicationSubjectsPanel: { template: '<div class="subjects-panel-stub"></div>' },
         RouterLink: { template: '<a><slot /></a>' },
       },
     },
   })
+}
+
+async function expandCollapsible(wrapper, testId) {
+  const card = wrapper.find(`[data-testid="${testId}"]`)
+  expect(card.exists()).toBe(true)
+  const toggle = card.find('[data-testid="collapsible-card-toggle"]')
+  if (toggle.attributes('aria-expanded') === 'false') {
+    await toggle.trigger('click')
+  }
 }
 
 async function flushPromises() {
@@ -78,6 +125,13 @@ describe('ApplicationDetail', () => {
     sessionStorage.clear()
     setAppLocale('en')
     setActivePinia(createPinia())
+    scholarshipsEnabledRef.value = true
+    routeParams.id = 'test-app'
+    mockAuthStore.userRole = 'coordinator'
+    mockAuthStore.canUseStaffReviewQueue = true
+    mockAuthStore.isAdmin = false
+    mockAuthStore.user = { id: 'current-user' }
+    mockConfirm.mockResolvedValue(true)
     vi.clearAllMocks()
   })
 
@@ -224,6 +278,7 @@ describe('ApplicationDetail', () => {
     await vi.waitFor(() => {
       expect(wrapper.text()).toContain('Sparse Program')
     })
+    await expandCollapsible(wrapper, 'program-info-card')
     const na = i18n.global.t('applicationDetailPage.notAvailable')
     expect(wrapper.text().split(na).length - 1).toBeGreaterThanOrEqual(3)
   })
@@ -288,6 +343,7 @@ describe('ApplicationDetail', () => {
       expect(wrapper.text()).toContain('DAAD Exchange')
     })
     expect(wrapper.text()).toContain('Technical University of Munich')
+    await expandCollapsible(wrapper, 'program-info-card')
     expect(wrapper.text()).toContain('Germany')
     expect(wrapper.find('[data-testid="program-duration"]').text()).toBe(
       i18n.global.t('applicationDetailPage.notAvailable'),
@@ -325,6 +381,7 @@ describe('ApplicationDetail', () => {
     await vi.waitFor(() => {
       expect(wrapper.text()).toContain('DAAD Exchange')
     })
+    await expandCollapsible(wrapper, 'program-info-card')
     expect(wrapper.find('[data-testid="program-duration"]').text()).toMatch(/Sep 1, 2026/)
     expect(wrapper.find('[data-testid="program-duration"]').text()).toMatch(/Dec 15, 2026/)
     expect(wrapper.find('[data-testid="program-duration"]').text()).not.toBe(
@@ -393,6 +450,7 @@ describe('ApplicationDetail', () => {
 
   it('shows scholarship estimate for students without cohort export buttons', async () => {
     mockAuthStore.userRole = 'student'
+    mockAuthStore.canUseStaffReviewQueue = false
     const scholarshipScore = {
       ruleset_id: 'default_v1',
       ruleset_label: 'Default rubric',
@@ -464,6 +522,36 @@ describe('ApplicationDetail', () => {
     expect(wrapper.find('[data-testid="scholarship-awards-export-pdf"]').exists()).toBe(true)
   })
 
+  it('hides scholarship score and award panels when feature is disabled', async () => {
+    scholarshipsEnabledRef.value = false
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            scholarship_allocation_score: {
+              ruleset_id: 'default_v1',
+              total_points: 10,
+              max_points: 100,
+              factors: [],
+            },
+            scholarship_award: null,
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="application-detail-page"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="scholarship-score-panel"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="scholarship-award-panel"]').exists()).toBe(false)
+  })
+
   it('shows scholarship evidence gates when catalog types are missing', async () => {
     api.get.mockImplementation((url) => {
       if (url === '/api/applications/test-app/') {
@@ -512,6 +600,7 @@ describe('ApplicationDetail', () => {
 
   it('shows uploaded documents as pending until staff validation', async () => {
     mockAuthStore.userRole = 'student'
+    mockAuthStore.canUseStaffReviewQueue = false
     api.get.mockImplementation((url) => {
       if (url === '/api/applications/test-app/') {
         return Promise.resolve({ data: applicationPayload })
@@ -553,17 +642,18 @@ describe('ApplicationDetail', () => {
     })
 
     const badges = wrapper.findAll('[data-testid="document-status-badge"]')
-    expect(badges[0].text()).toBe(i18n.global.t('applicationDetailPage.docPending'))
+    expect(badges[0].text()).toBe(i18n.global.t('applicationDetailPage.checklist.pending_review'))
     expect(badges[0].classes()).toContain('bg-warning')
-    expect(badges[1].text()).toBe(i18n.global.t('applicationDetailPage.docInvalid'))
+    expect(badges[1].text()).toBe(i18n.global.t('applicationDetailPage.checklist.invalid'))
     expect(badges[1].classes()).toContain('bg-danger')
-    expect(badges[2].text()).toBe(i18n.global.t('applicationDetailPage.docValid'))
+    expect(badges[2].text()).toBe(i18n.global.t('applicationDetailPage.checklist.approved'))
     expect(badges[2].classes()).toContain('bg-success')
     mockAuthStore.userRole = 'coordinator'
   })
 
   it('disables submit when host destination is required but incomplete', async () => {
     mockAuthStore.userRole = 'student'
+    mockAuthStore.canUseStaffReviewQueue = false
     api.get.mockImplementation((url) => {
       if (url === '/api/applications/test-app/') {
         return Promise.resolve({
@@ -600,6 +690,7 @@ describe('ApplicationDetail', () => {
 
   it('disables submit when eligibility is incomplete', async () => {
     mockAuthStore.userRole = 'student'
+    mockAuthStore.canUseStaffReviewQueue = false
     api.get.mockImplementation((url) => {
       if (url === '/api/applications/test-app/') {
         return Promise.resolve({
@@ -646,6 +737,7 @@ describe('ApplicationDetail', () => {
 
   it('localizes eligibility issues from message_key', async () => {
     mockAuthStore.userRole = 'student'
+    mockAuthStore.canUseStaffReviewQueue = false
     setAppLocale('es')
     api.get.mockImplementation((url) => {
       if (url === '/api/applications/test-app/') {
@@ -695,6 +787,7 @@ describe('ApplicationDetail', () => {
 
   it('localizes draft readiness headlines from structured fields', async () => {
     mockAuthStore.userRole = 'student'
+    mockAuthStore.canUseStaffReviewQueue = false
     setAppLocale('es')
     api.get.mockImplementation((url) => {
       if (url === '/api/applications/test-app/') {
@@ -793,6 +886,10 @@ describe('ApplicationDetail', () => {
     })
     const wrapper = mountView()
     await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="activity-timeline-card"]').exists()).toBe(true)
+    })
+    await expandCollapsible(wrapper, 'activity-timeline-card')
+    await vi.waitFor(() => {
       expect(wrapper.findAll('[data-testid="timeline-event-heading"]').length).toBe(2)
     })
     const headings = wrapper.findAll('[data-testid="timeline-event-heading"]')
@@ -835,6 +932,10 @@ describe('ApplicationDetail', () => {
       return Promise.reject(new Error(`Unhandled GET ${url}`))
     })
     const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="activity-timeline-card"]').exists()).toBe(true)
+    })
+    await expandCollapsible(wrapper, 'activity-timeline-card')
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="timeline-event-heading"]').exists()).toBe(true)
     })
@@ -887,12 +988,551 @@ describe('ApplicationDetail', () => {
     })
     const wrapper = mountView()
     await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-section-action"]').exists()).toBe(true)
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-name"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="document-checklist-name"]').text()).toBe('Academic transcript')
+    const doneToggle = wrapper
+      .find('[data-testid="document-checklist-section-done"]')
+      .find('[data-testid="document-checklist-section-toggle"]')
+    await doneToggle.trigger('click')
+    await vi.waitFor(() => {
       expect(wrapper.findAll('[data-testid="document-checklist-name"]').length).toBe(2)
     })
     const names = wrapper.findAll('[data-testid="document-checklist-name"]').map((n) => n.text())
     expect(names).toEqual(['Academic transcript', 'Passport or ID'])
     expect(names).not.toContain('transcript')
     expect(names).not.toContain('passport')
+  })
+
+  it('defaults Needs action open and Pending review open for staff', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'draft',
+            document_checklist: {
+              required_count: 4,
+              approved_count: 2,
+              complete: false,
+              items: [
+                {
+                  document_type_id: 1,
+                  slug: 'transcript',
+                  name: 'Transcript',
+                  status: 'missing',
+                  is_required: true,
+                },
+                {
+                  document_type_id: 2,
+                  slug: 'passport',
+                  name: 'Passport',
+                  status: 'pending_review',
+                  is_required: true,
+                },
+                {
+                  document_type_id: 3,
+                  slug: 'motivation',
+                  name: 'Motivation letter',
+                  status: 'approved',
+                  is_required: true,
+                },
+                {
+                  document_type_id: 4,
+                  slug: 'photo',
+                  name: 'Photo',
+                  status: 'approved',
+                  is_required: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-section-action"]').exists()).toBe(true)
+    })
+
+    const actionSection = wrapper.find('[data-testid="document-checklist-section-action"]')
+    const pendingSection = wrapper.find('[data-testid="document-checklist-section-pending_review"]')
+    const doneSection = wrapper.find('[data-testid="document-checklist-section-done"]')
+
+    expect(actionSection.find('[data-testid="document-checklist-section-count"]').text()).toBe('1')
+    expect(pendingSection.find('[data-testid="document-checklist-section-count"]').text()).toBe('1')
+    expect(doneSection.find('[data-testid="document-checklist-section-count"]').text()).toBe('2')
+
+    expect(actionSection.find('[data-testid="document-checklist-section-toggle"]').attributes('aria-expanded')).toBe('true')
+    expect(pendingSection.find('[data-testid="document-checklist-section-toggle"]').attributes('aria-expanded')).toBe('true')
+    expect(doneSection.find('[data-testid="document-checklist-section-toggle"]').attributes('aria-expanded')).toBe('false')
+
+    expect(actionSection.find('[data-testid="document-checklist-section-panel"]').exists()).toBe(true)
+    expect(pendingSection.find('[data-testid="document-checklist-section-panel"]').exists()).toBe(true)
+    expect(doneSection.find('[data-testid="document-checklist-section-panel"]').exists()).toBe(false)
+    expect(wrapper.findAll('[data-testid="document-checklist-item"]')).toHaveLength(2)
+    expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.checklistSections.action'))
+    expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.checklistSections.done'))
+
+    const actionToggle = actionSection.find('[data-testid="document-checklist-section-toggle"]')
+    const pendingToggle = pendingSection.find('[data-testid="document-checklist-section-toggle"]')
+    const doneToggle = doneSection.find('[data-testid="document-checklist-section-toggle"]')
+
+    await actionToggle.trigger('click')
+    await vi.waitFor(() => {
+      expect(actionSection.find('[data-testid="document-checklist-section-panel"]').exists()).toBe(false)
+    })
+    expect(actionToggle.attributes('aria-expanded')).toBe('false')
+    expect(wrapper.findAll('[data-testid="document-checklist-item"]')).toHaveLength(1)
+
+    await actionToggle.trigger('click')
+    await vi.waitFor(() => {
+      expect(actionSection.find('[data-testid="document-checklist-section-panel"]').exists()).toBe(true)
+    })
+    expect(actionToggle.attributes('aria-expanded')).toBe('true')
+    expect(wrapper.findAll('[data-testid="document-checklist-item"]')).toHaveLength(2)
+
+    expect(pendingToggle.attributes('aria-expanded')).toBe('true')
+
+    await doneToggle.trigger('click')
+    await vi.waitFor(() => {
+      expect(doneSection.find('[data-testid="document-checklist-section-panel"]').exists()).toBe(true)
+    })
+    expect(doneToggle.attributes('aria-expanded')).toBe('true')
+    expect(wrapper.findAll('[data-testid="document-checklist-item"]')).toHaveLength(4)
+
+    await doneToggle.trigger('click')
+    await vi.waitFor(() => {
+      expect(doneSection.find('[data-testid="document-checklist-section-panel"]').exists()).toBe(false)
+    })
+    expect(doneToggle.attributes('aria-expanded')).toBe('false')
+  })
+
+  it('keeps Pending review collapsed by default for students', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'draft',
+            document_checklist: {
+              required_count: 2,
+              approved_count: 0,
+              complete: false,
+              items: [
+                {
+                  document_type_id: 1,
+                  slug: 'transcript',
+                  name: 'Transcript',
+                  status: 'missing',
+                  is_required: true,
+                },
+                {
+                  document_type_id: 2,
+                  slug: 'passport',
+                  name: 'Passport',
+                  status: 'pending_review',
+                  is_required: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    mockAuthStore.userRole = 'student'
+    mockAuthStore.canUseStaffReviewQueue = false
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-section-action"]').exists()).toBe(true)
+    })
+    const actionSection = wrapper.find('[data-testid="document-checklist-section-action"]')
+    const pendingSection = wrapper.find('[data-testid="document-checklist-section-pending_review"]')
+    expect(actionSection.find('[data-testid="document-checklist-section-toggle"]').attributes('aria-expanded')).toBe('true')
+    expect(pendingSection.find('[data-testid="document-checklist-section-toggle"]').attributes('aria-expanded')).toBe('false')
+  })
+
+  it('keeps all checklist sections collapsed by default for admins', async () => {
+    mockAuthStore.userRole = 'admin'
+    mockAuthStore.canUseStaffReviewQueue = true
+    mockAuthStore.isAdmin = true
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'under_review',
+            document_checklist: {
+              required_count: 3,
+              approved_count: 1,
+              complete: false,
+              items: [
+                {
+                  document_type_id: 1,
+                  slug: 'transcript',
+                  name: 'Transcript',
+                  status: 'missing',
+                  is_required: true,
+                },
+                {
+                  document_type_id: 2,
+                  slug: 'passport',
+                  name: 'Passport',
+                  status: 'pending_review',
+                  is_required: true,
+                },
+                {
+                  document_type_id: 3,
+                  slug: 'motivation',
+                  name: 'Motivation letter',
+                  status: 'approved',
+                  is_required: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-section-action"]').exists()).toBe(true)
+    })
+
+    for (const sectionId of ['action', 'pending_review', 'done']) {
+      const section = wrapper.find(`[data-testid="document-checklist-section-${sectionId}"]`)
+      expect(section.exists()).toBe(true)
+      expect(section.find('[data-testid="document-checklist-section-toggle"]').attributes('aria-expanded')).toBe(
+        'false',
+      )
+      expect(section.find('[data-testid="document-checklist-section-panel"]').exists()).toBe(false)
+    }
+    expect(wrapper.findAll('[data-testid="document-checklist-item"]')).toHaveLength(0)
+  })
+
+  it('labels solicitud download as Download document and templates as Download template', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            document_checklist: {
+              required_count: 2,
+              approved_count: 0,
+              complete: false,
+              items: [
+                {
+                  document_type_id: 1,
+                  slug: 'solicitud_participacion',
+                  name: 'Solicitud',
+                  status: 'missing',
+                  is_required: true,
+                  due_now: true,
+                },
+                {
+                  document_type_id: 2,
+                  slug: 'transcript',
+                  name: 'Transcript',
+                  status: 'missing',
+                  is_required: true,
+                  has_template: true,
+                  due_now: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="download-solicitud-pdf"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="download-solicitud-pdf"]').text()).toContain(
+      i18n.global.t('applicationDetailPage.downloadDocument'),
+    )
+    expect(wrapper.find('[data-testid="download-checklist-template"]').text()).toContain(
+      i18n.global.t('applicationDetailPage.downloadTemplate'),
+    )
+  })
+
+  it('expands checklist section and scrolls when progress rail link is clicked', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'draft',
+            document_checklist: {
+              required_count: 2,
+              approved_count: 1,
+              complete: false,
+              items: [
+                {
+                  document_type_id: 1,
+                  slug: 'transcript',
+                  name: 'Transcript',
+                  status: 'missing',
+                  is_required: true,
+                  due_now: true,
+                },
+                {
+                  document_type_id: 3,
+                  slug: 'motivation',
+                  name: 'Motivation letter',
+                  status: 'approved',
+                  is_required: true,
+                  due_now: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const scrollIntoView = vi.fn()
+    Element.prototype.scrollIntoView = scrollIntoView
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-section-action"]').exists()).toBe(true)
+    })
+
+    const actionSection = wrapper.find('[data-testid="document-checklist-section-action"]')
+    await actionSection.find('[data-testid="document-checklist-section-toggle"]').trigger('click')
+    await vi.waitFor(() => {
+      expect(actionSection.find('[data-testid="document-checklist-section-panel"]').exists()).toBe(false)
+    })
+
+    await expandCollapsible(wrapper, 'document-progress-rail')
+    const railLink = wrapper.find('[data-testid="document-progress-rail-due-item"] [data-testid="document-progress-rail-link"]')
+    await railLink.trigger('click')
+    await vi.waitFor(() => {
+      expect(actionSection.find('[data-testid="document-checklist-section-panel"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('#checklist-item-1').exists()).toBe(true)
+    await vi.waitFor(() => {
+      expect(scrollIntoView).toHaveBeenCalled()
+    })
+  })
+
+  it('puts instructions-only checklist items in Instructions, not Completed', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'draft',
+            document_checklist: {
+              required_count: 2,
+              approved_count: 2,
+              complete: true,
+              items: [
+                {
+                  document_type_id: 1,
+                  slug: 'reglamento',
+                  name: 'Reglamento',
+                  status: 'n_a',
+                  submission_mode: 'instructions_only',
+                  is_required: true,
+                },
+                {
+                  document_type_id: 2,
+                  slug: 'passport',
+                  name: 'Passport',
+                  status: 'approved',
+                  is_required: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    mockAuthStore.userRole = 'student'
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-section-instructions"]').exists()).toBe(true)
+    })
+    const instructionsSection = wrapper.find('[data-testid="document-checklist-section-instructions"]')
+    const doneSection = wrapper.find('[data-testid="document-checklist-section-done"]')
+    expect(instructionsSection.find('[data-testid="document-checklist-section-count"]').text()).toBe('1')
+    expect(doneSection.find('[data-testid="document-checklist-section-count"]').text()).toBe('1')
+    expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.checklistSections.instructions'))
+
+    await instructionsSection.find('[data-testid="document-checklist-section-toggle"]').trigger('click')
+    await vi.waitFor(() => {
+      expect(instructionsSection.find('[data-testid="document-checklist-name"]').exists()).toBe(true)
+    })
+    expect(instructionsSection.find('[data-testid="document-checklist-name"]').text()).toBe('Reglamento')
+  })
+
+  it('hides document upload for coordinators', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: { ...applicationPayload, status: 'draft', document_checklist: { required_count: 0, complete: true } },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    mockAuthStore.userRole = 'coordinator'
+    const wrapper = mountView()
+    await flushPromises()
+    expect(wrapper.find('[data-testid="document-upload-card"]').exists()).toBe(false)
+    expect(wrapper.find('.document-upload-stub').exists()).toBe(false)
+  })
+
+  it('shows document upload for students on draft applications', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: { ...applicationPayload, status: 'draft', document_checklist: { required_count: 0, complete: true } },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    mockAuthStore.userRole = 'student'
+    const wrapper = mountView()
+    await flushPromises()
+    expect(wrapper.find('[data-testid="document-upload-card"]').exists()).toBe(true)
+  })
+
+  it('shows upload card and replace CTA for students on nominated apps with gaps', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'nominated',
+            document_checklist: {
+              required_count: 2,
+              approved_count: 0,
+              complete: false,
+              items: [
+                {
+                  document_type_id: 1,
+                  slug: 'transcript',
+                  name: 'Transcript',
+                  status: 'invalid',
+                  document_id: 'doc-invalid-1',
+                  is_required: true,
+                },
+                {
+                  document_type_id: 2,
+                  slug: 'passport',
+                  name: 'Passport',
+                  status: 'missing',
+                  is_required: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    mockAuthStore.userRole = 'student'
+    mockAuthStore.canUseStaffReviewQueue = false
+    const wrapper = mountView()
+    await flushPromises()
+    expect(wrapper.find('[data-testid="document-upload-card"]').exists()).toBe(true)
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="checklist-replace-cta"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="checklist-replace-cta"]').text()).toContain(
+      i18n.global.t('applicationDetailPage.replaceDocument'),
+    )
+    const uploadShortcuts = wrapper.findAll('[data-testid="checklist-upload-shortcut"]')
+    expect(uploadShortcuts.length).toBeGreaterThanOrEqual(2)
+    await uploadShortcuts[1].trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="document-upload-stub"]').attributes('data-prefill')).toBe('2')
+  })
+
+  it('hides checklist template download for approved items for students', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'under_review',
+            document_checklist: {
+              required_count: 1,
+              approved_count: 1,
+              complete: true,
+              items: [
+                {
+                  document_type_id: 5,
+                  slug: 'learning_agreement',
+                  name: 'Learning agreement',
+                  status: 'approved',
+                  has_template: true,
+                  is_required: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    mockAuthStore.userRole = 'student'
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-section-done"]').exists()).toBe(true)
+    })
+    await wrapper
+      .find('[data-testid="document-checklist-section-done"]')
+      .find('[data-testid="document-checklist-section-toggle"]')
+      .trigger('click')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-item"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="download-checklist-template"]').exists()).toBe(false)
   })
 
   it('shows Invalid on the required-document checklist', async () => {
@@ -926,10 +1566,54 @@ describe('ApplicationDetail', () => {
     })
     const wrapper = mountView()
     await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-section-action"]').exists()).toBe(true)
+    })
+    await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="document-checklist-item"]').exists()).toBe(true)
     })
     expect(wrapper.find('[data-testid="document-checklist-item"]').text()).toContain(
       i18n.global.t('applicationDetailPage.checklist.invalid'),
+    )
+  })
+
+  it('shows accepted file formats on checklist rows', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'draft',
+            document_checklist: {
+              required_count: 1,
+              approved_count: 0,
+              complete: false,
+              items: [
+                {
+                  document_type_id: 1,
+                  slug: 'passport',
+                  name: 'Passport',
+                  status: 'missing',
+                  is_required: true,
+                  accepted_extensions: 'pdf',
+                  max_file_size_mb: 5,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    mockAuthStore.userRole = 'student'
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-accepted-hint"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="document-checklist-accepted-hint"]').text()).toBe(
+      'Accepted: PDF (max 5MB)',
     )
   })
 
@@ -975,6 +1659,9 @@ describe('ApplicationDetail', () => {
     })
     const wrapper = mountView()
     await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-section-action"]').exists()).toBe(true)
+    })
+    await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="document-checklist-due-now"]').exists()).toBe(true)
     })
     expect(wrapper.find('[data-testid="document-checklist-due-now"]').text()).toBe(
@@ -984,8 +1671,62 @@ describe('ApplicationDetail', () => {
       i18n.global.t('applicationDetailPage.status.completed'),
     )
     expect(wrapper.find('[data-testid="document-progress-rail"]').exists()).toBe(true)
+    expect(
+      wrapper
+        .find('[data-testid="document-progress-rail"] [data-testid="collapsible-card-toggle"]')
+        .attributes('aria-expanded'),
+    ).toBe('false')
+    await expandCollapsible(wrapper, 'document-progress-rail')
     expect(wrapper.findAll('[data-testid="document-progress-rail-due-item"]')).toHaveLength(1)
     expect(wrapper.findAll('[data-testid="document-progress-rail-later-item"]')).toHaveLength(1)
+  })
+
+  it('keeps program info, subjects, timeline, and document progress collapsed by default', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            document_checklist: {
+              required_count: 1,
+              approved_count: 0,
+              complete: false,
+              items: [
+                {
+                  document_type_id: 1,
+                  slug: 'transcript',
+                  name: 'Transcript',
+                  status: 'missing',
+                  due_now: true,
+                  is_required: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="application-detail-page"]').exists()).toBe(true)
+    })
+    for (const testId of [
+      'program-info-card',
+      'application-subjects-card',
+      'activity-timeline-card',
+      'document-progress-rail',
+    ]) {
+      const card = wrapper.find(`[data-testid="${testId}"]`)
+      expect(card.exists()).toBe(true)
+      expect(card.find('[data-testid="collapsible-card-toggle"]').attributes('aria-expanded')).toBe(
+        'false',
+      )
+      expect(card.find('[data-testid="collapsible-card-panel"]').exists()).toBe(false)
+    }
   })
 
   it('shows review-queue prev/next when sessionStorage queue includes current id', async () => {
@@ -1009,5 +1750,232 @@ describe('ApplicationDetail', () => {
     expect(wrapper.find('[data-testid="review-queue-position"]').text()).toContain('2 of 3')
     await wrapper.find('[data-testid="review-queue-next"]').trigger('click')
     expect(mockPush).toHaveBeenCalledWith({ name: 'ApplicationDetail', params: { id: 'next-app' } })
+  })
+
+  it('hides review-queue prev/next for students even when sessionStorage has a queue', async () => {
+    mockAuthStore.userRole = 'student'
+    mockAuthStore.canUseStaffReviewQueue = false
+    mockAuthStore.isAdmin = false
+    sessionStorage.setItem(
+      'seim.reviewQueue.nav',
+      JSON.stringify({ ids: ['prev-app', 'test-app', 'next-app'], index: 1 }),
+    )
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({ data: applicationPayload })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="application-detail-page"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="review-queue-nav"]').exists()).toBe(false)
+  })
+
+  it('reloads application on full-page queue next for admin (route id change, reused component)', async () => {
+    mockAuthStore.userRole = 'admin'
+    mockAuthStore.canUseStaffReviewQueue = true
+    mockAuthStore.isAdmin = true
+    sessionStorage.setItem(
+      'seim.reviewQueue.nav',
+      JSON.stringify({ ids: ['prev-app', 'test-app', 'next-app'], index: 1 }),
+    )
+    const nextPayload = {
+      ...applicationPayload,
+      id: 'next-app',
+      program: { ...applicationPayload.program, name: 'Next Queue Program' },
+    }
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({ data: applicationPayload })
+      }
+      if (url === '/api/applications/next-app/') {
+        return Promise.resolve({ data: nextPayload })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="review-queue-nav"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="review-queue-next"]').trigger('click')
+    expect(mockPush).toHaveBeenCalledWith({ name: 'ApplicationDetail', params: { id: 'next-app' } })
+    expect(routeParams.id).toBe('next-app')
+    await vi.waitFor(() => {
+      expect(api.get).toHaveBeenCalledWith('/api/applications/next-app/')
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('Next Queue Program')
+    })
+    expect(wrapper.find('[data-testid="review-queue-position"]').text()).toContain('3 of 3')
+  })
+
+  it('reloads application on full-page queue previous for admin', async () => {
+    mockAuthStore.userRole = 'admin'
+    mockAuthStore.canUseStaffReviewQueue = true
+    mockAuthStore.isAdmin = true
+    sessionStorage.setItem(
+      'seim.reviewQueue.nav',
+      JSON.stringify({ ids: ['prev-app', 'test-app', 'next-app'], index: 1 }),
+    )
+    const prevPayload = {
+      ...applicationPayload,
+      id: 'prev-app',
+      program: { ...applicationPayload.program, name: 'Previous Queue Program' },
+    }
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({ data: applicationPayload })
+      }
+      if (url === '/api/applications/prev-app/') {
+        return Promise.resolve({ data: prevPayload })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="review-queue-prev"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="review-queue-prev"]').trigger('click')
+    expect(mockPush).toHaveBeenCalledWith({ name: 'ApplicationDetail', params: { id: 'prev-app' } })
+    await vi.waitFor(() => {
+      expect(wrapper.text()).toContain('Previous Queue Program')
+    })
+    expect(wrapper.find('[data-testid="review-queue-position"]').text()).toContain('1 of 3')
+  })
+
+  it('requires rejection note and confirm before marking document invalid', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({ data: { ...applicationPayload, status: 'under_review' } })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'doc-9',
+                type: { name: 'Transcript' },
+                is_valid: false,
+                validated_at: null,
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    api.post.mockResolvedValue({ data: {} })
+    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('  Needs clearer scan  ')
+
+    const wrapper = mountView()
+    await flushPromises()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-status-badge"]').exists()).toBe(true)
+    })
+    const invalidBtn = wrapper.findAll('button').find((b) => b.attributes('title') === i18n.global.t('applicationDetailPage.markInvalidTitle'))
+    expect(invalidBtn).toBeTruthy()
+    await invalidBtn.trigger('click')
+    await flushPromises()
+
+    expect(promptSpy).toHaveBeenCalled()
+    expect(mockConfirm).toHaveBeenCalled()
+    expect(api.post).toHaveBeenCalledWith('/api/documents/doc-9/validate_document/', {
+      result: 'invalid',
+      details: 'Needs clearer scan',
+    })
+    promptSpy.mockRestore()
+  })
+
+  it('blocks invalid mark when rejection note is empty', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({ data: { ...applicationPayload, status: 'under_review' } })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'doc-9',
+                type: { name: 'Transcript' },
+                is_valid: false,
+                validated_at: null,
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const promptSpy = vi.spyOn(window, 'prompt').mockReturnValue('   ')
+
+    const wrapper = mountView()
+    await flushPromises()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-status-badge"]').exists()).toBe(true)
+    })
+    const invalidBtn = wrapper.findAll('button').find((b) => b.attributes('title') === i18n.global.t('applicationDetailPage.markInvalidTitle'))
+    await invalidBtn.trigger('click')
+    await flushPromises()
+
+    expect(mockErrorToast).toHaveBeenCalledWith(i18n.global.t('applicationDetailPage.invalidNoteRequired'))
+    expect(api.post).not.toHaveBeenCalled()
+    promptSpy.mockRestore()
+  })
+
+  it('soft-confirms before marking document valid', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({ data: { ...applicationPayload, status: 'under_review' } })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'doc-9',
+                type: { name: 'Transcript' },
+                is_valid: false,
+                validated_at: null,
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    api.post.mockResolvedValue({ data: {} })
+
+    const wrapper = mountView()
+    await flushPromises()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-status-badge"]').exists()).toBe(true)
+    })
+    const validBtn = wrapper.findAll('button').find((b) => b.attributes('title') === i18n.global.t('applicationDetailPage.markValidTitle'))
+    await validBtn.trigger('click')
+    await flushPromises()
+
+    expect(mockConfirm).toHaveBeenCalled()
+    expect(api.post).toHaveBeenCalledWith('/api/documents/doc-9/validate_document/', {
+      result: 'valid',
+      details: '',
+    })
   })
 })

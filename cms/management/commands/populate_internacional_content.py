@@ -447,13 +447,13 @@ class Command(BaseCommand):
             formats_html = (
                 "<h2>Formatos de Movilidad Entrante</h2><ul>"
                 + _file_link(
-                    "Solicitud de Participación",
+                    "Solicitud de Participación (formato AF)",
                     file_url("solicitud_participacion_entrante"),
                 )
                 + "</ul><h2>Formatos de Movilidad Saliente</h2><ul>"
                 + _file_link(
-                    "Solicitud de Participación",
-                    file_url("solicitud_participacion_saliente"),
+                    "Solicitud de Participación (generada en SEIM)",
+                    "/seim/login/",
                 )
                 + _file_link("Lineamientos y Disposiciones", file_url("lineamientos"))
                 + _file_link("Carta Compromiso", file_url("carta_compromiso"))
@@ -491,8 +491,8 @@ class Command(BaseCommand):
                     ),
                     _cta(
                         "Solicitud de Participación",
-                        "Formato AF para movilidad entrante.",
-                        "Descargar formato",
+                        "Formato AF en blanco para movilidad entrante (documento oficial CGRI).",
+                        "Descargar formato AF",
                         file_url("solicitud_participacion_entrante"),
                         "secondary",
                     ),
@@ -508,6 +508,8 @@ class Command(BaseCommand):
                         "<h2>Movilidad Internacional Saliente</h2>"
                         "<p>Convocatoria y formatos para estudiantes UAdeC. El portal "
                         "SEIM es la vía principal para aplicar y dar seguimiento.</p>"
+                        "<p>La Solicitud de Participación (FS-SP) se genera prellenada "
+                        "desde tu expediente en SEIM; no uses un formato AF de entrantes.</p>"
                         '<p><a href="/seim/login/">Aplicar en SEIM</a> — crea tu cuenta '
                         "o inicia sesión para enviar tu solicitud.</p>"
                     ),
@@ -528,8 +530,8 @@ class Command(BaseCommand):
                     _rich(
                         "<h3>Formatos oficiales</h3><ul>"
                         + _file_link(
-                            "Solicitud de Participación",
-                            file_url("solicitud_participacion_saliente"),
+                            "Solicitud de Participación (generada en SEIM)",
+                            "/seim/login/",
                         )
                         + _file_link(
                             "Lineamientos y Disposiciones", file_url("lineamientos")

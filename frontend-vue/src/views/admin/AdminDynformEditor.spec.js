@@ -36,6 +36,7 @@ describe('AdminDynformEditor', () => {
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
+        { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
         { path: '/admin/dynforms', name: 'AdminDynforms', component: { template: '<div />' } },
         { path: '/admin/dynforms/:id', name: 'AdminDynformEditor', component: AdminDynformEditor },
       ],
@@ -68,6 +69,7 @@ describe('AdminDynformEditor', () => {
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
+        { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
         { path: '/admin/dynforms', name: 'AdminDynforms', component: { template: '<div />' } },
         { path: '/admin/dynforms/:id', name: 'AdminDynformEditor', component: AdminDynformEditor },
       ],
@@ -114,6 +116,7 @@ describe('AdminDynformEditor', () => {
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
+        { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
         { path: '/admin/dynforms', name: 'AdminDynforms', component: { template: '<div />' } },
         { path: '/admin/dynforms/:id', name: 'AdminDynformEditor', component: AdminDynformEditor },
       ],

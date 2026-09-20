@@ -11,7 +11,9 @@ from documents.models import (
     DocumentResubmissionRequest,
     DocumentType,
 )
+from documents.services import DocumentService
 from exchange.models import Application, ApplicationStatus, Program
+from rest_framework.exceptions import ValidationError as DRFValidationError
 
 
 @pytest.mark.django_db
@@ -96,7 +98,8 @@ class TestDocumentSerializer:
                     assert document.type == document_type
 
     def test_document_serializer_invalid_file_type(self):
-        """Test DocumentSerializer with invalid file type."""
+        """Type/size rejection happens on create via upload_document, not field validate."""
+        factory = APIRequestFactory()
         user = User.objects.create_user(username="testuser", email="test@example.com")
         program = Program.objects.create(
             name="Test Program",
@@ -109,7 +112,9 @@ class TestDocumentSerializer:
             program=program, student=user, status=status
         )
         document_type = DocumentType.objects.create(
-            name="Test Document", description="A test document type"
+            name="Test Document",
+            description="A test document type",
+            accepted_extensions="pdf",
         )
 
         file_content = b"test file content"
@@ -121,15 +126,90 @@ class TestDocumentSerializer:
             "file": file,
             "uploaded_by": user.id,
         }
+        request = factory.post("/api/documents/", data)
+        request.user = user
 
         with patch(
-            "documents.serializers.DocumentService.validate_file_type_and_size"
-        ) as mock_validate:
-            mock_validate.side_effect = ValueError("Invalid file type")
+            "documents.serializers.DocumentService.virus_scan", return_value=True
+        ):
+            serializer = serializers.DocumentSerializer(
+                data=data, context={"request": request}
+            )
+            assert serializer.is_valid(), serializer.errors
+            with pytest.raises(DRFValidationError) as exc_info:
+                serializer.save()
+            assert "File type not allowed" in str(exc_info.value)
 
-            serializer = serializers.DocumentSerializer(data=data)
-            assert serializer.is_valid() is False
-            assert "Invalid file type" in str(serializer.errors)
+    def test_document_serializer_allows_docx_when_type_permits(self):
+        """Create must not reject DOCX early when the document type allows it."""
+        factory = APIRequestFactory()
+        user = User.objects.create_user(username="testuser", email="test@example.com")
+        program = Program.objects.create(
+            name="Test Program",
+            description="A test program",
+            start_date="2023-01-01",
+            end_date="2023-12-31",
+        )
+        status = ApplicationStatus.objects.get_or_create(name="submitted")[0]
+        application = Application.objects.create(
+            program=program, student=user, status=status
+        )
+        document_type = DocumentType.objects.create(
+            name="Motivation letter",
+            description="Word letter",
+            accepted_extensions="pdf,docx",
+        )
+
+        # Minimal ZIP header so python-magic/mimetypes can treat as docx-ish; service
+        # maps by extension via EXTENSION_MIME when type-aware.
+        file = SimpleUploadedFile(
+            "letter.docx",
+            b"PK\x03\x04docx-content",
+            content_type=(
+                "application/vnd.openxmlformats-officedocument"
+                ".wordprocessingml.document"
+            ),
+        )
+        data = {
+            "application": application.id,
+            "type": document_type.id,
+            "file": file,
+            "uploaded_by": user.id,
+        }
+        request = factory.post("/api/documents/", data)
+        request.user = user
+
+        with patch(
+            "documents.serializers.DocumentService.virus_scan", return_value=True
+        ):
+            with patch(
+                "documents.serializers.DocumentService.upload_document"
+            ) as mock_upload:
+                mock_upload.return_value = Document(
+                    application=application,
+                    type=document_type,
+                    file=file,
+                    uploaded_by=user,
+                )
+                serializer = serializers.DocumentSerializer(
+                    data=data, context={"request": request}
+                )
+                assert serializer.is_valid(), serializer.errors
+                serializer.save()
+                mock_upload.assert_called_once()
+
+    def test_document_type_summary_resolved_accepted_extensions(self):
+        """Nested type payload exposes resolved extensions (defaults when empty)."""
+        empty = DocumentType.objects.create(name="Empty type")
+        data = serializers.DocumentTypeSummarySerializer(empty).data
+        assert data["resolved_accepted_extensions"] == "pdf,jpg,jpeg,png"
+        assert data["accepted_extensions"] == ""
+
+        pdf_only = DocumentType.objects.create(
+            name="PDF only", accepted_extensions="pdf"
+        )
+        data2 = serializers.DocumentTypeSummarySerializer(pdf_only).data
+        assert data2["resolved_accepted_extensions"] == "pdf"
 
     def test_document_serializer_virus_scan_failed(self):
         """Test DocumentSerializer when virus scan fails."""
@@ -218,7 +298,10 @@ class TestDocumentSerializer:
                     )
                     assert serializer.is_valid()
                     updated_document = serializer.save()
-                    assert updated_document == document
+                    assert updated_document.id != document.id
+                    assert updated_document.supersedes_id == document.id
+                    assert DocumentService.is_document_current(updated_document)
+                    assert not DocumentService.is_document_current(document)
 
     def test_document_serializer_update_resolves_open_resubmission(self):
         factory = APIRequestFactory()

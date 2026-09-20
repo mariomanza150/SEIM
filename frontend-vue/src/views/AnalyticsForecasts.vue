@@ -31,7 +31,7 @@
       <template #presets>
         <span class="form-label small text-muted d-block mb-2">{{ t('analyticsForecastsPage.savedViewsLabel') }}</span>
         <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
-          <div class="flex-grow-1" style="min-width: 200px">
+          <div class="flex-grow-1 seim-min-w-filter">
             <input
               v-model="newPresetName"
               type="text"

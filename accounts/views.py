@@ -13,7 +13,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from core.cache import invalidate_application_api_responses
 from core.permissions import CanManageRoles, IsAdminOrReadOnly
-from core.throttling import BurstRateThrottle
+from core.throttling import BurstRateThrottle, ResendVerificationEmailThrottle
+
+from .resend_verification import (
+    check_resend_verification_allowed,
+    mark_resend_verification_sent,
+)
 
 from .models import (
     AcademicLevel,
@@ -766,7 +771,7 @@ class ResendVerificationEmailView(APIView):
     """
 
     permission_classes = []  # Allow unauthenticated
-    throttle_classes = [BurstRateThrottle]
+    throttle_classes = [BurstRateThrottle, ResendVerificationEmailThrottle]
 
     @extend_schema(
         summary="Resend verification email",
@@ -801,11 +806,25 @@ class ResendVerificationEmailView(APIView):
                 status=status.HTTP_200_OK,
             )
 
-        # Check if already verified
+        # Check if already verified (does not consume the per-email cooldown)
         if user.is_email_verified:
             return Response(
                 {"error": "Email is already verified"},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        allowed, retry_after = check_resend_verification_allowed(user.email)
+        if not allowed:
+            return Response(
+                {
+                    "detail": (
+                        "Too many verification emails. "
+                        f"Please try again in {retry_after} seconds."
+                    ),
+                    "code": "resend_verification_rate_limited",
+                },
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+                headers={"Retry-After": str(retry_after)},
             )
 
         # Generate new token and send email
@@ -813,6 +832,7 @@ class ResendVerificationEmailView(APIView):
 
         token = AccountService.generate_email_verification_token(user)
         AccountService.send_verification_email(user, token, request=request)
+        mark_resend_verification_sent(user.email)
 
         return Response(
             {"message": "Verification email sent successfully."},

@@ -36,13 +36,36 @@ class TestIsOwnerOrAdminPermission(TestCase):
         self.assertFalse(has_permission)
 
     def test_is_owner_permission_admin(self):
-        """Test permission for admin user"""
+        """Test permission for admin user on non-document objects"""
         request = self.factory.get("/test/")
         request.user = self.user
         request.user.is_staff = True
         obj = type("MockObject", (), {"student": self.other_user})()
         has_permission = self.permission.has_object_permission(request, None, obj)
         self.assertTrue(has_permission)
+
+    def test_document_staff_can_read_but_not_write(self):
+        request_get = self.factory.get("/test/")
+        request_get.user = self.user
+        request_get.user.is_staff = True
+        request_patch = self.factory.patch("/test/")
+        request_patch.user = self.user
+        request_patch.user.is_staff = True
+
+        app = type("App", (), {"student_id": self.other_user.id})()
+        obj = type(
+            "MockDocument",
+            (),
+            {
+                "_meta": type("Meta", (), {"model_name": "document"})(),
+                "application": app,
+                "uploaded_by_id": self.other_user.id,
+            },
+        )()
+        self.assertTrue(self.permission.has_object_permission(request_get, None, obj))
+        self.assertFalse(
+            self.permission.has_object_permission(request_patch, None, obj)
+        )
 
     def test_is_owner_permission_safe_methods(self):
         """Test permission for safe methods"""

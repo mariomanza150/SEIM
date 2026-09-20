@@ -151,11 +151,14 @@ def _upsert_wagtail_document(spec, path: Path, collection, admin_user):
 
 
 def _attach_template(slug: str, path: Path) -> bool:
+    from cms.cgri_samples import official_template_download_name
+
     doc_type = DocumentType.objects.filter(slug=slug).first()
     if doc_type is None:
         return False
+    save_name = official_template_download_name(slug) or path.name
     with path.open("rb") as handle:
         if doc_type.template_file:
             doc_type.template_file.delete(save=False)
-        doc_type.template_file.save(path.name, File(handle), save=True)
+        doc_type.template_file.save(save_name, File(handle), save=True)
     return True

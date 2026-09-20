@@ -110,7 +110,7 @@
             </div>
 
             <div
-              v-if="typeInstructions || typeFaq"
+              v-if="typeInstructions || typeFaq || canDownloadTemplate || (isAdmin && document.type?.id)"
               class="card mb-4"
               data-testid="document-instructions-panel"
             >
@@ -123,7 +123,7 @@
                 <p v-if="typeInstructions" class="small mb-2">{{ typeInstructions }}</p>
                 <p v-if="typeFaq" class="small text-muted mb-2">{{ typeFaq }}</p>
                 <button
-                  v-if="document.type?.has_template"
+                  v-if="canDownloadTemplate"
                   type="button"
                   class="btn btn-sm btn-outline-secondary"
                   data-testid="download-type-template"
@@ -203,7 +203,7 @@
                   </a>
                 </div>
 
-                <div v-if="isStudent || isStaff" class="mt-4 pt-3 border-top">
+                <div v-if="canReplaceFile" class="mt-4 pt-3 border-top" data-testid="replace-file-section">
                   <h6 class="mb-2">{{ t('documentDetailPage.replaceFileHeading') }}</h6>
                   <p class="small text-muted mb-2">
                     {{ t('documentDetailPage.replaceFileHint') }}
@@ -212,12 +212,26 @@
                     ref="replaceInput"
                     type="file"
                     class="form-control form-control-sm mb-2"
-                    accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                    :class="{ 'is-invalid': replaceFileError }"
+                    :accept="replaceFileAccept"
+                    data-testid="replace-file-input"
+                    @change="onReplaceFileChange"
                   />
+                  <div v-if="replaceFileError" class="invalid-feedback d-block" data-testid="replace-file-error">
+                    {{ replaceFileError }}
+                  </div>
+                  <div
+                    v-if="replaceAcceptedHint"
+                    class="form-text mb-2"
+                    data-testid="replace-accepted-hint"
+                  >
+                    {{ replaceAcceptedHint }}
+                  </div>
                   <button
                     type="button"
                     class="btn btn-outline-primary btn-sm"
-                    :disabled="actionBusy"
+                    :disabled="actionBusy || !replaceFileReady"
+                    data-testid="replace-file-submit"
                     @click="submitReplaceFile"
                   >
                     {{ t('documentDetailPage.uploadReplacement') }}
@@ -225,6 +239,36 @@
                 </div>
               </div>
             </div>
+
+            <CollapsibleCard
+              v-if="showVersionHistory"
+              test-id="document-version-history"
+              :default-open="false"
+              class="mb-4"
+            >
+              <template #title>{{ t('documentDetailPage.versionHistory') }}</template>
+              <template #header-extra>
+                <span class="badge bg-secondary">{{ versionHistory.length }}</span>
+              </template>
+              <ul class="list-group list-group-flush" data-testid="document-version-history-list">
+                <li
+                  v-for="prior in versionHistory"
+                  :key="prior.id"
+                  class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2"
+                >
+                  <div>
+                    <div class="fw-medium">{{ prior.filename || prior.id }}</div>
+                    <div class="small text-muted">{{ formatDateTime(prior.created_at) }}</div>
+                  </div>
+                  <router-link
+                    :to="{ name: 'DocumentDetail', params: { id: prior.id } }"
+                    class="btn btn-sm btn-outline-secondary"
+                  >
+                    {{ t('documentDetailPage.viewPriorVersion') }}
+                  </router-link>
+                </li>
+              </ul>
+            </CollapsibleCard>
 
             <div class="card mb-4">
               <div class="card-header">
@@ -413,27 +457,38 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
+import { useConfirm } from '@/composables/useConfirm'
 import { resolveFileUrl } from '@/utils/apiUrl'
 import {
+  acceptAttributeFromExtensions,
   documentApplicationId,
   documentApplicationProgramName,
   documentReviewStatus,
+  documentReviewStatusBadgeClass,
+  documentReviewStatusLabel,
+  documentTypeAcceptedExtensions,
+  documentTypeAcceptedHintText,
   documentTypeLabel,
+  filenameFromContentDisposition,
+  validateDocumentFile,
 } from '@/utils/documentApi'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import PageStateShell from '@/components/State/PageStateShell.vue'
+import CollapsibleCard from '@/components/CollapsibleCard.vue'
 
 const route = useRoute()
-const { t, locale } = useI18n()
+const router = useRouter()
+const { t, te, locale } = useI18n()
 const authStore = useAuthStore()
 const toast = useToast()
+const { confirm } = useConfirm()
 
 const document = ref(null)
 const applications = ref([])
@@ -445,6 +500,8 @@ const commentPrivate = ref(false)
 const resubmitReason = ref('')
 const validationNote = ref('')
 const replaceInput = ref(null)
+const replaceFileError = ref('')
+const replaceFileReady = ref(false)
 
 const isStaff = computed(() => {
   const r = authStore.userRole
@@ -452,6 +509,35 @@ const isStaff = computed(() => {
 })
 const isAdmin = computed(() => authStore.userRole === 'admin')
 const isStudent = computed(() => authStore.userRole === 'student')
+
+const replaceAcceptedHint = computed(() =>
+  documentTypeAcceptedHintText(document.value?.type, t),
+)
+const replaceFileAccept = computed(() =>
+  acceptAttributeFromExtensions(documentTypeAcceptedExtensions(document.value?.type)),
+)
+
+const canReplaceFile = computed(() => Boolean(document.value?.can_replace))
+
+const versionHistory = computed(() =>
+  Array.isArray(document.value?.version_history) ? document.value.version_history : [],
+)
+
+const showVersionHistory = computed(
+  () =>
+    Boolean(document.value?.can_view_version_history) && versionHistory.value.length > 0,
+)
+
+const canDownloadTemplate = computed(() => {
+  if (!document.value?.type?.has_template) return false
+  if (isStaff.value) return true
+  if (!isStudent.value) return false
+  if (document.value.is_valid && document.value.validated_at) {
+    const open = (document.value.resubmission_requests || []).some((r) => !r.resolved)
+    return open
+  }
+  return true
+})
 
 const breadcrumbItems = computed(() => {
   const lastLabel = loading.value
@@ -470,6 +556,7 @@ const typeInstructions = computed(() => document.value?.type?.instructions || ''
 const typeFaq = computed(() => document.value?.type?.faq || '')
 
 async function downloadTypeTemplate() {
+  if (!canDownloadTemplate.value) return
   const typeId = document.value?.type?.id
   if (!typeId) return
   try {
@@ -482,7 +569,10 @@ async function downloadTypeTemplate() {
     const objectUrl = URL.createObjectURL(blob)
     const a = window.document.createElement('a')
     a.href = objectUrl
-    a.download = `${document.value?.type?.name || 'template'}`
+    a.download = filenameFromContentDisposition(
+      response.headers?.['content-disposition'],
+      `${document.value?.type?.name || 'template'}.docx`,
+    )
     a.rel = 'noopener noreferrer'
     window.document.body.appendChild(a)
     a.click()
@@ -628,24 +718,13 @@ function formatValidationResult(result) {
 
 const documentPageStatus = computed(() => documentReviewStatus(document.value))
 
-const documentPageStatusClass = computed(() => {
-  const status = documentPageStatus.value
-  if (status === 'valid') return 'bg-success'
-  if (status === 'invalid') return 'bg-danger'
-  return 'bg-warning text-dark'
-})
+const documentPageStatusClass = computed(() => documentReviewStatusBadgeClass(document.value))
 
 function documentPageStatusLabel(kind = 'short') {
-  const status = documentPageStatus.value
-  if (status === 'valid') {
-    return kind === 'header'
-      ? t('documentDetailPage.validated')
-      : t('documentDetailPage.statusValidatedShort')
+  if (kind === 'header' && documentPageStatus.value === 'pending') {
+    return t('documentDetailPage.pendingValidation')
   }
-  if (status === 'invalid') return t('documentDetailPage.validationResult.invalid')
-  return kind === 'header'
-    ? t('documentDetailPage.pendingValidation')
-    : t('documentDetailPage.statusPendingShort')
+  return documentReviewStatusLabel(document.value, { t, te })
 }
 
 function documentCommentAuthor(comment) {
@@ -750,11 +829,33 @@ async function resolveResubmission(req) {
 
 async function validateDoc(result) {
   if (!document.value) return
+  const details = validationNote.value.trim()
+  if (result === 'invalid') {
+    if (!details) {
+      toast.error(t('documentDetailPage.invalidNoteRequired'))
+      return
+    }
+    const ok = await confirm({
+      title: t('documentDetailPage.confirmInvalidTitle'),
+      message: t('documentDetailPage.confirmInvalidMessage'),
+      confirmText: t('documentDetailPage.markInvalid'),
+      variant: 'danger',
+    })
+    if (!ok) return
+  } else if (result === 'valid') {
+    const ok = await confirm({
+      title: t('documentDetailPage.confirmValidTitle'),
+      message: t('documentDetailPage.confirmValidMessage'),
+      confirmText: t('documentDetailPage.markValid'),
+      variant: 'primary',
+    })
+    if (!ok) return
+  }
   actionBusy.value = true
   try {
     await api.post(`/api/documents/${document.value.id}/validate_document/`, {
       result,
-      details: validationNote.value.trim(),
+      details,
     })
     validationNote.value = ''
     toast.success(
@@ -776,14 +877,30 @@ async function submitReplaceFile() {
     toast.error(t('documentDetailPage.toastChooseFile'))
     return
   }
+  const file = replaceInput.value.files[0]
+  const clientCheck = validateDocumentFile(file, document.value.type)
+  if (!clientCheck.ok) {
+    replaceFileError.value = t(clientCheck.errorKey, clientCheck.params)
+    replaceFileReady.value = false
+    toast.error(replaceFileError.value)
+    return
+  }
   const fd = new FormData()
-  fd.append('file', replaceInput.value.files[0])
+  fd.append('file', file)
   actionBusy.value = true
+  replaceFileError.value = ''
   try {
-    await api.patch(`/api/documents/${document.value.id}/`, fd)
+    const { data } = await api.patch(`/api/documents/${document.value.id}/`, fd)
     replaceInput.value.value = ''
+    replaceFileReady.value = false
     toast.success(t('documentDetailPage.toastFileUpdated'))
-    await fetchDocument()
+    const newId = data?.id
+    if (newId && String(newId) !== String(document.value.id)) {
+      await router.replace({ name: 'DocumentDetail', params: { id: newId } })
+      await fetchDocument()
+    } else {
+      await fetchDocument()
+    }
   } catch (err) {
     console.error(err)
     const d = err.response?.data
@@ -795,6 +912,20 @@ async function submitReplaceFile() {
   } finally {
     actionBusy.value = false
   }
+}
+
+function onReplaceFileChange(event) {
+  replaceFileError.value = ''
+  replaceFileReady.value = false
+  const file = event.target.files?.[0]
+  if (!file) return
+  const result = validateDocumentFile(file, document.value?.type)
+  if (!result.ok) {
+    replaceFileError.value = t(result.errorKey, result.params)
+    if (replaceInput.value) replaceInput.value.value = ''
+    return
+  }
+  replaceFileReady.value = true
 }
 
 function onApplicationSyncEvent(ev) {
@@ -820,6 +951,15 @@ onMounted(async () => {
     window.addEventListener('seim-application-sync', onApplicationSyncEvent)
   }
 })
+
+watch(
+  () => route.params.id,
+  async (next, prev) => {
+    if (next && String(next) !== String(prev || '')) {
+      await fetchDocument()
+    }
+  },
+)
 
 onUnmounted(() => {
   revokePreviewUrl()

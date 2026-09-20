@@ -31,9 +31,23 @@
         >
           <i class="bi me-2" :class="isReadyToApply ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
           {{ isReadyToApply ? t('profilePage.readyToApply') : t('profilePage.completeRequired') }}
+          <p v-if="returnToApplication" class="mb-0 mt-2 small" data-testid="profile-return-hint">
+            {{ t('profilePage.redirectedFromApplication') }}
+          </p>
           <ul v-if="!isReadyToApply && missingApplyFields.length" class="mb-0 mt-2" data-testid="profile-missing-fields">
             <li v-for="key in missingApplyFields" :key="key">{{ t(`profilePage.missingFields.${key}`) }}</li>
           </ul>
+          <div v-if="returnToApplication" class="mt-3">
+            <router-link
+              v-if="isReadyToApply"
+              :to="returnToApplication"
+              class="btn btn-primary btn-sm"
+              data-testid="profile-continue-application"
+            >
+              {{ t('profilePage.continueApplication') }}
+            </router-link>
+            <p v-else class="mb-0 small text-muted">{{ t('profilePage.finishThenContinue') }}</p>
+          </div>
         </div>
 
         <form autocomplete="off" @submit.prevent="handleSubmit">
@@ -284,6 +298,7 @@
                     v-model="form.language"
                     :options="spokenLanguageOptions"
                     :placeholder="t('profilePage.languagePlaceholder')"
+                    placement="up"
                     data-testid="profile-language"
                   />
                 </div>
@@ -311,6 +326,7 @@
                     v-model="row.name"
                     :options="spokenLanguageOptions"
                     :placeholder="t('profilePage.languagePlaceholder')"
+                    placement="up"
                   />
                 </div>
                 <div class="col-md-5">
@@ -344,6 +360,7 @@
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import SearchableSelect from '@/components/SearchableSelect.vue'
@@ -354,6 +371,8 @@ import PageStateShell from '@/components/State/PageStateShell.vue'
 import { useFormFields } from '@/composables/useFormFields'
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const { success, error: errorToast } = useToast()
 const {
   fieldErrors,
@@ -445,6 +464,16 @@ const missingApplyFields = computed(() => {
   return missing
 })
 const isReadyToApply = computed(() => missingApplyFields.value.length === 0)
+
+/** Safe internal path from ApplicationForm gate (`?next=/applications/new`). */
+const returnToApplication = computed(() => {
+  const raw = route.query.next
+  const path = Array.isArray(raw) ? raw[0] : raw
+  if (typeof path !== 'string') return null
+  const trimmed = path.trim()
+  if (!trimmed.startsWith('/') || trimmed.startsWith('//')) return null
+  return trimmed
+})
 
 const PROFILE_FIELDS = [
   'first_name', 'middle_name', 'last_name', 'mothers_last_name',
@@ -735,6 +764,9 @@ async function handleSubmit() {
       await fetchPrograms(form.value.school, false)
     }
     success(t('profilePage.toastSaved'))
+    if (isReadyToApply.value && returnToApplication.value) {
+      await router.push(returnToApplication.value)
+    }
   } catch (err) {
     applyApiFieldErrors(err.response?.data)
     saveError.value = errorMessage(err.response?.data)

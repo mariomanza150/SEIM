@@ -52,17 +52,25 @@ describe('AdminUsers', () => {
       history: createMemoryHistory(),
       routes: [
         { path: '/', name: 'Dashboard', component: { template: '<div />' } },
+        { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
         { path: '/admin/users', name: 'AdminUsers', component: AdminUsers },
       ],
     })
     await router.push({ name: 'AdminUsers' })
-    const wrapper = mount(AdminUsers, { global: { plugins: [i18n, router] } })
+    const wrapper = mount(AdminUsers, {
+      global: {
+        plugins: [i18n, router],
+        stubs: { Teleport: { template: '<div><slot /></div>' } },
+      },
+      attachTo: document.body,
+    })
     await flushPromises()
     expect(wrapper.get('[data-testid="admin-users-table"]').text()).toContain('coord@test.com')
     expect(wrapper.get('[data-testid="admin-users-table"]').text()).toContain('coordinator')
     await wrapper.get('[data-testid="admin-users-table"] button').trigger('click')
     await flushPromises()
     expect(wrapper.get('[data-testid="admin-users-roles"]').text()).toContain('coordinator')
+    wrapper.unmount()
   })
 
   it('sends role filter in users query params', async () => {
@@ -71,11 +79,17 @@ describe('AdminUsers', () => {
       history: createMemoryHistory(),
       routes: [
         { path: '/', name: 'Dashboard', component: { template: '<div />' } },
+        { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
         { path: '/admin/users', name: 'AdminUsers', component: AdminUsers },
       ],
     })
     await router.push({ name: 'AdminUsers' })
-    const wrapper = mount(AdminUsers, { global: { plugins: [i18n, router] } })
+    const wrapper = mount(AdminUsers, {
+      global: {
+        plugins: [i18n, router],
+        stubs: { Teleport: { template: '<div><slot /></div>' } },
+      },
+    })
     await flushPromises()
 
     const roleSelect = wrapper.findAll('select')[1]
@@ -85,5 +99,6 @@ describe('AdminUsers', () => {
     expect(mockGet).toHaveBeenLastCalledWith('/api/users/', {
       params: expect.objectContaining({ role: 'coordinator' }),
     })
+    wrapper.unmount()
   })
 })

@@ -406,6 +406,68 @@
               </div>
       </div>
     </FormModal>
+
+    <FormModal
+      :open="deleteDialog.open"
+      :title="t('adminPrograms.deleteTitle')"
+      :error="deleteDialog.error || ''"
+      :saving="deleteDialog.saving"
+      :submit-label="t('adminCommon.delete')"
+      :cancel-label="t('adminCommon.cancel')"
+      submit-variant="danger"
+      :submit-disabled="deleteDialog.loading || !deleteDialog.canDelete"
+      size="md"
+      @close="closeDeleteDialog"
+      @submit="executeDelete"
+    >
+      <div data-testid="admin-program-delete-body">
+        <p class="mb-3">
+          {{ t('adminPrograms.deleteConfirm', { name: deleteDialog.programName }) }}
+        </p>
+
+        <div v-if="deleteDialog.loading" class="text-muted small" data-testid="admin-program-delete-loading">
+          <span class="spinner-border spinner-border-sm me-1" aria-hidden="true" />
+          {{ t('adminPrograms.deleteImpactLoading') }}
+        </div>
+
+        <template v-else>
+          <div
+            v-if="deleteDialog.protectedItems.length"
+            class="alert alert-warning"
+            role="alert"
+            data-testid="admin-program-delete-protected"
+          >
+            <p class="mb-2 fw-medium">{{ t('adminPrograms.deleteBlocked') }}</p>
+            <ul class="mb-0 small">
+              <li v-for="(row, idx) in deleteDialog.protectedItems" :key="`${row.model}-${idx}`">
+                {{ row.label }}: {{ row.repr }}
+              </li>
+            </ul>
+          </div>
+
+          <template v-else-if="deleteDialog.related.length">
+            <p class="fw-medium mb-2">{{ t('adminPrograms.deleteImpactIntro') }}</p>
+            <ul class="list-group list-group-flush border rounded mb-2" data-testid="admin-program-delete-impact">
+              <li
+                v-for="row in deleteDialog.related"
+                :key="row.model"
+                class="list-group-item d-flex justify-content-between align-items-center py-2"
+              >
+                <span>{{ row.label }}</span>
+                <span class="badge text-bg-secondary rounded-pill">{{ row.count }}</span>
+              </li>
+            </ul>
+            <p class="small text-muted mb-0">
+              {{ t('adminPrograms.deleteImpactTotal', { n: deleteDialog.totalRelated }) }}
+            </p>
+          </template>
+
+          <p v-else class="text-muted small mb-0" data-testid="admin-program-delete-no-related">
+            {{ t('adminPrograms.deleteImpactEmpty') }}
+          </p>
+        </template>
+      </div>
+    </FormModal>
   </div>
 </template>
 
@@ -772,25 +834,72 @@ async function cloneProgram(program) {
   }
 }
 
+const deleteDialog = ref({
+  open: false,
+  programId: null,
+  programName: '',
+  loading: false,
+  saving: false,
+  error: null,
+  canDelete: true,
+  related: [],
+  protectedItems: [],
+  totalRelated: 0,
+})
+
+function closeDeleteDialog() {
+  if (deleteDialog.value.saving) return
+  deleteDialog.value.open = false
+}
+
 async function confirmDelete(program) {
-  const name = program?.name || ''
-  const ok = await confirm({
-    title: t('adminCommon.delete'),
-    message: t('adminPrograms.deleteConfirm', { name }),
-    confirmText: t('adminCommon.delete'),
-    cancelText: t('adminCommon.cancel'),
-    variant: 'danger',
-  })
-  if (!ok) return
+  if (!program?.id) return
+  deleteDialog.value = {
+    open: true,
+    programId: program.id,
+    programName: program.name || '',
+    loading: true,
+    saving: false,
+    error: null,
+    canDelete: true,
+    related: [],
+    protectedItems: [],
+    totalRelated: 0,
+  }
+  try {
+    const { data } = await api.get(`/api/programs/${program.id}/deletion-impact/`)
+    deleteDialog.value.related = Array.isArray(data?.related) ? data.related : []
+    deleteDialog.value.protectedItems = Array.isArray(data?.protected) ? data.protected : []
+    deleteDialog.value.totalRelated = Number(data?.total_related) || 0
+    deleteDialog.value.canDelete = data?.can_delete !== false
+    if (data?.program?.name) {
+      deleteDialog.value.programName = data.program.name
+    }
+  } catch (err) {
+    console.error('Failed to load program deletion impact:', err)
+    deleteDialog.value.error = formatApiError(err, t('adminPrograms.deleteImpactError'))
+    deleteDialog.value.canDelete = false
+  } finally {
+    deleteDialog.value.loading = false
+  }
+}
+
+async function executeDelete() {
+  if (!deleteDialog.value.programId || !deleteDialog.value.canDelete) return
+  deleteDialog.value.error = null
+  deleteDialog.value.saving = true
   mutating.value = true
   try {
-    await api.delete(`/api/programs/${program.id}/`)
+    await api.delete(`/api/programs/${deleteDialog.value.programId}/`)
     success(t('adminPrograms.toastDeleted'))
+    deleteDialog.value.open = false
     await fetchPrograms()
   } catch (err) {
     console.error('Failed to delete program:', err)
+    deleteDialog.value.error = formatApiError(err, t('adminPrograms.deleteToastError'))
     errorToast(t('adminPrograms.deleteToastError'))
   } finally {
+    deleteDialog.value.saving = false
     mutating.value = false
   }
 }

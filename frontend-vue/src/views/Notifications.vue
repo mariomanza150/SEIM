@@ -93,9 +93,9 @@
             class="list-group-item list-group-item-action"
             :class="{ 'seim-notification-unread': !notification.is_read }"
           >
-            <div class="d-flex w-100 justify-content-between align-items-start">
-              <div class="flex-grow-1">
-                <div class="d-flex align-items-center gap-2 mb-1">
+            <div class="d-flex w-100 justify-content-between align-items-start gap-2 min-w-0">
+              <div class="flex-grow-1 min-w-0">
+                <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
                   <span
                     v-if="!notification.is_read"
                     class="badge rounded-pill bg-primary"
@@ -148,6 +148,18 @@
                   >
                     <span v-if="markingId === notification.id" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                     <span v-else><i class="bi bi-check me-1" aria-hidden="true"></i>{{ t('notifications.markAsRead') }}</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-danger"
+                    :disabled="dismissingId === notification.id"
+                    :aria-busy="dismissingId === notification.id ? 'true' : 'false'"
+                    :aria-label="t('notifications.dismissAria')"
+                    data-testid="dismiss-notification-btn"
+                    @click="dismissNotification(notification)"
+                  >
+                    <span v-if="dismissingId === notification.id" class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                    <span v-else><i class="bi bi-x-lg me-1" aria-hidden="true"></i>{{ t('notifications.dismiss') }}</span>
                   </button>
                 </div>
               </div>
@@ -208,6 +220,7 @@ const {
   fetchUnreadCount: apiFetchUnreadCount,
   markAsRead: apiMarkAsRead,
   markAllRead: apiMarkAllRead,
+  dismissNotification: apiDismissNotification,
   formatTimestampPage,
 } = useNotifications()
 
@@ -215,6 +228,7 @@ const notifications = ref([])
 const loading = ref(true)
 const error = ref(null)
 const markingId = ref(null)
+const dismissingId = ref(null)
 const markingAllRead = ref(false)
 const unreadCount = ref(0)
 
@@ -298,6 +312,24 @@ async function markAllRead() {
     errorToast(t('notifications.toastMarkAllFailed'))
   } finally {
     markingAllRead.value = false
+  }
+}
+
+async function dismissNotification(notification) {
+  try {
+    dismissingId.value = notification.id
+    await apiDismissNotification(notification.id)
+    if (!notification.is_read) {
+      unreadCount.value = Math.max(0, unreadCount.value - 1)
+    }
+    notifications.value = notifications.value.filter((n) => n.id !== notification.id)
+    pagination.value.count = Math.max(0, (pagination.value.count || 1) - 1)
+    success(t('notifications.toastDismissed'))
+  } catch (err) {
+    console.error('Failed to dismiss notification:', err)
+    errorToast(t('notifications.toastDismissFailed'))
+  } finally {
+    dismissingId.value = null
   }
 }
 

@@ -230,3 +230,19 @@ class VueAppRoutingTests(TestCase):
                 str(response.content),
                 msg=f"Unexpected Vue shell for {path} (status {response.status_code})",
             )
+
+    def test_debug_media_served_before_wagtail_catch_all(self):
+        """``/media/*`` must not be swallowed by Wagtail's ``""`` catch-all (DEBUG)."""
+        from django.conf import settings
+        from pathlib import Path
+
+        media_dir = Path(settings.MEDIA_ROOT) / "documents"
+        media_dir.mkdir(parents=True, exist_ok=True)
+        sample = media_dir / "url_order_probe.pdf"
+        sample.write_bytes(b"%PDF-1.4 probe")
+        try:
+            response = self.client.get("/media/documents/url_order_probe.pdf")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(b"".join(response.streaming_content), b"%PDF-1.4 probe")
+        finally:
+            sample.unlink(missing_ok=True)

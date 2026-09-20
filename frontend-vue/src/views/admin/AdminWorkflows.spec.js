@@ -25,6 +25,7 @@ async function mountPage() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'Dashboard', component: { template: '<div />' } },
+        { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
       { path: '/admin/workflows', name: 'AdminWorkflows', component: AdminWorkflows },
       {
         path: '/admin/workflows/:id',
@@ -34,7 +35,13 @@ async function mountPage() {
     ],
   })
   await router.push({ name: 'AdminWorkflows' })
-  const wrapper = mount(AdminWorkflows, { global: { plugins: [i18n, router] } })
+  const wrapper = mount(AdminWorkflows, {
+    global: {
+      plugins: [i18n, router],
+      stubs: { Teleport: { template: '<div><slot /></div>' } },
+    },
+    attachTo: document.body,
+  })
   await flushPromises()
   return wrapper
 }

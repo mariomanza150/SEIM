@@ -21,7 +21,11 @@
         {{ t('applicationSubjects.missingHostGradeScale') }}
       </div>
 
-      <div v-if="canEditMapping" class="row g-2 align-items-end mb-3">
+      <div
+        v-if="canEditMapping && showCatalogPicker"
+        class="row g-2 align-items-end mb-3"
+        data-testid="catalog-subject-form"
+      >
         <div class="col-md-5">
           <label class="form-label" for="subject-catalog-pick">{{ t('applicationSubjects.hostSubjectLabel') }}</label>
           <select
@@ -35,9 +39,6 @@
               {{ formatHostSubjectOption(subj) }}
             </option>
           </select>
-          <div v-if="!hostSubjects.length && !hostSubjectsLoading" class="form-text">
-            {{ t('applicationSubjects.noHostSubjects') }}
-          </div>
         </div>
         <div class="col-md-3">
           <label class="form-label" for="home-course-code">{{ t('applicationSubjects.homeCourseCodeLabel') }}</label>
@@ -60,8 +61,20 @@
         </div>
       </div>
 
-      <div v-if="canEditMapping" class="border rounded p-3 mb-3" data-testid="custom-subject-form">
-        <div class="fw-medium mb-2">{{ t('applicationSubjects.customTitle') }}</div>
+      <div
+        v-if="canEditMapping"
+        class="border rounded p-3 mb-3"
+        :class="{ 'border-primary': useFreeTextSubjects }"
+        data-testid="custom-subject-form"
+      >
+        <div class="fw-medium mb-1">
+          {{ useFreeTextSubjects
+            ? t('applicationSubjects.customTitleEmpty')
+            : t('applicationSubjects.customTitle') }}
+        </div>
+        <p v-if="useFreeTextSubjects" class="text-muted small mb-2" data-testid="no-catalog-subjects-help">
+          {{ t('applicationSubjects.noHostSubjects') }}
+        </p>
         <div class="row g-2 align-items-end">
           <div class="col-md-2">
             <label class="form-label" for="custom-code">{{ t('applicationSubjects.customCodeLabel') }}</label>
@@ -176,7 +189,7 @@
           @click="downloadCarta"
         >
           <i class="bi bi-file-earmark-pdf me-1"></i>
-          {{ t('applicationSubjects.downloadCarta') }}
+          {{ t('applicationDetailPage.downloadDocument') }}
         </button>
         <button
           v-if="canProposeGrades"
@@ -367,6 +380,12 @@ const availableHostSubjects = computed(() => {
   )
   return hostSubjects.value.filter((s) => !selectedIds.has(String(s.id)))
 })
+
+/** No catalog subjects yet — free-text entry is the primary add path. */
+const useFreeTextSubjects = computed(
+  () => !hostSubjectsLoading.value && hostSubjects.value.length === 0,
+)
+const showCatalogPicker = computed(() => hostSubjects.value.length > 0)
 
 function formatHostSubjectOption(subj) {
   if (!subj || typeof subj !== 'object') return String(subj || '')
@@ -604,7 +623,7 @@ async function downloadCarta() {
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `carta_homologacion_${props.applicationId}.pdf`
+    link.download = `FS-HM_Homologacion_Materias_${props.applicationId}.pdf`
     document.body.appendChild(link)
     link.click()
     link.remove()

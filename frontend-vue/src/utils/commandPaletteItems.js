@@ -6,6 +6,7 @@
  * @param {boolean} opts.canUsePartnerPortal
  * @param {boolean} opts.canUseStaffReviewQueue
  * @param {boolean} opts.isAdmin
+ * @param {boolean} [opts.scholarshipsEnabled=true]
  * @returns {Array<{ id: string, section: string, sectionKey: string, label: string, keywords: string, iconClass: string, type: 'route'|'action', to?: object, action?: string }>}
  */
 export function buildCommandPaletteItems({
@@ -13,6 +14,7 @@ export function buildCommandPaletteItems({
   canUsePartnerPortal = false,
   canUseStaffReviewQueue = false,
   isAdmin = false,
+  scholarshipsEnabled = true,
 }) {
   const items = []
 
@@ -66,7 +68,9 @@ export function buildCommandPaletteItems({
     addRoute('staff', staff, 'notificationRouting', { name: 'NotificationRouting' }, t('dashboard.nav.notificationRouting'), 'bi bi-diagram-3', 'routing')
     addRoute('staff', staff, 'exchangeAgreements', { name: 'StaffExchangeAgreements' }, t('route.names.StaffExchangeAgreements'), 'bi bi-file-earmark-richtext', 'agreements')
     addRoute('staff', staff, 'eligibilityRulesets', { name: 'EligibilityRulesets' }, t('route.names.EligibilityRulesets'), 'bi bi-funnel', 'eligibility')
-    addRoute('staff', staff, 'scholarshipScoringRulesets', { name: 'ScholarshipScoringRulesets' }, t('route.names.ScholarshipScoringRulesets'), 'bi bi-pie-chart', 'scholarship')
+    if (scholarshipsEnabled) {
+      addRoute('staff', staff, 'scholarshipScoringRulesets', { name: 'ScholarshipScoringRulesets' }, t('route.names.ScholarshipScoringRulesets'), 'bi bi-pie-chart', 'scholarship')
+    }
     addRoute('staff', staff, 'nominations', { name: 'Nominations' }, t('route.names.Nominations'), 'bi bi-trophy', 'nominate')
     addRoute('staff', staff, 'analyticsForecasts', { name: 'AnalyticsForecasts' }, t('route.names.AnalyticsForecasts'), 'bi bi-graph-up', 'forecast analytics')
   }
@@ -88,6 +92,7 @@ export function buildCommandPaletteItems({
     addRoute('admin', admin, 'adminDataManagement', { name: 'AdminDataManagement' }, t('route.names.AdminDataManagement'), 'bi bi-database-gear')
     addRoute('admin', admin, 'adminWorkflows', { name: 'AdminWorkflows' }, t('route.names.AdminWorkflows'), 'bi bi-diagram-3')
     addRoute('admin', admin, 'adminDocuments', { name: 'AdminDocuments' }, t('route.names.AdminDocuments'), 'bi bi-file-earmark-text')
+    addRoute('admin', admin, 'adminFeatures', { name: 'AdminFeatures' }, t('route.names.AdminFeatures'), 'bi bi-toggles', 'features scholarships')
   }
 
   addAction('actions', actions, 'toggleTheme', 'toggleTheme', t('commandPalette.actionToggleTheme'), 'bi bi-circle-half', 'dark light theme')

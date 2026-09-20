@@ -11,16 +11,21 @@
       :aria-expanded="isOpen ? 'true' : 'false'"
       aria-autocomplete="list"
       @focus="isOpen = true"
-      @input="isOpen = true"
+      @input="onInput"
       @keydown.down.prevent="moveHighlight(1)"
       @keydown.up.prevent="moveHighlight(-1)"
       @keydown.enter.prevent="selectHighlighted"
       @blur="onBlur"
     >
-    <ul v-if="isOpen && filteredOptions.length" class="searchable-select-dropdown list-group" role="listbox">
+    <ul
+      v-if="isOpen && filteredOptions.length"
+      class="searchable-select-dropdown list-group"
+      :class="{ 'searchable-select-dropdown--up': placement === 'up' }"
+      role="listbox"
+    >
       <li
         v-for="(option, index) in filteredOptions"
-        :key="`${option.value}-${index}`"
+        :key="`opt-${option.value}-${index}`"
         class="list-group-item list-group-item-action"
         :class="{ active: index === highlightedIndex }"
         role="option"
@@ -42,9 +47,16 @@ const props = defineProps({
   placeholder: { type: String, default: '' },
   disabled: { type: Boolean, default: false },
   dataTestid: { type: String, default: '' },
+  /** Dropdown direction: ``down`` (default) or ``up`` (opens above the input). */
+  placement: { type: String, default: 'down', validator: (v) => v === 'down' || v === 'up' },
+  /**
+   * When true, typed text that does not match an option is kept as the value
+   * (suggestions remain available). Used for host-university name autocomplete.
+   */
+  allowCustom: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'query-change'])
 const query = ref('')
 const isOpen = ref(false)
 const highlightedIndex = ref(-1)
@@ -52,13 +64,17 @@ const highlightedIndex = ref(-1)
 const normalizedOptions = computed(() =>
   props.options
     .map((option) => ({
-      value: String(option?.value ?? ''),
+      value: option?.value == null ? '' : String(option.value),
       label: String(option?.label ?? option?.value ?? ''),
       aliases: Array.isArray(option?.aliases)
         ? option.aliases.map((alias) => String(alias || '').trim()).filter(Boolean)
         : [],
     }))
-    .filter((option) => option.value && option.label),
+    .filter((option) => {
+      if (!option.label) return false
+      // Keep labeled options even when value is '' (e.g. "No grade scale").
+      return true
+    }),
 )
 
 function optionMatches(option, term) {
@@ -79,7 +95,16 @@ watch(
   () => props.modelValue,
   (value) => {
     const selected = normalizedOptions.value.find((option) => option.value === value)
-    query.value = selected?.label || value || ''
+    if (selected) {
+      query.value = selected.label
+      return
+    }
+    // Custom / free-text values (or encoded suggestions) show the raw name portion when possible.
+    if (props.allowCustom && value && String(value).includes('\u001f')) {
+      query.value = String(value).split('\u001f')[0] || ''
+      return
+    }
+    query.value = value || ''
   },
   { immediate: true },
 )
@@ -88,10 +113,16 @@ watch(filteredOptions, () => {
   highlightedIndex.value = filteredOptions.value.length ? 0 : -1
 })
 
+function onInput() {
+  isOpen.value = true
+  emit('query-change', query.value)
+}
+
 function selectOption(option) {
   emit('update:modelValue', option.value)
   query.value = option.label
   isOpen.value = false
+  emit('query-change', option.label)
 }
 
 function resolveTypedOption(term) {
@@ -124,6 +155,14 @@ function onBlur() {
       selectOption(resolved)
       return
     }
+    if (props.allowCustom) {
+      const custom = String(query.value || '').trim()
+      if (custom !== props.modelValue) {
+        emit('update:modelValue', custom)
+      }
+      emit('query-change', custom)
+      return
+    }
     syncQueryToSelection()
   }, 100)
 }
@@ -144,7 +183,16 @@ function selectHighlighted() {
     return
   }
   const resolved = resolveTypedOption(query.value)
-  if (resolved) selectOption(resolved)
+  if (resolved) {
+    selectOption(resolved)
+    return
+  }
+  if (props.allowCustom) {
+    const custom = String(query.value || '').trim()
+    emit('update:modelValue', custom)
+    emit('query-change', custom)
+    isOpen.value = false
+  }
 }
 </script>
 
@@ -161,5 +209,10 @@ function selectHighlighted() {
   z-index: 20;
   max-height: 14rem;
   overflow-y: auto;
+}
+
+.searchable-select-dropdown--up {
+  top: auto;
+  bottom: calc(100% + 0.25rem);
 }
 </style>

@@ -51,6 +51,7 @@ describe('AdminGrades', () => {
       history: createMemoryHistory(),
       routes: [
         { path: '/', name: 'Dashboard', component: { template: '<div />' } },
+        { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
         { path: '/admin/grades', name: 'AdminGrades', component: AdminGrades },
       ],
     })

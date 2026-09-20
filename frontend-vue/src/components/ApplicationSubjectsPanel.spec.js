@@ -66,6 +66,9 @@ describe('ApplicationSubjectsPanel', () => {
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="add-custom-subject"]').exists()).toBe(true)
     })
+    expect(wrapper.find('[data-testid="catalog-subject-form"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="no-catalog-subjects-help"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="host-subject-select"]').exists()).toBe(false)
     await wrapper.find('#custom-name').setValue('Custom Algorithms')
     await wrapper.find('#custom-code').setValue('CUST1')
     await wrapper.find('[data-testid="add-custom-subject"]').trigger('click')
@@ -74,6 +77,26 @@ describe('ApplicationSubjectsPanel', () => {
       expect(wrapper.find('[data-testid="subject-selections-table"]').exists()).toBe(true)
     })
     expect(wrapper.text()).toContain('Custom Algorithms')
+  })
+
+  it('shows catalog picker when host subjects exist and keeps custom entry', async () => {
+    mockPanelGets({
+      subjects: [{ id: 'subj-1', code: 'CS101', name: 'Intro CS', credits: 3 }],
+    })
+    const wrapper = mount(ApplicationSubjectsPanel, {
+      props: {
+        applicationId: 'app-1',
+        applicationStatus: 'draft',
+        hostInstitutionId: 'inst-1',
+      },
+      global: { plugins: [i18n] },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="catalog-subject-form"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="host-subject-select"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="custom-subject-form"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="no-catalog-subjects-help"]').exists()).toBe(false)
   })
 
   function mockPanelGets({

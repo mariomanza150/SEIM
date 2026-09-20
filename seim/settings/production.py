@@ -77,6 +77,12 @@ def _docker_compose_postgres_service_to_localhost(url: str) -> str:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+# When True, Django serves ``MEDIA_URL`` (before Wagtail catch-all). Use for
+# single-container / Cloudflare Tunnel local-prod stacks that have no nginx
+# media location. Real production should keep this False and let the reverse
+# proxy serve ``MEDIA_ROOT``.
+SERVE_MEDIA = env.bool("SERVE_MEDIA", default=False)
+
 # Trust X-Forwarded-Proto/Host from Tailscale Serve or another TLS terminator.
 _use_tls_proxy = env.bool("USE_TLS_PROXY_HEADERS", default=False)
 _use_request_host_site = env.bool("USE_REQUEST_HOST_FOR_SITE", default=_use_tls_proxy)

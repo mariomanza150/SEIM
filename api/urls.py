@@ -49,7 +49,7 @@ from notifications.views import (
     NotificationViewSet,
     ReminderViewSet,
 )
-from core.views import branding_api
+from core.views import InstitutionFeaturesAPIView, branding_api
 from workflows.views import WorkflowDefinitionViewSet, WorkflowVersionViewSet
 
 router = routers.DefaultRouter()
@@ -98,6 +98,11 @@ router.register(
 
 urlpatterns = [
     path("branding/", branding_api, name="branding"),
+    path(
+        "features/",
+        InstitutionFeaturesAPIView.as_view(),
+        name="institution-features",
+    ),
     # Exchange viewsets + calendar ICS (owned by exchange.urls)
     path("", include("exchange.urls")),
     path(

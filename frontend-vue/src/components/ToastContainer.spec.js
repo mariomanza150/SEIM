@@ -38,6 +38,18 @@ describe('ToastContainer', () => {
     expect(container.attributes('style')).toContain('pointer-events: none')
     expect(wrapper.get('.toast').attributes('style')).toContain('pointer-events: auto')
     expect(container.classes()).toContain('seim-toast-container')
+    expect(container.classes()).not.toContain('end-0')
+  })
+
+  it('exposes a dismiss control on each toast', async () => {
+    const { showToast, toasts } = useToast()
+    showToast('Saved.', 'success', 0)
+    const wrapper = mount(ToastContainer, {
+      global: { plugins: [i18n] },
+    })
+    expect(wrapper.find('[data-testid="toast-dismiss"]').exists()).toBe(true)
+    await wrapper.find('[data-testid="toast-dismiss"]').trigger('click')
+    expect(toasts.value).toHaveLength(0)
   })
 
   it('uses Spanish labels when locale is es', () => {

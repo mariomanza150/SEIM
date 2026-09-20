@@ -339,6 +339,52 @@ class TestDocumentService(TestCase):
         document.save(update_fields=["is_valid", "validated_at"])
         self.assertTrue(DocumentService.can_replace_document(document, self.user))
 
+    def test_can_replace_document_nominated_with_invalid(self):
+        """Students may replace invalid docs while nominated / waitlisted."""
+        nominated_status, _ = ApplicationStatus.objects.get_or_create(
+            name="nominated", defaults={"order": 5}
+        )
+        self.application.status = nominated_status
+        self.application.save()
+        document = Document.objects.create(
+            application=self.application, type=self.document_type, uploaded_by=self.user
+        )
+        document.is_valid = False
+        document.validated_at = timezone.now()
+        document.save(update_fields=["is_valid", "validated_at"])
+        self.assertTrue(DocumentService.can_replace_document(document, self.user))
+
+    def test_can_replace_document_waitlist_with_resubmit(self):
+        waitlist_status, _ = ApplicationStatus.objects.get_or_create(
+            name="waitlist", defaults={"order": 6}
+        )
+        self.application.status = waitlist_status
+        self.application.save()
+        document = Document.objects.create(
+            application=self.application, type=self.document_type, uploaded_by=self.user
+        )
+        DocumentResubmissionRequest.objects.create(
+            document=document,
+            requested_by=self.user,
+            reason="Update needed",
+            resolved=False,
+        )
+        self.assertTrue(DocumentService.can_replace_document(document, self.user))
+
+    def test_can_replace_document_blocked_when_completed(self):
+        completed_status, _ = ApplicationStatus.objects.get_or_create(
+            name="completed", defaults={"order": 9}
+        )
+        self.application.status = completed_status
+        self.application.save()
+        document = Document.objects.create(
+            application=self.application, type=self.document_type, uploaded_by=self.user
+        )
+        document.is_valid = False
+        document.validated_at = timezone.now()
+        document.save(update_fields=["is_valid", "validated_at"])
+        self.assertFalse(DocumentService.can_replace_document(document, self.user))
+
     def test_checklist_marks_invalid_after_staff_rejection(self):
         from exchange.models import ProgramDocumentRequirement
 
@@ -361,9 +407,8 @@ class TestDocumentService(TestCase):
         )
         self.assertEqual(item["status"], "invalid")
 
-    def test_can_replace_document_admin_override(self):
-        """Test document replacement with admin override."""
-        # Set application to submitted status
+    def test_can_replace_document_admin_cannot_replace_student_doc(self):
+        """Staff/admin must not replace student application documents."""
         submitted_status, _ = ApplicationStatus.objects.get_or_create(
             name="submitted", defaults={"order": 2}
         )
@@ -374,18 +419,77 @@ class TestDocumentService(TestCase):
             application=self.application, type=self.document_type, uploaded_by=self.user
         )
 
-        # Create admin user
         admin_user = User.objects.create_user(
             username="admin", email="admin@example.com", password="testpass123"
         )
-        # Assign admin role to user
         from accounts.models import Role
 
         admin_role, _ = Role.objects.get_or_create(name="admin")
         admin_user.roles.add(admin_role)
         admin_user.save()
         result = DocumentService.can_replace_document(document, admin_user)
-        self.assertTrue(result)
+        self.assertFalse(result)
+
+    def test_can_replace_document_locked_when_approved(self):
+        """Approved documents cannot be replaced by the student until reopened."""
+        document = Document.objects.create(
+            application=self.application,
+            type=self.document_type,
+            uploaded_by=self.user,
+            is_valid=True,
+            validated_at=timezone.now(),
+        )
+        self.assertFalse(DocumentService.can_replace_document(document, self.user))
+
+        DocumentResubmissionRequest.objects.create(
+            document=document,
+            requested_by=self.user,
+            reason="Need clearer scan",
+            resolved=False,
+        )
+        self.assertTrue(DocumentService.can_replace_document(document, self.user))
+
+    def test_upload_document_rejects_non_applicant(self):
+        coordinator = User.objects.create_user(
+            username="coord", email="coord@example.com", password="testpass123"
+        )
+        from accounts.models import Role
+
+        role, _ = Role.objects.get_or_create(name="coordinator")
+        coordinator.roles.add(role)
+        pdf = SimpleUploadedFile(
+            "ok.pdf", b"%PDF-1.4\n", content_type="application/pdf"
+        )
+        with self.assertRaises(ValueError) as ctx:
+            DocumentService.upload_document(
+                self.application, self.document_type, pdf, coordinator
+            )
+        self.assertIn("Only the applicant", str(ctx.exception))
+
+    def test_can_download_template_blocked_when_approved(self):
+        document = Document.objects.create(
+            application=self.application,
+            type=self.document_type,
+            uploaded_by=self.user,
+            is_valid=True,
+            validated_at=timezone.now(),
+        )
+        self.assertFalse(
+            DocumentService.can_download_template(
+                self.application, self.document_type, self.user
+            )
+        )
+        DocumentResubmissionRequest.objects.create(
+            document=document,
+            requested_by=self.user,
+            reason="Reopen",
+            resolved=False,
+        )
+        self.assertTrue(
+            DocumentService.can_download_template(
+                self.application, self.document_type, self.user
+            )
+        )
 
     def test_resolve_open_resubmission_requests_marks_pending(self):
         document = Document.objects.create(

@@ -5,10 +5,18 @@
         <h6 class="mb-0"><i class="bi bi-cloud-upload me-2" aria-hidden="true"></i>{{ t('documentUpload.cardTitle') }}</h6>
       </div>
       <div class="card-body">
-        <form @submit.prevent="handleSubmit">
+        <p
+          v-if="nothingToUpload"
+          class="text-muted small mb-0"
+          data-testid="document-upload-empty"
+        >
+          {{ t('documentUpload.nothingToUpload') }}
+        </p>
+        <form v-else @submit.prevent="handleSubmit">
           <div class="mb-3">
             <label class="form-label">{{ t('documentDetailPage.labelDocumentType') }} <span class="text-danger">*</span></label>
             <select
+              ref="typeSelect"
               v-model="form.type"
               class="form-select"
               :class="{ 'is-invalid': errors.type }"
@@ -16,26 +24,32 @@
               data-testid="document-type-select"
             >
               <option value="">{{ t('documentUpload.selectTypePlaceholder') }}</option>
-              <option v-for="dt in documentTypes" :key="dt.id" :value="dt.id">
-                {{ documentTypeLabel(dt, dt.name) }}
+              <option v-for="dt in selectableTypes" :key="dt.id" :value="dt.id">
+                {{ documentTypeLabel(dt, dt.name, { t, te }) }}
               </option>
             </select>
             <div v-if="errors.type" class="invalid-feedback">{{ errors.type }}</div>
           </div>
 
-          <div class="mb-3">
+          <div v-if="selectedType" class="mb-3" data-testid="document-file-field">
             <label class="form-label">{{ t('documentUpload.fileLabel') }} <span class="text-danger">*</span></label>
             <input
               ref="fileInput"
               type="file"
               class="form-control"
               :class="{ 'is-invalid': errors.file }"
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              :accept="fileAccept"
               @change="onFileChange"
               data-testid="document-file-input"
             />
             <div v-if="errors.file" class="invalid-feedback">{{ errors.file }}</div>
-            <div class="form-text">{{ t('documentUpload.acceptedHint') }}</div>
+            <div
+              v-if="acceptedHintText"
+              class="form-text"
+              data-testid="document-accepted-hint"
+            >
+              {{ acceptedHintText }}
+            </div>
           </div>
 
           <div v-if="uploadError" class="alert alert-danger small">
@@ -63,18 +77,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
-import { documentTypeLabel } from '@/utils/documentApi'
+import {
+  acceptAttributeFromExtensions,
+  checklistUploadTargets,
+  documentTypeAcceptedExtensions,
+  documentTypeAcceptedHintText,
+  documentTypeLabel,
+  validateDocumentFile,
+} from '@/utils/documentApi'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 const props = defineProps({
   applicationId: {
     type: String,
     required: true,
+  },
+  /** When provided, type picker is limited to checklist upload gaps. */
+  checklist: {
+    type: Object,
+    default: null,
+  },
+  /** Prefill document-type select (checklist shortcut / deep link). */
+  preselectedTypeId: {
+    type: [String, Number],
+    default: null,
   },
 })
 
@@ -91,8 +122,89 @@ const errors = ref({})
 const uploading = ref(false)
 const uploadError = ref('')
 const fileInput = ref(null)
+const typeSelect = ref(null)
+
+const usesChecklistFilter = computed(
+  () => props.checklist != null && Array.isArray(props.checklist.items),
+)
+
+const selectableTypes = computed(() => {
+  if (usesChecklistFilter.value) {
+    return checklistUploadTargets(props.checklist).map((item) => ({
+      id: item.document_type_id,
+      name: item.name,
+      slug: item.slug,
+      description: item.description,
+      accepted_extensions: item.accepted_extensions || '',
+      resolved_accepted_extensions: item.accepted_extensions || '',
+      max_file_size_mb: item.max_file_size_mb ?? null,
+      file_type_families: item.file_type_families || [],
+      allows_multiple: Boolean(item.allows_multiple),
+    }))
+  }
+  return documentTypes.value
+})
+
+const selectedType = computed(() => {
+  if (!form.value.type) return null
+  return selectableTypes.value.find((dt) => String(dt.id) === String(form.value.type)) || null
+})
+
+const acceptedExtensions = computed(() =>
+  selectedType.value ? documentTypeAcceptedExtensions(selectedType.value) : [],
+)
+
+const fileAccept = computed(() => acceptAttributeFromExtensions(acceptedExtensions.value))
+
+const acceptedHintText = computed(() =>
+  documentTypeAcceptedHintText(selectedType.value, t),
+)
+
+const nothingToUpload = computed(
+  () => usesChecklistFilter.value && selectableTypes.value.length === 0,
+)
+
+function clearSelectedFile() {
+  form.value.file = null
+  errors.value.file = null
+  if (fileInput.value) fileInput.value.value = ''
+}
+
+function applyPreselectedType(typeId = props.preselectedTypeId) {
+  if (typeId == null || typeId === '') return false
+  const match = selectableTypes.value.find((dt) => String(dt.id) === String(typeId))
+  if (!match) return false
+  form.value.type = match.id
+  errors.value.type = null
+  return true
+}
+
+watch(selectableTypes, (types) => {
+  if (form.value.type) {
+    const stillAvailable = types.some((dt) => String(dt.id) === String(form.value.type))
+    if (!stillAvailable) form.value.type = ''
+  }
+  applyPreselectedType()
+})
+
+watch(
+  () => props.preselectedTypeId,
+  () => {
+    applyPreselectedType()
+  },
+)
+
+watch(
+  () => form.value.type,
+  (next, prev) => {
+    if (String(next || '') === String(prev || '')) return
+    clearSelectedFile()
+    uploadError.value = ''
+  },
+)
 
 async function fetchDocumentTypes() {
+  if (usesChecklistFilter.value) return
   try {
     const all = []
     let url = '/api/document-types/?page_size=100'
@@ -118,6 +230,13 @@ function onFileChange(event) {
   form.value.file = file || null
   uploadError.value = ''
   errors.value.file = null
+  if (!file || !selectedType.value) return
+  const result = validateDocumentFile(file, selectedType.value)
+  if (!result.ok) {
+    errors.value.file = t(result.errorKey, result.params)
+    form.value.file = null
+    if (fileInput.value) fileInput.value.value = ''
+  }
 }
 
 async function handleSubmit() {
@@ -130,6 +249,12 @@ async function handleSubmit() {
   }
   if (!form.value.file) {
     errors.value.file = t('documentUpload.fileRequired')
+    return
+  }
+
+  const clientCheck = validateDocumentFile(form.value.file, selectedType.value)
+  if (!clientCheck.ok) {
+    errors.value.file = t(clientCheck.errorKey, clientCheck.params)
     return
   }
 
@@ -163,6 +288,30 @@ async function handleSubmit() {
 
 onMounted(() => {
   fetchDocumentTypes()
+  applyPreselectedType()
+})
+
+watch(
+  () => props.checklist,
+  () => {
+    if (!usesChecklistFilter.value) fetchDocumentTypes()
+  },
+)
+
+function focusUploadForm() {
+  applyPreselectedType()
+  nextTick(() => {
+    if (fileInput.value && typeof fileInput.value.focus === 'function') {
+      fileInput.value.focus()
+    } else if (typeSelect.value && typeof typeSelect.value.focus === 'function') {
+      typeSelect.value.focus()
+    }
+  })
+}
+
+defineExpose({
+  focusUploadForm,
+  applyPreselectedType,
 })
 </script>
 
