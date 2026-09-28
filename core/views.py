@@ -1,4 +1,5 @@
 import logging
+import time
 
 import redis
 from django import forms
@@ -182,66 +183,92 @@ def health_live(request):
     )
 
 
+HEALTH_CHECK_TIMEOUT_SECONDS = 2
+HEALTH_CRITICAL_CHECKS = frozenset({"db"})
+
+
+class _SkipCheck(Exception):
+    pass
+
+
+def _check_db():
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT 1")
+
+
+def _check_cache():
+    backend = settings.CACHES.get("default", {}).get("BACKEND", "")
+    if backend.endswith("DummyCache"):
+        raise _SkipCheck
+    cache.set("health_check", "ok", 10)
+    if cache.get("health_check") != "ok":
+        raise RuntimeError("cache round-trip failed")
+
+
+def _check_redis():
+    redis_url = getattr(settings, "REDIS_URL", None)
+    if not redis_url:
+        raise _SkipCheck
+    client = redis.from_url(
+        redis_url,
+        socket_connect_timeout=HEALTH_CHECK_TIMEOUT_SECONDS,
+        socket_timeout=HEALTH_CHECK_TIMEOUT_SECONDS,
+    )
+    try:
+        client.ping()
+    finally:
+        client.close()
+
+
+HEALTH_CHECKS = {"db": _check_db, "cache": _check_cache, "redis": _check_redis}
+
+
+def _run_health_check(name, check):
+    started = time.perf_counter()
+    try:
+        check()
+    except _SkipCheck:
+        return {"status": "skipped"}
+    except Exception as exc:
+        logger.warning("health check failed", extra={"check": name, "error": repr(exc)})
+        return {
+            "status": "error",
+            "latency_ms": round((time.perf_counter() - started) * 1000, 1),
+            "error": type(exc).__name__,
+        }
+    return {
+        "status": "ok",
+        "latency_ms": round((time.perf_counter() - started) * 1000, 1),
+    }
+
+
 @csrf_exempt
 @require_http_methods(["GET"])
 def health_check(request):
     """
-    Health check endpoint for monitoring and load balancer health checks.
-    Returns 200 if all services are healthy, 503 if any service is unhealthy.
+    Readiness probe for monitoring (ops standard health contract).
+
+    ``status`` is ``ok``, ``degraded`` (a non-critical check failed; HTTP 200) or
+    ``down`` (the database failed; HTTP 503).
     """
-    health_status = {
-        "status": "healthy",
-        "services": {},
-        "version": getattr(settings, "VERSION", "unknown"),
-        "environment": getattr(settings, "DJANGO_ENV", "unknown"),
-    }
-
-    overall_healthy = True
-
-    # Check database connectivity
-    try:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
-        health_status["services"]["database"] = "healthy"
-    except Exception as e:
-        logger.error(f"Database health check failed: {e}")
-        health_status["services"]["database"] = f"unhealthy: {str(e)}"
-        overall_healthy = False
-
-    # Check cache connectivity
-    try:
-        cache.set("health_check", "ok", 10)
-        cache_result = cache.get("health_check")
-        if cache_result == "ok":
-            health_status["services"]["cache"] = "healthy"
-        else:
-            health_status["services"]["cache"] = "unhealthy: cache test failed"
-            overall_healthy = False
-    except Exception as e:
-        logger.error(f"Cache health check failed: {e}")
-        health_status["services"]["cache"] = f"unhealthy: {str(e)}"
-        overall_healthy = False
-
-    # Check Redis connectivity (if using Redis directly)
-    try:
-        redis_url = getattr(settings, "REDIS_URL", None)
-        if redis_url:
-            r = redis.from_url(redis_url)
-            r.ping()
-            health_status["services"]["redis"] = "healthy"
-        else:
-            health_status["services"]["redis"] = "not configured"
-    except Exception as e:
-        logger.error(f"Redis health check failed: {e}")
-        health_status["services"]["redis"] = f"unhealthy: {str(e)}"
-        overall_healthy = False
-
-    # Set overall status
-    if not overall_healthy:
-        health_status["status"] = "unhealthy"
-        return JsonResponse(health_status, status=503)
-
-    return JsonResponse(health_status, status=200)
+    checks = {name: _run_health_check(name, fn) for name, fn in HEALTH_CHECKS.items()}
+    failed = {name for name, result in checks.items() if result["status"] == "error"}
+    if failed & HEALTH_CRITICAL_CHECKS:
+        overall, http_status = "down", 503
+    elif failed:
+        overall, http_status = "degraded", 200
+    else:
+        overall, http_status = "ok", 200
+    return JsonResponse(
+        {
+            "status": overall,
+            "version": getattr(settings, "VERSION", "unknown"),
+            "environment": getattr(settings, "DJANGO_ENV", "unknown"),
+            "checks": checks,
+        },
+        status=http_status,
+        json_dumps_params={"separators": (",", ":")},
+    )
 
 
 def marketing_home(request):

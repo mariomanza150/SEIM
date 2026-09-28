@@ -280,8 +280,11 @@ MEDIA_URL=https://cdn.yourdomain.com/media/
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `LOG_LEVEL` | ❌ | `INFO` | Logging level |
-| `LOG_FILE` | ❌ | - | Log file path |
-| `SENTRY_DSN` | ❌ | - | Sentry error tracking DSN |
+| `LOG_FORMAT` | ❌ | `json` (production), `text` (development) | `json` = one JSON object per line on stdout (`ts`, `level`, `logger`, `msg`, `request_id`, extras) |
+| `LOG_FILE` | ❌ | `/var/log/seim/django.log` (production) | Extra log file; empty disables it |
+| `SENTRY_DSN` | ❌ | - | Sentry/GlitchTip DSN; unset disables error tracking |
+| `SENTRY_ENVIRONMENT` | ❌ | `DJANGO_ENV` | Environment tag on events |
+| `SENTRY_RELEASE` | ❌ | `1.0.0` | Release tag on events and `version` in `/health/` (set to the deployed git SHA or tag) |
 
 #### **Logging Examples:**
 ```bash
@@ -629,5 +632,5 @@ Do not put `CODECOV_TOKEN` in `.env` or `env.example`.
 
 ---
 
-**Last Updated**: December 2024  
-**Version**: 1.0 
+**Last Updated**: December 2024
+**Version**: 1.0

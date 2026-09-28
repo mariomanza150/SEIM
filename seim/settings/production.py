@@ -7,6 +7,8 @@ This file contains settings specific to the production environment.
 import os
 from urllib.parse import urlparse, urlunparse
 
+from core.observability import init_sentry, logging_config
+
 from .base import *
 from .hosting import (
     CLOUDFLARE_CORS_ORIGIN_REGEX,
@@ -250,55 +252,21 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
-# Logging for production
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-            "style": "{",
-        },
-        "simple": {
-            "format": "{levelname} {message}",
-            "style": "{",
-        },
-    },
-    "handlers": {
-        "file": {
-            "level": "INFO",
-            "class": "logging.FileHandler",
-            "filename": "/var/log/seim/django.log",
-            "formatter": "verbose",
-        },
-        "console": {
-            "level": "INFO",
-            "class": "logging.StreamHandler",
-            "formatter": "simple",
-        },
-    },
-    "root": {
-        "handlers": ["console", "file"],
+# Logging for production: JSON lines on stdout, mirrored to the logs volume
+LOGGING = logging_config(fmt=LOG_FORMAT, level=LOG_LEVEL)
+LOG_FILE = env("LOG_FILE", default="/var/log/seim/django.log")
+if LOG_FILE:
+    LOGGING["handlers"]["file"] = {
         "level": "INFO",
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "django.request": {
-            "handlers": ["console", "file"],
-            "level": "ERROR",
-            "propagate": False,
-        },
-        "django.security": {
-            "handlers": ["console", "file"],
-            "level": "ERROR",
-            "propagate": False,
-        },
-    },
-}
+        "class": "logging.FileHandler",
+        "filename": LOG_FILE,
+        "formatter": "default",
+        "filters": ["request_id"],
+    }
+    for _logger in [LOGGING["root"], *LOGGING["loggers"].values()]:
+        _logger["handlers"].append("file")
+
+init_sentry(dsn=SENTRY_DSN, environment=SENTRY_ENVIRONMENT, release=VERSION)
 
 # Same E2E hatch as development.py. Local-prod sets ALLOW_ANY_HOST=1.
 if os.environ.get("DISABLE_THROTTLE_E2E") or env.bool("ALLOW_ANY_HOST", default=False):
