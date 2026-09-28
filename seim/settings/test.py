@@ -157,6 +157,7 @@ PASSWORD_HASHERS = [
 
 # Disable middleware that might interfere with tests
 MIDDLEWARE = [
+    "core.observability.RequestIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",

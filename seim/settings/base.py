@@ -22,6 +22,14 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
 
+# Reported by /health/ and as the Sentry release; set SENTRY_RELEASE to the deployed git SHA or tag.
+VERSION = env("SENTRY_RELEASE", default="1.0.0")
+DJANGO_ENV = env("DJANGO_ENV", default="development").split("#")[0].strip()
+LOG_FORMAT = env("LOG_FORMAT", default="json")
+LOG_LEVEL = env("LOG_LEVEL", default="INFO")
+SENTRY_DSN = env("SENTRY_DSN", default="")
+SENTRY_ENVIRONMENT = env("SENTRY_ENVIRONMENT", default=DJANGO_ENV)
+
 # Used by django.core.mail.send_mail and Celery notification tasks (From: header).
 # SMTP/SES settings files may override this when those backends are selected.
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@seim.local")
@@ -109,6 +117,7 @@ INSTALLED_APPS = (
 )
 
 MIDDLEWARE = [
+    "core.observability.RequestIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",

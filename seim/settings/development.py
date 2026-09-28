@@ -10,6 +10,8 @@ import warnings
 from copy import deepcopy
 from urllib.parse import urlparse, urlunparse
 
+from core.observability import init_sentry, logging_config
+
 from .base import *
 
 
@@ -266,49 +268,10 @@ SECURE_SSL_REDIRECT = False
 # Use simple storage backend that doesn't require manifest files
 STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
-# Logging for development (container-friendly: stdout, formatted)
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "console": {
-            "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-        },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "formatter": "console",
-        },
-    },
-    "root": {
-        "handlers": ["console"],
-        "level": "INFO",
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "django.request": {
-            "handlers": ["console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "django.security": {
-            "handlers": ["console"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "django.server": {
-            "handlers": ["console"],
-            "level": "INFO",
-            "propagate": False,
-        },
-    },
-}
+# Logging for development (stdout; human-readable unless LOG_FORMAT=json)
+LOGGING = logging_config(fmt=env("LOG_FORMAT", default="text"), level=LOG_LEVEL)
+
+init_sentry(dsn=SENTRY_DSN, environment=SENTRY_ENVIRONMENT, release=VERSION)
 
 # Disable throttle for E2E (set DISABLE_THROTTLE_E2E=1 when running API for Playwright)
 if os.environ.get("DISABLE_THROTTLE_E2E"):

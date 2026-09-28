@@ -53,38 +53,35 @@ class TestHealthCheckView(TestCase):
         self.client = Client()
 
     def test_health_check_success(self):
-        """Test health check returns response with status info."""
+        """Contract shape: status, version, environment, checks."""
         response = self.client.get("/health/")
 
-        # May return 200 or 503 depending on service health
-        self.assertIn(response.status_code, [200, 503])
+        self.assertEqual(response.status_code, 200)
         data = response.json()
-
-        self.assertIn("status", data)
-        self.assertIn("services", data)
+        self.assertEqual(data["status"], "ok")
         self.assertIn("version", data)
         self.assertIn("environment", data)
+        self.assertEqual(set(data["checks"]), {"db", "cache", "redis"})
+        self.assertIn(b'"status":"ok"', response.content)
 
     def test_health_check_database_healthy(self):
-        """Test health check reports database as healthy."""
+        """Test health check reports database as ok."""
         response = self.client.get("/health/")
 
         data = response.json()
-        self.assertEqual(data["services"]["database"], "healthy")
+        self.assertEqual(data["checks"]["db"]["status"], "ok")
+        self.assertIn("latency_ms", data["checks"]["db"])
 
-    def test_health_check_cache_healthy(self):
-        """Test health check reports cache status."""
+    def test_health_check_dummy_cache_is_skipped(self):
+        """DummyCache (test settings) cannot round-trip, so the check is skipped."""
         response = self.client.get("/health/")
 
         data = response.json()
-        # Cache may or may not be working in test environment
-        self.assertIn("cache", data["services"])
-        self.assertIsNotNone(data["services"]["cache"])
+        self.assertEqual(data["checks"]["cache"], {"status": "skipped"})
 
     @patch("core.views.connection")
     def test_health_check_database_unhealthy(self, mock_connection):
-        """Test health check returns 503 when database unhealthy."""
-        # Mock database connection failure
+        """Database failure is critical: status down, HTTP 503."""
         mock_cursor = MagicMock()
         mock_cursor.execute.side_effect = Exception("Database connection failed")
         mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
@@ -93,26 +90,30 @@ class TestHealthCheckView(TestCase):
 
         self.assertEqual(response.status_code, 503)
         data = response.json()
-        self.assertEqual(data["status"], "unhealthy")
-        self.assertIn("unhealthy", data["services"]["database"])
+        self.assertEqual(data["status"], "down")
+        self.assertEqual(data["checks"]["db"]["status"], "error")
+        self.assertEqual(data["checks"]["db"]["error"], "Exception")
+        self.assertNotIn("Database connection failed", response.content.decode())
 
     @patch("core.views.cache")
+    @override_settings(
+        CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+    )
     def test_health_check_cache_unhealthy(self, mock_cache):
-        """Test health check returns 503 when cache unhealthy."""
-        # Mock cache failure
+        """Cache failure is non-critical: status degraded, HTTP 200."""
         mock_cache.set.side_effect = Exception("Cache connection failed")
 
         response = self.client.get("/health/")
 
-        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["status"], "unhealthy")
-        self.assertIn("unhealthy", data["services"]["cache"])
+        self.assertEqual(data["status"], "degraded")
+        self.assertEqual(data["checks"]["cache"]["status"], "error")
 
     @patch("core.views.redis")
     @override_settings(REDIS_URL="redis://localhost:6379/0")
     def test_health_check_redis_healthy(self, mock_redis):
-        """Test health check reports redis as healthy when configured."""
+        """Test health check reports redis as ok when configured."""
         mock_redis_instance = MagicMock()
         mock_redis_instance.ping.return_value = True
         mock_redis.from_url.return_value = mock_redis_instance
@@ -120,20 +121,21 @@ class TestHealthCheckView(TestCase):
         response = self.client.get("/health/")
 
         data = response.json()
-        self.assertIn("redis", data["services"])
+        self.assertEqual(data["checks"]["redis"]["status"], "ok")
+        mock_redis_instance.close.assert_called_once()
 
     @patch("core.views.redis")
     @override_settings(REDIS_URL="redis://localhost:6379/0")
     def test_health_check_redis_unhealthy(self, mock_redis):
-        """Test health check returns 503 when redis unhealthy."""
+        """Redis failure is non-critical: status degraded, HTTP 200."""
         mock_redis.from_url.side_effect = Exception("Redis connection failed")
 
         response = self.client.get("/health/")
 
-        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["status"], "unhealthy")
-        self.assertIn("unhealthy", data["services"]["redis"])
+        self.assertEqual(data["status"], "degraded")
+        self.assertEqual(data["checks"]["redis"]["status"], "error")
 
     @override_settings(REDIS_URL=None)
     def test_health_check_redis_not_configured(self):
@@ -141,9 +143,13 @@ class TestHealthCheckView(TestCase):
         response = self.client.get("/health/")
 
         data = response.json()
-        # Response code depends on other services
-        self.assertIn(response.status_code, [200, 503])
-        self.assertIn("redis", data["services"])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(data["checks"]["redis"], {"status": "skipped"})
+
+    def test_health_check_echoes_request_id(self):
+        response = self.client.get("/health/", HTTP_X_REQUEST_ID="req-42")
+
+        self.assertEqual(response["X-Request-ID"], "req-42")
 
 
 @pytest.mark.django_db
