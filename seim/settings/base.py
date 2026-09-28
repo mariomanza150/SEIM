@@ -604,3 +604,19 @@ TOEFL_CALLBACK_URL = env(
 )
 TOEFL_RETURN_URL = env("TOEFL_RETURN_URL", default="")
 TOEFL_DEFAULT_EXAM_CODE = env("TOEFL_DEFAULT_EXAM_CODE", default="director_extracted")
+
+# Error tracking (Sentry SDK, e.g. the GlitchTip on the services machine): web and Celery workers.
+# No-op unless SENTRY_DSN is set.
+SENTRY_DSN = env("SENTRY_DSN", default="")
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment=env("SENTRY_ENVIRONMENT", default="production"),
+        integrations=[DjangoIntegration(), CeleryIntegration()],
+        traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.0),
+        send_default_pii=False,
+    )
