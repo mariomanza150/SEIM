@@ -1,0 +1,29 @@
+{% load static %}
+{# Campus hero slides inspired by uadec.mx homepage carousel #}
+<section class="cms-home-slides py-0" aria-label="UAdeC campus">
+    <div class="d-flex justify-content-end px-3 pt-2">
+        <button type="button" class="btn btn-sm btn-outline-primary cms-carousel__pause" data-cms-carousel-pause aria-pressed="false">
+            Pausar
+        </button>
+    </div>
+    <div id="uadecHomeSlides" class="carousel slide cms-carousel" data-bs-ride="carousel" data-bs-interval="6000">
+        <div class="carousel-indicators">
+            {% for slide in homepage_slides %}
+            <button type="button" data-bs-target="#uadecHomeSlides" data-bs-slide-to="{{ forloop.counter0 }}"
+                {% if forloop.first %}class="active" aria-current="true"{% endif %}
+                aria-label="{{ slide.alt }}"></button>
+            {% endfor %}
+        </div>
+        <div class="carousel-inner">
+            {% for slide in homepage_slides %}
+            <div class="carousel-item{% if forloop.first %} active{% endif %}">
+                {% if forloop.first %}
+                {% include "cms/includes/cms_responsive_image.html" with static_path=slide.static_path webp_path=slide.webp_path alt=slide.alt img_class="d-block w-100 cms-home-slides__img" width=slide.width height=slide.height lazy=False %}
+                {% else %}
+                {% include "cms/includes/cms_responsive_image.html" with static_path=slide.static_path webp_path=slide.webp_path alt=slide.alt img_class="d-block w-100 cms-home-slides__img" width=slide.width height=slide.height lazy=True %}
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>

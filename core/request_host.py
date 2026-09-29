@@ -21,6 +21,15 @@ if TYPE_CHECKING:
     from wagtail.models import Site
 
 
+def request_frontend_origin(request) -> str:
+    """Public origin (scheme://host[:port]) for the current request.
+
+    Honors ``USE_X_FORWARDED_HOST`` / ``SECURE_PROXY_SSL_HEADER`` so email links
+    match the Cloudflare Tunnel or Tailscale host the user actually opened.
+    """
+    return request.build_absolute_uri("/").rstrip("/")
+
+
 def request_site_identity(request) -> tuple[str, int]:
     """Hostname and Wagtail Site port for the current request."""
     host = request.get_host()

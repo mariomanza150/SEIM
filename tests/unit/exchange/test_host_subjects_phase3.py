@@ -195,6 +195,8 @@ class TestHostSubjectsPhase3:
         empty_pdf = render_carta_homologacion_pdf(application)
         assert empty_pdf[:4] == b"%PDF"
         assert len(empty_pdf) > 200
+        assert b"CGRI-MAT" in empty_pdf
+        assert b"ORIGEN" in empty_pdf or b"DESTINO" in empty_pdf
 
         ApplicationSubjectSelection.objects.create(
             application=application,
@@ -207,6 +209,8 @@ class TestHostSubjectsPhase3:
         assert filled_pdf[:4] == b"%PDF"
         # With selections the PDF should be larger than the empty notice version.
         assert len(filled_pdf) >= len(empty_pdf)
+        assert b"MAT101" in filled_pdf
+        assert b"Algoritmos" in filled_pdf
 
         dl = client.get(f"/api/applications/{application.id}/carta-homologacion/")
         assert dl.status_code == status.HTTP_200_OK

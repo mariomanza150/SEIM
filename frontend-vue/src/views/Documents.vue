@@ -70,7 +70,7 @@
         </template>
         <template v-if="isStaff" #presets>
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
-                <div class="flex-grow-1" style="min-width: 200px">
+                <div class="flex-grow-1 seim-min-w-filter">
                   <label class="form-label small text-muted mb-1">{{ t('documentsPage.presetSaveLabel') }}</label>
                   <div class="input-group input-group-sm">
                     <input v-model="newPresetName" type="text" class="form-control" :placeholder="t('documentsPage.presetNamePlaceholder')" />
@@ -127,21 +127,23 @@
         </template>
       </CompactFilterBar>
 
-      <!-- Loading -->
-      <LoadingState
-        v-if="loading"
-        :spinner-label="t('documentsPage.loadingSpinner')"
-        :hint="t('documentsPage.loadingList')"
-      />
-
-      <!-- Error -->
-      <ErrorAlert v-else-if="error" :message="error" />
-
-      <!-- Documents List -->
-      <div v-else-if="documents.length > 0">
+      <PageStateShell
+        :loading="loading"
+        :error="error"
+        :empty="!documents.length"
+        :empty-title="t('documentsPage.emptyTitle')"
+        :empty-body="t('documentsPage.emptyBody')"
+        empty-icon-class="bi bi-folder-x"
+        skeleton="table"
+        :loading-label="t('documentsPage.loadingSpinner')"
+        :loading-hint="t('documentsPage.loadingList')"
+        :skeleton-columns="6"
+      >
+      <ResponsiveList :items="documents" item-key="id" mobile-test-id="documents-mobile">
+      <div v-if="documents.length > 0">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
-            <thead class="table-light">
+            <thead class="seim-table-head">
               <tr>
                 <th>{{ t('documentsPage.colDocument') }}</th>
                 <th>{{ t('documentsPage.colType') }}</th>
@@ -177,8 +179,12 @@
                   </router-link>
                 </td>
                 <td>
-                  <span class="badge" :class="doc.is_valid ? 'bg-success' : 'bg-warning'">
-                    {{ doc.is_valid ? t('documentDetailPage.statusValidatedShort') : t('documentDetailPage.statusPendingShort') }}
+                  <span
+                    class="badge"
+                    :class="documentReviewStatusBadgeClass(doc)"
+                    data-testid="documents-status-badge"
+                  >
+                    {{ documentReviewStatusLabel(doc, { t, te }) }}
                   </span>
                 </td>
                 <td class="text-muted small">{{ formatDate(doc.created_at) }}</td>
@@ -191,17 +197,18 @@
                   >
                     <i class="bi bi-eye" aria-hidden="true"></i>
                   </router-link>
-                  <a
+                  <button
                     v-if="doc.file"
-                    :href="resolveFileUrl(doc.file)"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    type="button"
                     class="btn btn-sm btn-outline-secondary"
                     :title="t('documentsPage.downloadTitle')"
                     :aria-label="t('documentsPage.downloadTitle')"
+                    :disabled="downloadingId === doc.id"
+                    data-testid="document-download"
+                    @click="downloadDocument(doc)"
                   >
                     <i class="bi bi-download" aria-hidden="true"></i>
-                  </a>
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -220,43 +227,38 @@
           @page-change="goToPage"
         />
       </div>
+      </ResponsiveList>
 
-      <!-- Empty State -->
-      <EmptyState
-        v-else
-        icon-class="bi bi-folder-x"
-        :title="t('documentsPage.emptyTitle')"
-        :body="t('documentsPage.emptyBody')"
-      >
-        <template #actions>
+        <template #emptyActions>
           <router-link :to="{ name: 'Applications' }" class="btn btn-primary">
             <i class="bi bi-file-earmark-text me-2" aria-hidden="true"></i>{{ t('documentsPage.goToApplications') }}
           </router-link>
         </template>
-      </EmptyState>
+      </PageStateShell>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onActivated } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
 import { useAuthStore } from '@/stores/auth'
-import { resolveFileUrl } from '@/utils/apiUrl'
 import api from '@/services/api'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import Pagination from '@/components/Pagination.vue'
-import LoadingState from '@/components/State/LoadingState.vue'
-import ErrorAlert from '@/components/State/ErrorAlert.vue'
-import EmptyState from '@/components/State/EmptyState.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import {
   applicationSelectLabel,
   documentApplicationId,
   documentApplicationProgramName,
+  documentReviewStatusBadgeClass,
+  documentReviewStatusLabel,
   documentTypeLabel,
+  filenameFromContentDisposition,
 } from '@/utils/documentApi'
 import { formatApplicationStatus } from '@/utils/formatters'
 import {
@@ -265,6 +267,8 @@ import {
   serializeDocumentListFilters,
 } from '@/utils/staffListSearchPresets'
 import { resolveListPage } from '@/utils/listPage'
+
+defineOptions({ name: 'Documents' })
 
 const { t, te, locale } = useI18n()
 
@@ -292,6 +296,7 @@ const applications = ref([])
 const documentTypes = ref([])
 const loading = ref(true)
 const error = ref(null)
+const downloadingId = ref(null)
 
 const filters = ref({
   application: '',
@@ -313,7 +318,7 @@ const pagination = ref({
 async function fetchApplications() {
   try {
     const response = await api.get('/api/applications/', {
-      params: { page_size: isStaff.value ? 200 : 100 },
+      params: { page_size: 100 },
     })
     applications.value = response.data.results || response.data
   } catch {
@@ -403,6 +408,35 @@ function fileName(fileUrl) {
   return decodeURIComponent(parts[parts.length - 1] || 'document')
 }
 
+async function downloadDocument(doc) {
+  if (!doc?.id || downloadingId.value === doc.id) return
+  downloadingId.value = doc.id
+  try {
+    const response = await api.get(`/api/documents/${doc.id}/preview/`, {
+      responseType: 'blob',
+    })
+    const blob = new Blob([response.data], {
+      type: response.headers['content-type'] || 'application/octet-stream',
+    })
+    const objectUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objectUrl
+    a.download = filenameFromContentDisposition(
+      response.headers['content-disposition'],
+      fileName(doc.file),
+    )
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(objectUrl)
+  } catch (err) {
+    console.error('Document download failed:', err)
+    errorToast(t('documentsPage.downloadError'))
+  } finally {
+    downloadingId.value = null
+  }
+}
+
 function formatDate(dateString) {
   if (!dateString) return t('documentDetailPage.notAvailable')
   const date = new Date(dateString)
@@ -424,6 +458,10 @@ onMounted(async () => {
     }
   }
   await fetchDocuments()
+})
+
+onActivated(() => {
+  fetchDocuments(pagination.value.currentPage)
 })
 </script>
 

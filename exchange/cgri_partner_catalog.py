@@ -2,8 +2,46 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
+
 MOBILITY_SCHEME_HISPANA = "Movilidad Internacional Habla Hispana"
 MOBILITY_SCHEME_INGLESa = "Movilidad Internacional Habla Inglesa"
+
+SCHEME_CODE_TO_NAME = {
+    "hispana": MOBILITY_SCHEME_HISPANA,
+    "inglesa": MOBILITY_SCHEME_INGLESa,
+}
+
+SPANISH_SPEAKING_COUNTRIES = frozenset(
+    {
+        "españa",
+        "spain",
+        "mexico",
+        "méxico",
+        "colombia",
+        "ecuador",
+        "argentina",
+        "bolivia",
+        "chile",
+        "peru",
+        "perú",
+        "costa rica",
+        "panama",
+        "panamá",
+        "uruguay",
+        "paraguay",
+        "venezuela",
+        "guatemala",
+        "honduras",
+        "nicaragua",
+        "el salvador",
+        "cuba",
+        "dominican republic",
+        "república dominicana",
+        "puerto rico",
+    }
+)
 
 CGRI_PARTNER_SPECS: tuple[dict[str, str], ...] = (
     # Habla Hispana — España
@@ -41,6 +79,35 @@ CGRI_PARTNER_SPECS: tuple[dict[str, str], ...] = (
 PLACEHOLDER_SCHOOL = "Facultad / Escuela general"
 PLACEHOLDER_PROGRAM = "Programa académico general"
 PLACEHOLDER_SUBJECT = ("GEN101", "Asignatura general de movilidad", "6.00")
+
+_DATA_DIR = Path(__file__).resolve().parent / "data"
+_UNIVERSITY_LIST_FILES = (
+    "universidades_por_convenio.json",
+    "universidades_por_conahec.json",
+)
+
+
+def _resolve_scheme_name(entry: dict) -> str:
+    code = (entry.get("scheme") or "").strip().lower()
+    if code in SCHEME_CODE_TO_NAME:
+        return SCHEME_CODE_TO_NAME[code]
+    country = (entry.get("country") or "").strip().lower()
+    if country in SPANISH_SPEAKING_COUNTRIES:
+        return MOBILITY_SCHEME_HISPANA
+    return MOBILITY_SCHEME_INGLESa
+
+
+def _load_official_university_entries() -> list[dict]:
+    rows: list[dict] = []
+    for filename in _UNIVERSITY_LIST_FILES:
+        path = _DATA_DIR / filename
+        if not path.is_file():
+            continue
+        with path.open(encoding="utf-8") as handle:
+            payload = json.load(handle)
+        if isinstance(payload, list):
+            rows.extend(payload)
+    return rows
 
 
 def seed_cgri_partner_destinations(*, program_model=None, host_models=None) -> dict[str, int]:
@@ -127,6 +194,82 @@ def seed_cgri_partner_destinations(*, program_model=None, host_models=None) -> d
             },
         )
         if agr_created:
+            agr_count += 1
+
+    list_counts = seed_official_university_lists(
+        program_model=program_model,
+        host_models=host_models,
+    )
+    return {
+        "institutions": inst_count + list_counts["institutions"],
+        "agreements": agr_count + list_counts["agreements"],
+    }
+
+
+def seed_official_university_lists(
+    *, program_model=None, host_models=None
+) -> dict[str, int]:
+    """
+    Upsert HostInstitution + ExchangeAgreement from official convenio/CONAHEC JSON lists.
+
+    Institution-only (no placeholder schools). Idempotent by program+name /
+    partner_institution_name+partner_country.
+    """
+    if program_model is None or host_models is None:
+        from exchange.models import ExchangeAgreement, HostInstitution, Program
+
+        program_model = Program
+        host_models = {
+            "institution": HostInstitution,
+            "agreement": ExchangeAgreement,
+        }
+
+    HostInstitution = host_models["institution"]
+    ExchangeAgreement = host_models["agreement"]
+
+    inst_count = 0
+    agr_count = 0
+
+    for entry in _load_official_university_entries():
+        name = (entry.get("name") or "").strip()
+        country = (entry.get("country") or "").strip()
+        if not name:
+            continue
+        scheme_name = _resolve_scheme_name(entry)
+        program = program_model.objects.filter(name=scheme_name, is_active=True).first()
+        if program is None:
+            continue
+
+        institution, created = HostInstitution.objects.get_or_create(
+            program=program,
+            name=name,
+            defaults={"country": country, "is_active": True},
+        )
+        if not created and country and institution.country != country:
+            institution.country = country
+            institution.save(update_fields=["country", "updated_at"])
+        inst_count += 1
+
+        source = (entry.get("source") or "convenio").strip().lower()
+        agreement_type = "conahec" if source == "conahec" else "bilateral"
+        title_prefix = "CONAHEC" if agreement_type == "conahec" else "Convenio CGRI"
+        ref_prefix = "CONAHEC" if agreement_type == "conahec" else "CGRI"
+        ref = f"{ref_prefix}-{(country or 'XX')[:3].upper()}-{name[:20].replace(' ', '')}"
+
+        existing = ExchangeAgreement.objects.filter(
+            partner_institution_name=name,
+            partner_country=country,
+        ).first()
+        if existing is None:
+            ExchangeAgreement.objects.create(
+                partner_institution_name=name,
+                partner_country=country,
+                title=f"{title_prefix} — {name}",
+                internal_reference=ref[:64],
+                agreement_type=agreement_type,
+                status="active",
+                notes=f"{title_prefix} — {scheme_name}",
+            )
             agr_count += 1
 
     return {"institutions": inst_count, "agreements": agr_count}

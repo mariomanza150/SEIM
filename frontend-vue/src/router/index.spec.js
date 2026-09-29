@@ -6,15 +6,23 @@ import { createPinia, setActivePinia } from 'pinia'
 import router from './index.js'
 import { routeBusy } from './routeBusy'
 
-const { mockAxios } = vi.hoisted(() => ({
-  mockAxios: {
+const { mockAxios } = vi.hoisted(() => {
+  const mockAxios = {
     get: vi.fn(),
     post: vi.fn(),
-    create: vi.fn(() => ({
-      interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
-    })),
-  },
-}))
+    patch: vi.fn(),
+    delete: vi.fn(),
+    create: vi.fn(),
+  }
+  mockAxios.create.mockReturnValue({
+    get: (...args) => mockAxios.get(...args),
+    post: (...args) => mockAxios.post(...args),
+    patch: (...args) => mockAxios.patch(...args),
+    delete: (...args) => mockAxios.delete(...args),
+    interceptors: { request: { use: vi.fn() }, response: { use: vi.fn() } },
+  })
+  return { mockAxios }
+})
 
 vi.mock('axios', () => ({ default: mockAxios }))
 
@@ -90,9 +98,9 @@ describe('router beforeEach + resolveAuthenticatedNavigation (MQ-014)', () => {
     setActivePinia(createPinia())
     await router.push({ name: 'Login' })
     await router.push({ name: 'AdminPrograms' })
-    expect(router.currentRoute.value.name).toBe('Applications')
+    expect(router.currentRoute.value.name).toBe('Dashboard')
     await router.push({ name: 'PartnerPortal' })
-    expect(router.currentRoute.value.name).toBe('Applications')
+    expect(router.currentRoute.value.name).toBe('CoordinatorReviewQueue')
   })
 
   it('redirects partner away from student Applications to PartnerPortal (MQ-030)', async () => {

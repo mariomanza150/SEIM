@@ -66,6 +66,8 @@ services:
       - DJANGO_SETTINGS_MODULE=seim.settings.production
       - DJANGO_ENV=production
       - DEBUG=False
+      # No nginx in this stack; Django must serve uploaded files for SPA download links.
+      - SERVE_MEDIA=1
       - DISABLE_PAGE_CACHE_MIDDLEWARE=1
       # Playwright against :8020 issues hundreds of JWT/profile calls; keep prod-like
       # throttles off for this local stack (also gated in production.py via ALLOW_ANY_HOST).
@@ -81,12 +83,19 @@ services:
       - SESSION_COOKIE_SECURE=False
       - CSRF_COOKIE_SECURE=False
       - SECURE_HSTS_SECONDS=0
-      # Tailscale Serve/Funnel terminates TLS and proxies HTTP to this container.
-      # Serve the HTTP backend, e.g. ``tailscale serve http://127.0.0.1:8020`` — not https://.
+      # TLS terminators (Cloudflare Tunnel / Tailscale Serve) proxy HTTP to this container.
+      # Backend is plain HTTP: ``http://127.0.0.1:8020`` — not https://.
       - USE_TLS_PROXY_HEADERS=1
       - USE_REQUEST_HOST_FOR_SITE=1
       - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://desktop-kg5i7pt.tail4dc6e5.ts.net}
-      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://desktop-kg5i7pt.tail4dc6e5.ts.net}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://desktop-kg5i7pt.tail4dc6e5.ts.net,https://*.trycloudflare.com,https://*.cfargotunnel.com}
+      - TOEFL_API_BASE_URL=${TOEFL_API_BASE_URL:-http://toefl:5000}
+      - TOEFL_API_KEY=${TOEFL_API_KEY:-toefl-api-key-change-me}
+      - TOEFL_SIGNING_SECRET=${TOEFL_SIGNING_SECRET:-toefl-signing-secret-change-me}
+      - TOEFL_PUBLIC_BASE_URL=${TOEFL_PUBLIC_BASE_URL:-http://localhost:5020}
+      - TOEFL_CALLBACK_URL=${TOEFL_CALLBACK_URL:-http://web:8000/api/toefl/webhook/}
+      - TOEFL_RETURN_URL=${TOEFL_RETURN_URL:-http://localhost:8020/seim/toefl-practice}
+      - TOEFL_DEFAULT_EXAM_CODE=${TOEFL_DEFAULT_EXAM_CODE:-director_extracted}
 
   celery:
     build:
@@ -117,6 +126,8 @@ services:
       - DJANGO_ENV=production
       - DEBUG=False
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
+      - ALLOW_ANY_HOST=${ALLOW_ANY_HOST:-1}
       - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
@@ -149,10 +160,62 @@ services:
       - DJANGO_ENV=production
       - DEBUG=False
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
+      - ALLOW_ANY_HOST=${ALLOW_ANY_HOST:-1}
       - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+
+
+  toefl:
+    build:
+      context: ${TOEFL_CONTEXT:-../toefl-practice}
+      dockerfile: Dockerfile
+    container_name: seim-toefl-local-prod
+    restart: unless-stopped
+    ports:
+      - "5020:5000"
+    volumes:
+      - toefl_sessions_prod:/app/data/sessions
+    networks:
+      - seim-prod-network
+    environment:
+      - SECRET_KEY=${TOEFL_SECRET_KEY:-toefl-secret-key-change-me}
+      - API_KEY=${TOEFL_API_KEY:-toefl-api-key-change-me}
+      - API_SIGNING_SECRET=${TOEFL_SIGNING_SECRET:-toefl-signing-secret-change-me}
+      - ADMIN_PASSWORD=${TOEFL_ADMIN_PASSWORD:-admin}
+      - PUBLIC_BASE_URL=${TOEFL_PUBLIC_BASE_URL:-http://localhost:5020}
+      - APPLICATION_ROOT=${TOEFL_APPLICATION_ROOT:-}
+
+  # Managed Cloudflare Tunnel (Zero Trust token). Dashboard public hostname → http://localhost:8000
+  #   docker compose -p seim-localprod -f docker-compose.local-prod.yml --profile cloudflare --env-file .env.local-prod up -d
+  cloudflared:
+    image: cloudflare/cloudflared:2026.8.2
+    container_name: seim-cloudflared-local-prod
+    profiles: ["cloudflare"]
+    network_mode: "service:web"
+    command: tunnel --no-autoupdate --protocol http2 run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      web:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Ephemeral Quick Tunnel (*.trycloudflare.com). URL is in container logs / logs/cloudflare-tunnel.url
+  #   docker compose -p seim-localprod -f docker-compose.local-prod.yml --profile cloudflare-quick --env-file .env.local-prod up -d
+  cloudflared-quick:
+    image: cloudflare/cloudflared:2026.8.2
+    container_name: seim-cloudflared-quick-local-prod
+    profiles: ["cloudflare-quick"]
+    command: tunnel --no-autoupdate --protocol http2 --url http://web:8000
+    depends_on:
+      web:
+        condition: service_healthy
+    networks:
+      - seim-prod-network
+    restart: unless-stopped
 
 volumes:
   postgres_prod_data:
@@ -162,6 +225,8 @@ volumes:
   static_prod_volume:
     driver: local
   media_prod_volume:
+    driver: local
+  toefl_sessions_prod:
     driver: local
 
 networks:

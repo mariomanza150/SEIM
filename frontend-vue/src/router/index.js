@@ -9,6 +9,7 @@ import i18n from '@/i18n'
 import { resolveDocumentTitle, syncAppSocialMeta, syncCanonicalLink } from '@/utils/documentTitle'
 import { resolveAuthenticatedNavigation } from '@/router/authNavigation'
 import { routeBusy } from '@/router/routeBusy'
+import { useFeatures } from '@/composables/useFeatures'
 
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
@@ -16,6 +17,7 @@ const Register = () => import('@/views/Register.vue')
 const VerifyEmail = () => import('@/views/VerifyEmail.vue')
 const PasswordReset = () => import('@/views/PasswordReset.vue')
 const PasswordResetConfirm = () => import('@/views/PasswordResetConfirm.vue')
+const AuthLayout = () => import('@/layouts/AuthLayout.vue')
 const AppShell = () => import('@/layouts/AppShell.vue')
 const Dashboard = () => import('@/views/Dashboard.vue')
 const Applications = () => import('@/views/Applications.vue')
@@ -54,50 +56,86 @@ const AdminWorkflowEditor = () => import('@/views/admin/AdminWorkflowEditor.vue'
 const AdminDocuments = () => import('@/views/admin/AdminDocuments.vue')
 const AdminDocumentTypeEdit = () => import('@/views/admin/AdminDocumentTypeEdit.vue')
 const AdminApplicationEdit = () => import('@/views/admin/AdminApplicationEdit.vue')
+const AdminFeatures = () => import('@/views/admin/AdminFeatures.vue')
 const HelpCenter = () => import('@/views/HelpCenter.vue')
 const HelpArticle = () => import('@/views/HelpArticle.vue')
+const ToeflPractice = () => import('@/views/ToeflPractice.vue')
 const NotFound = () => import('@/views/NotFound.vue')
 
 const routes = [
   {
     path: '/login',
-    name: 'Login',
-    component: Login,
-    meta: {
-      requiresAuth: false,
-    },
+    component: AuthLayout,
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: '',
+        name: 'Login',
+        component: Login,
+        meta: { authSubtitleKey: 'login.subtitle' },
+      },
+    ],
   },
   {
     path: '/register',
-    name: 'Register',
-    component: Register,
-    meta: {
-      requiresAuth: false,
-    },
+    component: AuthLayout,
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: '',
+        name: 'Register',
+        component: Register,
+        meta: {
+          authSubtitleKey: 'register.subtitle',
+          authColClass: 'col-md-6 col-lg-5',
+        },
+      },
+    ],
   },
   {
     path: '/verify-email',
-    name: 'VerifyEmail',
-    component: VerifyEmail,
-    meta: {
-      requiresAuth: false,
-    },
+    component: AuthLayout,
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: '',
+        name: 'VerifyEmail',
+        component: VerifyEmail,
+        meta: {
+          authSubtitleKey: 'verifyEmail.subtitle',
+          authShowVersion: false,
+        },
+      },
+    ],
   },
   {
     path: '/password-reset',
-    name: 'PasswordReset',
-    component: PasswordReset,
-    meta: {
-      requiresAuth: false,
-    },
+    component: AuthLayout,
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: '',
+        name: 'PasswordReset',
+        component: PasswordReset,
+        meta: { authSubtitleKey: 'passwordReset.subtitle' },
+      },
+    ],
   },
   {
     path: '/password-reset/confirm',
-    name: 'PasswordResetConfirm',
-    component: PasswordResetConfirm,
-    meta: {
-      requiresAuth: false,
-    },
+    component: AuthLayout,
+    meta: { requiresAuth: false },
+    children: [
+      {
+        path: '',
+        name: 'PasswordResetConfirm',
+        component: PasswordResetConfirm,
+        meta: {
+          authSubtitleKey: 'passwordResetConfirm.subtitle',
+          authColClass: 'col-md-6 col-lg-5',
+        },
+      },
+    ],
   },
   {
     path: '/',
@@ -174,6 +212,11 @@ const routes = [
         meta: { studentDocuments: true },
       },
       {
+        path: 'toefl-practice',
+        name: 'ToeflPractice',
+        component: ToeflPractice,
+      },
+      {
         path: 'documents/:id',
         name: 'DocumentDetail',
         component: DocumentDetail,
@@ -195,7 +238,7 @@ const routes = [
         path: 'scholarship-scoring-rulesets',
         name: 'ScholarshipScoringRulesets',
         component: ScholarshipScoringRulesets,
-        meta: { staffReviewQueue: true },
+        meta: { staffReviewQueue: true, scholarshipsFeature: true },
       },
       {
         path: 'nominations',
@@ -317,18 +360,23 @@ const routes = [
         meta: { adminOnly: true },
       },
       {
+        path: 'admin/features',
+        name: 'AdminFeatures',
+        component: AdminFeatures,
+        meta: { adminOnly: true },
+      },
+      {
         path: 'admin/applications/:id',
         name: 'AdminApplicationEdit',
         component: AdminApplicationEdit,
         meta: { adminOnly: true },
       },
+      {
+        path: ':pathMatch(.*)*',
+        name: 'NotFound',
+        component: NotFound,
+      },
     ],
-  },
-  // Catch-all 404
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'NotFound',
-    component: NotFound,
   },
 ]
 
@@ -350,13 +398,25 @@ router.beforeEach(async (to, from, next) => {
 
   const requiresAuth = to.matched.some((r) => r.meta && r.meta.requiresAuth)
   if (requiresAuth) {
-    const outcome = await resolveAuthenticatedNavigation(to, authStore)
+    const { loadFeatures, scholarshipsEnabled } = useFeatures()
+    await loadFeatures()
+    const outcome = await resolveAuthenticatedNavigation(to, authStore, {
+      scholarshipsEnabled: scholarshipsEnabled.value,
+    })
     if (outcome === 'login') {
       next({ name: 'Login', query: { redirect: to.fullPath } })
       return
     }
     if (outcome === 'applications') {
       next({ name: 'Applications', replace: true })
+      return
+    }
+    if (outcome === 'dashboard') {
+      next({ name: 'Dashboard', replace: true })
+      return
+    }
+    if (outcome === 'reviewQueue') {
+      next({ name: 'CoordinatorReviewQueue', replace: true })
       return
     }
     if (outcome === 'partner') {

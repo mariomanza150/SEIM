@@ -20,6 +20,14 @@ vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ error: mockErrorToast, success: mockSuccessToast }),
 }))
 
+const mockPush = vi.fn()
+const routeState = { query: {} }
+
+vi.mock('vue-router', () => ({
+  useRouter: () => ({ push: mockPush }),
+  useRoute: () => routeState,
+}))
+
 const profilePayload = {
   first_name: 'Ada',
   middle_name: 'Byron',
@@ -57,6 +65,7 @@ describe('Profile', () => {
     localStorage.clear()
     setAppLocale('en')
     vi.clearAllMocks()
+    routeState.query = {}
     api.get.mockImplementation((url, config) => {
       if (url === '/api/accounts/profile/') return Promise.resolve({ data: profilePayload })
       if (url === '/api/accounts/catalogs/academic-levels/') {
@@ -77,6 +86,15 @@ describe('Profile', () => {
       if (url === '/api/accounts/catalogs/banks/') {
         return Promise.resolve({ data: [{ id: 'bank-1', name: 'BBVA' }] })
       }
+      if (url === '/api/accounts/catalogs/spoken-languages/') {
+        return Promise.resolve({
+          data: [
+            { id: 'lang-en', name: 'English', aliases: ['Ingles', 'Inglés'] },
+            { id: 'lang-es', name: 'Spanish', aliases: ['Español', 'Espanol'] },
+            { id: 'lang-fr', name: 'French', aliases: [] },
+          ],
+        })
+      }
       if (url === '/api/accounts/catalogs/programs/') {
         const school = config?.params?.school
         if (school === 'school-2') {
@@ -96,6 +114,42 @@ describe('Profile', () => {
   afterEach(() => {
     setAppLocale('en')
     localStorage.clear()
+    routeState.query = {}
+  })
+
+  it('shows continue-to-application CTA when redirected with next and profile is ready', async () => {
+    routeState.query = { next: '/applications/new' }
+    const wrapper = mount(Profile, {
+      global: {
+        plugins: [i18n],
+        stubs: {
+          RouterLink: {
+            props: ['to'],
+            template: '<a :href="typeof to === \'string\' ? to : \'#\'" data-stub="router-link"><slot /></a>',
+          },
+        },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="profile-return-hint"]').exists()).toBe(true)
+    const btn = wrapper.find('[data-testid="profile-continue-application"]')
+    expect(btn.exists()).toBe(true)
+    expect(btn.text()).toContain('Continue to start application')
+    expect(btn.attributes('href')).toBe('/applications/new')
+  })
+
+  it('redirects to next after a successful save when coming from application start', async () => {
+    routeState.query = { next: '/applications/new' }
+    const wrapper = mount(Profile, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+    expect(mockPush).toHaveBeenCalledWith('/applications/new')
   })
 
   it('renders translated headings and eligibility copy in English', async () => {
@@ -124,7 +178,7 @@ describe('Profile', () => {
     expect(api.get).toHaveBeenCalledWith('/api/accounts/catalogs/banks/')
   })
 
-  it('uses profilePage.loadingSpinner on the loading state spinner', async () => {
+  it('shows cards skeleton while profile is loading', async () => {
     let resolveGet
     api.get.mockImplementation((url) => {
       if (url === '/api/accounts/profile/') {
@@ -140,13 +194,15 @@ describe('Profile', () => {
         stubs: { RouterLink: { template: '<a><slot /></a>' } },
       },
     })
-    const spinner = wrapper.find('.spinner-border')
-    expect(spinner.exists()).toBe(true)
-    expect(spinner.attributes('aria-label')).toBe(i18n.global.t('profilePage.loadingSpinner'))
+    expect(wrapper.find('.placeholder-glow').exists()).toBe(true)
     await flushPromises()
+    expect(typeof resolveGet).toBe('function')
+    expect(wrapper.find('.placeholder-glow').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="profile-readiness"]').exists()).toBe(false)
     resolveGet({ data: profilePayload })
     await flushPromises()
-    expect(wrapper.find('.spinner-border').exists()).toBe(false)
+    expect(wrapper.find('.placeholder-glow').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="profile-readiness"]').exists()).toBe(true)
   })
 
   it('renders Spanish copy when locale is es', async () => {

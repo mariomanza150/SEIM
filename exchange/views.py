@@ -23,8 +23,10 @@ from core.cache import (
     cache_api_response,
     invalidate_application_api_responses,
 )
+from core.feature_settings import scholarships_disabled_response, scholarships_enabled
 from core.permissions import (
     IsAdminOrReadOnly,
+    IsAdminRole,
     IsCoordinatorOrAdmin,
     IsStudentOrReadOnly,
 )
@@ -59,6 +61,7 @@ from .models import (
     HostSchool,
     HostSubject,
     Program,
+    ProgramDocumentRequirement,
     SavedSearch,
     ScholarshipScoringRuleset,
     TimelineEvent,
@@ -77,6 +80,7 @@ from .subject_plan_versions import (
 )
 from .serializers import (
     AgreementCommentSerializer,
+    ApplicationListSerializer,
     ApplicationSerializer,
     ApplicationStatusSerializer,
     ApplicationSubjectPlanVersionSerializer,
@@ -326,6 +330,13 @@ class ScholarshipScoringRulesetViewSet(viewsets.ModelViewSet):
     ordering_fields = ["label", "slug", "created_at", "updated_at", "is_active"]
     http_method_names = ["get", "post", "put", "patch", "head", "options"]
 
+    def initial(self, request, *args, **kwargs):
+        if not scholarships_enabled():
+            from rest_framework.exceptions import NotFound
+
+            raise NotFound(detail="Not found.")
+        super().initial(request, *args, **kwargs)
+
     @extend_schema(
         summary="Active scholarship scoring ruleset",
         responses={200: ScholarshipScoringRulesetSerializer},
@@ -443,6 +454,10 @@ class ProgramViewSet(viewsets.ModelViewSet):
         active_programs = self.filter_queryset(
             self.get_queryset().filter(is_active=True)
         )
+        page = self.paginate_queryset(active_programs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(active_programs, many=True)
         return Response(serializer.data)
 
@@ -527,6 +542,27 @@ class ProgramViewSet(viewsets.ModelViewSet):
             {"status": "Program cloned successfully", "program": serializer.data},
             status=status.HTTP_201_CREATED,
         )
+
+    @extend_schema(
+        summary="Preview cascade impact of deleting this program",
+        description=(
+            "Admin-only preview of related objects that would be cascade-deleted "
+            "with this program. Use before confirming DELETE."
+        ),
+        responses={200: OpenApiTypes.OBJECT},
+    )
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="deletion-impact",
+        permission_classes=[IsAdminRole],
+    )
+    def deletion_impact(self, request, pk=None):
+        """Return related-object counts that cascade-delete with this program."""
+        from exchange.program_deletion import get_program_deletion_impact
+
+        program = self.get_object()
+        return Response(get_program_deletion_impact(program))
 
     @extend_schema(
         summary="Check eligibility for this program",
@@ -980,6 +1016,11 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     ]
     ordering_fields = ["created_at", "submitted_at"]
 
+    def get_serializer_class(self):
+        if self.action == "list":
+            return ApplicationListSerializer
+        return ApplicationSerializer
+
     def get_queryset(self):
         """
         Filter queryset based on user role with optimized queries.
@@ -989,38 +1030,64 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         """
         user = self.request.user
 
-        # Base queryset with all optimizations
         base_qs = Application.objects.select_related(
-            "program",  # ForeignKey - use select_related
-            "student",  # ForeignKey
+            "program",
+            "student",
             "assigned_coordinator",
-            "status",  # ForeignKey
+            "status",
             "host_institution",
             "host_institution__grade_scale",
             "host_school",
             "host_academic_program",
-        ).prefetch_related(
-            "program__coordinators",
-            "program__required_document_types",
-            "student__roles",  # ManyToMany through student
-            "comments",
-            "comments__author",
-            "comments__author__roles",
-            "timeline_events",  # Reverse FK: events for this application
-            "timeline_events__created_by",
-            "document_set",  # Reverse ForeignKey (documents)
-            "document_set__type",  # Document types
-            "document_set__uploaded_by",  # Who uploaded them
-            "scholarship_award",
-            "scholarship_award__disbursements",
-            "scholarship_award__decided_by",
         )
 
-        # Filter based on role
+        from documents.models import Document
+
+        list_doc_prefetch = Prefetch(
+            "document_set",
+            queryset=Document.objects.select_related("type").prefetch_related(
+                "documentresubmissionrequest_set"
+            ),
+        )
+        detail_doc_prefetch = Prefetch(
+            "document_set",
+            queryset=Document.objects.select_related(
+                "type", "uploaded_by"
+            ).prefetch_related("documentresubmissionrequest_set"),
+        )
+        req_prefetch = Prefetch(
+            "program__program_document_requirements",
+            queryset=ProgramDocumentRequirement.objects.select_related(
+                "document_type", "required_from_status"
+            ),
+        )
+
+        if self.action == "list":
+            base_qs = base_qs.prefetch_related(
+                req_prefetch,
+                "student__roles",
+                list_doc_prefetch,
+            )
+        else:
+            base_qs = base_qs.prefetch_related(
+                "program__coordinators",
+                req_prefetch,
+                "program__required_document_types",
+                "student__roles",
+                "comments",
+                "comments__author",
+                "comments__author__roles",
+                "timeline_events",
+                "timeline_events__created_by",
+                detail_doc_prefetch,
+                "scholarship_award",
+                "scholarship_award__disbursements",
+                "scholarship_award__decided_by",
+            )
+
         if user.has_role("coordinator") or user.has_role("admin"):
             return base_qs
-        else:
-            return base_qs.filter(student=user)
+        return base_qs.filter(student=user)
 
     def perform_create(self, serializer):
         """Set the student after enforcing apply-readiness (catalogs + eligibility)."""
@@ -1072,6 +1139,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="scholarship-scores-export")
     def scholarship_scores_export(self, request):
         """Export scholarship scores for a program cohort: CSV (default), XLSX, or PDF (staff)."""
+        if not scholarships_enabled():
+            return scholarships_disabled_response()
         user = request.user
         if not user.is_authenticated or not user.has_any_role(["coordinator", "admin"]):
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
@@ -1113,6 +1182,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="scholarship-awards-export")
     def scholarship_awards_export(self, request):
         """Export scholarship awards for a program cohort: CSV (default), XLSX, or PDF (staff)."""
+        if not scholarships_enabled():
+            return scholarships_disabled_response()
         user = request.user
         if not user.is_authenticated or not user.has_any_role(["coordinator", "admin"]):
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
@@ -1159,6 +1230,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     )
     def scholarship_award(self, request, pk=None):
         """Read or upsert the scholarship award on this application."""
+        if not scholarships_enabled():
+            return scholarships_disabled_response()
         application = self.get_object()
         from exchange.scholarship_awards import serialize_award, upsert_award
 
@@ -1191,6 +1264,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         url_path="scholarship-award/transition",
     )
     def scholarship_award_transition(self, request, pk=None):
+        if not scholarships_enabled():
+            return scholarships_disabled_response()
         application = self.get_object()
         user = request.user
         if not user.has_any_role(["coordinator", "admin"]):
@@ -1221,6 +1296,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         url_path="scholarship-award/disbursements",
     )
     def scholarship_award_disbursement(self, request, pk=None):
+        if not scholarships_enabled():
+            return scholarships_disabled_response()
         application = self.get_object()
         user = request.user
         if not user.has_any_role(["coordinator", "admin"]):
@@ -1258,8 +1335,8 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     )
     def solicitud_participacion(self, request, pk=None):
         """
-        Download system-generated Solicitud de Participación PDF
-        (profile + application + destination when host FKs exist).
+        Download system-generated Solicitud de Participación PDF (FS-SP / CGRI-SP).
+        Prefills profile + application + destination when host FKs exist.
         """
         from django.http import HttpResponse
 
@@ -1267,7 +1344,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
         application = self.get_object()
         pdf_bytes = render_solicitud_participacion_pdf(application)
-        filename = f"solicitud_participacion_{application.id}.pdf"
+        filename = f"FS-SP_Solicitud_Participacion_{application.id}.pdf"
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         return response
@@ -1365,7 +1442,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Forbidden."}, status=status.HTTP_403_FORBIDDEN)
 
         pdf_bytes = persist_carta_homologacion(application, user)
-        filename = f"carta_homologacion_{application.id}.pdf"
+        filename = f"FS-HM_Homologacion_Materias_{application.id}.pdf"
         response = HttpResponse(pdf_bytes, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
         selection_count = application.subject_selections.count()
@@ -1510,7 +1587,6 @@ class HostInstitutionViewSet(viewsets.ModelViewSet):
 
     serializer_class = HostInstitutionSerializer
     permission_classes = [IsAdminOrReadOnly]
-    pagination_class = None
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["program", "is_active"]
     http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
@@ -1596,7 +1672,6 @@ class HostSchoolViewSet(viewsets.ModelViewSet):
 
     serializer_class = HostSchoolSerializer
     permission_classes = [IsAdminOrReadOnly]
-    pagination_class = None
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["institution", "is_active"]
     http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
@@ -1658,7 +1733,6 @@ class HostAcademicProgramViewSet(viewsets.ModelViewSet):
 
     serializer_class = HostAcademicProgramSerializer
     permission_classes = [IsAdminOrReadOnly]
-    pagination_class = None
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["school", "is_active"]
     http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
@@ -1706,7 +1780,6 @@ class HostSubjectViewSet(viewsets.ModelViewSet):
 
     serializer_class = HostSubjectSerializer
     permission_classes = [IsAdminOrReadOnly]
-    pagination_class = None
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["institution", "school", "academic_program", "is_active"]
     http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]

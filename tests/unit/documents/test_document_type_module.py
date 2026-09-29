@@ -7,11 +7,16 @@ import xml.etree.ElementTree as ET
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from documents.mailmerge import merge_docx, merge_values_for_application
-from documents.models import DocumentType
+from documents.mailmerge import (
+    docx_has_fillable_fields,
+    merge_docx,
+    merge_values_for_application,
+)
+from documents.models import Document, DocumentType
 from exchange.models import Application, ApplicationStatus, ProgramDocumentRequirement
 from tests.utils import TestUtils
 
@@ -79,6 +84,7 @@ def _response_bytes(response) -> bytes:
 class MailMergeTests(SimpleTestCase):
     def test_merges_complex_simple_and_placeholder_fields(self):
         raw = _docx_bytes()
+        self.assertTrue(docx_has_fillable_fields(raw))
         filled = merge_docx(
             raw, {"FirstName": "Ana", "LastName": "Lopez", "Email": "ana@test.com"}
         )
@@ -191,6 +197,44 @@ class DocumentTypeAdminApiTests(TestCase):
         url = reverse("api:documenttype-download-template", kwargs={"pk": self.doc_type.pk})
         response = self.client.get(url, {"application": str(other_app.id)})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_student_cannot_download_template_after_approval(self):
+        self.doc_type.template_file.save(
+            "agreement.docx",
+            SimpleUploadedFile("agreement.docx", _docx_bytes()),
+            save=True,
+        )
+        Document.objects.create(
+            application=self.application,
+            type=self.doc_type,
+            file=SimpleUploadedFile("signed.pdf", b"%PDF-1.4\n"),
+            uploaded_by=self.student,
+            is_valid=True,
+            validated_at=timezone.now(),
+        )
+        self.client.force_authenticate(user=self.student)
+        url = reverse("api:documenttype-download-template", kwargs={"pk": self.doc_type.pk})
+        response = self.client.get(url, {"application": str(self.application.id)})
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_staff_can_download_template_after_student_approval(self):
+        self.doc_type.template_file.save(
+            "agreement.docx",
+            SimpleUploadedFile("agreement.docx", _docx_bytes()),
+            save=True,
+        )
+        Document.objects.create(
+            application=self.application,
+            type=self.doc_type,
+            file=SimpleUploadedFile("signed.pdf", b"%PDF-1.4\n"),
+            uploaded_by=self.student,
+            is_valid=True,
+            validated_at=timezone.now(),
+        )
+        self.client.force_authenticate(user=self.admin)
+        url = reverse("api:documenttype-download-template", kwargs={"pk": self.doc_type.pk})
+        response = self.client.get(url, {"application": str(self.application.id)})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_merge_values_include_program_name(self):
         values = merge_values_for_application(self.application)

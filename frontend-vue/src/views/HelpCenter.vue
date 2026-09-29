@@ -45,26 +45,26 @@
       {{ t('help.contextualBanner') }}
     </div>
 
-    <LoadingState
-      v-if="loading"
-      :spinner-label="t('help.loading')"
-      :hint="t('help.loadingHint')"
-    />
-    <ErrorAlert v-else-if="error" :message="error" test-id="help-center-error" />
-    <EmptyState
-      v-else-if="!articles.length"
-      icon-class="bi bi-journal-x"
-      :title="t('help.emptyTitle')"
-      :body="t('help.emptyBody')"
-      test-id="help-center-empty"
+    <PageStateShell
+      :loading="loading"
+      :error="error"
+      :empty="!articles.length"
+      :empty-title="t('help.emptyTitle')"
+      :empty-body="t('help.emptyBody')"
+      empty-icon-class="bi bi-journal-x"
+      empty-test-id="help-center-empty"
+      error-test-id="help-center-error"
+      skeleton="cards"
+      :skeleton-count="4"
+      :loading-label="t('help.loading')"
+      :loading-hint="t('help.loadingHint')"
     >
-      <template v-if="searchInput || contextualKey" #actions>
+      <template v-if="searchInput || contextualKey" #emptyActions>
         <button type="button" class="btn btn-outline-primary" data-testid="help-clear-search" @click="clearSearch">
           {{ t('help.emptyClear') }}
         </button>
       </template>
-    </EmptyState>
-    <div v-else>
+    <div>
       <section
         v-for="group in topicGroups"
         :key="group.topic"
@@ -86,6 +86,7 @@
         </div>
       </section>
     </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -97,9 +98,7 @@ import { useToast } from '@/composables/useToast'
 import { fetchHelpArticles, unwrapHelpArticles } from '@/services/help'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
-import EmptyState from '@/components/State/EmptyState.vue'
-import LoadingState from '@/components/State/LoadingState.vue'
-import ErrorAlert from '@/components/State/ErrorAlert.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 
 const TOPIC_ORDER = [
   'getting_started',

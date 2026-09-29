@@ -1,42 +1,41 @@
 <template>
   <div class="notification-routing-page">
-    <nav :aria-label="t('notificationRoutingPage.breadcrumbAria')">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-        </li>
-        <li class="breadcrumb-item active">{{ t('route.names.NotificationRouting') }}</li>
-      </ol>
-    </nav>
+    <PageHeader
+      :title="t('route.names.NotificationRouting')"
+      :subtitle="t('notificationRoutingPage.subtitle')"
+      icon-class="bi bi-diagram-3"
+    >
+      <template #breadcrumb>
+        <PageBreadcrumb
+          :aria-label="t('notificationRoutingPage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.NotificationRouting') },
+          ]"
+        />
+      </template>
+      <template #actions>
+        <router-link :to="{ name: 'Settings' }" class="btn btn-outline-primary">
+          <i class="bi bi-gear me-1" aria-hidden="true"></i>{{ t('route.names.Settings') }}
+        </router-link>
+      </template>
+    </PageHeader>
 
-      <div class="row mb-4">
-        <div class="col-md-8">
-          <h2>
-            <i class="bi bi-diagram-3 me-2"></i>{{ t('route.names.NotificationRouting') }}
-          </h2>
-          <p class="text-muted mb-0">{{ t('notificationRoutingPage.subtitle') }}</p>
-        </div>
-        <div class="col-md-4 text-md-end mt-2 mt-md-0">
-          <router-link :to="{ name: 'Settings' }" class="btn btn-outline-primary">
-            <i class="bi bi-gear me-1"></i>{{ t('route.names.Settings') }}
-          </router-link>
-        </div>
-      </div>
-
-      <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('notificationRoutingPage.loading') }}</span>
-        </div>
-      </div>
-      <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-      <template v-else-if="payload">
+    <PageStateShell
+      :loading="loading"
+      :error="error"
+      :loading-label="t('notificationRoutingPage.loading')"
+      skeleton="table"
+      :skeleton-columns="5"
+    >
+      <template v-if="payload">
         <p class="small text-muted mb-3">
           {{ t('notificationRoutingPage.schemaVersion') }}:
           <span class="badge bg-secondary">{{ payload.schema_version }}</span>
         </p>
 
         <div class="card border-0 shadow-sm mb-4">
-          <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
+          <div class="card-header seim-surface-muted d-flex flex-wrap justify-content-between align-items-center gap-2">
             <span class="fw-semibold">{{ t('notificationRoutingPage.overridesTitle') }}</span>
             <span v-if="overridesLoading" class="spinner-border spinner-border-sm text-primary" role="status">
               <span class="visually-hidden">{{ t('notificationRoutingPage.overridesLoading') }}</span>
@@ -109,78 +108,124 @@
               </div>
             </form>
           </div>
-          <div class="table-responsive">
-            <table class="table table-hover mb-0">
-              <thead class="table-light">
-                <tr>
-                  <th scope="col">{{ t('notificationRoutingPage.colOverrideKind') }}</th>
-                  <th scope="col">{{ t('notificationRoutingPage.colOverrideKey') }}</th>
-                  <th scope="col">{{ t('notificationRoutingPage.colOverrideCategory') }}</th>
-                  <th scope="col">{{ t('notificationRoutingPage.colOverrideActive') }}</th>
-                  <th scope="col" class="text-end">{{ t('notificationRoutingPage.colOverrideActions') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-if="!overridesLoading && !routingOverrides.length">
-                  <td colspan="5" class="text-muted small px-3 py-3">{{ t('notificationRoutingPage.overridesEmpty') }}</td>
-                </tr>
-                <tr v-for="row in routingOverrides" :key="row.id">
-                  <td class="small"><code>{{ row.kind }}</code></td>
-                  <td class="small"><code>{{ row.key }}</code></td>
-                  <td class="small"><code>{{ row.settings_category }}</code></td>
-                  <td>
-                    <span v-if="row.is_active" class="badge bg-success">{{ t('notificationRoutingPage.statusActive') }}</span>
-                    <span v-else class="badge bg-secondary">{{ t('notificationRoutingPage.statusInactive') }}</span>
-                  </td>
-                  <td class="text-end text-nowrap">
-                    <button
-                      type="button"
-                      class="btn btn-link btn-sm py-0"
-                      :aria-label="t('notificationRoutingPage.editOverrideAria', { key: row.key })"
-                      @click="startEditOverride(row)"
-                    >
-                      {{ t('notificationRoutingPage.editOverride') }}
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-link btn-sm py-0"
-                      :disabled="overrideSaving"
-                      :aria-label="
-                        row.is_active
-                          ? t('notificationRoutingPage.deactivateOverrideAria', { key: row.key })
-                          : t('notificationRoutingPage.activateOverrideAria', { key: row.key })
-                      "
-                      @click="toggleOverrideActive(row)"
-                    >
-                      {{
-                        row.is_active
-                          ? t('notificationRoutingPage.deactivateOverride')
-                          : t('notificationRoutingPage.activateOverride')
-                      }}
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-link btn-sm py-0 text-danger"
-                      :disabled="overrideSaving"
-                      :aria-label="t('notificationRoutingPage.deleteOverrideAria', { key: row.key })"
-                      @click="deleteOverride(row)"
-                    >
-                      {{ t('notificationRoutingPage.deleteOverride') }}
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveList
+            :items="routingOverrides"
+            :columns="overrideColumns"
+            mobile-test-id="routing-override"
+          >
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="seim-table-head">
+                  <tr>
+                    <th scope="col">{{ t('notificationRoutingPage.colOverrideKind') }}</th>
+                    <th scope="col">{{ t('notificationRoutingPage.colOverrideKey') }}</th>
+                    <th scope="col">{{ t('notificationRoutingPage.colOverrideCategory') }}</th>
+                    <th scope="col">{{ t('notificationRoutingPage.colOverrideActive') }}</th>
+                    <th scope="col" class="text-end">{{ t('notificationRoutingPage.colOverrideActions') }}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-if="!overridesLoading && !routingOverrides.length">
+                    <td colspan="5" class="text-muted small px-3 py-3">{{ t('notificationRoutingPage.overridesEmpty') }}</td>
+                  </tr>
+                  <tr v-for="row in routingOverrides" :key="row.id">
+                    <td class="small"><code>{{ row.kind }}</code></td>
+                    <td class="small"><code>{{ row.key }}</code></td>
+                    <td class="small"><code>{{ row.settings_category }}</code></td>
+                    <td>
+                      <span v-if="row.is_active" class="badge bg-success">{{ t('notificationRoutingPage.statusActive') }}</span>
+                      <span v-else class="badge bg-secondary">{{ t('notificationRoutingPage.statusInactive') }}</span>
+                    </td>
+                    <td class="text-end text-nowrap">
+                      <button
+                        type="button"
+                        class="btn btn-link btn-sm py-0"
+                        :aria-label="t('notificationRoutingPage.editOverrideAria', { key: row.key })"
+                        @click="startEditOverride(row)"
+                      >
+                        {{ t('notificationRoutingPage.editOverride') }}
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-link btn-sm py-0"
+                        :disabled="overrideSaving"
+                        :aria-label="
+                          row.is_active
+                            ? t('notificationRoutingPage.deactivateOverrideAria', { key: row.key })
+                            : t('notificationRoutingPage.activateOverrideAria', { key: row.key })
+                        "
+                        @click="toggleOverrideActive(row)"
+                      >
+                        {{
+                          row.is_active
+                            ? t('notificationRoutingPage.deactivateOverride')
+                            : t('notificationRoutingPage.activateOverride')
+                        }}
+                      </button>
+                      <button
+                        type="button"
+                        class="btn btn-link btn-sm py-0 text-danger"
+                        :disabled="overrideSaving"
+                        :aria-label="t('notificationRoutingPage.deleteOverrideAria', { key: row.key })"
+                        @click="deleteOverride(row)"
+                      >
+                        {{ t('notificationRoutingPage.deleteOverride') }}
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <template #col-is_active="{ item }">
+              <span v-if="item.is_active" class="badge bg-success">{{ t('notificationRoutingPage.statusActive') }}</span>
+              <span v-else class="badge bg-secondary">{{ t('notificationRoutingPage.statusInactive') }}</span>
+            </template>
+            <template #actions="{ item }">
+              <button
+                type="button"
+                class="btn btn-link btn-sm py-0"
+                :aria-label="t('notificationRoutingPage.editOverrideAria', { key: item.key })"
+                @click="startEditOverride(item)"
+              >
+                {{ t('notificationRoutingPage.editOverride') }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-link btn-sm py-0"
+                :disabled="overrideSaving"
+                :aria-label="
+                  item.is_active
+                    ? t('notificationRoutingPage.deactivateOverrideAria', { key: item.key })
+                    : t('notificationRoutingPage.activateOverrideAria', { key: item.key })
+                "
+                @click="toggleOverrideActive(item)"
+              >
+                {{
+                  item.is_active
+                    ? t('notificationRoutingPage.deactivateOverride')
+                    : t('notificationRoutingPage.activateOverride')
+                }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-link btn-sm py-0 text-danger"
+                :disabled="overrideSaving"
+                :aria-label="t('notificationRoutingPage.deleteOverrideAria', { key: item.key })"
+                @click="deleteOverride(item)"
+              >
+                {{ t('notificationRoutingPage.deleteOverride') }}
+              </button>
+            </template>
+          </ResponsiveList>
         </div>
 
         <div class="card border-0 shadow-sm mb-4">
-          <div class="card-header bg-light">
+          <div class="card-header seim-surface-muted">
             <span class="fw-semibold">{{ t('notificationRoutingPage.categoriesTitle') }}</span>
           </div>
           <div class="table-responsive">
             <table class="table table-hover mb-0">
-              <thead class="table-light">
+              <thead class="seim-table-head">
                 <tr>
                   <th scope="col">{{ t('notificationRoutingPage.colCategory') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colEmailField') }}</th>
@@ -208,7 +253,7 @@
           v-if="payload.transactional_routes?.length"
           class="card border-0 shadow-sm mb-4"
         >
-          <div class="card-header bg-light">
+          <div class="card-header seim-surface-muted">
             <span class="fw-semibold">{{ t('notificationRoutingPage.transactionalRoutesTitle') }}</span>
           </div>
           <div class="card-body small text-muted border-bottom">
@@ -216,7 +261,7 @@
           </div>
           <div class="table-responsive">
             <table class="table table-hover mb-0">
-              <thead class="table-light">
+              <thead class="seim-table-head">
                 <tr>
                   <th scope="col">{{ t('notificationRoutingPage.colRouteKey') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colSettingsCategory') }}</th>
@@ -245,7 +290,7 @@
           v-if="transactionalRouteKeysByCategory.length"
           class="card border-0 shadow-sm mb-4"
         >
-          <div class="card-header bg-light">
+          <div class="card-header seim-surface-muted">
             <span class="fw-semibold">{{ t('notificationRoutingPage.transactionalByCategoryTitle') }}</span>
           </div>
           <div class="card-body small text-muted border-bottom">
@@ -253,7 +298,7 @@
           </div>
           <div class="table-responsive">
             <table class="table table-hover mb-0">
-              <thead class="table-light">
+              <thead class="seim-table-head">
                 <tr>
                   <th scope="col">{{ t('notificationRoutingPage.colCategoryBucket') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colRouteKeys') }}</th>
@@ -275,7 +320,7 @@
           v-if="reminderTypesByCategory.length"
           class="card border-0 shadow-sm mb-4"
         >
-          <div class="card-header bg-light">
+          <div class="card-header seim-surface-muted">
             <span class="fw-semibold">{{ t('notificationRoutingPage.reminderByCategoryTitle') }}</span>
           </div>
           <div class="card-body small text-muted border-bottom">
@@ -283,7 +328,7 @@
           </div>
           <div class="table-responsive">
             <table class="table table-hover mb-0">
-              <thead class="table-light">
+              <thead class="seim-table-head">
                 <tr>
                   <th scope="col">{{ t('notificationRoutingPage.colCategoryBucket') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colEventTypeKeys') }}</th>
@@ -302,12 +347,12 @@
         </div>
 
         <div class="card border-0 shadow-sm mb-4">
-          <div class="card-header bg-light">
+          <div class="card-header seim-surface-muted">
             <span class="fw-semibold">{{ t('notificationRoutingPage.remindersTitle') }}</span>
           </div>
           <div class="table-responsive">
             <table class="table table-hover mb-0">
-              <thead class="table-light">
+              <thead class="seim-table-head">
                 <tr>
                   <th scope="col">{{ t('notificationRoutingPage.colReminderEventType') }}</th>
                   <th scope="col">{{ t('notificationRoutingPage.colSettingsCategory') }}</th>
@@ -332,7 +377,7 @@
         </div>
 
         <div v-if="payload.digest" class="card border-0 shadow-sm mb-4">
-          <div class="card-header bg-light">
+          <div class="card-header seim-surface-muted">
             <span class="fw-semibold">{{ t('notificationRoutingPage.digestTitle') }}</span>
           </div>
           <div class="card-body">
@@ -358,7 +403,7 @@
         </div>
 
         <div v-if="payload.reference_api_access" class="card border-0 shadow-sm mb-4">
-          <div class="card-header bg-light">
+          <div class="card-header seim-surface-muted">
             <span class="fw-semibold">{{ t('notificationRoutingPage.apiAccessTitle') }}</span>
           </div>
           <div class="card-body small">
@@ -373,6 +418,7 @@
           </div>
         </div>
       </template>
+    </PageStateShell>
   </div>
 </template>
 
@@ -382,6 +428,10 @@ import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 
 const { t } = useI18n()
 const { error: errorToast, success: successToast } = useToast()
@@ -587,6 +637,13 @@ const reminderTypesByCategory = computed(() => {
     }))
 })
 
+const overrideColumns = computed(() => [
+  { key: 'kind', label: t('notificationRoutingPage.colOverrideKind') },
+  { key: 'key', label: t('notificationRoutingPage.colOverrideKey') },
+  { key: 'settings_category', label: t('notificationRoutingPage.colOverrideCategory') },
+  { key: 'is_active', label: t('notificationRoutingPage.colOverrideActive') },
+])
+
 const reminderRows = computed(() => {
   const m = payload.value?.reminder_event_type_to_settings_category
   if (!m || typeof m !== 'object') return []
@@ -622,9 +679,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.notification-routing-page {
-  min-height: 100vh;
-  background-color: var(--seim-app-bg, #f8f9fa);
-}
-</style>

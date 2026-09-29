@@ -134,6 +134,22 @@ DEMO_USER_SPECS = [
         },
     },
     {
+        "username": "student_nominated",
+        "email": "student.nominated@test.com",
+        "password": "student123",
+        "first_name": "Paula",
+        "last_name": "Navarro",
+        "role": "student",
+        "is_staff": False,
+        "is_superuser": False,
+        "profile": {
+            "secondary_email": "paula.navarro@example.edu",
+            "gpa": 3.6,
+            "language": "Spanish",
+            "language_level": "C1",
+        },
+    },
+    {
         "username": "partner",
         "email": "partner@test.com",
         "password": "partner123",
@@ -388,6 +404,7 @@ DEMO_APPLICATION_SPECS = [
         "submitted_days_ago": 10,
         "withdrawn": False,
         "nomination_rank": 1,
+        "attach_daad_cycle": True,
     },
     {
         "student_username": "student_approved",
@@ -425,6 +442,26 @@ DEMO_APPLICATION_SPECS = [
         "submitted_days_ago": 2,
         "withdrawn": False,
         "nomination_rank": 4,
+        "attach_daad_cycle": True,
+    },
+    {
+        "student_username": "student_nominated",
+        "program_name": "Erasmus+ Exchange - University of Barcelona, Spain",
+        "status": "nominated",
+        "submitted_days_ago": 12,
+        "withdrawn": False,
+        "nomination_rank": 1,
+        "partner_acknowledged": False,
+    },
+    {
+        "student_username": "student_approved",
+        "program_name": "Erasmus+ Exchange - University of Barcelona, Spain",
+        "status": "nominated",
+        "submitted_days_ago": 20,
+        "withdrawn": False,
+        "nomination_rank": 2,
+        "partner_acknowledged": True,
+        "partner_acknowledged_days_ago": 5,
     },
     {
         "student_username": "student",
@@ -498,6 +535,62 @@ DEMO_WORKFLOW_SLUG = "demo-application-workflow"
 DEMO_WORKFLOW_NAME = "Demo application workflow"
 DEMO_ELIGIBILITY_RULESET_NAME = "Demo Fulbright GPA overlay"
 DEMO_PARTNER_AGREEMENT_REF = "DEMO-SEED-AGR-001"
+DEMO_TUM_AGREEMENT_REF = "DEMO-SEED-AGR-002"
+DEMO_DAAD_PROGRAM_NAME = "DAAD Exchange - Technical University of Munich, Germany"
+DEMO_NOMINATION_CYCLE_NAME = "DEMO-SEED Spring nomination cycle"
+DEMO_DATASET_NAME = "SEIM showcase seed"
+DEMO_TOEFL_SESSION_PREFIX = "demo-toefl-"
+
+DEMO_PRACTICE_ATTEMPT_SPECS = [
+    {
+        "username": "student",
+        "external_session_id": f"{DEMO_TOEFL_SESSION_PREFIX}student-1",
+        "exam_code": "director_extracted",
+        "macro_id": "reading",
+        "client_ref": "demo-student-1",
+        "earned": 28,
+        "total": 40,
+        "percent": 70.0,
+        "categories": [
+            {"name": "Reading", "earned": 18, "total": 20},
+            {"name": "Listening", "earned": 10, "total": 20},
+        ],
+        "weakest": ["Listening"],
+        "completed_days_ago": 14,
+    },
+    {
+        "username": "student",
+        "external_session_id": f"{DEMO_TOEFL_SESSION_PREFIX}student-2",
+        "exam_code": "director_extracted",
+        "macro_id": "full",
+        "client_ref": "demo-student-2",
+        "earned": 34,
+        "total": 40,
+        "percent": 85.0,
+        "categories": [
+            {"name": "Reading", "earned": 19, "total": 20},
+            {"name": "Listening", "earned": 15, "total": 20},
+        ],
+        "weakest": ["Listening"],
+        "completed_days_ago": 3,
+    },
+    {
+        "username": "student_nominated",
+        "external_session_id": f"{DEMO_TOEFL_SESSION_PREFIX}nominated-1",
+        "exam_code": "director_extracted",
+        "macro_id": "reading",
+        "client_ref": "demo-nominated-1",
+        "earned": 30,
+        "total": 40,
+        "percent": 75.0,
+        "categories": [
+            {"name": "Reading", "earned": 16, "total": 20},
+            {"name": "Listening", "earned": 14, "total": 20},
+        ],
+        "weakest": ["Reading"],
+        "completed_days_ago": 7,
+    },
+]
 
 DEMO_BPMN_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

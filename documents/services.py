@@ -45,11 +45,48 @@ class DocumentService:
     """
 
     ALLOWED_FILE_TYPES = ["application/pdf", "image/jpeg", "image/png"]
+    # Keep in sync with frontend-vue/src/utils/documentApi.js DEFAULT_ACCEPTED_EXTENSIONS.
+    DEFAULT_ACCEPTED_EXTENSIONS = ["pdf", "jpg", "jpeg", "png"]
     EXTENSION_MIME = {
         "pdf": "application/pdf",
         "jpg": "image/jpeg",
         "jpeg": "image/jpeg",
         "png": "image/png",
+        "gif": "image/gif",
+        "webp": "image/webp",
+        "bmp": "image/bmp",
+        "tif": "image/tiff",
+        "tiff": "image/tiff",
+        "heic": "image/heic",
+        "heif": "image/heif",
+        "doc": "application/msword",
+        "docx": (
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        ),
+        "odt": "application/vnd.oasis.opendocument.text",
+        "rtf": "application/rtf",
+        "xls": "application/vnd.ms-excel",
+        "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "ods": "application/vnd.oasis.opendocument.spreadsheet",
+        "csv": "text/csv",
+        "ppt": "application/vnd.ms-powerpoint",
+        "pptx": (
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+        ),
+        "odp": "application/vnd.oasis.opendocument.presentation",
+        "txt": "text/plain",
+        "md": "text/markdown",
+        "zip": "application/zip",
+        "7z": "application/x-7z-compressed",
+        "rar": "application/vnd.rar",
+        "mp3": "audio/mpeg",
+        "wav": "audio/wav",
+        "m4a": "audio/mp4",
+        "mp4": "video/mp4",
+        "mov": "video/quicktime",
+        "webm": "video/webm",
+        "eml": "message/rfc822",
+        "msg": "application/vnd.ms-outlook",
     }
     MAX_FILE_SIZE_MB = 10
     MAX_RESUBMISSIONS = 3
@@ -78,11 +115,15 @@ class DocumentService:
         if document_type is not None:
             exts = document_type.parsed_accepted_extensions()
             if exts:
-                allowed_mimes = [
-                    DocumentService.EXTENSION_MIME[ext]
-                    for ext in exts
-                    if ext in DocumentService.EXTENSION_MIME
-                ]
+                allowed_mimes = []
+                seen = set()
+                for ext in exts:
+                    mime = DocumentService.EXTENSION_MIME.get(ext)
+                    if not mime:
+                        mime, _ = mimetypes.guess_type(f"file.{ext}")
+                    if mime and mime not in seen:
+                        seen.add(mime)
+                        allowed_mimes.append(mime)
                 if not allowed_mimes:
                     allowed_mimes = list(DocumentService.ALLOWED_FILE_TYPES)
 
@@ -95,6 +136,19 @@ class DocumentService:
         if file.size > max_mb * 1024 * 1024:
             raise ValueError("File size exceeds maximum allowed.")
         return True
+
+    @staticmethod
+    def resolved_accepted_extensions(document_type: DocumentType | None = None) -> list[str]:
+        """Extensions for a type, falling back to global defaults when unset."""
+        if document_type is not None:
+            exts = document_type.parsed_accepted_extensions()
+            if exts:
+                return list(exts)
+        return list(DocumentService.DEFAULT_ACCEPTED_EXTENSIONS)
+
+    @staticmethod
+    def resolved_accepted_extensions_csv(document_type: DocumentType | None = None) -> str:
+        return ",".join(DocumentService.resolved_accepted_extensions(document_type))
 
     @staticmethod
     def get_requirement_for_application(application, document_type):
@@ -145,8 +199,8 @@ class DocumentService:
                 )
 
         if not replacing and not document_type.allows_multiple:
-            existing_count = Document.objects.filter(
-                application=application, type=document_type
+            existing_count = DocumentService.current_documents(
+                application, document_type
             ).count()
             if existing_count > 0:
                 raise ValueError(
@@ -190,14 +244,17 @@ class DocumentService:
     @staticmethod
     @transaction.atomic
     def upload_document(application, doc_type, file, uploaded_by):
-        """Upload a new document for an application with file type/size and virus scan validation."""
-        for_staff = False
-        if getattr(uploaded_by, "has_role", None):
-            for_staff = uploaded_by.has_role("coordinator") or uploaded_by.has_role(
-                "admin"
+        """Upload a new document for an application with file type/size and virus scan validation.
+
+        Only the applicant may upload. Staff review/approve/reject; they must not
+        upload or replace files on the student's behalf.
+        """
+        if application.student_id != getattr(uploaded_by, "id", None):
+            raise ValueError(
+                "Only the applicant can upload documents for this application."
             )
         DocumentService.ensure_upload_allowed(
-            application, doc_type, for_staff=for_staff
+            application, doc_type, for_staff=False
         )
         DocumentService.validate_file_type_and_size(file, document_type=doc_type)
         # Async virus scan
@@ -209,6 +266,132 @@ class DocumentService:
             str(application.id), "document_uploaded", str(document.id)
         )
         return document
+
+    @staticmethod
+    def current_documents_qs(application, document_type=None):
+        """Uploads that have not been superseded by a newer replace."""
+        qs = Document.objects.filter(application=application)
+        if document_type is not None:
+            qs = qs.filter(type=document_type)
+        return qs.filter(successors__isnull=True).order_by("-created_at")
+
+    @staticmethod
+    def current_documents(application, document_type=None):
+        return DocumentService.current_documents_qs(application, document_type)
+
+    @staticmethod
+    def is_document_current(document: Document) -> bool:
+        if DocumentService._related_is_prefetched(document, "successors"):
+            return len(list(document.successors.all())) == 0
+        return not document.successors.exists()
+
+    @staticmethod
+    def version_chain(document: Document) -> list:
+        """Older versions only (walk supersedes), newest-first after the tip."""
+        chain = []
+        seen = set()
+        current = document.supersedes
+        while current is not None and current.id not in seen:
+            seen.add(current.id)
+            chain.append(current)
+            current = current.supersedes
+        return chain
+
+    @staticmethod
+    def filter_current_from_list(docs: list) -> list:
+        """Keep docs that are not pointed at by another doc's supersedes in the list/DB."""
+        if not docs:
+            return []
+        superseded_ids = {d.supersedes_id for d in docs if d.supersedes_id}
+        # Also treat as superseded if a successor exists outside this list.
+        current = []
+        for doc in docs:
+            if doc.id in superseded_ids:
+                continue
+            if DocumentService.is_document_current(doc):
+                current.append(doc)
+        return current
+
+    @staticmethod
+    def _status_for_single_upload(document: Document) -> str:
+        open_req = DocumentService._open_resubmission_for(document)
+        if open_req:
+            return "resubmit_requested"
+        if document.is_valid:
+            return "approved"
+        if document.validated_at:
+            return "invalid"
+        return "pending_review"
+
+    @staticmethod
+    def _aggregate_upload_status(current_uploads: list) -> tuple[str, object | None, str | None]:
+        """
+        Aggregate checklist status for current siblings.
+
+        Priority: resubmit_requested > invalid > missing > pending_review > approved.
+        Returns (status, primary_document, resubmission_reason).
+        """
+        if not current_uploads:
+            return "missing", None, None
+
+        statuses = []
+        reason = None
+        primary_resub = None
+        for doc in current_uploads:
+            st = DocumentService._status_for_single_upload(doc)
+            statuses.append((st, doc))
+            if st == "resubmit_requested" and reason is None:
+                open_req = DocumentService._open_resubmission_for(doc)
+                if open_req:
+                    reason = open_req.reason
+                    primary_resub = doc
+
+        if any(st == "resubmit_requested" for st, _ in statuses):
+            return "resubmit_requested", primary_resub or statuses[0][1], reason
+        if any(st == "invalid" for st, _ in statuses):
+            invalid_doc = next(doc for st, doc in statuses if st == "invalid")
+            return "invalid", invalid_doc, None
+        if any(st == "pending_review" for st, _ in statuses):
+            pending_doc = next(doc for st, doc in statuses if st == "pending_review")
+            return "pending_review", pending_doc, None
+        # All approved — primary is newest
+        return "approved", current_uploads[0], None
+
+    @staticmethod
+    @transaction.atomic
+    def replace_document(document: Document, file, uploaded_by):
+        """Create a new Document that supersedes ``document`` (keeps prior file)."""
+        if not DocumentService.can_replace_document(document, uploaded_by):
+            raise ValueError(
+                "Document cannot be replaced. Only the applicant may replace a file "
+                "before approval, or after staff marks it invalid / requests resubmission."
+            )
+        if not DocumentService.is_document_current(document):
+            raise ValueError("Only the current version of a document can be replaced.")
+
+        DocumentService.ensure_upload_allowed(
+            document.application,
+            document.type,
+            for_staff=False,
+            replacing=True,
+        )
+        DocumentService.validate_file_type_and_size(file, document_type=document.type)
+        if not DocumentService.virus_scan(file):
+            raise ValueError("File failed virus scan.")
+
+        new_doc = Document.objects.create(
+            application=document.application,
+            type=document.type,
+            file=file,
+            uploaded_by=uploaded_by,
+            supersedes=document,
+            is_valid=False,
+            validated_at=None,
+        )
+        DocumentService.resolve_open_resubmission_requests(document)
+        scan_document_virus.delay(str(new_doc.id), str(uploaded_by.id))
+        DocumentService.notify_coordinators_document_replaced(new_doc)
+        return new_doc
 
     @staticmethod
     def user_can_access_document(user, document: Document) -> bool:
@@ -353,33 +536,136 @@ class DocumentService:
         return req
 
     @staticmethod
+    def _has_open_resubmission(document: Document) -> bool:
+        return DocumentResubmissionRequest.objects.filter(
+            document=document, resolved=False
+        ).exists()
+
+    @staticmethod
+    def document_is_locked_approved(document: Document) -> bool:
+        """True when the upload is valid/approved and staff has not reopened it."""
+        if not (document.is_valid and document.validated_at):
+            return False
+        return not DocumentService._has_open_resubmission(document)
+
+    @staticmethod
     def can_replace_document(document: Document, user):
-        """Check if document can be replaced based on application status and resubmission requests."""
+        """Whether the applicant may replace this file.
+
+        - Only the application student may replace (staff review only).
+        - Once marked valid/approved, locked until staff requests resubmission
+          or marks the document invalid.
+        - After submit, replacement is allowed across non-terminal statuses
+          (under_review, nominated, waitlist, etc.) when resubmit is open or
+          the document was marked invalid.
+        """
         application = document.application
 
-        # If application is still in draft, allow replacement
-        if application.status.name == "draft":
-            return True
-
-        # If application is submitted or later, check for resubmission request
-        if application.status.name in [
-            "submitted",
-            "under_review",
-            "approved",
-            "rejected",
-        ]:
-            has_pending_request = DocumentResubmissionRequest.objects.filter(
-                document=document, resolved=False
-            ).exists()
-            if has_pending_request:
-                return True
-            if document.validated_at and not document.is_valid:
-                return True
-            if getattr(user, "role", None) == "admin":
-                return True
+        if application.student_id != getattr(user, "id", None):
             return False
 
+        if not DocumentService.is_document_current(document):
+            return False
+
+        if DocumentService.document_is_locked_approved(document):
+            return False
+
+        status_name = getattr(application.status, "name", "") or ""
+        if status_name in {"cancelled", "completed"}:
+            return False
+
+        if status_name == "draft":
+            return True
+
+        has_pending_request = DocumentService._has_open_resubmission(document)
+        if has_pending_request:
+            return True
+        if document.validated_at and not document.is_valid:
+            return True
         return False
+
+    @staticmethod
+    def can_download_template(application, document_type, user) -> bool:
+        """Whether the user may download a (prefilled) template for this requirement.
+
+        Staff may always download. Students may not once their upload for this
+        type is valid/approved (until staff requests resubmission or invalidates).
+        """
+        if getattr(user, "has_role", None) and (
+            user.has_role("coordinator") or user.has_role("admin")
+        ):
+            return True
+        if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
+            return True
+        if application.student_id != getattr(user, "id", None):
+            return False
+
+        latest = (
+            DocumentService.current_documents(application, document_type)
+            .select_related("type")
+            .first()
+        )
+        if latest is None:
+            return True
+        return not DocumentService.document_is_locked_approved(latest)
+
+    @staticmethod
+    def _related_is_prefetched(instance, lookup: str) -> bool:
+        cache = getattr(instance, "_prefetched_objects_cache", None)
+        return bool(cache and lookup in cache)
+
+    @staticmethod
+    def _program_document_requirements(program):
+        """Prefer prefetched through-model rows; otherwise query once."""
+        from exchange.models import ProgramDocumentRequirement
+
+        if DocumentService._related_is_prefetched(
+            program, "program_document_requirements"
+        ):
+            reqs = list(program.program_document_requirements.all())
+            reqs.sort(key=lambda r: (r.sort_order, r.id))
+            return reqs
+        return list(
+            ProgramDocumentRequirement.objects.filter(program=program)
+            .select_related("document_type", "required_from_status")
+            .order_by("sort_order", "id")
+        )
+
+    @staticmethod
+    def _uploads_by_type(application):
+        """Group uploads by type_id using prefetch when available."""
+        if DocumentService._related_is_prefetched(application, "document_set"):
+            docs = list(application.document_set.all())
+        else:
+            docs = list(
+                Document.objects.filter(application=application).select_related("type")
+            )
+        docs.sort(key=lambda d: d.created_at, reverse=True)
+        by_type: dict = {}
+        for doc in docs:
+            by_type.setdefault(doc.type_id, []).append(doc)
+        return by_type
+
+    @staticmethod
+    def _open_resubmission_for(document):
+        """Latest unresolved resubmission; use prefetch when present."""
+        if DocumentService._related_is_prefetched(
+            document, "documentresubmissionrequest_set"
+        ):
+            open_reqs = [
+                r
+                for r in document.documentresubmissionrequest_set.all()
+                if not r.resolved
+            ]
+            open_reqs.sort(key=lambda r: r.requested_at, reverse=True)
+            return open_reqs[0] if open_reqs else None
+        return (
+            DocumentResubmissionRequest.objects.filter(
+                document=document, resolved=False
+            )
+            .order_by("-requested_at")
+            .first()
+        )
 
     @staticmethod
     def build_application_document_checklist(application):
@@ -389,21 +675,25 @@ class DocumentService:
         Status per type (latest upload for that type): missing, pending_review,
         invalid, resubmit_requested, approved, n_a (instructions_only).
         Includes deadline / overdue flags for UI and coordinator review.
-        """
-        from exchange.models import ProgramDocumentRequirement
 
-        requirements = list(
-            ProgramDocumentRequirement.objects.filter(program=application.program)
-            .select_related("document_type", "required_from_status")
-            .order_by("sort_order", "id")
-        )
+        Results are cached on ``application._document_checklist_cache`` for the
+        request so readiness / checklist / form-step fields do not rebuild.
+        Uses prefetched requirements, documents, and resubmissions when present.
+        """
+        cached = getattr(application, "_document_checklist_cache", None)
+        if cached is not None:
+            return cached
+
+        requirements = DocumentService._program_document_requirements(application.program)
         if not requirements:
-            return {
+            result = {
                 "complete": True,
                 "required_count": 0,
                 "approved_count": 0,
                 "items": [],
             }
+            application._document_checklist_cache = result
+            return result
 
         items = []
         approved_count = 0
@@ -418,6 +708,8 @@ class DocumentService:
             application.status.name if getattr(application, "status", None) else "draft"
         )
         gate_status = document_completeness_gate(current_status)
+        uploads_by_type = DocumentService._uploads_by_type(application)
+
         for req in requirements:
             dt = req.document_type
             scheduled_required = bool(getattr(req, "is_required", True))
@@ -451,8 +743,12 @@ class DocumentService:
                 "faq": dt.faq or "",
                 "has_template": bool(dt.template_file),
                 "allows_multiple": dt.allows_multiple,
-                "accepted_extensions": dt.accepted_extensions or "",
+                "accepted_extensions": DocumentService.resolved_accepted_extensions_csv(
+                    dt
+                ),
+                "max_file_size_mb": dt.max_file_size_mb,
                 "upload_count": 0,
+                "uploads": [],
             }
 
             if dt.submission_mode == DocumentType.SubmissionMode.INSTRUCTIONS_ONLY:
@@ -462,44 +758,42 @@ class DocumentService:
                 items.append(entry)
                 continue
 
-            uploads = list(
-                Document.objects.filter(application=application, type=dt).order_by(
-                    "-created_at"
-                )
-            )
-            entry["upload_count"] = len(uploads)
-            latest = uploads[0] if uploads else None
-            if not latest:
-                items.append(entry)
-                continue
+            all_uploads = uploads_by_type.get(dt.id, [])
+            current_uploads = DocumentService.filter_current_from_list(all_uploads)
+            entry["upload_count"] = len(current_uploads)
+            entry["uploads"] = [
+                {
+                    "document_id": str(doc.id),
+                    "status": DocumentService._status_for_single_upload(doc),
+                    "created_at": doc.created_at.isoformat() if doc.created_at else None,
+                    "is_valid": bool(doc.is_valid),
+                    "validated_at": (
+                        doc.validated_at.isoformat() if doc.validated_at else None
+                    ),
+                }
+                for doc in current_uploads
+            ]
 
-            entry["document_id"] = str(latest.id)
-            open_req = (
-                DocumentResubmissionRequest.objects.filter(
-                    document=latest, resolved=False
-                )
-                .order_by("-requested_at")
-                .first()
+            status, primary, reason = DocumentService._aggregate_upload_status(
+                current_uploads
             )
-            if open_req:
-                entry["status"] = "resubmit_requested"
-                entry["resubmission_reason"] = open_req.reason
-            elif latest.is_valid:
-                entry["status"] = "approved"
-                if counts_toward_complete:
-                    approved_count += 1
-            elif latest.validated_at:
-                entry["status"] = "invalid"
-            else:
-                entry["status"] = "pending_review"
+            entry["status"] = status
+            if primary is not None:
+                entry["document_id"] = str(primary.id)
+            if reason:
+                entry["resubmission_reason"] = reason
+            if status == "approved" and counts_toward_complete:
+                approved_count += 1
             items.append(entry)
 
-        return {
+        result = {
             "complete": approved_count == required_count,
             "required_count": required_count,
             "approved_count": approved_count,
             "items": items,
         }
+        application._document_checklist_cache = result
+        return result
 
     @staticmethod
     def ensure_required_documents_approved(application):

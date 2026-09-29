@@ -1,0 +1,18 @@
+# Named Cloudflare Tunnel config for seim-localprod.
+# Hostname is filled by scripts\setup-named-cloudflare-tunnel.ps1
+#
+# Place credentials JSON next to this file (or rely on ~/.cloudflared/<TUNNEL_ID>.json).
+
+tunnel: REPLACE_TUNNEL_ID
+credentials-file: REPLACE_CREDENTIALS_FILE
+
+# UDP/QUIC is blocked on this network (Cisco Umbrella); use HTTP/2.
+protocol: http2
+
+ingress:
+  - hostname: REPLACE_HOSTNAME
+    service: http://127.0.0.1:8020
+    originRequest:
+      noTLSVerify: true
+      connectTimeout: 30s
+  - service: http_status:404

@@ -402,19 +402,22 @@ class AdminDashboardViewSet(viewsets.ViewSet):
                 status__name="submitted"
             ).count()
 
-            # Application status breakdown
-            application_status = {}
-            for status_name in [
+            # Application status breakdown (single grouped query)
+            status_names = [
                 "draft",
                 "submitted",
                 "under_review",
                 "approved",
                 "rejected",
                 "withdrawn",
-            ]:
-                application_status[status_name] = Application.objects.filter(
-                    status__name=status_name
-                ).count()
+            ]
+            application_status = {name: 0 for name in status_names}
+            for row in (
+                Application.objects.filter(status__name__in=status_names)
+                .values("status__name")
+                .annotate(total=Count("id"))
+            ):
+                application_status[row["status__name"]] = row["total"]
 
             return Response(
                 {

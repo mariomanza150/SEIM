@@ -57,7 +57,7 @@ describe('CoordinatorWorkload', () => {
       },
     })
     await flushPromises()
-    expect(wrapper.text()).toContain('Coordinator workload')
+    expect(wrapper.text()).toContain(i18n.global.t('route.names.CoordinatorWorkload'))
     expect(wrapper.text()).toContain('Your workload')
     expect(wrapper.text()).toContain('Assigned to you')
     expect(wrapper.text()).toContain('Submitted')
@@ -87,7 +87,7 @@ describe('CoordinatorWorkload', () => {
     })
     await flushPromises()
     expect(wrapper.text()).toContain('Institution overview')
-    expect(wrapper.text()).toContain('No assigned pending applications by coordinator.')
+    expect(wrapper.text()).toContain(i18n.global.t('workloadPage.distributionEmpty'))
   })
 
   it('shows Spanish empty distribution message', async () => {
@@ -100,6 +100,30 @@ describe('CoordinatorWorkload', () => {
       },
     })
     await flushPromises()
-    expect(wrapper.text()).toContain('No hay solicitudes pendientes asignadas por coordinador.')
+    expect(wrapper.text()).toContain(i18n.global.t('workloadPage.distributionEmpty'))
+  })
+
+  it('shows empty CTA when personal queue depth is zero', async () => {
+    api.get.mockResolvedValue({
+      data: {
+        you: {
+          assigned_pending_review: 0,
+          coordinated_programs_pending: 0,
+          assigned_with_open_resubmit: 0,
+          avg_days_in_queue_assigned: null,
+        },
+        global: null,
+        distribution: [],
+      },
+    })
+    const wrapper = mount(CoordinatorWorkload, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="workload-empty"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="workload-empty-cta"]').exists()).toBe(true)
   })
 })

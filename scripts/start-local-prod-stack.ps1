@@ -39,9 +39,22 @@ if (-not $dockerReady) {
     throw "Docker did not become ready within ${DockerTimeoutSec}s"
 }
 
+function Get-LocalProdTunnelToken {
+    if ($env:CLOUDFLARE_TUNNEL_TOKEN) {
+        return $env:CLOUDFLARE_TUNNEL_TOKEN.Trim()
+    }
+    $line = Get-Content $EnvFile | Where-Object { $_ -match '^\s*CLOUDFLARE_TUNNEL_TOKEN\s*=' } | Select-Object -First 1
+    if ($line -and $line -match '^\s*CLOUDFLARE_TUNNEL_TOKEN\s*=\s*(.*)$') {
+        return $Matches[1].Trim().Trim('"').Trim("'")
+    }
+    return ""
+}
+
 Set-Location $ProjectRoot
-Write-Step "Starting seim-localprod stack"
-docker compose -p $ProjectName -f $ComposeFile --env-file $EnvFile up -d --remove-orphans
+$token = Get-LocalProdTunnelToken
+$tunnelProfile = if (-not [string]::IsNullOrWhiteSpace($token)) { "cloudflare" } else { "cloudflare-quick" }
+Write-Step "Starting seim-localprod stack (profile: $tunnelProfile)"
+docker compose -p $ProjectName -f $ComposeFile --env-file $EnvFile --profile $tunnelProfile up -d --remove-orphans
 if ($LASTEXITCODE -ne 0) {
     throw "docker compose up failed (exit $LASTEXITCODE)"
 }
@@ -68,3 +81,19 @@ if (-not $healthy) {
 }
 
 Write-Step "seim-localprod is up at http://localhost:8020/seim/"
+
+$EnsureTunnel = Join-Path $PSScriptRoot "ensure-cloudflare-tunnel.ps1"
+if (Test-Path $EnsureTunnel) {
+    Write-Step "Ensuring Cloudflare Tunnel"
+    try {
+        & $EnsureTunnel
+        $urlFile = Join-Path $ProjectRoot "logs\cloudflare-tunnel.url"
+        if (Test-Path $urlFile) {
+            $publicUrl = (Get-Content $urlFile | Select-Object -First 1).Trim()
+            Write-Step "Public HTTPS: $publicUrl/seim/"
+        }
+    }
+    catch {
+        Write-Warning "Cloudflare Tunnel not started: $($_.Exception.Message)"
+    }
+}

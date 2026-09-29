@@ -2,30 +2,23 @@
   <div class="admin-application-edit-page" data-testid="admin-application-edit-page">
     <PageHeader :title="t('route.names.AdminApplicationEdit')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminApplicationEdit') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.AdminApplicationEdit') },
+          ]"
+        />
       </template>
     </PageHeader>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-      <p class="mt-3 text-muted">{{ t('adminApplicationEdit.loading') }}</p>
-    </div>
-
-    <div v-else-if="error" class="alert alert-danger" role="alert">
-      <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
-      {{ error }}
-    </div>
-
-    <div v-else-if="application" class="row g-3">
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      skeleton="none"
+      :loading-label="t('adminApplicationEdit.loading')"
+    >
+    <div v-if="application" class="row g-3">
       <div class="col-lg-8">
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -164,6 +157,7 @@
         </div>
       </div>
     </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -174,6 +168,8 @@ import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import {
   applicationStatusBadgeClass,
   formatApplicationStatus,

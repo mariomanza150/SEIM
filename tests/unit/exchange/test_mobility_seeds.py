@@ -11,6 +11,7 @@ from documents.models import DocumentType
 from exchange.mobility_schemes import (
     MOBILITY_SCHEME_HISPANA,
     MOBILITY_SCHEME_INGLESa,
+    MOBILITY_SCHEME_MAESTRIA,
     MOBILITY_SCHEME_SPECS,
     seed_mobility_schemes,
 )
@@ -20,9 +21,9 @@ from exchange.models import Program, ProgramDocumentRequirement
 @pytest.mark.django_db
 @pytest.mark.unit
 class TestMobilitySeeds:
-    def test_seed_schemes_creates_two_and_updates_eligibility(self):
+    def test_seed_schemes_creates_three_and_updates_eligibility(self):
         programs = seed_mobility_schemes()
-        assert len(programs) == 2
+        assert len(programs) == 3
         names = {p.name for p in programs}
         assert names == {spec["name"] for spec in MOBILITY_SCHEME_SPECS}
 
@@ -43,24 +44,48 @@ class TestMobilitySeeds:
         assert inglesa.min_toefl_score == 550
         assert not Program.objects.filter(name="Movilidad Nacional", is_active=True).exists()
 
+        maestria = Program.objects.get(name=MOBILITY_SCHEME_MAESTRIA)
+        assert maestria.min_semester == 1
+        assert maestria.min_credits_approved_percent is None
+        assert maestria.is_active is True
+
     def test_mx_document_catalog_and_scheme_requirements(self):
         seed_mobility_schemes()
         types = seed_mobility_document_types()
         assert len(types) == len(MOBILITY_DOCUMENT_TYPES)
         assert DocumentType.objects.filter(slug="solicitud_participacion").exists()
         assert DocumentType.objects.filter(slug="carta_homologacion").exists()
+        assert DocumentType.objects.filter(slug="carta_retorno_programa").exists()
+        postulacion = DocumentType.objects.get(slug="carta_postulacion")
+        assert postulacion.submission_mode == DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD
+        assert set(postulacion.file_type_families.values_list("slug", flat=True)) == {
+            "pdf",
+            "word",
+        }
+        passport = DocumentType.objects.get(slug="pasaporte_vigente")
+        assert set(passport.file_type_families.values_list("slug", flat=True)) == {
+            "pdf",
+            "image",
+        }
+        reglamento = DocumentType.objects.get(slug="reglamento_movilidad")
+        assert reglamento.submission_mode == DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD
         inscription = DocumentType.objects.get(slug="inscripcion_uadec")
         assert inscription.name == "Inscripción UAdeC"
 
         assign_scheme_document_requirements()
         assign_scheme_document_requirements()
-        for name in (MOBILITY_SCHEME_HISPANA, MOBILITY_SCHEME_INGLESa):
+        for name in (MOBILITY_SCHEME_HISPANA, MOBILITY_SCHEME_INGLESa, MOBILITY_SCHEME_MAESTRIA):
             program = Program.objects.get(name=name)
             assert ProgramDocumentRequirement.objects.filter(program=program).exists()
             assert ProgramDocumentRequirement.objects.filter(
                 program=program,
                 document_type__slug="solicitud_participacion",
                 is_required=True,
+            ).exists()
+            assert ProgramDocumentRequirement.objects.filter(
+                program=program,
+                document_type__slug="carta_retorno_programa",
+                is_required=False,
             ).exists()
 
     def test_inscription_label_uses_institution_short_name(self, settings):

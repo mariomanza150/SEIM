@@ -5,14 +5,13 @@
       :subtitle="t('scholarshipScoringRulesetsPage.subtitle')"
     >
       <template #breadcrumb>
-        <nav :aria-label="t('scholarshipScoringRulesetsPage.breadcrumbAria')">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.ScholarshipScoringRulesets') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('scholarshipScoringRulesetsPage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.ScholarshipScoringRulesets') },
+          ]"
+        />
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="fetchList">
@@ -29,78 +28,76 @@
       </template>
     </PageHeader>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger">{{ error }}</div>
-    <div v-else class="card" data-testid="scholarship-scoring-rulesets-page">
-      <div class="table-responsive">
-        <table class="table table-hover mb-0">
-          <thead>
-            <tr>
-              <th>{{ t('scholarshipScoringRulesetsPage.colLabel') }}</th>
-              <th>{{ t('scholarshipScoringRulesetsPage.colSlug') }}</th>
-              <th>{{ t('scholarshipScoringRulesetsPage.colActive') }}</th>
-              <th>{{ t('scholarshipScoringRulesetsPage.colUpdated') }}</th>
-              <th class="text-end">{{ t('adminCommon.actions') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in rows" :key="row.id">
-              <td>{{ row.label }}</td>
-              <td><code data-testid="scholarship-ruleset-slug">{{ row.slug }}</code></td>
-              <td>{{ row.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}</td>
-              <td>{{ formatDate(row.updated_at) }}</td>
-              <td class="text-end">
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-primary"
-                  data-testid="scholarship-ruleset-edit"
-                  @click="openEdit(row)"
-                >
-                  {{ t('adminCommon.edit') }}
-                </button>
-              </td>
-            </tr>
-            <tr v-if="!rows.length">
-              <td colspan="5" class="text-muted text-center py-4">
-                {{ t('scholarshipScoringRulesetsPage.empty') }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div
-      v-if="editor.open"
-      class="modal d-block"
-      tabindex="-1"
-      role="dialog"
-      data-testid="scholarship-ruleset-editor"
+    <RulesetListShell
+      :loading="loading"
+      :error="error"
+      :empty="!loading && !error && rows.length === 0"
+      :empty-body="t('scholarshipScoringRulesetsPage.empty')"
+      :loading-label="t('adminCommon.loading')"
+      :skeleton-columns="5"
+      :items="rows"
+      :columns="rulesetColumns"
+      mobile-test-id="scholarship-ruleset"
     >
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              {{
-                editor.id
-                  ? t('scholarshipScoringRulesetsPage.editTitle')
-                  : t('scholarshipScoringRulesetsPage.create')
-              }}
-            </h5>
-            <button
-              type="button"
-              class="btn-close"
-              :aria-label="t('adminCommon.close')"
-              @click="editor.open = false"
-            ></button>
+      <template #table>
+        <div class="card" data-testid="scholarship-scoring-rulesets-page">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>{{ t('scholarshipScoringRulesetsPage.colLabel') }}</th>
+                  <th>{{ t('scholarshipScoringRulesetsPage.colSlug') }}</th>
+                  <th>{{ t('scholarshipScoringRulesetsPage.colActive') }}</th>
+                  <th>{{ t('scholarshipScoringRulesetsPage.colUpdated') }}</th>
+                  <th class="text-end">{{ t('adminCommon.actions') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in rows" :key="row.id">
+                  <td>{{ row.label }}</td>
+                  <td><code data-testid="scholarship-ruleset-slug">{{ row.slug }}</code></td>
+                  <td>{{ row.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}</td>
+                  <td>{{ formatDate(row.updated_at) }}</td>
+                  <td class="text-end">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      data-testid="scholarship-ruleset-edit"
+                      @click="openEdit(row)"
+                    >
+                      {{ t('adminCommon.edit') }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
-          <form @submit.prevent="saveEditor">
-            <div class="modal-body">
-              <div v-if="editor.error" class="alert alert-danger">{{ editor.error }}</div>
+        </div>
+      </template>
+      <template #col-slug="{ item }"><code data-testid="scholarship-ruleset-slug">{{ item.slug }}</code></template>
+      <template #col-is_active="{ item }">{{ item.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}</template>
+      <template #col-updated_at="{ item }">{{ formatDate(item.updated_at) }}</template>
+      <template #actions="{ item }">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-primary"
+          data-testid="scholarship-ruleset-edit"
+          @click="openEdit(item)"
+        >
+          {{ t('adminCommon.edit') }}
+        </button>
+      </template>
+    </RulesetListShell>
+
+    <FormModal
+      :open="editor.open"
+      :title="editor.id ? t('scholarshipScoringRulesetsPage.editTitle') : t('scholarshipScoringRulesetsPage.create')"
+      :error="editor.error"
+      :saving="editor.saving"
+      data-testid="scholarship-ruleset-editor"
+      @close="editor.open = false"
+      @submit="saveEditor"
+    >
               <p class="small text-muted" data-testid="scholarship-ruleset-mvp-note">
                 {{ t('scholarshipScoringRulesetsPage.mvpNote') }}
               </p>
@@ -174,25 +171,7 @@
                   />
                 </div>
               </div>
-            </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-outline-secondary" @click="editor.open = false">
-                {{ t('adminCommon.cancel') }}
-              </button>
-              <button
-                type="submit"
-                class="btn btn-primary"
-                :disabled="editor.saving"
-                data-testid="scholarship-ruleset-save"
-              >
-                {{ t('adminCommon.save') }}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-    <div v-if="editor.open" class="modal-backdrop fade show"></div>
+    </FormModal>
   </div>
 </template>
 
@@ -200,6 +179,9 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import RulesetListShell from '@/components/RulesetListShell.vue'
+import FormModal from '@/components/FormModal.vue'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 
@@ -226,6 +208,13 @@ const loading = ref(true)
 const error = ref('')
 const rows = ref([])
 const factorIds = FACTOR_IDS
+
+const rulesetColumns = computed(() => [
+  { key: 'label', label: t('scholarshipScoringRulesetsPage.colLabel') },
+  { key: 'slug', label: t('scholarshipScoringRulesetsPage.colSlug') },
+  { key: 'is_active', label: t('scholarshipScoringRulesetsPage.colActive') },
+  { key: 'updated_at', label: t('scholarshipScoringRulesetsPage.colUpdated') },
+])
 
 const editor = reactive({
   open: false,

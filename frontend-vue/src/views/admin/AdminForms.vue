@@ -2,14 +2,13 @@
   <div class="admin-forms-page">
     <PageHeader :title="t('adminForms.title')" :subtitle="t('adminForms.subtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminForms') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.AdminForms') },
+          ]"
+        />
       </template>
 
       <template #actions>
@@ -22,60 +21,50 @@
       </template>
     </PageHeader>
 
-    <div class="card mb-3" data-testid="admin-forms-filters">
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
-            <input
-              v-model="filters.search"
-              class="form-control"
-              type="text"
-              :placeholder="t('adminForms.searchPlaceholder')"
-              @input="debouncedSearch"
-            />
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">{{ t('adminForms.filterType') }}</label>
-            <select v-model="filters.form_type" class="form-select" @change="fetchForms">
-              <option value="">{{ t('adminCommon.filterAll') }}</option>
-              <option v-for="opt in formTypeOptions" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-              </option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">{{ t('adminCommon.sortLabel') }}</label>
-            <select v-model="filters.ordering" class="form-select" @change="fetchForms">
-              <option value="name">{{ t('adminForms.sortNameAsc') }}</option>
-              <option value="-created_at">{{ t('adminForms.sortNewest') }}</option>
-            </select>
-          </div>
+    <CompactFilterBar test-id="admin-forms-filters" @clear="clearFilters">
+      <template #primary>
+        <div class="col-md-6">
+          <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
+          <input
+            v-model="filters.search"
+            class="form-control"
+            type="text"
+            :placeholder="t('adminForms.searchPlaceholder')"
+            @input="debouncedSearch"
+          />
         </div>
-      </div>
-    </div>
-
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-      <p class="mt-3 text-muted">{{ t('adminForms.loadingList') }}</p>
-    </div>
-
-    <div v-else-if="error" class="alert alert-danger" role="alert">
-      <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
-      {{ error }}
-    </div>
-
-    <div v-else class="card">
-      <div class="card-header bg-transparent d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div class="text-muted small">
-          {{ forms.length }}
+        <div class="col-md-3">
+          <label class="form-label">{{ t('adminForms.filterType') }}</label>
+          <select v-model="filters.form_type" class="form-select" @change="fetchForms">
+            <option value="">{{ t('adminCommon.filterAll') }}</option>
+            <option v-for="opt in formTypeOptions" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-secondary" @click="resetFilters" :disabled="loading">
-          <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{{ t('adminCommon.resetFilters') }}
-        </button>
-      </div>
+      </template>
+      <template #advanced>
+        <div class="col-md-4">
+          <label class="form-label">{{ t('adminCommon.sortLabel') }}</label>
+          <select v-model="filters.ordering" class="form-select" @change="fetchForms">
+            <option value="name">{{ t('adminForms.sortNameAsc') }}</option>
+            <option value="-created_at">{{ t('adminForms.sortNewest') }}</option>
+          </select>
+        </div>
+      </template>
+    </CompactFilterBar>
+
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      :empty="!forms.length"
+      :empty-title="t('adminForms.empty')"
+      skeleton="table"
+      :loading-label="t('adminForms.loadingList')"
+      :skeleton-columns="5"
+    >
+    <div class="card">
+      <ResponsiveList :items="forms" :columns="mobileColumns" mobile-test-id="admin-forms-mobile">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0" data-testid="admin-forms-table">
           <thead>
@@ -88,11 +77,6 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="!forms.length">
-              <td colspan="5" class="text-muted text-center py-4">
-                {{ t('adminForms.empty') }}
-              </td>
-            </tr>
             <tr v-for="ft in forms" :key="ft.id">
               <td class="min-w-0">
                 <div class="fw-medium text-truncate">{{ ft.name }}</div>
@@ -128,25 +112,48 @@
           </tbody>
         </table>
       </div>
+      <template #col-name="{ item }">
+        <div class="fw-medium">{{ item.name }}</div>
+        <div v-if="item.description" class="text-muted small">{{ item.description }}</div>
+      </template>
+      <template #col-type="{ item }">
+        <span class="badge bg-secondary">{{ item.form_type }}</span>
+      </template>
+      <template #col-active="{ item }">
+        <span class="badge" :class="item.is_active ? 'bg-success' : 'bg-secondary'">
+          {{ item.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}
+        </span>
+      </template>
+      <template #col-fields="{ item }">{{ item.field_count ?? 0 }}</template>
+      <template #actions="{ item }">
+        <router-link
+          class="btn btn-sm btn-primary"
+          :to="{ name: 'AdminDynformEditor', params: { id: String(item.id) } }"
+          data-testid="admin-forms-open-builder"
+        >
+          {{ t('adminForms.openBuilder') }}
+        </router-link>
+        <button type="button" class="btn btn-sm btn-outline-secondary" @click="openEdit(item)">
+          <i class="bi bi-pencil me-1" aria-hidden="true"></i>{{ t('adminCommon.edit') }}
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-danger" @click="confirmDelete(item)" :disabled="mutating">
+          <i class="bi bi-trash me-1" aria-hidden="true"></i>{{ t('adminCommon.delete') }}
+        </button>
+      </template>
+      </ResponsiveList>
     </div>
+    </PageStateShell>
 
-    <!-- Editor -->
-    <div v-if="editor.open" class="modal-backdrop show"></div>
-    <div v-if="editor.open" class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
-      <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              {{ editor.mode === 'create' ? t('adminForms.create') : t('adminForms.editTitle') }}
-            </h5>
-            <button type="button" class="btn-close" :aria-label="t('adminCommon.close')" @click="closeEditor" />
-          </div>
-          <div class="modal-body">
-            <div v-if="editor.error" class="alert alert-danger" role="alert">
-              {{ editor.error }}
-            </div>
-
-            <div class="row g-3">
+    <FormModal
+      :open="editor.open"
+      :title="editor.mode === 'create' ? t('adminForms.create') : t('adminForms.editTitle')"
+      :error="editor.error || ''"
+      :saving="editor.saving"
+      size="xl"
+      @close="closeEditor"
+      @submit="saveForm"
+    >
+      <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">{{ t('adminForms.fields.name') }}</label>
                 <input v-model="editor.form.name" class="form-control" type="text" />
@@ -187,30 +194,23 @@
                 <textarea v-model="editor.form.step_definitions_text" class="form-control font-monospace" rows="8" />
                 <div class="form-text">{{ t('adminForms.fields.stepsHelp') }}</div>
               </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" @click="closeEditor">
-              {{ t('adminCommon.cancel') }}
-            </button>
-            <button type="button" class="btn btn-primary" :disabled="editor.saving" @click="saveForm">
-              <span v-if="editor.saving" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
-              {{ t('adminCommon.save') }}
-            </button>
-          </div>
-        </div>
       </div>
-    </div>
+    </FormModal>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import FormModal from '@/components/FormModal.vue'
 
 const { t } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -227,7 +227,14 @@ const filters = ref({
   ordering: 'name',
 })
 
-function resetFilters() {
+const mobileColumns = computed(() => [
+  { key: 'name', label: t('adminForms.columns.name') },
+  { key: 'type', label: t('adminForms.columns.type') },
+  { key: 'active', label: t('adminForms.columns.active') },
+  { key: 'fields', label: t('adminForms.columns.fields') },
+])
+
+function clearFilters() {
   filters.value = { search: '', form_type: '', ordering: 'name' }
   fetchForms()
 }

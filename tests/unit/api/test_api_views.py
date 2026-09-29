@@ -161,6 +161,36 @@ class TestAPIViews(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("results", response.data)
 
+    def test_applications_list_uses_slim_serializer(self):
+        """List payload omits per-row dynamic form layout and submissions."""
+        self.client.force_authenticate(user=self.user)
+        Application.objects.create(
+            program=self.program,
+            student=self.user,
+            status=self.application_status,
+        )
+        response = self.client.get("/api/applications/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        row = response.data["results"][0]
+        self.assertIn("program_name", row)
+        self.assertIn("readiness", row)
+        self.assertNotIn("dynamic_form_layout", row)
+        self.assertNotIn("dynamic_form_submission", row)
+        self.assertNotIn("document_checklist", row)
+
+    def test_applications_list_honors_page_size(self):
+        self.client.force_authenticate(user=self.user)
+        for _ in range(3):
+            Application.objects.create(
+                program=self.program,
+                student=self.user,
+                status=self.application_status,
+            )
+        response = self.client.get("/api/applications/", {"page_size": 1})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["results"]), 1)
+        self.assertEqual(response.data["count"], 3)
+
     def test_users_list_unauthorized(self):
         """Test users list without authentication"""
         response = self.client.get("/api/users/")

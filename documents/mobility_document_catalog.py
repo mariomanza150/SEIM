@@ -6,7 +6,13 @@ Maps legacy English DocumentType.name seeds to Spanish display names + stable sl
 
 from __future__ import annotations
 
-from documents.models import DocumentType
+from django.db import connection
+
+from documents.file_type_families import (
+    infer_family_slugs_from_extensions,
+    seed_file_type_families,
+)
+from documents.models import DocumentType, FileTypeFamily
 from exchange.models import Program, ProgramDocumentRequirement
 
 # Legacy English seed name → new slug (overlapping types are renamed in place).
@@ -59,12 +65,13 @@ MOBILITY_DOCUMENT_TYPES = (
     {
         "slug": "carta_postulacion",
         "name": "Carta de Postulación",
-        "description": "Carta de postulación emitida por la facultad (instrucciones).",
-        "submission_mode": DocumentType.SubmissionMode.INSTRUCTIONS_ONLY,
+        "description": "Carta de postulación emitida por la facultad.",
+        "submission_mode": DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD,
         "instructions": (
-            "Solicite la carta de postulación a la dirección de su facultad. "
-            "No se carga en esta plataforma; conserve el original para trámites externos."
+            "Descargue el formato oficial, solicite la firma de la dirección de su facultad "
+            "y conserve el original para trámites externos."
         ),
+        "accepted_extensions": "pdf,docx",
     },
     {
         "slug": "seguro_gastos_medicos",
@@ -112,12 +119,27 @@ MOBILITY_DOCUMENT_TYPES = (
     {
         "slug": "reglamento_movilidad",
         "name": "Reglamento de Movilidad",
-        "description": "Acuse de conocimiento del reglamento de movilidad.",
-        "submission_mode": DocumentType.SubmissionMode.INSTRUCTIONS_ONLY,
+        "description": "Lineamientos y disposiciones del programa de movilidad.",
+        "submission_mode": DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD,
         "instructions": (
-            "Lea el Reglamento de Movilidad institucional. "
+            "Descargue y lea los Lineamientos y Disposiciones oficiales. "
             "Su participación implica aceptación de las disposiciones vigentes."
         ),
+        "accepted_extensions": "pdf",
+    },
+    {
+        "slug": "carta_retorno_programa",
+        "name": "Carta Compromiso Programa de Retorno",
+        "description": (
+            "Carta compromiso de adhesión al programa de retorno "
+            "(formato oficial CGRI)."
+        ),
+        "submission_mode": DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD,
+        "instructions": (
+            "Descargue la plantilla de adhesión al programa de retorno, "
+            "fírmela y súbala en PDF cuando corresponda."
+        ),
+        "accepted_extensions": "pdf",
     },
     {
         # Stable legacy slug; display name is branded at seed time.
@@ -215,6 +237,9 @@ INTERNATIONAL_EXTRA = (
     (170, "caratula_cuenta_santander"),
 )
 
+# Optional return-program commitment (international schemes).
+RETURN_PROGRAM_OPTIONAL = ((180, "carta_retorno_programa"),)
+
 # Optional scholarship docs (international schemes only).
 SCHOLARSHIP_OPTIONAL = (
     (200, "carta_beca"),
@@ -243,24 +268,35 @@ def _branded_document_spec(spec: dict) -> dict:
     return branded
 
 
-def seed_mobility_document_types() -> list[DocumentType]:
-    """Create/update Mexican mobility DocumentType rows; map legacy English names."""
-    by_slug: dict[str, DocumentType] = {}
+def seed_mobility_document_types(document_type_model=None) -> list:
+    """Create/update Mexican mobility DocumentType rows; map legacy English names.
+
+    Pass a historical ``document_type_model`` from migration RunPython so INSERT
+    only uses columns present at that migration state.
+    """
+    DocumentTypeModel = document_type_model or DocumentType
+    family_ready = "documents_filetypefamily" in connection.introspection.table_names()
+    families_by_slug = {}
+    if family_ready:
+        seed_file_type_families()
+        families_by_slug = {f.slug: f for f in FileTypeFamily.objects.all()}
+    by_slug = {}
+    model_field_names = {f.name for f in DocumentTypeModel._meta.local_fields}
     for spec in MOBILITY_DOCUMENT_TYPES:
         spec = _branded_document_spec(spec)
         slug = spec["slug"]
         legacy_names = spec.get("legacy_names") or ()
-        existing = DocumentType.objects.filter(slug=slug).first()
+        existing = DocumentTypeModel.objects.filter(slug=slug).first()
         if not existing:
             for legacy in legacy_names:
-                existing = DocumentType.objects.filter(
+                existing = DocumentTypeModel.objects.filter(
                     name=legacy, slug__isnull=True
                 ).first()
                 if existing:
                     break
             if not existing:
                 for legacy in legacy_names:
-                    existing = DocumentType.objects.filter(name=legacy).first()
+                    existing = DocumentTypeModel.objects.filter(name=legacy).first()
                     if existing:
                         break
 
@@ -276,13 +312,26 @@ def seed_mobility_document_types() -> list[DocumentType]:
             "accepted_extensions": spec.get("accepted_extensions", ""),
             "allows_multiple": spec.get("allows_multiple", False),
         }
+        defaults = {k: v for k, v in defaults.items() if k in model_field_names}
         if existing:
+            update_fields = []
             for key, value in defaults.items():
                 setattr(existing, key, value)
-            existing.save()
+                update_fields.append(key)
+            existing.save(update_fields=update_fields or None)
             dt = existing
         else:
-            dt, _ = DocumentType.objects.update_or_create(slug=slug, defaults=defaults)
+            dt = DocumentTypeModel.objects.create(**defaults)
+        family_slugs = spec.get("file_type_families")
+        if family_slugs is None:
+            family_slugs = infer_family_slugs_from_extensions(
+                spec.get("accepted_extensions", "")
+            )
+        family_objs = [
+            families_by_slug[s] for s in family_slugs if s in families_by_slug
+        ]
+        if family_ready and hasattr(dt, "file_type_families"):
+            dt.file_type_families.set(family_objs)
         by_slug[slug] = dt
     return list(by_slug.values())
 
@@ -293,7 +342,7 @@ def assign_scheme_document_requirements(
     document_type_model=None,
 ) -> int:
     """
-    Attach ProgramDocumentRequirement rows to the three mobility schemes.
+    Attach ProgramDocumentRequirement rows to mobility schemes.
 
     Scholarship docs are optional and only on international schemes.
     Returns number of requirement rows ensured.
@@ -306,13 +355,15 @@ def assign_scheme_document_requirements(
     requirement_cls = requirement_model or ProgramDocumentRequirement
     document_type_cls = document_type_model or DocumentType
 
-    seed_mobility_document_types()
+    seed_mobility_document_types(document_type_model=document_type_cls)
     schemes = {
         "Movilidad Internacional Habla Hispana": "intl_es",
         "Movilidad Internacional Habla Inglesa": "intl",
         "Movilidad Internacional": "intl",
+        "Movilidad Maestría": "maestria",
     }
     created = 0
+    req_field_names = {f.name for f in requirement_cls._meta.local_fields}
     for program_name, kind in schemes.items():
         program = program_cls.objects.filter(name=program_name).first()
         if not program:
@@ -320,21 +371,27 @@ def assign_scheme_document_requirements(
         rows: list[tuple[int, str, bool]] = [
             (order, slug, True) for order, slug in CORE_SCHEME_REQUIREMENTS
         ]
-        rows.extend((order, slug, True) for order, slug in INTERNATIONAL_EXTRA)
-        rows.extend((order, slug, False) for order, slug in SCHOLARSHIP_OPTIONAL)
+        if kind in ("intl_es", "intl", "maestria"):
+            rows.extend((order, slug, True) for order, slug in INTERNATIONAL_EXTRA)
+            rows.extend((order, slug, False) for order, slug in RETURN_PROGRAM_OPTIONAL)
+            rows.extend((order, slug, False) for order, slug in SCHOLARSHIP_OPTIONAL)
 
         for sort_order, slug, is_required in rows:
             dt = document_type_cls.objects.filter(slug=slug).first()
             if not dt:
                 continue
+            defaults = {
+                "is_required": is_required,
+                "sort_order": sort_order,
+            }
+            if "deadline_days_before_program_deadline" in req_field_names:
+                defaults["deadline_days_before_program_deadline"] = (
+                    0 if is_required else None
+                )
             _, was_created = requirement_cls.objects.update_or_create(
                 program=program,
                 document_type=dt,
-                defaults={
-                    "is_required": is_required,
-                    "sort_order": sort_order,
-                    "deadline_days_before_program_deadline": 0 if is_required else None,
-                },
+                defaults=defaults,
             )
             if was_created:
                 created += 1

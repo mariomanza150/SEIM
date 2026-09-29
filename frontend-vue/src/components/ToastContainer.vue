@@ -1,6 +1,6 @@
 <template>
   <div
-    class="toast-container position-fixed end-0 p-3 seim-toast-container"
+    class="toast-container position-fixed seim-toast-container"
     data-testid="toast-container"
     style="pointer-events: none"
   >
@@ -11,6 +11,7 @@
       role="alert"
       :class="`toast-${toast.type}`"
       style="pointer-events: auto"
+      data-testid="toast-item"
     >
       <div class="toast-header">
         <i
@@ -21,6 +22,7 @@
             'bi-exclamation-triangle-fill text-warning': toast.type === 'warning',
             'bi-info-circle-fill text-info': toast.type === 'info',
           }"
+          aria-hidden="true"
         ></i>
         <strong class="me-auto">
           {{ toastTitle(toast.type) }}
@@ -28,6 +30,7 @@
         <button
           type="button"
           class="btn-close"
+          data-testid="toast-dismiss"
           @click="removeToast(toast.id)"
           :aria-label="t('toast.close')"
         ></button>
@@ -64,13 +67,26 @@ function toastTitle(type) {
 
 <style scoped>
 .seim-toast-container {
-  /* Sit below navbar + page-header actions so Validate/Save stay clickable. */
+  /* Sit below navbar + page-header actions; inset from the right so panels
+     open toward the page interior instead of flush against the viewport edge. */
   top: calc(9.25rem + env(safe-area-inset-top, 0px));
+  right: max(0.75rem, env(safe-area-inset-right, 0px));
+  left: auto;
+  bottom: auto;
   z-index: 1080;
+  width: min(22rem, calc(100vw - 1.5rem));
+  max-width: calc(100vw - 1.5rem);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  box-sizing: border-box;
 }
 
 .toast {
-  min-width: 300px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: 0.5rem;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   background-color: var(--seim-surface-bg);
@@ -86,6 +102,7 @@ function toastTitle(type) {
 
 .toast-body {
   word-wrap: break-word;
+  overflow-wrap: anywhere;
   background-color: var(--seim-surface-bg);
   color: var(--seim-surface-text);
 }

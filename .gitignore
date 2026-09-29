@@ -53,6 +53,10 @@ coverage.xml
 cover/
 test_docs/
 test_output.txt
+test-out.txt
+test-out*.txt
+test-vitest-out*.txt
+*-probe.pdf
 test_deployment_*.log
 test_app_*.txt
 temp_*.txt
@@ -225,6 +229,15 @@ tenant_config.json
 *.backup
 *.tmp
 logs/runner-registration-token.txt
+logs/cloudflare-tunnel.url
+logs/cloudflare-tunnel.log
+logs/cloudflare-tunnel.pid
+logs/cloudflare-login.log
+logs/cloudflare-login.err
+tools/cloudflared/cloudflared.exe
+config/cloudflared/config.yml
+config/cloudflared/*.json
+config/cloudflared/tunnel-state.json
 
 # Node modules (if any frontend build tools)
 node_modules/
@@ -290,3 +303,8 @@ branding/*/logos/*
 tests/e2e_playwright/screenshots/
 tests/e2e_playwright/videos/
 tests/e2e_playwright/reports/
+
+# Local Tailscale / TLS host certs (never commit)
+*.ts.net.crt
+*.ts.net.key
+*.ts.net.pem

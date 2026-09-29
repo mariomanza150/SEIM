@@ -44,7 +44,7 @@ dependencies = [
     # Production and Deployment
     "gunicorn==23.0.0",
     "whitenoise==6.6.0",
-    "sentry-sdk==2.8.0",
+    "sentry-sdk[django]==2.8.0",
     # Utilities
     "openpyxl==3.1.5",
     "python-dateutil==2.8.2",
@@ -432,4 +432,4 @@ max-locals = 20
 max-parents = 7
 max-public-methods = 20
 max-returns = 6
-max-statements = 60 
+max-statements = 60

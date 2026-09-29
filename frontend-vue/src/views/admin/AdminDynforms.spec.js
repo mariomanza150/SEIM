@@ -26,6 +26,7 @@ describe('AdminDynforms', () => {
       history: createMemoryHistory(),
       routes: [
         { path: '/', name: 'Dashboard', component: { template: '<div />' } },
+        { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
         { path: '/admin/dynforms', name: 'AdminDynforms', component: AdminDynforms },
         { path: '/admin/dynforms/:id', name: 'AdminDynformEditor', component: { template: '<div />' } },
       ],

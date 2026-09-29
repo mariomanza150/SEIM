@@ -4,45 +4,18 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import axios from 'axios'
+import { formatApiErrorResponse, fieldErrorsFromResponse } from '@/utils/apiErrors'
+import {
+  ACCESS_TOKEN_KEYS,
+  REFRESH_TOKEN_KEYS,
+  getStoredToken,
+  persistToken,
+} from '@/utils/authTokens'
+import { clearReviewQueueNav } from '@/utils/reviewQueueNav'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
-const ACCESS_TOKEN_KEYS = ['access_token', 'seim_access_token']
-const REFRESH_TOKEN_KEYS = ['refresh_token', 'seim_refresh_token']
 
-function getStoredToken(keys) {
-  return keys.map(key => localStorage.getItem(key)).find(Boolean) || null
-}
-
-function persistToken(keys, value) {
-  keys.forEach((key) => {
-    if (value) {
-      localStorage.setItem(key, value)
-    } else {
-      localStorage.removeItem(key)
-    }
-  })
-}
-
-/** Normalize DRF / Django error payloads for display (MQ-006). */
-function formatAuthErrorResponse(data) {
-  if (data == null || typeof data !== 'object') return null
-  if (typeof data.detail === 'string') return data.detail
-  if (Array.isArray(data.detail)) return data.detail.map(String).join(' ')
-  if (Array.isArray(data.non_field_errors)) return data.non_field_errors.join(' ')
-  const parts = []
-  for (const [key, val] of Object.entries(data)) {
-    if (key === 'detail' && val && typeof val === 'object' && !Array.isArray(val)) {
-      for (const inner of Object.values(val)) {
-        if (Array.isArray(inner)) parts.push(...inner.map(String))
-        else if (inner != null) parts.push(String(inner))
-      }
-      continue
-    }
-    if (Array.isArray(val)) parts.push(...val.map(String))
-    else if (typeof val === 'string') parts.push(val)
-  }
-  return parts.length ? parts.join(' ') : null
-}
+const formatAuthErrorResponse = formatApiErrorResponse
 
 export const useAuthStore = defineStore('auth', () => {
   // State
@@ -51,6 +24,8 @@ export const useAuthStore = defineStore('auth', () => {
   const refreshToken = ref(getStoredToken(REFRESH_TOKEN_KEYS))
   const isLoading = ref(false)
   const error = ref(null)
+  const errorCode = ref(null)
+  const fieldErrors = ref({})
 
   // Getters
   const isAuthenticated = computed(() => !!accessToken.value && !!user.value)
@@ -84,10 +59,21 @@ export const useAuthStore = defineStore('auth', () => {
     return user.value.email || user.value.username || 'User'
   })
 
+  function extractErrorCode(body) {
+    if (!body || typeof body !== 'object') return null
+    if (typeof body.code === 'string') return body.code
+    if (body.detail && typeof body.detail === 'object' && typeof body.detail.code === 'string') {
+      return body.detail.code
+    }
+    return null
+  }
+
   // Actions
   async function login(email, password) {
     isLoading.value = true
     error.value = null
+    errorCode.value = null
+    fieldErrors.value = {}
 
     try {
       // Create a Django session and JWTs together for cross-system navigation.
@@ -108,6 +94,8 @@ export const useAuthStore = defineStore('auth', () => {
       return true
     } catch (err) {
       const body = err.response?.data
+      fieldErrors.value = fieldErrorsFromResponse(body)
+      errorCode.value = extractErrorCode(body)
       error.value =
         formatAuthErrorResponse(body) ||
         (typeof body === 'string' ? body : null) ||
@@ -127,6 +115,8 @@ export const useAuthStore = defineStore('auth', () => {
   async function register(payload) {
     isLoading.value = true
     error.value = null
+    errorCode.value = null
+    fieldErrors.value = {}
 
     try {
       await axios.post(`${API_BASE_URL}/api/accounts/register/`, {
@@ -142,6 +132,7 @@ export const useAuthStore = defineStore('auth', () => {
       return true
     } catch (err) {
       const body = err.response?.data
+      fieldErrors.value = fieldErrorsFromResponse(body)
       error.value =
         formatAuthErrorResponse(body) ||
         (typeof body === 'string' ? body : null) ||
@@ -216,12 +207,14 @@ export const useAuthStore = defineStore('auth', () => {
   async function verifyEmail(token) {
     isLoading.value = true
     error.value = null
+    errorCode.value = null
 
     try {
       await axios.post(`${API_BASE_URL}/api/accounts/verify-email/`, { token })
       return true
     } catch (err) {
       const body = err.response?.data
+      errorCode.value = extractErrorCode(body)
       error.value =
         formatAuthErrorResponse(body) ||
         (typeof body === 'string' ? body : null) ||
@@ -233,29 +226,75 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /**
+   * Resend the email-verification link. Rate-limited server-side (1 / 5 minutes / email).
+   * @param {string} email
+   * @returns {Promise<{ ok: boolean, status: number|null, message: string|null, retryAfter: number|null }>}
+   */
+  async function resendVerificationEmail(email) {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/accounts/resend-verification/`,
+        { email },
+      )
+      return {
+        ok: true,
+        status: response.status,
+        message: response.data?.message || null,
+        retryAfter: null,
+      }
+    } catch (err) {
+      const body = err.response?.data
+      const status = err.response?.status ?? null
+      const retryHeader = err.response?.headers?.['retry-after']
+      const retryAfterRaw = retryHeader ?? body?.retry_after
+      const retryAfter =
+        retryAfterRaw != null && retryAfterRaw !== ''
+          ? Number.parseInt(String(retryAfterRaw), 10)
+          : null
+      return {
+        ok: false,
+        status,
+        message:
+          formatAuthErrorResponse(body) ||
+          body?.error ||
+          (typeof body === 'string' ? body : null) ||
+          'Could not resend the verification email.',
+        retryAfter: Number.isFinite(retryAfter) ? retryAfter : null,
+      }
+    }
+  }
+
   async function logout() {
     const refresh = refreshToken.value
     const access = accessToken.value
 
-    // Call API while access token is still available (LogoutView is JWT-only — MQ-008).
-    try {
-      await axios.post(
+    // Clear local session first so the UI can navigate even if the API is slow/unreachable.
+    accessToken.value = null
+    refreshToken.value = null
+    user.value = null
+    persistToken(ACCESS_TOKEN_KEYS, null)
+    persistToken(REFRESH_TOKEN_KEYS, null)
+    // Drop staff review-queue sibling ids so the next user on this browser
+    // cannot see prev/next links into applications they cannot open.
+    clearReviewQueueNav()
+
+    // Best-effort server logout (blacklist refresh + clear Django session). JWT-only — MQ-008.
+    // Do not await: a hung network must not block redirect to Login.
+    if (!access && !refresh) return
+    axios
+      .post(
         `${API_BASE_URL}/api/accounts/logout/`,
         refresh ? { refresh } : {},
         {
           withCredentials: true,
+          timeout: 10000,
           headers: access ? { Authorization: `Bearer ${access}` } : {},
         },
       )
-    } catch (err) {
-      console.warn('Logout endpoint error:', err)
-    } finally {
-      accessToken.value = null
-      refreshToken.value = null
-      user.value = null
-      persistToken(ACCESS_TOKEN_KEYS, null)
-      persistToken(REFRESH_TOKEN_KEYS, null)
-    }
+      .catch((err) => {
+        console.warn('Logout endpoint error:', err)
+      })
   }
 
   let refreshInFlight = null
@@ -360,6 +399,8 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken,
     isLoading,
     error,
+    errorCode,
+    fieldErrors,
     // Getters
     isAuthenticated,
     userRole,
@@ -375,6 +416,7 @@ export const useAuthStore = defineStore('auth', () => {
     requestPasswordReset,
     confirmPasswordReset,
     verifyEmail,
+    resendVerificationEmail,
     logout,
     refreshToken: refreshAccessToken,
     fetchUserProfile,

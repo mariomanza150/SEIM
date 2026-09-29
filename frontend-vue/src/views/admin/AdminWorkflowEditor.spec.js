@@ -61,6 +61,7 @@ async function mountEditor() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'Dashboard', component: { template: '<div />' } },
+        { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
       { path: '/admin/workflows', name: 'AdminWorkflows', component: { template: '<div />' } },
       {
         path: '/admin/workflows/:id',

@@ -62,4 +62,56 @@ describe('SearchableSelect', () => {
 
     expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['España'])
   })
+
+  it('opens the dropdown upward when placement is up', async () => {
+    const wrapper = mount(SearchableSelect, {
+      props: {
+        modelValue: '',
+        placement: 'up',
+        options: [{ value: 'English', label: 'English' }],
+      },
+    })
+
+    await wrapper.get('input').trigger('focus')
+    expect(wrapper.get('.searchable-select-dropdown').classes()).toContain(
+      'searchable-select-dropdown--up',
+    )
+  })
+
+  it('keeps custom typed values when allowCustom is set', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount(SearchableSelect, {
+      props: {
+        modelValue: '',
+        allowCustom: true,
+        options: [{ value: 'MIT', label: 'MIT · EUA' }],
+      },
+    })
+
+    const input = wrapper.get('input')
+    await input.setValue('Brand New College')
+    expect(wrapper.emitted('query-change')?.at(-1)).toEqual(['Brand New College'])
+    await input.trigger('blur')
+    vi.advanceTimersByTime(150)
+    await flushPromises()
+
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['Brand New College'])
+    vi.useRealTimers()
+  })
+
+  it('includes empty-value options such as No scale', async () => {
+    const wrapper = mount(SearchableSelect, {
+      props: {
+        modelValue: '',
+        options: [
+          { value: '', label: 'No scale' },
+          { value: 'gs-1', label: 'ECTS' },
+        ],
+      },
+    })
+
+    await wrapper.get('input').trigger('focus')
+    const items = wrapper.findAll('.searchable-select-dropdown .list-group-item')
+    expect(items.map((li) => li.text())).toContain('No scale')
+  })
 })

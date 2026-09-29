@@ -231,3 +231,29 @@ def test_spa_only_pages_excluded_from_wagtail_pages_api_queryset():
     assert pages["spa_index"].id not in ids
     assert pages["public_faq"].id in ids
     assert pages["public_index"].id in ids
+
+
+def test_seed_spa_help_contextual_keys_match_vue_routes():
+    """Catalog keys must use Vue route names (no dead ApplicationForm)."""
+    from cms.management.commands.seed_spa_help import PUBLIC_FAQ_RETAG, SPA_HELP_ARTICLES
+
+    keys: set[str] = set()
+    for article in SPA_HELP_ARTICLES:
+        keys.update(
+            part.strip()
+            for part in article["contextual_keys"].split(",")
+            if part.strip()
+        )
+    for meta in PUBLIC_FAQ_RETAG.values():
+        keys.update(
+            part.strip()
+            for part in meta["contextual_keys"].split(",")
+            if part.strip()
+        )
+
+    assert "ApplicationForm" not in keys
+    assert "AdminWorkflowCatalogs" in keys
+    assert "AdminDynformEditor" in keys
+    assert "AdminApplicationEdit" in keys
+    assert "ApplicationNew" in keys
+    assert "ApplicationEdit" in keys

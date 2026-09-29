@@ -20,6 +20,7 @@ describe('Auth Store', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     localStorage.clear()
+    sessionStorage.clear()
   })
 
   describe('initial state', () => {
@@ -46,6 +47,10 @@ describe('Auth Store', () => {
       localStorage.setItem('refresh_token', 'rt')
       localStorage.setItem('seim_access_token', 'at')
       localStorage.setItem('seim_refresh_token', 'rt')
+      sessionStorage.setItem(
+        'seim.reviewQueue.nav',
+        JSON.stringify({ ids: ['1', '2'], index: 0 }),
+      )
       const store = useAuthStore()
       store.user = { email: 'u@test.com' }
 
@@ -53,18 +58,53 @@ describe('Auth Store', () => {
 
       expect(store.user).toBeNull()
       expect(store.accessToken).toBeNull()
+      expect(store.isAuthenticated).toBe(false)
       expect(localStorage.getItem('access_token')).toBeNull()
       expect(localStorage.getItem('refresh_token')).toBeNull()
       expect(localStorage.getItem('seim_access_token')).toBeNull()
       expect(localStorage.getItem('seim_refresh_token')).toBeNull()
+      expect(sessionStorage.getItem('seim.reviewQueue.nav')).toBeNull()
       expect(axios.post).toHaveBeenCalledWith(
         expect.stringContaining('/logout/'),
         { refresh: 'rt' },
         expect.objectContaining({
           withCredentials: true,
+          timeout: 10000,
           headers: { Authorization: 'Bearer at' },
         }),
       )
+    })
+
+    it('clears local session immediately even when logout API never resolves', async () => {
+      axios.post.mockImplementation(() => new Promise(() => {}))
+      localStorage.setItem('seim_access_token', 'at')
+      localStorage.setItem('seim_refresh_token', 'rt')
+      const store = useAuthStore()
+      store.user = { email: 'u@test.com' }
+
+      await store.logout()
+
+      expect(store.user).toBeNull()
+      expect(store.accessToken).toBeNull()
+      expect(store.isAuthenticated).toBe(false)
+      expect(localStorage.getItem('seim_access_token')).toBeNull()
+      expect(localStorage.getItem('seim_refresh_token')).toBeNull()
+      expect(axios.post).toHaveBeenCalled()
+    })
+
+    it('still clears local session when logout API rejects', async () => {
+      axios.post.mockRejectedValue(new Error('network'))
+      localStorage.setItem('seim_access_token', 'at')
+      localStorage.setItem('seim_refresh_token', 'rt')
+      const store = useAuthStore()
+      store.user = { email: 'u@test.com' }
+
+      await store.logout()
+      await Promise.resolve()
+
+      expect(store.isAuthenticated).toBe(false)
+      expect(store.accessToken).toBeNull()
+      expect(localStorage.getItem('seim_access_token')).toBeNull()
     })
   })
 
@@ -116,8 +156,27 @@ describe('Auth Store', () => {
 
       expect(result).toBe(false)
       expect(store.error).toContain('Invalid')
+      expect(store.errorCode).toBeNull()
       expect(store.accessToken).toBeNull()
       expect(store.isAuthenticated).toBe(false)
+    })
+
+    it('captures email_not_verified code from login error payload', async () => {
+      axios.post.mockRejectedValueOnce({
+        response: {
+          data: {
+            detail: 'Email not verified. Please check your inbox for the verification link.',
+            code: 'email_not_verified',
+          },
+        },
+      })
+
+      const store = useAuthStore()
+      const result = await store.login('u@test.com', 'pass')
+
+      expect(result).toBe(false)
+      expect(store.errorCode).toBe('email_not_verified')
+      expect(store.error).toContain('not verified')
     })
 
     it('maps field validation errors to a message', async () => {
@@ -370,6 +429,46 @@ describe('Auth Store', () => {
 
       expect(ok).toBe(false)
       expect(store.error).toBeTruthy()
+    })
+  })
+
+  describe('resendVerificationEmail', () => {
+    it('returns ok on success', async () => {
+      const store = useAuthStore()
+      axios.post.mockResolvedValueOnce({
+        data: { message: 'Verification email sent successfully.' },
+        status: 200,
+      })
+
+      const result = await store.resendVerificationEmail('u@test.com')
+
+      expect(result.ok).toBe(true)
+      expect(result.status).toBe(200)
+      expect(axios.post).toHaveBeenCalledWith(
+        expect.stringContaining('/api/accounts/resend-verification/'),
+        { email: 'u@test.com' },
+      )
+    })
+
+    it('surfaces 429 with Retry-After', async () => {
+      const store = useAuthStore()
+      axios.post.mockRejectedValueOnce({
+        response: {
+          status: 429,
+          data: {
+            detail: 'Too many verification emails.',
+            code: 'resend_verification_rate_limited',
+          },
+          headers: { 'retry-after': '280' },
+        },
+      })
+
+      const result = await store.resendVerificationEmail('u@test.com')
+
+      expect(result.ok).toBe(false)
+      expect(result.status).toBe(429)
+      expect(result.retryAfter).toBe(280)
+      expect(result.message).toContain('Too many')
     })
   })
 

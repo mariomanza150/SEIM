@@ -13,6 +13,7 @@ from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+TESTING = True
 
 # Use DATABASE_URL if available (for E2E tests in Docker), otherwise SQLite for unit tests
 import environ
@@ -156,11 +157,13 @@ PASSWORD_HASHERS = [
 
 # Disable middleware that might interfere with tests
 MIDDLEWARE = [
+    "core.observability.RequestIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.PrefetchUserRolesMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -222,5 +225,6 @@ REST_FRAMEWORK = {
         "anon": "1000/hour",
         "user": "10000/hour",
         "burst": "1000/minute",  # Keep burst rate definition to avoid KeyError
+        "resend_verification": "1000/hour",
     },
 }

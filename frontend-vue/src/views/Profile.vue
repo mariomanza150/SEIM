@@ -1,29 +1,28 @@
 <template>
   <div class="profile-page">
-    <nav :aria-label="t('profilePage.breadcrumbAria')">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-        </li>
-        <li class="breadcrumb-item active">{{ t('route.names.Profile') }}</li>
-      </ol>
-    </nav>
+    <PageHeader
+      :title="t('route.names.Profile')"
+      :subtitle="t('profilePage.pageSubtitle')"
+      icon-class="bi bi-person-gear"
+      test-id="profile-page-heading"
+    >
+      <template #breadcrumb>
+        <PageBreadcrumb
+          :aria-label="t('profilePage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.Profile') },
+          ]"
+        />
+      </template>
+    </PageHeader>
 
-    <div class="row mb-4">
-      <div class="col-md-8">
-        <h2 data-testid="profile-page-heading">
-          <i class="bi bi-person-gear me-2"></i>{{ t('route.names.Profile') }}
-        </h2>
-        <p class="text-muted">{{ t('profilePage.pageSubtitle') }}</p>
-      </div>
-    </div>
-
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status" :aria-label="t('profilePage.loadingSpinner')"></div>
-      <p class="mt-3 text-muted">{{ t('profilePage.loadingProfile') }}</p>
-    </div>
-
-    <div v-else class="row">
+    <PageStateShell
+      :loading="loading"
+      skeleton="cards"
+      :loading-label="t('profilePage.loadingProfile')"
+    >
+    <div class="row">
       <div class="col-lg-9">
         <div
           class="alert"
@@ -32,9 +31,23 @@
         >
           <i class="bi me-2" :class="isReadyToApply ? 'bi-check-circle' : 'bi-exclamation-triangle'"></i>
           {{ isReadyToApply ? t('profilePage.readyToApply') : t('profilePage.completeRequired') }}
+          <p v-if="returnToApplication" class="mb-0 mt-2 small" data-testid="profile-return-hint">
+            {{ t('profilePage.redirectedFromApplication') }}
+          </p>
           <ul v-if="!isReadyToApply && missingApplyFields.length" class="mb-0 mt-2" data-testid="profile-missing-fields">
             <li v-for="key in missingApplyFields" :key="key">{{ t(`profilePage.missingFields.${key}`) }}</li>
           </ul>
+          <div v-if="returnToApplication" class="mt-3">
+            <router-link
+              v-if="isReadyToApply"
+              :to="returnToApplication"
+              class="btn btn-primary btn-sm"
+              data-testid="profile-continue-application"
+            >
+              {{ t('profilePage.continueApplication') }}
+            </router-link>
+            <p v-else class="mb-0 small text-muted">{{ t('profilePage.finishThenContinue') }}</p>
+          </div>
         </div>
 
         <form autocomplete="off" @submit.prevent="handleSubmit">
@@ -48,11 +61,39 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-matricula">{{ t('profilePage.matricula') }} *</label>
-                  <input id="profile-matricula" v-model="form.matricula" type="text" inputmode="numeric" pattern="[0-9]+" class="form-control" required data-testid="profile-matricula">
+                  <input
+                    id="profile-matricula"
+                    v-model="form.matricula"
+                    type="text"
+                    inputmode="numeric"
+                    pattern="[0-9]+"
+                    :class="fieldClass('matricula')"
+                    :aria-invalid="ariaInvalid('matricula')"
+                    :aria-describedby="describeId('matricula')"
+                    required
+                    data-testid="profile-matricula"
+                  >
+                  <div v-if="fieldErrors.matricula" :id="describeId('matricula')" class="invalid-feedback d-block">
+                    {{ fieldErrors.matricula }}
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-first-name">{{ t('profilePage.firstName') }} *</label>
-                  <input id="profile-first-name" v-model="form.first_name" type="text" class="form-control" name="given-name" autocomplete="given-name" required data-testid="profile-first-name">
+                  <input
+                    id="profile-first-name"
+                    v-model="form.first_name"
+                    type="text"
+                    :class="fieldClass('first_name')"
+                    :aria-invalid="ariaInvalid('first_name')"
+                    :aria-describedby="describeId('first_name')"
+                    name="given-name"
+                    autocomplete="given-name"
+                    required
+                    data-testid="profile-first-name"
+                  >
+                  <div v-if="fieldErrors.first_name" :id="describeId('first_name')" class="invalid-feedback d-block">
+                    {{ fieldErrors.first_name }}
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-middle-name">{{ t('profilePage.middleName') }}</label>
@@ -60,7 +101,21 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-last-name">{{ t('profilePage.lastName') }} *</label>
-                  <input id="profile-last-name" v-model="form.last_name" type="text" class="form-control" name="family-name" autocomplete="family-name" required data-testid="profile-last-name">
+                  <input
+                    id="profile-last-name"
+                    v-model="form.last_name"
+                    type="text"
+                    :class="fieldClass('last_name')"
+                    :aria-invalid="ariaInvalid('last_name')"
+                    :aria-describedby="describeId('last_name')"
+                    name="family-name"
+                    autocomplete="family-name"
+                    required
+                    data-testid="profile-last-name"
+                  >
+                  <div v-if="fieldErrors.last_name" :id="describeId('last_name')" class="invalid-feedback d-block">
+                    {{ fieldErrors.last_name }}
+                  </div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-mothers-last-name">{{ t('profilePage.mothersLastName') }}</label>
@@ -76,7 +131,15 @@
               <div class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label" for="profile-gender">{{ t('profilePage.gender') }} *</label>
-                  <select id="profile-gender" v-model="form.gender" class="form-select" required data-testid="profile-gender">
+                  <select
+                    id="profile-gender"
+                    v-model="form.gender"
+                    :class="selectClass('gender')"
+                    :aria-invalid="ariaInvalid('gender')"
+                    :aria-describedby="describeId('gender')"
+                    required
+                    data-testid="profile-gender"
+                  >
                     <option value="">{{ t('profilePage.selectOption') }}</option>
                     <option value="female">{{ t('profilePage.genderFemale') }}</option>
                     <option value="male">{{ t('profilePage.genderMale') }}</option>
@@ -84,6 +147,9 @@
                     <option value="other">{{ t('profilePage.genderOther') }}</option>
                     <option value="prefer_not_to_say">{{ t('profilePage.genderPreferNot') }}</option>
                   </select>
+                  <div v-if="fieldErrors.gender" :id="describeId('gender')" class="invalid-feedback d-block">
+                    {{ fieldErrors.gender }}
+                  </div>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label" for="profile-dob">{{ t('profilePage.dateOfBirth') }} *</label>
@@ -228,7 +294,13 @@
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-language">{{ t('profilePage.primaryLanguage') }} *</label>
-                  <input id="profile-language" v-model="form.language" type="text" class="form-control" autocomplete="off" required :placeholder="t('profilePage.languagePlaceholder')" data-testid="profile-language">
+                  <SearchableSelect
+                    v-model="form.language"
+                    :options="spokenLanguageOptions"
+                    :placeholder="t('profilePage.languagePlaceholder')"
+                    placement="up"
+                    data-testid="profile-language"
+                  />
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-language-level">{{ t('profilePage.primaryLevelLabel') }} *</label>
@@ -249,7 +321,14 @@
                 </button>
               </div>
               <div v-for="(row, idx) in form.additional_languages" :key="idx" class="row g-2 mb-2">
-                <div class="col-md-5"><input v-model="row.name" type="text" class="form-control form-control-sm" :placeholder="t('profilePage.languagePlaceholder')"></div>
+                <div class="col-md-5">
+                  <SearchableSelect
+                    v-model="row.name"
+                    :options="spokenLanguageOptions"
+                    :placeholder="t('profilePage.languagePlaceholder')"
+                    placement="up"
+                  />
+                </div>
                 <div class="col-md-5">
                   <select v-model="row.level" class="form-select form-select-sm">
                     <option value="">{{ t('profilePage.notSetOption') }}</option>
@@ -274,17 +353,37 @@
         </form>
       </div>
     </div>
+    </PageStateShell>
   </div>
 </template>
 
 <script setup>
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
+import SearchableSelect from '@/components/SearchableSelect.vue'
+import { spokenLanguageSelectOptions } from '@/utils/spokenLanguageOptions'
+import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import { useFormFields } from '@/composables/useFormFields'
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
 const { success, error: errorToast } = useToast()
+const {
+  fieldErrors,
+  setFieldError,
+  clearFieldErrors,
+  fieldClass,
+  selectClass,
+  ariaInvalid,
+  describeId,
+  applyApiFieldErrors,
+} = useFormFields()
 const cefrLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 const loading = ref(true)
 const hydrating = ref(true)
@@ -293,8 +392,10 @@ const programsLoading = ref(false)
 const schoolsLoading = ref(false)
 const saveError = ref('')
 const catalogs = reactive({
-  academicLevels: [], schools: [], unidades: [], banks: [], programs: [], gradeScales: [],
+  academicLevels: [], schools: [], unidades: [], banks: [], programs: [], gradeScales: [], spokenLanguages: [],
 })
+
+const spokenLanguageOptions = computed(() => spokenLanguageSelectOptions(catalogs.spokenLanguages))
 
 const emptyForm = {
   email: '', first_name: '', middle_name: '', last_name: '', mothers_last_name: '',
@@ -363,6 +464,16 @@ const missingApplyFields = computed(() => {
   return missing
 })
 const isReadyToApply = computed(() => missingApplyFields.value.length === 0)
+
+/** Safe internal path from ApplicationForm gate (`?next=/applications/new`). */
+const returnToApplication = computed(() => {
+  const raw = route.query.next
+  const path = Array.isArray(raw) ? raw[0] : raw
+  if (typeof path !== 'string') return null
+  const trimmed = path.trim()
+  if (!trimmed.startsWith('/') || trimmed.startsWith('//')) return null
+  return trimmed
+})
 
 const PROFILE_FIELDS = [
   'first_name', 'middle_name', 'last_name', 'mothers_last_name',
@@ -555,12 +666,14 @@ async function fetchProfileAndCatalogs() {
     fetchCatalog('academic-levels'),
     fetchCatalog('unidades'),
     fetchCatalog('banks'),
+    fetchCatalog('spoken-languages'),
   ])
   const scalesSettled = await Promise.allSettled([fetchActiveGradeScales()])
   const catalogFailed = catalogSettled.some((result) => result.status === 'rejected')
   catalogs.academicLevels = catalogSettled[0].status === 'fulfilled' ? catalogSettled[0].value : []
   catalogs.unidades = catalogSettled[1].status === 'fulfilled' ? catalogSettled[1].value : []
   catalogs.banks = catalogSettled[2].status === 'fulfilled' ? catalogSettled[2].value : []
+  catalogs.spokenLanguages = catalogSettled[3].status === 'fulfilled' ? catalogSettled[3].value : []
   catalogs.schools = []
   catalogs.programs = []
   catalogs.gradeScales = scalesSettled[0].status === 'fulfilled' ? scalesSettled[0].value : []
@@ -632,6 +745,14 @@ function onClabeInput(event) {
 
 async function handleSubmit() {
   saveError.value = ''
+  clearFieldErrors()
+  for (const key of missingApplyFields.value) {
+    setFieldError(key, t(`profilePage.missingFields.${key}`))
+  }
+  if (missingApplyFields.value.length) {
+    saveError.value = t('profilePage.completeRequired')
+    return
+  }
   saving.value = true
   try {
     const { data } = await api.patch('/api/accounts/profile/', buildPayload())
@@ -643,7 +764,11 @@ async function handleSubmit() {
       await fetchPrograms(form.value.school, false)
     }
     success(t('profilePage.toastSaved'))
+    if (isReadyToApply.value && returnToApplication.value) {
+      await router.push(returnToApplication.value)
+    }
   } catch (err) {
+    applyApiFieldErrors(err.response?.data)
     saveError.value = errorMessage(err.response?.data)
     errorToast(t('profilePage.toastSaveError'))
   } finally {
@@ -677,7 +802,7 @@ onMounted(fetchProfileAndCatalogs)
 </script>
 
 <style scoped>
-.profile-page { min-height: 100vh; background-color: var(--seim-app-bg); }
+.profile-page { background-color: var(--seim-app-bg); }
 .card { border: none; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
 .card-header { background: var(--bs-body-bg); border-bottom: 1px solid var(--bs-border-color); }
 </style>

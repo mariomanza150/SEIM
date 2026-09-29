@@ -13,6 +13,7 @@ from .models import (
     Profile,
     Role,
     SchoolFaculty,
+    SpokenLanguage,
     Unidad,
     User,
     UserSession,
@@ -94,6 +95,18 @@ class BankInstitutionAdmin(CatalogAdmin):
 class HomeAcademicProgramAdmin(CatalogAdmin):
     list_display = ("name", "school", "code", "is_active", "ordering")
     list_filter = ("school", "is_active")
+
+
+@admin.register(SpokenLanguage)
+class SpokenLanguageAdmin(CatalogAdmin):
+    list_display = ("name", "code", "is_active", "ordering", "alias_preview")
+
+    @admin.display(description=_("Aliases"))
+    def alias_preview(self, obj):
+        aliases = obj.aliases or []
+        if not aliases:
+            return "—"
+        return ", ".join(str(item) for item in aliases[:5])
 
 
 @admin.register(Role)

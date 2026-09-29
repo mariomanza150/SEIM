@@ -26,6 +26,7 @@ from .views import (
     RevokeSessionView,
     RoleViewSet,
     SchoolFacultyViewSet,
+    SpokenLanguageViewSet,
     UnidadViewSet,
     UserPermissionsView,
     UserSessionsView,
@@ -60,6 +61,9 @@ catalog_router.register(
     r"programs", HomeAcademicProgramViewSet, basename="home-program"
 )
 catalog_router.register(r"banks", BankInstitutionViewSet, basename="bank")
+catalog_router.register(
+    r"spoken-languages", SpokenLanguageViewSet, basename="spoken-language"
+)
 
 urlpatterns = [
     # Include ViewSet URLs

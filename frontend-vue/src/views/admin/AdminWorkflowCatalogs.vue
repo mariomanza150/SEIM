@@ -2,14 +2,13 @@
   <div class="admin-workflow-catalogs-page">
     <PageHeader :title="t('adminWorkflowCatalogs.title')" :subtitle="t('adminWorkflowCatalogs.subtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminWorkflowCatalogs') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.AdminWorkflowCatalogs') },
+          ]"
+        />
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="load">
@@ -36,16 +35,15 @@
 
     <p class="text-muted">{{ t(`adminWorkflowCatalogs.help.${activeTab}`) }}</p>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger" role="alert">
-      <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>{{ error }}
-    </div>
-
-    <template v-else>
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      :empty="!items.length"
+      :empty-title="t('adminWorkflowCatalogs.empty')"
+      skeleton="table"
+      :loading-label="t('adminCommon.loading')"
+      :skeleton-columns="3"
+    >
       <form class="card mb-3" data-testid="admin-workflow-catalogs-create" @submit.prevent="createItem">
         <div class="card-body">
           <div v-if="formError" class="alert alert-danger" role="alert">{{ formError }}</div>
@@ -74,6 +72,7 @@
       </form>
 
       <div class="card">
+        <ResponsiveList :items="items" :columns="mobileColumns" mobile-test-id="admin-workflow-catalogs-mobile">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0" data-testid="admin-workflow-catalogs-table">
             <thead>
@@ -84,11 +83,6 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="!items.length">
-                <td :colspan="activeTab === 'statuses' ? 3 : 2" class="text-muted text-center py-4">
-                  {{ t('adminWorkflowCatalogs.empty') }}
-                </td>
-              </tr>
               <tr v-for="item in items" :key="item.id">
                 <td>
                   <div class="fw-medium">{{ item.name }}</div>
@@ -131,8 +125,24 @@
             </tbody>
           </table>
         </div>
+        <template #col-name="{ item }">
+          <div class="fw-medium">{{ item.name }}</div>
+          <input v-model="item.name" class="form-control form-control-sm mt-1" type="text" @change="saveRow(item)">
+        </template>
+        <template v-if="activeTab === 'statuses'" #col-order="{ item }">
+          <input v-model.number="item.order" class="form-control form-control-sm" type="number" min="0" step="1" @change="saveRow(item)">
+        </template>
+        <template #actions="{ item }">
+          <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="saving" @click="saveRow(item)">
+            {{ t('adminCommon.save') }}
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-danger" :disabled="saving" @click="confirmDelete(item)">
+            <i class="bi bi-trash me-1" aria-hidden="true"></i>{{ t('adminCommon.delete') }}
+          </button>
+        </template>
+        </ResponsiveList>
       </div>
-    </template>
+    </PageStateShell>
   </div>
 </template>
 
@@ -142,7 +152,10 @@ import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 
 const ENDPOINTS = {
   statuses: '/api/application-statuses/',
@@ -164,6 +177,14 @@ const draft = reactive({ name: '', order: 0 })
 
 const catalogUrl = computed(() => ENDPOINTS[activeTab.value])
 const canCreate = computed(() => Boolean((draft.name || '').trim()))
+
+const mobileColumns = computed(() => {
+  const cols = [{ key: 'name', label: t('adminWorkflowCatalogs.fields.name') }]
+  if (activeTab.value === 'statuses') {
+    cols.push({ key: 'order', label: t('adminWorkflowCatalogs.fields.order') })
+  }
+  return cols
+})
 
 function normalizeApiList(data) {
   if (data && typeof data === 'object' && Array.isArray(data.results)) return data.results

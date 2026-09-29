@@ -2,14 +2,13 @@
   <div class="admin-catalogs-page">
     <PageHeader :title="t('adminCatalogs.title')" :subtitle="t('adminCatalogs.subtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminCatalogs') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.AdminCatalogs') },
+          ]"
+        />
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="load">
@@ -34,48 +33,7 @@
       </li>
     </ul>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger" role="alert">
-      <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>{{ error }}
-    </div>
-
-    <template v-else-if="activeTab === 'destinations'">
-      <p class="text-muted">{{ t('adminCatalogs.destinationsHelp') }}</p>
-      <div class="card">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0" data-testid="admin-catalogs-destinations">
-            <thead>
-              <tr>
-                <th scope="col">{{ t('adminCatalogs.fields.name') }}</th>
-                <th scope="col" class="text-end">{{ t('adminCommon.actions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-if="!programs.length">
-                <td colspan="2" class="text-muted text-center py-4">{{ t('adminCatalogs.destinationsEmpty') }}</td>
-              </tr>
-              <tr v-for="program in programs" :key="program.id">
-                <td class="fw-medium">{{ program.name }}</td>
-                <td class="text-end text-nowrap">
-                  <router-link
-                    class="btn btn-sm btn-outline-secondary"
-                    :to="{ name: 'AdminProgramDestinations', params: { id: program.id } }"
-                  >
-                    <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ t('adminCatalogs.openDestinations') }}
-                  </router-link>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </template>
-
-    <template v-else>
+    <template v-if="activeTab !== 'destinations' && !loading && !error">
       <p v-if="activeTab === 'domains'" class="text-muted">{{ t('adminCatalogs.domainHelp') }}</p>
 
       <form class="card mb-3" data-testid="admin-catalogs-create" @submit.prevent="createItem">
@@ -101,6 +59,16 @@
                 <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
               </select>
             </div>
+            <div v-if="activeTab === 'languages'" class="col-md-4">
+              <label class="form-label" for="catalog-create-aliases">{{ t('adminCatalogs.fields.aliases') }}</label>
+              <input
+                id="catalog-create-aliases"
+                v-model="draft.aliasesText"
+                class="form-control"
+                type="text"
+                :placeholder="t('adminCatalogs.fields.aliasesPlaceholder')"
+              >
+            </div>
             <div class="col-md-2">
               <div class="form-check mt-2">
                 <input id="catalog-create-active" v-model="draft.is_active" class="form-check-input" type="checkbox">
@@ -115,8 +83,79 @@
           </div>
         </div>
       </form>
+    </template>
 
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      :empty="activeTab === 'destinations' ? !programs.length : !items.length"
+      :empty-title="activeTab === 'destinations' ? t('adminCatalogs.destinationsEmpty') : t('adminCatalogs.empty')"
+      skeleton="table"
+      :loading-label="t('adminCommon.loading')"
+      :skeleton-columns="5"
+    >
+      <template #emptyActions>
+        <button
+          v-if="activeTab !== 'destinations'"
+          type="button"
+          class="btn btn-primary"
+          data-testid="admin-catalogs-empty-cta"
+          @click="focusCreateForm"
+        >
+          {{ t('adminCatalogs.emptyCtaCreate') }}
+        </button>
+        <router-link
+          v-else
+          :to="{ name: 'AdminPrograms' }"
+          class="btn btn-primary"
+          data-testid="admin-catalogs-empty-programs-cta"
+        >
+          {{ t('adminCatalogs.emptyCtaPrograms') }}
+        </router-link>
+      </template>
+    <template v-if="activeTab === 'destinations'">
+      <p class="text-muted">{{ t('adminCatalogs.destinationsHelp') }}</p>
       <div class="card">
+        <ResponsiveList :items="programs" :columns="destinationMobileColumns" mobile-test-id="admin-catalogs-destinations-mobile">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0" data-testid="admin-catalogs-destinations">
+            <thead>
+              <tr>
+                <th scope="col">{{ t('adminCatalogs.fields.name') }}</th>
+                <th scope="col" class="text-end">{{ t('adminCommon.actions') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="program in programs" :key="program.id">
+                <td class="fw-medium">{{ program.name }}</td>
+                <td class="text-end text-nowrap">
+                  <router-link
+                    class="btn btn-sm btn-outline-secondary"
+                    :to="{ name: 'AdminProgramDestinations', params: { id: program.id } }"
+                  >
+                    <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ t('adminCatalogs.openDestinations') }}
+                  </router-link>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <template #col-name="{ item }">{{ item.name }}</template>
+        <template #actions="{ item }">
+          <router-link
+            class="btn btn-sm btn-outline-secondary"
+            :to="{ name: 'AdminProgramDestinations', params: { id: item.id } }"
+          >
+            <i class="bi bi-geo-alt me-1" aria-hidden="true"></i>{{ t('adminCatalogs.openDestinations') }}
+          </router-link>
+        </template>
+        </ResponsiveList>
+      </div>
+    </template>
+
+    <template v-else>
+      <div class="card">
+        <ResponsiveList :items="items" :columns="catalogMobileColumns" mobile-test-id="admin-catalogs-mobile">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0" data-testid="admin-catalogs-table">
             <thead>
@@ -125,16 +164,12 @@
                 <th scope="col">{{ t('adminCatalogs.fields.code') }}</th>
                 <th scope="col">{{ t('adminCatalogs.fields.ordering') }}</th>
                 <th v-if="activeTab === 'programs'" scope="col">{{ t('adminCatalogs.fields.school') }}</th>
+                <th v-if="activeTab === 'languages'" scope="col">{{ t('adminCatalogs.fields.aliases') }}</th>
                 <th scope="col">{{ t('adminCatalogs.fields.active') }}</th>
                 <th scope="col" class="text-end">{{ t('adminCommon.actions') }}</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-if="!items.length">
-                <td :colspan="activeTab === 'programs' ? 6 : 5" class="text-muted text-center py-4">
-                  {{ t('adminCatalogs.empty') }}
-                </td>
-              </tr>
               <tr v-for="item in items" :key="item.id">
                 <td>
                   <div class="fw-medium">{{ item.name }}</div>
@@ -158,6 +193,15 @@
                     <option value="">{{ t('adminCommon.notSet') }}</option>
                     <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
                   </select>
+                </td>
+                <td v-if="activeTab === 'languages'">
+                  <input
+                    v-model="item.aliasesText"
+                    class="form-control form-control-sm"
+                    type="text"
+                    :placeholder="t('adminCatalogs.fields.aliasesPlaceholder')"
+                    @change="saveRow(item)"
+                  >
                 </td>
                 <td>
                   <div class="form-check mb-0">
@@ -196,8 +240,54 @@
             </tbody>
           </table>
         </div>
+        <template #col-name="{ item }">
+          <div class="fw-medium">{{ item.name }}</div>
+          <input v-model="item.name" class="form-control form-control-sm mt-1" type="text" @change="saveRow(item)">
+        </template>
+        <template #col-code="{ item }">
+          <input v-model="item.code" class="form-control form-control-sm" type="text" @change="saveRow(item)">
+        </template>
+        <template #col-ordering="{ item }">
+          <input v-model.number="item.ordering" class="form-control form-control-sm" type="number" min="0" step="1" @change="saveRow(item)">
+        </template>
+        <template v-if="activeTab === 'programs'" #col-school="{ item }">
+          <select v-model="item.school" class="form-select form-select-sm" @change="saveRow(item)">
+            <option value="">{{ t('adminCommon.notSet') }}</option>
+            <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
+          </select>
+        </template>
+        <template #col-active="{ item }">
+          <div class="form-check mb-0">
+            <input
+              :id="`catalog-mobile-active-${item.id}`"
+              v-model="item.is_active"
+              class="form-check-input"
+              type="checkbox"
+              @change="toggleActive(item)"
+            >
+            <label class="form-check-label" :for="`catalog-mobile-active-${item.id}`">
+              {{ item.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}
+            </label>
+          </div>
+        </template>
+        <template #actions="{ item }">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            data-testid="admin-catalogs-save-row"
+            :disabled="saving || !(item.name || '').trim()"
+            @click="saveRow(item)"
+          >
+            {{ t('adminCommon.save') }}
+          </button>
+          <button type="button" class="btn btn-sm btn-outline-danger" :disabled="saving" @click="confirmDelete(item)">
+            <i class="bi bi-trash me-1" aria-hidden="true"></i>{{ t('adminCommon.delete') }}
+          </button>
+        </template>
+        </ResponsiveList>
       </div>
     </template>
+    </PageStateShell>
   </div>
 </template>
 
@@ -207,7 +297,10 @@ import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 
 const CATALOG_ENDPOINTS = {
   levels: '/api/accounts/catalogs/academic-levels/',
@@ -216,9 +309,10 @@ const CATALOG_ENDPOINTS = {
   unidades: '/api/accounts/catalogs/unidades/',
   banks: '/api/accounts/catalogs/banks/',
   domains: '/api/accounts/catalogs/allowed-email-domains/',
+  languages: '/api/accounts/catalogs/spoken-languages/',
 }
 
-const tabKeys = ['levels', 'schools', 'programs', 'unidades', 'banks', 'domains', 'destinations']
+const tabKeys = ['levels', 'schools', 'programs', 'unidades', 'banks', 'languages', 'domains', 'destinations']
 
 const { t } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -241,12 +335,48 @@ const canCreate = computed(() => {
   return true
 })
 
+const destinationMobileColumns = computed(() => [
+  { key: 'name', label: t('adminCatalogs.fields.name') },
+])
+
+const catalogMobileColumns = computed(() => {
+  const cols = [
+    { key: 'name', label: t('adminCatalogs.fields.name') },
+    { key: 'code', label: t('adminCatalogs.fields.code') },
+    { key: 'ordering', label: t('adminCatalogs.fields.ordering') },
+  ]
+  if (activeTab.value === 'programs') {
+    cols.push({ key: 'school', label: t('adminCatalogs.fields.school') })
+  }
+  cols.push({ key: 'active', label: t('adminCatalogs.fields.active') })
+  return cols
+})
+
 function emptyDraft() {
-  return { name: '', code: '', ordering: 0, is_active: true, school: '' }
+  return { name: '', code: '', ordering: 0, is_active: true, school: '', aliasesText: '' }
+}
+
+function parseAliasesText(text) {
+  return String(text || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean)
+}
+
+function aliasesToText(value) {
+  return Array.isArray(value) ? value.join(', ') : ''
 }
 
 function resetDraft() {
   Object.assign(draft, emptyDraft())
+}
+
+function focusCreateForm() {
+  const input = document.getElementById('catalog-create-name')
+  if (input) {
+    input.focus()
+    input.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 }
 
 function normalizeApiList(data) {
@@ -262,6 +392,7 @@ function normalizeItem(row) {
     ordering: row.ordering ?? 0,
     is_active: row.is_active !== false,
     school: row.school || '',
+    aliasesText: aliasesToText(row.aliases),
   }
 }
 
@@ -277,6 +408,7 @@ function payloadFrom(source) {
     is_active: Boolean(source.is_active),
   }
   if (activeTab.value === 'programs') payload.school = source.school
+  if (activeTab.value === 'languages') payload.aliases = parseAliasesText(source.aliasesText)
   return payload
 }
 

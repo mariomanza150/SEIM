@@ -32,13 +32,14 @@ def seed_mobility_document_catalog(apps, schema_editor):
         seed_mobility_document_types,
     )
 
-    seed_mobility_document_types()
+    DocumentType = apps.get_model("documents", "DocumentType")
+    seed_mobility_document_types(document_type_model=DocumentType)
     assign_scheme_document_requirements(
         program_model=apps.get_model("exchange", "Program"),
         requirement_model=apps.get_model(
             "exchange", "ProgramDocumentRequirement"
         ),
-        document_type_model=apps.get_model("documents", "DocumentType"),
+        document_type_model=DocumentType,
     )
 
 

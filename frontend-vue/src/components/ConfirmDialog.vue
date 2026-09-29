@@ -2,11 +2,13 @@
   <Teleport to="body">
     <div v-if="confirmState.open" class="seim-confirm-backdrop">
       <div
+        ref="dialogEl"
         class="seim-confirm-dialog"
         role="dialog"
         aria-modal="true"
-        :aria-label="confirmState.title || 'Confirm'"
+        :aria-label="confirmState.title || defaultAriaLabel"
         @keydown.esc.prevent="onCancel"
+        @keydown.tab="onTabTrap"
       >
         <div class="seim-confirm-dialog__header">
           <h5 class="mb-0">{{ confirmState.title }}</h5>
@@ -35,11 +37,43 @@
 </template>
 
 <script setup>
-import { nextTick, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useConfirm, resolveConfirm } from '@/composables/useConfirm'
 
+const FOCUSABLE =
+  'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+const { t } = useI18n()
 const { confirmState } = useConfirm()
 const confirmButton = ref(null)
+const dialogEl = ref(null)
+const previouslyFocused = ref(null)
+
+const defaultAriaLabel = computed(() => t('common.confirm'))
+
+function getFocusableElements() {
+  const root = dialogEl.value
+  if (!root) return []
+  return Array.from(root.querySelectorAll(FOCUSABLE))
+}
+
+function onTabTrap(event) {
+  const focusable = getFocusableElements()
+  if (!focusable.length) {
+    event.preventDefault()
+    return
+  }
+  const first = focusable[0]
+  const last = focusable[focusable.length - 1]
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault()
+    first.focus()
+  }
+}
 
 function onConfirm() {
   resolveConfirm(true)
@@ -52,9 +86,19 @@ function onCancel() {
 watch(
   () => confirmState.open,
   async (open) => {
-    if (!open) return
+    if (open) {
+      previouslyFocused.value =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null
+      await nextTick()
+      confirmButton.value?.focus?.()
+      return
+    }
+    const restore = previouslyFocused.value
+    previouslyFocused.value = null
     await nextTick()
-    confirmButton.value?.focus?.()
+    if (restore && typeof restore.focus === 'function') {
+      restore.focus()
+    }
   },
 )
 </script>
@@ -98,4 +142,3 @@ watch(
   justify-content: flex-end;
 }
 </style>
-

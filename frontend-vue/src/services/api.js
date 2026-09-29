@@ -84,7 +84,11 @@ api.interceptors.response.use(
       } catch (refreshError) {
         await authStore.logout()
         if (typeof window !== 'undefined') {
-          window.location.href = '/seim/login/'
+          const { default: router } = await import('@/router')
+          const redirect = router.currentRoute.value?.fullPath || '/dashboard'
+          if (router.currentRoute.value?.name !== 'Login') {
+            router.push({ name: 'Login', query: { redirect } })
+          }
         }
         return Promise.reject(refreshError)
       }

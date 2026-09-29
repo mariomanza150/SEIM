@@ -1,0 +1,68 @@
+schema_version: 1
+name: seim
+display_name: SEIM (Student Exchange Information Manager)
+repo: mariomanza150/SEIM
+state: active
+owners: [mariomanza150]
+stack: [python3.12, django5.2, drf, postgres15, redis7, celery, channels, wagtail, vue3, vite]
+
+health_url: http://localhost:8020/health/
+compose_project: seim-localprod    # docker-compose.local-prod.yml
+health_urls:
+  local-dev: http://localhost:8001/health/
+  local-prod: http://localhost:8020/health/
+  liveness: http://localhost:8020/health/live/
+  production: ""
+
+ports:
+  web-dev: 8001
+  web-local-prod: 8020
+  web-local-prod-alt: 8021
+  toefl-local-prod: 5020
+  postgres-dev: 5434
+  redis-dev: 6379
+
+services:
+  - { name: web, kind: http, port: 8020, health_path: /health/ }
+  - { name: celery, kind: worker }
+  - { name: celery-beat, kind: worker }
+  - { name: toefl, kind: http, port: 5020 }
+  - { name: db, kind: db, port: 5434 }
+  - { name: redis, kind: cache, port: 6379 }
+
+commands:
+  setup: just setup
+  lint: python -m ruff check .
+  fmt: python -m ruff format .
+  test: >-
+    python -m pytest tests/unit -q --no-cov -o addopts= --ds=seim.settings.test
+    -m "not e2e and not e2e_playwright" --ignore=tests/unit/frontend
+  typecheck: python -m mypy . --ignore-missing-imports
+  web-test: npm --prefix frontend-vue run test:run
+  up: docker compose up -d --build
+  down: docker compose down
+  logs: docker compose logs -f --tail=200
+  health: just health
+
+test_env:
+  SECRET_KEY: local-test-only
+
+error_tracking:
+  dsn_env: SENTRY_DSN
+  projects:
+    - { name: seim-web, platform: python-django, env: SENTRY_DSN }
+  # The monitoring hub writes the DSN here on the host serving local-prod and recreates these services.
+  deliver:
+    env_file: "%USERPROFILE%\\Documents\\MARIO\\SEIM\\.env.local-prod"
+    key: SENTRY_DSN
+    extra: { SENTRY_ENVIRONMENT: local-prod }
+    compose_project: seim-localprod
+    services: [web, celery, celery-beat]
+
+docs:
+  - README.md
+  - AGENTS.md
+  - CONTRIBUTING.md
+  - docs/*.md
+  - docs/notes/**/*.md
+  - env.example

@@ -8,7 +8,7 @@ class SeimSmokeUser(HttpUser):
 
     @task(3)
     def health(self):
-        # Use liveness probe: /health/ returns 503 under test DummyCache.
+        # Liveness probe: no Postgres/Redis round-trips per request.
         self.client.get("/health/live/", name="health_live")
 
     @task(1)

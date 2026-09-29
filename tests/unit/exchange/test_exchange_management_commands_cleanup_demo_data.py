@@ -1,4 +1,4 @@
-from datetime import date
+﻿from datetime import date
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
@@ -7,7 +7,9 @@ from django.test import TestCase
 from django.utils import timezone
 
 from accounts.models import Role, User
+from data_management.models import DataOperationLog, DemoDataSet
 from documents.models import Document, DocumentType
+from exchange.demo_seed import DEMO_DATASET_NAME, DEMO_TOEFL_SESSION_PREFIX
 from exchange.models import (
     Application,
     ApplicationStatus,
@@ -16,6 +18,7 @@ from exchange.models import (
     TimelineEvent,
 )
 from notifications.models import Notification
+from toefl.models import PracticeAttempt
 
 
 class TestCleanupDemoDataCommand(TestCase):
@@ -221,30 +224,38 @@ class TestCleanupDemoDataCommand(TestCase):
             notification_type="in_app",
         )
 
-    def test_cleanup_demo_data_command(self):
-        """Test that the cleanup_demo_data command properly removes demo data."""
-        # Debug: Check what users were actually created
-        print(f"DEBUG: Total users in database: {User.objects.count()}")
-        print(
-            f"DEBUG: Users with admin prefix: {User.objects.filter(username__startswith='admin').count()}"
+        PracticeAttempt.objects.create(
+            user=self.demo_users[-1],
+            external_session_id=f"{DEMO_TOEFL_SESSION_PREFIX}cleanup-1",
+            exam_code="director_extracted",
+            earned=10,
+            total=20,
+            percent=50.0,
+            completed_at=timezone.now(),
         )
-        print(
-            f"DEBUG: Users with coordinator prefix: {User.objects.filter(username__startswith='coordinator').count()}"
+        DemoDataSet.objects.create(
+            name=DEMO_DATASET_NAME,
+            description="Cleanup target",
+            data_config={"command": "seed_demo_readiness"},
+            created_by=self.demo_users[0],
         )
-        print(
-            f"DEBUG: Users with student prefix: {User.objects.filter(username__startswith='student').count()}"
-        )
-        print(
-            f"DEBUG: All usernames: {list(User.objects.values_list('username', flat=True))}"
+        DataOperationLog.objects.create(
+            user=self.demo_users[0],
+            operation_type="DEMO_SETUP",
+            model_name="seed_demo_readiness",
+            record_count=1,
+            status="COMPLETED",
+            operation_details={"source": "seed_demo_readiness"},
         )
 
+    def test_cleanup_demo_data_command(self):
+        """Test that the cleanup_demo_data command properly removes demo data."""
         # Verify initial state - demo data exists
         demo_user_count = User.objects.filter(
             Q(username__startswith="admin")
             | Q(username__startswith="coordinator")
             | Q(username__startswith="student")
         ).count()
-        print(f"DEBUG: Demo user count from filter: {demo_user_count}")
         self.assertEqual(demo_user_count, 7)
         self.assertEqual(
             Program.objects.filter(
@@ -287,6 +298,12 @@ class TestCleanupDemoDataCommand(TestCase):
             ).count(),
             7,
         )
+        self.assertTrue(
+            PracticeAttempt.objects.filter(
+                external_session_id__startswith=DEMO_TOEFL_SESSION_PREFIX
+            ).exists()
+        )
+        self.assertTrue(DemoDataSet.objects.filter(name=DEMO_DATASET_NAME).exists())
 
         # Verify regular data exists
         self.assertEqual(User.objects.filter(username="regular_user").count(), 1)
@@ -315,31 +332,12 @@ class TestCleanupDemoDataCommand(TestCase):
         # Run the cleanup command
         call_command("cleanup_demo_data")
 
-        # Debug: Check what users remain after cleanup
-        print(f"DEBUG AFTER CLEANUP: Total users in database: {User.objects.count()}")
-        print(
-            f"DEBUG AFTER CLEANUP: Users with admin prefix: {User.objects.filter(username__startswith='admin').count()}"
-        )
-        print(
-            f"DEBUG AFTER CLEANUP: Users with coordinator prefix: {User.objects.filter(username__startswith='coordinator').count()}"
-        )
-        print(
-            f"DEBUG AFTER CLEANUP: Users with student prefix: {User.objects.filter(username__startswith='student').count()}"
-        )
-        print(
-            f"DEBUG AFTER CLEANUP: All usernames: {list(User.objects.values_list('username', flat=True))}"
-        )
-
         # Verify demo data is cleaned up
-        # After cleanup
         demo_user_count_after = User.objects.filter(
             Q(username__startswith="admin")
             | Q(username__startswith="coordinator")
             | Q(username__startswith="student")
         ).count()
-        print(
-            f"DEBUG AFTER CLEANUP: Demo user count from filter: {demo_user_count_after}"
-        )
         self.assertEqual(demo_user_count_after, 0)
         self.assertEqual(
             Program.objects.filter(
@@ -381,6 +379,17 @@ class TestCleanupDemoDataCommand(TestCase):
                 | Q(recipient__username__startswith="student")
             ).count(),
             0,
+        )
+        self.assertFalse(
+            PracticeAttempt.objects.filter(
+                external_session_id__startswith=DEMO_TOEFL_SESSION_PREFIX
+            ).exists()
+        )
+        self.assertFalse(DemoDataSet.objects.filter(name=DEMO_DATASET_NAME).exists())
+        self.assertFalse(
+            DataOperationLog.objects.filter(
+                operation_details__source="seed_demo_readiness"
+            ).exists()
         )
 
         # Verify regular data is preserved
@@ -472,3 +481,4 @@ class TestCleanupDemoDataCommandSafety(TestCase):
         self.assertTrue(
             Notification.objects.filter(recipient__username="student_real").exists()
         )
+

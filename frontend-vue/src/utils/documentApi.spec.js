@@ -1,10 +1,21 @@
 import { describe, expect, it } from 'vitest'
 import {
+  acceptAttributeFromExtensions,
   applicationSelectLabel,
+  checklistUploadGaps,
+  checklistUploadTargets,
   documentApplicationId,
   documentApplicationProgramName,
   documentReviewStatus,
+  documentReviewStatusBadgeClass,
+  documentReviewStatusLabel,
+  documentTypeAcceptedExtensions,
+  documentTypeAcceptedHintText,
   documentTypeLabel,
+  documentTypeMaxFileSizeMb,
+  filenameFromContentDisposition,
+  formatAcceptedExtensionsLabel,
+  validateDocumentFile,
 } from './documentApi'
 
 describe('documentApi', () => {
@@ -94,6 +105,44 @@ describe('documentApi', () => {
     expect(documentReviewStatus(null)).toBe('pending')
   })
 
+  it('documentReviewStatusLabel aligns with checklist Approved / Rejected / Pending review', () => {
+    const i18n = {
+      te: () => true,
+      t: (key) => key,
+    }
+    expect(documentReviewStatusLabel({ is_valid: true }, i18n)).toBe(
+      'applicationDetailPage.checklist.approved',
+    )
+    expect(documentReviewStatusLabel({ is_valid: false, validated_at: '2026-01-01' }, i18n)).toBe(
+      'applicationDetailPage.checklist.invalid',
+    )
+    expect(documentReviewStatusLabel({ is_valid: false }, i18n)).toBe(
+      'applicationDetailPage.checklist.pending_review',
+    )
+    expect(documentReviewStatusBadgeClass({ is_valid: true })).toBe('bg-success')
+    expect(documentReviewStatusBadgeClass({ is_valid: false, validated_at: '2026-01-01' })).toBe(
+      'bg-danger',
+    )
+    expect(documentReviewStatusBadgeClass({ is_valid: false })).toBe('bg-warning text-dark')
+  })
+
+  it('checklistUploadGaps keeps missing/invalid/resubmit and drops instructions-only', () => {
+    const gaps = checklistUploadGaps({
+      items: [
+        { document_type_id: 1, status: 'missing' },
+        { document_type_id: 2, status: 'invalid' },
+        { document_type_id: 3, status: 'resubmit_requested' },
+        { document_type_id: 4, status: 'pending_review' },
+        { document_type_id: 5, status: 'approved' },
+        { document_type_id: 6, status: 'n_a', submission_mode: 'instructions_only' },
+        { document_type_id: 7, status: 'missing', submission_mode: 'instructions_only' },
+      ],
+    })
+    expect(gaps.map((g) => g.document_type_id)).toEqual([1, 2, 3])
+    expect(checklistUploadGaps(null)).toEqual([])
+    expect(checklistUploadGaps({})).toEqual([])
+  })
+
   it('applicationSelectLabel prefers program_name then nested program name', () => {
     expect(applicationSelectLabel({ id: 'i', program_name: 'From API' })).toBe('From API')
     expect(applicationSelectLabel({ id: 'i', program: { name: 'Nested' } })).toBe('Nested')
@@ -153,5 +202,92 @@ describe('documentApi', () => {
       'Vue E2E Test Program (draft) · 46991ada',
     )
     expect(applicationSelectLabel(siblings[2], '', siblings)).toBe('Tokyo (draft)')
+  })
+
+  it('filenameFromContentDisposition prefers quoted and RFC 5987 names', () => {
+    expect(
+      filenameFromContentDisposition(
+        'attachment; filename="FS-CC_Carta_Compromiso.docx"',
+        'fallback',
+      ),
+    ).toBe('FS-CC_Carta_Compromiso.docx')
+    expect(
+      filenameFromContentDisposition(
+        "attachment; filename*=UTF-8''FS-CP_Carta_de_Postulacion.docx",
+        'fallback',
+      ),
+    ).toBe('FS-CP_Carta_de_Postulacion.docx')
+    expect(filenameFromContentDisposition(null, 'template.docx')).toBe('template.docx')
+  })
+
+  it('documentTypeAcceptedExtensions resolves families and extras', () => {
+    expect(documentTypeAcceptedExtensions({})).toEqual(['pdf', 'jpg', 'jpeg', 'png'])
+    expect(
+      documentTypeAcceptedExtensions({
+        file_type_families: [{ extensions: 'pdf', is_active: true }],
+        accepted_extensions: 'docx',
+      }),
+    ).toEqual(['pdf', 'docx'])
+    expect(
+      documentTypeAcceptedExtensions({
+        resolved_accepted_extensions: 'pdf',
+        accepted_extensions: '',
+        file_type_families: [{ extensions: 'docx', is_active: true }],
+      }),
+    ).toEqual(['pdf'])
+    expect(
+      acceptAttributeFromExtensions(['pdf', 'docx']),
+    ).toBe('.pdf,.docx')
+    expect(formatAcceptedExtensionsLabel(['pdf', 'docx'])).toBe('PDF, DOCX')
+    expect(documentTypeMaxFileSizeMb({ max_file_size_mb: 5 })).toBe(5)
+    expect(documentTypeMaxFileSizeMb({})).toBe(10)
+  })
+
+  it('documentTypeAcceptedHintText and validateDocumentFile', () => {
+    const type = { accepted_extensions: 'pdf', max_file_size_mb: 5 }
+    expect(documentTypeAcceptedHintText(null, (k, p) => `${k}:${p.formats}`)).toBe('')
+    expect(documentTypeAcceptedHintText(type, (k, p) => `Accepted: ${p.formats} (max ${p.maxMb}MB)`)).toBe(
+      'Accepted: PDF (max 5MB)',
+    )
+    expect(validateDocumentFile(null, type)).toEqual({
+      ok: false,
+      errorKey: 'documentUpload.fileRequired',
+      params: {},
+    })
+    expect(validateDocumentFile({ name: 'x.docx', size: 10 }, type).ok).toBe(false)
+    expect(validateDocumentFile({ name: 'x.docx', size: 10 }, type).errorKey).toBe(
+      'documentUpload.fileTypeNotAllowed',
+    )
+    expect(validateDocumentFile({ name: 'x.pdf', size: 10 }, type)).toEqual({ ok: true })
+    expect(
+      validateDocumentFile({ name: 'x.pdf', size: 6 * 1024 * 1024 }, type).errorKey,
+    ).toBe('documentUpload.fileTooLarge')
+  })
+
+  it('checklistUploadTargets keeps allows_multiple types after first upload', () => {
+    const checklist = {
+      items: [
+        {
+          document_type_id: 1,
+          status: 'pending_review',
+          allows_multiple: true,
+          submission_mode: 'upload',
+        },
+        {
+          document_type_id: 2,
+          status: 'pending_review',
+          allows_multiple: false,
+          submission_mode: 'upload',
+        },
+        {
+          document_type_id: 3,
+          status: 'missing',
+          allows_multiple: false,
+          submission_mode: 'upload',
+        },
+      ],
+    }
+    expect(checklistUploadGaps(checklist).map((i) => i.document_type_id)).toEqual([3])
+    expect(checklistUploadTargets(checklist).map((i) => i.document_type_id)).toEqual([1, 3])
   })
 })

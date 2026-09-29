@@ -2,14 +2,13 @@
   <div class="admin-grades-page">
     <PageHeader :title="t('adminGrades.title')" :subtitle="t('adminGrades.subtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminGrades') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.AdminGrades') },
+          ]"
+        />
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="reload">
@@ -18,18 +17,13 @@
       </template>
     </PageHeader>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger" role="alert">
-      <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
-      {{ error }}
-    </div>
-
-    <template v-else>
-      <div class="row g-3 mb-4">
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      skeleton="none"
+      :loading-label="t('adminCommon.loading')"
+    >
+    <div class="row g-3 mb-4">
         <div class="col-lg-4">
           <div class="card mb-3" data-testid="admin-grades-create-scale">
             <div class="card-header fw-medium">{{ t('adminGrades.createScale') }}</div>
@@ -181,6 +175,7 @@
               <div class="card-body">
                 <div v-if="!values.length" class="text-muted mb-3">{{ t('adminGrades.emptyValues') }}</div>
                 <div v-else class="table-responsive mb-3">
+                  <ResponsiveList :items="values" :columns="valueMobileColumns" mobile-test-id="admin-grades-values-mobile">
                   <table class="table table-sm align-middle">
                     <thead>
                       <tr>
@@ -218,6 +213,30 @@
                       </tr>
                     </tbody>
                   </table>
+                  <template #col-label="{ item }">
+                    <input v-model="item.label" class="form-control form-control-sm" type="text" />
+                  </template>
+                  <template #col-numericValue="{ item }">
+                    <input v-model.number="item.numeric_value" class="form-control form-control-sm" type="number" step="any" />
+                  </template>
+                  <template #col-gpaEquivalent="{ item }">
+                    <input v-model.number="item.gpa_equivalent" class="form-control form-control-sm" type="number" step="any" />
+                  </template>
+                  <template #col-order="{ item }">
+                    <input v-model.number="item.order" class="form-control form-control-sm" type="number" />
+                  </template>
+                  <template #col-isPassing="{ item }">
+                    <input v-model="item.is_passing" class="form-check-input" type="checkbox" />
+                  </template>
+                  <template #actions="{ item }">
+                    <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="busy" @click="saveValue(item)">
+                      {{ t('adminCommon.save') }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" :disabled="busy" @click="deleteValue(item)">
+                      {{ t('adminCommon.delete') }}
+                    </button>
+                  </template>
+                  </ResponsiveList>
                 </div>
                 <div class="row g-2 align-items-end">
                   <div class="col-md-3">
@@ -264,6 +283,7 @@
         <div class="card-body">
           <div v-if="!translations.length" class="text-muted mb-3">{{ t('adminGrades.emptyTranslations') }}</div>
           <div v-else class="table-responsive mb-3">
+            <ResponsiveList :items="translations" :columns="translationMobileColumns" mobile-test-id="admin-grades-translations-mobile">
             <table class="table table-sm align-middle">
               <thead>
                 <tr>
@@ -288,6 +308,20 @@
                 </tr>
               </tbody>
             </table>
+            <template #col-sourceGrade="{ item }">
+              {{ gradeOptionLabel(item.source_grade, item.source_scale_code, item.source_grade_label) }}
+            </template>
+            <template #col-targetGrade="{ item }">
+              {{ gradeOptionLabel(item.target_grade, item.target_scale_code, item.target_grade_label) }}
+            </template>
+            <template #col-confidence="{ item }">{{ item.confidence }}</template>
+            <template #col-notes="{ item }"><span class="text-muted small">{{ item.notes }}</span></template>
+            <template #actions="{ item }">
+              <button type="button" class="btn btn-sm btn-outline-danger" :disabled="busy" @click="deleteTranslation(item)">
+                {{ t('adminCommon.delete') }}
+              </button>
+            </template>
+            </ResponsiveList>
           </div>
           <div class="row g-2 align-items-end">
             <div class="col-md-3">
@@ -329,17 +363,20 @@
           </div>
         </div>
       </div>
-    </template>
+    </PageStateShell>
   </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import SearchableSelect from '@/components/SearchableSelect.vue'
 
 const { t } = useI18n()
@@ -365,6 +402,21 @@ const newTranslation = reactive({
   confidence: 1,
   notes: '',
 })
+
+const valueMobileColumns = computed(() => [
+  { key: 'label', label: t('adminGrades.fields.label') },
+  { key: 'numericValue', label: t('adminGrades.fields.numericValue') },
+  { key: 'gpaEquivalent', label: t('adminGrades.fields.gpaEquivalent') },
+  { key: 'order', label: t('adminGrades.fields.order') },
+  { key: 'isPassing', label: t('adminGrades.fields.isPassing') },
+])
+
+const translationMobileColumns = computed(() => [
+  { key: 'sourceGrade', label: t('adminGrades.fields.sourceGrade') },
+  { key: 'targetGrade', label: t('adminGrades.fields.targetGrade') },
+  { key: 'confidence', label: t('adminGrades.fields.confidence') },
+  { key: 'notes', label: t('adminGrades.fields.notes') },
+])
 
 function emptyScale() {
   return {

@@ -111,7 +111,7 @@
         </template>
         <template #presets>
               <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
-                <div class="flex-grow-1" style="min-width: 200px">
+                <div class="flex-grow-1 seim-min-w-filter">
                   <label class="form-label small text-muted mb-1">{{ t('reviewQueuePage.presetSaveLabel') }}</label>
                   <div class="input-group input-group-sm">
                     <input
@@ -187,16 +187,31 @@
         </template>
       </CompactFilterBar>
 
-      <LoadingState v-if="loading" :spinner-label="t('reviewQueuePage.loading')" />
-      <ErrorAlert v-else-if="error" :message="error" />
-      <EmptyState
-        v-else-if="applications.length === 0"
-        test-id="review-queue-empty"
-        :body="t('reviewQueuePage.empty')"
-      />
-      <div v-else class="table-responsive card" data-testid="review-queue-table">
+      <div
+        class="review-queue-layout"
+        :class="{ 'review-queue-layout--split': splitEnabled && previewId }"
+        data-testid="review-queue-layout"
+      >
+      <div class="review-queue-layout__list">
+      <PageStateShell
+        :loading="loading"
+        :error="error"
+        :empty="!applications.length"
+        :empty-body="t('reviewQueuePage.empty')"
+        empty-test-id="review-queue-empty"
+        skeleton="table"
+        :loading-label="t('reviewQueuePage.loading')"
+        :skeleton-columns="7"
+      >
+      <ResponsiveList
+        :items="applications"
+        item-key="id"
+        mobile-test-id="review-queue-mobile"
+        :columns="reviewQueueMobileColumns"
+      >
+      <div class="table-responsive card" data-testid="review-queue-table">
         <table class="table table-hover mb-0" role="grid" :aria-label="t('reviewQueuePage.tableAria')">
-          <thead class="table-light">
+          <thead class="seim-table-head">
             <tr>
               <th scope="col" class="review-queue-select-col">
                 <input
@@ -221,10 +236,14 @@
             <tr
               v-for="(app, index) in applications"
               :key="app.id"
-              :class="{ 'table-active': focusedIndex === index, 'review-queue-row--selected': isSelected(app.id) }"
+              :class="{
+                'table-active': focusedIndex === index,
+                'review-queue-row--selected': isSelected(app.id),
+                'review-queue-row--preview': isPreview(app.id),
+              }"
               :aria-selected="focusedIndex === index ? 'true' : 'false'"
               data-testid="review-queue-row"
-              @click="focusRow(index)"
+              @click="onRowActivate(index)"
             >
               <td class="review-queue-select-col" @click.stop>
                 <input
@@ -253,9 +272,9 @@
                   :to="{ name: 'ApplicationDetail', params: { id: app.id } }"
                   class="btn btn-sm btn-outline-primary"
                   data-testid="review-queue-open-detail"
-                  @click.stop
+                  @click.stop="onOpenFullPage(app.id)"
                 >
-                  {{ t('reviewQueuePage.openDetail') }}
+                  {{ splitEnabled ? t('reviewQueuePage.openFullPage') : t('reviewQueuePage.openDetail') }}
                 </router-link>
               </td>
             </tr>
@@ -265,9 +284,33 @@
           {{ t('reviewQueuePage.keyboardHint') }}
         </p>
       </div>
+        <template #mobile-card="{ item: app }">
+          <div class="fw-medium">{{ app.student_display_name || t('reviewQueuePage.emDash') }}</div>
+          <div class="small text-muted mb-2">{{ app.student_email }}</div>
+          <dl class="row mb-0 small">
+            <dt class="col-5 text-muted">{{ t('reviewQueuePage.colProgram') }}</dt>
+            <dd class="col-7">{{ app.program_name || app.program?.name || t('reviewQueuePage.emDash') }}</dd>
+            <dt class="col-5 text-muted">{{ t('reviewQueuePage.colStatus') }}</dt>
+            <dd class="col-7">
+              <span class="badge" :class="statusClass(app.status)">{{ formatStatus(app.status) }}</span>
+            </dd>
+            <dt class="col-5 text-muted">{{ t('reviewQueuePage.colSubmitted') }}</dt>
+            <dd class="col-7">{{ formatDate(app.submitted_at) }}</dd>
+          </dl>
+          <router-link
+            :to="{ name: 'ApplicationDetail', params: { id: app.id } }"
+            class="btn btn-sm btn-outline-primary mt-3"
+            data-testid="review-queue-open-detail-mobile"
+            @click="onOpenFullPage(app.id)"
+          >
+            {{ t('reviewQueuePage.openDetail') }}
+          </router-link>
+        </template>
+      </ResponsiveList>
+      </PageStateShell>
 
       <Pagination
-        v-if="!loading"
+        v-if="!loading && !error"
         :count="pagination.count"
         :page-size="pagination.pageSize"
         :current-page="pagination.currentPage"
@@ -277,6 +320,22 @@
         ul-class="mt-3"
         @page-change="goToPage"
       />
+      </div>
+
+      <aside
+        v-if="splitEnabled && previewId"
+        class="review-queue-layout__detail"
+        data-testid="review-queue-split-pane"
+        :aria-label="t('reviewQueuePage.splitPaneAria')"
+      >
+        <ApplicationDetail
+          :key="previewId"
+          :application-id="previewId"
+          embedded
+          @select-sibling="selectInPane"
+        />
+      </aside>
+      </div>
 
       <div
         v-if="selectedCount > 0"
@@ -311,7 +370,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, onActivated } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
@@ -321,9 +380,9 @@ import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import Pagination from '@/components/Pagination.vue'
-import LoadingState from '@/components/State/LoadingState.vue'
-import ErrorAlert from '@/components/State/ErrorAlert.vue'
-import EmptyState from '@/components/State/EmptyState.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
+import ApplicationDetail from '@/views/ApplicationDetail.vue'
 import {
   REVIEW_QUEUE_SEARCH_TYPE,
   deserializeReviewQueueFilters,
@@ -331,6 +390,11 @@ import {
 } from '@/utils/reviewQueuePresets'
 import { resolveListPage } from '@/utils/listPage'
 import { applicationStatusBadgeClass, applicationStatusFromRouteQuery } from '@/utils/formatters'
+import { setReviewQueueNav } from '@/utils/reviewQueueNav'
+
+defineOptions({ name: 'CoordinatorReviewQueue' })
+
+const SPLIT_MQ = '(min-width: 992px)'
 
 const route = useRoute()
 const router = useRouter()
@@ -348,6 +412,9 @@ const newPresetName = ref('')
 const saveAsDefault = ref(false)
 const selectedIds = ref([])
 const focusedIndex = ref(-1)
+const previewId = ref(null)
+const splitEnabled = ref(false)
+let splitMedia = null
 
 const filters = ref({
   search: '',
@@ -373,6 +440,12 @@ const allPageSelected = computed(
 )
 const somePageSelected = computed(() => pageIds.value.some((id) => selectedIds.value.includes(id)))
 
+const reviewQueueMobileColumns = computed(() => [
+  { key: 'student_display_name', label: t('reviewQueuePage.colStudent') },
+  { key: 'program_name', label: t('reviewQueuePage.colProgram') },
+  { key: 'status', label: t('reviewQueuePage.colStatus') },
+])
+
 let searchTimeout = null
 function debouncedSearch() {
   clearTimeout(searchTimeout)
@@ -381,6 +454,10 @@ function debouncedSearch() {
 
 function isSelected(id) {
   return selectedIds.value.includes(id)
+}
+
+function isPreview(id) {
+  return previewId.value != null && String(previewId.value) === String(id)
 }
 
 function toggleSelect(id) {
@@ -405,9 +482,32 @@ function clearSelection() {
   selectedIds.value = []
 }
 
+function updateSplitEnabled() {
+  splitEnabled.value = Boolean(splitMedia?.matches)
+}
+
+function selectInPane(id) {
+  if (id == null) return
+  const next = String(id)
+  previewId.value = next
+  const ids = applications.value.length ? applications.value.map((app) => app.id) : [id]
+  setReviewQueueNav(ids, id)
+  const query = { ...route.query, selected: next }
+  router.replace({ query })
+}
+
 function focusRow(index) {
   if (index < 0 || index >= applications.value.length) return
   focusedIndex.value = index
+}
+
+function onRowActivate(index) {
+  focusRow(index)
+  const app = applications.value[index]
+  if (!app) return
+  if (splitEnabled.value) {
+    selectInPane(app.id)
+  }
 }
 
 function moveFocus(delta) {
@@ -419,10 +519,27 @@ function moveFocus(delta) {
         : applications.value.length - 1
       : Math.min(applications.value.length - 1, Math.max(0, focusedIndex.value + delta))
   focusedIndex.value = next
+  if (splitEnabled.value) {
+    const app = applications.value[next]
+    if (app) selectInPane(app.id)
+  }
 }
 
-function openApplication(id) {
+function onOpenFullPage(id) {
+  const ids = applications.value.length ? applications.value.map((app) => app.id) : [id]
+  setReviewQueueNav(ids, id)
+}
+
+function openApplication(id, queueIds = null) {
   if (id == null) return
+  const ids =
+    queueIds ||
+    (applications.value.length ? applications.value.map((app) => app.id) : [id])
+  setReviewQueueNav(ids, id)
+  if (splitEnabled.value) {
+    selectInPane(id)
+    return
+  }
   router.push({ name: 'ApplicationDetail', params: { id } })
 }
 
@@ -433,8 +550,9 @@ function openFocused() {
 
 function openSelected() {
   const ordered = applications.value.filter((app) => selectedIds.value.includes(app.id))
+  const ids = ordered.map((app) => app.id)
   const first = ordered[0] || applications.value.find((app) => selectedIds.value.includes(app.id))
-  if (first) openApplication(first.id)
+  if (first) openApplication(first.id, ids.length ? ids : null)
 }
 
 function toggleFocusedSelect() {
@@ -507,12 +625,30 @@ async function fetchApplications(page = 1) {
         pageSize: pagination.value.pageSize,
       }
     }
+    syncPreviewFromQuery()
   } catch (err) {
     const msg = t('reviewQueuePage.loadError')
     error.value = msg
     errorToast(msg)
   } finally {
     loading.value = false
+  }
+}
+
+function syncPreviewFromQuery() {
+  const selected = route.query.selected
+  if (selected == null || selected === '') {
+    if (!splitEnabled.value) previewId.value = null
+    return
+  }
+  previewId.value = String(selected)
+  const idx = applications.value.findIndex((app) => String(app.id) === String(selected))
+  if (idx >= 0) focusedIndex.value = idx
+  if (applications.value.length) {
+    setReviewQueueNav(
+      applications.value.map((app) => app.id),
+      selected,
+    )
   }
 }
 
@@ -631,6 +767,11 @@ function formatDate(dateString) {
 }
 
 onMounted(async () => {
+  if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+    splitMedia = window.matchMedia(SPLIT_MQ)
+    updateSplitEnabled()
+    splitMedia.addEventListener('change', updateSplitEnabled)
+  }
   window.addEventListener('keydown', onQueueKeydown)
   await loadPresets()
   const defaultPreset = savedPresets.value.find((p) => p.is_default)
@@ -641,19 +782,46 @@ onMounted(async () => {
   if (statusFromQuery) {
     filters.value.status = statusFromQuery
   }
+  if (route.query.selected != null && route.query.selected !== '') {
+    previewId.value = String(route.query.selected)
+  }
   await fetchApplications(1)
+})
+
+onActivated(() => {
+  fetchApplications(pagination.value.currentPage)
 })
 
 onUnmounted(() => {
   window.removeEventListener('keydown', onQueueKeydown)
+  if (splitMedia) {
+    splitMedia.removeEventListener('change', updateSplitEnabled)
+    splitMedia = null
+  }
 })
 </script>
 
 <style scoped>
 .review-queue-page {
-  min-height: 100vh;
-  background-color: var(--seim-app-bg);
   padding-bottom: 4.5rem;
+}
+
+.review-queue-layout--split {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.review-queue-layout__detail {
+  position: sticky;
+  top: 4.5rem;
+  max-height: calc(100vh - 5.5rem);
+  overflow: auto;
+  border: 1px solid var(--seim-border-color, #dee2e6);
+  border-radius: 0.5rem;
+  background: var(--seim-surface-bg, #fff);
+  padding: 0.75rem;
 }
 
 .review-queue-select-col {
@@ -663,6 +831,11 @@ onUnmounted(() => {
 
 .review-queue-row--selected {
   background-color: color-mix(in srgb, var(--bs-primary, #0d6efd) 8%, transparent);
+}
+
+.review-queue-row--preview {
+  outline: 2px solid color-mix(in srgb, var(--bs-primary, #0d6efd) 45%, transparent);
+  outline-offset: -2px;
 }
 
 .review-queue-selection-bar {
@@ -676,9 +849,9 @@ onUnmounted(() => {
   gap: 0.75rem;
   margin-top: 1rem;
   padding: 0.75rem 1rem;
-  border: 1px solid var(--seim-border, #dee2e6);
+  border: 1px solid var(--seim-border-color, #dee2e6);
   border-radius: 0.5rem;
-  background: var(--seim-surface, #fff);
+  background: var(--seim-surface-bg, #fff);
   box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.08);
 }
 </style>

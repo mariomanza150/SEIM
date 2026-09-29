@@ -3,11 +3,12 @@
  * Connects with JWT from query string; shows toasts and optional refresh on notification.new.
  */
 
-const PING_INTERVAL_MS = 30000
+import { getStoredAccessToken } from '@/utils/authTokens'
 const RECONNECT_INITIAL_MS = 2000
 const RECONNECT_MAX_MS = 30000
 const RECONNECT_DECAY = 1.5
 const RECONNECT_MAX_ATTEMPTS = 10
+const PING_INTERVAL_MS = 25000
 const NOTIFICATION_PATH = '/ws/notifications/'
 const PLACEHOLDER_HOST_FRAGMENT = 'your-domain.com'
 const AUTH_CLOSE_CODES = new Set([4001, 4003, 4401, 4403])
@@ -69,7 +70,7 @@ class NotificationWebSocket {
     this.onDisconnect = options.onDisconnect || (() => {})
     this.getToken = options.getToken || (() => {
       try {
-        return localStorage.getItem('access_token')
+        return getStoredAccessToken()
       } catch {
         return null
       }

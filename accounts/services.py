@@ -39,26 +39,37 @@ class AccountService:
     # ==========================================
 
     @staticmethod
-    def build_email_verification_url(token: str) -> str:
-        """Build the SPA URL users open to verify their email."""
-        base = getattr(settings, "FRONTEND_BASE_URL", "http://localhost:8001").rstrip(
+    def frontend_base_url(request=None) -> str:
+        """Public SPA origin for links in emails.
+
+        Prefer the current request host (Cloudflare / Tailscale / LAN) and fall
+        back to ``FRONTEND_BASE_URL`` when no request is available.
+        """
+        if request is not None:
+            from core.request_host import request_frontend_origin
+
+            return request_frontend_origin(request)
+        return getattr(settings, "FRONTEND_BASE_URL", "http://localhost:8001").rstrip(
             "/"
         )
+
+    @staticmethod
+    def build_email_verification_url(token: str, request=None) -> str:
+        """Build the SPA URL users open to verify their email."""
+        base = AccountService.frontend_base_url(request)
         return f"{base}/seim/verify-email?token={token}"
 
     @staticmethod
-    def build_password_reset_url(email: str, token: str) -> str:
+    def build_password_reset_url(email: str, token: str, request=None) -> str:
         """Build the SPA URL users open to choose a new password."""
-        base = getattr(settings, "FRONTEND_BASE_URL", "http://localhost:8001").rstrip(
-            "/"
-        )
+        base = AccountService.frontend_base_url(request)
         qs = urlencode({"email": email, "token": token})
         return f"{base}/seim/password-reset/confirm?{qs}"
 
     @staticmethod
-    def send_verification_email(user: User, token: str) -> None:
+    def send_verification_email(user: User, token: str, request=None) -> None:
         """Send the email-verification notification with a clickable link."""
-        verify_url = AccountService.build_email_verification_url(token)
+        verify_url = AccountService.build_email_verification_url(token, request=request)
         NotificationService.send_notification(
             recipient=user,
             title="Email Verification Required",
@@ -225,12 +236,13 @@ class AccountService:
 
     @staticmethod
     @transaction.atomic
-    def initiate_password_reset(email: str) -> User | None:
+    def initiate_password_reset(email: str, request=None) -> User | None:
         """
         Initiate password reset process.
 
         Args:
             email: User's email address
+            request: Incoming HTTP request; used to build the public reset URL
 
         Returns:
             User instance if found, None otherwise (don't reveal if email exists)
@@ -246,7 +258,9 @@ class AccountService:
         user.email_verification_token = token  # Reuse field for reset
         user.save()
 
-        reset_url = AccountService.build_password_reset_url(user.email, token)
+        reset_url = AccountService.build_password_reset_url(
+            user.email, token, request=request
+        )
         NotificationService.send_notification(
             recipient=user,
             title="Password Reset Request",
@@ -339,6 +353,7 @@ class AccountService:
         middle_name: str = "",
         last_name: str = "",
         mothers_last_name: str = "",
+        request=None,
     ) -> User:
         """
         Register a new user with email verification.
@@ -351,6 +366,7 @@ class AccountService:
             middle_name: Middle name
             last_name: Paternal last name
             mothers_last_name: Maternal last name
+            request: Incoming HTTP request; used to build the public verification URL
 
         Returns:
             Created user instance (inactive until email verified)
@@ -405,7 +421,7 @@ class AccountService:
         student_role, _ = Role.objects.get_or_create(name="student")
         user.roles.add(student_role)
 
-        AccountService.send_verification_email(user, token)
+        AccountService.send_verification_email(user, token, request=request)
 
         return user
 

@@ -145,6 +145,185 @@ export function documentReviewStatus(doc) {
   return 'pending'
 }
 
+/**
+ * i18n key for checklist-aligned review labels (Approved / Rejected / Pending review).
+ */
+export function documentReviewStatusI18nKey(doc) {
+  const status = documentReviewStatus(doc)
+  if (status === 'valid') return 'applicationDetailPage.checklist.approved'
+  if (status === 'invalid') return 'applicationDetailPage.checklist.invalid'
+  return 'applicationDetailPage.checklist.pending_review'
+}
+
+/** Checklist-aligned badge label for an uploaded document. */
+export function documentReviewStatusLabel(doc, i18n) {
+  const key = documentReviewStatusI18nKey(doc)
+  if (i18n?.te?.(key) && i18n?.t) return i18n.t(key)
+  const status = documentReviewStatus(doc)
+  if (status === 'valid') return 'Approved'
+  if (status === 'invalid') return 'Rejected'
+  return 'Pending review'
+}
+
+export function documentReviewStatusBadgeClass(doc) {
+  const status = documentReviewStatus(doc)
+  if (status === 'valid') return 'bg-success'
+  if (status === 'invalid') return 'bg-danger'
+  return 'bg-warning text-dark'
+}
+
+/** Checklist statuses that still need a student upload / replace. */
+export const CHECKLIST_UPLOAD_GAP_STATUSES = new Set([
+  'missing',
+  'invalid',
+  'resubmit_requested',
+])
+
+/**
+ * Checklist items the student can still upload for (gaps only).
+ * Excludes instructions-only / n_a and already-submitted / approved rows.
+ */
+export function checklistUploadGaps(checklist) {
+  const items = Array.isArray(checklist?.items) ? checklist.items : []
+  return items.filter((item) => {
+    if (!item) return false
+    if (item.submission_mode === 'instructions_only' || item.status === 'n_a') return false
+    return CHECKLIST_UPLOAD_GAP_STATUSES.has(item.status)
+  })
+}
+
+/**
+ * Checklist items available in the upload picker, including allows_multiple types
+ * that already have a current upload (pending/approved).
+ */
+export function checklistUploadTargets(checklist) {
+  const items = Array.isArray(checklist?.items) ? checklist.items : []
+  return items.filter((item) => {
+    if (!item) return false
+    if (item.submission_mode === 'instructions_only' || item.status === 'n_a') return false
+    if (CHECKLIST_UPLOAD_GAP_STATUSES.has(item.status)) return true
+    return Boolean(item.allows_multiple)
+  })
+}
+
+/** Global upload defaults when a document type has no family/extension overrides. */
+export const DEFAULT_ACCEPTED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png']
+export const DEFAULT_MAX_FILE_SIZE_MB = 10
+
+function normalizeExtension(ext) {
+  return String(ext || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^\./, '')
+}
+
+/**
+ * Resolved extensions for a document type (families + accepted_extensions extras).
+ * Prefers API `resolved_accepted_extensions` when present.
+ * Empty configuration falls back to global defaults.
+ */
+export function documentTypeAcceptedExtensions(type) {
+  const seen = []
+  const add = (ext) => {
+    const cleaned = normalizeExtension(ext)
+    if (cleaned && !seen.includes(cleaned)) seen.push(cleaned)
+  }
+
+  const resolved = type?.resolved_accepted_extensions
+  if (resolved != null && String(resolved).trim() !== '') {
+    for (const part of String(resolved).split(',')) add(part)
+    if (seen.length) return seen
+  }
+
+  const families = type?.file_type_families
+  if (Array.isArray(families)) {
+    for (const family of families) {
+      if (family && family.is_active === false) continue
+      for (const part of String(family?.extensions || '').split(',')) add(part)
+    }
+  }
+  for (const part of String(type?.accepted_extensions || '').split(',')) add(part)
+  return seen.length ? seen : [...DEFAULT_ACCEPTED_EXTENSIONS]
+}
+
+export function documentTypeMaxFileSizeMb(type) {
+  const raw = type?.max_file_size_mb
+  const n = Number(raw)
+  if (Number.isFinite(n) && n > 0) return n
+  return DEFAULT_MAX_FILE_SIZE_MB
+}
+
+/** Value for `<input type="file" accept="…">` from extension list. */
+export function acceptAttributeFromExtensions(extensions) {
+  const list = Array.isArray(extensions) ? extensions : []
+  return list
+    .map((ext) => normalizeExtension(ext))
+    .filter(Boolean)
+    .map((ext) => `.${ext}`)
+    .join(',')
+}
+
+/** Uppercase display list, e.g. "PDF, JPG, PNG". */
+export function formatAcceptedExtensionsLabel(extensions) {
+  return (Array.isArray(extensions) ? extensions : [])
+    .map((ext) => String(ext || '').trim().toUpperCase().replace(/^\./, ''))
+    .filter(Boolean)
+    .join(', ')
+}
+
+/**
+ * Localized "Accepted: PDF (max 10MB)" hint, or empty string when type is missing.
+ * `t` is vue-i18n `t` (or any (key, params) => string).
+ */
+export function documentTypeAcceptedHintText(type, t) {
+  if (!type) return ''
+  const formats = formatAcceptedExtensionsLabel(documentTypeAcceptedExtensions(type))
+  if (!formats) return ''
+  const translate = typeof t === 'function' ? t : null
+  if (!translate) {
+    return `Accepted: ${formats} (max ${documentTypeMaxFileSizeMb(type)}MB)`
+  }
+  return translate('documentUpload.acceptedHint', {
+    formats,
+    maxMb: documentTypeMaxFileSizeMb(type),
+  })
+}
+
+/**
+ * Client-side file check aligned with server rules.
+ * @returns {{ ok: true } | { ok: false, errorKey: string, params: object }}
+ */
+export function validateDocumentFile(file, type) {
+  if (!file) {
+    return { ok: false, errorKey: 'documentUpload.fileRequired', params: {} }
+  }
+  const extensions = documentTypeAcceptedExtensions(type)
+  const name = String(file.name || '')
+  const dot = name.lastIndexOf('.')
+  const ext = dot >= 0 ? normalizeExtension(name.slice(dot + 1)) : ''
+  const formats = formatAcceptedExtensionsLabel(extensions)
+  const maxMb = documentTypeMaxFileSizeMb(type)
+
+  if (!ext || !extensions.includes(ext)) {
+    return {
+      ok: false,
+      errorKey: 'documentUpload.fileTypeNotAllowed',
+      params: { formats, maxMb },
+    }
+  }
+
+  const size = Number(file.size)
+  if (Number.isFinite(size) && size > maxMb * 1024 * 1024) {
+    return {
+      ok: false,
+      errorKey: 'documentUpload.fileTooLarge',
+      params: { formats, maxMb },
+    }
+  }
+
+  return { ok: true }
+}
+
 function defaultSelectStatusLabel(rawStatus) {
   return String(rawStatus).replace(/_/g, ' ')
 }
@@ -175,4 +354,22 @@ export function applicationSelectLabel(app, fallback = '', siblings = null, form
   const hits = siblings.filter((s) => applicationSelectBaseLabel(s, fallback, formatStatus) === base)
   if (hits.length <= 1) return base
   return `${base} · ${String(app.id).slice(0, 8)}`
+}
+
+/** Prefer RFC 5987 / quoted filename from Content-Disposition; else ``fallback``. */
+export function filenameFromContentDisposition(header, fallback = 'download') {
+  if (!header || typeof header !== 'string') return fallback
+  const utf8 = /filename\*=(?:UTF-8''|utf-8'')([^;\s]+)/i.exec(header)
+  if (utf8?.[1]) {
+    try {
+      return decodeURIComponent(utf8[1].replace(/["']/g, '').trim()) || fallback
+    } catch {
+      /* keep falling through */
+    }
+  }
+  const quoted = /filename\s*=\s*"([^"]+)"/i.exec(header)
+  if (quoted?.[1]) return quoted[1].trim() || fallback
+  const plain = /filename\s*=\s*([^;\s]+)/i.exec(header)
+  if (plain?.[1]) return plain[1].replace(/["']/g, '').trim() || fallback
+  return fallback
 }

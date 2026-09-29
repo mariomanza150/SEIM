@@ -91,6 +91,7 @@ export function applyUiPreferences(settings = {}) {
   const reduceMotion = Boolean(settings.reduce_motion)
 
   root.dataset.theme = resolvedTheme
+  root.setAttribute('data-bs-theme', resolvedTheme)
   root.dataset.themePreference = themePreference
   root.dataset.fontSize = fontSize
   root.dataset.highContrast = highContrast ? 'true' : 'false'
@@ -130,6 +131,7 @@ export function clearUiPreferences() {
   const root = getRootElement()
   if (root) {
     delete root.dataset.theme
+    root.removeAttribute('data-bs-theme')
     delete root.dataset.themePreference
     delete root.dataset.fontSize
     delete root.dataset.highContrast

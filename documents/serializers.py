@@ -10,8 +10,23 @@ from .models import (
     DocumentType,
     DocumentValidation,
     ExchangeAgreementDocument,
+    FileTypeFamily,
 )
 from .services import DocumentService
+
+
+class FileTypeFamilySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FileTypeFamily
+        fields = (
+            "id",
+            "slug",
+            "name",
+            "aliases",
+            "extensions",
+            "sort_order",
+            "is_active",
+        )
 
 
 class ProgramRequirementNestedSerializer(serializers.Serializer):
@@ -46,6 +61,13 @@ class DocumentTypeSerializer(serializers.ModelSerializer):
         many=True, required=False, write_only=True
     )
     requirement_count = serializers.SerializerMethodField()
+    file_type_families = FileTypeFamilySerializer(many=True, read_only=True)
+    file_type_family_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=FileTypeFamily.objects.all(),
+        source="file_type_families",
+        required=False,
+    )
 
     class Meta:
         model = DocumentType
@@ -61,8 +83,14 @@ class DocumentTypeSerializer(serializers.ModelSerializer):
             "instructions",
             "faq",
             "accepted_extensions",
+            "file_type_families",
+            "file_type_family_ids",
             "max_file_size_mb",
             "allows_multiple",
+            "version_history_visibility",
+            "version_history_student",
+            "version_history_coordinator",
+            "version_history_admin",
             "program_requirements",
             "requirement_count",
         )
@@ -236,8 +264,14 @@ class DocumentTypeListSerializer(DocumentTypeSerializer):
             "has_template",
             "template_filename",
             "accepted_extensions",
+            "file_type_families",
+            "file_type_family_ids",
             "max_file_size_mb",
             "allows_multiple",
+            "version_history_visibility",
+            "version_history_student",
+            "version_history_coordinator",
+            "version_history_admin",
             "requirement_count",
         )
 
@@ -250,6 +284,7 @@ class DocumentTypeSummarySerializer(serializers.ModelSerializer):
     """Compact type payload for nested document responses (list/detail)."""
 
     has_template = serializers.SerializerMethodField()
+    resolved_accepted_extensions = serializers.SerializerMethodField()
 
     class Meta:
         model = DocumentType
@@ -262,13 +297,18 @@ class DocumentTypeSummarySerializer(serializers.ModelSerializer):
             "instructions",
             "faq",
             "accepted_extensions",
+            "resolved_accepted_extensions",
             "max_file_size_mb",
             "allows_multiple",
+            "version_history_visibility",
             "has_template",
         )
 
     def get_has_template(self, obj):
         return bool(obj.template_file)
+
+    def get_resolved_accepted_extensions(self, obj):
+        return DocumentService.resolved_accepted_extensions_csv(obj)
 
 
 def _user_display_name(user):
@@ -363,6 +403,10 @@ class DocumentSerializer(serializers.ModelSerializer):
         many=True, read_only=True, source="documentresubmissionrequest_set"
     )
     comments = serializers.SerializerMethodField()
+    can_replace = serializers.SerializerMethodField()
+    is_current = serializers.SerializerMethodField()
+    version_history = serializers.SerializerMethodField()
+    can_view_version_history = serializers.SerializerMethodField()
 
     class Meta:
         model = Document
@@ -371,11 +415,64 @@ class DocumentSerializer(serializers.ModelSerializer):
             "resubmission_requests",
             "comments",
             "uploaded_by_name",
+            "can_replace",
+            "is_current",
+            "version_history",
+            "can_view_version_history",
         ]
-        read_only_fields = ["uploaded_by", "uploaded_by_name", "validated_at", "is_valid"]
+        read_only_fields = [
+            "uploaded_by",
+            "uploaded_by_name",
+            "validated_at",
+            "is_valid",
+            "can_replace",
+            "is_current",
+            "version_history",
+            "can_view_version_history",
+            "supersedes",
+        ]
 
     def get_uploaded_by_name(self, obj):
         return _user_display_name(obj.uploaded_by) or None
+
+    def get_can_replace(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        return DocumentService.can_replace_document(obj, request.user)
+
+    def get_is_current(self, obj):
+        return DocumentService.is_document_current(obj)
+
+    def get_can_view_version_history(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return False
+        from documents.visibility import can_view_document_version_history
+
+        return can_view_document_version_history(request.user, obj.type)
+
+    def get_version_history(self, obj):
+        if not self.get_can_view_version_history(obj):
+            return []
+        chain = DocumentService.version_chain(obj)
+        out = []
+        for prior in chain:
+            filename = ""
+            if prior.file:
+                filename = prior.file.name.rsplit("/", 1)[-1]
+            out.append(
+                {
+                    "id": str(prior.id),
+                    "created_at": prior.created_at.isoformat() if prior.created_at else None,
+                    "filename": filename,
+                    "is_valid": bool(prior.is_valid),
+                    "validated_at": (
+                        prior.validated_at.isoformat() if prior.validated_at else None
+                    ),
+                }
+            )
+        return out
 
     def get_comments(self, obj):
         qs = obj.documentcomment_set.all().order_by("created_at")
@@ -401,11 +498,9 @@ class DocumentSerializer(serializers.ModelSerializer):
         return ret
 
     def validate_file(self, file):
-        # Type-aware checks run in create/update once document type is known.
-        try:
-            DocumentService.validate_file_type_and_size(file)
-        except ValueError as exc:
-            raise serializers.ValidationError(str(exc)) from exc
+        # Type-aware size/extension checks run in create/update once the document
+        # type is known. Field-level validation only runs virus scan so types that
+        # allow non-default formats (e.g. DOCX) are not rejected early.
         if not DocumentService.virus_scan(file):
             raise serializers.ValidationError("File failed virus scan.")
         return file
@@ -424,43 +519,16 @@ class DocumentSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         user = self.context["request"].user
-        if not DocumentService.can_replace_document(instance, user):
-            raise serializers.ValidationError(
-                "Document cannot be replaced. A resubmission request or invalid "
-                "review is required, or you need admin privileges."
-            )
-
         if "file" in validated_data:
-            file = validated_data["file"]
-            for_staff = getattr(user, "has_role", None) and (
-                user.has_role("coordinator") or user.has_role("admin")
-            )
             try:
-                DocumentService.ensure_upload_allowed(
-                    instance.application,
-                    instance.type,
-                    for_staff=bool(for_staff),
-                    replacing=True,
-                )
-                DocumentService.validate_file_type_and_size(
-                    file, document_type=instance.type
+                return DocumentService.replace_document(
+                    instance, validated_data["file"], user
                 )
             except ValueError as exc:
                 raise serializers.ValidationError({"file": str(exc)}) from exc
-            if not DocumentService.virus_scan(file):
-                raise serializers.ValidationError("File failed virus scan.")
 
-        file_replacing = "file" in validated_data
-        instance = super().update(instance, validated_data)
-        if file_replacing:
-            DocumentService.resolve_open_resubmission_requests(instance)
-            if user.has_role("student") and instance.application.student_id == user.id:
-                DocumentService.notify_coordinators_document_replaced(instance)
-            else:
-                NotificationService.broadcast_application_sync(
-                    str(instance.application_id), "document_replaced", str(instance.id)
-                )
-        return instance
+        # Non-file updates (staff fields should go through dedicated actions)
+        return super().update(instance, validated_data)
 
 
 class ExchangeAgreementDocumentSerializer(serializers.ModelSerializer):

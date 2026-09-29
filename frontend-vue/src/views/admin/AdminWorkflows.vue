@@ -2,14 +2,13 @@
   <div class="admin-workflows-page">
     <PageHeader :title="t('adminWorkflows.title')" :subtitle="t('adminWorkflows.subtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminWorkflows') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.AdminWorkflows') },
+          ]"
+        />
       </template>
 
       <template #actions>
@@ -22,59 +21,49 @@
       </template>
     </PageHeader>
 
-    <div class="card mb-3" data-testid="admin-workflows-filters">
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
-            <input
-              v-model="filters.search"
-              class="form-control"
-              type="text"
-              :placeholder="t('adminWorkflows.searchPlaceholder')"
-              @input="debouncedSearch"
-            />
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">{{ t('adminWorkflows.filterActive') }}</label>
-            <select v-model="filters.is_active" class="form-select" @change="fetchWorkflows">
-              <option value="">{{ t('adminCommon.filterAll') }}</option>
-              <option value="true">{{ t('adminCommon.yes') }}</option>
-              <option value="false">{{ t('adminCommon.no') }}</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">{{ t('adminCommon.sortLabel') }}</label>
-            <select v-model="filters.ordering" class="form-select" @change="fetchWorkflows">
-              <option value="name">{{ t('adminWorkflows.sortNameAsc') }}</option>
-              <option value="-created_at">{{ t('adminWorkflows.sortNewest') }}</option>
-            </select>
-          </div>
+    <CompactFilterBar test-id="admin-workflows-filters" @clear="clearFilters">
+      <template #primary>
+        <div class="col-md-6">
+          <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
+          <input
+            v-model="filters.search"
+            class="form-control"
+            type="text"
+            :placeholder="t('adminWorkflows.searchPlaceholder')"
+            @input="debouncedSearch"
+          />
         </div>
-      </div>
-    </div>
-
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-      <p class="mt-3 text-muted">{{ t('adminWorkflows.loadingList') }}</p>
-    </div>
-
-    <div v-else-if="error" class="alert alert-danger" role="alert">
-      <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
-      {{ error }}
-    </div>
-
-    <div v-else class="card">
-      <div class="card-header bg-transparent d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div class="text-muted small">
-          {{ workflows.length }}
+        <div class="col-md-3">
+          <label class="form-label">{{ t('adminWorkflows.filterActive') }}</label>
+          <select v-model="filters.is_active" class="form-select" @change="fetchWorkflows">
+            <option value="">{{ t('adminCommon.filterAll') }}</option>
+            <option value="true">{{ t('adminCommon.yes') }}</option>
+            <option value="false">{{ t('adminCommon.no') }}</option>
+          </select>
         </div>
-        <button type="button" class="btn btn-sm btn-outline-secondary" @click="resetFilters" :disabled="loading">
-          <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{{ t('adminCommon.resetFilters') }}
-        </button>
-      </div>
+      </template>
+      <template #advanced>
+        <div class="col-md-4">
+          <label class="form-label">{{ t('adminCommon.sortLabel') }}</label>
+          <select v-model="filters.ordering" class="form-select" @change="fetchWorkflows">
+            <option value="name">{{ t('adminWorkflows.sortNameAsc') }}</option>
+            <option value="-created_at">{{ t('adminWorkflows.sortNewest') }}</option>
+          </select>
+        </div>
+      </template>
+    </CompactFilterBar>
+
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      :empty="!workflows.length"
+      :empty-title="t('adminWorkflows.empty')"
+      skeleton="table"
+      :loading-label="t('adminWorkflows.loadingList')"
+      :skeleton-columns="4"
+    >
+    <div class="card">
+      <ResponsiveList :items="workflows" :columns="mobileColumns" mobile-test-id="admin-workflows-mobile">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0" data-testid="admin-workflows-table">
           <thead>
@@ -86,11 +75,6 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="!workflows.length">
-              <td colspan="4" class="text-muted text-center py-4">
-                {{ t('adminWorkflows.empty') }}
-              </td>
-            </tr>
             <tr v-for="wf in workflows" :key="wf.id">
               <td class="min-w-0">
                 <div class="fw-medium text-truncate">{{ wf.name }}</div>
@@ -120,55 +104,68 @@
           </tbody>
         </table>
       </div>
+      <template #col-name="{ item }">
+        <div class="fw-medium">{{ item.name }}</div>
+        <div v-if="item.description" class="text-muted small">{{ item.description }}</div>
+      </template>
+      <template #col-active="{ item }">
+        <span class="badge" :class="item.is_active ? 'bg-success' : 'bg-secondary'">
+          {{ item.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}
+        </span>
+      </template>
+      <template #col-latestPublished="{ item }">
+        <span v-if="item.latest_published_version">v{{ item.latest_published_version.version }}</span>
+        <span v-else class="text-muted">—</span>
+      </template>
+      <template #actions="{ item }">
+        <router-link
+          class="btn btn-sm btn-outline-primary"
+          :to="{ name: 'AdminWorkflowEditor', params: { id: item.id } }"
+          data-testid="admin-workflows-open-editor"
+        >
+          <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{{ t('adminWorkflows.openEditor') }}
+        </router-link>
+      </template>
+      </ResponsiveList>
     </div>
+    </PageStateShell>
 
-    <!-- Create -->
-    <div v-if="create.open" class="modal-backdrop show"></div>
-    <div v-if="create.open" class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ t('adminWorkflows.create') }}</h5>
-            <button type="button" class="btn-close" :aria-label="t('adminCommon.close')" @click="closeCreate" />
-          </div>
-          <div class="modal-body">
-            <div v-if="create.error" class="alert alert-danger" role="alert">
-              {{ create.error }}
-            </div>
-            <div class="mb-3">
-              <label class="form-label">{{ t('adminWorkflows.fields.name') }}</label>
-              <input v-model="create.form.name" class="form-control" type="text" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">{{ t('adminWorkflows.fields.description') }}</label>
-              <textarea v-model="create.form.description" class="form-control" rows="3" />
-            </div>
-            <div class="form-check">
-              <input id="wfActive" v-model="create.form.is_active" class="form-check-input" type="checkbox" />
-              <label class="form-check-label" for="wfActive">{{ t('adminWorkflows.fields.activeHelp') }}</label>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" @click="closeCreate">
-              {{ t('adminCommon.cancel') }}
-            </button>
-            <button type="button" class="btn btn-primary" :disabled="create.saving" @click="createWorkflow">
-              <span v-if="create.saving" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
-              {{ t('adminCommon.save') }}
-            </button>
-          </div>
-        </div>
+    <FormModal
+      :open="create.open"
+      :title="t('adminWorkflows.create')"
+      :error="create.error || ''"
+      :saving="create.saving"
+      size="md"
+      @close="closeCreate"
+      @submit="createWorkflow"
+    >
+      <div class="mb-3">
+        <label class="form-label">{{ t('adminWorkflows.fields.name') }}</label>
+        <input v-model="create.form.name" class="form-control" type="text" />
       </div>
-    </div>
+      <div class="mb-3">
+        <label class="form-label">{{ t('adminWorkflows.fields.description') }}</label>
+        <textarea v-model="create.form.description" class="form-control" rows="3" />
+      </div>
+      <div class="form-check">
+        <input id="wfActive" v-model="create.form.is_active" class="form-check-input" type="checkbox" />
+        <label class="form-check-label" for="wfActive">{{ t('adminWorkflows.fields.activeHelp') }}</label>
+      </div>
+    </FormModal>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import FormModal from '@/components/FormModal.vue'
 
 const { t } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -183,13 +180,19 @@ const filters = ref({
   ordering: 'name',
 })
 
+const mobileColumns = computed(() => [
+  { key: 'name', label: t('adminWorkflows.columns.name') },
+  { key: 'active', label: t('adminWorkflows.columns.active') },
+  { key: 'latestPublished', label: t('adminWorkflows.columns.latestPublished') },
+])
+
 let searchTimeout = null
 function debouncedSearch() {
   clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => fetchWorkflows(), 400)
 }
 
-function resetFilters() {
+function clearFilters() {
   filters.value = { search: '', is_active: '', ordering: 'name' }
   fetchWorkflows()
 }

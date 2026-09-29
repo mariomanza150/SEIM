@@ -1,0 +1,15 @@
+# Keep production image builds from mixing host Vite output with a fresh npm build.
+frontend-vue/dist
+frontend-vue/node_modules
+**/__pycache__
+**/*.pyc
+.git
+.venv
+venv
+node_modules
+logs
+*.crt
+*.key
+.env
+.env.*
+!.env*.example

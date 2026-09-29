@@ -75,7 +75,8 @@ describe('ProgramCompare', () => {
         stubs: { RouterLink: { template: '<a><slot /></a>' } },
       },
     })
-    expect(wrapper.find('.spinner-border .visually-hidden').text()).toBe('Loading')
+    expect(wrapper.find('.placeholder-glow').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('Alpha Program')
     resolveFetch({ data: { results: [], next: null } })
     await flushPromises()
     expect(wrapper.find('.spinner-border').exists()).toBe(false)

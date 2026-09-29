@@ -29,12 +29,19 @@ async function mountPage() {
     history: createMemoryHistory(),
     routes: [
       { path: '/', name: 'Dashboard', component: { template: '<div />' } },
+        { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
       { path: '/admin/forms', name: 'AdminForms', component: AdminForms },
       { path: '/admin/dynforms/:id', name: 'AdminDynformEditor', component: { template: '<div />' } },
     ],
   })
   await router.push({ name: 'AdminForms' })
-  const wrapper = mount(AdminForms, { global: { plugins: [i18n, router] } })
+  const wrapper = mount(AdminForms, {
+    global: {
+      plugins: [i18n, router],
+      stubs: { Teleport: { template: '<div><slot /></div>' } },
+    },
+    attachTo: document.body,
+  })
   await flushPromises()
   return wrapper
 }

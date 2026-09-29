@@ -8,7 +8,7 @@ import api from '@/services/api'
 import i18n, { setAppLocale } from '@/i18n'
 
 vi.mock('@/services/api', () => ({
-  default: { get: vi.fn() },
+  default: { get: vi.fn(), delete: vi.fn(), post: vi.fn() },
 }))
 
 describe('NotificationDropdown', () => {
@@ -44,7 +44,7 @@ describe('NotificationDropdown', () => {
     expect(toggle.attributes('aria-haspopup')).toBe('menu')
     expect(wrapper.text()).toContain('Notifications')
     expect(wrapper.text()).toContain('View all')
-    expect(wrapper.text()).toContain('No notifications')
+    expect(wrapper.text()).toContain('No unread notifications')
     expect(api.get).toHaveBeenCalled()
   })
 
@@ -137,5 +137,45 @@ describe('NotificationDropdown', () => {
     expect(wrapper.text()).toContain('En revisión')
     expect(wrapper.text()).not.toContain('under_review')
     expect(wrapper.text()).toContain('Ver solicitud')
+  })
+
+  it('dismisses a notification from the dropdown', async () => {
+    api.get.mockImplementation((_url, opts) => {
+      const p = opts?.params || {}
+      if (p.is_read === false) {
+        return Promise.resolve({ data: { count: 1, results: [] } })
+      }
+      return Promise.resolve({
+        data: {
+          results: [
+            {
+              id: 9,
+              title: 'Hello',
+              message: 'World',
+              is_read: false,
+              sent_at: new Date().toISOString(),
+            },
+          ],
+          count: 1,
+        },
+      })
+    })
+    api.delete.mockResolvedValue({})
+    const wrapper = mount(NotificationDropdown, {
+      attachTo: document.body,
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('#notificationDropdown').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="notification-dismiss"]').exists()).toBe(true)
+    await wrapper.find('[data-testid="notification-dismiss"]').trigger('click')
+    await flushPromises()
+    expect(api.delete).toHaveBeenCalledWith('/api/notifications/9/delete_notification/')
+    expect(wrapper.text()).not.toContain('Hello')
+    wrapper.unmount()
   })
 })

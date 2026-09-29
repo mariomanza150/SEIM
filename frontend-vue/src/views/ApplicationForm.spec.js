@@ -82,6 +82,11 @@ function profileGateResponse(url) {
       data: [{ id: 'scale-1', name: '4.0 Scale', scale_type: '4.0' }],
     })
   }
+  if (url === '/api/accounts/catalogs/spoken-languages/') {
+    return Promise.resolve({
+      data: [{ id: 'lang-en', name: 'English' }],
+    })
+  }
   return null
 }
 
@@ -594,6 +599,7 @@ describe('ApplicationForm', () => {
         return Promise.resolve({ data: { is_ready_to_apply: false } })
       }
       if (url === '/api/grades/scales/active/') return Promise.resolve({ data: [] })
+      if (url === '/api/accounts/catalogs/spoken-languages/') return Promise.resolve({ data: [] })
       return Promise.reject(new Error(`Unexpected GET ${url}`))
     })
 
@@ -609,6 +615,226 @@ describe('ApplicationForm', () => {
       })
     })
     expect(api.get).not.toHaveBeenCalledWith('/api/programs/')
+  })
+
+  it('allows starting an application when the profile is ready', async () => {
+    api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-ready',
+                name: 'Movilidad Nacional',
+                description: 'Domestic',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/saved-searches/' || url === '/api/accounts/saved-searches/') {
+        return Promise.resolve({ data: [] })
+      }
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    expect(mockReplace).not.toHaveBeenCalledWith({
+      name: 'Profile',
+      query: { next: '/applications/new' },
+    })
+    expect(mockErrorToast).not.toHaveBeenCalledWith(
+      'Complete eligibility fields on your profile (GPA, grading scale, language, credits %, and semester) before starting an application.',
+    )
+    expect(mockErrorToast).not.toHaveBeenCalledWith(
+      'Your profile could not be checked. Complete it before applying.',
+    )
+  })
+
+  it('uses auth-store readiness when profile GET fails but user is already ready', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/accounts/profile/') {
+        return Promise.reject(new Error('profile blip'))
+      }
+      if (url === '/api/grades/scales/active/') {
+        return Promise.resolve({
+          data: [{ id: 'scale-1', name: '4.0 Scale', scale_type: '4.0' }],
+        })
+      }
+      if (url === '/api/accounts/catalogs/spoken-languages/') {
+        return Promise.resolve({ data: [{ id: 'lang-en', name: 'English' }] })
+      }
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-auth-fallback',
+                name: 'Auth Fallback Program',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/saved-searches/' || url === '/api/accounts/saved-searches/') {
+        return Promise.resolve({ data: [] })
+      }
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const pinia = createPinia()
+    setActivePinia(pinia)
+    const authStore = useAuthStore()
+    authStore.user = {
+      is_ready_to_apply: true,
+      gpa: 3.5,
+      grade_scale: 'scale-1',
+      language: 'English',
+      language_level: 'B2',
+      ingress_date: '2023-08-01',
+      current_semester: 5,
+      credits_approved_percent: 70,
+    }
+    authStore.fetchUserProfile = vi.fn().mockResolvedValue(authStore.user)
+
+    const wrapper = mount(ApplicationForm, {
+      global: {
+        plugins: [pinia, i18n],
+        stubs: {
+          RouterLink: { template: '<a><slot /></a>' },
+        },
+      },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    expect(mockReplace).not.toHaveBeenCalledWith({
+      name: 'Profile',
+      query: { next: '/applications/new' },
+    })
+    expect(mockErrorToast).not.toHaveBeenCalledWith(
+      'Your profile could not be checked. Complete it before applying.',
+    )
+  })
+
+  it('hides eligibility soft-gate when ready profile has semester without ingress date', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/accounts/profile/') {
+        return Promise.resolve({
+          data: {
+            is_ready_to_apply: true,
+            gpa: 3.5,
+            grade_scale: 'scale-1',
+            language: 'English',
+            language_level: '',
+            ingress_date: null,
+            current_semester: 5,
+            computed_semester: null,
+            credits_approved_percent: 70,
+          },
+        })
+      }
+      if (url === '/api/grades/scales/active/') {
+        return Promise.resolve({
+          data: [{ id: 'scale-1', name: '4.0 Scale', scale_type: '4.0' }],
+        })
+      }
+      if (url === '/api/accounts/catalogs/spoken-languages/') {
+        return Promise.resolve({ data: [{ id: 'lang-en', name: 'English' }] })
+      }
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-semester-only',
+                name: 'Semester Ready Program',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/saved-searches/' || url === '/api/accounts/saved-searches/') {
+        return Promise.resolve({ data: [] })
+      }
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({ data: { eligible: true, message: 'ok' } })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    api.post.mockResolvedValue({
+      data: { id: 'app-semester-only', dynamic_form_layout: null },
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="application-eligibility-section"]').exists()).toBe(false)
+
+    await wrapper.find('[data-testid="program-select"]').setValue('program-semester-only')
+    await wrapper.find('[data-testid="application-form"]').trigger('submit.prevent')
+    await vi.waitFor(() => {
+      expect(api.post).toHaveBeenCalled()
+    })
+    expect(api.patch).not.toHaveBeenCalledWith(
+      '/api/accounts/profile/',
+      expect.anything(),
+    )
+    expect(api.post.mock.calls.some(([url]) => url === '/api/applications/')).toBe(true)
+  })
+
+  it('still opens apply form when spoken-language catalog fails but profile is ready', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/accounts/catalogs/spoken-languages/') {
+        return Promise.reject(new Error('catalog unavailable'))
+      }
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-catalog-blip',
+                name: 'Exchange Program',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+              },
+            ],
+          },
+        })
+      }
+      const cascade = hostCascadeResponse(url)
+      if (cascade) return cascade
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    expect(mockReplace).not.toHaveBeenCalledWith({
+      name: 'Profile',
+      query: { next: '/applications/new' },
+    })
   })
 
   it('loads host destination cascade after program selection', async () => {
@@ -707,6 +933,61 @@ describe('ApplicationForm', () => {
       expect(wrapper.find('[data-testid="host-destination-unconfigured"]').exists()).toBe(true)
     })
     expect(wrapper.find('[data-testid="host-institution-select"]').exists()).toBe(false)
+  })
+
+  it('shows free-text faculty and program when host university has no catalog lists', async () => {
+    api.get.mockImplementation((url) => {
+      const profileResponse = profileGateResponse(url)
+      if (profileResponse) return profileResponse
+      const cascade = hostCascadeResponse(url, {
+        institutions: [{ id: 'inst-empty', name: 'Bare Host U', country: 'MX' }],
+        schools: [],
+        academics: [],
+      })
+      if (cascade) return cascade
+      if (typeof url === 'string' && url.includes('/check_eligibility/')) {
+        return Promise.resolve({ data: { eligible: true, message: 'ok' } })
+      }
+      if (url === '/api/programs/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'program-bare-host',
+                name: 'Movilidad',
+                description: 'Bare hosts',
+                start_date: '2026-09-01',
+                end_date: '2027-01-15',
+              },
+            ],
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    api.post.mockResolvedValue({ data: { id: 'app-1', status: 'draft' } })
+
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="program-select"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="program-select"]').setValue('program-bare-host')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="host-institution-select"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="host-institution-select"]').setValue('inst-empty')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="host-school-input"]').exists()).toBe(true)
+      expect(wrapper.find('[data-testid="host-academic-program-input"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="host-school-select"]').exists()).toBe(false)
+
+    await wrapper.find('[data-testid="host-school-input"]').setValue('Faculty of Arts')
+    await wrapper.find('[data-testid="host-academic-program-input"]').setValue('Fine Arts BA')
+    expect(wrapper.find('[data-testid="host-school-input"]').element.value).toBe('Faculty of Arts')
+    expect(wrapper.find('[data-testid="host-academic-program-input"]').element.value).toBe(
+      'Fine Arts BA',
+    )
   })
 
   it('keeps program select above collapsed program filters', async () => {

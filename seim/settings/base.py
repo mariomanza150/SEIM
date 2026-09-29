@@ -22,11 +22,20 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env("SECRET_KEY")
 
+# Reported by /health/ and as the Sentry release; set SENTRY_RELEASE to the deployed git SHA or tag.
+VERSION = env("SENTRY_RELEASE", default="1.0.0")
+DJANGO_ENV = env("DJANGO_ENV", default="development").split("#")[0].strip()
+LOG_FORMAT = env("LOG_FORMAT", default="json")
+LOG_LEVEL = env("LOG_LEVEL", default="INFO")
+SENTRY_DSN = env("SENTRY_DSN", default="")
+SENTRY_ENVIRONMENT = env("SENTRY_ENVIRONMENT", default=DJANGO_ENV)
+
 # Used by django.core.mail.send_mail and Celery notification tasks (From: header).
 # SMTP/SES settings files may override this when those backends are selected.
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@seim.local")
 
-# Public origin for SPA links in emails (no trailing slash). Paths use /seim/...
+# Fallback origin for SPA links in emails (no trailing slash). Paths use /seim/...
+# HTTP views prefer the current request origin so tunnel/Tailscale hosts work.
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="http://localhost:8001").rstrip(
     "/"
 )
@@ -90,6 +99,7 @@ LOCAL_APPS = [
     "application_forms",  # Custom form types and submissions (separate from dynforms package)
     "workflows",
     "data_management",
+    "toefl",
 ]
 
 INSTALLED_APPS = (
@@ -107,6 +117,7 @@ INSTALLED_APPS = (
 )
 
 MIDDLEWARE = [
+    "core.observability.RequestIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "corsheaders.middleware.CorsMiddleware",
@@ -115,6 +126,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "core.middleware.PrefetchUserRolesMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # Wagtail Middleware
@@ -141,6 +153,7 @@ TEMPLATES = [
                 "django.template.context_processors.static",
                 "wagtail.contrib.settings.context_processors.settings",
                 "core.context_processors.institution",
+                "cms.context_processors.uadec_cms_assets",
             ],
         },
     },
@@ -239,7 +252,7 @@ REST_FRAMEWORK = {
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "DEFAULT_PAGINATION_CLASS": "core.pagination.StandardResultsSetPagination",
     "PAGE_SIZE": 20,
     "DEFAULT_THROTTLE_CLASSES": [
         "rest_framework.throttling.AnonRateThrottle",
@@ -249,6 +262,8 @@ REST_FRAMEWORK = {
         "anon": "100/hour",  # Anonymous users: 100 requests per hour
         "user": "1000/hour",  # Authenticated users: 1000 requests per hour
         "burst": "10/minute",  # Burst rate for login/register endpoints
+        # IP safety net for resend-verification; per-email 1/5min is in accounts.resend_verification
+        "resend_verification": "10/hour",
     },
 }
 
@@ -587,3 +602,14 @@ WAGTAILDOCS_EXTENSIONS = [
 SEO_JS_ENABLED = False  # Disable JavaScript SEO checks for better performance
 SEO_TWITTER_CARD_TYPE = "summary_large_image"  # Default Twitter card type
 SEO_DEFAULT_IMAGE = None  # Will be set per environment if needed
+
+# TOEFL Practice sidecar (partner launch + HMAC webhook). Does not write Profile.toefl_score.
+TOEFL_API_BASE_URL = env("TOEFL_API_BASE_URL", default="")
+TOEFL_API_KEY = env("TOEFL_API_KEY", default="")
+TOEFL_SIGNING_SECRET = env("TOEFL_SIGNING_SECRET", default="")
+TOEFL_PUBLIC_BASE_URL = env("TOEFL_PUBLIC_BASE_URL", default="")
+TOEFL_CALLBACK_URL = env(
+    "TOEFL_CALLBACK_URL", default="http://web:8000/api/toefl/webhook/"
+)
+TOEFL_RETURN_URL = env("TOEFL_RETURN_URL", default="")
+TOEFL_DEFAULT_EXAM_CODE = env("TOEFL_DEFAULT_EXAM_CODE", default="director_extracted")

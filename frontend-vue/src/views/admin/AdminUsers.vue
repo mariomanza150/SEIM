@@ -2,14 +2,13 @@
   <div class="admin-users-page">
     <PageHeader :title="t('adminUsers.title')" :subtitle="t('adminUsers.subtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminUsers') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.AdminUsers') },
+          ]"
+        />
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="fetchUsers">
@@ -21,59 +20,63 @@
       </template>
     </PageHeader>
 
-    <div class="card mb-3" data-testid="admin-users-filters">
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
-            <input
-              v-model="filters.search"
-              class="form-control"
-              type="text"
-              :placeholder="t('adminUsers.searchPlaceholder')"
-              @input="debouncedSearch"
-            >
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">{{ t('adminUsers.filterActive') }}</label>
-            <select v-model="filters.is_active" class="form-select" @change="fetchUsers">
-              <option value="">{{ t('adminCommon.filterAll') }}</option>
-              <option value="true">{{ t('adminCommon.yes') }}</option>
-              <option value="false">{{ t('adminCommon.no') }}</option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">{{ t('adminUsers.filterRole') }}</label>
-            <select v-model="filters.role" class="form-select" @change="fetchUsers">
-              <option value="">{{ t('adminCommon.filterAll') }}</option>
-              <option
-                v-for="role in catalogRoles"
-                :key="`role-filter-${role.id || role.name}`"
-                :value="role.name"
-              >
-                {{ role.name }}
-              </option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">{{ t('adminCommon.sortLabel') }}</label>
-            <select v-model="filters.ordering" class="form-select" @change="fetchUsers">
-              <option value="email">{{ t('adminUsers.sortEmail') }}</option>
-              <option value="username">{{ t('adminUsers.sortUsername') }}</option>
-              <option value="-date_joined">{{ t('adminUsers.sortNewest') }}</option>
-            </select>
-          </div>
+    <CompactFilterBar test-id="admin-users-filters" @clear="clearFilters">
+      <template #primary>
+        <div class="col-md-6">
+          <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
+          <input
+            v-model="filters.search"
+            class="form-control"
+            type="text"
+            :placeholder="t('adminUsers.searchPlaceholder')"
+            @input="debouncedSearch"
+          >
         </div>
-      </div>
-    </div>
+        <div class="col-md-3">
+          <label class="form-label">{{ t('adminUsers.filterActive') }}</label>
+          <select v-model="filters.is_active" class="form-select" @change="fetchUsers">
+            <option value="">{{ t('adminCommon.filterAll') }}</option>
+            <option value="true">{{ t('adminCommon.yes') }}</option>
+            <option value="false">{{ t('adminCommon.no') }}</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">{{ t('adminUsers.filterRole') }}</label>
+          <select v-model="filters.role" class="form-select" @change="fetchUsers">
+            <option value="">{{ t('adminCommon.filterAll') }}</option>
+            <option
+              v-for="role in catalogRoles"
+              :key="`role-filter-${role.id || role.name}`"
+              :value="role.name"
+            >
+              {{ role.name }}
+            </option>
+          </select>
+        </div>
+      </template>
+      <template #advanced>
+        <div class="col-md-4">
+          <label class="form-label">{{ t('adminCommon.sortLabel') }}</label>
+          <select v-model="filters.ordering" class="form-select" @change="fetchUsers">
+            <option value="email">{{ t('adminUsers.sortEmail') }}</option>
+            <option value="username">{{ t('adminUsers.sortUsername') }}</option>
+            <option value="-date_joined">{{ t('adminUsers.sortNewest') }}</option>
+          </select>
+        </div>
+      </template>
+    </CompactFilterBar>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger" role="alert">{{ error }}</div>
-    <div v-else class="card">
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      :empty="!users.length"
+      :empty-title="t('adminUsers.empty')"
+      skeleton="table"
+      :loading-label="t('adminCommon.loading')"
+      :skeleton-columns="5"
+    >
+    <div class="card">
+      <ResponsiveList :items="users" :columns="mobileColumns" mobile-test-id="admin-users-mobile">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0" data-testid="admin-users-table">
           <thead>
@@ -86,9 +89,6 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="!users.length">
-              <td colspan="5" class="text-muted text-center py-4">{{ t('adminUsers.empty') }}</td>
-            </tr>
             <tr v-for="user in users" :key="user.id">
               <td class="text-nowrap">
                 <button type="button" class="btn btn-sm btn-outline-secondary" @click="openEdit(user)">
@@ -117,22 +117,38 @@
           </tbody>
         </table>
       </div>
+      <template #col-email="{ item }">
+        <div class="fw-medium">{{ item.email }}</div>
+        <div class="text-muted small">{{ item.username }}</div>
+      </template>
+      <template #col-name="{ item }">{{ displayName(item) }}</template>
+      <template #col-roles="{ item }">
+        <span v-for="role in item.roles || []" :key="role" class="badge text-bg-secondary me-1">{{ role }}</span>
+        <span v-if="!(item.roles || []).length" class="text-muted">{{ item.role }}</span>
+      </template>
+      <template #col-active="{ item }">
+        <span class="badge" :class="item.is_active ? 'bg-success' : 'bg-secondary'">
+          {{ item.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}
+        </span>
+      </template>
+      <template #actions="{ item }">
+        <button type="button" class="btn btn-sm btn-outline-secondary" @click="openEdit(item)">
+          <i class="bi bi-pencil me-1" aria-hidden="true"></i>{{ t('adminCommon.edit') }}
+        </button>
+      </template>
+      </ResponsiveList>
     </div>
+    </PageStateShell>
 
-    <div v-if="editor.open" class="modal-backdrop show"></div>
-    <div v-if="editor.open" class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
-      <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              {{ editor.mode === 'create' ? t('adminUsers.create') : t('adminUsers.editTitle') }}
-            </h5>
-            <button type="button" class="btn-close" :aria-label="t('adminCommon.close')" @click="closeEditor">
-            </button>
-          </div>
-          <div class="modal-body">
-            <div v-if="editor.error" class="alert alert-danger" role="alert">{{ editor.error }}</div>
-            <div class="row g-3">
+    <FormModal
+      :open="editor.open"
+      :title="editor.mode === 'create' ? t('adminUsers.create') : t('adminUsers.editTitle')"
+      :error="editor.error || ''"
+      :saving="editor.saving"
+      @close="closeEditor"
+      @submit="saveUser"
+    >
+      <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">{{ t('adminUsers.fields.email') }}</label>
                 <input v-model="editor.form.email" class="form-control" type="email" required>
@@ -191,27 +207,23 @@
                 <div class="form-text">{{ t('adminUsers.fields.staffHelp') }}</div>
               </div>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" @click="closeEditor">
-              {{ t('adminCommon.cancel') }}
-            </button>
-            <button type="button" class="btn btn-primary" :disabled="editor.saving" data-testid="admin-users-save" @click="saveUser">
-              {{ t('adminCommon.save') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    </FormModal>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
+import FormModal from '@/components/FormModal.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+
+defineOptions({ name: 'AdminUsers' })
 
 const { t } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -221,6 +233,19 @@ const error = ref(null)
 const users = ref([])
 const catalogRoles = ref([])
 const filters = ref({ search: '', is_active: '', role: '', ordering: 'email' })
+
+const mobileColumns = computed(() => [
+  { key: 'email', label: t('adminUsers.columns.email') },
+  { key: 'name', label: t('adminUsers.columns.name') },
+  { key: 'roles', label: t('adminUsers.columns.roles') },
+  { key: 'active', label: t('adminUsers.columns.active') },
+])
+
+function clearFilters() {
+  filters.value = { search: '', is_active: '', role: '', ordering: 'email' }
+  fetchUsers()
+}
+
 const editor = ref({
   open: false,
   mode: 'create',

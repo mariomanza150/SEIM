@@ -6,7 +6,9 @@ This includes ApplicationStatus, DocumentType, NotificationType, and Roles.
 from django.core.management.base import BaseCommand
 
 from accounts.models import AllowedEmailDomain, Role
+from accounts.language_catalog import seed_spoken_languages
 from accounts.profile_catalogs import seed_profile_catalogs
+from documents.file_type_families import seed_file_type_families
 from documents.mobility_document_catalog import (
     assign_scheme_document_requirements,
     seed_mobility_document_types,
@@ -22,7 +24,7 @@ from notifications.models import NotificationType
 class Command(BaseCommand):
     help = (
         "Create initial system data (statuses, document types, notification types, "
-        "roles, allowed email domains, profile catalogs, two mobility schemes, "
+        "roles, allowed email domains, profile catalogs, mobility schemes, "
         "CGRI partner destinations, grade scales, and MX document catalog requirements)"
     )
 
@@ -38,6 +40,7 @@ class Command(BaseCommand):
             ("rejected", 5),
             ("completed", 6),
             ("cancelled", 7),
+            ("nominated", 16),
             ("waitlist", 15),
         ]
         for name, order in statuses:
@@ -45,6 +48,9 @@ class Command(BaseCommand):
                 name=name, defaults={"order": order}
             )
             self.stdout.write(f"  ✓ ApplicationStatus: {name}")
+
+        seed_file_type_families()
+        self.stdout.write("  ✓ File type families seeded (PDF, Image, Word, …)")
 
         # Legacy English seeds (kept for older tests/fixtures); mapped by Phase 4 catalog.
         document_types = [
@@ -92,6 +98,9 @@ class Command(BaseCommand):
             f"{len(programs)} programs, {len(banks)} banks"
         )
 
+        spoken_languages = seed_spoken_languages()
+        self.stdout.write(f"  ✓ Spoken languages: {len(spoken_languages)} entries")
+
         for program in seed_mobility_schemes():
             self.stdout.write(f"  ✓ Mobility scheme: {program.name}")
 
@@ -110,6 +119,9 @@ class Command(BaseCommand):
             self.stdout.write(f"  ✓ Mobility DocumentType: {dt.slug or dt.name}")
         n_req = assign_scheme_document_requirements()
         self.stdout.write(f"  ✓ Scheme document requirements ensured (+{n_req} new)")
+
+        call_command("ingest_cgri_samples", verbosity=1)
+        self.stdout.write("  ✓ CGRI samples ingest attempted (SAMPLES/ if present)")
 
         self.stdout.write(
             self.style.SUCCESS("Initial system data created successfully!")

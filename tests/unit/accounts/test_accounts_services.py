@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 from django.contrib.auth import get_user_model
-from django.test import TestCase, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.utils import timezone
 
 from accounts.models import AllowedEmailDomain, Role
@@ -204,6 +204,26 @@ class TestPasswordReset(TestCase):
         self.assertIn("/seim/password-reset/confirm?", url)
         self.assertIn("email=ada%40example.com", url)
         self.assertIn("token=tok123", url)
+
+    def test_email_links_use_request_origin_instead_of_settings(self):
+        request = RequestFactory().get(
+            "/", HTTP_HOST="seim.example.com", secure=True
+        )
+        with override_settings(
+            ALLOWED_HOSTS=["*"], FRONTEND_BASE_URL="http://localhost:8020"
+        ):
+            verify = AccountService.build_email_verification_url(
+                "abc", request=request
+            )
+            reset = AccountService.build_password_reset_url(
+                "ada@example.com", "tok123", request=request
+            )
+        self.assertEqual(
+            verify, "https://seim.example.com/seim/verify-email?token=abc"
+        )
+        self.assertTrue(reset.startswith("https://seim.example.com/"))
+        self.assertNotIn("localhost:8020", verify)
+        self.assertNotIn("localhost:8020", reset)
 
     def test_initiate_password_reset_nonexistent_email(self):
         """Test password reset with non-existent email."""

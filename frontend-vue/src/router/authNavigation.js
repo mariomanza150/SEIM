@@ -4,9 +4,10 @@
  *
  * @param {import('vue-router').RouteLocationNormalized} to
  * @param {{ isAuthenticated: boolean, accessToken: string | null, canUseStaffReviewQueue: boolean, checkAuth: () => Promise<void> }} authStore
- * @returns {Promise<'next' | 'login' | 'applications' | 'partner'>}
+ * @param {{ scholarshipsEnabled?: boolean }} [features]
+ * @returns {Promise<'next' | 'login' | 'applications' | 'partner' | 'dashboard' | 'reviewQueue'>}
  */
-export async function resolveAuthenticatedNavigation(to, authStore) {
+export async function resolveAuthenticatedNavigation(to, authStore, features = {}) {
   if (!authStore.isAuthenticated) {
     if (authStore.accessToken) {
       try {
@@ -21,10 +22,12 @@ export async function resolveAuthenticatedNavigation(to, authStore) {
   }
 
   if (to.meta.staffReviewQueue && !authStore.canUseStaffReviewQueue) {
+    if (authStore.canUsePartnerPortal) return 'partner'
     return 'applications'
   }
 
   if (to.meta.partnerPortal && !authStore.canUsePartnerPortal) {
+    if (authStore.canUseStaffReviewQueue) return 'reviewQueue'
     return 'applications'
   }
 
@@ -39,6 +42,13 @@ export async function resolveAuthenticatedNavigation(to, authStore) {
 
   // Admin-only routes (SPA admin console)
   if (to.meta.adminOnly && !authStore.isAdmin) {
+    if (authStore.canUsePartnerPortal) return 'partner'
+    if (authStore.canUseStaffReviewQueue) return 'dashboard'
+    return 'applications'
+  }
+
+  if (to.meta.scholarshipsFeature && features.scholarshipsEnabled === false) {
+    if (authStore.canUseStaffReviewQueue) return 'dashboard'
     return 'applications'
   }
 

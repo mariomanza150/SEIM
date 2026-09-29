@@ -1,44 +1,34 @@
 <template>
   <div class="application-form-page">
-    <!-- Breadcrumb -->
-    <PageBreadcrumb
-      :aria-label="t('applicationFormPage.breadcrumbAria')"
-      :items="[
-        { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
-        { to: { name: 'Applications' }, label: t('route.names.Applications') },
-        { label: isEditMode ? t('applicationFormPage.breadcrumbEdit') : t('applicationFormPage.breadcrumbNew') },
-      ]"
-    />
+    <PageHeader
+      :title="isEditMode ? t('applicationFormPage.titleEdit') : t('applicationFormPage.titleNew')"
+      :subtitle="isEditMode ? t('applicationFormPage.subtitleEdit') : t('applicationFormPage.subtitleNew')"
+      icon-class="bi bi-file-earmark-plus"
+    >
+      <template #breadcrumb>
+        <PageBreadcrumb
+          :aria-label="t('applicationFormPage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { to: { name: 'Applications' }, label: t('route.names.Applications') },
+            { label: isEditMode ? t('applicationFormPage.breadcrumbEdit') : t('applicationFormPage.breadcrumbNew') },
+          ]"
+        />
+      </template>
+    </PageHeader>
 
-      <!-- Header -->
-      <div class="row mb-4">
-        <div class="col-md-8">
-          <h2>
-            <i class="bi bi-file-earmark-plus me-2"></i>
-            {{ isEditMode ? t('applicationFormPage.titleEdit') : t('applicationFormPage.titleNew') }}
-          </h2>
-          <p class="text-muted">
-            {{ isEditMode ? t('applicationFormPage.subtitleEdit') : t('applicationFormPage.subtitleNew') }}
-          </p>
-        </div>
-      </div>
-
-      <!-- Loading -->
-      <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('applicationFormPage.loadingSpinner') }}</span>
-        </div>
-        <p class="mt-3 text-muted">{{ loadingMessage }}</p>
-      </div>
-
-      <!-- Form -->
-      <div v-else class="row">
+    <PageStateShell
+      :loading="loading"
+      skeleton="cards"
+      :loading-label="loadingMessage"
+    >
+      <div class="row">
         <div class="col-lg-8">
           <div class="card">
             <div class="card-body">
               <form data-testid="application-form" @submit.prevent="handleSubmit">
                 <div
-                  v-if="eligibilityRequired || !isEditMode"
+                  v-if="eligibilityRequired"
                   class="card border border-warning mb-4"
                   data-testid="application-eligibility-section"
                 >
@@ -51,17 +41,24 @@
                     <p class="text-muted small">{{ t('applicationFormPage.profileEligibilityIntro') }}</p>
                     <div class="row g-3">
                       <div class="col-md-6">
-                        <label for="application-profile-ingress" class="form-label">{{ t('profilePage.ingressDate') }} *</label>
+                        <label for="application-profile-ingress" class="form-label">
+                          {{ t('profilePage.ingressDate') }}
+                          <span v-if="!hasProfileSemesterOverride">*</span>
+                        </label>
                         <input
                           id="application-profile-ingress"
                           v-model="profileEligibility.ingress_date"
                           type="date"
                           class="form-control"
-                          required
+                          :required="!hasProfileSemesterOverride"
+                          data-testid="application-profile-ingress"
                         >
                       </div>
                       <div class="col-md-6">
-                        <label for="application-profile-semester" class="form-label">{{ t('profilePage.currentSemester') }}</label>
+                        <label for="application-profile-semester" class="form-label">
+                          {{ t('profilePage.currentSemester') }}
+                          <span v-if="!profileEligibility.ingress_date">*</span>
+                        </label>
                         <input
                           id="application-profile-semester"
                           v-model.number="profileEligibility.current_semester"
@@ -69,9 +66,11 @@
                           min="1"
                           step="1"
                           class="form-control"
+                          :required="!profileEligibility.ingress_date"
                           :placeholder="profileEligibility.computed_semester != null
                             ? t('profilePage.computedSemesterPlaceholder', { n: profileEligibility.computed_semester })
                             : t('profilePage.semesterOverridePlaceholder')"
+                          data-testid="application-profile-semester"
                         >
                       </div>
                       <div class="col-md-6">
@@ -113,21 +112,20 @@
                       </div>
                       <div class="col-md-6">
                         <label for="application-profile-language" class="form-label">{{ t('profilePage.primaryLanguage') }} *</label>
-                        <input
+                        <SearchableSelect
                           id="application-profile-language"
                           v-model="profileEligibility.language"
-                          type="text"
-                          class="form-control"
-                          required
-                        >
+                          :options="spokenLanguageOptions"
+                          :placeholder="t('profilePage.languagePlaceholder')"
+                        />
                       </div>
                       <div class="col-md-6">
-                        <label for="application-profile-language-level" class="form-label">{{ t('profilePage.primaryLevelLabel') }} *</label>
+                        <label for="application-profile-language-level" class="form-label">{{ t('profilePage.primaryLevelLabel') }}</label>
                         <select
                           id="application-profile-language-level"
                           v-model="profileEligibility.language_level"
                           class="form-select"
-                          required
+                          data-testid="application-profile-language-level"
                         >
                           <option value="">{{ t('profilePage.selectOption') }}</option>
                           <option v-for="level in ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']" :key="level" :value="level">{{ level }}</option>
@@ -149,7 +147,7 @@
                     id="program"
                     v-model="form.program"
                     class="form-select"
-                    :class="{ 'is-invalid': programIssueMessages.length }"
+                    :class="{ 'is-invalid': programIssueMessages.length || errors.program }"
                     :aria-invalid="programIssueMessages.length ? 'true' : 'false'"
                     :aria-describedby="programIssueMessages.length ? 'application-form-program-feedback' : undefined"
                     required
@@ -282,7 +280,7 @@
                     </template>
                     <template #presets>
                         <div class="d-flex flex-wrap align-items-end gap-2 mb-2">
-                          <div class="flex-grow-1" style="min-width: 200px">
+                          <div class="flex-grow-1 seim-min-w-filter">
                             <label class="form-label small text-muted mb-1">{{ t('applicationFormPage.savePresetLabel') }}</label>
                             <div class="input-group input-group-sm">
                               <input
@@ -433,7 +431,20 @@
                       <label for="host-school" class="form-label">
                         {{ t('applicationFormPage.hostSchoolLabel') }} <span class="text-danger">*</span>
                       </label>
+                      <input
+                        v-if="hostSchoolNeedsFreeText"
+                        id="host-school"
+                        v-model="form.host_school_name"
+                        type="text"
+                        class="form-control"
+                        :class="{ 'is-invalid': errors.host_school || errors.host_school_name }"
+                        :placeholder="t('applicationFormPage.hostSchoolFreeTextPlaceholder')"
+                        data-testid="host-school-input"
+                        maxlength="255"
+                        required
+                      >
                       <select
+                        v-else
                         id="host-school"
                         v-model="form.host_school"
                         class="form-select"
@@ -446,18 +457,35 @@
                           {{ school.name }}
                         </option>
                       </select>
+                      <div v-if="hostSchoolNeedsFreeText" class="form-text">
+                        {{ t('applicationFormPage.hostSchoolFreeTextHelp') }}
+                      </div>
                       <div v-if="hostSchoolsLoading" class="form-text">
                         {{ t('applicationFormPage.loadingHostSchools') }}
                       </div>
-                      <div v-if="errors.host_school" class="invalid-feedback d-block">
-                        {{ flattenFieldMessages(errors.host_school).join(' ') }}
+                      <div v-if="errors.host_school || errors.host_school_name" class="invalid-feedback d-block">
+                        {{ flattenFieldMessages(errors.host_school || errors.host_school_name).join(' ') }}
                       </div>
                     </div>
                     <div class="col-md-6">
                       <label for="host-academic-program" class="form-label">
                         {{ t('applicationFormPage.hostAcademicProgramLabel') }} <span class="text-danger">*</span>
                       </label>
+                      <input
+                        v-if="hostAcademicProgramNeedsFreeText"
+                        id="host-academic-program"
+                        v-model="form.host_academic_program_name"
+                        type="text"
+                        class="form-control"
+                        :class="{ 'is-invalid': errors.host_academic_program || errors.host_academic_program_name }"
+                        :placeholder="t('applicationFormPage.hostAcademicProgramFreeTextPlaceholder')"
+                        data-testid="host-academic-program-input"
+                        maxlength="255"
+                        :disabled="!form.host_institution || (!hostSchoolNeedsFreeText && !form.host_school)"
+                        required
+                      >
                       <select
+                        v-else
                         id="host-academic-program"
                         v-model="form.host_academic_program"
                         class="form-select"
@@ -474,11 +502,14 @@
                           {{ ap.code ? `${ap.name} (${ap.code})` : ap.name }}
                         </option>
                       </select>
+                      <div v-if="hostAcademicProgramNeedsFreeText" class="form-text">
+                        {{ t('applicationFormPage.hostAcademicProgramFreeTextHelp') }}
+                      </div>
                       <div v-if="hostAcademicProgramsLoading" class="form-text">
                         {{ t('applicationFormPage.loadingHostAcademicPrograms') }}
                       </div>
-                      <div v-if="errors.host_academic_program" class="invalid-feedback d-block">
-                        {{ flattenFieldMessages(errors.host_academic_program).join(' ') }}
+                      <div v-if="errors.host_academic_program || errors.host_academic_program_name" class="invalid-feedback d-block">
+                        {{ flattenFieldMessages(errors.host_academic_program || errors.host_academic_program_name).join(' ') }}
                       </div>
                     </div>
                   </div>
@@ -590,7 +621,7 @@
                         <span v-if="currentStepTitle"> — {{ currentStepTitle }}</span>
                       </p>
                     </div>
-                    <span class="badge bg-light text-dark border">
+                    <span class="badge seim-surface-muted text-body border">
                       {{
                         visibleDynamicFields.length === 1
                           ? t('applicationFormPage.fieldCountOne', { n: visibleDynamicFields.length })
@@ -763,9 +794,10 @@
                               {{ documentStepStatusLabel(row.status) }}
                             </span>
                             <button
-                              v-if="row.has_template && isEditMode && route.params.id"
+                              v-if="row.has_template && isEditMode && route.params.id && row.status !== 'approved'"
                               type="button"
                               class="btn btn-sm btn-outline-secondary"
+                              data-testid="download-step-template"
                               @click="downloadStepTemplate(row)"
                             >
                               {{ t('applicationFormPage.downloadTemplate') }}
@@ -917,6 +949,7 @@
           </div>
         </div>
       </div>
+    </PageStateShell>
   </div>
 </template>
 
@@ -941,10 +974,23 @@ import {
 } from '@/utils/eligibilityMessages'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
+import { flattenFieldMessages } from '@/utils/apiErrors'
+import { unwrapPaginatedResults } from '@/utils/apiList'
+import { filenameFromContentDisposition } from '@/utils/documentApi'
+import {
+  applyServerValidationErrors,
+  catalogId,
+  isIncompleteProfileError,
+  useHostDestinations,
+} from '@/composables/useApplicationForm'
 import ApplicationSubjectsPanel from '@/components/ApplicationSubjectsPanel.vue'
+import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import EligibilityFixList from '@/components/EligibilityFixList.vue'
+import SearchableSelect from '@/components/SearchableSelect.vue'
+import { spokenLanguageSelectOptions } from '@/utils/spokenLanguageOptions'
 
 const route = useRoute()
 const router = useRouter()
@@ -972,6 +1018,8 @@ const submitting = ref(false)
 const eligibilityRequired = ref(false)
 const profileEligibilityError = ref('')
 const gradeScales = ref([])
+const spokenLanguages = ref([])
+const spokenLanguageOptions = computed(() => spokenLanguageSelectOptions(spokenLanguages.value))
 const profileEligibility = ref({
   gpa: null,
   grade_scale: '',
@@ -982,6 +1030,27 @@ const profileEligibility = ref({
   credits_approved_percent: null,
   computed_semester: null,
 })
+
+/** Match backend apply-start: ingress date OR current semester. */
+function hasProfileSemester(values = profileEligibility.value) {
+  if (values?.ingress_date) return true
+  return values?.current_semester != null && values.current_semester !== ''
+}
+
+const hasProfileSemesterOverride = computed(() => (
+  profileEligibility.value.current_semester != null
+  && profileEligibility.value.current_semester !== ''
+))
+
+/** Soft-gate fields aligned with ``is_ready_to_apply`` eligibility keys (not language_level). */
+function eligibilityFieldsMissing(values = profileEligibility.value) {
+  return !values.gpa
+    || !values.grade_scale
+    || !String(values.language || '').trim()
+    || values.credits_approved_percent == null
+    || values.credits_approved_percent === ''
+    || !hasProfileSemester(values)
+}
 
 const programs = ref([])
 const programsLoading = ref(false)
@@ -1003,14 +1072,24 @@ const form = ref({
   host_institution: '',
   host_school: '',
   host_academic_program: '',
+  host_school_name: '',
+  host_academic_program_name: '',
 })
-const hostInstitutions = ref([])
-const hostSchools = ref([])
-const hostAcademicPrograms = ref([])
-const hostInstitutionsLoading = ref(false)
-const hostSchoolsLoading = ref(false)
-const hostAcademicProgramsLoading = ref(false)
-const hostDestinationConfigured = computed(() => hostInstitutions.value.length > 0)
+const {
+  hostInstitutions,
+  hostSchools,
+  hostAcademicPrograms,
+  hostInstitutionsLoading,
+  hostSchoolsLoading,
+  hostAcademicProgramsLoading,
+  hostDestinationConfigured,
+  hostSchoolNeedsFreeText,
+  hostAcademicProgramNeedsFreeText,
+  fetchHostInstitutions,
+  fetchHostSchools,
+  fetchHostAcademicPrograms,
+  hostDestinationPayload,
+} = useHostDestinations(form)
 const applicationStatus = ref('')
 let suppressHostCascadeReset = false
 /** For ``visible_when`` rules: ``has_assigned_coordinator`` (program id comes from ``form.program``). */
@@ -1043,46 +1122,14 @@ const pendingDynamicResponses = ref(null)
 const applicationDynamicLayout = ref(null)
 const currentStepIndex = ref(0)
 
-function flattenFieldMessages(raw) {
-  if (raw == null) return []
-  if (typeof raw === 'string') return [raw]
-  if (Array.isArray(raw)) {
-    return raw.flatMap((item) => flattenFieldMessages(item))
-  }
-  if (typeof raw === 'object') {
-    return Object.values(raw).flatMap((v) => flattenFieldMessages(v))
-  }
-  return [String(raw)]
-}
-
-function catalogId(value) {
-  if (value && typeof value === 'object') return value.id ?? ''
-  return value ?? ''
-}
-
-function isIncompleteProfileError(data) {
-  const code = data?.code || data?.error_code || data?.detail?.code
-  if (['profile_incomplete', 'incomplete_profile', 'profile_not_ready'].includes(code)) return true
-  const message = flattenFieldMessages(data).join(' ').toLowerCase()
-  return message.includes('profile') && (
-    message.includes('incomplete') ||
-    message.includes('complete your') ||
-    message.includes('not ready')
-  )
-}
-
 async function fetchActiveGradeScales() {
-  const listFrom = (data) => {
-    const rows = data?.results || data
-    return Array.isArray(rows) ? rows : []
-  }
   try {
     const { data } = await api.get('/api/grades/scales/active/')
-    return listFrom(data)
+    return unwrapPaginatedResults(data)
   } catch {
     try {
       const { data } = await api.get('/grades/api/scales/active/')
-      return listFrom(data)
+      return unwrapPaginatedResults(data)
     } catch {
       return []
     }
@@ -1090,71 +1137,82 @@ async function fetchActiveGradeScales() {
 }
 
 async function loadProfileGate() {
+  let profile
   try {
-    const [{ data: profile }, scales] = await Promise.all([
-      api.get('/api/accounts/profile/'),
-      fetchActiveGradeScales(),
-    ])
-    gradeScales.value = scales
-
-    if (profile.is_ready_to_apply === false) {
+    const { data } = await api.get('/api/accounts/profile/')
+    profile = data
+  } catch (err) {
+    console.error('Failed to check profile readiness:', err)
+    // Login/shell often already hydrated readiness; do not bounce ready students on a flaky GET.
+    if (authStore.user?.is_ready_to_apply === true) {
+      profile = { ...authStore.user, is_ready_to_apply: true }
+    } else if (authStore.user?.is_ready_to_apply === false) {
       errorToast(t('applicationFormPage.profileRequiredToast'))
       await router.replace({ name: 'Profile', query: { next: route.fullPath } })
       return false
+    } else {
+      errorToast(t('applicationFormPage.profileLoadFailed'))
+      await router.replace({ name: 'Profile', query: { next: route.fullPath } })
+      return false
     }
+  }
 
-    profileEligibility.value = {
-      gpa: profile.gpa ?? null,
-      grade_scale: catalogId(profile.grade_scale),
-      language: profile.language ?? '',
-      language_level: profile.language_level ?? '',
-      ingress_date: profile.ingress_date || '',
-      current_semester: profile.current_semester ?? null,
-      credits_approved_percent: profile.credits_approved_percent ?? null,
-      computed_semester: profile.computed_semester ?? null,
-    }
-    eligibilityRequired.value = !profileEligibility.value.gpa
-      || !profileEligibility.value.grade_scale
-      || !profileEligibility.value.language
-      || !profileEligibility.value.language_level
-      || !profileEligibility.value.ingress_date
-      || profileEligibility.value.credits_approved_percent == null
-      || profileEligibility.value.credits_approved_percent === ''
-    return true
-  } catch (err) {
-    console.error('Failed to check profile readiness:', err)
-    errorToast(t('applicationFormPage.profileLoadFailed'))
+  if (profile.is_ready_to_apply === false) {
+    errorToast(t('applicationFormPage.profileRequiredToast'))
     await router.replace({ name: 'Profile', query: { next: route.fullPath } })
     return false
   }
+
+  try {
+    const [scalesResult, langResult] = await Promise.allSettled([
+      fetchActiveGradeScales(),
+      api.get('/api/accounts/catalogs/spoken-languages/'),
+    ])
+    gradeScales.value = scalesResult.status === 'fulfilled' ? scalesResult.value : []
+    spokenLanguages.value = langResult.status === 'fulfilled'
+      ? unwrapPaginatedResults(langResult.value.data)
+      : []
+  } catch (err) {
+    console.error('Failed to load apply-form catalogs:', err)
+    gradeScales.value = []
+    spokenLanguages.value = []
+  }
+
+  profileEligibility.value = {
+    gpa: profile.gpa ?? null,
+    grade_scale: catalogId(profile.grade_scale),
+    language: profile.language ?? '',
+    language_level: profile.language_level ?? '',
+    ingress_date: profile.ingress_date || '',
+    current_semester: profile.current_semester ?? null,
+    credits_approved_percent: profile.credits_approved_percent ?? null,
+    computed_semester: profile.computed_semester ?? null,
+  }
+  eligibilityRequired.value = eligibilityFieldsMissing(profileEligibility.value)
+  return true
 }
 
 async function persistProfileEligibility() {
-  if (isEditMode.value && !eligibilityRequired.value) return true
+  if (!eligibilityRequired.value) return true
   profileEligibilityError.value = ''
   const values = profileEligibility.value
-  if (
-    !values.gpa
-    || !values.grade_scale
-    || !values.language.trim()
-    || !values.language_level
-    || !values.ingress_date
-    || values.credits_approved_percent == null
-    || values.credits_approved_percent === ''
-  ) {
+  if (eligibilityFieldsMissing(values)) {
     profileEligibilityError.value = t('applicationFormPage.profileEligibilityRequired')
     return false
   }
   try {
-    await api.patch('/api/accounts/profile/', {
+    const payload = {
       gpa: values.gpa,
       grade_scale: values.grade_scale,
       language: values.language.trim(),
-      language_level: values.language_level,
-      ingress_date: values.ingress_date,
+      ingress_date: values.ingress_date || null,
       current_semester: values.current_semester === '' ? null : values.current_semester,
       credits_approved_percent: values.credits_approved_percent,
-    })
+    }
+    if (values.language_level) {
+      payload.language_level = values.language_level
+    }
+    await api.patch('/api/accounts/profile/', payload)
     eligibilityRequired.value = false
     await authStore.fetchUserProfile()
     if (!isEditMode.value) await fetchPrograms()
@@ -1447,6 +1505,7 @@ function documentStepStatusLabel(status) {
 }
 
 async function downloadStepTemplate(row) {
+  if (row?.status === 'approved') return
   const typeId = row?.id
   const appId = route.params.id
   if (!typeId || !appId) return
@@ -1459,7 +1518,10 @@ async function downloadStepTemplate(row) {
     const objectUrl = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = objectUrl
-    a.download = row.name || 'template'
+    a.download = filenameFromContentDisposition(
+      response.headers?.['content-disposition'],
+      `${row.name || 'template'}.docx`,
+    )
     a.rel = 'noopener noreferrer'
     document.body.appendChild(a)
     a.click()
@@ -1702,62 +1764,6 @@ function applyApplicationVisibilityFromResponse(data) {
   }
 }
 
-async function fetchHostInstitutions(programId) {
-  hostInstitutions.value = []
-  hostSchools.value = []
-  hostAcademicPrograms.value = []
-  if (!programId) return
-  hostInstitutionsLoading.value = true
-  try {
-    const { data } = await api.get(`/api/programs/${programId}/host-institutions/`)
-    hostInstitutions.value = Array.isArray(data) ? data : (data.results || [])
-  } catch (err) {
-    console.error('Failed to load host institutions:', err)
-    hostInstitutions.value = []
-  } finally {
-    hostInstitutionsLoading.value = false
-  }
-}
-
-async function fetchHostSchools(institutionId) {
-  hostSchools.value = []
-  hostAcademicPrograms.value = []
-  if (!institutionId) return
-  hostSchoolsLoading.value = true
-  try {
-    const { data } = await api.get(`/api/host-institutions/${institutionId}/schools/`)
-    hostSchools.value = Array.isArray(data) ? data : (data.results || [])
-  } catch (err) {
-    console.error('Failed to load host schools:', err)
-    hostSchools.value = []
-  } finally {
-    hostSchoolsLoading.value = false
-  }
-}
-
-async function fetchHostAcademicPrograms(schoolId) {
-  hostAcademicPrograms.value = []
-  if (!schoolId) return
-  hostAcademicProgramsLoading.value = true
-  try {
-    const { data } = await api.get(`/api/schools/${schoolId}/academic-programs/`)
-    hostAcademicPrograms.value = Array.isArray(data) ? data : (data.results || [])
-  } catch (err) {
-    console.error('Failed to load host academic programs:', err)
-    hostAcademicPrograms.value = []
-  } finally {
-    hostAcademicProgramsLoading.value = false
-  }
-}
-
-function hostDestinationPayload() {
-  return {
-    host_institution: form.value.host_institution || null,
-    host_school: form.value.host_school || null,
-    host_academic_program: form.value.host_academic_program || null,
-  }
-}
-
 async function fetchApplication() {
   if (!isEditMode.value) return
 
@@ -1771,6 +1777,8 @@ async function fetchApplication() {
       host_institution: response.data.host_institution || '',
       host_school: response.data.host_school || '',
       host_academic_program: response.data.host_academic_program || '',
+      host_school_name: '',
+      host_academic_program_name: '',
     }
     applicationStatus.value = response.data.status || ''
     applyApplicationVisibilityFromResponse(response.data)
@@ -1884,15 +1892,6 @@ function buildDynamicPayload(fieldList) {
   return payload
 }
 
-function applyServerValidationErrors(raw) {
-  if (raw === undefined || raw === null) return false
-  const data = raw
-  errors.value = typeof data === 'string' ? { program: [data] } : { ...data }
-  const df = typeof data === 'object' && data !== null ? data.dynamic_form : undefined
-  dynamicFormErrors.value = Array.isArray(df) ? df : (df ? [df] : [])
-  return true
-}
-
 async function scrollToFirstValidationAlert() {
   await nextTick()
   eligibilityAlertRef.value?.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' })
@@ -1901,12 +1900,46 @@ async function scrollToFirstValidationAlert() {
   }
 }
 
+function validateHostDestinationClient() {
+  if (!hostDestinationConfigured.value || !form.value.host_institution) return true
+  const nextErrors = { ...errors.value }
+  let ok = true
+  if (hostSchoolNeedsFreeText.value) {
+    if (!String(form.value.host_school_name || '').trim()) {
+      nextErrors.host_school_name = [t('applicationFormPage.hostSchoolFreeTextPlaceholder')]
+      ok = false
+    }
+  } else if (!form.value.host_school) {
+    nextErrors.host_school = [t('applicationFormPage.selectHostSchool')]
+    ok = false
+  }
+  if (hostAcademicProgramNeedsFreeText.value) {
+    if (!String(form.value.host_academic_program_name || '').trim()) {
+      nextErrors.host_academic_program_name = [
+        t('applicationFormPage.hostAcademicProgramFreeTextPlaceholder'),
+      ]
+      ok = false
+    }
+  } else if (!form.value.host_academic_program) {
+    nextErrors.host_academic_program = [t('applicationFormPage.selectHostAcademicProgram')]
+    ok = false
+  }
+  if (!ok) errors.value = nextErrors
+  return ok
+}
+
 async function handleSubmit() {
   errors.value = {}
   dynamicFormErrors.value = []
 
   if (!(await persistProfileEligibility())) {
     errorToast(t('applicationFormPage.toastFixErrors'))
+    return
+  }
+
+  if (!validateHostDestinationClient()) {
+    errorToast(t('applicationFormPage.toastFixErrors'))
+    await scrollToFirstValidationAlert()
     return
   }
 
@@ -1974,7 +2007,7 @@ async function handleSubmit() {
       await router.replace({ name: 'Profile', query: { next: route.fullPath } })
       return
     }
-    if (applyServerValidationErrors(data)) {
+    if (applyServerValidationErrors(data, errors, dynamicFormErrors)) {
       errorToast(t('applicationFormPage.toastFixErrors'))
       await scrollToFirstValidationAlert()
     } else {
@@ -2042,7 +2075,7 @@ async function saveDraft() {
       await router.replace({ name: 'Profile', query: { next: route.fullPath } })
       return
     }
-    if (applyServerValidationErrors(data)) {
+    if (applyServerValidationErrors(data, errors, dynamicFormErrors)) {
       errorToast(t('applicationFormPage.toastFixErrors'))
       await scrollToFirstValidationAlert()
     } else {
@@ -2158,6 +2191,8 @@ watch(
     form.value.host_institution = ''
     form.value.host_school = ''
     form.value.host_academic_program = ''
+    form.value.host_school_name = ''
+    form.value.host_academic_program_name = ''
     await fetchHostInstitutions(programId)
   },
 )
@@ -2169,6 +2204,8 @@ watch(
     if (String(institutionId || '') === String(prev || '')) return
     form.value.host_school = ''
     form.value.host_academic_program = ''
+    form.value.host_school_name = ''
+    form.value.host_academic_program_name = ''
     await fetchHostSchools(institutionId)
   },
 )
@@ -2179,6 +2216,7 @@ watch(
     if (suppressHostCascadeReset) return
     if (String(schoolId || '') === String(prev || '')) return
     form.value.host_academic_program = ''
+    form.value.host_academic_program_name = ''
     await fetchHostAcademicPrograms(schoolId)
   },
 )
@@ -2186,7 +2224,6 @@ watch(
 
 <style scoped>
 .application-form-page {
-  min-height: 100vh;
   background-color: var(--seim-app-bg);
 }
 

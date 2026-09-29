@@ -6,7 +6,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import Register from './Register.vue'
 import i18n, { setAppLocale } from '@/i18n'
-import axios from 'axios'
+import api from '@/services/api'
 
 const mockSuccessToast = vi.fn()
 const mockErrorToast = vi.fn()
@@ -25,10 +25,11 @@ vi.mock('@/stores/auth', () => ({
   useAuthStore: () => ({
     register: mockRegister,
     error: null,
+    fieldErrors: {},
   }),
 }))
 
-vi.mock('axios', () => ({
+vi.mock('@/services/api', () => ({
   default: { get: vi.fn() },
 }))
 
@@ -37,7 +38,7 @@ describe('Register', () => {
     setActivePinia(createPinia())
     vi.clearAllMocks()
     mockRegister.mockResolvedValue(false)
-    axios.get.mockResolvedValue({
+    api.get.mockResolvedValue({
       data: [{ id: 'domain-1', name: 'uanl.edu.mx' }],
     })
     localStorage.clear()
@@ -67,8 +68,8 @@ describe('Register', () => {
     const wrapper = mountRegister()
 
     await vi.waitFor(() => {
-      expect(axios.get).toHaveBeenCalledWith(
-        expect.stringContaining('/api/accounts/catalogs/allowed-email-domains/'),
+      expect(api.get).toHaveBeenCalledWith(
+        '/api/accounts/catalogs/allowed-email-domains/',
       )
     })
     await flushPromises()
@@ -88,7 +89,7 @@ describe('Register', () => {
     mockRegister.mockResolvedValue(true)
     const wrapper = mountRegister()
 
-    await vi.waitFor(() => expect(axios.get).toHaveBeenCalled())
+    await vi.waitFor(() => expect(api.get).toHaveBeenCalled())
     await wrapper.find('#email').setValue('new@uanl.edu.mx')
     await wrapper.find('#first_name').setValue('New')
     await wrapper.find('#last_name').setValue('User')

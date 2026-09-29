@@ -237,7 +237,9 @@ def test_populate_internacional_content_renders_official_copy():
     assert docs.status_code == 200
     docs_html = docs.content.decode()
     assert "Kárdex" in docs_html
-    assert "ConvocatoriaMIEntrante.pdf" in docs_html or "FS-SP.pdf" in docs_html
+    assert "formato AF" in docs_html or "AF.pdf" in docs_html
+    assert "generada en SEIM" in docs_html or "/seim/login/" in docs_html
+    assert "Lineamientos" in docs_html or "FS-LD" in docs_html
 
     entrante = client.get(f"{internacional.url}movilidad-estudiantil/entrante/")
     assert entrante.status_code == 200

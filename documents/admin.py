@@ -6,6 +6,7 @@ from .models import (
     DocumentType,
     DocumentValidation,
     ExchangeAgreementDocument,
+    FileTypeFamily,
 )
 
 
@@ -47,6 +48,16 @@ class ExchangeAgreementDocumentAdmin(admin.ModelAdmin):
         super().save_model(request, obj, form, change)
 
 
+@admin.register(FileTypeFamily)
+class FileTypeFamilyAdmin(admin.ModelAdmin):
+    list_display = ("name", "slug", "extensions", "sort_order", "is_active")
+    list_editable = ("sort_order", "is_active")
+    list_filter = ("is_active",)
+    search_fields = ("name", "slug", "aliases", "extensions")
+    prepopulated_fields = {"slug": ("name",)}
+    ordering = ("sort_order", "name")
+
+
 @admin.register(DocumentType)
 class DocumentTypeAdmin(admin.ModelAdmin):
     list_display = (
@@ -56,10 +67,11 @@ class DocumentTypeAdmin(admin.ModelAdmin):
         "allows_multiple",
         "max_file_size_mb",
     )
-    list_filter = ("submission_mode", "allows_multiple")
+    list_filter = ("submission_mode", "allows_multiple", "file_type_families")
     search_fields = ("name", "slug", "description")
     readonly_fields = ("id",)
     prepopulated_fields = {"slug": ("name",)}
+    filter_horizontal = ("file_type_families",)
     fieldsets = (
         (None, {"fields": ("name", "slug", "description", "submission_mode")}),
         (
@@ -70,9 +82,21 @@ class DocumentTypeAdmin(admin.ModelAdmin):
             "Upload constraints",
             {
                 "fields": (
+                    "file_type_families",
                     "accepted_extensions",
                     "max_file_size_mb",
                     "allows_multiple",
+                )
+            },
+        ),
+        (
+            "Version history visibility",
+            {
+                "fields": (
+                    "version_history_visibility",
+                    "version_history_student",
+                    "version_history_coordinator",
+                    "version_history_admin",
                 )
             },
         ),
@@ -81,13 +105,21 @@ class DocumentTypeAdmin(admin.ModelAdmin):
 
 @admin.register(Document)
 class DocumentAdmin(admin.ModelAdmin):
-    list_display = ("application", "type", "uploaded_by", "is_valid", "validated_at")
+    list_display = (
+        "application",
+        "type",
+        "uploaded_by",
+        "is_valid",
+        "validated_at",
+        "supersedes",
+    )
     search_fields = ("application__id", "type__name", "uploaded_by__email")
     list_filter = ("is_valid", "type")
     list_editable = ("is_valid",)
+    raw_id_fields = ("application", "type", "uploaded_by", "supersedes")
     readonly_fields = ("created_at", "updated_at", "validated_at")
     fieldsets = (
-        (None, {"fields": ("application", "type", "file", "uploaded_by", "is_valid")}),
+        (None, {"fields": ("application", "type", "file", "uploaded_by", "is_valid", "supersedes")}),
         ("Validation", {"fields": ("validated_at",)}),
         ("Audit", {"fields": ("created_at", "updated_at")}),
     )

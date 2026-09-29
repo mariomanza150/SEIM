@@ -1,0 +1,21 @@
+{% load static %}
+{# Responsive image with optional WebP source #}
+<picture>
+    {% if webp_path %}
+    <source srcset="{% static webp_path %}" type="image/webp">
+    {% endif %}
+    <img
+        src="{% static static_path %}"
+        alt="{{ alt }}"
+        class="{{ img_class }}"
+        {% if width %}width="{{ width }}"{% endif %}
+        {% if height %}height="{{ height }}"{% endif %}
+        {% if lazy %}
+        loading="lazy"
+        decoding="async"
+        {% else %}
+        fetchpriority="high"
+        decoding="async"
+        {% endif %}
+    >
+</picture>

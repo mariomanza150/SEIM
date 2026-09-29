@@ -279,36 +279,47 @@ class CanManageRoles(HasPermission):
 # ============================================================================
 
 from rest_framework import permissions
+from rest_framework.permissions import SAFE_METHODS
 
 
 class IsOwnerOrAdmin(permissions.BasePermission):
     """
     Allow access if user is admin/staff or is the object's owner (student).
 
-    BACKWARD COMPATIBLE: Maintained for existing code.
-    For new code, use HasPermission with appropriate permission names.
+    For application Document objects: staff may read (review), but only the
+    applicant may create/replace/delete uploads.
     """
 
     def has_object_permission(self, request, view, obj):
         user = request.user
+        is_document = (
+            getattr(getattr(obj, "_meta", None), "model_name", None) == "document"
+        )
 
-        # Check if admin or staff
+        if is_document:
+            app = getattr(obj, "application", None)
+            is_applicant = (
+                app is not None and getattr(app, "student_id", None) == user.id
+            )
+            is_uploader = getattr(obj, "uploaded_by_id", None) == user.id
+            is_staff_role = bool(
+                user.is_staff
+                or user.is_superuser
+                or (hasattr(user, "is_admin") and user.is_admin)
+                or (
+                    hasattr(user, "has_role")
+                    and (user.has_role("coordinator") or user.has_role("admin"))
+                )
+            )
+            if request.method in SAFE_METHODS:
+                return is_applicant or is_uploader or is_staff_role
+            # Writes: only the applicant (never staff-as-student)
+            return is_applicant
+
+        # Non-document objects: admin/staff or owner
         if user.is_staff or (hasattr(user, "is_admin") and user.is_admin):
             return True
 
-        # Application uploads (DocumentViewSet uses this permission class)
-        if getattr(getattr(obj, "_meta", None), "model_name", None) == "document":
-            if hasattr(user, "has_role") and (
-                user.has_role("coordinator") or user.has_role("admin")
-            ):
-                return True
-            app = getattr(obj, "application", None)
-            if app is not None and getattr(app, "student_id", None) == user.id:
-                return True
-            if getattr(obj, "uploaded_by_id", None) == user.id:
-                return True
-
-        # Check ownership
         owner = getattr(obj, "student", None) or getattr(obj, "user", None)
         return owner == user
 
@@ -335,6 +346,25 @@ class IsCoordinatorOrAdmin(permissions.BasePermission):
         if hasattr(user, "has_any_role"):
             return user.has_any_role(["coordinator", "admin"])
 
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        return self.has_permission(request, view)
+
+
+class IsAdminRole(permissions.BasePermission):
+    """Allow only SEIM admin role, Django staff, or superuser (not coordinators)."""
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        if user.is_staff or user.is_superuser:
+            return True
+        if hasattr(user, "is_admin") and user.is_admin:
+            return True
+        if hasattr(user, "has_role"):
+            return user.has_role("admin")
         return False
 
     def has_object_permission(self, request, view, obj):

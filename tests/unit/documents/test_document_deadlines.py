@@ -174,5 +174,7 @@ class SolicitudPdfTests(TestCase):
         pdf = render_solicitud_participacion_pdf(self.application)
         self.assertTrue(pdf.startswith(b"%PDF"))
         self.assertGreater(len(pdf), 200)
-        # Graceful when host FKs absent / null
-        self.assertIn(b"Solicitud", pdf)
+        # FS-SP / CGRI-SP layout markers; graceful when host FKs absent
+        self.assertIn(b"SOLICITUD", pdf)
+        self.assertIn(b"CGRI", pdf)
+        self.assertIn(b"CGRI-SP", pdf)

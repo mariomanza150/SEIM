@@ -1,0 +1,9 @@
+{% load wagtailimages_tags %}
+{% if page.hero_image %}
+    {% if hero_fill == "1920x900" %}
+        {% image page.hero_image fill-1920x900 as hero_preload %}
+    {% else %}
+        {% image page.hero_image fill-1920x560 as hero_preload %}
+    {% endif %}
+    <link rel="preload" as="image" href="{{ hero_preload.url }}">
+{% endif %}

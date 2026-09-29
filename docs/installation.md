@@ -48,21 +48,38 @@ These accounts are created by `seed_demo_readiness`.
 For demonstration and testing purposes, you can populate the system with sample data:
 
 ```bash
-# Create deterministic demo data
+# Create deterministic demo data (also calls create_initial_data, restore_cms, seed_spa_help)
 docker-compose exec web python manage.py seed_demo_readiness
 ```
 
 This creates:
-- Canonical admin, coordinator, student, and partner demo users
+- Canonical admin, coordinator, student, partner, and nominated-student demo users
 - Active exchange programs (with host destinations, document requirements, and coordinators)
 - Manual QA fixtures: closed-window program (`DEMO-SEED Closed Window - University of Oslo`), submit-gate draft (`DEMO-SEED Submit Gate - University of Lisbon`), open document resubmission (`DEMO-SEED Resubmit - University of Vienna`), and a reserved open program with no student application for Section 8 (`DEMO-SEED Lifecycle - University of Porto`)
-- Applications in every major workflow status, including waitlist
-- Documents, comments, timeline events, notifications, forms, workflows, scholarships, and partner portal data
+- Applications in every major workflow status, including waitlist and nominated (partner acknowledge ready)
+- DAAD nomination cycle + partner seat allocation; richer partner portal (Barcelona + TUM contacts)
+- Subject plan version history on approved/completed apps
+- TOEFL practice attempt history (Launch still needs the sidecar — see below)
+- Documents, comments, timeline events, notifications, forms, workflows, scholarships, analytics, and data-management sample logs
+- CMS public pages + SPA Help catalog (via `restore_cms` / `seed_spa_help`)
+
+### **5b. TOEFL Practice sidecar (optional):**
+Live Launch from `/seim/toefl-practice` requires the sibling `toefl-practice` repo and matching secrets in `.env` (see `env.example` / `.env.toefl.example`):
+
+```bash
+# Clone toefl-practice next to SEIM (or set TOEFL_CONTEXT)
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.toefl.yml --env-file .env up -d --build
+```
+
+Seeded practice history works without the sidecar; Launch returns 503 until `TOEFL_*` and the `toefl` service are configured.
 
 ### **6. Cleanup Demo Data (Optional):**
 To remove all demo data:
+```bash
 docker-compose exec web python manage.py cleanup_demo_data
+```
 
+CMS / SPA help pages are left in place; re-run `restore_cms` / `seed_spa_help` if you need to refresh them.
 ---
 
 ## 🐍 Virtual Environment Setup (E2E Testing & Local Development)

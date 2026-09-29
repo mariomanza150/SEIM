@@ -1,38 +1,34 @@
 <template>
   <div class="program-compare-page" data-testid="program-compare-page">
-    <nav :aria-label="t('programComparePage.breadcrumbAria')">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item">
-          <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-        </li>
-        <li class="breadcrumb-item active">{{ t('route.names.ProgramCompare') }}</li>
-      </ol>
-    </nav>
+    <PageHeader
+      :title="t('route.names.ProgramCompare')"
+      :subtitle="t('programComparePage.pageSubtitle')"
+      icon-class="bi bi-columns-gap"
+    >
+      <template #breadcrumb>
+        <PageBreadcrumb
+          :aria-label="t('programComparePage.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.ProgramCompare') },
+          ]"
+        />
+      </template>
+      <template #actions>
+        <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary">
+          <i class="bi bi-plus-circle me-1"></i>{{ t('programComparePage.newApplication') }}
+        </router-link>
+      </template>
+    </PageHeader>
 
-      <div class="row mb-4">
-        <div class="col-lg-8">
-          <h2><i class="bi bi-columns-gap me-2"></i>{{ t('route.names.ProgramCompare') }}</h2>
-          <p class="text-muted mb-0">
-            {{ t('programComparePage.pageSubtitle') }}
-          </p>
-        </div>
-        <div class="col-lg-4 text-lg-end mt-2 mt-lg-0">
-          <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-1"></i>{{ t('programComparePage.newApplication') }}
-          </router-link>
-        </div>
-      </div>
-
-      <div v-if="loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">{{ t('programComparePage.loadingSpinner') }}</span>
-        </div>
-        <p class="mt-3 text-muted">{{ t('programComparePage.loadingPrograms') }}</p>
-      </div>
-
-      <div v-else-if="loadError" class="alert alert-danger">{{ loadError }}</div>
-
-      <template v-else>
+    <PageStateShell
+      :loading="loading"
+      :error="loadError"
+      :empty="!programs.length && !loading && !loadError"
+      :empty-title="t('programComparePage.emptyPrograms')"
+      skeleton="table"
+      :loading-label="t('programComparePage.loadingPrograms')"
+    >
         <div class="card mb-4">
           <div class="card-body">
             <label class="form-label fw-semibold">{{
@@ -74,10 +70,10 @@
         </div>
 
         <div v-else class="card">
-          <div class="card-body p-0">
+          <div class="card-body p-0 d-none d-md-block">
             <div class="table-responsive">
               <table class="table table-bordered table-hover mb-0 align-middle" data-testid="program-compare-table">
-                <thead class="table-light">
+                <thead class="seim-table-head">
                   <tr>
                     <th scope="col" class="text-muted small" style="min-width: 9rem">{{ t('programComparePage.colCriterion') }}</th>
                     <th v-for="p in selectedPrograms" :key="p.id" scope="col">
@@ -167,8 +163,32 @@
               </table>
             </div>
           </div>
+
+          <div class="d-md-none p-3" data-testid="program-compare-mobile">
+            <div v-for="p in selectedPrograms" :key="`mobile-${p.id}`" class="card mb-3">
+              <div class="card-body">
+                <h3 class="h6 mb-2">{{ p.name }}</h3>
+                <dl class="row mb-3 small">
+                  <dt class="col-5 text-muted">{{ t('programComparePage.rowProgramDates') }}</dt>
+                  <dd class="col-7">{{ formatDate(p.start_date) }}{{ t('programComparePage.dateRangeSeparator') }}{{ formatDate(p.end_date) }}</dd>
+                  <dt class="col-5 text-muted">{{ t('programComparePage.rowMinGpa') }}</dt>
+                  <dd class="col-7">{{ p.min_gpa != null ? p.min_gpa : t('programComparePage.emDash') }}</dd>
+                  <dt class="col-5 text-muted">{{ t('programComparePage.rowLanguage') }}</dt>
+                  <dd class="col-7">{{ p.required_language || t('programComparePage.emDash') }}</dd>
+                  <dt class="col-5 text-muted">{{ t('programComparePage.rowRecurring') }}</dt>
+                  <dd class="col-7">{{ p.recurring ? t('programComparePage.recurringYes') : t('programComparePage.recurringNo') }}</dd>
+                </dl>
+                <router-link
+                  class="btn btn-sm btn-outline-primary"
+                  :to="{ name: 'ApplicationNew', query: { program: p.id } }"
+                >
+                  {{ t('programComparePage.apply') }}
+                </router-link>
+              </div>
+            </div>
+          </div>
         </div>
-      </template>
+    </PageStateShell>
   </div>
 </template>
 
@@ -178,6 +198,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import {
   parseCompareIdsFromQuery,
   compareIdsToQueryParam,
@@ -292,7 +315,6 @@ watch(
 
 <style scoped>
 .program-compare-page {
-  min-height: 100vh;
   background-color: var(--seim-app-bg, #f8f9fa);
 }
 

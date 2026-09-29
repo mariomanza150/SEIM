@@ -1,4 +1,4 @@
-"""Seed helpers for the two international mobility scheme Programs."""
+"""Seed helpers for international mobility scheme Programs."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from exchange.models import Program
 
 MOBILITY_SCHEME_HISPANA = "Movilidad Internacional Habla Hispana"
 MOBILITY_SCHEME_INGLESa = "Movilidad Internacional Habla Inglesa"
+MOBILITY_SCHEME_MAESTRIA = "Movilidad Maestría"
 LEGACY_SCHEME_INGLESa = "Movilidad Internacional"
 LEGACY_SCHEME_NACIONAL = "Movilidad Nacional"
 
@@ -41,12 +42,25 @@ MOBILITY_SCHEME_SPECS = (
         "required_language": "English",
         "min_language_level": "B2",
     },
+    {
+        "name": MOBILITY_SCHEME_MAESTRIA,
+        "description": (
+            "Esquema de movilidad internacional para estudiantes de posgrado (Maestría). "
+            "Promedio mínimo 85 (escala 0–100). Aplica desde el primer semestre del programa."
+        ),
+        "min_gpa": 3.4,
+        "min_toefl_score": None,
+        "min_semester": 1,
+        "min_credits_approved_percent": None,
+        "required_language": None,
+        "min_language_level": None,
+    },
 )
 
 
 def seed_mobility_schemes(*, today: date | None = None) -> list[Program]:
     """
-    Ensure the two international mobility scheme programs exist (get_or_create by name).
+    Ensure the mobility scheme programs exist (get_or_create by name).
 
     Deactivates legacy Nacional scheme and renames legacy Internacional when present.
     Returns the Program instances (created or existing).

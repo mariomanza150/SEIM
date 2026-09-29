@@ -2,14 +2,13 @@
   <div class="admin-documents-page">
     <PageHeader :title="t('adminDocuments.title')" :subtitle="t('adminDocuments.subtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminDocuments') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.AdminDocuments') },
+          ]"
+        />
       </template>
 
       <template #actions>
@@ -22,58 +21,50 @@
       </template>
     </PageHeader>
 
-    <div class="card mb-3" data-testid="admin-documents-filters">
-      <div class="card-body">
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
-            <input
-              v-model="filters.search"
-              class="form-control"
-              type="text"
-              :placeholder="t('adminDocuments.searchPlaceholder')"
-              @input="debouncedSearch"
-            />
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">{{ t('adminDocuments.filterMode') }}</label>
-            <select v-model="filters.submission_mode" class="form-select" @change="fetchTypes">
-              <option value="">{{ t('adminCommon.filterAll') }}</option>
-              <option v-for="opt in submissionModes" :key="opt.value" :value="opt.value">
-                {{ opt.label }}
-              </option>
-            </select>
-          </div>
-          <div class="col-md-3">
-            <label class="form-label">{{ t('adminCommon.sortLabel') }}</label>
-            <select v-model="filters.ordering" class="form-select" @change="fetchTypes">
-              <option value="name">{{ t('adminDocuments.sortNameAsc') }}</option>
-              <option value="-id">{{ t('adminDocuments.sortNewest') }}</option>
-            </select>
-          </div>
+    <CompactFilterBar test-id="admin-documents-filters" @clear="clearFilters">
+      <template #primary>
+        <div class="col-md-6">
+          <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
+          <input
+            v-model="filters.search"
+            class="form-control"
+            type="text"
+            :placeholder="t('adminDocuments.searchPlaceholder')"
+            @input="debouncedSearch"
+          />
         </div>
-      </div>
-    </div>
+        <div class="col-md-3">
+          <label class="form-label">{{ t('adminDocuments.filterMode') }}</label>
+          <select v-model="filters.submission_mode" class="form-select" @change="fetchTypes">
+            <option value="">{{ t('adminCommon.filterAll') }}</option>
+            <option v-for="opt in submissionModes" :key="opt.value" :value="opt.value">
+              {{ opt.label }}
+            </option>
+          </select>
+        </div>
+      </template>
+      <template #advanced>
+        <div class="col-md-4">
+          <label class="form-label">{{ t('adminCommon.sortLabel') }}</label>
+          <select v-model="filters.ordering" class="form-select" @change="fetchTypes">
+            <option value="name">{{ t('adminDocuments.sortNameAsc') }}</option>
+            <option value="-id">{{ t('adminDocuments.sortNewest') }}</option>
+          </select>
+        </div>
+      </template>
+    </CompactFilterBar>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-      <p class="mt-3 text-muted">{{ t('adminDocuments.loadingList') }}</p>
-    </div>
-
-    <div v-else-if="error" class="alert alert-danger" role="alert">
-      <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>
-      {{ error }}
-    </div>
-
-    <div v-else class="card">
-      <div class="card-header bg-transparent d-flex justify-content-between align-items-center flex-wrap gap-2">
-        <div class="text-muted small">{{ types.length }}</div>
-        <button type="button" class="btn btn-sm btn-outline-secondary" :disabled="loading" @click="resetFilters">
-          <i class="bi bi-x-circle me-1" aria-hidden="true"></i>{{ t('adminCommon.resetFilters') }}
-        </button>
-      </div>
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      :empty="!types.length"
+      :empty-title="t('adminDocuments.empty')"
+      skeleton="table"
+      :loading-label="t('adminDocuments.loadingList')"
+      :skeleton-columns="5"
+    >
+    <div class="card">
+      <ResponsiveList :items="types" :columns="mobileColumns" mobile-test-id="admin-documents-mobile">
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0" data-testid="admin-documents-table">
           <thead>
@@ -86,9 +77,6 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-if="!types.length">
-              <td colspan="5" class="text-muted text-center py-4">{{ t('adminDocuments.empty') }}</td>
-            </tr>
             <tr v-for="dt in types" :key="dt.id">
               <td class="min-w-0">
                 <div class="fw-medium text-truncate">{{ dt.name }}</div>
@@ -119,51 +107,57 @@
           </tbody>
         </table>
       </div>
+      <template #col-name="{ item }">
+        <div class="fw-medium">{{ item.name }}</div>
+        <div v-if="item.slug || item.description" class="text-muted small">{{ item.slug || item.description }}</div>
+      </template>
+      <template #col-mode="{ item }">
+        <span class="badge bg-secondary">{{ modeLabel(item.submission_mode) }}</span>
+        <span v-if="item.has_template" class="badge bg-info text-dark ms-1">{{ t('adminDocuments.templateBadge') }}</span>
+      </template>
+      <template #col-constraints="{ item }">
+        <span v-if="item.accepted_extensions">{{ item.accepted_extensions }}</span>
+        <span v-else class="text-muted">{{ t('adminDocuments.defaultTypes') }}</span>
+        <span class="text-muted"> · {{ item.max_file_size_mb || 10 }} MB</span>
+      </template>
+      <template #col-programs="{ item }">{{ item.requirement_count ?? 0 }}</template>
+      <template #actions="{ item }">
+        <router-link
+          class="btn btn-sm btn-outline-primary"
+          :to="{ name: 'AdminDocumentTypeEdit', params: { id: String(item.id) } }"
+          data-testid="admin-documents-open-editor"
+        >
+          <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>{{ t('adminDocuments.openEditor') }}
+        </router-link>
+      </template>
+      </ResponsiveList>
     </div>
+    </PageStateShell>
 
-    <div v-if="create.open" class="modal-backdrop show"></div>
-    <div v-if="create.open" class="modal d-block" tabindex="-1" role="dialog" aria-modal="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{ t('adminDocuments.create') }}</h5>
-            <button type="button" class="btn-close" :aria-label="t('adminCommon.close')" @click="closeCreate" />
-          </div>
-          <div class="modal-body">
-            <div v-if="create.error" class="alert alert-danger" role="alert">{{ create.error }}</div>
-            <div class="mb-3">
-              <label class="form-label">{{ t('adminDocuments.fields.name') }}</label>
-              <input v-model="create.form.name" class="form-control" type="text" data-testid="admin-documents-create-name" />
-            </div>
-            <div class="mb-3">
-              <label class="form-label">{{ t('adminDocuments.fields.description') }}</label>
-              <textarea v-model="create.form.description" class="form-control" rows="3" />
-            </div>
-            <div class="mb-0">
-              <label class="form-label">{{ t('adminDocuments.fields.submissionMode') }}</label>
-              <select v-model="create.form.submission_mode" class="form-select">
-                <option v-for="opt in submissionModes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-              </select>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" @click="closeCreate">
-              {{ t('adminCommon.cancel') }}
-            </button>
-            <button
-              type="button"
-              class="btn btn-primary"
-              :disabled="create.saving"
-              data-testid="admin-documents-create-save"
-              @click="createType"
-            >
-              <span v-if="create.saving" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" />
-              {{ t('adminCommon.save') }}
-            </button>
-          </div>
-        </div>
+    <FormModal
+      :open="create.open"
+      :title="t('adminDocuments.create')"
+      :error="create.error || ''"
+      :saving="create.saving"
+      size="md"
+      @close="closeCreate"
+      @submit="createType"
+    >
+      <div class="mb-3">
+        <label class="form-label">{{ t('adminDocuments.fields.name') }}</label>
+        <input v-model="create.form.name" class="form-control" type="text" data-testid="admin-documents-create-name" />
       </div>
-    </div>
+      <div class="mb-3">
+        <label class="form-label">{{ t('adminDocuments.fields.description') }}</label>
+        <textarea v-model="create.form.description" class="form-control" rows="3" />
+      </div>
+      <div class="mb-0">
+        <label class="form-label">{{ t('adminDocuments.fields.submissionMode') }}</label>
+        <select v-model="create.form.submission_mode" class="form-select">
+          <option v-for="opt in submissionModes" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+        </select>
+      </div>
+    </FormModal>
   </div>
 </template>
 
@@ -173,7 +167,12 @@ import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
+import FormModal from '@/components/FormModal.vue'
 
 const { t } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -188,6 +187,13 @@ const filters = ref({
   submission_mode: '',
   ordering: 'name',
 })
+
+const mobileColumns = computed(() => [
+  { key: 'name', label: t('adminDocuments.columns.name') },
+  { key: 'mode', label: t('adminDocuments.columns.mode') },
+  { key: 'constraints', label: t('adminDocuments.columns.constraints') },
+  { key: 'programs', label: t('adminDocuments.columns.programs') },
+])
 
 const submissionModes = computed(() => [
   { value: 'upload', label: t('adminDocuments.modes.upload') },
@@ -207,7 +213,7 @@ function debouncedSearch() {
   searchTimeout = setTimeout(() => fetchTypes(), 400)
 }
 
-function resetFilters() {
+function clearFilters() {
   filters.value = { search: '', submission_mode: '', ordering: 'name' }
   fetchTypes()
 }

@@ -57,7 +57,8 @@ describe('PasswordReset', () => {
     const wrapper = mountView()
     expect(wrapper.find('[data-testid="password-reset-form"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="password-reset-email"]').exists()).toBe(true)
-    expect(wrapper.text()).toContain('Reset your password')
+    expect(wrapper.text()).toContain('Email address')
+    expect(wrapper.text()).toContain('Send reset link')
   })
 
   it('requests a reset email on submit', async () => {

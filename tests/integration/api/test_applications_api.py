@@ -631,6 +631,21 @@ class TestApplicationsPerformance(PerformanceTestCase):
         self.assertIn("results", response.data)
         self.assertIn("next", response.data)
 
+    def test_application_list_query_count_is_bounded(self):
+        """List must not issue a query per application for form layout."""
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        student = self.create_user(role="student")
+        program = self.create_program()
+        for _ in range(8):
+            self.create_application(student=student, program=program)
+        self.authenticate_user(student)
+        with CaptureQueriesContext(connection) as ctx:
+            response = self.client.get(reverse("api:application-list"))
+        self.assert_response_success(response, status.HTTP_200_OK)
+        self.assertLessEqual(len(ctx), 50)
+
     def test_application_search_performance(self):
         """Test search performance with large dataset."""
         # Create applications with searchable content

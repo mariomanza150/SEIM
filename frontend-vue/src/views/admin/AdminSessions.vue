@@ -2,14 +2,13 @@
   <div class="admin-sessions-page">
     <PageHeader :title="t('adminSessions.title')" :subtitle="t('adminSessions.subtitle')">
       <template #breadcrumb>
-        <nav aria-label="Breadcrumb">
-          <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-              <router-link :to="{ name: 'Dashboard' }">{{ t('route.names.Dashboard') }}</router-link>
-            </li>
-            <li class="breadcrumb-item active">{{ t('route.names.AdminSessions') }}</li>
-          </ol>
-        </nav>
+        <PageBreadcrumb
+          :aria-label="t('adminCommon.breadcrumbAria')"
+          :items="[
+            { to: { name: 'Dashboard' }, label: t('route.names.Dashboard') },
+            { label: t('route.names.AdminSessions') },
+          ]"
+        />
       </template>
       <template #actions>
         <button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="load">
@@ -34,41 +33,40 @@
       </li>
     </ul>
 
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">{{ t('adminCommon.loading') }}</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="alert alert-danger" role="alert">
-      <i class="bi bi-exclamation-triangle me-2" aria-hidden="true"></i>{{ error }}
-    </div>
-
-    <template v-else-if="activeTab === 'sessions'">
-      <div class="card mb-3">
-        <div class="card-body">
-          <div class="row g-3">
-            <div class="col-md-8">
-              <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
-              <input
-                v-model="sessionSearch"
-                class="form-control"
-                type="text"
-                :placeholder="t('adminSessions.sessionSearch')"
-                @change="load"
-              >
-            </div>
-            <div class="col-md-4">
-              <label class="form-label">{{ t('adminSessions.fields.active') }}</label>
-              <select v-model="sessionActive" class="form-select" @change="load">
-                <option value="">{{ t('adminCommon.filterAll') }}</option>
-                <option value="true">{{ t('adminCommon.yes') }}</option>
-                <option value="false">{{ t('adminCommon.no') }}</option>
-              </select>
-            </div>
+    <PageStateShell
+      :loading="loading"
+      :error="error || ''"
+      :empty="activeTab === 'sessions' ? !sessions.length : !reminders.length"
+      :empty-title="activeTab === 'sessions' ? t('adminSessions.emptySessions') : t('adminSessions.emptyReminders')"
+      skeleton="table"
+      :loading-label="t('adminCommon.loading')"
+      :skeleton-columns="6"
+    >
+    <template v-if="activeTab === 'sessions'">
+      <CompactFilterBar test-id="admin-sessions-filters" @clear="clearSessionFilters">
+        <template #primary>
+          <div class="col-md-8">
+            <label class="form-label">{{ t('adminCommon.searchLabel') }}</label>
+            <input
+              v-model="sessionSearch"
+              class="form-control"
+              type="text"
+              :placeholder="t('adminSessions.sessionSearch')"
+              @input="debouncedSessionSearch"
+            >
           </div>
-        </div>
-      </div>
+          <div class="col-md-4">
+            <label class="form-label">{{ t('adminSessions.fields.active') }}</label>
+            <select v-model="sessionActive" class="form-select" @change="load">
+              <option value="">{{ t('adminCommon.filterAll') }}</option>
+              <option value="true">{{ t('adminCommon.yes') }}</option>
+              <option value="false">{{ t('adminCommon.no') }}</option>
+            </select>
+          </div>
+        </template>
+      </CompactFilterBar>
       <div class="card">
+        <ResponsiveList :items="sessions" :columns="sessionMobileColumns" mobile-test-id="admin-sessions-mobile">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0" data-testid="admin-sessions-table">
             <thead>
@@ -82,9 +80,6 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="!sessions.length">
-                <td colspan="6" class="text-muted text-center py-4">{{ t('adminSessions.emptySessions') }}</td>
-              </tr>
               <tr v-for="row in sessions" :key="row.id">
                 <td>
                   <div class="fw-medium">{{ row.user_email }}</div>
@@ -116,6 +111,33 @@
             </tbody>
           </table>
         </div>
+        <template #col-user="{ item }">
+          <div class="fw-medium">{{ item.user_email }}</div>
+          <div class="text-muted small">{{ item.user_username }}</div>
+        </template>
+        <template #col-device="{ item }">{{ item.device || t('adminCommon.notSet') }}</template>
+        <template #col-location="{ item }">
+          <div>{{ item.location || t('adminCommon.notSet') }}</div>
+          <div v-if="item.ip_address" class="text-muted small">{{ item.ip_address }}</div>
+        </template>
+        <template #col-lastActivity="{ item }">{{ formatWhen(item.last_activity) }}</template>
+        <template #col-active="{ item }">
+          <span class="badge" :class="item.is_active ? 'bg-success' : 'bg-secondary'">
+            {{ item.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}
+          </span>
+        </template>
+        <template #actions="{ item }">
+          <button
+            v-if="item.is_active"
+            type="button"
+            class="btn btn-sm btn-outline-danger"
+            :disabled="saving"
+            @click="revokeSession(item)"
+          >
+            {{ t('adminSessions.revoke') }}
+          </button>
+        </template>
+        </ResponsiveList>
       </div>
     </template>
 
@@ -156,6 +178,7 @@
         </div>
       </form>
       <div class="card">
+        <ResponsiveList :items="reminders" :columns="reminderMobileColumns" mobile-test-id="admin-reminders-mobile">
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0" data-testid="admin-reminders-table">
             <thead>
@@ -169,9 +192,6 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-if="!reminders.length">
-                <td colspan="6" class="text-muted text-center py-4">{{ t('adminSessions.emptyReminders') }}</td>
-              </tr>
               <tr v-for="row in reminders" :key="row.id">
                 <td>{{ row.user_email }}</td>
                 <td>{{ row.event_title }}</td>
@@ -196,18 +216,43 @@
             </tbody>
           </table>
         </div>
+        <template #col-user="{ item }">{{ item.user_email }}</template>
+        <template #col-title="{ item }">{{ item.event_title }}</template>
+        <template #col-eventType="{ item }">{{ t(`adminSessions.eventTypes.${item.event_type}`) }}</template>
+        <template #col-remindAt="{ item }">{{ formatWhen(item.remind_at) }}</template>
+        <template #col-sent="{ item }">
+          <span class="badge" :class="item.sent ? 'bg-success' : 'bg-secondary'">
+            {{ item.sent ? t('adminCommon.yes') : t('adminCommon.no') }}
+          </span>
+        </template>
+        <template #actions="{ item }">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger"
+            :disabled="saving"
+            @click="confirmDeleteReminder(item)"
+          >
+            <i class="bi bi-trash me-1" aria-hidden="true"></i>{{ t('adminCommon.delete') }}
+          </button>
+        </template>
+        </ResponsiveList>
       </div>
     </template>
+    </PageStateShell>
   </div>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
+import CompactFilterBar from '@/components/CompactFilterBar.vue'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
+import PageStateShell from '@/components/State/PageStateShell.vue'
 import { formatDateTime } from '@/utils/formatters'
 
 const eventTypes = [
@@ -233,6 +278,35 @@ const reminders = ref([])
 const users = ref([])
 const sessionSearch = ref('')
 const sessionActive = ref('')
+
+const sessionMobileColumns = computed(() => [
+  { key: 'user', label: t('adminSessions.fields.user') },
+  { key: 'device', label: t('adminSessions.fields.device') },
+  { key: 'location', label: t('adminSessions.fields.location') },
+  { key: 'lastActivity', label: t('adminSessions.fields.lastActivity') },
+  { key: 'active', label: t('adminSessions.fields.active') },
+])
+
+const reminderMobileColumns = computed(() => [
+  { key: 'user', label: t('adminSessions.fields.user') },
+  { key: 'title', label: t('adminSessions.fields.title') },
+  { key: 'eventType', label: t('adminSessions.fields.eventType') },
+  { key: 'remindAt', label: t('adminSessions.fields.remindAt') },
+  { key: 'sent', label: t('adminSessions.fields.sent') },
+])
+
+let sessionSearchTimeout = null
+function debouncedSessionSearch() {
+  clearTimeout(sessionSearchTimeout)
+  sessionSearchTimeout = setTimeout(() => load(), 400)
+}
+
+function clearSessionFilters() {
+  sessionSearch.value = ''
+  sessionActive.value = ''
+  load()
+}
+
 const draft = reactive({
   user: '',
   event_type: 'custom',

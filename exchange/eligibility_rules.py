@@ -139,15 +139,16 @@ def _student_speaks_required_language(
 ) -> bool:
     if not (required or "").strip():
         return True
-    req = _norm(required)
+    from accounts.language_catalog import languages_match
+
     language = _effective_language(profile, application)
-    if language and _norm(language) == req:
+    if languages_match(language, required):
         return True
     for row in _effective_additional_languages(profile, application):
         if not isinstance(row, dict):
             continue
         name = (row.get("name") or "").strip()
-        if name and _norm(name) == req:
+        if name and languages_match(name, required):
             return True
     return False
 
@@ -162,17 +163,19 @@ def _effective_language_level_for_program(
     additional-language row; otherwise fall back to the profile's primary level
     (legacy behaviour when only ``min_language_level`` is set).
     """
+    from accounts.language_catalog import languages_match
+
     req = (program.required_language or "").strip()
     if req:
         language = _effective_language(profile, application)
-        if language and _norm(language) == _norm(req):
+        if languages_match(language, req):
             level = _effective_language_level(profile, application)
             return (level or "").strip() or None
         for row in _effective_additional_languages(profile, application):
             if not isinstance(row, dict):
                 continue
             name = (row.get("name") or "").strip()
-            if not name or _norm(name) != _norm(req):
+            if not name or not languages_match(name, req):
                 continue
             lv = row.get("level")
             if lv is None or lv == "":
@@ -515,15 +518,18 @@ def evaluate_eligibility(
     student: User,
     program: Program,
     application: Application | None = None,
+    profile: Profile | None = None,
 ) -> EligibilityEvaluation:
     """
     Run all eligibility rules; return structured outcome (no exceptions for failures).
 
     Profile is loaded with a queryset read so results are not stale when the ``User``
     instance still holds a cached ``profile`` from an earlier access (e.g. signals on
-    user create followed by ``Profile.objects.update_or_create``).
+    user create followed by ``Profile.objects.update_or_create``). Pass ``profile`` to
+    reuse a preloaded instance when evaluating many programs for the same student.
     """
-    profile = Profile.objects.filter(user_id=student.pk).first()
+    if profile is None or getattr(profile, "user_id", None) != student.pk:
+        profile = Profile.objects.filter(user_id=student.pk).first()
     if not profile:
         return EligibilityEvaluation(
             eligible=False,

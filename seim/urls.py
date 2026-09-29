@@ -13,7 +13,9 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import include, path, re_path
+from django.views.decorators.cache import never_cache
 from django.views.generic import RedirectView, TemplateView
+from django.views.static import serve as media_serve
 from django_js_reverse.views import urls_js
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
@@ -107,10 +109,12 @@ urlpatterns += [
     # ============================================
     # SEIM APPLICATION (Vue.js SPA)
     # ============================================
-    # Vue.js SPA lives exclusively under /seim/ namespace - catch all subpaths
+    # Vue.js SPA lives exclusively under /seim/ namespace - catch all subpaths.
+    # never_cache: mobile/CDN must not keep an old shell that points at stale hashed chunks
+    # (e.g. ApplicationForm still calling removed listFrom → false "profile could not be checked").
     re_path(
         r"^seim(?:/.*)?/?$",
-        TemplateView.as_view(template_name="index.html"),
+        never_cache(TemplateView.as_view(template_name="index.html")),
         name="vue-app",
     ),
     # ============================================
@@ -161,6 +165,36 @@ urlpatterns += [
     path("", include("internacional.urls")),
 ]
 
+# ============================================
+# Serve media and static files (DEBUG, or SERVE_MEDIA for nginx-less deploys)
+# Must be registered BEFORE Wagtail's ``""`` catch-all, or ``/media/*`` and
+# ``/static/*`` are swallowed and return Wagtail 404s (broken SPA download links).
+#
+# ``django.conf.urls.static.static()`` returns [] when DEBUG is False, so
+# SERVE_MEDIA must register ``django.views.static.serve`` explicitly.
+# ============================================
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+elif getattr(settings, "SERVE_MEDIA", False):
+    # ``static()`` is a no-op when DEBUG is False; register serve explicitly.
+    _media_prefix = settings.MEDIA_URL.lstrip("/")
+    urlpatterns += [
+        re_path(
+            rf"^{_media_prefix}(?P<path>.*)$",
+            media_serve,
+            {"document_root": settings.MEDIA_ROOT},
+        ),
+    ]
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # Vite ``base`` is ``/static/`` (see ``frontend-vue/vite.config.js``); built HTML loads
+    # ``/static/assets/*.js``. Django's staticfiles finder serves those from ``frontend-vue/dist``.
+    # Legacy fallback: older builds used ``/assets/*`` without the ``static`` prefix.
+    urlpatterns += static(
+        "/assets/",
+        document_root=settings.BASE_DIR / "frontend-vue" / "dist" / "assets",
+    )
+
 if _WAGTAIL:
     urlpatterns.append(
         path(
@@ -171,17 +205,3 @@ if _WAGTAIL:
 else:
     # Unit tests and minimal installs disable Wagtail; keep a public marketing root.
     urlpatterns.append(path("", marketing_home, name="marketing_home"))
-
-# ============================================
-# DEVELOPMENT: Serve media and static files
-# ============================================
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    # Vite ``base`` is ``/static/`` (see ``frontend-vue/vite.config.js``); built HTML loads
-    # ``/static/assets/*.js``. Django's staticfiles finder serves those from ``frontend-vue/dist``.
-    # Legacy fallback: older builds used ``/assets/*`` without the ``static`` prefix.
-    urlpatterns += static(
-        "/assets/",
-        document_root=settings.BASE_DIR / "frontend-vue" / "dist" / "assets",
-    )
