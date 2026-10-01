@@ -17,21 +17,45 @@
       </template>
     </PageHeader>
 
-    <ul class="nav nav-tabs mb-3" data-testid="admin-catalogs-tabs" role="tablist">
-      <li v-for="tab in tabKeys" :key="tab" class="nav-item" role="presentation">
-        <button
-          type="button"
-          class="nav-link"
-          :class="{ active: activeTab === tab }"
-          role="tab"
-          :aria-selected="activeTab === tab"
-          :data-tab="tab"
-          @click="selectTab(tab)"
-        >
-          {{ t(`adminCatalogs.tabs.${tab}`) }}
-        </button>
-      </li>
-    </ul>
+    <div class="admin-catalogs-tabs-wrapper mb-3">
+      <div class="tab-group">
+        <h6 class="tab-group-label">{{ t('adminCatalogs.groups.stock') }}</h6>
+        <ul class="nav nav-tabs" data-testid="admin-catalogs-tabs-stock" role="tablist">
+          <li v-for="tab in tabGroups.stock" :key="tab" class="nav-item" role="presentation">
+            <button
+              type="button"
+              class="nav-link"
+              :class="{ active: activeTab === tab }"
+              role="tab"
+              :aria-selected="activeTab === tab"
+              :data-tab="tab"
+              @click="selectTab(tab)"
+            >
+              {{ t(`adminCatalogs.tabs.${tab}`) }}
+            </button>
+          </li>
+        </ul>
+      </div>
+      
+      <div class="tab-group mt-3">
+        <h6 class="tab-group-label">{{ t('adminCatalogs.groups.categorias') }}</h6>
+        <ul class="nav nav-tabs" data-testid="admin-catalogs-tabs-categorias" role="tablist">
+          <li v-for="tab in tabGroups.categorias" :key="tab" class="nav-item" role="presentation">
+            <button
+              type="button"
+              class="nav-link"
+              :class="{ active: activeTab === tab }"
+              role="tab"
+              :aria-selected="activeTab === tab"
+              :data-tab="tab"
+              @click="selectTab(tab)"
+            >
+              {{ t(`adminCatalogs.tabs.${tab}`) }}
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
 
     <template v-if="activeTab !== 'destinations' && !loading && !error">
       <p v-if="activeTab === 'domains'" class="text-muted">{{ t('adminCatalogs.domainHelp') }}</p>
@@ -312,7 +336,13 @@ const CATALOG_ENDPOINTS = {
   languages: '/api/accounts/catalogs/spoken-languages/',
 }
 
-const tabKeys = ['levels', 'schools', 'programs', 'unidades', 'banks', 'languages', 'domains', 'destinations']
+// Reorganized: Stock (catalogo + inventario) and Categories (tags/etiquetas)
+const tabGroups = {
+  stock: ['programs', 'schools', 'unidades', 'destinations'],
+  categorias: ['levels', 'languages', 'domains', 'banks'],
+}
+
+const tabKeys = [...tabGroups.stock, ...tabGroups.categorias]
 
 const { t } = useI18n()
 const { success, error: errorToast } = useToast()
@@ -525,5 +555,37 @@ onMounted(() => {
 .admin-catalogs-page :deep(header.seim-page-header) {
   position: relative;
   z-index: 5;
+}
+
+.admin-catalogs-tabs-wrapper {
+  background-color: var(--seim-surface-bg, #f8f9fa);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.tab-group {
+  margin-bottom: 0.5rem;
+}
+
+.tab-group:last-child {
+  margin-bottom: 0;
+}
+
+.tab-group-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--seim-text-muted, #6c757d);
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem;
+}
+
+.tab-group .nav-tabs {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.tab-group .nav-link {
+  font-size: 0.9rem;
 }
 </style>

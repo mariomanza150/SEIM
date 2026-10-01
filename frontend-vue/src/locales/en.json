@@ -729,6 +729,10 @@
     "destinationsHelp": "Host universities, schools, academic programs, and subjects are managed per mobility program.",
     "destinationsEmpty": "No programs yet. Create a program first.",
     "openDestinations": "Destinations",
+    "groups": {
+      "stock": "Stock (Catalog & Inventory)",
+      "categorias": "Categories (Tags)"
+    },
     "tabs": {
       "levels": "Academic levels",
       "schools": "Schools / faculties",

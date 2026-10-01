@@ -729,6 +729,10 @@
     "destinationsHelp": "Las universidades anfitrionas, escuelas, programas académicos y asignaturas se gestionan por programa de movilidad.",
     "destinationsEmpty": "Aún no hay programas. Crea un programa primero.",
     "openDestinations": "Destinos",
+    "groups": {
+      "stock": "Stock (Catálogo e Inventario)",
+      "categorias": "Categorías (Etiquetas)"
+    },
     "tabs": {
       "levels": "Niveles académicos",
       "schools": "Escuelas / facultades",
