@@ -151,18 +151,16 @@ class ToeflLaunchTests(TestCase):
         }
         resp = self.client.post("/api/toefl/launch/", {"n": 20}, format="json")
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.data["launch_url"], "https://toefl.example/launch?token=tok")
+        self.assertEqual(
+            resp.data["launch_url"], "https://toefl.example/launch?token=tok"
+        )
         mock_create.assert_called_once()
         kwargs = mock_create.call_args.kwargs
         self.assertEqual(kwargs["client_ref"], str(self.user.pk))
         self.assertEqual(kwargs["exam_code"], "director_extracted")
         self.assertEqual(kwargs["n"], 20)
-        self.assertEqual(
-            kwargs["callback_url"], "http://web:8000/api/toefl/webhook/"
-        )
-        self.assertEqual(
-            kwargs["return_url"], "http://localhost/seim/toefl-practice"
-        )
+        self.assertEqual(kwargs["callback_url"], "http://web:8000/api/toefl/webhook/")
+        self.assertEqual(kwargs["return_url"], "http://localhost/seim/toefl-practice")
 
     @override_settings(TOEFL_CALLBACK_URL="", TOEFL_RETURN_URL="")
     def test_launch_missing_config_returns_503(self):

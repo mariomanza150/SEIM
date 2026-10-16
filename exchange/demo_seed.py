@@ -686,7 +686,11 @@ DEMO_HOST_SPECS = {
         "academic": "Programa académico general",
         "academic_code": "GEN",
         "subjects": (
-            {"code": "GEN101", "name": "Asignatura general de movilidad", "credits": "6.00"},
+            {
+                "code": "GEN101",
+                "name": "Asignatura general de movilidad",
+                "credits": "6.00",
+            },
         ),
     },
     "Movilidad Internacional Habla Inglesa": {
@@ -696,7 +700,11 @@ DEMO_HOST_SPECS = {
         "academic": "Programa académico general",
         "academic_code": "GEN",
         "subjects": (
-            {"code": "GEN101", "name": "Asignatura general de movilidad", "credits": "6.00"},
+            {
+                "code": "GEN101",
+                "name": "Asignatura general de movilidad",
+                "credits": "6.00",
+            },
         ),
     },
     "Movilidad Internacional": {
@@ -706,7 +714,11 @@ DEMO_HOST_SPECS = {
         "academic": "Programa académico general",
         "academic_code": "GEN",
         "subjects": (
-            {"code": "GEN101", "name": "Asignatura general de movilidad", "credits": "6.00"},
+            {
+                "code": "GEN101",
+                "name": "Asignatura general de movilidad",
+                "credits": "6.00",
+            },
         ),
     },
     DEMO_CLOSED_WINDOW_PROGRAM: {
@@ -716,7 +728,11 @@ DEMO_HOST_SPECS = {
         "academic": "Informatics",
         "academic_code": "INF",
         "subjects": (
-            {"code": "INF100", "name": "Introduction to Programming", "credits": "10.00"},
+            {
+                "code": "INF100",
+                "name": "Introduction to Programming",
+                "credits": "10.00",
+            },
         ),
     },
     DEMO_SUBMIT_GATE_PROGRAM: {

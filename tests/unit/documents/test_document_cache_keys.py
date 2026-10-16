@@ -28,8 +28,12 @@ def test_document_list_cache_key_varies_by_query_string():
 
 def test_document_retrieve_cache_key_varies_by_pk():
     r = _request(10)
-    k1 = _document_retrieve_cache_key(None, r, pk="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-    k2 = _document_retrieve_cache_key(None, r, pk="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+    k1 = _document_retrieve_cache_key(
+        None, r, pk="aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    )
+    k2 = _document_retrieve_cache_key(
+        None, r, pk="bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+    )
     assert k1 != k2
 
 

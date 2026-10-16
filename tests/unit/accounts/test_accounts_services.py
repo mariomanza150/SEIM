@@ -206,21 +206,15 @@ class TestPasswordReset(TestCase):
         self.assertIn("token=tok123", url)
 
     def test_email_links_use_request_origin_instead_of_settings(self):
-        request = RequestFactory().get(
-            "/", HTTP_HOST="seim.example.com", secure=True
-        )
+        request = RequestFactory().get("/", HTTP_HOST="seim.example.com", secure=True)
         with override_settings(
             ALLOWED_HOSTS=["*"], FRONTEND_BASE_URL="http://localhost:8020"
         ):
-            verify = AccountService.build_email_verification_url(
-                "abc", request=request
-            )
+            verify = AccountService.build_email_verification_url("abc", request=request)
             reset = AccountService.build_password_reset_url(
                 "ada@example.com", "tok123", request=request
             )
-        self.assertEqual(
-            verify, "https://seim.example.com/seim/verify-email?token=abc"
-        )
+        self.assertEqual(verify, "https://seim.example.com/seim/verify-email?token=abc")
         self.assertTrue(reset.startswith("https://seim.example.com/"))
         self.assertNotIn("localhost:8020", verify)
         self.assertNotIn("localhost:8020", reset)

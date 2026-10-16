@@ -68,7 +68,10 @@ def can_view_document_version_history(user, document_type: DocumentType | None) 
         return False
 
     if document_type is not None:
-        mode = document_type.version_history_visibility or DocumentType.VersionHistoryVisibility.INHERIT
+        mode = (
+            document_type.version_history_visibility
+            or DocumentType.VersionHistoryVisibility.INHERIT
+        )
         if mode == DocumentType.VersionHistoryVisibility.HIDDEN:
             return False
     else:

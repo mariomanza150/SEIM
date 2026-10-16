@@ -15,11 +15,6 @@ from core.cache import invalidate_application_api_responses
 from core.permissions import CanManageRoles, IsAdminOrReadOnly
 from core.throttling import BurstRateThrottle, ResendVerificationEmailThrottle
 
-from .resend_verification import (
-    check_resend_verification_allowed,
-    mark_resend_verification_sent,
-)
-
 from .models import (
     AcademicLevel,
     AllowedEmailDomain,
@@ -33,6 +28,10 @@ from .models import (
     Unidad,
     UserSession,
     UserSettings,
+)
+from .resend_verification import (
+    check_resend_verification_allowed,
+    mark_resend_verification_sent,
 )
 from .serializers import (
     AcademicLevelSerializer,

@@ -76,7 +76,9 @@ def _publish_standard_page():
     site.root_page = home
     site.save()
 
-    standard = StandardPage(title="About", slug="about-cms-seim-nav", introduction="Hello")
+    standard = StandardPage(
+        title="About", slug="about-cms-seim-nav", introduction="Hello"
+    )
     home.add_child(instance=standard)
     standard.save_revision().publish()
     return Client(), standard.url
@@ -141,7 +143,7 @@ def test_international_home_as_root_uses_same_origin_child_links():
     assert response.status_code == 200
     html = response.content.decode()
     assert 'href="/movilidad-estudiantil/"' in html
-    assert "href=\"//movilidad-estudiantil/\"" not in html
+    assert 'href="//movilidad-estudiantil/"' not in html
     assert "http://localhost" not in html
     assert 'href="/seim/login/"' in html
 
@@ -258,7 +260,9 @@ def test_populate_internacional_content_renders_official_copy():
     assert cgri.status_code == 200
     assert "lourdesmorales@uadec.edu.mx" in cgri.content.decode()
 
-    assert any(choice[0] == "conahec" for choice in ConvenioPage.agreement_type.field.choices)
+    assert any(
+        choice[0] == "conahec" for choice in ConvenioPage.agreement_type.field.choices
+    )
 
 
 def test_cgri_and_movilidad_legacy_redirects():

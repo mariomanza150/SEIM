@@ -100,7 +100,9 @@ def _slides_from_filesystem() -> tuple[list, list, list, bool, bool]:
             {
                 "static_path": f"uadec/images/{path.name}",
                 "webp_path": f"uadec/images/{webp.name}" if webp.exists() else None,
-                "alt": HOMEPAGE_SLIDE_ALT.get(path.name, "Universidad Autónoma de Coahuila"),
+                "alt": HOMEPAGE_SLIDE_ALT.get(
+                    path.name, "Universidad Autónoma de Coahuila"
+                ),
                 "width": 1920,
                 "height": 420,
             }
@@ -134,7 +136,9 @@ def uadec_cms_assets(request):
             manifest
         )
     else:
-        cgri, homepage, service_cards, has_cgri, has_homepage = _slides_from_filesystem()
+        cgri, homepage, service_cards, has_cgri, has_homepage = (
+            _slides_from_filesystem()
+        )
 
     return {
         "cgri_carousel_slides": cgri,

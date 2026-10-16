@@ -12,7 +12,6 @@ from .models import (
 )
 from .services import NotificationService
 
-
 _TYPE_SLUG_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
@@ -75,8 +74,10 @@ class ReminderSerializer(serializers.ModelSerializer):
             and actor.is_authenticated
             and (actor.is_staff or getattr(actor, "is_admin", False))
         )
-        if actor and actor.is_authenticated and (
-            not is_admin or "user" not in validated_data
+        if (
+            actor
+            and actor.is_authenticated
+            and (not is_admin or "user" not in validated_data)
         ):
             validated_data["user"] = actor
         return super().create(validated_data)

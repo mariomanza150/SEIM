@@ -141,7 +141,9 @@ class TestHostDestinationCascade:
         errors = validate_application_host_destination(app, require_complete=True)
         assert errors == {}
 
-    def test_institution_without_catalog_requires_school_and_program(self, mobility_app):
+    def test_institution_without_catalog_requires_school_and_program(
+        self, mobility_app
+    ):
         app = mobility_app["application"]
         bare = HostInstitution.objects.create(
             program=mobility_app["program"],

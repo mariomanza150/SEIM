@@ -112,7 +112,9 @@ class Command(BaseCommand):
             f"\n=== Populating Internacional ({short} example content) ===\n"
         )
 
-        internacional = InternationalHomePage.objects.filter(slug="internacional").first()
+        internacional = InternationalHomePage.objects.filter(
+            slug="internacional"
+        ).first()
         if internacional is None:
             self.stdout.write(
                 self.style.ERROR(
@@ -122,7 +124,9 @@ class Command(BaseCommand):
             return
 
         cgri_home = self._child(internacional, CGRIPage, "institucional")
-        movilidad = self._child(internacional, MovilidadLandingPage, "movilidad-estudiantil")
+        movilidad = self._child(
+            internacional, MovilidadLandingPage, "movilidad-estudiantil"
+        )
         if cgri_home is None or movilidad is None:
             self.stdout.write(
                 self.style.ERROR(
@@ -322,7 +326,9 @@ class Command(BaseCommand):
                     "title": item["name"],
                     "text": item["text"],
                     "link": item["url"],
-                    "link_text": item["url"].replace("https://", "").replace("http://", ""),
+                    "link_text": item["url"]
+                    .replace("https://", "")
+                    .replace("http://", ""),
                 }
                 for item in ASSOCIATIONS
             ]
@@ -441,8 +447,9 @@ class Command(BaseCommand):
                 "Documentación requerida para trámites de movilidad y formatos "
                 "oficiales de la CGRI."
             )
-            docs_html = "<h2>Documentación Requerida para Trámites de Movilidad</h2>" + _ul(
-                REQUIRED_DOCUMENTS
+            docs_html = (
+                "<h2>Documentación Requerida para Trámites de Movilidad</h2>"
+                + _ul(REQUIRED_DOCUMENTS)
             )
             formats_html = (
                 "<h2>Formatos de Movilidad Entrante</h2><ul>"
@@ -541,8 +548,12 @@ class Command(BaseCommand):
                             "Carta Compromiso de Adhesión al Programa de Retorno",
                             file_url("carta_retorno"),
                         )
-                        + _file_link("Carta de Postulación", file_url("carta_postulacion"))
-                        + _file_link("Homologación de Materias", file_url("homologacion"))
+                        + _file_link(
+                            "Carta de Postulación", file_url("carta_postulacion")
+                        )
+                        + _file_link(
+                            "Homologación de Materias", file_url("homologacion")
+                        )
                         + "</ul>"
                     ),
                 ],

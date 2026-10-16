@@ -75,6 +75,9 @@ class TestAuthenticationAPI(APITestCase):
             "username": username,
             "email": f"new_{self.unique_id}@example.com",
             "password": "testpass123",
+            "password2": "testpass123",
+            "first_name": "New",
+            "last_name": "User",
         }
 
         response = self.client.post(self.register_url, data, format="json")
@@ -102,7 +105,7 @@ class TestAuthenticationAPI(APITestCase):
     def test_user_registration_invalid_data(self):
         """Test registration with invalid data."""
         data = {
-            "username": "",  # Empty username
+            "username": "",  # Optional: derived from email when blank
             "email": "invalid-email",  # Invalid email
             "password": "123",  # Too short password
         }
@@ -110,7 +113,7 @@ class TestAuthenticationAPI(APITestCase):
         response = self.client.post(self.register_url, data, format="json")
 
         self.assert_response_error(response, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("username", response.data)
+        self.assertNotIn("username", response.data)
         self.assertIn("email", response.data)
         self.assertIn("password", response.data)
 

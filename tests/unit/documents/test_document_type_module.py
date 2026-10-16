@@ -1,8 +1,8 @@
 """Tests for Word MERGEFIELD template prefilling and document-type admin API."""
 
 import io
-import zipfile
 import xml.etree.ElementTree as ET
+import zipfile
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import SimpleTestCase, TestCase
@@ -68,10 +68,7 @@ def _document_text(docx_bytes: bytes) -> str:
     with zipfile.ZipFile(io.BytesIO(docx_bytes)) as zf:
         xml = zf.read("word/document.xml")
     root = ET.fromstring(xml)
-    texts = [
-        (node.text or "")
-        for node in root.iter(f"{{{W_NS}}}t")
-    ]
+    texts = [(node.text or "") for node in root.iter(f"{{{W_NS}}}t")]
     return "".join(texts)
 
 
@@ -174,7 +171,9 @@ class DocumentTypeAdminApiTests(TestCase):
             save=True,
         )
         self.client.force_authenticate(user=self.student)
-        url = reverse("api:documenttype-download-template", kwargs={"pk": self.doc_type.pk})
+        url = reverse(
+            "api:documenttype-download-template", kwargs={"pk": self.doc_type.pk}
+        )
         response = self.client.get(url, {"application": str(self.application.id)})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         text = _document_text(_response_bytes(response))
@@ -194,7 +193,9 @@ class DocumentTypeAdminApiTests(TestCase):
             save=True,
         )
         self.client.force_authenticate(user=self.student)
-        url = reverse("api:documenttype-download-template", kwargs={"pk": self.doc_type.pk})
+        url = reverse(
+            "api:documenttype-download-template", kwargs={"pk": self.doc_type.pk}
+        )
         response = self.client.get(url, {"application": str(other_app.id)})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -213,7 +214,9 @@ class DocumentTypeAdminApiTests(TestCase):
             validated_at=timezone.now(),
         )
         self.client.force_authenticate(user=self.student)
-        url = reverse("api:documenttype-download-template", kwargs={"pk": self.doc_type.pk})
+        url = reverse(
+            "api:documenttype-download-template", kwargs={"pk": self.doc_type.pk}
+        )
         response = self.client.get(url, {"application": str(self.application.id)})
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
@@ -232,7 +235,9 @@ class DocumentTypeAdminApiTests(TestCase):
             validated_at=timezone.now(),
         )
         self.client.force_authenticate(user=self.admin)
-        url = reverse("api:documenttype-download-template", kwargs={"pk": self.doc_type.pk})
+        url = reverse(
+            "api:documenttype-download-template", kwargs={"pk": self.doc_type.pk}
+        )
         response = self.client.get(url, {"application": str(self.application.id)})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 

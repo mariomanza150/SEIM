@@ -566,7 +566,7 @@ class Command(BaseCommand):
             {
                 "title": "¿Cuáles son los requisitos para aplicar?",
                 "slug": "requisitos-aplicar",
-                "answer": "<p>Los requisitos generales de la convocatoria oficial de movilidad son:</p><ul><li>Ser estudiante regular de licenciatura o posgrado al aplicar y al realizar la movilidad</li><li>No estar cursando el último semestre</li><li>Promedio mínimo general de 90 (universidades de habla hispana) o 85 (lengua extranjera), respaldado por Kárdex</li><li>Licenciatura: 50% de créditos para movilidad presencial (30% si es virtual); posgrado: 25% de créditos</li><li>Postulación de la dirección de tu escuela o facultad</li><li>Idioma: B2 / TOEFL 550 para lengua extranjera; B1 / TOEFL 450 para habla hispana, más el requisito de la institución destino</li><li>No tener adeudos con la UAdeC</li></ul><p>Consulta la convocatoria vigente en <a href=\"https://www.uadec.mx/movilidad/\">uadec.mx/movilidad</a>.</p>",
+                "answer": '<p>Los requisitos generales de la convocatoria oficial de movilidad son:</p><ul><li>Ser estudiante regular de licenciatura o posgrado al aplicar y al realizar la movilidad</li><li>No estar cursando el último semestre</li><li>Promedio mínimo general de 90 (universidades de habla hispana) o 85 (lengua extranjera), respaldado por Kárdex</li><li>Licenciatura: 50% de créditos para movilidad presencial (30% si es virtual); posgrado: 25% de créditos</li><li>Postulación de la dirección de tu escuela o facultad</li><li>Idioma: B2 / TOEFL 550 para lengua extranjera; B1 / TOEFL 450 para habla hispana, más el requisito de la institución destino</li><li>No tener adeudos con la UAdeC</li></ul><p>Consulta la convocatoria vigente en <a href="https://www.uadec.mx/movilidad/">uadec.mx/movilidad</a>.</p>',
             },
             {
                 "title": "¿Cuánto cuesta participar en un intercambio?",
@@ -660,7 +660,7 @@ class Command(BaseCommand):
                         "value": (
                             "<p><strong>Dra. Lourdes Morales Oyervides</strong><br>"
                             "Coordinadora General de Relaciones Internacionales</p>"
-                            "<p><a href=\"mailto:lourdesmorales@uadec.edu.mx\">"
+                            '<p><a href="mailto:lourdesmorales@uadec.edu.mx">'
                             "lourdesmorales@uadec.edu.mx</a></p>"
                         ),
                     },
@@ -676,14 +676,14 @@ class Command(BaseCommand):
                             "Col. República Oriente<br>"
                             "Saltillo, Coahuila, México<br>C.P. 25280</p>"
                             "<p>Teléfono: 844 415 3077 | 844 416 9995<br>"
-                            "Email: <a href=\"mailto:relaciones.internacionales@uadec.edu.mx\">"
+                            'Email: <a href="mailto:relaciones.internacionales@uadec.edu.mx">'
                             "relaciones.internacionales@uadec.edu.mx</a><br>"
-                            "Sitio: <a href=\"https://www.uadec.mx/cgri/\" target=\"_blank\" "
-                            "rel=\"noopener noreferrer\">uadec.mx/cgri</a></p>"
+                            'Sitio: <a href="https://www.uadec.mx/cgri/" target="_blank" '
+                            'rel="noopener noreferrer">uadec.mx/cgri</a></p>'
                             "<p>Horario: Lunes a viernes, 9:00 a.m. a 3:00 p.m.</p>"
-                            "<p><a href=\"https://maps.google.com/?q=Coordinacion+de+Relaciones+"
-                            "Internacionales+UADEC+Saltillo\" target=\"_blank\" "
-                            "rel=\"noopener noreferrer\">Ver ubicación en Google Maps</a></p>"
+                            '<p><a href="https://maps.google.com/?q=Coordinacion+de+Relaciones+'
+                            'Internacionales+UADEC+Saltillo" target="_blank" '
+                            'rel="noopener noreferrer">Ver ubicación en Google Maps</a></p>'
                         ),
                     },
                 ],

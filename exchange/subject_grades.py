@@ -58,7 +58,9 @@ def persist_carta_homologacion(application, user) -> bytes:
         .order_by("-created_at")
         .first()
     )
-    uploaded_by = user if getattr(user, "is_authenticated", False) else application.student
+    uploaded_by = (
+        user if getattr(user, "is_authenticated", False) else application.student
+    )
     if existing is None:
         document = Document(
             application=application,

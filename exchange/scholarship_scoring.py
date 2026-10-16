@@ -224,7 +224,9 @@ def _language_factor(profile, program, max_points: float) -> dict[str, Any]:
 
 def _program_fit_factor(profile, program, max_points: float) -> dict[str, Any]:
     # Relative bands from default_v1 (max 15): neutral 12, weak match 6.
-    neutral = round(max_points * (12.0 / MAX_PROGRAM_FIT), 2) if MAX_PROGRAM_FIT else 0.0
+    neutral = (
+        round(max_points * (12.0 / MAX_PROGRAM_FIT), 2) if MAX_PROGRAM_FIT else 0.0
+    )
     weak = round(max_points * (6.0 / MAX_PROGRAM_FIT), 2) if MAX_PROGRAM_FIT else 0.0
     req_lang = (program.required_language or "").strip()
     if not req_lang:

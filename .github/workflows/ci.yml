@@ -81,7 +81,10 @@ jobs:
         run: bandit -c pyproject.toml -r . -ll
 
       - name: pip-audit
-        run: pip-audit --desc on
+        # CVE-2026-106454: Twisted IMAP4 wildcardToRegexp (transitive via daphne/channels).
+        # SEIM never uses twisted.mail.imap4 and no fixed release exists yet.
+        # See docs/security/pip-audit-ignores.md; remove once Twisted ships a fix.
+        run: pip-audit --desc on --ignore-vuln CVE-2026-106454
 
       - name: Upload Bandit report
         uses: actions/upload-artifact@v4

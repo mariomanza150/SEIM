@@ -24,13 +24,21 @@ UADEC_CATALOG: dict[str, tuple[dict[str, Any], ...]] = {
             "programs": (
                 ("Licenciatura en Ciencias de la Educación", "ciencias_educacion"),
                 ("Licenciatura en Letras Españolas", "letras_espanolas"),
-                ("Licenciatura en Formación y Organización Deportiva", "formacion_deportiva"),
+                (
+                    "Licenciatura en Formación y Organización Deportiva",
+                    "formacion_deportiva",
+                ),
             ),
         },
         {
             "name": "Facultad de Ciencias de la Comunicación",
             "code": "sureste_comunicacion",
-            "programs": (("Licenciatura en Ciencias de la Comunicación", "ciencias_comunicacion"),),
+            "programs": (
+                (
+                    "Licenciatura en Ciencias de la Comunicación",
+                    "ciencias_comunicacion",
+                ),
+            ),
         },
         {
             "name": "Facultad de Ciencias Sociales",
@@ -139,13 +147,18 @@ UADEC_CATALOG: dict[str, tuple[dict[str, Any], ...]] = {
         {
             "name": "Instituto de Lenguas Extranjeras",
             "code": "sureste_ile",
-            "programs": (("Licenciatura en Enseñanza del Idioma Inglés", "ensenanza_ingles"),),
+            "programs": (
+                ("Licenciatura en Enseñanza del Idioma Inglés", "ensenanza_ingles"),
+            ),
         },
         {
             "name": "Instituto de Investigaciones Jurídicas Academia Interamericana de Derechos Humanos",
             "code": "sureste_derechos_humanos",
             "programs": (
-                ("Licenciatura en Derecho con Perspectiva en Derechos Humanos", "derecho_ddhh"),
+                (
+                    "Licenciatura en Derecho con Perspectiva en Derechos Humanos",
+                    "derecho_ddhh",
+                ),
             ),
         },
         {
@@ -153,9 +166,15 @@ UADEC_CATALOG: dict[str, tuple[dict[str, Any], ...]] = {
             "code": "sureste_cged",
             "programs": (
                 ("Licenciatura en Contaduría (En Línea)", "cged_contaduria"),
-                ("Licenciatura en Administración de Recursos Humanos (En Línea)", "cged_rrhh"),
+                (
+                    "Licenciatura en Administración de Recursos Humanos (En Línea)",
+                    "cged_rrhh",
+                ),
                 ("Licenciatura en Administración de Empresas (En Línea)", "cged_admin"),
-                ("Licenciatura en Negocios Internacionales (En Línea)", "cged_negocios"),
+                (
+                    "Licenciatura en Negocios Internacionales (En Línea)",
+                    "cged_negocios",
+                ),
             ),
         },
     ),
@@ -173,10 +192,19 @@ UADEC_CATALOG: dict[str, tuple[dict[str, Any], ...]] = {
             "code": "laguna_contaduria",
             "programs": (
                 ("Licenciatura en Contaduría Pública", "contaduria_publica"),
-                ("Licenciatura en Administración de Empresas con Acentuación en Comercialización", "admin_comercializacion"),
+                (
+                    "Licenciatura en Administración de Empresas con Acentuación en Comercialización",
+                    "admin_comercializacion",
+                ),
                 ("Licenciatura en Comercio Exterior y Aduanas", "comercio_exterior"),
-                ("Licenciatura en Administración de Empresas Gastronómicas y Turísticas", "admin_gastronomica"),
-                ("Licenciatura en Administración de Empresas con Acentuación en Producción", "admin_produccion"),
+                (
+                    "Licenciatura en Administración de Empresas Gastronómicas y Turísticas",
+                    "admin_gastronomica",
+                ),
+                (
+                    "Licenciatura en Administración de Empresas con Acentuación en Producción",
+                    "admin_produccion",
+                ),
             ),
         },
         {
@@ -191,8 +219,14 @@ UADEC_CATALOG: dict[str, tuple[dict[str, Any], ...]] = {
             "name": "Facultad de Ciencias Políticas y Sociales",
             "code": "laguna_ciencias_politicas",
             "programs": (
-                ("Licenciatura en Ciencias de la Comunicación", "ciencias_comunicacion"),
-                ("Licenciatura en Ciencias Políticas y Administración Pública", "ciencias_politicas"),
+                (
+                    "Licenciatura en Ciencias de la Comunicación",
+                    "ciencias_comunicacion",
+                ),
+                (
+                    "Licenciatura en Ciencias Políticas y Administración Pública",
+                    "ciencias_politicas",
+                ),
                 ("Licenciatura en Sociología", "sociologia"),
             ),
         },
@@ -217,7 +251,10 @@ UADEC_CATALOG: dict[str, tuple[dict[str, Any], ...]] = {
             "code": "laguna_escuela_admin",
             "programs": (
                 ("Licenciatura en Administración de Empresas", "admin_empresas"),
-                ("Ingeniero Industrial y Administración de Recursos Humanos", "ing_ind_rrhh"),
+                (
+                    "Ingeniero Industrial y Administración de Recursos Humanos",
+                    "ing_ind_rrhh",
+                ),
             ),
         },
         {
@@ -237,8 +274,14 @@ UADEC_CATALOG: dict[str, tuple[dict[str, Any], ...]] = {
             "name": "Escuela de Sistemas",
             "code": "laguna_sistemas",
             "programs": (
-                ("Ingeniería en Tecnologías de la Información y Comunicaciones", "ing_tic"),
-                ("Licenciatura en Sistemas Computacionales Administrativos", "sistemas_admin"),
+                (
+                    "Ingeniería en Tecnologías de la Información y Comunicaciones",
+                    "ing_tic",
+                ),
+                (
+                    "Licenciatura en Sistemas Computacionales Administrativos",
+                    "sistemas_admin",
+                ),
                 ("Ingeniería Industrial y de Sistemas", "ing_ind_sistemas"),
             ),
         },
@@ -273,7 +316,12 @@ UADEC_CATALOG: dict[str, tuple[dict[str, Any], ...]] = {
         {
             "name": "Escuela de Artes",
             "code": "laguna_artes",
-            "programs": (("Licenciatura en Artes Escénicas y Gestión Cultural", "artes_escenicas"),),
+            "programs": (
+                (
+                    "Licenciatura en Artes Escénicas y Gestión Cultural",
+                    "artes_escenicas",
+                ),
+            ),
         },
         {
             "name": "Escuela de Psicología",

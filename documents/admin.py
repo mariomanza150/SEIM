@@ -119,7 +119,19 @@ class DocumentAdmin(admin.ModelAdmin):
     raw_id_fields = ("application", "type", "uploaded_by", "supersedes")
     readonly_fields = ("created_at", "updated_at", "validated_at")
     fieldsets = (
-        (None, {"fields": ("application", "type", "file", "uploaded_by", "is_valid", "supersedes")}),
+        (
+            None,
+            {
+                "fields": (
+                    "application",
+                    "type",
+                    "file",
+                    "uploaded_by",
+                    "is_valid",
+                    "supersedes",
+                )
+            },
+        ),
         ("Validation", {"fields": ("validated_at",)}),
         ("Audit", {"fields": ("created_at", "updated_at")}),
     )

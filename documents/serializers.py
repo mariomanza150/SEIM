@@ -120,9 +120,7 @@ class DocumentTypeSerializer(serializers.ModelSerializer):
             return ret
         reqs = instance.program_requirements.select_related(
             "program", "required_from_status"
-        ).order_by(
-            "sort_order", "id"
-        )
+        ).order_by("sort_order", "id")
         ret["program_requirements"] = [
             {
                 "id": req.id,
@@ -464,7 +462,9 @@ class DocumentSerializer(serializers.ModelSerializer):
             out.append(
                 {
                     "id": str(prior.id),
-                    "created_at": prior.created_at.isoformat() if prior.created_at else None,
+                    "created_at": prior.created_at.isoformat()
+                    if prior.created_at
+                    else None,
                     "filename": filename,
                     "is_valid": bool(prior.is_valid),
                     "validated_at": (

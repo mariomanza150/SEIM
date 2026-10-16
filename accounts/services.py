@@ -383,9 +383,9 @@ class AccountService:
         if not all(str(value).strip() for value in (first_name, last_name)):
             raise ValueError("First name and last name are required")
 
-        username = (username or "").strip() or AccountService.unique_username_from_email(
-            email
-        )
+        username = (
+            username or ""
+        ).strip() or AccountService.unique_username_from_email(email)
 
         # Check if username exists
         if User.objects.filter(username=username).exists():

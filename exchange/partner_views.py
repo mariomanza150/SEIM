@@ -126,7 +126,9 @@ class PartnerAgreementViewSet(viewsets.ReadOnlyModelViewSet):
             docs = ExchangeAgreementDocument.objects.filter(
                 agreement=agreement
             ).select_related("agreement", "uploaded_by", "supersedes")
-            current_only = str(request.query_params.get("current_only") or "").lower() in (
+            current_only = str(
+                request.query_params.get("current_only") or ""
+            ).lower() in (
                 "1",
                 "true",
                 "yes",

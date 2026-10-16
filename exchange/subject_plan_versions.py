@@ -74,15 +74,12 @@ def selection_to_snapshot_dict(row) -> dict:
 
 def build_subject_plan_payload(application) -> list[dict]:
     """Return the current live selection set as a JSON-serializable list."""
-    rows = (
-        application.subject_selections.select_related(
-            "host_subject",
-            "proposed_host_grade",
-            "confirmed_host_grade",
-            "home_grade",
-        )
-        .order_by("created_at", "id")
-    )
+    rows = application.subject_selections.select_related(
+        "host_subject",
+        "proposed_host_grade",
+        "confirmed_host_grade",
+        "home_grade",
+    ).order_by("created_at", "id")
     return [selection_to_snapshot_dict(row) for row in rows]
 
 

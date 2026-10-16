@@ -119,7 +119,12 @@ def seed_profile_catalogs(
     Returns (schools, programs, banks).
     """
     if school_model is None or program_model is None or bank_model is None:
-        from accounts.models import BankInstitution, HomeAcademicProgram, SchoolFaculty, Unidad
+        from accounts.models import (
+            BankInstitution,
+            HomeAcademicProgram,
+            SchoolFaculty,
+            Unidad,
+        )
 
         school_model = school_model or SchoolFaculty
         program_model = program_model or HomeAcademicProgram

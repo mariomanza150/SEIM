@@ -73,9 +73,7 @@ class TestApplicationReadiness:
         program = TestUtils.create_test_program()
         attach_host_destination(program)
         draft, _ = ApplicationStatus.objects.get_or_create(name="draft")
-        app = Application.objects.create(
-            student=student, program=program, status=draft
-        )
+        app = Application.objects.create(student=student, program=program, status=draft)
         r = compute_application_readiness(app, include_dynamic_form=False)
         assert r["host_destination"]["required"] is True
         assert r["host_destination"]["complete"] is False
@@ -88,9 +86,7 @@ class TestApplicationReadiness:
         student = TestUtils.create_test_user(role="student")
         program = TestUtils.create_test_program()
         draft, _ = ApplicationStatus.objects.get_or_create(name="draft")
-        app = Application.objects.create(
-            student=student, program=program, status=draft
-        )
+        app = Application.objects.create(student=student, program=program, status=draft)
         r = compute_application_readiness(app, include_dynamic_form=False)
         assert r["host_destination"]["required"] is False
         assert r["host_destination"]["complete"] is True
@@ -98,8 +94,9 @@ class TestApplicationReadiness:
     def test_draft_ineligible_language_is_not_ready(self):
         from datetime import date, timedelta
 
-        from accounts.models import Profile, Role
         from django.contrib.auth import get_user_model
+
+        from accounts.models import Profile, Role
         from exchange.models import Application, ApplicationStatus, Program
 
         User = get_user_model()
@@ -131,9 +128,7 @@ class TestApplicationReadiness:
             is_active=True,
         )
         draft, _ = ApplicationStatus.objects.get_or_create(name="draft")
-        app = Application.objects.create(
-            student=student, program=program, status=draft
-        )
+        app = Application.objects.create(student=student, program=program, status=draft)
         r = compute_application_readiness(app, include_dynamic_form=False)
         assert r["eligibility"]["complete"] is False
         assert r["eligibility"]["issues"]
@@ -148,8 +143,9 @@ class TestApplicationReadiness:
         """Draft readiness uses the live profile, not leftover *_at_apply fields."""
         from datetime import date, timedelta
 
-        from accounts.models import Profile, Role
         from django.contrib.auth import get_user_model
+
+        from accounts.models import Profile, Role
         from exchange.models import Application, ApplicationStatus, Program
 
         User = get_user_model()

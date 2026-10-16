@@ -90,7 +90,7 @@ def _as_token_list(value):
         return []
     if isinstance(value, str):
         return [part.strip() for part in value.split(",") if part.strip()]
-    if isinstance(value, (list, tuple, set)):
+    if isinstance(value, list | tuple | set):
         return [str(part).strip() for part in value if str(part).strip()]
     return []
 

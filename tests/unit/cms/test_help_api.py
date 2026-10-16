@@ -153,12 +153,16 @@ class TestHelpArticlesAPI(APITestCase):
         self.assertIn("student-apply-help", slugs)
         self.assertIn("dashboard-help-all", slugs)
         self.assertNotIn("partner-portal-help", slugs)
-        student_row = next(r for r in resp.data["results"] if r["slug"] == "student-apply-help")
+        student_row = next(
+            r for r in resp.data["results"] if r["slug"] == "student-apply-help"
+        )
         self.assertIn("<p>", student_row["body_html"])
 
     def test_partner_cannot_read_student_slug(self):
         self.authenticate_user(self.partner)
-        detail = reverse("api:help-article-detail", kwargs={"slug": "student-apply-help"})
+        detail = reverse(
+            "api:help-article-detail", kwargs={"slug": "student-apply-help"}
+        )
         resp = self.client.get(detail)
         self.assertEqual(resp.status_code, 404)
         list_url = reverse("api:help-article-list")
@@ -177,7 +181,9 @@ class TestHelpArticlesAPI(APITestCase):
 
     def test_responsible_can_read_student_help(self):
         self.authenticate_user(self.coord)
-        detail = reverse("api:help-article-detail", kwargs={"slug": "student-apply-help"})
+        detail = reverse(
+            "api:help-article-detail", kwargs={"slug": "student-apply-help"}
+        )
         resp = self.client.get(detail)
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data["slug"], "student-apply-help")
@@ -235,7 +241,10 @@ def test_spa_only_pages_excluded_from_wagtail_pages_api_queryset():
 
 def test_seed_spa_help_contextual_keys_match_vue_routes():
     """Catalog keys must use Vue route names (no dead ApplicationForm)."""
-    from cms.management.commands.seed_spa_help import PUBLIC_FAQ_RETAG, SPA_HELP_ARTICLES
+    from cms.management.commands.seed_spa_help import (
+        PUBLIC_FAQ_RETAG,
+        SPA_HELP_ARTICLES,
+    )
 
     keys: set[str] = set()
     for article in SPA_HELP_ARTICLES:
@@ -246,9 +255,7 @@ def test_seed_spa_help_contextual_keys_match_vue_routes():
         )
     for meta in PUBLIC_FAQ_RETAG.values():
         keys.update(
-            part.strip()
-            for part in meta["contextual_keys"].split(",")
-            if part.strip()
+            part.strip() for part in meta["contextual_keys"].split(",") if part.strip()
         )
 
     assert "ApplicationForm" not in keys

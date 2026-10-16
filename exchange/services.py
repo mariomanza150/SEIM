@@ -137,10 +137,9 @@ class ApplicationService:
         # Prefer already-selected related object when present.
         ruleset = getattr(program, "eligibility_ruleset", None)
         if ruleset is None and getattr(program, "eligibility_ruleset_id", None):
-            ruleset = (
-                EligibilityRuleSet.objects.filter(pk=program.eligibility_ruleset_id)
-                .first()
-            )
+            ruleset = EligibilityRuleSet.objects.filter(
+                pk=program.eligibility_ruleset_id
+            ).first()
         application.eligibility_ruleset_snapshot = build_ruleset_snapshot(ruleset)
 
         application.save(

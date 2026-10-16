@@ -138,7 +138,9 @@ class DocumentService:
         return True
 
     @staticmethod
-    def resolved_accepted_extensions(document_type: DocumentType | None = None) -> list[str]:
+    def resolved_accepted_extensions(
+        document_type: DocumentType | None = None,
+    ) -> list[str]:
         """Extensions for a type, falling back to global defaults when unset."""
         if document_type is not None:
             exts = document_type.parsed_accepted_extensions()
@@ -147,7 +149,9 @@ class DocumentService:
         return list(DocumentService.DEFAULT_ACCEPTED_EXTENSIONS)
 
     @staticmethod
-    def resolved_accepted_extensions_csv(document_type: DocumentType | None = None) -> str:
+    def resolved_accepted_extensions_csv(
+        document_type: DocumentType | None = None,
+    ) -> str:
         return ",".join(DocumentService.resolved_accepted_extensions(document_type))
 
     @staticmethod
@@ -253,9 +257,7 @@ class DocumentService:
             raise ValueError(
                 "Only the applicant can upload documents for this application."
             )
-        DocumentService.ensure_upload_allowed(
-            application, doc_type, for_staff=False
-        )
+        DocumentService.ensure_upload_allowed(application, doc_type, for_staff=False)
         DocumentService.validate_file_type_and_size(file, document_type=doc_type)
         # Async virus scan
         document = Document.objects.create(
@@ -324,7 +326,9 @@ class DocumentService:
         return "pending_review"
 
     @staticmethod
-    def _aggregate_upload_status(current_uploads: list) -> tuple[str, object | None, str | None]:
+    def _aggregate_upload_status(
+        current_uploads: list,
+    ) -> tuple[str, object | None, str | None]:
         """
         Aggregate checklist status for current siblings.
 
@@ -684,7 +688,9 @@ class DocumentService:
         if cached is not None:
             return cached
 
-        requirements = DocumentService._program_document_requirements(application.program)
+        requirements = DocumentService._program_document_requirements(
+            application.program
+        )
         if not requirements:
             result = {
                 "complete": True,
@@ -765,7 +771,9 @@ class DocumentService:
                 {
                     "document_id": str(doc.id),
                     "status": DocumentService._status_for_single_upload(doc),
-                    "created_at": doc.created_at.isoformat() if doc.created_at else None,
+                    "created_at": doc.created_at.isoformat()
+                    if doc.created_at
+                    else None,
                     "is_valid": bool(doc.is_valid),
                     "validated_at": (
                         doc.validated_at.isoformat() if doc.validated_at else None

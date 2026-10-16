@@ -137,9 +137,7 @@ class TestSubjectPlanVersionSnapshots:
         assert resp.status_code == status.HTTP_201_CREATED
         assert application.subject_plan_versions.count() == 0
 
-    def test_second_add_creates_version_with_prior_row(
-        self, student_client, host_tree
-    ):
+    def test_second_add_creates_version_with_prior_row(self, student_client, host_tree):
         student, client = student_client
         application = _draft_application(student, host_tree)
 
@@ -149,9 +147,7 @@ class TestSubjectPlanVersionSnapshots:
         second = _add_selection(client, application, host_tree, suffix="2")
         assert second.status_code == status.HTTP_201_CREATED
 
-        versions = list(
-            application.subject_plan_versions.order_by("version_number")
-        )
+        versions = list(application.subject_plan_versions.order_by("version_number"))
         assert len(versions) == 1
         assert versions[0].version_number == 1
         assert len(versions[0].payload) == 1
@@ -183,14 +179,10 @@ class TestSubjectPlanVersionSnapshots:
         application = _draft_application(student, host_tree)
 
         for i in range(5):
-            resp = _add_selection(
-                client, application, host_tree, suffix=str(i)
-            )
+            resp = _add_selection(client, application, host_tree, suffix=str(i))
             assert resp.status_code == status.HTTP_201_CREATED, resp.data
 
-        versions = list(
-            application.subject_plan_versions.order_by("version_number")
-        )
+        versions = list(application.subject_plan_versions.order_by("version_number"))
         assert len(versions) == MAX_SUBJECT_PLAN_VERSIONS
         assert versions[0].version_number == 2
         assert versions[-1].version_number == 4
@@ -198,7 +190,9 @@ class TestSubjectPlanVersionSnapshots:
     def test_destroy_creates_snapshot(self, student_client, host_tree):
         student, client = student_client
         application = _draft_application(student, host_tree)
-        create = _add_selection(client, application, host_tree, suffix="1", catalog=True)
+        create = _add_selection(
+            client, application, host_tree, suffix="1", catalog=True
+        )
         selection_id = create.data["id"]
         _add_selection(client, application, host_tree, suffix="2")
 
@@ -212,7 +206,9 @@ class TestSubjectPlanVersionSnapshots:
     def test_mapping_patch_creates_snapshot(self, student_client, host_tree):
         student, client = student_client
         application = _draft_application(student, host_tree)
-        create = _add_selection(client, application, host_tree, suffix="1", catalog=True)
+        create = _add_selection(
+            client, application, host_tree, suffix="1", catalog=True
+        )
         selection_id = create.data["id"]
 
         patch = client.patch(
@@ -225,9 +221,7 @@ class TestSubjectPlanVersionSnapshots:
         assert version is not None
         assert version.payload[0]["home_course_label"] != "Renamed"
 
-    def test_grade_only_patch_does_not_snapshot(
-        self, student_client, host_tree
-    ):
+    def test_grade_only_patch_does_not_snapshot(self, student_client, host_tree):
         student, client = student_client
         application = _draft_application(student, host_tree)
         approved, _ = ApplicationStatus.objects.get_or_create(
@@ -253,7 +247,9 @@ class TestSubjectPlanVersionSnapshots:
             order=1,
         )
 
-        create = _add_selection(client, application, host_tree, suffix="1", catalog=True)
+        create = _add_selection(
+            client, application, host_tree, suffix="1", catalog=True
+        )
         selection_id = create.data["id"]
         _add_selection(client, application, host_tree, suffix="2")
         before = application.subject_plan_versions.count()
@@ -348,7 +344,9 @@ class TestSubjectPlanVersionApi:
             order=1,
         )
 
-        create = _add_selection(student_api, application, host_tree, suffix="1", catalog=True)
+        create = _add_selection(
+            student_api, application, host_tree, suffix="1", catalog=True
+        )
         selection_id = create.data["id"]
         _add_selection(student_api, application, host_tree, suffix="2")
         before = application.subject_plan_versions.count()

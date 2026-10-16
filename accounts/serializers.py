@@ -389,8 +389,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         actor = getattr(request, "user", None) if request else None
         from exchange.lifecycle_requirements import (
-            is_student_only_actor,
             due_profile_field_keys_for_user,
+            is_student_only_actor,
             profile_field_satisfied,
         )
 
@@ -475,7 +475,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             canonical = canonical_language_name(name)
             if not canonical:
                 raise serializers.ValidationError(
-                    f"Entry {i + 1}: select a language from the catalog."
+                    f"Entry {i + 1}: choose a language from the catalog."
                 )
             if len(canonical) > 64:
                 raise serializers.ValidationError(
@@ -555,6 +555,14 @@ class RegistrationSerializer(serializers.ModelSerializer):
     def validate_password(self, value):
         validate_password(value)
         return value
+
+    def validate_username(self, value):
+        username = (value or "").strip()
+        if username and User.objects.filter(username__iexact=username).exists():
+            raise serializers.ValidationError(
+                "A user with that username already exists."
+            )
+        return username
 
     def validate_email(self, value):
         domain = value.rsplit("@", 1)[-1].strip().lower()

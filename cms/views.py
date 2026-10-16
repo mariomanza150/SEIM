@@ -27,21 +27,30 @@ def _filtered_help_pages(request):
     pages = list(queryset.distinct().order_by("topic", "title"))
     key = (request.query_params.get("key") or "").strip()
     if key:
-        pages = [page for page in pages if key in parse_contextual_keys(page.contextual_keys)]
+        pages = [
+            page for page in pages if key in parse_contextual_keys(page.contextual_keys)
+        ]
     return pages
 
 
 @extend_schema(
     summary="List SPA help articles",
     parameters=[
-        OpenApiParameter(name="q", description="Search title and introduction", required=False, type=str),
+        OpenApiParameter(
+            name="q",
+            description="Search title and introduction",
+            required=False,
+            type=str,
+        ),
         OpenApiParameter(
             name="key",
             description="Vue route name tagged on contextual_keys",
             required=False,
             type=str,
         ),
-        OpenApiParameter(name="topic", description="Hub topic key", required=False, type=str),
+        OpenApiParameter(
+            name="topic", description="Hub topic key", required=False, type=str
+        ),
     ],
 )
 class HelpArticleListView(APIView):

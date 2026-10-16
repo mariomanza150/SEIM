@@ -27,6 +27,7 @@ from exchange.models import (
     HostSchool,
     HostSubject,
     Program,
+    ProgramDocumentRequirement,
 )
 from notifications.models import Notification
 
@@ -82,6 +83,16 @@ class Command(BaseCommand):
         program.eligibility_ruleset = None
         program.save()
         program.required_document_types.clear()
+        # Status-scheduled requirements replaced the M2M; keep the E2E program
+        # submittable without approved documents or extra profile fields.
+        program.program_document_requirements.all().delete()
+        program.field_requirements.all().delete()
+        # One optional checklist entry so the draft detail still offers document upload.
+        optional_type = DocumentType.objects.order_by("name").first()
+        if optional_type is not None:
+            ProgramDocumentRequirement.objects.create(
+                program=program, document_type=optional_type, is_required=False
+            )
 
         existing = list(
             Application.objects.filter(student=student, program=program).order_by(

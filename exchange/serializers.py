@@ -23,9 +23,9 @@ from .models import (
     SavedSearch,
     ScholarshipScoringRuleset,
     TimelineEvent,
-    visible_host_subjects_queryset,
-    validate_application_host_destination,
     resolve_host_destination_names,
+    validate_application_host_destination,
+    visible_host_subjects_queryset,
 )
 
 _TIMELINE_EVENT_FIELDS = tuple(f.name for f in TimelineEvent._meta.fields) + (
@@ -55,7 +55,9 @@ class ProgramFieldRequirementSerializer(serializers.ModelSerializer):
         from exchange.lifecycle_requirements import SOURCE_FORM, allowed_field_keys
 
         source = attrs.get("source", getattr(self.instance, "source", None))
-        key = (attrs.get("field_key") or getattr(self.instance, "field_key", "") or "").strip()
+        key = (
+            attrs.get("field_key") or getattr(self.instance, "field_key", "") or ""
+        ).strip()
         attrs["field_key"] = key
         allowed = allowed_field_keys(source)
         if not key:
@@ -65,7 +67,9 @@ class ProgramFieldRequirementSerializer(serializers.ModelSerializer):
                 {"field_key": "Unknown field key for this source."}
             )
         if source == SOURCE_FORM and not key:
-            raise serializers.ValidationError({"field_key": "Form field key is required."})
+            raise serializers.ValidationError(
+                {"field_key": "Form field key is required."}
+            )
         return attrs
 
 
@@ -206,7 +210,9 @@ class EligibilityRuleSetSerializer(serializers.ModelSerializer):
         read_only_fields = ("id", "content_revision", "created_at", "updated_at")
 
     def validate_schema_version(self, value):
-        from exchange.eligibility_ruleset_schema import SUPPORTED_RULESET_SCHEMA_VERSIONS
+        from exchange.eligibility_ruleset_schema import (
+            SUPPORTED_RULESET_SCHEMA_VERSIONS,
+        )
 
         if value not in SUPPORTED_RULESET_SCHEMA_VERSIONS:
             raise serializers.ValidationError(
@@ -239,7 +245,9 @@ class EligibilityRuleSetSerializer(serializers.ModelSerializer):
             except DjangoValidationError as exc:
                 if hasattr(exc, "message_dict"):
                     raise serializers.ValidationError(exc.message_dict) from exc
-                raise serializers.ValidationError({"rules_json": list(exc.messages)}) from exc
+                raise serializers.ValidationError(
+                    {"rules_json": list(exc.messages)}
+                ) from exc
         attrs.setdefault("schema_version", schema_version)
         return attrs
 
@@ -310,9 +318,7 @@ class ScholarshipScoringRulesetSerializer(serializers.ModelSerializer):
             try:
                 num = float(raw)
             except (TypeError, ValueError) as exc:
-                raise serializers.ValidationError(
-                    {fid: "Must be a number."}
-                ) from exc
+                raise serializers.ValidationError({fid: "Must be a number."}) from exc
             if num <= 0 or num > 200:
                 raise serializers.ValidationError(
                     {fid: "Must be greater than 0 and at most 200."}
@@ -436,7 +442,10 @@ class HostSubjectSerializer(serializers.ModelSerializer):
                 errors["academic_program"] = (
                     "Host academic program must belong to the selected host school."
                 )
-            if institution is not None and academic.school.institution_id != institution.id:
+            if (
+                institution is not None
+                and academic.school.institution_id != institution.id
+            ):
                 errors["academic_program"] = (
                     "Host academic program must belong to the selected host institution."
                 )
@@ -537,8 +546,10 @@ class ApplicationSubjectSelectionSerializer(serializers.ModelSerializer):
         application = attrs.get("application")
         if application is None and self.instance is not None:
             application = self.instance.application
-        host_subject = attrs["host_subject"] if "host_subject" in attrs else (
-            self.instance.host_subject if self.instance is not None else None
+        host_subject = (
+            attrs["host_subject"]
+            if "host_subject" in attrs
+            else (self.instance.host_subject if self.instance is not None else None)
         )
         custom_name = attrs.get(
             "custom_name",
@@ -617,7 +628,9 @@ class ApplicationSubjectSelectionSerializer(serializers.ModelSerializer):
                 if proposed is not None:
                     host = getattr(application, "host_institution", None)
                     host_scale_id = (
-                        getattr(host, "grade_scale_id", None) if host is not None else None
+                        getattr(host, "grade_scale_id", None)
+                        if host is not None
+                        else None
                     )
                     if not host_scale_id:
                         raise serializers.ValidationError(
@@ -767,7 +780,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
     student_display_name = serializers.SerializerMethodField()
     student_email = serializers.SerializerMethodField()
     program_name = serializers.SerializerMethodField()
-    program_start_date = serializers.DateField(source="program.start_date", read_only=True)
+    program_start_date = serializers.DateField(
+        source="program.start_date", read_only=True
+    )
     program_end_date = serializers.DateField(source="program.end_date", read_only=True)
     host_institution_name = serializers.SerializerMethodField()
     host_institution_country = serializers.SerializerMethodField()
@@ -780,7 +795,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
     readiness = serializers.SerializerMethodField()
     scholarship_allocation_score = serializers.SerializerMethodField()
     scholarship_award = serializers.SerializerMethodField()
-    eligibility_ruleset_snapshot = serializers.JSONField(read_only=True, allow_null=True)
+    eligibility_ruleset_snapshot = serializers.JSONField(
+        read_only=True, allow_null=True
+    )
 
     class Meta:
         model = Application
@@ -1016,11 +1033,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
         # For update operations, student is already set on the instance
         request = self.context.get("request")
         actor = request.user if request else None
-        student = (
-            self.instance.student
-            if self.instance
-            else (actor if actor else None)
-        )
+        student = self.instance.student if self.instance else (actor if actor else None)
         program = data.get("program")
         if self.instance is not None and program is None:
             program = self.instance.program
@@ -1081,7 +1094,11 @@ class ApplicationSerializer(serializers.ModelSerializer):
             if institution is None and self.instance is not None:
                 institution = self.instance.host_institution
             school = data.get("host_school")
-            if school is None and "host_school" not in data and self.instance is not None:
+            if (
+                school is None
+                and "host_school" not in data
+                and self.instance is not None
+            ):
                 school = self.instance.host_school
             resolved_school, resolved_academic, name_errors = (
                 resolve_host_destination_names(

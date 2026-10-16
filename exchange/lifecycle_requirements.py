@@ -6,8 +6,9 @@ onward requirements.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
-from typing import Any, Iterable
+from typing import Any
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 
@@ -290,7 +291,7 @@ def application_field_satisfied(application, field_key: str) -> bool:
 
 def _form_keys_satisfied(application, keys: Iterable[str]) -> dict[str, bool]:
     keys = [k for k in keys if k]
-    result = {k: False for k in keys}
+    result = dict.fromkeys(keys, False)
     if not keys:
         return result
     program = application.program
@@ -346,22 +347,14 @@ def draft_required_profile_keys(program=None) -> list[str]:
         if row is None:
             kept.append(key)
             continue
-        name = (
-            row.required_from_status.name
-            if row.required_from_status_id
-            else None
-        )
+        name = row.required_from_status.name if row.required_from_status_id else None
         if name == DRAFT:
             kept.append(key)
     extras = []
     for row in rows:
         if row.field_key in kept or row.field_key in required:
             continue
-        name = (
-            row.required_from_status.name
-            if row.required_from_status_id
-            else None
-        )
+        name = row.required_from_status.name if row.required_from_status_id else None
         if name == DRAFT and row.field_key in PROFILE_FIELD_CATALOG:
             extras.append(row.field_key)
     return kept + extras
@@ -395,9 +388,7 @@ def due_profile_field_keys_for_user(user) -> list[str]:
         status_name = app.status.name if app.status else ""
         for row in by_program.get(app.program_id, []):
             req_from = (
-                row.required_from_status.name
-                if row.required_from_status_id
-                else None
+                row.required_from_status.name if row.required_from_status_id else None
             )
             if is_due(req_from, status_name) and row.field_key not in seen:
                 seen.add(row.field_key)
@@ -514,9 +505,7 @@ def student_submit_field_errors(application) -> list[str]:
     if not missing:
         return []
     labels = [f"{item.kind}:{item.key}" for item in missing]
-    return [
-        "Required fields are not complete for submit: " + "; ".join(labels)
-    ]
+    return ["Required fields are not complete for submit: " + "; ".join(labels)]
 
 
 def eligibility_apply_keys() -> frozenset[str]:

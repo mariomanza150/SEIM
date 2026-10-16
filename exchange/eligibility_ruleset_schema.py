@@ -72,7 +72,13 @@ def _as_date(value: Any, field: str) -> str | None:
     raise DjangoValidationError({field: f"{field} must be an ISO date string."})
 
 
-def _as_float(value: Any, field: str, *, min_value: float | None = None, max_value: float | None = None) -> float | None:
+def _as_float(
+    value: Any,
+    field: str,
+    *,
+    min_value: float | None = None,
+    max_value: float | None = None,
+) -> float | None:
     if value in (None, ""):
         return None
     try:
@@ -109,9 +115,13 @@ def _as_str(value: Any, field: str) -> str | None:
     return text or None
 
 
-def normalize_program_overrides(overrides: dict[str, Any], *, strict: bool) -> dict[str, Any]:
+def normalize_program_overrides(
+    overrides: dict[str, Any], *, strict: bool
+) -> dict[str, Any]:
     if not isinstance(overrides, dict):
-        raise DjangoValidationError({"program_overrides": "program_overrides must be a JSON object."})
+        raise DjangoValidationError(
+            {"program_overrides": "program_overrides must be a JSON object."}
+        )
 
     unknown = set(overrides) - PROGRAM_OVERRIDE_KEYS
     if unknown and strict:
@@ -140,7 +150,9 @@ def normalize_program_overrides(overrides: dict[str, Any], *, strict: bool) -> d
             normalized = _as_str(raw, key)
             if normalized and normalized not in CEFR_LEVELS:
                 raise DjangoValidationError(
-                    {key: f"min_language_level must be one of {', '.join(sorted(CEFR_LEVELS))}."}
+                    {
+                        key: f"min_language_level must be one of {', '.join(sorted(CEFR_LEVELS))}."
+                    }
                 )
         else:
             normalized = _as_str(raw, key)
@@ -218,7 +230,9 @@ def validate_and_normalize_rules_json(
         )
 
     raw = deepcopy(rules_json)
-    overrides = normalize_program_overrides(raw.get("program_overrides") or {}, strict=strict)
+    overrides = normalize_program_overrides(
+        raw.get("program_overrides") or {}, strict=strict
+    )
     meta = normalize_meta(raw.get("meta"), strict=strict)
 
     out: dict[str, Any] = {}

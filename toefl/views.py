@@ -1,13 +1,17 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils.dateparse import parse_datetime
 from rest_framework import status, viewsets
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -119,24 +123,34 @@ def webhook_view(request):
     signature = request.headers.get("X-Webhook-Signature") or ""
     raw = request.body or b""
     if not verify_signature(raw, signature, secret):
-        return Response({"detail": "invalid signature"}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(
+            {"detail": "invalid signature"}, status=status.HTTP_401_UNAUTHORIZED
+        )
 
     payload = request.data
     if not isinstance(payload, dict):
-        return Response({"detail": "invalid payload"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "invalid payload"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
     session_id = str(payload.get("session_id") or "").strip()
     client_ref = str(payload.get("client_ref") or "").strip()
     if not session_id:
-        return Response({"detail": "session_id required"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "session_id required"}, status=status.HTTP_400_BAD_REQUEST
+        )
     if not client_ref:
-        return Response({"detail": "client_ref required"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "client_ref required"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
     try:
         user = User.objects.get(pk=client_ref)
     except (User.DoesNotExist, ValueError, TypeError):
         logger.warning("TOEFL webhook unknown client_ref=%s", client_ref)
-        return Response({"detail": "unknown client_ref"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "unknown client_ref"}, status=status.HTTP_400_BAD_REQUEST
+        )
 
     score = payload.get("score") or {}
     if not isinstance(score, dict):
@@ -148,11 +162,13 @@ def webhook_view(request):
         completed_at = parse_datetime(str(completed_raw))
         if completed_at is None:
             try:
-                completed_at = datetime.fromisoformat(str(completed_raw).replace("Z", "+00:00"))
+                completed_at = datetime.fromisoformat(
+                    str(completed_raw).replace("Z", "+00:00")
+                )
             except ValueError:
                 completed_at = None
         if completed_at and completed_at.tzinfo is None:
-            completed_at = completed_at.replace(tzinfo=timezone.utc)
+            completed_at = completed_at.replace(tzinfo=UTC)
 
     defaults = {
         "user": user,

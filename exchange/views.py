@@ -68,16 +68,6 @@ from .models import (
     visible_host_subjects_queryset,
 )
 from .scholarship_scoring import scholarship_scores_export_response
-from .subject_grades import (
-    confirm_subject_grades,
-    persist_carta_homologacion,
-    propose_subject_grades,
-    reject_subject_grades,
-)
-from .subject_plan_versions import (
-    snapshot_subject_plan,
-    subject_plan_mapping_changed,
-)
 from .serializers import (
     AgreementCommentSerializer,
     ApplicationListSerializer,
@@ -100,6 +90,16 @@ from .serializers import (
     TimelineEventSerializer,
 )
 from .services import ApplicationService
+from .subject_grades import (
+    confirm_subject_grades,
+    persist_carta_homologacion,
+    propose_subject_grades,
+    reject_subject_grades,
+)
+from .subject_plan_versions import (
+    snapshot_subject_plan,
+    subject_plan_mapping_changed,
+)
 
 # Create your views here.
 
@@ -418,11 +418,13 @@ class ProgramViewSet(viewsets.ModelViewSet):
             application__withdrawn=False,
             application__status__name__in=SEAT_HOLDING_APPLICATION_STATUS_NAMES,
         )
-        return Program.objects.select_related("application_form").prefetch_related(
-            "coordinators",
-            "field_requirements__required_from_status",
-        ).annotate(
-            _seat_holding_count=Count("application", filter=seat_filter)
+        return (
+            Program.objects.select_related("application_form")
+            .prefetch_related(
+                "coordinators",
+                "field_requirements__required_from_status",
+            )
+            .annotate(_seat_holding_count=Count("application", filter=seat_filter))
         )
 
     def perform_create(self, serializer):
@@ -696,7 +698,9 @@ class ProgramViewSet(viewsets.ModelViewSet):
         )
         # Frozen snapshot always applies when present; otherwise honor use_ruleset toggle.
         if application_obj is not None and frozen_meta is not None:
-            eval_program = _program_for_eligibility(program, application=application_obj)
+            eval_program = _program_for_eligibility(
+                program, application=application_obj
+            )
             use_ruleset = True
         elif use_ruleset and rs is not None:
             eval_program = ProgramEligibilityProxy(program, parse_ruleset_overrides(rs))
@@ -720,7 +724,10 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 .get(pk=application_obj.pk)
             )
             # Keep frozen snapshot on the instance used for evaluation.
-            if getattr(application_obj, "eligibility_ruleset_snapshot", None) is not None:
+            if (
+                getattr(application_obj, "eligibility_ruleset_snapshot", None)
+                is not None
+            ):
                 full_app.eligibility_ruleset_snapshot = (
                     application_obj.eligibility_ruleset_snapshot
                 )
@@ -917,7 +924,11 @@ class ProgramViewSet(viewsets.ModelViewSet):
     )
     def nomination_partner_allocations(self, request, pk=None, cycle_id=None):
         """Create/update a partner seat allocation on a nomination cycle."""
-        from exchange.models import ExchangeAgreement, NominationCycle, NominationPartnerAllocation
+        from exchange.models import (
+            ExchangeAgreement,
+            NominationCycle,
+            NominationPartnerAllocation,
+        )
         from exchange.nomination_matching import serialize_partner_allocations
         from exchange.serializers import NominationPartnerAllocationSerializer
 
@@ -1099,9 +1110,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             profile = None
         program = serializer.validated_data.get("program")
         missing = (
-            profile.missing_apply_fields(program=program)
-            if profile
-            else ["profile"]
+            profile.missing_apply_fields(program=program) if profile else ["profile"]
         )
         if not profile or missing:
             raise ValidationError(
@@ -1568,11 +1577,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 
 def _user_is_catalog_admin(user) -> bool:
     return bool(
-        user
-        and (
-            user.is_staff
-            or (hasattr(user, "is_admin") and user.is_admin)
-        )
+        user and (user.is_staff or (hasattr(user, "is_admin") and user.is_admin))
     )
 
 
@@ -1650,9 +1655,7 @@ class HostInstitutionViewSet(viewsets.ModelViewSet):
         academic_id = request.query_params.get("academic_program") or None
         scope = request.query_params.get("scope") or ""
         include_inactive = _user_is_catalog_admin(request.user)
-        if scope == "all" or (
-            include_inactive and not school_id and not academic_id
-        ):
+        if scope == "all" or (include_inactive and not school_id and not academic_id):
             qs = HostSubject.objects.filter(institution=institution)
             if not include_inactive:
                 qs = qs.filter(is_active=True)
@@ -1738,9 +1741,7 @@ class HostAcademicProgramViewSet(viewsets.ModelViewSet):
     http_method_names = ["get", "post", "put", "patch", "delete", "head", "options"]
 
     def get_queryset(self):
-        qs = HostAcademicProgram.objects.select_related(
-            "school", "school__institution"
-        )
+        qs = HostAcademicProgram.objects.select_related("school", "school__institution")
         if _user_is_catalog_admin(self.request.user):
             return qs
         return qs.filter(is_active=True)

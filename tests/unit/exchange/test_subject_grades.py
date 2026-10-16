@@ -136,9 +136,7 @@ def _make_scales():
 @pytest.mark.django_db
 @pytest.mark.unit
 class TestHostSubjectVisibility:
-    def test_visibility_includes_institution_school_and_program_levels(
-        self, host_tree
-    ):
+    def test_visibility_includes_institution_school_and_program_levels(self, host_tree):
         inst = host_tree["institution"]
         school = host_tree["school"]
         academic = host_tree["academic"]
@@ -300,7 +298,9 @@ class TestSubjectGradeWorkflow:
         )
         assert propose.status_code == status.HTTP_200_OK
         selection.refresh_from_db()
-        assert selection.grade_status == ApplicationSubjectSelection.GradeStatus.PROPOSED
+        assert (
+            selection.grade_status == ApplicationSubjectSelection.GradeStatus.PROPOSED
+        )
 
         student_delete = student_api.delete(
             f"/api/application-subject-selections/{selection.id}/"
@@ -314,7 +314,9 @@ class TestSubjectGradeWorkflow:
         )
         assert confirm.status_code == status.HTTP_200_OK, confirm.data
         selection.refresh_from_db()
-        assert selection.grade_status == ApplicationSubjectSelection.GradeStatus.CONFIRMED
+        assert (
+            selection.grade_status == ApplicationSubjectSelection.GradeStatus.CONFIRMED
+        )
         assert selection.confirmed_host_grade_id == host_a.id
         assert selection.home_grade_id == home_a.id
 
@@ -337,7 +339,9 @@ class TestSubjectGradeWorkflow:
         )
         assert reject.status_code == status.HTTP_200_OK
         selection.refresh_from_db()
-        assert selection.grade_status == ApplicationSubjectSelection.GradeStatus.REJECTED
+        assert (
+            selection.grade_status == ApplicationSubjectSelection.GradeStatus.REJECTED
+        )
         assert selection.home_grade_id is None
 
     def test_student_cannot_confirm(self, student_client, host_tree):
