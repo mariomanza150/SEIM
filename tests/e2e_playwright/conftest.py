@@ -24,14 +24,11 @@ except ImportError:  # pragma: no cover
         "update_baseline": False,
     }
 
-VISUAL_REGRESSION_CONFIG["update_baseline"] = (
-    os.environ.get("UPDATE_BASELINE", "false").lower() == "true"
-    or VISUAL_REGRESSION_CONFIG.get("update_baseline", False)
-)
+VISUAL_REGRESSION_CONFIG["update_baseline"] = os.environ.get(
+    "UPDATE_BASELINE", "false"
+).lower() == "true" or VISUAL_REGRESSION_CONFIG.get("update_baseline", False)
 VISUAL_REGRESSION_CONFIG["threshold"] = float(
-    os.environ.get(
-        "VISUAL_THRESHOLD", VISUAL_REGRESSION_CONFIG.get("threshold", 0.1)
-    )
+    os.environ.get("VISUAL_THRESHOLD", VISUAL_REGRESSION_CONFIG.get("threshold", 0.1))
 )
 
 try:
@@ -126,24 +123,41 @@ def get_mobile_context_config(device=None):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def vue_e2e_seed_if_requested():
+def vue_e2e_seed_if_requested(request):
     """
     When RUN_SEED_VUE_E2E=1, run manage.py seed_vue_e2e once per session
     so Vue E2E tests have programs, draft application, document, and unread notifications.
     Reduces skips for tests that need this data.
     """
-    if os.environ.get("RUN_SEED_VUE_E2E") != "1":
+    flag = os.environ.get("RUN_SEED_VUE_E2E")
+    # Default on against the test settings (CI e2e job); opt out with RUN_SEED_VUE_E2E=0.
+    default_on = os.environ.get("DJANGO_SETTINGS_MODULE") == "seim.settings.test"
+    if flag == "0" or (flag != "1" and not default_on):
         return
     manage_py = _REPO_ROOT / "manage.py"
     if not manage_py.exists():
         return
-    subprocess.run(
-        [sys.executable, "manage.py", "seed_vue_e2e"],
-        cwd=str(_REPO_ROOT),
-        env={**os.environ},
-        capture_output=True,
-        timeout=120,
-    )
+    # Under xdist every worker runs this fixture; seed once per test run, with the
+    # other workers waiting on the lock so no test starts before the data exists.
+    import fcntl
+    import tempfile
+
+    workerinput = getattr(request.config, "workerinput", None) or {}
+    run_id = workerinput.get("testrunuid") or str(os.getpid())
+    lock_dir = Path(tempfile.gettempdir())
+    done_marker = lock_dir / f"seim-seed-vue-e2e-{run_id}.done"
+    with open(lock_dir / f"seim-seed-vue-e2e-{run_id}.lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        if done_marker.exists():
+            return
+        subprocess.run(
+            [sys.executable, "manage.py", "seed_vue_e2e"],
+            cwd=str(_REPO_ROOT),
+            env={**os.environ},
+            capture_output=True,
+            timeout=120,
+        )
+        done_marker.touch()
 
 
 @pytest.fixture(scope="session")
@@ -193,6 +207,17 @@ def browser_context_args() -> dict[str, Any]:
 # Note: base_url is provided by pytest-base-url plugin, configured via BASE_URL constant
 
 
+_TOURS_COMPLETED_INIT_SCRIPT = """
+(() => {
+  const getItem = Storage.prototype.getItem;
+  Storage.prototype.getItem = function (key) {
+    if (typeof key === "string" && key.startsWith("seim.tour.")) return "done";
+    return getItem.call(this, key);
+  };
+})();
+"""
+
+
 @pytest.fixture
 def context(browser: Browser, request) -> Generator[BrowserContext, None, None]:
     """Create a new browser context for each test."""
@@ -214,6 +239,9 @@ def context(browser: Browser, request) -> Generator[BrowserContext, None, None]:
             config["record_video_size"] = {"width": 1280, "height": 720}
 
     context = browser.new_context(**config)
+    # First-login product tours (Tier 3) overlay the shell and intercept clicks; E2E
+    # flows exercise the app itself, so treat every tour as already completed.
+    context.add_init_script(_TOURS_COMPLETED_INIT_SCRIPT)
     yield context
 
     # Video is automatically saved by Playwright when context closes

@@ -5,7 +5,12 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 
 from accounts.country_catalog import CGRI_COUNTRY_NAMES
-from accounts.models import AllowedEmailDomain, HomeAcademicProgram, SchoolFaculty, Unidad
+from accounts.models import (
+    AllowedEmailDomain,
+    HomeAcademicProgram,
+    SchoolFaculty,
+    Unidad,
+)
 from accounts.profile_catalogs import seed_profile_catalogs
 from accounts.uadec_catalog_data import UADEC_CATALOG
 from grades.models import GradeScale
@@ -24,9 +29,7 @@ class TestUadecCatalogSeeds:
         schools, programs, _banks = seed_profile_catalogs()
         expected_faculties = sum(len(specs) for specs in UADEC_CATALOG.values())
         expected_programs = sum(
-            len(spec["programs"])
-            for specs in UADEC_CATALOG.values()
-            for spec in specs
+            len(spec["programs"]) for specs in UADEC_CATALOG.values() for spec in specs
         )
         assert len(schools) == expected_faculties
         assert len(programs) == expected_programs

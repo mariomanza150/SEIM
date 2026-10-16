@@ -13,6 +13,7 @@ import time
 
 from playwright.sync_api import Page
 
+
 def api_base_url() -> str:
     """Django origin for JWT/API calls (not the Vue `/seim` mount)."""
     raw = (
@@ -57,7 +58,9 @@ def _request_json(page: Page, method: str, url: str, payload=None, headers=None)
     return getattr(page.context.request, method)(url, **kwargs)
 
 
-def _apply_tokens_and_open_dashboard(page: Page, vue_base_url: str, access: str, refresh: str) -> None:
+def _apply_tokens_and_open_dashboard(
+    page: Page, vue_base_url: str, access: str, refresh: str
+) -> None:
     from tests.e2e_playwright.utils.auth_helpers import VueAppNotAvailable
 
     page.goto(vue_base_url)
@@ -88,19 +91,16 @@ def _apply_tokens_and_open_dashboard(page: Page, vue_base_url: str, access: str,
 def login_vue_via_jwt(page: Page, vue_base_url: str, email: str, password: str) -> dict:
     """
     Login via JWT API and set tokens in localStorage, then load Vue app.
-    Reuses cached tokens when available to avoid API throttle.
+
+    Always mints a fresh pair: refresh tokens rotate/blacklist and other tests log
+    the same user out, so a cached pair can leave the SPA bounced back to login.
+    The fresh access token still refreshes the cache used by API-only helpers.
     """
     from tests.e2e_playwright.utils.auth_helpers import VueAppNotAvailable
 
     key = (email, password)
     now = time.time()
     origin = api_base_url()
-    if key in _JWT_CACHE:
-        access, refresh, expiry = _JWT_CACHE[key]
-        if now < expiry:
-            _apply_tokens_and_open_dashboard(page, vue_base_url, access, refresh)
-            return {"access": access, "refresh": refresh}
-
     response = _request_json(
         page,
         "post",
@@ -166,7 +166,12 @@ def _token_for(page: Page, email: str, password: str) -> str | None:
 
 def _first_id(payload) -> str | None:
     rows = payload.get("results", payload) if isinstance(payload, dict) else payload
-    if isinstance(rows, list) and rows and isinstance(rows[0], dict) and rows[0].get("id"):
+    if (
+        isinstance(rows, list)
+        and rows
+        and isinstance(rows[0], dict)
+        and rows[0].get("id")
+    ):
         return str(rows[0]["id"])
     if isinstance(payload, dict) and payload.get("id"):
         return str(payload["id"])
@@ -442,7 +447,9 @@ def ensure_unread_notification_via_api(page: Page, email: str, password: str) ->
     rows = payload.get("results", payload) if isinstance(payload, dict) else payload
     if not isinstance(rows, list) or not rows:
         return False
-    unread = next((n for n in rows if isinstance(n, dict) and not n.get("is_read")), None)
+    unread = next(
+        (n for n in rows if isinstance(n, dict) and not n.get("is_read")), None
+    )
     target = unread or (rows[0] if isinstance(rows[0], dict) else None)
     if not target or not target.get("id"):
         return False
@@ -460,7 +467,9 @@ def ensure_unread_notification_via_api(page: Page, email: str, password: str) ->
 
 def wait_for_program_select_options(page: Page, timeout: int = 20000) -> None:
     """Wait until the new-application program select has at least one real option."""
-    page.locator("[data-testid=program-select]").wait_for(state="visible", timeout=timeout)
+    page.locator("[data-testid=program-select]").wait_for(
+        state="visible", timeout=timeout
+    )
     clear_btn = page.get_by_role("button", name=re.compile(r"Clear filters", re.I))
     if clear_btn.count() > 0:
         clear_btn.first.click()

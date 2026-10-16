@@ -10,9 +10,9 @@ from documents.mobility_document_catalog import (
 from documents.models import DocumentType
 from exchange.mobility_schemes import (
     MOBILITY_SCHEME_HISPANA,
-    MOBILITY_SCHEME_INGLESa,
     MOBILITY_SCHEME_MAESTRIA,
     MOBILITY_SCHEME_SPECS,
+    MOBILITY_SCHEME_INGLESa,
     seed_mobility_schemes,
 )
 from exchange.models import Program, ProgramDocumentRequirement
@@ -42,7 +42,9 @@ class TestMobilitySeeds:
         inglesa = Program.objects.get(name=MOBILITY_SCHEME_INGLESa)
         assert inglesa.min_gpa == 3.4
         assert inglesa.min_toefl_score == 550
-        assert not Program.objects.filter(name="Movilidad Nacional", is_active=True).exists()
+        assert not Program.objects.filter(
+            name="Movilidad Nacional", is_active=True
+        ).exists()
 
         maestria = Program.objects.get(name=MOBILITY_SCHEME_MAESTRIA)
         assert maestria.min_semester == 1
@@ -57,7 +59,9 @@ class TestMobilitySeeds:
         assert DocumentType.objects.filter(slug="carta_homologacion").exists()
         assert DocumentType.objects.filter(slug="carta_retorno_programa").exists()
         postulacion = DocumentType.objects.get(slug="carta_postulacion")
-        assert postulacion.submission_mode == DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD
+        assert (
+            postulacion.submission_mode == DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD
+        )
         assert set(postulacion.file_type_families.values_list("slug", flat=True)) == {
             "pdf",
             "word",
@@ -68,13 +72,19 @@ class TestMobilitySeeds:
             "image",
         }
         reglamento = DocumentType.objects.get(slug="reglamento_movilidad")
-        assert reglamento.submission_mode == DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD
+        assert (
+            reglamento.submission_mode == DocumentType.SubmissionMode.TEMPLATE_DOWNLOAD
+        )
         inscription = DocumentType.objects.get(slug="inscripcion_uadec")
         assert inscription.name == "Inscripción UAdeC"
 
         assign_scheme_document_requirements()
         assign_scheme_document_requirements()
-        for name in (MOBILITY_SCHEME_HISPANA, MOBILITY_SCHEME_INGLESa, MOBILITY_SCHEME_MAESTRIA):
+        for name in (
+            MOBILITY_SCHEME_HISPANA,
+            MOBILITY_SCHEME_INGLESa,
+            MOBILITY_SCHEME_MAESTRIA,
+        ):
             program = Program.objects.get(name=name)
             assert ProgramDocumentRequirement.objects.filter(program=program).exists()
             assert ProgramDocumentRequirement.objects.filter(

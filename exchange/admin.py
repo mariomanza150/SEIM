@@ -669,7 +669,14 @@ class ProgramAdmin(admin.ModelAdmin):
 
 @admin.register(HostInstitution)
 class HostInstitutionAdmin(admin.ModelAdmin):
-    list_display = ("name", "program", "country", "grade_scale", "is_active", "created_at")
+    list_display = (
+        "name",
+        "program",
+        "country",
+        "grade_scale",
+        "is_active",
+        "created_at",
+    )
     list_filter = ("is_active", "program", "country")
     search_fields = ("name", "country", "program__name")
     list_editable = ("is_active",)

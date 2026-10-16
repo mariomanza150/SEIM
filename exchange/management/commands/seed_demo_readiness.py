@@ -155,14 +155,18 @@ class Command(BaseCommand):
 
             _invalidate_program_api_caches()
         except Exception as exc:  # pragma: no cover - cache backend optional
-            self.stdout.write(self.style.WARNING(f"  Program cache bust skipped: {exc}"))
+            self.stdout.write(
+                self.style.WARNING(f"  Program cache bust skipped: {exc}")
+            )
 
         self.stdout.write(self.style.SUCCESS("Demo-ready seed completed."))
         self.stdout.write("Manual QA fixtures:")
         self.stdout.write(f"  Closed window: {DEMO_CLOSED_WINDOW_PROGRAM}")
         self.stdout.write(f"  Submit gate draft: {DEMO_SUBMIT_GATE_PROGRAM}")
         self.stdout.write(f"  Open resubmit: {DEMO_RESUBMIT_PROGRAM}")
-        self.stdout.write(f"  Section 8 reserved (no student app): {DEMO_LIFECYCLE_PROGRAM}")
+        self.stdout.write(
+            f"  Section 8 reserved (no student app): {DEMO_LIFECYCLE_PROGRAM}"
+        )
         self.stdout.write("Demo credentials:")
         self.stdout.write("  Admin: admin@test.com / admin123")
         self.stdout.write("  Coordinator: coordinator@test.com / coordinator123")
@@ -648,9 +652,7 @@ class Command(BaseCommand):
         count = 0
         version_count = 0
         coordinator = users["coordinator"]
-        ects_a = GradeValue.objects.filter(
-            grade_scale__code="ECTS", label="A"
-        ).first()
+        ects_a = GradeValue.objects.filter(grade_scale__code="ECTS", label="A").first()
         us_a = GradeValue.objects.filter(
             grade_scale__code="US_GPA_4", label="A"
         ).first()
@@ -735,8 +737,7 @@ class Command(BaseCommand):
                         version_count += 1
 
         self.stdout.write(
-            f"  Ensured {count} host subject selections "
-            f"({version_count} plan versions)"
+            f"  Ensured {count} host subject selections ({version_count} plan versions)"
         )
 
     def _create_documents(self, applications, users):

@@ -263,7 +263,9 @@ class TestPartnerPortalAPI(APITestCase):
 
     @patch("documents.serializers.DocumentService.virus_scan", return_value=True)
     @patch("documents.serializers.DocumentService.validate_file_type_and_size")
-    def test_partner_cannot_upload_staff_only_category(self, _mock_validate, _mock_virus):
+    def test_partner_cannot_upload_staff_only_category(
+        self, _mock_validate, _mock_virus
+    ):
         from django.core.files.uploadedfile import SimpleUploadedFile
 
         PartnerContact.objects.create(user=self.partner, agreement=self.agreement)
@@ -271,9 +273,7 @@ class TestPartnerPortalAPI(APITestCase):
         url = reverse(
             "api:partner-agreement-documents", kwargs={"pk": self.agreement.pk}
         )
-        pdf = SimpleUploadedFile(
-            "mou.pdf", b"%PDF-1.4", content_type="application/pdf"
-        )
+        pdf = SimpleUploadedFile("mou.pdf", b"%PDF-1.4", content_type="application/pdf")
         resp = self.client.post(
             url,
             {"category": "mou", "file": pdf},

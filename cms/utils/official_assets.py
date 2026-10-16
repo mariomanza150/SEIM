@@ -5,13 +5,16 @@ from __future__ import annotations
 import json
 from io import BytesIO
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import requests
 import urllib3
 from django.conf import settings
 from django.core.files.images import ImageFile
 from PIL import Image as PILImage
-from wagtail.images.models import Image
+
+if TYPE_CHECKING:
+    from wagtail.images.models import Image
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -35,9 +38,7 @@ OFFICIAL_IMAGES = {
     "cgri-asesoria-consular.jpg": (
         f"{_UPLOADS_2022}/3ServiciosDeAsesori%CC%81aConsular.jpg"
     ),
-    "cgri-acreditaciones.jpg": (
-        f"{_UPLOADS_2022}/4AcreditacionesInternacionales.jpg"
-    ),
+    "cgri-acreditaciones.jpg": (f"{_UPLOADS_2022}/4AcreditacionesInternacionales.jpg"),
     "cgri-convenios.jpg": (
         f"{_UPLOADS_2022}/5ConveniosDeCooperacio%CC%81nInternacional.jpg"
     ),
@@ -50,8 +51,7 @@ HOMEPAGE_SLIDES = {
 }
 
 HOMEPAGE_SLIDE_ALT = {
-    f"homepage-slide-{i}.png": f"Vista del campus UAdeC {i}"
-    for i in range(1, 7)
+    f"homepage-slide-{i}.png": f"Vista del campus UAdeC {i}" for i in range(1, 7)
 }
 
 WAGTAIL_TITLES = {
@@ -257,7 +257,9 @@ def write_manifest(international_base_url: str = "/internacional/") -> Path:
     img_dir.mkdir(parents=True, exist_ok=True)
     manifest = build_manifest(international_base_url)
     dest = manifest_path()
-    dest.write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8")
+    dest.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     return dest
 
 
@@ -314,6 +316,9 @@ def download_all_cms_assets(timeout: int = 20) -> dict[str, Path]:
 
 def get_or_create_wagtail_image(filename: str, path: Path) -> Image:
     """Create or refresh a Wagtail image from a local official asset file."""
+    # Imported lazily so the manifest/context helpers work without Wagtail installed.
+    from wagtail.images.models import Image
+
     title = WAGTAIL_TITLES.get(filename, filename)
     existing = Image.objects.filter(title=title).first()
     with path.open("rb") as handle:

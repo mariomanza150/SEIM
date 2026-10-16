@@ -83,9 +83,7 @@ class Command(BaseCommand):
             call_command("create_application_page")
 
             if not options["skip_internacional"]:
-                self.stdout.write(
-                    "\n🌍 Setting up Internacional (CGRI & Movilidad)..."
-                )
+                self.stdout.write("\n🌍 Setting up Internacional (CGRI & Movilidad)...")
                 if options["replace_internacional"]:
                     call_command("setup_internacional", replace=True)
                 else:

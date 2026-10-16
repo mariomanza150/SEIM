@@ -48,7 +48,9 @@ class TestInstitutionFeaturesAPI(APITestCase):
 
     def test_application_detail_omits_scholarship_fields_when_disabled(self):
         InstitutionFeatureSettings.get_solo()
-        InstitutionFeatureSettings.objects.filter(pk=1).update(scholarships_enabled=False)
+        InstitutionFeatureSettings.objects.filter(pk=1).update(
+            scholarships_enabled=False
+        )
 
         student = self.create_user(role="student")
         app = self.create_application(student=student, status_name="submitted")
@@ -61,7 +63,9 @@ class TestInstitutionFeaturesAPI(APITestCase):
 
     def test_scholarship_endpoints_404_when_disabled(self):
         InstitutionFeatureSettings.get_solo()
-        InstitutionFeatureSettings.objects.filter(pk=1).update(scholarships_enabled=False)
+        InstitutionFeatureSettings.objects.filter(pk=1).update(
+            scholarships_enabled=False
+        )
 
         coordinator = self.create_user(role="coordinator")
         program = self.create_program()

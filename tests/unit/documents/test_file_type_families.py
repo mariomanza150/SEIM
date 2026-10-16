@@ -36,7 +36,9 @@ class TestFileTypeFamilies(TestCase):
     def test_parsed_accepted_extensions_expands_families(self):
         seed_file_type_families()
         dt = DocumentType.objects.create(name="ID scan", accepted_extensions="svg")
-        dt.file_type_families.set(FileTypeFamily.objects.filter(slug__in=["pdf", "image"]))
+        dt.file_type_families.set(
+            FileTypeFamily.objects.filter(slug__in=["pdf", "image"])
+        )
         exts = dt.parsed_accepted_extensions()
         self.assertIn("pdf", exts)
         self.assertIn("jpg", exts)
@@ -87,5 +89,7 @@ class TestFileTypeFamilies(TestCase):
         )
         self.assertEqual(patch_res.status_code, status.HTTP_200_OK, patch_res.data)
         dt.refresh_from_db()
-        self.assertEqual(list(dt.file_type_families.values_list("slug", flat=True)), ["image"])
+        self.assertEqual(
+            list(dt.file_type_families.values_list("slug", flat=True)), ["image"]
+        )
         self.assertEqual(patch_res.data["file_type_family_ids"], [image.id])

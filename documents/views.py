@@ -92,9 +92,11 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
     lookup_field = "pk"
 
     def get_queryset(self):
-        qs = DocumentType.objects.all().annotate(
-            requirement_count=Count("program_requirements")
-        ).prefetch_related("file_type_families")
+        qs = (
+            DocumentType.objects.all()
+            .annotate(requirement_count=Count("program_requirements"))
+            .prefetch_related("file_type_families")
+        )
         if self.action == "retrieve":
             return qs.prefetch_related("program_requirements__program")
         return qs
@@ -206,13 +208,10 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
                 )
             raw = sample_path.read_bytes()
 
-        filename = (
-            official_template_download_name(doc_type.slug)
-            or (
-                os.path.basename(doc_type.template_file.name)
-                if doc_type.template_file
-                else "template.docx"
-            )
+        filename = official_template_download_name(doc_type.slug) or (
+            os.path.basename(doc_type.template_file.name)
+            if doc_type.template_file
+            else "template.docx"
         )
         application_id = request.query_params.get("application")
         if application_id and is_docx_filename(filename):
@@ -286,7 +285,9 @@ def _document_retrieve_cache_key(*args, **kwargs):
 
 
 def _document_validation_list_cache_key(*args, **kwargs):
-    return _document_user_path_cache_key("DocumentValidationViewSet.list", *args, **kwargs)
+    return _document_user_path_cache_key(
+        "DocumentValidationViewSet.list", *args, **kwargs
+    )
 
 
 def _document_validation_retrieve_cache_key(*args, **kwargs):
@@ -386,9 +387,13 @@ class DocumentViewSet(viewsets.ModelViewSet):
         )
 
         # Coordinators and admins can see all documents
-        if user.is_staff or user.is_superuser or (
-            hasattr(user, "has_role")
-            and (user.has_role("coordinator") or user.has_role("admin"))
+        if (
+            user.is_staff
+            or user.is_superuser
+            or (
+                hasattr(user, "has_role")
+                and (user.has_role("coordinator") or user.has_role("admin"))
+            )
         ):
             qs = Document.objects.select_related(
                 "application",

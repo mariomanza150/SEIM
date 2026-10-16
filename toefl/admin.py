@@ -15,7 +15,12 @@ class PracticeAttemptAdmin(admin.ModelAdmin):
         "completed_at",
     )
     list_filter = ("exam_code",)
-    search_fields = ("external_session_id", "client_ref", "user__email", "user__username")
+    search_fields = (
+        "external_session_id",
+        "client_ref",
+        "user__email",
+        "user__username",
+    )
     readonly_fields = (
         "id",
         "created_at",

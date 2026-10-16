@@ -92,7 +92,9 @@ class TestAuthenticationWorkflows:
             pytest.skip(
                 "Vue app not available at base_url. Run with BASE_URL=http://localhost:5173"
             )
-        auth_page.login("nonexistent@example.com", "wrong_password", expect_success=False)
+        auth_page.login(
+            "nonexistent@example.com", "wrong_password", expect_success=False
+        )
         # Should show error and stay on login page
         assert "login" in page.url
 

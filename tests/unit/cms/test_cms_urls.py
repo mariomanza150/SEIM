@@ -12,7 +12,5 @@ def test_localhost_url_to_path_strips_host_and_port():
 
 def test_localhost_url_to_path_leaves_other_urls_alone():
     assert localhost_url_to_path("/programas/") == "/programas/"
-    assert (
-        localhost_url_to_path("https://www.uadec.mx/") == "https://www.uadec.mx/"
-    )
+    assert localhost_url_to_path("https://www.uadec.mx/") == "https://www.uadec.mx/"
     assert localhost_url_to_path("") == ""

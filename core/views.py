@@ -13,15 +13,15 @@ from django.shortcuts import redirect, render
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from application_forms.models import FormType
 from core.branding import brand_from_settings
 from core.models import InstitutionFeatureSettings
 from core.permissions import IsAdminRole
 from core.serializers import InstitutionFeatureSettingsSerializer
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
 
 logger = logging.getLogger(__name__)
 

@@ -4,7 +4,11 @@ from django.test import TestCase
 from accounts.models import AllowedEmailDomain, User
 from application_forms.models import FormType
 from data_management.models import DataOperationLog, DemoDataSet
-from documents.models import Document, DocumentResubmissionRequest, ExchangeAgreementDocument
+from documents.models import (
+    Document,
+    DocumentResubmissionRequest,
+    ExchangeAgreementDocument,
+)
 from exchange.demo_seed import (
     DEMO_AGREEMENT_SPECS,
     DEMO_APPLICATION_SPECS,

@@ -65,6 +65,11 @@ def _run_automatic_tasks(workflow: BpmnWorkflow) -> None:
         task = workflow.get_next_task(state=TaskState.READY, manual=False)
 
 
+def _task_action_name(task_spec) -> str:
+    """Action name for a task: BPMN ``name`` attribute when set, else the spec id."""
+    return str(getattr(task_spec, "bpmn_name", None) or task_spec.name or "")
+
+
 def _ready_manual_tasks(workflow: BpmnWorkflow) -> list[dict]:
     out = []
     for t in workflow.get_tasks(state=TaskState.READY):
@@ -73,7 +78,7 @@ def _ready_manual_tasks(workflow: BpmnWorkflow) -> list[dict]:
             out.append(
                 {
                     "id": str(t.id),
-                    "name": t.task_spec.name or "",
+                    "name": _task_action_name(t.task_spec),
                     "spec_id": t.task_spec.name,
                 }
             )
@@ -260,18 +265,28 @@ class WorkflowRuntimeService:
 
         target = None
         for t in ready:
-            if str(t.id) == action or str(t.task_spec.name) == action:
+            if action in (
+                str(t.id),
+                str(t.task_spec.name),
+                _task_action_name(t.task_spec),
+            ):
                 target = t
                 break
 
         if target is None:
             available = [
-                {"id": str(t.id), "name": t.task_spec.name, "spec_id": t.task_spec.name}
+                {
+                    "id": str(t.id),
+                    "name": _task_action_name(t.task_spec),
+                    "spec_id": t.task_spec.name,
+                }
                 for t in ready
             ]
             raise ValueError(f"Action not available: {action}. Available: {available}")
 
-        if _is_stale_early_pipeline_action(application, target.task_spec.name):
+        if _is_stale_early_pipeline_action(
+            application, _task_action_name(target.task_spec)
+        ):
             raise ValueError(
                 f"Action not available: {action}. Application is already "
                 f"{_application_status_name(application)}."
@@ -282,9 +297,8 @@ class WorkflowRuntimeService:
             student_submit_field_errors,
         )
 
-        if (
-            str(target.task_spec.name or "") == "submitted"
-            and is_student_only_actor(user)
+        if _task_action_name(target.task_spec) == "submitted" and is_student_only_actor(
+            user
         ):
             field_errors = student_submit_field_errors(application)
             if field_errors:

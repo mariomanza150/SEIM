@@ -34,7 +34,9 @@ class Command(BaseCommand):
                 home.hero_image = hero_image
             self.stdout.write(self.style.SUCCESS("  ✓ Official assets downloaded"))
         except Exception as exc:
-            self.stdout.write(self.style.WARNING(f"  ⚠ Could not attach hero image: {exc}"))
+            self.stdout.write(
+                self.style.WARNING(f"  ⚠ Could not attach hero image: {exc}")
+            )
             self.stdout.write(
                 self.style.WARNING("  Run: python manage.py sync_uadec_cms_assets")
             )
@@ -280,7 +282,9 @@ class Command(BaseCommand):
             home.save_revision().publish()
         except Exception as exc:
             self.stdout.write(
-                self.style.WARNING(f"  ⚠ Full homepage save failed ({exc}); retrying without video")
+                self.style.WARNING(
+                    f"  ⚠ Full homepage save failed ({exc}); retrying without video"
+                )
             )
             enhanced_content = [
                 block for block in enhanced_content if block.get("type") != "video"

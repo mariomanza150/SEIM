@@ -189,7 +189,9 @@ def parse_ruleset_overrides_from_snapshot(
     return parse_overrides_dict(raw.get("program_overrides") or {})
 
 
-def ruleset_meta_from_snapshot(snapshot: dict[str, Any] | None) -> dict[str, Any] | None:
+def ruleset_meta_from_snapshot(
+    snapshot: dict[str, Any] | None,
+) -> dict[str, Any] | None:
     """Public meta subset for API responses (no full rules_json dump required)."""
     if not isinstance(snapshot, dict):
         return None

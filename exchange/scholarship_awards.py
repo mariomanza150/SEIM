@@ -266,7 +266,9 @@ def transition_award(
     return award
 
 
-def upsert_disbursement(award: ScholarshipAward, payload: dict, disbursement=None, actor=None):
+def upsert_disbursement(
+    award: ScholarshipAward, payload: dict, disbursement=None, actor=None
+):
     if disbursement is None:
         disbursement = ScholarshipDisbursement(award=award)
     if "label" in payload or disbursement.pk is None:
@@ -370,7 +372,13 @@ def render_awards_pdf(headers, rows, *, program_name="") -> bytes:
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import landscape, letter
     from reportlab.lib.styles import getSampleStyleSheet
-    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+    from reportlab.platypus import (
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
+    )
 
     pdf_headers = headers[:-1]
     pdf_rows = [r[:-1] for r in rows]
@@ -391,7 +399,11 @@ def render_awards_pdf(headers, rows, *, program_name="") -> bytes:
     if program_name:
         title += f" — {program_name}"
     story.append(Paragraph(title, styles["Title"]))
-    story.append(Paragraph("Notes column omitted; use CSV or Excel for full text.", styles["Normal"]))
+    story.append(
+        Paragraph(
+            "Notes column omitted; use CSV or Excel for full text.", styles["Normal"]
+        )
+    )
     story.append(Spacer(1, 8))
     tw = page[0] - 56
     nc = max(len(pdf_headers), 1)
@@ -406,7 +418,12 @@ def render_awards_pdf(headers, rows, *, program_name="") -> bytes:
                 ("FONTSIZE", (0, 0), (-1, -1), 8),
                 ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8f9fa")]),
+                (
+                    "ROWBACKGROUNDS",
+                    (0, 1),
+                    (-1, -1),
+                    [colors.white, colors.HexColor("#f8f9fa")],
+                ),
             ]
         )
     )
@@ -441,4 +458,6 @@ def awards_export_response(program_id, queryset, program_name="", export_format=
         response = HttpResponse(body, content_type="application/pdf")
         response["Content-Disposition"] = f'attachment; filename="{base}.pdf"'
         return response
-    raise ValueError(f"Unsupported export_format: {export_format!r} (use csv, xlsx, or pdf).")
+    raise ValueError(
+        f"Unsupported export_format: {export_format!r} (use csv, xlsx, or pdf)."
+    )

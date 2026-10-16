@@ -59,7 +59,9 @@ class TestEligibilityRulesetSnapshot(TestCase):
             snap["rules_json"]["program_overrides"]["required_language"], "English"
         )
         # Mutating live ruleset must not alter the frozen copy.
-        self.ruleset.rules_json = {"program_overrides": {"required_language": "Klingon"}}
+        self.ruleset.rules_json = {
+            "program_overrides": {"required_language": "Klingon"}
+        }
         self.assertEqual(
             snap["rules_json"]["program_overrides"]["required_language"], "English"
         )
@@ -71,9 +73,7 @@ class TestEligibilityRulesetSnapshot(TestCase):
         self.assertIsNotNone(snap)
         self.assertEqual(snap["id"], str(self.ruleset.id))
         self.assertEqual(snap["content_revision"], 1)
-        self.assertEqual(
-            snap["rules_json"]["program_overrides"]["min_gpa"], 3.0
-        )
+        self.assertEqual(snap["rules_json"]["program_overrides"]["min_gpa"], 3.0)
 
     def test_frozen_snapshot_survives_live_ruleset_edit(self):
         ApplicationService.capture_eligibility_snapshot(self.app)

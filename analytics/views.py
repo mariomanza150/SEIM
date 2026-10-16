@@ -411,7 +411,7 @@ class AdminDashboardViewSet(viewsets.ViewSet):
                 "rejected",
                 "withdrawn",
             ]
-            application_status = {name: 0 for name in status_names}
+            application_status = dict.fromkeys(status_names, 0)
             for row in (
                 Application.objects.filter(status__name__in=status_names)
                 .values("status__name")

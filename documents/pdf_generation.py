@@ -9,8 +9,8 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
-from reportlab.platypus import HRFlowable, Image as RLImage
 from reportlab.platypus import (
+    HRFlowable,
     PageBreak,
     Paragraph,
     SimpleDocTemplate,
@@ -18,6 +18,7 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
+from reportlab.platypus import Image as RLImage
 
 
 def _safe_getattr(obj, attr: str, default: str = "—"):
@@ -310,7 +311,9 @@ def render_solicitud_participacion_pdf(application) -> bytes:
     jan_jun, aug_dec, year = _mobility_period_flags(program)
     bilateral, conahec, indep, other_prog = _mobility_program_flags(program)
 
-    def _field_row(label: str, value: str, width_label=1.35 * inch, width_value=5.7 * inch):
+    def _field_row(
+        label: str, value: str, width_label=1.35 * inch, width_value=5.7 * inch
+    ):
         row = Table(
             [_line_field(label, value, body, field_label)],
             colWidths=[width_label, width_value],
@@ -449,7 +452,12 @@ def render_solicitud_participacion_pdf(application) -> bytes:
         [_field_row("Nacionalidad:", "")],
         [sexo_line],
         [_field_row("Fecha de nacimiento:", dob)],
-        [_field_row("Lugar de nacimiento:", _blank(getattr(profile, "birthplace", "") if profile else ""))],
+        [
+            _field_row(
+                "Lugar de nacimiento:",
+                _blank(getattr(profile, "birthplace", "") if profile else ""),
+            )
+        ],
         [
             _two_col_fields(
                 "Nº Pasaporte:",
@@ -480,7 +488,12 @@ def render_solicitud_participacion_pdf(application) -> bytes:
                 _blank(getattr(profile, "mobile_phone", "") if profile else ""),
             )
         ],
-        [_field_row("Código postal:", _blank(getattr(profile, "postal_code", "") if profile else ""))],
+        [
+            _field_row(
+                "Código postal:",
+                _blank(getattr(profile, "postal_code", "") if profile else ""),
+            )
+        ],
         [Spacer(1, 6)],
         [
             Paragraph(
@@ -537,8 +550,12 @@ def render_solicitud_participacion_pdf(application) -> bytes:
     home_unidad = ""
     home_carrera = ""
     if profile:
-        home_school = _blank(_safe_getattr(getattr(profile, "school", None), "name", ""))
-        home_unidad = _blank(_safe_getattr(getattr(profile, "unidad", None), "name", ""))
+        home_school = _blank(
+            _safe_getattr(getattr(profile, "school", None), "name", "")
+        )
+        home_unidad = _blank(
+            _safe_getattr(getattr(profile, "unidad", None), "name", "")
+        )
         home_carrera = _blank(
             _safe_getattr(getattr(profile, "home_academic_program", None), "name", "")
         )
@@ -1004,7 +1021,11 @@ def render_carta_homologacion_pdf(application) -> bytes:
         2.0 * inch,
         0.7 * inch,
     ]
-    subjects = Table(subject_rows, colWidths=col_widths, rowHeights=[22] + [28] * (len(subject_rows) - 1))
+    subjects = Table(
+        subject_rows,
+        colWidths=col_widths,
+        rowHeights=[22] + [28] * (len(subject_rows) - 1),
+    )
     subjects.setStyle(
         TableStyle(
             [
@@ -1044,8 +1065,7 @@ def render_carta_homologacion_pdf(application) -> bytes:
         ),
     ]
     signatures = [
-        [Paragraph(label, sig_label), Paragraph("", cell)]
-        for label in sig_entries
+        [Paragraph(label, sig_label), Paragraph("", cell)] for label in sig_entries
     ]
     sig_table = Table(signatures, colWidths=[3.5 * inch, 3.8 * inch])
     sig_table.setStyle(

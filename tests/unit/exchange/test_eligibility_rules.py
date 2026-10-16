@@ -54,6 +54,7 @@ class TestEligibilityRulesEngine:
             "gpa",
             "required_language",
             "language_proficiency",
+            "toefl",
             "age",
         ]
         win = next(r for r in ev.rules if r.rule_id == "application_window")
