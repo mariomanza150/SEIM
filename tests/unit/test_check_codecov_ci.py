@@ -30,6 +30,29 @@ class CheckCodecovCiTests(SimpleTestCase):
         with mock.patch.dict(os.environ, env, clear=False):
             self.assertEqual(self.mod.main(["--coverage-file", "missing.xml"]), 1)
 
+    def test_ci_missing_token_is_optional_when_coverage_present(self):
+        with TemporaryDirectory() as raw:
+            report = Path(raw) / "coverage.xml"
+            report.write_text("<coverage/>")
+            env = {
+                "GITHUB_ACTIONS": "true",
+                "CODECOV_TOKEN": "",
+                "CODECOV_SKIP_FORK": "",
+            }
+            with mock.patch.dict(os.environ, env, clear=False):
+                os.environ.pop("CODECOV_REQUIRE_TOKEN", None)
+                self.assertEqual(self.mod.main(["--coverage-file", str(report)]), 0)
+
+    def test_ci_missing_token_fails_when_required(self):
+        env = {
+            "GITHUB_ACTIONS": "true",
+            "CODECOV_TOKEN": "",
+            "CODECOV_SKIP_FORK": "",
+            "CODECOV_REQUIRE_TOKEN": "1",
+        }
+        with mock.patch.dict(os.environ, env, clear=False):
+            self.assertEqual(self.mod.main([]), 1)
+
     def test_ci_with_token_and_coverage_passes(self):
         with TemporaryDirectory() as raw:
             report = Path(raw) / "coverage.xml"
