@@ -52,7 +52,8 @@ function Get-LocalProdTunnelToken {
 
 Set-Location $ProjectRoot
 $token = Get-LocalProdTunnelToken
-$tunnelProfile = if (-not [string]::IsNullOrWhiteSpace($token)) { "cloudflare" } else { "cloudflare-quick" }
+if ([string]::IsNullOrWhiteSpace($token)) { throw "CLOUDFLARE_TUNNEL_TOKEN is not set in .env.local-prod (quick tunnel was removed)" }
+$tunnelProfile = "cloudflare"
 Write-Step "Starting seim-localprod stack (profile: $tunnelProfile)"
 docker compose -p $ProjectName -f $ComposeFile --env-file $EnvFile --profile $tunnelProfile up -d --remove-orphans
 if ($LASTEXITCODE -ne 0) {
