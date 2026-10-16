@@ -50,7 +50,7 @@ jobs:
       - name: Sync repo and deploy
         shell: powershell
         env:
-          SEIM_REPO: C:\Users\OEM\Documents\APPLICACION\SEIM
+          SEIM_REPO: C:\Users\mario\Documents\MARIO\SEIM
           DEPLOY_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
         run: |
           docker version

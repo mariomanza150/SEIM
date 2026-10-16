@@ -45,7 +45,7 @@ if (-not $SkipPull) {
 }
 
 if (-not $SkipBuild) {
-    Write-Step "Building production images (web, celery, celery-beat)"
+    Write-Step "Building production images (web, celery, celery-beat, toefl)"
     $buildArgs = @(
         "compose", "-p", $ProjectName,
         "-f", $ComposeFile,
@@ -55,13 +55,22 @@ if (-not $SkipBuild) {
     if ($NoCache) {
         $buildArgs += "--no-cache"
     }
-    $buildArgs += @("web", "celery", "celery-beat")
+    # Build toefl too so its tag always matches the deployed commit and `up` recreates it.
+    $buildArgs += @("web", "celery", "celery-beat", "toefl")
     & docker @buildArgs
     if ($LASTEXITCODE -ne 0) { throw "docker compose build failed (exit $LASTEXITCODE)" }
 }
 
-Write-Step "Starting / updating stack"
-& docker compose -p $ProjectName -f $ComposeFile --env-file $EnvFile up -d --remove-orphans
+# Include the named-tunnel profile when a token is configured; otherwise
+# --remove-orphans would tear down the running cloudflared container.
+$profileArgs = @()
+$tokenLine = Select-String -Path $EnvFile -Pattern '^\s*CLOUDFLARE_TUNNEL_TOKEN\s*=\s*\S+' -ErrorAction SilentlyContinue
+if ($tokenLine) {
+    $profileArgs = @("--profile", "cloudflare")
+}
+
+Write-Step "Starting / updating stack $($profileArgs -join ' ')"
+& docker compose -p $ProjectName -f $ComposeFile --env-file $EnvFile @profileArgs up -d --remove-orphans
 if ($LASTEXITCODE -ne 0) { throw "docker compose up failed (exit $LASTEXITCODE)" }
 
 Write-Step "Waiting for health check ($HealthUrl)"
