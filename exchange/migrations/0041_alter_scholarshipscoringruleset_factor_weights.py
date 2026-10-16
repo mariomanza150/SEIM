@@ -6,15 +6,16 @@ import exchange.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('exchange', '0040_exchangeagreement_conahec_type'),
+        ("exchange", "0040_exchangeagreement_conahec_type"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='scholarshipscoringruleset',
-            name='factor_weights',
-            field=models.JSONField(default=exchange.models.default_scholarship_factor_weights),
+            model_name="scholarshipscoringruleset",
+            name="factor_weights",
+            field=models.JSONField(
+                default=exchange.models.default_scholarship_factor_weights
+            ),
         ),
     ]

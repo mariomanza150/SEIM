@@ -4,15 +4,14 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('toefl', '0001_initial'),
+        ("toefl", "0001_initial"),
     ]
 
     operations = [
         migrations.RenameIndex(
-            model_name='practiceattempt',
-            new_name='toefl_pract_user_id_4b3cbf_idx',
-            old_name='toefl_pract_user_id_c8a0f0_idx',
+            model_name="practiceattempt",
+            new_name="toefl_pract_user_id_4b3cbf_idx",
+            old_name="toefl_pract_user_id_c8a0f0_idx",
         ),
     ]

@@ -6,20 +6,27 @@ import cms.help
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('cms', '0006_faqpage_help_center_fields'),
+        ("cms", "0006_faqpage_help_center_fields"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='faqpage',
-            name='audiences',
-            field=models.JSONField(blank=True, default=cms.help.default_faq_audiences, help_text='Who may see this article in the SPA help hub.'),
+            model_name="faqpage",
+            name="audiences",
+            field=models.JSONField(
+                blank=True,
+                default=cms.help.default_faq_audiences,
+                help_text="Who may see this article in the SPA help hub.",
+            ),
         ),
         migrations.AlterField(
-            model_name='faqpage',
-            name='surfaces',
-            field=models.JSONField(blank=True, default=cms.help.default_faq_surfaces, help_text='Where this article is published (public site and/or SPA).'),
+            model_name="faqpage",
+            name="surfaces",
+            field=models.JSONField(
+                blank=True,
+                default=cms.help.default_faq_surfaces,
+                help_text="Where this article is published (public site and/or SPA).",
+            ),
         ),
     ]
