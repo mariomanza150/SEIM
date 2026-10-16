@@ -10,9 +10,7 @@ SEAT_HOLDING_APPLICATION_STATUS_NAMES = frozenset(
 )
 
 # Application statuses in which students may propose host course grades.
-SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES = frozenset(
-    {"approved", "nominated", "completed"}
-)
+SUBJECT_GRADE_ELIGIBLE_STATUS_NAMES = frozenset({"approved", "nominated", "completed"})
 
 # Historic subject-plan snapshots kept per application (not counting the live set).
 MAX_SUBJECT_PLAN_VERSIONS = 3
@@ -528,7 +526,10 @@ class HostSubject(UUIDModel, TimeStampedModel):
                 errors["academic_program"] = _(
                     "Host academic program must belong to the selected host school."
                 )
-            if self.institution_id and academic.school.institution_id != self.institution_id:
+            if (
+                self.institution_id
+                and academic.school.institution_id != self.institution_id
+            ):
                 errors["academic_program"] = _(
                     "Host academic program must belong to the selected host institution."
                 )
@@ -940,7 +941,9 @@ class Application(UUIDModel, TimeStampedModel):
         null=True,
         blank=True,
         related_name="applications",
-        help_text=_("Nomination cycle that produced the current nominated/waitlist status."),
+        help_text=_(
+            "Nomination cycle that produced the current nominated/waitlist status."
+        ),
     )
     partner_nomination_acknowledged_at = models.DateTimeField(
         null=True,
@@ -1035,7 +1038,9 @@ class ApplicationSubjectSelection(UUIDModel, TimeStampedModel):
         related_name="application_selections",
         null=True,
         blank=True,
-        help_text=_("Catalog host subject. Mutually exclusive with custom course fields."),
+        help_text=_(
+            "Catalog host subject. Mutually exclusive with custom course fields."
+        ),
     )
     custom_code = models.CharField(
         max_length=64,
@@ -1143,10 +1148,7 @@ class ApplicationSubjectSelection(UUIDModel, TimeStampedModel):
                         & models.Q(custom_code="")
                         & models.Q(custom_credits__isnull=True)
                     )
-                    | (
-                        models.Q(host_subject__isnull=True)
-                        & ~models.Q(custom_name="")
-                    )
+                    | (models.Q(host_subject__isnull=True) & ~models.Q(custom_name=""))
                 ),
                 name="application_subject_catalog_xor_custom",
             ),
@@ -1182,9 +1184,7 @@ class ApplicationSubjectSelection(UUIDModel, TimeStampedModel):
         has_catalog = bool(self.host_subject_id)
         custom_name = (self.custom_name or "").strip()
         custom_code = (self.custom_code or "").strip()
-        has_custom = bool(
-            custom_name or custom_code or self.custom_credits is not None
-        )
+        has_custom = bool(custom_name or custom_code or self.custom_credits is not None)
 
         if has_catalog and has_custom:
             errors["host_subject"] = _(
@@ -1262,9 +1262,7 @@ class ApplicationSubjectPlanVersion(UUIDModel, TimeStampedModel):
     )
     payload = models.JSONField(
         default=list,
-        help_text=_(
-            "JSON list of subject-selection dicts captured at snapshot time."
-        ),
+        help_text=_("JSON list of subject-selection dicts captured at snapshot time."),
     )
 
     class Meta:
@@ -1458,9 +1456,9 @@ def visible_host_subjects_queryset(
     qs = HostSubject.objects.filter(q)
     if not include_inactive:
         qs = qs.filter(is_active=True)
-    return qs.select_related(
-        "institution", "school", "academic_program"
-    ).order_by("name", "code")
+    return qs.select_related("institution", "school", "academic_program").order_by(
+        "name", "code"
+    )
 
 
 class ApplicationStatus(models.Model):

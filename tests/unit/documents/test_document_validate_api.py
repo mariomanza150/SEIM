@@ -13,7 +13,9 @@ from tests.utils import TestUtils
 class TestDocumentValidateApi(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.student = TestUtils.create_test_user(username="val_student", role="student")
+        self.student = TestUtils.create_test_user(
+            username="val_student", role="student"
+        )
         self.admin = TestUtils.create_test_user(username="val_admin", role="admin")
         self.coordinator = TestUtils.create_test_user(
             username="val_coord", role="coordinator"
@@ -24,7 +26,9 @@ class TestDocumentValidateApi(TestCase):
             application=self.application,
             type=self.doc_type,
             uploaded_by=self.student,
-            file=SimpleUploadedFile("t.pdf", b"%PDF-1.4", content_type="application/pdf"),
+            file=SimpleUploadedFile(
+                "t.pdf", b"%PDF-1.4", content_type="application/pdf"
+            ),
         )
 
     def _url(self):

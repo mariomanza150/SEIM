@@ -455,9 +455,7 @@ def _rule_required_documents(
     missing = missing_submit_documents(application)
     if not missing:
         return RuleOutcome("required_documents", passed=True)
-    problems = [
-        f"{item.name} ({item.status or 'missing'})" for item in missing
-    ]
+    problems = [f"{item.name} ({item.status or 'missing'})" for item in missing]
     return RuleOutcome(
         "required_documents",
         passed=False,

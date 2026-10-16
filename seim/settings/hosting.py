@@ -30,7 +30,9 @@ def merge_unique(existing: list[str], extra: list[str] | tuple[str, ...]) -> lis
     return merged
 
 
-def allowed_hosts_with_tailscale(hosts: list[str], *, allow_any: bool = False) -> list[str]:
+def allowed_hosts_with_tailscale(
+    hosts: list[str], *, allow_any: bool = False
+) -> list[str]:
     if allow_any:
         return ["*"]
     return merge_unique(hosts, [TAILSCALE_HOST_SUFFIX, *CLOUDFLARE_HOST_SUFFIXES])

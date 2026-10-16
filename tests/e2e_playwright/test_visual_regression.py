@@ -69,8 +69,14 @@ class TestVisualRegression:
             ],
         )
         mask_elements(page, [".user-specific-data"])
-        stabilize_dynamic_region(page, "[data-testid=dashboard-stats], .dashboard .row.mb-4", height_px=180)
-        stabilize_dynamic_region(page, "[data-testid=dashboard-next-steps], .dashboard > .card", height_px=280)
+        stabilize_dynamic_region(
+            page, "[data-testid=dashboard-stats], .dashboard .row.mb-4", height_px=180
+        )
+        stabilize_dynamic_region(
+            page,
+            "[data-testid=dashboard-next-steps], .dashboard > .card",
+            height_px=280,
+        )
 
         assert assert_visual_match("dashboard_student")
 

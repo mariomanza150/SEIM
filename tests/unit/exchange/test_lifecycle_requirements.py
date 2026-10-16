@@ -53,10 +53,14 @@ class TestSubmitDocumentGate:
     def _app(self, status_name="draft"):
         student = TestUtils.create_test_user(role="student")
         program = TestUtils.create_test_program()
-        st = _status(status_name)
-        return TestUtils.create_test_application(
-            student=student, program=program, status_name=status_name
-        ), program, student
+        _status(status_name)
+        return (
+            TestUtils.create_test_application(
+                student=student, program=program, status_name=status_name
+            ),
+            program,
+            student,
+        )
 
     def test_required_from_approved_does_not_fail_submit_rule(self):
         app, program, student = self._app()
@@ -149,9 +153,7 @@ class TestStudentProfileDueFields:
         student = TestUtils.create_test_user(role="student")
         program = TestUtils.create_test_program()
         approved = _status("approved", 4)
-        Application.objects.create(
-            student=student, program=program, status=approved
-        )
+        Application.objects.create(student=student, program=program, status=approved)
         ProgramFieldRequirement.objects.create(
             program=program,
             source="profile",
@@ -246,9 +248,7 @@ class TestDueNowReminder:
             format="json",
         )
         assert response.status_code == status.HTTP_200_OK, response.data
-        due = Notification.objects.filter(
-            recipient=student, title="Requirements due"
-        )
+        due = Notification.objects.filter(recipient=student, title="Requirements due")
         assert due.count() == 1
         assert "Santander cover" in due.get().message
 

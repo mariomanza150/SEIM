@@ -9,9 +9,7 @@ class DocumentsPage(BasePage):
     """Page object for documents page."""
 
     # Page elements
-    DOCUMENTS_CONTAINER = (
-        '[data-testid="documents-page"], [data-testid="documents-list"], .documents-container, .documents-page'
-    )
+    DOCUMENTS_CONTAINER = '[data-testid="documents-page"], [data-testid="documents-list"], .documents-container, .documents-page'
     DOCUMENT_CARD = '.document-card, [data-testid^="document-"]'
     DOCUMENT_NAME = ".document-name"
     DOCUMENT_STATUS = ".document-status, .badge-status"

@@ -5,8 +5,8 @@ This includes ApplicationStatus, DocumentType, NotificationType, and Roles.
 
 from django.core.management.base import BaseCommand
 
-from accounts.models import AllowedEmailDomain, Role
 from accounts.language_catalog import seed_spoken_languages
+from accounts.models import AllowedEmailDomain, Role
 from accounts.profile_catalogs import seed_profile_catalogs
 from documents.file_type_families import seed_file_type_families
 from documents.mobility_document_catalog import (

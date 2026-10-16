@@ -2,6 +2,7 @@ from unittest.mock import patch
 
 import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
+from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.test import APIRequestFactory
 
 from accounts.models import User
@@ -13,7 +14,6 @@ from documents.models import (
 )
 from documents.services import DocumentService
 from exchange.models import Application, ApplicationStatus, Program
-from rest_framework.exceptions import ValidationError as DRFValidationError
 
 
 @pytest.mark.django_db
@@ -305,9 +305,7 @@ class TestDocumentSerializer:
 
     def test_document_serializer_update_resolves_open_resubmission(self):
         factory = APIRequestFactory()
-        user = User.objects.create_user(
-            username="resubuser", email="resub@example.com"
-        )
+        user = User.objects.create_user(username="resubuser", email="resub@example.com")
         program = Program.objects.create(
             name="Resub Program",
             description="A test program",

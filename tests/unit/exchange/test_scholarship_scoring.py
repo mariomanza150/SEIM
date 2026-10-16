@@ -5,6 +5,7 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
+from exchange.models import ScholarshipScoringRuleset
 from exchange.scholarship_scoring import (
     RULESET_ID,
     build_scholarship_scores_csv,
@@ -13,7 +14,6 @@ from exchange.scholarship_scoring import (
     render_scholarship_scores_xlsx,
     scholarship_scores_export_response,
 )
-from exchange.models import ScholarshipScoringRuleset
 from tests.utils import TestUtils
 
 

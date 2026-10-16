@@ -56,15 +56,11 @@ class TestNotificationTypeCRUD(APITestCase):
         assert listed.status_code == status.HTTP_200_OK
         assert {row["name"] for row in listed.data} >= {"qa_nt_seed", "qa_nt_created"}
 
-        bad = self.client.post(
-            self.list_url, {"name": "Bad Type"}, format="json"
-        )
+        bad = self.client.post(self.list_url, {"name": "Bad Type"}, format="json")
         assert bad.status_code == status.HTTP_400_BAD_REQUEST
 
         detail = reverse("api:notificationtype-detail", args=[type_id])
-        patched = self.client.patch(
-            detail, {"name": "qa_nt_renamed"}, format="json"
-        )
+        patched = self.client.patch(detail, {"name": "qa_nt_renamed"}, format="json")
         assert patched.status_code == status.HTTP_200_OK
         assert patched.data["name"] == "qa_nt_renamed"
 

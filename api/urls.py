@@ -32,6 +32,7 @@ from analytics.views import (
     analytics_export_api,
     analytics_report_detail_api,
 )
+from core.views import InstitutionFeaturesAPIView, branding_api
 from documents.views import (
     DocumentCommentViewSet,
     DocumentResubmissionRequestViewSet,
@@ -49,7 +50,6 @@ from notifications.views import (
     NotificationViewSet,
     ReminderViewSet,
 )
-from core.views import InstitutionFeaturesAPIView, branding_api
 from workflows.views import WorkflowDefinitionViewSet, WorkflowVersionViewSet
 
 router = routers.DefaultRouter()

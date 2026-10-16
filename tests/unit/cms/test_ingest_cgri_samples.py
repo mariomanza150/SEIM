@@ -152,7 +152,9 @@ class TestIngestCgriSamples:
 
         for spec in present:
             dt = DocumentType.objects.get(slug=spec["document_type_slug"])
-            assert dt.template_file, f"expected template on {spec['document_type_slug']}"
+            assert dt.template_file, (
+                f"expected template on {spec['document_type_slug']}"
+            )
 
         # System-generated solicitud must not receive the blank FS-SP as template.
         solicitud = DocumentType.objects.get(slug="solicitud_participacion")

@@ -605,7 +605,9 @@ class Profile(UUIDModel, TimeStampedModel):
             "credits_approved_percent",
             "semester",
         }
-        return not any(field not in eligibility for field in self.missing_apply_fields())
+        return not any(
+            field not in eligibility for field in self.missing_apply_fields()
+        )
 
     @staticmethod
     def calculate_semester_from_ingress(

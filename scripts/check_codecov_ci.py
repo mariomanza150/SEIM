@@ -66,7 +66,15 @@ def main(argv: list[str] | None = None) -> int:
 
     token = os.environ.get("CODECOV_TOKEN", "")
     running_in_ci = in_github_actions()
-    require_token = args.require_token or (running_in_ci and not skip_token_for_fork())
+    # Codecov upload is optional: a missing token only warns unless
+    # CODECOV_REQUIRE_TOKEN=1 (coverage artifacts are still required).
+    require_token = args.require_token or (
+        running_in_ci
+        and not skip_token_for_fork()
+        and _truthy(os.environ.get("CODECOV_REQUIRE_TOKEN"))
+    )
+    if running_in_ci and not require_token and not (token or "").strip():
+        print("WARNING: CODECOV_TOKEN not set; Codecov upload is skipped (optional).")
 
     if not running_in_ci and not args.require_token:
         print("OK: local run; Codecov token/coverage gate skipped.")
@@ -86,7 +94,7 @@ def main(argv: list[str] | None = None) -> int:
     if require_token:
         print("OK: CODECOV_TOKEN is set and coverage artifacts are present.")
     else:
-        print("OK: fork PR; token not required. Coverage artifacts checked.")
+        print("OK: token not required. Coverage artifacts checked.")
     return 0
 
 

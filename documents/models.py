@@ -39,9 +39,7 @@ class FileTypeFamily(models.Model):
 
     def parsed_aliases(self) -> list[str]:
         return [
-            alias.strip()
-            for alias in (self.aliases or "").split(",")
-            if alias.strip()
+            alias.strip() for alias in (self.aliases or "").split(",") if alias.strip()
         ]
 
 

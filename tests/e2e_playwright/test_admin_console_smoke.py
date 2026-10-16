@@ -52,7 +52,9 @@ def test_admin_forms_catalog_smoke(page: Page):
     page.wait_for_load_state("domcontentloaded")
     if re.search(r"/login", page.url, re.I):
         pytest.skip("Admin login did not reach forms catalog")
-    expect(page.locator("[data-testid=admin-forms-filters]")).to_be_visible(timeout=15000)
+    expect(page.locator("[data-testid=admin-forms-filters]")).to_be_visible(
+        timeout=15000
+    )
     expect(page.locator("[data-testid=admin-forms-table]")).to_be_visible(timeout=15000)
     builder = page.locator("[data-testid=admin-forms-open-builder]").first
     if builder.count():
@@ -70,8 +72,12 @@ def test_admin_workflows_catalog_smoke(page: Page):
     page.wait_for_load_state("domcontentloaded")
     if re.search(r"/login", page.url, re.I):
         pytest.skip("Admin login did not reach workflows catalog")
-    expect(page.locator("[data-testid=admin-workflows-filters]")).to_be_visible(timeout=15000)
-    expect(page.locator("[data-testid=admin-workflows-table]")).to_be_visible(timeout=15000)
+    expect(page.locator("[data-testid=admin-workflows-filters]")).to_be_visible(
+        timeout=15000
+    )
+    expect(page.locator("[data-testid=admin-workflows-table]")).to_be_visible(
+        timeout=15000
+    )
     editor_link = page.locator("[data-testid=admin-workflows-open-editor]").first
     if editor_link.count():
         expect(editor_link).to_be_visible()

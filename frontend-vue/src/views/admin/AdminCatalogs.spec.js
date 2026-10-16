@@ -79,14 +79,14 @@ describe('AdminCatalogs', () => {
 
   it('lists a school name on the schools tab', async () => {
     const wrapper = await mountPage()
-    await wrapper.get('[data-testid="admin-catalogs-tabs"] [data-tab="schools"]').trigger('click')
+    await wrapper.get('[data-testid^="admin-catalogs-tabs-"] [data-tab="schools"]').trigger('click')
     await flushPromises()
     expect(wrapper.get('[data-testid="admin-catalogs-table"]').text()).toContain('Engineering Faculty')
   })
 
   it('links destinations to the program destinations page', async () => {
     const wrapper = await mountPage()
-    await wrapper.get('[data-testid="admin-catalogs-tabs"] [data-tab="destinations"]').trigger('click')
+    await wrapper.get('[data-testid^="admin-catalogs-tabs-"] [data-tab="destinations"]').trigger('click')
     await flushPromises()
     expect(wrapper.get('[data-testid="admin-catalogs-destinations"] a').attributes('href')).toBe(
       '/admin/programs/42/destinations',
@@ -105,7 +105,7 @@ describe('AdminCatalogs', () => {
 
   it('renders allowed email domains without i18n linked-message errors', async () => {
     const wrapper = await mountPage()
-    await wrapper.get('[data-testid="admin-catalogs-tabs"] [data-tab="domains"]').trigger('click')
+    await wrapper.get('[data-testid^="admin-catalogs-tabs-"] [data-tab="domains"]').trigger('click')
     await flushPromises()
     expect(wrapper.get('[data-testid="admin-catalogs-table"]').text()).toContain('uanl.edu.mx')
     expect(wrapper.text()).toContain('@')

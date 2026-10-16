@@ -158,10 +158,13 @@ class TestVueProfile:
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
         page.goto(f"{VUE_BASE_URL}/profile")
         page.wait_for_load_state("networkidle")
-        page.locator('label:has-text("Language") + input').fill("German")
-        page.locator('label:has-text("Language level (CEFR)") + select').select_option(
-            "A2"
-        )
+        # Primary language is a catalog SearchableSelect (type, then pick the option).
+        language = page.locator("[data-testid=profile-language]")
+        language.fill("German")
+        page.locator(
+            ".searchable-select-dropdown [role=option]", has_text="German"
+        ).first.click()
+        page.locator("[data-testid=profile-language-level]").select_option("A2")
         page.get_by_role("button", name="Save profile").click()
         page.wait_for_load_state("networkidle")
         expect(page.locator(".alert-danger")).to_have_count(0, timeout=3000)
@@ -209,6 +212,7 @@ class TestVueHostCascade:
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
 @pytest.mark.nondestructive
+@pytest.mark.xdist_group("student_e2e_draft")
 class TestVueApplicationFlow:
     """Vue application create flow and eligibility messaging."""
 
@@ -387,6 +391,7 @@ class TestVueLogout:
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
 @pytest.mark.nondestructive
+@pytest.mark.xdist_group("student_e2e_draft")
 class TestVueEditApplication:
     """Edit application from detail page."""
 
@@ -557,6 +562,7 @@ class TestVueApplicationFormCancel:
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
 @pytest.mark.nondestructive
+@pytest.mark.xdist_group("student_e2e_draft")
 class TestVueApplicationDetailActions:
     """Application detail page actions (draft: Edit, Submit)."""
 
@@ -653,6 +659,7 @@ class TestVueLoginValidation:
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
 @pytest.mark.nondestructive
+@pytest.mark.xdist_group("student_e2e_draft")
 class TestVueApplicationFormSaveDraft:
     """Application form Save as Draft."""
 
@@ -710,6 +717,7 @@ class TestVueApplicationDetailNavigation:
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
 @pytest.mark.nondestructive
+@pytest.mark.xdist_group("student_e2e_draft")
 class TestVueApplicationDetailDelete:
     """Application detail delete (draft)."""
 
@@ -964,6 +972,7 @@ class TestVueAdminLogin:
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
 @pytest.mark.nondestructive
+@pytest.mark.xdist_group("student_e2e_draft")
 class TestVueSubmitApplication:
     """Submit application from draft detail."""
 
@@ -997,6 +1006,7 @@ class TestVueSubmitApplication:
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
 @pytest.mark.nondestructive
+@pytest.mark.xdist_group("student_e2e_draft")
 class TestVueDocumentUploadForm:
     """Document upload form on application detail."""
 
@@ -1004,9 +1014,10 @@ class TestVueDocumentUploadForm:
         """On draft application detail, document upload form is visible with type select and file input."""
         _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
         _goto_draft_application_detail(page)
-        expect(page.locator("[data-testid=document-type-select]")).to_be_visible(
-            timeout=5000
-        )
+        type_select = page.locator("[data-testid=document-type-select]")
+        expect(type_select).to_be_visible(timeout=5000)
+        # The file field only renders once a document type is chosen.
+        type_select.select_option(index=1)
         expect(page.locator("[data-testid=document-file-input]")).to_be_visible()
         expect(page.locator("[data-testid=document-upload-btn]")).to_be_visible()
 
@@ -1014,6 +1025,7 @@ class TestVueDocumentUploadForm:
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
 @pytest.mark.nondestructive
+@pytest.mark.xdist_group("student_e2e_draft")
 class TestVueDocumentUpload:
     """Document upload from application detail."""
 

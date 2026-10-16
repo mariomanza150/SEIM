@@ -131,7 +131,9 @@ class TestUserViewSet(APITestCase):
         student_user.roles.add(student_role)
 
         self.client.force_authenticate(user=self.admin_user)
-        response = self.client.get(reverse("accounts:user-list"), {"role": "coordinator"})
+        response = self.client.get(
+            reverse("accounts:user-list"), {"role": "coordinator"}
+        )
 
         assert response.status_code == status.HTTP_200_OK
         usernames = {row["username"] for row in response.data["results"]}
@@ -200,7 +202,10 @@ class TestProfileViewSet(APITestCase):
 @pytest.mark.views
 class TestProfileCatalogPermissions(APITestCase):
     def test_allowed_email_domains_are_public_but_other_catalogs_require_auth(self):
-        AllowedEmailDomain.objects.get_or_create(name="uanl.edu.mx")
+        # Migrations seed uanl.edu.mx as inactive; the public list only shows active rows.
+        AllowedEmailDomain.objects.update_or_create(
+            name="uanl.edu.mx", defaults={"is_active": True}
+        )
 
         public_response = self.client.get(reverse("accounts:allowed-email-domain-list"))
         protected_response = self.client.get(reverse("accounts:academic-level-list"))
@@ -1217,7 +1222,9 @@ class TestUserSessionViewSet(APITestCase):
         assert listed.status_code == status.HTTP_200_OK
         ids = {row["id"] for row in listed.data["results"]}
         assert self.session.id in ids
-        session_row = next(row for row in listed.data["results"] if row["id"] == self.session.id)
+        session_row = next(
+            row for row in listed.data["results"] if row["id"] == self.session.id
+        )
         assert session_row["user_email"] == self.user.email
         assert session_row["user_username"] == self.user.username
 

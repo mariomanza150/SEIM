@@ -79,13 +79,21 @@ MERGE_FIELD_CATALOG: list[dict[str, str]] = [
         "group": "application",
         "description": "Selected host institution",
     },
-    {"name": "HostSchool", "group": "application", "description": "Selected host school"},
+    {
+        "name": "HostSchool",
+        "group": "application",
+        "description": "Selected host school",
+    },
     {
         "name": "HostAcademicProgram",
         "group": "application",
         "description": "Selected host academic program",
     },
-    {"name": "ApplicationId", "group": "application", "description": "Application UUID"},
+    {
+        "name": "ApplicationId",
+        "group": "application",
+        "description": "Application UUID",
+    },
 ]
 
 
@@ -116,16 +124,19 @@ def merge_values_for_application(application) -> dict[str, str]:
     except ObjectDoesNotExist:
         profile = None
     program = application.program
-    full_name = " ".join(
-        part
-        for part in (
-            student.first_name,
-            getattr(student, "middle_name", "") or "",
-            student.last_name,
-            getattr(student, "mothers_last_name", "") or "",
-        )
-        if part
-    ).strip() or student.get_full_name()
+    full_name = (
+        " ".join(
+            part
+            for part in (
+                student.first_name,
+                getattr(student, "middle_name", "") or "",
+                student.last_name,
+                getattr(student, "mothers_last_name", "") or "",
+            )
+            if part
+        ).strip()
+        or student.get_full_name()
+    )
 
     values = {
         "FirstName": _fmt(student.first_name),

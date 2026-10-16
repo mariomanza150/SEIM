@@ -235,7 +235,9 @@ function onGlobalKeydown(event) {
 }
 
 onMounted(() => {
-  loadFeatures()
+  // /api/features/ requires auth; calling it anonymously (login/register pages) triggers
+  // the 401 refresh -> logout -> redirect-to-login path.
+  if (authStore.accessToken) loadFeatures()
   window.addEventListener('keydown', onGlobalKeydown)
 })
 

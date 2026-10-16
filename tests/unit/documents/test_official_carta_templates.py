@@ -34,9 +34,7 @@ def _require_samples():
     if not base.is_dir():
         pytest.skip("SAMPLES/ not present")
     missing = [
-        slug
-        for slug in OFFICIAL_CARTA_SLUGS
-        if official_sample_path(slug) is None
+        slug for slug in OFFICIAL_CARTA_SLUGS if official_sample_path(slug) is None
     ]
     if missing:
         pytest.skip(f"Missing official samples for: {', '.join(missing)}")
@@ -68,7 +66,14 @@ class TestOfficialCartaSampleFiles:
 @pytest.mark.django_db
 @pytest.mark.unit
 class TestOfficialCartaTemplateDownload:
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def _isolated_media_root(self, settings, tmp_path):
+        # Earlier ingests in the session leave files in MEDIA_ROOT, making storage
+        # append a random suffix to the template filename.
+        settings.MEDIA_ROOT = str(tmp_path / "media")
+        self._seed()
+
+    def _seed(self):
         _require_samples()
         seed_mobility_document_types()
         ingest_cgri_samples(skip_universities=True, skip_wagtail=True)
@@ -95,7 +100,9 @@ class TestOfficialCartaTemplateDownload:
             with dt.template_file.open("rb") as handle:
                 stored = handle.read()
             assert stored == sample
-            assert Path(dt.template_file.name).name == OFFICIAL_DOCX_DOWNLOAD_NAMES[slug]
+            assert (
+                Path(dt.template_file.name).name == OFFICIAL_DOCX_DOWNLOAD_NAMES[slug]
+            )
 
     def test_download_serves_exact_bytes_even_with_application(self):
         self.client.force_authenticate(user=self.student)
@@ -120,4 +127,6 @@ class TestOfficialCartaTemplateDownload:
         response = self.client.get(url)
         assert response.status_code == status.HTTP_200_OK
         assert response.content == sample
-        assert 'filename="FS-CC_Carta_Compromiso.docx"' in response["Content-Disposition"]
+        assert (
+            'filename="FS-CC_Carta_Compromiso.docx"' in response["Content-Disposition"]
+        )

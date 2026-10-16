@@ -69,7 +69,9 @@ class TestDashboardStatsAPI(APITestCase):
             file="agreement_repository/demo.pdf",
             uploaded_by=partner,
         )
-        self.create_application(student=student, program=program, status_name="submitted")
+        self.create_application(
+            student=student, program=program, status_name="submitted"
+        )
         self.create_application(
             student=self.create_user(role="student"),
             program=self.create_program(),

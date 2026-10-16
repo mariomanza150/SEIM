@@ -367,9 +367,7 @@ class Command(BaseCommand):
             index.index_kind = FAQ_INDEX_KIND_SPA_HELP
             index.show_in_menus = False
             if not index.introduction:
-                index.introduction = (
-                    "Artículos de ayuda de la aplicación. No aparecen en el sitio público."
-                )
+                index.introduction = "Artículos de ayuda de la aplicación. No aparecen en el sitio público."
             index.save_revision().publish()
             self.stdout.write(self.style.SUCCESS("  [ok] Updated SPA help index"))
             return index
@@ -432,7 +430,5 @@ class Command(BaseCommand):
             page.contextual_keys = meta["contextual_keys"]
             page.save_revision().publish()
             count += 1
-            self.stdout.write(
-                self.style.SUCCESS(f"  [ok] Retagged public FAQ: {slug}")
-            )
+            self.stdout.write(self.style.SUCCESS(f"  [ok] Retagged public FAQ: {slug}"))
         return count

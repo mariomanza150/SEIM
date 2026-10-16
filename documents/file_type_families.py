@@ -82,7 +82,9 @@ FILE_TYPE_FAMILY_SPECS = (
 def infer_family_slugs_from_extensions(extensions: str | list[str] | None) -> list[str]:
     """Map a comma list of extensions onto family slugs (order preserved)."""
     if isinstance(extensions, str):
-        exts = [e.strip().lower().lstrip(".") for e in extensions.split(",") if e.strip()]
+        exts = [
+            e.strip().lower().lstrip(".") for e in extensions.split(",") if e.strip()
+        ]
     else:
         exts = [str(e).strip().lower().lstrip(".") for e in (extensions or []) if e]
     if not exts:

@@ -57,7 +57,9 @@ class Command(BaseCommand):
 
         self.stdout.write("\n=== Setting up International Relations Section ===\n")
 
-        internacional = InternationalHomePage.objects.filter(slug="internacional").first()
+        internacional = InternationalHomePage.objects.filter(
+            slug="internacional"
+        ).first()
         if internacional and options["replace"]:
             self.stdout.write(
                 self.style.WARNING("Deleting existing 'internacional' page...")

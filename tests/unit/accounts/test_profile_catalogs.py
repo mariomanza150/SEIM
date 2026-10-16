@@ -30,17 +30,24 @@ class TestProfileCatalogSeeds:
         program_count = HomeAcademicProgram.objects.count()
         bank_count = BankInstitution.objects.count()
 
-        ingenieria = SchoolFaculty.objects.get(name="Ingeniería")
+        # Use a school owned by the current UADEC seed (legacy flat rows are not re-seeded).
+        seeded_spec = SCHOOL_SPECS[0]
+        ingenieria = SchoolFaculty.objects.get(
+            name=seeded_spec["name"], code=seeded_spec["code"]
+        )
         ingenieria.code = "changed"
         ingenieria.is_active = False
         ingenieria.save(update_fields=["code", "is_active"])
 
         seed_profile_catalogs()
         ingenieria.refresh_from_db()
-        assert ingenieria.code == "ingenieria"
+        assert ingenieria.code == seeded_spec["code"]
         assert ingenieria.is_active is True
         assert SchoolFaculty.objects.count() == school_count
         assert HomeAcademicProgram.objects.count() == program_count
         assert BankInstitution.objects.count() == bank_count
-        assert school_count == len(SCHOOL_SPECS)
+        # Legacy flat schools from historical migrations have no unidad and are not seeded.
+        assert SchoolFaculty.objects.filter(unidad__isnull=False).count() == len(
+            SCHOOL_SPECS
+        )
         assert bank_count == len(BANK_SPECS)

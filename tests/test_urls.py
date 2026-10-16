@@ -233,8 +233,9 @@ class VueAppRoutingTests(TestCase):
 
     def test_debug_media_served_before_wagtail_catch_all(self):
         """``/media/*`` must not be swallowed by Wagtail's ``""`` catch-all (DEBUG)."""
-        from django.conf import settings
         from pathlib import Path
+
+        from django.conf import settings
 
         media_dir = Path(settings.MEDIA_ROOT) / "documents"
         media_dir.mkdir(parents=True, exist_ok=True)

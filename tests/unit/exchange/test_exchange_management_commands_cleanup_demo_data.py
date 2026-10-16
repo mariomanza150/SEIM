@@ -1,4 +1,4 @@
-﻿from datetime import date
+from datetime import date
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import call_command
@@ -481,4 +481,3 @@ class TestCleanupDemoDataCommandSafety(TestCase):
         self.assertTrue(
             Notification.objects.filter(recipient__username="student_real").exists()
         )
-

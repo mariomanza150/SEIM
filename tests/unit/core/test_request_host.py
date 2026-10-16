@@ -15,9 +15,7 @@ from core.request_host import (
 
 @override_settings(ALLOWED_HOSTS=["*"])
 def test_request_frontend_origin_uses_https_host():
-    request = RequestFactory().get(
-        "/", HTTP_HOST="app.trycloudflare.com", secure=True
-    )
+    request = RequestFactory().get("/", HTTP_HOST="app.trycloudflare.com", secure=True)
     assert request_frontend_origin(request) == "https://app.trycloudflare.com"
 
 
@@ -52,7 +50,8 @@ def test_middleware_sets_cached_site_from_request_host():
     from django.conf import settings
 
     if "cms" not in settings.INSTALLED_APPS or not any(
-        app == "wagtail" or app.startswith("wagtail.") for app in settings.INSTALLED_APPS
+        app == "wagtail" or app.startswith("wagtail.")
+        for app in settings.INSTALLED_APPS
     ):
         pytest.skip("Wagtail/CMS not in INSTALLED_APPS for this settings module")
 

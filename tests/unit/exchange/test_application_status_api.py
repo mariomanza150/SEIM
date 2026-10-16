@@ -86,9 +86,7 @@ class TestApplicationStatusCRUD(APITestCase):
             end_date=date.today() + timedelta(days=30),
         )
         in_use = ApplicationStatus.objects.create(name="qa_status_in_use", order=20)
-        Application.objects.create(
-            student=self.student, program=program, status=in_use
-        )
+        Application.objects.create(student=self.student, program=program, status=in_use)
         blocked = self.client.delete(
             reverse("api:applicationstatus-detail", args=[in_use.id])
         )
@@ -109,4 +107,7 @@ class TestApplicationStatusCRUD(APITestCase):
 
         second = self.client.get(self.list_url)
         assert second.status_code == status.HTTP_200_OK
-        assert {row["name"] for row in second.data} >= {*names_before, "qa_status_cached"}
+        assert {row["name"] for row in second.data} >= {
+            *names_before,
+            "qa_status_cached",
+        }

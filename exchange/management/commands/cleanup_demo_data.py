@@ -137,6 +137,4 @@ class Command(BaseCommand):
             username__startswith="student",
             email__endswith="@university.edu",
         )
-        return (
-            canonical_users | legacy_admins | legacy_coordinators | legacy_students
-        )
+        return canonical_users | legacy_admins | legacy_coordinators | legacy_students

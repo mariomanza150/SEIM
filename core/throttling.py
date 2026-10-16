@@ -4,7 +4,11 @@ Custom throttling classes for SEIM API.
 These throttle classes help prevent abuse and ensure fair resource usage.
 """
 
-from rest_framework.throttling import AnonRateThrottle, SimpleRateThrottle, UserRateThrottle
+from rest_framework.throttling import (
+    AnonRateThrottle,
+    SimpleRateThrottle,
+    UserRateThrottle,
+)
 
 
 class BurstRateThrottle(UserRateThrottle):

@@ -399,7 +399,9 @@ router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some((r) => r.meta && r.meta.requiresAuth)
   if (requiresAuth) {
     const { loadFeatures, scholarshipsEnabled } = useFeatures()
-    await loadFeatures()
+    // /api/features/ requires auth: fetching it anonymously 401s, and the interceptor's
+    // failed refresh then logs out (racing with tokens being set, e.g. right after login).
+    if (authStore.accessToken) await loadFeatures()
     const outcome = await resolveAuthenticatedNavigation(to, authStore, {
       scholarshipsEnabled: scholarshipsEnabled.value,
     })

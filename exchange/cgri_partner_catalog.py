@@ -45,23 +45,79 @@ SPANISH_SPEAKING_COUNTRIES = frozenset(
 
 CGRI_PARTNER_SPECS: tuple[dict[str, str], ...] = (
     # Habla Hispana — España
-    {"scheme": MOBILITY_SCHEME_HISPANA, "country": "España", "name": "Universidad de León"},
-    {"scheme": MOBILITY_SCHEME_HISPANA, "country": "España", "name": "Universidad de Cádiz"},
-    {"scheme": MOBILITY_SCHEME_HISPANA, "country": "España", "name": "Universidad de Salamanca"},
-    {"scheme": MOBILITY_SCHEME_HISPANA, "country": "España", "name": "Universidad Politécnica de Cartagena"},
-    {"scheme": MOBILITY_SCHEME_HISPANA, "country": "España", "name": "Universidad Internacional de Cataluña"},
-    {"scheme": MOBILITY_SCHEME_HISPANA, "country": "España", "name": "Universidad de Burgos"},
-    {"scheme": MOBILITY_SCHEME_HISPANA, "country": "España", "name": "Universidad de Granada"},
+    {
+        "scheme": MOBILITY_SCHEME_HISPANA,
+        "country": "España",
+        "name": "Universidad de León",
+    },
+    {
+        "scheme": MOBILITY_SCHEME_HISPANA,
+        "country": "España",
+        "name": "Universidad de Cádiz",
+    },
+    {
+        "scheme": MOBILITY_SCHEME_HISPANA,
+        "country": "España",
+        "name": "Universidad de Salamanca",
+    },
+    {
+        "scheme": MOBILITY_SCHEME_HISPANA,
+        "country": "España",
+        "name": "Universidad Politécnica de Cartagena",
+    },
+    {
+        "scheme": MOBILITY_SCHEME_HISPANA,
+        "country": "España",
+        "name": "Universidad Internacional de Cataluña",
+    },
+    {
+        "scheme": MOBILITY_SCHEME_HISPANA,
+        "country": "España",
+        "name": "Universidad de Burgos",
+    },
+    {
+        "scheme": MOBILITY_SCHEME_HISPANA,
+        "country": "España",
+        "name": "Universidad de Granada",
+    },
     # Habla Hispana — Colombia
-    {"scheme": MOBILITY_SCHEME_HISPANA, "country": "Colombia", "name": "Pontificia Universidad Javeriana"},
-    {"scheme": MOBILITY_SCHEME_HISPANA, "country": "Colombia", "name": "Universidad de Córdoba"},
-    {"scheme": MOBILITY_SCHEME_HISPANA, "country": "Colombia", "name": "Universidad Militar Nueva Granada"},
+    {
+        "scheme": MOBILITY_SCHEME_HISPANA,
+        "country": "Colombia",
+        "name": "Pontificia Universidad Javeriana",
+    },
+    {
+        "scheme": MOBILITY_SCHEME_HISPANA,
+        "country": "Colombia",
+        "name": "Universidad de Córdoba",
+    },
+    {
+        "scheme": MOBILITY_SCHEME_HISPANA,
+        "country": "Colombia",
+        "name": "Universidad Militar Nueva Granada",
+    },
     # Habla Hispana — Ecuador
-    {"scheme": MOBILITY_SCHEME_HISPANA, "country": "Ecuador", "name": "Universidad Internacional del Ecuador"},
+    {
+        "scheme": MOBILITY_SCHEME_HISPANA,
+        "country": "Ecuador",
+        "name": "Universidad Internacional del Ecuador",
+    },
     # Habla Inglesa — Italia
-    {"scheme": MOBILITY_SCHEME_INGLESa, "country": "Italia", "name": "Università degli Studi di Firenze"},
-    {"scheme": MOBILITY_SCHEME_INGLESa, "country": "Italia", "name": "Università degli Studi di Torino"},
-    {"scheme": MOBILITY_SCHEME_INGLESa, "country": "Italia", "name": "Università degli Studi di Siena"},
+    {
+        "scheme": MOBILITY_SCHEME_INGLESa,
+        "country": "Italia",
+        "name": "Università degli Studi di Firenze",
+    },
+    {
+        "scheme": MOBILITY_SCHEME_INGLESa,
+        "country": "Italia",
+        "name": "Università degli Studi di Torino",
+    },
+    {
+        "scheme": MOBILITY_SCHEME_INGLESa,
+        "country": "Italia",
+        "name": "Università degli Studi di Siena",
+    },
     # Habla Inglesa — Alemania
     {
         "scheme": MOBILITY_SCHEME_INGLESa,
@@ -69,11 +125,27 @@ CGRI_PARTNER_SPECS: tuple[dict[str, str], ...] = (
         "name": "Duale Hochschule Baden-Württemberg (Stuttgart/Mosbach)",
     },
     # Habla Inglesa — Brasil
-    {"scheme": MOBILITY_SCHEME_INGLESa, "country": "Brasil", "name": "Universidade de Ouro Preto"},
-    {"scheme": MOBILITY_SCHEME_INGLESa, "country": "Brasil", "name": "Universidade Cruzeiro do Sul (São Paulo)"},
-    {"scheme": MOBILITY_SCHEME_INGLESa, "country": "Brasil", "name": "Universidade de Passo Fundo"},
+    {
+        "scheme": MOBILITY_SCHEME_INGLESa,
+        "country": "Brasil",
+        "name": "Universidade de Ouro Preto",
+    },
+    {
+        "scheme": MOBILITY_SCHEME_INGLESa,
+        "country": "Brasil",
+        "name": "Universidade Cruzeiro do Sul (São Paulo)",
+    },
+    {
+        "scheme": MOBILITY_SCHEME_INGLESa,
+        "country": "Brasil",
+        "name": "Universidade de Passo Fundo",
+    },
     # Habla Inglesa — China
-    {"scheme": MOBILITY_SCHEME_INGLESa, "country": "China", "name": "Beijing Institute of Technology"},
+    {
+        "scheme": MOBILITY_SCHEME_INGLESa,
+        "country": "China",
+        "name": "Beijing Institute of Technology",
+    },
 )
 
 PLACEHOLDER_SCHOOL = "Facultad / Escuela general"
@@ -110,7 +182,9 @@ def _load_official_university_entries() -> list[dict]:
     return rows
 
 
-def seed_cgri_partner_destinations(*, program_model=None, host_models=None) -> dict[str, int]:
+def seed_cgri_partner_destinations(
+    *, program_model=None, host_models=None
+) -> dict[str, int]:
     """
     Seed HostInstitution trees and ExchangeAgreement rows for CGRI partners.
 
@@ -146,7 +220,9 @@ def seed_cgri_partner_destinations(*, program_model=None, host_models=None) -> d
     schemes_seen: set[str] = set()
 
     for spec in CGRI_PARTNER_SPECS:
-        program = program_model.objects.filter(name=spec["scheme"], is_active=True).first()
+        program = program_model.objects.filter(
+            name=spec["scheme"], is_active=True
+        ).first()
         if program is None:
             continue
 
@@ -254,7 +330,9 @@ def seed_official_university_lists(
         agreement_type = "conahec" if source == "conahec" else "bilateral"
         title_prefix = "CONAHEC" if agreement_type == "conahec" else "Convenio CGRI"
         ref_prefix = "CONAHEC" if agreement_type == "conahec" else "CGRI"
-        ref = f"{ref_prefix}-{(country or 'XX')[:3].upper()}-{name[:20].replace(' ', '')}"
+        ref = (
+            f"{ref_prefix}-{(country or 'XX')[:3].upper()}-{name[:20].replace(' ', '')}"
+        )
 
         existing = ExchangeAgreement.objects.filter(
             partner_institution_name=name,

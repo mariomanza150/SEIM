@@ -32,11 +32,15 @@ class Command(BaseCommand):
         )
 
         manifest_path = refresh_cms_assets_manifest()
-        self.stdout.write(self.style.SUCCESS(f"  Wrote asset manifest: {manifest_path}"))
+        self.stdout.write(
+            self.style.SUCCESS(f"  Wrote asset manifest: {manifest_path}")
+        )
 
         hero_path = saved.get("mi2026.jpg") or logos_dir() / "mi2026.jpg"
         if not hero_path.exists():
-            self.stdout.write(self.style.WARNING("  mi2026.jpg not found; skipping heroes"))
+            self.stdout.write(
+                self.style.WARNING("  mi2026.jpg not found; skipping heroes")
+            )
             return
 
         hero_image = get_or_create_wagtail_image("mi2026.jpg", hero_path)

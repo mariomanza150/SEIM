@@ -118,7 +118,9 @@ class TestDocumentReplaceAndMultiUpload(APITestCase):
                     )
         self.assertIsNone(second.supersedes_id)
         self.assertEqual(DocumentService.current_documents(app, doc_type).count(), 2)
-        tip = DocumentService.current_documents(app, doc_type).filter(pk=first.pk).first()
+        tip = (
+            DocumentService.current_documents(app, doc_type).filter(pk=first.pk).first()
+        )
         self.assertIsNotNone(tip)
         with patch("documents.services.scan_document_virus.delay"):
             with patch(

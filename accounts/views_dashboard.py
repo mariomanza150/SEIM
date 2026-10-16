@@ -12,7 +12,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from documents.models import Document, DocumentResubmissionRequest, ExchangeAgreementDocument
+from documents.models import (
+    Document,
+    DocumentResubmissionRequest,
+    ExchangeAgreementDocument,
+)
 from exchange.models import Application
 from exchange.partner_views import partner_agreement_ids
 from notifications.models import Notification

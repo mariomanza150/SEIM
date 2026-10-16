@@ -23,7 +23,9 @@ class AuthPage(BasePage):
     REGISTER_CONFIRM_PASSWORD_INPUT = (
         '[data-testid="register-password2"], [name="password2"]'
     )
-    REGISTER_FIRST_NAME_INPUT = '[data-testid="register-first-name"], [name="first_name"]'
+    REGISTER_FIRST_NAME_INPUT = (
+        '[data-testid="register-first-name"], [name="first_name"]'
+    )
     REGISTER_LAST_NAME_INPUT = '[data-testid="register-last-name"], [name="last_name"]'
     REGISTER_MIDDLE_NAME_INPUT = (
         '[data-testid="register-middle-name"], [name="middle_name"]'
@@ -33,18 +35,12 @@ class AuthPage(BasePage):
     )
     REGISTER_AGREE_TERMS_CHECKBOX = '[name="agree_terms"]'
     REGISTER_SUBMIT_BUTTON = '[data-testid="register-submit"], button[type="submit"]'
-    REGISTER_SUCCESS_MESSAGE = (
-        '[data-testid="register-success"], .alert-success'
-    )
+    REGISTER_SUCCESS_MESSAGE = '[data-testid="register-success"], .alert-success'
     REGISTER_ERROR_MESSAGE = ".alert-danger, .error-message"
 
     # Common elements
-    LOGOUT_BUTTON = (
-        '[data-testid="logout-button"], [data-testid="logout-link"], a:has-text("Logout")'
-    )
-    USER_MENU = (
-        '[data-testid="user-menu"], #userDropdown, a[aria-label*="User menu" i]'
-    )
+    LOGOUT_BUTTON = '[data-testid="logout-button"], [data-testid="logout-link"], a:has-text("Logout")'
+    USER_MENU = '[data-testid="user-menu"], #userDropdown, a[aria-label*="User menu" i]'
 
     def navigate_to_login(self) -> None:
         """Navigate to Vue login page."""
@@ -98,7 +94,9 @@ class AuthPage(BasePage):
         self.fill(self.REGISTER_FIRST_NAME_INPUT, first_name or "Test")
         self.fill(self.REGISTER_LAST_NAME_INPUT, last_name or "User")
 
-        if agree_terms and self.is_visible(self.REGISTER_AGREE_TERMS_CHECKBOX, timeout=1000):
+        if agree_terms and self.is_visible(
+            self.REGISTER_AGREE_TERMS_CHECKBOX, timeout=1000
+        ):
             self.check(self.REGISTER_AGREE_TERMS_CHECKBOX)
 
         self.click(self.REGISTER_SUBMIT_BUTTON)
