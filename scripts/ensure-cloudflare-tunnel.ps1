@@ -1,5 +1,5 @@
 # Ensure Cloudflare Tunnel for seim-localprod via Docker Compose profiles.
-# Prefer: cloudflare (token) when CLOUDFLARE_TUNNEL_TOKEN is set, else cloudflare-quick.
+# Requires CLOUDFLARE_TUNNEL_TOKEN (profile cloudflare). The quick tunnel was removed.
 # Host cloudflared.exe is used only when a named config.yml from setup-named-cloudflare-tunnel.ps1 exists.
 #
 # Safe to run from Task Scheduler / start-local-prod-stack.ps1.
@@ -90,15 +90,6 @@ function Stop-HostCloudflared {
         }
 }
 
-function Get-QuickTunnelUrlFromLogs {
-    $logs = docker compose -p $ProjectName -f $ComposeFile --env-file $EnvFile --profile cloudflare-quick logs --no-color --tail 200 cloudflared-quick 2>$null
-    if (-not $logs) { return $null }
-    $text = if ($logs -is [array]) { $logs -join "`n" } else { [string]$logs }
-    $m = [regex]::Match($text, "https://[a-z0-9-]+\.trycloudflare\.com")
-    if ($m.Success) { return $m.Value }
-    return $null
-}
-
 function Test-ComposeServiceRunning([string]$Service, [string]$Profile) {
     $lines = docker compose -p $ProjectName -f $ComposeFile --env-file $EnvFile --profile $Profile ps --status running --services 2>$null
     return ($lines -split "`n" | ForEach-Object { $_.Trim() }) -contains $Service
@@ -152,57 +143,4 @@ if ($useToken) {
     return
 }
 
-Write-Step "Ensuring Docker Cloudflare Quick Tunnel (profile cloudflare-quick)"
-$needStart = $true
-if (Test-ComposeServiceRunning "cloudflared-quick" "cloudflare-quick") {
-    $url = Get-QuickTunnelUrlFromLogs
-    if (-not $url -and (Test-Path $UrlFile)) {
-        $url = (Get-Content $UrlFile | Select-Object -First 1).Trim()
-    }
-    if ($url -and (Test-TunnelHealthy $url)) {
-        Set-Content -Path $UrlFile -Value $url -Encoding utf8
-        [void](Set-SeimFrontendBaseUrl $url)
-        Write-Host "Cloudflare tunnel healthy: $url"
-        $needStart = $false
-    }
-}
-
-if ($needStart) {
-    docker compose -p $ProjectName -f $ComposeFile --env-file $EnvFile --profile cloudflare-quick up -d --force-recreate cloudflared-quick
-    if ($LASTEXITCODE -ne 0) {
-        throw "Failed to start cloudflared-quick container"
-    }
-
-    $deadline = (Get-Date).AddSeconds($ReadyTimeoutSec)
-    $publicUrl = $null
-    while ((Get-Date) -lt $deadline) {
-        $publicUrl = Get-QuickTunnelUrlFromLogs
-        if ($publicUrl) {
-            Set-Content -Path $UrlFile -Value $publicUrl -Encoding utf8
-            Write-Step "Tunnel hostname: $publicUrl"
-            if (Test-TunnelHealthy $publicUrl) {
-                break
-            }
-            Write-Step "Public probe waiting..."
-        }
-        Start-Sleep -Seconds 3
-    }
-
-    if (-not $publicUrl) {
-        docker compose -p $ProjectName -f $ComposeFile --env-file $EnvFile --profile cloudflare-quick logs --tail 80 cloudflared-quick
-        throw "Timed out waiting for trycloudflare.com URL from cloudflared-quick"
-    }
-    if (-not (Test-TunnelHealthy $publicUrl)) {
-        throw "Tunnel URL $publicUrl did not return HTTP 200 from $HealthPath"
-    }
-
-    $changed = Set-SeimFrontendBaseUrl $publicUrl
-    if ($changed) {
-        Write-Step "Recreating web so FRONTEND_BASE_URL takes effect"
-        docker compose -p $ProjectName -f $ComposeFile --env-file $EnvFile up -d --force-recreate --no-deps web
-    }
-
-    Write-Step "Public URL: $publicUrl"
-    Write-Step "SPA:        $publicUrl/seim/"
-    Write-Host "Cloudflare tunnel ready: $publicUrl"
-}
+throw "CLOUDFLARE_TUNNEL_TOKEN is not set in .env.local-prod. The quick tunnel (cloudflared-quick) was removed; configure the named token tunnel."
