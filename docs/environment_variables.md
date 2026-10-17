@@ -646,16 +646,16 @@ Backend (runtime, `.env.local-prod`):
 | `SENTRY_DSN` | empty (off) | Backend GlitchTip project DSN (`seim`) |
 | `SENTRY_ENVIRONMENT` | `DJANGO_ENV` | Environment tag |
 | `SENTRY_RELEASE` | deployed git SHA | Release tag (deploy script sets `SEIM_GIT_SHA`) |
-| `SENTRY_SAMPLE_RATE` / `SENTRY_TRACES_SAMPLE_RATE` | `1.0` / `0.0` | Error and trace sampling |
+| `SENTRY_SAMPLE_RATE` / `SENTRY_TRACES_SAMPLE_RATE` | `1.0` / `0.05` | Error and trace sampling |
 | `SENTRY_LOGS_LEVEL` | `WARNING` | Python log records at this level and up are sent as structured logs; `off` disables |
 
 Frontend (build time, passed as Docker build args from the same env file):
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `VITE_SENTRY_DSN` | empty (off) | Frontend GlitchTip project DSN (`seim-web`). Also read by the backend to relay browser envelopes from `/api/monitoring/envelope/` (only for this DSN) |
+| `VITE_SENTRY_DSN` | empty (off) | Frontend GlitchTip project DSN (`seim-web`) on the public ingest host (only `/api/<id>/envelope|store` exposed) |
 | `VITE_SENTRY_ENVIRONMENT` | `SENTRY_ENVIRONMENT` | Environment tag |
-| `VITE_SENTRY_SAMPLE_RATE` / `VITE_SENTRY_TRACES_SAMPLE_RATE` | `1.0` / `0` | Sampling |
+| `VITE_SENTRY_SAMPLE_RATE` / `VITE_SENTRY_TRACES_SAMPLE_RATE` | `1.0` / `0.05` | Sampling |
 | `VITE_SENTRY_LOGS_LEVEL` | `warn` | Console levels sent as logs (`off` disables); breadcrumbs are capped at 50 |
 
 Privacy: `send_default_pii`/`sendDefaultPii` are off on both sides; request bodies, cookies, auth headers, tokens,

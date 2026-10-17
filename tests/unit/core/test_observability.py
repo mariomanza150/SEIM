@@ -78,7 +78,6 @@ def test_init_sentry_is_noop_without_dsn():
 # --- scrubbing and envelope relay -------------------------------------------------------------
 from core.observability import (  # noqa: E402
     FILTERED,
-    envelope_upstream,
     scrub,
     scrub_event,
     scrub_log,
@@ -148,61 +147,6 @@ def test_scrub_log_masks_body_and_attributes():
     }
 
 
-def test_envelope_upstream_only_for_configured_dsn():
-    dsn = "http://pubkey@100.64.0.1:8002/6"
-    assert (
-        envelope_upstream({"dsn": dsn}, dsn) == "http://100.64.0.1:8002/api/6/envelope/"
-    )
-    assert envelope_upstream({"dsn": "http://k@evil.example/6"}, dsn) is None
-    assert envelope_upstream({"dsn": dsn}, "") is None
-
-
-def test_envelope_tunnel_rejects_unknown_dsn_and_is_quiet_when_unset(client, settings):
-    settings.SENTRY_FRONTEND_DSN = ""
-    assert (
-        client.post(
-            "/api/monitoring/envelope/", data=b"{}\n", content_type="text/plain"
-        ).status_code
-        == 204
-    )
-    settings.SENTRY_FRONTEND_DSN = "http://k@127.0.0.1:9/6"
-    bad = b'{"dsn":"http://k@evil.example/6"}\n{}'
-    assert (
-        client.post(
-            "/api/monitoring/envelope/", data=bad, content_type="text/plain"
-        ).status_code
-        == 400
-    )
-    assert client.get("/api/monitoring/envelope/").status_code == 405
-
-
-def test_envelope_tunnel_forwards_to_glitchtip(client, settings, monkeypatch):
-    dsn = "http://k@127.0.0.1:9/6"
-    settings.SENTRY_FRONTEND_DSN = dsn
-    seen = {}
-
-    class Resp:
-        status = 200
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *a):
-            return False
-
-    def fake_urlopen(req, timeout):
-        seen["url"], seen["data"] = req.full_url, req.data
-        return Resp()
-
-    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
-    body = ('{"dsn":"' + dsn + '"}\n{"type":"event"}\n{}').encode()
-    resp = client.post(
-        "/api/monitoring/envelope/", data=body, content_type="text/plain"
-    )
-    assert resp.status_code == 200
-    assert seen == {"url": "http://127.0.0.1:9/api/6/envelope/", "data": body}
-
-
 def test_init_sentry_enables_scrubbing_and_logs(monkeypatch):
     import sentry_sdk
 
@@ -212,6 +156,7 @@ def test_init_sentry_enables_scrubbing_and_logs(monkeypatch):
         dsn="http://k@h/1", environment="t", release="r", logs_level="warning"
     )
     assert captured["send_default_pii"] is False
+    assert captured["traces_sample_rate"] == 0.05
     assert captured["enable_logs"] is True
     assert captured["before_send"] is scrub_event
     assert captured["before_send_log"] is scrub_log

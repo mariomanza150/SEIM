@@ -29,8 +29,8 @@ describe('monitoringConfig', () => {
       environment: 'local-prod',
       release: 'abc123',
       sampleRate: 0.5,
-      tracesSampleRate: 0,
-      tunnel: '/api/monitoring/envelope/',
+      tracesSampleRate: 0.05,
+      tunnel: undefined,
       consoleLevels: ['warn', 'error'],
     })
   })

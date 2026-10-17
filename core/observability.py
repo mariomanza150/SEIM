@@ -247,7 +247,7 @@ def init_sentry(
     environment: str,
     release: str,
     *,
-    traces_sample_rate: float = 0.0,
+    traces_sample_rate: float = 0.05,
     sample_rate: float = 1.0,
     logs_level: str = "WARNING",
 ) -> bool:
@@ -288,61 +288,3 @@ def init_sentry(
         ],
     )
     return True
-
-
-# --- Browser envelope relay -------------------------------------------------------------------
-MAX_ENVELOPE_BYTES = 1_000_000
-
-
-def envelope_upstream(envelope_header: dict, allowed_dsn: str) -> str | None:
-    """The GlitchTip envelope URL for a browser envelope whose header DSN is exactly ``allowed_dsn``."""
-    from urllib.parse import urlsplit
-
-    if not allowed_dsn or envelope_header.get("dsn") != allowed_dsn:
-        return None
-    u = urlsplit(allowed_dsn)
-    project = u.path.strip("/").rsplit("/", 1)[-1]
-    if not (u.scheme in ("http", "https") and u.hostname and project.isdigit()):
-        return None
-    prefix = u.path.strip("/").rsplit("/", 1)[0] if "/" in u.path.strip("/") else ""
-    port = f":{u.port}" if u.port else ""
-    base = f"{u.scheme}://{u.hostname}{port}" + (f"/{prefix}" if prefix else "")
-    return f"{base}/api/{project}/envelope/"
-
-
-def sentry_envelope_tunnel(request):
-    """Same-origin relay for the SPA's Sentry ``tunnel`` option: forward envelopes for the configured
-    frontend DSN only, so browsers on the public site never talk to GlitchTip directly."""
-    import urllib.request
-
-    from django.conf import settings
-    from django.http import HttpResponse, HttpResponseBadRequest, HttpResponseNotAllowed
-
-    if request.method != "POST":
-        return HttpResponseNotAllowed(["POST"])
-    allowed = getattr(settings, "SENTRY_FRONTEND_DSN", "")
-    if not allowed:
-        return HttpResponse(status=204)
-    body = request.body
-    if len(body) > MAX_ENVELOPE_BYTES:
-        return HttpResponse(status=413)
-    try:
-        header = json.loads(body.split(b"\n", 1)[0] or b"{}")
-    except ValueError:
-        return HttpResponseBadRequest("bad envelope")
-    upstream = envelope_upstream(header if isinstance(header, dict) else {}, allowed)
-    if not upstream:
-        return HttpResponseBadRequest("unknown dsn")
-    req = urllib.request.Request(  # noqa: S310 - URL built from the configured DSN only
-        upstream,
-        data=body,
-        headers={"Content-Type": "application/x-sentry-envelope"},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310  # nosec B310
-            status = resp.status
-    except Exception as exc:  # noqa: BLE001 - never let monitoring break the app
-        status = getattr(exc, "code", 502) or 502
-        logging.getLogger(__name__).info("sentry envelope relay failed: %s", status)
-    return HttpResponse(status=200 if status < 300 else 502)

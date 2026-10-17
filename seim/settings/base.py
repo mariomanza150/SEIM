@@ -29,13 +29,10 @@ LOG_FORMAT = env("LOG_FORMAT", default="json")
 LOG_LEVEL = env("LOG_LEVEL", default="INFO")
 SENTRY_DSN = env("SENTRY_DSN", default="")
 SENTRY_ENVIRONMENT = env("SENTRY_ENVIRONMENT", default=DJANGO_ENV)
-SENTRY_TRACES_SAMPLE_RATE = env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.0)
+SENTRY_TRACES_SAMPLE_RATE = env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.05)
 SENTRY_SAMPLE_RATE = env.float("SENTRY_SAMPLE_RATE", default=1.0)
 # Minimum level sent to GlitchTip as structured logs (``off`` disables log capture).
 SENTRY_LOGS_LEVEL = env("SENTRY_LOGS_LEVEL", default="WARNING")
-# Frontend DSN (baked into the SPA at build time). The backend relays the SPA's envelopes to it
-# from same-origin /api/monitoring/envelope/ so browsers never need to reach GlitchTip directly.
-SENTRY_FRONTEND_DSN = env("VITE_SENTRY_DSN", default="")
 
 # Used by django.core.mail.send_mail and Celery notification tasks (From: header).
 # SMTP/SES settings files may override this when those backends are selected.

@@ -2,8 +2,8 @@
  * Error reporting and log capture (GlitchTip via the Sentry SDK).
  *
  * Everything is driven by VITE_SENTRY_* build-time env vars; with no VITE_SENTRY_DSN this is a no-op
- * and the SDK is never loaded. Events reach GlitchTip through the same-origin relay
- * (/api/monitoring/envelope/) so browsers never contact the GlitchTip host directly.
+ * and the SDK is never loaded. The DSN points at the public GlitchTip ingest host, which only accepts
+ * /api/<id>/envelope|store. VITE_SENTRY_TUNNEL can route events through a same-origin relay instead.
  *
  * Privacy (public repo, student data): sendDefaultPii is off; request bodies, cookies, auth headers,
  * tokens, names and e-mail addresses are scrubbed from errors, breadcrumbs and logs.
@@ -121,8 +121,8 @@ export function monitoringConfig(env = import.meta.env) {
     environment: env.VITE_SENTRY_ENVIRONMENT || env.MODE || 'production',
     release: env.VITE_SENTRY_RELEASE || undefined,
     sampleRate: rate(env.VITE_SENTRY_SAMPLE_RATE, 1),
-    tracesSampleRate: rate(env.VITE_SENTRY_TRACES_SAMPLE_RATE, 0),
-    tunnel: env.VITE_SENTRY_TUNNEL ?? '/api/monitoring/envelope/',
+    tracesSampleRate: rate(env.VITE_SENTRY_TRACES_SAMPLE_RATE, 0.05),
+    tunnel: env.VITE_SENTRY_TUNNEL || undefined,
     consoleLevels: at < 0 ? [] : LOG_LEVELS.slice(at),
     maxBreadcrumbs: 50,
   }
