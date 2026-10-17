@@ -60,6 +60,40 @@ const profilePayload = {
   additional_languages: [{ name: 'French', level: 'A2' }],
 }
 
+const genderRows = [
+  { id: 'g1', code: 'female', name: 'Femenino', label_en: 'Female', ordering: 0 },
+  { id: 'g2', code: 'male', name: 'Masculino', label_en: 'Male', ordering: 1 },
+  { id: 'g3', code: 'non_binary', name: 'No binario', label_en: 'Non-binary', ordering: 2 },
+]
+
+/** Gender + birth-place catalogs used by every Profile mount. */
+function sharedCatalogResponse(url, config) {
+  if (url === '/api/accounts/catalogs/gender-options/') return Promise.resolve({ data: genderRows })
+  if (url === '/api/accounts/catalogs/geo/countries/') {
+    return Promise.resolve({
+      data: [
+        { code: 'MX', value: 'México', label: 'México', has_states: true, aliases: ['Mexico'] },
+        { code: 'ES', value: 'España', label: 'España', has_states: false, aliases: ['Spain'] },
+      ],
+    })
+  }
+  if (url === '/api/accounts/catalogs/geo/states/') {
+    return Promise.resolve({
+      data: config?.params?.country === 'MX'
+        ? [{ code: 'COA', value: 'Coahuila', label: 'Coahuila' }, { code: 'NLE', value: 'Nuevo León', label: 'Nuevo León' }]
+        : [],
+    })
+  }
+  if (url === '/api/accounts/catalogs/geo/cities/') {
+    return Promise.resolve({
+      data: config?.params?.state === 'Coahuila'
+        ? [{ value: 'Saltillo', label: 'Saltillo' }, { value: 'Torreón', label: 'Torreón' }]
+        : [],
+    })
+  }
+  return null
+}
+
 describe('Profile', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -106,6 +140,8 @@ describe('Profile', () => {
       if (url === '/api/grades/scales/active/' || url === '/grades/api/scales/active/') {
         return Promise.resolve({ data: [{ id: 'scale-1', name: '4.0 scale' }] })
       }
+      const shared = sharedCatalogResponse(url, config)
+      if (shared) return shared
       return Promise.reject(new Error(`Unhandled GET ${url}`))
     })
     api.patch.mockResolvedValue({ data: profilePayload })
@@ -280,7 +316,7 @@ describe('Profile', () => {
     expect(wrapper.find('[data-testid="profile-unidad"]').element.value).toBe('unidad-1')
     expect(wrapper.find('[data-testid="profile-gender"]').element.value).toBe('female')
     expect(wrapper.find('[data-testid="profile-dob"]').element.value).toBe('2000-01-01')
-    expect(wrapper.find('[data-testid="profile-birthplace"]').element.value).toBe('Monterrey')
+    expect(wrapper.find('[data-testid="birth-place-legacy"]').text()).toContain('Monterrey')
     expect(wrapper.find('[data-testid="profile-postal-code"]').element.value).toBe('64000')
     expect(wrapper.find('[data-testid="profile-passport"]').element.value).toBe('P123456')
     expect(wrapper.find('[data-testid="profile-rfc"]').element.value).toBe('LOVA000101ABC')
@@ -330,6 +366,8 @@ describe('Profile', () => {
       if (url === '/api/grades/scales/active/') {
         return Promise.reject(new Error('not mounted'))
       }
+      const shared = sharedCatalogResponse(url)
+      if (shared) return shared
       if (url === '/grades/api/scales/active/') {
         return Promise.resolve({
           data: [{
@@ -609,5 +647,72 @@ describe('Profile', () => {
     expect(missing.text()).toContain('Credits approved')
     expect(wrapper.find('[data-testid="profile-gpa"]').attributes('required')).toBeDefined()
     expect(wrapper.find('[data-testid="profile-grade-scale"]').attributes('required')).toBeDefined()
+  })
+})
+
+describe('Profile catalogs and credits', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setAppLocale('en')
+    api.get.mockImplementation((url, config) => {
+      if (url === '/api/accounts/profile/') {
+        return Promise.resolve({ data: { ...profilePayload, gender: 'legacy_code', gender_label: 'Legacy' } })
+      }
+      const shared = sharedCatalogResponse(url, config)
+      if (shared) return shared
+      return Promise.resolve({ data: [] })
+    })
+    api.patch.mockResolvedValue({ data: profilePayload })
+  })
+
+  function mountProfile() {
+    return mount(Profile, {
+      global: { plugins: [i18n], stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+  }
+
+  it('renders gender options from the admin catalog and keeps a legacy saved value', async () => {
+    const wrapper = mountProfile()
+    await flushPromises()
+    const select = wrapper.find('[data-testid="profile-gender"]')
+    const labels = select.findAll('option').map((o) => o.text())
+    expect(labels).toEqual(expect.arrayContaining(['Female', 'Male', 'Non-binary', 'Legacy']))
+    expect(select.element.value).toBe('legacy_code')
+  })
+
+  it('shows Spanish gender labels when locale is es', async () => {
+    setAppLocale('es')
+    const wrapper = mountProfile()
+    await flushPromises()
+    const labels = wrapper.find('[data-testid="profile-gender"]').findAll('option').map((o) => o.text())
+    expect(labels).toEqual(expect.arrayContaining(['Femenino', 'Masculino']))
+  })
+
+  it('auto-calculates the credits percentage from approved / total and sends both', async () => {
+    const wrapper = mountProfile()
+    await flushPromises()
+    await wrapper.find('[data-testid="profile-credits-approved"]').setValue(150)
+    await wrapper.find('[data-testid="profile-credits-total"]').setValue(400)
+    await flushPromises()
+    const percent = wrapper.find('[data-testid="profile-credits-percent"]')
+    expect(percent.element.value).toBe('37.5')
+    expect(percent.attributes('readonly')).toBeDefined()
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(api.patch).toHaveBeenCalledWith(
+      '/api/accounts/profile/',
+      expect.objectContaining({ credits_approved: 150, credits_total: 400, credits_approved_percent: 37.5 }),
+    )
+  })
+
+  it('blocks save when approved credits exceed total', async () => {
+    const wrapper = mountProfile()
+    await flushPromises()
+    await wrapper.find('[data-testid="profile-credits-approved"]').setValue(500)
+    await wrapper.find('[data-testid="profile-credits-total"]').setValue(400)
+    await wrapper.find('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="profile-credits-error"]').exists()).toBe(true)
+    expect(api.patch).not.toHaveBeenCalled()
   })
 })

@@ -19,6 +19,7 @@ from .models import (
     AcademicLevel,
     AllowedEmailDomain,
     BankInstitution,
+    GenderOption,
     HomeAcademicProgram,
     Permission,
     Profile,
@@ -41,6 +42,7 @@ from .serializers import (
     ChangePasswordSerializer,
     DeleteAccountResponseSerializer,
     EmailVerificationSerializer,
+    GenderOptionSerializer,
     HomeAcademicProgramSerializer,
     LoginSerializer,
     LogoutResponseSerializer,
@@ -243,6 +245,43 @@ class HomeAcademicProgramViewSet(ActiveCatalogViewSet):
         if unidad_id:
             queryset = queryset.filter(school__unidad_id=unidad_id)
         return queryset
+
+
+class GenderOptionViewSet(ActiveCatalogViewSet):
+    queryset = GenderOption.objects.all()
+    serializer_class = GenderOptionSerializer
+
+
+class _GeoCatalogBase(APIView):
+    """Read-only static birth-place catalog for profile selectors."""
+
+    permission_classes = [IsAuthenticated]
+
+
+class GeoCountryCatalogView(_GeoCatalogBase):
+    def get(self, request):
+        from accounts.geo_catalog import country_options
+
+        return Response(country_options())
+
+
+class GeoStateCatalogView(_GeoCatalogBase):
+    def get(self, request):
+        from accounts.geo_catalog import state_options
+
+        return Response(state_options(request.query_params.get("country")))
+
+
+class GeoCityCatalogView(_GeoCatalogBase):
+    def get(self, request):
+        from accounts.geo_catalog import city_options
+
+        return Response(
+            city_options(
+                request.query_params.get("country"),
+                request.query_params.get("state"),
+            )
+        )
 
 
 class SpokenLanguageViewSet(ActiveCatalogViewSet):
