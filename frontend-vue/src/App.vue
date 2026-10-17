@@ -17,6 +17,7 @@
   <ConfirmDialog />
   <CommandPalette />
   <ProductTour />
+  <ReportIssueWidget />
 </template>
 
 <script setup>
@@ -36,9 +37,12 @@ import ToastContainer from '@/components/ToastContainer.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import CommandPalette from '@/components/CommandPalette.vue'
 import ProductTour from '@/components/ProductTour.vue'
+import ReportIssueWidget from '@/components/qa/ReportIssueWidget.vue'
+import { useQaStore } from '@/stores/qa'
 
 const { t, te, locale } = useI18n()
 const authStore = useAuthStore()
+const qaStore = useQaStore()
 const { loadBranding } = useBranding()
 const { info } = useToast()
 let mediaQuery = null
@@ -76,6 +80,7 @@ onMounted(async () => {
   connectIfAuthenticated()
 
   if (authStore.isAuthenticated) {
+    qaStore.load()
     await loadUiPreferences()
   }
 
@@ -102,8 +107,10 @@ watch(locale, () => {
 watch(() => authStore.isAuthenticated, async (isAuth) => {
   if (isAuth) {
     connectIfAuthenticated()
+    qaStore.load(true)
     await loadUiPreferences()
   } else {
+    qaStore.reset()
     disconnect()
     clearUiPreferences()
     applyUiPreferences()

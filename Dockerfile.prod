@@ -20,6 +20,10 @@ RUN npm ci
 # Copy frontend source (dist excluded via .dockerignore)
 COPY frontend-vue/ ./
 
+# Commit shown in the tester version badge (passed by deploy-local-prod.ps1).
+ARG GIT_COMMIT=
+ENV GIT_COMMIT=${GIT_COMMIT}
+
 # Drop any leftover build output, then compile a clean SPA
 RUN rm -rf dist && npm run build
 
@@ -27,6 +31,10 @@ RUN rm -rf dist && npm run build
 # STAGE 2: Python/Django Application
 # =============================================================================
 FROM python:3.12-slim as base
+
+# Build commit reported to the SPA tester badge (settings.BUILD_COMMIT).
+ARG GIT_COMMIT=
+ENV GIT_COMMIT=${GIT_COMMIT}
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \

@@ -104,6 +104,8 @@ urlpatterns = [
         name="institution-features",
     ),
     # Exchange viewsets + calendar ICS (owned by exchange.urls)
+    # Tester toolkit (404s unless TESTER_TOOLS_ENABLED + DEPLOY_TIER=test).
+    path("qa/", include("qa.urls")),
     path("", include("exchange.urls")),
     path(
         "notifications/routing-reference/",

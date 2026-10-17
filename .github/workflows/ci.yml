@@ -181,7 +181,7 @@ jobs:
           pytest \
             --cov=accounts --cov=analytics --cov=api --cov=application_forms --cov=core \
             --cov=data_management --cov=documents --cov=exchange \
-            --cov=grades --cov=internacional --cov=notifications \
+            --cov=grades --cov=internacional --cov=notifications --cov=qa \
             --cov=seim \
             --cov-config=pyproject.toml \
             --cov-report=xml --cov-report=html --cov-fail-under=80 \

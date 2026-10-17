@@ -29,6 +29,19 @@ LOG_FORMAT = env("LOG_FORMAT", default="json")
 LOG_LEVEL = env("LOG_LEVEL", default="INFO")
 SENTRY_DSN = env("SENTRY_DSN", default="")
 SENTRY_ENVIRONMENT = env("SENTRY_ENVIRONMENT", default=DJANGO_ENV)
+# Git commit of the running build (set by the deploy script; empty when unknown).
+BUILD_COMMIT = env("GIT_COMMIT", default="").strip()[:40]
+
+# Tester toolkit (qa app). Tools are active only when TESTER_TOOLS_ENABLED is true
+# AND DEPLOY_TIER is "development" or "test" AND the user has User.is_tester.
+# production.py defaults DEPLOY_TIER to "production" so real prod fails closed.
+TESTER_TOOLS_ENABLED = env.bool("TESTER_TOOLS_ENABLED", default=False)
+DEPLOY_TIER = env("DEPLOY_TIER", default="development").strip().lower()
+# Shared password for seeded demo accounts (seed_test_accounts). Never committed.
+TESTER_DEMO_PASSWORD = env("TESTER_DEMO_PASSWORD", default="")
+QA_MAX_ATTACHMENTS = env.int("QA_MAX_ATTACHMENTS", default=5)
+QA_MAX_IMAGE_MB = env.int("QA_MAX_IMAGE_MB", default=10)
+QA_MAX_VIDEO_MB = env.int("QA_MAX_VIDEO_MB", default=25)
 
 # Used by django.core.mail.send_mail and Celery notification tasks (From: header).
 # SMTP/SES settings files may override this when those backends are selected.
@@ -100,6 +113,7 @@ LOCAL_APPS = [
     "workflows",
     "data_management",
     "toefl",
+    "qa",  # Tester toolkit: issue reports, demo accounts, outbox (env-gated)
 ]
 
 INSTALLED_APPS = (
@@ -264,6 +278,11 @@ REST_FRAMEWORK = {
         "burst": "10/minute",  # Burst rate for login/register endpoints
         # IP safety net for resend-verification; per-email 1/5min is in accounts.resend_verification
         "resend_verification": "10/hour",
+        # Tester toolkit (qa app); applied on the views themselves.
+        "qa_issue": "20/hour",
+        "qa_upload": "60/hour",
+        "qa_demo_login": "30/hour",
+        "qa_reset": "1/minute",
     },
 }
 

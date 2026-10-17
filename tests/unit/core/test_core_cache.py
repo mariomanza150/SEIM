@@ -550,3 +550,17 @@ class TestCacheErrorHandling(TestCase):
             # Should not raise exception
             response = middleware(request)
             self.assertEqual(response.content.decode(), "response")
+
+
+def test_api_cache_middleware_skips_requests_with_authorization_header(rf):
+    """JWT requests look anonymous to middleware; they must never be cached."""
+    from django.contrib.auth.models import AnonymousUser
+
+    from core.cache import APICacheMiddleware
+
+    req = rf.get("/api/qa/issues/", HTTP_AUTHORIZATION="Bearer abc")
+    req.user = AnonymousUser()
+    assert APICacheMiddleware._should_cache_request(req) is False
+    anon = rf.get("/api/programs/")
+    anon.user = AnonymousUser()
+    assert APICacheMiddleware._should_cache_request(anon) is True
