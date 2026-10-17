@@ -145,9 +145,10 @@ _QUERY_SECRET_RE = re.compile(
     r"(?i)([?&](?:token|access|refresh|key|code|password|email|signature|uid)[^=&]{0,40}=)[^&#\s]+"
 )
 # Bounded (0-40 chars) key prefix/suffix and a start-of-word lookbehind: an open-ended [\w-]* here
-# backtracked quadratically on long alphanumeric / base64 blobs (ReDoS).
+# backtracked quadratically on long alphanumeric / base64 blobs (ReDoS). The optional quote on
+# each side of the separator also catches JSON / repr / kwargs forms: {"password": "x"}, token='x'.
 _KV_SECRET_RE = re.compile(
-    r"(?i)(?<![\w-])([\w-]{0,40}?(?:password|passwd|pwd|secret|token|api[-_]?key)[\w-]{0,40})(\s*[=:]\s*)[^&\s\"',;]+"
+    r"(?i)(?<![\w-])([\w-]{0,40}?(?:password|passwd|pwd|secret|token|api[-_]?key)[\w-]{0,40})([\"']?\s*[=:]\s*[\"']?)[^&\s\"',;]+"
 )
 _KV_NAME_RE = re.compile(
     r"(?i)(\b(?:name|nombre|full_name|first_name|last_name|apellidos?)\s*[=:]\s*)[^\s&,;'\"=]+(?:\s+(?![\w-]+\s*[=:])[^\s&,;'\"=]+){0,3}"
