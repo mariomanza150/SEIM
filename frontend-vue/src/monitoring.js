@@ -10,6 +10,18 @@
  */
 
 export const FILTERED = '[Filtered]'
+/**
+ * scrubText returns at most this many characters (plus TRUNCATED). Longer input is cut to a window of
+ * MAX_SCRUB_CHARS + SCRUB_WINDOW_SLACK at a token boundary, scrubbed, and the *scrubbed* text is cut
+ * again at a token boundary, so a secret straddling the cut is never half-kept.
+ */
+export const MAX_SCRUB_CHARS = 8192
+export const SCRUB_WINDOW_SLACK = 1024
+export const TRUNCATED = '\u2026[truncated]'
+// Token boundaries for cutting. "." "=" ":" "/" "?" "[" "]" are deliberately not boundaries, so a cut never
+// keeps part of a JWT, a key=value pair, a URL or a "[Filtered]" marker.
+const CUT_DELIMITERS = new Set([...' \t\r\n\f\v&,;\'"<>(){}|'])
+export const UNSERIALIZABLE = '[unserializable]'
 
 const SENSITIVE_KEY_PARTS = [
   'password', 'passwd', 'secret', 'token', 'authorization', 'cookie', 'session', 'csrf',
@@ -18,12 +30,16 @@ const SENSITIVE_KEY_PARTS = [
 ]
 // Plain 'name' is not here: contexts.os.name etc. are harmless (user.name goes with user).
 const SENSITIVE_EXACT = new Set(['user_name', 'address', 'ip_address'])
-const EMAIL_RE = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
+// The (^|[^...]) prefix anchors the match at the start of a run, so long non-email runs stay linear.
+// No lookbehind anywhere in this file: it is a syntax error on Safari/iOS < 16.4 and would break the app.
+const EMAIL_RE = /(^|[^\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
 const JWT_RE = /\beyJ[\w-]{5,}\.[\w-]{5,}\.[\w-]{5,}\b/g
 const BEARER_RE = /\b(bearer|token|basic)\s+[A-Za-z0-9._~+/=-]{8,}/gi
-const KV_SECRET_RE = /([\w-]*(?:password|passwd|secret|token|api[_-]?key)[\w-]*\s*[=:]\s*)[^\s&,;'"]+/gi
+// Bounded (0-40 chars) key prefix/suffix and a start-of-word prefix group: an open-ended [\w-]* here
+// backtracked quadratically on long alphanumeric / base64 blobs (ReDoS).
+const KV_SECRET_RE = /(^|[^\w-])([\w-]{0,40}?(?:password|passwd|pwd|secret|token|api[-_]?key)[\w-]{0,40})(\s*[=:]\s*)[^&\s"',;]+/gi
 const KV_NAME_RE = /(\b(?:name|nombre|full_name|first_name|last_name|apellidos?)\s*[=:]\s*)[^\s&,;'"=]+(?:\s+(?![\w-]+\s*[=:])[^\s&,;'"=]+){0,3}/gi
-const QUERY_SECRET_RE = /([?&](?:token|access|refresh|key|code|password|email|signature|uid)[^=&]*=)[^&#\s]+/gi
+const QUERY_SECRET_RE = /([?&](?:token|access|refresh|key|code|password|email|signature|uid)[^=&]{0,40}=)[^&#\s]+/gi
 
 export function isSensitiveKey(key) {
   const k = String(key).toLowerCase()
@@ -32,12 +48,27 @@ export function isSensitiveKey(key) {
 
 export function scrubText(value) {
   if (typeof value !== 'string') return value
+  if (value.length <= MAX_SCRUB_CHARS) return scrubPatterns(value)
+  const window = cutAtBoundary(value, MAX_SCRUB_CHARS + SCRUB_WINDOW_SLACK)
+  return cutAtBoundary(scrubPatterns(window), MAX_SCRUB_CHARS) + TRUNCATED
+}
+
+/** First `limit` chars of `text`, minus any partial last token (dropped, never kept). */
+function cutAtBoundary(text, limit) {
+  if (text.length <= limit || CUT_DELIMITERS.has(text[limit])) return text.slice(0, limit)
+  for (let i = limit - 1; i >= 0; i -= 1) {
+    if (CUT_DELIMITERS.has(text[i])) return text.slice(0, i + 1)
+  }
+  return ''
+}
+
+function scrubPatterns(value) {
   return value
-    .replace(EMAIL_RE, FILTERED)
+    .replace(EMAIL_RE, (_m, pre) => pre + FILTERED)
     .replace(JWT_RE, FILTERED)
     .replace(BEARER_RE, (_m, kind) => `${kind} ${FILTERED}`)
     .replace(QUERY_SECRET_RE, (_m, prefix) => prefix + FILTERED)
-    .replace(KV_SECRET_RE, (_m, prefix) => prefix + FILTERED)
+    .replace(KV_SECRET_RE, (_m, pre, key, sep) => pre + key + sep + FILTERED)
     .replace(KV_NAME_RE, (_m, prefix) => prefix + FILTERED)
 }
 
@@ -53,6 +84,15 @@ export function scrub(value, depth = 0) {
     return out
   }
   return value
+}
+
+/** String(value) that never throws (e.g. a throwing toString); returns UNSERIALIZABLE instead. */
+export function safeString(value) {
+  try {
+    return String(value)
+  } catch {
+    return UNSERIALIZABLE
+  }
 }
 
 function scrubBreadcrumbValues(crumbs) {
@@ -125,7 +165,7 @@ export function allowLog(log, now = Date.now()) {
     logWindowCount = 0
     logSeen.clear()
   }
-  const key = `${log.level}:${String(log.message).slice(0, 200)}`
+  const key = `${log.level}:${safeString(log.message).slice(0, 200)}`
   if (logSeen.has(key) || logWindowCount >= LOG_MAX_PER_WINDOW) return false
   logSeen.set(key, now)
   logWindowCount += 1
