@@ -23,7 +23,7 @@ LEGACY_DEMO_EMAILS = [
     "test@example.com",
     "admin@seim.local",
     "coordinator@seim.local",
-    "student@seim.local",
+    "student@university.edu",
 ]
 
 DESCRIPTIONS = {
