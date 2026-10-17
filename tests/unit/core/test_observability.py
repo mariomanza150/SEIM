@@ -132,7 +132,7 @@ def test_scrub_event_drops_bodies_cookies_auth_and_identity():
     assert "abc" not in req["url"]
     assert event["user"] == {"id": 3}
     assert "a@b.co" not in event["logentry"]["message"]
-    assert event["logentry"]["params"] == [{"token": FILTERED}]
+    assert "params" not in event["logentry"]
     assert "a@b.co" not in event["exception"]["values"][0]["value"]
     assert event["breadcrumbs"]["values"][0]["data"] == {"password": FILTERED}
 
@@ -216,3 +216,20 @@ def test_scrub_log_drops_django_request_4xx_but_keeps_errors():
         "attributes": {"logger.name": "django.request"},
     }
     assert scrub_log(err) is not None
+
+
+def test_message_parameters_are_dropped_from_events_and_logs():
+    event = scrub_event({"logentry": {"message": "hi %s", "params": ["Ana Perez"]}})
+    assert "Ana Perez" not in json.dumps(event)
+    log = scrub_log(
+        {
+            "level": "warn",
+            "body": "hi",
+            "attributes": {
+                "sentry.message.template": "hi %s",
+                "sentry.message.parameter.0": "Ana Perez",
+                "sentry.message.parameter.name": "Ana Perez",
+            },
+        }
+    )
+    assert log["attributes"] == {"sentry.message.template": "hi %s"}

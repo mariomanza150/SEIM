@@ -132,6 +132,21 @@ describe('isChunkLoadError', () => {
   })
 })
 
+describe('message parameters', () => {
+  beforeEach(() => resetLogLimiter())
+
+  it('are dropped from logs and events', () => {
+    const log = scrubLog({
+      level: 'warn',
+      message: 'hi',
+      attributes: { 'sentry.message.template': 'hi %s', 'sentry.message.parameter.0': 'Ana Perez' },
+    })
+    expect(log.attributes).toEqual({ 'sentry.message.template': 'hi %s' })
+    const event = scrubEvent({ logentry: { message: 'hi %s', params: ['Ana Perez'] } })
+    expect(JSON.stringify(event)).not.toContain('Ana Perez')
+  })
+})
+
 describe('log limiter', () => {
   beforeEach(() => resetLogLimiter())
 

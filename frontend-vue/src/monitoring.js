@@ -84,6 +84,10 @@ export function scrubEvent(event) {
     if (event[key]) event[key] = scrub(event[key])
   }
   if (event.message) event.message = scrubText(event.message)
+  if (event.logentry) {
+    delete event.logentry.params
+    if (event.logentry.message) event.logentry.message = scrubText(event.logentry.message)
+  }
   for (const exc of event.exception?.values || []) {
     if (exc.value) exc.value = scrubText(exc.value)
   }
@@ -137,7 +141,13 @@ export function scrubLog(log) {
   if (!log) return log
   if (!allowLog(log)) return null
   if (typeof log.message === 'string') log.message = scrubText(log.message)
-  if (log.attributes) log.attributes = scrub(log.attributes)
+  if (log.attributes) {
+    // Drop message parameters entirely (names etc.); the message already holds the scrubbed text.
+    const kept = Object.fromEntries(
+      Object.entries(log.attributes).filter(([k]) => !k.startsWith('sentry.message.parameter')),
+    )
+    log.attributes = scrub(kept)
+  }
   return log
 }
 

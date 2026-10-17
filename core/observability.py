@@ -223,8 +223,8 @@ def scrub_event(event: dict, hint: dict | None = None) -> dict:
         for k in ("message", "formatted"):
             if isinstance(logentry.get(k), str):
                 logentry[k] = scrub_text(logentry[k])
-        if "params" in logentry:
-            logentry["params"] = scrub(logentry["params"])
+        # Params can carry names verbatim; the formatted text is enough (and is scrubbed).
+        logentry.pop("params", None)
     for exc in (event.get("exception") or {}).get("values") or []:
         if isinstance(exc.get("value"), str):
             exc["value"] = scrub_text(exc["value"])
@@ -252,7 +252,14 @@ def scrub_log(log: dict, hint: dict | None = None) -> dict | None:
     if isinstance(log.get("body"), str):
         log["body"] = scrub_text(log["body"])
     if isinstance(log.get("attributes"), dict):
-        log["attributes"] = scrub(log["attributes"])
+        # Drop message parameters entirely (names etc.); the body already holds the scrubbed text.
+        log["attributes"] = scrub(
+            {
+                k: v
+                for k, v in log["attributes"].items()
+                if not str(k).startswith("sentry.message.parameter")
+            }
+        )
     return log
 
 
