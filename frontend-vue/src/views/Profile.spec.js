@@ -642,7 +642,7 @@ describe('Profile', () => {
     await flushPromises()
     const missing = wrapper.find('[data-testid="profile-missing-fields"]')
     expect(missing.exists()).toBe(true)
-    expect(missing.text()).toContain('GPA')
+    expect(missing.text()).toContain('Promedio')
     expect(missing.text()).toContain('Grading scale')
     expect(missing.text()).toContain('Credits approved')
     expect(wrapper.find('[data-testid="profile-gpa"]').attributes('required')).toBeDefined()
@@ -714,5 +714,89 @@ describe('Profile catalogs and credits', () => {
     await flushPromises()
     expect(wrapper.find('[data-testid="profile-credits-error"]').exists()).toBe(true)
     expect(api.patch).not.toHaveBeenCalled()
+  })
+})
+
+describe('Profile Promedio and grade scale policy', () => {
+  function mockWith(profileOverrides) {
+    api.get.mockImplementation((url, config) => {
+      if (url === '/api/accounts/profile/') {
+        return Promise.resolve({ data: { ...profilePayload, ...profileOverrides } })
+      }
+      if (url === '/api/grades/scales/active/') {
+        return Promise.resolve({
+          data: [
+            { id: 'scale-10', name: 'MX 0-10', min_value: 0, max_value: 10 },
+            { id: 'scale-100', name: 'MX 0-100', min_value: 0, max_value: 100 },
+          ],
+        })
+      }
+      const shared = sharedCatalogResponse(url, config)
+      if (shared) return shared
+      return Promise.resolve({ data: [] })
+    })
+  }
+
+  function mountProfile() {
+    return mount(Profile, {
+      global: { plugins: [i18n], stubs: { RouterLink: { template: '<a><slot /></a>' } } },
+    })
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setAppLocale('en')
+    api.patch.mockResolvedValue({ data: profilePayload })
+  })
+
+  it('renders the grade scale before Promedio and labels it Promedio', async () => {
+    mockWith({ grade_scale: 'scale-10', gpa: 8.5 })
+    const wrapper = mountProfile()
+    await flushPromises()
+    const html = wrapper.html()
+    expect(html.indexOf('profile-grade-scale')).toBeLessThan(html.indexOf('data-testid="profile-gpa"'))
+    expect(wrapper.find('label[for="profile-gpa"]').text()).toContain('Promedio')
+    expect(wrapper.text()).not.toContain('GPA')
+  })
+
+  it('disables Promedio until a grade scale is chosen and applies scale bounds', async () => {
+    mockWith({ grade_scale: null, gpa: null })
+    const wrapper = mountProfile()
+    await flushPromises()
+    const gpa = wrapper.find('[data-testid="profile-gpa"]')
+    expect(gpa.attributes('disabled')).toBeDefined()
+    await wrapper.find('[data-testid="profile-grade-scale"]').setValue('scale-100')
+    await flushPromises()
+    const enabled = wrapper.find('[data-testid="profile-gpa"]')
+    expect(enabled.attributes('disabled')).toBeUndefined()
+    expect(enabled.attributes('max')).toBe('100')
+    expect(enabled.attributes('step')).toBe('0.1')
+    await enabled.setValue(150)
+    expect(wrapper.find('[data-testid="profile-gpa-range"]').exists()).toBe(true)
+  })
+
+  it('locks the grade scale to the institution default', async () => {
+    mockWith({
+      grade_scale: 'scale-100',
+      grade_scale_policy: { locked: true, default_grade_scale: 'scale-10', default_grade_scale_name: 'MX 0-10' },
+    })
+    const wrapper = mountProfile()
+    await flushPromises()
+    const select = wrapper.find('[data-testid="profile-grade-scale"]')
+    expect(select.element.value).toBe('scale-10')
+    expect(select.attributes('disabled')).toBeDefined()
+    expect(wrapper.find('[data-testid="profile-grade-scale-locked"]').exists()).toBe(true)
+  })
+
+  it('pre-selects an unlocked institution default only when no scale is saved', async () => {
+    mockWith({
+      grade_scale: null,
+      grade_scale_policy: { locked: false, default_grade_scale: 'scale-10', default_grade_scale_name: 'MX 0-10' },
+    })
+    const wrapper = mountProfile()
+    await flushPromises()
+    const select = wrapper.find('[data-testid="profile-grade-scale"]')
+    expect(select.element.value).toBe('scale-10')
+    expect(select.attributes('disabled')).toBeUndefined()
   })
 })

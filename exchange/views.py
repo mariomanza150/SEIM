@@ -1117,7 +1117,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
                 {
                     "detail": (
                         "Complete your personal, academic, and eligibility profile "
-                        "(GPA, grade scale, language, credits, and semester) before "
+                        "(promedio, grade scale, language, credits, and semester) before "
                         "starting an application."
                     ),
                     "code": "profile_incomplete",

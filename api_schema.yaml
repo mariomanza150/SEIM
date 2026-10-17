@@ -15884,7 +15884,20 @@ components:
           minimum: 0
         is_active:
           type: boolean
+        default_grade_scale:
+          type: string
+          format: uuid
+          nullable: true
+        default_grade_scale_name:
+          type: string
+          readOnly: true
+          default: ''
+        lock_grade_scale:
+          type: boolean
+          description: When set (with a default scale), students of this domain cannot
+            change their grade scale.
       required:
+      - default_grade_scale_name
       - id
       - name
     AllowedEmailDomainRequest:
@@ -15903,6 +15916,14 @@ components:
           minimum: 0
         is_active:
           type: boolean
+        default_grade_scale:
+          type: string
+          format: uuid
+          nullable: true
+        lock_grade_scale:
+          type: boolean
+          description: When set (with a default scale), students of this domain cannot
+            change their grade scale.
       required:
       - name
     AppearanceSettings:
@@ -20896,6 +20917,14 @@ components:
           minimum: 0
         is_active:
           type: boolean
+        default_grade_scale:
+          type: string
+          format: uuid
+          nullable: true
+        lock_grade_scale:
+          type: boolean
+          description: When set (with a default scale), students of this domain cannot
+            change their grade scale.
     PatchedAppearanceSettingsRequest:
       type: object
       description: Serializer for appearance settings only.
@@ -22700,6 +22729,9 @@ components:
         grade_scale_name:
           type: string
           readOnly: true
+        grade_scale_policy:
+          type: string
+          readOnly: true
         ingress_date:
           type: string
           format: date
@@ -22779,6 +22811,7 @@ components:
       - full_name
       - gender_label
       - grade_scale_name
+      - grade_scale_policy
       - home_academic_program_name
       - is_admin
       - is_eligibility_complete

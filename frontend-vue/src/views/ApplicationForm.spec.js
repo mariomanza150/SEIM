@@ -587,7 +587,7 @@ describe('ApplicationForm', () => {
       expect(wrapper.findAll('[data-testid="eligibility-fix-item"]').length).toBe(2)
     })
     const rows = wrapper.findAll('[data-testid="eligibility-fix-item"]')
-    expect(rows[0].text()).toContain('GPA')
+    expect(rows[0].text()).toContain('Promedio')
     expect(rows[1].text()).toContain('transcript')
     expect(rows[0].text()).toContain(i18n.global.t('eligibilityFix.openProfile'))
     expect(rows[1].text()).toContain(i18n.global.t('eligibilityFix.uploadDocuments'))
@@ -607,7 +607,7 @@ describe('ApplicationForm', () => {
 
     await vi.waitFor(() => {
       expect(mockErrorToast).toHaveBeenCalledWith(
-        'Complete eligibility fields on your profile (GPA, grading scale, language, credits %, and semester) before starting an application.',
+        'Complete eligibility fields on your profile (Promedio, grading scale, language, credits %, and semester) before starting an application.',
       )
       expect(mockReplace).toHaveBeenCalledWith({
         name: 'Profile',
@@ -653,7 +653,7 @@ describe('ApplicationForm', () => {
       query: { next: '/applications/new' },
     })
     expect(mockErrorToast).not.toHaveBeenCalledWith(
-      'Complete eligibility fields on your profile (GPA, grading scale, language, credits %, and semester) before starting an application.',
+      'Complete eligibility fields on your profile (Promedio, grading scale, language, credits %, and semester) before starting an application.',
     )
     expect(mockErrorToast).not.toHaveBeenCalledWith(
       'Your profile could not be checked. Complete it before applying.',

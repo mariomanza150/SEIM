@@ -58,7 +58,7 @@
     </div>
 
     <template v-if="activeTab !== 'destinations' && !loading && !error">
-      <p v-if="activeTab === 'domains'" class="text-muted">{{ t('adminCatalogs.domainHelp') }}</p>
+      <p v-if="activeTab === 'domains'" class="text-muted">{{ t('adminCatalogs.domainHelp') }} {{ t('adminCatalogs.domainLockHelp') }}</p>
 
       <form class="card mb-3" data-testid="admin-catalogs-create" @submit.prevent="createItem">
         <div class="card-body">
@@ -87,6 +87,21 @@
               <label class="form-label" for="catalog-create-label-en">{{ t('adminCatalogs.fields.labelEn') }}</label>
               <input id="catalog-create-label-en" v-model="draft.label_en" class="form-control" type="text">
             </div>
+            <template v-if="activeTab === 'domains'">
+              <div class="col-md-3">
+                <label class="form-label" for="catalog-create-scale">{{ t('adminCatalogs.fields.defaultGradeScale') }}</label>
+                <select id="catalog-create-scale" v-model="draft.default_grade_scale" class="form-select">
+                  <option value="">{{ t('adminCommon.notSet') }}</option>
+                  <option v-for="scale in gradeScales" :key="scale.id" :value="String(scale.id)">{{ scale.name }}</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <div class="form-check mt-2">
+                  <input id="catalog-create-lock" v-model="draft.lock_grade_scale" class="form-check-input" type="checkbox" :disabled="!draft.default_grade_scale">
+                  <label class="form-check-label" for="catalog-create-lock">{{ t('adminCatalogs.fields.lockGradeScale') }}</label>
+                </div>
+              </div>
+            </template>
             <div v-if="activeTab === 'languages'" class="col-md-4">
               <label class="form-label" for="catalog-create-aliases">{{ t('adminCatalogs.fields.aliases') }}</label>
               <input
@@ -194,6 +209,8 @@
                 <th v-if="activeTab === 'programs'" scope="col">{{ t('adminCatalogs.fields.school') }}</th>
                 <th v-if="activeTab === 'languages'" scope="col">{{ t('adminCatalogs.fields.aliases') }}</th>
                 <th v-if="activeTab === 'genders'" scope="col">{{ t('adminCatalogs.fields.labelEn') }}</th>
+                <th v-if="activeTab === 'domains'" scope="col">{{ t('adminCatalogs.fields.defaultGradeScale') }}</th>
+                <th v-if="activeTab === 'domains'" scope="col">{{ t('adminCatalogs.fields.lockGradeScale') }}</th>
                 <th scope="col">{{ t('adminCatalogs.fields.active') }}</th>
                 <th scope="col" class="text-end">{{ t('adminCommon.actions') }}</th>
               </tr>
@@ -222,6 +239,28 @@
                     <option value="">{{ t('adminCommon.notSet') }}</option>
                     <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
                   </select>
+                </td>
+                <td v-if="activeTab === 'domains'">
+                  <select v-model="item.default_grade_scale" class="form-select form-select-sm" data-testid="admin-catalogs-domain-scale" @change="onDomainScaleChange(item)">
+                    <option value="">{{ t('adminCommon.notSet') }}</option>
+                    <option v-for="scale in gradeScales" :key="scale.id" :value="String(scale.id)">{{ scale.name }}</option>
+                  </select>
+                </td>
+                <td v-if="activeTab === 'domains'">
+                  <div class="form-check mb-0">
+                    <input
+                      :id="`catalog-lock-${item.id}`"
+                      v-model="item.lock_grade_scale"
+                      class="form-check-input"
+                      type="checkbox"
+                      :disabled="!item.default_grade_scale"
+                      data-testid="admin-catalogs-domain-lock"
+                      @change="saveRow(item)"
+                    >
+                    <label class="form-check-label" :for="`catalog-lock-${item.id}`">
+                      {{ item.lock_grade_scale ? t('adminCommon.yes') : t('adminCommon.no') }}
+                    </label>
+                  </div>
                 </td>
                 <td v-if="activeTab === 'genders'">
                   <input v-model="item.label_en" class="form-control form-control-sm" type="text" data-testid="admin-catalogs-label-en" @change="saveRow(item)">
@@ -365,6 +404,7 @@ const formError = ref(null)
 const items = ref([])
 const programs = ref([])
 const schools = ref([])
+const gradeScales = ref([])
 const draft = reactive(emptyDraft())
 
 const catalogUrl = computed(() => CATALOG_ENDPOINTS[activeTab.value] || '')
@@ -393,7 +433,17 @@ const catalogMobileColumns = computed(() => {
 })
 
 function emptyDraft() {
-  return { name: '', code: '', ordering: 0, is_active: true, school: '', aliasesText: '', label_en: '' }
+  return {
+    name: '',
+    code: '',
+    ordering: 0,
+    is_active: true,
+    school: '',
+    aliasesText: '',
+    label_en: '',
+    default_grade_scale: '',
+    lock_grade_scale: false,
+  }
 }
 
 function parseAliasesText(text) {
@@ -434,6 +484,8 @@ function normalizeItem(row) {
     school: row.school || '',
     aliasesText: aliasesToText(row.aliases),
     label_en: row.label_en || '',
+    default_grade_scale: row.default_grade_scale == null ? '' : String(row.default_grade_scale),
+    lock_grade_scale: Boolean(row.lock_grade_scale),
   }
 }
 
@@ -451,6 +503,10 @@ function payloadFrom(source) {
   if (activeTab.value === 'programs') payload.school = source.school
   if (activeTab.value === 'languages') payload.aliases = parseAliasesText(source.aliasesText)
   if (activeTab.value === 'genders') payload.label_en = (source.label_en || '').trim()
+  if (activeTab.value === 'domains') {
+    payload.default_grade_scale = source.default_grade_scale || null
+    payload.lock_grade_scale = Boolean(source.default_grade_scale && source.lock_grade_scale)
+  }
   return payload
 }
 
@@ -478,6 +534,14 @@ async function load() {
     if (activeTab.value === 'programs') {
       const schoolsRes = await api.get(CATALOG_ENDPOINTS.schools)
       schools.value = normalizeApiList(schoolsRes.data)
+    }
+    if (activeTab.value === 'domains') {
+      try {
+        const scalesRes = await api.get('/api/grades/scales/active/')
+        gradeScales.value = normalizeApiList(scalesRes.data)
+      } catch {
+        gradeScales.value = []
+      }
     }
   } catch (err) {
     console.error('Failed to load catalogs:', err)
@@ -516,6 +580,11 @@ async function saveRow(item) {
   } finally {
     saving.value = false
   }
+}
+
+function onDomainScaleChange(item) {
+  if (!item.default_grade_scale) item.lock_grade_scale = false
+  saveRow(item)
 }
 
 async function toggleActive(item) {

@@ -85,8 +85,34 @@ class CatalogSerializer(serializers.ModelSerializer):
 
 
 class AllowedEmailDomainSerializer(CatalogSerializer):
+    default_grade_scale = serializers.PrimaryKeyRelatedField(
+        queryset=GradeScale.objects.all(), required=False, allow_null=True
+    )
+    default_grade_scale_name = serializers.CharField(
+        source="default_grade_scale.name", read_only=True, default=""
+    )
+
     class Meta(CatalogSerializer.Meta):
         model = AllowedEmailDomain
+        fields = CatalogSerializer.Meta.fields + (
+            "default_grade_scale",
+            "default_grade_scale_name",
+            "lock_grade_scale",
+        )
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        lock = attrs.get(
+            "lock_grade_scale", getattr(self.instance, "lock_grade_scale", False)
+        )
+        scale = attrs.get(
+            "default_grade_scale", getattr(self.instance, "default_grade_scale", None)
+        )
+        if lock and scale is None:
+            raise serializers.ValidationError(
+                {"lock_grade_scale": "Choose a default grade scale before locking it."}
+            )
+        return attrs
 
 
 class AcademicLevelSerializer(CatalogSerializer):
@@ -164,6 +190,16 @@ class GenderOptionSerializer(CatalogSerializer):
         if qs.exists():
             raise serializers.ValidationError("A gender option with this code exists.")
         return code
+
+
+def _is_unprivileged(user) -> bool:
+    """Authenticated user without staff/coordinator/admin powers (i.e. a student)."""
+    if user is None or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "is_superuser", False) or getattr(user, "is_staff", False):
+        return False
+    has_any = getattr(user, "has_any_role", None)
+    return not (callable(has_any) and has_any(["coordinator", "admin"]))
 
 
 def _decimal_or_none(value):
@@ -247,6 +283,7 @@ class ProfileSerializer(serializers.ModelSerializer):
         max_digits=7, decimal_places=2, required=False, allow_null=True
     )
     gender_label = serializers.SerializerMethodField()
+    grade_scale_policy = serializers.SerializerMethodField()
     academic_level_name = serializers.CharField(
         source="academic_level.name", read_only=True
     )
@@ -279,6 +316,67 @@ class ProfileSerializer(serializers.ModelSerializer):
             )
             if part
         )
+
+    @staticmethod
+    def _domain_policy(user):
+        """AllowedEmailDomain row that governs this user's grade scale, if any."""
+        if user is None:
+            return None
+        domain = AllowedEmailDomain.for_email(getattr(user, "email", ""))
+        if domain is None or domain.default_grade_scale_id is None:
+            return None
+        return domain
+
+    def get_grade_scale_policy(self, obj):
+        domain = self._domain_policy(getattr(obj, "user", None))
+        if domain is None:
+            return {
+                "locked": False,
+                "default_grade_scale": None,
+                "default_grade_scale_name": "",
+            }
+        return {
+            "locked": bool(domain.lock_grade_scale),
+            "default_grade_scale": str(domain.default_grade_scale_id),
+            "default_grade_scale_name": domain.default_grade_scale.name,
+        }
+
+    def _apply_grade_scale_lock(self, attrs, actor):
+        """Students of a locked domain always get the domain's default scale."""
+        if self.instance is None or not _is_unprivileged(actor):
+            return
+        domain = self._domain_policy(self.instance.user)
+        if domain is None or not domain.lock_grade_scale:
+            return
+        requested = attrs.get("grade_scale")
+        if requested is not None and requested.pk != domain.default_grade_scale_id:
+            raise serializers.ValidationError(
+                {
+                    "grade_scale": (
+                        "Your institution sets the grade scale; it cannot be changed."
+                    )
+                }
+            )
+        if "grade_scale" in attrs or self.instance.grade_scale_id is None:
+            attrs["grade_scale"] = domain.default_grade_scale
+
+    def _validate_gpa_range(self, attrs):
+        if "gpa" not in attrs and "grade_scale" not in attrs:
+            return
+        gpa = attrs.get("gpa", getattr(self.instance, "gpa", None))
+        scale = attrs.get("grade_scale", getattr(self.instance, "grade_scale", None))
+        if gpa is None or scale is None:
+            return
+        low, high = sorted((scale.min_value, scale.max_value))
+        if gpa < low or gpa > high:
+            raise serializers.ValidationError(
+                {
+                    "gpa": (
+                        f"Promedio must be between {low:g} and {high:g} "
+                        f"for {scale.name}."
+                    )
+                }
+            )
 
     def get_gender_label(self, obj):
         code = getattr(obj, "gender", "") or ""
@@ -356,6 +454,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "gpa",
             "grade_scale",
             "grade_scale_name",
+            "grade_scale_policy",
             "ingress_date",
             "current_semester",
             "computed_semester",
@@ -487,6 +586,11 @@ class ProfileSerializer(serializers.ModelSerializer):
             )
         self._apply_birthplace(attrs)
         self._apply_credits(attrs)
+        request = self.context.get("request")
+        self._apply_grade_scale_lock(
+            attrs, getattr(request, "user", None) if request else None
+        )
+        self._validate_gpa_range(attrs)
         credits = attrs.get(
             "credits_approved_percent",
             getattr(self.instance, "credits_approved_percent", None),

@@ -69,7 +69,16 @@ class CatalogAdmin(admin.ModelAdmin):
 
 @admin.register(AllowedEmailDomain)
 class AllowedEmailDomainAdmin(CatalogAdmin):
-    pass
+    list_display = (
+        "name",
+        "code",
+        "default_grade_scale",
+        "lock_grade_scale",
+        "is_active",
+        "ordering",
+    )
+    list_editable = ("lock_grade_scale", "is_active", "ordering")
+    list_filter = ("is_active", "lock_grade_scale")
 
 
 @admin.register(GenderOption)
