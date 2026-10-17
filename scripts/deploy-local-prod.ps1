@@ -44,6 +44,13 @@ if (-not $SkipPull) {
     git pull --ff-only
 }
 
+# Stamp the build with the deployed commit (tester version badge / settings.BUILD_COMMIT).
+try {
+    $env:GIT_COMMIT = (git rev-parse HEAD).Trim()
+} catch {
+    $env:GIT_COMMIT = ""
+}
+
 if (-not $SkipBuild) {
     Write-Step "Building production images (web, celery, celery-beat, toefl)"
     $buildArgs = @(

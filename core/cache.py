@@ -342,6 +342,10 @@ class APICacheMiddleware:
     def _should_cache_request(request: HttpRequest) -> bool:
         if request.method != "GET" or not request.path.startswith("/api/"):
             return False
+        # JWT-authenticated requests look anonymous at the middleware layer
+        # (DRF authenticates later), so never cache anything carrying credentials.
+        if request.META.get("HTTP_AUTHORIZATION"):
+            return False
         user = getattr(request, "user", None)
         if user is not None and getattr(user, "is_authenticated", False):
             return False
