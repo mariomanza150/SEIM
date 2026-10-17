@@ -10,7 +10,7 @@ import warnings
 from copy import deepcopy
 from urllib.parse import urlparse, urlunparse
 
-from core.observability import init_sentry, logging_config
+from core.observability import init_sentry, logging_config, own_origin_targets
 
 from .base import *
 
@@ -271,7 +271,16 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 # Logging for development (stdout; human-readable unless LOG_FORMAT=json)
 LOGGING = logging_config(fmt=env("LOG_FORMAT", default="text"), level=LOG_LEVEL)
 
-init_sentry(dsn=SENTRY_DSN, environment=SENTRY_ENVIRONMENT, release=VERSION)
+init_sentry(
+    dsn=SENTRY_DSN,
+    environment=SENTRY_ENVIRONMENT,
+    release=VERSION,
+    traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+    sample_rate=SENTRY_SAMPLE_RATE,
+    logs_level=SENTRY_LOGS_LEVEL,
+    trace_propagation_targets=SENTRY_TRACE_PROPAGATION_TARGETS
+    or own_origin_targets(FRONTEND_BASE_URL),
+)
 
 # Disable throttle for E2E (set DISABLE_THROTTLE_E2E=1 when running API for Playwright)
 if os.environ.get("DISABLE_THROTTLE_E2E"):

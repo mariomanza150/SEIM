@@ -49,6 +49,13 @@ jobs:
       - name: Dependency manifest
         run: python scripts/check_python_deps.py
 
+      - name: No names in log calls (PII to GlitchTip)
+        run: |
+          if git grep -nE "(logger|logging|log)\.(debug|info|warning|warn|error|exception|critical)\(.*(get_full_name|first_name|last_name)" -- '*.py' ':!tests'; then
+            echo "::error::Don't log user names (get_full_name/first_name/last_name); log the user id instead."
+            exit 1
+          fi
+
       - name: Job summary
         if: always()
         run: |

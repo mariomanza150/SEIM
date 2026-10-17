@@ -7,7 +7,7 @@ This file contains settings specific to the production environment.
 import os
 from urllib.parse import urlparse, urlunparse
 
-from core.observability import init_sentry, logging_config
+from core.observability import init_sentry, logging_config, own_origin_targets
 
 from .base import *
 from .hosting import (
@@ -270,7 +270,16 @@ if LOG_FILE:
     for _logger in [LOGGING["root"], *LOGGING["loggers"].values()]:
         _logger["handlers"].append("file")
 
-init_sentry(dsn=SENTRY_DSN, environment=SENTRY_ENVIRONMENT, release=VERSION)
+init_sentry(
+    dsn=SENTRY_DSN,
+    environment=SENTRY_ENVIRONMENT,
+    release=VERSION,
+    traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+    sample_rate=SENTRY_SAMPLE_RATE,
+    logs_level=SENTRY_LOGS_LEVEL,
+    trace_propagation_targets=SENTRY_TRACE_PROPAGATION_TARGETS
+    or own_origin_targets(FRONTEND_BASE_URL),
+)
 
 # Same E2E hatch as development.py. Local-prod sets ALLOW_ANY_HOST=1.
 if os.environ.get("DISABLE_THROTTLE_E2E") or env.bool("ALLOW_ANY_HOST", default=False):
