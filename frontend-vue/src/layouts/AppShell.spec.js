@@ -188,4 +188,62 @@ describe('AppShell navbar', () => {
     expect(helpLinks[0].attributes('href')).toContain('/HelpCenter')
     wrapper.unmount()
   })
+
+  describe('sidebar collapse and route scroll', () => {
+    it('collapses the desktop sidebar to an icon rail and persists it', async () => {
+      const { wrapper } = await mountShell()
+      const aside = () => wrapper.find('[data-testid="app-shell-aside"]')
+      const main = () => wrapper.find('[data-testid="app-shell-main"]')
+      expect(aside().classes()).toContain('col-lg-2')
+      expect(main().classes()).toContain('col-lg-10')
+
+      await wrapper.find('[data-testid="sidebar-rail-toggle"]').trigger('click')
+      expect(aside().classes()).toContain('seim-app-shell__aside--rail')
+      expect(main().classes()).toContain('col')
+      expect(main().classes()).not.toContain('col-lg-10')
+      expect(localStorage.getItem('seim.sidebarCollapsed')).toBe('1')
+      expect(wrapper.find('[data-testid="sidebar-rail-toggle"]').attributes('aria-label')).toBe(
+        i18n.global.t('nav.expandSidebar'),
+      )
+      // Rail keeps navigation reachable via icon links with accessible names.
+      const railLinks = aside().findAll('a')
+      expect(railLinks.length).toBeGreaterThan(0)
+      expect(railLinks[0].attributes('aria-label')).toBeTruthy()
+
+      await wrapper.find('[data-testid="sidebar-collapse-toggle"]').trigger('click')
+      expect(aside().classes()).toContain('col-lg-2')
+      expect(localStorage.getItem('seim.sidebarCollapsed')).toBe('0')
+      wrapper.unmount()
+    })
+
+    it('restores the collapsed sidebar from localStorage', async () => {
+      localStorage.setItem('seim.sidebarCollapsed', '1')
+      const { wrapper } = await mountShell()
+      expect(wrapper.find('[data-testid="app-shell-aside"]').classes()).toContain('seim-app-shell__aside--rail')
+      wrapper.unmount()
+    })
+
+    it('renders collapsible nav sections', async () => {
+      const { wrapper } = await mountShell()
+      const toggle = wrapper.find('#seim-aside-nav-section-main-header')
+      expect(toggle.exists()).toBe(true)
+      expect(toggle.attributes('aria-expanded')).toBe('true')
+      wrapper.unmount()
+    })
+
+    it('scrolls main content into view on route change', async () => {
+      window.scrollTo = vi.fn()
+      Object.defineProperty(window, 'scrollY', { value: 900, writable: true, configurable: true })
+      const { wrapper, router } = await mountShell()
+      await router.push({ name: 'Applications' })
+      await flushPromises()
+      expect(window.scrollTo).toHaveBeenCalled()
+      window.scrollTo.mockClear()
+      await router.push({ name: 'Applications', query: { status: 'draft' } })
+      await flushPromises()
+      expect(window.scrollTo).not.toHaveBeenCalled()
+      window.scrollY = 0
+      wrapper.unmount()
+    })
+  })
 })
