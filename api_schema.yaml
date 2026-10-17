@@ -31,7 +31,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -62,7 +61,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -93,7 +91,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -106,7 +103,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -135,7 +131,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -164,7 +159,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -193,7 +187,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -210,7 +203,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -227,7 +219,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -244,7 +235,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -261,7 +251,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -278,7 +267,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -295,7 +283,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -312,7 +299,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -329,7 +315,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -358,7 +343,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -375,7 +359,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -393,6 +376,18 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: school
         schema:
@@ -402,16 +397,13 @@ paths:
       - academic-programs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostAcademicProgram'
+                $ref: '#/components/schemas/PaginatedHostAcademicProgramList'
           description: ''
     post:
       operationId: academic_programs_create
@@ -432,7 +424,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -457,7 +448,6 @@ paths:
       - academic-programs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -493,7 +483,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -528,7 +517,6 @@ paths:
               $ref: '#/components/schemas/PatchedHostAcademicProgramRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -552,7 +540,6 @@ paths:
       - academic-programs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -574,6 +561,18 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: school
         schema:
@@ -583,16 +582,13 @@ paths:
       - academic-programs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostSubject'
+                $ref: '#/components/schemas/PaginatedHostSubjectList'
           description: ''
     post:
       operationId: academic_programs_subjects_create
@@ -610,6 +606,18 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: school
         schema:
@@ -631,16 +639,13 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostSubject'
+                $ref: '#/components/schemas/PaginatedHostSubjectList'
           description: ''
   /api/accounts/api/permissions/:
     get:
@@ -659,6 +664,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -669,7 +680,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -693,7 +703,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -719,6 +728,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -729,7 +744,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -757,7 +771,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -782,7 +795,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -818,7 +830,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -853,7 +864,6 @@ paths:
               $ref: '#/components/schemas/PatchedProfileRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -877,7 +887,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -899,6 +908,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -909,7 +924,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -933,7 +947,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -963,6 +976,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -973,7 +992,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -989,7 +1007,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -1013,7 +1030,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1036,7 +1052,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -1056,7 +1071,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1090,6 +1104,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -1100,7 +1120,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1128,7 +1147,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -1153,7 +1171,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1189,7 +1206,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1224,7 +1240,6 @@ paths:
               $ref: '#/components/schemas/PatchedUserRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1241,7 +1256,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1268,7 +1282,6 @@ paths:
               $ref: '#/components/schemas/AppearanceSettingsRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1295,7 +1308,6 @@ paths:
               $ref: '#/components/schemas/PatchedAppearanceSettingsRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1326,7 +1338,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1357,7 +1368,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -1383,7 +1393,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1420,7 +1429,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1456,7 +1464,6 @@ paths:
               $ref: '#/components/schemas/PatchedAcademicLevelRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1481,7 +1488,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -1508,7 +1514,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1539,7 +1544,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -1565,7 +1569,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1602,7 +1605,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1638,7 +1640,6 @@ paths:
               $ref: '#/components/schemas/PatchedAllowedEmailDomainRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1663,7 +1664,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -1690,7 +1690,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1721,7 +1720,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -1747,7 +1745,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1784,7 +1781,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1820,7 +1816,6 @@ paths:
               $ref: '#/components/schemas/PatchedBankInstitutionRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1845,7 +1840,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -1858,7 +1852,218 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/catalogs/gender-options/:
+    get:
+      operationId: accounts_catalogs_gender_options_list
+      description: Unpaginated catalog CRUD. Admins write; others read active rows
+        only.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GenderOption'
+          description: ''
+    post:
+      operationId: accounts_catalogs_gender_options_create
+      description: Unpaginated catalog CRUD. Admins write; others read active rows
+        only.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenderOptionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GenderOptionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GenderOptionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenderOption'
+          description: ''
+  /api/accounts/catalogs/gender-options/{id}/:
+    get:
+      operationId: accounts_catalogs_gender_options_retrieve
+      description: Unpaginated catalog CRUD. Admins write; others read active rows
+        only.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this gender option.
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenderOption'
+          description: ''
+    put:
+      operationId: accounts_catalogs_gender_options_update
+      description: Unpaginated catalog CRUD. Admins write; others read active rows
+        only.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this gender option.
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenderOptionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GenderOptionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GenderOptionRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenderOption'
+          description: ''
+    patch:
+      operationId: accounts_catalogs_gender_options_partial_update
+      description: Unpaginated catalog CRUD. Admins write; others read active rows
+        only.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this gender option.
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedGenderOptionRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedGenderOptionRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedGenderOptionRequest'
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenderOption'
+          description: ''
+    delete:
+      operationId: accounts_catalogs_gender_options_destroy
+      description: Unpaginated catalog CRUD. Admins write; others read active rows
+        only.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this gender option.
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/accounts/catalogs/geo/cities/:
+    get:
+      operationId: accounts_catalogs_geo_cities_retrieve
+      description: Read-only static birth-place catalog for profile selectors.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/catalogs/geo/countries/:
+    get:
+      operationId: accounts_catalogs_geo_countries_retrieve
+      description: Read-only static birth-place catalog for profile selectors.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/accounts/catalogs/geo/states/:
+    get:
+      operationId: accounts_catalogs_geo_states_retrieve
+      description: Read-only static birth-place catalog for profile selectors.
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1885,7 +2090,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1916,7 +2120,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -1942,7 +2145,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -1979,7 +2181,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2015,7 +2216,6 @@ paths:
               $ref: '#/components/schemas/PatchedHomeAcademicProgramRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2040,7 +2240,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -2067,7 +2266,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2098,7 +2296,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -2124,7 +2321,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2161,7 +2357,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2197,7 +2392,6 @@ paths:
               $ref: '#/components/schemas/PatchedSchoolFacultyRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2222,7 +2416,182 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/accounts/catalogs/spoken-languages/:
+    get:
+      operationId: accounts_catalogs_spoken_languages_list
+      description: Unpaginated catalog CRUD. Admins write; others read active rows
+        only.
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SpokenLanguage'
+          description: ''
+    post:
+      operationId: accounts_catalogs_spoken_languages_create
+      description: Unpaginated catalog CRUD. Admins write; others read active rows
+        only.
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpokenLanguageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SpokenLanguageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SpokenLanguageRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpokenLanguage'
+          description: ''
+  /api/accounts/catalogs/spoken-languages/{id}/:
+    get:
+      operationId: accounts_catalogs_spoken_languages_retrieve
+      description: Unpaginated catalog CRUD. Admins write; others read active rows
+        only.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this spoken language.
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpokenLanguage'
+          description: ''
+    put:
+      operationId: accounts_catalogs_spoken_languages_update
+      description: Unpaginated catalog CRUD. Admins write; others read active rows
+        only.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this spoken language.
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpokenLanguageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SpokenLanguageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SpokenLanguageRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpokenLanguage'
+          description: ''
+    patch:
+      operationId: accounts_catalogs_spoken_languages_partial_update
+      description: Unpaginated catalog CRUD. Admins write; others read active rows
+        only.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this spoken language.
+        required: true
+      tags:
+      - accounts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSpokenLanguageRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSpokenLanguageRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSpokenLanguageRequest'
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SpokenLanguage'
+          description: ''
+    delete:
+      operationId: accounts_catalogs_spoken_languages_destroy
+      description: Unpaginated catalog CRUD. Admins write; others read active rows
+        only.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this spoken language.
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -2249,7 +2618,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2280,7 +2648,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -2306,7 +2673,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2343,7 +2709,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2379,7 +2744,6 @@ paths:
               $ref: '#/components/schemas/PatchedUnidadRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2404,7 +2768,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -2428,7 +2791,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2446,7 +2808,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2466,7 +2827,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2479,7 +2839,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2547,7 +2906,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2574,7 +2932,6 @@ paths:
               $ref: '#/components/schemas/NotificationSettingsRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2601,7 +2958,6 @@ paths:
               $ref: '#/components/schemas/PatchedNotificationSettingsRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2630,7 +2986,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2659,7 +3014,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2688,7 +3042,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2706,7 +3059,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2740,7 +3092,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2767,7 +3118,6 @@ paths:
               $ref: '#/components/schemas/PrivacySettingsRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2794,7 +3144,6 @@ paths:
               $ref: '#/components/schemas/PatchedPrivacySettingsRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2810,7 +3159,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2837,7 +3185,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2863,7 +3210,6 @@ paths:
               $ref: '#/components/schemas/PatchedProfileRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2892,7 +3238,6 @@ paths:
               $ref: '#/components/schemas/PatchedProfileUpdateRequestRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -2927,7 +3272,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -2962,7 +3306,6 @@ paths:
               description: Unspecified request body
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3004,7 +3347,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3041,7 +3383,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3064,7 +3405,6 @@ paths:
       - accounts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3091,7 +3431,6 @@ paths:
               $ref: '#/components/schemas/UserSettingsRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3118,7 +3457,6 @@ paths:
               $ref: '#/components/schemas/PatchedUserSettingsRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3147,7 +3485,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3164,7 +3501,6 @@ paths:
       - admin
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3195,7 +3531,6 @@ paths:
       - admin
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3226,7 +3561,6 @@ paths:
       - admin
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3239,7 +3573,6 @@ paths:
       - admin
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3268,7 +3601,6 @@ paths:
       - admin
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3297,7 +3629,6 @@ paths:
       - admin
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3349,6 +3680,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -3359,7 +3696,6 @@ paths:
       - agreement-documents
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3388,7 +3724,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -3414,7 +3749,6 @@ paths:
       - agreement-documents
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3451,7 +3785,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3487,7 +3820,6 @@ paths:
               $ref: '#/components/schemas/PatchedExchangeAgreementDocumentRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3512,7 +3844,6 @@ paths:
       - agreement-documents
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -3526,7 +3857,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3550,7 +3880,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3569,7 +3898,6 @@ paths:
       - analytics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3632,6 +3960,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -3642,7 +3976,6 @@ paths:
       - application-forms
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3675,7 +4008,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -3704,7 +4036,6 @@ paths:
       - application-forms
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3744,7 +4075,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3783,7 +4113,6 @@ paths:
               $ref: '#/components/schemas/PatchedFormTypeRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3811,7 +4140,6 @@ paths:
       - application-forms
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -3843,7 +4171,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3870,7 +4197,6 @@ paths:
       - application-forms
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3897,7 +4223,6 @@ paths:
       - application-forms
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3924,6 +4249,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -3934,7 +4265,6 @@ paths:
       - application-forms
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -3963,7 +4293,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -3988,7 +4317,6 @@ paths:
       - application-forms
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4024,7 +4352,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4059,7 +4386,6 @@ paths:
               $ref: '#/components/schemas/PatchedFormStepTemplateRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4083,7 +4409,6 @@ paths:
       - application-forms
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -4119,6 +4444,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: program
         schema:
@@ -4134,7 +4465,6 @@ paths:
       - application-forms
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4167,7 +4497,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -4196,7 +4525,6 @@ paths:
       - application-forms
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4236,7 +4564,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4275,7 +4602,6 @@ paths:
               $ref: '#/components/schemas/PatchedFormSubmissionRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4303,7 +4629,6 @@ paths:
       - application-forms
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -4329,7 +4654,6 @@ paths:
       - application-statuses
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4359,7 +4683,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -4383,7 +4706,6 @@ paths:
       - application-statuses
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4418,7 +4740,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4452,7 +4773,6 @@ paths:
               $ref: '#/components/schemas/PatchedApplicationStatusRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4475,7 +4795,6 @@ paths:
       - application-statuses
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -4491,11 +4810,16 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       tags:
       - application-subject-selections
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4523,7 +4847,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -4546,7 +4869,6 @@ paths:
       - application-subject-selections
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4580,7 +4902,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4613,7 +4934,6 @@ paths:
               $ref: '#/components/schemas/PatchedApplicationSubjectSelectionRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4635,7 +4955,6 @@ paths:
       - application-subject-selections
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -4682,6 +5001,12 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
       - in: query
@@ -4758,14 +5083,13 @@ paths:
       - applications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedApplicationList'
+                $ref: '#/components/schemas/PaginatedApplicationListList'
           description: ''
     post:
       operationId: applications_create
@@ -4786,7 +5110,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -4811,7 +5134,6 @@ paths:
       - applications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4847,7 +5169,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4882,7 +5203,6 @@ paths:
               $ref: '#/components/schemas/PatchedApplicationRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -4906,7 +5226,6 @@ paths:
       - applications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -4963,6 +5282,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: pending_review
         schema:
@@ -5037,7 +5362,6 @@ paths:
       - applications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5068,7 +5392,6 @@ paths:
       - applications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5102,7 +5425,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5140,7 +5462,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5178,7 +5499,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5203,7 +5523,6 @@ paths:
       - applications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5239,7 +5558,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5274,7 +5592,6 @@ paths:
               $ref: '#/components/schemas/PatchedApplicationRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5311,7 +5628,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5348,7 +5664,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5361,8 +5676,8 @@ paths:
     get:
       operationId: applications_solicitud_participacion_retrieve
       description: |-
-        Download system-generated Solicitud de Participación PDF
-        (profile + application + destination when host FKs exist).
+        Download system-generated Solicitud de Participación PDF (FS-SP / CGRI-SP).
+        Prefills profile + application + destination when host FKs exist.
       parameters:
       - in: path
         name: id
@@ -5375,7 +5690,6 @@ paths:
       - applications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5436,6 +5750,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: pending_review
         schema:
@@ -5510,7 +5830,6 @@ paths:
       - applications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5547,7 +5866,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5584,7 +5902,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5610,7 +5927,6 @@ paths:
       - applications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5647,7 +5963,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5665,7 +5980,6 @@ paths:
       - applications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5683,7 +5997,6 @@ paths:
       - applications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5715,6 +6028,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -5725,7 +6044,6 @@ paths:
       - calendar
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5756,7 +6074,6 @@ paths:
       - calendar
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5779,7 +6096,6 @@ paths:
       - calendar
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5836,7 +6152,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5859,7 +6174,6 @@ paths:
       - calendar
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5894,7 +6208,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5912,7 +6225,6 @@ paths:
       - calendar
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -5921,132 +6233,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/CalendarEvent'
           description: ''
-  /api/cms/documents/:
-    get:
-      operationId: cms_documents_retrieve
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/cms/documents/{id}/:
-    get:
-      operationId: cms_documents_retrieve_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/cms/documents/find/:
-    get:
-      operationId: cms_documents_find_retrieve
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/cms/images/:
-    get:
-      operationId: cms_images_retrieve
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/cms/images/{id}/:
-    get:
-      operationId: cms_images_retrieve_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/cms/images/find/:
-    get:
-      operationId: cms_images_find_retrieve
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/cms/pages/:
-    get:
-      operationId: cms_pages_retrieve
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/cms/pages/{id}/:
-    get:
-      operationId: cms_pages_retrieve_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /api/cms/pages/find/:
-    get:
-      operationId: cms_pages_find_retrieve
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
   /api/comments/:
     get:
       operationId: comments_list
@@ -6072,11 +6258,16 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       tags:
       - comments
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6104,7 +6295,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -6128,7 +6318,6 @@ paths:
       - comments
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6163,7 +6352,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6197,7 +6385,6 @@ paths:
               $ref: '#/components/schemas/PatchedCommentRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6220,7 +6407,6 @@ paths:
       - comments
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -6241,6 +6427,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -6251,7 +6443,6 @@ paths:
       - dashboard-configs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6278,7 +6469,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -6302,7 +6492,6 @@ paths:
       - dashboard-configs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6337,7 +6526,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6371,7 +6559,6 @@ paths:
               $ref: '#/components/schemas/PatchedDashboardConfigRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6394,7 +6581,6 @@ paths:
       - dashboard-configs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -6406,7 +6592,6 @@ paths:
       - data-management
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6418,7 +6603,6 @@ paths:
       - data-management
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6430,7 +6614,6 @@ paths:
       - data-management
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6442,7 +6625,6 @@ paths:
       - data-management
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6464,6 +6646,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -6474,7 +6662,6 @@ paths:
       - document-comments
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6502,7 +6689,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -6527,7 +6713,6 @@ paths:
       - document-comments
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6563,7 +6748,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6598,7 +6782,6 @@ paths:
               $ref: '#/components/schemas/PatchedDocumentCommentRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6622,7 +6805,6 @@ paths:
       - document-comments
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -6644,6 +6826,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -6654,7 +6842,6 @@ paths:
       - document-resubmissions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6682,7 +6869,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -6707,7 +6893,6 @@ paths:
       - document-resubmissions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6743,7 +6928,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6778,7 +6962,6 @@ paths:
               $ref: '#/components/schemas/PatchedDocumentResubmissionRequestRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6802,7 +6985,6 @@ paths:
       - document-resubmissions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -6826,6 +7008,12 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
       - name: search
@@ -6852,7 +7040,6 @@ paths:
       - document-types
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6880,7 +7067,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -6904,7 +7090,6 @@ paths:
       - document-types
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6939,7 +7124,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6973,7 +7157,6 @@ paths:
               $ref: '#/components/schemas/PatchedDocumentTypeRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -6996,7 +7179,6 @@ paths:
       - document-types
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -7004,8 +7186,12 @@ paths:
   /api/document-types/{id}/download-template/:
     get:
       operationId: document_types_download_template_retrieve
-      description: Download template; .docx files are prefilled when ?application=
-        is set.
+      description: |-
+        Download template; .docx files are prefilled when ?application= is set.
+
+        Official blank CGRI Word forms (no MERGEFIELD / ``{{…}}`` placeholders)
+        are served as exact sample bytes — mail-merge is skipped so the file
+        stays identical to ``SAMPLES/``.
       parameters:
       - in: path
         name: id
@@ -7017,7 +7203,6 @@ paths:
       - document-types
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7041,7 +7226,6 @@ paths:
       - document-types
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -7070,7 +7254,22 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentType'
+          description: ''
+  /api/document-types/file-type-families/:
+    get:
+      operationId: document_types_file_type_families_retrieve
+      description: Umbrella file-type groups (Image, Word, PDF) and their extensions.
+      tags:
+      - document-types
+      security:
+      - jwtAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7087,7 +7286,6 @@ paths:
       - document-types
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7113,6 +7311,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -7123,7 +7327,6 @@ paths:
       - document-validations
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7151,7 +7354,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -7176,7 +7378,6 @@ paths:
       - document-validations
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7212,7 +7413,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7247,7 +7447,6 @@ paths:
               $ref: '#/components/schemas/PatchedDocumentValidationRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7271,7 +7470,6 @@ paths:
       - document-validations
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -7306,6 +7504,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: pending_review
         schema:
@@ -7318,7 +7522,6 @@ paths:
       - documents
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7346,7 +7549,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -7371,7 +7573,6 @@ paths:
       - documents
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7407,7 +7608,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7442,7 +7642,6 @@ paths:
               $ref: '#/components/schemas/PatchedDocumentRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7466,7 +7665,6 @@ paths:
       - documents
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -7487,7 +7685,6 @@ paths:
       - documents
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7526,7 +7723,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7556,6 +7752,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: schema_version
         schema:
@@ -7570,7 +7772,6 @@ paths:
       - eligibility-rulesets
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7598,7 +7799,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -7623,7 +7823,6 @@ paths:
       - eligibility-rulesets
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7659,7 +7858,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7694,7 +7892,6 @@ paths:
               $ref: '#/components/schemas/PatchedEligibilityRuleSetRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7718,11 +7915,29 @@ paths:
       - eligibility-rulesets
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
           description: No response body
+  /api/eligibility-rulesets/document-schema/:
+    get:
+      operationId: eligibility_rulesets_document_schema_retrieve
+      description: Document format for ``rules_json`` / ``schema_version`` (distinct
+        from evaluation ``ELIGIBILITY_SCHEMA_VERSION``).
+      summary: Eligibility ruleset JSON schema
+      tags:
+      - eligibility-rulesets
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
   /api/email-verification/:
     post:
       operationId: email_verification_create
@@ -7743,7 +7958,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7763,6 +7977,7 @@ paths:
           type: string
           enum:
           - bilateral
+          - conahec
           - erasmus
           - multilateral
           - other
@@ -7771,6 +7986,7 @@ paths:
           * `bilateral` - Bilateral
           * `multilateral` - Multilateral
           * `erasmus` - Erasmus+
+          * `conahec` - CONAHEC
           * `specific` - Specific program
           * `other` - Other
       - in: query
@@ -7800,6 +8016,12 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
       - in: query
@@ -7852,7 +8074,6 @@ paths:
       - exchange-agreements
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7880,7 +8101,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -7905,7 +8125,6 @@ paths:
       - exchange-agreements
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7941,7 +8160,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -7976,7 +8194,6 @@ paths:
               $ref: '#/components/schemas/PatchedExchangeAgreementRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8000,7 +8217,6 @@ paths:
       - exchange-agreements
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -8021,7 +8237,6 @@ paths:
       - exchange-agreements
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8057,7 +8272,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8094,7 +8308,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8131,7 +8344,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8140,6 +8352,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/ExchangeAgreement'
           description: ''
+  /api/features/:
+    get:
+      operationId: features_retrieve
+      description: GET authenticated feature flags; PATCH admin-only.
+      tags:
+      - features
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: features_partial_update
+      description: GET authenticated feature flags; PATCH admin-only.
+      tags:
+      - features
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
   /api/grades/scales/:
     get:
       operationId: grades_scales_list
@@ -8158,6 +8393,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -8168,7 +8409,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8196,7 +8436,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -8223,7 +8462,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8259,7 +8497,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8294,7 +8531,6 @@ paths:
               $ref: '#/components/schemas/PatchedGradeScaleRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8318,7 +8554,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -8332,7 +8567,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8358,6 +8592,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -8368,7 +8608,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8396,7 +8635,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -8421,7 +8659,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8457,7 +8694,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8492,7 +8728,6 @@ paths:
               $ref: '#/components/schemas/PatchedGradeTranslationRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8516,7 +8751,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -8537,6 +8771,12 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
       - name: search
@@ -8561,7 +8801,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8591,7 +8830,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8621,7 +8859,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8651,7 +8888,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8678,6 +8914,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -8688,7 +8930,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8716,7 +8957,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -8741,7 +8981,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8777,7 +9016,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8812,7 +9050,6 @@ paths:
               $ref: '#/components/schemas/PatchedGradeValueRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8836,7 +9073,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -8856,7 +9092,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8875,6 +9110,18 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: program
         schema:
@@ -8884,16 +9131,13 @@ paths:
       - host-institutions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostInstitution'
+                $ref: '#/components/schemas/PaginatedHostInstitutionList'
           description: ''
     post:
       operationId: host_institutions_create
@@ -8915,7 +9159,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -8941,7 +9184,6 @@ paths:
       - host-institutions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -8978,7 +9220,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9014,7 +9255,6 @@ paths:
               $ref: '#/components/schemas/PatchedHostInstitutionRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9039,7 +9279,6 @@ paths:
       - host-institutions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -9062,6 +9301,18 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: program
         schema:
@@ -9071,16 +9322,13 @@ paths:
       - host-institutions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostSchool'
+                $ref: '#/components/schemas/PaginatedHostSchoolList'
           description: ''
     post:
       operationId: host_institutions_schools_create
@@ -9099,6 +9347,18 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: program
         schema:
@@ -9120,16 +9380,13 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostSchool'
+                $ref: '#/components/schemas/PaginatedHostSchoolList'
           description: ''
   /api/host-institutions/{id}/subjects/:
     get:
@@ -9149,6 +9406,18 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: program
         schema:
@@ -9158,16 +9427,13 @@ paths:
       - host-institutions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostSubject'
+                $ref: '#/components/schemas/PaginatedHostSubjectList'
           description: ''
     post:
       operationId: host_institutions_subjects_create
@@ -9186,6 +9452,18 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: program
         schema:
@@ -9207,16 +9485,13 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostSubject'
+                $ref: '#/components/schemas/PaginatedHostSubjectList'
           description: ''
   /api/host-subjects/:
     get:
@@ -9238,6 +9513,18 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: school
         schema:
@@ -9247,16 +9534,13 @@ paths:
       - host-subjects
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostSubject'
+                $ref: '#/components/schemas/PaginatedHostSubjectList'
           description: ''
     post:
       operationId: host_subjects_create
@@ -9278,7 +9562,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -9304,7 +9587,6 @@ paths:
       - host-subjects
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9341,7 +9623,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9377,7 +9658,6 @@ paths:
               $ref: '#/components/schemas/PatchedHostSubjectRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9402,7 +9682,6 @@ paths:
       - host-subjects
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -9447,6 +9726,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -9457,7 +9742,6 @@ paths:
       - metrics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9484,7 +9768,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -9508,7 +9791,6 @@ paths:
       - metrics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9543,7 +9825,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9577,7 +9858,6 @@ paths:
               $ref: '#/components/schemas/PatchedMetricRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9600,7 +9880,6 @@ paths:
       - metrics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -9613,7 +9892,6 @@ paths:
       - metrics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9630,7 +9908,6 @@ paths:
       - metrics
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9655,6 +9932,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -9665,7 +9948,6 @@ paths:
       - notification-preferences
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9692,7 +9974,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -9716,7 +9997,6 @@ paths:
       - notification-preferences
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9751,7 +10031,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9785,7 +10064,6 @@ paths:
               $ref: '#/components/schemas/PatchedNotificationPreferenceRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9808,7 +10086,6 @@ paths:
       - notification-preferences
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -9853,6 +10130,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -9883,7 +10166,6 @@ paths:
       - notifications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9913,7 +10195,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -9946,7 +10227,6 @@ paths:
       - notifications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -9988,7 +10268,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10031,7 +10310,6 @@ paths:
               $ref: '#/components/schemas/PatchedNotificationRoutingOverrideRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10063,7 +10341,6 @@ paths:
       - notifications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -10090,7 +10367,6 @@ paths:
       - notification-types
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10119,7 +10395,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -10142,7 +10417,6 @@ paths:
       - notification-types
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10176,7 +10450,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10209,7 +10482,6 @@ paths:
               $ref: '#/components/schemas/PatchedNotificationTypeRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10231,7 +10503,6 @@ paths:
       - notification-types
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -10286,11 +10557,16 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       tags:
       - notifications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10317,7 +10593,6 @@ paths:
               $ref: '#/components/schemas/NotificationRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -10342,7 +10617,6 @@ paths:
       - notifications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10377,7 +10651,6 @@ paths:
               $ref: '#/components/schemas/NotificationRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10412,7 +10685,6 @@ paths:
               $ref: '#/components/schemas/PatchedNotificationRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10436,7 +10708,6 @@ paths:
       - notifications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -10457,7 +10728,6 @@ paths:
       - notifications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -10489,7 +10759,6 @@ paths:
               $ref: '#/components/schemas/NotificationRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10517,7 +10786,6 @@ paths:
               $ref: '#/components/schemas/NotificationRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10545,7 +10813,6 @@ paths:
               $ref: '#/components/schemas/NotificationRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10567,7 +10834,6 @@ paths:
       - notifications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10586,7 +10852,6 @@ paths:
       - notifications
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10612,6 +10877,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -10622,7 +10893,6 @@ paths:
       - partner-contacts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10650,7 +10920,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -10673,7 +10942,6 @@ paths:
       - partner-contacts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10707,7 +10975,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10740,7 +11007,6 @@ paths:
               $ref: '#/components/schemas/PatchedPartnerContactRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10762,7 +11028,6 @@ paths:
       - partner-contacts
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -10784,6 +11049,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -10794,7 +11065,6 @@ paths:
       - partner
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10817,7 +11087,6 @@ paths:
       - partner
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10840,7 +11109,6 @@ paths:
       - partner
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10874,7 +11142,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10886,7 +11153,7 @@ paths:
   /api/partner/agreements/{id}/documents/:
     get:
       operationId: partner_agreements_documents_retrieve
-      description: Partner-facing agreements they are linked to (staff can also list).
+      description: List or upload repository files for a linked agreement.
       parameters:
       - in: path
         name: id
@@ -10897,7 +11164,39 @@ paths:
       - partner
       security:
       - jwtAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeAgreement'
+          description: ''
+    post:
+      operationId: partner_agreements_documents_create
+      description: List or upload repository files for a linked agreement.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - partner
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ExchangeAgreementRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ExchangeAgreementRequest'
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExchangeAgreementRequest'
+        required: true
+      security:
+      - jwtAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10932,7 +11231,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10959,6 +11257,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -10969,7 +11273,6 @@ paths:
       - partner
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -10993,7 +11296,28 @@ paths:
       - partner
       security:
       - jwtAuth: []
-      - cookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PartnerApplication'
+          description: ''
+  /api/partner/applications/{id}/acknowledge-nomination/:
+    post:
+      operationId: partner_applications_acknowledge_nomination_create
+      description: Partner acknowledges a nominated applicant for their linked programs.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - partner
+      security:
+      - jwtAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11016,7 +11340,6 @@ paths:
       - partner
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11038,7 +11361,6 @@ paths:
       - partner
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11067,7 +11389,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11096,7 +11417,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11122,6 +11442,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -11132,7 +11458,6 @@ paths:
       - permissions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11156,7 +11481,6 @@ paths:
       - permissions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11182,6 +11506,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -11192,7 +11522,6 @@ paths:
       - profiles
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11220,7 +11549,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -11245,7 +11573,6 @@ paths:
       - profiles
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11281,7 +11608,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11316,7 +11642,6 @@ paths:
               $ref: '#/components/schemas/PatchedProfileRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11340,7 +11665,6 @@ paths:
       - profiles
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -11447,6 +11771,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: recurring
         schema:
@@ -11479,7 +11809,6 @@ paths:
       - programs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11507,7 +11836,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -11532,7 +11860,6 @@ paths:
       - programs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11568,7 +11895,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11603,7 +11929,6 @@ paths:
               $ref: '#/components/schemas/PatchedProgramRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11627,7 +11952,6 @@ paths:
       - programs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -11669,7 +11993,6 @@ paths:
       - programs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11723,7 +12046,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11731,6 +12053,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Program'
+          description: ''
+  /api/programs/{id}/deletion-impact/:
+    get:
+      operationId: programs_deletion_impact_retrieve
+      description: Admin-only preview of related objects that would be cascade-deleted
+        with this program. Use before confirming DELETE.
+      summary: Preview cascade impact of deleting this program
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this program.
+        required: true
+      tags:
+      - programs
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
           description: ''
   /api/programs/{id}/host-institutions/:
     get:
@@ -11842,6 +12191,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: recurring
         schema:
@@ -11874,7 +12229,6 @@ paths:
       - programs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -11992,6 +12346,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: recurring
         schema:
@@ -12036,7 +12396,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12044,6 +12403,106 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedHostInstitutionList'
+          description: ''
+  /api/programs/{id}/nomination-cycles/:
+    get:
+      operationId: programs_nomination_cycles_retrieve
+      description: List or create nomination cycles (multi-cycle windows) for a program.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this program.
+        required: true
+      tags:
+      - programs
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+          description: ''
+    post:
+      operationId: programs_nomination_cycles_create
+      description: List or create nomination cycles (multi-cycle windows) for a program.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this program.
+        required: true
+      tags:
+      - programs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProgramRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProgramRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
+          description: ''
+  /api/programs/{id}/nomination-cycles/{cycle_id}/partner-allocations/:
+    post:
+      operationId: programs_nomination_cycles_partner_allocations_create
+      description: Create/update a partner seat allocation on a nomination cycle.
+      parameters:
+      - in: path
+        name: cycle_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this program.
+        required: true
+      tags:
+      - programs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProgramRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ProgramRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ProgramRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Program'
           description: ''
   /api/programs/{id}/nominations/:
     get:
@@ -12061,7 +12520,6 @@ paths:
       - programs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12097,7 +12555,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12134,7 +12591,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12151,7 +12607,6 @@ paths:
       - programs
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12180,7 +12635,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -12224,6 +12678,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -12243,7 +12703,6 @@ paths:
       - reminders
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12271,7 +12730,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -12296,7 +12754,6 @@ paths:
       - reminders
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12332,7 +12789,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12367,7 +12823,6 @@ paths:
               $ref: '#/components/schemas/PatchedReminderRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12391,7 +12846,6 @@ paths:
       - reminders
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -12404,7 +12858,6 @@ paths:
       - reminders
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12429,6 +12882,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -12439,7 +12898,6 @@ paths:
       - reports
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12466,7 +12924,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -12490,7 +12947,6 @@ paths:
       - reports
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12525,7 +12981,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12559,7 +13014,6 @@ paths:
               $ref: '#/components/schemas/PatchedReportRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12582,7 +13036,6 @@ paths:
       - reports
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -12614,7 +13067,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12640,6 +13092,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -12650,7 +13108,6 @@ paths:
       - roles
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12674,7 +13131,6 @@ paths:
       - roles
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12704,6 +13160,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - in: query
         name: search_type
         schema:
@@ -12730,7 +13192,6 @@ paths:
       - saved-searches
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12758,7 +13219,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -12783,7 +13243,6 @@ paths:
       - saved-searches
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12819,7 +13278,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12854,7 +13312,6 @@ paths:
               $ref: '#/components/schemas/PatchedSavedSearchRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12878,7 +13335,6 @@ paths:
       - saved-searches
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -12915,7 +13371,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12952,7 +13407,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -12960,6 +13414,192 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SavedSearch'
+          description: ''
+  /api/scholarship-scoring-rulesets/:
+    get:
+      operationId: scholarship_scoring_rulesets_list
+      description: Staff CRUD for scholarship allocation factor max weights.
+      parameters:
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: slug
+        schema:
+          type: string
+      tags:
+      - scholarship-scoring-rulesets
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedScholarshipScoringRulesetList'
+          description: ''
+    post:
+      operationId: scholarship_scoring_rulesets_create
+      description: Staff CRUD for scholarship allocation factor max weights.
+      tags:
+      - scholarship-scoring-rulesets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScholarshipScoringRulesetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ScholarshipScoringRulesetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ScholarshipScoringRulesetRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScholarshipScoringRuleset'
+          description: ''
+  /api/scholarship-scoring-rulesets/{id}/:
+    get:
+      operationId: scholarship_scoring_rulesets_retrieve
+      description: Staff CRUD for scholarship allocation factor max weights.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Scholarship scoring ruleset.
+        required: true
+      tags:
+      - scholarship-scoring-rulesets
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScholarshipScoringRuleset'
+          description: ''
+    put:
+      operationId: scholarship_scoring_rulesets_update
+      description: Staff CRUD for scholarship allocation factor max weights.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Scholarship scoring ruleset.
+        required: true
+      tags:
+      - scholarship-scoring-rulesets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScholarshipScoringRulesetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ScholarshipScoringRulesetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ScholarshipScoringRulesetRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScholarshipScoringRuleset'
+          description: ''
+    patch:
+      operationId: scholarship_scoring_rulesets_partial_update
+      description: Staff CRUD for scholarship allocation factor max weights.
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this Scholarship scoring ruleset.
+        required: true
+      tags:
+      - scholarship-scoring-rulesets
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedScholarshipScoringRulesetRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedScholarshipScoringRulesetRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedScholarshipScoringRulesetRequest'
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScholarshipScoringRuleset'
+          description: ''
+  /api/scholarship-scoring-rulesets/active/:
+    get:
+      operationId: scholarship_scoring_rulesets_active_retrieve
+      description: Staff CRUD for scholarship allocation factor max weights.
+      summary: Active scholarship scoring ruleset
+      tags:
+      - scholarship-scoring-rulesets
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScholarshipScoringRuleset'
           description: ''
   /api/schools/:
     get:
@@ -12975,20 +13615,29 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       tags:
       - schools
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostSchool'
+                $ref: '#/components/schemas/PaginatedHostSchoolList'
           description: ''
     post:
       operationId: schools_create
@@ -13009,7 +13658,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -13034,7 +13682,6 @@ paths:
       - schools
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13070,7 +13717,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13105,7 +13751,6 @@ paths:
               $ref: '#/components/schemas/PatchedHostSchoolRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13129,7 +13774,6 @@ paths:
       - schools
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -13156,20 +13800,29 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       tags:
       - schools
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostAcademicProgram'
+                $ref: '#/components/schemas/PaginatedHostAcademicProgramList'
           description: ''
     post:
       operationId: schools_academic_programs_create
@@ -13192,6 +13845,18 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       tags:
       - schools
       requestBody:
@@ -13208,16 +13873,13 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostAcademicProgram'
+                $ref: '#/components/schemas/PaginatedHostAcademicProgramList'
           description: ''
   /api/schools/{id}/subjects/:
     get:
@@ -13241,20 +13903,29 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       tags:
       - schools
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostSubject'
+                $ref: '#/components/schemas/PaginatedHostSubjectList'
           description: ''
     post:
       operationId: schools_subjects_create
@@ -13277,6 +13948,18 @@ paths:
         name: is_active
         schema:
           type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       tags:
       - schools
       requestBody:
@@ -13293,16 +13976,13 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HostSubject'
+                $ref: '#/components/schemas/PaginatedHostSubjectList'
           description: ''
   /api/timeline-events/:
     get:
@@ -13334,11 +14014,16 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       tags:
       - timeline-events
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13362,7 +14047,6 @@ paths:
       - timeline-events
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13371,6 +14055,97 @@ paths:
               schema:
                 $ref: '#/components/schemas/TimelineEvent'
           description: ''
+  /api/toefl/attempts/:
+    get:
+      operationId: toefl_attempts_list
+      description: 'List/retrieve practice attempts for the current student (staff:
+        all).'
+      parameters:
+      - name: ordering
+        required: false
+        in: query
+        description: Which field to use when ordering the results.
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      tags:
+      - toefl
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPracticeAttemptListList'
+          description: ''
+  /api/toefl/attempts/{id}/:
+    get:
+      operationId: toefl_attempts_retrieve
+      description: 'List/retrieve practice attempts for the current student (staff:
+        all).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - toefl
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PracticeAttempt'
+          description: ''
+  /api/toefl/launch/:
+    post:
+      operationId: toefl_launch_create
+      description: Create a signed TOEFL Practice launch URL for the authenticated
+        student.
+      tags:
+      - toefl
+      security:
+      - jwtAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/toefl/webhook/:
+    post:
+      operationId: toefl_webhook_create
+      description: Receive signed score payloads from TOEFL Practice. Does not touch
+        Profile.toefl_score.
+      tags:
+      - toefl
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
   /api/token/:
     post:
       operationId: token_create
@@ -13444,6 +14219,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -13454,7 +14235,6 @@ paths:
       - user-sessions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13470,7 +14250,6 @@ paths:
       - user-sessions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -13494,7 +14273,6 @@ paths:
       - user-sessions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13517,7 +14295,6 @@ paths:
       - user-sessions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -13537,7 +14314,6 @@ paths:
       - user-sessions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13554,7 +14330,6 @@ paths:
       - user-settings
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13581,7 +14356,6 @@ paths:
               $ref: '#/components/schemas/UserSettingsRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13608,7 +14382,6 @@ paths:
               $ref: '#/components/schemas/PatchedUserSettingsRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13642,6 +14415,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -13652,7 +14431,6 @@ paths:
       - users
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13680,7 +14458,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -13705,7 +14482,6 @@ paths:
       - users
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13741,7 +14517,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13776,7 +14551,6 @@ paths:
               $ref: '#/components/schemas/PatchedUserRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13801,6 +14575,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -13811,7 +14591,6 @@ paths:
       - workflow-versions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13838,7 +14617,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -13862,7 +14640,6 @@ paths:
       - workflow-versions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13897,7 +14674,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13931,7 +14707,6 @@ paths:
               $ref: '#/components/schemas/PatchedWorkflowVersionRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -13954,7 +14729,6 @@ paths:
       - workflow-versions
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -13986,7 +14760,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14025,7 +14798,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14050,6 +14822,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -14060,7 +14838,6 @@ paths:
       - workflows
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14087,7 +14864,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -14111,7 +14887,6 @@ paths:
       - workflows
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14146,7 +14921,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14180,7 +14954,6 @@ paths:
               $ref: '#/components/schemas/PatchedWorkflowDefinitionRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14203,7 +14976,6 @@ paths:
       - workflows
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -14223,7 +14995,6 @@ paths:
       - workflows
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14258,7 +15029,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14267,151 +15037,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/WorkflowDefinition'
           description: ''
-  /cms/api/main/documents/:
-    get:
-      operationId: cms_api_main_documents_retrieve
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /cms/api/main/documents/{id}/:
-    get:
-      operationId: cms_api_main_documents_retrieve_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /cms/api/main/documents/find/:
-    get:
-      operationId: cms_api_main_documents_find_retrieve
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /cms/api/main/images/:
-    get:
-      operationId: cms_api_main_images_retrieve
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /cms/api/main/images/{id}/:
-    get:
-      operationId: cms_api_main_images_retrieve_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /cms/api/main/images/find/:
-    get:
-      operationId: cms_api_main_images_find_retrieve
-      tags:
-      - cms
-      security:
-      - jwtAuth: []
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /cms/api/main/pages/:
-    get:
-      operationId: cms_api_main_pages_retrieve
-      tags:
-      - cms
-      security:
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /cms/api/main/pages/{id}/:
-    get:
-      operationId: cms_api_main_pages_retrieve_2
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - cms
-      security:
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /cms/api/main/pages/{id}/action/{action_name}/:
-    post:
-      operationId: cms_api_main_pages_action_create
-      parameters:
-      - in: path
-        name: action_name
-        schema:
-          type: string
-        required: true
-      - in: path
-        name: id
-        schema:
-          type: integer
-        required: true
-      tags:
-      - cms
-      security:
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
-  /cms/api/main/pages/find/:
-    get:
-      operationId: cms_api_main_pages_find_retrieve
-      tags:
-      - cms
-      security:
-      - cookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          description: No response body
   /grades/api/scales/:
     get:
       operationId: grades_api_scales_list
@@ -14430,6 +15055,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -14440,7 +15071,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14468,7 +15098,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -14495,7 +15124,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14531,7 +15159,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14566,7 +15193,6 @@ paths:
               $ref: '#/components/schemas/PatchedGradeScaleRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14590,7 +15216,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -14604,7 +15229,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14630,6 +15254,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -14640,7 +15270,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14668,7 +15297,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -14693,7 +15321,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14729,7 +15356,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14764,7 +15390,6 @@ paths:
               $ref: '#/components/schemas/PatchedGradeTranslationRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14788,7 +15413,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -14809,6 +15433,12 @@ paths:
         required: false
         in: query
         description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
         schema:
           type: integer
       - name: search
@@ -14833,7 +15463,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14863,7 +15492,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14893,7 +15521,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14923,7 +15550,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14950,6 +15576,12 @@ paths:
         description: A page number within the paginated result set.
         schema:
           type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
       - name: search
         required: false
         in: query
@@ -14960,7 +15592,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -14988,7 +15619,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '201':
@@ -15013,7 +15643,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -15049,7 +15678,6 @@ paths:
         required: true
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -15084,7 +15712,6 @@ paths:
               $ref: '#/components/schemas/PatchedGradeValueRequest'
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -15108,7 +15735,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '204':
@@ -15128,7 +15754,6 @@ paths:
       - grades
       security:
       - jwtAuth: []
-      - cookieAuth: []
       - jwtAuth: []
       responses:
         '200':
@@ -15212,6 +15837,7 @@ components:
       - bilateral
       - multilateral
       - erasmus
+      - conahec
       - specific
       - other
       type: string
@@ -15219,6 +15845,7 @@ components:
         * `bilateral` - Bilateral
         * `multilateral` - Multilateral
         * `erasmus` - Erasmus+
+        * `conahec` - CONAHEC
         * `specific` - Specific program
         * `other` - Other
     Alert:
@@ -15391,12 +16018,26 @@ components:
           nullable: true
           maxLength: 10
         additional_languages_at_apply: {}
+        eligibility_ruleset_snapshot:
+          readOnly: true
+          nullable: true
         nomination_rank:
           type: integer
           maximum: 2147483647
           minimum: 0
           nullable: true
           description: Staff ranking for nomination matching (lower is higher priority).
+        nomination_cycle:
+          type: string
+          format: uuid
+          nullable: true
+          description: Nomination cycle that produced the current nominated/waitlist
+            status.
+        partner_nomination_acknowledged_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When a partner contact acknowledged this nomination.
         host_institution:
           type: string
           format: uuid
@@ -15466,6 +16107,7 @@ components:
       - dynamic_form_layout
       - dynamic_form_submission
       - effective_coordinator
+      - eligibility_ruleset_snapshot
       - host_institution_country
       - host_institution_name
       - id
@@ -15482,6 +16124,90 @@ components:
       - student_email
       - submitted_at
       - updated_at
+    ApplicationList:
+      type: object
+      description: 'Slim list payload: omit per-row form layout, submissions, and
+        scholarship.'
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        status:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+        withdrawn:
+          type: boolean
+        program:
+          type: string
+          format: uuid
+        student:
+          type: string
+          format: uuid
+          readOnly: true
+        host_institution:
+          type: string
+          format: uuid
+          nullable: true
+          description: Selected host university for this application.
+        assigned_coordinator:
+          type: string
+          format: uuid
+          nullable: true
+          description: Coordinator explicitly assigned to review this application.
+        assigned_coordinator_name:
+          type: string
+          readOnly: true
+        student_display_name:
+          type: string
+          readOnly: true
+        student_email:
+          type: string
+          readOnly: true
+        program_name:
+          type: string
+          readOnly: true
+        program_start_date:
+          type: string
+          format: date
+          readOnly: true
+        program_end_date:
+          type: string
+          format: date
+          readOnly: true
+        host_institution_name:
+          type: string
+          readOnly: true
+        host_institution_country:
+          type: string
+          readOnly: true
+        readiness:
+          type: string
+          readOnly: true
+      required:
+      - assigned_coordinator_name
+      - created_at
+      - host_institution_country
+      - host_institution_name
+      - id
+      - program
+      - program_end_date
+      - program_name
+      - program_start_date
+      - readiness
+      - status
+      - student
+      - student_display_name
+      - student_email
+      - submitted_at
     ApplicationRequest:
       type: object
       properties:
@@ -15534,6 +16260,17 @@ components:
           minimum: 0
           nullable: true
           description: Staff ranking for nomination matching (lower is higher priority).
+        nomination_cycle:
+          type: string
+          format: uuid
+          nullable: true
+          description: Nomination cycle that produced the current nominated/waitlist
+            status.
+        partner_nomination_acknowledged_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When a partner contact acknowledged this nomination.
         host_institution:
           type: string
           format: uuid
@@ -15549,6 +16286,14 @@ components:
           format: uuid
           nullable: true
           description: Selected host academic program.
+        host_school_name:
+          type: string
+          writeOnly: true
+          maxLength: 255
+        host_academic_program_name:
+          type: string
+          writeOnly: true
+          maxLength: 255
       required:
       - program
     ApplicationStatistics:
@@ -16170,6 +16915,13 @@ components:
           format: date-time
           readOnly: true
           nullable: true
+        supersedes:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+          description: Prior upload this file replaces (keeps history). Same application
+            and type.
         validations:
           type: array
           items:
@@ -16186,20 +16938,37 @@ components:
         uploaded_by_name:
           type: string
           readOnly: true
+        can_replace:
+          type: string
+          readOnly: true
+        is_current:
+          type: string
+          readOnly: true
+        version_history:
+          type: string
+          readOnly: true
+        can_view_version_history:
+          type: string
+          readOnly: true
       required:
       - application
+      - can_replace
+      - can_view_version_history
       - comments
       - created_at
       - file
       - id
+      - is_current
       - is_valid
       - resubmission_requests
+      - supersedes
       - type
       - updated_at
       - uploaded_by
       - uploaded_by_name
       - validated_at
       - validations
+      - version_history
     DocumentComment:
       type: object
       properties:
@@ -16349,9 +17118,18 @@ components:
           description: Optional FAQ / tips shown alongside instructions.
         accepted_extensions:
           type: string
-          description: Comma-separated extensions without dots (e.g. pdf,jpg,png).
-            Empty = global defaults.
+          description: Extra extensions beyond selected families, comma-separated
+            without dots. Empty with no families = global defaults.
           maxLength: 120
+        file_type_families:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileTypeFamily'
+          readOnly: true
+        file_type_family_ids:
+          type: array
+          items:
+            type: integer
         max_file_size_mb:
           type: integer
           maximum: 2147483647
@@ -16361,10 +17139,32 @@ components:
         allows_multiple:
           type: boolean
           description: Allow more than one upload of this type per application.
+        version_history_visibility:
+          allOf:
+          - $ref: '#/components/schemas/VersionHistoryVisibilityEnum'
+          description: |-
+            Who may see prior file versions for this type.
+
+            * `inherit` - Inherit institution defaults
+            * `hidden` - Hidden for all roles
+            * `custom` - Custom per-role overrides
+        version_history_student:
+          type: boolean
+          nullable: true
+          description: Custom override for students when visibility is custom.
+        version_history_coordinator:
+          type: boolean
+          nullable: true
+          description: Custom override for coordinators when visibility is custom.
+        version_history_admin:
+          type: boolean
+          nullable: true
+          description: Custom override for admins when visibility is custom.
         requirement_count:
           type: string
           readOnly: true
       required:
+      - file_type_families
       - has_template
       - id
       - name
@@ -16397,9 +17197,18 @@ components:
           readOnly: true
         accepted_extensions:
           type: string
-          description: Comma-separated extensions without dots (e.g. pdf,jpg,png).
-            Empty = global defaults.
+          description: Extra extensions beyond selected families, comma-separated
+            without dots. Empty with no families = global defaults.
           maxLength: 120
+        file_type_families:
+          type: array
+          items:
+            $ref: '#/components/schemas/FileTypeFamily'
+          readOnly: true
+        file_type_family_ids:
+          type: array
+          items:
+            type: integer
         max_file_size_mb:
           type: integer
           maximum: 2147483647
@@ -16409,10 +17218,32 @@ components:
         allows_multiple:
           type: boolean
           description: Allow more than one upload of this type per application.
+        version_history_visibility:
+          allOf:
+          - $ref: '#/components/schemas/VersionHistoryVisibilityEnum'
+          description: |-
+            Who may see prior file versions for this type.
+
+            * `inherit` - Inherit institution defaults
+            * `hidden` - Hidden for all roles
+            * `custom` - Custom per-role overrides
+        version_history_student:
+          type: boolean
+          nullable: true
+          description: Custom override for students when visibility is custom.
+        version_history_coordinator:
+          type: boolean
+          nullable: true
+          description: Custom override for coordinators when visibility is custom.
+        version_history_admin:
+          type: boolean
+          nullable: true
+          description: Custom override for admins when visibility is custom.
         requirement_count:
           type: string
           readOnly: true
       required:
+      - file_type_families
       - has_template
       - id
       - name
@@ -16449,9 +17280,13 @@ components:
           description: Optional FAQ / tips shown alongside instructions.
         accepted_extensions:
           type: string
-          description: Comma-separated extensions without dots (e.g. pdf,jpg,png).
-            Empty = global defaults.
+          description: Extra extensions beyond selected families, comma-separated
+            without dots. Empty with no families = global defaults.
           maxLength: 120
+        file_type_family_ids:
+          type: array
+          items:
+            type: integer
         max_file_size_mb:
           type: integer
           maximum: 2147483647
@@ -16461,6 +17296,27 @@ components:
         allows_multiple:
           type: boolean
           description: Allow more than one upload of this type per application.
+        version_history_visibility:
+          allOf:
+          - $ref: '#/components/schemas/VersionHistoryVisibilityEnum'
+          description: |-
+            Who may see prior file versions for this type.
+
+            * `inherit` - Inherit institution defaults
+            * `hidden` - Hidden for all roles
+            * `custom` - Custom per-role overrides
+        version_history_student:
+          type: boolean
+          nullable: true
+          description: Custom override for students when visibility is custom.
+        version_history_coordinator:
+          type: boolean
+          nullable: true
+          description: Custom override for coordinators when visibility is custom.
+        version_history_admin:
+          type: boolean
+          nullable: true
+          description: Custom override for admins when visibility is custom.
         program_requirements:
           type: array
           items:
@@ -16617,6 +17473,10 @@ components:
           type: integer
           maximum: 2147483647
           minimum: 0
+        content_revision:
+          type: integer
+          readOnly: true
+          description: Increments when rules_json changes (edit versioning).
         rules_json: {}
         is_active:
           type: boolean
@@ -16629,6 +17489,7 @@ components:
           format: date-time
           readOnly: true
       required:
+      - content_revision
       - created_at
       - id
       - name
@@ -16661,6 +17522,10 @@ components:
           type: string
         schema_version:
           type: integer
+        content_revision:
+          type: integer
+        frozen:
+          type: boolean
       required:
       - id
       - name
@@ -16976,6 +17841,69 @@ components:
         * `expired` - Expired
         * `terminated` - Terminated
         * `renewal_pending` - Renewal pending
+    FileTypeFamily:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        slug:
+          type: string
+          maxLength: 40
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          maxLength: 80
+        aliases:
+          type: string
+          description: Search synonyms, comma-separated.
+          maxLength: 240
+        extensions:
+          type: string
+          description: Comma-separated extensions without dots (e.g. jpg,jpeg,png).
+          maxLength: 240
+        sort_order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+      required:
+      - extensions
+      - id
+      - name
+      - slug
+    FileTypeFamilyRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 40
+          pattern: ^[-a-zA-Z0-9_]+$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        aliases:
+          type: string
+          description: Search synonyms, comma-separated.
+          maxLength: 240
+        extensions:
+          type: string
+          minLength: 1
+          description: Comma-separated extensions without dots (e.g. jpg,jpeg,png).
+          maxLength: 240
+        sort_order:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+      required:
+      - extensions
+      - name
+      - slug
     FontSizeEnum:
       enum:
       - normal
@@ -17403,20 +18331,60 @@ components:
       required:
       - gpa_value
       - target_scale_id
-    GenderEnum:
-      enum:
-      - female
-      - male
-      - non_binary
-      - prefer_not_to_say
-      - other
-      type: string
-      description: |-
-        * `female` - Female
-        * `male` - Male
-        * `non_binary` - Non-binary
-        * `prefer_not_to_say` - Prefer not to say
-        * `other` - Other
+    GenderOption:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        code:
+          type: string
+          maxLength: 50
+        ordering:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+        label_es:
+          type: string
+          readOnly: true
+        label_en:
+          type: string
+          maxLength: 150
+        sort_order:
+          type: integer
+          readOnly: true
+      required:
+      - id
+      - label_es
+      - name
+      - sort_order
+    GenderOptionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        code:
+          type: string
+          maxLength: 50
+        ordering:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+        label_en:
+          type: string
+          maxLength: 150
+      required:
+      - name
     GenericAnalytics:
       type: object
       description: Generic serializer for analytics responses.
@@ -18706,7 +19674,7 @@ components:
     NullEnum:
       enum:
       - null
-    PaginatedApplicationList:
+    PaginatedApplicationListList:
       type: object
       required:
       - count
@@ -18728,7 +19696,7 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/Application'
+            $ref: '#/components/schemas/ApplicationList'
     PaginatedApplicationSubjectPlanVersionList:
       type: object
       required:
@@ -19166,6 +20134,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/GradeValue'
+    PaginatedHostAcademicProgramList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/HostAcademicProgram'
     PaginatedHostInstitutionList:
       type: object
       required:
@@ -19189,6 +20180,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/HostInstitution'
+    PaginatedHostSchoolList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/HostSchool'
     PaginatedHostSubjectList:
       type: object
       required:
@@ -19373,6 +20387,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Permission'
+    PaginatedPracticeAttemptListList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PracticeAttemptList'
     PaginatedProfileList:
       type: object
       required:
@@ -19511,6 +20548,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SavedSearch'
+    PaginatedScholarshipScoringRulesetList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ScholarshipScoringRuleset'
     PaginatedTimelineEventList:
       type: object
       required:
@@ -19666,6 +20726,12 @@ components:
           readOnly: true
           nullable: true
           description: Staff ranking for nomination matching (lower is higher priority).
+        partner_nomination_acknowledged_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+          description: When a partner contact acknowledged this nomination.
         created_at:
           type: string
           format: date-time
@@ -19679,6 +20745,7 @@ components:
       - document_checklist
       - id
       - nomination_rank
+      - partner_nomination_acknowledged_at
       - program
       - program_name
       - status
@@ -19903,6 +20970,17 @@ components:
           minimum: 0
           nullable: true
           description: Staff ranking for nomination matching (lower is higher priority).
+        nomination_cycle:
+          type: string
+          format: uuid
+          nullable: true
+          description: Nomination cycle that produced the current nominated/waitlist
+            status.
+        partner_nomination_acknowledged_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: When a partner contact acknowledged this nomination.
         host_institution:
           type: string
           format: uuid
@@ -19918,6 +20996,14 @@ components:
           format: uuid
           nullable: true
           description: Selected host academic program.
+        host_school_name:
+          type: string
+          writeOnly: true
+          maxLength: 255
+        host_academic_program_name:
+          type: string
+          writeOnly: true
+          maxLength: 255
     PatchedApplicationStatusRequest:
       type: object
       properties:
@@ -20075,9 +21161,13 @@ components:
           description: Optional FAQ / tips shown alongside instructions.
         accepted_extensions:
           type: string
-          description: Comma-separated extensions without dots (e.g. pdf,jpg,png).
-            Empty = global defaults.
+          description: Extra extensions beyond selected families, comma-separated
+            without dots. Empty with no families = global defaults.
           maxLength: 120
+        file_type_family_ids:
+          type: array
+          items:
+            type: integer
         max_file_size_mb:
           type: integer
           maximum: 2147483647
@@ -20087,6 +21177,27 @@ components:
         allows_multiple:
           type: boolean
           description: Allow more than one upload of this type per application.
+        version_history_visibility:
+          allOf:
+          - $ref: '#/components/schemas/VersionHistoryVisibilityEnum'
+          description: |-
+            Who may see prior file versions for this type.
+
+            * `inherit` - Inherit institution defaults
+            * `hidden` - Hidden for all roles
+            * `custom` - Custom per-role overrides
+        version_history_student:
+          type: boolean
+          nullable: true
+          description: Custom override for students when visibility is custom.
+        version_history_coordinator:
+          type: boolean
+          nullable: true
+          description: Custom override for coordinators when visibility is custom.
+        version_history_admin:
+          type: boolean
+          nullable: true
+          description: Custom override for admins when visibility is custom.
         program_requirements:
           type: array
           items:
@@ -20303,6 +21414,25 @@ components:
             single-step form.'
         is_active:
           type: boolean
+    PatchedGenderOptionRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        code:
+          type: string
+          maxLength: 50
+        ordering:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+        label_en:
+          type: string
+          maxLength: 150
     PatchedGradeScaleRequest:
       type: object
       description: Serializer for grade scales.
@@ -20725,9 +21855,9 @@ components:
           format: uuid
           nullable: true
         gender:
-          oneOf:
-          - $ref: '#/components/schemas/GenderEnum'
-          - $ref: '#/components/schemas/BlankEnum'
+          type: string
+          description: GenderOption.code (admin-managed catalog).
+          maxLength: 32
         date_of_birth:
           type: string
           format: date
@@ -20735,7 +21865,17 @@ components:
           description: Student's date of birth for age verification
         birthplace:
           type: string
+          description: Single-line birth place kept for exports; composed from city/state/country.
           maxLength: 150
+        birth_country:
+          type: string
+          maxLength: 100
+        birth_state:
+          type: string
+          maxLength: 100
+        birth_city:
+          type: string
+          maxLength: 100
         postal_code:
           type: string
           maxLength: 12
@@ -20780,6 +21920,16 @@ components:
         credits_approved_percent:
           type: number
           format: double
+          nullable: true
+        credits_approved:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+          nullable: true
+        credits_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
           nullable: true
         language:
           type: string
@@ -21015,6 +22165,24 @@ components:
         is_default:
           type: boolean
           description: Use this search as default for this user
+    PatchedScholarshipScoringRulesetRequest:
+      type: object
+      description: Staff CRUD for scholarship allocation factor max weights.
+      properties:
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^[-a-zA-Z0-9_]+$
+        label:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        factor_weights: {}
+        is_active:
+          type: boolean
     PatchedSchoolFacultyRequest:
       type: object
       properties:
@@ -21036,6 +22204,28 @@ components:
           format: uuid
           nullable: true
           description: Campus unit this faculty belongs to (UAdeC Unidad Sureste/Laguna/Norte).
+    PatchedSpokenLanguageRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        code:
+          type: string
+          maxLength: 50
+        ordering:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+        aliases:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 64
     PatchedUnidadRequest:
       type: object
       properties:
@@ -21244,6 +22434,122 @@ components:
       - id
       - name
       - roles
+    PracticeAttempt:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          type: string
+          format: uuid
+          readOnly: true
+        external_session_id:
+          type: string
+          readOnly: true
+        exam_code:
+          type: string
+          readOnly: true
+        macro_id:
+          type: string
+          readOnly: true
+        client_ref:
+          type: string
+          readOnly: true
+        earned:
+          type: integer
+          readOnly: true
+        total:
+          type: integer
+          readOnly: true
+        percent:
+          type: number
+          format: double
+          readOnly: true
+        categories:
+          readOnly: true
+        weakest:
+          readOnly: true
+        items:
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - categories
+      - client_ref
+      - completed_at
+      - created_at
+      - earned
+      - exam_code
+      - external_session_id
+      - id
+      - items
+      - macro_id
+      - percent
+      - total
+      - updated_at
+      - user
+      - weakest
+    PracticeAttemptList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        external_session_id:
+          type: string
+          readOnly: true
+        exam_code:
+          type: string
+          readOnly: true
+        macro_id:
+          type: string
+          readOnly: true
+        earned:
+          type: integer
+          readOnly: true
+        total:
+          type: integer
+          readOnly: true
+        percent:
+          type: number
+          format: double
+          readOnly: true
+        weakest:
+          readOnly: true
+        completed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - completed_at
+      - created_at
+      - earned
+      - exam_code
+      - external_session_id
+      - id
+      - macro_id
+      - percent
+      - total
+      - weakest
     PrivacySettings:
       type: object
       description: Serializer for privacy settings only.
@@ -21336,9 +22642,12 @@ components:
           type: string
           readOnly: true
         gender:
-          oneOf:
-          - $ref: '#/components/schemas/GenderEnum'
-          - $ref: '#/components/schemas/BlankEnum'
+          type: string
+          description: GenderOption.code (admin-managed catalog).
+          maxLength: 32
+        gender_label:
+          type: string
+          readOnly: true
         date_of_birth:
           type: string
           format: date
@@ -21346,7 +22655,17 @@ components:
           description: Student's date of birth for age verification
         birthplace:
           type: string
+          description: Single-line birth place kept for exports; composed from city/state/country.
           maxLength: 150
+        birth_country:
+          type: string
+          maxLength: 100
+        birth_state:
+          type: string
+          maxLength: 100
+        birth_city:
+          type: string
+          maxLength: 100
         postal_code:
           type: string
           maxLength: 12
@@ -21404,6 +22723,16 @@ components:
           type: number
           format: double
           nullable: true
+        credits_approved:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+          nullable: true
+        credits_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+          nullable: true
         language:
           type: string
           nullable: true
@@ -21448,6 +22777,7 @@ components:
       - email
       - first_name
       - full_name
+      - gender_label
       - grade_scale_name
       - home_academic_program_name
       - is_admin
@@ -21502,9 +22832,9 @@ components:
           format: uuid
           nullable: true
         gender:
-          oneOf:
-          - $ref: '#/components/schemas/GenderEnum'
-          - $ref: '#/components/schemas/BlankEnum'
+          type: string
+          description: GenderOption.code (admin-managed catalog).
+          maxLength: 32
         date_of_birth:
           type: string
           format: date
@@ -21512,7 +22842,17 @@ components:
           description: Student's date of birth for age verification
         birthplace:
           type: string
+          description: Single-line birth place kept for exports; composed from city/state/country.
           maxLength: 150
+        birth_country:
+          type: string
+          maxLength: 100
+        birth_state:
+          type: string
+          maxLength: 100
+        birth_city:
+          type: string
+          maxLength: 100
         postal_code:
           type: string
           maxLength: 12
@@ -21557,6 +22897,16 @@ components:
         credits_approved_percent:
           type: number
           format: double
+          nullable: true
+        credits_approved:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
+          nullable: true
+        credits_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,5}(?:\.\d{0,2})?$
           nullable: true
         language:
           type: string
@@ -22414,6 +23764,65 @@ components:
       required:
       - name
       - search_type
+    ScholarshipScoringRuleset:
+      type: object
+      description: Staff CRUD for scholarship allocation factor max weights.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        slug:
+          type: string
+          maxLength: 64
+          pattern: ^[-a-zA-Z0-9_]+$
+        label:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+        factor_weights: {}
+        factor_catalog:
+          type: string
+          readOnly: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - factor_catalog
+      - id
+      - label
+      - slug
+      - updated_at
+    ScholarshipScoringRulesetRequest:
+      type: object
+      description: Staff CRUD for scholarship allocation factor max weights.
+      properties:
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^[-a-zA-Z0-9_]+$
+        label:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+        factor_weights: {}
+        is_active:
+          type: boolean
+      required:
+      - label
+      - slug
     SchoolFaculty:
       type: object
       properties:
@@ -22512,6 +23921,57 @@ components:
         * `profile` - Profile
         * `application` - Application
         * `form` - Form
+    SpokenLanguage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        code:
+          type: string
+          maxLength: 50
+        ordering:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+        aliases:
+          type: array
+          items:
+            type: string
+            maxLength: 64
+      required:
+      - id
+      - name
+    SpokenLanguageRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        code:
+          type: string
+          maxLength: 50
+        ordering:
+          type: integer
+          maximum: 2147483647
+          minimum: 0
+        is_active:
+          type: boolean
+        aliases:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 64
+      required:
+      - name
     SubmissionModeEnum:
       enum:
       - upload
@@ -23012,6 +24472,16 @@ components:
         share_analytics:
           type: boolean
           description: Share usage analytics
+    VersionHistoryVisibilityEnum:
+      enum:
+      - inherit
+      - hidden
+      - custom
+      type: string
+      description: |-
+        * `inherit` - Inherit institution defaults
+        * `hidden` - Hidden for all roles
+        * `custom` - Custom per-role overrides
     WorkflowDefinition:
       type: object
       properties:
@@ -23146,10 +24616,6 @@ components:
         * `published` - Published
         * `archived` - Archived
   securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: sessionid
     jwtAuth:
       type: http
       scheme: bearer

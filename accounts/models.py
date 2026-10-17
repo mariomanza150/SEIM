@@ -430,6 +430,24 @@ class SpokenLanguage(CatalogModel):
     )
 
 
+class GenderOption(CatalogModel):
+    """Admin-managed gender option for student profiles.
+
+    ``name`` is the Spanish label (``label_es``); ``code`` is the value stored on
+    ``Profile.gender`` and must stay stable once profiles use it.
+    """
+
+    label_en = models.CharField(max_length=150, blank=True, default="")
+
+    @property
+    def label_es(self) -> str:
+        return self.name
+
+    @property
+    def sort_order(self) -> int:
+        return self.ordering
+
+
 class Profile(UUIDModel, TimeStampedModel):
     """Profile for additional user info."""
 
@@ -473,15 +491,16 @@ class Profile(UUIDModel, TimeStampedModel):
     gender = models.CharField(
         max_length=32,
         blank=True,
-        choices=[
-            ("female", "Female"),
-            ("male", "Male"),
-            ("non_binary", "Non-binary"),
-            ("prefer_not_to_say", "Prefer not to say"),
-            ("other", "Other"),
-        ],
+        help_text="GenderOption.code (admin-managed catalog).",
     )
-    birthplace = models.CharField(max_length=150, blank=True)
+    birthplace = models.CharField(
+        max_length=150,
+        blank=True,
+        help_text="Single-line birth place kept for exports; composed from city/state/country.",
+    )
+    birth_country = models.CharField(max_length=100, blank=True, default="")
+    birth_state = models.CharField(max_length=100, blank=True, default="")
+    birth_city = models.CharField(max_length=100, blank=True, default="")
     postal_code = models.CharField(max_length=12, blank=True)
     passport_number = models.CharField(max_length=30, blank=True)
     mobile_phone = models.CharField(max_length=30, blank=True)
@@ -532,6 +551,22 @@ class Profile(UUIDModel, TimeStampedModel):
         validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("100"))],
         help_text="Percentage of program credits approved (0–100).",
     )
+    credits_approved = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0"))],
+        help_text="Credits approved so far (optional; percentage auto-calculates).",
+    )
+    credits_total = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(Decimal("0.01"))],
+        help_text="Total credits of the program (optional; must be > 0).",
+    )
     language = models.CharField(max_length=64, null=True, blank=True)
     language_level = models.CharField(
         max_length=10,
@@ -569,6 +604,14 @@ class Profile(UUIDModel, TimeStampedModel):
 
     def clean(self):
         super().clean()
+        if (
+            self.credits_approved is not None
+            and self.credits_total is not None
+            and self.credits_approved > self.credits_total
+        ):
+            raise ValidationError(
+                {"credits_approved": "Approved credits cannot exceed total credits."}
+            )
         if (
             self.home_academic_program_id
             and self.school_id

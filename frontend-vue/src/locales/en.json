@@ -741,7 +741,8 @@
       "banks": "Banks",
       "languages": "Spoken languages",
       "domains": "Allowed email domains",
-      "destinations": "Host destinations"
+      "destinations": "Host destinations",
+      "genders": "Genders"
     },
     "fields": {
       "name": "Name",
@@ -750,7 +751,8 @@
       "active": "Active",
       "school": "School",
       "aliases": "Aliases",
-      "aliasesPlaceholder": "Comma-separated (e.g. Español, Espanol)"
+      "aliasesPlaceholder": "Comma-separated (e.g. Español, Espanol)",
+      "labelEn": "English label"
     }
   },
   "adminGrades": {
@@ -2383,7 +2385,15 @@
     "toastCatalogError": "Failed to load profile catalogs",
     "toastSaved": "Profile saved.",
     "toastSaveError": "Could not save profile",
-    "saveFailedGeneric": "Failed to save profile."
+    "saveFailedGeneric": "Failed to save profile.",
+    "creditsApproved": "Approved credits",
+    "creditsTotal": "Total credits",
+    "creditsOver": "of",
+    "creditsPercentOptional": "Percentage (%)",
+    "creditsHelp": "Enter approved and total credits to calculate the percentage automatically, or type the percentage directly.",
+    "creditsAutoCalculated": "Calculated from your credits",
+    "creditsTotalPositive": "Total credits must be greater than 0.",
+    "creditsApprovedOverTotal": "Approved credits cannot exceed total credits."
   },
   "eligibilityRules": {
     "profile_missing": "Student profile is missing.",
@@ -2579,5 +2589,15 @@
     "presetSetDefaultAria": "Set as default",
     "presetRemoveTitle": "Remove preset",
     "presetRemoveAria": "Remove preset"
+  },
+  "birthPlace": {
+    "country": "Country of birth",
+    "state": "State / province",
+    "city": "City",
+    "searchPlaceholder": "Type to search…",
+    "manualPlaceholder": "Type it in",
+    "otherOption": "Other / not listed (specify manually)",
+    "backToList": "Choose from the list instead",
+    "legacyValue": "Previously recorded: {value}. Pick country, state and city to update it."
   }
 }

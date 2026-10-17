@@ -7,6 +7,7 @@ from .models import (
     AcademicLevel,
     AllowedEmailDomain,
     BankInstitution,
+    GenderOption,
     GoogleCalendarConnection,
     HomeAcademicProgram,
     Permission,
@@ -69,6 +70,12 @@ class CatalogAdmin(admin.ModelAdmin):
 @admin.register(AllowedEmailDomain)
 class AllowedEmailDomainAdmin(CatalogAdmin):
     pass
+
+
+@admin.register(GenderOption)
+class GenderOptionAdmin(CatalogAdmin):
+    list_display = ("name", "label_en", "code", "is_active", "ordering")
+    search_fields = ("name", "label_en", "code")
 
 
 @admin.register(AcademicLevel)
