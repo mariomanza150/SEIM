@@ -4987,6 +4987,24 @@ paths:
           format: date-time
         description: Created Before
       - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - incoming
+          - outgoing
+        description: |-
+          Mobility direction (incoming / outgoing)
+
+          * `outgoing` - Outgoing
+          * `incoming` - Incoming
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+        description: Exchange starts on or before this date
+      - in: query
         name: needs_document_resubmit
         schema:
           type: boolean
@@ -5015,6 +5033,17 @@ paths:
           type: boolean
         description: Pending review (submitted or under_review)
       - in: query
+        name: period
+        schema:
+          type: string
+        description: 'Exchange period: YYYY, YYYY-1 (Jan–Jun) or YYYY-2 (Jul–Dec)'
+      - in: query
+        name: program
+        schema:
+          type: string
+          format: uuid
+        description: Program
+      - in: query
         name: program_id
         schema:
           type: string
@@ -5031,6 +5060,12 @@ paths:
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+        description: Exchange ends on or after this date
       - in: query
         name: status
         schema:
@@ -5258,6 +5293,24 @@ paths:
           type: string
           format: date-time
         description: Created Before
+      - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - incoming
+          - outgoing
+        description: |-
+          Mobility direction (incoming / outgoing)
+
+          * `outgoing` - Outgoing
+          * `incoming` - Incoming
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+        description: Exchange starts on or before this date
       - in: path
         name: id
         schema:
@@ -5294,6 +5347,17 @@ paths:
           type: boolean
         description: Pending review (submitted or under_review)
       - in: query
+        name: period
+        schema:
+          type: string
+        description: 'Exchange period: YYYY, YYYY-1 (Jan–Jun) or YYYY-2 (Jul–Dec)'
+      - in: query
+        name: program
+        schema:
+          type: string
+          format: uuid
+        description: Program
+      - in: query
         name: program_id
         schema:
           type: string
@@ -5310,6 +5374,12 @@ paths:
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+        description: Exchange ends on or after this date
       - in: query
         name: status
         schema:
@@ -5726,6 +5796,24 @@ paths:
           type: string
           format: date-time
         description: Created Before
+      - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - incoming
+          - outgoing
+        description: |-
+          Mobility direction (incoming / outgoing)
+
+          * `outgoing` - Outgoing
+          * `incoming` - Incoming
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+        description: Exchange starts on or before this date
       - in: path
         name: id
         schema:
@@ -5762,6 +5850,17 @@ paths:
           type: boolean
         description: Pending review (submitted or under_review)
       - in: query
+        name: period
+        schema:
+          type: string
+        description: 'Exchange period: YYYY, YYYY-1 (Jan–Jun) or YYYY-2 (Jul–Dec)'
+      - in: query
+        name: program
+        schema:
+          type: string
+          format: uuid
+        description: Program
+      - in: query
         name: program_id
         schema:
           type: string
@@ -5778,6 +5877,12 @@ paths:
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+        description: Exchange ends on or after this date
       - in: query
         name: status
         schema:
@@ -11690,6 +11795,18 @@ paths:
           type: string
         description: Description
       - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - incoming
+          - outgoing
+        description: |-
+          Mobility direction (incoming / outgoing)
+
+          * `outgoing` - Outgoing
+          * `incoming` - Incoming
+      - in: query
         name: eligible_for_me
         schema:
           type: boolean
@@ -12103,6 +12220,18 @@ paths:
           type: string
         description: Description
       - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - incoming
+          - outgoing
+        description: |-
+          Mobility direction (incoming / outgoing)
+
+          * `outgoing` - Outgoing
+          * `incoming` - Incoming
+      - in: query
         name: eligible_for_me
         schema:
           type: boolean
@@ -12257,6 +12386,18 @@ paths:
         schema:
           type: string
         description: Description
+      - in: query
+        name: direction
+        schema:
+          type: string
+          enum:
+          - incoming
+          - outgoing
+        description: |-
+          Mobility direction (incoming / outgoing)
+
+          * `outgoing` - Outgoing
+          * `incoming` - Incoming
       - in: query
         name: eligible_for_me
         schema:
@@ -16115,6 +16256,9 @@ components:
           type: string
           format: date
           readOnly: true
+        program_mobility_direction:
+          type: string
+          readOnly: true
         host_institution_name:
           type: string
           readOnly: true
@@ -16134,6 +16278,7 @@ components:
       - id
       - program
       - program_end_date
+      - program_mobility_direction
       - program_name
       - program_start_date
       - readiness
@@ -16204,6 +16349,9 @@ components:
           type: string
           format: date
           readOnly: true
+        program_mobility_direction:
+          type: string
+          readOnly: true
         host_institution_name:
           type: string
           readOnly: true
@@ -16221,6 +16369,7 @@ components:
       - id
       - program
       - program_end_date
+      - program_mobility_direction
       - program_name
       - program_start_date
       - readiness
@@ -19286,6 +19435,14 @@ components:
         * `B2` - Upper Intermediate (B2)
         * `C1` - Advanced (C1)
         * `C2` - Proficient (C2)
+    MobilityDirectionEnum:
+      enum:
+      - outgoing
+      - incoming
+      type: string
+      description: |-
+        * `outgoing` - Outgoing
+        * `incoming` - Incoming
     Notification:
       type: object
       properties:
@@ -22006,6 +22163,14 @@ components:
         description:
           type: string
           minLength: 1
+        mobility_direction:
+          allOf:
+          - $ref: '#/components/schemas/MobilityDirectionEnum'
+          description: |-
+            Outgoing: home students going abroad. Incoming: visiting students coming to the institution.
+
+            * `outgoing` - Outgoing
+            * `incoming` - Incoming
         start_date:
           type: string
           format: date
@@ -23010,6 +23175,14 @@ components:
           maxLength: 255
         description:
           type: string
+        mobility_direction:
+          allOf:
+          - $ref: '#/components/schemas/MobilityDirectionEnum'
+          description: |-
+            Outgoing: home students going abroad. Incoming: visiting students coming to the institution.
+
+            * `outgoing` - Outgoing
+            * `incoming` - Incoming
         start_date:
           type: string
           format: date
@@ -23262,6 +23435,14 @@ components:
         description:
           type: string
           minLength: 1
+        mobility_direction:
+          allOf:
+          - $ref: '#/components/schemas/MobilityDirectionEnum'
+          description: |-
+            Outgoing: home students going abroad. Incoming: visiting students coming to the institution.
+
+            * `outgoing` - Outgoing
+            * `incoming` - Incoming
         start_date:
           type: string
           format: date

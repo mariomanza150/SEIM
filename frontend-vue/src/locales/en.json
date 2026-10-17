@@ -709,7 +709,11 @@
       "sourceForm": "Form",
       "noFormKeys": "Select an application form with schema fields first",
       "fieldRequirementsFormHelp": "Form keys come from the program's application form JSON Schema properties.",
-      "addFieldRequirement": "Add field requirement"
+      "addFieldRequirement": "Add field requirement",
+      "mobilityDirection": "Mobility direction",
+      "mobilityDirectionOutgoing": "Outgoing (our students go abroad)",
+      "mobilityDirectionIncoming": "Incoming (visiting students)",
+      "mobilityDirectionHelp": "Controls whether applications appear under the Outgoing or Incoming tab."
     }
   },
   "adminCatalogs": {
@@ -1674,7 +1678,20 @@
     "deletedToast": "Application deleted successfully",
     "deleteToastError": "Failed to delete application",
     "editAria": "Edit application",
-    "deleteAria": "Delete application"
+    "deleteAria": "Delete application",
+    "tabOutgoing": "Outgoing",
+    "tabIncoming": "Incoming",
+    "periodLabel": "Exchange period",
+    "periodAll": "All periods",
+    "periodYear": "{year} (full year)",
+    "periodFirstHalf": "{year} · Jan–Jun",
+    "periodSecondHalf": "{year} · Jul–Dec",
+    "programLabel": "Program",
+    "programPlaceholder": "Search program…",
+    "programAll": "All programs",
+    "startDateLabel": "Exchange from",
+    "endDateLabel": "Exchange until",
+    "dateRangeHelp": "Shows applications whose program dates overlap this range."
   },
   "toeflPracticePage": {
     "breadcrumbAria": "Breadcrumb",
