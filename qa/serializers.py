@@ -69,6 +69,7 @@ def validate_uploads(files):
 class IssueListSerializer(serializers.ModelSerializer):
     reference = serializers.CharField(read_only=True)
     reporter = serializers.SerializerMethodField()
+    assignee = serializers.SerializerMethodField()
     attachment_count = serializers.IntegerField(read_only=True, default=0)
 
     class Meta:
@@ -84,6 +85,7 @@ class IssueListSerializer(serializers.ModelSerializer):
             "route_name",
             "reporter",
             "reporter_role",
+            "assignee",
             "app_version",
             "build_commit",
             "attachment_count",
@@ -93,6 +95,9 @@ class IssueListSerializer(serializers.ModelSerializer):
 
     def get_reporter(self, obj):
         return _user_label(obj.reporter)
+
+    def get_assignee(self, obj):
+        return _user_label(obj.assignee)
 
 
 class IssueDetailSerializer(IssueListSerializer):

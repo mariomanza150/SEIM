@@ -2,6 +2,12 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import IssueViewSet, QAContextView
+from .views_scenarios import (
+    ScenarioListView,
+    ScenarioMatrixView,
+    ScenarioResultView,
+    TriagerListView,
+)
 from .views_tools import (
     DemoAccountsView,
     DemoReturnView,
@@ -32,5 +38,13 @@ urlpatterns = [
     path("outbox/<uuid:pk>/", OutboxDetailView.as_view(), name="qa-outbox-detail"),
     path("flags/", FlagsView.as_view(), name="qa-flags"),
     path("reset-demo/", ResetDemoView.as_view(), name="qa-reset-demo"),
+    path("scenarios/", ScenarioListView.as_view(), name="qa-scenarios"),
+    path("scenarios/matrix/", ScenarioMatrixView.as_view(), name="qa-scenario-matrix"),
+    path(
+        "scenarios/<uuid:pk>/result/",
+        ScenarioResultView.as_view(),
+        name="qa-scenario-result",
+    ),
+    path("triagers/", TriagerListView.as_view(), name="qa-triagers"),
     path("", include(router.urls)),
 ]
