@@ -116,28 +116,37 @@
                         >
                       </div>
                       <div class="col-md-6">
-                        <label for="application-profile-gpa" class="form-label">{{ t('profilePage.gpaLabel') }} *</label>
-                        <input
-                          id="application-profile-gpa"
-                          v-model.number="profileEligibility.gpa"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          class="form-control"
-                          required
-                        >
-                      </div>
-                      <div class="col-md-6">
                         <label for="application-profile-grade-scale" class="form-label">{{ t('profilePage.gradeScale') }} *</label>
                         <select
                           id="application-profile-grade-scale"
                           v-model="profileEligibility.grade_scale"
                           class="form-select"
+                          :disabled="eligibilityScalePolicy.locked"
+                          data-testid="application-profile-grade-scale"
                           required
                         >
                           <option value="">{{ t('profilePage.selectOption') }}</option>
                           <option v-for="scale in gradeScales" :key="scale.id" :value="scale.id">{{ scale.name }}</option>
                         </select>
+                        <div v-if="eligibilityScalePolicy.locked" class="form-text" data-testid="application-profile-grade-scale-locked">
+                          <i class="bi bi-lock me-1" aria-hidden="true"></i>{{ t('profilePage.gradeScaleLocked') }}
+                        </div>
+                      </div>
+                      <div class="col-md-6">
+                        <label for="application-profile-gpa" class="form-label">{{ t('profilePage.gpaLabel') }} *</label>
+                        <input
+                          id="application-profile-gpa"
+                          v-model.number="profileEligibility.gpa"
+                          type="number"
+                          :min="eligibilityPromedioBounds.min"
+                          :max="eligibilityPromedioBounds.max ?? undefined"
+                          :step="eligibilityPromedioBounds.step"
+                          class="form-control"
+                          :disabled="!profileEligibility.grade_scale"
+                          :placeholder="profileEligibility.grade_scale ? '' : t('profilePage.gpaSelectScaleFirst')"
+                          data-testid="application-profile-gpa"
+                          required
+                        >
                       </div>
                       <div class="col-md-6">
                         <label for="application-profile-language" class="form-label">{{ t('profilePage.primaryLanguage') }} *</label>
@@ -1020,6 +1029,7 @@ import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import EligibilityFixList from '@/components/EligibilityFixList.vue'
 import SearchableSelect from '@/components/SearchableSelect.vue'
 import { spokenLanguageSelectOptions } from '@/utils/spokenLanguageOptions'
+import { findScale, gradeScaleBounds, gradeScalePolicy } from '@/utils/gradeScale'
 
 const route = useRoute()
 const router = useRouter()
@@ -1061,6 +1071,11 @@ const profileEligibility = ref({
   credits_total: null,
   computed_semester: null,
 })
+
+const eligibilityScalePolicy = ref({ locked: false, defaultId: '', defaultName: '' })
+const eligibilityPromedioBounds = computed(() => (
+  gradeScaleBounds(findScale(gradeScales.value, profileEligibility.value.grade_scale))
+))
 
 function creditNumber(value) {
   if (value === '' || value == null) return null
@@ -1245,6 +1260,12 @@ async function loadProfileGate() {
     credits_approved: creditNumber(profile.credits_approved),
     credits_total: creditNumber(profile.credits_total),
     computed_semester: profile.computed_semester ?? null,
+  }
+  eligibilityScalePolicy.value = gradeScalePolicy(profile)
+  const scalePolicy = eligibilityScalePolicy.value
+  if (scalePolicy.defaultId && (scalePolicy.locked || !profileEligibility.value.grade_scale)) {
+    const match = findScale(gradeScales.value, scalePolicy.defaultId)
+    profileEligibility.value.grade_scale = match ? match.id : scalePolicy.defaultId
   }
   eligibilityRequired.value = eligibilityFieldsMissing(profileEligibility.value)
   return true
