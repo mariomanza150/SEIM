@@ -59,6 +59,10 @@ const AdminApplicationEdit = () => import('@/views/admin/AdminApplicationEdit.vu
 const AdminFeatures = () => import('@/views/admin/AdminFeatures.vue')
 const TesterReports = () => import('@/views/tester/TesterReports.vue')
 const TesterReportDetail = () => import('@/views/tester/TesterReportDetail.vue')
+const TesterHub = () => import('@/views/tester/TesterHub.vue')
+const TesterAccounts = () => import('@/views/tester/TesterAccounts.vue')
+const TesterOutbox = () => import('@/views/tester/TesterOutbox.vue')
+const TesterGuide = () => import('@/views/tester/TesterGuide.vue')
 const HelpCenter = () => import('@/views/HelpCenter.vue')
 const HelpArticle = () => import('@/views/HelpArticle.vue')
 const ToeflPractice = () => import('@/views/ToeflPractice.vue')
@@ -368,6 +372,10 @@ const routes = [
         meta: { adminOnly: true },
       },
       // Tester toolkit (env-gated server-side; views show "not available" otherwise)
+      { path: 'tester', name: 'TesterHub', component: TesterHub, meta: { testerOnly: true } },
+      { path: 'tester/accounts', name: 'TesterAccounts', component: TesterAccounts, meta: { testerOnly: true } },
+      { path: 'tester/outbox', name: 'TesterOutbox', component: TesterOutbox, meta: { testerOnly: true } },
+      { path: 'tester/guide', name: 'TesterGuide', component: TesterGuide, meta: { testerOnly: true } },
       { path: 'tester/reports', name: 'TesterReports', component: TesterReports, meta: { testerOnly: true } },
       {
         path: 'tester/reports/:id',

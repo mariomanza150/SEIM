@@ -16,6 +16,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from .gating import (
+    CLAIM_IMPERSONATOR,
     deploy_tier,
     get_tester,
     is_impersonating,
@@ -82,6 +83,9 @@ class QAContextView(APIView):
                 "email": acting.email,
                 "role": getattr(acting, "primary_role", ""),
                 "is_demo_account": bool(getattr(acting, "is_demo_account", False)),
+                "mode": "impersonate"
+                if request.auth is not None and request.auth.get(CLAIM_IMPERSONATOR)
+                else "switch",
             }
         response = Response(data)
         response["Cache-Control"] = "private, no-store"

@@ -9,12 +9,16 @@ from django.core.management.base import BaseCommand
 
 from accounts.models import Role, User
 from exchange.models import Application, ApplicationStatus, Program
+from qa.gating import demo_password
 
 
 class Command(BaseCommand):
     help = "Create minimal test data (1 admin, 1 coordinator, 1 student, 1 program, 1 application)"
 
     def handle(self, *args, **options):
+        from qa.gating import assert_not_production
+
+        assert_not_production("create_minimal_test_data")
         self.stdout.write("Creating minimal test data...")
 
         # Get or create roles
@@ -32,13 +36,13 @@ class Command(BaseCommand):
                 "is_email_verified": True,
                 "is_active": True,
                 "is_staff": True,
-                "is_superuser": True,
+                "is_superuser": False,  # demo credentials never grant superuser
             },
         )
         if created:
-            admin_user.set_password("admin123")
+            admin_user.set_password(demo_password("admin123"))
             admin_user.save()
-            self.stdout.write("  ✓ Created admin user: admin / admin123")
+            self.stdout.write("  ✓ Created admin user: admin")
         else:
             self.stdout.write("  ✓ Admin user already exists: admin")
         admin_user.roles.add(admin_role)
@@ -55,11 +59,9 @@ class Command(BaseCommand):
             },
         )
         if created:
-            coordinator_user.set_password("coordinator123")
+            coordinator_user.set_password(demo_password("coordinator123"))
             coordinator_user.save()
-            self.stdout.write(
-                "  ✓ Created coordinator user: coordinator / coordinator123"
-            )
+            self.stdout.write("  ✓ Created coordinator user: coordinator")
         else:
             self.stdout.write("  ✓ Coordinator user already exists: coordinator")
         coordinator_user.roles.add(coordinator_role)
@@ -76,14 +78,14 @@ class Command(BaseCommand):
             },
         )
         if created:
-            student_user.set_password("student123")
+            student_user.set_password(demo_password("student123"))
             student_user.save()
             # Update profile
             profile = student_user.profile
             profile.gpa = 3.5
             profile.language = "English"
             profile.save()
-            self.stdout.write("  ✓ Created student user: student / student123")
+            self.stdout.write("  ✓ Created student user: student")
         else:
             self.stdout.write("  ✓ Student user already exists: student")
         student_user.roles.add(student_role)
@@ -130,7 +132,7 @@ class Command(BaseCommand):
             self.style.SUCCESS("\n✅ Minimal test data created successfully!")
         )
         self.stdout.write("\n📋 Test Credentials:")
-        self.stdout.write("   Admin: admin / admin123")
-        self.stdout.write("   Coordinator: coordinator / coordinator123")
-        self.stdout.write("   Student: student / student123")
+        self.stdout.write("   Admin: admin")
+        self.stdout.write("   Coordinator: coordinator")
+        self.stdout.write("   Student: student")
         self.stdout.write("\n🌐 Access: http://localhost:8000")

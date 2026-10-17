@@ -252,6 +252,8 @@ python -c "import playwright; print('Playwright OK')"
 ### **Demo-Ready Credentials**
 These accounts are created by `docker-compose exec web python manage.py seed_demo_readiness`.
 
+> **Local development only.** The passwords below apply only with `DEPLOY_TIER=development` (the default for local Docker and CI). On a test server (`DEPLOY_TIER=test`) every demo account uses the shared `TESTER_DEMO_PASSWORD` from the server env file, and no demo account is a superuser. Demo commands refuse to run on `DEPLOY_TIER=production`. See `docs/tester_guide.md`.
+
 - **Admin**
   - Email: `admin@test.com`
   - Password: `admin123`

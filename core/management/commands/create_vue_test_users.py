@@ -8,6 +8,7 @@ from django.core.management.base import BaseCommand
 
 from accounts.models import Role
 from accounts.profile_seed import complete_apply_profile
+from qa.gating import assert_not_production, demo_password, demo_password_is_configured
 
 User = get_user_model()
 
@@ -16,6 +17,7 @@ class Command(BaseCommand):
     help = "Create test users for Vue.js frontend development and testing"
 
     def handle(self, *args, **options):
+        assert_not_production("create_vue_test_users")
         self.stdout.write("Creating test users for Vue.js...")
 
         # Ensure roles exist
@@ -33,7 +35,8 @@ class Command(BaseCommand):
                 "last_name": "User",
                 "role": admin_role,
                 "is_staff": True,
-                "is_superuser": True,
+                # Shared demo credentials must never grant superuser.
+                "is_superuser": False,
                 "is_email_verified": True,
             },
             {
@@ -73,10 +76,16 @@ class Command(BaseCommand):
 
         created_count = 0
         updated_count = 0
+        pw_label = (
+            "TESTER_DEMO_PASSWORD"
+            if demo_password_is_configured()
+            else "legacy dev password"
+        )
 
         for user_data in test_users:
             email = user_data.pop("email")
-            password = user_data.pop("password")
+            password = demo_password(user_data.pop("password"))
+            user_data["is_demo_account"] = True
             role = user_data.pop("role")
 
             user, created = User.objects.get_or_create(
@@ -93,7 +102,7 @@ class Command(BaseCommand):
                 created_count += 1
                 self.stdout.write(
                     self.style.SUCCESS(
-                        f"  ✓ Created: {email} (password: {password}) - Role: {role.name}"
+                        f"  ✓ Created: {email} (password: {pw_label}) - Role: {role.name}"
                     )
                 )
             else:
@@ -108,7 +117,7 @@ class Command(BaseCommand):
                 updated_count += 1
                 self.stdout.write(
                     self.style.WARNING(
-                        f"  ↻ Updated: {email} (password: {password}) - Role: {role.name}"
+                        f"  ↻ Updated: {email} (password: {pw_label}) - Role: {role.name}"
                     )
                 )
 
@@ -123,10 +132,13 @@ class Command(BaseCommand):
         self.stdout.write("=" * 70)
         self.stdout.write("\nTest Credentials:")
         self.stdout.write("-" * 70)
-        self.stdout.write("  Admin:        admin@test.com / admin123")
-        self.stdout.write("  Coordinator:  coordinator@test.com / coordinator123")
-        self.stdout.write("  Student:      student@test.com / student123")
-        self.stdout.write("  Generic:      test@example.com / testpass123")
+        for label, email in (
+            ("Admin", "admin@test.com"),
+            ("Coordinator", "coordinator@test.com"),
+            ("Student", "student@test.com"),
+            ("Generic", "test@example.com"),
+        ):
+            self.stdout.write(f"  {label + ':':<13} {email} / {pw_label}")
         self.stdout.write("-" * 70)
         self.stdout.write("\nUse these credentials to test the Vue.js login at:")
         self.stdout.write("  http://localhost:5173/login")

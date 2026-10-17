@@ -9,7 +9,8 @@ DEMO_USER_SPECS = [
         "last_name": "Administrator",
         "role": "admin",
         "is_staff": True,
-        "is_superuser": True,
+        # Never superuser: demo credentials are shared with testers.
+        "is_superuser": False,
     },
     {
         "username": "coordinator",
