@@ -361,6 +361,32 @@ class AllowedEmailDomain(CatalogModel):
     """Institutional email domain permitted for student registration."""
 
     name = models.CharField(max_length=150, unique=True)
+    default_grade_scale = models.ForeignKey(
+        "grades.GradeScale",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="email_domains",
+        help_text="Grade scale pre-selected for students registered with this domain.",
+    )
+    lock_grade_scale = models.BooleanField(
+        default=False,
+        help_text=(
+            "When set (with a default scale), students of this domain cannot "
+            "change their grade scale."
+        ),
+    )
+
+    @classmethod
+    def for_email(cls, email: str | None):
+        domain = str(email or "").rsplit("@", 1)[-1].strip().lower()
+        if not domain or "@" not in str(email or ""):
+            return None
+        return (
+            cls.objects.select_related("default_grade_scale")
+            .filter(name__iexact=domain, is_active=True)
+            .first()
+        )
 
     def clean(self):
         super().clean()
@@ -520,9 +546,10 @@ class Profile(UUIDModel, TimeStampedModel):
         ],
     )
     gpa = models.FloatField(
+        "Promedio",
         null=True,
         blank=True,
-        help_text="Student's GPA/grade in their institutional grading scale",
+        help_text="Student's promedio (grade average) in their institutional grading scale",
     )
     grade_scale = models.ForeignKey(
         "grades.GradeScale",

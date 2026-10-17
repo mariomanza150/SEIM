@@ -82,6 +82,34 @@ describe('AdminCatalogs', () => {
     })
   })
 
+  it('sets a default grade scale and lock on an email domain', async () => {
+    mockPatch.mockResolvedValue({ data: {} })
+    const base = mockGet.getMockImplementation()
+    mockGet.mockImplementation((url) => {
+      if (url === '/api/grades/scales/active/') {
+        return Promise.resolve({ data: [{ id: 'gs-10', name: 'MX 0-10' }] })
+      }
+      return base(url)
+    })
+    const wrapper = await mountPage()
+    await wrapper.find('[data-tab="domains"]').trigger('click')
+    await flushPromises()
+    const lock = wrapper.find('[data-testid="admin-catalogs-domain-lock"]')
+    expect(lock.attributes('disabled')).toBeDefined()
+    await wrapper.find('[data-testid="admin-catalogs-domain-scale"]').setValue('gs-10')
+    await flushPromises()
+    expect(mockPatch).toHaveBeenLastCalledWith(
+      '/api/accounts/catalogs/allowed-email-domains/dom-1/',
+      expect.objectContaining({ default_grade_scale: 'gs-10', lock_grade_scale: false }),
+    )
+    await wrapper.find('[data-testid="admin-catalogs-domain-lock"]').setValue(true)
+    await flushPromises()
+    expect(mockPatch).toHaveBeenLastCalledWith(
+      '/api/accounts/catalogs/allowed-email-domains/dom-1/',
+      expect.objectContaining({ default_grade_scale: 'gs-10', lock_grade_scale: true }),
+    )
+  })
+
   it('manages gender options with an English label', async () => {
     mockPatch.mockResolvedValue({ data: {} })
     const wrapper = await mountPage()

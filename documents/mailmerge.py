@@ -36,7 +36,7 @@ MERGE_FIELD_CATALOG: list[dict[str, str]] = [
     {"name": "Email", "group": "student", "description": "Student email"},
     {"name": "Username", "group": "student", "description": "Student username"},
     {"name": "Matricula", "group": "student", "description": "Student ID / matrícula"},
-    {"name": "GPA", "group": "student", "description": "GPA"},
+    {"name": "GPA", "group": "student", "description": "Promedio"},
     {"name": "CurrentSemester", "group": "student", "description": "Current semester"},
     {
         "name": "CreditsApprovedPercent",

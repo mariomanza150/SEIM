@@ -298,15 +298,32 @@
                   <div v-if="creditsAutoPercent != null" class="form-text" data-testid="profile-credits-auto">{{ t('profilePage.creditsAutoCalculated') }}</div>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-gpa">{{ t('profilePage.gpaLabel') }} *</label>
-                  <input id="profile-gpa" v-model="form.gpa" type="number" step="0.01" min="0" class="form-control" autocomplete="off" required :placeholder="t('profilePage.gpaPlaceholder')" data-testid="profile-gpa">
-                </div>
-                <div class="col-md-6">
                   <label class="form-label" for="profile-grade-scale">{{ t('profilePage.gradeScale') }} *</label>
-                  <select id="profile-grade-scale" v-model="form.grade_scale" class="form-select" required data-testid="profile-grade-scale" :key="`scale-${form.grade_scale}-${catalogs.gradeScales.length}`">
+                  <select id="profile-grade-scale" v-model="form.grade_scale" class="form-select" required :disabled="scalePolicy.locked" data-testid="profile-grade-scale" :key="`scale-${form.grade_scale}-${catalogs.gradeScales.length}`">
                     <option value="">{{ t('profilePage.selectOption') }}</option>
                     <option v-for="item in catalogs.gradeScales" :key="item.id" :value="String(item.id)">{{ item.name }}</option>
                   </select>
+                  <div v-if="scalePolicy.locked" class="form-text" data-testid="profile-grade-scale-locked">
+                    <i class="bi bi-lock me-1" aria-hidden="true"></i>{{ t('profilePage.gradeScaleLocked') }}
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="profile-gpa">{{ t('profilePage.gpaLabel') }} *</label>
+                  <input
+                    id="profile-gpa"
+                    v-model="form.gpa"
+                    type="number"
+                    :step="promedioBounds.step"
+                    :min="promedioBounds.min"
+                    :max="promedioBounds.max ?? undefined"
+                    class="form-control"
+                    autocomplete="off"
+                    required
+                    :disabled="!form.grade_scale"
+                    :placeholder="form.grade_scale ? promedioPlaceholder : t('profilePage.gpaSelectScaleFirst')"
+                    data-testid="profile-gpa"
+                  >
+                  <div v-if="promedioRangeError" class="invalid-feedback d-block" data-testid="profile-gpa-range">{{ promedioRangeError }}</div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-language">{{ t('profilePage.primaryLanguage') }} *</label>
@@ -381,6 +398,7 @@ import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import SearchableSelect from '@/components/SearchableSelect.vue'
 import BirthPlaceFields from '@/components/BirthPlaceFields.vue'
+import { findScale, gradeScaleBounds, gradeScalePolicy } from '@/utils/gradeScale'
 import { spokenLanguageSelectOptions } from '@/utils/spokenLanguageOptions'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
@@ -429,6 +447,22 @@ const emptyForm = {
   computed_semester: null, effective_semester: null,
 }
 const form = ref({ ...emptyForm })
+const scalePolicy = ref({ locked: false, defaultId: '', defaultName: '' })
+
+const selectedScale = computed(() => findScale(catalogs.gradeScales, form.value.grade_scale))
+const promedioBounds = computed(() => gradeScaleBounds(selectedScale.value))
+const promedioPlaceholder = computed(() => {
+  const { min, max } = promedioBounds.value
+  return max == null ? t('profilePage.gpaPlaceholder') : t('profilePage.gpaRangePlaceholder', { min, max })
+})
+const promedioRangeError = computed(() => {
+  const { min, max } = promedioBounds.value
+  const value = form.value.gpa
+  if (value === '' || value == null || max == null) return ''
+  const n = Number(value)
+  if (Number.isNaN(n) || (n >= min && n <= max)) return ''
+  return t('profilePage.gpaOutOfRange', { min, max })
+})
 
 /** Admin-managed gender catalog; keeps the profile's saved code visible even if deactivated. */
 const genderOptions = computed(() => {
@@ -709,13 +743,27 @@ function applyProfile(data) {
   catalogs.schools = ensureSelected(catalogs.schools, form.value.school, form.value.school_name)
   catalogs.unidades = ensureSelected(catalogs.unidades, form.value.unidad, form.value.unidad_name)
   catalogs.banks = ensureSelected(catalogs.banks, form.value.bank_institution, form.value.bank_institution_name)
-  catalogs.gradeScales = ensureSelected(catalogs.gradeScales, form.value.grade_scale, data.grade_scale_name)
+  scalePolicy.value = gradeScalePolicy(data)
+  const policy = scalePolicy.value
+  if (policy.defaultId && (policy.locked || !form.value.grade_scale)) {
+    form.value.grade_scale = policy.defaultId
+  }
+  catalogs.gradeScales = ensureSelected(
+    catalogs.gradeScales,
+    form.value.grade_scale,
+    form.value.grade_scale === policy.defaultId && policy.defaultName ? policy.defaultName : data.grade_scale_name,
+  )
 }
 
 async function fetchActiveGradeScales() {
   const load = async (url) => {
     const { data } = await api.get(url)
-    const rows = catalogList(data)
+    const rows = listFrom(data)
+      .map((item) => {
+        const row = catalogRow(item)
+        return row ? { ...row, min_value: item.min_value, max_value: item.max_value } : null
+      })
+      .filter(Boolean)
     if (!rows.length && !Array.isArray(data) && !Array.isArray(data?.results)) {
       throw new Error(`Invalid grade scale payload from ${url}`)
     }
@@ -833,6 +881,10 @@ async function handleSubmit() {
   }
   if (creditsError.value) {
     saveError.value = creditsError.value
+    return
+  }
+  if (promedioRangeError.value) {
+    saveError.value = promedioRangeError.value
     return
   }
   saving.value = true
