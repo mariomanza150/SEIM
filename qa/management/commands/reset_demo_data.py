@@ -17,4 +17,5 @@ class Command(BaseCommand):
         call_command("cleanup_demo_data", verbosity=verbosity)
         call_command("seed_demo_readiness", verbosity=verbosity)
         call_command("seed_test_accounts", verbosity=verbosity)
+        call_command("seed_test_scenarios", verbosity=verbosity)
         self.stdout.write(self.style.SUCCESS("Demo data reset complete."))

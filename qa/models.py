@@ -216,3 +216,67 @@ class CapturedEmail(UUIDModel, TimeStampedModel):
 
     def __str__(self):
         return self.subject or "(no subject)"
+
+
+class TestScenario(UUIDModel, TimeStampedModel):
+    """A manual test case testers run against each build (seeded from qa/scenarios.py)."""
+
+    __test__ = False  # not a pytest class
+
+    code = models.CharField(max_length=40, unique=True)
+    area = models.CharField(max_length=60)
+    role = models.CharField(max_length=20, blank=True, default="")
+    title = models.CharField(max_length=200)
+    title_es = models.CharField(max_length=200, blank=True, default="")
+    steps = models.TextField(blank=True, default="")
+    steps_es = models.TextField(blank=True, default="")
+    expected = models.TextField(blank=True, default="")
+    expected_es = models.TextField(blank=True, default="")
+    route_name = models.CharField(max_length=100, blank=True, default="")
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["order", "code"]
+
+    def __str__(self):
+        return f"{self.code}: {self.title}"
+
+
+class ScenarioResult(UUIDModel, TimeStampedModel):
+    class Outcome(models.TextChoices):
+        PASS = "pass", _("Pass")
+        FAIL = "fail", _("Fail")
+        BLOCKED = "blocked", _("Blocked")
+        SKIPPED = "skipped", _("Skipped")
+
+    scenario = models.ForeignKey(
+        TestScenario, on_delete=models.CASCADE, related_name="results"
+    )
+    tester = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="qa_scenario_results",
+    )
+    build_commit = models.CharField(max_length=40, blank=True, default="")
+    outcome = models.CharField(max_length=10, choices=Outcome.choices)
+    note = models.TextField(blank=True, default="")
+    issue = models.ForeignKey(
+        Issue,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="scenario_results",
+    )
+
+    class Meta:
+        ordering = ["-updated_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["scenario", "tester", "build_commit"],
+                name="qa_one_result_per_build",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.scenario.code} {self.outcome} ({self.build_commit[:7]})"

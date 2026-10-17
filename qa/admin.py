@@ -4,7 +4,15 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .models import CapturedEmail, Issue, IssueAttachment, IssueComment, QAAuditEvent
+from .models import (
+    CapturedEmail,
+    Issue,
+    IssueAttachment,
+    IssueComment,
+    QAAuditEvent,
+    ScenarioResult,
+    TestScenario,
+)
 
 
 class IssueAttachmentInline(admin.TabularInline):
@@ -223,3 +231,26 @@ class CapturedEmailAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(TestScenario)
+class TestScenarioAdmin(admin.ModelAdmin):
+    list_display = ("code", "area", "role", "title", "is_active", "order")
+    list_filter = ("area", "role", "is_active")
+    search_fields = ("code", "title", "title_es")
+    list_editable = ("is_active", "order")
+
+
+@admin.register(ScenarioResult)
+class ScenarioResultAdmin(admin.ModelAdmin):
+    list_display = (
+        "scenario",
+        "tester",
+        "build_commit",
+        "outcome",
+        "issue",
+        "updated_at",
+    )
+    list_filter = ("outcome", "build_commit")
+    search_fields = ("scenario__code", "tester__email", "note")
+    raw_id_fields = ("issue",)

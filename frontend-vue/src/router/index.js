@@ -63,6 +63,8 @@ const TesterHub = () => import('@/views/tester/TesterHub.vue')
 const TesterAccounts = () => import('@/views/tester/TesterAccounts.vue')
 const TesterOutbox = () => import('@/views/tester/TesterOutbox.vue')
 const TesterGuide = () => import('@/views/tester/TesterGuide.vue')
+const TesterChecklist = () => import('@/views/tester/TesterChecklist.vue')
+const QaTriage = () => import('@/views/tester/QaTriage.vue')
 const HelpCenter = () => import('@/views/HelpCenter.vue')
 const HelpArticle = () => import('@/views/HelpArticle.vue')
 const ToeflPractice = () => import('@/views/ToeflPractice.vue')
@@ -376,6 +378,8 @@ const routes = [
       { path: 'tester/accounts', name: 'TesterAccounts', component: TesterAccounts, meta: { testerOnly: true } },
       { path: 'tester/outbox', name: 'TesterOutbox', component: TesterOutbox, meta: { testerOnly: true } },
       { path: 'tester/guide', name: 'TesterGuide', component: TesterGuide, meta: { testerOnly: true } },
+      { path: 'tester/checklist', name: 'TesterChecklist', component: TesterChecklist, meta: { testerOnly: true } },
+      { path: 'admin/qa-issues', name: 'QaTriage', component: QaTriage, meta: { testerOnly: true } },
       { path: 'tester/reports', name: 'TesterReports', component: TesterReports, meta: { testerOnly: true } },
       {
         path: 'tester/reports/:id',

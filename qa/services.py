@@ -9,14 +9,15 @@ logger = logging.getLogger(__name__)
 def triager_queryset():
     User = get_user_model()
     return (
-        User.objects.filter(is_active=True, is_demo_account=False)
+        User.objects.filter(is_active=True, is_demo_account=False, is_tester=True)
         .filter(Q(is_superuser=True) | Q(roles__name="admin"))
         .distinct()
     )
 
 
 def triage_url(issue) -> str:
-    return f"/seim/django-admin/qa/issue/{issue.pk}/change/"
+    # Vue report page; triagers get the triage panel there (Django admin still works).
+    return f"/seim/tester/reports/{issue.pk}"
 
 
 def reporter_url(issue) -> str:
@@ -65,3 +66,26 @@ def notify_status_change(issue, old_status, actor) -> None:
         )
     except Exception:  # pragma: no cover
         logger.exception("Could not notify reporter about %s", issue.reference)
+
+
+def notify_reopened(issue, actor) -> None:
+    """Tell the assignee (or every triager) that a fixed report was reopened."""
+    try:
+        from notifications.services import NotificationService
+
+        recipients = [issue.assignee] if issue.assignee_id else list(triager_queryset())
+        for user in recipients:
+            if actor and user.pk == actor.pk:
+                continue
+            NotificationService.send_notification(
+                recipient=user,
+                title=f"{issue.reference} reopened"[:255],
+                message=issue.title[:500],
+                notification_type="in_app",
+                action_url=triage_url(issue),
+                action_text="Triage",
+                category="warning",
+                data={"qa_issue": str(issue.pk), "to": issue.status},
+            )
+    except Exception:  # pragma: no cover
+        logger.exception("Could not notify about reopened %s", issue.reference)
