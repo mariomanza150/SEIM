@@ -266,7 +266,14 @@ if LOG_FILE:
     for _logger in [LOGGING["root"], *LOGGING["loggers"].values()]:
         _logger["handlers"].append("file")
 
-init_sentry(dsn=SENTRY_DSN, environment=SENTRY_ENVIRONMENT, release=VERSION)
+init_sentry(
+    dsn=SENTRY_DSN,
+    environment=SENTRY_ENVIRONMENT,
+    release=VERSION,
+    traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+    sample_rate=SENTRY_SAMPLE_RATE,
+    logs_level=SENTRY_LOGS_LEVEL,
+)
 
 # Same E2E hatch as development.py. Local-prod sets ALLOW_ANY_HOST=1.
 if os.environ.get("DISABLE_THROTTLE_E2E") or env.bool("ALLOW_ANY_HOST", default=False):

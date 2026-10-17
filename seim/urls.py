@@ -14,11 +14,13 @@ from django.contrib import admin
 from django.shortcuts import redirect
 from django.urls import include, path, re_path
 from django.views.decorators.cache import never_cache
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import RedirectView, TemplateView
 from django.views.static import serve as media_serve
 from django_js_reverse.views import urls_js
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from core.observability import sentry_envelope_tunnel
 from core.views import health_check, health_live, marketing_home, spa_logout
 
 _WAGTAIL = apps.is_installed("wagtail")
@@ -43,6 +45,11 @@ urlpatterns = [
     # HEALTH CHECK
     # ============================================
     path("health/live/", health_live, name="health_live"),
+    path(
+        "api/monitoring/envelope/",
+        csrf_exempt(sentry_envelope_tunnel),
+        name="sentry_envelope_tunnel",
+    ),
     path("health/", health_check, name="health_check"),
     # Redirect /admin/ to Django admin (moved to avoid SPA route collisions under /seim/admin/*)
     path(

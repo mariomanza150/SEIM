@@ -44,6 +44,10 @@ if (-not $SkipPull) {
     git pull --ff-only
 }
 
+# Deployed commit, used as the GlitchTip release (frontend build arg and backend env) unless
+# SENTRY_RELEASE is set in the env file.
+$env:SEIM_GIT_SHA = (git rev-parse --short=12 HEAD).Trim()
+
 if (-not $SkipBuild) {
     Write-Step "Building production images (web, celery, celery-beat, toefl)"
     $buildArgs = @(

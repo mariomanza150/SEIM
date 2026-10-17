@@ -73,3 +73,148 @@ def test_logging_config_is_valid_dictconfig(fmt, monkeypatch):
 
 def test_init_sentry_is_noop_without_dsn():
     assert init_sentry(dsn="", environment="test", release="x") is False
+
+
+# --- scrubbing and envelope relay -------------------------------------------------------------
+from core.observability import (  # noqa: E402
+    FILTERED,
+    envelope_upstream,
+    scrub,
+    scrub_event,
+    scrub_log,
+    scrub_text,
+)
+
+
+def test_scrub_text_masks_emails_tokens_and_query_secrets():
+    out = scrub_text("ana@uni.mx Bearer abcdefghijk /reset?token=s3cr3t&page=2")
+    assert "ana@uni.mx" not in out and "abcdefghijk" not in out and "s3cr3t" not in out
+    assert "page=2" in out
+
+
+def test_scrub_masks_sensitive_keys_only():
+    assert scrub(
+        {"password": "x", "logger": "a", "inner": {"email": "a@b.co", "n": 1}}
+    ) == {
+        "password": FILTERED,
+        "logger": "a",
+        "inner": {"email": FILTERED, "n": 1},
+    }
+
+
+def test_scrub_event_drops_bodies_cookies_auth_and_identity():
+    event = scrub_event(
+        {
+            "request": {
+                "url": "https://x/api?token=abc",
+                "data": {"password": "p"},
+                "cookies": {"sessionid": "s"},
+                "headers": {
+                    "Authorization": "Bearer t",
+                    "Cookie": "c",
+                    "Accept": "json",
+                },
+            },
+            "user": {"id": 3, "email": "a@b.co", "username": "ana"},
+            "logentry": {"message": "login a@b.co", "params": [{"token": "t"}]},
+            "exception": {"values": [{"value": "bad a@b.co"}]},
+            "breadcrumbs": {
+                "values": [{"message": "a@b.co", "data": {"password": "x"}}]
+            },
+        }
+    )
+    req = event["request"]
+    assert "data" not in req and "cookies" not in req
+    assert req["headers"] == {
+        "Authorization": FILTERED,
+        "Cookie": FILTERED,
+        "Accept": "json",
+    }
+    assert "abc" not in req["url"]
+    assert event["user"] == {"id": 3}
+    assert "a@b.co" not in event["logentry"]["message"]
+    assert event["logentry"]["params"] == [{"token": FILTERED}]
+    assert "a@b.co" not in event["exception"]["values"][0]["value"]
+    assert event["breadcrumbs"]["values"][0]["data"] == {"password": FILTERED}
+
+
+def test_scrub_log_masks_body_and_attributes():
+    log = scrub_log(
+        {"body": "user a@b.co failed", "attributes": {"email": "a@b.co", "x": 1}}
+    )
+    assert log == {
+        "body": f"user {FILTERED} failed",
+        "attributes": {"email": FILTERED, "x": 1},
+    }
+
+
+def test_envelope_upstream_only_for_configured_dsn():
+    dsn = "http://pubkey@100.64.0.1:8002/6"
+    assert (
+        envelope_upstream({"dsn": dsn}, dsn) == "http://100.64.0.1:8002/api/6/envelope/"
+    )
+    assert envelope_upstream({"dsn": "http://k@evil.example/6"}, dsn) is None
+    assert envelope_upstream({"dsn": dsn}, "") is None
+
+
+def test_envelope_tunnel_rejects_unknown_dsn_and_is_quiet_when_unset(client, settings):
+    settings.SENTRY_FRONTEND_DSN = ""
+    assert (
+        client.post(
+            "/api/monitoring/envelope/", data=b"{}\n", content_type="text/plain"
+        ).status_code
+        == 204
+    )
+    settings.SENTRY_FRONTEND_DSN = "http://k@127.0.0.1:9/6"
+    bad = b'{"dsn":"http://k@evil.example/6"}\n{}'
+    assert (
+        client.post(
+            "/api/monitoring/envelope/", data=bad, content_type="text/plain"
+        ).status_code
+        == 400
+    )
+    assert client.get("/api/monitoring/envelope/").status_code == 405
+
+
+def test_envelope_tunnel_forwards_to_glitchtip(client, settings, monkeypatch):
+    dsn = "http://k@127.0.0.1:9/6"
+    settings.SENTRY_FRONTEND_DSN = dsn
+    seen = {}
+
+    class Resp:
+        status = 200
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+    def fake_urlopen(req, timeout):
+        seen["url"], seen["data"] = req.full_url, req.data
+        return Resp()
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    body = ('{"dsn":"' + dsn + '"}\n{"type":"event"}\n{}').encode()
+    resp = client.post(
+        "/api/monitoring/envelope/", data=body, content_type="text/plain"
+    )
+    assert resp.status_code == 200
+    assert seen == {"url": "http://127.0.0.1:9/api/6/envelope/", "data": body}
+
+
+def test_init_sentry_enables_scrubbing_and_logs(monkeypatch):
+    import sentry_sdk
+
+    captured = {}
+    monkeypatch.setattr(sentry_sdk, "init", lambda **kw: captured.update(kw))
+    assert init_sentry(
+        dsn="http://k@h/1", environment="t", release="r", logs_level="warning"
+    )
+    assert captured["send_default_pii"] is False
+    assert captured["enable_logs"] is True
+    assert captured["before_send"] is scrub_event
+    assert captured["before_send_log"] is scrub_log
+    captured.clear()
+    init_sentry(dsn="http://k@h/1", environment="t", release="r", logs_level="off")
+    assert captured["enable_logs"] is False
