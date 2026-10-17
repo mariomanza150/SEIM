@@ -103,8 +103,22 @@ class ScholarshipScoringRuleset(UUIDModel, TimeStampedModel):
 class Program(UUIDModel, TimeStampedModel):
     """Represents an exchange program (e.g., Erasmus, semester abroad)."""
 
+    class MobilityDirection(models.TextChoices):
+        OUTGOING = "outgoing", _("Outgoing")
+        INCOMING = "incoming", _("Incoming")
+
     name = models.CharField(max_length=255)
     description = models.TextField()
+    mobility_direction = models.CharField(
+        max_length=10,
+        choices=MobilityDirection.choices,
+        default=MobilityDirection.OUTGOING,
+        db_index=True,
+        help_text=_(
+            "Outgoing: home students going abroad. Incoming: visiting students "
+            "coming to the institution."
+        ),
+    )
     start_date = models.DateField()
     end_date = models.DateField()
     application_open_date = models.DateField(
