@@ -411,7 +411,9 @@
       "staff": "Staff tools",
       "account": "Account",
       "admin": "Admin"
-    }
+    },
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar"
   },
   "commandPalette": {
     "ariaLabel": "Command palette",

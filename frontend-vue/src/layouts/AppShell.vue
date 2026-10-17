@@ -22,6 +22,8 @@
             class="btn btn-outline-light me-2 d-none d-md-inline-flex align-items-center"
             :aria-pressed="sidebarCollapsed ? 'true' : 'false'"
             :aria-label="t('dashboard.toggleSidebar')"
+            :title="sidebarCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')"
+            data-testid="sidebar-collapse-toggle"
             @click="toggleSidebarCollapsed"
           >
             <i
@@ -202,6 +204,7 @@
       <div class="offcanvas-body pt-0">
         <SidebarNavList
           :sections="navSections"
+          id-prefix="seim-offcanvas-nav"
           data-tour="sidebar-nav"
           @navigate="closeSidebarOffcanvas"
         />
@@ -211,16 +214,36 @@
     <div class="container-fluid mt-4">
       <div class="row">
         <aside
-          v-show="!sidebarCollapsed"
-          class="col-md-3 col-lg-2 d-none d-md-block seim-app-shell__aside"
+          class="d-none d-md-block seim-app-shell__aside"
+          :class="sidebarCollapsed ? 'seim-app-shell__aside--rail' : 'col-md-3 col-lg-2'"
+          :aria-label="t('dashboard.mainNavAria')"
           data-tour="sidebar-nav"
+          data-testid="app-shell-aside"
         >
-          <SidebarNavList :sections="navSections" />
+          <div class="d-flex mb-2" :class="sidebarCollapsed ? 'justify-content-center' : 'justify-content-end'">
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary seim-app-shell__rail-toggle"
+              :aria-expanded="sidebarCollapsed ? 'false' : 'true'"
+              :aria-label="sidebarCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')"
+              :title="sidebarCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')"
+              data-testid="sidebar-rail-toggle"
+              @click="toggleSidebarCollapsed"
+            >
+              <i
+                :class="sidebarCollapsed ? 'bi bi-chevron-double-right' : 'bi bi-chevron-double-left'"
+                aria-hidden="true"
+              />
+            </button>
+          </div>
+          <SidebarNavList :sections="navSections" :rail="sidebarCollapsed" id-prefix="seim-aside-nav" />
         </aside>
 
         <section
-          class="col-12 seim-app-shell__main-col"
-          :class="sidebarCollapsed ? '' : 'col-md-9 col-lg-10'"
+          ref="mainColEl"
+          class="seim-app-shell__main-col"
+          :class="sidebarCollapsed ? 'col' : 'col-12 col-md-9 col-lg-10'"
+          data-testid="app-shell-main"
         >
           <router-view v-slot="{ Component }">
             <keep-alive :include="keptAliveViews">
@@ -234,7 +257,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
@@ -247,8 +270,8 @@ import { useFeatures } from '@/composables/useFeatures'
 import { useThemeToggle } from '@/composables/useThemeToggle'
 import { useCommandPalette } from '@/composables/useCommandPalette'
 import { Offcanvas } from 'bootstrap'
-
-const SIDEBAR_COLLAPSED_KEY = 'seim.sidebarCollapsed'
+import { readSidebarCollapsed, writeSidebarCollapsed } from '@/utils/sidebarPrefs'
+import { scrollMainIntoView } from '@/utils/scrollMain'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -281,6 +304,17 @@ const {
 } = useNavDropdown()
 
 const sidebarCollapsed = ref(false)
+const mainColEl = ref(null)
+
+// Bring the main content to the top of the viewport on navigation (path changes
+// only, so filter/query updates on the same page do not jump the scroll).
+watch(
+  () => route.path,
+  (next, prev) => {
+    if (!prev || next === prev) return
+    nextTick(() => scrollMainIntoView(mainColEl.value))
+  },
+)
 
 const { branding, loadBranding } = useBranding()
 const { scholarshipsEnabled, loadFeatures } = useFeatures()
@@ -297,11 +331,7 @@ const commandPaletteShortcut = computed(() => {
 onMounted(() => {
   loadBranding()
   loadFeatures()
-  try {
-    sidebarCollapsed.value = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === '1'
-  } catch {
-    sidebarCollapsed.value = false
-  }
+  sidebarCollapsed.value = readSidebarCollapsed()
 })
 
 const brandLogoUrl = computed(() => branding.value?.logo_url || '')
@@ -309,11 +339,7 @@ const brandLabel = computed(() => branding.value?.nav_brand || branding.value?.s
 
 function toggleSidebarCollapsed() {
   sidebarCollapsed.value = !sidebarCollapsed.value
-  try {
-    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, sidebarCollapsed.value ? '1' : '0')
-  } catch {
-    /* ignore */
-  }
+  writeSidebarCollapsed(sidebarCollapsed.value)
 }
 
 const navSections = computed(() => {
@@ -590,6 +616,19 @@ async function handleLogout() {
 
 .seim-app-shell__main-col {
   min-width: 0;
+  scroll-margin-top: calc(4.5rem + env(safe-area-inset-top, 0px));
+}
+
+.seim-app-shell__aside--rail {
+  flex: 0 0 4rem;
+  width: 4rem;
+  max-width: 4rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.seim-app-shell__rail-toggle {
+  line-height: 1;
 }
 
 .seim-app-shell__utilities {
