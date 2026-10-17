@@ -23,12 +23,23 @@ environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
 SECRET_KEY = env("SECRET_KEY")
 
 # Reported by /health/ and as the Sentry release; set SENTRY_RELEASE to the deployed git SHA or tag.
-VERSION = env("SENTRY_RELEASE", default="1.0.0")
+VERSION = (
+    env("SENTRY_RELEASE", default="") or env("GIT_COMMIT", default="")[:40] or "1.0.0"
+)
 DJANGO_ENV = env("DJANGO_ENV", default="development").split("#")[0].strip()
 LOG_FORMAT = env("LOG_FORMAT", default="json")
 LOG_LEVEL = env("LOG_LEVEL", default="INFO")
 SENTRY_DSN = env("SENTRY_DSN", default="")
 SENTRY_ENVIRONMENT = env("SENTRY_ENVIRONMENT", default=DJANGO_ENV)
+SENTRY_TRACES_SAMPLE_RATE = env.float("SENTRY_TRACES_SAMPLE_RATE", default=0.05)
+SENTRY_SAMPLE_RATE = env.float("SENTRY_SAMPLE_RATE", default=1.0)
+# Minimum level sent to GlitchTip as structured logs (``off`` disables log capture).
+SENTRY_LOGS_LEVEL = env("SENTRY_LOGS_LEVEL", default="WARNING")
+# Outgoing requests that may carry trace headers: our own site only.
+# Empty = FRONTEND_BASE_URL only (see init_sentry call in production/development settings).
+SENTRY_TRACE_PROPAGATION_TARGETS = env.list(
+    "SENTRY_TRACE_PROPAGATION_TARGETS", default=[]
+)
 # Git commit of the running build (set by the deploy script; empty when unknown).
 BUILD_COMMIT = env("GIT_COMMIT", default="").strip()[:40]
 

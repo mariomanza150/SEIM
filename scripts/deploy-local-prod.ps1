@@ -44,7 +44,9 @@ if (-not $SkipPull) {
     git pull --ff-only
 }
 
-# Stamp the build with the deployed commit (tester version badge / settings.BUILD_COMMIT).
+# Stamp the build with the deployed commit (tester version badge / settings.BUILD_COMMIT, and the
+# GlitchTip release unless SENTRY_RELEASE is set). It is a build arg baked into the image, so
+# -SkipBuild reuses the running images and keeps their release.
 try {
     $env:GIT_COMMIT = (git rev-parse HEAD).Trim()
 } catch {

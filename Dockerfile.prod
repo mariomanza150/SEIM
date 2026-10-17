@@ -20,12 +20,24 @@ RUN npm ci
 # Copy frontend source (dist excluded via .dockerignore)
 COPY frontend-vue/ ./
 
+# Frontend error reporting (GlitchTip). Empty DSN builds a SPA with reporting off.
+ARG VITE_SENTRY_DSN=""
+ARG VITE_SENTRY_ENVIRONMENT=""
+ARG VITE_SENTRY_RELEASE=""
+ARG VITE_SENTRY_SAMPLE_RATE="1.0"
+ARG VITE_SENTRY_TRACES_SAMPLE_RATE="0.05"
+ARG VITE_SENTRY_LOGS_LEVEL="warn"
+
 # Commit shown in the tester version badge (passed by deploy-local-prod.ps1).
 ARG GIT_COMMIT=
 ENV GIT_COMMIT=${GIT_COMMIT}
 
 # Drop any leftover build output, then compile a clean SPA
-RUN rm -rf dist && npm run build
+RUN rm -rf dist && \
+    VITE_SENTRY_DSN="$VITE_SENTRY_DSN" VITE_SENTRY_ENVIRONMENT="$VITE_SENTRY_ENVIRONMENT" \
+    VITE_SENTRY_RELEASE="$VITE_SENTRY_RELEASE" VITE_SENTRY_SAMPLE_RATE="$VITE_SENTRY_SAMPLE_RATE" \
+    VITE_SENTRY_TRACES_SAMPLE_RATE="$VITE_SENTRY_TRACES_SAMPLE_RATE" \
+    VITE_SENTRY_LOGS_LEVEL="$VITE_SENTRY_LOGS_LEVEL" npm run build
 
 # =============================================================================
 # STAGE 2: Python/Django Application
