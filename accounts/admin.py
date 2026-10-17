@@ -24,7 +24,16 @@ from .models import (
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    list_display = ("email", "username", "is_active", "is_staff", "is_superuser")
+    list_display = (
+        "email",
+        "username",
+        "is_active",
+        "is_staff",
+        "is_superuser",
+        "is_tester",
+    )
+    list_filter = BaseUserAdmin.list_filter + ("is_tester", "is_demo_account")
+    actions = ("mark_as_tester", "remove_tester")
     search_fields = (
         "email",
         "username",
@@ -36,10 +45,35 @@ class UserAdmin(BaseUserAdmin):
     ordering = ("email",)
     fieldsets = BaseUserAdmin.fieldsets + (
         (_("Additional names"), {"fields": ("middle_name", "mothers_last_name")}),
+        (
+            _("Testing"),
+            {
+                "fields": ("is_tester", "is_demo_account"),
+                "description": _(
+                    "Tester tools only appear on test environments "
+                    "(TESTER_TOOLS_ENABLED and DEPLOY_TIER=test)."
+                ),
+            },
+        ),
     )
     add_fieldsets = BaseUserAdmin.add_fieldsets + (
         (_("Additional names"), {"fields": ("middle_name", "mothers_last_name")}),
+        (_("Testing"), {"fields": ("is_tester",)}),
     )
+
+    @admin.action(description=_("Mark selected users as testers"))
+    def mark_as_tester(self, request, queryset):
+        updated = queryset.update(is_tester=True)
+        self.message_user(
+            request, _("%(n)d user(s) marked as testers.") % {"n": updated}
+        )
+
+    @admin.action(description=_("Remove tester flag from selected users"))
+    def remove_tester(self, request, queryset):
+        updated = queryset.update(is_tester=False)
+        self.message_user(
+            request, _("%(n)d user(s) are no longer testers.") % {"n": updated}
+        )
 
 
 @admin.register(Profile)

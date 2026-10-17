@@ -3,6 +3,7 @@
  */
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import { recordFailedRequest } from '@/qa/diagnostics'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '',
@@ -23,6 +24,7 @@ function readCsrfToken() {
 // Request interceptor - Add JWT token to headers
 api.interceptors.request.use(
   (config) => {
+    config.__qaStart = Date.now()
     const authStore = useAuthStore()
     const token = authStore.accessToken
     
@@ -60,6 +62,7 @@ api.interceptors.response.use(
     return response
   },
   async (error) => {
+    recordFailedRequest(error)
     const originalRequest = error.config
     const requestUrl = String(originalRequest?.url || '')
 

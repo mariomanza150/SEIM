@@ -44,10 +44,16 @@ if (-not $SkipPull) {
     git pull --ff-only
 }
 
+# Stamp the build with the deployed commit (tester version badge / settings.BUILD_COMMIT, and the
+# GlitchTip release unless SENTRY_RELEASE is set). It is a build arg baked into the image, so
+# -SkipBuild reuses the running images and keeps their release.
+try {
+    $env:GIT_COMMIT = (git rev-parse HEAD).Trim()
+} catch {
+    $env:GIT_COMMIT = ""
+}
+
 if (-not $SkipBuild) {
-    # Commit baked into the new images as the GlitchTip release (unless SENTRY_RELEASE is set).
-    # Only on a build: -SkipBuild reuses the running images, so their release must not change.
-    $env:SEIM_GIT_SHA = (git rev-parse --short=12 HEAD).Trim()
     Write-Step "Building production images (web, celery, celery-beat, toefl)"
     $buildArgs = @(
         "compose", "-p", $ProjectName,

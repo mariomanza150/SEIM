@@ -75,6 +75,7 @@
               <i :class="resolvedIsDark ? 'bi bi-sun-fill' : 'bi bi-moon-fill'" aria-hidden="true" />
             </button>
           </li>
+          <TesterMenu />
           <NotificationDropdown />
 
           <li v-if="authStore.isAdmin" class="nav-item dropdown" ref="adminMenuRoot">
@@ -263,6 +264,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useNavDropdown } from '@/composables/useNavDropdown'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
+import TesterMenu from '@/components/qa/TesterMenu.vue'
 import LocaleSwitcher from '@/components/LocaleSwitcher.vue'
 import SidebarNavList from '@/components/nav/SidebarNavList.vue'
 import { useBranding } from '@/composables/useBranding'

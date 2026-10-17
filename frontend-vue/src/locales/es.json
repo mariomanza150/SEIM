@@ -364,7 +364,9 @@
       "AdminProgramDestinations": "Admin — Destinos",
       "HelpCenter": "Ayuda",
       "HelpArticle": "Artículo de ayuda",
-      "NotFound": "Página no encontrada"
+      "NotFound": "Página no encontrada",
+      "TesterReports": "Reportes de QA",
+      "TesterReportDetail": "Reporte de QA"
     },
     "fallbackTitle": "SEIM",
     "notFoundBrowserTitle": "404 — Página no encontrada"
@@ -2625,5 +2627,106 @@
     "otherOption": "Otro / no está en la lista (especificar)",
     "backToList": "Elegir de la lista",
     "legacyValue": "Registrado anteriormente: {value}. Elige país, estado y ciudad para actualizarlo."
+  },
+  "qa": {
+    "common": {
+      "close": "Cerrar",
+      "cancel": "Cancelar",
+      "remove": "Quitar",
+      "loading": "Cargando…",
+      "loadFailed": "No se pudo cargar. Inténtalo de nuevo.",
+      "notAvailable": "Las herramientas de prueba no están disponibles para tu cuenta en este entorno."
+    },
+    "widget": {
+      "fab": "Reportar problema",
+      "open": "Reportar un problema",
+      "title": "Reportar un problema",
+      "actingAs": "Estás probando como {email} ({role}). El reporte se registrará con tu propia cuenta de tester.",
+      "attachments": "Capturas y archivos",
+      "capturePage": "Capturar esta página",
+      "captureScreen": "Capturar pantalla/ventana",
+      "record": "Grabar pantalla",
+      "stopRecording": "Detener grabación",
+      "recordingStarted": "Grabando… usa “Detener grabación” en la ventana del reporte (máx. 60 s).",
+      "chooseFiles": "Adjuntar archivos",
+      "attachHint": "Hasta {n} archivos. Imágenes/logs hasta {img} MB, grabaciones hasta {video} MB. También puedes pegar una imagen (Ctrl+V).",
+      "dropHint": "Suelta archivos aquí",
+      "includeDiagnostics": "Incluir diagnóstico (errores recientes de consola, peticiones fallidas, navegación)",
+      "whatWeSend": "Qué se enviará",
+      "privacy": "No incluyas datos reales de estudiantes en capturas ni texto. Nunca se recopilan contraseñas, tokens ni contenido de peticiones.",
+      "submit": "Enviar reporte",
+      "submitted": "Reporte {ref} enviado. ¡Gracias!",
+      "submitFailed": "No se pudo enviar el reporte. Inténtalo de nuevo.",
+      "rateLimited": "Demasiados reportes en poco tiempo. Espera unos minutos.",
+      "titleRequired": "Agrega un título breve.",
+      "tooManyFiles": "Puedes adjuntar hasta {n} archivos.",
+      "fileTooLarge": "{name} pesa más de {mb} MB.",
+      "captureFailed": "La captura falló. Prueba “Capturar pantalla/ventana” o adjunta un archivo.",
+      "stepsTemplate": "1. \n2. \n3. \n\nEsperado: \nObtenido: "
+    },
+    "fields": {
+      "title": "Título",
+      "severity": "Severidad",
+      "kind": "Tipo",
+      "description": "¿Qué pasó?",
+      "steps": "Pasos para reproducir",
+      "status": "Estado",
+      "reporter": "Reportó",
+      "created": "Fecha"
+    },
+    "severity": {
+      "blocker": "Bloqueante",
+      "major": "Mayor",
+      "minor": "Menor",
+      "cosmetic": "Cosmético"
+    },
+    "kind": {
+      "bug": "Error",
+      "ux": "UX / usabilidad",
+      "content": "Contenido / traducción",
+      "suggestion": "Sugerencia"
+    },
+    "status": {
+      "new": "Nuevo",
+      "triaged": "Clasificado",
+      "in_progress": "En progreso",
+      "needs_info": "Requiere información",
+      "fixed": "Corregido",
+      "verified": "Verificado",
+      "closed": "Cerrado",
+      "wont_fix": "No se corregirá",
+      "duplicate": "Duplicado"
+    },
+    "menu": {
+      "label": "Tester",
+      "myReports": "Mis reportes",
+      "built": "compilado {when}",
+      "commitMismatch": "Las versiones del frontend y del servidor no coinciden — recarga la página."
+    },
+    "reports": {
+      "title": "Reportes de QA",
+      "openOnly": "Solo abiertos",
+      "scopeAll": "Todos",
+      "scopeMine": "Míos",
+      "empty": "Aún no hay reportes. Usa “Reportar problema” para enviar uno.",
+      "back": "Volver a reportes",
+      "reportedBy": "Reportado por {email} el {when}",
+      "actingAs": "mientras probaba como {email}",
+      "noAttachments": "Sin adjuntos.",
+      "addFiles": "Agregar archivos",
+      "comments": "Comentarios",
+      "internal": "Interno",
+      "addComment": "Agrega un comentario…",
+      "send": "Enviar",
+      "internalNote": "Nota interna (solo quien clasifica)",
+      "context": "Contexto",
+      "page": "Página",
+      "route": "Ruta",
+      "role": "Rol",
+      "browser": "Navegador",
+      "viewport": "Ventana",
+      "version": "Versión",
+      "diagnostics": "Diagnóstico"
+    }
   }
 }

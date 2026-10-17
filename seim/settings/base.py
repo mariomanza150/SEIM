@@ -24,7 +24,7 @@ SECRET_KEY = env("SECRET_KEY")
 
 # Reported by /health/ and as the Sentry release; set SENTRY_RELEASE to the deployed git SHA or tag.
 VERSION = (
-    env("SENTRY_RELEASE", default="") or env("SEIM_GIT_SHA", default="") or "1.0.0"
+    env("SENTRY_RELEASE", default="") or env("GIT_COMMIT", default="")[:40] or "1.0.0"
 )
 DJANGO_ENV = env("DJANGO_ENV", default="development").split("#")[0].strip()
 LOG_FORMAT = env("LOG_FORMAT", default="json")
@@ -40,6 +40,19 @@ SENTRY_LOGS_LEVEL = env("SENTRY_LOGS_LEVEL", default="WARNING")
 SENTRY_TRACE_PROPAGATION_TARGETS = env.list(
     "SENTRY_TRACE_PROPAGATION_TARGETS", default=[]
 )
+# Git commit of the running build (set by the deploy script; empty when unknown).
+BUILD_COMMIT = env("GIT_COMMIT", default="").strip()[:40]
+
+# Tester toolkit (qa app). Tools are active only when TESTER_TOOLS_ENABLED is true
+# AND DEPLOY_TIER is "development" or "test" AND the user has User.is_tester.
+# production.py defaults DEPLOY_TIER to "production" so real prod fails closed.
+TESTER_TOOLS_ENABLED = env.bool("TESTER_TOOLS_ENABLED", default=False)
+DEPLOY_TIER = env("DEPLOY_TIER", default="development").strip().lower()
+# Shared password for seeded demo accounts (seed_test_accounts). Never committed.
+TESTER_DEMO_PASSWORD = env("TESTER_DEMO_PASSWORD", default="")
+QA_MAX_ATTACHMENTS = env.int("QA_MAX_ATTACHMENTS", default=5)
+QA_MAX_IMAGE_MB = env.int("QA_MAX_IMAGE_MB", default=10)
+QA_MAX_VIDEO_MB = env.int("QA_MAX_VIDEO_MB", default=25)
 
 # Used by django.core.mail.send_mail and Celery notification tasks (From: header).
 # SMTP/SES settings files may override this when those backends are selected.
@@ -111,6 +124,7 @@ LOCAL_APPS = [
     "workflows",
     "data_management",
     "toefl",
+    "qa",  # Tester toolkit: issue reports, demo accounts, outbox (env-gated)
 ]
 
 INSTALLED_APPS = (
@@ -275,6 +289,11 @@ REST_FRAMEWORK = {
         "burst": "10/minute",  # Burst rate for login/register endpoints
         # IP safety net for resend-verification; per-email 1/5min is in accounts.resend_verification
         "resend_verification": "10/hour",
+        # Tester toolkit (qa app); applied on the views themselves.
+        "qa_issue": "20/hour",
+        "qa_upload": "60/hour",
+        "qa_demo_login": "30/hour",
+        "qa_reset": "1/minute",
     },
 }
 

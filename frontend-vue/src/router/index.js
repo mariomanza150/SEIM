@@ -57,6 +57,8 @@ const AdminDocuments = () => import('@/views/admin/AdminDocuments.vue')
 const AdminDocumentTypeEdit = () => import('@/views/admin/AdminDocumentTypeEdit.vue')
 const AdminApplicationEdit = () => import('@/views/admin/AdminApplicationEdit.vue')
 const AdminFeatures = () => import('@/views/admin/AdminFeatures.vue')
+const TesterReports = () => import('@/views/tester/TesterReports.vue')
+const TesterReportDetail = () => import('@/views/tester/TesterReportDetail.vue')
 const HelpCenter = () => import('@/views/HelpCenter.vue')
 const HelpArticle = () => import('@/views/HelpArticle.vue')
 const ToeflPractice = () => import('@/views/ToeflPractice.vue')
@@ -364,6 +366,15 @@ const routes = [
         name: 'AdminFeatures',
         component: AdminFeatures,
         meta: { adminOnly: true },
+      },
+      // Tester toolkit (env-gated server-side; views show "not available" otherwise)
+      { path: 'tester/reports', name: 'TesterReports', component: TesterReports, meta: { testerOnly: true } },
+      {
+        path: 'tester/reports/:id',
+        name: 'TesterReportDetail',
+        component: TesterReportDetail,
+        props: true,
+        meta: { testerOnly: true },
       },
       {
         path: 'admin/applications/:id',

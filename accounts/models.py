@@ -34,6 +34,21 @@ class User(AbstractUser, UUIDModel, TimeStampedModel):
         null=True,
         help_text="Datetime until which the account is locked out.",
     )
+    # Tester toolkit (qa app): admins tick this in Django admin. Only effective when
+    # TESTER_TOOLS_ENABLED is on and DEPLOY_TIER is development/test.
+    is_tester = models.BooleanField(
+        default=False,
+        help_text=(
+            "Designated QA tester: sees tester tools (report issue, demo role "
+            "switcher, outbox) on test environments only."
+        ),
+    )
+    # Seeded demo account (seed_test_accounts / seed_demo_readiness). Testers may
+    # switch into these; never set on real users.
+    is_demo_account = models.BooleanField(
+        default=False,
+        help_text="Seeded demo account that testers can switch into (test env only).",
+    )
     # Add institutional fields, etc.
     roles = models.ManyToManyField(
         "Role",

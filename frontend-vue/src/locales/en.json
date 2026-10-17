@@ -364,7 +364,9 @@
       "AdminProgramDestinations": "Admin — Destinations",
       "HelpCenter": "Help",
       "HelpArticle": "Help article",
-      "NotFound": "Page not found"
+      "NotFound": "Page not found",
+      "TesterReports": "QA reports",
+      "TesterReportDetail": "QA report"
     },
     "fallbackTitle": "SEIM",
     "notFoundBrowserTitle": "404 — Page not found"
@@ -2625,5 +2627,106 @@
     "otherOption": "Other / not listed (specify manually)",
     "backToList": "Choose from the list instead",
     "legacyValue": "Previously recorded: {value}. Pick country, state and city to update it."
+  },
+  "qa": {
+    "common": {
+      "close": "Close",
+      "cancel": "Cancel",
+      "remove": "Remove",
+      "loading": "Loading…",
+      "loadFailed": "Could not load. Please try again.",
+      "notAvailable": "Tester tools are not available for your account on this environment."
+    },
+    "widget": {
+      "fab": "Report issue",
+      "open": "Report an issue",
+      "title": "Report an issue",
+      "actingAs": "You are testing as {email} ({role}). The report will be filed under your own tester account.",
+      "attachments": "Screenshots & files",
+      "capturePage": "Capture this page",
+      "captureScreen": "Capture screen/window",
+      "record": "Record screen",
+      "stopRecording": "Stop recording",
+      "recordingStarted": "Recording… use “Stop recording” in the report window (max 60 s).",
+      "chooseFiles": "Attach files",
+      "attachHint": "Up to {n} files. Images/logs up to {img} MB, recordings up to {video} MB. You can also paste an image (Ctrl+V).",
+      "dropHint": "Drop files here",
+      "includeDiagnostics": "Include diagnostics (recent console errors, failed requests, navigation)",
+      "whatWeSend": "What will be sent",
+      "privacy": "Do not include real student data in screenshots or text. Passwords, tokens and request contents are never collected.",
+      "submit": "Send report",
+      "submitted": "Report {ref} sent. Thank you!",
+      "submitFailed": "The report could not be sent. Please try again.",
+      "rateLimited": "Too many reports in a short time. Please wait a few minutes.",
+      "titleRequired": "Please add a short title.",
+      "tooManyFiles": "You can attach up to {n} files.",
+      "fileTooLarge": "{name} is larger than {mb} MB.",
+      "captureFailed": "Capture failed. Try “Capture screen/window” or attach a file.",
+      "stepsTemplate": "1. \n2. \n3. \n\nExpected: \nActual: "
+    },
+    "fields": {
+      "title": "Title",
+      "severity": "Severity",
+      "kind": "Type",
+      "description": "What happened?",
+      "steps": "Steps to reproduce",
+      "status": "Status",
+      "reporter": "Reporter",
+      "created": "Reported"
+    },
+    "severity": {
+      "blocker": "Blocker",
+      "major": "Major",
+      "minor": "Minor",
+      "cosmetic": "Cosmetic"
+    },
+    "kind": {
+      "bug": "Bug",
+      "ux": "UX / usability",
+      "content": "Content / translation",
+      "suggestion": "Suggestion"
+    },
+    "status": {
+      "new": "New",
+      "triaged": "Triaged",
+      "in_progress": "In progress",
+      "needs_info": "Needs info",
+      "fixed": "Fixed",
+      "verified": "Verified",
+      "closed": "Closed",
+      "wont_fix": "Won't fix",
+      "duplicate": "Duplicate"
+    },
+    "menu": {
+      "label": "Tester",
+      "myReports": "My reports",
+      "built": "built {when}",
+      "commitMismatch": "Frontend and server versions differ — reload the page."
+    },
+    "reports": {
+      "title": "QA reports",
+      "openOnly": "Open only",
+      "scopeAll": "All reports",
+      "scopeMine": "Mine",
+      "empty": "No reports yet. Use “Report issue” to send one.",
+      "back": "Back to reports",
+      "reportedBy": "Reported by {email} on {when}",
+      "actingAs": "while testing as {email}",
+      "noAttachments": "No attachments.",
+      "addFiles": "Add files",
+      "comments": "Comments",
+      "internal": "Internal",
+      "addComment": "Add a comment…",
+      "send": "Send",
+      "internalNote": "Internal note (triagers only)",
+      "context": "Context",
+      "page": "Page",
+      "route": "Route",
+      "role": "Role",
+      "browser": "Browser",
+      "viewport": "Viewport",
+      "version": "Version",
+      "diagnostics": "Diagnostics"
+    }
   }
 }

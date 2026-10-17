@@ -622,6 +622,21 @@ Do not put `CODECOV_TOKEN` in `.env` or `env.example`.
 
 ---
 
+## 🧪 **Tester toolkit (qa app)**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `TESTER_TOOLS_ENABLED` | `false` | Master switch for the tester toolkit (Report issue widget, demo role switcher, impersonation, outbox). |
+| `DEPLOY_TIER` | `development` (`production` under `seim.settings.production`) | Tools only run when this is `development` or `test`. The win-a8 test stack sets `test`. System check `qa.E001` refuses to start when tools are on with any other tier. |
+| `TESTER_DEMO_PASSWORD` | (unset) | Shared password for accounts created by `manage.py seed_test_accounts`. Lives only in the server env file; never shown in the UI or committed. |
+| `QA_MAX_ATTACHMENTS` | `5` | Files per QA report. |
+| `QA_MAX_IMAGE_MB` / `QA_MAX_VIDEO_MB` | `10` / `25` | Size limits for screenshots/logs and screen recordings. |
+| `GIT_COMMIT` | (unset) | Build commit (set by `scripts/deploy-local-prod.ps1` as a Docker build arg); shown in the tester version badge. |
+
+Testers are designated in Django admin (**Users → "Is tester"**). See `docs/tester_guide.md`.
+
+---
+
 ## 🔗 **Related Documentation**
 
 - [Installation Guide](installation.md)
@@ -645,7 +660,7 @@ Backend (runtime, `.env.local-prod`):
 |---|---|---|
 | `SENTRY_DSN` | empty (off) | Backend GlitchTip project DSN (`seim`) |
 | `SENTRY_ENVIRONMENT` | `DJANGO_ENV` | Environment tag |
-| `SENTRY_RELEASE` | deployed git SHA | Release tag (deploy script sets `SEIM_GIT_SHA`) |
+| `SENTRY_RELEASE` | deployed git SHA | Release tag (`GIT_COMMIT` baked into the image by the deploy script; `-SkipBuild` keeps it) |
 | `SENTRY_SAMPLE_RATE` / `SENTRY_TRACES_SAMPLE_RATE` | `1.0` / `0.05` | Error and trace sampling |
 | `SENTRY_LOGS_LEVEL` | `WARNING` | Python log records at this level and up are sent as structured logs; `off` disables |
 

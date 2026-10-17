@@ -1,0 +1,4 @@
+# Fake JWT-shaped fixtures in redaction tests (commit a8ee5e8, PR #133). The fixtures
+# are now built at runtime; these fingerprints only cover that historical commit.
+a8ee5e86be19def83bb26bae7797d8021eb8200c:frontend-vue/src/qa/diagnostics.spec.js:jwt:29
+a8ee5e86be19def83bb26bae7797d8021eb8200c:tests/unit/qa/test_issues.py:jwt:51

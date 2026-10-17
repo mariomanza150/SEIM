@@ -47,11 +47,11 @@ services:
       args:
         VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
         VITE_SENTRY_ENVIRONMENT: ${VITE_SENTRY_ENVIRONMENT:-${SENTRY_ENVIRONMENT:-local-prod}}
-        VITE_SENTRY_RELEASE: ${SENTRY_RELEASE:-${SEIM_GIT_SHA:-}}
+        VITE_SENTRY_RELEASE: ${SENTRY_RELEASE:-${GIT_COMMIT:-}}
         VITE_SENTRY_SAMPLE_RATE: ${VITE_SENTRY_SAMPLE_RATE:-1.0}
         VITE_SENTRY_TRACES_SAMPLE_RATE: ${VITE_SENTRY_TRACES_SAMPLE_RATE:-0.05}
         VITE_SENTRY_LOGS_LEVEL: ${VITE_SENTRY_LOGS_LEVEL:-warn}
-        SEIM_GIT_SHA: ${SEIM_GIT_SHA:-}
+        GIT_COMMIT: ${GIT_COMMIT:-}
     container_name: seim-web-local-prod
     env_file:
       - .env.local-prod
@@ -116,11 +116,11 @@ services:
       args:
         VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
         VITE_SENTRY_ENVIRONMENT: ${VITE_SENTRY_ENVIRONMENT:-${SENTRY_ENVIRONMENT:-local-prod}}
-        VITE_SENTRY_RELEASE: ${SENTRY_RELEASE:-${SEIM_GIT_SHA:-}}
+        VITE_SENTRY_RELEASE: ${SENTRY_RELEASE:-${GIT_COMMIT:-}}
         VITE_SENTRY_SAMPLE_RATE: ${VITE_SENTRY_SAMPLE_RATE:-1.0}
         VITE_SENTRY_TRACES_SAMPLE_RATE: ${VITE_SENTRY_TRACES_SAMPLE_RATE:-0.05}
         VITE_SENTRY_LOGS_LEVEL: ${VITE_SENTRY_LOGS_LEVEL:-warn}
-        SEIM_GIT_SHA: ${SEIM_GIT_SHA:-}
+        GIT_COMMIT: ${GIT_COMMIT:-}
     container_name: seim-celery-local-prod
     env_file:
       - .env.local-prod
@@ -162,11 +162,11 @@ services:
       args:
         VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
         VITE_SENTRY_ENVIRONMENT: ${VITE_SENTRY_ENVIRONMENT:-${SENTRY_ENVIRONMENT:-local-prod}}
-        VITE_SENTRY_RELEASE: ${SENTRY_RELEASE:-${SEIM_GIT_SHA:-}}
+        VITE_SENTRY_RELEASE: ${SENTRY_RELEASE:-${GIT_COMMIT:-}}
         VITE_SENTRY_SAMPLE_RATE: ${VITE_SENTRY_SAMPLE_RATE:-1.0}
         VITE_SENTRY_TRACES_SAMPLE_RATE: ${VITE_SENTRY_TRACES_SAMPLE_RATE:-0.05}
         VITE_SENTRY_LOGS_LEVEL: ${VITE_SENTRY_LOGS_LEVEL:-warn}
-        SEIM_GIT_SHA: ${SEIM_GIT_SHA:-}
+        GIT_COMMIT: ${GIT_COMMIT:-}
     container_name: seim-celery-beat-local-prod
     env_file:
       - .env.local-prod

@@ -28,6 +28,10 @@ ARG VITE_SENTRY_SAMPLE_RATE="1.0"
 ARG VITE_SENTRY_TRACES_SAMPLE_RATE="0.05"
 ARG VITE_SENTRY_LOGS_LEVEL="warn"
 
+# Commit shown in the tester version badge (passed by deploy-local-prod.ps1).
+ARG GIT_COMMIT=
+ENV GIT_COMMIT=${GIT_COMMIT}
+
 # Drop any leftover build output, then compile a clean SPA
 RUN rm -rf dist && \
     VITE_SENTRY_DSN="$VITE_SENTRY_DSN" VITE_SENTRY_ENVIRONMENT="$VITE_SENTRY_ENVIRONMENT" \
@@ -40,10 +44,9 @@ RUN rm -rf dist && \
 # =============================================================================
 FROM python:3.12-slim as base
 
-# Deployed commit, reported as the GlitchTip release unless SENTRY_RELEASE is set. Baked into the
-# image so a redeploy without a rebuild keeps the same release.
-ARG SEIM_GIT_SHA=""
-ENV SEIM_GIT_SHA=${SEIM_GIT_SHA}
+# Build commit reported to the SPA tester badge (settings.BUILD_COMMIT).
+ARG GIT_COMMIT=
+ENV GIT_COMMIT=${GIT_COMMIT}
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \

@@ -226,5 +226,9 @@ REST_FRAMEWORK = {
         "user": "10000/hour",
         "burst": "1000/minute",  # Keep burst rate definition to avoid KeyError
         "resend_verification": "1000/hour",
+        "qa_issue": "1000/hour",
+        "qa_upload": "1000/hour",
+        "qa_demo_login": "1000/hour",
+        "qa_reset": "1000/minute",
     },
 }
