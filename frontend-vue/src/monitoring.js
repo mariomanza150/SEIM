@@ -16,11 +16,13 @@ const SENSITIVE_KEY_PARTS = [
   'api_key', 'apikey', 'dsn', 'email', 'username', 'first_name', 'last_name', 'full_name',
   'display_name', 'firstname', 'lastname', 'fullname', 'phone', 'birth', 'curp', 'student_id',
 ]
-const SENSITIVE_EXACT = new Set(['name', 'user_name', 'address', 'ip_address'])
+// Plain 'name' is not here: contexts.os.name etc. are harmless (user.name goes with user).
+const SENSITIVE_EXACT = new Set(['user_name', 'address', 'ip_address'])
 const EMAIL_RE = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
 const JWT_RE = /\beyJ[\w-]{5,}\.[\w-]{5,}\.[\w-]{5,}\b/g
 const BEARER_RE = /\b(bearer|token|basic)\s+[A-Za-z0-9._~+/=-]{8,}/gi
-const QUERY_SECRET_RE = /([?&](?:token|access|refresh|key|code|password|email|signature)[^=&]*=)[^&#\s]+/gi
+const KV_SECRET_RE = /\b((?:password|passwd|secret|token|api_key)\s*[=:]\s*)[^\s&,;]+/gi
+const QUERY_SECRET_RE = /([?&](?:token|access|refresh|key|code|password|email|signature|uid)[^=&]*=)[^&#\s]+/gi
 
 export function isSensitiveKey(key) {
   const k = String(key).toLowerCase()
@@ -34,6 +36,7 @@ export function scrubText(value) {
     .replace(JWT_RE, FILTERED)
     .replace(BEARER_RE, (_m, kind) => `${kind} ${FILTERED}`)
     .replace(QUERY_SECRET_RE, (_m, prefix) => prefix + FILTERED)
+    .replace(KV_SECRET_RE, (_m, prefix) => prefix + FILTERED)
 }
 
 export function scrub(value, depth = 0) {
@@ -57,9 +60,17 @@ function scrubBreadcrumbValues(crumbs) {
   }
 }
 
-/** beforeSend: strip request bodies/cookies/auth headers and user identity, mask everything else. */
+/**
+ * beforeSend / beforeSendTransaction: strip request bodies, cookies, auth headers and user identity;
+ * mask transaction names, spans, URLs (location.href and Referer carry reset/verify tokens) and the rest.
+ */
 export function scrubEvent(event) {
   if (!event) return event
+  if (event.transaction) event.transaction = scrubText(event.transaction)
+  for (const span of event.spans || []) {
+    if (span.description) span.description = scrubText(span.description)
+    if (span.data) span.data = scrub(span.data)
+  }
   const req = event.request
   if (req) {
     delete req.data
@@ -95,9 +106,36 @@ export function scrubBreadcrumb(crumb) {
   return crumb
 }
 
-/** beforeSendLog: mask the message and attributes of a structured log. */
+const LOG_WINDOW_MS = 60_000
+const LOG_MAX_PER_WINDOW = 30
+const logSeen = new Map()
+let logWindowStart = 0
+let logWindowCount = 0
+
+/** Drop repeats of the same message within a minute and cap logs at 30 per minute. */
+export function allowLog(log, now = Date.now()) {
+  if (now - logWindowStart > LOG_WINDOW_MS) {
+    logWindowStart = now
+    logWindowCount = 0
+    logSeen.clear()
+  }
+  const key = `${log.level}:${String(log.message).slice(0, 200)}`
+  if (logSeen.has(key) || logWindowCount >= LOG_MAX_PER_WINDOW) return false
+  logSeen.set(key, now)
+  logWindowCount += 1
+  return true
+}
+
+export function resetLogLimiter() {
+  logSeen.clear()
+  logWindowStart = 0
+  logWindowCount = 0
+}
+
+/** beforeSendLog: rate-limit/dedupe, then mask the message and attributes of a structured log. */
 export function scrubLog(log) {
   if (!log) return log
+  if (!allowLog(log)) return null
   if (typeof log.message === 'string') log.message = scrubText(log.message)
   if (log.attributes) log.attributes = scrub(log.attributes)
   return log
@@ -170,6 +208,9 @@ export async function initMonitoring(app, router, env = import.meta.env) {
     attachProps: false,
     integrations,
     beforeSend: scrubEvent,
+    beforeSendTransaction: scrubEvent,
+    // Trace headers only to our own origin (relative /api calls), never to third parties.
+    tracePropagationTargets: [/^\//, ...(typeof window !== 'undefined' ? [window.location.origin] : [])],
     beforeBreadcrumb: scrubBreadcrumb,
     beforeSendLog: scrubLog,
   })

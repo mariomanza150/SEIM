@@ -50,8 +50,12 @@ test_env:
 error_tracking:
   dsn_env: SENTRY_DSN
   projects:
-    - { name: seim-web, platform: python-django, env: SENTRY_DSN }
-  # The monitoring hub writes the DSN here on the host serving local-prod and recreates these services.
+    # Backend: the hub delivers this one (deliver: below, keyed by the top-level project name "seim").
+    - { name: seim, platform: python-django, env: SENTRY_DSN }
+    # Frontend: build-time VITE_SENTRY_DSN on the public ingest host; changing it needs an image rebuild
+    # (scripts/deploy-local-prod.ps1). Not delivered by the hub.
+    - { name: seim-web, platform: javascript-vue, env: VITE_SENTRY_DSN, build_time: true }
+  # The monitoring hub writes the backend (seim) DSN here on the host serving local-prod and recreates these services.
   deliver:
     env_file: "%USERPROFILE%\\Documents\\MARIO\\SEIM\\.env.local-prod"
     key: SENTRY_DSN

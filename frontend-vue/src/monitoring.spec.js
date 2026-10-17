@@ -1,8 +1,10 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach } from 'vitest'
 import {
   FILTERED,
   initMonitoring,
   isChunkLoadError,
+  allowLog,
+  resetLogLimiter,
   monitoringConfig,
   scrub,
   scrubBreadcrumb,
@@ -51,6 +53,8 @@ describe('initMonitoring', () => {
 })
 
 describe('scrubbing', () => {
+  beforeEach(() => resetLogLimiter())
+
   it('masks emails, tokens and secret query params in text', () => {
     const out = scrubText(
       'user ana@uni.mx Bearer abcdefghijkl eyJhbGciOi.eyJzdWIiOi.c2lnbmF0dXJl /x?token=s3cr3t&page=2'
@@ -60,10 +64,10 @@ describe('scrubbing', () => {
   })
 
   it('masks sensitive keys recursively but keeps others', () => {
-    expect(scrub({ password: 'x', nested: { first_name: 'Ana', email: 'a@b.co', count: 2 }, name: 'Ana' })).toEqual({
+    expect(scrub({ password: 'x', nested: { first_name: 'Ana', email: 'a@b.co', count: 2 }, os: { name: 'Linux' } })).toEqual({
       password: FILTERED,
       nested: { first_name: FILTERED, email: FILTERED, count: 2 },
-      name: FILTERED,
+      os: { name: 'Linux' },
     })
   })
 
@@ -95,6 +99,26 @@ describe('scrubbing', () => {
     expect(crumb.data).toEqual({ status_code: 500 })
   })
 
+  it('masks key=value secrets and uid params', () => {
+    const out = scrubText('password=hunter2 api_key: abc123 /verify?uid=MTIz&page=1')
+    expect(out).not.toMatch(/hunter2|abc123|MTIz/)
+    expect(out).toContain('page=1')
+  })
+
+  it('scrubs transactions: name, request URL/Referer, spans, breadcrumbs and user', () => {
+    const tx = scrubEvent({
+      type: 'transaction',
+      transaction: '/seim/reset?token=t0k3n&email=a@b.co',
+      request: { url: 'https://s/seim/verify?uid=MTIz&token=zz', headers: { Referer: 'https://s/reset?token=r3f' } },
+      spans: [{ description: 'GET /api/x?token=sp4n', data: { 'http.url': '/api/x?email=a@b.co', url: '/y?token=d4t4' } }],
+      breadcrumbs: [{ category: 'navigation', data: { from: '/reset?token=n4v', to: '/home' } }],
+      user: { id: 9, name: 'Ana', email: 'a@b.co', ip_address: '1.2.3.4' },
+    })
+    const json = JSON.stringify(tx)
+    expect(json).not.toMatch(/t0k3n|a@b\.co|MTIz|zz"|r3f|sp4n|d4t4|n4v|Ana|1\.2\.3\.4/)
+    expect(tx.user).toEqual({ id: 9 })
+  })
+
   it('scrubs structured logs', () => {
     const log = scrubLog({ message: 'hi a@b.co', attributes: { token: 't', route: 'home' } })
     expect(log).toEqual({ message: `hi ${FILTERED}`, attributes: { token: FILTERED, route: 'home' } })
@@ -105,5 +129,22 @@ describe('isChunkLoadError', () => {
   it('detects failed dynamic imports', () => {
     expect(isChunkLoadError(new TypeError('Failed to fetch dynamically imported module: /static/a.js'))).toBe(true)
     expect(isChunkLoadError(new Error('boom'))).toBe(false)
+  })
+})
+
+describe('log limiter', () => {
+  beforeEach(() => resetLogLimiter())
+
+  it('drops duplicate messages within a minute and caps volume', () => {
+    expect(allowLog({ level: 'warn', message: 'x' }, 1000)).toBe(true)
+    expect(allowLog({ level: 'warn', message: 'x' }, 2000)).toBe(false)
+    for (let i = 0; i < 40; i += 1) allowLog({ level: 'warn', message: `m${i}` }, 3000)
+    expect(allowLog({ level: 'warn', message: 'new' }, 4000)).toBe(false)
+    expect(allowLog({ level: 'warn', message: 'x' }, 70_000)).toBe(true)
+  })
+
+  it('beforeSendLog drops a repeat', () => {
+    expect(scrubLog({ level: 'warn', message: 'dup' })).not.toBeNull()
+    expect(scrubLog({ level: 'warn', message: 'dup' })).toBeNull()
   })
 })

@@ -27,8 +27,8 @@ app.use(router)
 app.use(i18n)
 
 // Error reporting and log capture: no-op unless VITE_SENTRY_DSN was set at build time.
-// Mount right away; reporting attaches as soon as the SDK chunk loads.
-initMonitoring(app, router).catch(() => {})
-
-// Mount app
-app.mount('#app')
+// Initialised before mount so errors during the first render are captured; without a DSN it
+// resolves immediately and nothing is loaded.
+initMonitoring(app, router)
+  .catch(() => false)
+  .finally(() => app.mount('#app'))

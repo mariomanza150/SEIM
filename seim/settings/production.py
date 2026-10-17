@@ -273,6 +273,7 @@ init_sentry(
     traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
     sample_rate=SENTRY_SAMPLE_RATE,
     logs_level=SENTRY_LOGS_LEVEL,
+    trace_propagation_targets=SENTRY_TRACE_PROPAGATION_TARGETS or [FRONTEND_BASE_URL],
 )
 
 # Same E2E hatch as development.py. Local-prod sets ALLOW_ANY_HOST=1.

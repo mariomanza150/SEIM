@@ -40,6 +40,11 @@ RUN rm -rf dist && \
 # =============================================================================
 FROM python:3.12-slim as base
 
+# Deployed commit, reported as the GlitchTip release unless SENTRY_RELEASE is set. Baked into the
+# image so a redeploy without a rebuild keeps the same release.
+ARG SEIM_GIT_SHA=""
+ENV SEIM_GIT_SHA=${SEIM_GIT_SHA}
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

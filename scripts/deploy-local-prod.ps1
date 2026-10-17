@@ -44,11 +44,10 @@ if (-not $SkipPull) {
     git pull --ff-only
 }
 
-# Deployed commit, used as the GlitchTip release (frontend build arg and backend env) unless
-# SENTRY_RELEASE is set in the env file.
-$env:SEIM_GIT_SHA = (git rev-parse --short=12 HEAD).Trim()
-
 if (-not $SkipBuild) {
+    # Commit baked into the new images as the GlitchTip release (unless SENTRY_RELEASE is set).
+    # Only on a build: -SkipBuild reuses the running images, so their release must not change.
+    $env:SEIM_GIT_SHA = (git rev-parse --short=12 HEAD).Trim()
     Write-Step "Building production images (web, celery, celery-beat, toefl)"
     $buildArgs = @(
         "compose", "-p", $ProjectName,

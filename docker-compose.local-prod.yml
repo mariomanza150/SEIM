@@ -51,6 +51,7 @@ services:
         VITE_SENTRY_SAMPLE_RATE: ${VITE_SENTRY_SAMPLE_RATE:-1.0}
         VITE_SENTRY_TRACES_SAMPLE_RATE: ${VITE_SENTRY_TRACES_SAMPLE_RATE:-0.05}
         VITE_SENTRY_LOGS_LEVEL: ${VITE_SENTRY_LOGS_LEVEL:-warn}
+        SEIM_GIT_SHA: ${SEIM_GIT_SHA:-}
     container_name: seim-web-local-prod
     env_file:
       - .env.local-prod
@@ -75,8 +76,6 @@ services:
       - DJANGO_SETTINGS_MODULE=seim.settings.production
       - DJANGO_ENV=production
       - DEBUG=False
-      # Release reported to GlitchTip: SENTRY_RELEASE if set, else the deployed git SHA.
-      - SENTRY_RELEASE=${SENTRY_RELEASE:-${SEIM_GIT_SHA:-}}
       # No nginx in this stack; Django must serve uploaded files for SPA download links.
       - SERVE_MEDIA=1
       - DISABLE_PAGE_CACHE_MIDDLEWARE=1
@@ -121,6 +120,7 @@ services:
         VITE_SENTRY_SAMPLE_RATE: ${VITE_SENTRY_SAMPLE_RATE:-1.0}
         VITE_SENTRY_TRACES_SAMPLE_RATE: ${VITE_SENTRY_TRACES_SAMPLE_RATE:-0.05}
         VITE_SENTRY_LOGS_LEVEL: ${VITE_SENTRY_LOGS_LEVEL:-warn}
+        SEIM_GIT_SHA: ${SEIM_GIT_SHA:-}
     container_name: seim-celery-local-prod
     env_file:
       - .env.local-prod
@@ -145,8 +145,6 @@ services:
       - DJANGO_SETTINGS_MODULE=seim.settings.production
       - DJANGO_ENV=production
       - DEBUG=False
-      # Release reported to GlitchTip: SENTRY_RELEASE if set, else the deployed git SHA.
-      - SENTRY_RELEASE=${SENTRY_RELEASE:-${SEIM_GIT_SHA:-}}
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
       - ALLOW_ANY_HOST=${ALLOW_ANY_HOST:-1}
@@ -168,6 +166,7 @@ services:
         VITE_SENTRY_SAMPLE_RATE: ${VITE_SENTRY_SAMPLE_RATE:-1.0}
         VITE_SENTRY_TRACES_SAMPLE_RATE: ${VITE_SENTRY_TRACES_SAMPLE_RATE:-0.05}
         VITE_SENTRY_LOGS_LEVEL: ${VITE_SENTRY_LOGS_LEVEL:-warn}
+        SEIM_GIT_SHA: ${SEIM_GIT_SHA:-}
     container_name: seim-celery-beat-local-prod
     env_file:
       - .env.local-prod
@@ -190,8 +189,6 @@ services:
       - DJANGO_SETTINGS_MODULE=seim.settings.production
       - DJANGO_ENV=production
       - DEBUG=False
-      # Release reported to GlitchTip: SENTRY_RELEASE if set, else the deployed git SHA.
-      - SENTRY_RELEASE=${SENTRY_RELEASE:-${SEIM_GIT_SHA:-}}
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
       - ALLOW_ANY_HOST=${ALLOW_ANY_HOST:-1}

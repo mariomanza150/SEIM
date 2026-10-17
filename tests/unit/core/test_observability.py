@@ -75,7 +75,7 @@ def test_init_sentry_is_noop_without_dsn():
     assert init_sentry(dsn="", environment="test", release="x") is False
 
 
-# --- scrubbing and envelope relay -------------------------------------------------------------
+# --- scrubbing (errors, transactions, logs) -------------------------------------------------------------
 from core.observability import (  # noqa: E402
     FILTERED,
     scrub,
@@ -159,7 +159,60 @@ def test_init_sentry_enables_scrubbing_and_logs(monkeypatch):
     assert captured["traces_sample_rate"] == 0.05
     assert captured["enable_logs"] is True
     assert captured["before_send"] is scrub_event
+    assert captured["before_send_transaction"] is scrub_event
+    assert captured["trace_propagation_targets"] == []
     assert captured["before_send_log"] is scrub_log
     captured.clear()
     init_sentry(dsn="http://k@h/1", environment="t", release="r", logs_level="off")
     assert captured["enable_logs"] is False
+
+
+def test_scrub_text_masks_key_value_secrets_and_uid():
+    out = scrub_text("password=hunter2 api_key: abc123 /verify?uid=MTIz&page=1")
+    assert "hunter2" not in out and "abc123" not in out and "MTIz" not in out
+    assert "page=1" in out
+
+
+def test_scrub_event_scrubs_transactions():
+    tx = scrub_event(
+        {
+            "type": "transaction",
+            "transaction": "/api/reset/?token=t0k3n&email=a@b.co",
+            "request": {
+                "url": "https://s/api/verify/?uid=MTIz",
+                "headers": {
+                    "Referer": "https://s/seim/reset?token=r3f",
+                    "Accept": "json",
+                },
+            },
+            "spans": [
+                {
+                    "description": "GET /x?token=sp4n",
+                    "data": {"url": "/y?email=a@b.co", "db.statement": "password=pw1"},
+                }
+            ],
+            "contexts": {"os": {"name": "Linux"}, "runtime": {"name": "CPython"}},
+            "user": {"id": 4, "name": "Ana", "email": "a@b.co"},
+        }
+    )
+    blob = json.dumps(tx)
+    for leaked in ("t0k3n", "a@b.co", "MTIz", "r3f", "sp4n", "pw1", "Ana"):
+        assert leaked not in blob
+    assert tx["user"] == {"id": 4}
+    assert tx["contexts"]["os"]["name"] == "Linux"
+    assert tx["request"]["headers"]["Accept"] == "json"
+
+
+def test_scrub_log_drops_django_request_4xx_but_keeps_errors():
+    warn = {
+        "level": "warn",
+        "body": "Not Found: /x",
+        "attributes": {"logger.name": "django.request"},
+    }
+    assert scrub_log(warn) is None
+    err = {
+        "level": "error",
+        "body": "Internal Server Error: /x",
+        "attributes": {"logger.name": "django.request"},
+    }
+    assert scrub_log(err) is not None

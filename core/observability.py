@@ -135,12 +135,16 @@ _SENSITIVE_KEYS = (
     "student_id",
 )
 # Exact keys (substring matching would also hide logger/file names).
-_SENSITIVE_EXACT = frozenset({"name", "user_name", "address", "ip_address"})
+# Exact keys. Plain "name" is not here: contexts.os.name etc. are harmless (user.name goes with user).
+_SENSITIVE_EXACT = frozenset({"user_name", "address", "ip_address"})
 _EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 _BEARER_RE = re.compile(r"(?i)\b(bearer|token|basic)\s+[A-Za-z0-9._~+/=-]{8,}")
 _JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\b")
 _QUERY_SECRET_RE = re.compile(
-    r"(?i)([?&](?:token|access|refresh|key|code|password|email|signature)[^=&]*=)[^&#\s]+"
+    r"(?i)([?&](?:token|access|refresh|key|code|password|email|signature|uid)[^=&]*=)[^&#\s]+"
+)
+_KV_SECRET_RE = re.compile(
+    r"(?i)\b((?:password|passwd|secret|token|api_key)\s*[=:]\s*)[^\s&,;]+"
 )
 FILTERED = "[Filtered]"
 
@@ -155,7 +159,8 @@ def scrub_text(value: str) -> str:
     value = _EMAIL_RE.sub(FILTERED, value)
     value = _JWT_RE.sub(FILTERED, value)
     value = _BEARER_RE.sub(lambda m: f"{m.group(1)} {FILTERED}", value)
-    return _QUERY_SECRET_RE.sub(lambda m: m.group(1) + FILTERED, value)
+    value = _QUERY_SECRET_RE.sub(lambda m: m.group(1) + FILTERED, value)
+    return _KV_SECRET_RE.sub(lambda m: m.group(1) + FILTERED, value)
 
 
 def scrub(value, depth: int = 0):
@@ -175,7 +180,17 @@ def scrub(value, depth: int = 0):
 
 
 def scrub_event(event: dict, hint: dict | None = None) -> dict:
-    """``before_send``: drop request bodies, cookies, auth headers and user identity; mask the rest."""
+    """``before_send`` / ``before_send_transaction``: drop request bodies, cookies, auth headers and
+    user identity; mask transaction names, spans, URLs and everything else."""
+    if isinstance(event.get("transaction"), str):
+        event["transaction"] = scrub_text(event["transaction"])
+    for span in event.get("spans") or []:
+        if isinstance(span.get("description"), str):
+            span["description"] = scrub_text(span["description"])
+        if "data" in span:
+            span["data"] = scrub(span["data"])
+        if "tags" in span:
+            span["tags"] = scrub(span["tags"])
     request = event.get("request")
     if isinstance(request, dict):
         request.pop("data", None)
@@ -183,7 +198,11 @@ def scrub_event(event: dict, hint: dict | None = None) -> dict:
         if isinstance(request.get("headers"), dict):
             request["headers"] = {
                 k: (
-                    FILTERED if _is_sensitive(k) or k.lower() in ("x-csrftoken",) else v
+                    FILTERED
+                    if _is_sensitive(k) or k.lower() in ("x-csrftoken",)
+                    else scrub_text(v)
+                    if isinstance(v, str)
+                    else v
                 )
                 for k, v in request["headers"].items()
             }
@@ -222,8 +241,14 @@ def scrub_event(event: dict, hint: dict | None = None) -> dict:
     return event
 
 
-def scrub_log(log: dict, hint: dict | None = None) -> dict:
-    """``before_send_log``: mask the body and attributes of a structured log record."""
+def scrub_log(log: dict, hint: dict | None = None) -> dict | None:
+    """``before_send_log``: mask the body and attributes of a structured log record.
+
+    django.request warnings (4xx responses) are dropped; 5xx are errors and still sent."""
+    attrs = log.get("attributes") if isinstance(log.get("attributes"), dict) else {}
+    level = str(log.get("level") or log.get("severity_text") or "").lower()
+    if attrs.get("logger.name") == "django.request" and level.startswith("warn"):
+        return None
     if isinstance(log.get("body"), str):
         log["body"] = scrub_text(log["body"])
     if isinstance(log.get("attributes"), dict):
@@ -250,6 +275,7 @@ def init_sentry(
     traces_sample_rate: float = 0.05,
     sample_rate: float = 1.0,
     logs_level: str = "WARNING",
+    trace_propagation_targets: list[str] | None = None,
 ) -> bool:
     """Initialise sentry-sdk for GlitchTip/Sentry. No-op without a DSN.
 
@@ -277,7 +303,10 @@ def init_sentry(
         max_request_body_size="never",
         include_local_variables=False,
         before_send=scrub_event,
+        before_send_transaction=scrub_event,
         before_send_log=scrub_log,
+        # Trace headers only to our own hosts, never to third parties.
+        trace_propagation_targets=trace_propagation_targets or [],
         enable_logs=level is not None,
         integrations=[
             LoggingIntegration(
