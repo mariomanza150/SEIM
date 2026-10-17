@@ -83,6 +83,10 @@
                 <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
               </select>
             </div>
+            <div v-if="activeTab === 'genders'" class="col-md-3">
+              <label class="form-label" for="catalog-create-label-en">{{ t('adminCatalogs.fields.labelEn') }}</label>
+              <input id="catalog-create-label-en" v-model="draft.label_en" class="form-control" type="text">
+            </div>
             <div v-if="activeTab === 'languages'" class="col-md-4">
               <label class="form-label" for="catalog-create-aliases">{{ t('adminCatalogs.fields.aliases') }}</label>
               <input
@@ -189,6 +193,7 @@
                 <th scope="col">{{ t('adminCatalogs.fields.ordering') }}</th>
                 <th v-if="activeTab === 'programs'" scope="col">{{ t('adminCatalogs.fields.school') }}</th>
                 <th v-if="activeTab === 'languages'" scope="col">{{ t('adminCatalogs.fields.aliases') }}</th>
+                <th v-if="activeTab === 'genders'" scope="col">{{ t('adminCatalogs.fields.labelEn') }}</th>
                 <th scope="col">{{ t('adminCatalogs.fields.active') }}</th>
                 <th scope="col" class="text-end">{{ t('adminCommon.actions') }}</th>
               </tr>
@@ -217,6 +222,9 @@
                     <option value="">{{ t('adminCommon.notSet') }}</option>
                     <option v-for="school in schools" :key="school.id" :value="school.id">{{ school.name }}</option>
                   </select>
+                </td>
+                <td v-if="activeTab === 'genders'">
+                  <input v-model="item.label_en" class="form-control form-control-sm" type="text" data-testid="admin-catalogs-label-en" @change="saveRow(item)">
                 </td>
                 <td v-if="activeTab === 'languages'">
                   <input
@@ -334,12 +342,13 @@ const CATALOG_ENDPOINTS = {
   banks: '/api/accounts/catalogs/banks/',
   domains: '/api/accounts/catalogs/allowed-email-domains/',
   languages: '/api/accounts/catalogs/spoken-languages/',
+  genders: '/api/accounts/catalogs/gender-options/',
 }
 
 // Reorganized: Stock (catalogo + inventario) and Categories (tags/etiquetas)
 const tabGroups = {
   stock: ['programs', 'schools', 'unidades', 'destinations'],
-  categorias: ['levels', 'languages', 'domains', 'banks'],
+  categorias: ['levels', 'languages', 'genders', 'domains', 'banks'],
 }
 
 const tabKeys = [...tabGroups.stock, ...tabGroups.categorias]
@@ -362,6 +371,7 @@ const catalogUrl = computed(() => CATALOG_ENDPOINTS[activeTab.value] || '')
 const canCreate = computed(() => {
   if (!draft.name.trim()) return false
   if (activeTab.value === 'programs' && !draft.school) return false
+  if (activeTab.value === 'genders' && !draft.code.trim()) return false
   return true
 })
 
@@ -383,7 +393,7 @@ const catalogMobileColumns = computed(() => {
 })
 
 function emptyDraft() {
-  return { name: '', code: '', ordering: 0, is_active: true, school: '', aliasesText: '' }
+  return { name: '', code: '', ordering: 0, is_active: true, school: '', aliasesText: '', label_en: '' }
 }
 
 function parseAliasesText(text) {
@@ -423,6 +433,7 @@ function normalizeItem(row) {
     is_active: row.is_active !== false,
     school: row.school || '',
     aliasesText: aliasesToText(row.aliases),
+    label_en: row.label_en || '',
   }
 }
 
@@ -439,6 +450,7 @@ function payloadFrom(source) {
   }
   if (activeTab.value === 'programs') payload.school = source.school
   if (activeTab.value === 'languages') payload.aliases = parseAliasesText(source.aliasesText)
+  if (activeTab.value === 'genders') payload.label_en = (source.label_en || '').trim()
   return payload
 }
 

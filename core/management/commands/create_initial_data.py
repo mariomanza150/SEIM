@@ -5,6 +5,7 @@ This includes ApplicationStatus, DocumentType, NotificationType, and Roles.
 
 from django.core.management.base import BaseCommand
 
+from accounts.gender_catalog import seed_gender_options
 from accounts.language_catalog import seed_spoken_languages
 from accounts.models import AllowedEmailDomain, Role
 from accounts.profile_catalogs import seed_profile_catalogs
@@ -100,6 +101,9 @@ class Command(BaseCommand):
 
         spoken_languages = seed_spoken_languages()
         self.stdout.write(f"  ✓ Spoken languages: {len(spoken_languages)} entries")
+
+        seed_gender_options()
+        self.stdout.write("  ✓ Gender options")
 
         for program in seed_mobility_schemes():
             self.stdout.write(f"  ✓ Mobility scheme: {program.name}")

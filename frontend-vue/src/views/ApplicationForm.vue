@@ -74,7 +74,35 @@
                         >
                       </div>
                       <div class="col-md-6">
-                        <label for="application-profile-credits" class="form-label">{{ t('profilePage.creditsApprovedPercent') }} *</label>
+                        <label for="application-profile-credits-approved" class="form-label">{{ t('profilePage.creditsApproved') }} / {{ t('profilePage.creditsTotal') }}</label>
+                        <div class="input-group">
+                          <input
+                            id="application-profile-credits-approved"
+                            v-model.number="profileEligibility.credits_approved"
+                            type="number"
+                            min="0"
+                            step="any"
+                            class="form-control"
+                            :aria-label="t('profilePage.creditsApproved')"
+                            data-testid="application-profile-credits-approved"
+                          >
+                          <span class="input-group-text">/</span>
+                          <input
+                            id="application-profile-credits-total"
+                            v-model.number="profileEligibility.credits_total"
+                            type="number"
+                            min="0.01"
+                            step="any"
+                            class="form-control"
+                            :aria-label="t('profilePage.creditsTotal')"
+                            data-testid="application-profile-credits-total"
+                          >
+                        </div>
+                        <div v-if="eligibilityCreditsError" class="invalid-feedback d-block">{{ eligibilityCreditsError }}</div>
+                        <div class="form-text">{{ t('profilePage.creditsHelp') }}</div>
+                      </div>
+                      <div class="col-md-6">
+                        <label for="application-profile-credits" class="form-label">{{ t('profilePage.creditsPercentOptional') }} *</label>
                         <input
                           id="application-profile-credits"
                           v-model.number="profileEligibility.credits_approved_percent"
@@ -83,6 +111,7 @@
                           max="100"
                           step="0.01"
                           class="form-control"
+                          :readonly="eligibilityCreditsAutoPercent != null"
                           required
                         >
                       </div>
@@ -1028,7 +1057,34 @@ const profileEligibility = ref({
   ingress_date: '',
   current_semester: null,
   credits_approved_percent: null,
+  credits_approved: null,
+  credits_total: null,
   computed_semester: null,
+})
+
+function creditNumber(value) {
+  if (value === '' || value == null) return null
+  const n = Number(value)
+  return Number.isNaN(n) ? null : n
+}
+
+const eligibilityCreditsError = computed(() => {
+  const approved = creditNumber(profileEligibility.value.credits_approved)
+  const total = creditNumber(profileEligibility.value.credits_total)
+  if (total != null && total <= 0) return t('profilePage.creditsTotalPositive')
+  if (approved != null && total != null && approved > total) return t('profilePage.creditsApprovedOverTotal')
+  return ''
+})
+
+const eligibilityCreditsAutoPercent = computed(() => {
+  const approved = creditNumber(profileEligibility.value.credits_approved)
+  const total = creditNumber(profileEligibility.value.credits_total)
+  if (approved == null || total == null || total <= 0 || approved > total) return null
+  return Math.round((approved / total) * 10000) / 100
+})
+
+watch(eligibilityCreditsAutoPercent, (value) => {
+  if (value != null) profileEligibility.value.credits_approved_percent = value
 })
 
 /** Match backend apply-start: ingress date OR current semester. */
@@ -1186,6 +1242,8 @@ async function loadProfileGate() {
     ingress_date: profile.ingress_date || '',
     current_semester: profile.current_semester ?? null,
     credits_approved_percent: profile.credits_approved_percent ?? null,
+    credits_approved: creditNumber(profile.credits_approved),
+    credits_total: creditNumber(profile.credits_total),
     computed_semester: profile.computed_semester ?? null,
   }
   eligibilityRequired.value = eligibilityFieldsMissing(profileEligibility.value)
@@ -1200,6 +1258,10 @@ async function persistProfileEligibility() {
     profileEligibilityError.value = t('applicationFormPage.profileEligibilityRequired')
     return false
   }
+  if (eligibilityCreditsError.value) {
+    profileEligibilityError.value = eligibilityCreditsError.value
+    return false
+  }
   try {
     const payload = {
       gpa: values.gpa,
@@ -1208,6 +1270,12 @@ async function persistProfileEligibility() {
       ingress_date: values.ingress_date || null,
       current_semester: values.current_semester === '' ? null : values.current_semester,
       credits_approved_percent: values.credits_approved_percent,
+    }
+    const approved = creditNumber(values.credits_approved)
+    const total = creditNumber(values.credits_total)
+    if (approved != null || total != null) {
+      payload.credits_approved = approved
+      payload.credits_total = total
     }
     if (values.language_level) {
       payload.language_level = values.language_level

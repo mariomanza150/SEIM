@@ -10,6 +10,10 @@ from .views import (
     CountryCatalogView,
     DeleteAccountView,
     EmailVerificationView,
+    GenderOptionViewSet,
+    GeoCityCatalogView,
+    GeoCountryCatalogView,
+    GeoStateCatalogView,
     HomeAcademicProgramViewSet,
     LoginView,
     LogoutView,
@@ -62,6 +66,9 @@ catalog_router.register(
 )
 catalog_router.register(r"banks", BankInstitutionViewSet, basename="bank")
 catalog_router.register(
+    r"gender-options", GenderOptionViewSet, basename="gender-option"
+)
+catalog_router.register(
     r"spoken-languages", SpokenLanguageViewSet, basename="spoken-language"
 )
 
@@ -69,6 +76,17 @@ urlpatterns = [
     # Include ViewSet URLs
     path("api/", include(router.urls)),
     path("catalogs/countries/", CountryCatalogView.as_view(), name="catalog-countries"),
+    path(
+        "catalogs/geo/countries/",
+        GeoCountryCatalogView.as_view(),
+        name="catalog-geo-countries",
+    ),
+    path(
+        "catalogs/geo/states/", GeoStateCatalogView.as_view(), name="catalog-geo-states"
+    ),
+    path(
+        "catalogs/geo/cities/", GeoCityCatalogView.as_view(), name="catalog-geo-cities"
+    ),
     path("catalogs/", include(catalog_router.urls)),
     path("register/", RegistrationView.as_view(), name="register"),
     path("verify-email/", EmailVerificationView.as_view(), name="verify-email"),

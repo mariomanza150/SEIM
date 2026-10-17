@@ -741,7 +741,8 @@
       "banks": "Bancos",
       "languages": "Idiomas",
       "domains": "Dominios de correo permitidos",
-      "destinations": "Destinos anfitriones"
+      "destinations": "Destinos anfitriones",
+      "genders": "Géneros"
     },
     "fields": {
       "name": "Nombre",
@@ -750,7 +751,8 @@
       "active": "Activo",
       "school": "Escuela",
       "aliases": "Alias",
-      "aliasesPlaceholder": "Separados por comas (p. ej. Español, Espanol)"
+      "aliasesPlaceholder": "Separados por comas (p. ej. Español, Espanol)",
+      "labelEn": "Etiqueta en inglés"
     }
   },
   "adminGrades": {
@@ -2383,7 +2385,15 @@
     "toastCatalogError": "No se pudieron cargar los catálogos del perfil",
     "toastSaved": "Perfil guardado.",
     "toastSaveError": "No se pudo guardar el perfil",
-    "saveFailedGeneric": "No se pudo guardar el perfil."
+    "saveFailedGeneric": "No se pudo guardar el perfil.",
+    "creditsApproved": "Créditos aprobados",
+    "creditsTotal": "Créditos totales",
+    "creditsOver": "de",
+    "creditsPercentOptional": "Porcentaje (%)",
+    "creditsHelp": "Captura créditos aprobados y totales para calcular el porcentaje automáticamente, o escribe el porcentaje directamente.",
+    "creditsAutoCalculated": "Calculado a partir de tus créditos",
+    "creditsTotalPositive": "Los créditos totales deben ser mayores que 0.",
+    "creditsApprovedOverTotal": "Los créditos aprobados no pueden ser mayores que los totales."
   },
   "eligibilityRules": {
     "profile_missing": "Falta el perfil del estudiante.",
@@ -2579,5 +2589,15 @@
     "presetSetDefaultAria": "Establecer como predeterminada",
     "presetRemoveTitle": "Quitar vista",
     "presetRemoveAria": "Quitar vista"
+  },
+  "birthPlace": {
+    "country": "País de nacimiento",
+    "state": "Estado / provincia",
+    "city": "Ciudad",
+    "searchPlaceholder": "Escribe para buscar…",
+    "manualPlaceholder": "Escríbelo",
+    "otherOption": "Otro / no está en la lista (especificar)",
+    "backToList": "Elegir de la lista",
+    "legacyValue": "Registrado anteriormente: {value}. Elige país, estado y ciudad para actualizarlo."
   }
 }

@@ -8,6 +8,7 @@ from .models import (
     AcademicLevel,
     AllowedEmailDomain,
     BankInstitution,
+    GenderOption,
     HomeAcademicProgram,
     Permission,
     Profile,
@@ -145,6 +146,37 @@ class SpokenLanguageSerializer(CatalogSerializer):
         return cleaned
 
 
+class GenderOptionSerializer(CatalogSerializer):
+    label_es = serializers.CharField(source="name", read_only=True)
+    sort_order = serializers.IntegerField(source="ordering", read_only=True)
+
+    class Meta(CatalogSerializer.Meta):
+        model = GenderOption
+        fields = CatalogSerializer.Meta.fields + ("label_es", "label_en", "sort_order")
+
+    def validate_code(self, value):
+        code = (value or "").strip()
+        if not code:
+            raise serializers.ValidationError("A code is required for gender options.")
+        qs = GenderOption.objects.filter(code__iexact=code)
+        if self.instance is not None:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise serializers.ValidationError("A gender option with this code exists.")
+        return code
+
+
+def _decimal_or_none(value):
+    from decimal import Decimal, InvalidOperation
+
+    if value is None or value == "":
+        return None
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        return None
+
+
 class ProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source="user.username", read_only=True)
     first_name = serializers.CharField(source="user.first_name")
@@ -208,6 +240,13 @@ class ProfileSerializer(serializers.ModelSerializer):
         allow_null=True,
     )
     credits_approved_percent = serializers.FloatField(required=False, allow_null=True)
+    credits_approved = serializers.DecimalField(
+        max_digits=7, decimal_places=2, required=False, allow_null=True, min_value=0
+    )
+    credits_total = serializers.DecimalField(
+        max_digits=7, decimal_places=2, required=False, allow_null=True
+    )
+    gender_label = serializers.SerializerMethodField()
     academic_level_name = serializers.CharField(
         source="academic_level.name", read_only=True
     )
@@ -240,6 +279,19 @@ class ProfileSerializer(serializers.ModelSerializer):
             )
             if part
         )
+
+    def get_gender_label(self, obj):
+        code = getattr(obj, "gender", "") or ""
+        if not code:
+            return ""
+        option = GenderOption.objects.filter(code=code).first()
+        if not option:
+            return code
+        from django.utils.translation import get_language
+
+        if (get_language() or "").startswith("en") and option.label_en:
+            return option.label_en
+        return option.name
 
     def get_computed_semester(self, obj):
         if not obj.ingress_date:
@@ -288,8 +340,12 @@ class ProfileSerializer(serializers.ModelSerializer):
             "home_academic_program",
             "home_academic_program_name",
             "gender",
+            "gender_label",
             "date_of_birth",
             "birthplace",
+            "birth_country",
+            "birth_state",
+            "birth_city",
             "postal_code",
             "passport_number",
             "mobile_phone",
@@ -305,6 +361,8 @@ class ProfileSerializer(serializers.ModelSerializer):
             "computed_semester",
             "effective_semester",
             "credits_approved_percent",
+            "credits_approved",
+            "credits_total",
             "language",
             "language_level",
             "toefl_score",
@@ -339,6 +397,8 @@ class ProfileSerializer(serializers.ModelSerializer):
             "gpa",
             "current_semester",
             "credits_approved_percent",
+            "credits_approved",
+            "credits_total",
             "toefl_score",
             "secondary_email",
             "language",
@@ -356,6 +416,60 @@ class ProfileSerializer(serializers.ModelSerializer):
         digits = "".join(ch for ch in str(value or "") if ch.isdigit())
         return digits
 
+    def validate_gender(self, value):
+        code = (value or "").strip()
+        if not code:
+            return ""
+        if code == (getattr(self.instance, "gender", "") or ""):
+            return code  # keep legacy / deactivated value the profile already has
+        if not GenderOption.objects.filter(code=code, is_active=True).exists():
+            raise serializers.ValidationError("Select a gender from the catalog.")
+        return code
+
+    def _apply_birthplace(self, attrs):
+        keys = ("birth_country", "birth_state", "birth_city")
+        if not any(key in attrs for key in keys):
+            return
+        values = {}
+        for key in keys:
+            raw = attrs.get(
+                key, getattr(self.instance, key, "") if self.instance else ""
+            )
+            values[key] = str(raw or "").strip()
+            if key in attrs:
+                attrs[key] = values[key]
+        if any(values.values()):
+            from accounts.geo_catalog import compose_birthplace
+
+            attrs["birthplace"] = compose_birthplace(
+                values["birth_city"], values["birth_state"], values["birth_country"]
+            )
+
+    def _apply_credits(self, attrs):
+        """Validate approved/total credits and derive the percentage when both exist."""
+        approved = _decimal_or_none(
+            attrs.get(
+                "credits_approved", getattr(self.instance, "credits_approved", None)
+            )
+        )
+        total = _decimal_or_none(
+            attrs.get("credits_total", getattr(self.instance, "credits_total", None))
+        )
+        if "credits_total" in attrs and total is not None and total <= 0:
+            raise serializers.ValidationError(
+                {"credits_total": "Total credits must be greater than 0."}
+            )
+        if approved is not None and total is not None:
+            if approved > total:
+                raise serializers.ValidationError(
+                    {
+                        "credits_approved": "Approved credits cannot exceed total credits."
+                    }
+                )
+            if "credits_approved" in attrs or "credits_total" in attrs:
+                percent = (approved / total * 100).quantize(_decimal_or_none("0.01"))
+                attrs["credits_approved_percent"] = float(percent)
+
     def validate(self, attrs):
         attrs = super().validate(attrs)
         school = attrs.get("school", getattr(self.instance, "school", None))
@@ -371,6 +485,8 @@ class ProfileSerializer(serializers.ModelSerializer):
                     )
                 }
             )
+        self._apply_birthplace(attrs)
+        self._apply_credits(attrs)
         credits = attrs.get(
             "credits_approved_percent",
             getattr(self.instance, "credits_approved_percent", None),

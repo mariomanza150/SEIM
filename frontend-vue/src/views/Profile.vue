@@ -141,11 +141,7 @@
                     data-testid="profile-gender"
                   >
                     <option value="">{{ t('profilePage.selectOption') }}</option>
-                    <option value="female">{{ t('profilePage.genderFemale') }}</option>
-                    <option value="male">{{ t('profilePage.genderMale') }}</option>
-                    <option value="non_binary">{{ t('profilePage.genderNonBinary') }}</option>
-                    <option value="other">{{ t('profilePage.genderOther') }}</option>
-                    <option value="prefer_not_to_say">{{ t('profilePage.genderPreferNot') }}</option>
+                    <option v-for="item in genderOptions" :key="item.code" :value="item.code">{{ item.label }}</option>
                   </select>
                   <div v-if="fieldErrors.gender" :id="describeId('gender')" class="invalid-feedback d-block">
                     {{ fieldErrors.gender }}
@@ -155,9 +151,18 @@
                   <label class="form-label" for="profile-dob">{{ t('profilePage.dateOfBirth') }} *</label>
                   <input id="profile-dob" v-model="form.date_of_birth" type="date" class="form-control" required data-testid="profile-dob">
                 </div>
-                <div class="col-md-4">
-                  <label class="form-label" for="profile-birthplace">{{ t('profilePage.birthplace') }} *</label>
-                  <input id="profile-birthplace" v-model="form.birthplace" type="text" class="form-control" required data-testid="profile-birthplace">
+                <div class="col-12" data-testid="profile-birthplace">
+                  <BirthPlaceFields
+                    v-model:country="form.birth_country"
+                    v-model:state="form.birth_state"
+                    v-model:city="form.birth_city"
+                    :legacy-birthplace="form.birthplace"
+                    :required="fieldIsRequired('birthplace')"
+                    id-prefix="profile-birth"
+                  />
+                  <div v-if="fieldErrors.birthplace" class="invalid-feedback d-block">
+                    {{ fieldErrors.birthplace }}
+                  </div>
                 </div>
                 <div class="col-md-4">
                   <label class="form-label" for="profile-postal-code">{{ t('profilePage.postalCode') }} *</label>
@@ -278,8 +283,19 @@
                   <div class="form-text">{{ t('profilePage.currentSemesterHelp') }}</div>
                 </div>
                 <div class="col-md-6">
-                  <label class="form-label" for="profile-credits-percent">{{ t('profilePage.creditsApprovedPercent') }} *</label>
-                  <input id="profile-credits-percent" v-model="form.credits_approved_percent" type="number" min="0" max="100" step="0.01" class="form-control" required autocomplete="off" data-testid="profile-credits-percent">
+                  <label class="form-label" for="profile-credits-approved">{{ t('profilePage.creditsApproved') }} / {{ t('profilePage.creditsTotal') }}</label>
+                  <div class="input-group">
+                    <input id="profile-credits-approved" v-model="form.credits_approved" type="number" min="0" step="any" class="form-control" :aria-label="t('profilePage.creditsApproved')" autocomplete="off" data-testid="profile-credits-approved">
+                    <span class="input-group-text">/</span>
+                    <input id="profile-credits-total" v-model="form.credits_total" type="number" min="0.01" step="any" class="form-control" :aria-label="t('profilePage.creditsTotal')" autocomplete="off" data-testid="profile-credits-total">
+                  </div>
+                  <div v-if="creditsError" class="invalid-feedback d-block" data-testid="profile-credits-error">{{ creditsError }}</div>
+                  <div class="form-text">{{ t('profilePage.creditsHelp') }}</div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label" for="profile-credits-percent">{{ t('profilePage.creditsPercentOptional') }} *</label>
+                  <input id="profile-credits-percent" v-model="form.credits_approved_percent" type="number" min="0" max="100" step="0.01" class="form-control" required autocomplete="off" :readonly="creditsAutoPercent != null" data-testid="profile-credits-percent">
+                  <div v-if="creditsAutoPercent != null" class="form-text" data-testid="profile-credits-auto">{{ t('profilePage.creditsAutoCalculated') }}</div>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label" for="profile-gpa">{{ t('profilePage.gpaLabel') }} *</label>
@@ -364,13 +380,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
 import SearchableSelect from '@/components/SearchableSelect.vue'
+import BirthPlaceFields from '@/components/BirthPlaceFields.vue'
 import { spokenLanguageSelectOptions } from '@/utils/spokenLanguageOptions'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import PageStateShell from '@/components/State/PageStateShell.vue'
 import { useFormFields } from '@/composables/useFormFields'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const { success, error: errorToast } = useToast()
@@ -393,13 +410,16 @@ const schoolsLoading = ref(false)
 const saveError = ref('')
 const catalogs = reactive({
   academicLevels: [], schools: [], unidades: [], banks: [], programs: [], gradeScales: [], spokenLanguages: [],
+  genders: [],
 })
+
 
 const spokenLanguageOptions = computed(() => spokenLanguageSelectOptions(catalogs.spokenLanguages))
 
 const emptyForm = {
   email: '', first_name: '', middle_name: '', last_name: '', mothers_last_name: '',
-  matricula: '', gender: '', date_of_birth: '', birthplace: '', postal_code: '',
+  matricula: '', gender: '', gender_label: '', date_of_birth: '', birthplace: '', postal_code: '',
+  birth_country: '', birth_state: '', birth_city: '', credits_approved: null, credits_total: null,
   passport_number: '', mobile_phone: '', secondary_email: '', rfc: '',
   academic_level: '', school: '', unidad: '', home_academic_program: '',
   academic_level_name: '', school_name: '', unidad_name: '', home_academic_program_name: '',
@@ -409,6 +429,46 @@ const emptyForm = {
   computed_semester: null, effective_semester: null,
 }
 const form = ref({ ...emptyForm })
+
+/** Admin-managed gender catalog; keeps the profile's saved code visible even if deactivated. */
+const genderOptions = computed(() => {
+  const english = String(locale.value || '').startsWith('en')
+  const rows = catalogs.genders.map((row) => ({
+    code: row.code,
+    label: (english && row.label_en) || row.name || row.code,
+  }))
+  const current = form.value.gender
+  if (current && !rows.some((row) => row.code === current)) {
+    rows.push({ code: current, label: form.value.gender_label || current })
+  }
+  return rows
+})
+
+function toNumber(value) {
+  if (value === '' || value == null) return null
+  const n = Number(value)
+  return Number.isNaN(n) ? null : n
+}
+
+const creditsError = computed(() => {
+  const approved = toNumber(form.value.credits_approved)
+  const total = toNumber(form.value.credits_total)
+  if (total != null && total <= 0) return t('profilePage.creditsTotalPositive')
+  if (approved != null && total != null && approved > total) return t('profilePage.creditsApprovedOverTotal')
+  return ''
+})
+
+/** Approved / total × 100 when both are valid; otherwise the percentage is typed directly. */
+const creditsAutoPercent = computed(() => {
+  const approved = toNumber(form.value.credits_approved)
+  const total = toNumber(form.value.credits_total)
+  if (approved == null || total == null || total <= 0 || approved > total) return null
+  return Math.round((approved / total) * 10000) / 100
+})
+
+watch(creditsAutoPercent, (value) => {
+  if (value != null) form.value.credits_approved_percent = value
+})
 
 const computedSemesterPlaceholder = computed(() => {
   const computedSem = form.value.computed_semester
@@ -444,7 +504,8 @@ const missingApplyFields = computed(() => {
   if (need('home_academic_program') && !form.value.home_academic_program) missing.push('home_academic_program')
   if (need('gender') && blank(form.value.gender)) missing.push('gender')
   if (need('date_of_birth') && !form.value.date_of_birth) missing.push('date_of_birth')
-  if (need('birthplace') && blank(form.value.birthplace)) missing.push('birthplace')
+  if (need('birthplace') && blank(form.value.birthplace)
+    && (blank(form.value.birth_country) || blank(form.value.birth_city))) missing.push('birthplace')
   if (need('postal_code') && blank(form.value.postal_code)) missing.push('postal_code')
   if (need('mobile_phone') && blank(form.value.mobile_phone)) missing.push('mobile_phone')
   if (need('secondary_email') && blank(form.value.secondary_email)) missing.push('secondary_email')
@@ -483,6 +544,7 @@ const PROFILE_FIELDS = [
   'bank_institution', 'clabe', 'gpa', 'grade_scale', 'language',
   'language_level', 'toefl_score', 'additional_languages',
   'ingress_date', 'current_semester', 'credits_approved_percent',
+  'birth_country', 'birth_state', 'birth_city', 'credits_approved', 'credits_total',
 ]
 
 function listFrom(data) {
@@ -605,6 +667,12 @@ function applyProfile(data) {
     mothers_last_name: data.mothers_last_name || '',
     matricula: data.matricula || '',
     gender: data.gender || '',
+    gender_label: data.gender_label || '',
+    birth_country: data.birth_country || '',
+    birth_state: data.birth_state || '',
+    birth_city: data.birth_city || '',
+    credits_approved: numberOf(data.credits_approved),
+    credits_total: numberOf(data.credits_total),
     date_of_birth: dateOf(data.date_of_birth),
     birthplace: data.birthplace || '',
     postal_code: data.postal_code || '',
@@ -667,6 +735,7 @@ async function fetchProfileAndCatalogs() {
     fetchCatalog('unidades'),
     fetchCatalog('banks'),
     fetchCatalog('spoken-languages'),
+    api.get('/api/accounts/catalogs/gender-options/').then(({ data }) => listFrom(data)),
   ])
   const scalesSettled = await Promise.allSettled([fetchActiveGradeScales()])
   const catalogFailed = catalogSettled.some((result) => result.status === 'rejected')
@@ -674,6 +743,7 @@ async function fetchProfileAndCatalogs() {
   catalogs.unidades = catalogSettled[1].status === 'fulfilled' ? catalogSettled[1].value : []
   catalogs.banks = catalogSettled[2].status === 'fulfilled' ? catalogSettled[2].value : []
   catalogs.spokenLanguages = catalogSettled[3].status === 'fulfilled' ? catalogSettled[3].value : []
+  catalogs.genders = catalogSettled[4].status === 'fulfilled' ? catalogSettled[4].value : []
   catalogs.schools = []
   catalogs.programs = []
   catalogs.gradeScales = scalesSettled[0].status === 'fulfilled' ? scalesSettled[0].value : []
@@ -732,6 +802,14 @@ function buildPayload() {
   payload.current_semester = nullable(payload.current_semester)
   payload.credits_approved_percent = nullable(payload.credits_approved_percent)
   payload.toefl_score = nullable(payload.toefl_score)
+  payload.credits_approved = nullable(payload.credits_approved)
+  payload.credits_total = nullable(payload.credits_total)
+  // birthplace (legacy string) is recomposed server-side whenever birth_* fields are sent.
+  if (!payload.birth_country && !payload.birth_state && !payload.birth_city) {
+    delete payload.birth_country
+    delete payload.birth_state
+    delete payload.birth_city
+  }
   payload.additional_languages = normalizedAdditionalLanguages()
   payload.rfc = String(payload.rfc || '').trim().toUpperCase()
   const clabeDigits = String(payload.clabe || '').replace(/\D/g, '')
@@ -751,6 +829,10 @@ async function handleSubmit() {
   }
   if (missingApplyFields.value.length) {
     saveError.value = t('profilePage.completeRequired')
+    return
+  }
+  if (creditsError.value) {
+    saveError.value = creditsError.value
     return
   }
   saving.value = true

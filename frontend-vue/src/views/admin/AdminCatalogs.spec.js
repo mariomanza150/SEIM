@@ -73,8 +73,30 @@ describe('AdminCatalogs', () => {
           },
         })
       }
+      if (url === '/api/accounts/catalogs/gender-options/') {
+        return Promise.resolve({
+          data: [{ id: 'g-1', name: 'Femenino', label_en: 'Female', code: 'female', ordering: 0, is_active: true }],
+        })
+      }
       return Promise.resolve({ data: { results: [] } })
     })
+  })
+
+  it('manages gender options with an English label', async () => {
+    mockPatch.mockResolvedValue({ data: {} })
+    const wrapper = await mountPage()
+    await wrapper.find('[data-tab="genders"]').trigger('click')
+    await flushPromises()
+    expect(mockGet).toHaveBeenCalledWith('/api/accounts/catalogs/gender-options/')
+    const labelEn = wrapper.find('[data-testid="admin-catalogs-label-en"]')
+    expect(labelEn.element.value).toBe('Female')
+    await labelEn.setValue('Woman')
+    await labelEn.trigger('change')
+    await flushPromises()
+    expect(mockPatch).toHaveBeenCalledWith(
+      '/api/accounts/catalogs/gender-options/g-1/',
+      expect.objectContaining({ code: 'female', label_en: 'Woman' }),
+    )
   })
 
   it('lists a school name on the schools tab', async () => {
