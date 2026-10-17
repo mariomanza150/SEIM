@@ -10,6 +10,7 @@
     aria-live="polite"
     aria-atomic="true"
   />
+  <ActingAsBanner />
   <main id="main-content" tabindex="-1" :aria-busy="routeBusy ? 'true' : undefined">
     <router-view />
   </main>
@@ -38,6 +39,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import CommandPalette from '@/components/CommandPalette.vue'
 import ProductTour from '@/components/ProductTour.vue'
 import ReportIssueWidget from '@/components/qa/ReportIssueWidget.vue'
+import ActingAsBanner from '@/components/qa/ActingAsBanner.vue'
 import { useQaStore } from '@/stores/qa'
 
 const { t, te, locale } = useI18n()

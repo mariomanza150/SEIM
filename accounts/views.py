@@ -14,6 +14,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from core.cache import invalidate_application_api_responses
 from core.permissions import CanManageRoles, IsAdminOrReadOnly
 from core.throttling import BurstRateThrottle, ResendVerificationEmailThrottle
+from qa.permissions import AccountSelfServiceAllowed
 
 from .models import (
     AcademicLevel,
@@ -559,7 +560,7 @@ class LogoutView(generics.GenericAPIView):
 
 class ChangePasswordView(generics.GenericAPIView):
     serializer_class = ChangePasswordSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, AccountSelfServiceAllowed]
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(
@@ -665,7 +666,7 @@ class RevokeSessionView(generics.GenericAPIView):
 class DeleteAccountView(generics.GenericAPIView):
     """View for deleting user account."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, AccountSelfServiceAllowed]
     serializer_class = DeleteAccountResponseSerializer
 
     @extend_schema(responses={200: DeleteAccountResponseSerializer})

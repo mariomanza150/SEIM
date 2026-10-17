@@ -43,6 +43,9 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        from qa.gating import assert_not_production
+
+        assert_not_production("cleanup_demo_data")
         self.stdout.write("Cleaning up demo data for SEIM...")
         demo_user_filter = self._demo_user_filter()
         demo_users = User.objects.filter(demo_user_filter)

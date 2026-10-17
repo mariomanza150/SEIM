@@ -98,3 +98,39 @@ def get_triager(request):
     """Return the tester behind the request when they are also a triager."""
     tester = get_tester(request)
     return tester if is_triager(tester) else None
+
+
+def assert_not_production(command_name: str) -> None:
+    """Refuse demo-data / demo-credential commands on real production."""
+    from django.core.management.base import CommandError
+
+    if deploy_tier() == "production":
+        raise CommandError(
+            f"{command_name} refuses to run with DEPLOY_TIER=production. "
+            "Demo accounts and demo data are only for development/test servers."
+        )
+
+
+def demo_password(fallback: str | None = None) -> str:
+    """
+    Password for seeded demo accounts.
+
+    ``TESTER_DEMO_PASSWORD`` (server env) always wins. Without it, the legacy
+    fallback is only allowed on ``development`` (local/CI); on ``test`` the
+    command fails so an internet-facing test server never gets known passwords.
+    """
+    from django.core.management.base import CommandError
+
+    configured = (getattr(settings, "TESTER_DEMO_PASSWORD", "") or "").strip()
+    if configured:
+        return configured
+    if deploy_tier() == "development" and fallback:
+        return fallback
+    raise CommandError(
+        "Set TESTER_DEMO_PASSWORD in the server env file before seeding demo "
+        f"accounts on DEPLOY_TIER={deploy_tier()!r}."
+    )
+
+
+def demo_password_is_configured() -> bool:
+    return bool((getattr(settings, "TESTER_DEMO_PASSWORD", "") or "").strip())

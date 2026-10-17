@@ -366,7 +366,11 @@
       "HelpArticle": "Help article",
       "NotFound": "Page not found",
       "TesterReports": "QA reports",
-      "TesterReportDetail": "QA report"
+      "TesterReportDetail": "QA report",
+      "TesterHub": "Tester hub",
+      "TesterAccounts": "Test accounts",
+      "TesterOutbox": "Email outbox",
+      "TesterGuide": "Tester guide"
     },
     "fallbackTitle": "SEIM",
     "notFoundBrowserTitle": "404 — Page not found"
@@ -2635,7 +2639,9 @@
       "remove": "Remove",
       "loading": "Loading…",
       "loadFailed": "Could not load. Please try again.",
-      "notAvailable": "Tester tools are not available for your account on this environment."
+      "notAvailable": "Tester tools are not available for your account on this environment.",
+      "yes": "Yes",
+      "no": "No"
     },
     "widget": {
       "fab": "Report issue",
@@ -2701,7 +2707,11 @@
       "label": "Tester",
       "myReports": "My reports",
       "built": "built {when}",
-      "commitMismatch": "Frontend and server versions differ — reload the page."
+      "commitMismatch": "Frontend and server versions differ — reload the page.",
+      "hub": "Tester hub",
+      "accounts": "Test accounts",
+      "outbox": "Email outbox",
+      "guide": "Tester guide"
     },
     "reports": {
       "title": "QA reports",
@@ -2727,6 +2737,115 @@
       "viewport": "Viewport",
       "version": "Version",
       "diagnostics": "Diagnostics"
+    },
+    "roles": {
+      "admin": "Admin",
+      "coordinator": "Coordinator",
+      "partner": "Partner",
+      "student": "Student"
+    },
+    "switcher": {
+      "title": "Test accounts",
+      "intro": "Act as a demo account to test each role. Your own account stays signed in in the background; use “Return to my account” to come back.",
+      "actAs": "Act as this account",
+      "banner": "Testing as {email} ({role}).",
+      "bannerImpersonating": "Admin view as {email} ({role}). Every action is recorded in the audit log.",
+      "return": "Return to my account",
+      "currentlyActing": "You are currently acting as {email}.",
+      "noAccounts": "No demo accounts yet. Ask an admin to run seed_test_accounts.",
+      "passwordHint": "To sign in to a demo account directly (e.g. in another browser), ask the SEIM admin for the shared demo password. It is never shown here.",
+      "failed": "Could not switch accounts. Please try again."
+    },
+    "impersonate": {
+      "title": "View as a user (admins)",
+      "intro": "Sign in as any non-superuser account to reproduce a report. Sessions last 30 minutes and are audit-logged.",
+      "search": "Search by email or name",
+      "reason": "Reason (e.g. report number)",
+      "start": "View as",
+      "forbidden": "You cannot view as this account."
+    },
+    "outbox": {
+      "title": "Email outbox",
+      "intro": "This test server does not deliver email. Messages sent to demo accounts and to you appear here.",
+      "notCapturing": "Email capture is off on this server (EMAIL_BACKEND is not the capture backend). Messages are not listed.",
+      "search": "Search subject or recipient",
+      "refresh": "Refresh",
+      "empty": "No emails captured yet.",
+      "noSubject": "(no subject)",
+      "from": "From",
+      "to": "To",
+      "text": "Text",
+      "preview": "Email preview"
+    },
+    "hub": {
+      "title": "Tester hub",
+      "intro": "Everything you need to test SEIM on this environment.",
+      "accountsHint": "Switch between demo roles.",
+      "reportsHint": "Track the issues you reported.",
+      "outboxHint": "Read emails the app sent.",
+      "guideHint": "How testing works here.",
+      "build": "Build",
+      "tier": "Environment",
+      "serverVersion": "Server",
+      "frontendBuild": "Frontend",
+      "emailCapture": "Email captured",
+      "virusScanner": "Virus scanner",
+      "demoPassword": "Demo password configured",
+      "flags": "Feature flags",
+      "samples": "Sample files",
+      "samplesHint": "Fake files for testing uploads. Never upload real documents.",
+      "samplePdf": "Sample PDF",
+      "samplePng": "Sample image",
+      "sampleTxt": "Sample text",
+      "reset": "Reset demo data",
+      "resetHint": "Deletes and re-creates demo programs, applications and demo accounts. QA reports and real users are kept. Takes a few minutes.",
+      "resetButton": "Reset demo data",
+      "resetConfirm": "Reset all demo data now? Testers currently using demo accounts will lose their changes.",
+      "resetQueued": "Reset started. It finishes in a few minutes.",
+      "resetRunning": "A reset is already running.",
+      "resetFailed": "Could not start the reset."
+    },
+    "guide": {
+      "title": "Tester guide",
+      "start": {
+        "title": "Getting started",
+        "items": [
+          "Use your own account. An admin marks it as a tester in Django admin.",
+          "The yellow TEST badge in the top bar opens the tester menu.",
+          "Check the build shown in the menu before testing; reload if it says versions differ."
+        ]
+      },
+      "accounts": {
+        "title": "Testing different roles",
+        "items": [
+          "Open “Test accounts” and pick a demo account (student, coordinator, partner, admin).",
+          "A banner shows who you are acting as; use “Return to my account” when done.",
+          "Demo accounts are shared and reset from time to time; do not rely on data you create."
+        ]
+      },
+      "report": {
+        "title": "Reporting issues",
+        "items": [
+          "Click “Report issue” (or press Ctrl+Shift+B) on the page with the problem.",
+          "Add a short title, what happened, what you expected, and steps to reproduce.",
+          "Attach a screenshot or a short recording. Diagnostics help developers but can be turned off.",
+          "Follow progress under “My reports”; admins may ask for more information."
+        ]
+      },
+      "email": {
+        "title": "Emails",
+        "items": [
+          "No real email leaves this server. Open “Email outbox” to read messages (verification, notifications)."
+        ]
+      },
+      "rules": {
+        "title": "Rules",
+        "items": [
+          "Never enter real student or personal data.",
+          "Never share the demo password outside the testing group.",
+          "This is a test environment: data can be reset at any time."
+        ]
+      }
     }
   }
 }

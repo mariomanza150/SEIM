@@ -160,3 +160,59 @@ class IssueComment(UUIDModel, TimeStampedModel):
 
     def __str__(self):
         return f"Comment on {self.issue.reference}"
+
+
+class QAAuditEvent(UUIDModel, TimeStampedModel):
+    """Audit trail for demo-account switches and staff impersonation."""
+
+    class Action(models.TextChoices):
+        DEMO_SWITCH = "demo_switch", _("Switched into demo account")
+        DEMO_RETURN = "demo_return", _("Returned from demo account")
+        IMPERSONATE_START = "impersonate_start", _("Impersonation started")
+        IMPERSONATE_STOP = "impersonate_stop", _("Impersonation stopped")
+        RESET_DEMO = "reset_demo", _("Demo data reset requested")
+
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="qa_audit_events",
+    )
+    target = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="qa_audit_targets",
+    )
+    action = models.CharField(max_length=30, choices=Action.choices)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=500, blank=True, default="")
+    note = models.CharField(max_length=500, blank=True, default="")
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.get_action_display()} by {self.actor_id} → {self.target_id}"
+
+
+class CapturedEmail(UUIDModel, TimeStampedModel):
+    """Outgoing email captured on test servers instead of being delivered."""
+
+    subject = models.CharField(max_length=998, blank=True, default="")
+    from_email = models.CharField(max_length=320, blank=True, default="")
+    to = models.JSONField(default=list, blank=True)
+    cc = models.JSONField(default=list, blank=True)
+    bcc = models.JSONField(default=list, blank=True)
+    body_text = models.TextField(blank=True, default="")
+    body_html = models.TextField(blank=True, default="")
+    recipients_index = models.TextField(
+        blank=True, default="", help_text=_("Lower-cased recipients, for filtering.")
+    )
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return self.subject or "(no subject)"
