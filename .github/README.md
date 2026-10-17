@@ -42,7 +42,21 @@ Runs on: **after CI succeeds** on `main` / `master`, or `workflow_dispatch`
    .\svc.cmd install
    .\svc.cmd start
    ```
-4. Push to `main` → CI green → **Deploy local-prod** runs automatically.
+4. Once per machine, elevated: create `C:\ProgramData\ops` for the maintenance lock and give every runner account
+   Modify on it (it finds the runner services/tasks itself, or pass `-Account`):
+   ```powershell
+   .\scripts\setup-maintenance-lock-dir.ps1
+   ```
+   On win-a8 the SEIM, local-ai-stack and Cataloqui runners run as `WIN-A82J3T7T7M5\Rene Montes` (scheduled tasks).
+5. Push to `main` → CI green → **Deploy local-prod** runs automatically.
+
+**Maintenance lock and timeouts:** the deploy takes the machine-wide maintenance lock
+(`C:\ProgramData\ops\maintenance.lock`, `scripts/maintenance-lock.ps1`, same protocol as local-ai-stack) before the
+build, renews it with a heartbeat (TTL 10 min) and releases it at the end, so deploys across repos never overlap and
+Otto does not restart containers mid-deploy. Build (8 min), `up --no-build --wait` (4 min), the Created-container
+fallback (2 min) and the health check (3 min) each have a hard timeout, all inside an 18-minute budget under the job's
+`timeout-minutes: 20`. If `up` hangs, compose is killed and this project's Created containers are started (db and redis
+first); the job then passes only if `/health/` answers 200.
 
 **Manual deploy (no runner):**
 
