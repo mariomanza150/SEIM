@@ -55,7 +55,7 @@ dependencies = [
     # Wagtail CMS
     "wagtail==7.0.9",
     "wagtail-seo==3.1.1",
-    "wagtail-markdown==0.14.1",
+    "wagtail-markdown==0.15.0",
     # Dynamic Forms and UI Components
     "django-dynforms==2025.9.10",
     "crispy-bootstrap5==2025.6",
