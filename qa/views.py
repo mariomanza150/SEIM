@@ -35,7 +35,7 @@ from .serializers import (
     IssueTriageUpdateSerializer,
     validate_uploads,
 )
-from .services import notify_new_issue, notify_status_change
+from .services import notify_new_issue, notify_reopened, notify_status_change
 
 
 class QAScopedThrottle(ScopedRateThrottle):
@@ -140,6 +140,10 @@ class IssueViewSet(
         mine = self.request.query_params.get("mine")
         if mine in ("1", "true"):
             qs = qs.filter(reporter=self.tester)
+        if self.request.query_params.get("assigned") == "me":
+            qs = qs.filter(assignee=self.tester)
+        elif self.request.query_params.get("assigned") == "none":
+            qs = qs.filter(assignee__isnull=True)
         open_only = self.request.query_params.get("open")
         if open_only in ("1", "true"):
             qs = qs.filter(status__in=Issue.OPEN_STATUSES)
@@ -228,6 +232,42 @@ class IssueViewSet(
 
     def update(self, request, *args, **kwargs):
         return self.partial_update(request, *args, **kwargs)
+
+    @action(detail=True, methods=["post"])
+    def verify(self, request, pk=None):
+        """Reporter (or triager) confirms a fix or reopens the report."""
+        issue = self.get_object()
+        if not (self.triager or issue.reporter_id == self.tester.pk):
+            raise Http404
+        if issue.status != Issue.Status.FIXED:
+            return Response(
+                {"detail": _("Only fixed reports can be verified or reopened.")},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        result = str(request.data.get("result") or "")
+        note = str(request.data.get("comment") or "").strip()[:10000]
+        if result not in ("verified", "reopen"):
+            return Response({"result": [_("Choose verified or reopen.")]}, status=400)
+        if result == "reopen" and not note:
+            return Response(
+                {"comment": [_("Explain what is still wrong.")]}, status=400
+            )
+        old_status = issue.status
+        issue.status = (
+            Issue.Status.VERIFIED if result == "verified" else Issue.Status.TRIAGED
+        )
+        issue.save(update_fields=["status", "updated_at"])
+        IssueComment.objects.create(
+            issue=issue,
+            author=self.tester,
+            body=f"Status: {old_status} → {issue.status}",
+            is_system=True,
+        )
+        if note:
+            IssueComment.objects.create(issue=issue, author=self.tester, body=note)
+        if result == "reopen":
+            transaction.on_commit(lambda: notify_reopened(issue, self.tester))
+        return self._detail(issue)
 
     @action(detail=True, methods=["post"])
     def comments(self, request, pk=None):

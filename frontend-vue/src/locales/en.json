@@ -370,7 +370,9 @@
       "TesterHub": "Tester hub",
       "TesterAccounts": "Test accounts",
       "TesterOutbox": "Email outbox",
-      "TesterGuide": "Tester guide"
+      "TesterGuide": "Tester guide",
+      "TesterChecklist": "Test checklist",
+      "QaTriage": "Triage QA reports"
     },
     "fallbackTitle": "SEIM",
     "notFoundBrowserTitle": "404 — Page not found"
@@ -2711,7 +2713,9 @@
       "hub": "Tester hub",
       "accounts": "Test accounts",
       "outbox": "Email outbox",
-      "guide": "Tester guide"
+      "guide": "Tester guide",
+      "checklist": "Test checklist",
+      "triage": "Triage reports"
     },
     "reports": {
       "title": "QA reports",
@@ -2845,6 +2849,68 @@
           "Never share the demo password outside the testing group.",
           "This is a test environment: data can be reset at any time."
         ]
+      }
+    },
+    "triage": {
+      "title": "Triage QA reports",
+      "intro": "All tester reports. Change status inline or open a report for details.",
+      "panel": "Triage",
+      "assignee": "Assignee",
+      "unassigned": "Unassigned",
+      "fixedIn": "Fixed in commit",
+      "duplicateOf": "Duplicate of #",
+      "save": "Save",
+      "saved": "Saved.",
+      "saveFailed": "Could not save. Please try again.",
+      "search": "Search",
+      "openStatuses": "Open",
+      "anyStatus": "Any status",
+      "anySeverity": "Any severity",
+      "anyone": "Anyone",
+      "assignedToMe": "Assigned to me",
+      "apply": "Apply",
+      "empty": "No reports match these filters."
+    },
+    "verify": {
+      "title": "This report is marked as fixed.",
+      "fixedIn": "(commit {commit})",
+      "hint": "Check it on the current build and confirm, or reopen it if the problem is still there.",
+      "works": "It works now",
+      "reopen": "Still broken",
+      "sendReopen": "Reopen report",
+      "reopenPlaceholder": "What is still wrong?"
+    },
+    "annotate": {
+      "open": "Annotate",
+      "title": "Annotate screenshot",
+      "tools": "Annotation tools",
+      "highlight": "Highlight",
+      "redact": "Redact",
+      "undo": "Undo",
+      "apply": "Use image",
+      "hint": "Drag to draw. Use Redact to black out personal data."
+    },
+    "checklist": {
+      "title": "Test checklist",
+      "intro": "Run these scenarios on the current build ({build}) and record the result. Results are kept per build.",
+      "myRun": "My run",
+      "matrix": "Results by build",
+      "area": "Area",
+      "allAreas": "All areas",
+      "howTo": "Steps and expected result",
+      "expected": "Expected",
+      "clear": "Clear",
+      "reportFailure": "Report this failure",
+      "note": "Note (optional)",
+      "reportNumber": "Report #",
+      "scenario": "Scenario",
+      "current": "current",
+      "outcome": {
+        "todo": "To do",
+        "pass": "Pass",
+        "fail": "Fail",
+        "blocked": "Blocked",
+        "skipped": "Skipped"
       }
     }
   }

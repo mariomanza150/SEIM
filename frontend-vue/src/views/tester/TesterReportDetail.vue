@@ -16,7 +16,8 @@
         {{ t('qa.reports.reportedBy', { email: issue.reporter?.email || '—', when: formatDate(issue.created_at) }) }}
         <span v-if="issue.acting_as"> · {{ t('qa.reports.actingAs', { email: issue.acting_as.email }) }}</span>
       </p>
-      <slot name="triage" :issue="issue" :reload="load" />
+      <IssueVerifyPanel v-if="canVerify" :issue="issue" @updated="load" />
+      <IssueTriagePanel v-if="qa.isTriager" :issue="issue" @updated="load" />
       <div class="row g-3">
         <div class="col-lg-7">
           <div class="card mb-3">
@@ -101,13 +102,15 @@
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { useQaStore } from '@/stores/qa'
 import { addAttachments, addComment, attachmentObjectUrl, getIssue } from '@/qa/api'
 import { formatBytes, severityClass } from '@/qa/format'
 import TesterNotAvailable from './TesterNotAvailable.vue'
+import IssueTriagePanel from '@/components/qa/IssueTriagePanel.vue'
+import IssueVerifyPanel from '@/components/qa/IssueVerifyPanel.vue'
 
 const props = defineProps({ id: { type: String, default: '' } })
 const { t, locale } = useI18n()
@@ -120,6 +123,11 @@ const comment = ref('')
 const internal = ref(false)
 const fileError = ref('')
 const urls = reactive({})
+const canVerify = computed(
+  () =>
+    issue.value?.status === 'fixed' &&
+    (qa.isTriager || (issue.value?.reporter?.id && issue.value.reporter.id === qa.context?.tester?.id)),
+)
 
 function formatDate(v) {
   return v ? new Date(v).toLocaleString(locale.value) : ''

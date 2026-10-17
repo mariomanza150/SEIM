@@ -117,6 +117,15 @@
                   <img v-if="item.preview" :src="item.preview" :alt="item.file.name" />
                   <i v-else class="bi bi-file-earmark fs-3 d-block" aria-hidden="true" />
                   <div class="small text-truncate">{{ item.file.name }}</div>
+                  <button
+                    v-if="item.preview"
+                    type="button"
+                    class="btn btn-link btn-sm p-0 me-2"
+                    :data-testid="`qa-annotate-${idx}`"
+                    @click="annotating = idx"
+                  >
+                    {{ t('qa.annotate.open') }}
+                  </button>
                   <button type="button" class="btn btn-link btn-sm text-danger p-0" @click="removeFile(idx)">
                     {{ t('qa.common.remove') }}
                   </button>
@@ -145,6 +154,12 @@
           </form>
         </div>
       </div>
+      <ScreenshotAnnotator
+        v-if="annotating !== null && files[annotating]"
+        :file="files[annotating].file"
+        @apply="onAnnotated"
+        @cancel="annotating = null"
+      />
     </Teleport>
   </div>
 </template>
@@ -158,6 +173,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { createIssue } from '@/qa/api'
 import { environmentInfo, snapshotDiagnostics } from '@/qa/diagnostics'
+import ScreenshotAnnotator from './ScreenshotAnnotator.vue'
 import { canCaptureScreen, canRecordScreen, capturePage, captureScreen, startRecording } from '@/qa/capture'
 
 const { t, locale } = useI18n()
@@ -179,6 +195,7 @@ const dragging = ref(false)
 const recording = ref(null)
 const includeDiagnostics = ref(true)
 const files = ref([])
+const annotating = ref(null)
 const errors = reactive({ title: '', files: '', general: '' })
 const form = reactive({ title: '', description: '', steps: '', severity: 'minor', kind: 'bug' })
 
@@ -251,6 +268,19 @@ function addFiles(list) {
     const preview = file.type.startsWith('image/') && typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : ''
     files.value.push({ file, preview, key: `${file.name}-${file.size}-${Math.random()}` })
   }
+}
+
+function onAnnotated(file) {
+  const idx = annotating.value
+  annotating.value = null
+  const item = files.value[idx]
+  if (!item || file === item.file) return
+  if (item.preview) URL.revokeObjectURL(item.preview)
+  files.value.splice(idx, 1, {
+    file,
+    preview: URL.createObjectURL(file),
+    key: `${file.name}-${file.size}-${Math.random()}`,
+  })
 }
 
 function removeFile(idx) {
@@ -377,8 +407,12 @@ function onKeydown(e) {
   }
 }
 
-function onOpenEvent() {
-  if (qa.isTester && !qa.widgetOpen) open()
+async function onOpenEvent(e) {
+  if (!qa.isTester || qa.widgetOpen) return
+  await open()
+  const prefill = e?.detail || {}
+  if (prefill.title) form.title = String(prefill.title).slice(0, 200)
+  if (prefill.steps) form.steps = String(prefill.steps)
 }
 
 onMounted(() => {

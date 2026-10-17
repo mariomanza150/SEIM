@@ -370,7 +370,9 @@
       "TesterHub": "Centro de pruebas",
       "TesterAccounts": "Cuentas de prueba",
       "TesterOutbox": "Bandeja de correos",
-      "TesterGuide": "Guía para testers"
+      "TesterGuide": "Guía para testers",
+      "TesterChecklist": "Lista de pruebas",
+      "QaTriage": "Clasificar reportes de QA"
     },
     "fallbackTitle": "SEIM",
     "notFoundBrowserTitle": "404 — Página no encontrada"
@@ -2711,7 +2713,9 @@
       "hub": "Centro de pruebas",
       "accounts": "Cuentas de prueba",
       "outbox": "Bandeja de correos",
-      "guide": "Guía para testers"
+      "guide": "Guía para testers",
+      "checklist": "Lista de pruebas",
+      "triage": "Clasificar reportes"
     },
     "reports": {
       "title": "Reportes de QA",
@@ -2845,6 +2849,68 @@
           "Nunca compartas la contraseña demo fuera del grupo de pruebas.",
           "Este es un entorno de pruebas: los datos pueden restablecerse en cualquier momento."
         ]
+      }
+    },
+    "triage": {
+      "title": "Clasificar reportes de QA",
+      "intro": "Todos los reportes de testers. Cambia el estado en la tabla o abre un reporte para ver detalles.",
+      "panel": "Clasificación",
+      "assignee": "Responsable",
+      "unassigned": "Sin asignar",
+      "fixedIn": "Corregido en commit",
+      "duplicateOf": "Duplicado de #",
+      "save": "Guardar",
+      "saved": "Guardado.",
+      "saveFailed": "No se pudo guardar. Inténtalo de nuevo.",
+      "search": "Buscar",
+      "openStatuses": "Abiertos",
+      "anyStatus": "Cualquier estado",
+      "anySeverity": "Cualquier severidad",
+      "anyone": "Cualquiera",
+      "assignedToMe": "Asignados a mí",
+      "apply": "Aplicar",
+      "empty": "Ningún reporte coincide con estos filtros."
+    },
+    "verify": {
+      "title": "Este reporte está marcado como corregido.",
+      "fixedIn": "(commit {commit})",
+      "hint": "Revísalo en la versión actual y confírmalo, o reábrelo si el problema continúa.",
+      "works": "Ya funciona",
+      "reopen": "Sigue fallando",
+      "sendReopen": "Reabrir reporte",
+      "reopenPlaceholder": "¿Qué sigue fallando?"
+    },
+    "annotate": {
+      "open": "Anotar",
+      "title": "Anotar captura",
+      "tools": "Herramientas de anotación",
+      "highlight": "Resaltar",
+      "redact": "Ocultar",
+      "undo": "Deshacer",
+      "apply": "Usar imagen",
+      "hint": "Arrastra para dibujar. Usa Ocultar para tapar datos personales."
+    },
+    "checklist": {
+      "title": "Lista de pruebas",
+      "intro": "Ejecuta estos escenarios en la versión actual ({build}) y registra el resultado. Los resultados se guardan por versión.",
+      "myRun": "Mi ejecución",
+      "matrix": "Resultados por versión",
+      "area": "Área",
+      "allAreas": "Todas las áreas",
+      "howTo": "Pasos y resultado esperado",
+      "expected": "Esperado",
+      "clear": "Borrar",
+      "reportFailure": "Reportar esta falla",
+      "note": "Nota (opcional)",
+      "reportNumber": "Reporte #",
+      "scenario": "Escenario",
+      "current": "actual",
+      "outcome": {
+        "todo": "Pendiente",
+        "pass": "Pasa",
+        "fail": "Falla",
+        "blocked": "Bloqueado",
+        "skipped": "Omitido"
       }
     }
   }

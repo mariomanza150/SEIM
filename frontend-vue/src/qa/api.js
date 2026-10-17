@@ -67,3 +67,27 @@ export function getFlags() {
 export function resetDemoData() {
   return api.post('/api/qa/reset-demo/', { confirm: 'RESET' })
 }
+
+export function verifyIssue(id, result, comment = '') {
+  return api.post(`/api/qa/issues/${id}/verify/`, { result, comment })
+}
+
+export function listTriagers() {
+  return api.get('/api/qa/triagers/')
+}
+
+export function listScenarios(params = {}) {
+  return api.get('/api/qa/scenarios/', { params })
+}
+
+export function saveScenarioResult(id, payload) {
+  return api.post(`/api/qa/scenarios/${id}/result/`, payload)
+}
+
+export function clearScenarioResult(id) {
+  return api.delete(`/api/qa/scenarios/${id}/result/`)
+}
+
+export function getScenarioMatrix(params = {}) {
+  return api.get('/api/qa/scenarios/matrix/', { params })
+}

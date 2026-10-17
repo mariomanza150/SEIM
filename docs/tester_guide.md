@@ -27,7 +27,13 @@ Otherwise every `/api/qa/*` endpoint returns 404 and the SPA shows nothing. Syst
   errors, failed request URLs and status codes, navigation). Passwords, tokens and request
   bodies are never collected. Limits: `QA_MAX_ATTACHMENTS` files, `QA_MAX_IMAGE_MB` for
   images/logs, `QA_MAX_VIDEO_MB` for recordings.
-- **My reports** — follow status and reply to questions from admins.
+- **Annotate** a screenshot before sending: draw red highlight boxes or black **Redact**
+  boxes over personal data (the original is replaced by the annotated PNG).
+- **My reports** — follow status and reply to questions from admins. When a report is
+  marked **Fixed**, confirm with *It works now* or reopen it with *Still broken*.
+- **Test checklist** (`/seim/tester/checklist`) — scenarios drafted from current features
+  (`qa/scenarios.py`, seeded by `manage.py seed_test_scenarios`). Record Pass / Fail /
+  Blocked / Skipped per build; *Report this failure* opens the report form prefilled.
 - **Email outbox** — the test server does not deliver email; messages sent to demo accounts
   and to you appear here (HTML is rendered in a sandboxed frame).
 - Never enter real student data. Never share the demo password outside the test group.
@@ -37,7 +43,13 @@ Otherwise every `/api/qa/*` endpoint returns 404 and the SPA shows nothing. Syst
 - **Designate testers**: Django admin → Users → select → action *Mark as tester* (or the
   *Testing* fieldset). Demo accounts can never be testers.
 - **Triage**: every non-demo admin who is a tester receives new-report notifications and
-  can triage in Django admin (*QA → Issues*) or the SPA report pages.
+  triages at **Triage reports** (`/seim/admin/qa-issues`): filters, inline status, and a
+  triage panel on each report (status, severity, assignee, fixed-in commit, duplicate of).
+  Django admin (*QA → Issues*) still works. Reopened reports notify the assignee.
+- **Checklist matrix**: *Test checklist → Results by build* shows the worst outcome per
+  scenario for the latest builds. Edit or retire scenarios in Django admin (*QA → Test
+  scenarios*); `seed_test_scenarios --overwrite` restores the shipped text.
+- **GitHub forwarding** is not built; copy a report into an issue manually if needed.
 - **View as a user**: on *Test accounts*, admins can act as any non-superuser account for
   30 minutes. Every start/stop is recorded in *QA → Audit events*.
 - **Reset demo data**: Tester hub → *Reset demo data* (queues `reset_demo_data` on Celery:
