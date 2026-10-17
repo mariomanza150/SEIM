@@ -279,3 +279,65 @@ def test_own_origin_targets_are_anchored():
     )
     assert not re.match(pattern, "https://seim.incognitoslw.com.evil.example/")
     assert own_origin_targets("") == []
+
+
+# --- ReDoS regression: scrubbing must stay linear on long, hostile input ---------------------
+
+
+def _best_of(fn, runs=3):
+    import time
+
+    best = float("inf")
+    for _ in range(runs):
+        start = time.perf_counter()
+        fn()
+        best = min(best, time.perf_counter() - start)
+    return best
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        pytest.param("a-" * 51200, id="dash-separated-100k"),
+        pytest.param("Zx9Qa7Lm3Kp2Vb8N" * 6400, id="alphanumeric-100k"),
+    ],
+)
+def test_scrub_text_is_fast_on_large_hostile_input(payload):
+    from core.observability import MAX_SCRUB_CHARS, scrub_text
+
+    assert len(payload) >= 100 * 1024
+    elapsed = _best_of(lambda: scrub_text(payload))
+    assert elapsed < 0.1, f"scrub_text took {elapsed * 1000:.1f} ms"
+    out = scrub_text(payload)
+    assert out.endswith("...[truncated]") and len(out) <= MAX_SCRUB_CHARS + 20
+
+
+def test_kv_secret_masking_is_unchanged_by_the_bounded_regex():
+    from core.observability import scrub_text
+
+    out = scrub_text("pwd=p1 db_password = p2, token:p3;ok=1 user_secret_value=p4")
+    for leaked in ("p1", "p2", "p3", "p4"):
+        assert leaked not in out
+    assert "db_password = [Filtered]," in out and "ok=1" in out
+
+
+def test_scrub_text_truncates_before_masking_so_emails_stay_masked():
+    from core.observability import MAX_SCRUB_CHARS, scrub_text
+
+    out = scrub_text("ana@uni.mx " + "x" * (MAX_SCRUB_CHARS * 2))
+    assert "ana@uni.mx" not in out and out.endswith("...[truncated]")
+
+
+def test_scrub_returns_placeholder_for_unprintable_objects():
+    from core.observability import scrub
+
+    class Broken:
+        def __str__(self):
+            raise RuntimeError("boom")
+
+        __repr__ = __str__
+
+    assert scrub({"request": Broken(), "n": 1}) == {
+        "request": "[unserializable]",
+        "n": 1,
+    }
