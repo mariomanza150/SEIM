@@ -77,6 +77,7 @@ from notifications.models import (
     NotificationType,
     Reminder,
 )
+from qa.gating import assert_not_production, demo_password, demo_password_is_configured
 from toefl.models import PracticeAttempt
 from workflows.models import (
     WorkflowDefinition,
@@ -92,6 +93,7 @@ class Command(BaseCommand):
     help = "Seed a deterministic, demo-ready dataset covering SEIM domain surfaces."
 
     def handle(self, *args, **options):
+        assert_not_production("seed_demo_readiness")
         self.stdout.write("Seeding demo-ready data for SEIM...")
 
         call_command("create_initial_data", verbosity=0)
@@ -168,13 +170,13 @@ class Command(BaseCommand):
             f"  Section 8 reserved (no student app): {DEMO_LIFECYCLE_PROGRAM}"
         )
         self.stdout.write("Demo credentials:")
-        self.stdout.write("  Admin: admin@test.com / admin123")
-        self.stdout.write("  Coordinator: coordinator@test.com / coordinator123")
-        self.stdout.write("  Student: student@test.com / student123")
-        self.stdout.write("  Partner: partner@test.com / partner123")
-        self.stdout.write(
-            "  Nominated (partner ack): student.nominated@test.com / student123"
+        pw_hint = (
+            "TESTER_DEMO_PASSWORD (server env)"
+            if demo_password_is_configured()
+            else "legacy dev password (see exchange/demo_seed.py)"
         )
+        for spec in DEMO_USER_SPECS:
+            self.stdout.write(f"  {spec['role']}: {spec['email']} / {pw_hint}")
 
     def _create_users(self):
         users = {}
@@ -196,7 +198,8 @@ class Command(BaseCommand):
             user.is_active = True
             user.is_staff = spec["is_staff"]
             user.is_superuser = spec["is_superuser"]
-            user.set_password(spec["password"])
+            user.is_demo_account = True
+            user.set_password(demo_password(spec["password"]))
             user.save()
             user.roles.set([role])
             UserSettings.objects.get_or_create(user=user)

@@ -366,7 +366,11 @@
       "HelpArticle": "Artículo de ayuda",
       "NotFound": "Página no encontrada",
       "TesterReports": "Reportes de QA",
-      "TesterReportDetail": "Reporte de QA"
+      "TesterReportDetail": "Reporte de QA",
+      "TesterHub": "Centro de pruebas",
+      "TesterAccounts": "Cuentas de prueba",
+      "TesterOutbox": "Bandeja de correos",
+      "TesterGuide": "Guía para testers"
     },
     "fallbackTitle": "SEIM",
     "notFoundBrowserTitle": "404 — Página no encontrada"
@@ -2635,7 +2639,9 @@
       "remove": "Quitar",
       "loading": "Cargando…",
       "loadFailed": "No se pudo cargar. Inténtalo de nuevo.",
-      "notAvailable": "Las herramientas de prueba no están disponibles para tu cuenta en este entorno."
+      "notAvailable": "Las herramientas de prueba no están disponibles para tu cuenta en este entorno.",
+      "yes": "Sí",
+      "no": "No"
     },
     "widget": {
       "fab": "Reportar problema",
@@ -2701,7 +2707,11 @@
       "label": "Tester",
       "myReports": "Mis reportes",
       "built": "compilado {when}",
-      "commitMismatch": "Las versiones del frontend y del servidor no coinciden — recarga la página."
+      "commitMismatch": "Las versiones del frontend y del servidor no coinciden — recarga la página.",
+      "hub": "Centro de pruebas",
+      "accounts": "Cuentas de prueba",
+      "outbox": "Bandeja de correos",
+      "guide": "Guía para testers"
     },
     "reports": {
       "title": "Reportes de QA",
@@ -2727,6 +2737,115 @@
       "viewport": "Ventana",
       "version": "Versión",
       "diagnostics": "Diagnóstico"
+    },
+    "roles": {
+      "admin": "Administrador",
+      "coordinator": "Coordinador",
+      "partner": "Socio",
+      "student": "Estudiante"
+    },
+    "switcher": {
+      "title": "Cuentas de prueba",
+      "intro": "Actúa como una cuenta demo para probar cada rol. Tu cuenta sigue iniciada en segundo plano; usa “Volver a mi cuenta” para regresar.",
+      "actAs": "Actuar como esta cuenta",
+      "banner": "Probando como {email} ({role}).",
+      "bannerImpersonating": "Vista de administrador como {email} ({role}). Cada acción queda registrada en la auditoría.",
+      "return": "Volver a mi cuenta",
+      "currentlyActing": "Actualmente actúas como {email}.",
+      "noAccounts": "Aún no hay cuentas demo. Pide a un administrador ejecutar seed_test_accounts.",
+      "passwordHint": "Para iniciar sesión directamente en una cuenta demo (p. ej. en otro navegador), pide la contraseña demo compartida al administrador de SEIM. Nunca se muestra aquí.",
+      "failed": "No se pudo cambiar de cuenta. Inténtalo de nuevo."
+    },
+    "impersonate": {
+      "title": "Ver como un usuario (administradores)",
+      "intro": "Inicia sesión como cualquier cuenta que no sea superusuario para reproducir un reporte. Las sesiones duran 30 minutos y quedan auditadas.",
+      "search": "Buscar por correo o nombre",
+      "reason": "Motivo (p. ej. número de reporte)",
+      "start": "Ver como",
+      "forbidden": "No puedes ver como esta cuenta."
+    },
+    "outbox": {
+      "title": "Bandeja de correos",
+      "intro": "Este servidor de pruebas no entrega correos. Aquí aparecen los mensajes enviados a cuentas demo y a ti.",
+      "notCapturing": "La captura de correos está desactivada en este servidor (EMAIL_BACKEND no es el backend de captura). No se listan mensajes.",
+      "search": "Buscar asunto o destinatario",
+      "refresh": "Actualizar",
+      "empty": "Aún no hay correos capturados.",
+      "noSubject": "(sin asunto)",
+      "from": "De",
+      "to": "Para",
+      "text": "Texto",
+      "preview": "Vista previa del correo"
+    },
+    "hub": {
+      "title": "Centro de pruebas",
+      "intro": "Todo lo que necesitas para probar SEIM en este entorno.",
+      "accountsHint": "Cambia entre roles demo.",
+      "reportsHint": "Da seguimiento a tus reportes.",
+      "outboxHint": "Lee los correos que envió la aplicación.",
+      "guideHint": "Cómo funcionan las pruebas aquí.",
+      "build": "Versión",
+      "tier": "Entorno",
+      "serverVersion": "Servidor",
+      "frontendBuild": "Frontend",
+      "emailCapture": "Correos capturados",
+      "virusScanner": "Antivirus",
+      "demoPassword": "Contraseña demo configurada",
+      "flags": "Funciones activas",
+      "samples": "Archivos de ejemplo",
+      "samplesHint": "Archivos ficticios para probar cargas. Nunca subas documentos reales.",
+      "samplePdf": "PDF de ejemplo",
+      "samplePng": "Imagen de ejemplo",
+      "sampleTxt": "Texto de ejemplo",
+      "reset": "Restablecer datos demo",
+      "resetHint": "Borra y vuelve a crear programas, solicitudes y cuentas demo. Se conservan los reportes QA y los usuarios reales. Tarda unos minutos.",
+      "resetButton": "Restablecer datos demo",
+      "resetConfirm": "¿Restablecer ahora todos los datos demo? Quienes estén usando cuentas demo perderán sus cambios.",
+      "resetQueued": "Restablecimiento iniciado. Termina en unos minutos.",
+      "resetRunning": "Ya hay un restablecimiento en curso.",
+      "resetFailed": "No se pudo iniciar el restablecimiento."
+    },
+    "guide": {
+      "title": "Guía para testers",
+      "start": {
+        "title": "Primeros pasos",
+        "items": [
+          "Usa tu propia cuenta. Un administrador la marca como tester en el admin de Django.",
+          "La insignia amarilla TEST en la barra superior abre el menú de pruebas.",
+          "Revisa la versión que muestra el menú antes de probar; recarga si indica que las versiones difieren."
+        ]
+      },
+      "accounts": {
+        "title": "Probar distintos roles",
+        "items": [
+          "Abre “Cuentas de prueba” y elige una cuenta demo (estudiante, coordinador, socio, administrador).",
+          "Un aviso muestra como quién actúas; usa “Volver a mi cuenta” al terminar.",
+          "Las cuentas demo son compartidas y se restablecen de vez en cuando; no dependas de los datos que crees."
+        ]
+      },
+      "report": {
+        "title": "Reportar problemas",
+        "items": [
+          "Haz clic en “Reportar problema” (o presiona Ctrl+Shift+B) en la página con el problema.",
+          "Agrega un título breve, qué pasó, qué esperabas y los pasos para reproducirlo.",
+          "Adjunta una captura o una grabación corta. El diagnóstico ayuda a desarrollo, pero puedes desactivarlo.",
+          "Sigue el avance en “Mis reportes”; los administradores pueden pedirte más información."
+        ]
+      },
+      "email": {
+        "title": "Correos",
+        "items": [
+          "Ningún correo real sale de este servidor. Abre “Bandeja de correos” para leer los mensajes (verificación, notificaciones)."
+        ]
+      },
+      "rules": {
+        "title": "Reglas",
+        "items": [
+          "Nunca captures datos reales de estudiantes ni datos personales.",
+          "Nunca compartas la contraseña demo fuera del grupo de pruebas.",
+          "Este es un entorno de pruebas: los datos pueden restablecerse en cualquier momento."
+        ]
+      }
     }
   }
 }

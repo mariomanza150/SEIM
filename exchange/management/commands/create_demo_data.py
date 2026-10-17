@@ -15,6 +15,7 @@ from exchange.models import (
     TimelineEvent,
 )
 from notifications.models import Notification, NotificationType
+from qa.gating import demo_password
 
 fake = Faker()
 
@@ -43,6 +44,9 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        from qa.gating import assert_not_production
+
+        assert_not_production("create_demo_data")
         self.stdout.write("Creating comprehensive demo data for SEIM...")
 
         # Create roles first
@@ -99,7 +103,7 @@ class Command(BaseCommand):
                 },
             )
             if created:
-                user.set_password("admin123")
+                user.set_password(demo_password("admin123"))
                 user.save()
                 self.stdout.write(f"  Created admin user: {user.username}")
             else:
@@ -123,7 +127,7 @@ class Command(BaseCommand):
                 },
             )
             if created:
-                user.set_password("coordinator123")
+                user.set_password(demo_password("coordinator123"))
                 user.save()
                 self.stdout.write(f"  Created coordinator user: {user.username}")
             else:
@@ -148,7 +152,7 @@ class Command(BaseCommand):
                 },
             )
             if created:
-                user.set_password("student123")
+                user.set_password(demo_password("student123"))
                 user.save()
                 self.stdout.write(f"  Created student user: {user.username}")
             else:

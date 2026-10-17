@@ -631,6 +631,7 @@ Do not put `CODECOV_TOKEN` in `.env` or `env.example`.
 | `TESTER_DEMO_PASSWORD` | (unset) | Shared password for accounts created by `manage.py seed_test_accounts`. Lives only in the server env file; never shown in the UI or committed. |
 | `QA_MAX_ATTACHMENTS` | `5` | Files per QA report. |
 | `QA_MAX_IMAGE_MB` / `QA_MAX_VIDEO_MB` | `10` / `25` | Size limits for screenshots/logs and screen recordings. |
+| `EMAIL_BACKEND=qa.mail.CaptureEmailBackend` | — | Test servers: store outgoing email in the database (tester **Email outbox**) instead of delivering it. Refuses to load on `DEPLOY_TIER=production` (system check `qa.E002`). Captured mail is pruned after 14 days. |
 | `GIT_COMMIT` | (unset) | Build commit (set by `scripts/deploy-local-prod.ps1` as a Docker build arg); shown in the tester version badge. |
 
 Testers are designated in Django admin (**Users → "Is tester"**). See `docs/tester_guide.md`.

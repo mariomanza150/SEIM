@@ -2,3 +2,6 @@
 # are now built at runtime; these fingerprints only cover that historical commit.
 a8ee5e86be19def83bb26bae7797d8021eb8200c:frontend-vue/src/qa/diagnostics.spec.js:jwt:29
 a8ee5e86be19def83bb26bae7797d8021eb8200c:tests/unit/qa/test_issues.py:jwt:51
+# Fake demo-password fixture in tests/unit/qa/test_tools.py (commit 6efac65, PR #134); now built at runtime.
+6efac65223e1ba56b519111ed662f4246f3781c5:tests/unit/qa/test_tools.py:generic-api-key:63
+6efac65223e1ba56b519111ed662f4246f3781c5:tests/unit/qa/test_tools.py:generic-api-key:81

@@ -38,3 +38,18 @@ class NotImpersonating(BasePermission):
 
     def has_permission(self, request, view):
         return not is_impersonating(request)
+
+
+class AccountSelfServiceAllowed(BasePermission):
+    """
+    Block password change / account deletion for shared demo accounts and while a
+    tester is switched into (or a triager impersonates) another account.
+    """
+
+    message = "Not allowed for demo accounts or while testing as another user."
+
+    def has_permission(self, request, view):
+        if is_impersonating(request):
+            return False
+        user = getattr(request, "user", None)
+        return not getattr(user, "is_demo_account", False)

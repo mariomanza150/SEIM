@@ -4,7 +4,7 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .models import Issue, IssueAttachment, IssueComment
+from .models import CapturedEmail, Issue, IssueAttachment, IssueComment, QAAuditEvent
 
 
 class IssueAttachmentInline(admin.TabularInline):
@@ -199,3 +199,27 @@ class IssueAdmin(admin.ModelAdmin):
                 is_system=True,
             )
             notify_status_change(obj, old_status, request.user)
+
+
+@admin.register(QAAuditEvent)
+class QAAuditEventAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "action", "actor", "target", "ip_address")
+    list_filter = ("action",)
+    search_fields = ("actor__email", "target__email", "note")
+    readonly_fields = [f.name for f in QAAuditEvent._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(CapturedEmail)
+class CapturedEmailAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "subject", "from_email", "recipients_index")
+    search_fields = ("subject", "recipients_index")
+    readonly_fields = [f.name for f in CapturedEmail._meta.fields]
+
+    def has_add_permission(self, request):
+        return False

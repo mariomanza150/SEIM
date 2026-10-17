@@ -278,6 +278,8 @@ export const useAuthStore = defineStore('auth', () => {
     // Drop staff review-queue sibling ids so the next user on this browser
     // cannot see prev/next links into applications they cannot open.
     clearReviewQueueNav()
+    // Drop any stashed tester session (role switcher) so it cannot be restored.
+    localStorage.removeItem('seim_qa_stash')
 
     // Best-effort server logout (blacklist refresh + clear Django session). JWT-only — MQ-008.
     // Do not await: a hung network must not block redirect to Login.
@@ -295,6 +297,22 @@ export const useAuthStore = defineStore('auth', () => {
       .catch((err) => {
         console.warn('Logout endpoint error:', err)
       })
+  }
+
+  /**
+   * Replace the session tokens (tester role switcher) and reload the profile.
+   * @param {string} access
+   * @param {string} refresh
+   */
+  async function adoptTokens(access, refresh) {
+    accessToken.value = access
+    refreshToken.value = refresh
+    persistToken(ACCESS_TOKEN_KEYS, access)
+    persistToken(REFRESH_TOKEN_KEYS, refresh)
+    user.value = null
+    clearReviewQueueNav()
+    await fetchUserProfile()
+    return user.value
   }
 
   let refreshInFlight = null
@@ -421,5 +439,6 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken: refreshAccessToken,
     fetchUserProfile,
     checkAuth,
+    adoptTokens,
   }
 })

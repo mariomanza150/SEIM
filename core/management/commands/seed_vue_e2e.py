@@ -38,6 +38,9 @@ class Command(BaseCommand):
     help = "Seed data for Vue E2E tests (draft application, document, unread notifications)"
 
     def handle(self, *args, **options):
+        from qa.gating import assert_not_production
+
+        assert_not_production("seed_vue_e2e")
         self.stdout.write("Seeding Vue E2E data...")
 
         call_command("create_initial_data", verbosity=0)
