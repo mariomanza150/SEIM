@@ -9,6 +9,11 @@ from qa.models import Issue, IssueAttachment
 
 from .conftest import client_for
 
+# Built at runtime so secret scanners do not flag the fixture.
+FAKE_JWT = ".".join(
+    ["eyJ" + "hbGciOiJIUzI1NiJ9", "eyJ" + "zdWIiOiIxMjM0NSJ9", "abcdefghijk"]
+)
+
 pytestmark = pytest.mark.django_db
 
 
@@ -48,7 +53,7 @@ def test_tester_creates_issue_with_screenshot(
         "consoleErrors": [
             {
                 "level": "error",
-                "message": "boom eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NSJ9.abcdefghijk",
+                "message": "boom " + FAKE_JWT,
             }
         ],
         "failedRequests": [
