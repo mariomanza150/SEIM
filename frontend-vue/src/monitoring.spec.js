@@ -310,3 +310,25 @@ describe('truncation and browser compatibility', () => {
     expect(source).not.toContain('(?<')
   })
 })
+
+describe('quoted secret keys', () => {
+  it.each([
+    ['{"password": "x"}', `{"password": "${FILTERED}"}`],
+    ["{'api_key': 'x'}", `{'api_key': '${FILTERED}'}`],
+    ['password="x"', `password="${FILTERED}"`],
+    ["token='x'", `token='${FILTERED}'`],
+    ['{"access_token":"x"}', `{"access_token":"${FILTERED}"}`],
+  ])('masks %s', (text, expected) => {
+    expect(scrubText(text)).toBe(expected)
+  })
+
+  it.each([
+    ['my_access_token=abc', `my_access_token=${FILTERED}`],
+    ['x-api-key: abc', `x-api-key: ${FILTERED}`],
+    ['token=1&token=2', `token=${FILTERED}&token=${FILTERED}`],
+    ['status code: 500', 'status code: 500'],
+    ['filename="a.txt"', 'filename="a.txt"'],
+  ])('keeps unquoted behaviour for %s', (text, expected) => {
+    expect(scrubText(text)).toBe(expected)
+  })
+})

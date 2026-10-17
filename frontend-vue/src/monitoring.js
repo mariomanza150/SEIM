@@ -36,8 +36,9 @@ const EMAIL_RE = /(^|[^\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
 const JWT_RE = /\beyJ[\w-]{5,}\.[\w-]{5,}\.[\w-]{5,}\b/g
 const BEARER_RE = /\b(bearer|token|basic)\s+[A-Za-z0-9._~+/=-]{8,}/gi
 // Bounded (0-40 chars) key prefix/suffix and a start-of-word prefix group: an open-ended [\w-]* here
-// backtracked quadratically on long alphanumeric / base64 blobs (ReDoS).
-const KV_SECRET_RE = /(^|[^\w-])([\w-]{0,40}?(?:password|passwd|pwd|secret|token|api[-_]?key)[\w-]{0,40})(\s*[=:]\s*)[^&\s"',;]+/gi
+// backtracked quadratically on long alphanumeric / base64 blobs (ReDoS). The optional quote on
+// each side of the separator also catches JSON / repr / kwargs forms: {"password": "x"}, token='x'.
+const KV_SECRET_RE = /(^|[^\w-])([\w-]{0,40}?(?:password|passwd|pwd|secret|token|api[-_]?key)[\w-]{0,40})(["']?\s*[=:]\s*["']?)[^&\s"',;]+/gi
 const KV_NAME_RE = /(\b(?:name|nombre|full_name|first_name|last_name|apellidos?)\s*[=:]\s*)[^\s&,;'"=]+(?:\s+(?![\w-]+\s*[=:])[^\s&,;'"=]+){0,3}/gi
 const QUERY_SECRET_RE = /([?&](?:token|access|refresh|key|code|password|email|signature|uid)[^=&]{0,40}=)[^&#\s]+/gi
 
