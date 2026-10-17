@@ -4,6 +4,7 @@ import io
 import json
 import logging
 import logging.config
+import re
 import sys
 
 import pytest
@@ -78,6 +79,7 @@ def test_init_sentry_is_noop_without_dsn():
 # --- scrubbing (errors, transactions, logs) -------------------------------------------------------------
 from core.observability import (  # noqa: E402
     FILTERED,
+    own_origin_targets,
     scrub,
     scrub_event,
     scrub_log,
@@ -233,3 +235,47 @@ def test_message_parameters_are_dropped_from_events_and_logs():
         }
     )
     assert log["attributes"] == {"sentry.message.template": "hi %s"}
+
+
+def test_scrub_log_stringifies_and_scrubs_non_string_attributes():
+    class FakeRequest:
+        def __repr__(self):
+            return "<WSGIRequest: GET '/boom/?email=ana@uni.mx&token=t0k3n'>"
+
+    log = scrub_log(
+        {
+            "level": "error",
+            "body": "Internal Server Error: /boom/",
+            "attributes": {
+                "logger.name": "django.request",
+                "request": FakeRequest(),
+                "status_code": 500,
+                "ok": False,
+            },
+        }
+    )
+    blob = json.dumps(log)
+    assert "ana@uni.mx" not in blob and "t0k3n" not in blob
+    assert log["attributes"]["status_code"] == 500 and log["attributes"]["ok"] is False
+
+
+def test_kv_regex_catches_compound_secret_and_name_keys():
+    text = (
+        "access_token=a1 client_secret=b2 secret_key: c3 apiKey=d4 X-Api-Key=e5 "
+        "name=Ana nombre=Ana full_name=Ana Perez filename=report.pdf"
+    )
+    out = scrub_text(text)
+    for leaked in ("a1", "b2", "c3", "d4", "e5", "Ana"):
+        assert leaked not in out
+    assert "filename=report.pdf" in out
+
+
+def test_own_origin_targets_are_anchored():
+    (pattern,) = own_origin_targets("https://seim.incognitoslw.com/")
+    assert re.match(pattern, "https://seim.incognitoslw.com/api/x")
+    assert re.match(pattern, "https://seim.incognitoslw.com")
+    assert not re.match(
+        pattern, "https://evil.example/?next=https://seim.incognitoslw.com/"
+    )
+    assert not re.match(pattern, "https://seim.incognitoslw.com.evil.example/")
+    assert own_origin_targets("") == []

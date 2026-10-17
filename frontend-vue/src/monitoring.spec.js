@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   FILTERED,
   initMonitoring,
   isChunkLoadError,
   allowLog,
+  ownOriginTargets,
+  initMonitoringWithTimeout,
   resetLogLimiter,
   monitoringConfig,
   scrub,
@@ -161,5 +163,46 @@ describe('log limiter', () => {
   it('beforeSendLog drops a repeat', () => {
     expect(scrubLog({ level: 'warn', message: 'dup' })).not.toBeNull()
     expect(scrubLog({ level: 'warn', message: 'dup' })).toBeNull()
+  })
+})
+
+describe('compound secret and name keys', () => {
+  it('masks access_token, client_secret, secret_key, apiKey and name fields', () => {
+    const out = scrubText(
+      'access_token=a1 client_secret=b2 secret_key: c3 apiKey=d4 X-Api-Key=e5 name=Ana nombre=Ana full_name=Ana Perez filename=report.pdf',
+    )
+    for (const leaked of ['a1', 'b2', 'c3', 'd4', 'e5', 'Ana']) expect(out).not.toContain(leaked)
+    expect(out).toContain('filename=report.pdf')
+  })
+
+  it('stringifies non-plain values via scrub', () => {
+    expect(scrub({ n: 5, ok: true, none: null })).toEqual({ n: 5, ok: true, none: null })
+  })
+})
+
+describe('ownOriginTargets', () => {
+  const match = (targets, url) => targets.some((re) => re.test(url))
+  it('matches only relative paths and our exact origin', () => {
+    const t = ownOriginTargets('https://seim.incognitoslw.com')
+    expect(match(t, '/api/x')).toBe(true)
+    expect(match(t, 'https://seim.incognitoslw.com/api/x')).toBe(true)
+    expect(match(t, 'https://evil.example/?next=https://seim.incognitoslw.com/')).toBe(false)
+    expect(match(t, 'https://seim.incognitoslw.com.evil.example/')).toBe(false)
+    expect(match(t, '//evil.example/x')).toBe(false)
+  })
+})
+
+describe('initMonitoringWithTimeout', () => {
+  it('resolves false after the timeout when the SDK hangs', async () => {
+    vi.useFakeTimers()
+    const p = initMonitoringWithTimeout({}, null, 3000, () => new Promise(() => {}))
+    vi.advanceTimersByTime(3000)
+    await expect(p).resolves.toBe(false)
+    vi.useRealTimers()
+  })
+
+  it('passes through a fast init and swallows errors', async () => {
+    await expect(initMonitoringWithTimeout({}, null, 3000, async () => true)).resolves.toBe(true)
+    await expect(initMonitoringWithTimeout({}, null, 3000, async () => { throw new Error('x') })).resolves.toBe(false)
   })
 })

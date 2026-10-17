@@ -144,7 +144,10 @@ _QUERY_SECRET_RE = re.compile(
     r"(?i)([?&](?:token|access|refresh|key|code|password|email|signature|uid)[^=&]*=)[^&#\s]+"
 )
 _KV_SECRET_RE = re.compile(
-    r"(?i)\b((?:password|passwd|secret|token|api_key)\s*[=:]\s*)[^\s&,;]+"
+    r"(?i)([\w-]*(?:password|passwd|secret|token|api[_-]?key)[\w-]*\s*[=:]\s*)[^\s&,;'\"]+"
+)
+_KV_NAME_RE = re.compile(
+    r"(?i)(\b(?:name|nombre|full_name|first_name|last_name|apellidos?)\s*[=:]\s*)[^\s&,;'\"=]+(?:\s+(?![\w-]+\s*[=:])[^\s&,;'\"=]+){0,3}"
 )
 FILTERED = "[Filtered]"
 
@@ -160,7 +163,8 @@ def scrub_text(value: str) -> str:
     value = _JWT_RE.sub(FILTERED, value)
     value = _BEARER_RE.sub(lambda m: f"{m.group(1)} {FILTERED}", value)
     value = _QUERY_SECRET_RE.sub(lambda m: m.group(1) + FILTERED, value)
-    return _KV_SECRET_RE.sub(lambda m: m.group(1) + FILTERED, value)
+    value = _KV_SECRET_RE.sub(lambda m: m.group(1) + FILTERED, value)
+    return _KV_NAME_RE.sub(lambda m: m.group(1) + FILTERED, value)
 
 
 def scrub(value, depth: int = 0):
@@ -176,7 +180,11 @@ def scrub(value, depth: int = 0):
         return [scrub(v, depth + 1) for v in value]
     if isinstance(value, str):
         return scrub_text(value)
-    return value
+    if value is None or isinstance(value, bool | int | float):
+        return value
+    # Anything else (e.g. the WSGIRequest django.request passes as an extra) is stringified
+    # and scrubbed so its repr can't leak query strings or PII.
+    return scrub_text(str(value))
 
 
 def scrub_event(event: dict, hint: dict | None = None) -> dict:
@@ -261,6 +269,13 @@ def scrub_log(log: dict, hint: dict | None = None) -> dict | None:
             }
         )
     return log
+
+
+def own_origin_targets(base_url: str) -> list[str]:
+    """Anchored trace-propagation regex for our own origin only (``^`` + escaped origin + ``/`` or end),
+    so a third-party URL that merely contains our origin (``?next=...``) gets no trace headers."""
+    base = (base_url or "").rstrip("/")
+    return [f"^{re.escape(base)}(?:/|$)"] if base else []
 
 
 def _log_level(name: str) -> int | None:

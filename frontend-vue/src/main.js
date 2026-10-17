@@ -6,7 +6,7 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import i18n from './i18n'
-import { initMonitoring } from './monitoring'
+import { initMonitoringWithTimeout } from './monitoring'
 import { installDiagnostics, recordNavigation } from './qa/diagnostics'
 
 // In-memory only; attached to a QA report solely when a tester submits one.
@@ -33,7 +33,5 @@ app.use(i18n)
 
 // Error reporting and log capture: no-op unless VITE_SENTRY_DSN was set at build time.
 // Initialised before mount so errors during the first render are captured; without a DSN it
-// resolves immediately and nothing is loaded.
-initMonitoring(app, router)
-  .catch(() => false)
-  .finally(() => app.mount('#app'))
+// resolves immediately and nothing is loaded. Waits at most 3 s for the SDK chunk.
+initMonitoringWithTimeout(app, router, 3000).finally(() => app.mount('#app'))

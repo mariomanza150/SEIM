@@ -21,7 +21,8 @@ const SENSITIVE_EXACT = new Set(['user_name', 'address', 'ip_address'])
 const EMAIL_RE = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g
 const JWT_RE = /\beyJ[\w-]{5,}\.[\w-]{5,}\.[\w-]{5,}\b/g
 const BEARER_RE = /\b(bearer|token|basic)\s+[A-Za-z0-9._~+/=-]{8,}/gi
-const KV_SECRET_RE = /\b((?:password|passwd|secret|token|api_key)\s*[=:]\s*)[^\s&,;]+/gi
+const KV_SECRET_RE = /([\w-]*(?:password|passwd|secret|token|api[_-]?key)[\w-]*\s*[=:]\s*)[^\s&,;'"]+/gi
+const KV_NAME_RE = /(\b(?:name|nombre|full_name|first_name|last_name|apellidos?)\s*[=:]\s*)[^\s&,;'"=]+(?:\s+(?![\w-]+\s*[=:])[^\s&,;'"=]+){0,3}/gi
 const QUERY_SECRET_RE = /([?&](?:token|access|refresh|key|code|password|email|signature|uid)[^=&]*=)[^&#\s]+/gi
 
 export function isSensitiveKey(key) {
@@ -37,6 +38,7 @@ export function scrubText(value) {
     .replace(BEARER_RE, (_m, kind) => `${kind} ${FILTERED}`)
     .replace(QUERY_SECRET_RE, (_m, prefix) => prefix + FILTERED)
     .replace(KV_SECRET_RE, (_m, prefix) => prefix + FILTERED)
+    .replace(KV_NAME_RE, (_m, prefix) => prefix + FILTERED)
 }
 
 export function scrub(value, depth = 0) {
@@ -182,6 +184,27 @@ export function isChunkLoadError(error) {
   return /dynamically imported module|Importing a module script failed|error loading dynamically imported|Loading chunk [\w-]+ failed|ChunkLoadError/i.test(msg)
 }
 
+/** Anchored trace-propagation targets: relative paths and our exact origin only. */
+export function ownOriginTargets(origin) {
+  const targets = [/^\/(?!\/)/]
+  if (origin) {
+    const escaped = origin.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&')
+    targets.push(new RegExp(`^${escaped}(?:/|$)`))
+  }
+  return targets
+}
+
+/** Run initMonitoring but give up waiting after timeoutMs so a hanging SDK chunk can't blank the page. */
+export function initMonitoringWithTimeout(app, router, timeoutMs = 3000, init = initMonitoring) {
+  let timer
+  const timeout = new Promise((resolve) => {
+    timer = setTimeout(() => resolve(false), timeoutMs)
+  })
+  return Promise.race([Promise.resolve().then(() => init(app, router)).catch(() => false), timeout]).finally(() =>
+    clearTimeout(timer),
+  )
+}
+
 let sentry = null
 
 /**
@@ -220,7 +243,7 @@ export async function initMonitoring(app, router, env = import.meta.env) {
     beforeSend: scrubEvent,
     beforeSendTransaction: scrubEvent,
     // Trace headers only to our own origin (relative /api calls), never to third parties.
-    tracePropagationTargets: [/^\//, ...(typeof window !== 'undefined' ? [window.location.origin] : [])],
+    tracePropagationTargets: ownOriginTargets(typeof window !== 'undefined' ? window.location.origin : ''),
     beforeBreadcrumb: scrubBreadcrumb,
     beforeSendLog: scrubLog,
   })
