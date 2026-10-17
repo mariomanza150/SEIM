@@ -1,6 +1,12 @@
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   FILTERED,
+  MAX_SCRUB_CHARS,
+  TRUNCATED,
+  safeString,
   initMonitoring,
   isChunkLoadError,
   allowLog,
@@ -204,5 +210,103 @@ describe('initMonitoringWithTimeout', () => {
   it('passes through a fast init and swallows errors', async () => {
     await expect(initMonitoringWithTimeout({}, null, 3000, async () => true)).resolves.toBe(true)
     await expect(initMonitoringWithTimeout({}, null, 3000, async () => { throw new Error('x') })).resolves.toBe(false)
+  })
+})
+
+describe('ReDoS regression', () => {
+  const bestOf = (fn, runs = 3) => {
+    let best = Infinity
+    for (let i = 0; i < runs; i += 1) {
+      const start = performance.now()
+      fn()
+      best = Math.min(best, performance.now() - start)
+    }
+    return best
+  }
+
+  it.each([
+    ['dash-separated 100 KB', 'a-'.repeat(51200)],
+    ['alphanumeric 100 KB', 'Zx9Qa7Lm3Kp2Vb8N'.repeat(6400)],
+  ])('scrubs %s in under 100 ms', (_label, payload) => {
+    expect(payload.length).toBeGreaterThanOrEqual(100 * 1024)
+    const elapsed = bestOf(() => scrubText(payload))
+    expect(elapsed).toBeLessThan(100)
+    const out = scrubText(payload)
+    expect(out.endsWith(TRUNCATED)).toBe(true)
+    expect(out.length).toBeLessThanOrEqual(MAX_SCRUB_CHARS + 20)
+  })
+
+  it('keeps key=value secret masking with the bounded regex', () => {
+    const out = scrubText('pwd=p1 db_password = p2, token:p3;ok=1 user_secret_value=p4')
+    for (const leaked of ['p1', 'p2', 'p3', 'p4']) expect(out).not.toContain(leaked)
+    expect(out).toContain(`db_password = ${FILTERED},`)
+    expect(out).toContain('ok=1')
+  })
+
+  it('truncates before masking so emails stay masked', () => {
+    const out = scrubText(`ana@uni.mx ${'x'.repeat(MAX_SCRUB_CHARS * 2)}`)
+    expect(out).not.toContain('ana@uni.mx')
+    expect(out.endsWith(TRUNCATED)).toBe(true)
+  })
+
+  it('safeString never throws', () => {
+    const broken = { toString() { throw new Error('boom') } }
+    expect(safeString(broken)).toBe('[unserializable]')
+    expect(safeString(42)).toBe('42')
+  })
+})
+
+// import.meta.url is not a file: URL under the jsdom environment, so resolve from this spec's path.
+const MONITORING_DIR = dirname(fileURLToPath(new URL(import.meta.url, 'file:///')))
+
+describe('truncation and browser compatibility', () => {
+  const bestOf = (fn, runs = 3) => {
+    let best = Infinity
+    for (let i = 0; i < runs; i += 1) {
+      const start = performance.now()
+      fn()
+      best = Math.min(best, performance.now() - start)
+    }
+    return best
+  }
+
+  it.each([
+    ['blob then space', 'Zx9Qa7Lm3Kp2Vb8N'.repeat(570) + ' ' + 'a-'.repeat(50000)],
+    ['?token 100 KB', '?token'.repeat(17100)],
+    ['spaced ?token 100 KB', ('?token'.repeat(1600) + ' ').repeat(11)],
+  ])('scrubs %s in under 100 ms', (_label, payload) => {
+    expect(payload.length).toBeGreaterThanOrEqual(100 * 1024)
+    expect(bestOf(() => scrubText(payload))).toBeLessThan(100)
+  })
+
+  const secrets = {
+    email: 'ana.perez@uni.edu',
+    jwt: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.c2lnbmF0dXJlLXZhbHVl',
+    bearer: 'Bearer s3cr3tT0k3nValue99',
+  }
+
+  it.each(Object.keys(secrets))('leaves no %s fragment at any cut position', (kind) => {
+    const secret = secrets[kind]
+    expect(secret).not.toContain('~')
+    const filler = '~ '.repeat(3000)
+    for (let offset = -2; offset < secret.length + 3; offset += 1) {
+      const prefixLen = MAX_SCRUB_CHARS - offset
+      const text = '~ '.repeat(Math.floor(prefixLen / 2) + 1).slice(0, prefixLen) + secret + ' ' + filler
+      const out = scrubText(text)
+      expect(out.endsWith(TRUNCATED)).toBe(true)
+      const residue = out.replace(TRUNCATED, '').split(FILTERED).join('').split('Bearer').join('')
+      expect(residue, `${kind} leaked at cut offset ${offset}: ${out.slice(-60)}`).toMatch(/^[~ ]*$/)
+    }
+  })
+
+  it('masks emails and secret keys at the very start of the text', () => {
+    expect(scrubText('ana@uni.edu')).toBe(FILTERED)
+    expect(scrubText('pwd=p1')).toBe(`pwd=${FILTERED}`)
+    expect(scrubText('a@b.co,c@d.co')).toBe(`${FILTERED},${FILTERED}`)
+  })
+
+  it('uses no regex lookbehind (Safari/iOS < 16.4 cannot parse it)', () => {
+    const source = readFileSync(resolve(MONITORING_DIR, 'monitoring.js'), 'utf8')
+    expect(source).not.toContain('(?<')
   })
 })

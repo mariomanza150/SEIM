@@ -137,19 +137,32 @@ _SENSITIVE_KEYS = (
 # Exact keys (substring matching would also hide logger/file names).
 # Exact keys. Plain "name" is not here: contexts.os.name etc. are harmless (user.name goes with user).
 _SENSITIVE_EXACT = frozenset({"user_name", "address", "ip_address"})
-_EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
+# The lookbehind anchors the match at the start of a run, so long non-email runs stay linear.
+_EMAIL_RE = re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 _BEARER_RE = re.compile(r"(?i)\b(bearer|token|basic)\s+[A-Za-z0-9._~+/=-]{8,}")
 _JWT_RE = re.compile(r"\beyJ[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}\b")
 _QUERY_SECRET_RE = re.compile(
-    r"(?i)([?&](?:token|access|refresh|key|code|password|email|signature|uid)[^=&]*=)[^&#\s]+"
+    r"(?i)([?&](?:token|access|refresh|key|code|password|email|signature|uid)[^=&]{0,40}=)[^&#\s]+"
 )
+# Bounded (0-40 chars) key prefix/suffix and a start-of-word lookbehind: an open-ended [\w-]* here
+# backtracked quadratically on long alphanumeric / base64 blobs (ReDoS).
 _KV_SECRET_RE = re.compile(
-    r"(?i)([\w-]*(?:password|passwd|secret|token|api[_-]?key)[\w-]*\s*[=:]\s*)[^\s&,;'\"]+"
+    r"(?i)(?<![\w-])([\w-]{0,40}?(?:password|passwd|pwd|secret|token|api[-_]?key)[\w-]{0,40})(\s*[=:]\s*)[^&\s\"',;]+"
 )
 _KV_NAME_RE = re.compile(
     r"(?i)(\b(?:name|nombre|full_name|first_name|last_name|apellidos?)\s*[=:]\s*)[^\s&,;'\"=]+(?:\s+(?![\w-]+\s*[=:])[^\s&,;'\"=]+){0,3}"
 )
 FILTERED = "[Filtered]"
+# scrub_text returns at most this many characters (plus TRUNCATED). Longer input is cut to a
+# window of MAX_SCRUB_CHARS + SCRUB_WINDOW_SLACK at a token boundary, scrubbed, and the *scrubbed*
+# text is cut again at a token boundary, so a secret straddling the cut is never half-kept.
+MAX_SCRUB_CHARS = 8192
+SCRUB_WINDOW_SLACK = 1024
+TRUNCATED = "\u2026[truncated]"
+# Token boundaries for cutting. "." "=" ":" "/" "?" "[" "]" are deliberately not boundaries, so a cut never
+# keeps part of a JWT, a key=value pair, a URL or a "[Filtered]" marker.
+_CUT_DELIMITERS = frozenset(" \t\r\n\f\v&,;'\"<>(){}|")
+UNSERIALIZABLE = "[unserializable]"
 
 
 def _is_sensitive(key: object) -> bool:
@@ -158,12 +171,33 @@ def _is_sensitive(key: object) -> bool:
 
 
 def scrub_text(value: str) -> str:
-    """Mask e-mail addresses, bearer/JWT tokens and secret query parameters inside free text."""
+    """Mask e-mail addresses, bearer/JWT tokens and secret query parameters inside free text.
+
+    Input longer than ``MAX_SCRUB_CHARS`` is truncated (see ``_cut_at_boundary``), which also
+    bounds the cost of every pattern.
+    """
+    if len(value) <= MAX_SCRUB_CHARS:
+        return _scrub_patterns(value)
+    window = _cut_at_boundary(value, MAX_SCRUB_CHARS + SCRUB_WINDOW_SLACK)
+    return _cut_at_boundary(_scrub_patterns(window), MAX_SCRUB_CHARS) + TRUNCATED
+
+
+def _cut_at_boundary(text: str, limit: int) -> str:
+    """First ``limit`` chars of ``text``, minus any partial last token (dropped, never kept)."""
+    if len(text) <= limit or text[limit] in _CUT_DELIMITERS:
+        return text[:limit]
+    for i in range(limit - 1, -1, -1):
+        if text[i] in _CUT_DELIMITERS:
+            return text[: i + 1]
+    return ""
+
+
+def _scrub_patterns(value: str) -> str:
     value = _EMAIL_RE.sub(FILTERED, value)
     value = _JWT_RE.sub(FILTERED, value)
     value = _BEARER_RE.sub(lambda m: f"{m.group(1)} {FILTERED}", value)
     value = _QUERY_SECRET_RE.sub(lambda m: m.group(1) + FILTERED, value)
-    value = _KV_SECRET_RE.sub(lambda m: m.group(1) + FILTERED, value)
+    value = _KV_SECRET_RE.sub(lambda m: m.group(1) + m.group(2) + FILTERED, value)
     return _KV_NAME_RE.sub(lambda m: m.group(1) + FILTERED, value)
 
 
@@ -184,7 +218,11 @@ def scrub(value, depth: int = 0):
         return value
     # Anything else (e.g. the WSGIRequest django.request passes as an extra) is stringified
     # and scrubbed so its repr can't leak query strings or PII.
-    return scrub_text(str(value))
+    try:
+        text = str(value)
+    except Exception:  # noqa: BLE001 - a broken __str__/__repr__ must never break event sending
+        return UNSERIALIZABLE
+    return scrub_text(text)
 
 
 def scrub_event(event: dict, hint: dict | None = None) -> dict:
