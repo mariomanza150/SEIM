@@ -24,6 +24,31 @@ env:
   SECRET_KEY: ci-not-a-secret-key-for-tests-only
 
 jobs:
+  powershell:
+    name: PowerShell (deploy scripts, maintenance lock)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Parse every script
+        shell: pwsh
+        run: |
+          $failed = 0
+          Get-ChildItem -Recurse -Filter *.ps1 -Path scripts | ForEach-Object {
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$null, [ref]$errors)
+            foreach ($e in $errors) { Write-Output "::error file=$($_.FullName),line=$($e.Extent.StartLineNumber)::$($e.Message)"; $failed++ }
+          }
+          exit [int]($failed -gt 0)
+
+      - name: Maintenance lock tests
+        shell: pwsh
+        run: ./scripts/tests/maintenance-lock-tests.ps1 -LockScript scripts/maintenance-lock.ps1
+
+      - name: Deploy script tests (fake docker)
+        shell: pwsh
+        run: ./scripts/tests/deploy-local-prod-tests.ps1
+
   lint:
     name: Lint (Ruff)
     runs-on: ubuntu-latest

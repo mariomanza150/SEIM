@@ -41,6 +41,8 @@ jobs:
   deploy:
     name: Deploy seim-localprod
     runs-on: [self-hosted, Windows, local-prod]
+    # A hung docker compose up once held this job for hours; the deploy script has its own hard timeouts too.
+    timeout-minutes: 20
     if: |
       (github.event_name == 'workflow_dispatch') ||
       (github.event.workflow_run.conclusion == 'success' &&
