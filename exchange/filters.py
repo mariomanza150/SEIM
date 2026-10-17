@@ -2,7 +2,8 @@
 FilterSets for advanced search and filtering of programs and applications.
 """
 
-from datetime import timedelta
+import re
+from datetime import date, timedelta
 
 import django_filters
 from django.contrib.postgres.search import SearchVector
@@ -12,6 +13,31 @@ from django.utils import timezone
 from documents.models import DocumentResubmissionRequest
 
 from .models import Application, ExchangeAgreement, Program
+
+_PERIOD_RE = re.compile(r"^(?P<year>\d{4})(?:-(?P<half>[12]))?$")
+
+
+def parse_exchange_period(value: str | None) -> tuple[date, date] | None:
+    """``YYYY`` → whole year; ``YYYY-1`` → Jan–Jun; ``YYYY-2`` → Jul–Dec."""
+    match = _PERIOD_RE.match(str(value or "").strip())
+    if not match:
+        return None
+    year = int(match.group("year"))
+    half = match.group("half")
+    if half == "1":
+        return date(year, 1, 1), date(year, 6, 30)
+    if half == "2":
+        return date(year, 7, 1), date(year, 12, 31)
+    return date(year, 1, 1), date(year, 12, 31)
+
+
+def _overlapping(queryset, prefix: str, start: date | None, end: date | None):
+    """Rows whose program dates overlap [start, end] (either bound optional)."""
+    if start is not None:
+        queryset = queryset.filter(**{f"{prefix}end_date__gte": start})
+    if end is not None:
+        queryset = queryset.filter(**{f"{prefix}start_date__lte": end})
+    return queryset
 
 
 class ProgramFilter(django_filters.FilterSet):
@@ -88,6 +114,11 @@ class ProgramFilter(django_filters.FilterSet):
         label="Only programs the current student passes (strict)",
     )
     recurring = django_filters.BooleanFilter(label="Recurring")
+    direction = django_filters.ChoiceFilter(
+        field_name="mobility_direction",
+        choices=Program.MobilityDirection.choices,
+        label="Mobility direction (incoming / outgoing)",
+    )
     auto_reject_ineligible = django_filters.BooleanFilter(
         label="Auto-reject Ineligible"
     )
@@ -208,6 +239,26 @@ class ApplicationFilter(django_filters.FilterSet):
         field_name="program__name", lookup_expr="icontains", label="Program Name"
     )
     program_id = django_filters.UUIDFilter(field_name="program__id", label="Program ID")
+    program = django_filters.UUIDFilter(field_name="program__id", label="Program")
+    direction = django_filters.ChoiceFilter(
+        field_name="program__mobility_direction",
+        choices=Program.MobilityDirection.choices,
+        label="Mobility direction (incoming / outgoing)",
+    )
+
+    # Exchange period (program dates overlap the period / range)
+    period = django_filters.CharFilter(
+        method="filter_period",
+        label="Exchange period: YYYY, YYYY-1 (Jan–Jun) or YYYY-2 (Jul–Dec)",
+    )
+    start_date = django_filters.DateFilter(
+        method="filter_start_date",
+        label="Exchange ends on or after this date",
+    )
+    end_date = django_filters.DateFilter(
+        method="filter_end_date",
+        label="Exchange starts on or before this date",
+    )
 
     # Status filters (status= for Vue compatibility, status_name= explicit)
     status = django_filters.CharFilter(
@@ -276,6 +327,18 @@ class ApplicationFilter(django_filters.FilterSet):
     class Meta:
         model = Application
         fields = ["withdrawn"]
+
+    def filter_period(self, queryset, name, value):
+        bounds = parse_exchange_period(value)
+        if bounds is None:
+            return queryset
+        return _overlapping(queryset, "program__", *bounds)
+
+    def filter_start_date(self, queryset, name, value):
+        return _overlapping(queryset, "program__", value, None)
+
+    def filter_end_date(self, queryset, name, value):
+        return _overlapping(queryset, "program__", None, value)
 
     def filter_student_name(self, queryset, name, value):
         """Filter by student first name or last name."""

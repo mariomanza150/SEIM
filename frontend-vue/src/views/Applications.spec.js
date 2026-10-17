@@ -36,6 +36,7 @@ describe('Applications', () => {
     localStorage.clear()
     setAppLocale('en')
     routeQuery.status = ''
+    delete routeQuery.direction
     vi.clearAllMocks()
     global.confirm = vi.fn(() => false)
   })
@@ -166,7 +167,7 @@ describe('Applications', () => {
     await wrapper.find('[data-testid="applications-filter-status"]').trigger('change')
     await flushPromises()
     expect(api.get).toHaveBeenCalledWith('/api/applications/', {
-      params: { page: 1, ordering: '-created_at', status: 'draft' },
+      params: { page: 1, ordering: '-created_at', status: 'draft', direction: 'outgoing' },
     })
   })
 
@@ -227,7 +228,7 @@ describe('Applications', () => {
     await flushPromises()
     expect(wrapper.find('[data-testid="applications-filter-status"]').element.value).toBe('nominated')
     expect(api.get).toHaveBeenCalledWith('/api/applications/', {
-      params: { page: 1, ordering: '-created_at', status: 'nominated' },
+      params: { page: 1, ordering: '-created_at', status: 'nominated', direction: 'outgoing' },
     })
   })
 
@@ -237,7 +238,110 @@ describe('Applications', () => {
     await flushPromises()
     expect(wrapper.find('[data-testid="applications-filters"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="compact-filter-clear"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="compact-filter-advanced-toggle"]').exists()).toBe(false)
+    // Exchange date range lives in the advanced disclosure.
+    expect(wrapper.find('[data-testid="compact-filter-advanced-toggle"]').exists()).toBe(true)
     expect(wrapper.find('.seim-page-breadcrumb').exists()).toBe(true)
+  })
+
+  describe('incoming / outgoing tabs and exchange filters', () => {
+    const empty = { data: { results: [], count: 0, next: null, previous: null } }
+    const programsPayload = {
+      data: {
+        results: [
+          { id: 'p-1', name: 'DAAD Exchange' },
+          { id: 'p-2', name: 'Erasmus Madrid' },
+        ],
+        count: 2,
+        next: null,
+        previous: null,
+      },
+    }
+
+    function mockByUrl() {
+      api.get.mockImplementation((url) =>
+        Promise.resolve(url === '/api/programs/' ? programsPayload : empty),
+      )
+    }
+
+    function applicationCalls() {
+      return api.get.mock.calls.filter(([url]) => url === '/api/applications/').map(([, cfg]) => cfg.params)
+    }
+
+    it('defaults to the Outgoing tab and loads outgoing programs for the filter', async () => {
+      mockByUrl()
+      const wrapper = mountApplications()
+      await flushPromises()
+      expect(wrapper.find('[data-testid="applications-tab-outgoing"]').classes()).toContain('active')
+      expect(wrapper.find('[data-testid="applications-tab-incoming"]').text()).toContain(
+        i18n.global.t('applicationsPage.tabIncoming'),
+      )
+      expect(api.get).toHaveBeenCalledWith('/api/programs/', {
+        params: { direction: 'outgoing', page_size: 100, ordering: 'name' },
+      })
+      expect(applicationCalls().at(-1)).toMatchObject({ page: 1, direction: 'outgoing' })
+      expect(wrapper.find('[data-testid="applications-filter-program-wrap"]').exists()).toBe(true)
+    })
+
+    it('switching to Incoming refetches page 1, hides and clears the program filter', async () => {
+      mockByUrl()
+      const wrapper = mountApplications()
+      await flushPromises()
+      wrapper.vm.filters.program = 'p-2'
+      await flushPromises()
+      expect(applicationCalls().at(-1)).toMatchObject({ page: 1, direction: 'outgoing', program: 'p-2' })
+
+      await wrapper.find('[data-testid="applications-tab-incoming"]').trigger('click')
+      await flushPromises()
+      const last = applicationCalls().at(-1)
+      expect(last).toMatchObject({ page: 1, direction: 'incoming' })
+      expect(last.program).toBeUndefined()
+      expect(wrapper.vm.filters.program).toBe('')
+      expect(wrapper.find('[data-testid="applications-filter-program-wrap"]').exists()).toBe(false)
+    })
+
+    it('period and date range changes refetch page 1 with the API params', async () => {
+      mockByUrl()
+      const wrapper = mountApplications()
+      await flushPromises()
+      const periodSelect = wrapper.find('[data-testid="applications-filter-period"]')
+      const year = new Date().getFullYear()
+      expect(periodSelect.findAll('option').map((o) => o.element.value)).toContain(`${year}-2`)
+      await periodSelect.setValue(`${year}-2`)
+      await flushPromises()
+      expect(applicationCalls().at(-1)).toMatchObject({ page: 1, period: `${year}-2` })
+
+      wrapper.vm.filters.start_date = '2026-08-01'
+      wrapper.vm.filters.end_date = '2026-12-15'
+      await flushPromises()
+      expect(applicationCalls().at(-1)).toMatchObject({
+        page: 1,
+        start_date: '2026-08-01',
+        end_date: '2026-12-15',
+      })
+    })
+
+    it('honours ?direction=incoming from the route', async () => {
+      routeQuery.direction = 'incoming'
+      mockByUrl()
+      const wrapper = mountApplications()
+      await flushPromises()
+      expect(wrapper.find('[data-testid="applications-tab-incoming"]').classes()).toContain('active')
+      expect(applicationCalls()[0]).toMatchObject({ direction: 'incoming' })
+    })
+
+    it('clear filters keeps the active tab and refetches once', async () => {
+      mockByUrl()
+      const wrapper = mountApplications()
+      await flushPromises()
+      await wrapper.find('[data-testid="applications-tab-incoming"]').trigger('click')
+      wrapper.vm.filters.period = '2026'
+      await flushPromises()
+      api.get.mockClear()
+      await wrapper.find('[data-testid="compact-filter-clear"]').trigger('click')
+      await flushPromises()
+      const calls = applicationCalls()
+      expect(calls).toHaveLength(1)
+      expect(calls[0]).toEqual({ page: 1, ordering: '-created_at', direction: 'incoming' })
+    })
   })
 })

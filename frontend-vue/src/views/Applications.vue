@@ -20,13 +20,30 @@
       </template>
     </PageHeader>
 
+      <ul class="nav nav-tabs mb-3" role="tablist" data-testid="applications-direction-tabs">
+        <li v-for="tab in directionTabs" :key="tab.value" class="nav-item" role="presentation">
+          <button
+            type="button"
+            class="nav-link"
+            :class="{ active: filters.direction === tab.value }"
+            role="tab"
+            :aria-selected="filters.direction === tab.value"
+            :data-testid="`applications-tab-${tab.value}`"
+            @click="setDirection(tab.value)"
+          >
+            <i :class="tab.icon" class="me-1" aria-hidden="true"></i>{{ tab.label }}
+          </button>
+        </li>
+      </ul>
+
       <CompactFilterBar
         test-id="applications-filters"
+        :active-filter-count="activeFilterCount"
         :clear-label="t('applicationsPage.clearFilters')"
         @clear="clearFilters"
       >
         <template #primary>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label class="form-label">{{ t('applicationsPage.searchLabel') }}</label>
               <input
                 v-model="filters.search"
@@ -37,7 +54,7 @@
                 data-testid="applications-search"
               />
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
               <label class="form-label">{{ t('applicationsPage.statusLabel') }}</label>
               <select v-model="filters.status" class="form-select" @change="() => fetchApplications(1)" data-testid="applications-filter-status">
                 <option value="">{{ t('applicationsPage.statusOptionAll') }}</option>
@@ -53,7 +70,28 @@
                 <option value="withdrawn">{{ t('applicationDetailPage.status.withdrawn') }}</option>
               </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
+              <label class="form-label" for="applications-filter-period">{{ t('applicationsPage.periodLabel') }}</label>
+              <select
+                id="applications-filter-period"
+                v-model="filters.period"
+                class="form-select"
+                data-testid="applications-filter-period"
+              >
+                <option value="">{{ t('applicationsPage.periodAll') }}</option>
+                <option v-for="opt in periodOptions" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+              </select>
+            </div>
+            <div v-if="filters.direction === 'outgoing'" class="col-md-3" data-testid="applications-filter-program-wrap">
+              <label class="form-label">{{ t('applicationsPage.programLabel') }}</label>
+              <SearchableSelect
+                v-model="filters.program"
+                :options="programSelectOptions"
+                :placeholder="t('applicationsPage.programPlaceholder')"
+                data-testid="applications-filter-program"
+              />
+            </div>
+            <div class="col-md-2">
               <label class="form-label">{{ t('applicationsPage.sortLabel') }}</label>
               <select v-model="filters.ordering" class="form-select" @change="() => fetchApplications(1)" data-testid="applications-filter-ordering">
                 <option value="-created_at">{{ t('applicationsPage.sortNewest') }}</option>
@@ -61,6 +99,33 @@
                 <option value="-submitted_at">{{ t('applicationsPage.sortRecentlySubmitted') }}</option>
               </select>
             </div>
+        </template>
+        <template #advanced>
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label class="form-label" for="applications-filter-start">{{ t('applicationsPage.startDateLabel') }}</label>
+              <input
+                id="applications-filter-start"
+                v-model="filters.start_date"
+                type="date"
+                class="form-control"
+                data-testid="applications-filter-start-date"
+              />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label" for="applications-filter-end">{{ t('applicationsPage.endDateLabel') }}</label>
+              <input
+                id="applications-filter-end"
+                v-model="filters.end_date"
+                type="date"
+                class="form-control"
+                data-testid="applications-filter-end-date"
+              />
+            </div>
+            <div class="col-12">
+              <small class="text-muted">{{ t('applicationsPage.dateRangeHelp') }}</small>
+            </div>
+          </div>
         </template>
       </CompactFilterBar>
 
@@ -176,7 +241,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onActivated } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onActivated } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
@@ -189,6 +254,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import Pagination from '@/components/Pagination.vue'
+import SearchableSelect from '@/components/SearchableSelect.vue'
 import PageStateShell from '@/components/State/PageStateShell.vue'
 import { useConfirm } from '@/composables/useConfirm'
 import {
@@ -214,11 +280,87 @@ const applications = ref([])
 const loading = ref(true)
 const error = ref(null)
 
-const filters = ref({
-  search: '',
-  status: '',
-  ordering: '-created_at',
+const DIRECTIONS = ['outgoing', 'incoming']
+
+function defaultFilters(direction = 'outgoing') {
+  return {
+    search: '',
+    status: '',
+    ordering: '-created_at',
+    direction,
+    period: '',
+    program: '',
+    start_date: '',
+    end_date: '',
+  }
+}
+
+const filters = ref(defaultFilters())
+const programs = ref([])
+let suppressFilterWatch = false
+
+const directionTabs = computed(() => [
+  { value: 'outgoing', label: t('applicationsPage.tabOutgoing'), icon: 'bi bi-box-arrow-up-right' },
+  { value: 'incoming', label: t('applicationsPage.tabIncoming'), icon: 'bi bi-box-arrow-in-down-left' },
+])
+
+/** Exchange periods: whole year, Jan–Jun (``-1``) and Jul–Dec (``-2``). */
+const periodOptions = computed(() => {
+  const year = new Date().getFullYear()
+  const out = []
+  for (let y = year + 1; y >= year - 3; y -= 1) {
+    out.push({ value: String(y), label: t('applicationsPage.periodYear', { year: y }) })
+    out.push({ value: `${y}-1`, label: t('applicationsPage.periodFirstHalf', { year: y }) })
+    out.push({ value: `${y}-2`, label: t('applicationsPage.periodSecondHalf', { year: y }) })
+  }
+  return out
 })
+
+const programSelectOptions = computed(() => [
+  { value: '', label: t('applicationsPage.programAll') },
+  ...programs.value.map((p) => ({ value: String(p.id), label: p.name })),
+])
+
+const activeFilterCount = computed(() => {
+  const f = filters.value
+  return ['status', 'period', 'program', 'start_date', 'end_date', 'search'].filter((k) => !!f[k]).length
+})
+
+function setDirection(direction) {
+  if (!DIRECTIONS.includes(direction) || filters.value.direction === direction) return
+  filters.value.direction = direction
+  if (direction !== 'outgoing') {
+    filters.value.program = ''
+  }
+}
+
+async function loadPrograms() {
+  try {
+    const data = await resourceCache.get(
+      '/api/programs/',
+      { direction: 'outgoing', page_size: 100, ordering: 'name' },
+      { ttlMs: 60000 },
+    )
+    programs.value = unwrapPaginatedResults(data)
+  } catch (err) {
+    console.error('Failed to load programs for filter:', err)
+    programs.value = []
+  }
+}
+
+watch(
+  () => [
+    filters.value.direction,
+    filters.value.period,
+    filters.value.program,
+    filters.value.start_date,
+    filters.value.end_date,
+  ],
+  () => {
+    if (suppressFilterWatch) return
+    fetchApplications(1)
+  },
+)
 
 const pagination = ref({
   count: 0,
@@ -253,6 +395,21 @@ async function fetchApplications(page = 1) {
     if (filters.value.status) {
       params.status = filters.value.status
     }
+    if (filters.value.direction) {
+      params.direction = filters.value.direction
+    }
+    if (filters.value.period) {
+      params.period = filters.value.period
+    }
+    if (filters.value.direction === 'outgoing' && filters.value.program) {
+      params.program = filters.value.program
+    }
+    if (filters.value.start_date) {
+      params.start_date = filters.value.start_date
+    }
+    if (filters.value.end_date) {
+      params.end_date = filters.value.end_date
+    }
 
     const data = await resourceCache.get('/api/applications/', params, { force: true, ttlMs: 15000 })
     applications.value = unwrapPaginatedResults(data)
@@ -281,12 +438,13 @@ function goToPage(page) {
 }
 
 function clearFilters() {
-  filters.value = {
-    search: '',
-    status: '',
-    ordering: '-created_at',
-  }
-  fetchApplications()
+  suppressFilterWatch = true
+  filters.value = defaultFilters(filters.value.direction)
+  fetchApplications(1)
+  // Re-enable once the watcher has flushed the reset.
+  nextTick(() => {
+    suppressFilterWatch = false
+  })
 }
 
 function statusClass(status) {
@@ -354,6 +512,11 @@ onMounted(() => {
   if (statusFromQuery) {
     filters.value.status = statusFromQuery
   }
+  const directionFromQuery = String(route.query?.direction || '')
+  if (DIRECTIONS.includes(directionFromQuery)) {
+    filters.value.direction = directionFromQuery
+  }
+  loadPrograms()
   fetchApplications()
 })
 

@@ -784,6 +784,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
         source="program.start_date", read_only=True
     )
     program_end_date = serializers.DateField(source="program.end_date", read_only=True)
+    program_mobility_direction = serializers.CharField(
+        source="program.mobility_direction", read_only=True
+    )
     host_institution_name = serializers.SerializerMethodField()
     host_institution_country = serializers.SerializerMethodField()
     host_school_name = serializers.CharField(
@@ -815,6 +818,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
             "program_name",
             "program_start_date",
             "program_end_date",
+            "program_mobility_direction",
             "host_institution_name",
             "host_institution_country",
             "host_school_name",
@@ -1339,6 +1343,7 @@ class ApplicationListSerializer(ApplicationSerializer):
             "program_name",
             "program_start_date",
             "program_end_date",
+            "program_mobility_direction",
             "host_institution_name",
             "host_institution_country",
             "readiness",

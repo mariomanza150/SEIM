@@ -246,6 +246,20 @@
               </div>
 
               <div class="col-md-6">
+                <label class="form-label" for="mobility_direction">{{ t('adminPrograms.fields.mobilityDirection') }}</label>
+                <select
+                  id="mobility_direction"
+                  v-model="editor.form.mobility_direction"
+                  class="form-select"
+                  data-testid="admin-program-mobility-direction"
+                >
+                  <option value="outgoing">{{ t('adminPrograms.fields.mobilityDirectionOutgoing') }}</option>
+                  <option value="incoming">{{ t('adminPrograms.fields.mobilityDirectionIncoming') }}</option>
+                </select>
+                <div class="form-text">{{ t('adminPrograms.fields.mobilityDirectionHelp') }}</div>
+              </div>
+
+              <div class="col-md-6">
                 <label class="form-label">{{ t('adminPrograms.fields.recurring') }}</label>
                 <div class="form-check mt-2">
                   <input id="recurring" v-model="editor.form.recurring" class="form-check-input" type="checkbox" />
@@ -614,6 +628,7 @@ function emptyProgramForm() {
     description: '',
     is_active: true,
     recurring: false,
+    mobility_direction: 'outgoing',
     application_open_date: null,
     application_deadline: null,
     start_date: null,
@@ -707,6 +722,7 @@ function openEdit(program) {
       description: program.description || '',
       is_active: Boolean(program.is_active),
       recurring: Boolean(program.recurring),
+      mobility_direction: program.mobility_direction === 'incoming' ? 'incoming' : 'outgoing',
       application_open_date: program.application_open_date || null,
       application_deadline: program.application_deadline || null,
       start_date: program.start_date || null,

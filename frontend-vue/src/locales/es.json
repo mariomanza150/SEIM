@@ -411,7 +411,9 @@
       "staff": "Herramientas del personal",
       "account": "Cuenta",
       "admin": "Admin"
-    }
+    },
+    "collapseSidebar": "Contraer barra lateral",
+    "expandSidebar": "Expandir barra lateral"
   },
   "commandPalette": {
     "ariaLabel": "Paleta de comandos",
@@ -709,7 +711,11 @@
       "sourceForm": "Formulario",
       "noFormKeys": "Selecciona primero un formulario de solicitud con campos en el esquema",
       "fieldRequirementsFormHelp": "Las claves de formulario salen de las propiedades JSON Schema del formulario de solicitud del programa.",
-      "addFieldRequirement": "Agregar requisito de campo"
+      "addFieldRequirement": "Agregar requisito de campo",
+      "mobilityDirection": "Dirección de movilidad",
+      "mobilityDirectionOutgoing": "Saliente (nuestros estudiantes van al extranjero)",
+      "mobilityDirectionIncoming": "Entrante (estudiantes visitantes)",
+      "mobilityDirectionHelp": "Define si las solicitudes aparecen en la pestaña Salientes o Entrantes."
     }
   },
   "adminCatalogs": {
@@ -1674,7 +1680,20 @@
     "deletedToast": "Solicitud eliminada correctamente",
     "deleteToastError": "No se pudo eliminar la solicitud",
     "editAria": "Editar solicitud",
-    "deleteAria": "Eliminar solicitud"
+    "deleteAria": "Eliminar solicitud",
+    "tabOutgoing": "Salientes",
+    "tabIncoming": "Entrantes",
+    "periodLabel": "Periodo de intercambio",
+    "periodAll": "Todos los periodos",
+    "periodYear": "{year} (año completo)",
+    "periodFirstHalf": "{year} · ene–jun",
+    "periodSecondHalf": "{year} · jul–dic",
+    "programLabel": "Programa",
+    "programPlaceholder": "Buscar programa…",
+    "programAll": "Todos los programas",
+    "startDateLabel": "Intercambio desde",
+    "endDateLabel": "Intercambio hasta",
+    "dateRangeHelp": "Muestra solicitudes cuyas fechas de programa se traslapan con este rango."
   },
   "toeflPracticePage": {
     "breadcrumbAria": "Migas de pan",
