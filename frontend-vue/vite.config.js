@@ -1,6 +1,21 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { fileURLToPath, URL } from 'node:url'
+import { execSync } from 'node:child_process'
+
+// Build commit shown in the tester version badge (Docker builds pass GIT_COMMIT).
+function resolveCommit() {
+  const fromEnv = (process.env.GIT_COMMIT || '').trim()
+  if (fromEnv) return fromEnv.slice(0, 40)
+  try {
+    return execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim()
+      .slice(0, 40)
+  } catch {
+    return ''
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -8,6 +23,11 @@ export default defineConfig({
   // This ensures the built SPA requests `/static/assets/...` instead of `/assets/...`.
   base: '/static/',
   plugins: [vue()],
+
+  define: {
+    __APP_COMMIT__: JSON.stringify(resolveCommit()),
+    __APP_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   
   resolve: {
     alias: {

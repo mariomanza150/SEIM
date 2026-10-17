@@ -42,6 +42,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.prod
+      args:
+        GIT_COMMIT: ${GIT_COMMIT:-}
     container_name: seim-web-local-prod
     env_file:
       - .env.local-prod

@@ -79,6 +79,10 @@ def _docker_compose_postgres_service_to_localhost(url: str) -> str:
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
+# Fail closed: production settings are real prod unless DEPLOY_TIER says otherwise
+# (the win-a8 test stack sets DEPLOY_TIER=test explicitly).
+DEPLOY_TIER = env("DEPLOY_TIER", default="production").strip().lower()
+
 # When True, Django serves ``MEDIA_URL`` (before Wagtail catch-all). Use for
 # single-container / Cloudflare Tunnel local-prod stacks that have no nginx
 # media location. Real production should keep this False and let the reverse
