@@ -26,7 +26,8 @@
     .\maintenance-lock.ps1 -Action Release -Repo SEIM -RunId 123
     .\maintenance-lock.ps1 -Action Status
   In a script: Enter-MaintenanceLock, then Start-MaintenanceLockHeartbeat (renews every TTL/3 from a background
-  runspace), and in finally Stop-MaintenanceLockHeartbeat and Exit-MaintenanceLock.
+  runspace, a failed renew is retried after 5 s), Test-MaintenanceLockHeartbeat between steps (stop when it returns a
+  reason), and in finally Stop-MaintenanceLockHeartbeat and Exit-MaintenanceLock.
   $env:MAINTENANCE_LOCK overrides the path (tests). One-time setup: scripts/setup-maintenance-lock-dir.ps1.
   Windows PowerShell 5.1 and PowerShell 7.
 #>
@@ -328,9 +329,11 @@ function Enter-MaintenanceLock {
 function Update-MaintenanceLock {
     <# Renew: push expires_at out to now + TtlSeconds if Repo/RunId holds the lock. $true renewed, $false not ours,
        $null not this time (guard busy or file in use). #>
-    param([Parameter(Mandatory)][string]$Repo, [Parameter(Mandatory)][string]$RunId, [int]$TtlSeconds = 600)
+    param([Parameter(Mandatory)][string]$Repo, [Parameter(Mandatory)][string]$RunId, [int]$TtlSeconds = 600,
+          [double]$GuardWaitSeconds = -1)
+    if ($GuardWaitSeconds -lt 0) { $GuardWaitSeconds = $script:GuardWaitSeconds }
     $path = Get-MaintenanceLockPath
-    $token = Enter-MaintenanceLockGuard $path $script:GuardWaitSeconds
+    $token = Enter-MaintenanceLockGuard $path $GuardWaitSeconds
     if ($null -eq $token) { return $null }
     try {
         $lock = ConvertFrom-MaintenanceLockBytes (Read-MaintenanceLockBytes $path)
@@ -383,24 +386,31 @@ function Exit-MaintenanceLock {
 
 function Start-MaintenanceLockHeartbeat {
     <# Renew Repo/RunId's lock every IntervalSeconds (default TtlSeconds/3) from a background runspace, so it keeps
-       running while the caller blocks on docker. Stop it with Stop-MaintenanceLockHeartbeat. .State.Lost is set
-       once the lock is no longer ours. #>
+       running while the caller blocks on docker. A renew that could not run ($null: guard busy, file in use) is
+       retried after RetrySeconds (5) instead of a full interval. Stop it with Stop-MaintenanceLockHeartbeat; check it
+       with Test-MaintenanceLockHeartbeat. .State: Lost (no longer ours), Renewals, Retries, LastRenewedAt. #>
     param([Parameter(Mandatory)][string]$Repo, [Parameter(Mandatory)][string]$RunId, [int]$TtlSeconds = 600,
-          [double]$IntervalSeconds = 0)
+          [double]$IntervalSeconds = 0, [double]$RetrySeconds = 5)
     if ($IntervalSeconds -le 0) { $IntervalSeconds = [Math]::Max(1, $TtlSeconds / 3) }
-    $state = [hashtable]::Synchronized(@{ Stop = $false; Renewals = 0; Lost = $false; LastError = $null })
+    $RetrySeconds = [Math]::Min($RetrySeconds, $IntervalSeconds)
+    $state = [hashtable]::Synchronized(@{ Stop = $false; Renewals = 0; Retries = 0; Lost = $false; LastError = $null;
+                                         LastRenewedAt = [DateTime]::UtcNow })
     $loop = @'
 
 $hb = $MaintenanceLockHeartbeatState
+$pause = $MaintenanceLockHeartbeatInterval
 while (-not $hb.Stop) {
-    $until = [DateTime]::UtcNow.AddSeconds($MaintenanceLockHeartbeatInterval)
-    while (-not $hb.Stop -and [DateTime]::UtcNow -lt $until) { Start-Sleep -Milliseconds 200 }
+    $until = [DateTime]::UtcNow.AddSeconds($pause)
+    while (-not $hb.Stop -and [DateTime]::UtcNow -lt $until) { Start-Sleep -Milliseconds 100 }
     if ($hb.Stop) { break }
+    $pause = $MaintenanceLockHeartbeatInterval
+    $ok = $null
     try {
-        $ok = Update-MaintenanceLock -Repo $Repo -RunId $RunId -TtlSeconds $TtlSeconds
-        if ($ok -eq $true) { $hb.Renewals++ }
-        elseif ($ok -eq $false) { $hb.Lost = $true; break }
+        $ok = Update-MaintenanceLock -Repo $Repo -RunId $RunId -TtlSeconds $TtlSeconds -GuardWaitSeconds ([Math]::Min(2, $MaintenanceLockHeartbeatRetry))
     } catch { $hb.LastError = $_.Exception.Message }
+    if ($ok -eq $true) { $hb.Renewals++; $hb.LastRenewedAt = [DateTime]::UtcNow }
+    elseif ($ok -eq $false) { $hb.Lost = $true; break }
+    else { $hb.Retries++; $pause = $MaintenanceLockHeartbeatRetry }
 }
 '@
     $text = [System.IO.File]::ReadAllText($script:MaintenanceLockSource) + "`n" + $loop
@@ -408,11 +418,30 @@ while (-not $hb.Stop) {
     $rs.Open()
     $rs.SessionStateProxy.SetVariable("MaintenanceLockHeartbeatState", $state)
     $rs.SessionStateProxy.SetVariable("MaintenanceLockHeartbeatInterval", $IntervalSeconds)
+    $rs.SessionStateProxy.SetVariable("MaintenanceLockHeartbeatRetry", $RetrySeconds)
     $ps = [powershell]::Create()
     $ps.Runspace = $rs
     [void]$ps.AddScript($text).AddParameter("Repo", $Repo).AddParameter("RunId", $RunId).AddParameter("TtlSeconds", $TtlSeconds)
     $handle = $ps.BeginInvoke()
-    return [pscustomobject]@{ Repo = $Repo; RunId = $RunId; State = $state; PowerShell = $ps; Handle = $handle; Runspace = $rs }
+    return [pscustomobject]@{ Repo = $Repo; RunId = $RunId; IntervalSeconds = $IntervalSeconds; RetrySeconds = $RetrySeconds;
+                              State = $state; PowerShell = $ps; Handle = $handle; Runspace = $rs }
+}
+
+function Test-MaintenanceLockHeartbeat($Heartbeat) {
+    <# Why the heartbeat can no longer be trusted to keep the lock, or $null when it is healthy: the lock was lost,
+       the runspace ended (Handle.IsCompleted), or no renewal for over 2x the interval. #>
+    if ($null -eq $Heartbeat) { return "no heartbeat" }
+    if ($Heartbeat.State.Lost) { return "the lock is no longer ours (it expired and was taken, or was removed)" }
+    if ($Heartbeat.Handle.IsCompleted) {
+        $err = $Heartbeat.State.LastError
+        if (-not $err -and $Heartbeat.PowerShell.Streams.Error.Count -gt 0) { $err = [string]$Heartbeat.PowerShell.Streams.Error[0] }
+        return "the heartbeat stopped running$(if ($err) { ": $err" })"
+    }
+    $since = ([DateTime]::UtcNow - [DateTime]$Heartbeat.State.LastRenewedAt).TotalSeconds
+    if ($since -gt 2 * $Heartbeat.IntervalSeconds) {
+        return "no renewal for $([int]$since)s (every $($Heartbeat.IntervalSeconds)s expected; $($Heartbeat.State.Retries) retries, last error: $($Heartbeat.State.LastError))"
+    }
+    return $null
 }
 
 function Get-MaintenanceLockParentPid {

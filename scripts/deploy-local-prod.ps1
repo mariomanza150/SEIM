@@ -113,7 +113,10 @@ function Invoke-CreatedContainerStart([string]$Project, [int]$PerContainerSec, [
 }
 
 function Assert-LockHeld($Heartbeat) {
-    if ($Heartbeat.State.Lost) { throw "Lost the maintenance lock (it expired and was taken); stopping the deploy" }
+    # Stop the deploy when the lock can no longer be trusted: lost, the heartbeat runspace ended
+    # (Handle.IsCompleted), or no renewal within 2x the renew interval.
+    $why = Test-MaintenanceLockHeartbeat $Heartbeat
+    if ($why) { throw "Maintenance lock heartbeat failed ($why); stopping the deploy" }
 }
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {

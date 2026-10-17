@@ -45,6 +45,10 @@ jobs:
         shell: pwsh
         run: ./scripts/tests/maintenance-lock-tests.ps1 -LockScript scripts/maintenance-lock.ps1
 
+      - name: Deploy script tests (fake docker)
+        shell: pwsh
+        run: ./scripts/tests/deploy-local-prod-tests.ps1
+
   lint:
     name: Lint (Ruff)
     runs-on: ubuntu-latest

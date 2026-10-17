@@ -181,6 +181,57 @@ Test-Case "the heartbeat stops once the lock is lost" {
     } finally { Stop-MaintenanceLockHeartbeat $hb }
 }
 
+Test-Case "a renew that could not run is retried after RetrySeconds, not a full interval" {
+    $p = New-TestLock
+    Enter-MaintenanceLock -Repo SEIM -RunId 1 6>$null | Out-Null
+    [System.IO.File]::WriteAllText("$p.takeover", "someone")   # a fresh guard: renew returns $null
+    $hb = Start-MaintenanceLockHeartbeat -Repo SEIM -RunId 1 -IntervalSeconds 4 -RetrySeconds 0.5
+    try {
+        Assert ($hb.RetrySeconds -eq 0.5) "retry"
+        $until = [DateTime]::UtcNow.AddSeconds(10)
+        while ($hb.State.Retries -lt 1 -and [DateTime]::UtcNow -lt $until) { Start-Sleep -Milliseconds 50 }
+        Assert ($hb.State.Retries -ge 1) "a renew failed (guard busy): $($hb.State.LastError)"
+        Remove-Item "$p.takeover"
+        $t0 = [DateTime]::UtcNow
+        while ($hb.State.Renewals -lt 1 -and [DateTime]::UtcNow -lt $t0.AddSeconds(8)) { Start-Sleep -Milliseconds 20 }
+        $took = ([DateTime]::UtcNow - $t0).TotalSeconds
+        Assert ($hb.State.Renewals -ge 1) "renewed after the guard went"
+        # the guard wait is min(2, RetrySeconds) = 0.5 s, the retry pause 0.5 s: about 1 s at worst, a full interval is 4 s
+        Assert ($took -lt 2.5) "retried within RetrySeconds, not after the 4 s interval: $took s"
+    } finally { Stop-MaintenanceLockHeartbeat $hb }
+    $default = Start-MaintenanceLockHeartbeat -Repo SEIM -RunId 1 -TtlSeconds 600
+    try { Assert ($default.RetrySeconds -eq 5 -and $default.IntervalSeconds -eq 200) "defaults: $($default.RetrySeconds)/$($default.IntervalSeconds)" }
+    finally { Stop-MaintenanceLockHeartbeat $default }
+}
+
+Test-Case "Test-MaintenanceLockHeartbeat: healthy, stopped runspace, stalled renewals, lost" {
+    $p = New-TestLock
+    Enter-MaintenanceLock -Repo SEIM -RunId 1 6>$null | Out-Null
+    $hb = Start-MaintenanceLockHeartbeat -Repo SEIM -RunId 1 -IntervalSeconds 0.3
+    try {
+        Start-Sleep -Milliseconds 800
+        $why = Test-MaintenanceLockHeartbeat $hb
+        Assert ($null -eq $why) "healthy: $why"
+        # renewals stop rising (the guard is held by someone else for good)
+        [System.IO.File]::WriteAllText("$p.takeover", "someone")
+        Start-Sleep -Milliseconds 1200
+        $why = Test-MaintenanceLockHeartbeat $hb
+        Assert ("$why" -match "no renewal for") "stalled: $why"
+        Remove-Item "$p.takeover"
+        Start-Sleep -Milliseconds 1500
+        Assert ($null -eq (Test-MaintenanceLockHeartbeat $hb)) "healthy again"
+        # the runspace ends
+        $hb.PowerShell.Stop()
+        Assert ($hb.Handle.IsCompleted) "completed"
+        $why = Test-MaintenanceLockHeartbeat $hb
+        Assert ("$why" -match "stopped running") "stopped: $why"
+    } finally { Stop-MaintenanceLockHeartbeat $hb }
+    $fake = [pscustomobject]@{ IntervalSeconds = 1; Handle = [pscustomobject]@{ IsCompleted = $false };
+                               State = @{ Lost = $true; LastRenewedAt = [DateTime]::UtcNow; Retries = 0 } }
+    Assert ("$(Test-MaintenanceLockHeartbeat $fake)" -match "no longer ours") "lost"
+    Assert ("$(Test-MaintenanceLockHeartbeat $null)" -eq "no heartbeat") "none"
+}
+
 Test-Case "a crashed taker's guard goes stale; a fresh guard is respected" {
     $p = New-TestLock
     Write-TestLock $p (Get-StaleJson)
