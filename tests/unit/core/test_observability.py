@@ -395,3 +395,35 @@ def test_no_fragment_survives_at_any_cut_position(kind):
         assert set(residue) <= {"~", " "}, (
             f"{kind} leaked at cut offset {offset}: {out[-60:]!r}"
         )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ('{"password": "x"}', '{"password": "[Filtered]"}'),
+        ("{'api_key': 'x'}", "{'api_key': '[Filtered]'}"),
+        ('password="x"', 'password="[Filtered]"'),
+        ("token='x'", "token='[Filtered]'"),
+        ('{"access_token":"x"}', '{"access_token":"[Filtered]"}'),
+    ],
+)
+def test_kv_secret_masks_quoted_keys_and_values(text, expected):
+    from core.observability import scrub_text
+
+    assert scrub_text(text) == expected
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("my_access_token=abc", "my_access_token=[Filtered]"),
+        ("x-api-key: abc", "x-api-key: [Filtered]"),
+        ("token=1&token=2", "token=[Filtered]&token=[Filtered]"),
+        ("status code: 500", "status code: 500"),
+        ('filename="a.txt"', 'filename="a.txt"'),
+    ],
+)
+def test_kv_secret_unquoted_behaviour_is_unchanged(text, expected):
+    from core.observability import scrub_text
+
+    assert scrub_text(text) == expected
