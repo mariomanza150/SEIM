@@ -91,7 +91,7 @@ dev = [
     "mypy==1.18.2",
     "django-stubs==5.2.7",
     "types-requests==2.31.0.20240106",
-    "types-PyYAML==6.0.12.12",
+    "types-PyYAML==6.0.12.20260906",
     # Code complexity and quality
     "radon==6.0.1",
     "mccabe==0.7.0",
