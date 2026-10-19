@@ -53,6 +53,20 @@
             </option>
           </select>
         </div>
+        <div class="col-md-3">
+          <label class="form-label" for="admin-users-filter-tester">{{ t('adminUsers.filterTester') }}</label>
+          <select
+            id="admin-users-filter-tester"
+            v-model="filters.is_tester"
+            class="form-select"
+            data-testid="admin-users-filter-tester"
+            @change="fetchUsers"
+          >
+            <option value="">{{ t('adminCommon.filterAll') }}</option>
+            <option value="true">{{ t('adminCommon.yes') }}</option>
+            <option value="false">{{ t('adminCommon.no') }}</option>
+          </select>
+        </div>
       </template>
       <template #advanced>
         <div class="col-md-4">
@@ -86,6 +100,7 @@
               <th scope="col">{{ t('adminUsers.columns.name') }}</th>
               <th scope="col">{{ t('adminUsers.columns.roles') }}</th>
               <th scope="col">{{ t('adminUsers.columns.active') }}</th>
+              <th scope="col">{{ t('adminUsers.columns.tester') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -113,6 +128,10 @@
                   {{ user.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}
                 </span>
               </td>
+              <td>
+                <span v-if="user.is_tester" class="badge text-bg-warning" data-testid="admin-users-tester-badge">{{ t('adminUsers.testerBadge') }}</span>
+                <span v-else class="text-muted">—</span>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -130,6 +149,10 @@
         <span class="badge" :class="item.is_active ? 'bg-success' : 'bg-secondary'">
           {{ item.is_active ? t('adminCommon.yes') : t('adminCommon.no') }}
         </span>
+      </template>
+      <template #col-tester="{ item }">
+        <span v-if="item.is_tester" class="badge text-bg-warning">{{ t('adminUsers.testerBadge') }}</span>
+        <span v-else class="text-muted">—</span>
       </template>
       <template #actions="{ item }">
         <button type="button" class="btn btn-sm btn-outline-secondary" @click="openEdit(item)">
@@ -197,6 +220,16 @@
                   <label class="form-check-label" for="userActive">{{ t('adminUsers.fields.active') }}</label>
                 </div>
                 <div class="form-check">
+                  <input
+                    id="userTester"
+                    v-model="editor.form.is_tester"
+                    class="form-check-input"
+                    type="checkbox"
+                    data-testid="admin-users-tester-checkbox"
+                  >
+                  <label class="form-check-label" for="userTester">{{ t('adminUsers.fields.tester') }}</label>
+                </div>
+                <div class="form-check">
                   <input id="userVerified" v-model="editor.form.is_email_verified" class="form-check-input" type="checkbox">
                   <label class="form-check-label" for="userVerified">{{ t('adminUsers.fields.verified') }}</label>
                 </div>
@@ -232,17 +265,18 @@ const loading = ref(true)
 const error = ref(null)
 const users = ref([])
 const catalogRoles = ref([])
-const filters = ref({ search: '', is_active: '', role: '', ordering: 'email' })
+const filters = ref({ search: '', is_active: '', is_tester: '', role: '', ordering: 'email' })
 
 const mobileColumns = computed(() => [
   { key: 'email', label: t('adminUsers.columns.email') },
   { key: 'name', label: t('adminUsers.columns.name') },
   { key: 'roles', label: t('adminUsers.columns.roles') },
   { key: 'active', label: t('adminUsers.columns.active') },
+  { key: 'tester', label: t('adminUsers.columns.tester') },
 ])
 
 function clearFilters() {
-  filters.value = { search: '', is_active: '', role: '', ordering: 'email' }
+  filters.value = { search: '', is_active: '', is_tester: '', role: '', ordering: 'email' }
   fetchUsers()
 }
 
@@ -266,6 +300,7 @@ function emptyUserForm() {
     is_active: true,
     is_email_verified: true,
     is_staff: false,
+    is_tester: false,
   }
 }
 
@@ -292,6 +327,7 @@ async function fetchUsers() {
     const params = { ordering: filters.value.ordering, page_size: 100 }
     if (filters.value.search) params.search = filters.value.search
     if (filters.value.is_active) params.is_active = filters.value.is_active
+    if (filters.value.is_tester) params.is_tester = filters.value.is_tester
     if (filters.value.role) params.role = filters.value.role
     const res = await api.get('/api/users/', { params })
     users.value = normalizeApiList(res.data)
@@ -341,6 +377,7 @@ function openEdit(user) {
       is_active: Boolean(user.is_active),
       is_email_verified: Boolean(user.is_email_verified),
       is_staff: Boolean(user.is_staff),
+      is_tester: Boolean(user.is_tester),
     },
   }
 }
