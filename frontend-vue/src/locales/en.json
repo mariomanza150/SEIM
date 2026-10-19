@@ -2446,7 +2446,8 @@
     "age_above": "Age above maximum requirement. Your age: {student}, Maximum: {maximum}",
     "documents_incomplete": "Required documents are not all approved yet: {items}",
     "dynamic_form_incomplete": "Complete the program application form before submitting.",
-    "dynamic_form_invalid": "{detail}"
+    "dynamic_form_invalid": "{detail}",
+    "program_inactive": "This program is not active."
   },
   "eligibilityRulesetsPage": {
     "title": "Eligibility rulesets",
@@ -2913,5 +2914,9 @@
         "skipped": "Skipped"
       }
     }
+  },
+  "testerEligibility": {
+    "summary": "Tester: why {n} program(s) are hidden from this list",
+    "intro": "Only testers see this. Each hidden program lists the eligibility checks your profile fails (closed application windows do not hide programs)."
   }
 }

@@ -464,6 +464,66 @@ class ProgramViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @extend_schema(
+        summary="Tester-only: why each program is hidden from the new-application list",
+        description=(
+            "404 unless the tester toolkit is enabled on a development/test tier and "
+            "the acting user is an active tester (qa.gating). Mirrors the "
+            "``eligible_for_me`` filter: a program is ``listed`` when it is active and "
+            "no non-window eligibility rule fails."
+        ),
+    )
+    @action(detail=False, methods=["get"], url_path="eligibility-overview")
+    def eligibility_overview(self, request):
+        """Per-program blocking eligibility checks for the current user (testers only)."""
+        from django.http import Http404
+
+        from accounts.models import Profile
+        from exchange.eligibility_rules import evaluate_eligibility
+        from qa.gating import get_tester
+
+        if get_tester(request) is None:
+            raise Http404
+        user = request.user
+        profile = Profile.objects.filter(user_id=user.pk).first()
+        rows = []
+        programs = Program.objects.prefetch_related("required_document_types").order_by(
+            "name"
+        )
+        for program in programs:
+            evaluation = evaluate_eligibility(user, program, profile=profile)
+            blocking = []
+            if not program.is_active:
+                blocking.append(
+                    {
+                        "id": "is_active",
+                        "message": "Program is not active.",
+                        "message_key": "program_inactive",
+                        "message_params": {},
+                    }
+                )
+            for rule in evaluation.rules:
+                if rule.skipped or rule.passed or rule.rule_id == "application_window":
+                    continue
+                blocking.append(
+                    {
+                        "id": rule.rule_id,
+                        "message": rule.message or "",
+                        "message_key": rule.message_key or "",
+                        "message_params": rule.message_params or {},
+                    }
+                )
+            rows.append(
+                {
+                    "id": str(program.pk),
+                    "name": program.name,
+                    "is_active": program.is_active,
+                    "listed": not blocking,
+                    "blocking": blocking,
+                }
+            )
+        return Response({"results": rows})
+
+    @extend_schema(
         summary="List or create host institutions for a mobility scheme",
         responses={200: HostInstitutionSerializer(many=True)},
     )

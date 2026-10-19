@@ -2446,7 +2446,8 @@
     "age_above": "Edad por encima del máximo. Tu edad: {student}, Máximo: {maximum}",
     "documents_incomplete": "Aún no están aprobados todos los documentos requeridos: {items}",
     "dynamic_form_incomplete": "Completa el formulario de solicitud del programa antes de enviar.",
-    "dynamic_form_invalid": "{detail}"
+    "dynamic_form_invalid": "{detail}",
+    "program_inactive": "Este programa no está activo."
   },
   "eligibilityRulesetsPage": {
     "title": "Conjuntos de reglas de elegibilidad",
@@ -2913,5 +2914,9 @@
         "skipped": "Omitido"
       }
     }
+  },
+  "testerEligibility": {
+    "summary": "Tester: por qué {n} programa(s) no aparecen en esta lista",
+    "intro": "Solo los testers ven esto. Cada programa oculto muestra las verificaciones de elegibilidad que tu perfil no cumple (las convocatorias cerradas no ocultan programas)."
   }
 }
