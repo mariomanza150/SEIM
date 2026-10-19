@@ -832,7 +832,8 @@
       "email": "Correo",
       "name": "Nombre",
       "roles": "Roles",
-      "active": "Activo"
+      "active": "Activo",
+      "tester": "Tester"
     },
     "fields": {
       "email": "Correo",
@@ -846,8 +847,11 @@
       "active": "Activo",
       "verified": "Correo verificado (puede iniciar sesión)",
       "staff": "Staff de Django",
-      "staffHelp": "Staff puede usar el admin de Django. La consola SEIM sigue requiriendo el rol admin."
-    }
+      "staffHelp": "Staff puede usar el admin de Django. La consola SEIM sigue requiriendo el rol admin.",
+      "tester": "Tester (ve las herramientas de prueba en el sitio de pruebas)"
+    },
+    "filterTester": "Tester",
+    "testerBadge": "Tester"
   },
   "adminSessions": {
     "title": "Sesiones y recordatorios",

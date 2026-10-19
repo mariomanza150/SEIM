@@ -832,7 +832,8 @@
       "email": "Email",
       "name": "Name",
       "roles": "Roles",
-      "active": "Active"
+      "active": "Active",
+      "tester": "Tester"
     },
     "fields": {
       "email": "Email",
@@ -846,8 +847,11 @@
       "active": "Active",
       "verified": "Email verified (can sign in)",
       "staff": "Django staff",
-      "staffHelp": "Staff can use Django admin. SEIM console access still requires the admin role."
-    }
+      "staffHelp": "Staff can use Django admin. SEIM console access still requires the admin role.",
+      "tester": "Tester (sees tester tools on the test site)"
+    },
+    "filterTester": "Tester",
+    "testerBadge": "Tester"
   },
   "adminSessions": {
     "title": "Sessions and reminders",

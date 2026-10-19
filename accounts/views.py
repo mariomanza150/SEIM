@@ -37,6 +37,7 @@ from .resend_verification import (
 )
 from .serializers import (
     AcademicLevelSerializer,
+    AdminUserSerializer,
     AllowedEmailDomainSerializer,
     AppearanceSettingsSerializer,
     BankInstitutionSerializer,
@@ -74,7 +75,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """ViewSet for User model operations."""
 
     queryset = get_user_model().objects.prefetch_related("roles").all()
-    serializer_class = UserSerializer
+    serializer_class = AdminUserSerializer
     permission_classes = [CanManageRoles]
     filter_backends = [
         DjangoFilterBackend,
@@ -89,7 +90,7 @@ class UserViewSet(viewsets.ModelViewSet):
         "middle_name",
         "mothers_last_name",
     ]
-    filterset_fields = ["is_active", "is_staff"]
+    filterset_fields = ["is_active", "is_staff", "is_tester"]
     ordering_fields = ["username", "email", "date_joined"]
     http_method_names = ["get", "post", "put", "patch", "head", "options"]
 

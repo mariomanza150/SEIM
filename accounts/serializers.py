@@ -46,12 +46,15 @@ class UserSerializer(serializers.ModelSerializer):
             "is_staff",
             "is_superuser",
             "is_email_verified",
+            "is_tester",
             "role",
             "roles",
             "password",
         )
         extra_kwargs = {
             "is_superuser": {"read_only": True},
+            # Exposed for display (login payload, etc.); only AdminUserSerializer writes it.
+            "is_tester": {"read_only": True},
         }
 
     def create(self, validated_data):
@@ -74,6 +77,27 @@ class UserSerializer(serializers.ModelSerializer):
         if roles is not None:
             instance.roles.set(roles)
         return instance
+
+
+class AdminUserSerializer(UserSerializer):
+    """UserViewSet (admin console) serializer: admins may toggle ``is_tester``."""
+
+    class Meta(UserSerializer.Meta):
+        extra_kwargs = {
+            "is_superuser": {"read_only": True},
+            "is_tester": {"read_only": False, "required": False},
+        }
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        if "is_tester" in attrs:
+            request = self.context.get("request")
+            actor = getattr(request, "user", None)
+            if not (actor and getattr(actor, "is_admin", False)):
+                raise serializers.ValidationError(
+                    {"is_tester": "Only SEIM admins can change the tester flag."}
+                )
+        return attrs
 
 
 _CEFR_LEVELS = frozenset({"A1", "A2", "B1", "B2", "C1", "C2"})
