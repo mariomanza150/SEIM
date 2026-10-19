@@ -197,6 +197,7 @@
                       {{ program.name }}
                     </option>
                   </select>
+                  <TesterEligibilityOverview v-if="!isEditMode" />
                   <CompactFilterBar
                     v-if="!isEditMode"
                     class="mt-3"
@@ -1027,6 +1028,7 @@ import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import PageStateShell from '@/components/State/PageStateShell.vue'
 import CompactFilterBar from '@/components/CompactFilterBar.vue'
 import EligibilityFixList from '@/components/EligibilityFixList.vue'
+import TesterEligibilityOverview from '@/components/qa/TesterEligibilityOverview.vue'
 import SearchableSelect from '@/components/SearchableSelect.vue'
 import { spokenLanguageSelectOptions } from '@/utils/spokenLanguageOptions'
 import { findScale, gradeScaleBounds, gradeScalePolicy } from '@/utils/gradeScale'
