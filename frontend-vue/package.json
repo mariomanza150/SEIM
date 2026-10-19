@@ -21,7 +21,7 @@
     "bpmn-js-properties-panel": "^5.53.0",
     "html2canvas": "^1.4.1",
     "pinia": "^3.0.4",
-    "vue": "^3.5.41",
+    "vue": "^3.5.44",
     "vue-i18n": "^11.3.2",
     "vue-router": "^4.6.4"
   },
