@@ -33,7 +33,7 @@ class UserAdmin(BaseUserAdmin):
         "is_tester",
     )
     list_filter = BaseUserAdmin.list_filter + ("is_tester", "is_demo_account")
-    actions = ("mark_as_tester", "remove_tester")
+    actions = ("mark_as_tester", "remove_tester", "unlock_selected")
     search_fields = (
         "email",
         "username",
@@ -67,6 +67,16 @@ class UserAdmin(BaseUserAdmin):
         self.message_user(
             request, _("%(n)d user(s) marked as testers.") % {"n": updated}
         )
+
+    @admin.action(description=_("Unlock selected users"))
+    def unlock_selected(self, request, queryset):
+        from .services import AccountService
+
+        count = 0
+        for user in queryset:
+            AccountService.unlock_account(user)
+            count += 1
+        self.message_user(request, _("%(n)d user(s) unlocked.") % {"n": count})
 
     @admin.action(description=_("Remove tester flag from selected users"))
     def remove_tester(self, request, queryset):

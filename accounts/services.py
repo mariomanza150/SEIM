@@ -302,9 +302,11 @@ class AccountService:
         if user.email_verification_token != token:
             raise ValueError("Invalid reset token")
 
-        # Set new password
+        # Set new password; proving control of the inbox also clears any lockout.
         user.set_password(new_password)
         user.email_verification_token = None
+        user.failed_login_attempts = 0
+        user.lockout_until = None
         user.save()
 
         # Notify user
