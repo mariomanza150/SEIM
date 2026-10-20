@@ -104,6 +104,15 @@ def _resolve_notification_type_for_user_settings(
     return requested
 
 
+def _data_with_route_key(data, transactional_route_key):
+    """Record the route key on the notification so the email task can route it
+    (account-security mail always goes to the primary address)."""
+    payload = dict(data or {})
+    if transactional_route_key:
+        payload.setdefault("transactional_route_key", str(transactional_route_key))
+    return payload
+
+
 class NotificationService:
     """
     Service for sending notifications and managing user preferences.
@@ -196,7 +205,7 @@ class NotificationService:
             notification_type=effective_type,
             action_url=action_url,
             action_text=action_text,
-            data=data or {},
+            data=_data_with_route_key(data, transactional_route_key),
             category=category,
         )
 

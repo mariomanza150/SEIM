@@ -66,12 +66,33 @@ def get_reminder_event_type_routing_map() -> dict[str, str]:
     return base
 
 
-def get_user_email(user):
+# Transactional route keys whose email must go to the account's primary address
+# (``user.email``), never ``Profile.secondary_email``: password reset/change,
+# lockout, verification, deactivation. A secondary address is not proof of
+# account ownership, so security mail must not be redirected there.
+PRIMARY_EMAIL_ROUTE_KEYS = frozenset({"account_security_email"})
+
+# Key under ``Notification.data`` that records the transactional route key.
+ROUTE_KEY_DATA_FIELD = "transactional_route_key"
+
+
+def get_user_email(user, *, primary_only=False):
+    """Address for notification email.
+
+    Defaults to ``Profile.secondary_email`` when set, else ``user.email``.
+    ``primary_only=True`` (account-security mail) always returns ``user.email``.
+    """
+    if primary_only:
+        return user.email
     profile = getattr(user, "profile", None)
     secondary_email = getattr(profile, "secondary_email", None)
     if secondary_email and secondary_email.strip():
         return secondary_email.strip()
     return user.email
+
+
+def is_primary_only_route(route_key) -> bool:
+    return bool(route_key) and str(route_key) in PRIMARY_EMAIL_ROUTE_KEYS
 
 
 @shared_task(on_failure=log_celery_failure, **retryable_task_kwargs())
@@ -102,7 +123,10 @@ def send_notification_by_id(self, notification_id):
 
     try:
         notification = Notification.objects.get(id=notification_id)
-        email = get_user_email(notification.recipient)
+        route_key = (notification.data or {}).get(ROUTE_KEY_DATA_FIELD)
+        email = get_user_email(
+            notification.recipient, primary_only=is_primary_only_route(route_key)
+        )
         send_mail(
             notification.title,
             notification.message,
