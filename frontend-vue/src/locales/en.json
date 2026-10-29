@@ -723,7 +723,18 @@
       "mobilityDirection": "Mobility direction",
       "mobilityDirectionOutgoing": "Outgoing (our students go abroad)",
       "mobilityDirectionIncoming": "Incoming (visiting students)",
-      "mobilityDirectionHelp": "Controls whether applications appear under the Outgoing or Incoming tab."
+      "mobilityDirectionHelp": "Controls whether applications appear under the Outgoing or Incoming tab.",
+      "hostDestinationRequired": "Require host destination",
+      "hostDestinationRequiredHelp": "Applicants must provide university / school / program before submit",
+      "hostDestinationMode": "Host destination entry",
+      "hostDestinationModeCatalog": "Catalog only",
+      "hostDestinationModeFreeText": "Free text only",
+      "hostDestinationModeEither": "Catalog or free text",
+      "hostDestinationModeHelp": "Catalog uses the Destinations tree; free text lets applicants type names; either adds a “not listed” option.",
+      "defaultGradeScale": "Default grade scale (outgoing)",
+      "defaultGradeScaleHelp": "Overrides the email-domain default for outgoing applicants when set.",
+      "lockGradeScale": "Lock grade scale",
+      "lockGradeScaleHelp": "Prevent applicants from changing the grade scale on the apply form"
     }
   },
   "adminCatalogs": {
@@ -2194,6 +2205,8 @@
     "selectHostInstitution": "-- Select host university --",
     "selectHostSchool": "-- Select host school --",
     "selectHostAcademicProgram": "-- Select academic program --",
+    "hostDestinationNotListed": "Not listed — type a name",
+    "hostInstitutionFreeTextPlaceholder": "Enter host university name",
     "hostSchoolFreeTextPlaceholder": "Enter host school / faculty name",
     "hostSchoolFreeTextHelp": "No faculty catalog is configured for this university — enter the name.",
     "hostAcademicProgramFreeTextPlaceholder": "Enter host academic program name",

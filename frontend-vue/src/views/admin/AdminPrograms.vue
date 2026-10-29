@@ -268,6 +268,68 @@
               </div>
 
               <div class="col-md-6">
+                <label class="form-label" for="host_destination_required">{{ t('adminPrograms.fields.hostDestinationRequired') }}</label>
+                <div class="form-check mt-2">
+                  <input
+                    id="host_destination_required"
+                    v-model="editor.form.host_destination_required"
+                    class="form-check-input"
+                    type="checkbox"
+                    data-testid="admin-program-host-destination-required"
+                  />
+                  <label class="form-check-label" for="host_destination_required">
+                    {{ t('adminPrograms.fields.hostDestinationRequiredHelp') }}
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="host_destination_mode">{{ t('adminPrograms.fields.hostDestinationMode') }}</label>
+                <select
+                  id="host_destination_mode"
+                  v-model="editor.form.host_destination_mode"
+                  class="form-select"
+                  data-testid="admin-program-host-destination-mode"
+                >
+                  <option value="catalog">{{ t('adminPrograms.fields.hostDestinationModeCatalog') }}</option>
+                  <option value="free_text">{{ t('adminPrograms.fields.hostDestinationModeFreeText') }}</option>
+                  <option value="either">{{ t('adminPrograms.fields.hostDestinationModeEither') }}</option>
+                </select>
+                <div class="form-text">{{ t('adminPrograms.fields.hostDestinationModeHelp') }}</div>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label" for="default_grade_scale">{{ t('adminPrograms.fields.defaultGradeScale') }}</label>
+                <select
+                  id="default_grade_scale"
+                  v-model="editor.form.default_grade_scale"
+                  class="form-select"
+                  data-testid="admin-program-default-grade-scale"
+                >
+                  <option :value="null">{{ t('adminCommon.notSet') }}</option>
+                  <option v-for="scale in gradeScales" :key="scale.id" :value="scale.id">
+                    {{ scale.name }}
+                  </option>
+                </select>
+                <div class="form-text">{{ t('adminPrograms.fields.defaultGradeScaleHelp') }}</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label" for="lock_grade_scale">{{ t('adminPrograms.fields.lockGradeScale') }}</label>
+                <div class="form-check mt-2">
+                  <input
+                    id="lock_grade_scale"
+                    v-model="editor.form.lock_grade_scale"
+                    class="form-check-input"
+                    type="checkbox"
+                    :disabled="!editor.form.default_grade_scale"
+                    data-testid="admin-program-lock-grade-scale"
+                  />
+                  <label class="form-check-label" for="lock_grade_scale">
+                    {{ t('adminPrograms.fields.lockGradeScaleHelp') }}
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-md-6">
                 <label class="form-label">{{ t('adminPrograms.fields.capacity') }}</label>
                 <input v-model.number="editor.form.enrollment_capacity" class="form-control" type="number" min="0" />
               </div>
@@ -598,6 +660,7 @@ const coordinators = ref([])
 const documentTypes = ref([])
 const spokenLanguages = ref([])
 const eligibilityRulesets = ref([])
+const gradeScales = ref([])
 
 const spokenLanguageOptions = computed(() => spokenLanguageSelectOptions(spokenLanguages.value))
 
@@ -629,6 +692,10 @@ function emptyProgramForm() {
     is_active: true,
     recurring: false,
     mobility_direction: 'outgoing',
+    host_destination_required: true,
+    host_destination_mode: 'catalog',
+    default_grade_scale: null,
+    lock_grade_scale: false,
     application_open_date: null,
     application_deadline: null,
     start_date: null,
@@ -682,13 +749,14 @@ async function fetchPrograms() {
 }
 
 async function fetchEditorOptions() {
-  const [ftRes, userRes, dtRes, wvRes, rsRes, langRes] = await Promise.all([
+  const [ftRes, userRes, dtRes, wvRes, rsRes, langRes, scaleRes] = await Promise.all([
     api.get('/api/application-forms/form-types/', { params: { ordering: 'name' } }),
     api.get('/api/users/'),
     api.get('/api/document-types/', { params: { ordering: 'name' } }),
     api.get('/api/workflow-versions/', { params: { ordering: '-version' } }),
     api.get('/api/eligibility-rulesets/', { params: { ordering: 'name' } }),
     api.get('/api/accounts/catalogs/spoken-languages/'),
+    api.get('/api/grades/scales/active/').catch(() => ({ data: [] })),
   ])
   formTypes.value = normalizeApiList(ftRes.data)
   const allUsers = normalizeApiList(userRes.data)
@@ -697,6 +765,7 @@ async function fetchEditorOptions() {
   workflowVersions.value = normalizeApiList(wvRes.data).filter((v) => v.status === 'published')
   eligibilityRulesets.value = normalizeApiList(rsRes.data)
   spokenLanguages.value = normalizeApiList(langRes.data)
+  gradeScales.value = normalizeApiList(scaleRes.data)
 }
 
 function openCreate() {
@@ -723,6 +792,12 @@ function openEdit(program) {
       is_active: Boolean(program.is_active),
       recurring: Boolean(program.recurring),
       mobility_direction: program.mobility_direction === 'incoming' ? 'incoming' : 'outgoing',
+      host_destination_required: program.host_destination_required !== false,
+      host_destination_mode: ['catalog', 'free_text', 'either'].includes(program.host_destination_mode)
+        ? program.host_destination_mode
+        : 'catalog',
+      default_grade_scale: program.default_grade_scale ?? null,
+      lock_grade_scale: Boolean(program.lock_grade_scale),
       application_open_date: program.application_open_date || null,
       application_deadline: program.application_deadline || null,
       start_date: program.start_date || null,
@@ -801,6 +876,8 @@ function cleanProgramPayload(form) {
   if (payload.min_credits_approved_percent === '') payload.min_credits_approved_percent = null
   if (payload.min_age === '') payload.min_age = null
   if (payload.max_age === '') payload.max_age = null
+  if (payload.default_grade_scale === '') payload.default_grade_scale = null
+  if (!payload.default_grade_scale) payload.lock_grade_scale = false
   return payload
 }
 

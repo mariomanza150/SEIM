@@ -281,11 +281,17 @@ def application_field_satisfied(application, field_key: str) -> bool:
         )
         return not bool(errors)
     if field_key == "host_institution":
-        return bool(getattr(application, "host_institution_id", None))
+        return bool(getattr(application, "host_institution_id", None)) or bool(
+            (getattr(application, "host_institution_text", None) or "").strip()
+        )
     if field_key == "host_school":
-        return bool(getattr(application, "host_school_id", None))
+        return bool(getattr(application, "host_school_id", None)) or bool(
+            (getattr(application, "host_school_text", None) or "").strip()
+        )
     if field_key == "host_academic_program":
-        return bool(getattr(application, "host_academic_program_id", None))
+        return bool(getattr(application, "host_academic_program_id", None)) or bool(
+            (getattr(application, "host_academic_program_text", None) or "").strip()
+        )
     return False
 
 

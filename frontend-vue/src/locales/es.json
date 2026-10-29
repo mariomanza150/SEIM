@@ -723,7 +723,18 @@
       "mobilityDirection": "Dirección de movilidad",
       "mobilityDirectionOutgoing": "Saliente (nuestros estudiantes van al extranjero)",
       "mobilityDirectionIncoming": "Entrante (estudiantes visitantes)",
-      "mobilityDirectionHelp": "Define si las solicitudes aparecen en la pestaña Salientes o Entrantes."
+      "mobilityDirectionHelp": "Define si las solicitudes aparecen en la pestaña Salientes o Entrantes.",
+      "hostDestinationRequired": "Exigir destino anfitrión",
+      "hostDestinationRequiredHelp": "Los solicitantes deben indicar universidad / facultad / programa antes de enviar",
+      "hostDestinationMode": "Entrada de destino anfitrión",
+      "hostDestinationModeCatalog": "Solo catálogo",
+      "hostDestinationModeFreeText": "Solo texto libre",
+      "hostDestinationModeEither": "Catálogo o texto libre",
+      "hostDestinationModeHelp": "El catálogo usa el árbol de Destinos; el texto libre permite escribir nombres; “cualquiera” añade la opción “no listado”.",
+      "defaultGradeScale": "Escala de calificaciones por defecto (saliente)",
+      "defaultGradeScaleHelp": "Si se define, sustituye el valor por defecto del dominio de correo para solicitantes salientes.",
+      "lockGradeScale": "Bloquear escala de calificaciones",
+      "lockGradeScaleHelp": "Impide que el solicitante cambie la escala en el formulario de solicitud"
     }
   },
   "adminCatalogs": {
@@ -2194,6 +2205,8 @@
     "selectHostInstitution": "-- Selecciona universidad anfitriona --",
     "selectHostSchool": "-- Selecciona escuela anfitriona --",
     "selectHostAcademicProgram": "-- Selecciona programa académico --",
+    "hostDestinationNotListed": "No listado — escribir un nombre",
+    "hostInstitutionFreeTextPlaceholder": "Escribe el nombre de la universidad anfitriona",
     "hostSchoolFreeTextPlaceholder": "Escribe el nombre de la escuela / facultad anfitriona",
     "hostSchoolFreeTextHelp": "No hay catálogo de facultades para esta universidad — escribe el nombre.",
     "hostAcademicProgramFreeTextPlaceholder": "Escribe el nombre del programa académico anfitrión",
