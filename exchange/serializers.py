@@ -151,7 +151,9 @@ class ProgramSerializer(serializers.ModelSerializer):
         attrs = super().validate(attrs)
         lock = attrs.get(
             "lock_grade_scale",
-            getattr(self.instance, "lock_grade_scale", False) if self.instance else False,
+            getattr(self.instance, "lock_grade_scale", False)
+            if self.instance
+            else False,
         )
         scale = attrs.get(
             "default_grade_scale",
@@ -1152,7 +1154,11 @@ class ApplicationSerializer(serializers.ModelSerializer):
             if store_free_text:
                 if institution_name or "host_institution_text" in initial:
                     data["host_institution_text"] = institution_name
-                if school_name or "host_school_text" in initial or "host_school_name" in initial:
+                if (
+                    school_name
+                    or "host_school_text" in initial
+                    or "host_school_name" in initial
+                ):
                     data["host_school_text"] = school_name
                 if (
                     academic_name
@@ -1208,8 +1214,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
         if any(k in data for k in host_keys) or any(
             (
                 getattr(self.instance, f"{k}_id", None)
-                if k
-                in ("host_institution", "host_school", "host_academic_program")
+                if k in ("host_institution", "host_school", "host_academic_program")
                 else (getattr(self.instance, k, None) or "").strip()
             )
             for k in host_keys

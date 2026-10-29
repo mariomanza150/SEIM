@@ -340,7 +340,12 @@ class ProgramAdmin(admin.ModelAdmin):
         "lock_grade_scale",
     )
     list_editable = ("is_active",)
-    autocomplete_fields = ("default_grade_scale", "eligibility_ruleset", "application_form", "workflow_version")
+    autocomplete_fields = (
+        "default_grade_scale",
+        "eligibility_ruleset",
+        "application_form",
+        "workflow_version",
+    )
     readonly_fields = (
         "created_at",
         "updated_at",

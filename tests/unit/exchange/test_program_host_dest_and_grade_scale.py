@@ -154,7 +154,9 @@ class TestProgramGradeScaleSettings:
         client = APIClient()
         client.force_authenticate(user)
         # Without program: domain policy
-        domain_policy = client.get("/api/accounts/profile/").json()["grade_scale_policy"]
+        domain_policy = client.get("/api/accounts/profile/").json()[
+            "grade_scale_policy"
+        ]
         assert domain_policy["default_grade_scale"] == str(ten.pk)
         # With program: outgoing program overrides
         program_policy = client.get(

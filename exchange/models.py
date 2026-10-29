@@ -1056,9 +1056,7 @@ class Application(UUIDModel, TimeStampedModel):
         max_length=255,
         blank=True,
         default="",
-        help_text=_(
-            "Free-text host academic program name when not using the catalog."
-        ),
+        help_text=_("Free-text host academic program name when not using the catalog."),
     )
 
     class Meta:
