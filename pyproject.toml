@@ -18,7 +18,7 @@ dependencies = [
     "sqlparse==0.6.0",
     "djangorestframework==3.18.2",
     "django-cors-headers==4.9.0",
-    "django-environ==0.12.0",
+    "django-environ==0.14.0",
     # Authentication and Security
     "djangorestframework-simplejwt==5.5.1",
     "defusedxml==0.7.1",
