@@ -251,6 +251,47 @@ class Program(UUIDModel, TimeStampedModel):
             "When unset, eligibility rules are derived from program fields."
         ),
     )
+    host_destination_required = models.BooleanField(
+        default=True,
+        help_text=_(
+            "When enabled, applicants must provide a host destination before submit "
+            "(catalog and/or free text, depending on host destination mode)."
+        ),
+    )
+
+    class HostDestinationMode(models.TextChoices):
+        CATALOG = "catalog", _("Catalog only")
+        FREE_TEXT = "free_text", _("Free text only")
+        EITHER = "either", _("Catalog or free text")
+
+    host_destination_mode = models.CharField(
+        max_length=20,
+        choices=HostDestinationMode.choices,
+        default=HostDestinationMode.CATALOG,
+        help_text=_(
+            "How applicants enter host university / school / academic program: "
+            "catalog selects, free-text fields, or either (catalog with a "
+            "'not listed' typed option)."
+        ),
+    )
+    default_grade_scale = models.ForeignKey(
+        "grades.GradeScale",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="programs_default",
+        help_text=_(
+            "For outgoing programs: preferred grade scale for applicants. "
+            "Overrides the AllowedEmailDomain default when set."
+        ),
+    )
+    lock_grade_scale = models.BooleanField(
+        default=False,
+        help_text=_(
+            "For outgoing programs: when set (with a default scale), applicants "
+            "cannot change the grade scale on the apply form."
+        ),
+    )
 
     class Meta:
         ordering = ["name"]
@@ -367,6 +408,15 @@ class Program(UUIDModel, TimeStampedModel):
             raise ValidationError(
                 {
                     "application_deadline": "Application deadline must be on or before the program start date."
+                }
+            )
+
+        if self.lock_grade_scale and not self.default_grade_scale_id:
+            raise ValidationError(
+                {
+                    "lock_grade_scale": _(
+                        "Choose a default grade scale before locking it."
+                    )
                 }
             )
 
@@ -964,7 +1014,7 @@ class Application(UUIDModel, TimeStampedModel):
         blank=True,
         help_text=_("When a partner contact acknowledged this nomination."),
     )
-    # Host destination hierarchy (required before submit).
+    # Host destination hierarchy (required before submit when program requires it).
     host_institution = models.ForeignKey(
         "HostInstitution",
         on_delete=models.PROTECT,
@@ -988,6 +1038,25 @@ class Application(UUIDModel, TimeStampedModel):
         blank=True,
         related_name="applications",
         help_text=_("Selected host academic program."),
+    )
+    # Free-text host destination (used when program mode is free_text / either).
+    host_institution_text = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text=_("Free-text host university name when not using the catalog."),
+    )
+    host_school_text = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text=_("Free-text host school / faculty when not using the catalog."),
+    )
+    host_academic_program_text = models.CharField(
+        max_length=255,
+        blank=True,
+        default="",
+        help_text=_("Free-text host academic program name when not using the catalog."),
     )
 
     class Meta:
@@ -1300,7 +1369,19 @@ class ApplicationSubjectPlanVersion(UUIDModel, TimeStampedModel):
         return f"{self.application_id} v{self.version_number}"
 
 
-def program_requires_host_destination(program) -> bool:
+def program_host_destination_mode(program) -> str:
+    """Return the program's host destination entry mode (catalog/free_text/either)."""
+    if program is None:
+        return Program.HostDestinationMode.CATALOG
+    mode = getattr(program, "host_destination_mode", None) or (
+        Program.HostDestinationMode.CATALOG
+    )
+    if mode not in Program.HostDestinationMode.values:
+        return Program.HostDestinationMode.CATALOG
+    return mode
+
+
+def program_has_active_host_institutions(program) -> bool:
     """True when the mobility scheme has at least one active host university."""
     if program is None:
         return False
@@ -1308,6 +1389,27 @@ def program_requires_host_destination(program) -> bool:
     if cached is not None and "host_institutions" in cached:
         return any(inst.is_active for inst in program.host_institutions.all())
     return program.host_institutions.filter(is_active=True).exists()
+
+
+def program_requires_host_destination(program) -> bool:
+    """
+    True when applicants must provide a host destination before submit.
+
+    Defaults preserve prior behavior: required when the program flag is on
+    (default) and either the catalog has active host universities or the mode
+    allows free-text entry without a catalog.
+    """
+    if program is None:
+        return False
+    if not getattr(program, "host_destination_required", True):
+        return False
+    mode = program_host_destination_mode(program)
+    if mode in (
+        Program.HostDestinationMode.FREE_TEXT,
+        Program.HostDestinationMode.EITHER,
+    ):
+        return True
+    return program_has_active_host_institutions(program)
 
 
 def _program_for_host_validation(application):
@@ -1320,37 +1422,88 @@ def _program_for_host_validation(application):
     return Program.objects.filter(pk=program_id).first()
 
 
+def _text_value(application, attr: str) -> str:
+    return (getattr(application, attr, None) or "").strip()
+
+
+def application_host_institution_display(application) -> str:
+    """Catalog name, else free-text institution name."""
+    host = getattr(application, "host_institution", None)
+    if host is not None and getattr(host, "name", None):
+        return host.name
+    return _text_value(application, "host_institution_text")
+
+
+def application_host_school_display(application) -> str:
+    """Catalog name, else free-text school name."""
+    school = getattr(application, "host_school", None)
+    if school is not None and getattr(school, "name", None):
+        return school.name
+    return _text_value(application, "host_school_text")
+
+
+def application_host_academic_program_display(application) -> str:
+    """Catalog name, else free-text academic program name."""
+    academic = getattr(application, "host_academic_program", None)
+    if academic is not None and getattr(academic, "name", None):
+        return academic.name
+    return _text_value(application, "host_academic_program_text")
+
+
+def _host_institution_satisfied(application) -> bool:
+    return bool(getattr(application, "host_institution_id", None)) or bool(
+        _text_value(application, "host_institution_text")
+    )
+
+
+def _host_school_satisfied(application) -> bool:
+    return bool(getattr(application, "host_school_id", None)) or bool(
+        _text_value(application, "host_school_text")
+    )
+
+
+def _host_academic_program_satisfied(application) -> bool:
+    return bool(getattr(application, "host_academic_program_id", None)) or bool(
+        _text_value(application, "host_academic_program_text")
+    )
+
+
 def validate_application_host_destination(application, *, require_complete=False):
     """
-    Validate host destination FK cascade consistency.
+    Validate host destination FK cascade / free-text consistency.
 
     Returns a dict of field -> error messages (empty if valid).
-    When ``require_complete`` is True and the scheme has host universities,
-    require institution plus school and academic program (catalog select or
-    free-text resolved via ``resolve_host_destination_names``).
+    When ``require_complete`` is True and the program requires a host
+    destination, require institution plus school and academic program via
+    catalog FKs and/or free-text fields (depending on program mode).
     """
     errors = {}
     institution = application.host_institution
     school = application.host_school
     academic = application.host_academic_program
     program_id = application.program_id
+    program = _program_for_host_validation(application)
+    mode = program_host_destination_mode(program)
 
-    if require_complete:
-        program = _program_for_host_validation(application)
-        if program_requires_host_destination(program):
-            if not application.host_institution_id:
+    if require_complete and program_requires_host_destination(program):
+        if not _host_institution_satisfied(application):
+            if mode == Program.HostDestinationMode.FREE_TEXT:
                 errors["host_institution"] = _(
-                    "Select a host university before submitting."
+                    "Enter a host university before submitting."
                 )
             else:
-                if not application.host_school_id:
-                    errors["host_school"] = _(
-                        "Select or enter a host school / faculty before submitting."
-                    )
-                if not application.host_academic_program_id:
-                    errors["host_academic_program"] = _(
-                        "Select or enter a host academic program before submitting."
-                    )
+                errors["host_institution"] = _(
+                    "Select or enter a host university before submitting."
+                )
+        else:
+            if not _host_school_satisfied(application):
+                errors["host_school"] = _(
+                    "Select or enter a host school / faculty before submitting."
+                )
+            if not _host_academic_program_satisfied(application):
+                errors["host_academic_program"] = _(
+                    "Select or enter a host academic program before submitting."
+                )
 
     if application.host_institution_id and institution is not None:
         if program_id and institution.program_id != program_id:
@@ -1381,6 +1534,23 @@ def validate_application_host_destination(application, *, require_complete=False
                 "Host academic program must belong to the selected host school."
             )
 
+    # Free-text without a catalog institution is only valid in free_text / either.
+    has_free_text = bool(
+        _text_value(application, "host_institution_text")
+        or _text_value(application, "host_school_text")
+        or _text_value(application, "host_academic_program_text")
+    )
+    if has_free_text and mode == Program.HostDestinationMode.CATALOG:
+        # Catalog mode still allows free-text that was resolved into FKs;
+        # leftover text alone without FKs is only OK when children catalogs
+        # were empty and names were resolved — reject pure free-text with no FKs.
+        if not application.host_institution_id and _text_value(
+            application, "host_institution_text"
+        ):
+            errors["host_institution"] = _(
+                "Select a host university from the catalog for this program."
+            )
+
     return errors
 
 
@@ -1390,6 +1560,7 @@ def resolve_host_destination_names(
     school=None,
     school_name="",
     academic_program_name="",
+    create_catalog_rows=True,
 ):
     """
     Resolve free-text host school / academic program names to catalog rows.
@@ -1397,12 +1568,18 @@ def resolve_host_destination_names(
     Returns ``(school, academic_program, errors)`` where ``errors`` maps field
     names to messages. Empty name strings are ignored (caller still validates
     completeness separately).
+
+    When ``create_catalog_rows`` is False, names are not written to the catalog
+    (caller should persist them on Application free-text fields instead).
     """
     errors = {}
     school_name = (school_name or "").strip()
     academic_program_name = (academic_program_name or "").strip()
     resolved_school = school
     resolved_academic = None
+
+    if not create_catalog_rows:
+        return resolved_school, resolved_academic, errors
 
     if school_name:
         if institution is None:
@@ -1435,6 +1612,33 @@ def resolve_host_destination_names(
                 resolved_academic.save(update_fields=["is_active"])
 
     return resolved_school, resolved_academic, errors
+
+
+def program_grade_scale_policy(program):
+    """
+    Return outgoing-program grade scale policy, or None when not applicable.
+
+    Incoming programs and programs without a default scale yield None so callers
+    can fall back to AllowedEmailDomain policy.
+    """
+    if program is None:
+        return None
+    direction = getattr(program, "mobility_direction", None)
+    if direction and direction != Program.MobilityDirection.OUTGOING:
+        return None
+    scale = getattr(program, "default_grade_scale", None)
+    scale_id = getattr(program, "default_grade_scale_id", None)
+    if not scale_id:
+        return None
+    name = ""
+    if scale is not None:
+        name = getattr(scale, "name", "") or ""
+    return {
+        "locked": bool(getattr(program, "lock_grade_scale", False)),
+        "default_grade_scale": str(scale_id),
+        "default_grade_scale_name": name,
+        "scale": scale,
+    }
 
 
 def visible_host_subjects_queryset(

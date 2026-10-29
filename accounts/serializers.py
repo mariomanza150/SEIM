@@ -351,7 +351,44 @@ class ProfileSerializer(serializers.ModelSerializer):
             return None
         return domain
 
+    def _program_grade_scale_policy(self):
+        """
+        Outgoing-program grade scale override from ``?program=`` / body ``program``.
+
+        When the referenced outgoing program has a default scale, it overrides the
+        AllowedEmailDomain policy for apply-form profile updates.
+        """
+        request = self.context.get("request")
+        if request is None:
+            return None
+        program_id = None
+        try:
+            program_id = request.query_params.get("program")
+        except Exception:
+            program_id = None
+        if not program_id:
+            data = getattr(request, "data", None)
+            if isinstance(data, dict):
+                program_id = data.get("program") or data.get("program_id")
+        if not program_id:
+            return None
+        from exchange.models import Program, program_grade_scale_policy
+
+        program = (
+            Program.objects.select_related("default_grade_scale")
+            .filter(pk=program_id)
+            .first()
+        )
+        return program_grade_scale_policy(program)
+
     def get_grade_scale_policy(self, obj):
+        program_policy = self._program_grade_scale_policy()
+        if program_policy is not None:
+            return {
+                "locked": bool(program_policy["locked"]),
+                "default_grade_scale": program_policy["default_grade_scale"],
+                "default_grade_scale_name": program_policy["default_grade_scale_name"],
+            }
         domain = self._domain_policy(getattr(obj, "user", None))
         if domain is None:
             return {
@@ -366,8 +403,26 @@ class ProfileSerializer(serializers.ModelSerializer):
         }
 
     def _apply_grade_scale_lock(self, attrs, actor):
-        """Students of a locked domain always get the domain's default scale."""
+        """Enforce locked grade scale from outgoing program or email domain."""
         if self.instance is None or not _is_unprivileged(actor):
+            return
+        program_policy = self._program_grade_scale_policy()
+        if program_policy is not None:
+            if not program_policy["locked"]:
+                return
+            scale = program_policy.get("scale")
+            scale_id = program_policy.get("default_grade_scale")
+            requested = attrs.get("grade_scale")
+            if requested is not None and str(requested.pk) != str(scale_id):
+                raise serializers.ValidationError(
+                    {
+                        "grade_scale": (
+                            "This program sets the grade scale; it cannot be changed."
+                        )
+                    }
+                )
+            if "grade_scale" in attrs or self.instance.grade_scale_id is None:
+                attrs["grade_scale"] = scale
             return
         domain = self._domain_policy(self.instance.user)
         if domain is None or not domain.lock_grade_scale:
