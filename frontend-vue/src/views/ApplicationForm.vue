@@ -443,32 +443,65 @@
                   <div v-else class="row g-3">
                     <div class="col-md-12">
                       <label for="host-institution" class="form-label">
-                        {{ t('applicationFormPage.hostInstitutionLabel') }} <span class="text-danger">*</span>
+                        {{ t('applicationFormPage.hostInstitutionLabel') }}
+                        <span v-if="hostDestinationRequired" class="text-danger">*</span>
                       </label>
-                      <select
+                      <input
+                        v-if="hostInstitutionUsesFreeText"
                         id="host-institution"
-                        v-model="form.host_institution"
-                        class="form-select"
-                        :class="{ 'is-invalid': errors.host_institution }"
-                        :disabled="hostInstitutionsLoading || !hostInstitutions.length"
-                        data-testid="host-institution-select"
+                        v-model="form.host_institution_text"
+                        type="text"
+                        class="form-control"
+                        :class="{ 'is-invalid': errors.host_institution || errors.host_institution_text }"
+                        :placeholder="t('applicationFormPage.hostInstitutionFreeTextPlaceholder')"
+                        data-testid="host-institution-input"
+                        maxlength="255"
+                        :required="hostDestinationRequired"
                       >
-                        <option value="">{{ t('applicationFormPage.selectHostInstitution') }}</option>
-                        <option
-                          v-for="inst in hostInstitutions"
-                          :key="inst.id"
-                          :value="inst.id"
+                      <template v-else>
+                        <select
+                          id="host-institution"
+                          v-model="form.host_institution"
+                          class="form-select"
+                          :class="{ 'is-invalid': errors.host_institution }"
+                          :disabled="hostInstitutionsLoading || (!hostInstitutions.length && hostDestinationMode === 'catalog')"
+                          data-testid="host-institution-select"
                         >
-                          {{ inst.country ? `${inst.name} (${inst.country})` : inst.name }}
-                        </option>
-                      </select>
-                      <div v-if="errors.host_institution" class="invalid-feedback d-block">
-                        {{ flattenFieldMessages(errors.host_institution).join(' ') }}
+                          <option value="">{{ t('applicationFormPage.selectHostInstitution') }}</option>
+                          <option
+                            v-for="inst in hostInstitutions"
+                            :key="inst.id"
+                            :value="inst.id"
+                          >
+                            {{ inst.country ? `${inst.name} (${inst.country})` : inst.name }}
+                          </option>
+                          <option
+                            v-if="hostDestinationMode === 'either'"
+                            :value="HOST_DEST_NOT_LISTED"
+                          >
+                            {{ t('applicationFormPage.hostDestinationNotListed') }}
+                          </option>
+                        </select>
+                        <input
+                          v-if="hostInstitutionNotListed"
+                          v-model="form.host_institution_text"
+                          type="text"
+                          class="form-control mt-2"
+                          :class="{ 'is-invalid': errors.host_institution || errors.host_institution_text }"
+                          :placeholder="t('applicationFormPage.hostInstitutionFreeTextPlaceholder')"
+                          data-testid="host-institution-input"
+                          maxlength="255"
+                          :required="hostDestinationRequired"
+                        >
+                      </template>
+                      <div v-if="errors.host_institution || errors.host_institution_text" class="invalid-feedback d-block">
+                        {{ flattenFieldMessages(errors.host_institution || errors.host_institution_text).join(' ') }}
                       </div>
                     </div>
                     <div class="col-md-6">
                       <label for="host-school" class="form-label">
-                        {{ t('applicationFormPage.hostSchoolLabel') }} <span class="text-danger">*</span>
+                        {{ t('applicationFormPage.hostSchoolLabel') }}
+                        <span v-if="hostDestinationRequired" class="text-danger">*</span>
                       </label>
                       <input
                         v-if="hostSchoolNeedsFreeText"
@@ -476,11 +509,11 @@
                         v-model="form.host_school_name"
                         type="text"
                         class="form-control"
-                        :class="{ 'is-invalid': errors.host_school || errors.host_school_name }"
+                        :class="{ 'is-invalid': errors.host_school || errors.host_school_name || errors.host_school_text }"
                         :placeholder="t('applicationFormPage.hostSchoolFreeTextPlaceholder')"
                         data-testid="host-school-input"
                         maxlength="255"
-                        required
+                        :required="hostDestinationRequired"
                       >
                       <select
                         v-else
@@ -488,12 +521,18 @@
                         v-model="form.host_school"
                         class="form-select"
                         :class="{ 'is-invalid': errors.host_school }"
-                        :disabled="!form.host_institution || hostSchoolsLoading || !hostSchools.length"
+                        :disabled="!form.host_institution || hostSchoolsLoading || (!hostSchools.length && hostDestinationMode === 'catalog')"
                         data-testid="host-school-select"
                       >
                         <option value="">{{ t('applicationFormPage.selectHostSchool') }}</option>
                         <option v-for="school in hostSchools" :key="school.id" :value="school.id">
                           {{ school.name }}
+                        </option>
+                        <option
+                          v-if="hostDestinationMode === 'either'"
+                          :value="HOST_DEST_NOT_LISTED"
+                        >
+                          {{ t('applicationFormPage.hostDestinationNotListed') }}
                         </option>
                       </select>
                       <div v-if="hostSchoolNeedsFreeText" class="form-text">
@@ -502,13 +541,14 @@
                       <div v-if="hostSchoolsLoading" class="form-text">
                         {{ t('applicationFormPage.loadingHostSchools') }}
                       </div>
-                      <div v-if="errors.host_school || errors.host_school_name" class="invalid-feedback d-block">
-                        {{ flattenFieldMessages(errors.host_school || errors.host_school_name).join(' ') }}
+                      <div v-if="errors.host_school || errors.host_school_name || errors.host_school_text" class="invalid-feedback d-block">
+                        {{ flattenFieldMessages(errors.host_school || errors.host_school_name || errors.host_school_text).join(' ') }}
                       </div>
                     </div>
                     <div class="col-md-6">
                       <label for="host-academic-program" class="form-label">
-                        {{ t('applicationFormPage.hostAcademicProgramLabel') }} <span class="text-danger">*</span>
+                        {{ t('applicationFormPage.hostAcademicProgramLabel') }}
+                        <span v-if="hostDestinationRequired" class="text-danger">*</span>
                       </label>
                       <input
                         v-if="hostAcademicProgramNeedsFreeText"
@@ -516,12 +556,12 @@
                         v-model="form.host_academic_program_name"
                         type="text"
                         class="form-control"
-                        :class="{ 'is-invalid': errors.host_academic_program || errors.host_academic_program_name }"
+                        :class="{ 'is-invalid': errors.host_academic_program || errors.host_academic_program_name || errors.host_academic_program_text }"
                         :placeholder="t('applicationFormPage.hostAcademicProgramFreeTextPlaceholder')"
                         data-testid="host-academic-program-input"
                         maxlength="255"
-                        :disabled="!form.host_institution || (!hostSchoolNeedsFreeText && !form.host_school)"
-                        required
+                        :disabled="hostDestinationMode === 'catalog' && !form.host_institution && !hostSchoolNeedsFreeText"
+                        :required="hostDestinationRequired"
                       >
                       <select
                         v-else
@@ -529,7 +569,7 @@
                         v-model="form.host_academic_program"
                         class="form-select"
                         :class="{ 'is-invalid': errors.host_academic_program }"
-                        :disabled="!form.host_school || hostAcademicProgramsLoading || !hostAcademicPrograms.length"
+                        :disabled="!form.host_school || hostAcademicProgramsLoading || (!hostAcademicPrograms.length && hostDestinationMode === 'catalog')"
                         data-testid="host-academic-program-select"
                       >
                         <option value="">{{ t('applicationFormPage.selectHostAcademicProgram') }}</option>
@@ -540,6 +580,12 @@
                         >
                           {{ ap.code ? `${ap.name} (${ap.code})` : ap.name }}
                         </option>
+                        <option
+                          v-if="hostDestinationMode === 'either'"
+                          :value="HOST_DEST_NOT_LISTED"
+                        >
+                          {{ t('applicationFormPage.hostDestinationNotListed') }}
+                        </option>
                       </select>
                       <div v-if="hostAcademicProgramNeedsFreeText" class="form-text">
                         {{ t('applicationFormPage.hostAcademicProgramFreeTextHelp') }}
@@ -547,8 +593,8 @@
                       <div v-if="hostAcademicProgramsLoading" class="form-text">
                         {{ t('applicationFormPage.loadingHostAcademicPrograms') }}
                       </div>
-                      <div v-if="errors.host_academic_program || errors.host_academic_program_name" class="invalid-feedback d-block">
-                        {{ flattenFieldMessages(errors.host_academic_program || errors.host_academic_program_name).join(' ') }}
+                      <div v-if="errors.host_academic_program || errors.host_academic_program_name || errors.host_academic_program_text" class="invalid-feedback d-block">
+                        {{ flattenFieldMessages(errors.host_academic_program || errors.host_academic_program_name || errors.host_academic_program_text).join(' ') }}
                       </div>
                     </div>
                   </div>
@@ -1019,6 +1065,7 @@ import { filenameFromContentDisposition } from '@/utils/documentApi'
 import {
   applyServerValidationErrors,
   catalogId,
+  HOST_DEST_NOT_LISTED,
   isIncompleteProfileError,
   useHostDestinations,
 } from '@/composables/useApplicationForm'
@@ -1075,6 +1122,7 @@ const profileEligibility = ref({
 })
 
 const eligibilityScalePolicy = ref({ locked: false, defaultId: '', defaultName: '' })
+const domainGradeScalePolicy = ref({ locked: false, defaultId: '', defaultName: '' })
 const eligibilityPromedioBounds = computed(() => (
   gradeScaleBounds(findScale(gradeScales.value, profileEligibility.value.grade_scale))
 ))
@@ -1145,8 +1193,15 @@ const form = ref({
   host_institution: '',
   host_school: '',
   host_academic_program: '',
+  host_institution_text: '',
   host_school_name: '',
+  host_school_text: '',
   host_academic_program_name: '',
+  host_academic_program_text: '',
+})
+const selectedProgram = computed(() => {
+  if (!form.value.program) return null
+  return programs.value.find(p => String(p.id) === String(form.value.program))
 })
 const {
   hostInstitutions,
@@ -1156,13 +1211,17 @@ const {
   hostSchoolsLoading,
   hostAcademicProgramsLoading,
   hostDestinationConfigured,
+  hostDestinationMode,
+  hostDestinationRequired,
+  hostInstitutionUsesFreeText,
+  hostInstitutionNotListed,
   hostSchoolNeedsFreeText,
   hostAcademicProgramNeedsFreeText,
   fetchHostInstitutions,
   fetchHostSchools,
   fetchHostAcademicPrograms,
   hostDestinationPayload,
-} = useHostDestinations(form)
+} = useHostDestinations(form, selectedProgram)
 const applicationStatus = ref('')
 let suppressHostCascadeReset = false
 /** For ``visible_when`` rules: ``has_assigned_coordinator`` (program id comes from ``form.program``). */
@@ -1263,12 +1322,8 @@ async function loadProfileGate() {
     credits_total: creditNumber(profile.credits_total),
     computed_semester: profile.computed_semester ?? null,
   }
-  eligibilityScalePolicy.value = gradeScalePolicy(profile)
-  const scalePolicy = eligibilityScalePolicy.value
-  if (scalePolicy.defaultId && (scalePolicy.locked || !profileEligibility.value.grade_scale)) {
-    const match = findScale(gradeScales.value, scalePolicy.defaultId)
-    profileEligibility.value.grade_scale = match ? match.id : scalePolicy.defaultId
-  }
+  domainGradeScalePolicy.value = gradeScalePolicy(profile)
+  applyProgramGradeScalePolicy()
   eligibilityRequired.value = eligibilityFieldsMissing(profileEligibility.value)
   return true
 }
@@ -1303,7 +1358,8 @@ async function persistProfileEligibility() {
     if (values.language_level) {
       payload.language_level = values.language_level
     }
-    await api.patch('/api/accounts/profile/', payload)
+    const params = form.value.program ? { program: form.value.program } : undefined
+    await api.patch('/api/accounts/profile/', payload, { params })
     eligibilityRequired.value = false
     await authStore.fetchUserProfile()
     if (!isEditMode.value) await fetchPrograms()
@@ -1312,6 +1368,28 @@ async function persistProfileEligibility() {
     profileEligibilityError.value = flattenFieldMessages(err.response?.data).join(' ')
       || t('applicationFormPage.profileEligibilitySaveFailed')
     return false
+  }
+}
+
+function applyProgramGradeScalePolicy() {
+  const program = selectedProgram.value
+  if (
+    program
+    && program.mobility_direction !== 'incoming'
+    && program.default_grade_scale
+  ) {
+    eligibilityScalePolicy.value = {
+      locked: Boolean(program.lock_grade_scale),
+      defaultId: String(program.default_grade_scale),
+      defaultName: program.default_grade_scale_name || '',
+    }
+  } else {
+    eligibilityScalePolicy.value = { ...domainGradeScalePolicy.value }
+  }
+  const scalePolicy = eligibilityScalePolicy.value
+  if (scalePolicy.defaultId && (scalePolicy.locked || !profileEligibility.value.grade_scale)) {
+    const match = findScale(gradeScales.value, scalePolicy.defaultId)
+    profileEligibility.value.grade_scale = match ? match.id : scalePolicy.defaultId
   }
 }
 
@@ -1361,11 +1439,6 @@ const otherErrors = computed(() => {
     list.push(...texts.map((txt) => (typeof txt === 'string' ? txt : `${field}: ${JSON.stringify(txt)}`)))
   }
   return list
-})
-
-const selectedProgram = computed(() => {
-  if (!form.value.program) return null
-  return programs.value.find(p => String(p.id) === String(form.value.program))
 })
 
 const applicationWindowState = computed(() => {
@@ -1863,13 +1936,31 @@ async function fetchApplication() {
     const response = await api.get(`/api/applications/${route.params.id}/`)
 
     suppressHostCascadeReset = true
+    const institutionText = response.data.host_institution_text || ''
+    const schoolText = response.data.host_school_text || response.data.host_school_name || ''
+    const academicText = response.data.host_academic_program_text
+      || response.data.host_academic_program_name || ''
     form.value = {
       program: response.data.program?.id || response.data.program,
-      host_institution: response.data.host_institution || '',
-      host_school: response.data.host_school || '',
-      host_academic_program: response.data.host_academic_program || '',
-      host_school_name: '',
-      host_academic_program_name: '',
+      host_institution: response.data.host_institution
+        || (institutionText ? HOST_DEST_NOT_LISTED : ''),
+      host_school: response.data.host_school
+        || (schoolText && !response.data.host_institution ? '' : (schoolText ? HOST_DEST_NOT_LISTED : '')),
+      host_academic_program: response.data.host_academic_program
+        || (academicText && !response.data.host_school ? '' : (academicText ? HOST_DEST_NOT_LISTED : '')),
+      host_institution_text: institutionText,
+      host_school_name: schoolText,
+      host_school_text: schoolText,
+      host_academic_program_name: academicText,
+      host_academic_program_text: academicText,
+    }
+    // When only free-text school/program exists under a catalog institution, keep FK empty
+    // and show free-text inputs.
+    if (!response.data.host_school && schoolText) {
+      form.value.host_school = HOST_DEST_NOT_LISTED
+    }
+    if (!response.data.host_academic_program && academicText) {
+      form.value.host_academic_program = HOST_DEST_NOT_LISTED
     }
     applicationStatus.value = response.data.status || ''
     applyApplicationVisibilityFromResponse(response.data)
@@ -1992,28 +2083,53 @@ async function scrollToFirstValidationAlert() {
 }
 
 function validateHostDestinationClient() {
-  if (!hostDestinationConfigured.value || !form.value.host_institution) return true
+  if (!hostDestinationConfigured.value) return true
+  const required = hostDestinationRequired.value
+  const hasInstitution = hostInstitutionUsesFreeText.value || hostInstitutionNotListed.value
+    ? Boolean(String(form.value.host_institution_text || '').trim())
+    : Boolean(form.value.host_institution && form.value.host_institution !== HOST_DEST_NOT_LISTED)
+  // Optional + nothing started → skip client checks (server readiness still applies).
+  if (!required && !hasInstitution && !form.value.host_school && !form.value.host_school_name
+    && !form.value.host_academic_program && !form.value.host_academic_program_name
+    && !form.value.host_institution_text) {
+    return true
+  }
+  if (!required && !hasInstitution) return true
+
   const nextErrors = { ...errors.value }
   let ok = true
-  if (hostSchoolNeedsFreeText.value) {
-    if (!String(form.value.host_school_name || '').trim()) {
-      nextErrors.host_school_name = [t('applicationFormPage.hostSchoolFreeTextPlaceholder')]
+  if (required || hasInstitution) {
+    if (!hasInstitution) {
+      nextErrors.host_institution = [t('applicationFormPage.selectHostInstitution')]
       ok = false
     }
-  } else if (!form.value.host_school) {
-    nextErrors.host_school = [t('applicationFormPage.selectHostSchool')]
-    ok = false
   }
-  if (hostAcademicProgramNeedsFreeText.value) {
-    if (!String(form.value.host_academic_program_name || '').trim()) {
-      nextErrors.host_academic_program_name = [
-        t('applicationFormPage.hostAcademicProgramFreeTextPlaceholder'),
-      ]
+  if (hasInstitution || required) {
+    if (hostSchoolNeedsFreeText.value) {
+      if (!String(form.value.host_school_name || form.value.host_school_text || '').trim()) {
+        nextErrors.host_school_name = [t('applicationFormPage.hostSchoolFreeTextPlaceholder')]
+        ok = false
+      }
+    } else if (!form.value.host_school || form.value.host_school === HOST_DEST_NOT_LISTED) {
+      nextErrors.host_school = [t('applicationFormPage.selectHostSchool')]
       ok = false
     }
-  } else if (!form.value.host_academic_program) {
-    nextErrors.host_academic_program = [t('applicationFormPage.selectHostAcademicProgram')]
-    ok = false
+    if (hostAcademicProgramNeedsFreeText.value) {
+      if (!String(
+        form.value.host_academic_program_name || form.value.host_academic_program_text || '',
+      ).trim()) {
+        nextErrors.host_academic_program_name = [
+          t('applicationFormPage.hostAcademicProgramFreeTextPlaceholder'),
+        ]
+        ok = false
+      }
+    } else if (
+      !form.value.host_academic_program
+      || form.value.host_academic_program === HOST_DEST_NOT_LISTED
+    ) {
+      nextErrors.host_academic_program = [t('applicationFormPage.selectHostAcademicProgram')]
+      ok = false
+    }
   }
   if (!ok) errors.value = nextErrors
   return ok
@@ -2282,8 +2398,12 @@ watch(
     form.value.host_institution = ''
     form.value.host_school = ''
     form.value.host_academic_program = ''
+    form.value.host_institution_text = ''
     form.value.host_school_name = ''
+    form.value.host_school_text = ''
     form.value.host_academic_program_name = ''
+    form.value.host_academic_program_text = ''
+    applyProgramGradeScalePolicy()
     await fetchHostInstitutions(programId)
   },
 )
@@ -2296,7 +2416,12 @@ watch(
     form.value.host_school = ''
     form.value.host_academic_program = ''
     form.value.host_school_name = ''
+    form.value.host_school_text = ''
     form.value.host_academic_program_name = ''
+    form.value.host_academic_program_text = ''
+    if (institutionId !== HOST_DEST_NOT_LISTED) {
+      form.value.host_institution_text = ''
+    }
     await fetchHostSchools(institutionId)
   },
 )
@@ -2308,6 +2433,11 @@ watch(
     if (String(schoolId || '') === String(prev || '')) return
     form.value.host_academic_program = ''
     form.value.host_academic_program_name = ''
+    form.value.host_academic_program_text = ''
+    if (schoolId !== HOST_DEST_NOT_LISTED) {
+      form.value.host_school_name = ''
+      form.value.host_school_text = ''
+    }
     await fetchHostAcademicPrograms(schoolId)
   },
 )

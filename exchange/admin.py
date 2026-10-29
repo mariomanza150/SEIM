@@ -334,8 +334,13 @@ class ProgramAdmin(admin.ModelAdmin):
         "required_language",
         "min_language_level",
         "eligibility_ruleset",
+        "mobility_direction",
+        "host_destination_required",
+        "host_destination_mode",
+        "lock_grade_scale",
     )
     list_editable = ("is_active",)
+    autocomplete_fields = ("default_grade_scale", "eligibility_ruleset", "application_form", "workflow_version")
     readonly_fields = (
         "created_at",
         "updated_at",
@@ -356,7 +361,18 @@ class ProgramAdmin(admin.ModelAdmin):
     ]
 
     fieldsets = (
-        (None, {"fields": ("name", "description", "is_active", "recurring")}),
+        (
+            None,
+            {
+                "fields": (
+                    "name",
+                    "description",
+                    "is_active",
+                    "recurring",
+                    "mobility_direction",
+                )
+            },
+        ),
         (
             "Dates",
             {
@@ -373,6 +389,26 @@ class ProgramAdmin(admin.ModelAdmin):
             {
                 "fields": ("enrollment_capacity", "waitlist_when_full"),
                 "description": "Optional seat limit; waitlist applies when full and enabled.",
+            },
+        ),
+        (
+            "Host destination",
+            {
+                "fields": ("host_destination_required", "host_destination_mode"),
+                "description": (
+                    "Whether applicants must pick/enter a host destination, and whether "
+                    "they use the catalog, free text, or either."
+                ),
+            },
+        ),
+        (
+            "Grade scale (outgoing)",
+            {
+                "fields": ("default_grade_scale", "lock_grade_scale"),
+                "description": (
+                    "For outgoing programs, overrides the AllowedEmailDomain grade-scale "
+                    "default. When locked, applicants cannot change the scale on apply."
+                ),
             },
         ),
         (
@@ -785,8 +821,14 @@ class ApplicationAdmin(admin.ModelAdmin):
                     "host_institution",
                     "host_school",
                     "host_academic_program",
+                    "host_institution_text",
+                    "host_school_text",
+                    "host_academic_program_text",
                 ),
-                "description": "Cascade: institution → school → academic program",
+                "description": (
+                    "Cascade: institution → school → academic program "
+                    "(or free-text when the program mode allows it)."
+                ),
             },
         ),
         (

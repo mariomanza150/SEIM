@@ -23,6 +23,10 @@ from .models import (
     SavedSearch,
     ScholarshipScoringRuleset,
     TimelineEvent,
+    application_host_academic_program_display,
+    application_host_institution_display,
+    application_host_school_display,
+    program_host_destination_mode,
     resolve_host_destination_names,
     validate_application_host_destination,
     visible_host_subjects_queryset,
@@ -81,6 +85,9 @@ class ProgramSerializer(serializers.ModelSerializer):
     enrollment_seats_occupied = serializers.SerializerMethodField()
     field_requirements = ProgramFieldRequirementSerializer(many=True, required=False)
     field_requirement_catalog = serializers.SerializerMethodField()
+    default_grade_scale_name = serializers.CharField(
+        source="default_grade_scale.name", read_only=True, default="", allow_null=True
+    )
 
     def get_field_requirement_catalog(self, obj):
         from exchange.lifecycle_requirements import field_requirement_catalog
@@ -139,6 +146,24 @@ class ProgramSerializer(serializers.ModelSerializer):
                 "Select a language from the catalog or use a recognized spelling."
             )
         return canonical
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        lock = attrs.get(
+            "lock_grade_scale",
+            getattr(self.instance, "lock_grade_scale", False) if self.instance else False,
+        )
+        scale = attrs.get(
+            "default_grade_scale",
+            getattr(self.instance, "default_grade_scale", None)
+            if self.instance
+            else None,
+        )
+        if lock and not scale:
+            raise serializers.ValidationError(
+                {"lock_grade_scale": "Choose a default grade scale before locking it."}
+            )
+        return attrs
 
     def _sync_field_requirements(self, program, rows):
         if rows is None:
@@ -789,12 +814,8 @@ class ApplicationSerializer(serializers.ModelSerializer):
     )
     host_institution_name = serializers.SerializerMethodField()
     host_institution_country = serializers.SerializerMethodField()
-    host_school_name = serializers.CharField(
-        write_only=True, required=False, allow_blank=True, max_length=255
-    )
-    host_academic_program_name = serializers.CharField(
-        write_only=True, required=False, allow_blank=True, max_length=255
-    )
+    host_school_name = serializers.SerializerMethodField()
+    host_academic_program_name = serializers.SerializerMethodField()
     readiness = serializers.SerializerMethodField()
     scholarship_allocation_score = serializers.SerializerMethodField()
     scholarship_award = serializers.SerializerMethodField()
@@ -867,14 +888,22 @@ class ApplicationSerializer(serializers.ModelSerializer):
         return obj.program.name
 
     def get_host_institution_name(self, obj):
-        host = obj.host_institution
-        return host.name if host else None
+        name = application_host_institution_display(obj)
+        return name or None
 
     def get_host_institution_country(self, obj):
         host = obj.host_institution
         if not host:
             return None
         return host.country or None
+
+    def get_host_school_name(self, obj):
+        name = application_host_school_display(obj)
+        return name or None
+
+    def get_host_academic_program_name(self, obj):
+        name = application_host_academic_program_display(obj)
+        return name or None
 
     def get_readiness(self, obj):
         from exchange.readiness import compute_application_readiness
@@ -1090,43 +1119,101 @@ class ApplicationSerializer(serializers.ModelSerializer):
                     {"program": "Active application already exists for this program."}
                 )
 
-        # Resolve free-text host school / program names into catalog FKs.
-        school_name = (data.pop("host_school_name", "") or "").strip()
-        academic_name = (data.pop("host_academic_program_name", "") or "").strip()
-        if school_name or academic_name:
-            institution = data.get("host_institution")
-            if institution is None and self.instance is not None:
-                institution = self.instance.host_institution
-            school = data.get("host_school")
-            if (
-                school is None
-                and "host_school" not in data
-                and self.instance is not None
-            ):
-                school = self.instance.host_school
-            resolved_school, resolved_academic, name_errors = (
-                resolve_host_destination_names(
-                    institution=institution,
-                    school=school,
-                    school_name=school_name,
-                    academic_program_name=academic_name,
+        # Free-text host names: model fields, legacy write keys, or *_name aliases.
+        initial = self.initial_data if isinstance(self.initial_data, dict) else {}
+
+        def _name_from(keys):
+            for key in keys:
+                if key in data and data.get(key) is not None:
+                    return str(data.get(key) or "").strip()
+                if key in initial and initial.get(key) is not None:
+                    return str(initial.get(key) or "").strip()
+            return ""
+
+        # Prefer model text fields; accept legacy host_*_name write keys from the form.
+        institution_name = _name_from(("host_institution_text",))
+        school_name = _name_from(("host_school_text", "host_school_name"))
+        academic_name = _name_from(
+            ("host_academic_program_text", "host_academic_program_name")
+        )
+        # Drop legacy write aliases that are not model fields.
+        data.pop("host_school_name", None)
+        data.pop("host_academic_program_name", None)
+
+        mode = program_host_destination_mode(program)
+        store_free_text = mode in (
+            Program.HostDestinationMode.FREE_TEXT,
+            Program.HostDestinationMode.EITHER,
+        )
+        # Catalog mode: resolve typed school/program names into catalog rows
+        # (preserves empty-child free-text behavior). Free-text / either modes
+        # persist names on Application text fields instead.
+        if school_name or academic_name or institution_name:
+            if store_free_text:
+                if institution_name or "host_institution_text" in initial:
+                    data["host_institution_text"] = institution_name
+                if school_name or "host_school_text" in initial or "host_school_name" in initial:
+                    data["host_school_text"] = school_name
+                if (
+                    academic_name
+                    or "host_academic_program_text" in initial
+                    or "host_academic_program_name" in initial
+                ):
+                    data["host_academic_program_text"] = academic_name
+                # When typing free-text for a level, clear the catalog FK for that level.
+                if institution_name and not data.get("host_institution"):
+                    data["host_institution"] = None
+                if school_name and not data.get("host_school"):
+                    data["host_school"] = None
+                if academic_name and not data.get("host_academic_program"):
+                    data["host_academic_program"] = None
+            else:
+                institution = data.get("host_institution")
+                if institution is None and self.instance is not None:
+                    institution = self.instance.host_institution
+                school = data.get("host_school")
+                if (
+                    school is None
+                    and "host_school" not in data
+                    and self.instance is not None
+                ):
+                    school = self.instance.host_school
+                resolved_school, resolved_academic, name_errors = (
+                    resolve_host_destination_names(
+                        institution=institution,
+                        school=school,
+                        school_name=school_name,
+                        academic_program_name=academic_name,
+                        create_catalog_rows=True,
+                    )
                 )
-            )
-            if name_errors:
-                raise serializers.ValidationError(name_errors)
-            if school_name:
-                data["host_school"] = resolved_school
-            if academic_name:
-                data["host_academic_program"] = resolved_academic
+                if name_errors:
+                    raise serializers.ValidationError(name_errors)
+                if school_name:
+                    data["host_school"] = resolved_school
+                    data["host_school_text"] = ""
+                if academic_name:
+                    data["host_academic_program"] = resolved_academic
+                    data["host_academic_program_text"] = ""
 
         # Cascade-validate host destination when any host field is present / being set.
         host_keys = (
             "host_institution",
             "host_school",
             "host_academic_program",
+            "host_institution_text",
+            "host_school_text",
+            "host_academic_program_text",
         )
         if any(k in data for k in host_keys) or any(
-            getattr(self.instance, f"{k}_id", None) for k in host_keys if self.instance
+            (
+                getattr(self.instance, f"{k}_id", None)
+                if k
+                in ("host_institution", "host_school", "host_academic_program")
+                else (getattr(self.instance, k, None) or "").strip()
+            )
+            for k in host_keys
+            if self.instance
         ):
 
             class _HostProbe:
@@ -1138,7 +1225,14 @@ class ApplicationSerializer(serializers.ModelSerializer):
                 if program is not None
                 else (self.instance.program_id if self.instance else None)
             )
-            for key in host_keys:
+            probe.program = program or (
+                self.instance.program if self.instance else None
+            )
+            for key in (
+                "host_institution",
+                "host_school",
+                "host_academic_program",
+            ):
                 if key in data:
                     setattr(probe, key, data[key])
                     setattr(
@@ -1152,6 +1246,17 @@ class ApplicationSerializer(serializers.ModelSerializer):
                 else:
                     setattr(probe, key, None)
                     setattr(probe, f"{key}_id", None)
+            for text_key in (
+                "host_institution_text",
+                "host_school_text",
+                "host_academic_program_text",
+            ):
+                if text_key in data:
+                    setattr(probe, text_key, data[text_key] or "")
+                elif self.instance is not None:
+                    setattr(probe, text_key, getattr(self.instance, text_key) or "")
+                else:
+                    setattr(probe, text_key, "")
 
             host_errors = validate_application_host_destination(
                 probe, require_complete=False
@@ -1178,6 +1283,9 @@ class ApplicationSerializer(serializers.ModelSerializer):
                     "host_institution",
                     "host_school",
                     "host_academic_program",
+                    "host_institution_text",
+                    "host_school_text",
+                    "host_academic_program_text",
                 )
             ):
 
@@ -1205,6 +1313,19 @@ class ApplicationSerializer(serializers.ModelSerializer):
                             probe,
                             f"{key}_id",
                             getattr(self.instance, f"{key}_id"),
+                        )
+                for text_key in (
+                    "host_institution_text",
+                    "host_school_text",
+                    "host_academic_program_text",
+                ):
+                    if text_key in data:
+                        setattr(probe, text_key, data[text_key] or "")
+                    else:
+                        setattr(
+                            probe,
+                            text_key,
+                            getattr(self.instance, text_key) or "",
                         )
             for row in ProgramFieldRequirement.objects.filter(
                 program=program, source=SOURCE_APPLICATION
@@ -1346,6 +1467,11 @@ class ApplicationListSerializer(ApplicationSerializer):
             "program_mobility_direction",
             "host_institution_name",
             "host_institution_country",
+            "host_school_name",
+            "host_academic_program_name",
+            "host_institution_text",
+            "host_school_text",
+            "host_academic_program_text",
             "readiness",
         )
 
