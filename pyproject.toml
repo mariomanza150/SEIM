@@ -100,7 +100,7 @@ dev = [
     # Security analysis
     "bandit==1.8.6",
     # Pre-commit hooks
-    "pre-commit==4.4.0",
+    "pre-commit==4.6.2",
     # Documentation (aligned with [docs])
     "sphinx==7.4.7",
     "sphinx-rtd-theme==2.0.0",
