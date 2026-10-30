@@ -60,6 +60,8 @@ const emit = defineEmits(['update:modelValue', 'query-change'])
 const query = ref('')
 const isOpen = ref(false)
 const highlightedIndex = ref(-1)
+/** Last option picked from the list; survives blur even before the parent echoes v-model. */
+const lastSelected = ref(null)
 
 const normalizedOptions = computed(() =>
   props.options
@@ -95,6 +97,7 @@ watch(
   () => props.modelValue,
   (value) => {
     const selected = normalizedOptions.value.find((option) => option.value === value)
+    if (lastSelected.value && lastSelected.value.value !== value) lastSelected.value = null
     if (selected) {
       query.value = selected.label
       return
@@ -119,6 +122,7 @@ function onInput() {
 }
 
 function selectOption(option) {
+  lastSelected.value = option
   emit('update:modelValue', option.value)
   query.value = option.label
   isOpen.value = false
@@ -150,6 +154,15 @@ function syncQueryToSelection() {
 function onBlur() {
   setTimeout(() => {
     isOpen.value = false
+    const typed = String(query.value || '').trim()
+    if (lastSelected.value && typed && typed === lastSelected.value.label) {
+      // Value was picked from the list: keep it, never clear on blur.
+      if (lastSelected.value.value !== props.modelValue) {
+        emit('update:modelValue', lastSelected.value.value)
+      }
+      query.value = lastSelected.value.label
+      return
+    }
     const resolved = resolveTypedOption(query.value)
     if (resolved && resolved.value !== props.modelValue) {
       selectOption(resolved)

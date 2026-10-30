@@ -114,4 +114,33 @@ describe('SearchableSelect', () => {
     const items = wrapper.findAll('.searchable-select-dropdown .list-group-item')
     expect(items.map((li) => li.text())).toContain('No scale')
   })
+
+  it('keeps a value picked from the list after blur', async () => {
+    vi.useFakeTimers()
+    const wrapper = mount(SearchableSelect, {
+      props: {
+        modelValue: '',
+        options: [
+          { value: 'Ecuador', label: 'Ecuador' },
+          { value: 'Bolivia', label: 'Bolivia' },
+          { value: 'Colombia', label: 'Colombia' },
+        ],
+      },
+    })
+    const input = wrapper.get('input')
+    await input.trigger('focus')
+    await input.setValue('o')
+    const items = wrapper.findAll('.searchable-select-dropdown .list-group-item')
+    await items.find((li) => li.text() === 'Bolivia').trigger('mousedown')
+    // Parent has not echoed v-model yet when blur fires.
+    await input.trigger('blur')
+    vi.advanceTimersByTime(150)
+    await flushPromises()
+    const emitted = wrapper.emitted('update:modelValue').map((e) => e[0])
+    expect(emitted).toContain('Bolivia')
+    expect(emitted).not.toContain('')
+    expect(emitted[emitted.length - 1]).toBe('Bolivia')
+    expect(input.element.value).toBe('Bolivia')
+    vi.useRealTimers()
+  })
 })

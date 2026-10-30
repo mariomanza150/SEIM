@@ -125,6 +125,7 @@ jobs:
           --ignore-vuln CVE-2026-115778
           --ignore-vuln CVE-2026-115877
           --ignore-vuln CVE-2026-83813
+          --ignore-vuln GHSA-vpp8-g58w-m8mp
 
       - name: Upload Bandit report
         uses: actions/upload-artifact@v4

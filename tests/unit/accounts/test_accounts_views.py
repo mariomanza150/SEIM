@@ -229,7 +229,7 @@ class TestProfileCatalogPermissions(APITestCase):
         assert authenticated.status_code == status.HTTP_200_OK
         assert isinstance(authenticated.data, list)
         assert any(item["value"] == "España" for item in authenticated.data)
-        assert len(authenticated.data) == 17
+        assert len(authenticated.data) > 200
         assert all("value" in item and "label" in item for item in authenticated.data)
 
 

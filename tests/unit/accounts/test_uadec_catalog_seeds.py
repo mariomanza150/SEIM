@@ -52,16 +52,46 @@ class TestUadecCatalogSeeds:
 @pytest.mark.django_db
 @pytest.mark.unit
 class TestCgriCountryCatalog:
-    def test_country_api_returns_seventeen_cgri_countries(self, student_user):
+    def test_country_api_returns_full_catalog(self, student_user):
         client = APIClient()
         client.force_authenticate(user=student_user)
         response = client.get(reverse("accounts:catalog-countries"))
         assert response.status_code == 200
         names = [row["value"] for row in response.data]
-        assert names == list(CGRI_COUNTRY_NAMES)
-        assert len(names) == 17
+        for legacy in CGRI_COUNTRY_NAMES:
+            assert legacy in names
+        assert {"Ecuador", "Bolivia"} <= set(names)
+        assert len(names) > 200
         spain = next(row for row in response.data if row["value"] == "España")
         assert "Spain" in spain.get("aliases", [])
+        usa = next(row for row in response.data if row["value"] == "EUA")
+        assert "United States" in usa["aliases"]
+
+    def test_every_seed_country_resolves_to_an_option(self):
+        import json
+        from pathlib import Path
+
+        from accounts.country_catalog import country_options, resolve_country_option
+
+        values = {row["value"] for row in country_options()}
+        data_dir = Path(__file__).resolve().parents[3] / "exchange" / "data"
+        seeds = set()
+        for name in (
+            "universidades_por_conahec.json",
+            "universidades_por_convenio.json",
+        ):
+            rows = json.loads((data_dir / name).read_text(encoding="utf-8"))
+            seeds |= {row["country"] for row in rows if row.get("country")}
+        assert seeds
+        for country in seeds:
+            assert resolve_country_option(country) in values, country
+
+    def test_every_spanish_speaking_country_present(self):
+        from accounts.country_catalog import resolve_country_option
+        from exchange.cgri_partner_catalog import SPANISH_SPEAKING_COUNTRIES
+
+        for country in SPANISH_SPEAKING_COUNTRIES:
+            assert resolve_country_option(country), country
 
 
 @pytest.mark.django_db

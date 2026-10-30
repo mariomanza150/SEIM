@@ -13,3 +13,4 @@ dependencies change.
 | CVE-2026-115778 | twisted 26.4.0 | Unbounded telnet/conch subnegotiation buffer. SEIM does not expose Twisted telnet/manhole. Fix only in 26.10.0rc1. | 2026-10-29 | Stable Twisted release ≥ fixed version. |
 | CVE-2026-115877 | twisted 26.4.0 | HTTP header CR/LF smuggling gap in `HTTPChannel`. Daphne/ASGI path; no stable fix yet (26.10.0rc1 only). | 2026-10-29 | Stable Twisted release ≥ fixed version. |
 | CVE-2026-83813 | twisted 26.4.0 | DNS datagram source-address not validated. SEIM does not use `twisted.names` as a resolver service. Fix only in 26.10.0rc1. | 2026-10-29 | Stable Twisted release ≥ fixed version. |
+| GHSA-vpp8-g58w-m8mp | twisted 26.4.0 | HTTP/2 rapid-reset CPU DoS in `twisted.web._http2`. Daphne runs HTTP/1.1 behind nginx/cloudflared; SEIM does not serve Twisted HTTP/2 directly. Fix only in 26.10.0rc1. | 2026-10-29 | Stable Twisted release ≥ fixed version. |
