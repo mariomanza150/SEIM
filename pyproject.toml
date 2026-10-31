@@ -68,7 +68,7 @@ dependencies = [
     "pycryptodome==3.23.0",
     "pyparsing==3.2.5",
     # Workflow Engine (BPMN)
-    "SpiffWorkflow==3.1.2",
+    "SpiffWorkflow==3.2.0",
     "lxml==6.1.0",
     # WebSocket Support
     "channels==4.3.1",
