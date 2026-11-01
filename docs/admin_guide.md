@@ -363,8 +363,8 @@ When staff (or a workflow action) moves an application onto a pipeline status an
 #### **Site Configuration:**
 - **Site Name**: SEIM
 - **Site Description**: Student Exchange Information Manager
-- **Contact Email**: admin@seim.local
-- **Support Email**: support@seim.local
+- **Public contact**: GitHub Issues (no public support mailbox)
+- **Security reports**: [SECURITY.md](../SECURITY.md)
 
 #### **Application Settings:**
 - **Max File Size**: Document upload limits
@@ -471,8 +471,8 @@ tar -xzf media_backup.tar.gz
 ### **Getting Help:**
 - **Documentation**: Check this guide first
 - **System Logs**: Review error logs
-- **Community**: GitHub issues
-- **Direct Contact**: admin@seim.local
+- **Community**: [GitHub Issues](https://github.com/mariomanza150/SEIM/issues)
+- **Security**: [SECURITY.md](../SECURITY.md) (private vulnerability reporting)
 
 ### **Emergency Procedures:**
 1. **System Down**: Check Docker containers
