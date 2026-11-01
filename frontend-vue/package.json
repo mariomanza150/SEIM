@@ -20,7 +20,7 @@
     "bpmn-js": "^18.31.0",
     "bpmn-js-properties-panel": "^5.65.2",
     "html2canvas": "^1.4.1",
-    "pinia": "^3.0.4",
+    "pinia": "^4.1.0",
     "vue": "^3.5.44",
     "vue-i18n": "^11.4.14",
     "vue-router": "^4.6.4"
