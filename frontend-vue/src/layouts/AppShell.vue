@@ -737,10 +737,11 @@ async function handleLogout() {
 /*
  * Below lg, only notifications + user-menu stay in the top bar. Everything else
  * is available from the offcanvas (Search, theme, locale, tester, admin links).
- * !important beats stray Bootstrap display utilities if a deferred control remains.
+ * :deep so child-component roots (TesterMenu, etc.) match; !important beats
+ * Bootstrap display utilities if a deferred control remains.
  */
 @media (max-width: 991.98px) {
-  .seim-app-shell__utilities > :not(.seim-notification-nav):not(.seim-user-menu) {
+  .seim-app-shell__utilities > :deep(li:not(.seim-notification-nav):not(.seim-user-menu)) {
     display: none !important;
   }
 }
