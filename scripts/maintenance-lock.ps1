@@ -47,7 +47,10 @@ $script:UnreadableGraceSeconds = 30
 $script:GuardStaleSeconds = 10
 $script:GuardWaitSeconds = 15
 $script:RetryMilliseconds = 50
-$script:StaleGraceSeconds = 2
+# How long Enter-MaintenanceLock keeps trying when the lock is stale even if WaitSeconds is 0.
+# Under CPU contention (CI race tests, busy deploy hosts) 2s was too short for eight takers
+# fighting the takeover guard; all could give up busy while the stale file remained.
+$script:StaleGraceSeconds = 5
 $script:PollSeconds = 2
 $script:Invariant = [Globalization.CultureInfo]::InvariantCulture
 $script:MaintenanceLockAttempts = 0   # attempts by the last Enter-MaintenanceLock (tests: no busy loop)
@@ -189,14 +192,31 @@ function New-MaintenanceLockFile([string]$Path, [string]$Text) {
         $fs = [System.IO.File]::Open($Path, [System.IO.FileMode]::CreateNew, [System.IO.FileAccess]::Write,
                                      [System.IO.FileShare]::None)
     } catch {
+        # CreateNew lost the race. Prefer $false over throw: PowerShell often wraps the IO error in
+        # MethodInvocationException, and Test-Path can briefly disagree (file deleted between the
+        # failed create and the check), which used to surface as a hard error instead of "busy".
         if (Test-Path -LiteralPath $Path) { return $false }
+        $msg = [string]$_.Exception.Message
+        $innerMsg = if ($null -ne $_.Exception.InnerException) { [string]$_.Exception.InnerException.Message } else { "" }
+        # CreateNew lost the race or another handle has Share.None; caller retries / treats as busy.
+        if ($msg -match 'already exists|being used by another process|Sharing' -or
+            $innerMsg -match 'already exists|being used by another process|Sharing') {
+            return $false
+        }
         throw
     }
+    $wrote = $false
     try {
         $bytes = (New-Object System.Text.UTF8Encoding($false)).GetBytes($Text)
         $fs.Write($bytes, 0, $bytes.Length)
+        $wrote = $true
     } finally {
         $fs.Dispose()
+        # CreateNew left an empty/partial file if the write failed; that reads as unreadable and
+        # blocks takers for UnreadableGraceSeconds. Remove it so the next attempt can CreateNew.
+        if (-not $wrote) {
+            try { [System.IO.File]::Delete($Path) } catch { }
+        }
     }
     return $true
 }
@@ -309,16 +329,30 @@ function Enter-MaintenanceLock {
                 $graceEnd = $start.AddSeconds($script:StaleGraceSeconds)
                 if ($graceEnd -gt $limit) { $limit = $graceEnd }
             }
-        } catch [System.IO.IOException], [System.UnauthorizedAccessException] {
+        } catch {
+            # PowerShell wraps many .NET IO failures in MethodInvocationException; treat those like IOException.
+            $ex = $_.Exception
+            $io = ($ex -is [System.IO.IOException]) -or ($ex -is [System.UnauthorizedAccessException]) -or
+                  ($null -ne $ex.InnerException -and (
+                      ($ex.InnerException -is [System.IO.IOException]) -or
+                      ($ex.InnerException -is [System.UnauthorizedAccessException])))
+            if (-not $io) { throw }
             # The lock or its guard is in use or cannot be removed right now: retried, like busy.
             $pauseMs = $script:RetryMilliseconds * 4
-            $lastError = $_.Exception
+            $lastError = if ($null -ne $ex.InnerException) { $ex.InnerException } else { $ex }
             if ($null -eq $seen) { try { $seen = ConvertFrom-MaintenanceLockBytes (Read-MaintenanceLockBytes $path) } catch { } }
         }
         $leftMs = ($limit - [DateTime]::UtcNow).TotalMilliseconds
         if ($leftMs -le 0) {
             # Nobody holds it and we still could not create it (e.g. access denied on the folder): not "busy".
-            if ($null -eq $seen -and $null -ne $lastError) { throw $lastError }
+            # Share/in-use/already-exists on create means another taker: that is busy, even if we never parsed a record.
+            if ($null -eq $seen -and $null -ne $lastError) {
+                $msg = [string]$lastError.Message
+                if ($msg -match 'already exists|being used by another process|Sharing') {
+                    throw (New-MaintenanceLockBusyError "maintenance lock held (create contended)")
+                }
+                throw $lastError
+            }
             if ($null -eq $seen -or $seen.Unreadable) { $who = "an unreadable lock" } else { $who = "$($seen.Repo) run $($seen.RunId)" }
             throw (New-MaintenanceLockBusyError "maintenance lock held by $who until $($seen.ExpiresAt)")
         }
