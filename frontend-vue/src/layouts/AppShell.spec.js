@@ -32,11 +32,16 @@ vi.mock('@/services/api', () => ({
   },
 }))
 
-vi.mock('bootstrap', () => ({
-  Offcanvas: {
-    getInstance: vi.fn(() => null),
-  },
+const { offcanvasHide } = vi.hoisted(() => ({
+  offcanvasHide: vi.fn(),
 }))
+vi.mock('bootstrap', () => {
+  const Offcanvas = vi.fn(function Offcanvas() {
+    this.hide = offcanvasHide
+  })
+  Offcanvas.getInstance = vi.fn(() => null)
+  return { Offcanvas }
+})
 
 const authStoreMock = {
   userName: 'Sofia Martinez',
@@ -178,6 +183,30 @@ describe('AppShell navbar', () => {
 
     expect(authStoreMock.logout).toHaveBeenCalled()
     expect(router.currentRoute.value.name).toBe('Login')
+    wrapper.unmount()
+  })
+
+  it('logs out from the slide-out menu and navigates to Login', async () => {
+    authStoreMock.logout.mockClear()
+    offcanvasHide.mockClear()
+    const { wrapper, router } = await mountShell('Dashboard')
+
+    const sidebarLogout = wrapper.get('[data-testid="sidebar-logout"]')
+    expect(sidebarLogout.text()).toMatch(/Logout|Cerrar sesión/i)
+    await sidebarLogout.trigger('click')
+    await flushPromises()
+
+    expect(authStoreMock.logout).toHaveBeenCalled()
+    expect(router.currentRoute.value.name).toBe('Login')
+    expect(offcanvasHide).toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('exposes an accessible user-menu label and mobile tap-target class', async () => {
+    const { wrapper } = await mountShell()
+    const toggle = wrapper.get('[data-testid="user-menu"]')
+    expect(toggle.attributes('aria-label')).toMatch(/User menu for Sofia Martinez/i)
+    expect(toggle.classes()).toContain('seim-user-menu-toggle')
     wrapper.unmount()
   })
 

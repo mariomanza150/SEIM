@@ -387,6 +387,55 @@ class TestVueLogout:
         expect(page).to_have_url(re.compile(r".*login.*"), timeout=15000)
         assert not is_vue_logged_in(page), "Token should be cleared after logout"
 
+    def test_mobile_sidebar_logout_within_two_taps(self, page: Page):
+        """At 375px: open hamburger, Log out, then Back + reload stay logged out."""
+        page.set_viewport_size({"width": 375, "height": 667})
+        _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
+        page.goto(f"{VUE_BASE_URL}/dashboard")
+        page.wait_for_load_state("networkidle")
+        expect(page.locator("[data-testid=dashboard-page]")).to_be_visible(
+            timeout=15000
+        )
+
+        user_menu = page.locator("[data-testid=user-menu]")
+        expect(user_menu).to_be_visible()
+        box = user_menu.bounding_box()
+        assert box is not None
+        assert box["height"] >= 44, f"user-menu tap target height {box['height']} < 44"
+        assert box["width"] >= 44, f"user-menu tap target width {box['width']} < 44"
+        aria = user_menu.get_attribute("aria-label") or ""
+        assert aria.strip(), "user-menu must expose an aria-label on mobile"
+
+        hamburger = page.locator(
+            'button[data-bs-target="#seimSidebarOffcanvas"], '
+            'button[aria-controls="seimSidebarOffcanvas"]'
+        ).first
+        expect(hamburger).to_be_visible(timeout=5000)
+        hamburger.click()
+
+        expect(page.locator("#seimSidebarOffcanvas.show")).to_be_visible(timeout=5000)
+        sidebar_logout = page.locator("[data-testid=sidebar-logout]")
+        expect(sidebar_logout).to_be_visible(timeout=5000)
+        sidebar_logout.click()
+
+        page.wait_for_load_state("networkidle")
+        expect(page).to_have_url(re.compile(r".*login.*"), timeout=15000)
+        assert not is_vue_logged_in(page), (
+            "Token should be cleared after sidebar logout"
+        )
+
+        page.go_back()
+        page.wait_for_load_state("networkidle")
+        expect(page).to_have_url(re.compile(r".*login.*"), timeout=15000)
+        assert not is_vue_logged_in(page), (
+            "Back must not restore an authenticated session"
+        )
+
+        page.reload()
+        page.wait_for_load_state("networkidle")
+        expect(page).to_have_url(re.compile(r".*login.*"), timeout=15000)
+        assert not is_vue_logged_in(page), "Reload must keep the user logged out"
+
 
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
