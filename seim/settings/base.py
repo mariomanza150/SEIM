@@ -349,8 +349,8 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": "/api/",
     "CONTACT": {
-        "name": "SEIM Development Team",
-        "email": "support@seim.local",
+        "name": "SEIM maintainers",
+        "url": "https://github.com/mariomanza150/SEIM/blob/testing/SECURITY.md",
     },
     "LICENSE": {
         "name": "MIT License",

@@ -17,8 +17,8 @@ info:
     validate documents, manage programs\n    - **Admin**: Full system access, user
     management, analytics\n    "
   contact:
-    name: SEIM Development Team
-    email: support@seim.local
+    name: SEIM maintainers
+    url: https://github.com/mariomanza150/SEIM/blob/testing/SECURITY.md
   license:
     name: MIT License
     url: https://opensource.org/licenses/MIT
