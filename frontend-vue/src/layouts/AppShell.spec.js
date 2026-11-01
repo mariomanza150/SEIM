@@ -211,6 +211,9 @@ describe('AppShell navbar', () => {
     expect(name.classes()).toContain('d-none')
     expect(name.classes()).toContain('d-lg-inline')
     expect(name.text()).toContain('Sofia Martinez')
+    const brandText = wrapper.get('.seim-navbar-brand__text')
+    expect(brandText.classes()).toContain('d-none')
+    expect(brandText.classes()).toContain('d-sm-inline')
     wrapper.unmount()
   })
 
@@ -224,23 +227,26 @@ describe('AppShell navbar', () => {
     wrapper.unmount()
   })
 
-  it('opens the command palette from the offcanvas Search entry', async () => {
+  it('opens the command palette after the offcanvas finishes hiding', async () => {
     const { useCommandPalette } = await import('@/composables/useCommandPalette')
-    const { openPalette, closePalette, paletteState } = useCommandPalette()
+    const { closePalette, paletteState } = useCommandPalette()
     closePalette()
     expect(paletteState.open).toBe(false)
 
     const { wrapper } = await mountShell()
+    const offcanvasEl = wrapper.get('#seimSidebarOffcanvas').element
+    offcanvasEl.classList.add('show')
     const search = wrapper.get('[data-testid="sidebar-command-palette"]')
     expect(search.text()).toMatch(/Search \/ command palette|Buscar \/ paleta/i)
     await search.trigger('click')
     await flushPromises()
 
     expect(offcanvasHide).toHaveBeenCalled()
+    expect(paletteState.open).toBe(false)
+    offcanvasEl.dispatchEvent(new Event('hidden.bs.offcanvas'))
+    await flushPromises()
     expect(paletteState.open).toBe(true)
     closePalette()
-    // keep openPalette referenced so tree-shaking does not drop the import in analysis
-    expect(typeof openPalette).toBe('function')
     wrapper.unmount()
   })
 
@@ -249,9 +255,22 @@ describe('AppShell navbar', () => {
     const topThemeLi = wrapper.get('[data-testid="app-shell-theme-toggle"]').element.closest('li')
     expect(topThemeLi.classList.contains('d-none')).toBe(true)
     expect(topThemeLi.classList.contains('d-lg-flex')).toBe(true)
-    expect(wrapper.get('[data-testid="sidebar-theme-toggle"]').text()).toMatch(
-      /Toggle theme|Cambiar tema/i,
+    const sidebarTheme = wrapper.get('[data-testid="sidebar-theme-toggle"]')
+    expect(sidebarTheme.text()).toMatch(/Toggle theme|Cambiar tema/i)
+    expect(sidebarTheme.attributes('aria-label')).toBeUndefined()
+    wrapper.unmount()
+  })
+
+  it('surfaces Admin console links in the offcanvas for admins', async () => {
+    authStoreMock.isAdmin = true
+    const { wrapper } = await mountShell()
+    const adminTools = wrapper.get('[data-testid="sidebar-admin-tools"]')
+    expect(adminTools.text()).toMatch(/Django Admin/i)
+    expect(adminTools.text()).toMatch(/CMS Admin/i)
+    expect(wrapper.get('[data-testid="admin-menu"]').element.closest('li').classList.contains('d-none')).toBe(
+      true,
     )
+    authStoreMock.isAdmin = false
     wrapper.unmount()
   })
 

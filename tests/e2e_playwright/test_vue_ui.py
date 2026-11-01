@@ -484,11 +484,17 @@ class TestVueAppShellTopBar:
     @pytest.mark.parametrize(
         ("viewport", "email", "password"),
         [
+            ({"width": 320, "height": 568}, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD),
             ({"width": 375, "height": 812}, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD),
             ({"width": 768, "height": 1024}, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD),
             ({"width": 375, "height": 812}, VUE_ADMIN_EMAIL, VUE_ADMIN_PASSWORD),
         ],
-        ids=["student-375x812", "student-768x1024", "admin-375x812"],
+        ids=[
+            "student-320x568",
+            "student-375x812",
+            "student-768x1024",
+            "admin-375x812",
+        ],
     )
     def test_top_bar_fits_viewport_and_user_menu_tap_target(
         self, page: Page, viewport: dict, email: str, password: str

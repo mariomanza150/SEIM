@@ -39,11 +39,18 @@
               class="seim-navbar-brand__logo"
               height="28"
             />
-            <span class="seim-navbar-brand__text">{{ brandLabel }}</span>
+            <!-- Fallback mark when there is no logo (text itself is hidden below sm). -->
+            <span
+              v-else
+              class="seim-navbar-brand__mark d-sm-none"
+              aria-hidden="true"
+            >{{ brandMark }}</span>
+            <!-- Below sm: hide brand text so notifications + user-menu stay on-screen. -->
+            <span class="seim-navbar-brand__text d-none d-sm-inline">{{ brandLabel }}</span>
           </router-link>
         </div>
 
-        <ul class="navbar-nav flex-row align-items-center flex-nowrap ms-auto seim-app-shell__utilities">
+        <ul class="navbar-nav flex-row align-items-center flex-nowrap seim-app-shell__utilities">
           <!-- Desktop-only utilities; phones/tablets use the offcanvas equivalents. -->
           <li class="nav-item d-none d-lg-flex align-items-center me-1">
             <button
@@ -220,7 +227,6 @@
               type="button"
               class="list-group-item list-group-item-action d-inline-flex align-items-center gap-2"
               data-testid="sidebar-theme-toggle"
-              :aria-label="themeToggleAria"
               @click="toggleNavTheme"
             >
               <i :class="resolvedIsDark ? 'bi bi-sun-fill' : 'bi bi-moon-fill'" aria-hidden="true" />
@@ -233,6 +239,29 @@
             data-tour="sidebar-nav"
             @navigate="closeSidebarOffcanvas"
           />
+          <div v-if="authStore.isAdmin" class="mt-3" data-testid="sidebar-admin-tools">
+            <div class="text-uppercase text-muted small px-2 mb-2">{{ t('adminNav.consoleMenu') }}</div>
+            <div class="list-group mb-2">
+              <a
+                class="list-group-item list-group-item-action"
+                href="/seim/django-admin/"
+                target="_blank"
+                rel="noopener noreferrer"
+                @click="closeSidebarOffcanvas"
+              >
+                <i class="bi bi-gear-wide-connected me-2" aria-hidden="true" />{{ t('dashboard.djangoAdmin') }}
+              </a>
+              <a
+                class="list-group-item list-group-item-action"
+                href="/cms/"
+                target="_blank"
+                rel="noopener noreferrer"
+                @click="closeSidebarOffcanvas"
+              >
+                <i class="bi bi-layout-wtf me-2" aria-hidden="true" />{{ t('dashboard.cmsAdmin') }}
+              </a>
+            </div>
+          </div>
           <div v-if="qaStore.isTester" class="mt-3" data-testid="sidebar-tester-tools" data-qa-ignore>
             <div class="text-uppercase text-muted small px-2 mb-2">{{ t('qa.menu.label') }}</div>
             <div class="list-group mb-2">
@@ -412,6 +441,10 @@ onMounted(() => {
 
 const brandLogoUrl = computed(() => branding.value?.logo_url || '')
 const brandLabel = computed(() => branding.value?.nav_brand || branding.value?.short_name || 'SEIM')
+const brandMark = computed(() => {
+  const label = String(brandLabel.value || 'SEIM').trim()
+  return label ? label.slice(0, 1).toUpperCase() : 'S'
+})
 
 function toggleSidebarCollapsed() {
   sidebarCollapsed.value = !sidebarCollapsed.value
@@ -645,8 +678,24 @@ function closeSidebarOffcanvas() {
 }
 
 function openPaletteFromOffcanvas() {
-  closeSidebarOffcanvas()
-  openPalette()
+  const el = document.getElementById('seimSidebarOffcanvas')
+  if (!el) {
+    openPalette()
+    return
+  }
+  // Wait until the offcanvas has finished hiding so focus can land in the palette search box.
+  const onHidden = () => {
+    el.removeEventListener('hidden.bs.offcanvas', onHidden)
+    openPalette()
+  }
+  el.addEventListener('hidden.bs.offcanvas', onHidden)
+  if (!el.classList.contains('show')) {
+    el.removeEventListener('hidden.bs.offcanvas', onHidden)
+    openPalette()
+    return
+  }
+  const instance = Offcanvas.getInstance(el) || new Offcanvas(el)
+  instance.hide()
 }
 
 function openQaReportFromOffcanvas() {
@@ -729,9 +778,19 @@ async function handleLogout() {
 
 .seim-app-shell__utilities {
   gap: 0.15rem;
-  flex: 0 1 auto;
+  flex: 1 1 auto;
+  justify-content: flex-end;
   min-width: 0;
   max-width: 100%;
+}
+
+.seim-app-shell__utilities > :deep(li) {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.seim-user-menu {
+  flex-shrink: 0;
 }
 
 /*
@@ -766,18 +825,29 @@ async function handleLogout() {
   white-space: nowrap;
 }
 
-/* Narrow phones: keep brand from crowding notifications + user-menu. */
+.seim-navbar-brand__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Below sm: logo/mark only; utilities may still shrink. */
 @media (max-width: 575.98px) {
   .seim-app-shell__navbar-inner {
     gap: 0.25rem;
   }
 
-  .seim-navbar-brand__text {
-    max-width: min(4rem, 22vw);
-  }
-
   .seim-app-shell__utilities {
     gap: 0;
+    flex: 0 1 auto;
   }
 
   /* Bell keeps a compact hit target; drop extra caret gutter on phones. */
