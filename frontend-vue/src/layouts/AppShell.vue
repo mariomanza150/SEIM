@@ -845,13 +845,20 @@ async function handleLogout() {
 @media (max-width: 575.98px) {
   .seim-app-shell__navbar-inner {
     gap: 0.25rem;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+    /* Keep room for 44×44 bell + user-menu at 320px. */
+    padding-left: 0.35rem;
+    padding-right: 0.35rem;
   }
 
   .seim-navbar-brand__logo {
-    max-width: 1.75rem;
-    max-height: 1.75rem;
+    max-width: 1.5rem;
+    max-height: 1.5rem;
+  }
+
+  .seim-navbar-brand__mark {
+    width: 1.5rem;
+    height: 1.5rem;
+    font-size: 0.75rem;
   }
 
   .seim-app-shell__utilities {
@@ -859,9 +866,18 @@ async function handleLogout() {
     flex: 0 1 auto;
   }
 
-  /* Bell keeps a compact hit target; drop extra caret gutter on phones. */
+  /*
+   * Notification bell must stay ≥44×44 on phones (padding-inline alone made it ~28px wide).
+   * Keep the caret gutter off so the min size fits beside the user-menu at 320px.
+   */
   .seim-app-shell__utilities :deep(.seim-nav-icon-btn) {
+    min-width: 44px;
+    min-height: 44px;
     padding-inline: 0.25rem;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .seim-app-shell__utilities :deep(.seim-nav-icon-btn.dropdown-toggle::after) {
@@ -869,7 +885,7 @@ async function handleLogout() {
   }
 
   .seim-app-shell__utilities :deep(.seim-notification-nav) {
-    flex-shrink: 1;
+    flex-shrink: 0;
   }
 }
 

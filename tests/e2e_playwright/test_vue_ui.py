@@ -437,12 +437,24 @@ class TestVueLogout:
         assert not is_vue_logged_in(page), "Reload must keep the user logged out"
 
 
+def _assert_control_on_screen(box: dict, vw: float, label: str) -> None:
+    assert box["height"] >= 44, f"{label} height {box['height']} < 44"
+    assert box["width"] >= 44, f"{label} width {box['width']} < 44"
+    assert box["x"] >= -0.5, f"{label} starts off-screen left ({box['x']})"
+    assert box["x"] + box["width"] <= vw + 0.5, (
+        f"{label} overflows right edge "
+        f"(right={box['x'] + box['width']} > innerWidth={vw})"
+    )
+
+
 def _assert_top_bar_fits(page: Page, viewport: dict) -> None:
-    """Shared assertions: no horizontal overflow; user-menu visible and ≥44×44."""
+    """Shared assertions: no horizontal overflow; key controls visible and ≥44×44."""
     metrics = page.evaluate(
         """() => {
           const user = document.querySelector('[data-testid="user-menu"]');
+          const bell = document.querySelector('[data-testid="notifications-menu"]');
           const ur = user ? user.getBoundingClientRect() : null;
+          const br = bell ? bell.getBoundingClientRect() : null;
           return {
             scrollWidth: document.documentElement.scrollWidth,
             clientWidth: document.documentElement.clientWidth,
@@ -453,6 +465,12 @@ def _assert_top_bar_fits(page: Page, viewport: dict) -> None:
               width: ur.width,
               height: ur.height,
             },
+            bell: br && {
+              left: br.left,
+              right: br.right,
+              width: br.width,
+              height: br.height,
+            },
           };
         }"""
     )
@@ -461,18 +479,20 @@ def _assert_top_bar_fits(page: Page, viewport: dict) -> None:
         f"scrollWidth={metrics['scrollWidth']} > innerWidth={metrics['innerWidth']}"
     )
 
+    vw = metrics["innerWidth"]
     user_menu = page.locator("[data-testid=user-menu]")
     expect(user_menu).to_be_visible()
-    box = user_menu.bounding_box()
-    assert box is not None
-    assert box["height"] >= 44, f"user-menu height {box['height']} < 44"
-    assert box["width"] >= 44, f"user-menu width {box['width']} < 44"
-    vw = metrics["innerWidth"]
-    assert box["x"] >= -0.5, f"user-menu starts off-screen left ({box['x']})"
-    assert box["x"] + box["width"] <= vw + 0.5, (
-        f"user-menu overflows right edge "
-        f"(right={box['x'] + box['width']} > innerWidth={vw}; metrics={metrics})"
-    )
+    user_box = user_menu.bounding_box()
+    assert user_box is not None
+    _assert_control_on_screen(user_box, vw, "user-menu")
+
+    # Phones: notification bell must also be a ≥44×44 on-screen tap target.
+    if viewport["width"] <= 375:
+        bell = page.locator("[data-testid=notifications-menu]")
+        expect(bell).to_be_visible()
+        bell_box = bell.bounding_box()
+        assert bell_box is not None
+        _assert_control_on_screen(bell_box, vw, "notifications-menu")
 
 
 @pytest.mark.e2e_playwright
@@ -487,19 +507,21 @@ class TestVueAppShellTopBar:
             ({"width": 320, "height": 568}, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD),
             ({"width": 375, "height": 812}, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD),
             ({"width": 768, "height": 1024}, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD),
+            ({"width": 320, "height": 568}, VUE_ADMIN_EMAIL, VUE_ADMIN_PASSWORD),
             ({"width": 375, "height": 812}, VUE_ADMIN_EMAIL, VUE_ADMIN_PASSWORD),
         ],
         ids=[
             "student-320x568",
             "student-375x812",
             "student-768x1024",
+            "admin-320x568",
             "admin-375x812",
         ],
     )
     def test_top_bar_fits_viewport_and_user_menu_tap_target(
         self, page: Page, viewport: dict, email: str, password: str
     ):
-        """No horizontal overflow; user-menu visible and ≥44×44 for student and admin."""
+        """No horizontal overflow; user-menu (and phone bell) ≥44×44 on-screen."""
         page.set_viewport_size(viewport)
         _login_vue_or_skip(page, VUE_BASE_URL, email, password)
         page.goto(f"{VUE_BASE_URL}/dashboard")
