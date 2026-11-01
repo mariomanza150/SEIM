@@ -14,6 +14,7 @@ from exchange.models import (
     application_host_institution_display,
     program_grade_scale_policy,
     program_requires_host_destination,
+    seed_outgoing_programs_from_domain_policy,
     validate_application_host_destination,
 )
 from exchange.serializers import ApplicationSerializer, ProgramSerializer
@@ -197,3 +198,122 @@ class TestProgramGradeScaleSettings:
         )
         assert not serializer.is_valid()
         assert "lock_grade_scale" in serializer.errors
+
+    def test_unlocked_program_default_overrides_domain_lock(self, program, scales):
+        """Program default (even unlocked) replaces domain policy for ?program=."""
+        ten, four = scales
+        AllowedEmailDomain.objects.create(
+            name="uni.test.mx", default_grade_scale=ten, lock_grade_scale=True
+        )
+        program.default_grade_scale = four
+        program.lock_grade_scale = False
+        program.save()
+
+        user = User.objects.create_user(
+            username="sam", email="sam@uni.test.mx", password="pw-123456!"
+        )
+        role, _ = Role.objects.get_or_create(name="student")
+        user.roles.add(role)
+        Profile.objects.get_or_create(user=user)
+        client = APIClient()
+        client.force_authenticate(user)
+
+        policy = client.get(f"/api/accounts/profile/?program={program.id}").json()[
+            "grade_scale_policy"
+        ]
+        assert policy["default_grade_scale"] == str(four.pk)
+        assert policy["locked"] is False
+
+        ok = client.patch(
+            f"/api/accounts/profile/?program={program.id}",
+            {"grade_scale": str(ten.pk), "gpa": 8.0},
+            format="json",
+        )
+        assert ok.status_code == 200, ok.content
+        assert Profile.objects.get(user=user).grade_scale_id == ten.pk
+
+    def test_domain_fallback_when_program_has_no_default(self, program, scales):
+        ten, _four = scales
+        AllowedEmailDomain.objects.create(
+            name="uni.test.mx", default_grade_scale=ten, lock_grade_scale=True
+        )
+        assert program.default_grade_scale_id is None
+
+        user = User.objects.create_user(
+            username="lee", email="lee@uni.test.mx", password="pw-123456!"
+        )
+        role, _ = Role.objects.get_or_create(name="student")
+        user.roles.add(role)
+        Profile.objects.get_or_create(user=user)
+        client = APIClient()
+        client.force_authenticate(user)
+
+        policy = client.get(f"/api/accounts/profile/?program={program.id}").json()[
+            "grade_scale_policy"
+        ]
+        assert policy["default_grade_scale"] == str(ten.pk)
+        assert policy["locked"] is True
+
+        bad = client.patch(
+            f"/api/accounts/profile/?program={program.id}",
+            {"grade_scale": str(scales[1].pk)},
+            format="json",
+        )
+        assert bad.status_code == 400
+        assert "grade_scale" in bad.json()
+
+
+@pytest.mark.django_db
+@pytest.mark.unit
+class TestSeedProgramGradeScaleFromDomain:
+    def test_unique_domain_policy_seeds_outgoing_programs(self, program, scales):
+        ten, _four = scales
+        AllowedEmailDomain.objects.create(
+            name="uni.test.mx", default_grade_scale=ten, lock_grade_scale=True
+        )
+        other = Program.objects.create(
+            name="Already set",
+            description="x",
+            start_date=program.start_date,
+            end_date=program.end_date,
+            is_active=True,
+            mobility_direction=Program.MobilityDirection.OUTGOING,
+            default_grade_scale=scales[1],
+            lock_grade_scale=False,
+        )
+        incoming = Program.objects.create(
+            name="Incoming",
+            description="x",
+            start_date=program.start_date,
+            end_date=program.end_date,
+            is_active=True,
+            mobility_direction=Program.MobilityDirection.INCOMING,
+        )
+
+        updated = seed_outgoing_programs_from_domain_policy(Program, AllowedEmailDomain)
+        assert updated >= 1
+
+        program.refresh_from_db()
+        other.refresh_from_db()
+        incoming.refresh_from_db()
+        assert program.default_grade_scale_id == ten.pk
+        assert program.lock_grade_scale is True
+        # Pre-set programs and incoming programs are left alone.
+        assert other.default_grade_scale_id == scales[1].pk
+        assert other.lock_grade_scale is False
+        assert incoming.default_grade_scale_id is None
+
+    def test_conflicting_domains_do_not_seed(self, program, scales):
+        ten, four = scales
+        AllowedEmailDomain.objects.create(
+            name="a.test.mx", default_grade_scale=ten, lock_grade_scale=True
+        )
+        AllowedEmailDomain.objects.create(
+            name="b.test.mx", default_grade_scale=four, lock_grade_scale=False
+        )
+        assert (
+            seed_outgoing_programs_from_domain_policy(Program, AllowedEmailDomain) == 0
+        )
+        program.refresh_from_db()
+        assert program.default_grade_scale_id is None
+        assert program.lock_grade_scale is False

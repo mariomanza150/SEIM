@@ -94,12 +94,13 @@ docker-compose exec web python manage.py create_missing_profiles
 
 #### **Student Profile Catalogs:**
 Manage these under **Admin** → **Accounts**:
-- **Allowed email domains**: Active domains accepted during registration. The default seed includes `uanl.edu.mx`.
+- **Allowed email domains**: Active domains accepted during registration. The default seed includes `uanl.edu.mx`. Domain `default_grade_scale` / `lock_grade_scale` are a **deprecated fallback** when an outgoing program has no grade-scale default.
 - **Academic levels**
 - **School faculties**
 - **Unidades**
 - **Home academic programs**: Each program belongs to one school/faculty.
 - **Bank institutions**
+- **Outgoing program grade scale** (Programs admin / `/seim/admin/programs`): set **Default grade scale** and optionally **Lock grade scale** so applicants cannot change the scale on the apply form.
 
 Only active catalog entries are shown in the student UI. Allowed email domains are publicly readable so the registration page can display and validate them; all other profile catalogs require authentication.
 

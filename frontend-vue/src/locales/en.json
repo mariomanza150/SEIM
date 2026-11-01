@@ -732,7 +732,7 @@
       "hostDestinationModeEither": "Catalog or free text",
       "hostDestinationModeHelp": "Catalog uses the Destinations tree; free text lets applicants type names; either adds a “not listed” option.",
       "defaultGradeScale": "Default grade scale (outgoing)",
-      "defaultGradeScaleHelp": "Overrides the email-domain default for outgoing applicants when set.",
+      "defaultGradeScaleHelp": "Preferred over the deprecated email-domain fallback for outgoing applicants when set.",
       "lockGradeScale": "Lock grade scale",
       "lockGradeScaleHelp": "Prevent applicants from changing the grade scale on the apply form"
     }
@@ -778,10 +778,11 @@
       "aliases": "Aliases",
       "aliasesPlaceholder": "Comma-separated (e.g. Español, Espanol)",
       "labelEn": "English label",
-      "defaultGradeScale": "Default grade scale",
-      "lockGradeScale": "Lock for students"
+      "defaultGradeScale": "Default grade scale (fallback)",
+      "lockGradeScale": "Lock for students (fallback)"
     },
-    "domainLockHelp": "Students whose email matches a locked domain always use its default grade scale."
+    "domainLockHelp": "Deprecated fallback: prefer Programs → Default / Lock grade scale for outgoing mobility. Domain settings still apply when a program has no default.",
+    "domainGradeScaleDeprecated": "Prefer per-program grade scale settings. Domain values are a fallback only."
   },
   "adminGrades": {
     "title": "Grade scales",
@@ -2444,7 +2445,7 @@
     "gpaSelectScaleFirst": "Choose a grade scale first",
     "gpaRangePlaceholder": "Between {min} and {max}",
     "gpaOutOfRange": "Promedio must be between {min} and {max} for this scale.",
-    "gradeScaleLocked": "Set by your institution; it can't be changed."
+    "gradeScaleLocked": "Set by your program or institution; it can't be changed."
   },
   "eligibilityRules": {
     "profile_missing": "Student profile is missing.",

@@ -382,13 +382,18 @@ class AllowedEmailDomain(CatalogModel):
         null=True,
         blank=True,
         related_name="email_domains",
-        help_text="Grade scale pre-selected for students registered with this domain.",
+        help_text=(
+            "Deprecated fallback: prefer Program.default_grade_scale for outgoing "
+            "mobility. Still used when a program has no default (profile page and "
+            "apply form without a program override)."
+        ),
     )
     lock_grade_scale = models.BooleanField(
         default=False,
         help_text=(
-            "When set (with a default scale), students of this domain cannot "
-            "change their grade scale."
+            "Deprecated fallback: prefer Program.lock_grade_scale. When set (with a "
+            "default scale) and no program override applies, students of this domain "
+            "cannot change their grade scale."
         ),
     )
 
@@ -408,6 +413,14 @@ class AllowedEmailDomain(CatalogModel):
         self.name = self.name.strip().lower().lstrip("@")
         if "@" in self.name or "." not in self.name:
             raise ValidationError({"name": "Enter a valid domain without '@'."})
+        if self.lock_grade_scale and not self.default_grade_scale_id:
+            raise ValidationError(
+                {
+                    "lock_grade_scale": (
+                        "Choose a default grade scale before locking it."
+                    )
+                }
+            )
 
     def save(self, *args, **kwargs):
         self.full_clean()
