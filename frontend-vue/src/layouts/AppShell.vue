@@ -812,7 +812,9 @@ async function handleLogout() {
 
 .seim-navbar-brand__logo {
   max-height: 28px;
+  max-width: 7rem;
   width: auto;
+  object-fit: contain;
   flex-shrink: 0;
 }
 
@@ -843,6 +845,13 @@ async function handleLogout() {
 @media (max-width: 575.98px) {
   .seim-app-shell__navbar-inner {
     gap: 0.25rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  .seim-navbar-brand__logo {
+    max-width: 1.75rem;
+    max-height: 1.75rem;
   }
 
   .seim-app-shell__utilities {
@@ -852,11 +861,15 @@ async function handleLogout() {
 
   /* Bell keeps a compact hit target; drop extra caret gutter on phones. */
   .seim-app-shell__utilities :deep(.seim-nav-icon-btn) {
-    padding-inline: 0.35rem;
+    padding-inline: 0.25rem;
   }
 
   .seim-app-shell__utilities :deep(.seim-nav-icon-btn.dropdown-toggle::after) {
     display: none;
+  }
+
+  .seim-app-shell__utilities :deep(.seim-notification-nav) {
+    flex-shrink: 1;
   }
 }
 
