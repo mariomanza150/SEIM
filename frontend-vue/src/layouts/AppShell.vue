@@ -148,7 +148,7 @@
           <li class="nav-item dropdown" ref="userMenuRoot">
             <button
               type="button"
-              class="nav-link dropdown-toggle d-flex align-items-center seim-nav-text-btn"
+              class="nav-link dropdown-toggle d-flex align-items-center seim-nav-text-btn seim-user-menu-toggle"
               id="userDropdown"
               data-testid="user-menu"
               :class="{ show: userMenuOpen }"
@@ -202,13 +202,25 @@
         <h5 class="offcanvas-title">{{ brandLabel }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" :aria-label="t('common.close')" />
       </div>
-      <div class="offcanvas-body pt-0">
+      <div class="offcanvas-body pt-0 d-flex flex-column">
         <SidebarNavList
           :sections="navSections"
           id-prefix="seim-offcanvas-nav"
           data-tour="sidebar-nav"
           @navigate="closeSidebarOffcanvas"
         />
+        <div class="mt-auto pt-3 border-top">
+          <button
+            type="button"
+            class="btn btn-outline-danger w-100 d-inline-flex align-items-center justify-content-center gap-2 seim-sidebar-logout"
+            data-testid="sidebar-logout"
+            data-tour="sidebar-logout"
+            @click="handleLogout"
+          >
+            <i class="bi bi-box-arrow-right" aria-hidden="true" />
+            {{ t('dashboard.logout') }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -572,6 +584,7 @@ function closeSidebarOffcanvas() {
 
 async function handleLogout() {
   closeUserMenu()
+  closeSidebarOffcanvas()
   await authStore.logout()
   await router.replace({ name: 'Login' })
 }
@@ -673,6 +686,20 @@ async function handleLogout() {
 .seim-nav-text-btn {
   background: transparent;
   border: 0;
+}
+
+/* Phone: icon-only user menu needs a ≥44px tap target (Bootstrap sm = 576px). */
+@media (max-width: 575.98px) {
+  .seim-user-menu-toggle {
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+    padding-inline: 0.5rem;
+  }
+}
+
+.seim-sidebar-logout {
+  min-height: 44px;
 }
 
 .seim-user-name {
