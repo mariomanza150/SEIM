@@ -123,6 +123,21 @@ class AllowedEmailDomainAdmin(CatalogAdmin):
     )
     list_editable = ("lock_grade_scale", "is_active", "ordering")
     list_filter = ("is_active", "lock_grade_scale")
+    autocomplete_fields = ("default_grade_scale",)
+    fieldsets = (
+        (None, {"fields": ("name", "code", "ordering", "is_active")}),
+        (
+            _("Grade scale (deprecated fallback)"),
+            {
+                "fields": ("default_grade_scale", "lock_grade_scale"),
+                "description": _(
+                    "Prefer Program → Default / Lock grade scale for outgoing "
+                    "mobility. These domain fields remain as a fallback when a "
+                    "program has no default set."
+                ),
+            },
+        ),
+    )
 
 
 @admin.register(GenderOption)
