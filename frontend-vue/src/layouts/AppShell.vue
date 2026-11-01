@@ -8,7 +8,7 @@
       <div class="container-fluid seim-app-shell__navbar-inner">
         <div class="d-flex align-items-center seim-app-shell__brand-cluster">
           <button
-            class="btn btn-outline-light me-2 d-lg-none flex-shrink-0"
+            class="btn btn-outline-light me-1 me-md-2 d-lg-none flex-shrink-0"
             type="button"
             data-bs-toggle="offcanvas"
             data-bs-target="#seimSidebarOffcanvas"
@@ -19,7 +19,7 @@
           </button>
           <button
             type="button"
-            class="btn btn-outline-light me-2 d-none d-md-inline-flex align-items-center"
+            class="btn btn-outline-light me-2 d-none d-md-inline-flex align-items-center flex-shrink-0"
             :aria-pressed="sidebarCollapsed ? 'true' : 'false'"
             :aria-label="t('dashboard.toggleSidebar')"
             :title="sidebarCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')"
@@ -79,7 +79,8 @@
           <TesterMenu />
           <NotificationDropdown />
 
-          <li v-if="authStore.isAdmin" class="nav-item dropdown" ref="adminMenuRoot">
+          <!-- Admin console dropdown is desktop-only; sidebar/offcanvas already lists admin links. -->
+          <li v-if="authStore.isAdmin" class="nav-item dropdown d-none d-lg-block" ref="adminMenuRoot">
             <button
               type="button"
               class="nav-link dropdown-toggle seim-nav-text-btn"
@@ -92,7 +93,7 @@
               @click="toggleAdminMenu"
             >
               <i class="bi bi-sliders me-1" aria-hidden="true"></i>
-              <span class="d-none d-lg-inline">{{ t('adminNav.consoleMenu') }}</span>
+              <span>{{ t('adminNav.consoleMenu') }}</span>
             </button>
             <ul
               class="dropdown-menu dropdown-menu-end"
@@ -158,7 +159,7 @@
               :aria-label="t('dashboard.userMenuAria', { name: userName })"
               @click="toggleUserMenu"
             >
-              <i class="bi bi-person-circle me-1" aria-hidden="true"></i>
+              <i class="bi bi-person-circle seim-user-menu-toggle__icon" aria-hidden="true"></i>
               <span class="d-none d-lg-inline text-truncate seim-user-name">{{ userName }}</span>
             </button>
             <ul
@@ -696,6 +697,7 @@ async function handleLogout() {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
+  justify-content: space-between;
   gap: 0.5rem;
   width: 100%;
   max-width: 100%;
@@ -704,7 +706,8 @@ async function handleLogout() {
 
 .seim-app-shell__brand-cluster {
   min-width: 0;
-  flex-shrink: 1;
+  flex: 1 1 auto;
+  overflow: hidden;
 }
 
 .seim-app-shell__main-col {
@@ -726,12 +729,14 @@ async function handleLogout() {
 
 .seim-app-shell__utilities {
   gap: 0.15rem;
-  flex-shrink: 1;
+  flex: 0 0 auto;
   min-width: 0;
+  max-width: 100%;
 }
 
 .seim-navbar-brand {
   min-width: 0;
+  max-width: 100%;
 }
 
 .seim-navbar-brand__logo {
@@ -749,18 +754,27 @@ async function handleLogout() {
   white-space: nowrap;
 }
 
-/* Narrow phones: collapse brand width so utilities (esp. user-menu) stay on-screen. */
+/* Narrow phones: keep brand from crowding notifications + user-menu. */
 @media (max-width: 575.98px) {
   .seim-app-shell__navbar-inner {
     gap: 0.25rem;
   }
 
   .seim-navbar-brand__text {
-    max-width: min(5.5rem, 28vw);
+    max-width: min(4rem, 22vw);
   }
 
   .seim-app-shell__utilities {
     gap: 0;
+  }
+
+  /* Bell keeps a compact hit target; drop extra caret gutter on phones. */
+  .seim-app-shell__utilities :deep(.seim-nav-icon-btn) {
+    padding-inline: 0.35rem;
+  }
+
+  .seim-app-shell__utilities :deep(.seim-nav-icon-btn.dropdown-toggle::after) {
+    display: none;
   }
 }
 
@@ -791,12 +805,28 @@ async function handleLogout() {
   min-width: 44px;
   min-height: 44px;
   box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.seim-user-menu-toggle__icon {
+  margin-inline-end: 0;
+}
+
+@media (min-width: 992px) {
+  .seim-user-menu-toggle__icon {
+    margin-inline-end: 0.25rem;
+  }
 }
 
 @media (max-width: 575.98px) {
   .seim-user-menu-toggle {
     justify-content: center;
-    padding-inline: 0.5rem;
+    padding-inline: 0.35rem;
+  }
+
+  /* Icon-only: caret is redundant with the aria-label + offcanvas account links. */
+  .seim-user-menu-toggle.dropdown-toggle::after {
+    display: none;
   }
 }
 
