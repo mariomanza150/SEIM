@@ -437,6 +437,150 @@ class TestVueLogout:
         assert not is_vue_logged_in(page), "Reload must keep the user logged out"
 
 
+def _assert_top_bar_fits(page: Page, viewport: dict) -> None:
+    """Shared assertions: no horizontal overflow; user-menu visible and ≥44×44."""
+    metrics = page.evaluate(
+        """() => {
+          const user = document.querySelector('[data-testid="user-menu"]');
+          const ur = user ? user.getBoundingClientRect() : null;
+          return {
+            scrollWidth: document.documentElement.scrollWidth,
+            clientWidth: document.documentElement.clientWidth,
+            innerWidth: window.innerWidth,
+            user: ur && {
+              left: ur.left,
+              right: ur.right,
+              width: ur.width,
+              height: ur.height,
+            },
+          };
+        }"""
+    )
+    assert metrics["scrollWidth"] <= metrics["innerWidth"], (
+        f"horizontal overflow at {viewport['width']}px: "
+        f"scrollWidth={metrics['scrollWidth']} > innerWidth={metrics['innerWidth']}"
+    )
+
+    user_menu = page.locator("[data-testid=user-menu]")
+    expect(user_menu).to_be_visible()
+    box = user_menu.bounding_box()
+    assert box is not None
+    assert box["height"] >= 44, f"user-menu height {box['height']} < 44"
+    assert box["width"] >= 44, f"user-menu width {box['width']} < 44"
+    vw = metrics["innerWidth"]
+    assert box["x"] >= -0.5, f"user-menu starts off-screen left ({box['x']})"
+    assert box["x"] + box["width"] <= vw + 0.5, (
+        f"user-menu overflows right edge "
+        f"(right={box['x'] + box['width']} > innerWidth={vw}; metrics={metrics})"
+    )
+
+
+@pytest.mark.e2e_playwright
+@pytest.mark.vue
+@pytest.mark.nondestructive
+class TestVueAppShellTopBar:
+    """Top-bar overflow and tap-target checks (issue #153)."""
+
+    @pytest.mark.parametrize(
+        ("viewport", "email", "password"),
+        [
+            ({"width": 375, "height": 812}, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD),
+            ({"width": 768, "height": 1024}, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD),
+            ({"width": 375, "height": 812}, VUE_ADMIN_EMAIL, VUE_ADMIN_PASSWORD),
+        ],
+        ids=["student-375x812", "student-768x1024", "admin-375x812"],
+    )
+    def test_top_bar_fits_viewport_and_user_menu_tap_target(
+        self, page: Page, viewport: dict, email: str, password: str
+    ):
+        """No horizontal overflow; user-menu visible and ≥44×44 for student and admin."""
+        page.set_viewport_size(viewport)
+        _login_vue_or_skip(page, VUE_BASE_URL, email, password)
+        page.goto(f"{VUE_BASE_URL}/dashboard")
+        page.wait_for_load_state("networkidle")
+        expect(page.locator("[data-testid=dashboard-page]")).to_be_visible(
+            timeout=15000
+        )
+        _assert_top_bar_fits(page, viewport)
+
+        # Phones/tablets must still reach Search via the slide-out.
+        if viewport["width"] < 992:
+            hamburger = page.locator(
+                'button[data-bs-target="#seimSidebarOffcanvas"], '
+                'button[aria-controls="seimSidebarOffcanvas"]'
+            ).first
+            expect(hamburger).to_be_visible(timeout=5000)
+            hamburger.click()
+            expect(page.locator("#seimSidebarOffcanvas.show")).to_be_visible(
+                timeout=5000
+            )
+            expect(
+                page.locator("[data-testid=sidebar-command-palette]")
+            ).to_be_visible()
+            expect(page.locator("[data-testid=sidebar-theme-toggle]")).to_be_visible()
+            expect(
+                page.locator("[data-testid=sidebar-locale-switcher]")
+            ).to_be_visible()
+
+    def test_admin_sidebar_logout_visible_without_scroll(self, page: Page):
+        """At 375×812 as admin, Log out is in the viewport when the menu opens."""
+        page.set_viewport_size({"width": 375, "height": 812})
+        _login_vue_or_skip(page, VUE_BASE_URL, VUE_ADMIN_EMAIL, VUE_ADMIN_PASSWORD)
+        page.goto(f"{VUE_BASE_URL}/dashboard")
+        page.wait_for_load_state("networkidle")
+        expect(page.locator("[data-testid=dashboard-page]")).to_be_visible(
+            timeout=15000
+        )
+
+        hamburger = page.locator(
+            'button[data-bs-target="#seimSidebarOffcanvas"], '
+            'button[aria-controls="seimSidebarOffcanvas"]'
+        ).first
+        expect(hamburger).to_be_visible(timeout=5000)
+        hamburger.click()
+
+        offcanvas = page.locator("#seimSidebarOffcanvas.show")
+        expect(offcanvas).to_be_visible(timeout=5000)
+        sidebar_logout = page.locator("[data-testid=sidebar-logout]")
+        expect(sidebar_logout).to_be_visible(timeout=5000)
+
+        # Footer must remain in the viewport without scrolling the page or offcanvas.
+        in_view = page.evaluate(
+            """() => {
+              const el = document.querySelector('[data-testid="sidebar-logout"]');
+              if (!el) return false;
+              const r = el.getBoundingClientRect();
+              const vh = window.innerHeight;
+              const vw = window.innerWidth;
+              return (
+                r.height >= 44 &&
+                r.top >= 0 &&
+                r.bottom <= vh + 0.5 &&
+                r.left >= 0 &&
+                r.right <= vw + 0.5
+              );
+            }"""
+        )
+        assert in_view, (
+            "Admin Log out must be fully visible in the 375x812 viewport "
+            "without scrolling when the slide-out opens"
+        )
+
+        # Nav can scroll independently; Log out footer stays put.
+        page.locator("[data-testid=sidebar-offcanvas-nav]").evaluate(
+            "el => { el.scrollTop = el.scrollHeight; }"
+        )
+        still_in_view = page.evaluate(
+            """() => {
+              const el = document.querySelector('[data-testid="sidebar-logout"]');
+              if (!el) return false;
+              const r = el.getBoundingClientRect();
+              return r.top >= 0 && r.bottom <= window.innerHeight + 0.5;
+            }"""
+        )
+        assert still_in_view, "Log out must stay pinned after scrolling the nav list"
+
+
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
 @pytest.mark.nondestructive

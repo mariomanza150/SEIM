@@ -427,6 +427,7 @@
     "ariaLabel": "Command palette",
     "openAria": "Open command palette",
     "openLabel": "Search",
+    "offcanvasLabel": "Search / command palette",
     "searchLabel": "Search commands",
     "searchPlaceholder": "Go to a page or run an action…",
     "hint": "Use ↑↓ to move, Enter to select, Esc to close",

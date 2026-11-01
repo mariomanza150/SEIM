@@ -202,11 +202,56 @@ describe('AppShell navbar', () => {
     wrapper.unmount()
   })
 
-  it('exposes an accessible user-menu label and mobile tap-target class', async () => {
+  it('exposes an accessible user-menu label and defers the name until lg', async () => {
     const { wrapper } = await mountShell()
     const toggle = wrapper.get('[data-testid="user-menu"]')
     expect(toggle.attributes('aria-label')).toMatch(/User menu for Sofia Martinez/i)
     expect(toggle.classes()).toContain('seim-user-menu-toggle')
+    const name = toggle.get('.seim-user-name')
+    expect(name.classes()).toContain('d-none')
+    expect(name.classes()).toContain('d-lg-inline')
+    expect(name.text()).toContain('Sofia Martinez')
+    wrapper.unmount()
+  })
+
+  it('pins Log out and locale in the offcanvas footer while nav scrolls', async () => {
+    const { wrapper } = await mountShell()
+    expect(wrapper.find('[data-testid="sidebar-offcanvas-nav"]').exists()).toBe(true)
+    const footer = wrapper.get('#seimSidebarOffcanvas .seim-offcanvas-footer')
+    expect(footer.find('[data-testid="sidebar-logout"]').exists()).toBe(true)
+    expect(footer.find('[data-testid="sidebar-locale-switcher"]').exists()).toBe(true)
+    expect(footer.find('[data-testid="locale-en"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('opens the command palette from the offcanvas Search entry', async () => {
+    const { useCommandPalette } = await import('@/composables/useCommandPalette')
+    const { openPalette, closePalette, paletteState } = useCommandPalette()
+    closePalette()
+    expect(paletteState.open).toBe(false)
+
+    const { wrapper } = await mountShell()
+    const search = wrapper.get('[data-testid="sidebar-command-palette"]')
+    expect(search.text()).toMatch(/Search \/ command palette|Buscar \/ paleta/i)
+    await search.trigger('click')
+    await flushPromises()
+
+    expect(offcanvasHide).toHaveBeenCalled()
+    expect(paletteState.open).toBe(true)
+    closePalette()
+    // keep openPalette referenced so tree-shaking does not drop the import in analysis
+    expect(typeof openPalette).toBe('function')
+    wrapper.unmount()
+  })
+
+  it('keeps theme toggle available in the offcanvas when deferred from the top bar', async () => {
+    const { wrapper } = await mountShell()
+    const topThemeLi = wrapper.get('[data-testid="app-shell-theme-toggle"]').element.closest('li')
+    expect(topThemeLi.classList.contains('d-none')).toBe(true)
+    expect(topThemeLi.classList.contains('d-lg-flex')).toBe(true)
+    expect(wrapper.get('[data-testid="sidebar-theme-toggle"]').text()).toMatch(
+      /Toggle theme|Cambiar tema/i,
+    )
     wrapper.unmount()
   })
 

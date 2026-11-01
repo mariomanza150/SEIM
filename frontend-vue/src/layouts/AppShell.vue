@@ -6,9 +6,9 @@
       :aria-label="t('dashboard.mainNavAria')"
     >
       <div class="container-fluid seim-app-shell__navbar-inner">
-        <div class="d-flex align-items-center flex-shrink-0">
+        <div class="d-flex align-items-center seim-app-shell__brand-cluster">
           <button
-            class="btn btn-outline-light me-2 d-lg-none"
+            class="btn btn-outline-light me-2 d-lg-none flex-shrink-0"
             type="button"
             data-bs-toggle="offcanvas"
             data-bs-target="#seimSidebarOffcanvas"
@@ -44,7 +44,8 @@
         </div>
 
         <ul class="navbar-nav flex-row align-items-center flex-nowrap ms-auto seim-app-shell__utilities">
-          <li class="nav-item d-flex align-items-center me-1">
+          <!-- Desktop-only utilities; phones/tablets use the offcanvas equivalents. -->
+          <li class="nav-item d-none d-lg-flex align-items-center me-1">
             <button
               type="button"
               class="btn btn-outline-light btn-sm d-inline-flex align-items-center gap-1"
@@ -54,17 +55,17 @@
               @click="openPalette"
             >
               <i class="bi bi-search" aria-hidden="true" />
-              <span class="d-none d-lg-inline">{{ t('commandPalette.openLabel') }}</span>
+              <span class="d-none d-xl-inline">{{ t('commandPalette.openLabel') }}</span>
               <kbd class="d-none d-xl-inline seim-command-palette-kbd">{{ commandPaletteShortcut }}</kbd>
             </button>
           </li>
-          <li class="nav-item d-flex align-items-center me-1">
+          <li class="nav-item d-none d-lg-flex align-items-center me-1">
             <LocaleSwitcher
               active-class="btn-light btn-sm"
               inactive-class="btn-outline-light btn-sm"
             />
           </li>
-          <li class="nav-item d-flex align-items-center">
+          <li class="nav-item d-none d-lg-flex align-items-center">
             <button
               type="button"
               class="btn btn-link nav-link py-2 seim-theme-toggle"
@@ -91,7 +92,7 @@
               @click="toggleAdminMenu"
             >
               <i class="bi bi-sliders me-1" aria-hidden="true"></i>
-              <span class="d-none d-md-inline">{{ t('adminNav.consoleMenu') }}</span>
+              <span class="d-none d-lg-inline">{{ t('adminNav.consoleMenu') }}</span>
             </button>
             <ul
               class="dropdown-menu dropdown-menu-end"
@@ -145,7 +146,7 @@
             </ul>
           </li>
 
-          <li class="nav-item dropdown" ref="userMenuRoot">
+          <li class="nav-item dropdown seim-user-menu" ref="userMenuRoot">
             <button
               type="button"
               class="nav-link dropdown-toggle d-flex align-items-center seim-nav-text-btn seim-user-menu-toggle"
@@ -158,7 +159,7 @@
               @click="toggleUserMenu"
             >
               <i class="bi bi-person-circle me-1" aria-hidden="true"></i>
-              <span class="d-none d-sm-inline text-truncate seim-user-name">{{ userName }}</span>
+              <span class="d-none d-lg-inline text-truncate seim-user-name">{{ userName }}</span>
             </button>
             <ul
               class="dropdown-menu dropdown-menu-end"
@@ -202,14 +203,70 @@
         <h5 class="offcanvas-title">{{ brandLabel }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" :aria-label="t('common.close')" />
       </div>
-      <div class="offcanvas-body pt-0 d-flex flex-column">
-        <SidebarNavList
-          :sections="navSections"
-          id-prefix="seim-offcanvas-nav"
-          data-tour="sidebar-nav"
-          @navigate="closeSidebarOffcanvas"
-        />
-        <div class="mt-auto pt-3 border-top">
+      <div class="offcanvas-body pt-0 d-flex flex-column seim-offcanvas-body">
+        <div class="seim-offcanvas-nav" data-testid="sidebar-offcanvas-nav">
+          <div class="list-group mb-3">
+            <button
+              type="button"
+              class="list-group-item list-group-item-action d-inline-flex align-items-center gap-2"
+              data-testid="sidebar-command-palette"
+              @click="openPaletteFromOffcanvas"
+            >
+              <i class="bi bi-search" aria-hidden="true" />
+              {{ t('commandPalette.offcanvasLabel') }}
+            </button>
+            <button
+              type="button"
+              class="list-group-item list-group-item-action d-inline-flex align-items-center gap-2"
+              data-testid="sidebar-theme-toggle"
+              :aria-label="themeToggleAria"
+              @click="toggleNavTheme"
+            >
+              <i :class="resolvedIsDark ? 'bi bi-sun-fill' : 'bi bi-moon-fill'" aria-hidden="true" />
+              {{ t('commandPalette.actionToggleTheme') }}
+            </button>
+          </div>
+          <SidebarNavList
+            :sections="navSections"
+            id-prefix="seim-offcanvas-nav"
+            data-tour="sidebar-nav"
+            @navigate="closeSidebarOffcanvas"
+          />
+          <div v-if="qaStore.isTester" class="mt-3" data-testid="sidebar-tester-tools" data-qa-ignore>
+            <div class="text-uppercase text-muted small px-2 mb-2">{{ t('qa.menu.label') }}</div>
+            <div class="list-group mb-2">
+              <button
+                type="button"
+                class="list-group-item list-group-item-action d-inline-flex align-items-center gap-2"
+                data-testid="sidebar-qa-report"
+                @click="openQaReportFromOffcanvas"
+              >
+                <i class="bi bi-bug" aria-hidden="true" />
+                {{ t('qa.widget.open') }}
+              </button>
+              <router-link
+                v-for="item in testerLinks"
+                :key="item.name"
+                class="list-group-item list-group-item-action"
+                :to="{ name: item.name }"
+                @click="closeSidebarOffcanvas"
+              >
+                <i :class="`bi ${item.icon}`" class="me-2" aria-hidden="true" />{{ t(item.label) }}
+              </router-link>
+            </div>
+          </div>
+        </div>
+        <div class="seim-offcanvas-footer pt-3 border-top">
+          <div
+            class="d-flex align-items-center justify-content-between gap-2 mb-3"
+            data-testid="sidebar-locale-switcher"
+          >
+            <span class="small text-muted">{{ t('dashboard.localeToggleAria') }}</span>
+            <LocaleSwitcher
+              active-class="btn-primary btn-sm"
+              inactive-class="btn-outline-secondary btn-sm"
+            />
+          </div>
           <button
             type="button"
             class="btn btn-outline-danger w-100 d-inline-flex align-items-center justify-content-center gap-2 seim-sidebar-logout"
@@ -274,6 +331,7 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useQaStore } from '@/stores/qa'
 import { useNavDropdown } from '@/composables/useNavDropdown'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import TesterMenu from '@/components/qa/TesterMenu.vue'
@@ -284,6 +342,7 @@ import { useFeatures } from '@/composables/useFeatures'
 import { useThemeToggle } from '@/composables/useThemeToggle'
 import { useCommandPalette } from '@/composables/useCommandPalette'
 import { Offcanvas } from 'bootstrap'
+import { testerMenuLinks } from '@/qa/menuLinks'
 import { readSidebarCollapsed, writeSidebarCollapsed } from '@/utils/sidebarPrefs'
 import { scrollMainIntoView } from '@/utils/scrollMain'
 
@@ -291,6 +350,8 @@ const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const qaStore = useQaStore()
+const testerLinks = computed(() => testerMenuLinks(qaStore))
 const keptAliveViews = [
   'Applications',
   'CoordinatorReviewQueue',
@@ -582,6 +643,16 @@ function closeSidebarOffcanvas() {
   instance.hide()
 }
 
+function openPaletteFromOffcanvas() {
+  closeSidebarOffcanvas()
+  openPalette()
+}
+
+function openQaReportFromOffcanvas() {
+  closeSidebarOffcanvas()
+  window.dispatchEvent(new CustomEvent('seim:qa-report'))
+}
+
 async function handleLogout() {
   closeUserMenu()
   closeSidebarOffcanvas()
@@ -606,6 +677,7 @@ async function handleLogout() {
   padding-top: env(safe-area-inset-top, 0);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: visible;
+  max-width: 100%;
 }
 
 /*
@@ -625,8 +697,14 @@ async function handleLogout() {
   align-items: center;
   flex-wrap: nowrap;
   gap: 0.5rem;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
+}
+
+.seim-app-shell__brand-cluster {
+  min-width: 0;
+  flex-shrink: 1;
 }
 
 .seim-app-shell__main-col {
@@ -652,9 +730,14 @@ async function handleLogout() {
   min-width: 0;
 }
 
+.seim-navbar-brand {
+  min-width: 0;
+}
+
 .seim-navbar-brand__logo {
   max-height: 28px;
   width: auto;
+  flex-shrink: 0;
 }
 
 .seim-navbar-brand__text {
@@ -664,6 +747,21 @@ async function handleLogout() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Narrow phones: collapse brand width so utilities (esp. user-menu) stay on-screen. */
+@media (max-width: 575.98px) {
+  .seim-app-shell__navbar-inner {
+    gap: 0.25rem;
+  }
+
+  .seim-navbar-brand__text {
+    max-width: min(5.5rem, 28vw);
+  }
+
+  .seim-app-shell__utilities {
+    gap: 0;
+  }
 }
 
 @media (min-width: 768px) {
@@ -688,14 +786,39 @@ async function handleLogout() {
   border: 0;
 }
 
-/* Phone: icon-only user menu needs a ≥44px tap target (Bootstrap sm = 576px). */
+/* ≥44px tap target at every width (phones through tablet; desktop already wider with name). */
+.seim-user-menu-toggle {
+  min-width: 44px;
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
 @media (max-width: 575.98px) {
   .seim-user-menu-toggle {
-    min-width: 44px;
-    min-height: 44px;
     justify-content: center;
     padding-inline: 0.5rem;
   }
+}
+
+/*
+ * Pin Log out to the offcanvas foot: nav items scroll; footer stays visible.
+ * Bootstrap's .offcanvas-body uses overflow-y:auto — override so only the nav scrolls.
+ */
+.seim-offcanvas-body {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.seim-offcanvas-nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.seim-offcanvas-footer {
+  flex: 0 0 auto;
 }
 
 .seim-sidebar-logout {
