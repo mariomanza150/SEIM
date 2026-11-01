@@ -282,14 +282,15 @@ class Program(UUIDModel, TimeStampedModel):
         related_name="programs_default",
         help_text=_(
             "For outgoing programs: preferred grade scale for applicants. "
-            "Overrides the AllowedEmailDomain default when set."
+            "When set, overrides the AllowedEmailDomain fallback default."
         ),
     )
     lock_grade_scale = models.BooleanField(
         default=False,
         help_text=_(
             "For outgoing programs: when set (with a default scale), applicants "
-            "cannot change the grade scale on the apply form."
+            "cannot change the grade scale on the apply form. Takes precedence "
+            "over the AllowedEmailDomain lock fallback."
         ),
     )
 
@@ -1619,7 +1620,7 @@ def program_grade_scale_policy(program):
     Return outgoing-program grade scale policy, or None when not applicable.
 
     Incoming programs and programs without a default scale yield None so callers
-    can fall back to AllowedEmailDomain policy.
+    can fall back to the deprecated AllowedEmailDomain policy.
     """
     if program is None:
         return None
@@ -1639,6 +1640,90 @@ def program_grade_scale_policy(program):
         "default_grade_scale_name": name,
         "scale": scale,
     }
+
+
+def resolve_grade_scale_policy(*, program=None, user=None):
+    """
+    Effective grade-scale policy for apply/profile flows.
+
+    Precedence: outgoing program default (when set) → AllowedEmailDomain fallback
+    → unlocked empty policy. Domain fields remain as a non-destructive fallback
+    until an admin configures the program.
+    """
+    policy = program_grade_scale_policy(program)
+    if policy is not None:
+        return {
+            "locked": bool(policy["locked"]),
+            "default_grade_scale": policy["default_grade_scale"],
+            "default_grade_scale_name": policy["default_grade_scale_name"],
+            "scale": policy.get("scale"),
+            "source": "program",
+        }
+    from accounts.models import AllowedEmailDomain
+
+    domain = AllowedEmailDomain.for_email(getattr(user, "email", None))
+    if domain is None or domain.default_grade_scale_id is None:
+        return {
+            "locked": False,
+            "default_grade_scale": None,
+            "default_grade_scale_name": "",
+            "scale": None,
+            "source": None,
+        }
+    return {
+        "locked": bool(domain.lock_grade_scale),
+        "default_grade_scale": str(domain.default_grade_scale_id),
+        "default_grade_scale_name": domain.default_grade_scale.name,
+        "scale": domain.default_grade_scale,
+        "source": "domain",
+    }
+
+
+def seed_outgoing_programs_from_domain_policy(ProgramModel, AllowedEmailDomainModel):
+    """
+    Copy a unique active domain grade-scale policy onto unset outgoing programs.
+
+    Used by migration 0044 and tests. Returns how many programs were updated.
+    Conflicting domain policies yield 0 (runtime domain fallback remains).
+    """
+    pairs = list(
+        AllowedEmailDomainModel.objects.filter(
+            is_active=True,
+            default_grade_scale_id__isnull=False,
+        )
+        .order_by("ordering", "name")
+        .values_list("default_grade_scale_id", "lock_grade_scale")
+        .distinct()
+    )
+    if len(pairs) != 1:
+        return 0
+
+    scale_id, locked = pairs[0]
+    return ProgramModel.objects.filter(
+        mobility_direction="outgoing",
+        default_grade_scale_id__isnull=True,
+    ).update(default_grade_scale_id=scale_id, lock_grade_scale=bool(locked))
+
+
+def unseed_outgoing_programs_from_domain_policy(ProgramModel, AllowedEmailDomainModel):
+    """Best-effort reverse for migration 0044."""
+    pairs = list(
+        AllowedEmailDomainModel.objects.filter(
+            is_active=True,
+            default_grade_scale_id__isnull=False,
+        )
+        .values_list("default_grade_scale_id", "lock_grade_scale")
+        .distinct()
+    )
+    if len(pairs) != 1:
+        return 0
+
+    scale_id, locked = pairs[0]
+    return ProgramModel.objects.filter(
+        mobility_direction="outgoing",
+        default_grade_scale_id=scale_id,
+        lock_grade_scale=bool(locked),
+    ).update(default_grade_scale_id=None, lock_grade_scale=False)
 
 
 def visible_host_subjects_queryset(

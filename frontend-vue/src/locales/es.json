@@ -732,7 +732,7 @@
       "hostDestinationModeEither": "Catálogo o texto libre",
       "hostDestinationModeHelp": "El catálogo usa el árbol de Destinos; el texto libre permite escribir nombres; “cualquiera” añade la opción “no listado”.",
       "defaultGradeScale": "Escala de calificaciones por defecto (saliente)",
-      "defaultGradeScaleHelp": "Si se define, sustituye el valor por defecto del dominio de correo para solicitantes salientes.",
+      "defaultGradeScaleHelp": "Preferida frente al respaldo obsoleto del dominio de correo para solicitantes salientes.",
       "lockGradeScale": "Bloquear escala de calificaciones",
       "lockGradeScaleHelp": "Impide que el solicitante cambie la escala en el formulario de solicitud"
     }
@@ -778,10 +778,11 @@
       "aliases": "Alias",
       "aliasesPlaceholder": "Separados por comas (p. ej. Español, Espanol)",
       "labelEn": "Etiqueta en inglés",
-      "defaultGradeScale": "Escala de calificación predeterminada",
-      "lockGradeScale": "Bloquear para estudiantes"
+      "defaultGradeScale": "Escala predeterminada (respaldo)",
+      "lockGradeScale": "Bloquear para estudiantes (respaldo)"
     },
-    "domainLockHelp": "Los estudiantes cuyo correo coincide con un dominio bloqueado siempre usan su escala predeterminada."
+    "domainLockHelp": "Respaldo obsoleto: preferir Programas → Escala / Bloqueo para movilidad saliente. El dominio aplica solo si el programa no tiene valor por defecto.",
+    "domainGradeScaleDeprecated": "Prefiere la configuración por programa. Los valores del dominio son solo respaldo."
   },
   "adminGrades": {
     "title": "Escalas de calificación",
@@ -2444,7 +2445,7 @@
     "gpaSelectScaleFirst": "Elige primero una escala de calificación",
     "gpaRangePlaceholder": "Entre {min} y {max}",
     "gpaOutOfRange": "El promedio debe estar entre {min} y {max} para esta escala.",
-    "gradeScaleLocked": "Definida por tu institución; no se puede cambiar."
+    "gradeScaleLocked": "Definida por tu programa o institución; no se puede cambiar."
   },
   "eligibilityRules": {
     "profile_missing": "Falta el perfil del estudiante.",

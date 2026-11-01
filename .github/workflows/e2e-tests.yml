@@ -2,9 +2,9 @@ name: E2E Tests (Playwright)
 
 on:
   push:
-    branches: [main, develop, master, feature/vue-migration]
+    branches: [main, develop, master, testing, feature/vue-migration]
   pull_request:
-    branches: [main, develop, master]
+    branches: [main, develop, master, testing]
   workflow_dispatch:
 
 concurrency:

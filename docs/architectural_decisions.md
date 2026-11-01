@@ -46,7 +46,20 @@ This document records key architectural decisions and the rationale behind them.
 
 ---
 
-## 8. Vue SPA Migration (Completed 2025–2026)
+## 8. Outgoing grade scale is per program (2026-10-28)
+
+**Decision:** Configure and optionally lock the home grade scale on `exchange.Program` for outgoing mobility. Keep `AllowedEmailDomain.default_grade_scale` / `lock_grade_scale` as a deprecated runtime fallback when a program has no default.
+
+**Rationale:**
+- Mario (2026-10-28): outgoing students’ scale should follow the exchange program, not only the email domain
+- Admins lock the scale on the program so applicants cannot change it on the apply form
+- Existing domain values stay non-destructive: migration `exchange.0044` seeds outgoing programs only when active domains agree on one policy; otherwise domain fallback continues unchanged until an admin edits the program
+
+**Enforcement:** Profile API `GET/PATCH /api/accounts/profile/?program=<id>` returns/enforces `grade_scale_policy` via `resolve_grade_scale_policy` (program → domain → unlocked). Vue apply form disables the scale select when locked.
+
+---
+
+## 9. Vue SPA Migration (Completed 2025–2026)
 
 **Decision:** Replace the Django-template authenticated UI with a **Vue 3 SPA** at `/seim/`, keeping Wagtail for the public site and DRF for all app data.
 
