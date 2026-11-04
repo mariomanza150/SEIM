@@ -49,7 +49,7 @@ dependencies = [
     "openpyxl==3.1.5",
     "python-dateutil==2.9.0.post0",
     "pytz==2026.5",
-    "requests==2.33.0",
+    "requests==2.34.2",
     "django-js-reverse==0.10.2",
     "django-filter==24.3",
     # Wagtail CMS
