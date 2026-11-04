@@ -80,7 +80,7 @@ dependencies = [
 dev = [
     # Code formatting and linting
     "ruff==0.12.2",
-    "isort==5.13.2",
+    "isort==9.0.2",
     "flake8==6.1.0",
     "flake8-docstrings==1.7.0",
     "flake8-import-order==0.18.2",
