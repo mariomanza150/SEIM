@@ -129,7 +129,7 @@ dev = [
     "webdriver-manager==4.0.1",
     # Performance profiling
     "memory-profiler==0.61.0",
-    "line-profiler==5.0.0",
+    "line-profiler==5.1.0",
 ]
 test = [
     # Core testing (versions match [dev] where packages overlap)
