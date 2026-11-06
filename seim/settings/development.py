@@ -220,6 +220,14 @@ if env("EMAIL_BACKEND") == "django_ses.SESBackend":
     AWS_SES_SECRET_ACCESS_KEY = env("AWS_SES_SECRET_ACCESS_KEY")
     DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
+# Microsoft Graph (personal Microsoft / Hotmail via OAuth2 device code)
+if EMAIL_BACKEND == "core.email.backends.MicrosoftGraphEmailBackend":
+    MS_GRAPH_CLIENT_ID = env("MS_GRAPH_CLIENT_ID")
+    MS_GRAPH_CLIENT_SECRET = env("MS_GRAPH_CLIENT_SECRET", default="")
+    MS_GRAPH_TENANT = env("MS_GRAPH_TENANT", default="consumers")
+    MS_GRAPH_REFRESH_TOKEN = env("MS_GRAPH_REFRESH_TOKEN")
+    DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
+
 # Celery Configuration
 CELERY_BROKER_URL = _docker_compose_redis_host_to_localhost(env("CELERY_BROKER_URL"))
 CELERY_RESULT_BACKEND = _docker_compose_redis_host_to_localhost(
