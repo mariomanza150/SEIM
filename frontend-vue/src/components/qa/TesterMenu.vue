@@ -1,5 +1,11 @@
 <template>
-  <li v-if="qa.isTester" ref="root" class="nav-item dropdown me-1" data-testid="qa-tester-menu" data-qa-ignore>
+  <li
+    v-if="qa.isTester"
+    ref="root"
+    class="nav-item dropdown me-1 d-none d-lg-block"
+    data-testid="qa-tester-menu"
+    data-qa-ignore
+  >
     <button
       type="button"
       class="nav-link dropdown-toggle seim-nav-text-btn d-inline-flex align-items-center gap-1"

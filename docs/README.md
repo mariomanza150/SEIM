@@ -246,7 +246,7 @@ Sphinx HTML stays in `docs/sphinx/build/` (gitignored). See **Current State** ab
 ### **Support:**
 - **Documentation**: Comprehensive guides (this folder)
 - **GitHub Issues**: Bug reports and feature requests
-- **Email**: admin@seim.local
+- **Security**: [SECURITY.md](../SECURITY.md) (private vulnerability reporting; no public support email)
 
 ---
 
