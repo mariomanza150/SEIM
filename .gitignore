@@ -304,6 +304,10 @@ tests/e2e_playwright/screenshots/
 tests/e2e_playwright/videos/
 tests/e2e_playwright/reports/
 
+# Microsoft Graph device-code refresh token (never commit)
+.ms_graph_refresh_token
+*.ms_graph_token
+
 # Local Tailscale / TLS host certs (never commit)
 *.ts.net.crt
 *.ts.net.key
