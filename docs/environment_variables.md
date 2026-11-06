@@ -112,13 +112,19 @@ REDIS_URL=redis://redis:6379/0
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `EMAIL_BACKEND` | ❌ | `console` | Email backend: `console`, `smtp`, `ses` |
+| `EMAIL_BACKEND` | ❌ | `console` | Email backend: `console`, `smtp`, `ses`, or `core.email.backends.MicrosoftGraphEmailBackend` |
 | `EMAIL_HOST` | ❌ | - | SMTP server host |
 | `EMAIL_PORT` | ❌ | `587` | SMTP server port |
 | `EMAIL_USE_TLS` | ❌ | `True` | Use TLS encryption |
 | `EMAIL_HOST_USER` | ❌ | - | SMTP username |
 | `EMAIL_HOST_PASSWORD` | ❌ | - | SMTP password |
 | `DEFAULT_FROM_EMAIL` | ❌ | `noreply@seim.local` | Default sender email |
+| `MS_GRAPH_CLIENT_ID` | when Graph | - | Azure app (public client) application (client) ID |
+| `MS_GRAPH_CLIENT_SECRET` | ❌ | empty | Optional; public clients usually omit this |
+| `MS_GRAPH_TENANT` | ❌ | `consumers` | Authority tenant (`consumers` for personal Microsoft accounts) |
+| `MS_GRAPH_REFRESH_TOKEN` | when Graph | - | Bootstrap refresh token (rotated tokens persist in Redis/Django cache) |
+
+Graph settings are loaded in `development.py` / `production.py` **only** when `EMAIL_BACKEND=core.email.backends.MicrosoftGraphEmailBackend`.
 
 #### **Email Backend Examples:**
 
@@ -145,6 +151,31 @@ AWS_SES_REGION_NAME=us-east-1
 AWS_SES_ACCESS_KEY_ID=your-access-key
 AWS_SES_SECRET_ACCESS_KEY=your-secret-key
 ```
+
+**Microsoft Graph (personal Microsoft / Hotmail):**
+
+Hotmail consumer SMTP AUTH often returns `535 5.7.139 SmtpClientAuthentication disabled`. Use Graph `POST /v1.0/me/sendMail` with delegated OAuth2 instead:
+
+1. Azure app registration: **Accounts in any organizational directory and personal Microsoft accounts** or **Personal Microsoft accounts only**; treat as a **public client**; enable **Allow public client flows**; add delegated permissions **Mail.Send** and **offline_access**.
+2. Obtain a refresh token (prints URL + user code only; writes a gitignored file by default):
+
+```bash
+python manage.py ms_graph_device_code
+# or: python manage.py ms_graph_device_code --print-token
+```
+
+3. Set env (example):
+
+```bash
+EMAIL_BACKEND=core.email.backends.MicrosoftGraphEmailBackend
+MS_GRAPH_CLIENT_ID=your-azure-app-client-id
+# MS_GRAPH_CLIENT_SECRET=   # optional
+MS_GRAPH_TENANT=consumers
+MS_GRAPH_REFRESH_TOKEN=paste-from-device-code-output
+DEFAULT_FROM_EMAIL=you@hotmail.com
+```
+
+Rotated refresh tokens are stored in Django cache (Redis via django-redis in prod). Do not log tokens. After changing prod env, recreate `web` / `celery` / `celery-beat` (keep the Redis volume so the cached refresh token survives).
 
 ### **☁️ AWS Configuration**
 
