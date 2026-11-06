@@ -53,7 +53,7 @@ dependencies = [
     "django-js-reverse==0.10.2",
     "django-filter==24.3",
     # Wagtail CMS
-    "wagtail==7.0.9",
+    "wagtail==8.0.1",
     "wagtail-seo==3.1.1",
     "wagtail-markdown==0.15.0",
     # Dynamic Forms and UI Components
