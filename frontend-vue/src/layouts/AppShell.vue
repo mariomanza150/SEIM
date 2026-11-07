@@ -742,6 +742,21 @@ async function handleLogout() {
   max-width: min(22rem, calc(100vw - 1.5rem));
 }
 
+/*
+ * Notification panel on phones: AppShell forces absolute on navbar menus, which
+ * would override NotificationDropdown's fixed inset. Re-assert fixed + gutters
+ * so the panel stays fully on-screen below the sm breakpoint (#157).
+ */
+@media (max-width: 575.98px) {
+  .seim-app-shell__navbar :deep(.navbar-nav .dropdown-menu.notification-dropdown) {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: none;
+  }
+}
+
 .seim-app-shell__navbar-inner {
   display: flex;
   align-items: center;
