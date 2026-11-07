@@ -118,67 +118,132 @@
       >
         {{ t('applicationSubjects.empty') }}
       </div>
-      <div v-else class="table-responsive mb-3">
-        <table class="table table-sm align-middle" data-testid="subject-selections-table">
-          <thead>
-            <tr>
-              <th>{{ t('applicationSubjects.hostSubjectLabel') }}</th>
-              <th>{{ t('applicationSubjects.homeCourseCodeLabel') }}</th>
-              <th>{{ t('applicationSubjects.homeCourseLabelLabel') }}</th>
-              <th>{{ t('applicationSubjects.creditsLabel') }}</th>
-              <th v-if="showGradeColumns">{{ t('applicationSubjects.hostGradeLabel') }}</th>
-              <th v-if="showGradeColumns">{{ t('applicationSubjects.homeGradeLabel') }}</th>
-              <th>{{ t('applicationSubjects.statusLabel') }}</th>
-              <th class="text-end">{{ t('applicationSubjects.actionsLabel') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="sel in selections" :key="sel.id">
-              <td>{{ hostCourseLabel(sel) }}</td>
-              <td>{{ sel.home_course_code || '—' }}</td>
-              <td>{{ sel.home_course_label || '—' }}</td>
-              <td>{{ sel.credits ?? sel.custom_credits ?? sel.host_subject_detail?.credits ?? '—' }}</td>
-              <td v-if="showGradeColumns">
-                <select
-                  v-if="canProposeGrades && sel.grade_status !== 'confirmed' && !hostGradeScaleMissing"
-                  class="form-select form-select-sm"
-                  :value="sel.proposed_host_grade || ''"
-                  :data-testid="`proposed-grade-${sel.id}`"
-                  @change="onProposedGradeChange(sel, $event.target.value)"
-                >
-                  <option value="">{{ t('applicationSubjects.selectGrade') }}</option>
-                  <option v-for="gv in hostGradeValues" :key="gv.id" :value="gv.id">
-                    {{ gv.label }}
-                  </option>
-                </select>
-                <span v-else>
-                  {{ sel.confirmed_host_grade_label || sel.proposed_host_grade_label || '—' }}
-                </span>
-              </td>
-              <td v-if="showGradeColumns">
-                {{ sel.home_grade_label || '—' }}
-              </td>
-              <td>
+      <ResponsiveList
+        v-else
+        class="mb-3"
+        :items="selections"
+        item-key="id"
+        mobile-test-id="subject-selections-mobile"
+      >
+        <div class="table-responsive">
+          <table class="table table-sm align-middle" data-testid="subject-selections-table">
+            <thead>
+              <tr>
+                <th>{{ t('applicationSubjects.hostSubjectLabel') }}</th>
+                <th>{{ t('applicationSubjects.homeCourseCodeLabel') }}</th>
+                <th>{{ t('applicationSubjects.homeCourseLabelLabel') }}</th>
+                <th>{{ t('applicationSubjects.creditsLabel') }}</th>
+                <th v-if="showGradeColumns">{{ t('applicationSubjects.hostGradeLabel') }}</th>
+                <th v-if="showGradeColumns">{{ t('applicationSubjects.homeGradeLabel') }}</th>
+                <th>{{ t('applicationSubjects.statusLabel') }}</th>
+                <th class="text-end">{{ t('applicationSubjects.actionsLabel') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="sel in selections" :key="sel.id">
+                <td>{{ hostCourseLabel(sel) }}</td>
+                <td>{{ sel.home_course_code || '—' }}</td>
+                <td>{{ sel.home_course_label || '—' }}</td>
+                <td>{{ selectionCredits(sel) }}</td>
+                <td v-if="showGradeColumns">
+                  <select
+                    v-if="canProposeGrades && sel.grade_status !== 'confirmed' && !hostGradeScaleMissing"
+                    class="form-select form-select-sm"
+                    :value="sel.proposed_host_grade || ''"
+                    :data-testid="`proposed-grade-${sel.id}`"
+                    @change="onProposedGradeChange(sel, $event.target.value)"
+                  >
+                    <option value="">{{ t('applicationSubjects.selectGrade') }}</option>
+                    <option v-for="gv in hostGradeValues" :key="gv.id" :value="gv.id">
+                      {{ gv.label }}
+                    </option>
+                  </select>
+                  <span v-else>
+                    {{ sel.confirmed_host_grade_label || sel.proposed_host_grade_label || '—' }}
+                  </span>
+                </td>
+                <td v-if="showGradeColumns">
+                  {{ sel.home_grade_label || '—' }}
+                </td>
+                <td>
+                  <span class="badge" :class="gradeStatusBadge(sel.grade_status)">
+                    {{ t(`applicationSubjects.gradeStatus.${sel.grade_status || 'none'}`) }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <button
+                    v-if="canEditMapping"
+                    type="button"
+                    class="btn btn-outline-danger btn-sm"
+                    :disabled="saving"
+                    :aria-label="t('applicationSubjects.removeSelectionLabel')"
+                    :data-testid="`remove-subject-${sel.id}`"
+                    @click="removeSelection(sel)"
+                  >
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <template #mobile-card="{ item: sel }">
+          <div class="subject-selection-card" :data-testid="`subject-selection-card-${sel.id}`">
+            <div class="fw-medium text-break mb-2">{{ hostCourseLabel(sel) }}</div>
+            <dl class="row mb-0 small subject-selection-card__dl">
+              <dt class="col-5 text-muted">{{ t('applicationSubjects.homeCourseCodeLabel') }}</dt>
+              <dd class="col-7 text-break">{{ sel.home_course_code || '—' }}</dd>
+              <dt class="col-5 text-muted">{{ t('applicationSubjects.homeCourseLabelLabel') }}</dt>
+              <dd class="col-7 text-break">{{ sel.home_course_label || '—' }}</dd>
+              <dt class="col-5 text-muted">{{ t('applicationSubjects.creditsLabel') }}</dt>
+              <dd class="col-7">{{ selectionCredits(sel) }}</dd>
+              <template v-if="showGradeColumns">
+                <dt class="col-5 text-muted">{{ t('applicationSubjects.hostGradeLabel') }}</dt>
+                <dd class="col-7">
+                  <select
+                    v-if="canProposeGrades && sel.grade_status !== 'confirmed' && !hostGradeScaleMissing"
+                    class="form-select subject-selection-card__control"
+                    :value="sel.proposed_host_grade || ''"
+                    :aria-label="t('applicationSubjects.hostGradeLabel')"
+                    :data-testid="`proposed-grade-mobile-${sel.id}`"
+                    @change="onProposedGradeChange(sel, $event.target.value)"
+                  >
+                    <option value="">{{ t('applicationSubjects.selectGrade') }}</option>
+                    <option v-for="gv in hostGradeValues" :key="gv.id" :value="gv.id">
+                      {{ gv.label }}
+                    </option>
+                  </select>
+                  <span v-else>
+                    {{ sel.confirmed_host_grade_label || sel.proposed_host_grade_label || '—' }}
+                  </span>
+                </dd>
+                <dt class="col-5 text-muted">{{ t('applicationSubjects.homeGradeLabel') }}</dt>
+                <dd class="col-7">{{ sel.home_grade_label || '—' }}</dd>
+              </template>
+              <dt class="col-5 text-muted">{{ t('applicationSubjects.statusLabel') }}</dt>
+              <dd class="col-7">
                 <span class="badge" :class="gradeStatusBadge(sel.grade_status)">
                   {{ t(`applicationSubjects.gradeStatus.${sel.grade_status || 'none'}`) }}
                 </span>
-              </td>
-              <td class="text-end">
-                <button
-                  v-if="canEditMapping"
-                  type="button"
-                  class="btn btn-outline-danger btn-sm"
-                  :disabled="saving"
-                  :data-testid="`remove-subject-${sel.id}`"
-                  @click="removeSelection(sel)"
-                >
-                  <i class="bi bi-trash"></i>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              </dd>
+            </dl>
+            <div v-if="canEditMapping" class="mt-3">
+              <button
+                type="button"
+                class="btn btn-outline-danger w-100 subject-selection-card__control"
+                :disabled="saving"
+                :aria-label="t('applicationSubjects.removeSelectionLabel')"
+                :data-testid="`remove-subject-mobile-${sel.id}`"
+                @click="removeSelection(sel)"
+              >
+                <i class="bi bi-trash me-1" aria-hidden="true"></i>
+                {{ t('applicationSubjects.removeSelectionLabel') }}
+              </button>
+            </div>
+          </div>
+        </template>
+      </ResponsiveList>
 
       <div class="d-flex flex-wrap gap-2 mb-2">
         <button
@@ -311,6 +376,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import ResponsiveList from '@/components/ResponsiveList.vue'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 
@@ -404,6 +470,10 @@ function hostCourseLabel(sel) {
     return `${code}${sel.custom_name}`
   }
   return formatHostSubjectOption(sel.host_subject_detail || sel.host_subject)
+}
+
+function selectionCredits(sel) {
+  return sel.credits ?? sel.custom_credits ?? sel.host_subject_detail?.credits ?? '—'
 }
 
 function snapshotHostCourseLabel(row) {
@@ -703,3 +773,18 @@ watch(
   { immediate: true },
 )
 </script>
+
+<style scoped>
+.subject-selection-card__dl dt {
+  font-weight: 500;
+}
+
+.subject-selection-card__dl dd {
+  margin-bottom: 0.5rem;
+}
+
+/* Phone cards: readable controls without sideways scroll (issue #179). */
+.subject-selection-card__control {
+  min-height: 44px;
+}
+</style>
