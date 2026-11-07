@@ -652,8 +652,7 @@ def _assert_notification_panel_in_viewport(page: Page, viewport: dict) -> None:
     vh = metrics["innerHeight"]
     # Allow sub-pixel rounding on device pixel ratios.
     assert metrics["left"] >= -0.5, (
-        f"panel overflows left at {viewport['width']}px "
-        f"(left={metrics['left']})"
+        f"panel overflows left at {viewport['width']}px (left={metrics['left']})"
     )
     assert metrics["right"] <= vw + 0.5, (
         f"panel overflows right at {viewport['width']}px "
