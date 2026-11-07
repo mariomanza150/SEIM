@@ -576,6 +576,7 @@
     "homeCourseLabelLabel": "Nombre (casa)",
     "creditsLabel": "Créditos",
     "actionsLabel": "Acciones",
+    "removeSelectionLabel": "Eliminar asignatura",
     "addSubjectSelection": "Agregar del catálogo",
     "customTitle": "Curso anfitrión no listado",
     "customTitleEmpty": "Ingresar curso anfitrión",
