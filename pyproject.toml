@@ -24,7 +24,7 @@ dependencies = [
     "defusedxml==0.7.1",
     # Database and Caching
     "psycopg2-binary==2.9.11",
-    "redis==5.0.4",
+    "redis==8.1.0",
     "django-redis==6.0.0",
     "django-cacheops==7.2",
     # Background Tasks and Queue Management
