@@ -58,6 +58,7 @@ describe('AdminDynformEditor', () => {
 
     await wrapper.get('[data-testid="dynforms-save"]').trigger('click')
     await flushPromises()
+    await flushPromises()
     expect(mockPatch).toHaveBeenCalled()
     const payload = mockPatch.mock.calls[0][1]
     const titles = Object.values(payload.schema.properties).map((p) => p.title)

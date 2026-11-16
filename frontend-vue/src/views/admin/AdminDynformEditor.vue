@@ -213,9 +213,25 @@ async function selectField(id) {
   await nextTick()
   if (seq !== labelFocusSeq) return
   const el = labelInput.value
-  if (!el || typeof el.focus !== 'function') return
-  el.focus({ preventScroll: true })
-  if (typeof el.select === 'function') el.select()
+  if (el && typeof el.focus === 'function') {
+    el.focus({ preventScroll: true })
+    if (typeof el.select === 'function') el.select()
+  }
+  if (typeof window !== 'undefined' && typeof window.innerWidth === 'number' && window.innerWidth < 1024) {
+    const prefersReducedMotion =
+      typeof window.matchMedia === 'function' &&
+      Boolean(window.matchMedia('(prefers-reduced-motion: reduce)')?.matches)
+    const behavior = prefersReducedMotion ? 'auto' : 'smooth'
+    const target =
+      (typeof document !== 'undefined' && typeof document.querySelector === 'function'
+        ? document.querySelector('[data-testid="dynforms-field-settings"]') ||
+          document.querySelector('[data-testid="dynforms-settings"]') ||
+          document.querySelector('.card-header')
+        : null) || el
+    if (target && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({ behavior, block: 'start' })
+    }
+  }
 }
 
 function addField(type) {
