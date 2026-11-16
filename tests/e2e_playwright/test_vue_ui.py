@@ -609,6 +609,116 @@ class TestVueAppShellTopBar:
         assert still_in_view, "Log out must stay pinned after scrolling the nav list"
 
 
+def _assert_notification_panel_in_viewport(page: Page, viewport: dict) -> None:
+    """Open the bell menu and assert its box stays inside the viewport (#157)."""
+    bell = page.locator("[data-testid=notifications-menu]")
+    expect(bell).to_be_visible(timeout=5000)
+    bell.click()
+
+    menu = page.locator("[data-testid=notifications-dropdown-menu].show")
+    expect(menu).to_be_visible(timeout=5000)
+
+    metrics = page.evaluate(
+        """() => {
+          const el = document.querySelector(
+            '[data-testid="notifications-dropdown-menu"].show'
+          );
+          if (!el) return null;
+          const r = el.getBoundingClientRect();
+          const header = el.querySelector('.dropdown-header');
+          const hr = header ? header.getBoundingClientRect() : null;
+          return {
+            left: r.left,
+            right: r.right,
+            top: r.top,
+            bottom: r.bottom,
+            width: r.width,
+            height: r.height,
+            scrollWidth: document.documentElement.scrollWidth,
+            clientWidth: document.documentElement.clientWidth,
+            innerWidth: window.innerWidth,
+            innerHeight: window.innerHeight,
+            header: hr && {
+              left: hr.left,
+              right: hr.right,
+              width: hr.width,
+            },
+            overflowY: getComputedStyle(el).overflowY,
+          };
+        }"""
+    )
+    assert metrics is not None, "notifications dropdown menu not found after open"
+    vw = metrics["innerWidth"]
+    vh = metrics["innerHeight"]
+    # Allow sub-pixel rounding on device pixel ratios.
+    assert metrics["left"] >= -0.5, (
+        f"panel overflows left at {viewport['width']}px (left={metrics['left']})"
+    )
+    assert metrics["right"] <= vw + 0.5, (
+        f"panel overflows right at {viewport['width']}px "
+        f"(right={metrics['right']} > innerWidth={vw})"
+    )
+    assert metrics["top"] >= -0.5, (
+        f"panel overflows top at {viewport['width']}px (top={metrics['top']})"
+    )
+    assert metrics["bottom"] <= vh + 0.5, (
+        f"panel overflows bottom at {viewport['width']}px "
+        f"(bottom={metrics['bottom']} > innerHeight={vh})"
+    )
+    assert metrics["scrollWidth"] <= metrics["innerWidth"], (
+        f"horizontal page scroll at {viewport['width']}px: "
+        f"scrollWidth={metrics['scrollWidth']} > innerWidth={metrics['innerWidth']}"
+    )
+    if metrics["header"]:
+        assert metrics["header"]["left"] >= -0.5, (
+            f"panel title clipped on the left at {viewport['width']}px "
+            f"(header.left={metrics['header']['left']})"
+        )
+        assert metrics["header"]["right"] <= vw + 0.5, (
+            f"panel title clipped on the right at {viewport['width']}px "
+            f"(header.right={metrics['header']['right']})"
+        )
+    # Narrow phones: panel must scroll internally rather than grow off-screen.
+    if viewport["width"] < 576:
+        assert metrics["overflowY"] in ("auto", "scroll"), (
+            f"expected internal vertical scroll on phones, got {metrics['overflowY']}"
+        )
+
+
+@pytest.mark.e2e_playwright
+@pytest.mark.vue
+@pytest.mark.nondestructive
+class TestVueNotificationDropdownViewport:
+    """Notification panel stays inside the viewport on phones/tablets (#157)."""
+
+    @pytest.mark.parametrize(
+        "viewport",
+        [
+            {"width": 320, "height": 568},
+            {"width": 375, "height": 812},
+            {"width": 768, "height": 1024},
+            {"width": 1280, "height": 800},
+        ],
+        ids=["phone-320", "phone-375", "tablet-768", "desktop-1280"],
+    )
+    def test_notification_panel_bounding_box_in_viewport(
+        self, page: Page, viewport: dict
+    ):
+        """Bell menu fully on-screen; no horizontal page scroll; title not clipped."""
+        page.set_viewport_size(viewport)
+        _login_vue_or_skip(page, VUE_BASE_URL, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD)
+        # Seed at least one notification so the panel has real content/height.
+        ensure_unread_notification_via_api(
+            page, VUE_STUDENT_EMAIL, VUE_STUDENT_PASSWORD
+        )
+        page.goto(f"{VUE_BASE_URL}/dashboard")
+        page.wait_for_load_state("networkidle")
+        expect(page.locator("[data-testid=dashboard-page]")).to_be_visible(
+            timeout=15000
+        )
+        _assert_notification_panel_in_viewport(page, viewport)
+
+
 @pytest.mark.e2e_playwright
 @pytest.mark.vue
 @pytest.mark.nondestructive
