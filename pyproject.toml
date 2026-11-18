@@ -62,7 +62,7 @@ dependencies = [
     "django-crisp-modals==2025.10.0",
     "django-itemlist==2025.7.7",
     # Additional Utilities
-    "Markdown==3.10",
+    "Markdown==3.11.3",
     "numpy==2.2.6",
     "py-dateutil==2.2",
     "pycryptodome==3.23.0",
