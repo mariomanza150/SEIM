@@ -310,9 +310,7 @@ class TestIsCoordinatorOrAdmin(TestCase):
 
         request.user = self.coordinator
         self.assertTrue(self.permission.has_permission(request, None))
-        self.assertTrue(
-            self.permission.has_object_permission(request, None, object())
-        )
+        self.assertTrue(self.permission.has_object_permission(request, None, object()))
 
         staff = TestUtils.create_test_user(
             username="coa_staff", email="coa_staff@example.com", role="student"
@@ -324,7 +322,11 @@ class TestIsCoordinatorOrAdmin(TestCase):
 
     def test_user_without_has_any_role_denied(self):
         request = self.factory.get("/test/")
-        bare = type("BareUser", (), {"is_authenticated": True, "is_staff": False, "is_superuser": False})()
+        bare = type(
+            "BareUser",
+            (),
+            {"is_authenticated": True, "is_staff": False, "is_superuser": False},
+        )()
         request.user = bare
         self.assertFalse(self.permission.has_permission(request, None))
 
@@ -350,9 +352,7 @@ class TestIsAdminRole(TestCase):
 
         request.user = self.admin
         self.assertTrue(self.permission.has_permission(request, None))
-        self.assertTrue(
-            self.permission.has_object_permission(request, None, object())
-        )
+        self.assertTrue(self.permission.has_object_permission(request, None, object()))
 
     def test_staff_and_is_admin_property(self):
         request = self.factory.get("/test/")
@@ -467,6 +467,8 @@ class TestIsOwner(TestCase):
         via_student = type("Obj", (), {"student": self.owner, "user": None})()
         via_user = type("Obj", (), {"student": None, "user": self.owner})()
         other = type("Obj", (), {"student": self.other, "user": None})()
-        self.assertTrue(self.permission.has_object_permission(request, None, via_student))
+        self.assertTrue(
+            self.permission.has_object_permission(request, None, via_student)
+        )
         self.assertTrue(self.permission.has_object_permission(request, None, via_user))
         self.assertFalse(self.permission.has_object_permission(request, None, other))
