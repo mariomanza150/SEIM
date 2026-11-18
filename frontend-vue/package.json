@@ -28,7 +28,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.11",
     "@vitest/coverage-v8": "^4.1.10",
-    "@vue/test-utils": "^2.4.6",
+    "@vue/test-utils": "^2.6.0",
     "eslint": "^10.14.0",
     "jsdom": "^27.4.0",
     "prettier": "^3.10.1",
