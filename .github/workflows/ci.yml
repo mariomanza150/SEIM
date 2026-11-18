@@ -113,19 +113,9 @@ jobs:
         run: bandit -c pyproject.toml -r . -ll
 
       - name: pip-audit
-        # Twisted (transitive via daphne/channels): no stable fixed release yet
-        # (fixes only in 26.10.0rc1). SEIM does not expose Twisted mail/IRC/XMPP/
-        # telnet/manhole. See docs/security/pip-audit-ignores.md.
-        run: >
-          pip-audit --desc on
-          --ignore-vuln CVE-2026-106454
-          --ignore-vuln CVE-2026-115774
-          --ignore-vuln CVE-2026-115775
-          --ignore-vuln CVE-2026-115776
-          --ignore-vuln CVE-2026-115778
-          --ignore-vuln CVE-2026-115877
-          --ignore-vuln CVE-2026-83813
-          --ignore-vuln GHSA-vpp8-g58w-m8mp
+        # Twisted (via daphne/channels) is at a fixed stable release; do not add
+        # --ignore-vuln without documenting it in docs/security/pip-audit-ignores.md.
+        run: pip-audit --desc on
 
       - name: Upload Bandit report
         uses: actions/upload-artifact@v4
