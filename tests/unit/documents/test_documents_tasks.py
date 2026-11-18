@@ -85,10 +85,10 @@ class TestScanDocumentVirusTask:
             # Verify task completed successfully
             assert "scanned: valid" in result
 
-            # Verify document was updated
+            # Clean virus scan must not mark the document staff-approved
             document.refresh_from_db()
-            assert document.is_valid is True
-            assert document.validated_at is not None
+            assert document.is_valid is False
+            assert document.validated_at is None
 
             # Verify validation record created
             validation = DocumentValidation.objects.filter(
@@ -193,9 +193,10 @@ class TestScanDocumentVirusTask:
             # Verify task doesn't crash
             assert "scanned: error" in result or "failed" in result.lower()
 
-            # Verify document updated
+            # Scan errors must not stamp staff approval timestamps
             document.refresh_from_db()
-            assert document.validated_at is not None
+            assert document.is_valid is False
+            assert document.validated_at is None
 
     def test_scan_document_virus_updates_existing_validation(
         self, document, validator_user
@@ -292,9 +293,9 @@ class TestScanDocumentVirusTask:
 
             assert start_time <= validation.validated_at <= end_time
 
-            # Verify document validated_at also set
+            # Clean scans leave document.validated_at unset (staff approval field)
             document.refresh_from_db()
-            assert start_time <= document.validated_at <= end_time
+            assert document.validated_at is None
 
     def test_scan_document_virus_preserves_document_metadata(
         self, document, validator_user
@@ -364,9 +365,9 @@ class TestScanDocumentVirusTask:
                 result = scan_document_virus(str(document.id), validator_id)
                 assert "scanned" in result.lower()
 
-            # Document should still be in valid state
+            # Still awaiting staff review after repeated clean scans
             document.refresh_from_db()
-            assert document.is_valid is True
+            assert document.is_valid is False
 
             # Should have 3 validation records
             assert DocumentValidation.objects.filter(document=document).count() == 3
@@ -393,10 +394,10 @@ class TestDocumentTaskIntegration:
             # Verify complete workflow
             assert "valid" in result.lower()
 
-            # Check document updated
+            # Virus-clean is not staff approval
             document.refresh_from_db()
-            assert document.is_valid is True
-            assert document.validated_at is not None
+            assert document.is_valid is False
+            assert document.validated_at is None
 
             # Check validation created
             validation = DocumentValidation.objects.get(
