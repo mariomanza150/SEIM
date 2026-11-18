@@ -10,7 +10,9 @@ from tests.utils import APITestCase
 
 
 def _pdf(name="doc.pdf"):
-    return SimpleUploadedFile(name, b"%PDF-1.4 isolation", content_type="application/pdf")
+    return SimpleUploadedFile(
+        name, b"%PDF-1.4 isolation", content_type="application/pdf"
+    )
 
 
 class TestDocumentIsolationAPI(APITestCase):
