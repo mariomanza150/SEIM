@@ -5,7 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.exceptions import ValidationError as DRFValidationError
 from rest_framework.test import APIRequestFactory
 
-from accounts.models import User
+from accounts.models import Role, User
 from documents import serializers
 from documents.models import (
     Document,
@@ -459,7 +459,14 @@ class TestDocumentResubmissionRequestSerializer:
     def test_document_resubmission_request_serializer_valid(self):
         """Test DocumentResubmissionRequestSerializer with valid data."""
         factory = APIRequestFactory()
-        user = User.objects.create_user(username="testuser", email="test@example.com")
+        student = User.objects.create_user(
+            username="testuser", email="test@example.com"
+        )
+        coordinator = User.objects.create_user(
+            username="coorduser", email="coord@example.com"
+        )
+        coord_role, _ = Role.objects.get_or_create(name="coordinator")
+        coordinator.roles.add(coord_role)
         document_type = DocumentType.objects.create(name="Test Document")
         program = Program.objects.create(
             name="Test Program",
@@ -469,13 +476,13 @@ class TestDocumentResubmissionRequestSerializer:
         )
         status = ApplicationStatus.objects.get_or_create(name="submitted")[0]
         application = Application.objects.create(
-            program=program, student=user, status=status
+            program=program, student=student, status=status
         )
         document = Document.objects.create(
             application=application,
             type=document_type,
             file=SimpleUploadedFile("test.pdf", b"test content"),
-            uploaded_by=user,
+            uploaded_by=student,
         )
 
         data = {
@@ -484,9 +491,9 @@ class TestDocumentResubmissionRequestSerializer:
             "resolved": False,
         }
 
-        # Create a request with the user
+        # Create a request with a coordinator (staff-only action)
         request_obj = factory.post("/api/document-resubmissions/", data)
-        request_obj.user = user
+        request_obj.user = coordinator
 
         with patch("documents.services.NotificationService.send_notification"):
             serializer = serializers.DocumentResubmissionRequestSerializer(
@@ -496,7 +503,7 @@ class TestDocumentResubmissionRequestSerializer:
 
             request = serializer.save()
         assert request.document == document
-        assert request.requested_by == user
+        assert request.requested_by == coordinator
         assert request.reason == "Document is unclear and needs to be resubmitted"
         assert not request.resolved
 
