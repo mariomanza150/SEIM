@@ -14,7 +14,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from core.cache import (
@@ -2073,16 +2073,49 @@ class CommentViewSet(viewsets.ModelViewSet):
                 Q(author=user) | Q(application__student=user, is_private=False)
             )
 
+    def _is_comment_staff(self, user):
+        return bool(
+            user.is_staff
+            or user.is_superuser
+            or (
+                hasattr(user, "has_role")
+                and (user.has_role("coordinator") or user.has_role("admin"))
+            )
+        )
+
+    def _can_access_application(self, user, application):
+        if self._is_comment_staff(user):
+            return True
+        return getattr(application, "student_id", None) == user.id
+
+    def _can_modify_comment(self, user, comment):
+        if self._is_comment_staff(user):
+            return True
+        return comment.author_id == user.id
+
     def perform_create(self, serializer):
         """Set author to current user on creation."""
-        serializer.save(author=self.request.user)
+        user = self.request.user
+        application = serializer.validated_data["application"]
+        if not self._can_access_application(user, application):
+            raise PermissionDenied("You cannot comment on this application.")
+        # Students cannot create private/staff-only comments
+        if not self._is_comment_staff(user):
+            serializer.validated_data["is_private"] = False
+        serializer.save(author=user)
         invalidate_application_api_responses(serializer.instance.application)
 
     def perform_update(self, serializer):
+        if not self._can_modify_comment(self.request.user, serializer.instance):
+            raise PermissionDenied("You cannot edit this comment.")
+        if not self._is_comment_staff(self.request.user):
+            serializer.validated_data["is_private"] = False
         serializer.save()
         invalidate_application_api_responses(serializer.instance.application)
 
     def perform_destroy(self, instance):
+        if not self._can_modify_comment(self.request.user, instance):
+            raise PermissionDenied("You cannot delete this comment.")
         application = instance.application
         instance.delete()
         invalidate_application_api_responses(application)
