@@ -576,6 +576,7 @@
     "homeCourseLabelLabel": "Home course name",
     "creditsLabel": "Credits",
     "actionsLabel": "Actions",
+    "removeSelectionLabel": "Remove subject",
     "addSubjectSelection": "Add catalog subject",
     "customTitle": "Unlisted host course",
     "customTitleEmpty": "Enter host course",
