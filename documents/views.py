@@ -507,6 +507,12 @@ class DocumentValidationViewSet(viewsets.ModelViewSet):
     serializer_class = DocumentValidationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_permissions(self):
+        # Students may read their own validation history; only staff may write.
+        if self.action in ("create", "update", "partial_update", "destroy"):
+            return [permissions.IsAuthenticated(), IsCoordinatorOrAdmin()]
+        return super().get_permissions()
+
     def get_queryset(self):
         """Filter validations based on user permissions."""
         user = self.request.user
@@ -540,6 +546,12 @@ class DocumentResubmissionRequestViewSet(viewsets.ModelViewSet):
     queryset = DocumentResubmissionRequest.objects.all()
     serializer_class = DocumentResubmissionRequestSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        # Students may read requests on their documents; only staff may create/update.
+        if self.action in ("create", "update", "partial_update", "destroy"):
+            return [permissions.IsAuthenticated(), IsCoordinatorOrAdmin()]
+        return super().get_permissions()
 
     def get_queryset(self):
         """Filter resubmission requests based on user permissions."""
