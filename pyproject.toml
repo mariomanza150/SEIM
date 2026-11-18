@@ -112,7 +112,7 @@ dev = [
     "django-livereload==1.7",
     # Testing and Code Coverage (aligned with [test])
     "pytest==8.3.5",
-    "pytest-django==4.7.0",
+    "pytest-django==4.14.0",
     "pytest-cov==4.1.0",
     "pytest-html==4.1.1",
     "pytest-json-report==1.5.0",
@@ -134,7 +134,7 @@ dev = [
 test = [
     # Core testing (versions match [dev] where packages overlap)
     "pytest==8.3.5",
-    "pytest-django==4.7.0",
+    "pytest-django==4.14.0",
     "pytest-cov==4.1.0",
     "pytest-mock==3.17.0",
     "pytest-selenium==4.1.0",
