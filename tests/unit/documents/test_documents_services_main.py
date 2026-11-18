@@ -462,19 +462,12 @@ class TestDocumentService(TestCase):
         self.assertTrue(DocumentService.can_replace_document(document, self.user))
 
     def test_upload_document_rejects_non_applicant(self):
-        coordinator = User.objects.create_user(
-            username="coord", email="coord@example.com", password="testpass123"
-        )
-        from accounts.models import Role
-
-        role, _ = Role.objects.get_or_create(name="coordinator")
-        coordinator.roles.add(role)
         pdf = SimpleUploadedFile(
             "ok.pdf", b"%PDF-1.4\n", content_type="application/pdf"
         )
         with self.assertRaises(ValueError) as ctx:
             DocumentService.upload_document(
-                self.application, self.document_type, pdf, coordinator
+                self.application, self.document_type, pdf, self.coordinator
             )
         self.assertIn("Only the applicant", str(ctx.exception))
 
