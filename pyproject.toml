@@ -126,7 +126,7 @@ dev = [
     "responses==0.24.1",
     "httpretty==1.1.4",
     "coverage==7.11.3",
-    "webdriver-manager==4.0.1",
+    "webdriver-manager==4.1.2",
     # Performance profiling
     "memory-profiler==0.61.0",
     "line-profiler==5.0.0",
@@ -148,7 +148,7 @@ test = [
     "httpretty==1.1.4",
     "coverage==7.11.3",
     # Selenium (host-oriented tests; kept for parity with dev)
-    "webdriver-manager==4.0.1",
+    "webdriver-manager==4.1.2",
     # Playwright E2E
     "playwright==1.41.2",
     "pytest-playwright==0.4.4",
