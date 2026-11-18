@@ -601,12 +601,44 @@ class DocumentCommentViewSet(viewsets.ModelViewSet):
             Q(author=user) | Q(document__application__student=user, is_private=False)
         ).select_related("document", "document__application", "author")
 
+    def _is_comment_staff(self, user):
+        return bool(
+            user.is_staff
+            or user.is_superuser
+            or (
+                hasattr(user, "has_role")
+                and (user.has_role("coordinator") or user.has_role("admin"))
+            )
+        )
+
+    def _can_modify_comment(self, user, comment):
+        if self._is_comment_staff(user):
+            return True
+        return comment.author_id == user.id
+
     def perform_create(self, serializer):
         document = serializer.validated_data["document"]
         if not DocumentService.user_can_access_document(self.request.user, document):
             raise PermissionDenied("You cannot comment on this document.")
+        if not self._is_comment_staff(self.request.user):
+            serializer.validated_data["is_private"] = False
         serializer.save(author=self.request.user)
         invalidate_application_api_responses(document.application)
+
+    def perform_update(self, serializer):
+        if not self._can_modify_comment(self.request.user, serializer.instance):
+            raise PermissionDenied("You cannot edit this comment.")
+        if not self._is_comment_staff(self.request.user):
+            serializer.validated_data["is_private"] = False
+        serializer.save()
+        invalidate_application_api_responses(serializer.instance.document.application)
+
+    def perform_destroy(self, instance):
+        if not self._can_modify_comment(self.request.user, instance):
+            raise PermissionDenied("You cannot delete this comment.")
+        application = instance.document.application
+        instance.delete()
+        invalidate_application_api_responses(application)
 
     @cache_api_response(timeout=300, key_func=_document_comment_list_cache_key)
     def list(self, request, *args, **kwargs):
