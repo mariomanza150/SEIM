@@ -15,7 +15,7 @@ requires-python = ">=3.11"
 dependencies = [
     # Core Django and DRF
     "Django==5.2.17",
-    "sqlparse==0.6.0",
+    "sqlparse==0.6.1",
     "djangorestframework==3.18.3",
     "django-cors-headers==4.9.0",
     "django-environ==0.14.0",
@@ -62,7 +62,7 @@ dependencies = [
     "django-crisp-modals==2025.10.0",
     "django-itemlist==2025.7.7",
     # Additional Utilities
-    "Markdown==3.10",
+    "Markdown==3.11.3",
     "numpy==2.2.6",
     "py-dateutil==2.2",
     "pycryptodome==3.23.0",
