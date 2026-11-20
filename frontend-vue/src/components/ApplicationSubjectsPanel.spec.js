@@ -333,4 +333,140 @@ describe('ApplicationSubjectsPanel', () => {
     expect(wrapper.text()).toContain('Versiones anteriores')
     expect(wrapper.text()).toContain('Aún no hay versiones anteriores')
   })
+
+  const selectionFixture = {
+    id: 'sel-1',
+    custom_name: 'Algorithms',
+    custom_code: 'CS101',
+    home_course_code: 'H101',
+    home_course_label: 'Home Algos',
+    credits: '6.00',
+    grade_status: 'none',
+    proposed_host_grade: 'gv-1',
+  }
+
+  it('renders phone cards for current selections while keeping the desktop table (student)', async () => {
+    mockPanelGets({ selections: [selectionFixture] })
+    const wrapper = mount(ApplicationSubjectsPanel, {
+      props: {
+        applicationId: 'app-1',
+        applicationStatus: 'approved',
+        hostInstitutionId: 'inst-1',
+        isCoordinator: false,
+      },
+      global: { plugins: [i18n] },
+      attachTo: document.body,
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="subject-selections-table"]').exists()).toBe(true)
+    })
+
+    const desktopPane = wrapper.find('.seim-responsive-list > .d-none.d-md-block')
+    const mobilePane = wrapper.find('.seim-responsive-list__mobile.d-md-none')
+    expect(desktopPane.exists()).toBe(true)
+    expect(mobilePane.exists()).toBe(true)
+    expect(desktopPane.find('[data-testid="subject-selections-table"]').exists()).toBe(true)
+
+    const card = wrapper.find('[data-testid="subject-selection-card-sel-1"]')
+    expect(card.exists()).toBe(true)
+    expect(wrapper.find('[data-testid="subject-selections-mobile-0"]').exists()).toBe(true)
+    expect(card.text()).toContain('CS101')
+    expect(card.text()).toContain('Algorithms')
+    expect(card.text()).toContain('H101')
+    expect(card.text()).toContain('Home Algos')
+    expect(card.text()).toContain('6.00')
+
+    const gradeSelect = wrapper.find('[data-testid="proposed-grade-mobile-sel-1"]')
+    const removeBtn = wrapper.find('[data-testid="remove-subject-mobile-sel-1"]')
+    expect(gradeSelect.exists()).toBe(true)
+    expect(removeBtn.exists()).toBe(true)
+    expect(gradeSelect.classes()).toContain('subject-selection-card__control')
+    expect(removeBtn.classes()).toContain('subject-selection-card__control')
+    expect(removeBtn.attributes('aria-label')).toBe('Remove subject')
+
+    gradeSelect.element.focus()
+    expect(document.activeElement).toBe(gradeSelect.element)
+    removeBtn.element.focus()
+    expect(document.activeElement).toBe(removeBtn.element)
+
+    // Historical snapshots stay table-only (out of scope for phone cards).
+    expect(wrapper.find('[data-testid="subject-plan-versions"] .seim-responsive-list').exists()).toBe(false)
+
+    wrapper.unmount()
+  })
+
+  it('renders phone cards for coordinators without student grade inputs', async () => {
+    mockPanelGets({
+      selections: [
+        {
+          ...selectionFixture,
+          grade_status: 'proposed',
+          proposed_host_grade_label: 'HostA',
+          home_grade_label: 'HomeA',
+        },
+      ],
+    })
+    const wrapper = mount(ApplicationSubjectsPanel, {
+      props: {
+        applicationId: 'app-1',
+        applicationStatus: 'approved',
+        hostInstitutionId: 'inst-1',
+        isCoordinator: true,
+      },
+      global: { plugins: [i18n] },
+      attachTo: document.body,
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="subject-selection-card-sel-1"]').exists()).toBe(true)
+    })
+
+    const card = wrapper.find('[data-testid="subject-selection-card-sel-1"]')
+    expect(card.text()).toContain('HostA')
+    expect(card.text()).toContain('HomeA')
+    expect(card.text()).toContain('Proposed')
+    expect(wrapper.find('[data-testid="proposed-grade-mobile-sel-1"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="remove-subject-mobile-sel-1"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="confirm-subject-grades"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="reject-subject-grades"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="propose-subject-grades"]').exists()).toBe(false)
+
+    const notes = wrapper.find('#grade-notes')
+    notes.element.focus()
+    expect(document.activeElement).toBe(notes.element)
+
+    wrapper.unmount()
+  })
+
+  it('wires mobile remove and grade change to existing handlers', async () => {
+    mockPanelGets({ selections: [selectionFixture] })
+    api.patch.mockResolvedValue({
+      data: { ...selectionFixture, proposed_host_grade: 'gv-1' },
+    })
+    api.delete.mockResolvedValue({})
+    const wrapper = mount(ApplicationSubjectsPanel, {
+      props: {
+        applicationId: 'app-1',
+        applicationStatus: 'approved',
+        hostInstitutionId: 'inst-1',
+        isCoordinator: false,
+      },
+      global: { plugins: [i18n] },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="proposed-grade-mobile-sel-1"]').exists()).toBe(true)
+    })
+
+    await wrapper.find('[data-testid="proposed-grade-mobile-sel-1"]').setValue('gv-1')
+    await vi.waitFor(() => {
+      expect(api.patch).toHaveBeenCalledWith(
+        '/api/application-subject-selections/sel-1/',
+        { proposed_host_grade: 'gv-1' },
+      )
+    })
+
+    await wrapper.find('[data-testid="remove-subject-mobile-sel-1"]').trigger('click')
+    await vi.waitFor(() => {
+      expect(api.delete).toHaveBeenCalledWith('/api/application-subject-selections/sel-1/')
+    })
+  })
 })

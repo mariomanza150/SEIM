@@ -349,10 +349,11 @@ pytest tests/integration/
 
 ## 📞 Support
 
-- **Documentation:** See `docs/` directory
-- **Issues:** GitHub Issues
-- **Wiki:** GitHub Wiki
-- **Email:** support@seim.example.com
+- **Documentation:** See `docs/` ([docs/README.md](docs/README.md))
+- **Issues:** [GitHub Issues](https://github.com/mariomanza150/SEIM/issues)
+- **Security:** Private reports via [SECURITY.md](SECURITY.md) (do not use public issues for vulnerabilities)
+
+There is no public support email for this repository.
 
 ---
 
@@ -371,7 +372,7 @@ Special thanks to all contributors who helped achieve production readiness!
 
 ## 📜 License
 
-[Your License Here]
+MIT — see [LICENSE](LICENSE).
 
 ---
 

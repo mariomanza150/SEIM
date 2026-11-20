@@ -182,9 +182,13 @@ class NotificationViewSet(viewsets.ModelViewSet):
         ).count()
         return Response({"count": count})
 
-    @action(detail=False, methods=["post"])
+    @action(
+        detail=False,
+        methods=["post"],
+        permission_classes=[IsAuthenticated, IsCoordinatorOrAdmin],
+    )
     def batch_send(self, request):
-        """Send notifications to multiple users."""
+        """Send notifications to multiple users (coordinator/admin only)."""
         users = request.data.get("users", [])
         type_name = request.data.get("type_name")
         message = request.data.get("message")
@@ -193,8 +197,21 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
 
 class NotificationPreferenceViewSet(viewsets.ModelViewSet):
+    """Per-user notification preferences; callers may only access their own rows."""
+
     queryset = NotificationPreference.objects.all()
     serializer_class = NotificationPreferenceSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return (
+            NotificationPreference.objects.filter(user=self.request.user)
+            .select_related("user", "type")
+            .order_by("type__name", "id")
+        )
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
 @extend_schema_view(

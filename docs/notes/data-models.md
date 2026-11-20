@@ -110,7 +110,7 @@ Extended user profile with additional information.
 ### Student Profile Catalogs
 Administrator-managed catalogs share `id` (UUID), `name`, `code`, `is_active`, `ordering`, `created_at`, and `updated_at`.
 
-- `AllowedEmailDomain` - Unique normalized institutional domain used by registration; active entries are publicly readable
+- `AllowedEmailDomain` - Unique normalized institutional domain used by registration; active entries are publicly readable. `default_grade_scale` / `lock_grade_scale` are a **deprecated fallback** when an outgoing `Program` has no grade-scale default (prefer `Program.default_grade_scale` / `lock_grade_scale`).
 - `AcademicLevel` - Academic level choices
 - `SchoolFaculty` - Home school/faculty choices
 - `Unidad` - Home campus/unit choices
@@ -203,6 +203,10 @@ Mobility **scheme** definition (not a destination). Seeded schemes: Movilidad Na
 - `recurring` (BooleanField, default=False)
 - `application_form` (ForeignKey to application_forms.FormType, nullable)
 - `eligibility_ruleset` (optional linked ruleset)
+- `mobility_direction` (`outgoing` / `incoming`)
+- `host_destination_mode` / `host_destination_required`
+- `default_grade_scale` (FK → grades.GradeScale, nullable) — outgoing preferred home scale; overrides domain fallback when set
+- `lock_grade_scale` (Boolean, default False) — when set with a default, applicants cannot change the scale on apply
 - `created_at`, `updated_at` (from TimeStampedModel)
 
 **Relationships:**
@@ -211,9 +215,10 @@ Mobility **scheme** definition (not a destination). Seeded schemes: Movilidad Na
 - Through: `required_document_types` ↔ DocumentType via **ProgramDocumentRequirement**
 - One-to-Many: `form_submissions` → application_forms.FormSubmission
 - Foreign Key: `application_form` → application_forms.FormType
+- Foreign Key: `default_grade_scale` → grades.GradeScale
 
 **Validation:**
-- `clean()` - Ensures end_date > start_date
+- `clean()` - Ensures end_date > start_date; rejects `lock_grade_scale` without `default_grade_scale`
 
 ### Host destination hierarchy
 Nested under a scheme `Program`:

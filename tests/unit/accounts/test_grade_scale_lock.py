@@ -160,3 +160,10 @@ class TestDomainCatalogApi:
         )
         assert ok.status_code == 201, ok.content
         assert ok.json()["default_grade_scale_name"] == "MX 0-10"
+
+    def test_model_clean_rejects_lock_without_default(self, scales):
+        from django.core.exceptions import ValidationError
+
+        with pytest.raises(ValidationError) as exc:
+            AllowedEmailDomain.objects.create(name="bad.lock.mx", lock_grade_scale=True)
+        assert "lock_grade_scale" in exc.value.message_dict

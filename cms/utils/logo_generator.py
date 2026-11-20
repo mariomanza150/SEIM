@@ -81,7 +81,6 @@ def create_placeholder_logo(institution_name, output_path=None, return_buffer=Fa
             font_small = ImageFont.load_default()
 
     # Wrap text if too long
-    width - 40
     if len(institution_name) > 30:
         # Split into two lines
         words = institution_name.split()

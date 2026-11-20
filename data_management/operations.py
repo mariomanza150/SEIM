@@ -71,7 +71,9 @@ _DATA_MANAGEMENT_SECTIONS = (
 
 
 class DataManagementError(Exception):
-    def __init__(self, message, code=400):
+    def __init__(self, message, code=400):  # noqa: B042
+        # Keep Exception.args = (message,) so str(exc)/logging stay message-only;
+        # HTTP status lives on .code (callers use exc.message / exc.code).
         self.message = message
         self.code = code
         super().__init__(message)

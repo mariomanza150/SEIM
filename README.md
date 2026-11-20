@@ -4,7 +4,7 @@
 
 Student Exchange Information Manager: Django 5.2 + DRF + Vue 3 SPA + Wagtail CMS for student exchange programs.
 
-**SPA:** `/seim/` (`frontend-vue/`) · **CMS:** `/` and `/cms/` · **API:** `/api/` · [Contributing](CONTRIBUTING.md) · [Issues](https://github.com/mariomanza150/SEIM/issues) · [License](LICENSE)
+**SPA:** `/seim/` (`frontend-vue/`) · **CMS:** `/` and `/cms/` · **API:** `/api/` · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Issues](https://github.com/mariomanza150/SEIM/issues) · [License](LICENSE)
 
 ## 🎉 Project Status
 
@@ -665,9 +665,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support & Contact
 
-- **Documentation**: [Developer Guide](docs/developer_guide.md)
+- **Documentation**: [Developer Guide](docs/developer_guide.md) · [docs/README.md](docs/README.md)
 - **Issues**: [GitHub Issues](https://github.com/mariomanza150/SEIM/issues)
-- **Email**: support@seim.local
+- **Security**: Private vulnerability reports via [SECURITY.md](SECURITY.md) — do not file public issues for security findings
+
+There is no public support mailbox for this repository.
 
 ---
 

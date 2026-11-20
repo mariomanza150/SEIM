@@ -1,8 +1,8 @@
-> **Snapshot (October 2025).** Active work is tracked in GitHub Issues and [changelog.md](changelog.md). **Superseded for gap/priority decisions by** [`notes/gap-audit-2026-08-20.md`](notes/gap-audit-2026-08-20.md) (+ [`notes/feature-tracking.md`](notes/feature-tracking.md)).
+> **Snapshot (2026-11).** Historical MVP tracker. Active work is tracked in GitHub Issues and [changelog.md](changelog.md). **Superseded for gap/priority decisions by** [`notes/gap-audit-2026-08-20.md`](notes/gap-audit-2026-08-20.md) (+ [`notes/feature-tracking.md`](notes/feature-tracking.md)).
 
 # SEIM Backlog
 
-This backlog tracks actionable development tasks, prioritized for sprint planning. Each item is linked to a user story, phase, and acceptance criteria. Update status and sprint as work progresses.
+This backlog tracks historical MVP / early-phase tasks. Prefer GitHub Issues for new work. Each item is linked to a user story, phase, and acceptance criteria.
 
 | ID    | User Story / Task (summary)                                 | Phase   | Priority | Acceptance Criteria (summary)                                 | Status   | Sprint |
 |-------|------------------------------------------------------------|---------|----------|--------------------------------------------------------------|----------|--------|
@@ -30,9 +30,9 @@ This backlog tracks actionable development tasks, prioritized for sprint plannin
 | US8   | Visual form builder for dynamic application forms           | 1/MVP   | Medium   | Admin can build/edit forms with validation                    | Done     | 2      |
 | US9   | Notifications for workflow events                           | 2/Future| Medium   | Email/in-app notifications for key events                     | Done     | 3      |
 | US10  | Analytics dashboard and exportable reports                  | 3/Future| Low      | Admin/coordinator can view/export analytics                   | Done     | 4      |
-| US11  | Internationalization support                                | 5/Future| Low      | Users can select preferred language                           | Planned  | 5      |
-| T1    | Set up CI/CD pipeline (lint, test, deploy)                  | 1/MVP   | High     | Automated build, test, deploy on push/PR                      | To Do    | 1      |
-| T2    | Write unit and integration tests for all major features     | 1/MVP   | High     | 80%+ coverage, all critical paths tested                      | To Do    | 2      |
+| US11  | Internationalization support                                | 5/Future| Low      | Users can select preferred language                           | Done     | 5      |
+| T1    | Set up CI/CD pipeline (lint, test, deploy)                  | 1/MVP   | High     | Automated build, test, deploy on push/PR                      | Done     | 1      |
+| T2    | Write unit and integration tests for all major features     | 1/MVP   | High     | 80%+ coverage, all critical paths tested                      | Done     | 2      |
 | T3    | Update and maintain documentation as features are added     | 1/MVP   | High     | Docs reflect current state, onboarding is up to date          | Done     | 1-5    |
 
 ---
@@ -45,16 +45,15 @@ This backlog tracks actionable development tasks, prioritized for sprint plannin
 
 **Current Status Summary:**
 - **MVP Features:** 22/22 completed (100%)
-- **Future Features:** 4/4 completed (100%)
-  - Program Cloning ✅
-  - Enhanced Eligibility Criteria ✅
-  - Direct Notification Links ✅
-  - Enhanced Analytics (previous) ✅
-- **Technical Tasks:** 1/3 completed (33%)
+- **Future / stretch items in this table:** completed (notifications, analytics, i18n foundation, program cloning, eligibility, CI/CD, test gate)
+- **Technical Tasks:** 3/3 completed (100%)
+  - **T1** CI/CD: `.github/workflows/ci.yml`, deploy workflows, Playwright `e2e-tests.yml`, secret scan
+  - **T2** Tests: pytest unit/integration with `--cov-fail-under=80`; Vitest; Playwright E2E
+  - **US11** i18n: Django locales (`locale/`) plus Vue `vue-i18n` (en/es); further locale depth is optional polish
 
-**Remaining Work for Production:**
-1. **Testing:** Comprehensive test suite (T2)
-2. **CI/CD:** Automated deployment pipeline (T1)
-3. **Optional:** Internationalization support (US11)
+**Where to look next:**
+1. GitHub Issues for open work
+2. [`notes/feature-tracking.md`](notes/feature-tracking.md) and [`notes/gap-audit-2026-08-20.md`](notes/gap-audit-2026-08-20.md) for gaps
+3. [roadmap.md](roadmap.md) for phase history (Phase 5 production readiness marked complete)
 
-Expand this backlog as new stories/tasks are identified. For full user stories and requirements, see [user_stories.md](user_stories.md). 
+Expand this backlog only for historical MVP mapping. For full user stories and requirements, see [user_stories.md](user_stories.md). 

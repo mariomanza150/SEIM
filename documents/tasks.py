@@ -35,7 +35,7 @@ def scan_document_virus(self, document_id, validator_id):
                 result = "error"
                 details = f"Scan failed: {str(e)}"
 
-        # Create validation record
+        # Create validation record (virus outcome ≠ staff approval).
         DocumentValidation.objects.create(
             document=document,
             validator_id=validator_id,
@@ -44,10 +44,12 @@ def scan_document_virus(self, document_id, validator_id):
             validated_at=timezone.now(),
         )
 
-        # Update document status
-        document.is_valid = result == "valid"
-        document.validated_at = timezone.now()
-        document.save()
+        # Only infection flips staff-facing approval flags. A clean scan must not
+        # set is_valid=True — that flag means coordinator/admin review.
+        if result == "infected":
+            document.is_valid = False
+            document.validated_at = timezone.now()
+            document.save(update_fields=["is_valid", "validated_at"])
 
         return f"Document {document_id} scanned: {result}"
 

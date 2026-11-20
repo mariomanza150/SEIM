@@ -14,6 +14,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 
+from accounts.models import Role
 from documents.models import (
     Document,
     DocumentResubmissionRequest,
@@ -34,6 +35,11 @@ class TestDocumentService(TestCase):
         self.user = User.objects.create_user(
             username="testuser", email="test@example.com", password="testpass123"
         )
+        self.coordinator = User.objects.create_user(
+            username="coorduser", email="coord@example.com", password="testpass123"
+        )
+        coord_role, _ = Role.objects.get_or_create(name="coordinator")
+        self.coordinator.roles.add(coord_role)
 
         self.program = Program.objects.create(
             name="Test Program",
@@ -226,7 +232,9 @@ class TestDocumentService(TestCase):
         # Create maximum number of resubmission requests
         for i in range(DocumentService.MAX_RESUBMISSIONS):
             DocumentResubmissionRequest.objects.create(
-                document=document, requested_by=self.user, reason=f"Request {i + 1}"
+                document=document,
+                requested_by=self.coordinator,
+                reason=f"Request {i + 1}",
             )
 
         result = DocumentService.can_request_resubmission(document)
@@ -241,12 +249,12 @@ class TestDocumentService(TestCase):
 
         with patch("documents.services.NotificationService.send_notification"):
             result = DocumentService.request_resubmission(
-                document, self.user, "Document needs to be updated"
+                document, self.coordinator, "Document needs to be updated"
             )
 
             self.assertIsInstance(result, DocumentResubmissionRequest)
             self.assertEqual(result.document, document)
-            self.assertEqual(result.requested_by, self.user)
+            self.assertEqual(result.requested_by, self.coordinator)
             self.assertEqual(result.reason, "Document needs to be updated")
 
     def test_request_resubmission_over_limit(self):
@@ -258,13 +266,17 @@ class TestDocumentService(TestCase):
         # Create maximum number of resubmission requests
         for i in range(DocumentService.MAX_RESUBMISSIONS):
             DocumentResubmissionRequest.objects.create(
-                document=document, requested_by=self.user, reason=f"Request {i + 1}"
+                document=document,
+                requested_by=self.coordinator,
+                reason=f"Request {i + 1}",
             )
 
         with self.assertRaises(
             ValueError, msg="Maximum number of resubmissions reached."
         ):
-            DocumentService.request_resubmission(document, self.user, "Another request")
+            DocumentService.request_resubmission(
+                document, self.coordinator, "Another request"
+            )
 
     def test_can_replace_document_draft_status(self):
         """Test document replacement when application is in draft status."""
@@ -450,19 +462,12 @@ class TestDocumentService(TestCase):
         self.assertTrue(DocumentService.can_replace_document(document, self.user))
 
     def test_upload_document_rejects_non_applicant(self):
-        coordinator = User.objects.create_user(
-            username="coord", email="coord@example.com", password="testpass123"
-        )
-        from accounts.models import Role
-
-        role, _ = Role.objects.get_or_create(name="coordinator")
-        coordinator.roles.add(role)
         pdf = SimpleUploadedFile(
             "ok.pdf", b"%PDF-1.4\n", content_type="application/pdf"
         )
         with self.assertRaises(ValueError) as ctx:
             DocumentService.upload_document(
-                self.application, self.document_type, pdf, coordinator
+                self.application, self.document_type, pdf, self.coordinator
             )
         self.assertIn("Only the applicant", str(ctx.exception))
 

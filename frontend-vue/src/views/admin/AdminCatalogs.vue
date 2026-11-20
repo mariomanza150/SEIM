@@ -59,6 +59,9 @@
 
     <template v-if="activeTab !== 'destinations' && !loading && !error">
       <p v-if="activeTab === 'domains'" class="text-muted">{{ t('adminCatalogs.domainHelp') }} {{ t('adminCatalogs.domainLockHelp') }}</p>
+      <p v-if="activeTab === 'domains'" class="small text-warning-emphasis mb-2" data-testid="admin-catalogs-domain-grade-deprecated">
+        {{ t('adminCatalogs.domainGradeScaleDeprecated') }}
+      </p>
 
       <form class="card mb-3" data-testid="admin-catalogs-create" @submit.prevent="createItem">
         <div class="card-body">

@@ -1,6 +1,6 @@
 """Phase 3: test scenario checklist + triage helpers."""
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 from django.conf import settings
 from django.db.models import Max
@@ -73,7 +73,7 @@ class ScenarioListView(APIView):
             ).select_related("issue")
         }
         rows = []
-        summary = defaultdict(int)
+        summary = Counter()
         for s in scenarios:
             r = mine.get(s.pk)
             summary[r.outcome if r else "todo"] += 1
@@ -143,7 +143,7 @@ class ScenarioMatrixView(APIView):
         ):
             cell = cells[str(r.scenario_id)].setdefault(
                 r.build_commit,
-                {"outcome": None, "counts": defaultdict(int), "issues": []},
+                {"outcome": None, "counts": Counter(), "issues": []},
             )
             cell["counts"][r.outcome] += 1
             if (

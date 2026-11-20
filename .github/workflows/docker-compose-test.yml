@@ -2,9 +2,9 @@ name: Docker Compose Test
 
 on:
   push:
-    branches: [main, master, develop, feature/vue-migration]
+    branches: [main, master, develop, testing, feature/vue-migration]
   pull_request:
-    branches: [main, master, develop]
+    branches: [main, master, develop, testing]
 
 concurrency:
   group: docker-compose-test-${{ github.workflow }}-${{ github.ref }}

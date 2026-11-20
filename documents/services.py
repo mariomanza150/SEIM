@@ -513,6 +513,16 @@ class DocumentService:
     @transaction.atomic
     def request_resubmission(document: Document, requested_by, reason):
         """Request a resubmission for a document, enforcing resubmission limit."""
+        is_staff_actor = bool(
+            getattr(requested_by, "is_staff", False)
+            or getattr(requested_by, "is_superuser", False)
+            or (
+                hasattr(requested_by, "has_any_role")
+                and requested_by.has_any_role(["coordinator", "admin"])
+            )
+        )
+        if not is_staff_actor:
+            raise ValueError("Only coordinators or admins can request resubmissions.")
         if not DocumentService.can_request_resubmission(document):
             raise ValueError("Maximum number of resubmissions reached.")
         req = DocumentResubmissionRequest.objects.create(

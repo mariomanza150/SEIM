@@ -274,7 +274,10 @@ $env:MAINTENANCE_LOCK = $Lock
 . $LockScript
 while ([DateTime]::UtcNow -lt $Start) { Start-Sleep -Milliseconds 1 }
 try { Enter-MaintenanceLock -Repo R -RunId "run$I" -TtlSeconds 60 -WaitSeconds 0 3>$null 6>$null | Out-Null }
-catch { return "busy" }
+catch {
+    if (Test-MaintenanceLockBusyError $_) { return "busy" }
+    return "err:$($_.Exception.Message)"
+}
 $ok = $true
 for ($k = 0; $k -lt 6; $k++) {
     Start-Sleep -Milliseconds 50
@@ -288,19 +291,35 @@ if ($ok) { "held" } else { "lost:$saw" }
     $pool.Open()
     try {
         for ($round = 0; $round -lt 15; $round++) {
-            Get-ChildItem (Split-Path $p) -ErrorAction SilentlyContinue | Remove-Item -Force
-            Write-TestLock $p (Get-StaleJson)
-            $start = [DateTime]::UtcNow.AddMilliseconds(400)
-            $jobs = foreach ($i in 0..7) {
-                $ps = [powershell]::Create()
-                $ps.RunspacePool = $pool
-                [void]$ps.AddScript($worker).AddArgument($p).AddArgument($LockScript).AddArgument($i).AddArgument($start)
-                [pscustomobject]@{ PS = $ps; H = $ps.BeginInvoke() }
+            $passedRound = $false
+            $lastRes = @()
+            # Retry a round when every taker reports busy: under CPU starvation the stale-grace
+            # window can elapse before any runspace finishes takeover+CreateNew. Mutual exclusion
+            # is still asserted whenever someone holds.
+            for ($attempt = 0; $attempt -lt 4 -and -not $passedRound; $attempt++) {
+                Get-ChildItem (Split-Path $p) -Force -ErrorAction SilentlyContinue | Remove-Item -Force
+                Write-TestLock $p (Get-StaleJson)
+                $start = [DateTime]::UtcNow.AddMilliseconds(600)
+                $jobs = foreach ($i in 0..7) {
+                    $ps = [powershell]::Create()
+                    $ps.RunspacePool = $pool
+                    [void]$ps.AddScript($worker).AddArgument($p).AddArgument($LockScript).AddArgument($i).AddArgument($start)
+                    [pscustomobject]@{ PS = $ps; H = $ps.BeginInvoke() }
+                }
+                $lastRes = @(foreach ($j in $jobs) { $j.PS.EndInvoke($j.H); $j.PS.Dispose() })
+                $held = @($lastRes | Where-Object { $_ -eq "held" }).Count
+                $lost = @($lastRes | Where-Object { "$_" -like "lost*" }).Count
+                $errs = @($lastRes | Where-Object { "$_" -like "err:*" }).Count
+                if ($held -eq 1 -and $lost -eq 0 -and $errs -eq 0) {
+                    $passedRound = $true
+                } elseif ($held -eq 0 -and $lost -eq 0 -and $errs -eq 0) {
+                    # all busy — retry this round (stale-grace elapsed under scheduling pressure)
+                    continue
+                } else {
+                    Assert $false "round $round attempt $attempt : $($lastRes -join ',')"
+                }
             }
-            $res = foreach ($j in $jobs) { $j.PS.EndInvoke($j.H); $j.PS.Dispose() }
-            $held = @($res | Where-Object { $_ -eq "held" }).Count
-            $lost = @($res | Where-Object { "$_" -like "lost*" }).Count
-            Assert ($held -eq 1 -and $lost -eq 0) "round $round : $($res -join ',')"
+            Assert $passedRound "round $round : $($lastRes -join ',')"
         }
     } finally { $pool.Close() }
 }
