@@ -378,3 +378,13 @@ export function filenameFromContentDisposition(header, fallback = 'download') {
   if (plain?.[1]) return plain[1].replace(/["']/g, '').trim() || fallback
   return fallback
 }
+
+/** Strip path separators and control chars for a safe download basename. */
+export function sanitizeDownloadFilename(value, fallback = 'download') {
+  const cleaned = String(value || '')
+    .normalize('NFKD')
+    .replace(/[^\w.\-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^[-.]+|[-.]+$/g, '')
+  return cleaned || fallback
+}

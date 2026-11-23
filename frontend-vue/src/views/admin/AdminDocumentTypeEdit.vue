@@ -353,15 +353,34 @@
                   · {{ student.email }}
                 </div>
               </div>
-              <button
-                type="button"
-                class="btn btn-sm btn-outline-danger flex-shrink-0"
-                :disabled="prefillBusy"
-                data-testid="admin-prefill-student-remove"
-                @click="removePrefillStudent(student)"
-              >
-                {{ t('adminDocuments.prefillStudents.remove') }}
-              </button>
+              <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  :disabled="prefillBusy || prefillPreviewId === student.id"
+                  data-testid="admin-prefill-student-preview"
+                  :aria-label="t('adminDocuments.prefillStudents.previewAria', { name: student.full_name || student.username })"
+                  @click="previewPrefillStudent(student)"
+                >
+                  <span
+                    v-if="prefillPreviewId === student.id"
+                    class="spinner-border spinner-border-sm me-1"
+                    role="status"
+                    aria-hidden="true"
+                  />
+                  <i v-else class="bi bi-download me-1" aria-hidden="true"></i>
+                  {{ t('adminDocuments.prefillStudents.preview') }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  :disabled="prefillBusy || prefillPreviewId === student.id"
+                  data-testid="admin-prefill-student-remove"
+                  @click="removePrefillStudent(student)"
+                >
+                  {{ t('adminDocuments.prefillStudents.remove') }}
+                </button>
+              </div>
             </li>
           </ul>
           <p v-else class="text-muted small mb-0" data-testid="admin-prefill-student-empty">
@@ -512,6 +531,10 @@ import PageStateShell from '@/components/State/PageStateShell.vue'
 import FileTypeFamilyPicker from '@/components/FileTypeFamilyPicker.vue'
 import CollapsibleCard from '@/components/CollapsibleCard.vue'
 import { resolveSectionDefaultsMap } from '@/utils/sectionDefaults'
+import {
+  filenameFromContentDisposition,
+  sanitizeDownloadFilename,
+} from '@/utils/documentApi'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -540,6 +563,7 @@ const prefillBulkFile = ref(null)
 const prefillCsvInput = ref(null)
 const prefillBulkResult = ref(null)
 const prefillBusy = ref(false)
+const prefillPreviewId = ref(null)
 let prefillSearchTimer = null
 
 const form = ref(emptyForm())
@@ -755,6 +779,52 @@ async function removePrefillStudent(student) {
     errorToast(t('adminDocuments.prefillStudents.removeError'))
   } finally {
     prefillBusy.value = false
+  }
+}
+
+function prefillPreviewFilename(student) {
+  const typePart = sanitizeDownloadFilename(
+    form.value.slug || form.value.name || templateFilename.value || 'template',
+    'template',
+  )
+  const studentPart = sanitizeDownloadFilename(
+    student?.username || student?.matricula || student?.full_name || student?.id,
+    'student',
+  )
+  return `${typePart}-${studentPart}.docx`
+}
+
+async function previewPrefillStudent(student) {
+  if (!student?.id || prefillPreviewId.value === student.id) return
+  prefillPreviewId.value = student.id
+  try {
+    const response = await api.get(
+      `/api/document-types/${route.params.id}/download-template/`,
+      {
+        params: { student: student.id },
+        responseType: 'blob',
+      },
+    )
+    const blob = new Blob([response.data], {
+      type: response.headers?.['content-type'] || 'application/octet-stream',
+    })
+    const objectUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objectUrl
+    a.download = filenameFromContentDisposition(
+      response.headers?.['content-disposition'],
+      prefillPreviewFilename(student),
+    )
+    a.rel = 'noopener noreferrer'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(objectUrl)
+  } catch (err) {
+    console.error('Prefill student preview failed:', err)
+    errorToast(t('adminDocuments.prefillStudents.previewError'))
+  } finally {
+    prefillPreviewId.value = null
   }
 }
 

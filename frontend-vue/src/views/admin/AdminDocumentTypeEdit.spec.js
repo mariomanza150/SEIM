@@ -8,16 +8,17 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import en from '@/locales/en.json'
 import AdminDocumentTypeEdit from './AdminDocumentTypeEdit.vue'
 
-const { mockGet, mockPost, mockDelete } = vi.hoisted(() => ({
+const { mockGet, mockPost, mockDelete, mockErrorToast } = vi.hoisted(() => ({
   mockGet: vi.fn(),
   mockPost: vi.fn(),
   mockDelete: vi.fn(),
+  mockErrorToast: vi.fn(),
 }))
 vi.mock('@/services/api', () => ({
   default: { get: mockGet, patch: vi.fn(), post: mockPost, delete: mockDelete },
 }))
 vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({ success: vi.fn(), error: vi.fn() }),
+  useToast: () => ({ success: vi.fn(), error: mockErrorToast }),
 }))
 vi.mock('@/composables/useConfirm', () => ({
   useConfirm: () => ({ confirm: vi.fn() }),
@@ -66,6 +67,7 @@ async function mountEditor() {
 
 describe('AdminDocumentTypeEdit', () => {
   beforeEach(() => {
+    mockErrorToast.mockClear()
     mockGet.mockImplementation((url) => {
       if (url === '/api/document-types/9/') {
         return Promise.resolve({ data: mockDocumentTypePayload() })
@@ -271,5 +273,133 @@ describe('AdminDocumentTypeEdit', () => {
     )
     const result = wrapper.get('[data-testid="admin-prefill-bulk-result"]')
     expect(result.text()).toContain('missing@example.com')
+  })
+
+  it('renders a preview button per listed student and downloads with ?student=', async () => {
+    mockGet.mockImplementation((url, config) => {
+      if (url === '/api/document-types/9/') {
+        return Promise.resolve({
+          data: mockDocumentTypePayload({
+            program_requirements: [],
+            slug: 'transcript',
+            name: 'Transcript',
+          }),
+        })
+      }
+      if (url.startsWith('/api/programs/')) {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/merge-fields/') {
+        return Promise.resolve({ data: { fields: [] } })
+      }
+      if (url === '/api/document-types/file-type-families/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/9/prefill-students/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'stu-7',
+                username: 'ana.lopez',
+                full_name: 'Ana Lopez',
+                email: 'ana.lopez@example.com',
+                matricula: 'A01234567',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/document-types/9/download-template/') {
+        expect(config).toEqual(
+          expect.objectContaining({
+            params: { student: 'stu-7' },
+            responseType: 'blob',
+          }),
+        )
+        return Promise.resolve({
+          data: new Blob(['docx'], {
+            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          }),
+          headers: {
+            'content-type':
+              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'content-disposition': 'attachment; filename="transcript_ana.lopez.docx"',
+          },
+        })
+      }
+      return Promise.resolve({ data: {} })
+    })
+
+    const clickSpy = vi.fn()
+    const origCreate = document.createElement.bind(document)
+    vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+      const el = origCreate(tag)
+      if (tag === 'a') el.click = clickSpy
+      return el
+    })
+    global.URL.createObjectURL = vi.fn(() => 'blob:preview')
+    global.URL.revokeObjectURL = vi.fn()
+
+    const { wrapper, i18n } = await mountEditor()
+    const previewBtn = wrapper.get('[data-testid="admin-prefill-student-preview"]')
+    expect(previewBtn.text()).toContain(i18n.global.t('adminDocuments.prefillStudents.preview'))
+    expect(previewBtn.attributes('aria-label')).toBe(
+      i18n.global.t('adminDocuments.prefillStudents.previewAria', { name: 'Ana Lopez' }),
+    )
+
+    await previewBtn.trigger('click')
+    await flushPromises()
+    expect(mockGet).toHaveBeenCalledWith(
+      '/api/document-types/9/download-template/',
+      expect.objectContaining({
+        params: { student: 'stu-7' },
+        responseType: 'blob',
+      }),
+    )
+    expect(clickSpy).toHaveBeenCalled()
+    document.createElement.mockRestore()
+  })
+
+  it('shows an error toast when prefill preview download fails', async () => {
+    mockGet.mockImplementation((url) => {
+      if (url === '/api/document-types/9/') {
+        return Promise.resolve({ data: mockDocumentTypePayload({ program_requirements: [] }) })
+      }
+      if (url.startsWith('/api/programs/')) {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/merge-fields/') {
+        return Promise.resolve({ data: { fields: [] } })
+      }
+      if (url === '/api/document-types/file-type-families/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/9/prefill-students/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'stu-7',
+                full_name: 'Ana Lopez',
+                email: 'ana.lopez@example.com',
+                matricula: 'A01234567',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/document-types/9/download-template/') {
+        return Promise.reject(new Error('preview failed'))
+      }
+      return Promise.resolve({ data: {} })
+    })
+
+    const { wrapper, i18n } = await mountEditor()
+    await wrapper.get('[data-testid="admin-prefill-student-preview"]').trigger('click')
+    await flushPromises()
+    expect(mockErrorToast).toHaveBeenCalledWith(
+      i18n.global.t('adminDocuments.prefillStudents.previewError'),
+    )
   })
 })
