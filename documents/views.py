@@ -339,7 +339,9 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
             qs = qs.filter(profile__school_id=school_id)
         return qs
 
-    def _prefill_filter_summary(self, doc_type, filters: dict, *, sample_limit: int = 5):
+    def _prefill_filter_summary(
+        self, doc_type, filters: dict, *, sample_limit: int = 5
+    ):
         matched_qs = self._prefill_filter_queryset(filters)
         matched = matched_qs.count()
         listed_ids = set(doc_type.prefill_students.values_list("id", flat=True))
@@ -600,7 +602,9 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
         matched_qs = self._prefill_filter_queryset(filters)
         matched = matched_qs.count()
         listed_ids = set(doc_type.prefill_students.values_list("id", flat=True))
-        new_ids = list(matched_qs.exclude(pk__in=listed_ids).values_list("id", flat=True))
+        new_ids = list(
+            matched_qs.exclude(pk__in=listed_ids).values_list("id", flat=True)
+        )
         added = self._bulk_add_prefill_students(doc_type, new_ids)
         already_listed = matched - added
         logger.info(
