@@ -350,6 +350,103 @@
             </div>
           </div>
 
+          <div class="mb-3 border-top pt-3" data-testid="admin-prefill-filter-panel">
+            <h3 class="h6 mb-1">{{ t('adminDocuments.prefillStudents.filterTitle') }}</h3>
+            <p class="small text-muted mb-3">{{ t('adminDocuments.prefillStudents.filterHelp') }}</p>
+            <div class="row g-2">
+              <div class="col-md-4">
+                <label class="form-label" for="prefill-filter-domain">{{ t('adminDocuments.prefillStudents.filterDomain') }}</label>
+                <select
+                  id="prefill-filter-domain"
+                  v-model="prefillFilter.domain"
+                  class="form-select"
+                  data-testid="admin-prefill-filter-domain"
+                  @change="clearPrefillFilterPreview"
+                >
+                  <option value="">{{ t('adminDocuments.prefillStudents.filterDomainAll') }}</option>
+                  <option v-for="domain in prefillFilterOptions.domains" :key="domain" :value="domain">
+                    @{{ domain }}
+                  </option>
+                </select>
+                <div class="form-text">{{ t('adminDocuments.prefillStudents.filterDomainHint') }}</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="prefill-filter-unidad">{{ t('adminDocuments.prefillStudents.filterUnidad') }}</label>
+                <select
+                  id="prefill-filter-unidad"
+                  v-model="prefillFilter.unidad_id"
+                  class="form-select"
+                  data-testid="admin-prefill-filter-unidad"
+                  @change="onPrefillFilterUnidadChange"
+                >
+                  <option value="">{{ t('adminDocuments.prefillStudents.filterUnidadAll') }}</option>
+                  <option v-for="row in prefillFilterOptions.unidades" :key="row.id" :value="row.id">
+                    {{ row.name }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="prefill-filter-school">{{ t('adminDocuments.prefillStudents.filterSchool') }}</label>
+                <select
+                  id="prefill-filter-school"
+                  v-model="prefillFilter.school_id"
+                  class="form-select"
+                  data-testid="admin-prefill-filter-school"
+                  @change="clearPrefillFilterPreview"
+                >
+                  <option value="">{{ t('adminDocuments.prefillStudents.filterSchoolAll') }}</option>
+                  <option v-for="row in filteredPrefillSchools" :key="row.id" :value="row.id">
+                    {{ row.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                :disabled="prefillBusy || prefillFilterBusy"
+                data-testid="admin-prefill-filter-preview"
+                @click="previewPrefillFilter"
+              >
+                {{ t('adminDocuments.prefillStudents.filterPreview') }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary"
+                :disabled="prefillBusy || prefillFilterBusy || !prefillFilterPreview || !prefillFilterPreview.new_count"
+                data-testid="admin-prefill-filter-confirm"
+                @click="confirmPrefillFilter"
+              >
+                {{ t('adminDocuments.prefillStudents.filterConfirm') }}
+              </button>
+            </div>
+            <div
+              v-if="prefillFilterPreview"
+              class="alert alert-info small mt-2 mb-0"
+              data-testid="admin-prefill-filter-preview-result"
+            >
+              <div>
+                {{
+                  t('adminDocuments.prefillStudents.filterPreviewSummary', {
+                    matched: prefillFilterPreview.matched,
+                    newCount: prefillFilterPreview.new_count,
+                    already: prefillFilterPreview.already_listed,
+                  })
+                }}
+              </div>
+              <div v-if="prefillFilterPreview.samples?.length" class="mt-2">
+                <div class="fw-medium">{{ t('adminDocuments.prefillStudents.filterSamples') }}</div>
+                <ul class="mb-0 ps-3">
+                  <li v-for="sample in prefillFilterPreview.samples" :key="sample.id">
+                    {{ sample.full_name || sample.username }}
+                    <span class="text-muted">· {{ sample.email }}</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
           <ul
             v-if="prefillStudents.length"
             class="list-group"
@@ -578,6 +675,10 @@ const prefillCsvInput = ref(null)
 const prefillBulkResult = ref(null)
 const prefillBusy = ref(false)
 const prefillPreviewId = ref(null)
+const prefillFilterBusy = ref(false)
+const prefillFilterOptions = ref({ domains: [], unidades: [], schools: [] })
+const prefillFilter = ref({ domain: '', unidad_id: '', school_id: '' })
+const prefillFilterPreview = ref(null)
 let prefillSearchTimer = null
 
 const form = ref(emptyForm())
@@ -617,6 +718,13 @@ const sectionOpen = computed(() =>
 )
 
 const mergeFieldCount = computed(() => mergeFields.value.length)
+
+const filteredPrefillSchools = computed(() => {
+  const schools = prefillFilterOptions.value.schools || []
+  const unidadId = prefillFilter.value.unidad_id
+  if (!unidadId) return schools
+  return schools.filter((row) => !row.unidad_id || String(row.unidad_id) === String(unidadId))
+})
 
 function normalizeRequirementRow(row) {
   const requiredFrom = row.is_required === false ? '' : (row.required_from_status || 'submitted')
@@ -694,16 +802,117 @@ async function loadPrefillStudents() {
   prefillStudents.value = normalizeApiList(res.data)
 }
 
+function buildPrefillFilterPayload() {
+  const payload = {}
+  const domain = String(prefillFilter.value.domain || '').trim()
+  const unidadId = String(prefillFilter.value.unidad_id || '').trim()
+  const schoolId = String(prefillFilter.value.school_id || '').trim()
+  if (domain) payload.domain = domain
+  if (unidadId) payload.unidad_id = unidadId
+  if (schoolId) payload.school_id = schoolId
+  return payload
+}
+
+function clearPrefillFilterPreview() {
+  prefillFilterPreview.value = null
+}
+
+function onPrefillFilterUnidadChange() {
+  const unidadId = prefillFilter.value.unidad_id
+  const schoolId = prefillFilter.value.school_id
+  if (schoolId) {
+    const stillValid = filteredPrefillSchools.value.some((row) => String(row.id) === String(schoolId))
+    if (!stillValid) prefillFilter.value.school_id = ''
+  }
+  if (!unidadId) {
+    // keep school selection when clearing unidad
+  }
+  clearPrefillFilterPreview()
+}
+
+async function loadPrefillFilterOptions() {
+  try {
+    const res = await api.get(`/api/document-types/${route.params.id}/prefill-students/filter-options/`)
+    prefillFilterOptions.value = {
+      domains: Array.isArray(res.data?.domains) ? res.data.domains : [],
+      unidades: Array.isArray(res.data?.unidades) ? res.data.unidades : [],
+      schools: Array.isArray(res.data?.schools) ? res.data.schools : [],
+    }
+  } catch (err) {
+    console.error('Prefill filter options failed:', err)
+    errorToast(t('adminDocuments.prefillStudents.filterOptionsError'))
+  }
+}
+
+async function previewPrefillFilter() {
+  prefillFilterBusy.value = true
+  prefillFilterPreview.value = null
+  try {
+    const res = await api.post(
+      `/api/document-types/${route.params.id}/prefill-students/filter-preview/`,
+      buildPrefillFilterPayload(),
+    )
+    prefillFilterPreview.value = res.data || {
+      matched: 0,
+      new_count: 0,
+      already_listed: 0,
+      samples: [],
+    }
+  } catch (err) {
+    console.error('Prefill filter preview failed:', err)
+    errorToast(t('adminDocuments.prefillStudents.filterPreviewError'))
+  } finally {
+    prefillFilterBusy.value = false
+  }
+}
+
+async function confirmPrefillFilter() {
+  const preview = prefillFilterPreview.value
+  if (!preview?.new_count) {
+    errorToast(t('adminDocuments.prefillStudents.filterNothingNew'))
+    return
+  }
+  const ok = await confirm({
+    title: t('adminDocuments.prefillStudents.filterConfirmTitle'),
+    message: t('adminDocuments.prefillStudents.filterConfirmMessage', {
+      newCount: preview.new_count,
+      matched: preview.matched,
+    }),
+    confirmText: t('adminDocuments.prefillStudents.filterConfirmOk'),
+    cancelText: t('adminCommon.cancel'),
+    variant: 'primary',
+  })
+  if (!ok) return
+  prefillFilterBusy.value = true
+  try {
+    const res = await api.post(
+      `/api/document-types/${route.params.id}/prefill-students/filter-confirm/`,
+      buildPrefillFilterPayload(),
+    )
+    const added = res.data?.added ?? 0
+    await loadPrefillStudents()
+    await loadPrefillFilterOptions()
+    prefillFilterPreview.value = null
+    success(t('adminDocuments.prefillStudents.filterToastAdded', { added }))
+  } catch (err) {
+    console.error('Prefill filter confirm failed:', err)
+    errorToast(t('adminDocuments.prefillStudents.filterConfirmError'))
+  } finally {
+    prefillFilterBusy.value = false
+  }
+}
+
 async function load() {
   loading.value = true
   error.value = null
   try {
-    const [typeRes, programRes, fieldsRes, familyRes, prefillRes] = await Promise.all([
+    const [typeRes, programRes, fieldsRes, familyRes, prefillRes, filterOptsRes] = await Promise.all([
       api.get(`/api/document-types/${route.params.id}/`),
       api.get('/api/programs/', { params: { ordering: 'name', page_size: 100 } }),
       api.get('/api/document-types/merge-fields/'),
       api.get('/api/document-types/file-type-families/'),
       api.get(`/api/document-types/${route.params.id}/prefill-students/`),
+      api.get(`/api/document-types/${route.params.id}/prefill-students/filter-options/`).catch(() => null),
     ])
     const dt = typeRes.data || {}
     form.value = {
@@ -731,6 +940,13 @@ async function load() {
     mergeFields.value = fieldsRes.data?.fields || []
     fileTypeFamilies.value = normalizeApiList(familyRes.data)
     prefillStudents.value = normalizeApiList(prefillRes.data)
+    if (filterOptsRes?.data) {
+      prefillFilterOptions.value = {
+        domains: Array.isArray(filterOptsRes.data.domains) ? filterOptsRes.data.domains : [],
+        unidades: Array.isArray(filterOptsRes.data.unidades) ? filterOptsRes.data.unidades : [],
+        schools: Array.isArray(filterOptsRes.data.schools) ? filterOptsRes.data.schools : [],
+      }
+    }
   } catch (err) {
     console.error('Failed to load document type:', err)
     error.value = t('adminDocuments.loadDetailError')
