@@ -7132,6 +7132,7 @@ paths:
         schema:
           type: string
           enum:
+          - download_only
           - instructions_only
           - system_generated
           - template_download
@@ -7141,6 +7142,7 @@ paths:
           * `template_download` - Template download
           * `system_generated` - System generated
           * `instructions_only` - Instructions only
+          * `download_only` - Download only
       tags:
       - document-types
       security:
@@ -24192,12 +24194,14 @@ components:
       - template_download
       - system_generated
       - instructions_only
+      - download_only
       type: string
       description: |-
         * `upload` - Upload
         * `template_download` - Template download
         * `system_generated` - System generated
         * `instructions_only` - Instructions only
+        * `download_only` - Download only
     SystemInfo:
       type: object
       description: Serializer for system information.

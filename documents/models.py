@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -51,6 +52,19 @@ class DocumentType(models.Model):
         TEMPLATE_DOWNLOAD = "template_download", _("Template download")
         SYSTEM_GENERATED = "system_generated", _("System generated")
         INSTRUCTIONS_ONLY = "instructions_only", _("Instructions only")
+        DOWNLOAD_ONLY = "download_only", _("Download only")
+
+    #: Modes that never accept student uploads (no checklist upload slot).
+    NON_UPLOAD_MODES = frozenset(
+        {
+            SubmissionMode.INSTRUCTIONS_ONLY,
+            SubmissionMode.DOWNLOAD_ONLY,
+        }
+    )
+
+    @classmethod
+    def is_non_upload_mode(cls, mode: str | None) -> bool:
+        return mode in cls.NON_UPLOAD_MODES
 
     class VersionHistoryVisibility(models.TextChoices):
         INHERIT = "inherit", _("Inherit institution defaults")
@@ -132,6 +146,15 @@ class DocumentType(models.Model):
         null=True,
         blank=True,
         help_text=_("Custom override for admins when visibility is custom."),
+    )
+    prefill_students = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="prefill_document_types",
+        help_text=_(
+            "Students allowed to download this type's template prefilled "
+            "with their profile data (no application required)."
+        ),
     )
 
     class Meta:

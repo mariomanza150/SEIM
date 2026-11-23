@@ -1021,14 +1021,36 @@
       "instructions": "Student instructions",
       "constraints": "File types and size",
       "template": "Template",
+      "prefillStudents": "Students with prefilled template",
       "workflow": "Program request workflow",
       "mergeFields": "Word merge fields"
+    },
+    "prefillStudents": {
+      "help": "Listed students can download this Word template prefilled with their profile data, even without an application.",
+      "searchLabel": "Search students",
+      "searchPlaceholder": "Name, student ID, or email…",
+      "noMatricula": "No student ID",
+      "add": "Add",
+      "alreadyListed": "Already listed",
+      "remove": "Remove",
+      "empty": "No students listed yet.",
+      "bulkLabel": "Bulk add (one student ID or email per line)",
+      "bulkPlaceholder": "A01234567\nstudent{'@'}example.com",
+      "bulkSubmit": "Add from list",
+      "bulkResult": "Added {added}. Already listed: {already}.",
+      "bulkNotFound": "Not found",
+      "toastAdded": "Student added to prefill list",
+      "toastRemoved": "Student removed from prefill list",
+      "addError": "Could not add student",
+      "removeError": "Could not remove student",
+      "bulkError": "Could not bulk-add students"
     },
     "modes": {
       "upload": "Upload",
       "template_download": "Template download",
       "system_generated": "System generated",
-      "instructions_only": "Instructions only"
+      "instructions_only": "Instructions only",
+      "download_only": "Download only"
     },
     "versionHistoryModes": {
       "inherit": "Inherit institution defaults",
@@ -1789,7 +1811,11 @@
     "emptyBody": "Upload documents from your application detail page.",
     "goToApplications": "Go to applications",
     "filterPendingReview": "Pending review",
-    "filterOverdue": "Overdue"
+    "filterOverdue": "Overdue",
+    "prefillTemplatesTitle": "Templates for you",
+    "prefillTemplatesHelp": "Download Word templates prefilled with your profile data.",
+    "prefillDownload": "Download prefilled",
+    "prefillDownloadError": "Could not download this template. Please try again."
   },
   "documentDetailPage": {
     "breadcrumbAria": "Breadcrumb",
@@ -2060,7 +2086,8 @@
       "resubmit_requested": "Resubmission needed",
       "invalid": "Rejected",
       "approved": "Approved",
-      "n_a": "Instructions only"
+      "n_a": "Instructions only",
+      "download_only": "Download only"
     },
     "view": "View",
     "viewUpload": "File ({status})",

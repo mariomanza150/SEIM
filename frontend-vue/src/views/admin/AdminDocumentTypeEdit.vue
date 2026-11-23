@@ -232,6 +232,144 @@
         </CollapsibleCard>
 
         <CollapsibleCard
+          test-id="admin-document-section-prefill-students"
+          :default-open="sectionOpen.prefillStudents"
+        >
+          <template #title>{{ t('adminDocuments.sections.prefillStudents') }}</template>
+          <template v-if="prefillStudents.length" #header-extra>
+            <span class="badge bg-secondary">{{ prefillStudents.length }}</span>
+          </template>
+          <p class="small text-muted mb-3">{{ t('adminDocuments.prefillStudents.help') }}</p>
+
+          <div class="mb-3">
+            <label class="form-label" for="prefill-student-search">{{ t('adminDocuments.prefillStudents.searchLabel') }}</label>
+            <input
+              id="prefill-student-search"
+              v-model="prefillSearch"
+              class="form-control"
+              type="search"
+              autocomplete="off"
+              data-testid="admin-prefill-student-search"
+              :placeholder="t('adminDocuments.prefillStudents.searchPlaceholder')"
+              @input="onPrefillSearchInput"
+            />
+            <ul
+              v-if="prefillCandidates.length"
+              class="list-group mt-2"
+              data-testid="admin-prefill-student-candidates"
+            >
+              <li
+                v-for="candidate in prefillCandidates"
+                :key="candidate.id"
+                class="list-group-item d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2"
+              >
+                <div class="min-w-0">
+                  <div class="fw-medium text-truncate">{{ candidate.full_name || candidate.username }}</div>
+                  <div class="small text-muted text-break">
+                    {{ candidate.matricula || t('adminDocuments.prefillStudents.noMatricula') }}
+                    · {{ candidate.email }}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary flex-shrink-0"
+                  :disabled="candidate.already_listed || prefillBusy"
+                  data-testid="admin-prefill-student-add"
+                  @click="addPrefillStudent(candidate)"
+                >
+                  {{
+                    candidate.already_listed
+                      ? t('adminDocuments.prefillStudents.alreadyListed')
+                      : t('adminDocuments.prefillStudents.add')
+                  }}
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="prefill-bulk-text">{{ t('adminDocuments.prefillStudents.bulkLabel') }}</label>
+            <textarea
+              id="prefill-bulk-text"
+              v-model="prefillBulkText"
+              class="form-control"
+              rows="3"
+              data-testid="admin-prefill-bulk-text"
+              :placeholder="t('adminDocuments.prefillStudents.bulkPlaceholder')"
+            />
+            <div class="d-flex flex-wrap gap-2 mt-2">
+              <input
+                ref="prefillCsvInput"
+                class="form-control"
+                type="file"
+                accept=".csv,.txt,text/csv,text/plain"
+                data-testid="admin-prefill-bulk-file"
+                @change="onPrefillCsvChosen"
+              />
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                :disabled="prefillBusy || (!prefillBulkText.trim() && !prefillBulkFile)"
+                data-testid="admin-prefill-bulk-submit"
+                @click="submitPrefillBulk"
+              >
+                {{ t('adminDocuments.prefillStudents.bulkSubmit') }}
+              </button>
+            </div>
+            <div
+              v-if="prefillBulkResult"
+              class="alert alert-info small mt-2 mb-0"
+              data-testid="admin-prefill-bulk-result"
+            >
+              <div>
+                {{
+                  t('adminDocuments.prefillStudents.bulkResult', {
+                    added: prefillBulkResult.added,
+                    already: prefillBulkResult.already_listed,
+                  })
+                }}
+              </div>
+              <div v-if="prefillBulkResult.not_found?.length" class="mt-1">
+                {{ t('adminDocuments.prefillStudents.bulkNotFound') }}:
+                <span class="text-break">{{ prefillBulkResult.not_found.join(', ') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <ul
+            v-if="prefillStudents.length"
+            class="list-group"
+            data-testid="admin-prefill-student-list"
+          >
+            <li
+              v-for="student in prefillStudents"
+              :key="student.id"
+              class="list-group-item d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2"
+            >
+              <div class="min-w-0">
+                <div class="fw-medium text-truncate">{{ student.full_name || student.username }}</div>
+                <div class="small text-muted text-break">
+                  {{ student.matricula || t('adminDocuments.prefillStudents.noMatricula') }}
+                  · {{ student.email }}
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-danger flex-shrink-0"
+                :disabled="prefillBusy"
+                data-testid="admin-prefill-student-remove"
+                @click="removePrefillStudent(student)"
+              >
+                {{ t('adminDocuments.prefillStudents.remove') }}
+              </button>
+            </li>
+          </ul>
+          <p v-else class="text-muted small mb-0" data-testid="admin-prefill-student-empty">
+            {{ t('adminDocuments.prefillStudents.empty') }}
+          </p>
+        </CollapsibleCard>
+
+        <CollapsibleCard
           test-id="admin-document-requirements"
           :default-open="sectionOpen.workflow"
         >
@@ -394,6 +532,15 @@ const pendingTemplate = ref(null)
 const templateBusy = ref(false)
 const hasTemplate = ref(false)
 const templateFilename = ref('')
+const prefillStudents = ref([])
+const prefillCandidates = ref([])
+const prefillSearch = ref('')
+const prefillBulkText = ref('')
+const prefillBulkFile = ref(null)
+const prefillCsvInput = ref(null)
+const prefillBulkResult = ref(null)
+const prefillBusy = ref(false)
+let prefillSearchTimer = null
 
 const form = ref(emptyForm())
 const documentPipelineStatuses = ['submitted', 'under_review', 'nominated', 'approved', 'completed']
@@ -404,6 +551,11 @@ const EDITOR_SECTION_DEFS = [
   { id: 'instructions', defaultOpen: false },
   { id: 'constraints', defaultOpen: false },
   { id: 'template', openWhen: () => true },
+  {
+    id: 'prefillStudents',
+    defaultOpen: false,
+    openWhen: (ctx) => Boolean(ctx.hasPrefillStudents),
+  },
   {
     id: 'workflow',
     defaultOpen: false,
@@ -419,6 +571,7 @@ const EDITOR_SECTION_DEFS = [
 const sectionContext = computed(() => ({
   hasTemplate: hasTemplate.value,
   hasRequirements: form.value.program_requirements.length > 0,
+  hasPrefillStudents: prefillStudents.value.length > 0,
 }))
 
 const sectionOpen = computed(() =>
@@ -445,6 +598,7 @@ const submissionModes = computed(() => [
   { value: 'template_download', label: t('adminDocuments.modes.template_download') },
   { value: 'system_generated', label: t('adminDocuments.modes.system_generated') },
   { value: 'instructions_only', label: t('adminDocuments.modes.instructions_only') },
+  { value: 'download_only', label: t('adminDocuments.modes.download_only') },
 ])
 
 const pageTitle = computed(() => form.value.name || t('adminDocuments.editorTitle'))
@@ -497,15 +651,21 @@ function emptyToNull(value) {
   return value
 }
 
+async function loadPrefillStudents() {
+  const res = await api.get(`/api/document-types/${route.params.id}/prefill-students/`)
+  prefillStudents.value = normalizeApiList(res.data)
+}
+
 async function load() {
   loading.value = true
   error.value = null
   try {
-    const [typeRes, programRes, fieldsRes, familyRes] = await Promise.all([
+    const [typeRes, programRes, fieldsRes, familyRes, prefillRes] = await Promise.all([
       api.get(`/api/document-types/${route.params.id}/`),
       api.get('/api/programs/', { params: { ordering: 'name', page_size: 100 } }),
       api.get('/api/document-types/merge-fields/'),
       api.get('/api/document-types/file-type-families/'),
+      api.get(`/api/document-types/${route.params.id}/prefill-students/`),
     ])
     const dt = typeRes.data || {}
     form.value = {
@@ -532,11 +692,101 @@ async function load() {
     programs.value = normalizeApiList(programRes.data)
     mergeFields.value = fieldsRes.data?.fields || []
     fileTypeFamilies.value = normalizeApiList(familyRes.data)
+    prefillStudents.value = normalizeApiList(prefillRes.data)
   } catch (err) {
     console.error('Failed to load document type:', err)
     error.value = t('adminDocuments.loadDetailError')
   } finally {
     loading.value = false
+  }
+}
+
+function onPrefillSearchInput() {
+  clearTimeout(prefillSearchTimer)
+  prefillSearchTimer = setTimeout(searchPrefillCandidates, 300)
+}
+
+async function searchPrefillCandidates() {
+  const q = prefillSearch.value.trim()
+  if (!q) {
+    prefillCandidates.value = []
+    return
+  }
+  try {
+    const res = await api.get(`/api/document-types/${route.params.id}/prefill-students/candidates/`, {
+      params: { search: q },
+    })
+    prefillCandidates.value = normalizeApiList(res.data)
+  } catch (err) {
+    console.error('Prefill student search failed:', err)
+    prefillCandidates.value = []
+  }
+}
+
+async function addPrefillStudent(candidate) {
+  if (!candidate?.id || candidate.already_listed) return
+  prefillBusy.value = true
+  try {
+    await api.post(`/api/document-types/${route.params.id}/prefill-students/`, {
+      user_id: candidate.id,
+    })
+    await loadPrefillStudents()
+    prefillCandidates.value = prefillCandidates.value.map((row) =>
+      row.id === candidate.id ? { ...row, already_listed: true } : row,
+    )
+    success(t('adminDocuments.prefillStudents.toastAdded'))
+  } catch (err) {
+    console.error('Add prefill student failed:', err)
+    errorToast(t('adminDocuments.prefillStudents.addError'))
+  } finally {
+    prefillBusy.value = false
+  }
+}
+
+async function removePrefillStudent(student) {
+  if (!student?.id) return
+  prefillBusy.value = true
+  try {
+    await api.delete(`/api/document-types/${route.params.id}/prefill-students/${student.id}/`)
+    prefillStudents.value = prefillStudents.value.filter((row) => row.id !== student.id)
+    success(t('adminDocuments.prefillStudents.toastRemoved'))
+  } catch (err) {
+    console.error('Remove prefill student failed:', err)
+    errorToast(t('adminDocuments.prefillStudents.removeError'))
+  } finally {
+    prefillBusy.value = false
+  }
+}
+
+function onPrefillCsvChosen(event) {
+  prefillBulkFile.value = event.target.files?.[0] || null
+}
+
+async function submitPrefillBulk() {
+  prefillBusy.value = true
+  prefillBulkResult.value = null
+  try {
+    let res
+    if (prefillBulkFile.value) {
+      const data = new FormData()
+      data.append('file', prefillBulkFile.value)
+      if (prefillBulkText.value.trim()) data.append('text', prefillBulkText.value)
+      res = await api.post(`/api/document-types/${route.params.id}/prefill-students/bulk/`, data)
+    } else {
+      res = await api.post(`/api/document-types/${route.params.id}/prefill-students/bulk/`, {
+        text: prefillBulkText.value,
+      })
+    }
+    prefillBulkResult.value = res.data || { added: 0, already_listed: 0, not_found: [] }
+    await loadPrefillStudents()
+    prefillBulkText.value = ''
+    prefillBulkFile.value = null
+    if (prefillCsvInput.value) prefillCsvInput.value.value = ''
+  } catch (err) {
+    console.error('Bulk prefill add failed:', err)
+    errorToast(t('adminDocuments.prefillStudents.bulkError'))
+  } finally {
+    prefillBusy.value = false
   }
 }
 
