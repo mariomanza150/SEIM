@@ -22,6 +22,7 @@ from core.cache import (
 )
 from core.permissions import IsAdminOrReadOnly, IsCoordinatorOrAdmin, IsOwnerOrAdmin
 
+from .audit import audit_info, audit_warning
 from .filters import DocumentFilter, ExchangeAgreementDocumentFilter
 from .mailmerge import (
     MERGE_FIELD_CATALOG,
@@ -118,6 +119,39 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
             ctx["include_program_requirements"] = False
         return ctx
 
+    def perform_create(self, serializer):
+        serializer.save()
+        instance = serializer.instance
+        audit_info(
+            "document_type_create",
+            actor=self.request.user,
+            object_id=instance.pk,
+            object_slug=instance.slug or "",
+            submission_mode=instance.submission_mode,
+        )
+
+    def perform_update(self, serializer):
+        serializer.save()
+        instance = serializer.instance
+        audit_info(
+            "document_type_update",
+            actor=self.request.user,
+            object_id=instance.pk,
+            object_slug=instance.slug or "",
+            submission_mode=instance.submission_mode,
+        )
+
+    def perform_destroy(self, instance):
+        object_id = instance.pk
+        object_slug = instance.slug or ""
+        instance.delete()
+        audit_info(
+            "document_type_delete",
+            actor=self.request.user,
+            object_id=object_id,
+            object_slug=object_slug,
+        )
+
     @action(detail=False, methods=["get"], url_path="merge-fields")
     def merge_fields(self, request):
         """Word MERGEFIELD names available for template prefilling."""
@@ -147,8 +181,15 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
     def upload_template(self, request, pk=None):
         """Attach or replace the downloadable template file (admin)."""
         doc_type = self.get_object()
+        replacing = bool(doc_type.template_file)
         upload = request.FILES.get("template_file") or request.FILES.get("file")
         if not upload:
+            audit_warning(
+                "document_type_template_upload_rejected",
+                actor=request.user,
+                object_id=doc_type.pk,
+                reason="missing_file",
+            )
             return Response(
                 {"template_file": ["A template file is required."]},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -160,6 +201,13 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
             or name.endswith(".doc")
             or name.endswith(".odt")
         ):
+            audit_warning(
+                "document_type_template_upload_rejected",
+                actor=request.user,
+                object_id=doc_type.pk,
+                reason="invalid_extension",
+                size=getattr(upload, "size", None),
+            )
             return Response(
                 {
                     "template_file": [
@@ -170,6 +218,15 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
             )
         doc_type.template_file = upload
         doc_type.save(update_fields=["template_file"])
+        audit_info(
+            "document_type_template_replace"
+            if replacing
+            else "document_type_template_upload",
+            actor=request.user,
+            object_id=doc_type.pk,
+            object_slug=doc_type.slug or "",
+            size=getattr(upload, "size", None),
+        )
         serializer = DocumentTypeSerializer(doc_type, context={"request": request})
         return Response(serializer.data)
 
@@ -179,6 +236,12 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
         doc_type = self.get_object()
         if doc_type.template_file:
             doc_type.template_file.delete(save=True)
+            audit_info(
+                "document_type_template_delete",
+                actor=request.user,
+                object_id=doc_type.pk,
+                object_slug=doc_type.slug or "",
+            )
         serializer = DocumentTypeSerializer(doc_type, context={"request": request})
         return Response(serializer.data)
 
@@ -345,6 +408,12 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_200_OK,
             )
         doc_type.prefill_students.add(student)
+        audit_info(
+            "document_type_prefill_add",
+            actor=request.user,
+            object_id=doc_type.pk,
+            student_id=student.pk,
+        )
         return Response(
             {"student": self._serialize_prefill_student(student)},
             status=status.HTTP_201_CREATED,
@@ -365,6 +434,12 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
         doc_type = self.get_object()
         student = get_object_or_404(User, pk=user_id)
         doc_type.prefill_students.remove(student)
+        audit_info(
+            "document_type_prefill_remove",
+            actor=request.user,
+            object_id=doc_type.pk,
+            student_id=student.pk,
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @action(
@@ -412,6 +487,14 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
                 continue
             doc_type.prefill_students.add(student)
             added += 1
+        audit_info(
+            "document_type_prefill_bulk",
+            actor=request.user,
+            object_id=doc_type.pk,
+            added=added,
+            already_listed=already_listed,
+            not_found_count=len(not_found),
+        )
         return Response(
             {
                 "added": added,
@@ -714,10 +797,48 @@ class DocumentViewSet(viewsets.ModelViewSet):
             qs = qs.filter(successors__isnull=True)
         return qs
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            upload = request.FILES.get("file")
+            type_id = request.data.get("type")
+            application_id = request.data.get("application")
+            audit_warning(
+                "document_upload_rejected",
+                actor=request.user,
+                document_type_id=type_id,
+                application_id=application_id,
+                size=getattr(upload, "size", None) if upload else None,
+                outcome="rejected",
+                status_code=400,
+            )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(
+            serializer.data, status=status.HTTP_201_CREATED, headers=headers
+        )
+
     def perform_create(self, serializer):
         """Set uploaded_by to current user on creation."""
         serializer.save(uploaded_by=self.request.user)
-        invalidate_application_api_responses(serializer.instance.application)
+        instance = serializer.instance
+        size = None
+        if instance.file:
+            try:
+                size = instance.file.size
+            except Exception:
+                size = None
+        audit_info(
+            "document_upload",
+            actor=self.request.user,
+            document_id=instance.pk,
+            document_type_id=instance.type_id,
+            application_id=instance.application_id,
+            size=size,
+            outcome="created",
+        )
+        invalidate_application_api_responses(instance.application)
 
     def perform_update(self, serializer):
         serializer.save()

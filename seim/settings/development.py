@@ -10,7 +10,13 @@ import warnings
 from copy import deepcopy
 from urllib.parse import urlparse, urlunparse
 
-from core.observability import init_sentry, logging_config, own_origin_targets
+from core.observability import (
+    attach_rotating_file_handler,
+    init_sentry,
+    logging_config,
+    own_origin_targets,
+    resolve_log_file_path,
+)
 
 from .base import *
 
@@ -276,8 +282,21 @@ SECURE_SSL_REDIRECT = False
 # Use simple storage backend that doesn't require manifest files
 STATICFILES_STORAGE = "whitenoise.storage.CompressedStaticFilesStorage"
 
-# Logging for development (stdout; human-readable unless LOG_FORMAT=json)
+# Logging for development (stdout; human-readable unless LOG_FORMAT=json).
+# Optional rotating file when LOG_FILE or LOG_DIR is set.
 LOGGING = logging_config(fmt=env("LOG_FORMAT", default="text"), level=LOG_LEVEL)
+LOG_FILE = env("LOG_FILE", default="")
+LOG_DIR = env("LOG_DIR", default="")
+_resolved_log_file = resolve_log_file_path(LOG_FILE, LOG_DIR)
+if _resolved_log_file:
+    LOG_FILE = _resolved_log_file
+    attach_rotating_file_handler(
+        LOGGING,
+        filename=LOG_FILE,
+        level=LOG_LEVEL,
+        max_bytes=env.int("LOG_FILE_MAX_BYTES", default=10 * 1024 * 1024),
+        backup_count=env.int("LOG_FILE_BACKUP_COUNT", default=5),
+    )
 
 init_sentry(
     dsn=SENTRY_DSN,

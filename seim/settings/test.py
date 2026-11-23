@@ -171,7 +171,8 @@ MIDDLEWARE = [
 # Disable static files collection
 STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
-# Disable logging for tests
+# Quiet logging for tests. Keep seim.audit configured so dictConfig restores
+# do not leave it disabled for audit caplog assertions.
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": True,
@@ -182,6 +183,14 @@ LOGGING = {
     },
     "root": {
         "handlers": ["null"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "seim.audit": {
+            "handlers": ["null"],
+            "level": "INFO",
+            "propagate": False,
+        },
     },
 }
 

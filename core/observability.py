@@ -106,8 +106,70 @@ def logging_config(fmt: str = "json", level: str = "INFO") -> dict:
                 "level": "INFO",
                 "propagate": False,
             },
+            "seim.audit": {
+                "handlers": ["console"],
+                "level": "INFO",
+                "propagate": False,
+            },
         },
     }
+
+
+def resolve_log_file_path(
+    log_file: str | None = None,
+    log_dir: str | None = None,
+    *,
+    default_basename: str = "seim.log",
+) -> str | None:
+    """Return a log file path from ``LOG_FILE`` and/or ``LOG_DIR``, or ``None`` if unset."""
+    file_path = (log_file or "").strip()
+    dir_path = (log_dir or "").strip()
+    if file_path:
+        return file_path
+    if dir_path:
+        import os
+
+        return os.path.join(dir_path, default_basename)
+    return None
+
+
+def attach_rotating_file_handler(
+    config: dict,
+    *,
+    filename: str,
+    level: str = "INFO",
+    max_bytes: int = 10 * 1024 * 1024,
+    backup_count: int = 5,
+) -> dict:
+    """Add a size-based rotating file handler (in addition to stdout) and return ``config``.
+
+    Creates the parent directory when possible. Each process should use its own
+    ``filename`` to avoid rotation races on a shared volume.
+    """
+    import os
+
+    parent = os.path.dirname(filename)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+
+    config.setdefault("handlers", {})
+    config["handlers"]["file"] = {
+        "level": level.upper(),
+        "class": "logging.handlers.RotatingFileHandler",
+        "filename": filename,
+        "maxBytes": max_bytes,
+        "backupCount": backup_count,
+        "formatter": "default",
+        "filters": ["request_id"],
+    }
+    for logger_cfg in [config.get("root"), *config.get("loggers", {}).values()]:
+        if not logger_cfg:
+            continue
+        handlers = list(logger_cfg.get("handlers") or [])
+        if "file" not in handlers:
+            handlers.append("file")
+        logger_cfg["handlers"] = handlers
+    return config
 
 
 # Keys whose values never leave the server (matched case-insensitively as substrings).
