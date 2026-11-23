@@ -179,15 +179,20 @@ export const CHECKLIST_UPLOAD_GAP_STATUSES = new Set([
   'resubmit_requested',
 ])
 
+/** Modes that never accept student uploads (no checklist upload slot). */
+export function isNonUploadSubmissionMode(mode) {
+  return mode === 'instructions_only' || mode === 'download_only'
+}
+
 /**
  * Checklist items the student can still upload for (gaps only).
- * Excludes instructions-only / n_a and already-submitted / approved rows.
+ * Excludes instructions-only / download-only / n_a and already-submitted / approved rows.
  */
 export function checklistUploadGaps(checklist) {
   const items = Array.isArray(checklist?.items) ? checklist.items : []
   return items.filter((item) => {
     if (!item) return false
-    if (item.submission_mode === 'instructions_only' || item.status === 'n_a') return false
+    if (isNonUploadSubmissionMode(item.submission_mode) || item.status === 'n_a') return false
     return CHECKLIST_UPLOAD_GAP_STATUSES.has(item.status)
   })
 }
@@ -200,7 +205,7 @@ export function checklistUploadTargets(checklist) {
   const items = Array.isArray(checklist?.items) ? checklist.items : []
   return items.filter((item) => {
     if (!item) return false
-    if (item.submission_mode === 'instructions_only' || item.status === 'n_a') return false
+    if (isNonUploadSubmissionMode(item.submission_mode) || item.status === 'n_a') return false
     if (CHECKLIST_UPLOAD_GAP_STATUSES.has(item.status)) return true
     return Boolean(item.allows_multiple)
   })

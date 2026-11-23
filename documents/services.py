@@ -173,12 +173,17 @@ class DocumentService:
     ):
         """
         Block student uploads past per-doc deadline (staff may still review late uploads).
-        Also enforce allows_multiple / instructions_only.
+        Also enforce allows_multiple / non-upload modes (instructions_only,
+        download_only).
         """
-        if (
-            document_type.submission_mode
-            == DocumentType.SubmissionMode.INSTRUCTIONS_ONLY
-        ):
+        if DocumentType.is_non_upload_mode(document_type.submission_mode):
+            if (
+                document_type.submission_mode
+                == DocumentType.SubmissionMode.DOWNLOAD_ONLY
+            ):
+                raise ValueError(
+                    "This document type is download-only and does not accept uploads."
+                )
             raise ValueError(
                 "This document type is instructions-only and does not accept uploads."
             )
@@ -687,8 +692,9 @@ class DocumentService:
         Compare program document requirements to uploads on this application.
 
         Status per type (latest upload for that type): missing, pending_review,
-        invalid, resubmit_requested, approved, n_a (instructions_only).
-        Includes deadline / overdue flags for UI and coordinator review.
+        invalid, resubmit_requested, approved, n_a (instructions_only /
+        download_only). Includes deadline / overdue flags for UI and coordinator
+        review.
 
         Results are cached on ``application._document_checklist_cache`` for the
         request so readiness / checklist / form-step fields do not rebuild.
@@ -767,8 +773,9 @@ class DocumentService:
                 "uploads": [],
             }
 
-            if dt.submission_mode == DocumentType.SubmissionMode.INSTRUCTIONS_ONLY:
+            if DocumentType.is_non_upload_mode(dt.submission_mode):
                 entry["status"] = "n_a"
+                entry["is_overdue"] = False
                 if counts_toward_complete:
                     approved_count += 1
                 items.append(entry)

@@ -1024,14 +1024,36 @@
       "instructions": "Instrucciones para el estudiante",
       "constraints": "Tipos y tamaño de archivo",
       "template": "Plantilla",
+      "prefillStudents": "Estudiantes con plantilla prellenada",
       "workflow": "Flujo de solicitud por programa",
       "mergeFields": "Campos de combinación de Word"
+    },
+    "prefillStudents": {
+      "help": "Los estudiantes listados pueden descargar esta plantilla Word prellenada con sus datos de perfil, aunque no tengan solicitud.",
+      "searchLabel": "Buscar estudiantes",
+      "searchPlaceholder": "Nombre, matrícula o correo…",
+      "noMatricula": "Sin matrícula",
+      "add": "Agregar",
+      "alreadyListed": "Ya listado",
+      "remove": "Quitar",
+      "empty": "Aún no hay estudiantes listados.",
+      "bulkLabel": "Alta masiva (una matrícula o correo por línea)",
+      "bulkPlaceholder": "A01234567\nestudiante{'@'}ejemplo.com",
+      "bulkSubmit": "Agregar desde lista",
+      "bulkResult": "Agregados: {added}. Ya listados: {already}.",
+      "bulkNotFound": "No encontrados",
+      "toastAdded": "Estudiante agregado a la lista de prellenado",
+      "toastRemoved": "Estudiante quitado de la lista de prellenado",
+      "addError": "No se pudo agregar al estudiante",
+      "removeError": "No se pudo quitar al estudiante",
+      "bulkError": "No se pudo hacer el alta masiva"
     },
     "modes": {
       "upload": "Carga",
       "template_download": "Descarga de plantilla",
       "system_generated": "Generado por el sistema",
-      "instructions_only": "Solo instrucciones"
+      "instructions_only": "Solo instrucciones",
+      "download_only": "Solo descarga"
     },
     "versionHistoryModes": {
       "inherit": "Heredar valores de la institución",
@@ -1792,7 +1814,11 @@
     "emptyBody": "Sube documentos desde el detalle de tu solicitud.",
     "goToApplications": "Ir a solicitudes",
     "filterPendingReview": "Pendientes de revisión",
-    "filterOverdue": "Vencidos"
+    "filterOverdue": "Vencidos",
+    "prefillTemplatesTitle": "Plantillas para ti",
+    "prefillTemplatesHelp": "Descarga plantillas Word prellenadas con tus datos de perfil.",
+    "prefillDownload": "Descargar prellenado",
+    "prefillDownloadError": "No se pudo descargar esta plantilla. Inténtalo de nuevo."
   },
   "documentDetailPage": {
     "breadcrumbAria": "Migas de pan",
@@ -2063,7 +2089,8 @@
       "resubmit_requested": "Reenvío necesario",
       "invalid": "Rechazado",
       "approved": "Aprobado",
-      "n_a": "Solo instrucciones"
+      "n_a": "Solo instrucciones",
+      "download_only": "Solo descarga"
     },
     "view": "Ver",
     "replaceDocument": "Reemplazar archivo",

@@ -1342,6 +1342,56 @@ describe('ApplicationDetail', () => {
     })
   })
 
+  it('shows download button and no upload for download_only checklist items', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/test-app/') {
+        return Promise.resolve({
+          data: {
+            ...applicationPayload,
+            status: 'draft',
+            document_checklist: {
+              required_count: 1,
+              approved_count: 1,
+              complete: true,
+              items: [
+                {
+                  document_type_id: 9,
+                  slug: 'guide_packet',
+                  name: 'Guide Packet',
+                  status: 'n_a',
+                  submission_mode: 'download_only',
+                  is_required: true,
+                  has_template: true,
+                  due_now: true,
+                },
+              ],
+            },
+          },
+        })
+      }
+      if (url === '/api/documents/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/comments/') return Promise.resolve({ data: { results: [] } })
+      if (url === '/api/timeline-events/') return Promise.resolve({ data: { results: [] } })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+
+    mockAuthStore.userRole = 'student'
+    const wrapper = mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="document-checklist-section-instructions"]').exists()).toBe(true)
+    })
+    const instructionsSection = wrapper.find('[data-testid="document-checklist-section-instructions"]')
+    await instructionsSection.find('[data-testid="document-checklist-section-toggle"]').trigger('click')
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="download-checklist-template"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="checklist-upload-shortcut"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="download-checklist-template"]').text()).toContain(
+      i18n.global.t('applicationDetailPage.downloadTemplate'),
+    )
+    expect(wrapper.text()).toContain(i18n.global.t('applicationDetailPage.checklist.download_only'))
+  })
+
   it('puts instructions-only checklist items in Instructions, not Completed', async () => {
     api.get.mockImplementation((url) => {
       if (url === '/api/applications/test-app/') {

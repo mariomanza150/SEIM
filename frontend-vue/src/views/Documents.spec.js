@@ -29,6 +29,9 @@ function mockEmptyApis() {
     if (url === '/api/document-types/') {
       return Promise.resolve({ data: { results: [] } })
     }
+    if (url === '/api/document-types/my-prefill-templates/') {
+      return Promise.resolve({ data: { results: [] } })
+    }
     if (url === '/api/documents/') {
       return Promise.resolve({ data: { results: [], count: 0, next: null, previous: null } })
     }
@@ -88,6 +91,9 @@ describe('Documents', () => {
       if (url === '/api/document-types/') {
         return Promise.resolve({ data: { results: [] } })
       }
+      if (url === '/api/document-types/my-prefill-templates/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
       if (url === '/api/documents/') {
         return Promise.resolve({
           data: {
@@ -125,6 +131,62 @@ describe('Documents', () => {
     expect(downloadBtn.attributes('aria-label')).toBe(i18n.global.t('documentsPage.downloadTitle'))
   })
 
+  it('shows Plantillas para ti only when prefill templates exist', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/') {
+        return Promise.resolve({ data: { results: [], count: 0 } })
+      }
+      if (url === '/api/document-types/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/my-prefill-templates/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 42,
+                name: 'Learning Agreement',
+                slug: 'learning_agreement',
+                has_template: true,
+                template_filename: 'agreement.docx',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({ data: { results: [], count: 0, next: null, previous: null } })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+
+    const wrapper = mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const block = wrapper.find('[data-testid="prefill-templates-block"]')
+    expect(block.exists()).toBe(true)
+    expect(block.text()).toContain(i18n.global.t('documentsPage.prefillTemplatesTitle'))
+    expect(block.text()).toContain('Learning Agreement')
+    expect(wrapper.find('[data-testid="prefill-template-download"]').text()).toContain(
+      i18n.global.t('documentsPage.prefillDownload'),
+    )
+  })
+
+  it('hides Plantillas para ti when the list is empty', async () => {
+    const wrapper = mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('[data-testid="prefill-templates-block"]').exists()).toBe(false)
+  })
+
   it('downloads via authenticated preview endpoint', async () => {
     const clickSpy = vi.fn()
     const origCreate = document.createElement.bind(document)
@@ -143,6 +205,9 @@ describe('Documents', () => {
         return Promise.resolve({ data: { results: [], count: 0 } })
       }
       if (url === '/api/document-types/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/my-prefill-templates/') {
         return Promise.resolve({ data: { results: [] } })
       }
       if (url === '/api/documents/') {
@@ -193,6 +258,9 @@ describe('Documents', () => {
         return Promise.resolve({ data: { results: [], count: 0 } })
       }
       if (url === '/api/document-types/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/my-prefill-templates/') {
         return Promise.resolve({ data: { results: [] } })
       }
       if (url === '/api/documents/') {
@@ -246,6 +314,9 @@ describe('Documents', () => {
         })
       }
       if (url === '/api/document-types/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/my-prefill-templates/') {
         return Promise.resolve({ data: { results: [] } })
       }
       if (url === '/api/documents/') {
@@ -311,6 +382,9 @@ describe('Documents', () => {
             ],
           },
         })
+      }
+      if (url === '/api/document-types/my-prefill-templates/') {
+        return Promise.resolve({ data: { results: [] } })
       }
       if (url === '/api/documents/') {
         return Promise.resolve({ data: { results: [], count: 0, next: null, previous: null } })

@@ -136,6 +136,8 @@ describe('documentApi', () => {
         { document_type_id: 5, status: 'approved' },
         { document_type_id: 6, status: 'n_a', submission_mode: 'instructions_only' },
         { document_type_id: 7, status: 'missing', submission_mode: 'instructions_only' },
+        { document_type_id: 8, status: 'n_a', submission_mode: 'download_only' },
+        { document_type_id: 9, status: 'missing', submission_mode: 'download_only' },
       ],
     })
     expect(gaps.map((g) => g.document_type_id)).toEqual([1, 2, 3])

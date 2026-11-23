@@ -1,9 +1,9 @@
 """Word MERGEFIELD prefilling for document-type templates.
 
 Templates are standard .docx files with Word mail-merge fields
-(Insert → Field → MergeField). When a student downloads a template in the
-context of an application, field values are filled from the student profile,
-application, and program.
+(Insert → Field → MergeField). Field values come from the student profile
+(``merge_values_for_student``) and, when an application is present, from
+program / host / application fields (``merge_values_for_application``).
 """
 
 from __future__ import annotations
@@ -121,14 +121,16 @@ def _related_name(obj, attr: str) -> str:
     return _fmt(getattr(related, "name", related))
 
 
-def merge_values_for_application(application) -> dict[str, str]:
-    """Build MERGEFIELD name → value map from an application."""
-    student = application.student
+def merge_values_for_student(student) -> dict[str, str]:
+    """Build MERGEFIELD name → value map from a user and their profile.
+
+    Program / host / ApplicationId keys are always present but blank when
+    there is no application context.
+    """
     try:
         profile = student.profile
     except ObjectDoesNotExist:
         profile = None
-    program = application.program
     full_name = (
         " ".join(
             part
@@ -151,14 +153,14 @@ def merge_values_for_application(application) -> dict[str, str]:
         "FullName": _fmt(full_name),
         "Email": _fmt(student.email),
         "Username": _fmt(student.username),
-        "ProgramName": _fmt(program.name if program else ""),
-        "ProgramStartDate": _fmt(getattr(program, "start_date", None)),
-        "ProgramEndDate": _fmt(getattr(program, "end_date", None)),
-        "ApplicationDeadline": _fmt(getattr(program, "application_deadline", None)),
-        "HostInstitution": _related_name(application, "host_institution"),
-        "HostSchool": _related_name(application, "host_school"),
-        "HostAcademicProgram": _related_name(application, "host_academic_program"),
-        "ApplicationId": _fmt(application.id),
+        "ProgramName": "",
+        "ProgramStartDate": "",
+        "ProgramEndDate": "",
+        "ApplicationDeadline": "",
+        "HostInstitution": "",
+        "HostSchool": "",
+        "HostAcademicProgram": "",
+        "ApplicationId": "",
         "Matricula": "",
         "GPA": "",
         "CurrentSemester": "",
@@ -213,6 +215,29 @@ def merge_values_for_application(application) -> dict[str, str]:
             "LanguageLevel": _fmt(profile.language_level),
             "BankInstitution": _related_name(profile, "bank_institution"),
             "CLABE": _fmt(profile.clabe),
+        }
+    )
+    return values
+
+
+def merge_values_for_application(application) -> dict[str, str]:
+    """Build MERGEFIELD name → value map from an application.
+
+    Student / profile fields come from ``merge_values_for_student``; program
+    and host keys are filled from the application.
+    """
+    values = merge_values_for_student(application.student)
+    program = application.program
+    values.update(
+        {
+            "ProgramName": _fmt(program.name if program else ""),
+            "ProgramStartDate": _fmt(getattr(program, "start_date", None)),
+            "ProgramEndDate": _fmt(getattr(program, "end_date", None)),
+            "ApplicationDeadline": _fmt(getattr(program, "application_deadline", None)),
+            "HostInstitution": _related_name(application, "host_institution"),
+            "HostSchool": _related_name(application, "host_school"),
+            "HostAcademicProgram": _related_name(application, "host_academic_program"),
+            "ApplicationId": _fmt(application.id),
         }
     )
     return values

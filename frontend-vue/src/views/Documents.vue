@@ -17,6 +17,42 @@
       </template>
     </PageHeader>
 
+      <div
+        v-if="!isStaff && prefillTemplates.length"
+        class="card border-0 shadow-sm mb-3"
+        data-testid="prefill-templates-block"
+      >
+        <div class="card-body">
+          <h2 class="h5 mb-1">{{ t('documentsPage.prefillTemplatesTitle') }}</h2>
+          <p class="small text-muted mb-3">{{ t('documentsPage.prefillTemplatesHelp') }}</p>
+          <ul class="list-unstyled mb-0">
+            <li
+              v-for="item in prefillTemplates"
+              :key="item.id"
+              class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between gap-2 py-2 border-bottom border-light"
+              data-testid="prefill-template-row"
+            >
+              <div class="min-w-0">
+                <div class="fw-medium text-truncate">{{ item.name }}</div>
+                <div v-if="item.template_filename" class="small text-muted text-truncate">
+                  {{ item.template_filename }}
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary flex-shrink-0"
+                :disabled="prefillDownloadingId === item.id"
+                data-testid="prefill-template-download"
+                @click="downloadPrefillTemplate(item)"
+              >
+                <i class="bi bi-download me-1" aria-hidden="true"></i>
+                {{ t('documentsPage.prefillDownload') }}
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+
       <CompactFilterBar :clear-label="t('documentsPage.clearFilters')" @clear="clearFilters">
         <template #primary>
             <div class="col-md-4">
@@ -294,9 +330,11 @@ const {
 const documents = ref([])
 const applications = ref([])
 const documentTypes = ref([])
+const prefillTemplates = ref([])
 const loading = ref(true)
 const error = ref(null)
 const downloadingId = ref(null)
+const prefillDownloadingId = ref(null)
 
 const filters = ref({
   application: '',
@@ -332,6 +370,48 @@ async function fetchDocumentTypes() {
     documentTypes.value = response.data.results || response.data
   } catch {
     documentTypes.value = []
+  }
+}
+
+async function fetchPrefillTemplates() {
+  if (isStaff.value) {
+    prefillTemplates.value = []
+    return
+  }
+  try {
+    const response = await api.get('/api/document-types/my-prefill-templates/')
+    prefillTemplates.value = response.data.results || response.data || []
+  } catch {
+    prefillTemplates.value = []
+  }
+}
+
+async function downloadPrefillTemplate(item) {
+  if (!item?.id || prefillDownloadingId.value === item.id) return
+  prefillDownloadingId.value = item.id
+  try {
+    const response = await api.get(`/api/document-types/${item.id}/download-template/`, {
+      responseType: 'blob',
+    })
+    const blob = new Blob([response.data], {
+      type: response.headers['content-type'] || 'application/octet-stream',
+    })
+    const objectUrl = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = objectUrl
+    a.download = filenameFromContentDisposition(
+      response.headers['content-disposition'],
+      item.template_filename || item.name || 'template.docx',
+    )
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(objectUrl)
+  } catch (err) {
+    console.error('Prefill template download failed:', err)
+    errorToast(t('documentsPage.prefillDownloadError'))
+  } finally {
+    prefillDownloadingId.value = null
   }
 }
 
@@ -449,7 +529,7 @@ function formatDate(dateString) {
 }
 
 onMounted(async () => {
-  await Promise.all([fetchApplications(), fetchDocumentTypes()])
+  await Promise.all([fetchApplications(), fetchDocumentTypes(), fetchPrefillTemplates()])
   if (isStaff.value) {
     await loadPresets()
     const def = savedPresets.value.find((p) => p.is_default)

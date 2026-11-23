@@ -569,7 +569,7 @@
                       </div>
                       <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                         <span class="badge" :class="checklistBadgeClass(item.status)">
-                          {{ checklistStatusLabel(item.status) }}
+                          {{ checklistStatusLabel(item.status, item) }}
                         </span>
                         <button
                           v-if="item.slug === 'solicitud_participacion'"
@@ -1227,7 +1227,13 @@ async function onProgressRailNavigate(item) {
 
 function canUploadChecklistItem(item) {
   if (!isStudent.value || !showDocumentUploadCard.value || !item) return false
-  if (item.submission_mode === 'instructions_only' || item.status === 'n_a') return false
+  if (
+    item.submission_mode === 'instructions_only'
+    || item.submission_mode === 'download_only'
+    || item.status === 'n_a'
+  ) {
+    return false
+  }
   if (CHECKLIST_UPLOAD_GAP_STATUSES.has(item.status)) return true
   return Boolean(item.allows_multiple)
 }
@@ -1607,7 +1613,13 @@ function checklistItemDescription(item) {
 
 function checklistAcceptedHint(item) {
   if (!item) return ''
-  if (item.submission_mode === 'instructions_only' || item.status === 'n_a') return ''
+  if (
+    item.submission_mode === 'instructions_only'
+    || item.submission_mode === 'download_only'
+    || item.status === 'n_a'
+  ) {
+    return ''
+  }
   return documentTypeAcceptedHintText(
     {
       accepted_extensions: item.accepted_extensions || '',
@@ -1624,7 +1636,11 @@ function checklistSiblingUploads(item) {
   return uploads.length > 1 ? uploads : []
 }
 
-function checklistStatusLabel(status) {
+function checklistStatusLabel(status, item = null) {
+  if (status === 'n_a' && item?.submission_mode === 'download_only') {
+    const downloadKey = 'applicationDetailPage.checklist.download_only'
+    if (te(downloadKey)) return t(downloadKey)
+  }
   const key = `applicationDetailPage.checklist.${status}`
   if (te(key)) return t(key)
   return status
