@@ -8,20 +8,22 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import en from '@/locales/en.json'
 import AdminDocumentTypeEdit from './AdminDocumentTypeEdit.vue'
 
-const { mockGet, mockPost, mockDelete, mockErrorToast } = vi.hoisted(() => ({
+const { mockGet, mockPost, mockDelete, mockErrorToast, mockSuccessToast, mockConfirm } = vi.hoisted(() => ({
   mockGet: vi.fn(),
   mockPost: vi.fn(),
   mockDelete: vi.fn(),
   mockErrorToast: vi.fn(),
+  mockSuccessToast: vi.fn(),
+  mockConfirm: vi.fn(),
 }))
 vi.mock('@/services/api', () => ({
   default: { get: mockGet, patch: vi.fn(), post: mockPost, delete: mockDelete },
 }))
 vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({ success: vi.fn(), error: mockErrorToast }),
+  useToast: () => ({ success: mockSuccessToast, error: mockErrorToast }),
 }))
 vi.mock('@/composables/useConfirm', () => ({
-  useConfirm: () => ({ confirm: vi.fn() }),
+  useConfirm: () => ({ confirm: mockConfirm }),
 }))
 
 function mockDocumentTypePayload(overrides = {}) {
@@ -68,6 +70,9 @@ async function mountEditor() {
 describe('AdminDocumentTypeEdit', () => {
   beforeEach(() => {
     mockErrorToast.mockClear()
+    mockSuccessToast.mockClear()
+    mockConfirm.mockReset()
+    mockConfirm.mockResolvedValue(true)
     mockGet.mockImplementation((url) => {
       if (url === '/api/document-types/9/') {
         return Promise.resolve({ data: mockDocumentTypePayload() })
@@ -93,6 +98,15 @@ describe('AdminDocumentTypeEdit', () => {
               { id: 1, slug: 'pdf', name: 'PDF', extensions: 'pdf', aliases: '' },
               { id: 2, slug: 'image', name: 'Image', extensions: 'jpg,png', aliases: 'photo' },
             ],
+          },
+        })
+      }
+      if (url === '/api/document-types/9/prefill-students/filter-options/') {
+        return Promise.resolve({
+          data: {
+            domains: ['example.edu'],
+            unidades: [{ id: 'u1', name: 'Campus North' }],
+            schools: [{ id: 's1', name: 'Engineering', unidad_id: 'u1' }],
           },
         })
       }
@@ -375,6 +389,9 @@ describe('AdminDocumentTypeEdit', () => {
       if (url === '/api/document-types/file-type-families/') {
         return Promise.resolve({ data: { results: [] } })
       }
+      if (url === '/api/document-types/9/prefill-students/filter-options/') {
+        return Promise.resolve({ data: { domains: [], unidades: [], schools: [] } })
+      }
       if (url === '/api/document-types/9/prefill-students/') {
         return Promise.resolve({
           data: {
@@ -400,6 +417,97 @@ describe('AdminDocumentTypeEdit', () => {
     await flushPromises()
     expect(mockErrorToast).toHaveBeenCalledWith(
       i18n.global.t('adminDocuments.prefillStudents.previewError'),
+    )
+  })
+
+  async function openPrefillSection(wrapper) {
+    const section = wrapper.get('[data-testid="admin-document-section-prefill-students"]')
+    const toggle = section.get('[data-testid="collapsible-card-toggle"]')
+    if (toggle.attributes('aria-expanded') !== 'true') {
+      await toggle.trigger('click')
+      await flushPromises()
+    }
+  }
+
+  it('previews filter matches then confirms add without sending id lists', async () => {
+    mockPost.mockImplementation((url, body) => {
+      if (url === '/api/document-types/9/prefill-students/filter-preview/') {
+        expect(body).toEqual({ domain: 'example.edu', unidad_id: 'u1' })
+        expect(body).not.toHaveProperty('user_ids')
+        expect(body).not.toHaveProperty('ids')
+        return Promise.resolve({
+          data: {
+            filter: body,
+            matched: 3,
+            new_count: 2,
+            already_listed: 1,
+            samples: [
+              {
+                id: 'stu-8',
+                full_name: 'Bruno Diaz',
+                email: 'bruno.diaz@example.edu',
+                matricula: 'A07654321',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/document-types/9/prefill-students/filter-confirm/') {
+        expect(body).toEqual({ domain: 'example.edu', unidad_id: 'u1' })
+        expect(body).not.toHaveProperty('user_ids')
+        return Promise.resolve({
+          data: { filter: body, matched: 3, added: 2, already_listed: 1 },
+        })
+      }
+      return Promise.resolve({ data: {} })
+    })
+
+    const { wrapper, i18n } = await mountEditor()
+    await openPrefillSection(wrapper)
+    expect(wrapper.find('[data-testid="admin-prefill-filter-panel"]').exists()).toBe(true)
+
+    await wrapper.get('[data-testid="admin-prefill-filter-domain"]').setValue('example.edu')
+    await wrapper.get('[data-testid="admin-prefill-filter-unidad"]').setValue('u1')
+    await wrapper.get('[data-testid="admin-prefill-filter-preview"]').trigger('click')
+    await flushPromises()
+
+    const preview = wrapper.get('[data-testid="admin-prefill-filter-preview-result"]')
+    expect(preview.text()).toContain('Bruno Diaz')
+    expect(preview.text()).toContain(
+      i18n.global.t('adminDocuments.prefillStudents.filterPreviewSummary', {
+        matched: 3,
+        newCount: 2,
+        already: 1,
+      }),
+    )
+
+    await wrapper.get('[data-testid="admin-prefill-filter-confirm"]').trigger('click')
+    await flushPromises()
+    expect(mockConfirm).toHaveBeenCalled()
+    expect(mockPost).toHaveBeenCalledWith(
+      '/api/document-types/9/prefill-students/filter-confirm/',
+      { domain: 'example.edu', unidad_id: 'u1' },
+    )
+    expect(mockSuccessToast).toHaveBeenCalledWith(
+      i18n.global.t('adminDocuments.prefillStudents.filterToastAdded', { added: 2 }),
+    )
+  })
+
+  it('disables filter confirm until preview reports new students', async () => {
+    mockPost.mockResolvedValue({
+      data: { matched: 1, new_count: 0, already_listed: 1, samples: [] },
+    })
+    const { wrapper } = await mountEditor()
+    await openPrefillSection(wrapper)
+    const confirmBtn = wrapper.get('[data-testid="admin-prefill-filter-confirm"]')
+    expect(confirmBtn.attributes('disabled')).toBeDefined()
+
+    await wrapper.get('[data-testid="admin-prefill-filter-preview"]').trigger('click')
+    await flushPromises()
+    expect(confirmBtn.attributes('disabled')).toBeDefined()
+    expect(mockPost).toHaveBeenCalledWith(
+      '/api/document-types/9/prefill-students/filter-preview/',
+      {},
     )
   })
 })

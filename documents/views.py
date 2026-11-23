@@ -281,6 +281,99 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
             .first()
         )
 
+    @staticmethod
+    def _normalize_email_domain(raw: str | None) -> str:
+        """Exact domain after ``@`` (no subdomain expansion); lowercase, no leading @."""
+        domain = str(raw or "").strip().lower().lstrip("@")
+        if "@" in domain:
+            domain = domain.rsplit("@", 1)[-1].strip()
+        return domain
+
+    @staticmethod
+    def _parse_prefill_filter_params(data) -> dict:
+        """Parse optional domain / unidad / school filters (AND). Empty = all students."""
+        if hasattr(data, "dict"):
+            data = data.dict()
+        elif not isinstance(data, dict):
+            data = {}
+        domain = DocumentTypeViewSet._normalize_email_domain(
+            data.get("domain") or data.get("email_domain")
+        )
+        unidad_id = data.get("unidad_id") or data.get("unidad") or None
+        school_id = data.get("school_id") or data.get("school") or None
+        if unidad_id in ("", None):
+            unidad_id = None
+        else:
+            unidad_id = str(unidad_id)
+        if school_id in ("", None):
+            school_id = None
+        else:
+            school_id = str(school_id)
+        return {
+            "domain": domain,
+            "unidad_id": unidad_id,
+            "school_id": school_id,
+        }
+
+    def _prefill_filter_queryset(self, filters: dict):
+        """Active student-role users matching optional domain/unidad/school (AND).
+
+        Domain match is case-insensitive on the exact host after ``@`` only
+        (``example.edu`` matches ``a@example.edu``, not ``a@mail.example.edu``).
+        """
+        qs = (
+            User.objects.filter(roles__name="student", is_active=True)
+            .select_related("profile", "profile__unidad", "profile__school")
+            .distinct()
+            .order_by("last_name", "first_name", "username")
+        )
+        domain = filters.get("domain") or ""
+        if domain:
+            # Exact domain only: ends with @domain, not a subdomain suffix.
+            qs = qs.filter(email__iendswith=f"@{domain}")
+        unidad_id = filters.get("unidad_id")
+        if unidad_id:
+            qs = qs.filter(profile__unidad_id=unidad_id)
+        school_id = filters.get("school_id")
+        if school_id:
+            qs = qs.filter(profile__school_id=school_id)
+        return qs
+
+    def _prefill_filter_summary(
+        self, doc_type, filters: dict, *, sample_limit: int = 5
+    ):
+        matched_qs = self._prefill_filter_queryset(filters)
+        matched = matched_qs.count()
+        listed_ids = set(doc_type.prefill_students.values_list("id", flat=True))
+        new_qs = matched_qs.exclude(pk__in=listed_ids) if listed_ids else matched_qs
+        new_count = new_qs.count()
+        already_listed = matched - new_count
+        samples = [
+            self._serialize_prefill_student(user) for user in new_qs[:sample_limit]
+        ]
+        return {
+            "filter": filters,
+            "matched": matched,
+            "new_count": new_count,
+            "already_listed": already_listed,
+            "samples": samples,
+        }
+
+    @staticmethod
+    def _bulk_add_prefill_students(doc_type, student_ids) -> int:
+        """Idempotent M2M add in chunks; returns number newly added."""
+        ids = list(student_ids)
+        if not ids:
+            return 0
+        existing = set(
+            doc_type.prefill_students.filter(pk__in=ids).values_list("id", flat=True)
+        )
+        to_add = [pk for pk in ids if pk not in existing]
+        chunk_size = 500
+        for i in range(0, len(to_add), chunk_size):
+            doc_type.prefill_students.add(*to_add[i : i + chunk_size])
+        return len(to_add)
+
     @action(detail=False, methods=["get"], url_path="my-prefill-templates")
     def my_prefill_templates(self, request):
         """Document types the current user may download prefilled (no application)."""
@@ -417,6 +510,122 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
                 "added": added,
                 "already_listed": already_listed,
                 "not_found": not_found,
+            }
+        )
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="prefill-students/filter-options",
+        permission_classes=[permissions.IsAuthenticated, IsCoordinatorOrAdmin],
+    )
+    def prefill_students_filter_options(self, request, pk=None):
+        """Dropdown values for filter bulk-add (unidad, school, known email domains)."""
+        from accounts.models import SchoolFaculty, Unidad
+
+        self.get_object()
+        unidades = list(
+            Unidad.objects.filter(is_active=True)
+            .order_by("ordering", "name")
+            .values("id", "name")
+        )
+        schools = list(
+            SchoolFaculty.objects.filter(is_active=True)
+            .order_by("ordering", "name")
+            .values("id", "name", "unidad_id")
+        )
+        for row in unidades:
+            row["id"] = str(row["id"])
+        for row in schools:
+            row["id"] = str(row["id"])
+            row["unidad_id"] = str(row["unidad_id"]) if row.get("unidad_id") else None
+
+        domains: set[str] = set()
+        emails = (
+            User.objects.filter(roles__name="student", is_active=True)
+            .exclude(email="")
+            .values_list("email", flat=True)
+            .distinct()
+        )
+        for email in emails.iterator(chunk_size=500):
+            if "@" not in str(email):
+                continue
+            domains.add(self._normalize_email_domain(email))
+        return Response(
+            {
+                "unidades": unidades,
+                "schools": schools,
+                "domains": sorted(d for d in domains if d),
+            }
+        )
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="prefill-students/filter-preview",
+        permission_classes=[permissions.IsAuthenticated, IsCoordinatorOrAdmin],
+    )
+    def prefill_students_filter_preview(self, request, pk=None):
+        """Preview how many students a filter would add (same query as confirm)."""
+        doc_type = self.get_object()
+        filters = self._parse_prefill_filter_params(request.data)
+        if filters["domain"] == "" and (
+            "domain" in request.data or "email_domain" in request.data
+        ):
+            raw = request.data.get("domain") or request.data.get("email_domain")
+            if str(raw or "").strip():
+                return Response(
+                    {"domain": ["Enter a valid email domain (e.g. example.edu)."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        return Response(self._prefill_filter_summary(doc_type, filters))
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="prefill-students/filter-confirm",
+        permission_classes=[permissions.IsAuthenticated, IsCoordinatorOrAdmin],
+    )
+    def prefill_students_filter_confirm(self, request, pk=None):
+        """Confirm filter bulk-add using the same server-side query as preview."""
+        doc_type = self.get_object()
+        filters = self._parse_prefill_filter_params(request.data)
+        if filters["domain"] == "" and (
+            "domain" in request.data or "email_domain" in request.data
+        ):
+            raw = request.data.get("domain") or request.data.get("email_domain")
+            if str(raw or "").strip():
+                return Response(
+                    {"domain": ["Enter a valid email domain (e.g. example.edu)."]},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        matched_qs = self._prefill_filter_queryset(filters)
+        matched = matched_qs.count()
+        listed_ids = set(doc_type.prefill_students.values_list("id", flat=True))
+        new_ids = list(
+            matched_qs.exclude(pk__in=listed_ids).values_list("id", flat=True)
+        )
+        added = self._bulk_add_prefill_students(doc_type, new_ids)
+        already_listed = matched - added
+        logger.info(
+            "document_template_prefill_bulk_add",
+            extra={
+                "action": "prefill_bulk_filter_add",
+                "actor_id": request.user.pk,
+                "document_type_id": doc_type.pk,
+                "document_type_slug": doc_type.slug or "",
+                "filter": filters,
+                "matched": matched,
+                "added": added,
+                "already_listed": already_listed,
+            },
+        )
+        return Response(
+            {
+                "filter": filters,
+                "matched": matched,
+                "added": added,
+                "already_listed": already_listed,
             }
         )
 
