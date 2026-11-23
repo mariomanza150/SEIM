@@ -52,6 +52,19 @@ class DocumentType(models.Model):
         TEMPLATE_DOWNLOAD = "template_download", _("Template download")
         SYSTEM_GENERATED = "system_generated", _("System generated")
         INSTRUCTIONS_ONLY = "instructions_only", _("Instructions only")
+        DOWNLOAD_ONLY = "download_only", _("Download only")
+
+    #: Modes that never accept student uploads (no checklist upload slot).
+    NON_UPLOAD_MODES = frozenset(
+        {
+            SubmissionMode.INSTRUCTIONS_ONLY,
+            SubmissionMode.DOWNLOAD_ONLY,
+        }
+    )
+
+    @classmethod
+    def is_non_upload_mode(cls, mode: str | None) -> bool:
+        return mode in cls.NON_UPLOAD_MODES
 
     class VersionHistoryVisibility(models.TextChoices):
         INHERIT = "inherit", _("Inherit institution defaults")

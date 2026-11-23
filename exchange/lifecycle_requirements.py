@@ -436,7 +436,7 @@ def evaluate(application, *, target_status: str | None = None) -> LifecycleEvalu
         entry = by_type.get(dt.id, {})
         st = entry.get("status") or "missing"
         satisfied = st in {"approved", "n_a"}
-        if dt.submission_mode == DocumentType.SubmissionMode.INSTRUCTIONS_ONLY:
+        if DocumentType.is_non_upload_mode(dt.submission_mode):
             satisfied = True
             st = "n_a"
         items.append(

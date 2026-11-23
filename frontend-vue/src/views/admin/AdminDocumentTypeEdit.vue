@@ -598,6 +598,7 @@ const submissionModes = computed(() => [
   { value: 'template_download', label: t('adminDocuments.modes.template_download') },
   { value: 'system_generated', label: t('adminDocuments.modes.system_generated') },
   { value: 'instructions_only', label: t('adminDocuments.modes.instructions_only') },
+  { value: 'download_only', label: t('adminDocuments.modes.download_only') },
 ])
 
 const pageTitle = computed(() => form.value.name || t('adminDocuments.editorTitle'))

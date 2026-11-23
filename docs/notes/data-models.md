@@ -354,7 +354,7 @@ Document catalog entry (MX mobility seeds use stable `slug` values).
 - `name` (CharField, max_length=100, unique)
 - `slug` (CharField, unique, nullable) — e.g. `solicitud_participacion`, `carta_homologacion`
 - `description` (TextField, blank=True)
-- `submission_mode` — `upload` / `template_download` / `system_generated` / `instructions_only`
+- `submission_mode` — `upload` / `template_download` / `system_generated` / `instructions_only` / `download_only`
 - `template_file`, `instructions`, `faq`
 - `accepted_extensions`, `max_file_size_mb`, `allows_multiple`
 

@@ -1049,7 +1049,8 @@
       "upload": "Upload",
       "template_download": "Template download",
       "system_generated": "System generated",
-      "instructions_only": "Instructions only"
+      "instructions_only": "Instructions only",
+      "download_only": "Download only"
     },
     "versionHistoryModes": {
       "inherit": "Inherit institution defaults",
@@ -2085,7 +2086,8 @@
       "resubmit_requested": "Resubmission needed",
       "invalid": "Rejected",
       "approved": "Approved",
-      "n_a": "Instructions only"
+      "n_a": "Instructions only",
+      "download_only": "Download only"
     },
     "view": "View",
     "viewUpload": "File ({status})",

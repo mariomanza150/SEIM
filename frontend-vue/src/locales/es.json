@@ -1049,7 +1049,8 @@
       "upload": "Carga",
       "template_download": "Descarga de plantilla",
       "system_generated": "Generado por el sistema",
-      "instructions_only": "Solo instrucciones"
+      "instructions_only": "Solo instrucciones",
+      "download_only": "Solo descarga"
     },
     "versionHistoryModes": {
       "inherit": "Heredar valores de la institución",
@@ -2085,7 +2086,8 @@
       "resubmit_requested": "Reenvío necesario",
       "invalid": "Rechazado",
       "approved": "Aprobado",
-      "n_a": "Solo instrucciones"
+      "n_a": "Solo instrucciones",
+      "download_only": "Solo descarga"
     },
     "view": "Ver",
     "replaceDocument": "Reemplazar archivo",

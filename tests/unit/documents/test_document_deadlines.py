@@ -144,6 +144,38 @@ class DocumentDeadlineTests(TestCase):
         statuses = {i["slug"]: i["status"] for i in summary["items"]}
         self.assertEqual(statuses["reglamento_test"], "n_a")
 
+    def test_download_only_counts_complete_and_not_overdue(self):
+        dl_only = DocumentType.objects.create(
+            name="Guide Packet",
+            slug="guide_packet_deadline_test",
+            submission_mode=DocumentType.SubmissionMode.DOWNLOAD_ONLY,
+        )
+        ProgramDocumentRequirement.objects.create(
+            program=self.program,
+            document_type=dl_only,
+            is_required=True,
+            sort_order=30,
+            deadline=timezone.localdate() - timedelta(days=2),
+        )
+        self.requirement.deadline = timezone.localdate() + timedelta(days=5)
+        self.requirement.save()
+        from documents.models import Document
+
+        Document.objects.create(
+            application=self.application,
+            type=self.doc_type,
+            file=SimpleUploadedFile(
+                "a.pdf", b"%PDF-1.4\n", content_type="application/pdf"
+            ),
+            uploaded_by=self.user,
+            is_valid=True,
+        )
+        summary = DocumentService.build_application_document_checklist(self.application)
+        self.assertTrue(summary["complete"])
+        by_slug = {i["slug"]: i for i in summary["items"]}
+        self.assertEqual(by_slug["guide_packet_deadline_test"]["status"], "n_a")
+        self.assertFalse(by_slug["guide_packet_deadline_test"]["is_overdue"])
+
 
 class SolicitudPdfTests(TestCase):
     def setUp(self):
