@@ -87,6 +87,13 @@
                 <span v-if="dt.has_template" class="badge bg-info text-dark ms-1">
                   {{ t('adminDocuments.templateBadge') }}
                 </span>
+                <span
+                  v-else-if="needsTemplate(dt)"
+                  class="badge bg-warning text-dark ms-1"
+                  data-testid="admin-documents-missing-template"
+                >
+                  {{ t('adminDocuments.missingTemplateBadge') }}
+                </span>
               </td>
               <td class="text-nowrap small">
                 <span v-if="dt.accepted_extensions">{{ dt.accepted_extensions }}</span>
@@ -114,6 +121,11 @@
       <template #col-mode="{ item }">
         <span class="badge bg-secondary">{{ modeLabel(item.submission_mode) }}</span>
         <span v-if="item.has_template" class="badge bg-info text-dark ms-1">{{ t('adminDocuments.templateBadge') }}</span>
+        <span
+          v-else-if="needsTemplate(item)"
+          class="badge bg-warning text-dark ms-1"
+          data-testid="admin-documents-missing-template"
+        >{{ t('adminDocuments.missingTemplateBadge') }}</span>
       </template>
       <template #col-constraints="{ item }">
         <span v-if="item.accepted_extensions">{{ item.accepted_extensions }}</span>
@@ -206,6 +218,12 @@ const submissionModes = computed(() => [
 function modeLabel(value) {
   const hit = submissionModes.value.find((opt) => opt.value === value)
   return hit ? hit.label : value || '—'
+}
+
+const TEMPLATE_REQUIRED_MODES = new Set(['download_only', 'template_download'])
+
+function needsTemplate(dt) {
+  return TEMPLATE_REQUIRED_MODES.has(dt?.submission_mode) && !dt?.has_template
 }
 
 let searchTimeout = null

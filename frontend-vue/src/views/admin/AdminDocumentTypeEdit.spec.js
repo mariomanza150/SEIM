@@ -8,16 +8,25 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import en from '@/locales/en.json'
 import AdminDocumentTypeEdit from './AdminDocumentTypeEdit.vue'
 
-const { mockGet, mockPost, mockDelete, mockErrorToast, mockSuccessToast, mockConfirm } = vi.hoisted(() => ({
+const {
+  mockGet,
+  mockPost,
+  mockPatch,
+  mockDelete,
+  mockSuccessToast,
+  mockErrorToast,
+  mockConfirm,
+} = vi.hoisted(() => ({
   mockGet: vi.fn(),
   mockPost: vi.fn(),
+  mockPatch: vi.fn(),
   mockDelete: vi.fn(),
-  mockErrorToast: vi.fn(),
   mockSuccessToast: vi.fn(),
+  mockErrorToast: vi.fn(),
   mockConfirm: vi.fn(),
 }))
 vi.mock('@/services/api', () => ({
-  default: { get: mockGet, patch: vi.fn(), post: mockPost, delete: mockDelete },
+  default: { get: mockGet, patch: mockPatch, post: mockPost, delete: mockDelete },
 }))
 vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ success: mockSuccessToast, error: mockErrorToast }),
@@ -57,14 +66,18 @@ async function mountEditor() {
     ],
   })
   await router.push({ name: 'AdminDocumentTypeEdit', params: { id: '9' } })
-  const wrapper = mount(AdminDocumentTypeEdit, {
-    global: {
-      plugins: [i18n, router],
-      stubs: { RouterLink: { template: '<a><slot /></a>' } },
+  // Mount via <router-view> so onBeforeRouteLeave registers correctly.
+  const wrapper = mount(
+    { template: '<router-view />' },
+    {
+      global: {
+        plugins: [i18n, router],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
     },
-  })
+  )
   await flushPromises()
-  return { wrapper, i18n }
+  return { wrapper, i18n, router }
 }
 
 describe('AdminDocumentTypeEdit', () => {
@@ -73,6 +86,10 @@ describe('AdminDocumentTypeEdit', () => {
     mockSuccessToast.mockClear()
     mockConfirm.mockReset()
     mockConfirm.mockResolvedValue(true)
+    mockPatch.mockReset()
+    mockPatch.mockResolvedValue({
+      data: mockDocumentTypePayload({ program_requirements: [] }),
+    })
     mockGet.mockImplementation((url) => {
       if (url === '/api/document-types/9/') {
         return Promise.resolve({ data: mockDocumentTypePayload() })
@@ -373,6 +390,79 @@ describe('AdminDocumentTypeEdit', () => {
     )
     expect(clickSpy).toHaveBeenCalled()
     document.createElement.mockRestore()
+  })
+
+  it('shows pending-template hint and uploads on Guardar when a file is selected', async () => {
+    mockPost.mockResolvedValue({
+      data: {
+        has_template: true,
+        template_filename: 'mobility.docx',
+      },
+    })
+    const { wrapper, i18n } = await mountEditor()
+    const input = wrapper.get('[data-testid="admin-document-type-template"]')
+    const file = new File(['docx'], 'mobility.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    })
+    Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
+    await input.trigger('change')
+    expect(wrapper.get('[data-testid="admin-document-template-pending"]').text()).toContain(
+      'mobility.docx',
+    )
+
+    await wrapper.get('[data-testid="admin-document-type-save"]').trigger('click')
+    await flushPromises()
+    expect(mockPatch).toHaveBeenCalledWith(
+      '/api/document-types/9/',
+      expect.objectContaining({ name: 'Transcript' }),
+    )
+    expect(mockPost).toHaveBeenCalledWith(
+      '/api/document-types/9/upload-template/',
+      expect.any(FormData),
+    )
+    expect(mockSuccessToast).toHaveBeenCalledWith(
+      i18n.global.t('adminDocuments.toastSavedWithTemplate'),
+    )
+    expect(wrapper.find('[data-testid="admin-document-template-pending"]').exists()).toBe(false)
+  })
+
+  it('warns that the template was NOT saved when upload fails after Guardar', async () => {
+    mockPost.mockRejectedValue(new Error('upload failed'))
+    const { wrapper, i18n } = await mountEditor()
+    const input = wrapper.get('[data-testid="admin-document-type-template"]')
+    const file = new File(['docx'], 'broken.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    })
+    Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
+    await input.trigger('change')
+    await wrapper.get('[data-testid="admin-document-type-save"]').trigger('click')
+    await flushPromises()
+    expect(mockPatch).toHaveBeenCalled()
+    expect(mockErrorToast).toHaveBeenCalledWith(
+      i18n.global.t('adminDocuments.templateNotSavedAfterSave'),
+    )
+    expect(wrapper.find('[data-testid="admin-document-template-pending"]').exists()).toBe(true)
+  })
+
+  it('confirms before leaving when a template file is pending upload', async () => {
+    mockConfirm.mockResolvedValue(false)
+    const { wrapper, i18n, router } = await mountEditor()
+    const input = wrapper.get('[data-testid="admin-document-type-template"]')
+    const file = new File(['docx'], 'pending.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    })
+    Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
+    await input.trigger('change')
+
+    await router.push({ name: 'AdminDocuments' })
+    await flushPromises()
+    expect(mockConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: i18n.global.t('adminDocuments.templatePendingLeaveTitle'),
+        message: i18n.global.t('adminDocuments.templatePendingLeaveMessage'),
+      }),
+    )
+    expect(router.currentRoute.value.name).toBe('AdminDocumentTypeEdit')
   })
 
   it('shows an error toast when prefill preview download fails', async () => {
