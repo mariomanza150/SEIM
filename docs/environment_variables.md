@@ -312,7 +312,10 @@ MEDIA_URL=https://cdn.yourdomain.com/media/
 |----------|----------|---------|-------------|
 | `LOG_LEVEL` | ❌ | `INFO` | Logging level |
 | `LOG_FORMAT` | ❌ | `json` (production), `text` (development) | `json` = one JSON object per line on stdout (`ts`, `level`, `logger`, `msg`, `request_id`, extras) |
-| `LOG_FILE` | ❌ | `/var/log/seim/django.log` (production) | Extra log file; empty disables it |
+| `LOG_FILE` | ❌ | (empty) | When set, also write to this path with a size-based rotating file handler (keeps `LOG_FILE_BACKUP_COUNT` backups). Prefer a distinct file per process (web / celery / beat) to avoid rotation races. |
+| `LOG_DIR` | ❌ | (empty) | If `LOG_FILE` is empty and `LOG_DIR` is set, logs go to `{LOG_DIR}/seim.log`. |
+| `LOG_FILE_MAX_BYTES` | ❌ | `10485760` (10 MiB) | Max size per log file before rotation |
+| `LOG_FILE_BACKUP_COUNT` | ❌ | `5` | Number of rotated backups to keep |
 | `SENTRY_DSN` | ❌ | - | Sentry/GlitchTip DSN; unset disables error tracking |
 | `SENTRY_ENVIRONMENT` | ❌ | `DJANGO_ENV` | Environment tag on events |
 | `SENTRY_RELEASE` | ❌ | `1.0.0` | Release tag on events and `version` in `/health/` (set to the deployed git SHA or tag) |
@@ -327,6 +330,10 @@ LOG_FILE=logs/seim.log
 LOG_LEVEL=WARNING
 SENTRY_DSN=https://your-sentry-dsn@sentry.io/project-id
 ```
+
+#### **Local-prod persistent logs**
+
+`docker-compose.local-prod.yml` mounts named volume `logs_prod_volume` at `/app/logs` and sets a distinct `LOG_FILE` per process (`web.log`, `celery.log`, `celery-beat.log`) so rotation does not race across containers. Logs survive `docker compose up` recreates. Document type / template / upload actions also emit structured lines on logger `seim.audit` (ids and outcomes only).
 
 ---
 

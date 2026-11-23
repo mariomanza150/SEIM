@@ -65,6 +65,7 @@ services:
     volumes:
       - static_prod_volume:/app/staticfiles
       - media_prod_volume:/app/media
+      - logs_prod_volume:/app/logs
     networks:
       - seim-prod-network
     depends_on:
@@ -76,6 +77,8 @@ services:
       - DJANGO_SETTINGS_MODULE=seim.settings.production
       - DJANGO_ENV=production
       - DEBUG=False
+      # Persistent rotating logs (survives container recreate). Per-process file avoids rotation races.
+      - LOG_FILE=/app/logs/web.log
       # No nginx in this stack; Django must serve uploaded files for SPA download links.
       - SERVE_MEDIA=1
       - DISABLE_PAGE_CACHE_MIDDLEWARE=1
@@ -128,6 +131,7 @@ services:
     command: celery -A seim worker --loglevel=info --concurrency=2
     volumes:
       - media_prod_volume:/app/media
+      - logs_prod_volume:/app/logs
     networks:
       - seim-prod-network
     depends_on:
@@ -145,6 +149,7 @@ services:
       - DJANGO_SETTINGS_MODULE=seim.settings.production
       - DJANGO_ENV=production
       - DEBUG=False
+      - LOG_FILE=/app/logs/celery.log
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
       - ALLOW_ANY_HOST=${ALLOW_ANY_HOST:-1}
@@ -172,6 +177,8 @@ services:
       - .env.local-prod
     restart: unless-stopped
     command: celery -A seim beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - logs_prod_volume:/app/logs
     networks:
       - seim-prod-network
     depends_on:
@@ -189,6 +196,7 @@ services:
       - DJANGO_SETTINGS_MODULE=seim.settings.production
       - DJANGO_ENV=production
       - DEBUG=False
+      - LOG_FILE=/app/logs/celery-beat.log
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
       - ALLOW_ANY_HOST=${ALLOW_ANY_HOST:-1}
@@ -242,6 +250,8 @@ volumes:
   static_prod_volume:
     driver: local
   media_prod_volume:
+    driver: local
+  logs_prod_volume:
     driver: local
   toefl_sessions_prod:
     driver: local
