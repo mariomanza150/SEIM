@@ -15,9 +15,7 @@ from core.observability import (
 
 
 def test_resolve_log_file_path_prefers_explicit_file():
-    assert (
-        resolve_log_file_path("/tmp/custom.log", "/tmp/logs") == "/tmp/custom.log"
-    )
+    assert resolve_log_file_path("/tmp/custom.log", "/tmp/logs") == "/tmp/custom.log"
 
 
 def test_resolve_log_file_path_uses_dir_when_file_empty(tmp_path):

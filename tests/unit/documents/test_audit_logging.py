@@ -65,7 +65,9 @@ class DocumentAuditLoggingTests(TestCase):
             ),
         )
         with self.assertLogs("seim.audit", level="INFO") as caplog:
-            response = self.client.post(url, {"template_file": upload}, format="multipart")
+            response = self.client.post(
+                url, {"template_file": upload}, format="multipart"
+            )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(
             any("document_type_template_upload" in line for line in caplog.output),
