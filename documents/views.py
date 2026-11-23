@@ -283,9 +283,14 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], url_path="my-prefill-templates")
     def my_prefill_templates(self, request):
-        """Document types the current user may download prefilled (no application)."""
+        """Document types the current user may download prefilled (no application).
+
+        Types without an attached template file are excluded so the student UI
+        never offers a download that would 404.
+        """
         qs = (
             DocumentType.objects.filter(prefill_students=request.user)
+            .exclude(Q(template_file="") | Q(template_file__isnull=True))
             .order_by("name")
             .distinct()
         )
@@ -294,7 +299,7 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
                 "id": dt.id,
                 "name": dt.name,
                 "slug": dt.slug,
-                "has_template": bool(dt.template_file),
+                "has_template": True,
                 "template_filename": (
                     dt.template_file.name.rsplit("/", 1)[-1] if dt.template_file else ""
                 ),

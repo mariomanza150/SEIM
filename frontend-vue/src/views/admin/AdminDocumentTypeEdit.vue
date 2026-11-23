@@ -202,6 +202,19 @@
             {{ templateFilename || t('adminDocuments.templateAttached') }}
           </p>
           <p v-else class="text-muted small">{{ t('adminDocuments.noTemplate') }}</p>
+          <div
+            v-if="pendingTemplate"
+            class="alert alert-warning py-2 px-3 small mb-2"
+            role="status"
+            data-testid="admin-document-template-pending"
+          >
+            <i class="bi bi-exclamation-triangle me-1" aria-hidden="true"></i>
+            {{
+              t('adminDocuments.templatePendingHint', {
+                name: pendingTemplate.name || t('adminDocuments.templatePendingFile'),
+              })
+            }}
+          </div>
           <div class="d-flex flex-wrap gap-2 align-items-center">
             <input
               ref="templateInput"
@@ -215,6 +228,7 @@
               type="button"
               class="btn btn-outline-primary"
               :disabled="templateBusy || !pendingTemplate"
+              data-testid="admin-document-type-upload-template"
               @click="uploadTemplate"
             >
               {{ t('adminDocuments.uploadTemplate') }}
@@ -519,9 +533,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from 'vue-router'
+import { onBeforeRouteLeave, useRoute, useRouter } from 'vue-router'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
@@ -924,6 +938,7 @@ async function removeTemplate() {
 async function save() {
   formError.value = null
   saving.value = true
+  const hadPendingTemplate = Boolean(pendingTemplate.value)
   try {
     const payload = {
       name: form.value.name,
@@ -965,7 +980,30 @@ async function save() {
     form.value.program_requirements = (res.data.program_requirements || []).map((row) =>
       normalizeRequirementRow(row),
     )
-    success(t('adminDocuments.toastSaved'))
+
+    if (hadPendingTemplate && pendingTemplate.value) {
+      templateBusy.value = true
+      try {
+        const data = new FormData()
+        data.append('template_file', pendingTemplate.value)
+        const uploadRes = await api.post(
+          `/api/document-types/${route.params.id}/upload-template/`,
+          data,
+        )
+        hasTemplate.value = Boolean(uploadRes.data?.has_template)
+        templateFilename.value = uploadRes.data?.template_filename || pendingTemplate.value.name
+        pendingTemplate.value = null
+        if (templateInput.value) templateInput.value.value = ''
+        success(t('adminDocuments.toastSavedWithTemplate'))
+      } catch (uploadErr) {
+        console.error('Template upload failed after save:', uploadErr)
+        errorToast(t('adminDocuments.templateNotSavedAfterSave'))
+      } finally {
+        templateBusy.value = false
+      }
+    } else {
+      success(t('adminDocuments.toastSaved'))
+    }
   } catch (err) {
     console.error('Failed to save document type:', err)
     formError.value = t('adminDocuments.saveError')
@@ -997,8 +1035,31 @@ async function confirmDelete() {
   }
 }
 
+function onBeforeUnload(event) {
+  if (!pendingTemplate.value) return
+  event.preventDefault()
+  event.returnValue = ''
+}
+
+onBeforeRouteLeave(async () => {
+  if (!pendingTemplate.value) return true
+  const ok = await confirm({
+    title: t('adminDocuments.templatePendingLeaveTitle'),
+    message: t('adminDocuments.templatePendingLeaveMessage'),
+    confirmText: t('adminDocuments.templatePendingLeaveConfirm'),
+    cancelText: t('adminCommon.cancel'),
+    variant: 'danger',
+  })
+  return ok
+})
+
 onMounted(() => {
+  window.addEventListener('beforeunload', onBeforeUnload)
   load()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('beforeunload', onBeforeUnload)
 })
 </script>
 

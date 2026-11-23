@@ -227,6 +227,22 @@ class PrefillStudentsApiTests(TestCase):
         ids = {row["id"] for row in response.json()["results"]}
         self.assertEqual(ids, {self.doc_type.pk})
 
+    def test_student_my_prefill_templates_excludes_types_without_template(self):
+        bare = DocumentType.objects.create(
+            name="Bare Prefill Type",
+            slug="bare_prefill_type",
+            submission_mode="download_only",
+        )
+        self.doc_type.prefill_students.add(self.student)
+        bare.prefill_students.add(self.student)
+        self.client.force_authenticate(user=self.student)
+        response = self.client.get(self._my_templates_url())
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.json()["results"]
+        ids = {row["id"] for row in results}
+        self.assertEqual(ids, {self.doc_type.pk})
+        self.assertTrue(all(row.get("has_template") for row in results))
+
     def test_merge_values_for_student_blanks_program_keys(self):
         from documents.mailmerge import merge_values_for_student
 
