@@ -15,6 +15,7 @@ import {
   documentTypeMaxFileSizeMb,
   filenameFromContentDisposition,
   formatAcceptedExtensionsLabel,
+  sanitizeDownloadFilename,
   validateDocumentFile,
 } from './documentApi'
 
@@ -220,6 +221,12 @@ describe('documentApi', () => {
       ),
     ).toBe('FS-CP_Carta_de_Postulacion.docx')
     expect(filenameFromContentDisposition(null, 'template.docx')).toBe('template.docx')
+  })
+
+  it('sanitizeDownloadFilename strips unsafe characters', () => {
+    expect(sanitizeDownloadFilename('Learning Agreement / v2')).toBe('Learning-Agreement-v2')
+    expect(sanitizeDownloadFilename('ana lopez')).toBe('ana-lopez')
+    expect(sanitizeDownloadFilename(',,,')).toBe('download')
   })
 
   it('documentTypeAcceptedExtensions resolves families and extras', () => {
