@@ -28,6 +28,8 @@ Runs on: **after CI succeeds** on `main` / `master`, or `workflow_dispatch`
 
 **Target:** Docker Compose project **`seim-localprod`** (`docker-compose.local-prod.yml`) on **this machine** — app at `http://localhost:8020`.
 
+**Persistent logs:** named volume `logs_prod_volume` → `/app/logs` on `web`, `celery`, and `celery-beat`, with per-process `LOG_FILE` (`web.log` / `celery.log` / `celery-beat.log`) and Django rotating file handlers. Inspect with e.g. `docker compose -p seim-localprod -f docker-compose.local-prod.yml exec web tail -n 100 /app/logs/web.log`.
+
 **Runner:** requires a **self-hosted** Windows runner with labels `self-hosted`, `windows`, `local-prod`.
 
 **One-time setup:**
