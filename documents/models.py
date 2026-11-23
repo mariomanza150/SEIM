@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -132,6 +133,15 @@ class DocumentType(models.Model):
         null=True,
         blank=True,
         help_text=_("Custom override for admins when visibility is custom."),
+    )
+    prefill_students = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="prefill_document_types",
+        help_text=_(
+            "Students allowed to download this type's template prefilled "
+            "with their profile data (no application required)."
+        ),
     )
 
     class Meta:

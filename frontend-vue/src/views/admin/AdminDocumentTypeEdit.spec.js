@@ -8,9 +8,13 @@ import { createRouter, createMemoryHistory } from 'vue-router'
 import en from '@/locales/en.json'
 import AdminDocumentTypeEdit from './AdminDocumentTypeEdit.vue'
 
-const { mockGet } = vi.hoisted(() => ({ mockGet: vi.fn() }))
+const { mockGet, mockPost, mockDelete } = vi.hoisted(() => ({
+  mockGet: vi.fn(),
+  mockPost: vi.fn(),
+  mockDelete: vi.fn(),
+}))
 vi.mock('@/services/api', () => ({
-  default: { get: mockGet, patch: vi.fn(), post: vi.fn(), delete: vi.fn() },
+  default: { get: mockGet, patch: vi.fn(), post: mockPost, delete: mockDelete },
 }))
 vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ success: vi.fn(), error: vi.fn() }),
@@ -90,8 +94,16 @@ describe('AdminDocumentTypeEdit', () => {
           },
         })
       }
+      if (url === '/api/document-types/9/prefill-students/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url.startsWith('/api/document-types/9/prefill-students/candidates/')) {
+        return Promise.resolve({ data: { results: [] } })
+      }
       return Promise.resolve({ data: {} })
     })
+    mockPost.mockResolvedValue({ data: { added: 0, already_listed: 0, not_found: [] } })
+    mockDelete.mockResolvedValue({})
   })
 
   it('shows a required-from select instead of a required checkbox', async () => {
@@ -162,6 +174,9 @@ describe('AdminDocumentTypeEdit', () => {
       if (url === '/api/document-types/file-type-families/') {
         return Promise.resolve({ data: { results: [] } })
       }
+      if (url === '/api/document-types/9/prefill-students/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
       return Promise.resolve({ data: {} })
     })
 
@@ -191,5 +206,70 @@ describe('AdminDocumentTypeEdit', () => {
         .get('[data-testid="admin-document-section-merge-fields"] [data-testid="collapsible-card-toggle"]')
         .attributes('aria-expanded'),
     ).toBe('false')
+  })
+
+  it('shows prefill students section with empty state and bulk add result', async () => {
+    mockGet.mockImplementation((url) => {
+      if (url === '/api/document-types/9/') {
+        return Promise.resolve({ data: mockDocumentTypePayload({ program_requirements: [] }) })
+      }
+      if (url.startsWith('/api/programs/')) {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/merge-fields/') {
+        return Promise.resolve({ data: { fields: [] } })
+      }
+      if (url === '/api/document-types/file-type-families/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/9/prefill-students/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 7,
+                full_name: 'Ana Lopez',
+                email: 'ana.lopez@example.com',
+                matricula: 'A01234567',
+              },
+            ],
+          },
+        })
+      }
+      if (url.startsWith('/api/document-types/9/prefill-students/candidates/')) {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 8,
+                full_name: 'Bruno Diaz',
+                email: 'bruno.diaz@example.com',
+                matricula: 'A07654321',
+                already_listed: false,
+              },
+            ],
+          },
+        })
+      }
+      return Promise.resolve({ data: {} })
+    })
+    mockPost.mockResolvedValue({
+      data: { added: 1, already_listed: 0, not_found: ['missing@example.com'] },
+    })
+
+    const { wrapper, i18n } = await mountEditor()
+    const section = wrapper.get('[data-testid="admin-document-section-prefill-students"]')
+    expect(section.text()).toContain(i18n.global.t('adminDocuments.sections.prefillStudents'))
+    expect(wrapper.find('[data-testid="admin-prefill-student-list"]').text()).toContain('Ana Lopez')
+
+    await wrapper.get('[data-testid="admin-prefill-bulk-text"]').setValue('bruno.diaz@example.com\nmissing@example.com')
+    await wrapper.get('[data-testid="admin-prefill-bulk-submit"]').trigger('click')
+    await flushPromises()
+    expect(mockPost).toHaveBeenCalledWith(
+      '/api/document-types/9/prefill-students/bulk/',
+      expect.objectContaining({ text: 'bruno.diaz@example.com\nmissing@example.com' }),
+    )
+    const result = wrapper.get('[data-testid="admin-prefill-bulk-result"]')
+    expect(result.text()).toContain('missing@example.com')
   })
 })

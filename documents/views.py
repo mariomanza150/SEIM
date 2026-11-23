@@ -1,9 +1,11 @@
 import hashlib
+import logging
 import mimetypes
 import os
 
+from django.contrib.auth import get_user_model
 from django.db.models import Count, Prefetch, Q
-from django.http import FileResponse, HttpResponse
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, status, viewsets
@@ -27,6 +29,7 @@ from .mailmerge import (
     is_docx_filename,
     merge_docx,
     merge_values_for_application,
+    merge_values_for_student,
 )
 from .models import (
     Document,
@@ -46,6 +49,9 @@ from .serializers import (
     ExchangeAgreementDocumentSerializer,
 )
 from .services import DocumentService
+
+logger = logging.getLogger(__name__)
+User = get_user_model()
 
 # Create your views here.
 
@@ -176,9 +182,251 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
         serializer = DocumentTypeSerializer(doc_type, context={"request": request})
         return Response(serializer.data)
 
+    @staticmethod
+    def _user_is_coordinator_or_admin(user) -> bool:
+        return bool(
+            getattr(user, "has_role", None)
+            and (user.has_role("coordinator") or user.has_role("admin"))
+        )
+
+    @staticmethod
+    def _serialize_prefill_student(user) -> dict:
+        profile = getattr(user, "profile", None)
+        full_name = (
+            " ".join(
+                part
+                for part in (
+                    user.first_name,
+                    getattr(user, "middle_name", "") or "",
+                    user.last_name,
+                    getattr(user, "mothers_last_name", "") or "",
+                )
+                if part
+            ).strip()
+            or user.get_full_name()
+            or user.username
+        )
+        return {
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "full_name": full_name,
+            "matricula": getattr(profile, "matricula", "") or "",
+        }
+
+    @staticmethod
+    def _student_search_queryset(search: str = ""):
+        qs = (
+            User.objects.filter(roles__name="student", is_active=True)
+            .select_related("profile")
+            .distinct()
+            .order_by("last_name", "first_name", "username")
+        )
+        term = (search or "").strip()
+        if not term:
+            return qs
+        return qs.filter(
+            Q(email__icontains=term)
+            | Q(username__icontains=term)
+            | Q(first_name__icontains=term)
+            | Q(last_name__icontains=term)
+            | Q(middle_name__icontains=term)
+            | Q(mothers_last_name__icontains=term)
+            | Q(profile__matricula__icontains=term)
+        )
+
+    @staticmethod
+    def _parse_bulk_identifiers(request) -> list[str]:
+        identifiers: list[str] = []
+        text = request.data.get("text")
+        if text is None and "text" not in getattr(request, "FILES", {}):
+            text = request.data.get("identifiers") or ""
+        if hasattr(text, "read"):
+            text = text.read().decode("utf-8", errors="ignore")
+        if text:
+            identifiers.extend(str(text).replace("\r\n", "\n").split("\n"))
+        upload = request.FILES.get("file") or request.FILES.get("csv")
+        if upload is not None:
+            raw = upload.read()
+            if isinstance(raw, bytes):
+                raw = raw.decode("utf-8", errors="ignore")
+            identifiers.extend(str(raw).replace("\r\n", "\n").split("\n"))
+        cleaned: list[str] = []
+        seen: set[str] = set()
+        for line in identifiers:
+            token = line.strip().strip(",").strip()
+            if not token or token.lower() in seen:
+                continue
+            seen.add(token.lower())
+            cleaned.append(token)
+        return cleaned
+
+    def _resolve_student_by_identifier(self, token: str):
+        """Match an existing student by email or matrícula (case-insensitive)."""
+        lowered = token.lower()
+        user = (
+            User.objects.filter(roles__name="student", is_active=True)
+            .filter(Q(email__iexact=token) | Q(email__iexact=lowered))
+            .select_related("profile")
+            .first()
+        )
+        if user is not None:
+            return user
+        return (
+            User.objects.filter(roles__name="student", is_active=True)
+            .filter(profile__matricula__iexact=token)
+            .select_related("profile")
+            .first()
+        )
+
+    @action(detail=False, methods=["get"], url_path="my-prefill-templates")
+    def my_prefill_templates(self, request):
+        """Document types the current user may download prefilled (no application)."""
+        qs = (
+            DocumentType.objects.filter(prefill_students=request.user)
+            .order_by("name")
+            .distinct()
+        )
+        results = [
+            {
+                "id": dt.id,
+                "name": dt.name,
+                "slug": dt.slug,
+                "has_template": bool(dt.template_file),
+                "template_filename": (
+                    dt.template_file.name.rsplit("/", 1)[-1] if dt.template_file else ""
+                ),
+            }
+            for dt in qs
+        ]
+        return Response({"results": results})
+
+    @action(
+        detail=True,
+        methods=["get", "post"],
+        url_path="prefill-students",
+        permission_classes=[permissions.IsAuthenticated, IsCoordinatorOrAdmin],
+    )
+    def prefill_students(self, request, pk=None):
+        """List or add students allowed to download a prefilled template."""
+        doc_type = self.get_object()
+        if request.method == "GET":
+            search = request.query_params.get("search") or ""
+            qs = doc_type.prefill_students.select_related("profile").order_by(
+                "last_name", "first_name", "username"
+            )
+            if search.strip():
+                qs = qs.filter(
+                    Q(email__icontains=search)
+                    | Q(username__icontains=search)
+                    | Q(first_name__icontains=search)
+                    | Q(last_name__icontains=search)
+                    | Q(profile__matricula__icontains=search)
+                )
+            return Response(
+                {"results": [self._serialize_prefill_student(user) for user in qs]}
+            )
+
+        user_id = request.data.get("user_id") or request.data.get("user")
+        if user_id is None:
+            return Response(
+                {"user_id": ["This field is required."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        student = get_object_or_404(User.objects.select_related("profile"), pk=user_id)
+        if doc_type.prefill_students.filter(pk=student.pk).exists():
+            return Response(
+                {
+                    "detail": "Student is already listed.",
+                    "student": self._serialize_prefill_student(student),
+                },
+                status=status.HTTP_200_OK,
+            )
+        doc_type.prefill_students.add(student)
+        return Response(
+            {"student": self._serialize_prefill_student(student)},
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(
+        detail=True,
+        methods=["delete"],
+        url_path=(
+            r"prefill-students/"
+            r"(?P<user_id>[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+            r"[0-9a-fA-F]{4}-[0-9a-fA-F]{12})"
+        ),
+        permission_classes=[permissions.IsAuthenticated, IsCoordinatorOrAdmin],
+    )
+    def prefill_students_remove(self, request, pk=None, user_id=None):
+        """Remove a student from the prefill allow-list."""
+        doc_type = self.get_object()
+        student = get_object_or_404(User, pk=user_id)
+        doc_type.prefill_students.remove(student)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="prefill-students/candidates",
+        permission_classes=[permissions.IsAuthenticated, IsCoordinatorOrAdmin],
+    )
+    def prefill_students_candidates(self, request, pk=None):
+        """Search students (name, matrícula, email) to add to the allow-list."""
+        doc_type = self.get_object()
+        search = (
+            request.query_params.get("search") or request.query_params.get("q") or ""
+        )
+        listed_ids = set(doc_type.prefill_students.values_list("id", flat=True))
+        qs = self._student_search_queryset(search)[:25]
+        results = []
+        for user in qs:
+            row = self._serialize_prefill_student(user)
+            row["already_listed"] = user.id in listed_ids
+            results.append(row)
+        return Response({"results": results})
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="prefill-students/bulk",
+        permission_classes=[permissions.IsAuthenticated, IsCoordinatorOrAdmin],
+        parser_classes=[JSONParser, MultiPartParser, FormParser],
+    )
+    def prefill_students_bulk(self, request, pk=None):
+        """Bulk-add students by matrícula or email (one per line). Never creates users."""
+        doc_type = self.get_object()
+        identifiers = self._parse_bulk_identifiers(request)
+        added = 0
+        already_listed = 0
+        not_found: list[str] = []
+        for token in identifiers:
+            student = self._resolve_student_by_identifier(token)
+            if student is None:
+                not_found.append(token)
+                continue
+            if doc_type.prefill_students.filter(pk=student.pk).exists():
+                already_listed += 1
+                continue
+            doc_type.prefill_students.add(student)
+            added += 1
+        return Response(
+            {
+                "added": added,
+                "already_listed": already_listed,
+                "not_found": not_found,
+            }
+        )
+
     @action(detail=True, methods=["get"], url_path="download-template")
     def download_template(self, request, pk=None):
         """Download template; .docx files are prefilled when ?application= is set.
+
+        Without ?application=, listed students (``prefill_students``) receive a
+        copy filled from their profile. Coordinators/admins may preview a listed
+        student's copy with ``?student=<id>``.
 
         Official blank CGRI Word forms (no MERGEFIELD / ``{{…}}`` placeholders)
         are served as exact sample bytes — mail-merge is skipped so the file
@@ -214,6 +462,7 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
             else "template.docx"
         )
         application_id = request.query_params.get("application")
+        student_id = request.query_params.get("student")
         if application_id and is_docx_filename(filename):
             from exchange.models import Application
 
@@ -234,9 +483,7 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
                 pk=application_id,
             )
             user = request.user
-            is_staff = getattr(user, "has_role", None) and (
-                user.has_role("coordinator") or user.has_role("admin")
-            )
+            is_staff = self._user_is_coordinator_or_admin(user)
             if not is_staff and application.student_id != user.id:
                 raise PermissionDenied(
                     "You cannot download a prefilled template for this application."
@@ -251,6 +498,56 @@ class DocumentTypeViewSet(viewsets.ModelViewSet):
                 raw = merge_docx(raw, values)
             stem, ext = os.path.splitext(filename)
             filename = f"{stem}_{application.student.username}{ext}"
+        elif (
+            not application_id
+            and is_docx_filename(filename)
+            and docx_has_fillable_fields(raw)
+        ):
+            user = request.user
+            is_staff = self._user_is_coordinator_or_admin(user)
+            target_student = None
+            if student_id:
+                if not is_staff:
+                    raise PermissionDenied(
+                        "You cannot download a prefilled template for another student."
+                    )
+                target_student = get_object_or_404(
+                    User.objects.select_related(
+                        "profile",
+                        "profile__school",
+                        "profile__unidad",
+                        "profile__academic_level",
+                        "profile__home_academic_program",
+                        "profile__bank_institution",
+                    ),
+                    pk=student_id,
+                )
+                if not doc_type.prefill_students.filter(pk=target_student.pk).exists():
+                    raise Http404("Student is not listed for this template.")
+                logger.info(
+                    "document_template_prefill_preview",
+                    extra={
+                        "action": "prefill_template_preview",
+                        "actor_id": user.pk,
+                        "student_id": target_student.pk,
+                        "document_type_id": doc_type.pk,
+                        "document_type_slug": doc_type.slug or "",
+                    },
+                )
+            elif doc_type.prefill_students.filter(pk=user.pk).exists():
+                target_student = User.objects.select_related(
+                    "profile",
+                    "profile__school",
+                    "profile__unidad",
+                    "profile__academic_level",
+                    "profile__home_academic_program",
+                    "profile__bank_institution",
+                ).get(pk=user.pk)
+            if target_student is not None:
+                values = merge_values_for_student(target_student)
+                raw = merge_docx(raw, values)
+                stem, ext = os.path.splitext(filename)
+                filename = f"{stem}_{target_student.username}{ext}"
 
         content_type, _ = mimetypes.guess_type(filename)
         response = HttpResponse(
