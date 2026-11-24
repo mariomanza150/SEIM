@@ -1520,6 +1520,24 @@ class CommentSerializer(serializers.ModelSerializer):
         )  # Remove event handlers
         return value
 
+    def validate_application(self, application):
+        """Students may only comment on their own applications."""
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user is None or not user.is_authenticated:
+            raise serializers.ValidationError("Authentication required.")
+        if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
+            return application
+        if hasattr(user, "has_any_role") and user.has_any_role(
+            ["coordinator", "admin"]
+        ):
+            return application
+        if application.student_id != user.id:
+            raise serializers.ValidationError(
+                "You can only comment on your own applications."
+            )
+        return application
+
     def get_author_name(self, obj):
         full_name = obj.author.get_full_name().strip()
         return full_name or obj.author.username or obj.author.email
