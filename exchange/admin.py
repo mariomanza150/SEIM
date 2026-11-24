@@ -901,11 +901,16 @@ class ApplicationAdmin(admin.ModelAdmin):
             if obj.program.min_language_level:
                 html += f"<li>Language Level: {profile.language_level} (required: {obj.program.min_language_level}+)</li>"
             if obj.program.min_age or obj.program.max_age:
-                from datetime import date
+                from django.utils import timezone
 
                 dob = profile.date_of_birth
                 if dob:
-                    age = date.today().year - dob.year
+                    today = timezone.localdate()
+                    age = (
+                        today.year
+                        - dob.year
+                        - ((today.month, today.day) < (dob.month, dob.day))
+                    )
                     html += f"<li>Age: {age} years"
                     if obj.program.min_age and obj.program.max_age:
                         html += (

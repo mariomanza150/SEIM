@@ -5,6 +5,7 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
+from django.utils import timezone
 
 from core.models import TimeStampedModel, UUIDModel
 
@@ -701,7 +702,7 @@ class Profile(UUIDModel, TimeStampedModel):
         """Estimate semester as floor(months_since_ingress / 6) + 1, clamped to ≥ 1."""
         if not ingress_date:
             return 1
-        today = on_date or date.today()
+        today = on_date or timezone.localdate()
         if today < ingress_date:
             return 1
         months = (today.year - ingress_date.year) * 12 + (
