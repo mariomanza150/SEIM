@@ -362,8 +362,8 @@ SPECTACULAR_SETTINGS = {
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": "/api/",
     "CONTACT": {
-        "name": "SEIM Development Team",
-        "email": "support@seim.local",
+        "name": "SEIM maintainers",
+        "url": "https://github.com/mariomanza150/SEIM/blob/testing/SECURITY.md",
     },
     "LICENSE": {
         "name": "MIT License",
@@ -434,6 +434,7 @@ CELERY_TIMEZONE = "UTC"
 # Security Settings
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 X_FRAME_OPTIONS = "DENY"
 
 # Redis Cache Configuration

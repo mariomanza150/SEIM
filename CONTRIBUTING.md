@@ -105,7 +105,7 @@ All changes need review before merge. Address comments; keep feedback specific a
 
 ## Security
 
-Report security issues privately to the maintainer. Do not open a public issue with secrets, tokens, or `.env` contents.
+Report vulnerabilities privately using [SECURITY.md](SECURITY.md) (GitHub private vulnerability reporting). Do not open a public issue with secrets, tokens, `.env` contents, or exploit details.
 
 ## Documentation
 

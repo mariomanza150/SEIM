@@ -48,6 +48,13 @@ This document outlines the business rules and logic implemented in the SEIM (Stu
 - Programs can be marked as recurring for annual offerings
 - Only active programs are visible to students
 
+### **Outgoing grade scale:**
+- Each outgoing `Program` may set `default_grade_scale` and `lock_grade_scale`
+- When a program default is set, it overrides the deprecated AllowedEmailDomain fallback for apply-form profile updates (`?program=`)
+- When locked (with a default), students cannot change `profile.grade_scale` via the apply form or profile PATCH scoped to that program
+- If the program has no default, AllowedEmailDomain policy remains the fallback (including domain lock)
+- Incoming programs never apply program grade-scale policy
+
 ### **Program Lifecycle:**
 - Programs can be deactivated but not deleted (for audit purposes)
 - Deactivated programs cannot accept new applications

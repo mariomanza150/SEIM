@@ -51,6 +51,7 @@ class NotificationPreferenceSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotificationPreference
         fields = "__all__"
+        read_only_fields = ["user"]
 
 
 class ReminderSerializer(serializers.ModelSerializer):

@@ -231,6 +231,24 @@ defineExpose({ refresh: fetchRecent })
   box-sizing: border-box;
 }
 
+/*
+ * Phones (< sm / 576px): absolute + right:0 overflows the left edge when the
+ * bell sits near the right of a narrow viewport (e.g. ~26px past at 375px).
+ * Pin to the viewport with gutters; keep internal scroll for long lists.
+ * ≥576px / desktop: unchanged absolute end-aligned panel above.
+ */
+@media (max-width: 575.98px) {
+  .notification-dropdown {
+    position: fixed;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: none;
+    /* Leave room under the fixed-top navbar + safe area. */
+    max-height: min(400px, calc(100vh - 5rem - env(safe-area-inset-top, 0px)));
+  }
+}
+
 .notification-item {
   white-space: normal;
   max-width: 100%;

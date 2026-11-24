@@ -1,87 +1,62 @@
-> **Snapshot (October 2025).** Planning doc; completed items are tracked in [changelog.md](changelog.md). Do not treat task lists as current backlog. **Superseded for gap/priority decisions by** [`notes/gap-audit-2026-08-20.md`](notes/gap-audit-2026-08-20.md) (+ [`notes/feature-tracking.md`](notes/feature-tracking.md)).
+> **Snapshot (2026-11).** Planning history; completed items are tracked in [changelog.md](changelog.md). Do not treat task lists as the live backlog. **Superseded for gap/priority decisions by** [`notes/gap-audit-2026-08-20.md`](notes/gap-audit-2026-08-20.md) (+ [`notes/feature-tracking.md`](notes/feature-tracking.md)).
 
 # SEIM Roadmap
 
-This roadmap outlines planned features and milestones for the SEIM project. The roadmap will be updated as the project evolves.
+This roadmap outlines completed milestones and optional future directions. Open work lives in GitHub Issues and the gap/feature trackers linked above.
 
 ## Milestones
 
 ### Phase 1: Core Platform [✅ COMPLETED]
-- ✅ Project scaffolding and initial setup [COMPLETED]
-- ✅ User authentication and role-based permissions [COMPLETED]
-- ✅ Student application workflow (draft, submit, review, approve/reject, complete) [COMPLETED]
-- ✅ Secure document upload and validation [COMPLETED]
-- ✅ Admin dashboard [COMPLETED]
-- ✅ Frontend implementation with Bootstrap 5 [COMPLETED]
-- ✅ API endpoints and documentation [COMPLETED]
+- ✅ Project scaffolding and initial setup
+- ✅ User authentication and role-based permissions
+- ✅ Student application workflow (draft, submit, review, approve/reject, complete)
+- ✅ Secure document upload and validation
+- ✅ Admin / staff dashboards (Vue SPA at `/seim/`)
+- ✅ Vue 3 SPA with Bootstrap 5 (Django template frontend removed)
+- ✅ API endpoints and documentation
 
 ### Phase 2: Communication & Notifications [✅ COMPLETED]
-- ✅ Email and in-app notifications [COMPLETED]
-- ✅ Background task processing with Celery [COMPLETED]
-- ✅ Notification preferences and templates [COMPLETED]
+- ✅ Email and in-app notifications
+- ✅ Background task processing with Celery
+- ✅ Notification preferences and templates
+- ✅ WebSocket delivery for in-app updates
 
 ### Phase 3: Analytics & Reporting [✅ COMPLETED]
-- ✅ Analytics dashboard [COMPLETED]
-- ✅ Exportable reports [COMPLETED]
-- ✅ Real-time metrics [COMPLETED]
+- ✅ Analytics dashboard
+- ✅ Exportable reports (CSV / Excel / PDF)
+- ✅ Staff forecast views in the SPA
 
 ### Phase 4: API & Integrations [✅ COMPLETED]
-- ✅ RESTful API endpoints [COMPLETED]
-- ✅ Automated API documentation with Swagger [COMPLETED]
-- ✅ JWT authentication [COMPLETED]
-- ✅ Third-party integrations (S3, external auth, etc.) [COMPLETED]
+- ✅ RESTful API endpoints
+- ✅ Automated API documentation (OpenAPI / Swagger UI)
+- ✅ JWT authentication
+- ✅ Optional third-party integrations (e.g. S3-compatible storage)
 
-### Phase 5: Production Readiness [🚧 IN PROGRESS]
-- ✅ Deployment scripts and documentation [COMPLETED]
-- ✅ Security audit and improvements [COMPLETED]
-- ✅ Docker containerization [COMPLETED]
-- 🔄 Testing suite implementation [IN PROGRESS]
-- 🔄 CI/CD pipeline setup [IN PROGRESS]
-- 🔄 Internationalization support [PLANNED]
+### Phase 5: Production Readiness [✅ COMPLETED]
+- ✅ Deployment scripts and documentation
+- ✅ Security hardening and dependency scanning in CI
+- ✅ Docker containerization
+- ✅ Test suite (pytest 80% coverage gate, Vitest, Playwright E2E)
+- ✅ CI/CD (`.github/workflows/ci.yml` and related workflows)
+- ✅ Internationalization foundation (Django locales + Vue `vue-i18n` en/es)
 
 ## Current Status
 
-**🎉 MVP Status: COMPLETE**  
-All core features for the Minimum Viable Product have been implemented and are functional.
+**MVP Status: COMPLETE**  
+Core exchange workflows are implemented and exercised in CI.
 
-**✨ New Features (October 2025): COMPLETE**
-- ✅ Program Cloning - Quick program duplication
-- ✅ Enhanced Eligibility Criteria Engine - Comprehensive validation
-- ✅ Direct Links in Notifications - One-click access to resources
+**Production readiness: CI-backed**  
+Unit/integration coverage is gated at 80%. Remaining work is product polish and items tracked in [`notes/feature-tracking.md`](notes/feature-tracking.md) (not a missing test/CI foundation).
 
-**🚀 Production Readiness: 85%**  
-The application is production-ready with the following remaining tasks:
-- Comprehensive test suite
-- Automated CI/CD pipeline
-- Optional internationalization support
+## Optional next themes
 
-## Next Steps
+These are directions, not commitments. Prefer GitHub Issues for concrete tasks.
 
-### Immediate (Sprint 1)
-1. **Testing Implementation**
-   - Unit tests for all models and services
-   - Integration tests for API endpoints
-   - Frontend component testing
-   - End-to-end workflow testing
-
-2. **CI/CD Pipeline**
-   - Automated testing on pull requests
-   - Code quality checks (linting, formatting)
-   - Automated deployment to staging/production
-   - Security scanning
-
-### Future Enhancements (Optional)
-1. **Internationalization**
-   - Multi-language support
-   - Localized date/time formats
-   - RTL language support
-
-2. **Advanced Features**
-   - Real-time notifications via WebSockets
-   - Mobile application
-   - Advanced analytics and machine learning
-   - Third-party integrations
+1. **Deeper i18n / a11y** — more locales, full manual accessibility audit
+2. **Partner / nomination polish** — richer partner document review beyond the repository list
+3. **External calendar sync** — beyond ICS/webcal subscribe (e.g. OAuth providers)
+4. **White-labeling depth** — see [white_labeling.md](white_labeling.md)
 
 ---
 
-For questions or suggestions, see the [Support & Contact](../README.md#support--contact) section. 
+For questions, see [Support & Contact](../README.md#support--contact). Report vulnerabilities via [SECURITY.md](../SECURITY.md).

@@ -411,8 +411,9 @@ class ProgramAdmin(admin.ModelAdmin):
             {
                 "fields": ("default_grade_scale", "lock_grade_scale"),
                 "description": (
-                    "For outgoing programs, overrides the AllowedEmailDomain grade-scale "
-                    "default. When locked, applicants cannot change the scale on apply."
+                    "Preferred source of truth for outgoing applicants. Overrides the "
+                    "deprecated AllowedEmailDomain fallback when set. When locked, "
+                    "applicants cannot change the scale on the apply form."
                 ),
             },
         ),

@@ -958,7 +958,7 @@ docker system info > docker_info_$(date +%Y%m%d_%H%M%S).txt
 ### **Contact Information**
 - **Documentation**: Check this guide first
 - **GitHub Issues**: Report bugs and feature requests
-- **Email Support**: admin@seim.local (for critical issues)
+- **Security**: [SECURITY.md](../SECURITY.md) — private vulnerability reporting only
 
 ---
 
@@ -991,12 +991,9 @@ make test
 docker-compose exec db pg_dump -U postgres seim_db > backup.sql
 ```
 
-### **Emergency Contacts**
-- **System Admin**: admin@seim.local
-- **Database Admin**: db-admin@seim.local
-- **Emergency Hotline**: +1-555-EMERGENCY
+Operators should configure their own on-call contacts for production; this repository does not publish a public support mailbox or emergency hotline.
 
 ---
 
-**Last Updated**: December 2024  
-**Version**: 1.0 
+**Last Updated**: November 2026  
+**Version**: 1.1 
