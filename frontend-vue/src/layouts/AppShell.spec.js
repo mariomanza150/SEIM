@@ -7,6 +7,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import AppShell from './AppShell.vue'
 import i18n, { setAppLocale } from '@/i18n'
+import { resetBrandingForTests } from '@/composables/useBranding'
 
 vi.mock('@/services/api', () => ({
   default: {
@@ -17,12 +18,13 @@ vi.mock('@/services/api', () => ({
       if (url === '/api/branding/') {
         return Promise.resolve({
           data: {
-            logo_url: '',
-            nav_brand: 'SEIM',
-            short_name: 'SEIM',
-            name: 'SEIM',
-            theme_css: 'uadec/theme.css',
-            theme: {},
+            logo_url: '/static/exampleu/logos/institution-logo.png',
+            nav_brand: 'EXU Mobility',
+            short_name: 'EXU',
+            name: 'Example University',
+            tagline: 'Student Mobility',
+            theme_css: 'exampleu/theme.css',
+            theme: { primary: '#111111', accent: '#ABCDEF' },
           },
         })
       }
@@ -105,11 +107,13 @@ describe('AppShell navbar', () => {
     localStorage.clear()
     setAppLocale('en')
     vi.clearAllMocks()
+    resetBrandingForTests()
   })
 
   afterEach(() => {
     setAppLocale('en')
     localStorage.clear()
+    resetBrandingForTests()
   })
 
   async function mountShell(startName = 'Dashboard') {
@@ -128,6 +132,16 @@ describe('AppShell navbar', () => {
     await flushPromises()
     return { wrapper, router }
   }
+
+  it('applies institution branding to the navbar label and logo', async () => {
+    const { wrapper } = await mountShell()
+    const brand = wrapper.get('.seim-navbar-brand')
+    expect(brand.text()).toContain('EXU Mobility')
+    const logo = brand.get('img.seim-navbar-brand__logo')
+    expect(logo.attributes('src')).toBe('/static/exampleu/logos/institution-logo.png')
+    expect(logo.attributes('alt')).toBe('EXU Mobility')
+    wrapper.unmount()
+  })
 
   it('always shows notifications and the user name outside the collapse', async () => {
     const { wrapper } = await mountShell()

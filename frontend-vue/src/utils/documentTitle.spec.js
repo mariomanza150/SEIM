@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import i18n, { setAppLocale } from '@/i18n'
+import { resetBrandingForTests } from '@/composables/useBranding'
 import {
   resolveDocumentTitle,
   syncAppMetaDescription,
@@ -19,13 +20,15 @@ function removeSocialMetas() {
 describe('resolveDocumentTitle', () => {
   beforeEach(() => {
     setAppLocale('en')
+    resetBrandingForTests()
   })
 
   afterEach(() => {
     setAppLocale('en')
+    resetBrandingForTests()
   })
 
-  it('uses route name and fallback product title in English', () => {
+  it('uses route name and institution short_name suffix in English', () => {
     expect(resolveDocumentTitle({ name: 'Dashboard' })).toBe('Dashboard - SEIM')
   })
 
@@ -40,7 +43,7 @@ describe('resolveDocumentTitle', () => {
     expect(resolveDocumentTitle({ name: 'NotFound' })).toBe('404 — Página no encontrada - SEIM')
   })
 
-  it('falls back to product name when name is missing or unknown', () => {
+  it('falls back to institution short_name when route name is missing or unknown', () => {
     expect(resolveDocumentTitle({})).toBe('SEIM')
     expect(resolveDocumentTitle({ name: 'UnknownRoute' })).toBe('SEIM')
   })
@@ -79,12 +82,14 @@ describe('syncAppMetaDescription', () => {
 describe('syncAppSocialMeta', () => {
   beforeEach(() => {
     setAppLocale('en')
+    resetBrandingForTests()
     removeSocialMetas()
   })
 
   afterEach(() => {
     removeSocialMetas()
     setAppLocale('en')
+    resetBrandingForTests()
   })
 
   it('uses socialTitle when tab title is only the product fallback', () => {
@@ -102,7 +107,9 @@ describe('syncAppSocialMeta', () => {
 
   it('uses tab title for named routes', () => {
     syncAppSocialMeta((k) => i18n.global.t(k), { name: 'Dashboard' })
-    expect(document.querySelector('meta[property="og:title"]').getAttribute('content')).toBe('Dashboard - SEIM')
+    expect(document.querySelector('meta[property="og:title"]').getAttribute('content')).toBe(
+      'Dashboard - SEIM',
+    )
   })
 
   it('follows locale for description and og:locale', () => {

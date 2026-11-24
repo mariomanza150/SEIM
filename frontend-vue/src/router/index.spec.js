@@ -3,6 +3,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
+import { resetBrandingForTests } from '@/composables/useBranding'
 import router from './index.js'
 import { routeBusy } from './routeBusy'
 
@@ -39,6 +40,7 @@ const profileStudent = {
 describe('router beforeEach + resolveAuthenticatedNavigation (MQ-014)', () => {
   beforeEach(async () => {
     routeBusy.value = false
+    resetBrandingForTests()
     mockAxios.get.mockResolvedValue({ data: profileStudent })
     localStorage.clear()
     localStorage.setItem('access_token', 'test-jwt')

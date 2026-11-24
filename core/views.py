@@ -129,15 +129,21 @@ class DynamicFormFromSchema(forms.Form):
 @csrf_exempt
 @require_http_methods(["GET"])
 def branding_api(request):
-    """Public institution branding for SPA shell (logo, nav label)."""
+    """Public read-only institution branding for the SPA shell.
+
+    Returns only non-sensitive INSTITUTION_*/BRAND_* chrome fields (name,
+    short name, tagline, nav label, logo, theme CSS, colors). Contact and
+    address fields stay off this endpoint.
+    """
     brand = brand_from_settings(settings)
     theme = brand.get("theme") or {}
     return JsonResponse(
         {
-            "logo_url": brand.get("logo_url") or "",
-            "nav_brand": brand.get("nav_brand") or "",
-            "short_name": brand.get("short_name") or "",
             "name": brand.get("name") or "",
+            "short_name": brand.get("short_name") or "",
+            "tagline": brand.get("tagline") or "",
+            "nav_brand": brand.get("nav_brand") or "",
+            "logo_url": brand.get("logo_url") or "",
             "theme_css": brand.get("theme_css") or "uadec/theme.css",
             "theme": theme,
         }
