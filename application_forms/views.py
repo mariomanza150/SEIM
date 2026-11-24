@@ -93,6 +93,12 @@ class FormTypeViewSet(viewsets.ModelViewSet):
             return FormTypeListSerializer
         return FormTypeSerializer
 
+    def get_permissions(self):
+        # Form schemas are shared; only admins may mutate them.
+        if self.action in ("create", "update", "partial_update", "destroy"):
+            return [permissions.IsAuthenticated(), IsSeimAdmin()]
+        return super().get_permissions()
+
     def get_queryset(self):
         """Filter forms based on user permissions"""
         queryset = super().get_queryset()
