@@ -1,6 +1,6 @@
 """Tests for production-like virus scanner settings resolution."""
 
-import logging
+from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ImproperlyConfigured
@@ -49,9 +49,8 @@ def test_resolve_rejects_mock_on_production_without_allow():
         )
 
 
-def test_resolve_allows_mock_on_production_with_flag(caplog):
-    # Pin the module logger so Django's configured logging still reaches caplog.
-    with caplog.at_level(logging.CRITICAL, logger="seim.settings.virus_scanner"):
+def test_resolve_allows_mock_on_production_with_flag():
+    with patch("seim.settings.virus_scanner.logger.critical") as critical:
         assert (
             resolve_virus_scanner_type(
                 deploy_tier="production",
@@ -62,4 +61,6 @@ def test_resolve_allows_mock_on_production_with_flag(caplog):
             )
             == "mock"
         )
-    assert any("mock is active" in r.message for r in caplog.records)
+    critical.assert_called_once()
+    message = critical.call_args.args[0]
+    assert "mock is active" in message
