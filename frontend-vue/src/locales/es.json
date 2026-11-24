@@ -747,6 +747,7 @@
     "customCreditsLabel": "Créditos",
     "addCustomSubject": "Agregar curso personalizado",
     "loadingSelections": "Cargando selecciones…",
+    "loadError": "No se pudieron cargar las asignaturas seleccionadas.",
     "empty": "Sin asignaturas seleccionadas. Puedes omitir este paso o agregar materias para la homologación.",
     "hostGradeLabel": "Calificación anfitriona",
     "homeGradeLabel": "Calificación casa",

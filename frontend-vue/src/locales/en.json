@@ -747,6 +747,7 @@
     "customCreditsLabel": "Credits",
     "addCustomSubject": "Add custom course",
     "loadingSelections": "Loading selections…",
+    "loadError": "Could not load subject selections.",
     "empty": "No subjects selected. You can skip this step or add courses for homologation.",
     "hostGradeLabel": "Host grade",
     "homeGradeLabel": "Home grade",
