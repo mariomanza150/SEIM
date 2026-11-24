@@ -31,7 +31,9 @@ def test_hashed_js_keeps_existing_cache_control():
 
 def test_css_and_other_assets_unchanged():
     headers = _Headers({"Cache-Control": "max-age=60, public"})
-    whitenoise_add_headers(headers, "/app/staticfiles/css/app.css", "/static/css/app.css")
+    whitenoise_add_headers(
+        headers, "/app/staticfiles/css/app.css", "/static/css/app.css"
+    )
     assert headers["Cache-Control"] == "max-age=60, public"
 
 
