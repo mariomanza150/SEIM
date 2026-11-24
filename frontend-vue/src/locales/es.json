@@ -2674,6 +2674,7 @@
     "breadcrumbAria": "Migas de pan",
     "loading": "Cargando pronósticos…",
     "loadError": "No se pudieron cargar los pronósticos.",
+    "programsLoadError": "No se pudieron cargar los programas para los pronósticos.",
     "demandHeading": "Pronóstico de demanda",
     "trend": "Tendencia: {n} solicitudes/semana",
     "colWeek": "Semana que inicia",
