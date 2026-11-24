@@ -11,6 +11,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from core.celery_utils import log_celery_failure, retryable_task_kwargs
+from core.email.errors import sanitize_last_error
 from core.email.outbox import claim_due_emails, scheduled_for_reason
 from core.email.pacing import wait_for_send_slot
 from core.email.quota import release_slot, try_reserve_slot
@@ -18,9 +19,23 @@ from core.email.serialize import payload_to_message
 
 logger = logging.getLogger(__name__)
 
+# Rows left in ``sending`` longer than this are assumed abandoned (worker crash).
+DEFAULT_STALE_SENDING_MINUTES = 15
+
 
 def _max_retries() -> int:
     return int(getattr(settings, "EMAIL_DEFERRED_MAX_RETRIES", 5) or 5)
+
+
+def _stale_sending_minutes() -> int:
+    return int(
+        getattr(
+            settings,
+            "EMAIL_DEFERRED_STALE_SENDING_MINUTES",
+            DEFAULT_STALE_SENDING_MINUTES,
+        )
+        or DEFAULT_STALE_SENDING_MINUTES
+    )
 
 
 def _backoff_seconds(attempts: int) -> int:
@@ -37,6 +52,29 @@ def _delivery_backend_path() -> str:
     return path
 
 
+def reclaim_stale_sending(*, stale_minutes: int | None = None) -> int:
+    """Reset abandoned ``sending`` rows back to ``pending``.
+
+    Returns the number of rows reclaimed.
+    """
+    from core.models import DeferredEmail
+
+    minutes = stale_minutes if stale_minutes is not None else _stale_sending_minutes()
+    cutoff = timezone.now() - timedelta(minutes=minutes)
+    with transaction.atomic():
+        updated = DeferredEmail.objects.filter(
+            status=DeferredEmail.STATUS_SENDING,
+            updated_at__lt=cutoff,
+        ).update(
+            status=DeferredEmail.STATUS_PENDING,
+            last_error=sanitize_last_error(f"reclaimed stale sending after {minutes}m"),
+            updated_at=timezone.now(),
+        )
+    if updated:
+        logger.info("email_drain_reclaimed_stale count=%s cutoff=%s", updated, cutoff)
+    return int(updated)
+
+
 def _send_deferred_row(row) -> str:
     """Attempt delivery for one claimed DeferredEmail. Returns outcome label."""
     from django.core.mail import get_connection
@@ -48,8 +86,8 @@ def _send_deferred_row(row) -> str:
         reason = reservation.defer_reason or "daily"
         row.status = DeferredEmail.STATUS_PENDING
         row.scheduled_for = scheduled_for_reason(reason)
-        row.last_error = f"quota:{reason}"
-        row.save(update_fields=["status", "scheduled_for", "last_error"])
+        row.last_error = sanitize_last_error(f"quota:{reason}")
+        row.save(update_fields=["status", "scheduled_for", "last_error", "updated_at"])
         logger.info(
             "email_drain_rescheduled id=%s priority=%s reason=%s",
             row.pk,
@@ -93,6 +131,7 @@ def _send_deferred_row(row) -> str:
                 "body",
                 "html_body",
                 "attachments",
+                "updated_at",
             ]
         )
         logger.info(
@@ -105,16 +144,22 @@ def _send_deferred_row(row) -> str:
     except Exception as exc:
         from core.email.backends import is_transient_provider_error
 
-        release_slot()
+        release_slot(reservation.usage_date)
         max_retries = _max_retries()
         if is_transient_provider_error(exc) and row.attempts < max_retries:
             row.status = DeferredEmail.STATUS_PENDING
             row.scheduled_for = timezone.now() + timedelta(
                 seconds=_backoff_seconds(row.attempts)
             )
-            row.last_error = f"transient:{exc.__class__.__name__}"[:2000]
+            row.last_error = sanitize_last_error(exc, prefix="transient")
             row.save(
-                update_fields=["status", "scheduled_for", "last_error", "attempts"]
+                update_fields=[
+                    "status",
+                    "scheduled_for",
+                    "last_error",
+                    "attempts",
+                    "updated_at",
+                ]
             )
             logger.warning(
                 "email_drain_retry id=%s priority=%s attempts=%s error_type=%s",
@@ -125,8 +170,8 @@ def _send_deferred_row(row) -> str:
             )
             return "retry"
         row.status = DeferredEmail.STATUS_FAILED
-        row.last_error = f"{exc.__class__.__name__}:{exc}"[:2000]
-        row.save(update_fields=["status", "last_error", "attempts"])
+        row.last_error = sanitize_last_error(exc)
+        row.save(update_fields=["status", "last_error", "attempts", "updated_at"])
         logger.error(
             "email_drain_failed id=%s priority=%s attempts=%s error_type=%s",
             row.pk,
@@ -147,8 +192,10 @@ def drain_deferred_emails(self, batch_size: int = 50):
     """
     from core.models import DeferredEmail
 
+    reclaimed = reclaim_stale_sending()
     claimed_ids = claim_due_emails(limit=batch_size)
     counts = {
+        "reclaimed": reclaimed,
         "claimed": len(claimed_ids),
         "sent": 0,
         "rescheduled": 0,
@@ -179,7 +226,9 @@ def drain_deferred_emails(self, batch_size: int = 50):
             stop_draining = True
 
     logger.info(
-        "email_drain_complete claimed=%s sent=%s rescheduled=%s retry=%s failed=%s",
+        "email_drain_complete reclaimed=%s claimed=%s sent=%s rescheduled=%s "
+        "retry=%s failed=%s",
+        counts["reclaimed"],
         counts["claimed"],
         counts["sent"],
         counts["rescheduled"],

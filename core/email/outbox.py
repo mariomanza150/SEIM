@@ -8,6 +8,7 @@ from datetime import datetime
 from django.db import transaction
 from django.utils import timezone
 
+from core.email.errors import sanitize_last_error
 from core.email.priority import PRIORITY_HIGH, PRIORITY_NORMAL
 from core.email.quota import (
     _select_for_update,
@@ -61,7 +62,7 @@ def enqueue_message(
         attachments=payload["attachments"],
         scheduled_for=when,
         attempts=0,
-        last_error=(last_error or "")[:2000],
+        last_error=sanitize_last_error(last_error) if last_error else "",
     )
     logger.info(
         "email_outbox_enqueued id=%s priority=%s defer_reason=%s scheduled_for=%s",
@@ -99,6 +100,6 @@ def claim_due_emails(*, limit: int = 50):
         rows = list(_select_for_update(qs, skip_locked=True)[:limit])
         for row in rows:
             row.status = DeferredEmail.STATUS_SENDING
-            row.save(update_fields=["status"])
+            row.save(update_fields=["status", "updated_at"])
             claimed.append(row.pk)
     return claimed

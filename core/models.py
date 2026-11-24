@@ -62,6 +62,7 @@ class DeferredEmail(models.Model):
     attempts = models.PositiveIntegerField(default=0)
     last_error = models.TextField(blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     sent_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

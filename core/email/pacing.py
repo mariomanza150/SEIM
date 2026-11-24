@@ -18,6 +18,9 @@ _LOCAL_NEXT_ALLOWED = 0.0
 CACHE_NEXT_KEY = "seim:email:pacer:next_allowed"
 CACHE_LOCK_KEY = "seim:email:pacer:lock"
 
+# How many times to retry when another worker holds the shared lock.
+_DEFAULT_MAX_LOCK_ATTEMPTS = 40
+
 
 def get_min_interval_seconds() -> float:
     try:
@@ -26,51 +29,61 @@ def get_min_interval_seconds() -> float:
         return 0.6
 
 
-def _try_cache_add(key: str, value, timeout: int) -> bool:
-    """Atomic set-if-absent via Django cache ``add``."""
+class CacheUnavailable(Exception):
+    """Raised when the shared cache backend cannot be used for pacing."""
+
+
+def _cache_add(key: str, value, timeout: int) -> bool:
+    """Atomic set-if-absent. Raises ``CacheUnavailable`` on backend errors."""
     try:
         return bool(cache.add(key, value, timeout))
-    except Exception:
-        logger.debug("Email pacer cache add failed; falling back to local lock")
-        return False
+    except Exception as exc:
+        raise CacheUnavailable(str(exc)) from exc
 
 
 def _cache_get(key: str):
     try:
         return cache.get(key)
-    except Exception:
-        return None
+    except Exception as exc:
+        raise CacheUnavailable(str(exc)) from exc
 
 
 def _cache_set(key: str, value, timeout: int) -> None:
     try:
         cache.set(key, value, timeout)
+    except Exception as exc:
+        raise CacheUnavailable(str(exc)) from exc
+
+
+def _cache_delete(key: str) -> None:
+    try:
+        cache.delete(key)
     except Exception:
-        logger.debug("Email pacer cache set failed", exc_info=True)
+        logger.debug("Email pacer cache delete failed", exc_info=True)
 
 
-def wait_for_send_slot(
+def _wait_with_shared_cache(
+    interval: float,
     *,
-    sleep: Callable[[float], None] = time.sleep,
-    monotonic: Callable[[], float] = time.monotonic,
+    sleep: Callable[[float], None],
+    clock: Callable[[], float],
+    max_lock_attempts: int,
 ) -> float:
-    """Block until the next send is allowed by ``EMAIL_MIN_INTERVAL_SECONDS``.
-
-    Uses a Redis/cache lock + next-allowed timestamp when available, otherwise
-    an in-process lock. Returns the seconds slept (for tests/metrics).
-    """
-    interval = get_min_interval_seconds()
-    if interval <= 0:
-        return 0.0
-
+    """Acquire the shared lock (retrying on contention) and pace with wall clock."""
     slept = 0.0
-    # Prefer shared cache when ``add`` works (Redis / LocMem); else local lock.
     lock_timeout = max(int(interval * 4) + 1, 2)
-    got_cache_lock = _try_cache_add(CACHE_LOCK_KEY, "1", lock_timeout)
+    # Brief pause while another worker holds the lock (still cross-process safe).
+    contention_delay = min(max(interval / 5, 0.01), 0.1)
 
-    if got_cache_lock:
+    for _ in range(max_lock_attempts):
+        got_lock = _cache_add(CACHE_LOCK_KEY, "1", lock_timeout)
+        if not got_lock:
+            sleep(contention_delay)
+            slept += contention_delay
+            continue
+
         try:
-            now = monotonic()
+            now = clock()
             next_allowed = _cache_get(CACHE_NEXT_KEY)
             try:
                 next_allowed_f = (
@@ -81,23 +94,83 @@ def wait_for_send_slot(
             if next_allowed_f > now:
                 delay = next_allowed_f - now
                 sleep(delay)
-                slept = delay
-                now = monotonic()
-            _cache_set(CACHE_NEXT_KEY, now + interval, lock_timeout + int(interval) + 1)
+                slept += delay
+                now = clock()
+            _cache_set(
+                CACHE_NEXT_KEY,
+                now + interval,
+                lock_timeout + int(interval) + 1,
+            )
             return slept
         finally:
-            try:
-                cache.delete(CACHE_LOCK_KEY)
-            except Exception:
-                pass
+            _cache_delete(CACHE_LOCK_KEY)
 
+    # Exhausted contention retries — wait a full interval then take the slot.
+    sleep(interval)
+    slept += interval
+    now = clock()
+    got_lock = _cache_add(CACHE_LOCK_KEY, "1", lock_timeout)
+    if got_lock:
+        try:
+            _cache_set(
+                CACHE_NEXT_KEY,
+                now + interval,
+                lock_timeout + int(interval) + 1,
+            )
+        finally:
+            _cache_delete(CACHE_LOCK_KEY)
+    return slept
+
+
+def _wait_with_local_lock(
+    interval: float,
+    *,
+    sleep: Callable[[float], None],
+    clock: Callable[[], float],
+) -> float:
+    """In-process fallback when the shared cache backend is unavailable."""
     global _LOCAL_NEXT_ALLOWED
+    slept = 0.0
     with _LOCAL_LOCK:
-        now = monotonic()
+        now = clock()
         if _LOCAL_NEXT_ALLOWED > now:
             delay = _LOCAL_NEXT_ALLOWED - now
             sleep(delay)
             slept = delay
-            now = monotonic()
+            now = clock()
         _LOCAL_NEXT_ALLOWED = now + interval
         return slept
+
+
+def wait_for_send_slot(
+    *,
+    sleep: Callable[[float], None] = time.sleep,
+    clock: Callable[[], float] = time.time,
+    max_lock_attempts: int = _DEFAULT_MAX_LOCK_ATTEMPTS,
+) -> float:
+    """Block until the next send is allowed by ``EMAIL_MIN_INTERVAL_SECONDS``.
+
+    Uses wall-clock ``time.time()`` in the shared Redis/cache key so pacing works
+    across separate Docker containers (monotonic clocks are not comparable).
+    Contended locks retry in a bounded loop; the in-process lock is used only when
+    the cache backend raises / is unavailable.
+
+    Returns the seconds slept (for tests/metrics).
+    """
+    interval = get_min_interval_seconds()
+    if interval <= 0:
+        return 0.0
+
+    try:
+        return _wait_with_shared_cache(
+            interval,
+            sleep=sleep,
+            clock=clock,
+            max_lock_attempts=max_lock_attempts,
+        )
+    except CacheUnavailable:
+        logger.debug(
+            "Email pacer shared cache unavailable; falling back to in-process lock",
+            exc_info=True,
+        )
+        return _wait_with_local_lock(interval, sleep=sleep, clock=clock)

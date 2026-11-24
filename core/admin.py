@@ -27,6 +27,7 @@ class DeferredEmailAdmin(admin.ModelAdmin):
         "scheduled_for",
         "attempts",
         "created_at",
+        "updated_at",
         "sent_at",
     )
     list_filter = ("status", "priority")
@@ -45,6 +46,7 @@ class DeferredEmailAdmin(admin.ModelAdmin):
         "attempts",
         "last_error",
         "created_at",
+        "updated_at",
         "sent_at",
         "body",
         "html_body",

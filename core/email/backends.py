@@ -203,12 +203,14 @@ class RateLimitedEmailBackend(BaseEmailBackend):
                 )
                 sent = connection.send_messages([message])
                 if not sent:
-                    release_slot()
+                    release_slot(reservation.usage_date)
+                    from core.email.errors import sanitize_last_error
+
                     enqueue_message(
                         message,
                         priority=priority,
                         defer_reason="daily",
-                        last_error="delivery backend returned 0",
+                        last_error=sanitize_last_error("delivery backend returned 0"),
                     )
                     handled += 1
                     continue
@@ -219,13 +221,15 @@ class RateLimitedEmailBackend(BaseEmailBackend):
                     delivery_path.rsplit(".", 1)[-1],
                 )
             except Exception as exc:
-                release_slot()
+                release_slot(reservation.usage_date)
                 if is_transient_provider_error(exc):
+                    from core.email.errors import sanitize_last_error
+
                     enqueue_message(
                         message,
                         priority=priority,
                         defer_reason="daily",
-                        last_error=f"transient:{exc.__class__.__name__}",
+                        last_error=sanitize_last_error(exc, prefix="transient"),
                     )
                     handled += 1
                     logger.warning(

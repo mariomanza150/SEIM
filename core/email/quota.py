@@ -58,6 +58,10 @@ def quota_today(limits: QuotaLimits | None = None) -> date:
     return quota_now(limits).date()
 
 
+# Alias used by tests/ops docs for the quota-timezone calendar date.
+current_quota_date = quota_today
+
+
 def month_bounds(day: date) -> tuple[date, date]:
     """Inclusive start and exclusive end dates for the calendar month of ``day``."""
     start = day.replace(day=1)
@@ -102,6 +106,7 @@ class ReservationResult:
     defer_reason: str | None = None  # "daily" | "monthly" | None
     sent_count: int = 0
     month_total: int = 0
+    usage_date: date | None = None
 
 
 def _month_total_locked(usage_model, today: date) -> int:
@@ -146,6 +151,7 @@ def try_reserve_slot(priority: str = PRIORITY_NORMAL) -> ReservationResult:
             defer_reason="monthly",
             sent_count=usage.sent_count,
             month_total=month_total,
+            usage_date=today,
         )
 
     if limits.daily_limit > 0:
@@ -157,6 +163,7 @@ def try_reserve_slot(priority: str = PRIORITY_NORMAL) -> ReservationResult:
                     defer_reason="daily",
                     sent_count=usage.sent_count,
                     month_total=month_total,
+                    usage_date=today,
                 )
         elif usage.sent_count >= limits.daily_limit:
             return ReservationResult(
@@ -164,6 +171,7 @@ def try_reserve_slot(priority: str = PRIORITY_NORMAL) -> ReservationResult:
                 defer_reason="daily",
                 sent_count=usage.sent_count,
                 month_total=month_total,
+                usage_date=today,
             )
 
     usage.sent_count += 1
@@ -173,6 +181,7 @@ def try_reserve_slot(priority: str = PRIORITY_NORMAL) -> ReservationResult:
         defer_reason=None,
         sent_count=usage.sent_count,
         month_total=month_total + 1,
+        usage_date=today,
     )
 
 

@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import smtplib
-from datetime import date, datetime, timedelta
+from datetime import timedelta
 from io import StringIO
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -16,16 +16,24 @@ from django.test import override_settings
 from django.utils import timezone
 
 from core.email.backends import RateLimitedEmailBackend, is_transient_provider_error
-from core.email.pacing import wait_for_send_slot
+from core.email.errors import sanitize_last_error
+from core.email.pacing import (
+    CACHE_LOCK_KEY,
+    CACHE_NEXT_KEY,
+    CacheUnavailable,
+    wait_for_send_slot,
+)
 from core.email.priority import PRIORITY_HEADER, detect_priority, strip_priority_header
 from core.email.quota import (
+    current_quota_date,
     next_day_boundary,
     next_month_boundary,
+    release_slot,
     remaining_headroom,
     try_reserve_slot,
 )
 from core.models import DeferredEmail, EmailDailyUsage
-from core.tasks import drain_deferred_emails
+from core.tasks import drain_deferred_emails, reclaim_stale_sending
 
 LOCMEM_CACHES = {
     "default": {
@@ -180,19 +188,67 @@ def test_strip_priority_header_returns_priority():
 
 
 @override_settings(**{**RATE_LIMIT_SETTINGS, "EMAIL_MIN_INTERVAL_SECONDS": 0.5})
-def test_pacing_sleeps_between_sends():
+def test_pacing_wall_clock_shared_and_contention_retry():
+    """Shared pacing uses wall-clock time.time and retries on lock contention."""
     sleeps: list[float] = []
-    clock = {"t": 1000.0}
+    clock = {"t": 1_700_000_000.0}
+    add_calls = {"n": 0}
 
-    def fake_mono():
+    def fake_clock():
         return clock["t"]
 
     def fake_sleep(seconds):
         sleeps.append(seconds)
         clock["t"] += seconds
 
-    wait_for_send_slot(sleep=fake_sleep, monotonic=fake_mono)
-    wait_for_send_slot(sleep=fake_sleep, monotonic=fake_mono)
+    # First wait takes the lock and sets next_allowed = now + interval in shared cache.
+    start = clock["t"]
+    wait_for_send_slot(sleep=fake_sleep, clock=fake_clock, max_lock_attempts=5)
+    assert cache.get(CACHE_NEXT_KEY) == pytest.approx(start + 0.5, abs=0.01)
+
+    # Second wait should sleep ~0.5s based on wall-clock next_allowed.
+    wait_for_send_slot(sleep=fake_sleep, clock=fake_clock, max_lock_attempts=5)
+    assert any(s == pytest.approx(0.5, abs=0.01) for s in sleeps)
+
+    # Contention: lock already held → retry loop sleeps briefly, then acquires.
+    sleeps.clear()
+    cache.set(CACHE_LOCK_KEY, "held", 5)
+    real_add = cache.add
+
+    def add_then_clear(key, value, timeout):
+        add_calls["n"] += 1
+        if key == CACHE_LOCK_KEY and add_calls["n"] == 1:
+            # Simulate another worker releasing the lock after our first miss.
+            cache.delete(CACHE_LOCK_KEY)
+            return False
+        return real_add(key, value, timeout)
+
+    with patch("core.email.pacing.cache.add", side_effect=add_then_clear):
+        wait_for_send_slot(sleep=fake_sleep, clock=fake_clock, max_lock_attempts=5)
+
+    assert sleeps  # contended path slept at least once
+    assert add_calls["n"] >= 2
+
+
+@override_settings(**{**RATE_LIMIT_SETTINGS, "EMAIL_MIN_INTERVAL_SECONDS": 0.5})
+def test_pacing_falls_back_only_when_cache_unavailable():
+    sleeps: list[float] = []
+    clock = {"t": 100.0}
+
+    def fake_clock():
+        return clock["t"]
+
+    def fake_sleep(seconds):
+        sleeps.append(seconds)
+        clock["t"] += seconds
+
+    with patch(
+        "core.email.pacing._cache_add",
+        side_effect=CacheUnavailable("redis down"),
+    ):
+        wait_for_send_slot(sleep=fake_sleep, clock=fake_clock)
+        wait_for_send_slot(sleep=fake_sleep, clock=fake_clock)
+
     assert sleeps
     assert sleeps[0] == pytest.approx(0.5, abs=0.01)
 
@@ -202,6 +258,16 @@ def test_is_transient_provider_error():
     assert is_transient_provider_error(smtplib.SMTPResponseException(450, b"try later"))
     assert is_transient_provider_error(RuntimeError("HTTP 429 Too Many Requests"))
     assert not is_transient_provider_error(ValueError("bad recipient"))
+
+
+def test_sanitize_last_error_redacts_addresses():
+    text = sanitize_last_error(
+        ValueError("failed for student@example.edu"), prefix="transient"
+    )
+    assert "example.edu" not in text
+    assert "[redacted]" in text
+    assert text.startswith("transient:")
+    assert len(text) <= 500
 
 
 @override_settings(**RATE_LIMIT_SETTINGS)
@@ -219,6 +285,18 @@ def test_transient_error_defers_and_refunds_quota():
     assert handled == 1
     assert EmailDailyUsage.objects.get().sent_count == 0
     assert DeferredEmail.objects.filter(subject="flaky").exists()
+
+
+@override_settings(**RATE_LIMIT_SETTINGS)
+def test_release_slot_uses_exact_reserved_usage_date():
+    reserved = try_reserve_slot("normal")
+    assert reserved.reserved is True
+    assert reserved.usage_date == current_quota_date()
+    assert EmailDailyUsage.objects.get(usage_date=reserved.usage_date).sent_count == 1
+
+    # Refund the exact reserved day (not "today" after a midnight crossover).
+    release_slot(reserved.usage_date)
+    assert EmailDailyUsage.objects.get(usage_date=reserved.usage_date).sent_count == 0
 
 
 @override_settings(**RATE_LIMIT_SETTINGS)
@@ -251,7 +329,7 @@ def test_drain_high_before_normal_clears_bodies_and_respects_limits():
 
     # Fill normal cap so only high (and remaining daily) can send; leave room for 1 high.
     EmailDailyUsage.objects.create(
-        usage_date=date.today(),
+        usage_date=current_quota_date(),
         sent_count=7,
     )
 
@@ -290,7 +368,7 @@ def test_drain_retries_then_fails():
             pass
 
         def send_messages(self, email_messages):
-            raise RuntimeError("HTTP 429 rate limit")
+            raise RuntimeError("HTTP 429 rate limit for user@example.edu")
 
     with patch("django.core.mail.get_connection", return_value=Always429()):
         for _ in range(3):
@@ -303,6 +381,8 @@ def test_drain_retries_then_fails():
     row.refresh_from_db()
     assert row.status == DeferredEmail.STATUS_FAILED
     assert row.attempts >= 3
+    assert "example.edu" not in row.last_error
+    assert "[redacted]" in row.last_error
 
 
 @override_settings(**RATE_LIMIT_SETTINGS)
@@ -325,8 +405,52 @@ def test_drain_idempotent_no_double_send():
 
 
 @override_settings(**RATE_LIMIT_SETTINGS)
+def test_drain_reclaims_stale_sending_rows():
+    now = timezone.now()
+    stale = DeferredEmail.objects.create(
+        priority=DeferredEmail.PRIORITY_HIGH,
+        status=DeferredEmail.STATUS_SENDING,
+        subject="stale-sending",
+        body="secret",
+        from_email="noreply@example.com",
+        to=["stale@example.edu"],
+        scheduled_for=now - timedelta(hours=1),
+    )
+    # Force updated_at into the past (auto_now would otherwise overwrite on save).
+    DeferredEmail.objects.filter(pk=stale.pk).update(
+        updated_at=now - timedelta(minutes=30)
+    )
+
+    reclaimed = reclaim_stale_sending(stale_minutes=15)
+    assert reclaimed == 1
+    stale.refresh_from_db()
+    assert stale.status == DeferredEmail.STATUS_PENDING
+    assert "reclaimed stale" in stale.last_error
+
+    # Fresh sending row must not be reclaimed.
+    fresh = DeferredEmail.objects.create(
+        priority=DeferredEmail.PRIORITY_NORMAL,
+        status=DeferredEmail.STATUS_SENDING,
+        subject="fresh-sending",
+        from_email="noreply@example.com",
+        to=["fresh@example.edu"],
+        scheduled_for=now,
+    )
+    assert reclaim_stale_sending(stale_minutes=15) == 0
+    fresh.refresh_from_db()
+    assert fresh.status == DeferredEmail.STATUS_SENDING
+
+    # Full drain should reclaim then send the stale row.
+    result = drain_deferred_emails(batch_size=5)
+    assert result["reclaimed"] >= 0
+    assert DeferredEmail.objects.get(subject="stale-sending").status == (
+        DeferredEmail.STATUS_SENT
+    )
+
+
+@override_settings(**RATE_LIMIT_SETTINGS)
 def test_email_quota_status_command():
-    EmailDailyUsage.objects.create(usage_date=date.today(), sent_count=4)
+    EmailDailyUsage.objects.create(usage_date=current_quota_date(), sent_count=4)
     DeferredEmail.objects.create(
         priority=DeferredEmail.PRIORITY_HIGH,
         status=DeferredEmail.STATUS_PENDING,
