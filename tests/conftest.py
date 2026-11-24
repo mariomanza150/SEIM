@@ -645,24 +645,34 @@ def create_application_workflow(student, program, status_name):
     return application
 
 
-def pytest_sessionstart(session):
-    """Build project gettext catalogs when GNU gettext is available.
+def _project_locale_mo_paths(root):
+    """Expected compiled catalogs for project languages used by i18n tests."""
+    from pathlib import Path
 
-    ``*.mo`` is gitignored; Docker bind-mounts hide image-baked ``locale/*/LC_MESSAGES``.
-    Compiling here keeps i18n tests accurate in dev/CI without committing binaries.
+    root = Path(root)
+    return [
+        root / "locale" / lang / "LC_MESSAGES" / "django.mo" for lang in ("de", "es", "fr")
+    ]
+
+
+def compile_project_messages(root=None):
+    """Compile project ``.po`` → ``.mo`` for de/es/fr.
+
+    Returns ``(ok, detail)``. ``ok`` is True when catalogs exist after the attempt.
+    GNU ``msgfmt`` is required (same as ``manage.py compilemessages`` / CI).
     """
     import shutil
     import subprocess
     import sys
     from pathlib import Path
 
-    if not shutil.which("msgfmt"):
-        return
-    root = Path(__file__).resolve().parents[1]
+    root = Path(root) if root is not None else Path(__file__).resolve().parents[1]
     manage = root / "manage.py"
     if not manage.is_file():
-        return
-    subprocess.run(
+        return False, "manage.py not found"
+    if not shutil.which("msgfmt"):
+        return False, "msgfmt not found (install GNU gettext)"
+    result = subprocess.run(
         [
             sys.executable,
             str(manage),
@@ -679,6 +689,34 @@ def pytest_sessionstart(session):
         capture_output=True,
         text=True,
     )
+    missing = [str(p) for p in _project_locale_mo_paths(root) if not p.is_file()]
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "").strip() or f"exit {result.returncode}"
+        return False, detail
+    if missing:
+        return False, f"missing catalogs after compile: {', '.join(missing)}"
+    return True, "ok"
+
+
+def pytest_sessionstart(session):
+    """Build project gettext catalogs when GNU gettext is available.
+
+    ``*.mo`` is gitignored; Docker bind-mounts hide image-baked ``locale/*/LC_MESSAGES``.
+    Compiling here keeps i18n tests accurate in dev/CI without committing binaries.
+    """
+    import warnings
+
+    ok, detail = compile_project_messages()
+    session.config._seim_messages_compiled = ok
+    session.config._seim_messages_compile_detail = detail
+    if not ok:
+        warnings.warn(
+            f"SEIM project gettext catalogs were not compiled ({detail}). "
+            "i18n translation tests will skip until GNU gettext is installed "
+            "and compilemessages succeeds.",
+            UserWarning,
+            stacklevel=1,
+        )
 
 
 def pytest_sessionfinish(session, exitstatus):
