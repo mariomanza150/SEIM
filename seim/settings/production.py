@@ -19,9 +19,10 @@ from .base import *
 from .hosting import (
     CLOUDFLARE_CORS_ORIGIN_REGEX,
     TAILSCALE_CORS_ORIGIN_REGEX,
-    allowed_hosts_with_tailscale,
     csrf_origins_with_tls_proxies,
+    resolve_production_allowed_hosts,
 )
+from .virus_scanner import resolve_virus_scanner_type
 
 
 def _docker_compose_redis_host_to_localhost(url: str) -> str:
@@ -86,8 +87,12 @@ def _docker_compose_postgres_service_to_localhost(url: str) -> str:
 DEBUG = False
 
 # Fail closed: production settings are real prod unless DEPLOY_TIER says otherwise
-# (the win-a8 test stack sets DEPLOY_TIER=test explicitly).
+# (test stacks set DEPLOY_TIER=test explicitly).
 DEPLOY_TIER = env("DEPLOY_TIER", default="production").strip().lower()
+
+# Virus scanner: no silent mock default on production-like tiers.
+VIRUS_SCANNER_TYPE = resolve_virus_scanner_type(deploy_tier=DEPLOY_TIER)
+VIRUS_SCAN_FAIL_SECURE = env.bool("VIRUS_SCAN_FAIL_SECURE", default=True)
 
 # Legacy flag: ``/media/`` is always registered on the ACL-guarded Django view.
 # Keep True for single-container / Cloudflare Tunnel stacks without nginx so
@@ -103,11 +108,8 @@ if _use_tls_proxy:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     USE_X_FORWARDED_HOST = True
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
-if env.bool("ALLOW_ANY_HOST", default=False):
-    ALLOWED_HOSTS = ["*"]
-elif _use_tls_proxy:
-    ALLOWED_HOSTS = allowed_hosts_with_tailscale(ALLOWED_HOSTS)
+# Fail closed: require an explicit host list. ALLOW_ANY_HOST / "*" are rejected.
+ALLOWED_HOSTS = resolve_production_allowed_hosts(use_tls_proxy=_use_tls_proxy)
 
 if _use_request_host_site:
     _middleware = list(MIDDLEWARE)
@@ -142,7 +144,7 @@ CACHES = {
         "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer",
+            "SERIALIZER": "django_redis.serializers.json.JSONSerializer",
             "CONNECTION_POOL_KWARGS": {
                 "max_connections": 100,
                 "retry_on_timeout": True,
@@ -158,6 +160,7 @@ CACHES = {
         "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SERIALIZER": "django_redis.serializers.json.JSONSerializer",
         },
         "KEY_PREFIX": "seim_session",
         "TIMEOUT": 3600,  # 1 hour for sessions
@@ -167,6 +170,7 @@ CACHES = {
         "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SERIALIZER": "django_redis.serializers.json.JSONSerializer",
         },
         "KEY_PREFIX": "seim_api",
         "TIMEOUT": 600,  # 10 minutes for API responses
@@ -176,6 +180,7 @@ CACHES = {
         "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SERIALIZER": "django_redis.serializers.json.JSONSerializer",
         },
         "KEY_PREFIX": "seim_analytics",
         "TIMEOUT": 1800,  # 30 minutes for analytics data
@@ -194,8 +199,9 @@ CACHE_MIDDLEWARE_SECONDS = 300  # 5 minutes
 CACHE_MIDDLEWARE_KEY_PREFIX = "seim"
 CACHE_MIDDLEWARE_ALIAS = "default"
 
-# Full-page cache (optional). Disable for docker-compose.local-prod to avoid stale HTML during dev.
-if not env.bool("DISABLE_PAGE_CACHE_MIDDLEWARE", default=False):
+# Full-page cache stores HttpResponse objects and is incompatible with the
+# JSON Redis serializer. Disabled by default; opt in only with a non-JSON cache.
+if not env.bool("DISABLE_PAGE_CACHE_MIDDLEWARE", default=True):
     MIDDLEWARE = (
         [
             "django.middleware.cache.UpdateCacheMiddleware",  # Must be first
@@ -319,6 +325,7 @@ init_sentry(
     or own_origin_targets(FRONTEND_BASE_URL),
 )
 
-# Same E2E hatch as development.py. Local-prod sets ALLOW_ANY_HOST=1.
-if os.environ.get("DISABLE_THROTTLE_E2E") or env.bool("ALLOW_ANY_HOST", default=False):
+# Same E2E hatch as development.py. Use DISABLE_THROTTLE_E2E=1 explicitly
+# (ALLOW_ANY_HOST no longer bypasses throttles or host checks).
+if os.environ.get("DISABLE_THROTTLE_E2E"):
     REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []

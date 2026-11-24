@@ -11,8 +11,13 @@ vi.mock('@/services/api', () => ({
   default: { get: vi.fn(), post: vi.fn(), delete: vi.fn() },
 }))
 
+const { toastSuccess, toastError } = vi.hoisted(() => ({
+  toastSuccess: vi.fn(),
+  toastError: vi.fn(),
+}))
+
 vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({ success: vi.fn(), error: vi.fn() }),
+  useToast: () => ({ success: toastSuccess, error: toastError }),
 }))
 
 vi.mock('@/composables/useConfirm', () => ({
@@ -114,5 +119,31 @@ describe('AnalyticsForecasts', () => {
     })
     await wrapper.find('[data-testid="compact-filter-advanced-toggle"]').trigger('click')
     expect(wrapper.find('[data-testid="forecasts-preset-apply"]').text()).toBe('Erasmus only')
+  })
+
+  it('toasts programsLoadError and still loads forecasts when programs GET fails', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/programs/') {
+        return Promise.reject(new Error('network'))
+      }
+      if (url === '/api/saved-searches/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/admin/dashboard/forecasts/') {
+        return Promise.resolve({ data: forecastPayload })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+    const wrapper = mount(AnalyticsForecasts, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' }, PageHeader: { template: '<div><slot /></div>' } },
+      },
+    })
+    await flushPromises()
+    expect(toastError).toHaveBeenCalledWith(i18n.global.t('analyticsForecastsPage.programsLoadError'))
+    expect(wrapper.find('[data-testid="analytics-forecasts-page"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('4')
+    expect(api.get).toHaveBeenCalledWith('/api/admin/dashboard/forecasts/', { params: {} })
   })
 })

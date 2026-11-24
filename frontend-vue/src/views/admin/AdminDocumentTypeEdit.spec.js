@@ -11,6 +11,7 @@ import AdminDocumentTypeEdit from './AdminDocumentTypeEdit.vue'
 const {
   mockGet,
   mockPost,
+  mockPut,
   mockPatch,
   mockDelete,
   mockSuccessToast,
@@ -19,6 +20,7 @@ const {
 } = vi.hoisted(() => ({
   mockGet: vi.fn(),
   mockPost: vi.fn(),
+  mockPut: vi.fn(),
   mockPatch: vi.fn(),
   mockDelete: vi.fn(),
   mockSuccessToast: vi.fn(),
@@ -26,7 +28,7 @@ const {
   mockConfirm: vi.fn(),
 }))
 vi.mock('@/services/api', () => ({
-  default: { get: mockGet, patch: mockPatch, post: mockPost, delete: mockDelete },
+  default: { get: mockGet, patch: mockPatch, put: mockPut, post: mockPost, delete: mockDelete },
 }))
 vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ success: mockSuccessToast, error: mockErrorToast }),
@@ -90,6 +92,10 @@ describe('AdminDocumentTypeEdit', () => {
     mockPatch.mockResolvedValue({
       data: mockDocumentTypePayload({ program_requirements: [] }),
     })
+    mockPut.mockReset()
+    mockPut.mockResolvedValue({
+      data: { active: true, filter: {}, labels: {}, added: 0, matched: 0, already_listed: 0 },
+    })
     mockGet.mockImplementation((url) => {
       if (url === '/api/document-types/9/') {
         return Promise.resolve({ data: mockDocumentTypePayload() })
@@ -125,6 +131,11 @@ describe('AdminDocumentTypeEdit', () => {
             unidades: [{ id: 'u1', name: 'Campus North' }],
             schools: [{ id: 's1', name: 'Engineering', unidad_id: 'u1' }],
           },
+        })
+      }
+      if (url === '/api/document-types/9/prefill-students/active-filters/') {
+        return Promise.resolve({
+          data: { active: false, filter: null, labels: {} },
         })
       }
       if (url === '/api/document-types/9/prefill-students/') {
@@ -546,7 +557,17 @@ describe('AdminDocumentTypeEdit', () => {
         expect(body).toEqual({ domain: 'example.edu', unidad_id: 'u1' })
         expect(body).not.toHaveProperty('user_ids')
         return Promise.resolve({
-          data: { filter: body, matched: 3, added: 2, already_listed: 1 },
+          data: {
+            filter: body,
+            matched: 3,
+            added: 2,
+            already_listed: 1,
+            active_filters: {
+              active: true,
+              filter: { domain: 'example.edu', unidad_id: 'u1', school_id: null },
+              labels: { domain: 'example.edu', unidad: 'Campus North', school: '' },
+            },
+          },
         })
       }
       return Promise.resolve({ data: {} })
@@ -581,6 +602,10 @@ describe('AdminDocumentTypeEdit', () => {
     expect(mockSuccessToast).toHaveBeenCalledWith(
       i18n.global.t('adminDocuments.prefillStudents.filterToastAdded', { added: 2 }),
     )
+    expect(wrapper.find('[data-testid="admin-prefill-active-filters"]').exists()).toBe(true)
+    expect(wrapper.get('[data-testid="admin-prefill-active-filters-summary"]').text()).toContain(
+      'example.edu',
+    )
   })
 
   it('disables filter confirm until preview reports new students', async () => {
@@ -598,6 +623,106 @@ describe('AdminDocumentTypeEdit', () => {
     expect(mockPost).toHaveBeenCalledWith(
       '/api/document-types/9/prefill-students/filter-preview/',
       {},
+    )
+  })
+
+  it('shows active filters indicator and supports edit and clear', async () => {
+    mockGet.mockImplementation((url) => {
+      if (url === '/api/document-types/9/') {
+        return Promise.resolve({ data: mockDocumentTypePayload({ program_requirements: [] }) })
+      }
+      if (url.startsWith('/api/programs/')) {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/merge-fields/') {
+        return Promise.resolve({ data: { fields: [] } })
+      }
+      if (url === '/api/document-types/file-type-families/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/9/prefill-students/filter-options/') {
+        return Promise.resolve({
+          data: {
+            domains: ['example.edu'],
+            unidades: [{ id: 'u1', name: 'Campus North' }],
+            schools: [{ id: 's1', name: 'Engineering', unidad_id: 'u1' }],
+          },
+        })
+      }
+      if (url === '/api/document-types/9/prefill-students/active-filters/') {
+        return Promise.resolve({
+          data: {
+            active: true,
+            filter: { domain: 'example.edu', unidad_id: 'u1', school_id: 's1' },
+            labels: { domain: 'example.edu', unidad: 'Campus North', school: 'Engineering' },
+          },
+        })
+      }
+      if (url === '/api/document-types/9/prefill-students/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      return Promise.resolve({ data: {} })
+    })
+    mockDelete.mockResolvedValue({
+      data: { active: false, filter: null, labels: {} },
+    })
+
+    const { wrapper, i18n } = await mountEditor()
+    await openPrefillSection(wrapper)
+
+    const banner = wrapper.get('[data-testid="admin-prefill-active-filters"]')
+    expect(banner.text()).toContain(i18n.global.t('adminDocuments.prefillStudents.activeFiltersTitle'))
+    expect(wrapper.get('[data-testid="admin-prefill-active-filters-summary"]').text()).toContain(
+      'Campus North',
+    )
+    expect(wrapper.get('[data-testid="admin-prefill-active-filters-summary"]').text()).toContain(
+      'Engineering',
+    )
+
+    await wrapper.get('[data-testid="admin-prefill-active-filters-edit"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.get('[data-testid="admin-prefill-filter-domain"]').element.value).toBe(
+      'example.edu',
+    )
+    expect(wrapper.get('[data-testid="admin-prefill-filter-unidad"]').element.value).toBe('u1')
+    expect(wrapper.get('[data-testid="admin-prefill-filter-school"]').element.value).toBe('s1')
+
+    await wrapper.get('[data-testid="admin-prefill-active-filters-clear"]').trigger('click')
+    await flushPromises()
+    expect(mockConfirm).toHaveBeenCalled()
+    expect(mockDelete).toHaveBeenCalledWith(
+      '/api/document-types/9/prefill-students/active-filters/',
+    )
+    expect(wrapper.find('[data-testid="admin-prefill-active-filters"]').exists()).toBe(false)
+    expect(mockSuccessToast).toHaveBeenCalledWith(
+      i18n.global.t('adminDocuments.prefillStudents.activeFiltersCleared'),
+    )
+  })
+
+  it('saves active filters from the filter panel without requiring preview matches', async () => {
+    mockPut.mockResolvedValue({
+      data: {
+        active: true,
+        filter: { domain: 'example.edu', unidad_id: null, school_id: null },
+        labels: { domain: 'example.edu', unidad: '', school: '' },
+        matched: 2,
+        added: 1,
+        already_listed: 1,
+      },
+    })
+    const { wrapper, i18n } = await mountEditor()
+    await openPrefillSection(wrapper)
+    await wrapper.get('[data-testid="admin-prefill-filter-domain"]').setValue('example.edu')
+    await wrapper.get('[data-testid="admin-prefill-filter-save-active"]').trigger('click')
+    await flushPromises()
+    expect(mockConfirm).toHaveBeenCalled()
+    expect(mockPut).toHaveBeenCalledWith(
+      '/api/document-types/9/prefill-students/active-filters/',
+      { domain: 'example.edu' },
+    )
+    expect(wrapper.find('[data-testid="admin-prefill-active-filters"]').exists()).toBe(true)
+    expect(mockSuccessToast).toHaveBeenCalledWith(
+      i18n.global.t('adminDocuments.prefillStudents.filterSaveActiveToast', { added: 1 }),
     )
   })
 })

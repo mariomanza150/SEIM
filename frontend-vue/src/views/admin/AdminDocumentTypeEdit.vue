@@ -350,6 +350,45 @@
             </div>
           </div>
 
+          <div
+            v-if="prefillActiveFilters?.active"
+            class="alert alert-success small mb-3"
+            data-testid="admin-prefill-active-filters"
+            role="status"
+          >
+            <div class="d-flex flex-column flex-sm-row align-items-sm-start justify-content-between gap-2">
+              <div class="min-w-0">
+                <div class="fw-medium" data-testid="admin-prefill-active-filters-title">
+                  {{ t('adminDocuments.prefillStudents.activeFiltersTitle') }}
+                </div>
+                <div class="mt-1" data-testid="admin-prefill-active-filters-summary">
+                  {{ activeFiltersSummary }}
+                </div>
+                <div class="text-muted mt-1">{{ t('adminDocuments.prefillStudents.activeFiltersHelp') }}</div>
+              </div>
+              <div class="d-flex flex-wrap gap-2 flex-shrink-0">
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary"
+                  :disabled="prefillBusy || prefillFilterBusy"
+                  data-testid="admin-prefill-active-filters-edit"
+                  @click="editActiveFilters"
+                >
+                  {{ t('adminDocuments.prefillStudents.activeFiltersEdit') }}
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-danger"
+                  :disabled="prefillBusy || prefillFilterBusy"
+                  data-testid="admin-prefill-active-filters-clear"
+                  @click="clearActiveFilters"
+                >
+                  {{ t('adminDocuments.prefillStudents.activeFiltersClear') }}
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="mb-3 border-top pt-3" data-testid="admin-prefill-filter-panel">
             <h3 class="h6 mb-1">{{ t('adminDocuments.prefillStudents.filterTitle') }}</h3>
             <p class="small text-muted mb-3">{{ t('adminDocuments.prefillStudents.filterHelp') }}</p>
@@ -419,6 +458,15 @@
                 @click="confirmPrefillFilter"
               >
                 {{ t('adminDocuments.prefillStudents.filterConfirm') }}
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                :disabled="prefillBusy || prefillFilterBusy"
+                data-testid="admin-prefill-filter-save-active"
+                @click="saveActiveFilters"
+              >
+                {{ t('adminDocuments.prefillStudents.filterSaveActive') }}
               </button>
             </div>
             <div
@@ -679,6 +727,7 @@ const prefillFilterBusy = ref(false)
 const prefillFilterOptions = ref({ domains: [], unidades: [], schools: [] })
 const prefillFilter = ref({ domain: '', unidad_id: '', school_id: '' })
 const prefillFilterPreview = ref(null)
+const prefillActiveFilters = ref(null)
 let prefillSearchTimer = null
 
 const form = ref(emptyForm())
@@ -710,8 +759,39 @@ const EDITOR_SECTION_DEFS = [
 const sectionContext = computed(() => ({
   hasTemplate: hasTemplate.value,
   hasRequirements: form.value.program_requirements.length > 0,
-  hasPrefillStudents: prefillStudents.value.length > 0,
+  hasPrefillStudents: prefillStudents.value.length > 0 || Boolean(prefillActiveFilters.value?.active),
 }))
+
+const activeFiltersSummary = computed(() => {
+  const labels = prefillActiveFilters.value?.labels || {}
+  const filter = prefillActiveFilters.value?.filter || {}
+  const parts = []
+  if (labels.domain || filter.domain) {
+    parts.push(
+      t('adminDocuments.prefillStudents.activeFiltersDomain', {
+        domain: labels.domain || filter.domain,
+      }),
+    )
+  }
+  if (labels.unidad || filter.unidad_id) {
+    parts.push(
+      t('adminDocuments.prefillStudents.activeFiltersUnidad', {
+        name: labels.unidad || filter.unidad_id,
+      }),
+    )
+  }
+  if (labels.school || filter.school_id) {
+    parts.push(
+      t('adminDocuments.prefillStudents.activeFiltersSchool', {
+        name: labels.school || filter.school_id,
+      }),
+    )
+  }
+  if (!parts.length) {
+    return t('adminDocuments.prefillStudents.activeFiltersAll')
+  }
+  return parts.join(' · ')
+})
 
 const sectionOpen = computed(() =>
   resolveSectionDefaultsMap(EDITOR_SECTION_DEFS, { isAdmin: true }, sectionContext.value),
@@ -844,6 +924,93 @@ async function loadPrefillFilterOptions() {
   }
 }
 
+async function loadPrefillActiveFilters() {
+  try {
+    const res = await api.get(`/api/document-types/${route.params.id}/prefill-students/active-filters/`)
+    prefillActiveFilters.value = res.data || { active: false, filter: null, labels: {} }
+  } catch (err) {
+    console.error('Prefill active filters failed:', err)
+    prefillActiveFilters.value = { active: false, filter: null, labels: {} }
+  }
+}
+
+function applyActiveFiltersToForm(payload) {
+  const filter = payload?.filter || {}
+  prefillFilter.value = {
+    domain: filter.domain || '',
+    unidad_id: filter.unidad_id || '',
+    school_id: filter.school_id || '',
+  }
+  clearPrefillFilterPreview()
+}
+
+function editActiveFilters() {
+  applyActiveFiltersToForm(prefillActiveFilters.value)
+  const panel = document.querySelector('[data-testid="admin-prefill-filter-panel"]')
+  if (panel && typeof panel.scrollIntoView === 'function') {
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+}
+
+async function clearActiveFilters() {
+  const ok = await confirm({
+    title: t('adminDocuments.prefillStudents.activeFiltersClearTitle'),
+    message: t('adminDocuments.prefillStudents.activeFiltersClearMessage'),
+    confirmText: t('adminDocuments.prefillStudents.activeFiltersClearOk'),
+    cancelText: t('adminCommon.cancel'),
+    variant: 'danger',
+  })
+  if (!ok) return
+  prefillFilterBusy.value = true
+  try {
+    const res = await api.delete(`/api/document-types/${route.params.id}/prefill-students/active-filters/`)
+    prefillActiveFilters.value = res.data || { active: false, filter: null, labels: {} }
+    success(t('adminDocuments.prefillStudents.activeFiltersCleared'))
+  } catch (err) {
+    console.error('Clear active filters failed:', err)
+    errorToast(t('adminDocuments.prefillStudents.activeFiltersClearError'))
+  } finally {
+    prefillFilterBusy.value = false
+  }
+}
+
+async function saveActiveFilters() {
+  const ok = await confirm({
+    title: t('adminDocuments.prefillStudents.filterSaveActiveTitle'),
+    message: t('adminDocuments.prefillStudents.filterSaveActiveMessage'),
+    confirmText: t('adminDocuments.prefillStudents.filterSaveActiveOk'),
+    cancelText: t('adminCommon.cancel'),
+    variant: 'primary',
+  })
+  if (!ok) return
+  prefillFilterBusy.value = true
+  try {
+    const res = await api.put(
+      `/api/document-types/${route.params.id}/prefill-students/active-filters/`,
+      buildPrefillFilterPayload(),
+    )
+    prefillActiveFilters.value = {
+      active: Boolean(res.data?.active),
+      filter: res.data?.filter ?? null,
+      labels: res.data?.labels || {},
+    }
+    const added = res.data?.added ?? 0
+    await loadPrefillStudents()
+    await loadPrefillFilterOptions()
+    prefillFilterPreview.value = null
+    success(
+      t('adminDocuments.prefillStudents.filterSaveActiveToast', {
+        added,
+      }),
+    )
+  } catch (err) {
+    console.error('Save active filters failed:', err)
+    errorToast(t('adminDocuments.prefillStudents.filterSaveActiveError'))
+  } finally {
+    prefillFilterBusy.value = false
+  }
+}
+
 async function previewPrefillFilter() {
   prefillFilterBusy.value = true
   prefillFilterPreview.value = null
@@ -890,6 +1057,11 @@ async function confirmPrefillFilter() {
       buildPrefillFilterPayload(),
     )
     const added = res.data?.added ?? 0
+    if (res.data?.active_filters) {
+      prefillActiveFilters.value = res.data.active_filters
+    } else {
+      await loadPrefillActiveFilters()
+    }
     await loadPrefillStudents()
     await loadPrefillFilterOptions()
     prefillFilterPreview.value = null
@@ -906,13 +1078,15 @@ async function load() {
   loading.value = true
   error.value = null
   try {
-    const [typeRes, programRes, fieldsRes, familyRes, prefillRes, filterOptsRes] = await Promise.all([
+    const [typeRes, programRes, fieldsRes, familyRes, prefillRes, filterOptsRes, activeFiltersRes] =
+      await Promise.all([
       api.get(`/api/document-types/${route.params.id}/`),
       api.get('/api/programs/', { params: { ordering: 'name', page_size: 100 } }),
       api.get('/api/document-types/merge-fields/'),
       api.get('/api/document-types/file-type-families/'),
       api.get(`/api/document-types/${route.params.id}/prefill-students/`),
       api.get(`/api/document-types/${route.params.id}/prefill-students/filter-options/`).catch(() => null),
+      api.get(`/api/document-types/${route.params.id}/prefill-students/active-filters/`).catch(() => null),
     ])
     const dt = typeRes.data || {}
     form.value = {
@@ -946,6 +1120,11 @@ async function load() {
         unidades: Array.isArray(filterOptsRes.data.unidades) ? filterOptsRes.data.unidades : [],
         schools: Array.isArray(filterOptsRes.data.schools) ? filterOptsRes.data.schools : [],
       }
+    }
+    prefillActiveFilters.value = activeFiltersRes?.data || {
+      active: false,
+      filter: null,
+      labels: {},
     }
   } catch (err) {
     console.error('Failed to load document type:', err)

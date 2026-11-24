@@ -148,6 +148,7 @@ describe('AppShell navbar', () => {
     expect(wrapper.find('.navbar-collapse').exists()).toBe(false)
     expect(wrapper.find('[data-testid="notifications-menu"]').exists()).toBe(true)
     expect(wrapper.get('[data-testid="user-menu"]').attributes('aria-label')).toContain('Test User')
+    expect(wrapper.get('.seim-app-shell__user-menu').classes()).toContain('seim-app-shell__user-menu')
     wrapper.unmount()
   })
 
@@ -168,6 +169,44 @@ describe('AppShell navbar', () => {
     await router.push({ name: 'Applications' })
     await flushPromises()
     expect(offcanvasHide).toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('keeps logout reachable from the mobile offcanvas for every role chrome', async () => {
+    authStoreMock.isAdmin = true
+    authStoreMock.canUseStaffReviewQueue = true
+    authStoreMock.logout.mockClear()
+    offcanvasHide.mockClear()
+
+    const { wrapper, router } = await mountShell()
+    expect(wrapper.find('[data-testid="logout-link-offcanvas"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="admin-menu"]').exists()).toBe(true)
+    expect(wrapper.find('.seim-app-shell__user-menu').exists()).toBe(true)
+    // Command palette yields space on phone widths; locale moves into the drawer.
+    expect(wrapper.get('[data-testid="app-shell-command-palette"]').element.closest('li').className).toContain(
+      'd-none',
+    )
+
+    await wrapper.get('[data-testid="logout-link-offcanvas"]').trigger('click')
+    await flushPromises()
+    expect(authStoreMock.logout).toHaveBeenCalled()
+    expect(router.currentRoute.value.name).toBe('Login')
+
+    authStoreMock.isAdmin = false
+    authStoreMock.canUseStaffReviewQueue = false
+    wrapper.unmount()
+  })
+
+  it('logs out from the partner role chrome via the offcanvas control', async () => {
+    authStoreMock.canUsePartnerPortal = true
+    authStoreMock.logout.mockClear()
+    const { wrapper, router } = await mountShell()
+    expect(wrapper.find('[data-testid="user-menu"]').exists()).toBe(true)
+    await wrapper.get('[data-testid="logout-link-offcanvas"]').trigger('click')
+    await flushPromises()
+    expect(authStoreMock.logout).toHaveBeenCalled()
+    expect(router.currentRoute.value.name).toBe('Login')
+    authStoreMock.canUsePartnerPortal = false
     wrapper.unmount()
   })
 

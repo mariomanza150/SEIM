@@ -14,7 +14,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from core.cache import (
@@ -412,12 +412,15 @@ class ProgramViewSet(viewsets.ModelViewSet):
     filterset_class = ProgramFilter  # Use advanced filter
     search_fields = ["name", "description"]
     ordering_fields = ["name", "start_date", "end_date", "created_at"]
+    ordering = ["name", "pk"]
 
     def get_queryset(self):
         seat_filter = Q(
             application__withdrawn=False,
             application__status__name__in=SEAT_HOLDING_APPLICATION_STATUS_NAMES,
         )
+        # Explicit order_by: Count() annotations clear Meta.ordering and make
+        # paginated lists non-deterministic (UnorderedObjectListWarning).
         return (
             Program.objects.select_related("application_form")
             .prefetch_related(
@@ -425,6 +428,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 "field_requirements__required_from_status",
             )
             .annotate(_seat_holding_count=Count("application", filter=seat_filter))
+            .order_by("name", "pk")
         )
 
     def perform_create(self, serializer):
@@ -1134,8 +1138,18 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         )
 
         if self.action == "list":
-            base_qs = base_qs.prefetch_related(
+            # Prefetch host institutions so list readiness (per-row status) does
+            # not issue program_has_active_host_institutions.exists() per row.
+            host_inst_prefetch = Prefetch(
+                "program__host_institutions",
+                queryset=HostInstitution.objects.filter(is_active=True),
+            )
+            base_qs = base_qs.select_related(
+                "student__profile",
+                "program__application_form",
+            ).prefetch_related(
                 req_prefetch,
+                host_inst_prefetch,
                 "student__roles",
                 list_doc_prefetch,
             )
@@ -2060,6 +2074,16 @@ class CommentViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["application", "author", "is_private"]
 
+    def _is_staff_commenter(self, user) -> bool:
+        return bool(
+            user.is_staff
+            or user.is_superuser
+            or (
+                hasattr(user, "has_any_role")
+                and user.has_any_role(["coordinator", "admin"])
+            )
+        )
+
     def get_queryset(self):
         """
         Filter comments based on user role and permissions with optimizations.
@@ -2093,10 +2117,17 @@ class CommentViewSet(viewsets.ModelViewSet):
         invalidate_application_api_responses(serializer.instance.application)
 
     def perform_update(self, serializer):
+        user = self.request.user
+        comment = serializer.instance
+        if not self._is_staff_commenter(user) and comment.author_id != user.id:
+            raise PermissionDenied("You can only edit your own comments.")
         serializer.save()
         invalidate_application_api_responses(serializer.instance.application)
 
     def perform_destroy(self, instance):
+        user = self.request.user
+        if not self._is_staff_commenter(user) and instance.author_id != user.id:
+            raise PermissionDenied("You can only delete your own comments.")
         application = instance.application
         instance.delete()
         invalidate_application_api_responses(application)

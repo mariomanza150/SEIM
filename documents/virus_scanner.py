@@ -238,7 +238,7 @@ class VirusScannerFactory:
             Configured virus scanner instance
         """
         if scanner_type is None:
-            scanner_type = getattr(settings, "VIRUS_SCANNER_TYPE", "clamav")
+            scanner_type = getattr(settings, "VIRUS_SCANNER_TYPE", "mock")
 
         if scanner_type == "clamav":
             return ClamAVScanner(
@@ -264,12 +264,24 @@ class VirusScannerFactory:
 _virus_scanner: BaseVirusScanner | None = None
 
 
+def _mock_fallback_allowed() -> bool:
+    """Whether init failures may fall back to the mock scanner."""
+    from seim.settings.virus_scanner import mock_virus_scanner_allowed
+
+    deploy_tier = getattr(settings, "DEPLOY_TIER", "development")
+    allow_mock = getattr(settings, "VIRUS_SCANNER_ALLOW_MOCK", False)
+    return mock_virus_scanner_allowed(
+        deploy_tier=str(deploy_tier),
+        allow_mock=bool(allow_mock),
+    )
+
+
 def get_virus_scanner() -> BaseVirusScanner:
     """Get the global virus scanner instance."""
     global _virus_scanner
 
     if _virus_scanner is None:
-        scanner_type = getattr(settings, "VIRUS_SCANNER_TYPE", "clamav")
+        scanner_type = getattr(settings, "VIRUS_SCANNER_TYPE", "mock")
         scanner_config = getattr(settings, "VIRUS_SCANNER_CONFIG", {})
 
         try:
@@ -277,9 +289,21 @@ def get_virus_scanner() -> BaseVirusScanner:
                 scanner_type, **scanner_config
             )
         except Exception as e:
-            logger.error(f"Failed to initialize virus scanner: {e}")
-            # Fallback to mock scanner in case of configuration issues
-            _virus_scanner = MockVirusScanner(simulate_infected=False)
+            logger.error("Failed to initialize virus scanner: %s", e)
+            if _mock_fallback_allowed():
+                logger.warning(
+                    "Falling back to mock virus scanner (deploy tier allows mock)"
+                )
+                _virus_scanner = MockVirusScanner(simulate_infected=False)
+            else:
+                logger.critical(
+                    "Virus scanner init failed and mock fallback is disabled "
+                    "for this deploy tier (type=%s)",
+                    scanner_type,
+                )
+                raise VirusScannerError(
+                    f"Virus scanner initialization failed: {e}"
+                ) from e
 
     return _virus_scanner
 

@@ -155,6 +155,9 @@ class InstitutionFeatureSettings(TimeStampedModel):
     def save(self, *args, **kwargs):
         self.pk = 1
         super().save(*args, **kwargs)
+        from core.feature_settings import clear_scholarships_enabled_cache
+
+        clear_scholarships_enabled_cache()
 
     def delete(self, *args, **kwargs):
         # Singleton must not be deleted; reset to defaults instead.

@@ -3,6 +3,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_view
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -136,10 +137,18 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     queryset = Notification.objects.all()
     serializer_class = NotificationSerializer
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
     filterset_fields = ["is_read", "notification_type", "category"]
     ordering_fields = ["sent_at", "created_at"]
     ordering = ["-sent_at"]
+    # Inbox: read/mark-read (PATCH)/delete-own. Staff-only create + batch_send.
+    http_method_names = ["get", "head", "options", "post", "patch", "put", "delete"]
+
+    def get_permissions(self):
+        if getattr(self, "action", None) in ("batch_send", "create"):
+            return [IsAuthenticated(), IsCoordinatorOrAdmin()]
+        return super().get_permissions()
 
     def get_queryset(self):
         """Filter notifications to only show user's own notifications."""
@@ -184,17 +193,80 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["post"])
     def batch_send(self, request):
-        """Send notifications to multiple users."""
+        """Staff-only: send notifications to multiple users."""
+        from accounts.models import User
+
         users = request.data.get("users", [])
-        type_name = request.data.get("type_name")
-        message = request.data.get("message")
-        sent = NotificationService.batch_send_notifications(users, type_name, message)
+        title = request.data.get("title") or request.data.get("type_name") or "Notice"
+        message = request.data.get("message") or ""
+        if not isinstance(users, list | tuple) or not users:
+            raise ValidationError({"users": "Provide a non-empty list of user ids."})
+        if not str(message).strip():
+            raise ValidationError({"message": "Message is required."})
+        recipients = list(User.objects.filter(pk__in=users))
+        sent = NotificationService.send_bulk_notifications(
+            recipients,
+            title=str(title),
+            message=str(message),
+            notification_type=request.data.get("notification_type", "in_app"),
+        )
         return Response({"sent": len(sent)})
 
 
 class NotificationPreferenceViewSet(viewsets.ModelViewSet):
+    """Per-user notification type toggles. Users manage their own rows only."""
+
     queryset = NotificationPreference.objects.all()
     serializer_class = NotificationPreferenceSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
+    filterset_fields = ["type", "enabled"]
+    ordering_fields = ["created_at", "updated_at"]
+    ordering = ["type_id", "id"]
+
+    def _is_staff_manager(self, user) -> bool:
+        return bool(
+            user.is_staff
+            or user.is_superuser
+            or (
+                hasattr(user, "has_any_role")
+                and user.has_any_role(["coordinator", "admin"])
+            )
+        )
+
+    def get_queryset(self):
+        qs = NotificationPreference.objects.select_related("user", "type").order_by(
+            "type_id", "id"
+        )
+        user = self.request.user
+        if self._is_staff_manager(user):
+            return qs
+        return qs.filter(user=user)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if self._is_staff_manager(user):
+            serializer.save()
+            return
+        target = serializer.validated_data.get("user", user)
+        if target != user:
+            raise PermissionDenied("You can only create preferences for yourself.")
+        serializer.save(user=user)
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        if not self._is_staff_manager(user) and serializer.instance.user_id != user.id:
+            raise PermissionDenied("You can only update your own preferences.")
+        if not self._is_staff_manager(user):
+            serializer.save(user=user)
+            return
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        if not self._is_staff_manager(user) and instance.user_id != user.id:
+            raise PermissionDenied("You can only delete your own preferences.")
+        instance.delete()
 
 
 @extend_schema_view(
