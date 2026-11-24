@@ -5,8 +5,13 @@ import ApplicationSubjectsPanel from './ApplicationSubjectsPanel.vue'
 import api from '@/services/api'
 import i18n, { setAppLocale } from '@/i18n'
 
+const { toastSuccess, toastError } = vi.hoisted(() => ({
+  toastSuccess: vi.fn(),
+  toastError: vi.fn(),
+}))
+
 vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({ success: vi.fn(), error: vi.fn() }),
+  useToast: () => ({ success: toastSuccess, error: toastError }),
 }))
 
 vi.mock('@/services/api', () => ({
@@ -332,5 +337,34 @@ describe('ApplicationSubjectsPanel', () => {
     })
     expect(wrapper.text()).toContain('Versiones anteriores')
     expect(wrapper.text()).toContain('Aún no hay versiones anteriores')
+  })
+
+  it('shows load error instead of empty state when selections GET fails', async () => {
+    api.get.mockImplementation((url) => {
+      if (url.includes('application-subject-selections')) {
+        return Promise.reject(new Error('network'))
+      }
+      if (url.includes('subject-plan-versions')) return Promise.resolve({ data: [] })
+      if (url.includes('available-subjects')) return Promise.resolve({ data: [] })
+      if (url.includes('/api/host-institutions/')) return Promise.resolve({ data: { grade_scale: null } })
+      if (url.includes('/api/grades/values/')) return Promise.resolve({ data: [] })
+      return Promise.reject(new Error(`Unhandled GET ${url}`))
+    })
+    const wrapper = mount(ApplicationSubjectsPanel, {
+      props: {
+        applicationId: 'app-1',
+        applicationStatus: 'draft',
+        hostInstitutionId: 'inst-1',
+      },
+      global: { plugins: [i18n] },
+    })
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="subjects-load-error"]').exists()).toBe(true)
+    })
+    expect(wrapper.find('[data-testid="subjects-empty"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="subjects-load-error"]').text()).toContain(
+      i18n.global.t('applicationSubjects.loadError'),
+    )
+    expect(toastError).toHaveBeenCalledWith(i18n.global.t('applicationSubjects.loadError'))
   })
 })

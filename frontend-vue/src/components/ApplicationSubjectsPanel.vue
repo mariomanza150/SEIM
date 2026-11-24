@@ -112,6 +112,14 @@
 
       <div v-if="loading" class="form-text">{{ t('applicationSubjects.loadingSelections') }}</div>
       <div
+        v-else-if="loadError"
+        class="alert alert-danger small mb-3"
+        role="alert"
+        data-testid="subjects-load-error"
+      >
+        {{ loadError }}
+      </div>
+      <div
         v-else-if="!selections.length"
         class="alert alert-light border small mb-3"
         data-testid="subjects-empty"
@@ -335,6 +343,7 @@ const saving = ref(false)
 const cartaDownloading = ref(false)
 const hostSubjectsLoading = ref(false)
 const error = ref('')
+const loadError = ref('')
 const selections = ref([])
 const planVersions = ref([])
 const hostSubjects = ref([])
@@ -465,9 +474,11 @@ async function fetchPlanVersions() {
 async function fetchSelections() {
   if (!props.applicationId) {
     selections.value = []
+    loadError.value = ''
     return
   }
   loading.value = true
+  loadError.value = ''
   try {
     const { data } = await api.get('/api/application-subject-selections/', {
       params: { application: props.applicationId },
@@ -476,6 +487,8 @@ async function fetchSelections() {
   } catch (err) {
     console.error('Failed to load subject selections:', err)
     selections.value = []
+    loadError.value = t('applicationSubjects.loadError')
+    errorToast(loadError.value)
   } finally {
     loading.value = false
   }
