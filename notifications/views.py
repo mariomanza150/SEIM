@@ -201,7 +201,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
         users = request.data.get("users", [])
         title = request.data.get("title") or request.data.get("type_name") or "Notice"
         message = request.data.get("message") or ""
-        if not isinstance(users, (list, tuple)) or not users:
+        if not isinstance(users, list | tuple) or not users:
             raise ValidationError({"users": "Provide a non-empty list of user ids."})
         if not str(message).strip():
             raise ValidationError({"message": "Message is required."})
