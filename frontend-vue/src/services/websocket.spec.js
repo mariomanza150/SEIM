@@ -1,6 +1,10 @@
 import { describe, expect, it, vi, afterEach, beforeEach } from 'vitest'
 
-import NotificationWebSocket, { resolveNotificationWsUrl } from '@/services/websocket'
+import NotificationWebSocket, {
+  WS_JWT_SUBPROTOCOL,
+  buildWsAuthProtocols,
+  resolveNotificationWsUrl,
+} from '@/services/websocket'
 
 describe('resolveNotificationWsUrl', () => {
   const browserLocation = {
@@ -59,6 +63,15 @@ describe('NotificationWebSocket application.sync', () => {
   })
 })
 
+describe('buildWsAuthProtocols', () => {
+  it('puts JWT in Sec-WebSocket-Protocol values, not the URL', () => {
+    expect(buildWsAuthProtocols('access.jwt.token')).toEqual([
+      WS_JWT_SUBPROTOCOL,
+      'access.jwt.token',
+    ])
+  })
+})
+
 describe('NotificationWebSocket reconnect and heartbeat', () => {
   let sockets
 
@@ -70,8 +83,9 @@ describe('NotificationWebSocket reconnect and heartbeat', () => {
       class MockWebSocket {
         static OPEN = 1
         static CLOSED = 3
-        constructor(url) {
+        constructor(url, protocols = []) {
           this.url = url
+          this.protocols = protocols
           this.readyState = MockWebSocket.OPEN
           this.sent = []
           sockets.push(this)
@@ -90,6 +104,15 @@ describe('NotificationWebSocket reconnect and heartbeat', () => {
     vi.useRealTimers()
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
+  })
+
+  it('connects without putting the JWT in the URL', () => {
+    const ws = new NotificationWebSocket()
+    ws.connect('access-token')
+
+    expect(sockets[0].url).not.toContain('token=')
+    expect(sockets[0].url).not.toContain('access-token')
+    expect(sockets[0].protocols).toEqual([WS_JWT_SUBPROTOCOL, 'access-token'])
   })
 
   it('sends ping heartbeats while connected', () => {
@@ -114,7 +137,8 @@ describe('NotificationWebSocket reconnect and heartbeat', () => {
     await vi.advanceTimersByTimeAsync(2000)
 
     expect(refreshToken).toHaveBeenCalled()
-    expect(sockets.at(-1).url).toContain('fresh-token')
+    expect(sockets.at(-1).url).not.toContain('fresh-token')
+    expect(sockets.at(-1).protocols).toEqual([WS_JWT_SUBPROTOCOL, 'fresh-token'])
   })
 
   it('reconnects with a fresh token when the browser comes back online', async () => {
@@ -130,7 +154,7 @@ describe('NotificationWebSocket reconnect and heartbeat', () => {
     await Promise.resolve()
 
     expect(refreshToken).toHaveBeenCalled()
-    expect(sockets.at(-1).url).toContain('online-token')
+    expect(sockets.at(-1).protocols).toEqual([WS_JWT_SUBPROTOCOL, 'online-token'])
   })
 
   it('does not refresh JWT on a generic socket drop when an access token is still present', async () => {
@@ -145,6 +169,6 @@ describe('NotificationWebSocket reconnect and heartbeat', () => {
     await vi.advanceTimersByTimeAsync(2000)
 
     expect(refreshToken).not.toHaveBeenCalled()
-    expect(sockets.at(-1).url).toContain('stale-token')
+    expect(sockets.at(-1).protocols).toEqual([WS_JWT_SUBPROTOCOL, 'stale-token'])
   })
 })

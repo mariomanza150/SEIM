@@ -44,8 +44,12 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             self.notification_group_name, self.channel_name
         )
 
-        # Accept connection
-        await self.accept()
+        # Accept connection (echo negotiated Sec-WebSocket-Protocol when present)
+        subprotocol = self.scope.get("seim_ws_subprotocol")
+        if subprotocol:
+            await self.accept(subprotocol=subprotocol)
+        else:
+            await self.accept()
 
         # Send connection confirmation
         await self.send(

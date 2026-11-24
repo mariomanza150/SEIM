@@ -1,6 +1,6 @@
 /**
  * WebSocket client for real-time notifications (Django Channels).
- * Connects with JWT from query string; shows toasts and optional refresh on notification.new.
+ * Auth: Sec-WebSocket-Protocol ['seim.jwt', accessToken] — JWT is never put in the URL.
  */
 
 import { getStoredAccessToken } from '@/utils/authTokens'
@@ -12,6 +12,11 @@ const PING_INTERVAL_MS = 25000
 const NOTIFICATION_PATH = '/ws/notifications/'
 const PLACEHOLDER_HOST_FRAGMENT = 'your-domain.com'
 const AUTH_CLOSE_CODES = new Set([4001, 4003, 4401, 4403])
+export const WS_JWT_SUBPROTOCOL = 'seim.jwt'
+
+export function buildWsAuthProtocols(token) {
+  return [WS_JWT_SUBPROTOCOL, token]
+}
 
 function hasPlaceholderHost(url) {
   if (!url) return false
@@ -94,9 +99,10 @@ class NotificationWebSocket {
 
     this.intentionalClose = false
     this._bindNetworkListeners()
-    const url = `${baseUrl}?token=${encodeURIComponent(token)}`
+    const url = baseUrl
+    const protocols = buildWsAuthProtocols(token)
     try {
-      this.ws = new WebSocket(url)
+      this.ws = new WebSocket(url, protocols)
       this.ws.onopen = () => this._onOpen()
       this.ws.onmessage = (e) => this._onMessage(e)
       this.ws.onerror = (e) => this._onError(e)
