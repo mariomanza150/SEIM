@@ -11,8 +11,9 @@ vi.mock('@/services/api', () => ({
   default: { get: vi.fn() },
 }))
 
+const mockToastError = vi.fn()
 vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({ error: vi.fn(), success: vi.fn() }),
+  useToast: () => ({ error: mockToastError, success: vi.fn() }),
 }))
 
 vi.mock('@/stores/auth', () => ({
@@ -44,6 +45,7 @@ describe('Documents', () => {
     localStorage.clear()
     setAppLocale('en')
     vi.clearAllMocks()
+    mockToastError.mockClear()
     mockEmptyApis()
   })
 
@@ -129,6 +131,38 @@ describe('Documents', () => {
     const downloadBtn = wrapper.find('[data-testid="document-download"]')
     expect(downloadBtn.exists()).toBe(true)
     expect(downloadBtn.attributes('aria-label')).toBe(i18n.global.t('documentsPage.downloadTitle'))
+    // Mobile cards must include actions (ResponsiveList previously had empty mobile markup).
+    expect(wrapper.find('[data-testid="documents-mobile-0"]').exists()).toBe(true)
+    expect(
+      wrapper.find('[data-testid="documents-mobile-0"] [data-testid="document-detail-link"]').exists(),
+    ).toBe(true)
+  })
+
+  it('toasts when document-type filter options fail to load', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/') {
+        return Promise.resolve({ data: { results: [], count: 0 } })
+      }
+      if (url === '/api/document-types/') {
+        return Promise.reject(new Error('network'))
+      }
+      if (url === '/api/document-types/my-prefill-templates/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({ data: { results: [], count: 0, next: null, previous: null } })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+
+    mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(mockToastError).toHaveBeenCalledWith(i18n.global.t('documentsPage.filtersLoadError'))
   })
 
   it('shows Plantillas para ti only when prefill templates exist', async () => {

@@ -29,6 +29,10 @@ export function useApplicationDetailLoader(resolveId = null) {
     async () => {
       const id = currentId()
       const response = await api.get(`/api/applications/${id}/`)
+      // Ignore stale responses when the user switched applications mid-flight.
+      if (String(currentId()) !== String(id)) {
+        return application.value
+      }
       application.value = response.data
       return response.data
     },
@@ -48,6 +52,9 @@ export function useApplicationDetailLoader(resolveId = null) {
     try {
       const id = currentId()
       const response = await api.get(`/api/applications/${id}/`)
+      if (String(currentId()) !== String(id)) {
+        return application.value
+      }
       application.value = response.data
       return response.data
     } catch (err) {

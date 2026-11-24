@@ -200,8 +200,14 @@ function applyPayload(data) {
 }
 
 async function loadPrograms() {
+  try {
     const { data } = await api.get('/api/programs/', { params: { page_size: 100, ordering: 'name' } })
-  programs.value = data.results ?? data ?? []
+    programs.value = data.results ?? data ?? []
+  } catch {
+    programs.value = []
+    error.value = t('nominationsPage.programsLoadError')
+    errorToast(error.value)
+  }
 }
 
 async function loadNominations() {

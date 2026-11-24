@@ -322,6 +322,8 @@ class TestApplicationsAPI(APITestCase):
         )
 
         self.assert_response_success(response, status.HTTP_200_OK)
+        self.assertEqual(response.data.get("application_status"), "submitted")
+        self.assertFalse(response.data.get("waitlisted"))
 
         # Verify application status changed
         application.refresh_from_db()

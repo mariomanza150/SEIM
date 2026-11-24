@@ -4,7 +4,7 @@
  *
  * @param {import('vue-router').RouteLocationNormalized} to
  * @param {{ isAuthenticated: boolean, accessToken: string | null, canUseStaffReviewQueue: boolean, checkAuth: () => Promise<void> }} authStore
- * @param {{ scholarshipsEnabled?: boolean }} [features]
+ * @param {{ scholarshipsEnabled?: boolean, isTester?: boolean }} [features]
  * @returns {Promise<'next' | 'login' | 'applications' | 'partner' | 'dashboard' | 'reviewQueue'>}
  */
 export async function resolveAuthenticatedNavigation(to, authStore, features = {}) {
@@ -42,6 +42,17 @@ export async function resolveAuthenticatedNavigation(to, authStore, features = {
 
   // Admin-only routes (SPA admin console)
   if (to.meta.adminOnly && !authStore.isAdmin) {
+    if (authStore.canUsePartnerPortal) return 'partner'
+    if (authStore.canUseStaffReviewQueue) return 'dashboard'
+    return 'applications'
+  }
+
+  // Tester toolkit (meta.testerOnly) — backend still 403s; block the SPA route too.
+  const testerOnly = Boolean(
+    to.meta.testerOnly
+    || (to.matched?.some((r) => r.meta && r.meta.testerOnly) ?? false),
+  )
+  if (testerOnly && !features.isTester) {
     if (authStore.canUsePartnerPortal) return 'partner'
     if (authStore.canUseStaffReviewQueue) return 'dashboard'
     return 'applications'

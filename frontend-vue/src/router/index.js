@@ -10,6 +10,7 @@ import { resolveDocumentTitle, syncAppSocialMeta, syncCanonicalLink } from '@/ut
 import { resolveAuthenticatedNavigation } from '@/router/authNavigation'
 import { routeBusy } from '@/router/routeBusy'
 import { useFeatures } from '@/composables/useFeatures'
+import { useQaStore } from '@/stores/qa'
 
 // Route Components (lazy-loaded)
 const Login = () => import('@/views/Login.vue')
@@ -425,8 +426,16 @@ router.beforeEach(async (to, from, next) => {
     // /api/features/ requires auth: fetching it anonymously 401s, and the interceptor's
     // failed refresh then logs out (racing with tokens being set, e.g. right after login).
     if (authStore.accessToken) await loadFeatures()
+    const testerOnly = to.matched.some((r) => r.meta && r.meta.testerOnly)
+    let isTester = false
+    if (testerOnly && authStore.accessToken) {
+      const qaStore = useQaStore()
+      await qaStore.load()
+      isTester = Boolean(qaStore.isTester)
+    }
     const outcome = await resolveAuthenticatedNavigation(to, authStore, {
       scholarshipsEnabled: scholarshipsEnabled.value,
+      isTester,
     })
     if (outcome === 'login') {
       next({ name: 'Login', query: { redirect: to.fullPath } })

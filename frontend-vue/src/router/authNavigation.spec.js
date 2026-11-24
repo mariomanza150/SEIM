@@ -218,4 +218,40 @@ describe('resolveAuthenticatedNavigation', () => {
       await resolveAuthenticatedNavigation(to, authStore, { scholarshipsEnabled: false }),
     ).toBe('dashboard')
   })
+
+  it('returns applications for testerOnly route when user is not a tester', async () => {
+    const authStore = {
+      accessToken: 'jwt',
+      isAuthenticated: true,
+      isAdmin: false,
+      canUseStaffReviewQueue: false,
+      canUsePartnerPortal: false,
+      checkAuth: vi.fn(),
+    }
+    const to = {
+      meta: { requiresAuth: true, testerOnly: true },
+      matched: [{ meta: { testerOnly: true } }],
+      fullPath: '/tester',
+    }
+    expect(await resolveAuthenticatedNavigation(to, authStore, { isTester: false })).toBe(
+      'applications',
+    )
+  })
+
+  it('returns next for testerOnly route when isTester is true', async () => {
+    const authStore = {
+      accessToken: 'jwt',
+      isAuthenticated: true,
+      isAdmin: false,
+      canUseStaffReviewQueue: false,
+      canUsePartnerPortal: false,
+      checkAuth: vi.fn(),
+    }
+    const to = {
+      meta: { requiresAuth: true, testerOnly: true },
+      matched: [{ meta: { testerOnly: true } }],
+      fullPath: '/tester',
+    }
+    expect(await resolveAuthenticatedNavigation(to, authStore, { isTester: true })).toBe('next')
+  })
 })

@@ -65,22 +65,24 @@
                 >
                   <p class="alert alert-warning small mb-2 mb-md-3">{{ previewError }}</p>
                   <div v-if="document.file" class="d-flex flex-wrap gap-2">
-                    <a
-                      :href="resolveFileUrl(document.file)"
-                      download=""
+                    <button
+                      type="button"
                       class="btn btn-sm btn-primary"
-                      rel="noopener noreferrer"
+                      data-testid="document-auth-download"
+                      :disabled="downloadingFile"
+                      @click="downloadAuthenticatedFile"
                     >
                       <i class="bi bi-download me-1"></i>{{ t('documentDetailPage.download') }}
-                    </a>
-                    <a
-                      :href="resolveFileUrl(document.file)"
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    </button>
+                    <button
+                      type="button"
                       class="btn btn-sm btn-outline-primary"
+                      data-testid="document-auth-open"
+                      :disabled="downloadingFile"
+                      @click="openAuthenticatedFile"
                     >
                       <i class="bi bi-box-arrow-up-right me-1"></i>{{ t('documentDetailPage.previewOpenInNewTab') }}
-                    </a>
+                    </button>
                   </div>
                 </div>
                 <template v-else-if="previewObjectUrl">
@@ -192,15 +194,16 @@
                 </div>
 
                 <div class="mt-4 pt-3 border-top">
-                  <a
+                  <button
                     v-if="document.file"
-                    :href="resolveFileUrl(document.file)"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    type="button"
                     class="btn btn-primary"
+                    data-testid="document-auth-download-main"
+                    :disabled="downloadingFile"
+                    @click="downloadAuthenticatedFile"
                   >
                     <i class="bi bi-download me-2"></i>{{ t('documentDetailPage.downloadDocument') }}
-                  </a>
+                  </button>
                 </div>
 
                 <div v-if="canReplaceFile" class="mt-4 pt-3 border-top" data-testid="replace-file-section">
@@ -404,15 +407,16 @@
               </div>
               <div class="card-body">
                 <div class="d-grid gap-2">
-                  <a
+                  <button
                     v-if="document.file"
-                    :href="resolveFileUrl(document.file)"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    type="button"
                     class="btn btn-outline-primary"
+                    data-testid="document-auth-download-sidebar"
+                    :disabled="downloadingFile"
+                    @click="downloadAuthenticatedFile"
                   >
                     <i class="bi bi-download me-2"></i>{{ t('documentDetailPage.download') }}
-                  </a>
+                  </button>
                   <router-link
                     :to="{ name: 'ApplicationDetail', params: { id: documentApplicationId(document.application) } }"
                     class="btn btn-outline-secondary"
@@ -462,7 +466,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
 import { useConfirm } from '@/composables/useConfirm'
-import { resolveFileUrl } from '@/utils/apiUrl'
 import {
   acceptAttributeFromExtensions,
   documentApplicationId,
@@ -503,12 +506,19 @@ const replaceInput = ref(null)
 const replaceFileError = ref('')
 const replaceFileReady = ref(false)
 
-const isStaff = computed(() => {
-  const r = authStore.userRole
-  return r === 'coordinator' || r === 'admin'
-})
-const isAdmin = computed(() => authStore.userRole === 'admin')
+/** Align with ApplicationDetail / Documents: superuser and is_admin flags count as staff/admin. */
+const isStaff = computed(
+  () =>
+    Boolean(authStore.canUseStaffReviewQueue) ||
+    authStore.userRole === 'coordinator' ||
+    authStore.userRole === 'admin' ||
+    Boolean(authStore.isAdmin),
+)
+const isAdmin = computed(
+  () => Boolean(authStore.isAdmin) || authStore.userRole === 'admin',
+)
 const isStudent = computed(() => authStore.userRole === 'student')
+const downloadingFile = ref(false)
 
 const replaceAcceptedHint = computed(() =>
   documentTypeAcceptedHintText(document.value?.type, t),
@@ -706,6 +716,54 @@ function fileName(fileUrl) {
   if (!fileUrl) return t('documentDetailPage.fileUnknown')
   const parts = fileUrl.split('/')
   return decodeURIComponent(parts[parts.length - 1] || t('documentDetailPage.fileFallback'))
+}
+
+/**
+ * Fetch the document via the authenticated preview endpoint (never bare /media/).
+ * @param {'download'|'open'} mode
+ */
+async function fetchAuthenticatedBlob(mode = 'download') {
+  if (!document.value?.id || downloadingFile.value) return null
+  downloadingFile.value = true
+  try {
+    const response = await api.get(`/api/documents/${document.value.id}/preview/`, {
+      responseType: 'blob',
+    })
+    const contentType = response.headers['content-type'] || 'application/octet-stream'
+    const blob = new Blob([response.data], { type: contentType })
+    const objectUrl = URL.createObjectURL(blob)
+    if (mode === 'open') {
+      window.open(objectUrl, '_blank', 'noopener,noreferrer')
+      // Revoke after the new tab has a chance to load.
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000)
+      return objectUrl
+    }
+    const a = window.document.createElement('a')
+    a.href = objectUrl
+    a.download = filenameFromContentDisposition(
+      response.headers['content-disposition'],
+      fileName(document.value.file),
+    )
+    window.document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(objectUrl)
+    return objectUrl
+  } catch (err) {
+    console.error('Authenticated document download failed:', err)
+    toast.error(t('documentsPage.downloadError'))
+    return null
+  } finally {
+    downloadingFile.value = false
+  }
+}
+
+async function downloadAuthenticatedFile() {
+  await fetchAuthenticatedBlob('download')
+}
+
+async function openAuthenticatedFile() {
+  await fetchAuthenticatedBlob('open')
 }
 
 function formatValidationResult(result) {

@@ -90,6 +90,40 @@ describe('useHostDestinations free-text payload', () => {
     })
   })
 
+  it('ignores stale host-institution responses after a newer program fetch', async () => {
+    let resolveSlow
+    const slow = new Promise((resolve) => {
+      resolveSlow = resolve
+    })
+    api.get.mockImplementation((url) => {
+      if (url.includes('/programs/program-old/host-institutions/')) {
+        return slow
+      }
+      if (url.includes('/programs/program-new/host-institutions/')) {
+        return Promise.resolve({ data: [{ id: 'inst-new', name: 'New Host' }] })
+      }
+      return Promise.resolve({ data: [] })
+    })
+
+    const form = ref({
+      host_institution: '',
+      host_school: '',
+      host_academic_program: '',
+      host_institution_text: '',
+      host_school_name: '',
+      host_academic_program_name: '',
+    })
+    const { fetchHostInstitutions, hostInstitutions } = useHostDestinations(form)
+
+    const first = fetchHostInstitutions('program-old')
+    await fetchHostInstitutions('program-new')
+    expect(hostInstitutions.value).toEqual([{ id: 'inst-new', name: 'New Host' }])
+
+    resolveSlow({ data: [{ id: 'inst-stale', name: 'Stale Host' }] })
+    await first
+    expect(hostInstitutions.value).toEqual([{ id: 'inst-new', name: 'New Host' }])
+  })
+
   it('uses not-listed option in either mode', () => {
     const form = ref({
       host_institution: HOST_DEST_NOT_LISTED,

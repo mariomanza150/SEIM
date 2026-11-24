@@ -1391,9 +1391,23 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         """Submit an application."""
         application = self.get_object()
         try:
-            ApplicationService.submit_application(application, request.user)
+            application = ApplicationService.submit_application(
+                application, request.user
+            )
             self._invalidate_application_cache(application)
-            return Response({"status": "Application submitted successfully"})
+            status_name = getattr(getattr(application, "status", None), "name", None)
+            waitlisted = status_name == "waitlist"
+            return Response(
+                {
+                    "status": (
+                        "Application placed on waitlist"
+                        if waitlisted
+                        else "Application submitted successfully"
+                    ),
+                    "application_status": status_name,
+                    "waitlisted": waitlisted,
+                }
+            )
         except ValueError as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
