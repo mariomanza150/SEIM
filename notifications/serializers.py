@@ -34,12 +34,30 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         fields = "__all__"
+        read_only_fields = (
+            "id",
+            "recipient",
+            "sent_at",
+            "created_at",
+            "updated_at",
+        )
 
     def create(self, validated_data):
-        user = validated_data["user"]
-        type_name = validated_data["type"].name
-        message = validated_data["message"]
-        notification = NotificationService.send_notification(user, type_name, message)
+        # Staff create path: prefer NotificationService / batch_send over raw create.
+        request = self.context.get("request")
+        recipient = validated_data.get("recipient")
+        if recipient is None and request is not None:
+            recipient = request.user
+            validated_data["recipient"] = recipient
+        title = validated_data.get("title") or "Notice"
+        message = validated_data.get("message") or ""
+        notification = NotificationService.send_notification(
+            recipient=recipient,
+            title=title,
+            message=message,
+            notification_type=validated_data.get("notification_type", "in_app"),
+            category=validated_data.get("category", "info"),
+        )
         if notification is None:
             raise serializers.ValidationError(
                 "User has disabled this notification type."

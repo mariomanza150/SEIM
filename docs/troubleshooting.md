@@ -266,7 +266,7 @@ docker-compose logs db
    tailscale serve --bg http://127.0.0.1:8020
    ```
    Open the MagicDNS `https://<machine>.<tailnet>.ts.net` URL. Prefer Serve over Funnel on UDP-blocked networks.
-4. Recreate the local-prod web container so `USE_TLS_PROXY_HEADERS=1` and `ALLOW_ANY_HOST=1` from `docker-compose.local-prod.yml` are applied.
+4. Recreate the local-prod web container so `USE_TLS_PROXY_HEADERS=1` and an explicit `DJANGO_ALLOWED_HOSTS` list from `docker-compose.local-prod.yml` are applied.
 
 #### **Issue**: Account confirmation / password-reset email links still point at `localhost` after the public URL changed
 **Cause**: Emails used a static `FRONTEND_BASE_URL` (often `http://localhost:8020`) instead of the Cloudflare Tunnel or Tailscale host the user opened.

@@ -329,6 +329,8 @@ class TestAnalyticsAPIViewsSimple(APITestCase):
         self.user = User.objects.create_user(
             username="testuser", email="test@example.com", password="testpass123"
         )
+        role, _ = Role.objects.get_or_create(name="coordinator")
+        self.user.roles.add(role)
         self.client.force_authenticate(user=self.user)
 
     def test_api_application_statistics(self):
@@ -390,6 +392,8 @@ class TestAdvancedAnalyticsAPIViews(APITestCase):
             email="analytics@example.com",
             password="testpass123",
         )
+        role, _ = Role.objects.get_or_create(name="coordinator")
+        self.user.roles.add(role)
         self.client.force_authenticate(user=self.user)
 
         self.program = Program.objects.create(

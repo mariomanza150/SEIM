@@ -4,12 +4,30 @@ Unit tests for internationalization (i18n) functionality.
 Tests translation loading, language switching, and locale preferences.
 """
 
+from pathlib import Path
+
+import pytest
 from django.contrib.auth import get_user_model
 from django.test import RequestFactory, TestCase, override_settings
 from django.utils import translation
 from django.utils.translation import gettext as _
 
 User = get_user_model()
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _project_catalogs_present() -> bool:
+    return all(
+        (_PROJECT_ROOT / "locale" / lang / "LC_MESSAGES" / "django.mo").is_file()
+        for lang in ("de", "es", "fr")
+    )
+
+
+requires_compiled_messages = pytest.mark.skipif(
+    not _project_catalogs_present(),
+    reason="Project gettext catalogs (.mo) missing; install GNU gettext and compilemessages",
+)
 
 
 class TestTranslationLoading(TestCase):
@@ -23,6 +41,7 @@ class TestTranslationLoading(TestCase):
             translated = _("Dashboard")
             self.assertEqual(str(translated), "Dashboard")
 
+    @requires_compiled_messages
     def test_spanish_translation(self):
         """Test that Spanish translations load correctly."""
         with translation.override("es"):
@@ -34,6 +53,7 @@ class TestTranslationLoading(TestCase):
             translated = _("Applications")
             self.assertEqual(str(translated), "Solicitudes")
 
+    @requires_compiled_messages
     def test_french_translation(self):
         """Test that French translations load correctly."""
         with translation.override("fr"):
@@ -44,6 +64,7 @@ class TestTranslationLoading(TestCase):
             translated = _("Applications")
             self.assertEqual(str(translated), "Candidatures")
 
+    @requires_compiled_messages
     def test_german_translation(self):
         """Test that German translations load correctly."""
         with translation.override("de"):
@@ -103,6 +124,7 @@ class TestLanguageSwitching(TestCase):
         self.assertEqual(self.client.cookies.get("django_language").value, "fr")
 
 
+@requires_compiled_messages
 class TestModelTranslations(TestCase):
     """Test model field translations."""
 
@@ -150,6 +172,7 @@ class TestModelTranslations(TestCase):
             self.assertEqual(str(choices["C1"]), "Avanzado (C1)")
 
 
+@requires_compiled_messages
 class TestTemplateTags(TestCase):
     """Test i18n template tags."""
 

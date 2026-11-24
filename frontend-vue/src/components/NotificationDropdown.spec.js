@@ -11,6 +11,14 @@ vi.mock('@/services/api', () => ({
   default: { get: vi.fn(), delete: vi.fn(), post: vi.fn() },
 }))
 
+const { toastError } = vi.hoisted(() => ({
+  toastError: vi.fn(),
+}))
+
+vi.mock('@/composables/useToast', () => ({
+  useToast: () => ({ success: vi.fn(), error: toastError }),
+}))
+
 describe('NotificationDropdown', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -176,6 +184,45 @@ describe('NotificationDropdown', () => {
     await flushPromises()
     expect(api.delete).toHaveBeenCalledWith('/api/notifications/9/delete_notification/')
     expect(wrapper.text()).not.toContain('Hello')
+    wrapper.unmount()
+  })
+
+  it('toasts when dismiss fails', async () => {
+    api.get.mockImplementation((_url, opts) => {
+      const p = opts?.params || {}
+      if (p.is_read === false) {
+        return Promise.resolve({ data: { count: 1, results: [] } })
+      }
+      return Promise.resolve({
+        data: {
+          results: [
+            {
+              id: 9,
+              title: 'Hello',
+              message: 'World',
+              is_read: false,
+              sent_at: new Date().toISOString(),
+            },
+          ],
+          count: 1,
+        },
+      })
+    })
+    api.delete.mockRejectedValueOnce(new Error('network'))
+    const wrapper = mount(NotificationDropdown, {
+      attachTo: document.body,
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('#notificationDropdown').trigger('click')
+    await flushPromises()
+    await wrapper.find('[data-testid="notification-dismiss"]').trigger('click')
+    await flushPromises()
+    expect(toastError).toHaveBeenCalledWith(i18n.global.t('notifications.toastDismissFailed'))
+    expect(wrapper.text()).toContain('Hello')
     wrapper.unmount()
   })
 })

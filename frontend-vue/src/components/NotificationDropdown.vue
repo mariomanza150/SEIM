@@ -109,6 +109,7 @@ import { useI18n } from 'vue-i18n'
 import { isNewTabUrl, isSpaUrl, normalizeSpaLocation } from '@/utils/navigation'
 import { useNavDropdown } from '@/composables/useNavDropdown'
 import { useNotifications } from '@/composables/useNotifications'
+import { useToast } from '@/composables/useToast'
 import {
   formatNotificationAction,
   formatNotificationMessage,
@@ -116,6 +117,7 @@ import {
 } from '@/utils/notificationCopy'
 
 const { t, te } = useI18n()
+const { error: errorToast } = useToast()
 const i18nCtx = { t, te }
 
 function displayTitle(notification) {
@@ -153,6 +155,7 @@ async function fetchRecent() {
     unreadCount.value = count
   } catch (err) {
     console.warn('Failed to fetch notifications:', err)
+    errorToast(t('notifications.toastLoadFailed'))
   } finally {
     loading.value = false
   }
@@ -171,6 +174,7 @@ async function markAsRead(notification) {
     unreadCount.value = Math.max(0, unreadCount.value - 1)
   } catch (err) {
     console.warn('Failed to mark as read:', err)
+    errorToast(t('notifications.toastMarkReadFailed'))
   }
 }
 
@@ -183,6 +187,7 @@ async function dismiss(notification) {
     recent.value = recent.value.filter((n) => n.id !== notification.id)
   } catch (err) {
     console.warn('Failed to dismiss notification:', err)
+    errorToast(t('notifications.toastDismissFailed'))
   }
 }
 

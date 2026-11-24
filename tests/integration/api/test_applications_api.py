@@ -648,6 +648,58 @@ class TestApplicationsPerformance(PerformanceTestCase):
         self.assert_response_success(response, status.HTTP_200_OK)
         self.assertLessEqual(len(ctx), 50)
 
+    def test_application_list_query_count_does_not_grow_with_rows(self):
+        """Readiness/status on list rows must stay O(1) queries as rows increase."""
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        from exchange.models import HostInstitution
+
+        student = self.create_user(role="student")
+        program = self.create_program()
+        # Ensure at least one active host so list readiness touches host catalog.
+        HostInstitution.objects.get_or_create(
+            program=program,
+            name="Host University Alpha",
+            defaults={"is_active": True},
+        )
+        self.authenticate_user(student)
+
+        def _seed(n: int) -> None:
+            for _ in range(n):
+                self.create_application(
+                    student=student, program=program, status_name="draft"
+                )
+
+        def _list_query_count() -> tuple[int, list]:
+            with CaptureQueriesContext(connection) as ctx:
+                response = self.client.get(reverse("api:application-list"))
+            self.assert_response_success(response, status.HTTP_200_OK)
+            results = response.data["results"]
+            self.assertTrue(all("readiness" in row for row in results))
+            return len(ctx.captured_queries), results
+
+        _seed(3)
+        count_small, small_results = _list_query_count()
+        self.assertEqual(len(small_results), 3)
+
+        _seed(9)
+        count_large, large_results = _list_query_count()
+        self.assertEqual(len(large_results), 12)
+
+        # Allow a small constant variance, but not per-row growth.
+        self.assertLessEqual(
+            count_large,
+            count_small + 2,
+            f"Query count grew from {count_small} (3 rows) to {count_large} "
+            f"(12 rows); readiness/status list path still looks N+1.",
+        )
+        # Absolute ceiling via assertNumQueries for the larger list.
+        with self.assertNumQueries(count_large):
+            response = self.client.get(reverse("api:application-list"))
+        self.assert_response_success(response, status.HTTP_200_OK)
+        self.assertLessEqual(count_large, 25)
+
     def test_application_search_performance(self):
         """Test search performance with large dataset."""
         # Create applications with searchable content

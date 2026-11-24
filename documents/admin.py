@@ -79,6 +79,10 @@ class DocumentTypeAdmin(admin.ModelAdmin):
             {"fields": ("instructions", "faq", "template_file")},
         ),
         (
+            "Prefill active filters",
+            {"fields": ("prefill_active_filters",)},
+        ),
+        (
             "Upload constraints",
             {
                 "fields": (

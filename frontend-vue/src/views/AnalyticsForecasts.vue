@@ -229,6 +229,7 @@ import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import PageStateShell from '@/components/State/PageStateShell.vue'
 import { useStaffSavedPresets } from '@/composables/useStaffSavedPresets'
+import { useToast } from '@/composables/useToast'
 import {
   STAFF_SAVED_SEARCH_TYPE,
   deserializeAnalyticsForecastFilters,
@@ -236,6 +237,7 @@ import {
 } from '@/utils/staffListSearchPresets'
 
 const { t } = useI18n()
+const { error: errorToast } = useToast()
 const loading = ref(true)
 const error = ref('')
 const data = ref(null)
@@ -292,8 +294,13 @@ const {
 } = useStaffSavedPresets(STAFF_SAVED_SEARCH_TYPE.ANALYTICS_FORECAST)
 
 async function loadPrograms() {
-  const { data: payload } = await api.get('/api/programs/', { params: { page_size: 100, ordering: 'name' } })
-  programs.value = payload.results ?? payload ?? []
+  try {
+    const { data: payload } = await api.get('/api/programs/', { params: { page_size: 100, ordering: 'name' } })
+    programs.value = payload.results ?? payload ?? []
+  } catch {
+    programs.value = []
+    errorToast(t('analyticsForecastsPage.programsLoadError'))
+  }
 }
 
 async function loadForecasts() {

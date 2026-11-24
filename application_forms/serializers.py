@@ -98,6 +98,26 @@ class FormSubmissionSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Responses must be a valid JSON object")
         return value
 
+    def validate_application(self, application):
+        """Students may only attach submissions to their own applications."""
+        if application is None:
+            return application
+        request = self.context.get("request")
+        user = getattr(request, "user", None)
+        if user is None or not user.is_authenticated:
+            raise serializers.ValidationError("Authentication required.")
+        if getattr(user, "is_staff", False) or getattr(user, "is_superuser", False):
+            return application
+        if hasattr(user, "has_any_role") and user.has_any_role(
+            ["coordinator", "admin"]
+        ):
+            return application
+        if application.student_id != user.id:
+            raise serializers.ValidationError(
+                "You can only link submissions to your own applications."
+            )
+        return application
+
     def create(self, validated_data):
         """Auto-assign submitted_by from request user"""
         request = self.context.get("request")
