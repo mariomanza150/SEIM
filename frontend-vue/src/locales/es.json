@@ -1670,6 +1670,7 @@
     "threadHeading": "Conversación del convenio — {title}",
     "threadLoading": "Cargando mensajes…",
     "threadEmpty": "Aún no hay mensajes.",
+    "threadLoadError": "No se pudieron cargar los mensajes de este convenio.",
     "threadLabel": "Mensaje",
     "threadSubmit": "Enviar",
     "threadPrivateLabel": "Nota interna del personal (oculta para socios)",
