@@ -32,7 +32,7 @@ from analytics.views import (
     analytics_export_api,
     analytics_report_detail_api,
 )
-from core.views import InstitutionFeaturesAPIView, branding_api
+from core.views import InstitutionFeaturesAPIView, OpsNoticesAPIView, branding_api
 from documents.views import (
     DocumentCommentViewSet,
     DocumentResubmissionRequestViewSet,
@@ -102,6 +102,11 @@ urlpatterns = [
         "features/",
         InstitutionFeaturesAPIView.as_view(),
         name="institution-features",
+    ),
+    path(
+        "ops-notices/",
+        OpsNoticesAPIView.as_view(),
+        name="ops-notices",
     ),
     # Exchange viewsets + calendar ICS (owned by exchange.urls)
     # Tester toolkit (404s unless TESTER_TOOLS_ENABLED + DEPLOY_TIER=test).

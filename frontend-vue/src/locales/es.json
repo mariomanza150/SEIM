@@ -1869,6 +1869,9 @@
     "newApplication": "Nueva solicitud",
     "emDash": "—"
   },
+  "opsNotices": {
+    "title": "Aviso de operaciones:"
+  },
   "dashboard": {
     "mainNavAria": "Navegación principal",
     "toggleNav": "Mostrar u ocultar menú",

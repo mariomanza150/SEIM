@@ -61,7 +61,7 @@ class TestHealthCheckView(TestCase):
         self.assertEqual(data["status"], "ok")
         self.assertIn("version", data)
         self.assertIn("environment", data)
-        self.assertEqual(set(data["checks"]), {"db", "cache", "redis"})
+        self.assertEqual(set(data["checks"]), {"db", "cache", "redis", "ms_graph"})
         self.assertIn(b'"status":"ok"', response.content)
 
     def test_health_check_database_healthy(self):
@@ -150,6 +150,87 @@ class TestHealthCheckView(TestCase):
         response = self.client.get("/health/", HTTP_X_REQUEST_ID="req-42")
 
         self.assertEqual(response["X-Request-ID"], "req-42")
+
+    def test_health_check_ms_graph_skipped_by_default(self):
+        response = self.client.get("/health/")
+        data = response.json()
+        self.assertEqual(data["checks"]["ms_graph"], {"status": "skipped"})
+
+    @override_settings(
+        EMAIL_BACKEND="core.email.backends.MicrosoftGraphEmailBackend",
+        CACHES={
+            "default": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "health-ms-graph",
+            }
+        },
+    )
+    def test_health_check_ms_graph_degraded_when_reconnect_required(self):
+        from django.core.cache import cache
+
+        from core.email.ms_graph import RECONNECT_MESSAGE, mark_reconnect_required
+
+        cache.clear()
+        mark_reconnect_required(error_code="invalid_grant", http_status=400)
+        response = self.client.get("/health/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["status"], "degraded")
+        self.assertEqual(data["checks"]["ms_graph"]["status"], "error")
+        self.assertEqual(data["checks"]["ms_graph"]["detail"], RECONNECT_MESSAGE)
+        cache.clear()
+
+
+@pytest.mark.django_db
+class TestOpsNoticesAPIView(TestCase):
+    """Staff ops notices for Graph reconnect."""
+
+    def setUp(self):
+        from rest_framework.test import APIClient
+
+        from accounts.models import Role
+
+        self.client = APIClient()
+        self.admin_role = Role.objects.get_or_create(name="admin")[0]
+        self.admin = User.objects.create_user(
+            username="opsadmin", email="opsadmin@example.com", password="testpass123"
+        )
+        self.admin.roles.add(self.admin_role)
+        self.student = User.objects.create_user(
+            username="opsstudent",
+            email="opsstudent@example.com",
+            password="testpass123",
+        )
+
+    def test_student_forbidden(self):
+        self.client.force_authenticate(user=self.student)
+        response = self.client.get("/api/ops-notices/")
+        self.assertEqual(response.status_code, 403)
+
+    @override_settings(
+        EMAIL_BACKEND="core.email.backends.MicrosoftGraphEmailBackend",
+        CACHES={
+            "default": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "ops-notices-ms-graph",
+            }
+        },
+    )
+    def test_admin_sees_graph_reconnect_notice(self):
+        from django.core.cache import cache
+
+        from core.email.ms_graph import RECONNECT_MESSAGE, mark_reconnect_required
+
+        cache.clear()
+        mark_reconnect_required(error_code="invalid_grant", http_status=400)
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get("/api/ops-notices/")
+        self.assertEqual(response.status_code, 200)
+        notices = response.json()["notices"]
+        self.assertEqual(len(notices), 1)
+        self.assertEqual(notices[0]["id"], "ms_graph_reconnect")
+        self.assertEqual(notices[0]["message"], RECONNECT_MESSAGE)
+        cache.clear()
 
 
 @pytest.mark.django_db

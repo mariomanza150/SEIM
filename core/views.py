@@ -166,6 +166,41 @@ class InstitutionFeaturesAPIView(APIView):
         return Response(serializer.data)
 
 
+class OpsNoticesAPIView(APIView):
+    """Staff-facing ops notices (e.g. Microsoft Graph reconnect required)."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        has_role = getattr(user, "has_role", None)
+        is_staff_role = bool(
+            getattr(user, "is_staff", False)
+            or getattr(user, "is_superuser", False)
+            or (callable(has_role) and (has_role("admin") or has_role("coordinator")))
+        )
+        if not is_staff_role:
+            return Response({"detail": "Forbidden."}, status=403)
+
+        notices = []
+        from core.email.ms_graph import (
+            graph_email_selected,
+            reconnect_status_payload,
+        )
+
+        if graph_email_selected():
+            status_payload = reconnect_status_payload()
+            if status_payload.get("reconnect_required"):
+                notices.append(
+                    {
+                        "id": "ms_graph_reconnect",
+                        "severity": "warning",
+                        "message": status_payload.get("message") or "",
+                    }
+                )
+        return Response({"notices": notices})
+
+
 @csrf_exempt
 @require_http_methods(["GET"])
 def health_live(request):
@@ -220,7 +255,26 @@ def _check_redis():
         client.close()
 
 
-HEALTH_CHECKS = {"db": _check_db, "cache": _check_cache, "redis": _check_redis}
+def _check_ms_graph():
+    """Surface Graph reconnect-required without calling Microsoft."""
+    from core.email.ms_graph import (
+        RECONNECT_MESSAGE,
+        graph_email_selected,
+        is_reconnect_required,
+    )
+
+    if not graph_email_selected():
+        raise _SkipCheck
+    if is_reconnect_required():
+        raise RuntimeError(RECONNECT_MESSAGE)
+
+
+HEALTH_CHECKS = {
+    "db": _check_db,
+    "cache": _check_cache,
+    "redis": _check_redis,
+    "ms_graph": _check_ms_graph,
+}
 
 
 def _run_health_check(name, check):
@@ -231,11 +285,16 @@ def _run_health_check(name, check):
         return {"status": "skipped"}
     except Exception as exc:
         logger.warning("health check failed", extra={"check": name, "error": repr(exc)})
-        return {
+        result = {
             "status": "error",
             "latency_ms": round((time.perf_counter() - started) * 1000, 1),
             "error": type(exc).__name__,
         }
+        # Safe plain-text detail for known ops checks (no secrets).
+        detail = str(exc).strip()
+        if name == "ms_graph" and detail:
+            result["detail"] = detail
+        return result
     return {
         "status": "ok",
         "latency_ms": round((time.perf_counter() - started) * 1000, 1),

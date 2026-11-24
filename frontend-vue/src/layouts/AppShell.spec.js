@@ -21,10 +21,13 @@ vi.mock('@/services/api', () => ({
             nav_brand: 'SEIM',
             short_name: 'SEIM',
             name: 'SEIM',
-            theme_css: 'uadec/theme.css',
+            theme_css: 'default/theme.css',
             theme: {},
           },
         })
+      }
+      if (url === '/api/ops-notices/') {
+        return Promise.resolve({ data: { notices: [] } })
       }
       return Promise.resolve({ data: { results: [], count: 0 } })
     }),
@@ -39,7 +42,7 @@ vi.mock('bootstrap', () => ({
 }))
 
 const authStoreMock = {
-  userName: 'Sofia Martinez',
+  userName: 'Test User',
   isAdmin: false,
   canUseStaffReviewQueue: false,
   canUsePartnerPortal: false,
@@ -59,6 +62,7 @@ const routeNames = [
   'NotificationRouting',
   'StaffExchangeAgreements',
   'EligibilityRulesets',
+  'ScholarshipScoringRulesets',
   'Nominations',
   'AnalyticsForecasts',
   'PartnerPortal',
@@ -105,6 +109,9 @@ describe('AppShell navbar', () => {
     localStorage.clear()
     setAppLocale('en')
     vi.clearAllMocks()
+    authStoreMock.canUseStaffReviewQueue = false
+    authStoreMock.isAdmin = false
+    authStoreMock.canUsePartnerPortal = false
   })
 
   afterEach(() => {
@@ -133,7 +140,7 @@ describe('AppShell navbar', () => {
     const { wrapper } = await mountShell()
     expect(wrapper.find('.navbar-collapse').exists()).toBe(false)
     expect(wrapper.find('[data-testid="notifications-menu"]').exists()).toBe(true)
-    expect(wrapper.get('[data-testid="user-menu"]').text()).toContain('Sofia Martinez')
+    expect(wrapper.get('[data-testid="user-menu"]').text()).toContain('Test User')
     wrapper.unmount()
   })
 
@@ -187,6 +194,53 @@ describe('AppShell navbar', () => {
     expect(helpLinks.length).toBeGreaterThan(0)
     expect(helpLinks[0].attributes('href')).toContain('/HelpCenter')
     wrapper.unmount()
+  })
+
+  it('shows staff ops notices when reconnect is required', async () => {
+    const api = (await import('@/services/api')).default
+    authStoreMock.canUseStaffReviewQueue = true
+    try {
+      api.get.mockImplementation((url) => {
+        if (url === '/api/ops-notices/') {
+          return Promise.resolve({
+            data: {
+              notices: [
+                {
+                  id: 'ms_graph_reconnect',
+                  severity: 'warning',
+                  message:
+                    'Microsoft Graph email reconnect required. Run: python manage.py ms_graph_device_code',
+                },
+              ],
+            },
+          })
+        }
+        if (url === '/api/features/') {
+          return Promise.resolve({ data: { scholarships_enabled: true } })
+        }
+        if (url === '/api/branding/') {
+          return Promise.resolve({
+            data: {
+              logo_url: '',
+              nav_brand: 'SEIM',
+              short_name: 'SEIM',
+              name: 'SEIM',
+              theme_css: 'default/theme.css',
+              theme: {},
+            },
+          })
+        }
+        return Promise.resolve({ data: {} })
+      })
+
+      const { wrapper } = await mountShell()
+      const banner = wrapper.get('[data-testid="ops-notices-banner"]')
+      expect(banner.text()).toContain('Ops notice:')
+      expect(banner.text()).toContain('ms_graph_device_code')
+      wrapper.unmount()
+    } finally {
+      authStoreMock.canUseStaffReviewQueue = false
+    }
   })
 
   describe('sidebar collapse and route scroll', () => {
