@@ -33,6 +33,11 @@ app.conf.beat_schedule = {
         "schedule": crontab(hour=8, minute=30),
         "options": {"expires": 3600},
     },
+    "drain-deferred-emails": {
+        "task": "core.tasks.drain_deferred_emails",
+        "schedule": crontab(minute="*/5"),
+        "options": {"expires": 240},
+    },
 }
 
 

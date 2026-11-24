@@ -1,8 +1,9 @@
 from celery import shared_task
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMessage, send_mail
 
 from core.celery_utils import log_celery_failure, retryable_task_kwargs
+from core.email.priority import PRIORITY_HEADER, PRIORITY_HIGH
 
 REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY = {
     "application_deadline": "applications",
@@ -127,13 +128,24 @@ def send_notification_by_id(self, notification_id):
         email = get_user_email(
             notification.recipient, primary_only=is_primary_only_route(route_key)
         )
-        send_mail(
-            notification.title,
-            notification.message,
-            settings.DEFAULT_FROM_EMAIL,
-            [email],
-            fail_silently=False,
-        )
+        if is_primary_only_route(route_key):
+            # Auth/security mail keeps priority headroom under rate limits.
+            message = EmailMessage(
+                subject=notification.title,
+                body=notification.message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                to=[email],
+                headers={PRIORITY_HEADER: PRIORITY_HIGH},
+            )
+            message.send(fail_silently=False)
+        else:
+            send_mail(
+                notification.title,
+                notification.message,
+                settings.DEFAULT_FROM_EMAIL,
+                [email],
+                fail_silently=False,
+            )
         return True
     except Notification.DoesNotExist:
         return False

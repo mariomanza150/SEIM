@@ -5,6 +5,87 @@ from django.db import models
 # Create your models here.
 
 
+class EmailDailyUsage(models.Model):
+    """Per-day outgoing email send counter in the configured quota timezone."""
+
+    usage_date = models.DateField(unique=True, db_index=True)
+    sent_count = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Email daily usage"
+        verbose_name_plural = "Email daily usage"
+        ordering = ["-usage_date"]
+
+    def __str__(self) -> str:
+        return f"{self.usage_date}: {self.sent_count} sent"
+
+
+class DeferredEmail(models.Model):
+    """Persistent outbox for emails deferred by rate/quota limits."""
+
+    PRIORITY_HIGH = "high"
+    PRIORITY_NORMAL = "normal"
+    PRIORITY_CHOICES = [
+        (PRIORITY_HIGH, "High"),
+        (PRIORITY_NORMAL, "Normal"),
+    ]
+
+    STATUS_PENDING = "pending"
+    STATUS_SENDING = "sending"
+    STATUS_SENT = "sent"
+    STATUS_FAILED = "failed"
+    STATUS_CHOICES = [
+        (STATUS_PENDING, "Pending"),
+        (STATUS_SENDING, "Sending"),
+        (STATUS_SENT, "Sent"),
+        (STATUS_FAILED, "Failed"),
+    ]
+
+    priority = models.CharField(
+        max_length=16, choices=PRIORITY_CHOICES, default=PRIORITY_NORMAL, db_index=True
+    )
+    status = models.CharField(
+        max_length=16, choices=STATUS_CHOICES, default=STATUS_PENDING, db_index=True
+    )
+    subject = models.CharField(max_length=998, blank=True, default="")
+    body = models.TextField(blank=True, default="")
+    html_body = models.TextField(blank=True, default="")
+    from_email = models.CharField(max_length=254, blank=True, default="")
+    to = models.JSONField(default=list, blank=True)
+    cc = models.JSONField(default=list, blank=True)
+    bcc = models.JSONField(default=list, blank=True)
+    reply_to = models.JSONField(default=list, blank=True)
+    headers = models.JSONField(default=dict, blank=True)
+    attachments = models.JSONField(default=list, blank=True)
+    scheduled_for = models.DateTimeField(db_index=True)
+    attempts = models.PositiveIntegerField(default=0)
+    last_error = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Deferred email"
+        verbose_name_plural = "Deferred emails"
+        ordering = ["scheduled_for", "created_at"]
+        indexes = [
+            models.Index(
+                fields=["status", "scheduled_for", "priority", "created_at"],
+                name="core_defemail_drain_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"DeferredEmail({self.pk}, {self.priority}, {self.status})"
+
+    def clear_sensitive_content(self) -> None:
+        """Drop bodies/attachments after successful send (privacy)."""
+        self.body = ""
+        self.html_body = ""
+        self.attachments = []
+
+
 class UUIDModel(models.Model):
     """
     Abstract base model with UUID primary key.
