@@ -50,7 +50,8 @@ def test_resolve_rejects_mock_on_production_without_allow():
 
 
 def test_resolve_allows_mock_on_production_with_flag(caplog):
-    with caplog.at_level(logging.CRITICAL):
+    # Pin the module logger so Django's configured logging still reaches caplog.
+    with caplog.at_level(logging.CRITICAL, logger="seim.settings.virus_scanner"):
         assert (
             resolve_virus_scanner_type(
                 deploy_tier="production",
