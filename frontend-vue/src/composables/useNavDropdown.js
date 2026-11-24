@@ -1,4 +1,4 @@
-import { onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 
 const registry = new Set()
 
@@ -10,8 +10,21 @@ export function useNavDropdown() {
   const open = ref(false)
   const rootEl = ref(null)
 
-  function close() {
+  function focusToggle() {
+    const root = rootEl.value
+    if (!(root instanceof HTMLElement)) return
+    const toggle = root.querySelector(
+      'button.dropdown-toggle, button[aria-haspopup], button[data-testid], button',
+    )
+    if (toggle instanceof HTMLElement) toggle.focus()
+  }
+
+  function close({ restoreFocus = false } = {}) {
+    if (!open.value) return
     open.value = false
+    if (restoreFocus) {
+      nextTick(() => focusToggle())
+    }
   }
 
   function toggle(event) {
@@ -34,7 +47,10 @@ export function useNavDropdown() {
   }
 
   function onDocumentKeydown(event) {
-    if (event.key === 'Escape' && open.value) close()
+    if (event.key === 'Escape' && open.value) {
+      event.stopPropagation()
+      close({ restoreFocus: true })
+    }
   }
 
   onMounted(() => {

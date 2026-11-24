@@ -52,6 +52,23 @@ describe('useNavDropdown', () => {
     wrapper.unmount()
   })
 
+  it('restores focus to the toggle after Escape', async () => {
+    const wrapper = mountDropdown()
+    const toggle = wrapper.get('[data-testid="toggle"]').element
+    toggle.focus()
+    await wrapper.get('[data-testid="toggle"]').trigger('click')
+    expect(wrapper.find('[data-testid="menu"]').exists()).toBe(true)
+
+    // Simulate focus moving into the open menu before Escape.
+    document.body.focus?.()
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    await wrapper.vm.$nextTick()
+    await Promise.resolve()
+    expect(wrapper.find('[data-testid="menu"]').exists()).toBe(false)
+    expect(document.activeElement).toBe(toggle)
+    wrapper.unmount()
+  })
+
   it('closes the previously open dropdown when another opens', async () => {
     const a = mountDropdown()
     const b = mountDropdown()

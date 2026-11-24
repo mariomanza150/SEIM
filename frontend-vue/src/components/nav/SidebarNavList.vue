@@ -68,6 +68,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { navItemMatchesRoute } from '@/utils/navRouteMatch'
 import { readCollapsedSections, writeCollapsedSections } from '@/utils/sidebarPrefs'
 
 const props = defineProps({
@@ -135,7 +136,7 @@ watch(
   (name) => {
     if (!name || !props.collapsible) return
     const owner = visibleSections.value.find((section) =>
-      section.items.some((item) => item.to?.name === name),
+      section.items.some((item) => navItemMatchesRoute(item, name)),
     )
     if (owner && collapsed.value[owner.key]) {
       toggleSection(owner.key)
