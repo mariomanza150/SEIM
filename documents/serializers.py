@@ -1,4 +1,3 @@
-from django.db.models import Q
 from rest_framework import serializers
 
 from notifications.services import NotificationService
@@ -448,7 +447,11 @@ class DocumentSerializer(serializers.ModelSerializer):
             return False
         from documents.visibility import can_view_document_version_history
 
-        return can_view_document_version_history(request.user, obj.type)
+        return can_view_document_version_history(
+            request.user,
+            obj.type,
+            settings_obj=self.context.get("institution_feature_settings"),
+        )
 
     def get_version_history(self, obj):
         if not self.get_can_view_version_history(obj):
@@ -475,16 +478,21 @@ class DocumentSerializer(serializers.ModelSerializer):
         return out
 
     def get_comments(self, obj):
-        qs = obj.documentcomment_set.all().order_by("created_at")
+        # Use the prefetch cache: RelatedManager.filter()/order_by() would
+        # issue a new query per document row.
+        comments = list(obj.documentcomment_set.all())
+        comments.sort(key=lambda c: (c.created_at, c.pk))
         request = self.context.get("request")
         if request and request.user.is_authenticated:
             u = request.user
-            staff = getattr(u, "has_role", None) and (
-                u.has_role("coordinator") or u.has_role("admin")
-            )
+            staff = bool(self.context.get("viewer_is_document_staff"))
+            if not staff and getattr(u, "has_role", None):
+                staff = u.has_role("coordinator") or u.has_role("admin")
             if not staff:
-                qs = qs.filter(Q(is_private=False) | Q(author=u))
-        return DocumentCommentSerializer(qs, many=True).data
+                comments = [
+                    c for c in comments if (not c.is_private) or c.author_id == u.id
+                ]
+        return DocumentCommentSerializer(comments, many=True).data
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
