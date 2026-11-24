@@ -490,9 +490,7 @@ class DocumentSerializer(serializers.ModelSerializer):
                 staff = u.has_role("coordinator") or u.has_role("admin")
             if not staff:
                 comments = [
-                    c
-                    for c in comments
-                    if (not c.is_private) or c.author_id == u.id
+                    c for c in comments if (not c.is_private) or c.author_id == u.id
                 ]
         return DocumentCommentSerializer(comments, many=True).data
 
