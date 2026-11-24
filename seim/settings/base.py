@@ -425,7 +425,8 @@ SPECTACULAR_SETTINGS = {
 # CORS Configuration (environment-specific - see development.py and production.py)
 CORS_ALLOW_CREDENTIALS = True
 
-# Celery Configuration
+# Celery Configuration — JSON only (no pickle). Drain any in-flight pickled
+# tasks before deploying a worker that rejects non-JSON content.
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
@@ -436,15 +437,15 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 
-# Redis Cache Configuration
+# Redis Cache Configuration — JSON serializer (no pickle). Values must be
+# JSON-serializable; full-page HttpResponse caching is not supported.
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
         "LOCATION": "redis://redis:6379/1",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            # Use PickleSerializer to support caching of HttpResponse objects (required for cache_page)
-            "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer",
+            "SERIALIZER": "django_redis.serializers.json.JSONSerializer",
         },
         "TIMEOUT": 300,  # Default: 5 minutes
     }
