@@ -651,7 +651,8 @@ def _project_locale_mo_paths(root):
 
     root = Path(root)
     return [
-        root / "locale" / lang / "LC_MESSAGES" / "django.mo" for lang in ("de", "es", "fr")
+        root / "locale" / lang / "LC_MESSAGES" / "django.mo"
+        for lang in ("de", "es", "fr")
     ]
 
 
@@ -691,7 +692,9 @@ def compile_project_messages(root=None):
     )
     missing = [str(p) for p in _project_locale_mo_paths(root) if not p.is_file()]
     if result.returncode != 0:
-        detail = (result.stderr or result.stdout or "").strip() or f"exit {result.returncode}"
+        detail = (
+            result.stderr or result.stdout or ""
+        ).strip() or f"exit {result.returncode}"
         return False, detail
     if missing:
         return False, f"missing catalogs after compile: {', '.join(missing)}"
