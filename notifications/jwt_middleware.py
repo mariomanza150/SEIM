@@ -59,7 +59,11 @@ def extract_token_from_subprotocols(subprotocols) -> tuple[str | None, str | Non
 
 def extract_token_from_query_string(query_string: bytes | str) -> str | None:
     """Deprecated: read JWT from ``?token=`` query string."""
-    raw = query_string.decode() if isinstance(query_string, bytes) else (query_string or "")
+    raw = (
+        query_string.decode()
+        if isinstance(query_string, bytes)
+        else (query_string or "")
+    )
     query = urllib.parse.parse_qs(raw)
     token_list = query.get("token")
     return token_list[0] if token_list else None
@@ -99,9 +103,7 @@ class JWTAuthMiddleware(BaseMiddleware):
                         )
                         token = query_token
                         scope["seim_ws_auth_via"] = "query_string_deprecated"
-                elif extract_token_from_query_string(
-                    scope.get("query_string") or b""
-                ):
+                elif extract_token_from_query_string(scope.get("query_string") or b""):
                     logger.warning(
                         "Ignoring WebSocket ?token= query JWT "
                         "(WEBSOCKET_ALLOW_QUERY_JWT is disabled)"
