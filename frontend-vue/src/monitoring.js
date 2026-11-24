@@ -9,6 +9,10 @@
  * tokens, names and e-mail addresses are scrubbed from errors, breadcrumbs and logs.
  */
 
+import { isChunkLoadError } from './utils/chunkLoadReload'
+
+export { isChunkLoadError }
+
 export const FILTERED = '[Filtered]'
 /**
  * scrubText returns at most this many characters (plus TRUNCATED). Longer input is cut to a window of
@@ -217,12 +221,6 @@ export function monitoringConfig(env = import.meta.env) {
     consoleLevels: at < 0 ? [] : LOG_LEVELS.slice(at),
     maxBreadcrumbs: 50,
   }
-}
-
-/** True for "Failed to fetch dynamically imported module" style chunk-load failures. */
-export function isChunkLoadError(error) {
-  const msg = String(error?.message || error || '')
-  return /dynamically imported module|Importing a module script failed|error loading dynamically imported|Loading chunk [\w-]+ failed|ChunkLoadError/i.test(msg)
 }
 
 /** Anchored trace-propagation targets: relative paths and our exact origin only. */

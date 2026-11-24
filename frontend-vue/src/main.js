@@ -8,6 +8,7 @@ import router from './router'
 import i18n from './i18n'
 import { initMonitoringWithTimeout } from './monitoring'
 import { installDiagnostics, recordNavigation } from './qa/diagnostics'
+import { installChunkLoadReloadHandlers } from './utils/chunkLoadReload'
 
 // In-memory only; attached to a QA report solely when a tester submits one.
 installDiagnostics()
@@ -28,6 +29,9 @@ app.use(pinia)
 // Install Vue Router
 app.use(router)
 router.afterEach((to, from) => recordNavigation(to, from))
+
+// Stale hashed chunks after deploy → one-time full reload (sessionStorage guard).
+installChunkLoadReloadHandlers(router)
 
 app.use(i18n)
 
