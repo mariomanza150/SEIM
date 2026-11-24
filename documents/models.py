@@ -156,6 +156,24 @@ class DocumentType(models.Model):
             "with their profile data (no application required)."
         ),
     )
+    prefill_active_filters = models.JSONField(
+        null=True,
+        blank=True,
+        default=None,
+        help_text=_(
+            "When set, students who match these filters (domain / unidad / school) "
+            "are auto-added to the prefill allow-list. Null turns auto-inclusion off."
+        ),
+    )
+    prefill_filter_exclusions = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="prefill_document_type_exclusions",
+        help_text=_(
+            "Students manually removed while active filters are on; "
+            "they are not auto-re-added until filters change or they are added again."
+        ),
+    )
 
     class Meta:
         ordering = ["name"]
