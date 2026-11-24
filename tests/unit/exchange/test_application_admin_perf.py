@@ -60,8 +60,9 @@ class ApplicationAdminChangelistPerfTests(APITestCase):
         self.assertLessEqual(count_large, 40)
 
     def test_eligibility_status_column_is_lightweight(self):
-        from exchange.admin import ApplicationAdmin
         from django.contrib import admin
+
+        from exchange.admin import ApplicationAdmin
 
         app = self.create_application(
             student=self.create_user(role="student"),
