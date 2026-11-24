@@ -142,7 +142,7 @@ CACHES = {
         "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-            "SERIALIZER": "django_redis.serializers.pickle.PickleSerializer",
+            "SERIALIZER": "django_redis.serializers.json.JSONSerializer",
             "CONNECTION_POOL_KWARGS": {
                 "max_connections": 100,
                 "retry_on_timeout": True,
@@ -158,6 +158,7 @@ CACHES = {
         "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SERIALIZER": "django_redis.serializers.json.JSONSerializer",
         },
         "KEY_PREFIX": "seim_session",
         "TIMEOUT": 3600,  # 1 hour for sessions
@@ -167,6 +168,7 @@ CACHES = {
         "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SERIALIZER": "django_redis.serializers.json.JSONSerializer",
         },
         "KEY_PREFIX": "seim_api",
         "TIMEOUT": 600,  # 10 minutes for API responses
@@ -176,6 +178,7 @@ CACHES = {
         "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "SERIALIZER": "django_redis.serializers.json.JSONSerializer",
         },
         "KEY_PREFIX": "seim_analytics",
         "TIMEOUT": 1800,  # 30 minutes for analytics data
@@ -194,8 +197,9 @@ CACHE_MIDDLEWARE_SECONDS = 300  # 5 minutes
 CACHE_MIDDLEWARE_KEY_PREFIX = "seim"
 CACHE_MIDDLEWARE_ALIAS = "default"
 
-# Full-page cache (optional). Disable for docker-compose.local-prod to avoid stale HTML during dev.
-if not env.bool("DISABLE_PAGE_CACHE_MIDDLEWARE", default=False):
+# Full-page cache stores HttpResponse objects and is incompatible with the
+# JSON Redis serializer. Disabled by default; opt in only with a non-JSON cache.
+if not env.bool("DISABLE_PAGE_CACHE_MIDDLEWARE", default=True):
     MIDDLEWARE = (
         [
             "django.middleware.cache.UpdateCacheMiddleware",  # Must be first

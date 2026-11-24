@@ -211,7 +211,8 @@ class NotificationService:
 
         # Send email notification if type is email or both
         if effective_type in ["email", "both"]:
-            send_notification_by_id.delay(notification.id)
+            # UUID must be str for CELERY_TASK_SERIALIZER=json
+            send_notification_by_id.delay(str(notification.id))
 
         # Send real-time notification via WebSocket
         if effective_type in ("in_app", "both"):

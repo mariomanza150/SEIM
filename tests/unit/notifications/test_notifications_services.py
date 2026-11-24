@@ -146,7 +146,7 @@ class TestNotificationService(TestCase):
 
         self.assertEqual(notification.notification_type, "email")
         # Verify task was called
-        mock_task.assert_called_once_with(notification.id)
+        mock_task.assert_called_once_with(str(notification.id))
 
     @patch("notifications.services.send_notification_by_id.delay")
     def test_send_notification_both(self, mock_task):
@@ -160,7 +160,7 @@ class TestNotificationService(TestCase):
 
         self.assertEqual(notification.notification_type, "both")
         # Verify task was called
-        mock_task.assert_called_once_with(notification.id)
+        mock_task.assert_called_once_with(str(notification.id))
 
     def test_send_notification_with_action_url(self):
         """Test sending notification with action URL."""
@@ -221,7 +221,7 @@ class TestNotificationService(TestCase):
         )
         self.assertIsNotNone(notification)
         self.assertEqual(notification.notification_type, "email")
-        mock_task.assert_called_once_with(notification.id)
+        mock_task.assert_called_once_with(str(notification.id))
 
     @patch("notifications.services.send_notification_by_id.delay")
     def test_send_notification_usersettings_applications_inapp_only(self, mock_task):
@@ -307,7 +307,7 @@ class TestNotificationService(TestCase):
         )
         self.assertIsNotNone(notification)
         self.assertEqual(notification.notification_type, "email")
-        mock_task.assert_called_once_with(notification.id)
+        mock_task.assert_called_once_with(str(notification.id))
 
     @patch("notifications.services.send_notification_by_id.delay")
     def test_send_notification_usersettings_programs_uses_inapp_programs_not_applications(
@@ -354,7 +354,7 @@ class TestNotificationService(TestCase):
         )
         self.assertIsNotNone(notification)
         self.assertEqual(notification.notification_type, "email")
-        mock_task.assert_called_once_with(notification.id)
+        mock_task.assert_called_once_with(str(notification.id))
 
     @patch("notifications.services.send_notification_by_id.delay")
     def test_send_notification_usersettings_system_inapp_off_email_on(self, mock_task):
@@ -374,7 +374,7 @@ class TestNotificationService(TestCase):
         )
         self.assertIsNotNone(notification)
         self.assertEqual(notification.notification_type, "email")
-        mock_task.assert_called_once_with(notification.id)
+        mock_task.assert_called_once_with(str(notification.id))
 
     @patch("notifications.services.send_notification_by_id.delay")
     def test_send_notification_usersettings_system_inapp_on_email_off(self, mock_task):

@@ -82,7 +82,7 @@ class NotificationServiceTestCase(TestCase):
             )
 
             self.assertIsNotNone(notification)
-            mock_send_email.assert_called_once_with(notification.id)
+            mock_send_email.assert_called_once_with(str(notification.id))
 
     def test_send_notification_both(self):
         """Test both email and in-app notification sending."""
@@ -97,7 +97,7 @@ class NotificationServiceTestCase(TestCase):
             )
 
             self.assertIsNotNone(notification)
-            mock_send_email.assert_called_once_with(notification.id)
+            mock_send_email.assert_called_once_with(str(notification.id))
 
     def test_send_notification_invalid_type(self):
         """Test notification sending with invalid type."""
