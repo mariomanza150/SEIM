@@ -7,6 +7,7 @@ import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import AppShell from './AppShell.vue'
 import i18n, { setAppLocale } from '@/i18n'
+import { resetBrandingForTests } from '@/composables/useBranding'
 
 vi.mock('@/services/api', () => ({
   default: {
@@ -106,11 +107,13 @@ describe('AppShell navbar', () => {
     localStorage.clear()
     setAppLocale('en')
     vi.clearAllMocks()
+    resetBrandingForTests()
   })
 
   afterEach(() => {
     setAppLocale('en')
     localStorage.clear()
+    resetBrandingForTests()
   })
 
   async function mountShell(startName = 'Dashboard') {

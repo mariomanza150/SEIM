@@ -3,7 +3,7 @@ import { getBrandTitleSuffix } from '@/composables/useBranding'
 
 /**
  * Localized browser tab title for a matched route (Vue Router route object).
- * Suffix uses institution short_name from /api/branding/ (UAdeC fallback).
+ * Suffix uses institution short_name from /api/branding/ (SEIM while loading).
  */
 export function resolveDocumentTitle(routeLike) {
   const t = i18n.global.t

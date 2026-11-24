@@ -3,14 +3,14 @@ import { ref, readonly } from 'vue'
 import api from '@/services/api'
 import { applyBrandTheme } from '@/utils/brandTheme'
 
-/** Packaged UAdeC defaults — used while loading or if the API is unavailable. */
+/** Neutral SPA chrome while /api/branding/ is loading or unavailable. */
 export const FALLBACK_BRANDING = {
-  logo_url: '/static/uadec/logos/institution-logo.png',
-  nav_brand: 'UAdeC Intercambio Académico',
-  short_name: 'UAdeC',
-  name: 'Universidad Autónoma de Coahuila',
-  tagline: 'Intercambio Académico',
-  theme_css: 'uadec/theme.css',
+  logo_url: '',
+  nav_brand: 'SEIM',
+  short_name: 'SEIM',
+  name: 'SEIM',
+  tagline: 'Student Exchange',
+  theme_css: '',
   theme: {
     primary: '#2E5790',
     primary_light: '#3251AC',
@@ -58,6 +58,16 @@ function normalizeBranding(data) {
 export function getBrandTitleSuffix() {
   ensureDefaultTheme()
   return branding.value?.short_name || FALLBACK_BRANDING.short_name
+}
+
+/** Test helper: restore neutral fallback and clear hydration. */
+export function resetBrandingForTests() {
+  branding.value = { ...FALLBACK_BRANDING }
+  loading.value = false
+  error.value = ''
+  hydrated.value = false
+  fetchPromise = null
+  defaultsApplied = false
 }
 
 export function useBranding() {

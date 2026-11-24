@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 vi.mock('@/services/api', () => ({
   default: {
@@ -15,20 +15,32 @@ vi.mock('@/utils/brandTheme', () => ({
 
 import api from '@/services/api'
 import { applyBrandTheme } from '@/utils/brandTheme'
-import { FALLBACK_BRANDING, getBrandTitleSuffix, useBranding } from '@/composables/useBranding'
+import {
+  FALLBACK_BRANDING,
+  getBrandTitleSuffix,
+  resetBrandingForTests,
+  useBranding,
+} from '@/composables/useBranding'
 
 describe('useBranding', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    resetBrandingForTests()
   })
 
-  it('exposes UAdeC fallback defaults before the API responds', () => {
-    expect(FALLBACK_BRANDING.short_name).toBe('UAdeC')
+  afterEach(() => {
+    resetBrandingForTests()
+  })
+
+  it('exposes neutral SEIM fallback defaults before the API responds', () => {
+    expect(FALLBACK_BRANDING.short_name).toBe('SEIM')
+    expect(FALLBACK_BRANDING.name).toBe('SEIM')
+    expect(FALLBACK_BRANDING.nav_brand).toBe('SEIM')
     expect(FALLBACK_BRANDING.theme.primary).toBe('#2E5790')
-    expect(getBrandTitleSuffix()).toBe('UAdeC')
+    expect(getBrandTitleSuffix()).toBe('SEIM')
     const { branding } = useBranding()
-    expect(branding.value.short_name).toBe('UAdeC')
-    expect(branding.value.nav_brand).toContain('UAdeC')
+    expect(branding.value.short_name).toBe('SEIM')
+    expect(branding.value.nav_brand).toBe('SEIM')
     expect(applyBrandTheme).toHaveBeenCalled()
   })
 
@@ -55,15 +67,16 @@ describe('useBranding', () => {
     expect(applyBrandTheme).toHaveBeenCalled()
   })
 
-  it('falls back to UAdeC defaults when API fails', async () => {
+  it('falls back to SEIM defaults when API fails', async () => {
     api.get.mockRejectedValue(new Error('Network error'))
 
     const { branding, loadBranding } = useBranding()
     const result = await loadBranding(true)
-    expect(result.nav_brand).toBe(FALLBACK_BRANDING.nav_brand)
-    expect(branding.value.short_name).toBe('UAdeC')
+    expect(result.nav_brand).toBe('SEIM')
+    expect(branding.value.short_name).toBe('SEIM')
+    expect(branding.value.name).toBe('SEIM')
     expect(branding.value.theme.accent).toBe('#BF9B4C')
-    expect(getBrandTitleSuffix()).toBe('UAdeC')
+    expect(getBrandTitleSuffix()).toBe('SEIM')
     expect(applyBrandTheme).toHaveBeenCalled()
   })
 })

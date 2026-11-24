@@ -338,7 +338,7 @@ onMounted(() => {
 
 const brandLogoUrl = computed(() => branding.value?.logo_url || '')
 const brandLabel = computed(
-  () => branding.value?.nav_brand || branding.value?.short_name || 'UAdeC',
+  () => branding.value?.nav_brand || branding.value?.short_name || 'SEIM',
 )
 
 function toggleSidebarCollapsed() {

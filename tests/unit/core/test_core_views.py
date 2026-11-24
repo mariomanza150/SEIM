@@ -31,18 +31,47 @@ class TestBrandingApi(SimpleTestCase):
         "social_instagram",
     )
 
-    def test_branding_api_returns_default_institution_fields(self):
+    @override_settings(
+        INSTITUTION_NAME="SEIM",
+        INSTITUTION_SHORT_NAME="SEIM",
+        INSTITUTION_TAGLINE="Student Exchange",
+        INSTITUTION_NAV_BRAND="SEIM",
+        INSTITUTION_LOGO_URL="",
+        INSTITUTION_THEME_CSS="example/theme.css",
+        INSTITUTION_THEME={
+            "primary": "#2E5790",
+            "primary_light": "#3251AC",
+            "primary_dark": "#1E3A5F",
+            "accent": "#BF9B4C",
+            "accent_light": "#EDB621",
+            "accent_dark": "#A6863D",
+            "navy": "#1E3A5F",
+            "orange": "#E67E22",
+            "text": "#2C3E50",
+        },
+    )
+    def test_branding_api_returns_configured_institution_fields(self):
         response = self.client.get("/api/branding/")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertEqual(data["short_name"], "UAdeC")
-        self.assertIn("Coahuila", data["name"])
-        self.assertEqual(data["tagline"], "Intercambio Académico")
-        self.assertIn("UAdeC", data["nav_brand"])
-        self.assertTrue(data["logo_url"])
-        self.assertEqual(data["theme_css"], "uadec/theme.css")
+        self.assertEqual(data["name"], "SEIM")
+        self.assertEqual(data["short_name"], "SEIM")
+        self.assertEqual(data["tagline"], "Student Exchange")
+        self.assertEqual(data["nav_brand"], "SEIM")
+        self.assertEqual(data["logo_url"], "")
+        self.assertEqual(data["theme_css"], "example/theme.css")
         self.assertEqual(data["theme"]["primary"], "#2E5790")
         self.assertEqual(data["theme"]["accent"], "#BF9B4C")
+        for key in (
+            "name",
+            "short_name",
+            "tagline",
+            "nav_brand",
+            "logo_url",
+            "theme_css",
+            "theme",
+        ):
+            self.assertIn(key, data)
         for key in self._SENSITIVE_KEYS:
             self.assertNotIn(key, data)
 

@@ -50,7 +50,7 @@ Set these in `.env` (see `env.example`) or in the JSON config:
 
 Templates read these through `core.context_processors.institution`. CSS keeps the historical `--uadec-*` names and aliases them to `--brand-*` so existing CMS templates keep working.
 
-The Vue SPA (`/seim/`) loads a public read-only payload from `GET /api/branding/` (name, short name, tagline, nav label, logo URL, theme CSS, and brand colors only — no contact/address fields). The SPA shell applies that payload to the document title suffix, navbar brand label/logo, and CSS custom properties, with packaged UAdeC defaults while the request is loading or if it fails.
+The Vue SPA (`/seim/`) loads a public read-only payload from `GET /api/branding/` (name, short name, tagline, nav label, logo URL, theme CSS, and brand colors only — no contact/address fields). The SPA shell applies that payload to the document title suffix, navbar brand label/logo, and CSS custom properties, with neutral SEIM chrome while the request is loading or if it fails.
 
 ## Logos and theme files
 
