@@ -217,7 +217,10 @@
     "googleCalendarError": "La acción de Google Calendar falló.",
     "googleCalendarSyncSuccess": "Calendario sincronizado. Se restauraron los eventos de SEIM si diferían en Google; los eventos solo de Google aparecen en Plazos.",
     "googleCalendarDisconnectedToast": "Google Calendar desconectado.",
-    "googleCalendarConnectedToast": "Google Calendar conectado."
+    "googleCalendarConnectedToast": "Google Calendar conectado.",
+    "startPageTour": "Iniciar tour de la página",
+    "pageToursHeading": "Recorridos",
+    "pageToursBody": "Repite el tour de bienvenida o inicia un recorrido de página disponible para tu rol."
   },
   "login": {
     "subtitle": "Inicia sesión para continuar",
@@ -406,7 +409,13 @@
       "admin": "Administración",
       "account": "Cuenta",
       "other": "Otros"
-    }
+    },
+    "startWalkthrough": "Iniciar recorrido",
+    "startWalkthroughHint": "Abre la página relacionada e inicia un tour interactivo según tu rol.",
+    "walkthroughCardTitle": "Recorridos interactivos",
+    "walkthroughCardBody": "Repite el tour del producto o inicia un recorrido guiado de un flujo principal.",
+    "replayWelcomeTour": "Repetir tour de bienvenida",
+    "pageTourLabel": "Tour de página: {title}"
   },
   "adminNav": {
     "sectionTitle": "Admin",
@@ -492,6 +501,161 @@
         "statsBody": "Las tarjetas del panel resumen elementos relevantes para tu rol de socio.",
         "portalTitle": "Portal de socios",
         "portalBody": "Confirma nominaciones y gestiona documentos de socio desde el portal."
+      }
+    },
+    "startWalkthrough": "Iniciar recorrido",
+    "replayTour": "Repetir el tour del producto",
+    "replayPageTour": "Repetir el tour de la página",
+    "startPageTour": "Iniciar tour de la página",
+    "pageToursHeading": "Recorridos por página",
+    "pageToursBody": "Repite el tour de bienvenida o lanza un recorrido guiado de una página principal.",
+    "noPageTour": "No hay recorrido disponible para esta página y rol.",
+    "pages": {
+      "applications": {
+        "title": "Tour de solicitudes",
+        "steps": {
+          "headerTitle": "Solicitudes",
+          "headerBody": "Esta página lista las solicitudes de intercambio que puedes abrir, filtrar o iniciar.",
+          "actionsTitle": "Iniciar una solicitud",
+          "actionsBody": "Crea un borrador nuevo cuando estés listo para postular a un programa.",
+          "tabsTitle": "Pestañas de dirección",
+          "tabsBody": "Cambia entre solicitudes salientes y entrantes cuando ambas estén disponibles.",
+          "filtersTitle": "Filtros y búsqueda",
+          "filtersBody": "Reduce la lista por estado, periodo, programa o palabras clave.",
+          "listTitle": "Tarjetas de solicitud",
+          "listBody": "Abre una tarjeta para ver estado, preparación y siguientes acciones."
+        },
+        "student": {
+          "steps": {
+            "actionsBody": "Inicia aquí un borrador nuevo de solicitud de intercambio.",
+            "listBody": "Sigue borradores y envíos. Abre uno para continuar o revisar comentarios."
+          }
+        },
+        "staff": {
+          "steps": {
+            "actionsBody": "Puedes abrir solicitudes ligadas a tu trabajo de coordinación desde esta lista.",
+            "listBody": "Usa la lista para entrar a una solicitud antes de la revisión profunda en la cola."
+          }
+        },
+        "admin": {
+          "steps": {
+            "actionsBody": "Los administradores pueden abrir o inspeccionar solicitudes desde esta lista.",
+            "listBody": "Revisa el volumen de solicitudes y abre expedientes para seguimiento operativo."
+          }
+        }
+      },
+      "application-form": {
+        "title": "Tour del formulario de solicitud",
+        "steps": {
+          "headerTitle": "Formulario de solicitud",
+          "headerBody": "Completa la selección de programa y los campos antes de enviar.",
+          "programTitle": "Elige un programa",
+          "programBody": "Selecciona el programa de intercambio. Los filtros ayudan a encontrar el destino.",
+          "dynamicTitle": "Campos del formulario dinámico",
+          "dynamicBody": "Responde las preguntas que pide este programa. Guarda borradores mientras avanzas.",
+          "submitTitle": "Guardar y enviar",
+          "submitBody": "Guarda el borrador cuando quieras. Envía solo cuando elegibilidad y campos requeridos estén listos."
+        },
+        "student": {
+          "steps": {
+            "submitBody": "Guarda con frecuencia. Envía cuando documentos y elegibilidad estén listos."
+          }
+        },
+        "staff": {
+          "steps": {
+            "headerBody": "El personal puede ayudar a corregir borradores cuando el flujo permita ediciones."
+          }
+        },
+        "admin": {
+          "steps": {
+            "headerBody": "Los administradores pueden ajustar datos operativos desde editores de admin relacionados."
+          }
+        }
+      },
+      "documents": {
+        "title": "Tour de documentos",
+        "steps": {
+          "headerTitle": "Documentos",
+          "headerBody": "Sube, reemplaza y da seguimiento a archivos ligados a solicitudes.",
+          "prefillTitle": "Plantillas prefabricadas",
+          "prefillBody": "Descarga plantillas institucionales precargadas con tu perfil cuando estén disponibles.",
+          "filtersTitle": "Filtros de documentos",
+          "filtersBody": "Filtra por solicitud, tipo de documento o estado de validación.",
+          "listTitle": "Lista de documentos",
+          "listBody": "Abre un documento para descargar, reemplazar o leer comentarios de revisión."
+        },
+        "student": {
+          "steps": {
+            "listBody": "Sube los archivos requeridos y responde rápido si piden un reenvío."
+          }
+        },
+        "staff": {
+          "steps": {
+            "listBody": "Valida o solicita reenvíos con un motivo y plazo claros."
+          }
+        },
+        "admin": {
+          "steps": {
+            "headerBody": "Los administradores pueden inspeccionar el estado de documentos desde esta lista."
+          }
+        }
+      },
+      "review-queue": {
+        "title": "Tour de la cola de revisión",
+        "steps": {
+          "headerTitle": "Cola de revisión",
+          "headerBody": "Prioriza solicitudes enviadas que necesitan acción de coordinación.",
+          "filtersTitle": "Filtros de la cola",
+          "filtersBody": "Concéntrate en revisión pendiente, reenvíos de documentos o ítems asignados a ti.",
+          "listTitle": "Resultados de la cola",
+          "listBody": "Abre una fila para revisar formulario, documentos y transiciones de estado permitidas."
+        },
+        "staff": {
+          "steps": {
+            "listBody": "Avanza el estado solo cuando se cumplan los requisitos del paso. Las notas quedan en la línea de tiempo."
+          }
+        },
+        "admin": {
+          "steps": {
+            "headerBody": "Los administradores comparten esta cola con coordinación para el triage operativo."
+          }
+        }
+      },
+      "partner-portal": {
+        "title": "Tour del portal de socios",
+        "steps": {
+          "headerTitle": "Portal de socios",
+          "headerBody": "Revisa convenios, postulantes nominados y tareas de documentos del socio.",
+          "agreementsTitle": "Convenios de intercambio",
+          "agreementsBody": "Abre un convenio para ver su estado y los documentos institucionales requeridos.",
+          "nomineesTitle": "Postulantes nominados",
+          "nomineesBody": "Confirma nominaciones y abre checklists de requisitos del anfitrión.",
+          "docsTitle": "Documentos del socio",
+          "docsBody": "Sube o reemplaza archivos institucionales pedidos para el convenio seleccionado."
+        },
+        "partner": {
+          "steps": {
+            "nomineesBody": "Confirma cada nominación y completa a tiempo los ítems del checklist del anfitrión."
+          }
+        }
+      },
+      "admin-programs": {
+        "title": "Tour de administración de programas",
+        "steps": {
+          "headerTitle": "Programas",
+          "headerBody": "Crea y mantén los programas de intercambio que usan los postulantes.",
+          "createTitle": "Crear un programa",
+          "createBody": "Agrega un programa nuevo y luego configura destinos y ventanas.",
+          "filtersTitle": "Búsqueda y filtros",
+          "filtersBody": "Encuentra programas por nombre o estado activo antes de editar.",
+          "tableTitle": "Lista de programas",
+          "tableBody": "Edita un programa, gestiona destinos o clona una configuración existente."
+        },
+        "admin": {
+          "steps": {
+            "tableBody": "Usa destinos para modelar campus anfitriones. Alinea elegibilidad y convenios antes de abrir convocatoria."
+          }
+        }
       }
     }
   },

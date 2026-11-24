@@ -1,5 +1,6 @@
 <template>
-  <div class="review-queue-page">
+  <div class="review-queue-page" data-tour="review-queue-page">
+    <div data-tour="review-queue-header">
     <PageHeader
       :title="t('reviewQueuePage.pageHeading')"
       :subtitle="t('reviewQueuePage.pageSubtitle')"
@@ -21,7 +22,9 @@
         </router-link>
       </template>
     </PageHeader>
+    </div>
 
+      <div data-tour="review-queue-filters">
       <CompactFilterBar
         test-id="review-queue-filters"
         :clear-label="t('reviewQueuePage.clearFilters')"
@@ -186,11 +189,13 @@
               </div>
         </template>
       </CompactFilterBar>
+      </div>
 
       <div
         class="review-queue-layout"
         :class="{ 'review-queue-layout--split': splitEnabled && previewId }"
         data-testid="review-queue-layout"
+        data-tour="review-queue-list"
       >
       <div class="review-queue-layout__list">
       <PageStateShell

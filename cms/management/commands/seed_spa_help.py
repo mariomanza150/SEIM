@@ -27,13 +27,46 @@ def _paragraph_body(html):
 
 SPA_HELP_ARTICLES = [
     {
-        "title": "Usar el panel",
+        "title": "Usar el panel / Using the dashboard",
         "slug": "usar-el-panel",
-        "introduction": "Cómo leer el panel después de iniciar sesión.",
+        "introduction": "Cómo leer el panel después de iniciar sesión. / How to read the dashboard after sign-in.",
         "topic": "getting_started",
         "audiences": [FAQ_AUDIENCE_ALL],
         "contextual_keys": "Dashboard",
-        "body": "<p>El panel resume lo más urgente para tu rol: solicitudes, documentos, avisos y tareas pendientes.</p><ul><li>Usa las tarjetas de conteo para saltar a la lista correspondiente.</li><li>La actividad reciente muestra cambios de estado y comentarios nuevos.</li><li>El menú lateral abre el resto de herramientas; Ayuda está siempre visible.</li></ul>",
+        "body": (
+            "<p><strong>ES:</strong> El panel resume lo más urgente para tu rol: solicitudes, documentos, avisos y tareas pendientes.</p>"
+            "<ul><li>Usa las tarjetas de conteo para saltar a la lista correspondiente.</li>"
+            "<li>La actividad reciente muestra cambios de estado y comentarios nuevos.</li>"
+            "<li>El menú lateral abre el resto de herramientas; Ayuda está siempre visible.</li>"
+            "<li>Desde Ayuda o Ajustes puedes repetir el tour de bienvenida interactivo.</li></ul>"
+            "<p><strong>EN:</strong> The dashboard summarizes what matters for your role: applications, documents, notices, and pending tasks.</p>"
+            "<ul><li>Use the count cards to jump to the matching list.</li>"
+            "<li>Recent activity shows status changes and new comments.</li>"
+            "<li>The sidebar opens the rest of the tools; Help stays visible.</li>"
+            "<li>From Help or Settings you can replay the interactive welcome tour.</li></ul>"
+        ),
+    },
+    {
+        "title": "Recorridos interactivos / Interactive walkthroughs",
+        "slug": "recorridos-interactivos",
+        "introduction": "Tours guiados por página según tu rol. / Role-aware guided page tours.",
+        "topic": "getting_started",
+        "audiences": [FAQ_AUDIENCE_ALL],
+        "contextual_keys": "Dashboard,HelpCenter,Settings",
+        "body": (
+            "<p><strong>ES:</strong> SEIM incluye recorridos interactivos (no hace falta instalar nada extra). "
+            "El tour de bienvenida cubre el panel. Además hay tours de página para solicitudes, formulario, documentos, "
+            "cola de revisión, portal de socio y programas de administración, según tu rol.</p>"
+            "<ul><li>En Ayuda usa <em>Iniciar recorrido</em> junto a un artículo o los botones de tours de página.</li>"
+            "<li>En Ajustes puedes repetir el tour del producto o lanzar un tour de página disponible.</li>"
+            "<li>Si un control no aparece (por rol o estado vacío), ese paso se omite automáticamente.</li></ul>"
+            "<p><strong>EN:</strong> SEIM includes interactive walkthroughs (nothing extra to install). "
+            "The welcome tour covers the dashboard. Page tours also exist for applications, the application form, documents, "
+            "the review queue, the partner portal, and admin programs, filtered by your role.</p>"
+            "<ul><li>In Help, use <em>Start walkthrough</em> next to an article or the page-tour buttons.</li>"
+            "<li>In Settings you can replay the product tour or launch an available page tour.</li>"
+            "<li>If a control is not on screen (role-gated or empty state), that step is skipped automatically.</li></ul>"
+        ),
     },
     {
         "title": "Perfil y ajustes",
@@ -72,31 +105,51 @@ SPA_HELP_ARTICLES = [
         "body": "<p>La comparación pone lado a lado duración, requisitos, destinos anfitriones e idiomas.</p><p>Úsala para decidir a qué programa aplicar. Iniciar una solicitud se hace desde Programas o Solicitudes, no desde la tabla de comparación.</p>",
     },
     {
-        "title": "Buscar un programa y empezar una solicitud",
+        "title": "Buscar un programa y empezar una solicitud / Find a program and apply",
         "slug": "buscar-programa-y-aplicar",
-        "introduction": "Del catálogo al borrador de solicitud.",
+        "introduction": "Del catálogo al borrador de solicitud. / From catalog to application draft.",
         "topic": "applications",
         "audiences": [FAQ_AUDIENCE_STUDENT],
         "contextual_keys": "Applications,ApplicationNew",
-        "body": "<p>Revisa el catálogo, compara destinos y pulsa aplicar en el programa elegido. Se crea un borrador ligado a tu cuenta.</p><p>No envíes hasta completar el formulario dinámico y la lista de documentos. Puedes guardar y volver más tarde.</p>",
+        "body": (
+            "<p><strong>ES:</strong> Revisa el catálogo, compara destinos y pulsa aplicar en el programa elegido. "
+            "Se crea un borrador ligado a tu cuenta. No envíes hasta completar el formulario dinámico y la lista de documentos. "
+            "Usa <em>Iniciar recorrido</em> en Ayuda para un tour de la lista de solicitudes o del formulario.</p>"
+            "<p><strong>EN:</strong> Browse the catalog, compare destinations, and apply to a program to create a draft on your account. "
+            "Do not submit until the dynamic form and document list are complete. "
+            "Use <em>Start walkthrough</em> in Help for a guided tour of the applications list or form.</p>"
+        ),
     },
     {
-        "title": "Borrador, elegibilidad y envío",
+        "title": "Borrador, elegibilidad y envío / Draft, eligibility, and submit",
         "slug": "borrador-elegibilidad-enviar",
-        "introduction": "Qué revisar antes de enviar.",
+        "introduction": "Qué revisar antes de enviar. / What to check before submitting.",
         "topic": "applications",
         "audiences": [FAQ_AUDIENCE_STUDENT],
         "contextual_keys": "ApplicationNew,ApplicationEdit",
-        "body": "<p>El borrador guarda respuestas del formulario. Las reglas de elegibilidad pueden bloquear el envío si faltan créditos, idioma o promedio.</p><p>Corrige los campos marcados y vuelve a enviar. Después del envío, algunos datos se bloquean hasta que coordinación pida cambios.</p>",
+        "body": (
+            "<p><strong>ES:</strong> El borrador guarda respuestas del formulario. Las reglas de elegibilidad pueden bloquear el envío "
+            "si faltan créditos, idioma o promedio. Corrige los campos marcados y vuelve a enviar. "
+            "El tour del formulario destaca programa, preguntas dinámicas y botones de guardar/enviar.</p>"
+            "<p><strong>EN:</strong> Drafts store form answers. Eligibility rules may block submit when credits, language, or GPA are missing. "
+            "Fix flagged fields and try again. The form walkthrough highlights program selection, dynamic questions, and save/submit actions.</p>"
+        ),
     },
     {
-        "title": "Documentos, reenvío y tipos",
+        "title": "Documentos, reenvío y tipos / Documents, resubmit, and types",
         "slug": "documentos-reenvio-tipos",
-        "introduction": "Subir archivos y atender solicitudes de reenvío.",
+        "introduction": "Subir archivos y atender solicitudes de reenvío. / Upload files and handle resubmit requests.",
         "topic": "documents",
         "audiences": [FAQ_AUDIENCE_STUDENT],
         "contextual_keys": "Documents,DocumentDetail",
-        "body": "<p>Cada tipo de documento tiene formato, tamaño y, a veces, una nota de ayuda. Sube el archivo en la solicitud o en Documentos.</p><p>Si coordinación pide reenvío, verás el motivo y un plazo. Sustituye el archivo; no crees un duplicado salvo que el sistema lo pida.</p>",
+        "body": (
+            "<p><strong>ES:</strong> Cada tipo de documento tiene formato, tamaño y, a veces, una nota de ayuda. "
+            "Sube el archivo en la solicitud o en Documentos. Si coordinación pide reenvío, verás el motivo y un plazo. "
+            "Inicia el recorrido de Documentos desde Ayuda para ver filtros, plantillas y la lista.</p>"
+            "<p><strong>EN:</strong> Each document type has format, size, and sometimes a help note. "
+            "Upload from the application or Documents. If staff request a resubmit, you will see the reason and deadline. "
+            "Start the Documents walkthrough from Help to review filters, templates, and the list.</p>"
+        ),
     },
     {
         "title": "Seguimiento de estado y comentarios",
@@ -117,13 +170,20 @@ SPA_HELP_ARTICLES = [
         "body": "<p>Algunos programas muestran factores de beca o un puntaje. Completa los campos que pida el formulario; no inventes datos.</p><p>La decisión de apoyo económico la toma el personal con las reglas de puntuación. Pregunta a coordinación si no ves el bloque de becas y creías calificar.</p>",
     },
     {
-        "title": "Cola de revisión y cambios de estado",
+        "title": "Cola de revisión y cambios de estado / Review queue and status changes",
         "slug": "cola-de-revision",
-        "introduction": "Revisar solicitudes enviadas y avanzar el flujo.",
+        "introduction": "Revisar solicitudes enviadas y avanzar el flujo. / Review submitted applications and advance the workflow.",
         "topic": "review",
         "audiences": [FAQ_AUDIENCE_COORDINATOR],
         "contextual_keys": "CoordinatorReviewQueue",
-        "body": "<p>La cola lista solicitudes en revisión. Abre una ficha para ver formulario, documentos y el flujo de estados permitido.</p><p>Cambia el estado solo cuando los requisitos del paso estén cubiertos. El historial queda en la línea de tiempo.</p>",
+        "body": (
+            "<p><strong>ES:</strong> La cola lista solicitudes en revisión. Abre una ficha para ver formulario, documentos y el flujo de estados permitido. "
+            "Cambia el estado solo cuando los requisitos del paso estén cubiertos. "
+            "Usa <em>Iniciar recorrido</em> para un tour de filtros y resultados de la cola.</p>"
+            "<p><strong>EN:</strong> The queue lists applications in review. Open a record to see the form, documents, and allowed status transitions. "
+            "Change status only when the step requirements are met. "
+            "Use <em>Start walkthrough</em> for a guided tour of queue filters and results.</p>"
+        ),
     },
     {
         "title": "Comentarios y validación de documentos",
@@ -198,13 +258,20 @@ SPA_HELP_ARTICLES = [
         "body": "<p>Los pronósticos estiman carga futura a partir del historial de solicitudes.</p><p>Úsalos para cupos y personal, no como decisión individual sobre un expediente. Los filtros de programa y periodo cambian el gráfico.</p>",
     },
     {
-        "title": "Portal de socio: resumen",
+        "title": "Portal de socio: resumen / Partner portal overview",
         "slug": "portal-socio-resumen",
-        "introduction": "Qué ve una institución socia al entrar.",
+        "introduction": "Qué ve una institución socia al entrar. / What a partner institution sees after sign-in.",
         "topic": "partner",
         "audiences": [FAQ_AUDIENCE_PARTNER],
         "contextual_keys": "PartnerPortal",
-        "body": "<p>El portal muestra convenios ligados a tu cuenta, postulantes nominados y documentos que tu institución debe cargar.</p><p>No incluye el formulario completo de cada estudiante ni herramientas de administración del sitio público.</p>",
+        "body": (
+            "<p><strong>ES:</strong> El portal muestra convenios ligados a tu cuenta, postulantes nominados y documentos que tu institución debe cargar. "
+            "No incluye el formulario completo de cada estudiante ni herramientas de administración del sitio público. "
+            "Inicia el recorrido del portal desde Ayuda para recorrer convenios, nominados y documentos.</p>"
+            "<p><strong>EN:</strong> The portal shows agreements on your account, nominated applicants, and documents your institution must upload. "
+            "It does not include each student's full application form or public-site admin tools. "
+            "Start the partner portal walkthrough from Help to cover agreements, nominees, and documents.</p>"
+        ),
     },
     {
         "title": "Convenios y documentos requeridos (socio)",
@@ -234,13 +301,20 @@ SPA_HELP_ARTICLES = [
         "body": "<p>Desde el portal puedes adjuntar cartas, confirmaciones de plaza u otros tipos definidos en el convenio.</p><p>Respeta el tipo de documento pedido. Si el archivo se rechaza, lee el comentario y vuelve a cargar una versión corregida.</p>",
     },
     {
-        "title": "Programas y destinos anfitriones",
+        "title": "Programas y destinos anfitriones / Programs and host destinations",
         "slug": "admin-programas-destinos",
-        "introduction": "Alta de programas y árbol de destinos.",
+        "introduction": "Alta de programas y árbol de destinos. / Create programs and the host destination tree.",
         "topic": "admin",
         "audiences": [FAQ_AUDIENCE_ADMIN],
         "contextual_keys": "AdminPrograms,AdminProgramDestinations,AdminApplicationEdit",
-        "body": "<p>En administración SPA creas programas, periodos y destinos anfitriones (campus, facultad o ciudad según tu modelo).</p><p>Desde el editor de solicitud de admin puedes corregir datos operativos de un expediente concreto. Publicar un programa no sustituye el convenio vigente ni las reglas de elegibilidad. Revisa ambos antes de abrir convocatoria.</p>",
+        "body": (
+            "<p><strong>ES:</strong> En administración SPA creas programas, periodos y destinos anfitriones (campus, facultad o ciudad según tu modelo). "
+            "Publicar un programa no sustituye el convenio vigente ni las reglas de elegibilidad. "
+            "Usa el recorrido de Programas en Ayuda o Ajustes para ver creación, filtros y la tabla.</p>"
+            "<p><strong>EN:</strong> In SPA admin you create programs, windows, and host destinations (campus, school, or city per your model). "
+            "Publishing a program does not replace the active agreement or eligibility rules. "
+            "Use the Programs walkthrough in Help or Settings to cover create, filters, and the table.</p>"
+        ),
     },
     {
         "title": "Catálogos",

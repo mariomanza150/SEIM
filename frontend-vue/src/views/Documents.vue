@@ -1,5 +1,6 @@
 <template>
-  <div class="documents-page" data-testid="documents-page">
+  <div class="documents-page" data-testid="documents-page" data-tour="documents-page">
+    <div data-tour="documents-header">
     <PageHeader
       :title="t('route.names.Documents')"
       :subtitle="isStaff ? t('documentsPage.subtitleStaff') : t('documentsPage.subtitleStudent')"
@@ -16,11 +17,13 @@
         />
       </template>
     </PageHeader>
+    </div>
 
       <div
         v-if="!isStaff && prefillTemplates.length"
         class="card border-0 shadow-sm mb-3"
         data-testid="prefill-templates-block"
+        data-tour="documents-prefill"
       >
         <div class="card-body">
           <h2 class="h5 mb-1">{{ t('documentsPage.prefillTemplatesTitle') }}</h2>
@@ -53,6 +56,7 @@
         </div>
       </div>
 
+      <div data-tour="documents-filters">
       <CompactFilterBar :clear-label="t('documentsPage.clearFilters')" @clear="clearFilters">
         <template #primary>
             <div class="col-md-4">
@@ -162,6 +166,7 @@
               </div>
         </template>
       </CompactFilterBar>
+      </div>
 
       <PageStateShell
         :loading="loading"
@@ -175,6 +180,7 @@
         :loading-hint="t('documentsPage.loadingList')"
         :skeleton-columns="6"
       >
+      <div data-tour="documents-list">
       <ResponsiveList
         :items="documents"
         :columns="mobileColumns"
@@ -306,6 +312,7 @@
         </button>
       </template>
       </ResponsiveList>
+      </div>
 
       <Pagination
         v-if="documents.length > 0"
