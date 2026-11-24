@@ -21,12 +21,20 @@ from core.media_access import (
     normalize_media_path,
     user_may_access_media,
 )
-from documents.models import Document, DocumentType
-from exchange.models import Application, ApplicationStatus, Program
+from core.media_views import _safe_content_disposition
+from documents.models import Document, DocumentType, ExchangeAgreementDocument
+from exchange.models import (
+    Application,
+    ApplicationStatus,
+    ExchangeAgreement,
+    PartnerContact,
+    Program,
+)
 
 User = get_user_model()
 
 PDF_BYTES = b"%PDF-1.4 synthetic-test-doc"
+AGREEMENT_PDF_BYTES = b"%PDF-1.4 synthetic-agreement-doc"
 
 
 def _ensure_role(name: str) -> Role:
@@ -67,6 +75,25 @@ def _make_document(*, student: User, filename: str = "test-doc.pdf") -> Document
     )
 
 
+def _make_agreement_document(
+    *, filename: str = "agreement-doc.pdf"
+) -> tuple[ExchangeAgreement, ExchangeAgreementDocument]:
+    agreement = ExchangeAgreement.objects.create(
+        title="Synthetic Framework Agreement",
+        partner_institution_name="Synthetic Partner University",
+        status=ExchangeAgreement.Status.ACTIVE,
+    )
+    document = ExchangeAgreementDocument.objects.create(
+        agreement=agreement,
+        category=ExchangeAgreementDocument.Category.SIGNED_COPY,
+        title="Synthetic signed copy",
+        file=SimpleUploadedFile(
+            filename, AGREEMENT_PDF_BYTES, content_type="application/pdf"
+        ),
+    )
+    return agreement, document
+
+
 @pytest.mark.django_db
 class TestMediaPathHelpers:
     def test_normalize_rejects_traversal(self):
@@ -75,6 +102,14 @@ class TestMediaPathHelpers:
         assert normalize_media_path("") is None
         # Leading slash is stripped; path stays relative to MEDIA_ROOT.
         assert normalize_media_path("/images/logo.png") == "images/logo.png"
+
+    def test_normalize_rejects_encoded_traversal_and_controls(self):
+        assert normalize_media_path("%2e%2e/secrets.txt") is None
+        assert normalize_media_path("documents/%2e%2e/%2e%2e/secrets.txt") is None
+        assert normalize_media_path("documents/evil\x00.pdf") is None
+        assert normalize_media_path("documents/evil\r.pdf") is None
+        assert normalize_media_path("documents/evil\n.pdf") is None
+        assert normalize_media_path("documents/ok.pdf") == "documents/ok.pdf"
 
     def test_classify_public_and_protected(self):
         assert classify_media_path("images/logo.png") == MediaAccessKind.PUBLIC
@@ -88,6 +123,13 @@ class TestMediaPathHelpers:
             classify_media_path("agreement_repository/2024/01/x.pdf")
             == MediaAccessKind.PROTECTED
         )
+
+    def test_safe_content_disposition_strips_injection(self):
+        header = _safe_content_disposition('agreement_repository/x/"bad\r\n.pdf')
+        assert "\r" not in header
+        assert "\n" not in header
+        assert "inline;" in header
+        assert "filename" in header.lower()
 
 
 @pytest.mark.django_db
@@ -269,6 +311,75 @@ class TestProtectedMediaHttpAccess:
         assert response.status_code == 200
         assert response["X-Accel-Redirect"].startswith("/internal_media/")
         assert "documents/" in response["X-Accel-Redirect"]
+
+
+@pytest.mark.django_db
+class TestPartnerAgreementMediaAccess:
+    def test_linked_partner_can_download_own_agreement_file(self):
+        partner = _make_user(
+            username="partner1", email="partner1@example.com", role="partner"
+        )
+        agreement, document = _make_agreement_document(filename="partner-own.pdf")
+        PartnerContact.objects.create(user=partner, agreement=agreement, is_active=True)
+
+        client = Client()
+        client.force_login(partner)
+        response = client.get(document.file.url)
+        assert response.status_code == 200
+        body = (
+            b"".join(response.streaming_content)
+            if hasattr(response, "streaming_content")
+            else response.content
+        )
+        assert body == AGREEMENT_PDF_BYTES
+
+    def test_other_partner_cannot_download_unlinked_agreement_file(self):
+        partner_a = _make_user(
+            username="partner_a", email="partner_a@example.com", role="partner"
+        )
+        partner_b = _make_user(
+            username="partner_b", email="partner_b@example.com", role="partner"
+        )
+        agreement_a, document = _make_agreement_document(filename="partner-a-only.pdf")
+        agreement_b = ExchangeAgreement.objects.create(
+            title="Other Synthetic Agreement",
+            partner_institution_name="Other Synthetic Partner",
+            status=ExchangeAgreement.Status.ACTIVE,
+        )
+        PartnerContact.objects.create(
+            user=partner_a, agreement=agreement_a, is_active=True
+        )
+        PartnerContact.objects.create(
+            user=partner_b, agreement=agreement_b, is_active=True
+        )
+
+        client = Client()
+        client.force_login(partner_b)
+        response = client.get(document.file.url)
+        assert response.status_code in (403, 404)
+        body = (
+            b"".join(response.streaming_content)
+            if hasattr(response, "streaming_content")
+            else response.content
+        )
+        assert body != AGREEMENT_PDF_BYTES
+
+    def test_student_cannot_download_agreement_repository_file(self):
+        student = _make_user(
+            username="student_agr", email="student3@example.com", role="student"
+        )
+        _agreement, document = _make_agreement_document(filename="student-denied.pdf")
+
+        client = Client()
+        client.force_login(student)
+        response = client.get(document.file.url)
+        assert response.status_code in (403, 404)
+        body = (
+            b"".join(response.streaming_content)
+            if hasattr(response, "streaming_content")
+            else response.content
+        )
+        assert body != AGREEMENT_PDF_BYTES
 
 
 @pytest.mark.django_db

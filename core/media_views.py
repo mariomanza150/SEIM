@@ -15,6 +15,7 @@ from django.http import (
     HttpResponseForbidden,
     HttpResponseNotFound,
 )
+from django.utils.http import content_disposition_header
 from django.views.decorators.http import require_GET
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
@@ -70,12 +71,25 @@ def _content_type_for(path: str) -> str:
     return content_type or "application/octet-stream"
 
 
+def _safe_content_disposition(relative_path: str) -> str:
+    """Build a Content-Disposition value with a sanitized basename."""
+    name = os.path.basename(relative_path or "")
+    # Strip quotes, path separators, and controls that could break/inject headers.
+    cleaned = "".join(
+        ch for ch in name if ch.isprintable() and ch not in '"\\;/\r\n\x00'
+    ).strip()
+    if not cleaned or cleaned in {".", ".."}:
+        cleaned = "download"
+    return content_disposition_header(as_attachment=False, filename=cleaned)
+
+
 def _serve_file(request, relative_path: str) -> HttpResponse:
     absolute = _absolute_media_file(relative_path)
     if not absolute.is_file():
         raise Http404("Media file not found.")
 
     content_type = _content_type_for(relative_path)
+    disposition = _safe_content_disposition(relative_path)
     use_accel = bool(getattr(settings, "USE_X_ACCEL_REDIRECT", False))
     if use_accel:
         internal_prefix = getattr(settings, "MEDIA_INTERNAL_URL", "/internal_media/")
@@ -83,9 +97,7 @@ def _serve_file(request, relative_path: str) -> HttpResponse:
             internal_prefix = f"{internal_prefix}/"
         response = HttpResponse(content_type=content_type)
         response["X-Accel-Redirect"] = f"{internal_prefix}{relative_path}"
-        response["Content-Disposition"] = (
-            f'inline; filename="{os.path.basename(relative_path)}"'
-        )
+        response["Content-Disposition"] = disposition
         # Hint caches not to store private uploads.
         if classify_media_path(relative_path) != MediaAccessKind.PUBLIC:
             response["Cache-Control"] = "private, no-store"
@@ -94,9 +106,7 @@ def _serve_file(request, relative_path: str) -> HttpResponse:
     # Local / DEBUG / SERVE_MEDIA: stream from disk via Django.
     handle = absolute.open("rb")
     response = FileResponse(handle, content_type=content_type)
-    response["Content-Disposition"] = (
-        f'inline; filename="{os.path.basename(relative_path)}"'
-    )
+    response["Content-Disposition"] = disposition
     if classify_media_path(relative_path) != MediaAccessKind.PUBLIC:
         response["Cache-Control"] = "private, no-store"
     return response

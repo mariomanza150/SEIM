@@ -10,6 +10,7 @@ from __future__ import annotations
 import posixpath
 from dataclasses import dataclass
 from enum import Enum
+from urllib.parse import unquote
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
@@ -64,8 +65,12 @@ def normalize_media_path(path: str) -> str | None:
     """Return a safe relative media path, or None if the path is invalid."""
     if path is None:
         return None
-    raw = str(path).replace("\\", "/").lstrip("/")
+    # Decode percent-encoding so ``%2e%2e`` cannot bypass ``..`` checks.
+    raw = unquote(str(path)).replace("\\", "/").lstrip("/")
     if not raw or raw.endswith("/"):
+        return None
+    # Reject control / header-injection characters before normpath.
+    if any(ch in raw for ch in ("\x00", "\r", "\n")):
         return None
     # Collapse . / .. without resolving outside the media root.
     cleaned = posixpath.normpath(raw)
@@ -75,7 +80,7 @@ def normalize_media_path(path: str) -> str | None:
         or cleaned.startswith("/")
     ):
         return None
-    if "\x00" in cleaned:
+    if any(ch in cleaned for ch in ("\x00", "\r", "\n")):
         return None
     return cleaned
 
@@ -126,9 +131,22 @@ def _user_can_access_application_document(user: UserLike, relative_path: str) ->
 def _user_can_access_agreement_document(user: UserLike, relative_path: str) -> bool:
     from documents.models import ExchangeAgreementDocument
 
-    if not _is_staff_or_admin(user):
+    document = (
+        ExchangeAgreementDocument.objects.select_related("agreement")
+        .filter(file=relative_path)
+        .first()
+    )
+    if document is None:
         return False
-    return ExchangeAgreementDocument.objects.filter(file=relative_path).exists()
+    if _is_staff_or_admin(user):
+        return True
+    # Partner portal: same scoping as PartnerAgreementViewSet (active PartnerContact).
+    has_role = getattr(user, "has_role", None)
+    if not callable(has_role) or not has_role("partner"):
+        return False
+    from exchange.partner_views import partner_agreement_ids
+
+    return document.agreement_id in set(partner_agreement_ids(user))
 
 
 def _user_can_access_document_template(user: UserLike, relative_path: str) -> bool:
