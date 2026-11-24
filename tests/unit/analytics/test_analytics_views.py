@@ -5,6 +5,8 @@ from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from accounts.models import Role
+
 
 class TestAnalyticsViews(TestCase):
     def setUp(self):
@@ -14,6 +16,9 @@ class TestAnalyticsViews(TestCase):
         self.user = self.User.objects.create_user(
             username="testuser", email="testuser@example.com", password="TestPass123!"
         )
+        # Analytics APIs require coordinator/admin (IsCoordinatorOrAdmin).
+        role, _ = Role.objects.get_or_create(name="coordinator")
+        self.user.roles.add(role)
         # Create JWT token for API authentication
         self.refresh = RefreshToken.for_user(self.user)
         self.access_token = str(self.refresh.access_token)
