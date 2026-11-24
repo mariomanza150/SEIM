@@ -17,6 +17,7 @@ from decimal import Decimal
 from typing import Any
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils import timezone
 
 from accounts.models import Profile, User
 from exchange.models import Application, Program
@@ -411,7 +412,7 @@ def _rule_age(profile, program: Program, application, _student: User) -> RuleOut
     # Legacy parity: age rules only run when date_of_birth is set (otherwise silently ignored).
     if not profile.date_of_birth:
         return RuleOutcome("age", passed=True, skipped=True)
-    today = date.today()
+    today = timezone.localdate()
     dob = profile.date_of_birth
     age = today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
     if program.min_age and age < program.min_age:

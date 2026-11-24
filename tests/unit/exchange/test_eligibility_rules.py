@@ -5,6 +5,9 @@ from datetime import date, timedelta
 import pytest
 from django.contrib.auth import get_user_model
 from django.db.models.signals import post_save
+from django.test import override_settings
+from django.utils import timezone
+from freezegun import freeze_time
 
 from accounts.models import Profile, Role
 from accounts.signals import create_user_profile
@@ -322,3 +325,35 @@ class TestEligibilityRulesEngine:
         assert ev.failures == ["Student profile is missing."]
         row = ev.rules_as_dicts()[0]
         assert row["message_key"] == "profile_missing"
+
+    @override_settings(TIME_ZONE="America/Mexico_City", USE_TZ=True)
+    def test_age_rule_uses_localdate_near_midnight(self):
+        """Age boundary follows Django TIME_ZONE, not host OS date.today()."""
+        user = self._student_with_profile(
+            gpa=3.5,
+            language="English",
+            language_level="B2",
+            # Turns 20 on 2025-06-15; still 19 in Mexico City on Jun 14.
+            date_of_birth=date(2005, 6, 15),
+        )
+        program = Program.objects.create(
+            name="AgeLocaldateProg",
+            description="d",
+            start_date=date(2025, 1, 1),
+            end_date=date(2025, 12, 31),
+            min_age=20,
+        )
+        # UTC 2025-06-15 05:00 → America/Mexico_City 2025-06-14 23:00.
+        with freeze_time("2025-06-15 05:00:00", tz_offset=0):
+            assert timezone.localdate() == date(2025, 6, 14)
+            ev = evaluate_eligibility(user, program)
+            age_rule = next(r for r in ev.rules if r.rule_id == "age")
+            assert age_rule.passed is False
+            assert age_rule.message_key == "age_below"
+
+        # After local midnight birthday, the same DOB meets min_age.
+        with freeze_time("2025-06-15 06:30:00", tz_offset=0):
+            assert timezone.localdate() == date(2025, 6, 15)
+            ev_ok = evaluate_eligibility(user, program)
+            age_ok = next(r for r in ev_ok.rules if r.rule_id == "age")
+            assert age_ok.passed is True
