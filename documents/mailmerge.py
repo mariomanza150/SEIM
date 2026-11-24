@@ -449,11 +449,21 @@ def _replace_complex_fields(parent, lookup) -> None:
             i = begin_idx + 1
 
 
-def _char_index_to_node(texts: list[str], pos: int) -> tuple[int, int]:
-    """Map a character offset in ``"".join(texts)`` to ``(node_index, offset)``."""
+def _char_index_to_node(
+    texts: list[str], pos: int, *, exclusive_end: bool = False
+) -> tuple[int, int]:
+    """Map a character offset in ``"".join(texts)`` to ``(node_index, offset)``.
+
+    Start indices use strict ``<`` so a match that begins exactly on a ``<w:t>``
+    boundary lands in the following run (skipping empty ``w:t`` nodes). Exclusive
+    end indices keep ``<=`` so the end offset stays on the correct node.
+    """
     remaining = pos
     for index, text in enumerate(texts):
-        if remaining <= len(text):
+        if exclusive_end:
+            if remaining <= len(text):
+                return index, remaining
+        elif remaining < len(text):
             return index, remaining
         remaining -= len(text)
     if not texts:
@@ -466,7 +476,7 @@ def _splice_replacement(
 ) -> tuple[int, int]:
     """Replace ``texts`` span ``[start:end)`` with ``value``; return touched range."""
     start_i, start_off = _char_index_to_node(texts, start)
-    end_i, end_off = _char_index_to_node(texts, end)
+    end_i, end_off = _char_index_to_node(texts, end, exclusive_end=True)
     if start_i == end_i:
         node_text = texts[start_i]
         texts[start_i] = node_text[:start_off] + value + node_text[end_off:]

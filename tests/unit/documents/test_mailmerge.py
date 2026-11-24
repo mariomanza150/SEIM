@@ -103,6 +103,23 @@ def _space_preserve_on_value(root, value: str) -> bool:
     return False
 
 
+def _run_containing_text(root, needle: str):
+    for run in root.iter(f"{{{W_NS}}}r"):
+        text = "".join(
+            (child.text or "") for child in run if child.tag == f"{{{W_NS}}}t"
+        )
+        if needle in text:
+            return run
+    return None
+
+
+def _run_is_bold(run) -> bool:
+    if run is None:
+        return False
+    rpr = run.find(f"{{{W_NS}}}rPr")
+    return rpr is not None and rpr.find(f"{{{W_NS}}}b") is not None
+
+
 class SplitRunPlaceholderTests(SimpleTestCase):
     def test_prooferr_split_fullname_and_school_preserves_space_and_formatting(self):
         body = f"""
@@ -154,6 +171,29 @@ class SplitRunPlaceholderTests(SimpleTestCase):
         raw = _pack_docx(**{"word/document.xml": _doc(body)})
         filled = merge_docx(raw, {"Matricula": "12345678"})
         self.assertEqual(_joined_text(_read_part(filled)), "12345678")
+
+    def test_boundary_start_keeps_value_in_bold_run(self):
+        """Match starting exactly at a w:t boundary must not inherit prior run formatting."""
+        body = f"""
+        <w:p>
+          <w:r><w:t>ID: </w:t></w:r>
+          <w:r>{BOLD_RPR}<w:t>{{</w:t></w:r>
+          <w:r><w:t>{{</w:t></w:r>
+          <w:r><w:t>matricula</w:t></w:r>
+          <w:r><w:t>}}}}</w:t></w:r>
+        </w:p>
+        """
+        raw = _pack_docx(**{"word/document.xml": _doc(body)})
+        filled = merge_docx(raw, {"Matricula": "12345678"})
+        root = _read_part(filled)
+        self.assertEqual(_joined_text(root), "ID: 12345678")
+        id_run = _run_containing_text(root, "ID: ")
+        value_run = _run_containing_text(root, "12345678")
+        self.assertIsNotNone(id_run)
+        self.assertIsNotNone(value_run)
+        self.assertIsNot(id_run, value_run)
+        self.assertFalse(_run_is_bold(id_run))
+        self.assertTrue(_run_is_bold(value_run))
 
     def test_intact_unidad_alongside_split_runs(self):
         body = """
