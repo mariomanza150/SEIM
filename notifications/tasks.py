@@ -1,9 +1,13 @@
+import logging
+
 from celery import shared_task
 from django.conf import settings
 from django.core.mail import EmailMessage, send_mail
 
 from core.celery_utils import log_celery_failure, retryable_task_kwargs
 from core.email.priority import PRIORITY_HEADER, PRIORITY_HIGH
+
+logger = logging.getLogger(__name__)
 
 REMINDER_EVENT_TYPE_TO_SETTINGS_CATEGORY = {
     "application_deadline": "applications",
@@ -96,12 +100,26 @@ def is_primary_only_route(route_key) -> bool:
     return bool(route_key) and str(route_key) in PRIMARY_EMAIL_ROUTE_KEYS
 
 
+def _normalized_recipient_email(email) -> str | None:
+    """Return a non-empty email address, or None when send would be invalid."""
+    if email is None:
+        return None
+    value = str(email).strip()
+    return value or None
+
+
 @shared_task(on_failure=log_celery_failure, **retryable_task_kwargs())
 def send_notification_email(self, user_id, subject, message):
     from accounts.models import User
 
     user = User.objects.get(id=user_id)
-    email = get_user_email(user)
+    email = _normalized_recipient_email(get_user_email(user))
+    if not email:
+        logger.warning(
+            "Skipping notification email for user_id=%s: empty recipient address",
+            user_id,
+        )
+        return False
     send_mail(
         subject,
         message,
@@ -109,6 +127,7 @@ def send_notification_email(self, user_id, subject, message):
         [email],
         fail_silently=False,
     )
+    return True
 
 
 @shared_task(on_failure=log_celery_failure, **retryable_task_kwargs())
@@ -124,10 +143,24 @@ def send_notification_by_id(self, notification_id):
 
     try:
         notification = Notification.objects.get(id=notification_id)
+        if notification.recipient_id is None:
+            logger.warning(
+                "Skipping email for notification_id=%s: missing recipient",
+                notification_id,
+            )
+            return False
         route_key = (notification.data or {}).get(ROUTE_KEY_DATA_FIELD)
-        email = get_user_email(
-            notification.recipient, primary_only=is_primary_only_route(route_key)
+        email = _normalized_recipient_email(
+            get_user_email(
+                notification.recipient, primary_only=is_primary_only_route(route_key)
+            )
         )
+        if not email:
+            logger.warning(
+                "Skipping email for notification_id=%s: empty recipient address",
+                notification_id,
+            )
+            return False
         if is_primary_only_route(route_key):
             # Auth/security mail keeps priority headroom under rate limits.
             message = EmailMessage(
@@ -201,7 +234,9 @@ def send_deadline_reminders(self):
 
         except Exception as e:
             # Log error but continue with other reminders
-            print(f"Error sending reminder {reminder.id}: {e}")
+            logger.exception(
+                "Error sending reminder id=%s: %s", reminder.id, e
+            )
 
     return sent_count
 

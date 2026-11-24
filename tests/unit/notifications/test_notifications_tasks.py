@@ -154,6 +154,18 @@ class TestSendNotificationEmailTask:
         with pytest.raises(Exception):
             send_notification_email(fake_id, "Subject", "Message")
 
+    def test_send_notification_email_skips_empty_recipient(self, user):
+        """Empty recipient must not call send_mail (avoids SMTP/edge crashes)."""
+        User.objects.filter(pk=user.pk).update(email="")
+        user.profile.secondary_email = None
+        user.profile.save(update_fields=["secondary_email"])
+        mail.outbox = []
+
+        result = send_notification_email(str(user.id), "Subject", "Message")
+
+        assert result is False
+        assert mail.outbox == []
+
     def test_send_notification_email_multiple_users(self, user, another_user):
         """Test sending emails to multiple users."""
         mail.outbox = []
@@ -264,6 +276,21 @@ class TestSendNotificationByIdTask:
 
         # Should return False, not crash
         assert result is False
+
+    def test_send_notification_by_id_skips_missing_recipient(self, db):
+        """Notifications without a recipient must not crash the Celery worker."""
+        orphan = Notification.objects.create(
+            recipient=None,
+            title="Orphan",
+            message="No recipient",
+            category="info",
+        )
+        mail.outbox = []
+
+        result = send_notification_by_id(str(orphan.id))
+
+        assert result is False
+        assert mail.outbox == []
 
     def test_send_notification_by_id_from_address(self, notification):
         """Test email from address."""
