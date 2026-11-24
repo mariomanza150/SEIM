@@ -481,6 +481,9 @@ CHANNEL_LAYERS = {
 # WebSocket Configuration
 WEBSOCKET_ENABLED = env.bool("WEBSOCKET_ENABLED", default=True)
 WEBSOCKET_RECONNECT_INTERVAL = env.int("WEBSOCKET_RECONNECT_INTERVAL", default=5000)
+# Deprecated: allow JWT in ?token= query string. Prefer Sec-WebSocket-Protocol.
+# Set to 0/false after clients are upgraded.
+WEBSOCKET_ALLOW_QUERY_JWT = env.bool("WEBSOCKET_ALLOW_QUERY_JWT", default=True)
 
 # Feature Flags
 FEATURE_FLAGS = {
