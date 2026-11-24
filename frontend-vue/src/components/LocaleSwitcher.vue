@@ -43,7 +43,8 @@ function selectLocale(code) {
 
 <style scoped>
 .seim-locale-switcher .btn {
-  min-width: 2.5rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.02em;

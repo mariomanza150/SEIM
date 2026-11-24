@@ -21,7 +21,7 @@ vi.mock('@/services/api', () => ({
             nav_brand: 'SEIM',
             short_name: 'SEIM',
             name: 'SEIM',
-            theme_css: 'uadec/theme.css',
+            theme_css: 'brand/theme.css',
             theme: {},
           },
         })
@@ -32,14 +32,21 @@ vi.mock('@/services/api', () => ({
   },
 }))
 
+const { Offcanvas: OffcanvasMock, offcanvasHide } = vi.hoisted(() => {
+  const hide = vi.fn()
+  function Mock() {
+    this.hide = hide
+  }
+  Mock.getInstance = vi.fn(() => null)
+  return { Offcanvas: Mock, offcanvasHide: hide }
+})
+
 vi.mock('bootstrap', () => ({
-  Offcanvas: {
-    getInstance: vi.fn(() => null),
-  },
+  Offcanvas: OffcanvasMock,
 }))
 
 const authStoreMock = {
-  userName: 'Sofia Martinez',
+  userName: 'Test User',
   isAdmin: false,
   canUseStaffReviewQueue: false,
   canUsePartnerPortal: false,
@@ -59,6 +66,7 @@ const routeNames = [
   'NotificationRouting',
   'StaffExchangeAgreements',
   'EligibilityRulesets',
+  'ScholarshipScoringRulesets',
   'Nominations',
   'AnalyticsForecasts',
   'PartnerPortal',
@@ -105,6 +113,12 @@ describe('AppShell navbar', () => {
     localStorage.clear()
     setAppLocale('en')
     vi.clearAllMocks()
+    authStoreMock.userName = 'Test User'
+    authStoreMock.isAdmin = false
+    authStoreMock.canUseStaffReviewQueue = false
+    authStoreMock.canUsePartnerPortal = false
+    authStoreMock.logout.mockResolvedValue(undefined)
+    offcanvasHide.mockClear()
   })
 
   afterEach(() => {
@@ -129,11 +143,31 @@ describe('AppShell navbar', () => {
     return { wrapper, router }
   }
 
-  it('always shows notifications and the user name outside the collapse', async () => {
+  it('always shows notifications and the user menu outside the collapse', async () => {
     const { wrapper } = await mountShell()
     expect(wrapper.find('.navbar-collapse').exists()).toBe(false)
     expect(wrapper.find('[data-testid="notifications-menu"]').exists()).toBe(true)
-    expect(wrapper.get('[data-testid="user-menu"]').text()).toContain('Sofia Martinez')
+    expect(wrapper.get('[data-testid="user-menu"]').attributes('aria-label')).toContain('Test User')
+    wrapper.unmount()
+  })
+
+  it('exposes a testable mobile offcanvas toggle and keeps aside desktop-only', async () => {
+    const { wrapper } = await mountShell()
+    const toggle = wrapper.get('[data-testid="sidebar-offcanvas-toggle"]')
+    expect(toggle.classes()).toContain('d-lg-none')
+    expect(toggle.classes()).toContain('seim-tap-target')
+    expect(wrapper.get('[data-testid="app-shell-aside"]').classes()).toContain('d-lg-block')
+    expect(wrapper.get('[data-testid="app-shell-aside"]').classes()).not.toContain('d-md-block')
+    expect(wrapper.get('[data-testid="sidebar-collapse-toggle"]').classes()).toContain('d-lg-inline-flex')
+    wrapper.unmount()
+  })
+
+  it('closes the offcanvas when the route changes (back / deep link)', async () => {
+    const { wrapper, router } = await mountShell()
+    offcanvasHide.mockClear()
+    await router.push({ name: 'Applications' })
+    await flushPromises()
+    expect(offcanvasHide).toHaveBeenCalled()
     wrapper.unmount()
   })
 
