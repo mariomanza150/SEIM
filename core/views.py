@@ -177,10 +177,7 @@ class OpsNoticesAPIView(APIView):
         is_staff_role = bool(
             getattr(user, "is_staff", False)
             or getattr(user, "is_superuser", False)
-            or (
-                callable(has_role)
-                and (has_role("admin") or has_role("coordinator"))
-            )
+            or (callable(has_role) and (has_role("admin") or has_role("coordinator")))
         )
         if not is_staff_role:
             return Response({"detail": "Forbidden."}, status=403)

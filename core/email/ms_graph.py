@@ -117,7 +117,9 @@ def _token_fingerprint(token: str) -> str:
     return digest[:16]
 
 
-def _parse_oauth_error_fields(response: requests.Response) -> tuple[str | None, str | None]:
+def _parse_oauth_error_fields(
+    response: requests.Response,
+) -> tuple[str | None, str | None]:
     """Extract safe OAuth ``error`` and optional numeric ``error_codes`` only."""
     try:
         payload = response.json()
