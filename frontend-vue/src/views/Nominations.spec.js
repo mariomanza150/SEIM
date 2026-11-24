@@ -11,8 +11,13 @@ vi.mock('@/services/api', () => ({
   default: { get: vi.fn(), put: vi.fn(), post: vi.fn() },
 }))
 
+const { toastSuccess, toastError } = vi.hoisted(() => ({
+  toastSuccess: vi.fn(),
+  toastError: vi.fn(),
+}))
+
 vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({ success: vi.fn(), error: vi.fn() }),
+  useToast: () => ({ success: toastSuccess, error: toastError }),
 }))
 
 const routeQuery = { program: '' }
@@ -106,5 +111,39 @@ describe('Nominations', () => {
     expect(wrapper.find('[data-testid="nominations-program"]').element.value).toBe('prog-1')
     expect(wrapper.find('[data-testid="nominations-table"]').text()).toContain('Ada L.')
     expect(api.get).toHaveBeenCalledWith('/api/programs/prog-1/nominations/')
+  })
+
+  it('toasts saveError (not loadError) when saving ranks fails', async () => {
+    api.put.mockRejectedValueOnce(new Error('network'))
+    const wrapper = mount(Nominations, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' }, PageHeader: { template: '<div><slot /></div>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="nominations-program"]').setValue('prog-1')
+    await flushPromises()
+    await wrapper.find('[data-testid="nominations-save"]').trigger('click')
+    await flushPromises()
+    expect(toastError).toHaveBeenCalledWith(i18n.global.t('nominationsPage.saveError'))
+    expect(toastError).not.toHaveBeenCalledWith(i18n.global.t('nominationsPage.loadError'))
+  })
+
+  it('toasts matchError (not loadError) when match fails', async () => {
+    api.post.mockRejectedValueOnce(new Error('network'))
+    const wrapper = mount(Nominations, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' }, PageHeader: { template: '<div><slot /></div>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="nominations-program"]').setValue('prog-1')
+    await flushPromises()
+    await wrapper.find('[data-testid="nominations-match"]').trigger('click')
+    await flushPromises()
+    expect(toastError).toHaveBeenCalledWith(i18n.global.t('nominationsPage.matchError'))
+    expect(toastError).not.toHaveBeenCalledWith(i18n.global.t('nominationsPage.loadError'))
   })
 })

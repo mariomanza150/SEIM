@@ -2831,6 +2831,8 @@
     "emptyCtaReviewQueue": "Open review queue",
     "loadError": "Could not load nominations.",
     "programsLoadError": "Could not load programs for nominations.",
+    "saveError": "Could not save nomination ranks.",
+    "matchError": "Could not match nominations to seats.",
     "saveSuccess": "Ranks saved.",
     "matchSuccess": "Matched {nominated} nomination(s) and waitlisted {waitlisted}."
   },

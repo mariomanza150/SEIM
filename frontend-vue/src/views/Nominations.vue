@@ -241,7 +241,7 @@ async function saveRanks() {
     applyPayload(data)
     successToast(t('nominationsPage.saveSuccess'))
   } catch {
-    errorToast(t('nominationsPage.loadError'))
+    errorToast(t('nominationsPage.saveError'))
   } finally {
     busy.value = false
   }
@@ -260,7 +260,7 @@ async function runMatch() {
       }),
     )
   } catch {
-    errorToast(t('nominationsPage.loadError'))
+    errorToast(t('nominationsPage.matchError'))
   } finally {
     busy.value = false
   }
