@@ -22,6 +22,7 @@ from .hosting import (
     allowed_hosts_with_tailscale,
     csrf_origins_with_tls_proxies,
 )
+from .virus_scanner import resolve_virus_scanner_type
 
 
 def _docker_compose_redis_host_to_localhost(url: str) -> str:
@@ -86,8 +87,12 @@ def _docker_compose_postgres_service_to_localhost(url: str) -> str:
 DEBUG = False
 
 # Fail closed: production settings are real prod unless DEPLOY_TIER says otherwise
-# (the win-a8 test stack sets DEPLOY_TIER=test explicitly).
+# (test stacks set DEPLOY_TIER=test explicitly).
 DEPLOY_TIER = env("DEPLOY_TIER", default="production").strip().lower()
+
+# Virus scanner: no silent mock default on production-like tiers.
+VIRUS_SCANNER_TYPE = resolve_virus_scanner_type(deploy_tier=DEPLOY_TIER)
+VIRUS_SCAN_FAIL_SECURE = env.bool("VIRUS_SCAN_FAIL_SECURE", default=True)
 
 # Legacy flag: ``/media/`` is always registered on the ACL-guarded Django view.
 # Keep True for single-container / Cloudflare Tunnel stacks without nginx so

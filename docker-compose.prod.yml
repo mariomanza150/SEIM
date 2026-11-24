@@ -121,9 +121,11 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - VIRUS_SCANNER_TYPE=${VIRUS_SCANNER_TYPE:-mock}
+      # No silent mock default — set VIRUS_SCANNER_TYPE in env (clamav recommended).
+      - VIRUS_SCANNER_TYPE=${VIRUS_SCANNER_TYPE}
       - VIRUS_SCANNER_HOST=${VIRUS_SCANNER_HOST:-clamav}
       - VIRUS_SCANNER_PORT=${VIRUS_SCANNER_PORT:-3310}
+      - VIRUS_SCANNER_ALLOW_MOCK=${VIRUS_SCANNER_ALLOW_MOCK:-0}
       - AWS_ACCESS_KEY_ID_FILE=/run/secrets/aws_access_key_id
       - AWS_SECRET_ACCESS_KEY_FILE=/run/secrets/aws_secret_access_key
       - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
@@ -186,9 +188,10 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - VIRUS_SCANNER_TYPE=${VIRUS_SCANNER_TYPE:-mock}
+      - VIRUS_SCANNER_TYPE=${VIRUS_SCANNER_TYPE}
       - VIRUS_SCANNER_HOST=${VIRUS_SCANNER_HOST:-clamav}
       - VIRUS_SCANNER_PORT=${VIRUS_SCANNER_PORT:-3310}
+      - VIRUS_SCANNER_ALLOW_MOCK=${VIRUS_SCANNER_ALLOW_MOCK:-0}
       - AWS_ACCESS_KEY_ID_FILE=/run/secrets/aws_access_key_id
       - AWS_SECRET_ACCESS_KEY_FILE=/run/secrets/aws_secret_access_key
       - AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME}
