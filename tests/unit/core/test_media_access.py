@@ -81,7 +81,9 @@ class TestMediaPathHelpers:
         assert (
             classify_media_path("original_images/photo.jpg") == MediaAccessKind.PUBLIC
         )
-        assert classify_media_path("documents/test-doc.pdf") == MediaAccessKind.PROTECTED
+        assert (
+            classify_media_path("documents/test-doc.pdf") == MediaAccessKind.PROTECTED
+        )
         assert (
             classify_media_path("agreement_repository/2024/01/x.pdf")
             == MediaAccessKind.PROTECTED
@@ -152,9 +154,7 @@ class TestProtectedMediaHttpAccess:
         owner = _make_user(
             username="owner4", email="student1@example.com", role="student"
         )
-        admin = _make_user(
-            username="admin4", email="admin1@example.com", role="admin"
-        )
+        admin = _make_user(username="admin4", email="admin1@example.com", role="admin")
         document = _make_document(student=owner, filename="admin-ok.pdf")
         media_url = document.file.url
 
@@ -221,9 +221,7 @@ class TestProtectedMediaHttpAccess:
         document = _make_document(student=owner, filename="jwt-ok.pdf")
         token = RefreshToken.for_user(owner).access_token
         client = Client()
-        response = client.get(
-            document.file.url, HTTP_AUTHORIZATION=f"Bearer {token}"
-        )
+        response = client.get(document.file.url, HTTP_AUTHORIZATION=f"Bearer {token}")
         assert response.status_code == 200
         body = (
             b"".join(response.streaming_content)

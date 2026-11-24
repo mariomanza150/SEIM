@@ -69,7 +69,11 @@ def normalize_media_path(path: str) -> str | None:
         return None
     # Collapse . / .. without resolving outside the media root.
     cleaned = posixpath.normpath(raw)
-    if cleaned in ("", ".", "..") or cleaned.startswith("../") or cleaned.startswith("/"):
+    if (
+        cleaned in ("", ".", "..")
+        or cleaned.startswith("../")
+        or cleaned.startswith("/")
+    ):
         return None
     if "\x00" in cleaned:
         return None
@@ -149,7 +153,9 @@ def _user_can_access_qa_attachment(user: UserLike, relative_path: str) -> bool:
         return False
     if _is_staff_or_admin(user):
         return True
-    if attachment.uploaded_by_id and attachment.uploaded_by_id == getattr(user, "id", None):
+    if attachment.uploaded_by_id and attachment.uploaded_by_id == getattr(
+        user, "id", None
+    ):
         return True
     issue = attachment.issue
     reporter_id = getattr(issue, "reporter_id", None) or getattr(
@@ -169,7 +175,10 @@ def user_may_access_media(user: UserLike, path: str) -> MediaAccessDecision:
     kind = classify_media_path(normalized)
     if kind == MediaAccessKind.PUBLIC:
         return MediaAccessDecision(
-            allowed=True, status=200, kind=MediaAccessKind.PUBLIC, reason="public_prefix"
+            allowed=True,
+            status=200,
+            kind=MediaAccessKind.PUBLIC,
+            reason="public_prefix",
         )
 
     if not getattr(user, "is_authenticated", False):
