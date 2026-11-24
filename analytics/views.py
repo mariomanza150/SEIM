@@ -12,6 +12,7 @@ from rest_framework.response import Response
 
 from accounts.models import User
 from core.cache import cache_api_response
+from core.permissions import IsCoordinatorOrAdmin
 from documents.models import Document
 from exchange.models import Application, Program
 from notifications.models import Notification
@@ -275,6 +276,7 @@ def _build_export_response(request):
 class ReportViewSet(viewsets.ModelViewSet):
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
+    permission_classes = [IsAuthenticated, IsCoordinatorOrAdmin]
 
     @cache_api_response(timeout=600)
     def list(self, request, *args, **kwargs):
@@ -294,6 +296,7 @@ class ReportViewSet(viewsets.ModelViewSet):
 class MetricViewSet(viewsets.ModelViewSet):
     queryset = Metric.objects.all()
     serializer_class = MetricSerializer
+    permission_classes = [IsAuthenticated, IsCoordinatorOrAdmin]
 
     @cache_api_response(timeout=600)
     def list(self, request, *args, **kwargs):
@@ -322,6 +325,7 @@ class MetricViewSet(viewsets.ModelViewSet):
 class DashboardConfigViewSet(viewsets.ModelViewSet):
     queryset = DashboardConfig.objects.all()
     serializer_class = DashboardConfigSerializer
+    permission_classes = [IsAuthenticated, IsCoordinatorOrAdmin]
 
     @cache_api_response(timeout=600)
     def list(self, request, *args, **kwargs):
@@ -624,7 +628,7 @@ def export_data_view(request):
 
 @extend_schema(responses={200: ApplicationStatisticsSerializer})
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def api_application_statistics(request):
     """Get application statistics."""
     return Response(
@@ -635,7 +639,7 @@ def api_application_statistics(request):
 
 @extend_schema(responses={200: ProgramStatisticsSerializer})
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def api_program_statistics(request):
     """Get program statistics."""
     program_stats = AnalyticsService.get_program_statistics()
@@ -653,7 +657,7 @@ def api_program_statistics(request):
 
 @extend_schema(responses={200: UserActivitySerializer})
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def api_user_activity(request):
     """Get user activity statistics."""
     start_date, end_date, _ = _parse_analytics_filters(request)
@@ -692,7 +696,7 @@ def track_event(request):
 
 @extend_schema(responses={200: GenericAnalyticsSerializer})
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def metrics_view(request):
     """Get aggregated analytics metrics for the admin analytics UI."""
     return Response(_build_dashboard_payload(request), status=200)
@@ -700,7 +704,7 @@ def metrics_view(request):
 
 @extend_schema(responses={200: GenericAnalyticsSerializer})
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def reports_view(request):
     """List available detailed analytics reports."""
     return Response(
@@ -729,7 +733,7 @@ def reports_view(request):
 
 @extend_schema(responses={200: GenericAnalyticsSerializer})
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def application_analytics_view(request):
     """Get application-focused analytics."""
     applications, start_date, end_date, _ = _get_filtered_applications(request)
@@ -749,7 +753,7 @@ def application_analytics_view(request):
 
 @extend_schema(responses={200: GenericAnalyticsSerializer})
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def document_analytics_view(request):
     """Get document-focused analytics."""
     start_date, end_date, _ = _parse_analytics_filters(request)
@@ -776,7 +780,7 @@ def document_analytics_view(request):
 
 @extend_schema(responses={200: GenericAnalyticsSerializer})
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def notification_analytics_view(request):
     """Get notification-focused analytics."""
     start_date, end_date, _ = _parse_analytics_filters(request)
@@ -811,7 +815,7 @@ def notification_analytics_view(request):
 
 @extend_schema(responses={200: GenericAnalyticsSerializer})
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def program_analytics_view(request):
     """Get program-focused analytics."""
     applications, _, _, program_id = _get_filtered_applications(request)
@@ -828,7 +832,7 @@ def program_analytics_view(request):
 
 @extend_schema(responses={200: GenericAnalyticsSerializer})
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def user_analytics_view(request):
     """Get user-focused analytics."""
     start_date, end_date, _ = _parse_analytics_filters(request)
@@ -849,7 +853,7 @@ def user_analytics_view(request):
     responses={200: GenericAnalyticsSerializer, 401: ErrorResponseSerializer}
 )
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def analytics_dashboard_api(request):
     """Get the analytics dashboard payload expected by the admin analytics page."""
     return Response(_build_dashboard_payload(request), status=status.HTTP_200_OK)
@@ -863,7 +867,7 @@ def analytics_dashboard_api(request):
     }
 )
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def analytics_report_detail_api(request, report_type):
     """Get a detailed analytics report by type."""
     report = _build_detailed_report(report_type, request)
@@ -875,7 +879,7 @@ def analytics_report_detail_api(request, report_type):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsCoordinatorOrAdmin])
 def analytics_export_api(request):
     """Export dashboard as CSV (default), Excel (`export_format=xlsx`), or PDF (`export_format=pdf`)."""
     return _build_export_response(request)
