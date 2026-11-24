@@ -1,4 +1,5 @@
 import i18n from '@/i18n'
+import { getBrandTitleSuffix } from '@/composables/useBranding'
 
 export const ROUTE_ANNOUNCE_ID = 'seim-route-announce'
 
@@ -24,7 +25,11 @@ export function announceRouteNavigation(to) {
     text = i18n.global.t(key)
   } else {
     const title = (to?.meta && to.meta.title) || ''
-    text = String(title).replace(/\s*-\s*SEIM\s*$/i, '').trim() || i18n.global.t('route.fallbackTitle')
+    const suffix = getBrandTitleSuffix() || i18n.global.t('route.fallbackTitle')
+    const suffixRe = new RegExp(`\\s*-\\s*${suffix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'i')
+    text =
+      String(title).replace(suffixRe, '').replace(/\s*-\s*SEIM\s*$/i, '').trim() ||
+      i18n.global.t('route.fallbackTitle')
   }
   const el = document.getElementById(ROUTE_ANNOUNCE_ID)
   if (!el) return

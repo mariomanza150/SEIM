@@ -67,7 +67,9 @@ onMounted(() => {
 })
 
 const brandLogoUrl = computed(() => branding.value?.logo_url || '')
-const brandLabel = computed(() => branding.value?.nav_brand || branding.value?.short_name || 'SEIM')
+const brandLabel = computed(
+  () => branding.value?.nav_brand || branding.value?.short_name || 'UAdeC',
+)
 
 const subtitle = computed(() => {
   const key = route.meta.authSubtitleKey

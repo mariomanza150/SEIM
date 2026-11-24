@@ -1,21 +1,24 @@
 import i18n from '@/i18n'
+import { getBrandTitleSuffix } from '@/composables/useBranding'
 
 /**
  * Localized browser tab title for a matched route (Vue Router route object).
+ * Suffix uses institution short_name from /api/branding/ (UAdeC fallback).
  */
 export function resolveDocumentTitle(routeLike) {
   const t = i18n.global.t
+  const suffix = getBrandTitleSuffix() || t('route.fallbackTitle')
   const name = routeLike?.name
   if (name === 'NotFound') {
-    return `${t('route.notFoundBrowserTitle')} - ${t('route.fallbackTitle')}`
+    return `${t('route.notFoundBrowserTitle')} - ${suffix}`
   }
   if (typeof name === 'string' && name) {
     const key = `route.names.${name}`
     if (i18n.global.te(key)) {
-      return `${t(key)} - ${t('route.fallbackTitle')}`
+      return `${t(key)} - ${suffix}`
     }
   }
-  return t('route.fallbackTitle')
+  return suffix
 }
 
 /**
@@ -60,10 +63,10 @@ function upsertHeadMeta(byAttr, key, content) {
 export function syncAppSocialMeta(t, routeLike = {}) {
   if (typeof document === 'undefined') return
   const tabTitle = resolveDocumentTitle(routeLike)
-  const fallback = t('route.fallbackTitle')
-  const shareTitle = tabTitle === fallback ? t('appMeta.socialTitle') : tabTitle
+  const brandSuffix = getBrandTitleSuffix() || t('route.fallbackTitle')
+  const shareTitle = tabTitle === brandSuffix ? t('appMeta.socialTitle') : tabTitle
   const desc = t('appMeta.metaDescription')
-  const site = t('route.fallbackTitle')
+  const site = brandSuffix
 
   upsertHeadMeta('property', 'og:title', shareTitle)
   upsertHeadMeta('property', 'og:description', desc)

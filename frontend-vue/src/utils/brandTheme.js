@@ -54,9 +54,9 @@ export function applyBrandTheme(branding) {
   upsertLink(THEME_LINK_ID, `/static/${themeCss.replace(/^\//, '')}`)
 
   const theme = branding.theme || {}
-  const primary = theme.primary || '#667eea'
-  const accent = theme.accent || '#764ba2'
-  const primaryRgb = hexToRgbTriplet(primary) || '102, 126, 234'
+  const primary = theme.primary || '#2E5790'
+  const accent = theme.accent || '#BF9B4C'
+  const primaryRgb = hexToRgbTriplet(primary) || '46, 87, 144'
 
   const css = `:root {
   --uadec-blue: ${theme.primary || '#2E5790'};

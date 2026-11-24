@@ -31,7 +31,7 @@ import { useNotificationWebSocket } from '@/services/websocket'
 import { applyUiPreferences, clearUiPreferences, mergeUiPreferencesFromServer, readStoredUiPreferences } from '@/services/uiPreferences'
 import router from '@/router'
 import { routeBusy } from '@/router/routeBusy'
-import { syncAppMetaDescription, syncAppSocialMeta, syncCanonicalLink } from '@/utils/documentTitle'
+import { resolveDocumentTitle, syncAppMetaDescription, syncAppSocialMeta, syncCanonicalLink } from '@/utils/documentTitle'
 import { formatNotificationCopy } from '@/utils/notificationCopy'
 import { useBranding } from '@/composables/useBranding'
 import ToastContainer from '@/components/ToastContainer.vue'
@@ -45,10 +45,21 @@ import { useQaStore } from '@/stores/qa'
 const { t, te, locale } = useI18n()
 const authStore = useAuthStore()
 const qaStore = useQaStore()
-const { loadBranding } = useBranding()
+const { branding, loadBranding } = useBranding()
 const { info } = useToast()
 let mediaQuery = null
 let mediaQueryListener = null
+
+function refreshDocumentChrome() {
+  const route = router.currentRoute.value
+  document.title = resolveDocumentTitle(route)
+  syncAppMetaDescription(t)
+  syncAppSocialMeta(t, route)
+  if (typeof window !== 'undefined') {
+    const href = new URL(router.resolve(route).href, window.location.origin).href
+    syncCanonicalLink(href)
+  }
+}
 
 const { connectIfAuthenticated, disconnect } = useNotificationWebSocket(authStore, {
   onNotification(notification) {
@@ -70,13 +81,8 @@ async function loadUiPreferences() {
 }
 
 onMounted(async () => {
-  loadBranding()
-  syncAppMetaDescription(t)
-  syncAppSocialMeta(t, router.currentRoute.value)
-  if (typeof window !== 'undefined') {
-    const href = new URL(router.resolve(router.currentRoute.value).href, window.location.origin).href
-    syncCanonicalLink(href)
-  }
+  await loadBranding()
+  refreshDocumentChrome()
   applyUiPreferences(readStoredUiPreferences() || undefined)
   await authStore.checkAuth()
   connectIfAuthenticated()
@@ -98,13 +104,15 @@ onMounted(async () => {
 })
 
 watch(locale, () => {
-  syncAppMetaDescription(t)
-  syncAppSocialMeta(t, router.currentRoute.value)
-  if (typeof window !== 'undefined') {
-    const href = new URL(router.resolve(router.currentRoute.value).href, window.location.origin).href
-    syncCanonicalLink(href)
-  }
+  refreshDocumentChrome()
 })
+
+watch(
+  () => branding.value?.short_name,
+  () => {
+    refreshDocumentChrome()
+  },
+)
 
 watch(() => authStore.isAuthenticated, async (isAuth) => {
   if (isAuth) {

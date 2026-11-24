@@ -126,6 +126,6 @@ describe('router beforeEach + resolveAuthenticatedNavigation (MQ-014)', () => {
     await router.push({ name: 'PartnerPortal' })
     await router.push({ name: 'Applications' })
     expect(router.currentRoute.value.name).toBe('PartnerPortal')
-    expect(document.title).toBe('Partner portal - SEIM')
+    expect(document.title).toBe('Partner portal - UAdeC')
   })
 })

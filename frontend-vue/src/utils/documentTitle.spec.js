@@ -25,24 +25,24 @@ describe('resolveDocumentTitle', () => {
     setAppLocale('en')
   })
 
-  it('uses route name and fallback product title in English', () => {
-    expect(resolveDocumentTitle({ name: 'Dashboard' })).toBe('Dashboard - SEIM')
+  it('uses route name and institution short_name suffix in English', () => {
+    expect(resolveDocumentTitle({ name: 'Dashboard' })).toBe('Dashboard - UAdeC')
   })
 
   it('uses Spanish route names when locale is es', () => {
     setAppLocale('es')
-    expect(resolveDocumentTitle({ name: 'Dashboard' })).toBe('Panel - SEIM')
+    expect(resolveDocumentTitle({ name: 'Dashboard' })).toBe('Panel - UAdeC')
   })
 
   it('uses localized 404 tab title for NotFound', () => {
-    expect(resolveDocumentTitle({ name: 'NotFound' })).toBe('404 — Page not found - SEIM')
+    expect(resolveDocumentTitle({ name: 'NotFound' })).toBe('404 — Page not found - UAdeC')
     setAppLocale('es')
-    expect(resolveDocumentTitle({ name: 'NotFound' })).toBe('404 — Página no encontrada - SEIM')
+    expect(resolveDocumentTitle({ name: 'NotFound' })).toBe('404 — Página no encontrada - UAdeC')
   })
 
-  it('falls back to product name when name is missing or unknown', () => {
-    expect(resolveDocumentTitle({})).toBe('SEIM')
-    expect(resolveDocumentTitle({ name: 'UnknownRoute' })).toBe('SEIM')
+  it('falls back to institution short_name when route name is missing or unknown', () => {
+    expect(resolveDocumentTitle({})).toBe('UAdeC')
+    expect(resolveDocumentTitle({ name: 'UnknownRoute' })).toBe('UAdeC')
   })
 })
 
@@ -102,7 +102,9 @@ describe('syncAppSocialMeta', () => {
 
   it('uses tab title for named routes', () => {
     syncAppSocialMeta((k) => i18n.global.t(k), { name: 'Dashboard' })
-    expect(document.querySelector('meta[property="og:title"]').getAttribute('content')).toBe('Dashboard - SEIM')
+    expect(document.querySelector('meta[property="og:title"]').getAttribute('content')).toBe(
+      'Dashboard - UAdeC',
+    )
   })
 
   it('follows locale for description and og:locale', () => {

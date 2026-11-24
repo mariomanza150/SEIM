@@ -19,17 +19,68 @@ User = get_user_model()
 class TestBrandingApi(SimpleTestCase):
     """Public branding endpoint for SPA shell."""
 
-    def test_branding_api_returns_institution_fields(self):
+    _SENSITIVE_KEYS = (
+        "email",
+        "phone",
+        "address",
+        "website",
+        "location",
+        "department",
+        "social_facebook",
+        "social_twitter",
+        "social_instagram",
+    )
+
+    def test_branding_api_returns_default_institution_fields(self):
         response = self.client.get("/api/branding/")
         self.assertEqual(response.status_code, 200)
         data = response.json()
-        self.assertIn("logo_url", data)
-        self.assertIn("nav_brand", data)
-        self.assertIn("short_name", data)
-        self.assertIn("name", data)
-        self.assertIn("theme_css", data)
-        self.assertIn("theme", data)
-        self.assertIn("primary", data["theme"])
+        self.assertEqual(data["short_name"], "UAdeC")
+        self.assertIn("Coahuila", data["name"])
+        self.assertEqual(data["tagline"], "Intercambio Académico")
+        self.assertIn("UAdeC", data["nav_brand"])
+        self.assertTrue(data["logo_url"])
+        self.assertEqual(data["theme_css"], "uadec/theme.css")
+        self.assertEqual(data["theme"]["primary"], "#2E5790")
+        self.assertEqual(data["theme"]["accent"], "#BF9B4C")
+        for key in self._SENSITIVE_KEYS:
+            self.assertNotIn(key, data)
+
+    @override_settings(
+        INSTITUTION_NAME="Example University",
+        INSTITUTION_SHORT_NAME="EXU",
+        INSTITUTION_TAGLINE="Student Mobility",
+        INSTITUTION_NAV_BRAND="EXU Mobility",
+        INSTITUTION_LOGO_URL="/static/exampleu/logos/institution-logo.png",
+        INSTITUTION_THEME_CSS="exampleu/theme.css",
+        INSTITUTION_THEME={
+            "primary": "#111111",
+            "primary_light": "#222222",
+            "primary_dark": "#000000",
+            "accent": "#ABCDEF",
+            "accent_light": "#BCDEF0",
+            "accent_dark": "#9ABCDE",
+            "navy": "#012345",
+            "orange": "#FEDCBA",
+            "text": "#333333",
+        },
+    )
+    def test_branding_api_respects_settings_override(self):
+        response = self.client.get("/api/branding/")
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["name"], "Example University")
+        self.assertEqual(data["short_name"], "EXU")
+        self.assertEqual(data["tagline"], "Student Mobility")
+        self.assertEqual(data["nav_brand"], "EXU Mobility")
+        self.assertEqual(
+            data["logo_url"], "/static/exampleu/logos/institution-logo.png"
+        )
+        self.assertEqual(data["theme_css"], "exampleu/theme.css")
+        self.assertEqual(data["theme"]["primary"], "#111111")
+        self.assertEqual(data["theme"]["accent"], "#ABCDEF")
+        for key in self._SENSITIVE_KEYS:
+            self.assertNotIn(key, data)
 
 
 class TestHealthLiveView(SimpleTestCase):
