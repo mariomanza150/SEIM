@@ -35,7 +35,9 @@ def prefill_auto_include_on_profile_save(sender, instance, **kwargs):
 
 
 @receiver(m2m_changed, sender=User.roles.through)  # type: ignore[attr-defined]
-def prefill_auto_include_on_role_change(sender, instance, action, reverse, model, pk_set, **kwargs):
+def prefill_auto_include_on_role_change(
+    sender, instance, action, reverse, model, pk_set, **kwargs
+):
     """Include newly assigned students when they gain the student role."""
     if action not in ("post_add",):
         return

@@ -20,6 +20,7 @@ from .models import DocumentType
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
+
 def normalize_email_domain(raw: str | None) -> str:
     """Exact domain after ``@`` (no subdomain expansion); lowercase, no leading @."""
     domain = str(raw or "").strip().lower().lstrip("@")
@@ -206,7 +207,9 @@ def serialize_active_filters(doc_type: DocumentType) -> dict:
             from accounts.models import Unidad
 
             labels["unidad"] = (
-                Unidad.objects.filter(pk=unidad_id).values_list("name", flat=True).first()
+                Unidad.objects.filter(pk=unidad_id)
+                .values_list("name", flat=True)
+                .first()
                 or ""
             )
         if school_id:

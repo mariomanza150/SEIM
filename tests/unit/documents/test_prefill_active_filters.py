@@ -66,7 +66,8 @@ class PrefillFilterMatchingTests(TestCase):
         self.student.save(update_fields=["email"])
         self.assertFalse(
             user_matches_prefill_filters(
-                self.student, {"domain": "example.edu", "unidad_id": None, "school_id": None}
+                self.student,
+                {"domain": "example.edu", "unidad_id": None, "school_id": None},
             )
         )
 
@@ -218,9 +219,7 @@ class PrefillActiveFiltersAutoIncludeTests(TransactionTestCase):
         student.profile.school = self.school
         student.profile.save(update_fields=["unidad", "school"])
 
-        self.assertTrue(
-            self.doc_type.prefill_students.filter(pk=student.pk).exists()
-        )
+        self.assertTrue(self.doc_type.prefill_students.filter(pk=student.pk).exists())
 
     def test_attribute_change_into_match_auto_includes(self):
         student = TestUtils.create_test_user(
@@ -232,18 +231,14 @@ class PrefillActiveFiltersAutoIncludeTests(TransactionTestCase):
         )
         student.profile.unidad = self.other_unidad
         student.profile.save(update_fields=["unidad"])
-        self.assertFalse(
-            self.doc_type.prefill_students.filter(pk=student.pk).exists()
-        )
+        self.assertFalse(self.doc_type.prefill_students.filter(pk=student.pk).exists())
 
         student.email = "auto.later@example.edu"
         student.save(update_fields=["email"])
         student.profile.unidad = self.unidad
         student.profile.save(update_fields=["unidad"])
 
-        self.assertTrue(
-            self.doc_type.prefill_students.filter(pk=student.pk).exists()
-        )
+        self.assertTrue(self.doc_type.prefill_students.filter(pk=student.pk).exists())
 
     def test_auto_include_is_idempotent(self):
         student = TestUtils.create_test_user(
@@ -276,9 +271,7 @@ class PrefillActiveFiltersAutoIncludeTests(TransactionTestCase):
         )
         student.profile.unidad = self.unidad
         student.profile.save(update_fields=["unidad"])
-        self.assertTrue(
-            self.doc_type.prefill_students.filter(pk=student.pk).exists()
-        )
+        self.assertTrue(self.doc_type.prefill_students.filter(pk=student.pk).exists())
 
         client.force_authenticate(user=admin)
         remove_url = reverse(
@@ -287,9 +280,7 @@ class PrefillActiveFiltersAutoIncludeTests(TransactionTestCase):
         )
         response = client.delete(remove_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(
-            self.doc_type.prefill_students.filter(pk=student.pk).exists()
-        )
+        self.assertFalse(self.doc_type.prefill_students.filter(pk=student.pk).exists())
         self.assertTrue(
             self.doc_type.prefill_filter_exclusions.filter(pk=student.pk).exists()
         )
@@ -297,9 +288,7 @@ class PrefillActiveFiltersAutoIncludeTests(TransactionTestCase):
         # Profile save should not re-add while excluded
         student.profile.school = self.school
         student.profile.save(update_fields=["school"])
-        self.assertFalse(
-            self.doc_type.prefill_students.filter(pk=student.pk).exists()
-        )
+        self.assertFalse(self.doc_type.prefill_students.filter(pk=student.pk).exists())
 
         # Manual re-add clears exclusion
         add_url = reverse(
@@ -307,7 +296,9 @@ class PrefillActiveFiltersAutoIncludeTests(TransactionTestCase):
             kwargs={"pk": self.doc_type.pk},
         )
         add_resp = client.post(add_url, {"user_id": student.pk}, format="json")
-        self.assertIn(add_resp.status_code, (status.HTTP_200_OK, status.HTTP_201_CREATED))
+        self.assertIn(
+            add_resp.status_code, (status.HTTP_200_OK, status.HTTP_201_CREATED)
+        )
         self.assertFalse(
             self.doc_type.prefill_filter_exclusions.filter(pk=student.pk).exists()
         )
@@ -320,15 +311,11 @@ class PrefillActiveFiltersAutoIncludeTests(TransactionTestCase):
         )
         existing.profile.unidad = self.unidad
         existing.profile.save(update_fields=["unidad"])
-        self.assertTrue(
-            self.doc_type.prefill_students.filter(pk=existing.pk).exists()
-        )
+        self.assertTrue(self.doc_type.prefill_students.filter(pk=existing.pk).exists())
 
         clear_prefill_active_filters(self.doc_type)
         self.assertIsNone(self.doc_type.prefill_active_filters)
-        self.assertTrue(
-            self.doc_type.prefill_students.filter(pk=existing.pk).exists()
-        )
+        self.assertTrue(self.doc_type.prefill_students.filter(pk=existing.pk).exists())
 
         later = TestUtils.create_test_user(
             username="auto_after_clear",
@@ -337,9 +324,7 @@ class PrefillActiveFiltersAutoIncludeTests(TransactionTestCase):
         )
         later.profile.unidad = self.unidad
         later.profile.save(update_fields=["unidad"])
-        self.assertFalse(
-            self.doc_type.prefill_students.filter(pk=later.pk).exists()
-        )
+        self.assertFalse(self.doc_type.prefill_students.filter(pk=later.pk).exists())
 
     def test_non_matching_student_not_included(self):
         outsider = TestUtils.create_test_user(
@@ -349,6 +334,4 @@ class PrefillActiveFiltersAutoIncludeTests(TransactionTestCase):
         )
         outsider.profile.unidad = self.other_unidad
         outsider.profile.save(update_fields=["unidad"])
-        self.assertFalse(
-            self.doc_type.prefill_students.filter(pk=outsider.pk).exists()
-        )
+        self.assertFalse(self.doc_type.prefill_students.filter(pk=outsider.pk).exists())
