@@ -21,8 +21,38 @@ export function isIncompleteProfileError(data) {
   )
 }
 
+/** Keys that are never treated as form field names on DRF error bodies. */
+const NON_FIELD_ERROR_KEYS = new Set([
+  'detail',
+  'error',
+  'code',
+  'error_code',
+  'status',
+  'message',
+])
+
+/**
+ * True when `raw` looks like field-level validation (or a plain string message),
+ * not a generic API failure such as `{ detail: '…' }` / `{ error: '…' }`.
+ */
+export function isFieldValidationErrorBody(raw) {
+  if (typeof raw === 'string') return raw.trim().length > 0
+  if (raw === undefined || raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    return false
+  }
+  const keys = Object.keys(raw)
+  if (!keys.length) return false
+  if (keys.some((k) => k === 'non_field_errors' || k === 'dynamic_form')) return true
+  return keys.some((k) => !NON_FIELD_ERROR_KEYS.has(k))
+}
+
+/**
+ * Apply server validation into form error refs.
+ * @returns {boolean} true when field-level validation was applied (caller should
+ *   show "fix errors"); false for generic failures (caller should toast save failed).
+ */
 export function applyServerValidationErrors(raw, errors, dynamicFormErrors) {
-  if (raw === undefined || raw === null) return false
+  if (!isFieldValidationErrorBody(raw)) return false
   errors.value = typeof raw === 'string' ? { program: [raw] } : { ...raw }
   const df = typeof raw === 'object' && raw !== null ? raw.dynamic_form : undefined
   dynamicFormErrors.value = Array.isArray(df) ? df : (df ? [df] : [])
@@ -92,7 +122,12 @@ export function useHostDestinations(form, programRef = null) {
     return !hostAcademicProgramsLoading.value && hostAcademicPrograms.value.length === 0
   })
 
+  let hostInstitutionsSeq = 0
+  let hostSchoolsSeq = 0
+  let hostAcademicProgramsSeq = 0
+
   async function fetchHostInstitutions(programId) {
+    const seq = ++hostInstitutionsSeq
     hostInstitutions.value = []
     hostSchools.value = []
     hostAcademicPrograms.value = []
@@ -101,16 +136,19 @@ export function useHostDestinations(form, programRef = null) {
     hostInstitutionsLoading.value = true
     try {
       const { data } = await api.get(`/api/programs/${programId}/host-institutions/`)
+      if (seq !== hostInstitutionsSeq) return
       hostInstitutions.value = unwrapPaginatedResults(data)
     } catch (err) {
+      if (seq !== hostInstitutionsSeq) return
       console.error('Failed to load host institutions:', err)
       hostInstitutions.value = []
     } finally {
-      hostInstitutionsLoading.value = false
+      if (seq === hostInstitutionsSeq) hostInstitutionsLoading.value = false
     }
   }
 
   async function fetchHostSchools(institutionId) {
+    const seq = ++hostSchoolsSeq
     hostSchools.value = []
     hostAcademicPrograms.value = []
     if (!institutionId || institutionId === HOST_DEST_NOT_LISTED) return
@@ -118,28 +156,33 @@ export function useHostDestinations(form, programRef = null) {
     hostSchoolsLoading.value = true
     try {
       const { data } = await api.get(`/api/host-institutions/${institutionId}/schools/`)
+      if (seq !== hostSchoolsSeq) return
       hostSchools.value = unwrapPaginatedResults(data)
     } catch (err) {
+      if (seq !== hostSchoolsSeq) return
       console.error('Failed to load host schools:', err)
       hostSchools.value = []
     } finally {
-      hostSchoolsLoading.value = false
+      if (seq === hostSchoolsSeq) hostSchoolsLoading.value = false
     }
   }
 
   async function fetchHostAcademicPrograms(schoolId) {
+    const seq = ++hostAcademicProgramsSeq
     hostAcademicPrograms.value = []
     if (!schoolId || schoolId === HOST_DEST_NOT_LISTED) return
     if (hostDestinationMode.value === 'free_text') return
     hostAcademicProgramsLoading.value = true
     try {
       const { data } = await api.get(`/api/schools/${schoolId}/academic-programs/`)
+      if (seq !== hostAcademicProgramsSeq) return
       hostAcademicPrograms.value = unwrapPaginatedResults(data)
     } catch (err) {
+      if (seq !== hostAcademicProgramsSeq) return
       console.error('Failed to load host academic programs:', err)
       hostAcademicPrograms.value = []
     } finally {
-      hostAcademicProgramsLoading.value = false
+      if (seq === hostAcademicProgramsSeq) hostAcademicProgramsLoading.value = false
     }
   }
 

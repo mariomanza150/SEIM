@@ -814,7 +814,7 @@
                   <button
                     v-if="application.status === 'draft'"
                     class="btn btn-success"
-                    :disabled="submitBlocked"
+                    :disabled="submitBlocked || submittingApplication"
                     :title="submitBlockedTitle"
                     @click="submitApplication"
                     data-testid="submit-application-btn"
@@ -824,6 +824,7 @@
                   <button
                     v-if="application.status === 'draft'"
                     class="btn btn-danger"
+                    :disabled="deletingApplication"
                     @click="confirmDelete"
                   >
                     <i class="bi bi-trash me-2"></i>{{ t('applicationDetailPage.deleteApplication') }}
@@ -1101,6 +1102,8 @@ const commentsError = ref(null)
 const newCommentText = ref('')
 const newCommentPrivate = ref(false)
 const submittingComment = ref(false)
+const submittingApplication = ref(false)
+const deletingApplication = ref(false)
 const reviewStatus = ref('')
 const updatingStatus = ref(false)
 const docValidatingId = ref(null)
@@ -1791,6 +1794,7 @@ function timelineIconBg(eventType) {
 }
 
 async function submitApplication() {
+  if (submittingApplication.value || submitBlocked.value) return
   const ok = await confirm({
     title: t('applicationDetailPage.submitApplication'),
     message: t('applicationDetailPage.confirmSubmit'),
@@ -1799,19 +1803,28 @@ async function submitApplication() {
     variant: 'primary',
   })
   if (!ok) return
+  if (submittingApplication.value) return
 
+  submittingApplication.value = true
   try {
-    await api.post(`/api/applications/${resolvedApplicationId.value}/submit/`)
-    success(t('applicationDetailPage.toastSubmitted'))
+    const { data } = await api.post(`/api/applications/${resolvedApplicationId.value}/submit/`)
+    if (data?.waitlisted || data?.application_status === 'waitlist') {
+      success(t('applicationDetailPage.toastWaitlisted'))
+    } else {
+      success(t('applicationDetailPage.toastSubmitted'))
+    }
     await fetchApplication()
   } catch (err) {
     console.error('Failed to submit application:', err)
     const msg = err.response?.data?.error || t('applicationDetailPage.toastSubmitFailed')
     errorToast(msg)
+  } finally {
+    submittingApplication.value = false
   }
 }
 
 async function confirmDelete() {
+  if (deletingApplication.value) return
   const ok = await confirm({
     title: t('applicationDetailPage.deleteApplication'),
     message: t('applicationDetailPage.confirmDelete'),
@@ -1824,6 +1837,8 @@ async function confirmDelete() {
 }
 
 async function deleteApplication() {
+  if (deletingApplication.value) return
+  deletingApplication.value = true
   try {
     await api.delete(`/api/applications/${resolvedApplicationId.value}/`)
     success(t('applicationDetailPage.toastDeleted'))
@@ -1831,6 +1846,8 @@ async function deleteApplication() {
   } catch (err) {
     console.error('Failed to delete application:', err)
     errorToast(t('applicationDetailPage.toastDeleteFailed'))
+  } finally {
+    deletingApplication.value = false
   }
 }
 

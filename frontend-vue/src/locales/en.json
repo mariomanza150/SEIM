@@ -1832,6 +1832,7 @@
     "loadingList": "Loading documents…",
     "loadError": "Failed to load documents. Please try again.",
     "loadToastError": "Failed to load documents",
+    "filtersLoadError": "Could not load document filter options. Filters may be incomplete.",
     "colDocument": "Document",
     "colType": "Type",
     "colApplication": "Application",
@@ -2201,6 +2202,7 @@
     "confirmSubmit": "Are you sure you want to submit this application? You will not be able to edit it after submission.",
     "confirmDelete": "Are you sure you want to delete this application? This action cannot be undone.",
     "toastSubmitted": "Application submitted successfully!",
+    "toastWaitlisted": "Application received — you are on the waitlist because the program is at capacity.",
     "toastSubmitFailed": "Failed to submit application",
     "toastDeleted": "Application deleted successfully",
     "toastDeleteFailed": "Failed to delete application",
@@ -2666,6 +2668,7 @@
     "empty": "No submitted, waitlisted, or nominated applicants for this program.",
     "emptyCtaReviewQueue": "Open review queue",
     "loadError": "Could not load nominations.",
+    "programsLoadError": "Could not load programs for nominations.",
     "saveSuccess": "Ranks saved.",
     "matchSuccess": "Matched {nominated} nomination(s) and waitlisted {waitlisted}."
   },
