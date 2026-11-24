@@ -142,13 +142,11 @@ class NotificationViewSet(viewsets.ModelViewSet):
     filterset_fields = ["is_read", "notification_type", "category"]
     ordering_fields = ["sent_at", "created_at"]
     ordering = ["-sent_at"]
-    # Inbox is read/mark-read/delete-own; staff bulk send is the dedicated action.
-    http_method_names = ["get", "head", "options", "post", "delete"]
+    # Inbox: read/mark-read (PATCH)/delete-own. Staff-only create + batch_send.
+    http_method_names = ["get", "head", "options", "post", "patch", "put", "delete"]
 
     def get_permissions(self):
-        if getattr(self, "action", None) == "batch_send":
-            return [IsAuthenticated(), IsCoordinatorOrAdmin()]
-        if getattr(self, "action", None) in ("create", "update", "partial_update"):
+        if getattr(self, "action", None) in ("batch_send", "create"):
             return [IsAuthenticated(), IsCoordinatorOrAdmin()]
         return super().get_permissions()
 

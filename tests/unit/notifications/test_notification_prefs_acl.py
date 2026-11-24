@@ -84,3 +84,34 @@ class TestNotificationPrefsAndBatchSendAcl:
         assert Notification.objects.filter(
             recipient=self.student_b, title="Staff notice"
         ).exists()
+
+    def test_student_can_patch_own_is_read(self):
+        note = Notification.objects.create(
+            recipient=self.student_a,
+            title="Inbox item",
+            message="body",
+            category="info",
+            is_read=True,
+        )
+        self.client.force_authenticate(user=self.student_a)
+        response = self.client.patch(
+            f"/api/notifications/{note.id}/",
+            {"is_read": False},
+            format="json",
+        )
+        assert response.status_code == 200
+        note.refresh_from_db()
+        assert note.is_read is False
+
+    def test_student_cannot_create_notification(self):
+        self.client.force_authenticate(user=self.student_a)
+        response = self.client.post(
+            "/api/notifications/",
+            {
+                "title": "Nope",
+                "message": "should be forbidden",
+                "category": "info",
+            },
+            format="json",
+        )
+        assert response.status_code == 403
