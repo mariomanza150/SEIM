@@ -58,6 +58,19 @@ QA_MAX_VIDEO_MB = env.int("QA_MAX_VIDEO_MB", default=25)
 # SMTP/SES settings files may override this when those backends are selected.
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="noreply@seim.local")
 
+# Outgoing email quota / rate limiting (used when EMAIL_BACKEND is RateLimitedEmailBackend).
+# Defaults stay safely under a 100/day + 3000/month + 2 req/s free-tier provider.
+EMAIL_DELIVERY_BACKEND = env(
+    "EMAIL_DELIVERY_BACKEND",
+    default="django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_DAILY_LIMIT = env.int("EMAIL_DAILY_LIMIT", default=90)
+EMAIL_PRIORITY_RESERVE = env.int("EMAIL_PRIORITY_RESERVE", default=15)
+EMAIL_MONTHLY_LIMIT = env.int("EMAIL_MONTHLY_LIMIT", default=2850)
+EMAIL_MIN_INTERVAL_SECONDS = env.float("EMAIL_MIN_INTERVAL_SECONDS", default=0.6)
+EMAIL_QUOTA_RESET_TIMEZONE = env("EMAIL_QUOTA_RESET_TIMEZONE", default="UTC")
+EMAIL_DEFERRED_MAX_RETRIES = env.int("EMAIL_DEFERRED_MAX_RETRIES", default=5)
+
 # Fallback origin for SPA links in emails (no trailing slash). Paths use /seim/...
 # HTTP views prefer the current request origin so tunnel/Tailscale hosts work.
 FRONTEND_BASE_URL = env("FRONTEND_BASE_URL", default="http://localhost:8001").rstrip(

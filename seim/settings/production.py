@@ -212,8 +212,22 @@ AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
 
 # Email Configuration
 EMAIL_BACKEND = env("EMAIL_BACKEND")
+EMAIL_DELIVERY_BACKEND = env(
+    "EMAIL_DELIVERY_BACKEND",
+    default="django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_DAILY_LIMIT = env.int("EMAIL_DAILY_LIMIT", default=90)
+EMAIL_PRIORITY_RESERVE = env.int("EMAIL_PRIORITY_RESERVE", default=15)
+EMAIL_MONTHLY_LIMIT = env.int("EMAIL_MONTHLY_LIMIT", default=2850)
+EMAIL_MIN_INTERVAL_SECONDS = env.float("EMAIL_MIN_INTERVAL_SECONDS", default=0.6)
+EMAIL_QUOTA_RESET_TIMEZONE = env("EMAIL_QUOTA_RESET_TIMEZONE", default="UTC")
+EMAIL_DEFERRED_MAX_RETRIES = env.int("EMAIL_DEFERRED_MAX_RETRIES", default=5)
 
-if EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
+_smtp_selected = EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend" or (
+    EMAIL_BACKEND == "core.email.backends.RateLimitedEmailBackend"
+    and EMAIL_DELIVERY_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
+)
+if _smtp_selected:
     EMAIL_HOST = env("EMAIL_HOST")
     EMAIL_PORT = env.int("EMAIL_PORT")
     EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS")
@@ -222,14 +236,22 @@ if EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend":
     DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
 # For AWS SES (production)
-if EMAIL_BACKEND == "django_ses.SESBackend":
+_ses_selected = EMAIL_BACKEND == "django_ses.SESBackend" or (
+    EMAIL_BACKEND == "core.email.backends.RateLimitedEmailBackend"
+    and EMAIL_DELIVERY_BACKEND == "django_ses.SESBackend"
+)
+if _ses_selected:
     AWS_SES_REGION_NAME = env("AWS_SES_REGION_NAME")
     AWS_SES_ACCESS_KEY_ID = env("AWS_SES_ACCESS_KEY_ID")
     AWS_SES_SECRET_ACCESS_KEY = env("AWS_SES_SECRET_ACCESS_KEY")
     DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL")
 
 # Microsoft Graph (personal Microsoft / Hotmail via OAuth2 device code)
-if EMAIL_BACKEND == "core.email.backends.MicrosoftGraphEmailBackend":
+_graph_selected = EMAIL_BACKEND == "core.email.backends.MicrosoftGraphEmailBackend" or (
+    EMAIL_BACKEND == "core.email.backends.RateLimitedEmailBackend"
+    and EMAIL_DELIVERY_BACKEND == "core.email.backends.MicrosoftGraphEmailBackend"
+)
+if _graph_selected:
     MS_GRAPH_CLIENT_ID = env("MS_GRAPH_CLIENT_ID")
     MS_GRAPH_CLIENT_SECRET = env("MS_GRAPH_CLIENT_SECRET", default="")
     MS_GRAPH_TENANT = env("MS_GRAPH_TENANT", default="consumers")

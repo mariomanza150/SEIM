@@ -112,7 +112,14 @@ REDIS_URL=redis://redis:6379/0
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `EMAIL_BACKEND` | ❌ | `console` | Email backend: `console`, `smtp`, `ses`, or `core.email.backends.MicrosoftGraphEmailBackend` |
+| `EMAIL_BACKEND` | ❌ | `console` | Email backend: `console`, `smtp`, `ses`, `core.email.backends.MicrosoftGraphEmailBackend`, or `core.email.backends.RateLimitedEmailBackend` |
+| `EMAIL_DELIVERY_BACKEND` | ❌ | `django.core.mail.backends.smtp.EmailBackend` | Real delivery backend used when `EMAIL_BACKEND` is `RateLimitedEmailBackend` |
+| `EMAIL_DAILY_LIMIT` | ❌ | `90` | Max sends per quota day (`0` disables). Keep below provider daily cap (e.g. 100) |
+| `EMAIL_PRIORITY_RESERVE` | ❌ | `15` | Slice of the daily limit reserved for high-priority auth/security mail. Normal mail may use up to `EMAIL_DAILY_LIMIT - EMAIL_PRIORITY_RESERVE` (clamped if reserve ≥ daily) |
+| `EMAIL_MONTHLY_LIMIT` | ❌ | `2850` | Max sends per quota-timezone calendar month (`0` disables). Keep below provider monthly cap (e.g. 3000) |
+| `EMAIL_MIN_INTERVAL_SECONDS` | ❌ | `0.6` | Minimum gap between sends across web + Celery workers (`0` disables). Keeps traffic under ~2 req/s |
+| `EMAIL_QUOTA_RESET_TIMEZONE` | ❌ | `UTC` | Timezone for daily/monthly quota boundaries (align with provider reset, usually `UTC`) |
+| `EMAIL_DEFERRED_MAX_RETRIES` | ❌ | `5` | Max transient-error retries for `DeferredEmail` rows before `failed` |
 | `EMAIL_HOST` | ❌ | - | SMTP server host |
 | `EMAIL_PORT` | ❌ | `587` | SMTP server port |
 | `EMAIL_USE_TLS` | ❌ | `True` | Use TLS encryption |
@@ -124,7 +131,25 @@ REDIS_URL=redis://redis:6379/0
 | `MS_GRAPH_TENANT` | ❌ | `consumers` | Authority tenant (`consumers` for personal Microsoft accounts) |
 | `MS_GRAPH_REFRESH_TOKEN` | when Graph | - | Bootstrap refresh token (rotated tokens persist in Redis/Django cache) |
 
-Graph settings are loaded in `development.py` / `production.py` **only** when `EMAIL_BACKEND=core.email.backends.MicrosoftGraphEmailBackend`.
+Graph settings are loaded in `development.py` / `production.py` **only** when `EMAIL_BACKEND` (or `EMAIL_DELIVERY_BACKEND` under the rate-limited wrapper) is `core.email.backends.MicrosoftGraphEmailBackend`.
+
+#### **Rate-limited backend (provider free-tier caps)**
+
+Use the wrapping backend in production so all Django mail (`send_mail`, `EmailMessage`, auth mail, digests, etc.) shares one persistent quota + outbox:
+
+```bash
+EMAIL_BACKEND=core.email.backends.RateLimitedEmailBackend
+EMAIL_DELIVERY_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# or: EMAIL_DELIVERY_BACKEND=core.email.backends.MicrosoftGraphEmailBackend
+EMAIL_DAILY_LIMIT=90
+EMAIL_PRIORITY_RESERVE=15
+EMAIL_MONTHLY_LIMIT=2850
+EMAIL_MIN_INTERVAL_SECONDS=0.6
+EMAIL_QUOTA_RESET_TIMEZONE=UTC
+EMAIL_DEFERRED_MAX_RETRIES=5
+```
+
+**Priority headroom:** set `X-SEIM-Email-Priority: high` on a message (stripped before delivery). SEIM marks email-verification and password-reset notifications as high priority automatically. Normal mail stops at `daily - reserve` (default 75/day); high-priority auth mail can still use the reserved slice up to `EMAIL_DAILY_LIMIT`. Overflow is stored in `DeferredEmail` and drained by Celery Beat task `drain_deferred_emails` every 5 minutes after the next `00:01` quota-timezone boundary (or 1st of next month if the monthly cap was hit). Ops: `python manage.py email_quota_status`. Dev/test defaults leave `EMAIL_BACKEND` unchanged so existing suites stay fast unless you opt in.
 
 #### **Email Backend Examples:**
 

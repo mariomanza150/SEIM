@@ -4,13 +4,39 @@ from __future__ import annotations
 
 import base64
 import logging
+import smtplib
 from email.mime.base import MIMEBase
 
+from django.conf import settings
+from django.core.mail import get_connection
 from django.core.mail.backends.base import BaseEmailBackend
 
 from core.email.ms_graph import MicrosoftGraphAuthError, send_mail_payload
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_DELIVERY_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+
+def is_transient_provider_error(exc: BaseException) -> bool:
+    """True for provider rate-limit / temporary refusal errors (defer, don't drop)."""
+    if isinstance(exc, smtplib.SMTPResponseException):
+        if exc.smtp_code in (421, 450, 451):
+            return True
+    if isinstance(exc, smtplib.SMTPServerDisconnected):
+        return True
+    text = str(exc).lower()
+    markers = (
+        "429",
+        "too many requests",
+        "rate limit",
+        "throttl",
+        "try again later",
+        "421",
+        "450",
+        "451",
+    )
+    return any(m in text for m in markers)
 
 
 def _recipient_list(addresses) -> list[dict]:
@@ -107,3 +133,125 @@ class MicrosoftGraphEmailBackend(BaseEmailBackend):
                 if not self.fail_silently:
                     raise
         return sent
+
+
+class RateLimitedEmailBackend(BaseEmailBackend):
+    """Wrap a delivery backend with daily/monthly quotas and outbox deferral.
+
+    Configure production with::
+
+        EMAIL_BACKEND=core.email.backends.RateLimitedEmailBackend
+        EMAIL_DELIVERY_BACKEND=django.core.mail.backends.smtp.EmailBackend
+    """
+
+    def __init__(self, fail_silently=False, **kwargs):
+        super().__init__(fail_silently=fail_silently)
+        self._delivery_kwargs = kwargs
+
+    def _delivery_backend_path(self) -> str:
+        path = (
+            getattr(settings, "EMAIL_DELIVERY_BACKEND", "") or DEFAULT_DELIVERY_BACKEND
+        )
+        if path == "core.email.backends.RateLimitedEmailBackend":
+            # Avoid infinite recursion if misconfigured.
+            return DEFAULT_DELIVERY_BACKEND
+        return path
+
+    def open(self):
+        return False
+
+    def close(self):
+        return None
+
+    def send_messages(self, email_messages):
+        if not email_messages:
+            return 0
+
+        from core.email.outbox import enqueue_message
+        from core.email.pacing import wait_for_send_slot
+        from core.email.priority import strip_priority_header
+        from core.email.quota import release_slot, try_reserve_slot
+
+        handled = 0
+        delivery_path = self._delivery_backend_path()
+
+        for message in email_messages:
+            priority = strip_priority_header(message)
+            reservation = try_reserve_slot(priority)
+            if not reservation.reserved:
+                enqueue_message(
+                    message,
+                    priority=priority,
+                    defer_reason=reservation.defer_reason or "daily",
+                )
+                handled += 1
+                logger.info(
+                    "email_deferred priority=%s reason=%s sent_today=%s month_total=%s",
+                    priority,
+                    reservation.defer_reason,
+                    reservation.sent_count,
+                    reservation.month_total,
+                )
+                continue
+
+            wait_for_send_slot()
+            try:
+                connection = get_connection(
+                    backend=delivery_path,
+                    fail_silently=False,
+                    **self._delivery_kwargs,
+                )
+                sent = connection.send_messages([message])
+                if not sent:
+                    release_slot(reservation.usage_date)
+                    from core.email.errors import sanitize_last_error
+
+                    enqueue_message(
+                        message,
+                        priority=priority,
+                        defer_reason="daily",
+                        last_error=sanitize_last_error("delivery backend returned 0"),
+                    )
+                    handled += 1
+                    continue
+                handled += int(sent)
+                logger.info(
+                    "email_sent priority=%s backend=%s",
+                    priority,
+                    delivery_path.rsplit(".", 1)[-1],
+                )
+            except Exception as exc:
+                release_slot(reservation.usage_date)
+                if is_transient_provider_error(exc):
+                    from core.email.errors import sanitize_last_error
+
+                    enqueue_message(
+                        message,
+                        priority=priority,
+                        defer_reason="daily",
+                        last_error=sanitize_last_error(exc, prefix="transient"),
+                    )
+                    handled += 1
+                    logger.warning(
+                        "email_deferred_transient priority=%s error_type=%s",
+                        priority,
+                        exc.__class__.__name__,
+                    )
+                    continue
+                logger.exception(
+                    "email_send_failed priority=%s error_type=%s",
+                    priority,
+                    exc.__class__.__name__,
+                )
+                if not self.fail_silently:
+                    raise
+        return handled
+
+
+# Keep import_string happy for settings introspection / docs.
+__all__ = [
+    "MicrosoftGraphEmailBackend",
+    "RateLimitedEmailBackend",
+    "email_message_to_graph_payload",
+    "is_transient_provider_error",
+]
