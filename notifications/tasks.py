@@ -234,9 +234,7 @@ def send_deadline_reminders(self):
 
         except Exception as e:
             # Log error but continue with other reminders
-            logger.exception(
-                "Error sending reminder id=%s: %s", reminder.id, e
-            )
+            logger.exception("Error sending reminder id=%s: %s", reminder.id, e)
 
     return sent_count
 
