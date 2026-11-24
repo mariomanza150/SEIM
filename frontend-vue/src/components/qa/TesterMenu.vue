@@ -1,12 +1,14 @@
 <template>
-  <li v-if="qa.isTester" ref="root" class="nav-item dropdown me-1" data-testid="qa-tester-menu" data-qa-ignore>
+  <li v-if="qa.isTester" ref="rootEl" class="nav-item dropdown me-1" data-testid="qa-tester-menu" data-qa-ignore>
     <button
       type="button"
-      class="nav-link dropdown-toggle seim-nav-text-btn d-inline-flex align-items-center gap-1"
+      class="nav-link dropdown-toggle seim-nav-text-btn d-inline-flex align-items-center gap-1 seim-tap-target"
       :class="{ show: open }"
       :aria-expanded="open ? 'true' : 'false'"
       aria-haspopup="menu"
-      @click="open = !open"
+      :aria-label="t('qa.menu.label')"
+      data-testid="qa-tester-menu-toggle"
+      @click="toggle"
     >
       <span class="badge text-bg-warning text-uppercase" data-testid="qa-tier-badge">{{ tierLabel }}</span>
       <span class="d-none d-lg-inline">{{ t('qa.menu.label') }}</span>
@@ -18,7 +20,7 @@
         </button>
       </li>
       <li v-for="item in links" :key="item.name">
-        <router-link class="dropdown-item" :to="{ name: item.name }" @click="open = false">
+        <router-link class="dropdown-item" :to="{ name: item.name }" @click="close">
           <i :class="`bi ${item.icon} me-1`" aria-hidden="true" />{{ t(item.label) }}
         </router-link>
       </li>
@@ -34,16 +36,16 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useNavDropdown } from '@/composables/useNavDropdown'
 import { useQaStore } from '@/stores/qa'
 import { shortCommit } from '@/qa/buildInfo'
 import { testerMenuLinks } from '@/qa/menuLinks'
 
 const { t, locale } = useI18n()
 const qa = useQaStore()
-const open = ref(false)
-const root = ref(null)
+const { open, rootEl, toggle, close } = useNavDropdown()
 
 const tierLabel = computed(() => (qa.deployTier === 'development' ? 'DEV' : 'TEST'))
 const links = computed(() => testerMenuLinks(qa))
@@ -65,13 +67,7 @@ const versionText = computed(() => {
 })
 
 function report() {
-  open.value = false
+  close()
   window.dispatchEvent(new CustomEvent('seim:qa-report'))
 }
-
-function onDocClick(e) {
-  if (open.value && root.value && !root.value.contains(e.target)) open.value = false
-}
-onMounted(() => document.addEventListener('click', onDocClick))
-onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 </script>

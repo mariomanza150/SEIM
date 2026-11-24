@@ -96,6 +96,30 @@ describe('SidebarNavList', () => {
     expect(toggle(wrapper, 'admin').attributes('aria-expanded')).toBe('true')
   })
 
+  it('re-opens a section for deep-link child routes (ApplicationDetail)', async () => {
+    const router = makeRouter()
+    router.addRoute({
+      path: '/ApplicationDetail',
+      name: 'ApplicationDetail',
+      component: { template: '<div />' },
+    })
+    localStorage.setItem(SIDEBAR_SECTIONS_KEY, JSON.stringify({ main: true }))
+    await router.push({ name: 'Dashboard' })
+    await router.isReady()
+    const wrapper = mount(SidebarNavList, {
+      props: { sections },
+      global: { plugins: [router] },
+    })
+    await flushPromises()
+    expect(toggle(wrapper, 'main').attributes('aria-expanded')).toBe('true')
+    await toggle(wrapper, 'main').trigger('click')
+    expect(toggle(wrapper, 'main').attributes('aria-expanded')).toBe('false')
+
+    await router.push({ name: 'ApplicationDetail' })
+    await flushPromises()
+    expect(toggle(wrapper, 'main').attributes('aria-expanded')).toBe('true')
+  })
+
   it('rail mode renders icon-only links with accessible labels and no section toggles', async () => {
     const { wrapper } = await mountList({ rail: true })
     expect(wrapper.find('[data-testid^="sidebar-section-toggle-"]').exists()).toBe(false)
