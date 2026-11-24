@@ -906,8 +906,10 @@ class ApplicationAdmin(admin.ModelAdmin):
                 dob = profile.date_of_birth
                 if dob:
                     today = timezone.localdate()
-                    age = today.year - dob.year - (
-                        (today.month, today.day) < (dob.month, dob.day)
+                    age = (
+                        today.year
+                        - dob.year
+                        - ((today.month, today.day) < (dob.month, dob.day))
                     )
                     html += f"<li>Age: {age} years"
                     if obj.program.min_age and obj.program.max_age:
