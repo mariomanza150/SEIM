@@ -200,6 +200,24 @@ class ExchangeAgreementViewSet(viewsets.ModelViewSet):
             ),
         ).all()
 
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        user = self.request.user
+        if getattr(user, "is_authenticated", False):
+            roles = list(user.roles.all())
+            cache = getattr(user, "_prefetched_objects_cache", None)
+            if cache is None:
+                user._prefetched_objects_cache = {}
+            user._prefetched_objects_cache["roles"] = roles
+            ctx["viewer_is_agreement_staff"] = bool(
+                user.is_staff
+                or user.is_superuser
+                or user.has_any_role(["coordinator", "admin"])
+            )
+        else:
+            ctx["viewer_is_agreement_staff"] = False
+        return ctx
+
     @action(detail=True, methods=["post"], url_path="mark-renewal-pending")
     def mark_renewal_pending(self, request, pk=None):
         agreement = self.get_object()

@@ -1611,23 +1611,27 @@ class ExchangeAgreementSerializer(serializers.ModelSerializer):
         contacts = getattr(obj, "partner_contacts", None)
         if contacts is None:
             return []
-        request = self.context.get("request")
-        user = getattr(request, "user", None)
-        staff = bool(
-            user
-            and user.is_authenticated
-            and (
-                getattr(user, "is_staff", False)
-                or getattr(user, "is_superuser", False)
-                or (
-                    hasattr(user, "has_any_role")
-                    and user.has_any_role(["coordinator", "admin"])
+        if "viewer_is_agreement_staff" in self.context:
+            staff = bool(self.context["viewer_is_agreement_staff"])
+        else:
+            request = self.context.get("request")
+            user = getattr(request, "user", None)
+            staff = bool(
+                user
+                and user.is_authenticated
+                and (
+                    getattr(user, "is_staff", False)
+                    or getattr(user, "is_superuser", False)
+                    or (
+                        hasattr(user, "has_any_role")
+                        and user.has_any_role(["coordinator", "admin"])
+                    )
                 )
             )
-        )
         if not staff:
             return []
-        qs = obj.partner_contacts.select_related("user").all()
+        # Prefer prefetch cache: ``.select_related().all()`` would re-query per row.
+        qs = list(obj.partner_contacts.all())
         return PartnerContactSerializer(qs, many=True).data
 
     def create(self, validated_data):

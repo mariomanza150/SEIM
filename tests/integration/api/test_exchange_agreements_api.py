@@ -2,13 +2,15 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
 
 from accounts.models import Role
-from exchange.models import AgreementComment, ExchangeAgreement, Program
+from exchange.models import AgreementComment, ExchangeAgreement, PartnerContact, Program
 
 User = get_user_model()
 
@@ -188,3 +190,58 @@ class ExchangeAgreementsAPITests(APITestCase):
         )
         url = reverse("api:exchange-agreement-comments", kwargs={"pk": str(ag.id)})
         self.assertEqual(self.client.get(url).status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_agreement_list_query_count_does_not_grow_with_rows(self):
+        """Partner-contact embedding must stay O(1) as agreement rows grow."""
+        coordinator = User.objects.create_user(
+            username="coord_ag_perf",
+            email="coord_ag_perf@example.com",
+            password="pass12345",
+        )
+        _grant_role(coordinator, "coordinator")
+        partner = User.objects.create_user(
+            username="partner_ag_perf",
+            email="partner_ag_perf@example.com",
+            password="pass12345",
+        )
+        _grant_role(partner, "partner")
+        self.client.force_authenticate(coordinator)
+
+        def _seed(n: int) -> None:
+            for i in range(n):
+                ag = ExchangeAgreement.objects.create(
+                    title=f"Perf Agreement {i}",
+                    partner_institution_name=f"Partner Institute {i}",
+                    partner_country="XX",
+                    status=ExchangeAgreement.Status.ACTIVE,
+                )
+                PartnerContact.objects.create(
+                    user=partner, agreement=ag, is_active=True, title="Liaison"
+                )
+
+        def _list_query_count() -> tuple[int, int]:
+            with CaptureQueriesContext(connection) as ctx:
+                response = self.client.get(self.url)
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            results = response.data["results"]
+            self.assertTrue(all("partner_contacts" in row for row in results))
+            return len(ctx.captured_queries), len(results)
+
+        _seed(3)
+        count_small, n_small = _list_query_count()
+        self.assertEqual(n_small, 3)
+
+        _seed(9)
+        count_large, n_large = _list_query_count()
+        self.assertEqual(n_large, 12)
+
+        self.assertLessEqual(
+            count_large,
+            count_small + 2,
+            f"Query count grew from {count_small} (3 rows) to {count_large} "
+            f"(12 rows); agreement list still looks N+1.",
+        )
+        with self.assertNumQueries(count_large):
+            response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertLessEqual(count_large, 25)

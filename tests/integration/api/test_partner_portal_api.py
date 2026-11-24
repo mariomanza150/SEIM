@@ -2,6 +2,8 @@
 
 from unittest.mock import patch
 
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 
 from accounts.models import Role
@@ -330,3 +332,52 @@ class TestPartnerPortalAPI(APITestCase):
         self.assertEqual(current.status_code, 200)
         self.assertEqual(len(current.data), 1)
         self.assertEqual(current.data[0]["title"], "Updated signed")
+
+    def test_partner_application_list_query_count_does_not_grow_with_rows(self):
+        """Document checklist on partner list must stay O(1) as applicants grow."""
+        from documents.models import DocumentType
+
+        PartnerContact.objects.create(user=self.partner, agreement=self.agreement)
+        doc_type = DocumentType.objects.create(name="Partner Checklist Type")
+        self.program.required_document_types.add(doc_type)
+        self.authenticate_user(self.partner)
+        url = reverse("api:partner-application-list")
+
+        def _seed(n: int) -> None:
+            for _ in range(n):
+                student = self.create_user(role="student")
+                self.create_application(
+                    student=student, program=self.program, status_name="submitted"
+                )
+
+        def _list_query_count() -> tuple[int, int]:
+            with CaptureQueriesContext(connection) as ctx:
+                response = self.client.get(url)
+            self.assertEqual(response.status_code, 200)
+            results = (
+                response.data["results"]
+                if isinstance(response.data, dict)
+                else response.data
+            )
+            self.assertTrue(all("document_checklist" in row for row in results))
+            return len(ctx.captured_queries), len(results)
+
+        # setUp already created one applicant on this program.
+        _seed(2)
+        count_small, n_small = _list_query_count()
+        self.assertEqual(n_small, 3)
+
+        _seed(9)
+        count_large, n_large = _list_query_count()
+        self.assertEqual(n_large, 12)
+
+        self.assertLessEqual(
+            count_large,
+            count_small + 2,
+            f"Query count grew from {count_small} (3 rows) to {count_large} "
+            f"(12 rows); partner application list still looks N+1.",
+        )
+        with self.assertNumQueries(count_large):
+            response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertLessEqual(count_large, 35)

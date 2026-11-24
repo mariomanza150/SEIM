@@ -184,7 +184,7 @@ class DocumentType(models.Model):
     def parsed_accepted_extensions(self) -> list[str]:
         seen: list[str] = []
         # Prefer prefetched M2M rows: ``.filter()`` on the related manager
-        # bypasses the prefetch cache and causes per-row N+1 on document lists.
+        # bypasses the prefetch cache and causes per-row N+1 on list endpoints.
         cache = getattr(self, "_prefetched_objects_cache", None)
         if cache is not None and "file_type_families" in cache:
             families = [f for f in self.file_type_families.all() if f.is_active]
