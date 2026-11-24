@@ -15,10 +15,10 @@ from django.shortcuts import redirect
 from django.urls import include, path, re_path
 from django.views.decorators.cache import never_cache
 from django.views.generic import RedirectView, TemplateView
-from django.views.static import serve as media_serve
 from django_js_reverse.views import urls_js
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
+from core.media_views import serve_media
 from core.views import health_check, health_live, marketing_home, spa_logout
 
 _WAGTAIL = apps.is_installed("wagtail")
@@ -166,25 +166,23 @@ urlpatterns += [
 ]
 
 # ============================================
-# Serve media and static files (DEBUG, or SERVE_MEDIA for nginx-less deploys)
+# Serve media (ACL-guarded) and static files
 # Must be registered BEFORE Wagtail's ``""`` catch-all, or ``/media/*`` and
 # ``/static/*`` are swallowed and return Wagtail 404s (broken SPA download links).
 #
-# ``django.conf.urls.static.static()`` returns [] when DEBUG is False, so
-# SERVE_MEDIA must register ``django.views.static.serve`` explicitly.
+# Protected uploads (documents/, agreement_repository/, …) require session or
+# JWT auth plus object-level checks. Public CMS image prefixes stay readable.
+# Production nginx should proxy ``/media/`` here (or use X-Accel-Redirect), never
+# alias protected upload dirs as world-readable.
 # ============================================
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-elif getattr(settings, "SERVE_MEDIA", False):
-    # ``static()`` is a no-op when DEBUG is False; register serve explicitly.
-    _media_prefix = settings.MEDIA_URL.lstrip("/")
-    urlpatterns += [
-        re_path(
-            rf"^{_media_prefix}(?P<path>.*)$",
-            media_serve,
-            {"document_root": settings.MEDIA_ROOT},
-        ),
-    ]
+_media_prefix = settings.MEDIA_URL.lstrip("/")
+urlpatterns += [
+    re_path(
+        rf"^{_media_prefix}(?P<path>.*)$",
+        serve_media,
+        name="serve_media",
+    ),
+]
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     # Vite ``base`` is ``/static/`` (see ``frontend-vue/vite.config.js``); built HTML loads

@@ -242,10 +242,17 @@ server {
         alias /app/staticfiles/;
     }
     
-    # Media files
+    # Public CMS images only; protected uploads proxy to Django ACL.
+    location ^~ /media/images/ { alias /app/media/images/; }
+    location ^~ /media/original_images/ { alias /app/media/original_images/; }
     location /media/ {
-        alias /app/media/;
+        proxy_pass http://django;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
+    location /internal_media/ { internal; alias /app/media/; }
 }
 ```
 
