@@ -675,6 +675,7 @@ async function saveInstitution(inst) {
     })
   } catch (err) {
     console.error(err)
+    await reload()
     error.value = t('adminProgramDestinations.saveError')
   } finally {
     busy.value = false
@@ -722,6 +723,10 @@ async function saveSchool(school) {
   busy.value = true
   try {
     await api.patch(`/api/schools/${school.id}/`, { name: school.name })
+  } catch (err) {
+    console.error(err)
+    await reload()
+    error.value = t('adminProgramDestinations.saveError')
   } finally {
     busy.value = false
   }
@@ -750,6 +755,10 @@ async function saveAcademic(ap) {
   busy.value = true
   try {
     await api.patch(`/api/academic-programs/${ap.id}/`, { name: ap.name, code: ap.code })
+  } catch (err) {
+    console.error(err)
+    await reload()
+    error.value = t('adminProgramDestinations.saveError')
   } finally {
     busy.value = false
   }

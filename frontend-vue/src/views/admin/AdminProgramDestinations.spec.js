@@ -173,4 +173,30 @@ describe('AdminProgramDestinations', () => {
       }),
     )
   })
+
+  it('surfaces save errors and reloads when school rename fails', async () => {
+    wrapper = await mountPage()
+    await flushPromises()
+    const getCallsBefore = mockGet.mock.calls.length
+    mockPatch.mockRejectedValueOnce(new Error('network'))
+
+    await wrapper.vm.saveSchool({ id: 'school-1', name: 'Edited School' })
+    await flushPromises()
+
+    expect(wrapper.vm.error).toBe(en.adminProgramDestinations.saveError)
+    expect(mockGet.mock.calls.length).toBeGreaterThan(getCallsBefore)
+  })
+
+  it('surfaces save errors and reloads when academic program rename fails', async () => {
+    wrapper = await mountPage()
+    await flushPromises()
+    const getCallsBefore = mockGet.mock.calls.length
+    mockPatch.mockRejectedValueOnce(new Error('network'))
+
+    await wrapper.vm.saveAcademic({ id: 'ap-1', name: 'Edited Program', code: 'EP' })
+    await flushPromises()
+
+    expect(wrapper.vm.error).toBe(en.adminProgramDestinations.saveError)
+    expect(mockGet.mock.calls.length).toBeGreaterThan(getCallsBefore)
+  })
 })
