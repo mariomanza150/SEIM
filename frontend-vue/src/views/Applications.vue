@@ -1,5 +1,6 @@
 <template>
-  <div class="applications-page">
+  <div class="applications-page" data-tour="applications-page">
+    <div data-tour="applications-header">
     <PageHeader :title="t('applicationsPage.title')" :subtitle="t('applicationsPage.tagline')" icon-class="bi bi-file-earmark-text">
       <template #breadcrumb>
         <PageBreadcrumb
@@ -14,13 +15,14 @@
         <router-link :to="{ name: 'ProgramCompare' }" class="btn btn-outline-secondary">
           <i class="bi bi-columns-gap me-1" aria-hidden="true"></i>{{ t('applicationsPage.comparePrograms') }}
         </router-link>
-        <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary">
+        <router-link :to="{ name: 'ApplicationNew' }" class="btn btn-primary" data-tour="applications-new">
           <i class="bi bi-plus-circle me-2" aria-hidden="true"></i>{{ t('applicationsPage.newApplication') }}
         </router-link>
       </template>
     </PageHeader>
+    </div>
 
-      <ul class="nav nav-tabs mb-3" role="tablist" data-testid="applications-direction-tabs">
+      <ul class="nav nav-tabs mb-3" role="tablist" data-testid="applications-direction-tabs" data-tour="applications-tabs">
         <li v-for="tab in directionTabs" :key="tab.value" class="nav-item" role="presentation">
           <button
             type="button"
@@ -36,6 +38,7 @@
         </li>
       </ul>
 
+      <div data-tour="applications-filters">
       <CompactFilterBar
         test-id="applications-filters"
         :active-filter-count="activeFilterCount"
@@ -128,6 +131,7 @@
           </div>
         </template>
       </CompactFilterBar>
+      </div>
 
       <PageStateShell
         :loading="loading"
@@ -139,7 +143,7 @@
         skeleton="cards"
         :loading-label="t('applicationsPage.loadingList')"
       >
-        <div v-if="applications.length > 0" data-testid="applications-results">
+        <div v-if="applications.length > 0" data-testid="applications-results" data-tour="applications-list">
         <div class="row">
           <div v-for="application in applications" :key="application.id" class="col-md-6 mb-4">
             <div class="card application-card h-100 card-hover">

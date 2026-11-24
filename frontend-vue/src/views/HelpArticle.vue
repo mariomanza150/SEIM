@@ -17,6 +17,16 @@
         />
       </template>
       <template #actions>
+        <button
+          v-if="walkthroughPageId"
+          type="button"
+          class="btn btn-outline-primary me-2"
+          data-testid="help-article-start-walkthrough"
+          :title="t('help.startWalkthroughHint')"
+          @click="startArticleWalkthrough"
+        >
+          {{ t('help.startWalkthrough') }}
+        </button>
         <router-link :to="backToHelp" class="btn btn-outline-secondary" data-testid="help-article-back">
           {{ t('help.backToHelp') }}
         </router-link>
@@ -70,6 +80,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useStartWalkthrough } from '@/composables/useStartWalkthrough'
 import { fetchHelpArticle, fetchHelpArticles, unwrapHelpArticles } from '@/services/help'
 import { sanitizeHelpHtml } from '@/utils/helpHtml'
 import PageHeader from '@/components/PageHeader.vue'
@@ -79,6 +90,7 @@ import LoadingState from '@/components/State/LoadingState.vue'
 
 const route = useRoute()
 const { t } = useI18n()
+const { startWalkthroughForArticle, resolvePageTourFromHelp } = useStartWalkthrough()
 
 const loading = ref(true)
 const error = ref('')
@@ -87,6 +99,11 @@ const related = ref([])
 
 const bodyHtml = computed(() => sanitizeHelpHtml(article.value?.body_html || ''))
 const backToHelp = computed(() => ({ name: 'HelpCenter' }))
+const walkthroughPageId = computed(() => resolvePageTourFromHelp(article.value))
+
+async function startArticleWalkthrough() {
+  await startWalkthroughForArticle(article.value)
+}
 
 async function loadArticle() {
   loading.value = true

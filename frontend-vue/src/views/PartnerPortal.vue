@@ -1,5 +1,6 @@
 <template>
-  <div class="partner-portal-page">
+  <div class="partner-portal-page" data-tour="partner-portal-page">
+    <div data-tour="partner-portal-header">
     <PageHeader :title="t('partnerPortalPage.title')" :subtitle="t('partnerPortalPage.subtitle')">
       <template #breadcrumb>
         <PageBreadcrumb
@@ -11,6 +12,7 @@
         />
       </template>
     </PageHeader>
+    </div>
 
     <PageStateShell
       :loading="loading"
@@ -20,7 +22,7 @@
       :skeleton-columns="5"
     >
     <div data-testid="partner-portal-page">
-      <div class="card mb-4">
+      <div class="card mb-4" data-tour="partner-agreements">
         <div class="card-header"><h5 class="mb-0">{{ t('partnerPortalPage.agreementsHeading') }}</h5></div>
         <ResponsiveList
           :items="agreements"
@@ -84,7 +86,7 @@
         </ResponsiveList>
       </div>
 
-      <div v-if="docsAgreement" class="card mb-4" data-testid="partner-docs">
+      <div v-if="docsAgreement" class="card mb-4" data-testid="partner-docs" data-tour="partner-docs">
         <div class="card-header d-flex flex-wrap align-items-center gap-2 justify-content-between">
           <h5 class="mb-0">{{ t('partnerPortalPage.docsHeading', { title: docsAgreement.title }) }}</h5>
           <div class="form-check mb-0">
@@ -222,7 +224,7 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" data-tour="partner-applications">
         <div class="card-header"><h5 class="mb-0">{{ t('partnerPortalPage.applicantsHeading') }}</h5></div>
         <ResponsiveList
           :items="applications"

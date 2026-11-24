@@ -109,4 +109,23 @@ describe('SidebarNavList', () => {
     expect(wrapper.find('[data-testid^="sidebar-section-toggle-"]').exists()).toBe(false)
     expect(wrapper.text()).toContain('Administration')
   })
+
+  it('exposes data-tour attributes for applications, review queue, and partner nav items', async () => {
+    const withStaff = [
+      {
+        key: 'main',
+        label: 'Main',
+        items: [
+          { key: 'applications', to: { name: 'Applications' }, label: 'Applications', iconClass: 'bi bi-file' },
+          { key: 'reviewQueue', to: { name: 'Dashboard' }, label: 'Review queue', iconClass: 'bi bi-clipboard' },
+          { key: 'partnerPortal', to: { name: 'Dashboard' }, label: 'Partner', iconClass: 'bi bi-building' },
+        ],
+      },
+    ]
+    const { wrapper } = await mountList({ sections: withStaff })
+    const links = wrapper.findAll('a')
+    expect(links.some((a) => a.attributes('data-tour') === 'nav-applications')).toBe(true)
+    expect(links.some((a) => a.attributes('data-tour') === 'nav-review-queue')).toBe(true)
+    expect(links.some((a) => a.attributes('data-tour') === 'nav-partner')).toBe(true)
+  })
 })
