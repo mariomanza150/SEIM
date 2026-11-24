@@ -83,11 +83,11 @@ services:
       - SERVE_MEDIA=1
       - DISABLE_PAGE_CACHE_MIDDLEWARE=1
       # Playwright against :8020 issues hundreds of JWT/profile calls; keep prod-like
-      # throttles off for this local stack (also gated in production.py via ALLOW_ANY_HOST).
+      # throttles off for this local stack via DISABLE_THROTTLE_E2E only.
       - DISABLE_THROTTLE_E2E=1
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
-      - ALLOW_ANY_HOST=${ALLOW_ANY_HOST:-1}
+      # Explicit hosts only — ALLOW_ANY_HOST / * are rejected by production settings.
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
       - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
@@ -151,8 +151,7 @@ services:
       - DEBUG=False
       - LOG_FILE=/app/logs/celery.log
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
-      - ALLOW_ANY_HOST=${ALLOW_ANY_HOST:-1}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
       - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
@@ -198,8 +197,7 @@ services:
       - DEBUG=False
       - LOG_FILE=/app/logs/celery-beat.log
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
-      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
-      - ALLOW_ANY_HOST=${ALLOW_ANY_HOST:-1}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
       - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
       - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0

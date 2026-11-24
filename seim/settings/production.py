@@ -19,8 +19,8 @@ from .base import *
 from .hosting import (
     CLOUDFLARE_CORS_ORIGIN_REGEX,
     TAILSCALE_CORS_ORIGIN_REGEX,
-    allowed_hosts_with_tailscale,
     csrf_origins_with_tls_proxies,
+    resolve_production_allowed_hosts,
 )
 
 
@@ -103,11 +103,8 @@ if _use_tls_proxy:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     USE_X_FORWARDED_HOST = True
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS")
-if env.bool("ALLOW_ANY_HOST", default=False):
-    ALLOWED_HOSTS = ["*"]
-elif _use_tls_proxy:
-    ALLOWED_HOSTS = allowed_hosts_with_tailscale(ALLOWED_HOSTS)
+# Fail closed: require an explicit host list. ALLOW_ANY_HOST / "*" are rejected.
+ALLOWED_HOSTS = resolve_production_allowed_hosts(use_tls_proxy=_use_tls_proxy)
 
 if _use_request_host_site:
     _middleware = list(MIDDLEWARE)
@@ -319,6 +316,7 @@ init_sentry(
     or own_origin_targets(FRONTEND_BASE_URL),
 )
 
-# Same E2E hatch as development.py. Local-prod sets ALLOW_ANY_HOST=1.
-if os.environ.get("DISABLE_THROTTLE_E2E") or env.bool("ALLOW_ANY_HOST", default=False):
+# Same E2E hatch as development.py. Use DISABLE_THROTTLE_E2E=1 explicitly
+# (ALLOW_ANY_HOST no longer bypasses throttles or host checks).
+if os.environ.get("DISABLE_THROTTLE_E2E"):
     REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []
