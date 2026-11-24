@@ -1,6 +1,7 @@
 # Ultra-Lean AWS profile — single-host Docker Compose for EC2 t4g.small (2 GB RAM).
 # Target: ~120 applicants/year, ~10 staff, Cloudflare Free proxy, S3 for private media.
-# ClamAV is intentionally omitted (~1.2–1.5 GB idle RAM). Use VIRUS_SCANNER_TYPE=mock.
+# ClamAV is intentionally omitted (~1.2–1.5 GB idle RAM).
+# Set VIRUS_SCANNER_TYPE=mock and VIRUS_SCANNER_ALLOW_MOCK=1 (logs CRITICAL).
 #
 # Usage:
 #   cp env.lean.example .env.lean
@@ -148,7 +149,8 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
-      VIRUS_SCANNER_TYPE: ${VIRUS_SCANNER_TYPE:-mock}
+      VIRUS_SCANNER_TYPE: ${VIRUS_SCANNER_TYPE:?Set VIRUS_SCANNER_TYPE in .env.lean}
+      VIRUS_SCANNER_ALLOW_MOCK: ${VIRUS_SCANNER_ALLOW_MOCK:-0}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
       AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME:-}
@@ -204,7 +206,8 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
-      VIRUS_SCANNER_TYPE: ${VIRUS_SCANNER_TYPE:-mock}
+      VIRUS_SCANNER_TYPE: ${VIRUS_SCANNER_TYPE:?Set VIRUS_SCANNER_TYPE in .env.lean}
+      VIRUS_SCANNER_ALLOW_MOCK: ${VIRUS_SCANNER_ALLOW_MOCK:-0}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
       AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME:-}

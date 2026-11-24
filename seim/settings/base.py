@@ -455,9 +455,12 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
 # Virus Scanner Configuration
+# Development/test default to mock. Production settings re-resolve via
+# seim.settings.virus_scanner.resolve_virus_scanner_type (fail closed).
 VIRUS_SCANNER_TYPE = env(
     "VIRUS_SCANNER_TYPE", default="mock"
 )  # Options: 'clamav', 'clamav_cli', 'mock'
+VIRUS_SCANNER_ALLOW_MOCK = env.bool("VIRUS_SCANNER_ALLOW_MOCK", default=False)
 VIRUS_SCANNER_CONFIG = {
     "socket_path": env("VIRUS_SCANNER_SOCKET_PATH", default=None),
     "host": env("VIRUS_SCANNER_HOST", default="localhost"),

@@ -352,16 +352,29 @@ class TestGetVirusScanner(TestCase):
         self.assertIsInstance(scanner, MockVirusScanner)
         self.assertTrue(scanner.simulate_infected)
 
+    @override_settings(VIRUS_SCANNER_TYPE="mock", DEPLOY_TIER="development")
     @patch("documents.virus_scanner.VirusScannerFactory.create_scanner")
-    def test_get_virus_scanner_fallback_on_error(self, mock_factory):
-        """Test get_virus_scanner falls back to mock on error."""
+    def test_get_virus_scanner_fallback_on_error_in_dev(self, mock_factory):
+        """Dev/test tiers may fall back to mock on init errors."""
         mock_factory.side_effect = Exception("Configuration error")
 
         scanner = get_virus_scanner()
 
-        # Should fallback to mock scanner
         self.assertIsInstance(scanner, MockVirusScanner)
         self.assertFalse(scanner.simulate_infected)
+
+    @override_settings(
+        VIRUS_SCANNER_TYPE="clamav",
+        DEPLOY_TIER="production",
+        VIRUS_SCANNER_ALLOW_MOCK=False,
+    )
+    @patch("documents.virus_scanner.VirusScannerFactory.create_scanner")
+    def test_get_virus_scanner_fail_closed_outside_dev(self, mock_factory):
+        """Production-like tiers must not silently fall back to mock."""
+        mock_factory.side_effect = Exception("Configuration error")
+
+        with self.assertRaises(VirusScannerError):
+            get_virus_scanner()
 
 
 @pytest.mark.django_db
