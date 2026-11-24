@@ -96,6 +96,7 @@ class TimelineEventInline(admin.TabularInline):
 @admin.register(AgreementExpirationReminderLog)
 class AgreementExpirationReminderLogAdmin(admin.ModelAdmin):
     list_display = ("agreement", "days_before", "agreement_end_date", "created_at")
+    list_select_related = ("agreement",)
     list_filter = ("days_before",)
     search_fields = ("agreement__title", "agreement__partner_institution_name")
     readonly_fields = (
@@ -718,6 +719,7 @@ class HostInstitutionAdmin(admin.ModelAdmin):
         "is_active",
         "created_at",
     )
+    list_select_related = ("program", "grade_scale")
     list_filter = ("is_active", "program", "country")
     search_fields = ("name", "country", "program__name")
     list_editable = ("is_active",)
@@ -728,6 +730,7 @@ class HostInstitutionAdmin(admin.ModelAdmin):
 @admin.register(HostSchool)
 class HostSchoolAdmin(admin.ModelAdmin):
     list_display = ("name", "institution", "is_active", "created_at")
+    list_select_related = ("institution", "institution__program")
     list_filter = ("is_active", "institution__program")
     search_fields = ("name", "institution__name")
     list_editable = ("is_active",)
@@ -738,6 +741,7 @@ class HostSchoolAdmin(admin.ModelAdmin):
 @admin.register(HostAcademicProgram)
 class HostAcademicProgramAdmin(admin.ModelAdmin):
     list_display = ("name", "code", "school", "is_active", "created_at")
+    list_select_related = ("school", "school__institution")
     list_filter = ("is_active", "school__institution__program")
     search_fields = ("name", "code", "school__name", "school__institution__name")
     list_editable = ("is_active",)
@@ -757,6 +761,7 @@ class HostSubjectAdmin(admin.ModelAdmin):
         "is_active",
         "created_at",
     )
+    list_select_related = ("institution", "school", "academic_program")
     list_filter = ("is_active", "institution__program")
     search_fields = (
         "name",
@@ -781,6 +786,13 @@ class ApplicationAdmin(admin.ModelAdmin):
         "eligibility_status",
         "submitted_at",
         "withdrawn",
+    )
+    list_select_related = (
+        "student",
+        "program",
+        "host_institution",
+        "assigned_coordinator",
+        "status",
     )
     search_fields = (
         "id",
@@ -858,23 +870,20 @@ class ApplicationAdmin(admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
     def eligibility_status(self, obj):
-        """Show eligibility status with visual indicator."""
-        try:
-            from exchange.services import ApplicationService
+        """Changelist hint only — avoid live eligibility evaluation (N+1 / heavy).
 
-            ApplicationService.check_eligibility(
-                obj.student, obj.program, application=obj
-            )
+        Full ``ApplicationService.check_eligibility`` remains on the change form
+        via ``eligibility_check_details`` and the bulk admin action.
+        """
+        if obj.eligibility_ruleset_snapshot:
             return format_html(
-                '<span style="color: green; font-weight: bold;">✓ Eligible</span>'
+                '<span style="color: #555;">{}</span>',
+                "Snapshot on file — open to re-check",
             )
-        except ValueError as e:
-            error_msg = str(e).replace("Eligibility requirements not met:\n- ", "")
-            return format_html(
-                '<span style="color: red;" title="{}">✗ Ineligible</span>', error_msg
-            )
-        except Exception:
-            return format_html('<span style="color: gray;">? Unknown</span>')
+        return format_html(
+            '<span style="color: #555;">{}</span>',
+            "Open detail to check",
+        )
 
     eligibility_status.short_description = "Eligibility"
 
@@ -987,6 +996,7 @@ class ApplicationStatusAdmin(admin.ModelAdmin):
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
     list_display = ("application", "author", "is_private", "created_at")
+    list_select_related = ("application", "author")
     search_fields = ("application__id", "author__email", "text")
     list_filter = ("is_private",)
     readonly_fields = ("created_at", "updated_at")
@@ -995,6 +1005,7 @@ class CommentAdmin(admin.ModelAdmin):
 @admin.register(AgreementComment)
 class AgreementCommentAdmin(admin.ModelAdmin):
     list_display = ("agreement", "author", "is_private", "created_at")
+    list_select_related = ("agreement", "author")
     search_fields = ("agreement__title", "author__email", "text")
     list_filter = ("is_private",)
     readonly_fields = ("created_at", "updated_at")
@@ -1003,6 +1014,7 @@ class AgreementCommentAdmin(admin.ModelAdmin):
 @admin.register(TimelineEvent)
 class TimelineEventAdmin(admin.ModelAdmin):
     list_display = ("application", "event_type", "created_by", "created_at")
+    list_select_related = ("application", "created_by")
     search_fields = ("application__id", "event_type", "description")
     readonly_fields = ("created_at", "updated_at")
 
@@ -1019,6 +1031,7 @@ class SavedSearchAdmin(admin.ModelAdmin):
         "filter_count",
         "created_at",
     )
+    list_select_related = ("user",)
     search_fields = ("name", "user__username", "user__email")
     list_filter = ("search_type", "is_default", "created_at")
     readonly_fields = ("created_at", "updated_at", "filter_preview")
@@ -1091,6 +1104,7 @@ class ScholarshipDisbursementInline(admin.TabularInline):
 @admin.register(ScholarshipAward)
 class ScholarshipAwardAdmin(admin.ModelAdmin):
     list_display = ("application", "status", "amount", "currency", "decided_at")
+    list_select_related = ("application", "application__student", "application__program")
     list_filter = ("status", "currency")
     search_fields = (
         "application__student__email",
@@ -1104,6 +1118,7 @@ class ScholarshipAwardAdmin(admin.ModelAdmin):
 @admin.register(PartnerContact)
 class PartnerContactAdmin(admin.ModelAdmin):
     list_display = ("user", "agreement", "title", "is_active", "created_at")
+    list_select_related = ("user", "agreement")
     list_filter = ("is_active",)
     search_fields = (
         "user__email",
