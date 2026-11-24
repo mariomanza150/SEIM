@@ -143,7 +143,7 @@ services:
       DJANGO_ENV: production
       DEBUG: "false"
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env.lean}
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-${ALLOWED_HOSTS:-localhost}}
       DATABASE_URL: postgresql://${POSTGRES_USER:-seimuser}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-seim}
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
       CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
