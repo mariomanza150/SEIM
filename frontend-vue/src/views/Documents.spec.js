@@ -16,11 +16,29 @@ vi.mock('@/composables/useToast', () => ({
   useToast: () => ({ error: mockToastError, success: vi.fn() }),
 }))
 
+const authStoreMock = {
+  canUseStaffReviewQueue: false,
+}
+
 vi.mock('@/stores/auth', () => ({
-  useAuthStore: () => ({
-    canUseStaffReviewQueue: false,
-  }),
+  useAuthStore: () => authStoreMock,
 }))
+
+vi.mock('@/composables/useStaffSavedPresets', async () => {
+  const { ref } = await import('vue')
+  return {
+    useStaffSavedPresets: () => ({
+      savedPresets: ref([]),
+      newPresetName: ref(''),
+      saveAsDefault: ref(false),
+      presetsLoading: ref(false),
+      loadPresets: vi.fn().mockResolvedValue(undefined),
+      savePreset: vi.fn(),
+      deletePreset: vi.fn(),
+      setDefaultPreset: vi.fn(),
+    }),
+  }
+})
 
 function mockEmptyApis() {
   api.get.mockImplementation((url) => {
@@ -44,6 +62,7 @@ describe('Documents', () => {
   beforeEach(() => {
     localStorage.clear()
     setAppLocale('en')
+    authStoreMock.canUseStaffReviewQueue = false
     vi.clearAllMocks()
     mockToastError.mockClear()
     mockEmptyApis()
@@ -441,5 +460,213 @@ describe('Documents', () => {
     const typeSelect = wrapper.findAll('select')[1]
     expect(typeSelect.text()).toContain('Scholarship letter')
     expect(typeSelect.text()).not.toContain('carta_beca')
+  })
+
+  async function openStaffAdvancedFilters(wrapper) {
+    await wrapper.get('[data-testid="compact-filter-advanced-toggle"]').trigger('click')
+    await flushPromises()
+  }
+
+  it('staff pending-review filter forces pending status and refetch', async () => {
+    authStoreMock.canUseStaffReviewQueue = true
+    const wrapper = mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await openStaffAdvancedFilters(wrapper)
+    api.get.mockClear()
+    mockEmptyApis()
+    await wrapper.get('[data-testid="filter-pending-review"]').trigger('click')
+    await flushPromises()
+    const docsCalls = api.get.mock.calls.filter(([url]) => url === '/api/documents/')
+    expect(docsCalls.length).toBeGreaterThan(0)
+    expect(docsCalls.at(-1)[1].params).toMatchObject({
+      pending_review: true,
+      is_valid: 'false',
+      page: 1,
+    })
+  })
+
+  it('staff overdue filter toggles the overdue query param', async () => {
+    authStoreMock.canUseStaffReviewQueue = true
+    const wrapper = mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await openStaffAdvancedFilters(wrapper)
+    api.get.mockClear()
+    mockEmptyApis()
+    await wrapper.get('[data-testid="filter-overdue"]').trigger('click')
+    await flushPromises()
+    const docsCalls = api.get.mock.calls.filter(([url]) => url === '/api/documents/')
+    expect(docsCalls.at(-1)[1].params).toMatchObject({ overdue: true, page: 1 })
+  })
+
+  it('clear filters resets staff toggles and reloads the first page', async () => {
+    authStoreMock.canUseStaffReviewQueue = true
+    const wrapper = mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await openStaffAdvancedFilters(wrapper)
+    await wrapper.get('[data-testid="filter-overdue"]').trigger('click')
+    await flushPromises()
+    api.get.mockClear()
+    mockEmptyApis()
+    await wrapper.get('[data-testid="compact-filter-clear"]').trigger('click')
+    await flushPromises()
+    const docsCalls = api.get.mock.calls.filter(([url]) => url === '/api/documents/')
+    expect(docsCalls.at(-1)[1].params).toEqual({
+      page: 1,
+      ordering: '-created_at',
+    })
+  })
+
+  it('toasts when document download fails', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/') {
+        return Promise.resolve({ data: { results: [], count: 0 } })
+      }
+      if (url === '/api/document-types/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/my-prefill-templates/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'doc-1',
+                application: 'app-1',
+                file: '/media/uploads/sample.pdf',
+                is_valid: true,
+                created_at: '2026-01-01T00:00:00Z',
+                type: { name: 'Identity document' },
+              },
+            ],
+            count: 1,
+            next: null,
+            previous: null,
+          },
+        })
+      }
+      if (url === '/api/documents/doc-1/preview/') {
+        return Promise.reject(new Error('offline'))
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+
+    const wrapper = mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="document-download"]').trigger('click')
+    await flushPromises()
+    expect(mockToastError).toHaveBeenCalledWith(i18n.global.t('documentsPage.downloadError'))
+  })
+
+  it('downloads a prefill template through the authenticated endpoint', async () => {
+    const clickSpy = vi.fn()
+    const origCreate = document.createElement.bind(document)
+    vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+      const el = origCreate(tag)
+      if (tag === 'a') el.click = clickSpy
+      return el
+    })
+    global.URL.createObjectURL = vi.fn(() => 'blob:template')
+    global.URL.revokeObjectURL = vi.fn()
+
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/') {
+        return Promise.resolve({ data: { results: [], count: 0 } })
+      }
+      if (url === '/api/document-types/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/my-prefill-templates/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 7,
+                name: 'Learning plan template',
+                slug: 'learning_plan',
+                has_template: true,
+                template_filename: 'learning-plan.docx',
+              },
+            ],
+          },
+        })
+      }
+      if (url === '/api/documents/') {
+        return Promise.resolve({ data: { results: [], count: 0, next: null, previous: null } })
+      }
+      if (url === '/api/document-types/7/download-template/') {
+        return Promise.resolve({
+          data: new Blob(['docx'], { type: 'application/octet-stream' }),
+          headers: {
+            'content-type': 'application/octet-stream',
+            'content-disposition': 'attachment; filename="learning-plan.docx"',
+          },
+        })
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+
+    const wrapper = mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.get('[data-testid="prefill-template-download"]').trigger('click')
+    await flushPromises()
+    expect(api.get).toHaveBeenCalledWith('/api/document-types/7/download-template/', {
+      responseType: 'blob',
+    })
+    expect(clickSpy).toHaveBeenCalled()
+    document.createElement.mockRestore()
+  })
+
+  it('shows a load error when the documents list request fails', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/applications/') {
+        return Promise.resolve({ data: { results: [], count: 0 } })
+      }
+      if (url === '/api/document-types/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/document-types/my-prefill-templates/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/documents/') {
+        return Promise.reject(new Error('network'))
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+    const wrapper = mount(Documents, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain(i18n.global.t('documentsPage.loadError'))
+    expect(mockToastError).toHaveBeenCalledWith(i18n.global.t('documentsPage.loadToastError'))
   })
 })

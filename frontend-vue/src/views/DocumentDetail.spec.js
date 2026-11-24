@@ -486,4 +486,74 @@ describe('DocumentDetail', () => {
       details: '',
     })
   })
+
+  it('accepts a valid replacement file and patches the document', async () => {
+    api.patch.mockResolvedValue({ data: { id: 'doc-1' } })
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const input = wrapper.get('[data-testid="replace-file-input"]')
+    const file = new File(['%PDF-1.4'], 'replacement.pdf', { type: 'application/pdf' })
+    Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
+    await input.trigger('change')
+    expect(wrapper.find('[data-testid="replace-file-error"]').exists()).toBe(false)
+    await wrapper.get('[data-testid="replace-file-submit"]').trigger('click')
+    await flushPromises()
+    expect(api.patch).toHaveBeenCalled()
+    const [url, formData] = api.patch.mock.calls[0]
+    expect(url).toBe('/api/documents/doc-1/')
+    expect(formData).toBeInstanceOf(FormData)
+    expect(formData.get('file')).toBe(file)
+    expect(mockToastSuccess).toHaveBeenCalledWith(i18n.global.t('documentDetailPage.toastFileUpdated'))
+  })
+
+  it('rejects disallowed replacement files client-side', async () => {
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const input = wrapper.get('[data-testid="replace-file-input"]')
+    const badFile = new File(['x'], 'notes.docx', {
+      type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    })
+    Object.defineProperty(input.element, 'files', { value: [badFile], configurable: true })
+    await input.trigger('change')
+    expect(wrapper.find('[data-testid="replace-file-error"]').exists()).toBe(true)
+    expect(api.patch).not.toHaveBeenCalled()
+  })
+
+  it('posts a comment on the document thread', async () => {
+    api.post.mockResolvedValue({ data: { id: 'c1' } })
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    const commentBox = wrapper.findAll('textarea').find((ta) =>
+      (ta.attributes('placeholder') || '').toLowerCase().includes('comment')
+      || (ta.attributes('data-testid') || '') === 'document-comment-input',
+    ) || wrapper.findAll('textarea')[0]
+    expect(commentBox).toBeTruthy()
+    await commentBox.setValue('Please upload a clearer scan.')
+    const postBtn = wrapper.findAll('button').find((b) =>
+      b.text().toLowerCase().includes('comment') || b.text().toLowerCase().includes('post'),
+    )
+    expect(postBtn).toBeTruthy()
+    await postBtn.trigger('click')
+    await flushPromises()
+    expect(api.post).toHaveBeenCalledWith('/api/document-comments/', {
+      document: 'doc-1',
+      text: 'Please upload a clearer scan.',
+      is_private: false,
+    })
+  })
 })
