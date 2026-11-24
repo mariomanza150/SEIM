@@ -66,5 +66,82 @@ describe('useNotifications', () => {
     const n = mountComposable()
     expect(n.formatTimestampDropdown('2026-01-01T00:00:00.000Z')).toBe('Just now')
   })
+
+  it('fetchNotifications normalizes array and paginated payloads', async () => {
+    const n = mountComposable()
+    api.get.mockResolvedValueOnce({ data: [{ id: 1 }, { id: 2 }] })
+    await expect(n.fetchNotifications({ page: 2, pageSize: 10 })).resolves.toEqual({
+      results: [{ id: 1 }, { id: 2 }],
+      count: 2,
+      next: null,
+      previous: null,
+    })
+    expect(api.get).toHaveBeenCalledWith('/api/notifications/', {
+      params: { page: 2, ordering: '-sent_at', page_size: 10 },
+    })
+
+    api.get.mockResolvedValueOnce({
+      data: { results: [{ id: 9 }], count: 9, next: 'n', previous: 'p' },
+    })
+    await expect(n.fetchNotifications({ filters: { is_read: false } })).resolves.toEqual({
+      results: [{ id: 9 }],
+      count: 9,
+      next: 'n',
+      previous: 'p',
+    })
+  })
+
+  it('fetchNotifications treats empty payloads as an empty page', async () => {
+    api.get.mockResolvedValue({ data: null })
+    const n = mountComposable()
+    await expect(n.fetchNotifications()).resolves.toEqual({
+      results: [],
+      count: 0,
+      next: null,
+      previous: null,
+    })
+  })
+
+  it('markAsRead and dismissNotification no-op without an id', async () => {
+    const n = mountComposable()
+    await n.markAsRead()
+    await n.dismissNotification(null)
+    expect(api.post).not.toHaveBeenCalled()
+    expect(api.delete).not.toHaveBeenCalled()
+  })
+
+  it('markAllRead posts the mark_all_read endpoint', async () => {
+    api.post.mockResolvedValue({ data: {} })
+    const n = mountComposable()
+    await n.markAllRead()
+    expect(api.post).toHaveBeenCalledWith('/api/notifications/mark_all_read/')
+  })
+
+  it('formats dropdown and page timestamps across relative buckets', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-15T12:00:00.000Z'))
+    const n = mountComposable()
+
+    expect(n.formatTimestampDropdown('')).toBe('')
+    expect(n.formatTimestampDropdown('2026-03-15T11:50:00.000Z')).toBe('10m ago')
+    expect(n.formatTimestampDropdown('2026-03-15T09:00:00.000Z')).toBe('3h ago')
+    expect(n.formatTimestampDropdown('2026-03-10T12:00:00.000Z')).toMatch(/Mar/)
+
+    expect(n.formatTimestampPage('')).toBe('N/A')
+    expect(n.formatTimestampPage('2026-03-15T11:59:30.000Z')).toBe('Just now')
+    expect(n.formatTimestampPage('2026-03-15T11:30:00.000Z')).toBe('30m ago')
+    expect(n.formatTimestampPage('2026-03-15T08:00:00.000Z')).toBe('4h ago')
+    expect(n.formatTimestampPage('2026-03-13T12:00:00.000Z')).toBe('2d ago')
+    expect(n.formatTimestampPage('2026-02-01T12:00:00.000Z')).toMatch(/2026/)
+  })
+
+  it('uses Spanish locale tags for absolute dates when locale is es', () => {
+    setAppLocale('es')
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-03-15T12:00:00.000Z'))
+    const n = mountComposable()
+    expect(n.formatTimestampDropdown('2026-01-05T12:00:00.000Z')).toBeTruthy()
+    expect(n.formatTimestampPage('2026-01-05T12:00:00.000Z')).toBeTruthy()
+  })
 })
 

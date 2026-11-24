@@ -49,4 +49,47 @@ describe('useApplicationDetailLoader', () => {
     expect(error.value).toBeTruthy()
     expect(mockErrorToast).toHaveBeenCalled()
   })
+
+  it('uses a generic error when the API response has no detail', async () => {
+    mockGet.mockRejectedValue({ response: { data: {} } })
+    const { error, loadApplication } = useApplicationDetailLoader()
+    await expect(loadApplication()).rejects.toBeTruthy()
+    expect(error.value).toBe('applicationDetailPage.loadError')
+    expect(mockErrorToast).toHaveBeenCalledWith('applicationDetailPage.loadToastError')
+  })
+
+  it('softReload updates application data without flipping page error state', async () => {
+    mockGet
+      .mockResolvedValueOnce({ data: { id: 42, status: 'draft' } })
+      .mockResolvedValueOnce({ data: { id: 42, status: 'submitted' } })
+    const { application, loadApplication, softReload, error } = useApplicationDetailLoader()
+    await loadApplication()
+    await softReload()
+    expect(application.value).toEqual({ id: 42, status: 'submitted' })
+    expect(error.value).toBe('')
+  })
+
+  it('softReload returns null when the live sync request fails', async () => {
+    mockGet
+      .mockResolvedValueOnce({ data: { id: 42, status: 'draft' } })
+      .mockRejectedValueOnce(new Error('offline'))
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const { application, loadApplication, softReload } = useApplicationDetailLoader()
+    await loadApplication()
+    await expect(softReload()).resolves.toBe(null)
+    expect(application.value).toEqual({ id: 42, status: 'draft' })
+    warn.mockRestore()
+  })
+
+  it('ignores stale softReload responses after the application id changes', async () => {
+    let overrideId = '42'
+    mockGet.mockImplementation(() => {
+      overrideId = '99'
+      return Promise.resolve({ data: { id: 42, status: 'draft' } })
+    })
+    const { application, softReload } = useApplicationDetailLoader(() => overrideId)
+    application.value = { id: 99, status: 'submitted' }
+    await expect(softReload()).resolves.toEqual({ id: 99, status: 'submitted' })
+    expect(application.value).toEqual({ id: 99, status: 'submitted' })
+  })
 })
