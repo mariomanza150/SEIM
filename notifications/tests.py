@@ -114,9 +114,7 @@ class TestJWTAuthMiddleware:
 
         with (
             override_settings(WEBSOCKET_ALLOW_QUERY_JWT=False),
-            patch(
-                "notifications.jwt_middleware.get_user_from_token"
-            ) as get_user,
+            patch("notifications.jwt_middleware.get_user_from_token") as get_user,
         ):
             _run_middleware(scope)
 
