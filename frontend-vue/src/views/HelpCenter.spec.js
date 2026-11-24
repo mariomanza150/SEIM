@@ -131,4 +131,79 @@ describe('HelpCenter', () => {
     expect(wrapper.find('[data-testid="help-start-page-tour-applications"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="help-start-page-tour-review-queue"]').exists()).toBe(false)
   })
+
+  it('applies search query via the search controls', async () => {
+    const { wrapper, router } = await mountHelp()
+    const input = wrapper.get('[data-testid="help-search"]')
+    await input.setValue('upload')
+    await wrapper.get('[data-testid="help-search-submit"]').trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.query.q).toBe('upload')
+    expect(fetchHelpArticles).toHaveBeenCalledWith(
+      expect.objectContaining({ q: 'upload' }),
+    )
+  })
+
+  it('clears search from the empty-state action', async () => {
+    fetchHelpArticles.mockResolvedValue({ data: { results: [] } })
+    const { wrapper, router } = await mountHelp({ q: 'missing-topic' })
+    expect(wrapper.find('[data-testid="help-clear-search"]').exists()).toBe(true)
+    await wrapper.get('[data-testid="help-clear-search"]').trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.query.q).toBeUndefined()
+  })
+
+  it('shows contextual banner when a key matches multiple articles', async () => {
+    fetchHelpArticles.mockResolvedValue({
+      data: {
+        results: [
+          { ...sampleArticles[0], contextual_keys: ['Applications'] },
+          { ...sampleArticles[1], contextual_keys: ['Applications'] },
+        ],
+      },
+    })
+    const { wrapper } = await mountHelp({ key: 'Applications' })
+    expect(wrapper.find('[data-testid="help-contextual-banner"]').exists()).toBe(true)
+  })
+
+  it('groups unknown topics after the ordered topics', async () => {
+    fetchHelpArticles.mockResolvedValue({
+      data: {
+        results: [
+          {
+            slug: 'custom-topic-guide',
+            title: 'Custom topic guide',
+            introduction: 'Extra help',
+            topic: 'custom_topic',
+            contextual_keys: [],
+          },
+          sampleArticles[0],
+        ],
+      },
+    })
+    const { wrapper } = await mountHelp()
+    expect(wrapper.find('[data-testid="help-topic-applications"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="help-topic-custom_topic"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain('Custom topic guide')
+  })
+
+  it('shows load error state when articles fail to fetch', async () => {
+    fetchHelpArticles.mockRejectedValue(new Error('offline'))
+    const { wrapper } = await mountHelp()
+    expect(wrapper.find('[data-testid="help-center-error"]').exists()).toBe(true)
+    expect(wrapper.text()).toContain(i18n.global.t('help.loadError'))
+  })
+
+  it('replays the welcome tour from the walkthrough card', async () => {
+    const { wrapper } = await mountHelp()
+    await wrapper.get('[data-testid="help-replay-welcome-tour"]').trigger('click')
+    await flushPromises()
+    expect(useProductTour().open.value).toBe(true)
+  })
+
+  it('shows review-queue page tour for staff roles', async () => {
+    authStoreMock.canUseStaffReviewQueue = true
+    const { wrapper } = await mountHelp()
+    expect(wrapper.find('[data-testid="help-start-page-tour-review-queue"]').exists()).toBe(true)
+  })
 })
