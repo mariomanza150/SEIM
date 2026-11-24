@@ -1480,6 +1480,12 @@ class ApplicationListSerializer(ApplicationSerializer):
             "readiness",
         )
 
+    def to_representation(self, instance):
+        # Skip ApplicationSerializer.to_representation scholarship gating —
+        # list fields omit scholarship and that path hit InstitutionFeatureSettings
+        # once per row (N+1).
+        return super(ApplicationSerializer, self).to_representation(instance)
+
 
 _WORKFLOW_SLUG_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 

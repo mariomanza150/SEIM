@@ -157,12 +157,15 @@ class InstitutionFeaturesAPIView(APIView):
         return Response(InstitutionFeatureSettingsSerializer(settings_obj).data)
 
     def patch(self, request):
+        from core.feature_settings import clear_scholarships_enabled_cache
+
         settings_obj = InstitutionFeatureSettings.get_solo()
         serializer = InstitutionFeatureSettingsSerializer(
             settings_obj, data=request.data, partial=True
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        clear_scholarships_enabled_cache()
         return Response(serializer.data)
 
 
