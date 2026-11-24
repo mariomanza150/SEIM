@@ -19,15 +19,11 @@ def test_mock_allowed_on_development_and_test():
 
 def test_mock_denied_on_production_without_override():
     assert mock_virus_scanner_allowed(deploy_tier="production") is False
-    assert (
-        mock_virus_scanner_allowed(deploy_tier="production", allow_mock=True) is True
-    )
+    assert mock_virus_scanner_allowed(deploy_tier="production", allow_mock=True) is True
 
 
 def test_resolve_defaults_to_mock_on_development():
-    assert (
-        resolve_virus_scanner_type(deploy_tier="development", environ={}) == "mock"
-    )
+    assert resolve_virus_scanner_type(deploy_tier="development", environ={}) == "mock"
 
 
 def test_resolve_requires_type_on_production():
