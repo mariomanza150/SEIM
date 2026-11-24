@@ -18,6 +18,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from lxml import etree
 
 W_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
 NSMAP = {"w": W_NS}
 FLD_INSTR_RE = re.compile(r"MERGEFIELD\s+([A-Za-z][A-Za-z0-9_]*)", re.IGNORECASE)
 PLACEHOLDER_RE = re.compile(r"\{\{([A-Za-z][A-Za-z0-9_]*)\}\}")
@@ -247,26 +248,92 @@ def is_docx_filename(name: str | None) -> bool:
     return bool(name) and str(name).lower().endswith(".docx")
 
 
+def _is_merge_part(name: str) -> bool:
+    if not (name.startswith("word/") and name.endswith(".xml")):
+        return False
+    base = name.rsplit("/", 1)[-1]
+    return (
+        base == "document.xml" or base.startswith("header") or base.startswith("footer")
+    )
+
+
+def _make_value_lookup(values: dict[str, str]):
+    """Exact key match wins; otherwise case-insensitive fallback."""
+    lower_map = {key.lower(): value for key, value in values.items()}
+
+    def lookup(name: str) -> str:
+        if name in values:
+            return values[name]
+        return lower_map.get(name.lower(), "")
+
+    return lookup
+
+
+def _iter_paragraph_text_nodes(para):
+    """Yield ``w:t`` nodes owned by ``para``, skipping nested paragraphs.
+
+    Nested ``w:p`` (e.g. inside ``w:txbxContent``) are handled by their own
+    paragraph iteration. Intervening siblings such as ``w:proofErr`` and
+    bookmarks are ignored automatically.
+    """
+
+    def walk(elem):
+        for child in elem:
+            if child.tag == f"{{{W_NS}}}p":
+                continue
+            if child.tag == f"{{{W_NS}}}t":
+                yield child
+            else:
+                yield from walk(child)
+
+    yield from walk(para)
+
+
+def _xml_has_fillable_fields(xml_bytes: bytes) -> bool:
+    """Detect MERGEFIELD / ``{{Name}}`` after concatenating split runs."""
+    try:
+        root = etree.fromstring(xml_bytes)
+    except etree.XMLSyntaxError:
+        return False
+
+    for para in root.xpath(".//w:p", namespaces=NSMAP):
+        full_text = "".join(
+            (node.text or "") for node in _iter_paragraph_text_nodes(para)
+        )
+        if PLACEHOLDER_RE.search(full_text):
+            return True
+
+    instr_text = "".join(
+        (node.text or "") for node in root.xpath(".//w:instrText", namespaces=NSMAP)
+    )
+    if FLD_INSTR_RE.search(instr_text):
+        return True
+
+    for el in root.xpath(".//w:fldSimple", namespaces=NSMAP):
+        instr = el.get(f"{{{W_NS}}}instr") or ""
+        if FLD_INSTR_RE.search(instr):
+            return True
+
+    return False
+
+
 def docx_has_fillable_fields(template_bytes: bytes) -> bool:
     """True when the package contains MERGEFIELD or ``{{Name}}`` placeholders.
 
-    Official blank CGRI forms (FS-CC / FS-CP / FS-PR) have neither; calling
-    ``merge_docx`` on them rewrites XML/ZIP bytes and must be skipped.
+    Blank forms with neither must stay untouched: calling ``merge_docx`` on them
+    rewrites XML/ZIP bytes and must be skipped. Placeholders split across Word
+    runs are detected by concatenating each paragraph's ``w:t`` text.
     """
     try:
         with zipfile.ZipFile(io.BytesIO(template_bytes), "r") as src:
             for name in src.namelist():
-                if not (name.startswith("word/") and name.endswith(".xml")):
+                if not _is_merge_part(name):
                     continue
-                base = name.rsplit("/", 1)[-1]
-                if not (
-                    base == "document.xml"
-                    or base.startswith("header")
-                    or base.startswith("footer")
-                ):
-                    continue
-                text = src.read(name).decode("utf-8", errors="ignore")
+                raw = src.read(name)
+                text = raw.decode("utf-8", errors="ignore")
                 if FLD_INSTR_RE.search(text) or PLACEHOLDER_RE.search(text):
+                    return True
+                if _xml_has_fillable_fields(raw):
                     return True
     except zipfile.BadZipFile:
         return False
@@ -278,23 +345,22 @@ def _set_run_text(run, text: str) -> None:
     texts = run.findall(f"{{{W_NS}}}t")
     if texts:
         texts[0].text = text
-        texts[0].set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+        texts[0].set(XML_SPACE, "preserve")
         for extra in texts[1:]:
             run.remove(extra)
         return
     t_el = etree.SubElement(run, f"{{{W_NS}}}t")
-    t_el.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+    t_el.set(XML_SPACE, "preserve")
     t_el.text = text
 
 
-def _replace_simple_fields(root, values: dict[str, str]) -> None:
+def _replace_simple_fields(root, lookup) -> None:
     for el in root.xpath(".//w:fldSimple", namespaces=NSMAP):
         instr = el.get(f"{{{W_NS}}}instr") or ""
         match = FLD_INSTR_RE.search(instr)
         if not match:
             continue
-        name = match.group(1)
-        value = values.get(name, values.get(name.lower(), ""))
+        value = lookup(match.group(1))
         runs = el.findall(f"{{{W_NS}}}r")
         if runs:
             _set_run_text(runs[0], value)
@@ -305,7 +371,7 @@ def _replace_simple_fields(root, values: dict[str, str]) -> None:
             _set_run_text(run, value)
 
 
-def _replace_complex_fields(parent, values: dict[str, str]) -> None:
+def _replace_complex_fields(parent, lookup) -> None:
     """Replace begin/separate/end MERGEFIELD sequences under ``parent``."""
     children = list(parent)
     i = 0
@@ -315,7 +381,7 @@ def _replace_complex_fields(parent, values: dict[str, str]) -> None:
         if fld is None or fld.get(f"{{{W_NS}}}fldCharType") != "begin":
             # Recurse into containers (hyperlinks, sdt, etc.)
             if child.tag != f"{{{W_NS}}}r":
-                _replace_complex_fields(child, values)
+                _replace_complex_fields(child, lookup)
             i += 1
             continue
 
@@ -354,8 +420,7 @@ def _replace_complex_fields(parent, values: dict[str, str]) -> None:
             children = list(parent)
             continue
 
-        name = match.group(1)
-        value = values.get(name, values.get(name.lower(), ""))
+        value = lookup(match.group(1))
         end_idx = j  # exclusive
 
         # Keep the first result run (after separate, or the begin run) as the value.
@@ -384,24 +449,82 @@ def _replace_complex_fields(parent, values: dict[str, str]) -> None:
             i = begin_idx + 1
 
 
-def _replace_placeholders(root, values: dict[str, str]) -> None:
-    for t_el in root.xpath(".//w:t", namespaces=NSMAP):
-        if not t_el.text or "{{" not in t_el.text:
-            continue
+def _char_index_to_node(
+    texts: list[str], pos: int, *, exclusive_end: bool = False
+) -> tuple[int, int]:
+    """Map a character offset in ``"".join(texts)`` to ``(node_index, offset)``.
 
-        def _sub(match: re.Match) -> str:
-            name = match.group(1)
-            return values.get(name, values.get(name.lower(), ""))
+    Start indices use strict ``<`` so a match that begins exactly on a ``<w:t>``
+    boundary lands in the following run (skipping empty ``w:t`` nodes). Exclusive
+    end indices keep ``<=`` so the end offset stays on the correct node.
+    """
+    remaining = pos
+    for index, text in enumerate(texts):
+        if exclusive_end:
+            if remaining <= len(text):
+                return index, remaining
+        elif remaining < len(text):
+            return index, remaining
+        remaining -= len(text)
+    if not texts:
+        return 0, 0
+    return len(texts) - 1, len(texts[-1])
 
-        t_el.text = PLACEHOLDER_RE.sub(_sub, t_el.text)
+
+def _splice_replacement(
+    texts: list[str], start: int, end: int, value: str
+) -> tuple[int, int]:
+    """Replace ``texts`` span ``[start:end)`` with ``value``; return touched range."""
+    start_i, start_off = _char_index_to_node(texts, start)
+    end_i, end_off = _char_index_to_node(texts, end, exclusive_end=True)
+    if start_i == end_i:
+        node_text = texts[start_i]
+        texts[start_i] = node_text[:start_off] + value + node_text[end_off:]
+        return start_i, start_i
+
+    texts[start_i] = texts[start_i][:start_off] + value
+    for index in range(start_i + 1, end_i):
+        texts[index] = ""
+    texts[end_i] = texts[end_i][end_off:]
+    return start_i, end_i
+
+
+def _replace_placeholders_in_paragraph(para, lookup) -> None:
+    t_nodes = list(_iter_paragraph_text_nodes(para))
+    if not t_nodes:
+        return
+
+    texts = [node.text or "" for node in t_nodes]
+    full_text = "".join(texts)
+    matches = list(PLACEHOLDER_RE.finditer(full_text))
+    if not matches:
+        return
+
+    touched: set[int] = set()
+    # Right-to-left so earlier match offsets stay valid as later spans shrink/grow.
+    for match in reversed(matches):
+        value = lookup(match.group(1))
+        start_i, end_i = _splice_replacement(texts, match.start(), match.end(), value)
+        touched.update(range(start_i, end_i + 1))
+
+    for index in sorted(touched):
+        t_nodes[index].text = texts[index]
+        t_nodes[index].set(XML_SPACE, "preserve")
+
+
+def _replace_placeholders(root, lookup) -> None:
+    """Fill ``{{Name}}`` placeholders, including those split across Word runs."""
+    for para in root.xpath(".//w:p", namespaces=NSMAP):
+        _replace_placeholders_in_paragraph(para, lookup)
 
 
 def _merge_xml_bytes(xml_bytes: bytes, values: dict[str, str]) -> bytes:
     root = etree.fromstring(xml_bytes)
-    _replace_simple_fields(root, values)
+    lookup = _make_value_lookup(values)
+    _replace_simple_fields(root, lookup)
     for para in root.xpath(".//w:p", namespaces=NSMAP):
-        _replace_complex_fields(para, values)
-    _replace_placeholders(root, values)
+        _replace_complex_fields(para, lookup)
+    _replace_placeholders(root, lookup)
     return etree.tostring(root, xml_declaration=True, encoding="UTF-8", standalone=True)
 
 
@@ -413,17 +536,11 @@ def merge_docx(template_bytes: bytes, values: dict[str, str]) -> bytes:
         for info in src.infolist():
             data = src.read(info.filename)
             name = info.filename
-            if name.startswith("word/") and name.endswith(".xml"):
-                base = name.rsplit("/", 1)[-1]
-                if (
-                    base == "document.xml"
-                    or base.startswith("header")
-                    or base.startswith("footer")
-                ):
-                    try:
-                        data = _merge_xml_bytes(data, values)
-                    except etree.XMLSyntaxError:
-                        pass
+            if _is_merge_part(name):
+                try:
+                    data = _merge_xml_bytes(data, values)
+                except etree.XMLSyntaxError:
+                    pass
             dest.writestr(info, data)
     src.close()
     return out_buf.getvalue()
