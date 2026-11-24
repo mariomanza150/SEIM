@@ -14,7 +14,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema
 from rest_framework import filters, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.response import Response
 
 from core.cache import (
@@ -2060,6 +2060,16 @@ class CommentViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ["application", "author", "is_private"]
 
+    def _is_staff_commenter(self, user) -> bool:
+        return bool(
+            user.is_staff
+            or user.is_superuser
+            or (
+                hasattr(user, "has_any_role")
+                and user.has_any_role(["coordinator", "admin"])
+            )
+        )
+
     def get_queryset(self):
         """
         Filter comments based on user role and permissions with optimizations.
@@ -2093,10 +2103,17 @@ class CommentViewSet(viewsets.ModelViewSet):
         invalidate_application_api_responses(serializer.instance.application)
 
     def perform_update(self, serializer):
+        user = self.request.user
+        comment = serializer.instance
+        if not self._is_staff_commenter(user) and comment.author_id != user.id:
+            raise PermissionDenied("You can only edit your own comments.")
         serializer.save()
         invalidate_application_api_responses(serializer.instance.application)
 
     def perform_destroy(self, instance):
+        user = self.request.user
+        if not self._is_staff_commenter(user) and instance.author_id != user.id:
+            raise PermissionDenied("You can only delete your own comments.")
         application = instance.application
         instance.delete()
         invalidate_application_api_responses(application)
