@@ -165,9 +165,13 @@ class DocumentType(models.Model):
 
     def parsed_accepted_extensions(self) -> list[str]:
         seen: list[str] = []
-        families = self.file_type_families.all()
-        if hasattr(families, "filter"):
-            families = families.filter(is_active=True)
+        # Prefer prefetched M2M rows: ``.filter()`` on the related manager
+        # bypasses the prefetch cache and causes per-row N+1 on document lists.
+        cache = getattr(self, "_prefetched_objects_cache", None)
+        if cache is not None and "file_type_families" in cache:
+            families = [f for f in self.file_type_families.all() if f.is_active]
+        else:
+            families = self.file_type_families.filter(is_active=True)
         for family in families:
             for ext in family.parsed_extensions():
                 if ext not in seen:

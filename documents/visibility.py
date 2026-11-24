@@ -50,7 +50,12 @@ def _type_role_flag(document_type: DocumentType | None, role: str):
     return None
 
 
-def can_view_document_version_history(user, document_type: DocumentType | None) -> bool:
+def can_view_document_version_history(
+    user,
+    document_type: DocumentType | None,
+    *,
+    settings_obj: InstitutionFeatureSettings | None = None,
+) -> bool:
     """
     Institution master switch + per-type visibility + role flags.
 
@@ -62,8 +67,12 @@ def can_view_document_version_history(user, document_type: DocumentType | None) 
         type.version_history_<role>
       else:
         institution.document_version_history_<role>
+
+    Pass ``settings_obj`` from the request/serializer context when serializing
+    many documents so ``get_solo()`` is not queried once per row.
     """
-    settings_obj = InstitutionFeatureSettings.get_solo()
+    if settings_obj is None:
+        settings_obj = InstitutionFeatureSettings.get_solo()
     if not settings_obj.document_version_history_enabled:
         return False
 

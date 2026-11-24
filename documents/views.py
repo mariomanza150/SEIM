@@ -961,23 +961,29 @@ class DocumentViewSet(viewsets.ModelViewSet):
             "created_at"
         )
 
+        related = (
+            "application",
+            "application__student",
+            "application__program",
+            "application__status",
+            "type",
+            "uploaded_by",
+            "supersedes",
+        )
+        prefetches = (
+            "uploaded_by__roles",
+            "type__file_type_families",
+            "successors",
+            Prefetch("documentvalidation_set", queryset=val_qs),
+            Prefetch("documentresubmissionrequest_set", queryset=resub_qs),
+            Prefetch("documentcomment_set", queryset=comment_qs),
+        )
+
         # Students can only see their own documents
         qs = (
             Document.objects.filter(Q(uploaded_by=user) | Q(application__student=user))
-            .select_related(
-                "application",
-                "application__student",
-                "application__program",
-                "application__status",
-                "type",
-                "uploaded_by",
-            )
-            .prefetch_related(
-                "uploaded_by__roles",
-                Prefetch("documentvalidation_set", queryset=val_qs),
-                Prefetch("documentresubmissionrequest_set", queryset=resub_qs),
-                Prefetch("documentcomment_set", queryset=comment_qs),
-            )
+            .select_related(*related)
+            .prefetch_related(*prefetches)
         )
 
         # Coordinators and admins can see all documents
@@ -989,19 +995,7 @@ class DocumentViewSet(viewsets.ModelViewSet):
                 and (user.has_role("coordinator") or user.has_role("admin"))
             )
         ):
-            qs = Document.objects.select_related(
-                "application",
-                "application__student",
-                "application__program",
-                "application__status",
-                "type",
-                "uploaded_by",
-            ).prefetch_related(
-                "uploaded_by__roles",
-                Prefetch("documentvalidation_set", queryset=val_qs),
-                Prefetch("documentresubmissionrequest_set", queryset=resub_qs),
-                Prefetch("documentcomment_set", queryset=comment_qs),
-            )
+            qs = Document.objects.select_related(*related).prefetch_related(*prefetches)
 
         include_superseded = str(
             self.request.query_params.get("include_superseded", "")
@@ -1010,6 +1004,31 @@ class DocumentViewSet(viewsets.ModelViewSet):
         if getattr(self, "action", None) == "list" and not include_superseded:
             qs = qs.filter(successors__isnull=True)
         return qs
+
+    def get_serializer_context(self):
+        """Attach per-request caches so list serialization stays O(1) queries/row."""
+        ctx = super().get_serializer_context()
+        user = self.request.user
+        if getattr(user, "is_authenticated", False):
+            # Populate roles prefetch cache so has_role()/has_any_role() do not
+            # issue EXISTS queries once per document row.
+            roles = list(user.roles.all())
+            cache = getattr(user, "_prefetched_objects_cache", None)
+            if cache is None:
+                user._prefetched_objects_cache = {}
+            user._prefetched_objects_cache["roles"] = roles
+            ctx["viewer_is_document_staff"] = bool(
+                user.is_staff
+                or user.is_superuser
+                or user.has_role("coordinator")
+                or user.has_role("admin")
+            )
+        else:
+            ctx["viewer_is_document_staff"] = False
+        from core.models import InstitutionFeatureSettings
+
+        ctx["institution_feature_settings"] = InstitutionFeatureSettings.get_solo()
+        return ctx
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
