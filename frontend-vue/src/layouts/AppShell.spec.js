@@ -32,14 +32,21 @@ vi.mock('@/services/api', () => ({
   },
 }))
 
+const { Offcanvas: OffcanvasMock, offcanvasHide } = vi.hoisted(() => {
+  const hide = vi.fn()
+  function Mock() {
+    this.hide = hide
+  }
+  Mock.getInstance = vi.fn(() => null)
+  return { Offcanvas: Mock, offcanvasHide: hide }
+})
+
 vi.mock('bootstrap', () => ({
-  Offcanvas: {
-    getInstance: vi.fn(() => null),
-  },
+  Offcanvas: OffcanvasMock,
 }))
 
 const authStoreMock = {
-  userName: 'Sofia Martinez',
+  userName: 'Test User',
   isAdmin: false,
   canUseStaffReviewQueue: false,
   canUsePartnerPortal: false,
@@ -59,6 +66,7 @@ const routeNames = [
   'NotificationRouting',
   'StaffExchangeAgreements',
   'EligibilityRulesets',
+  'ScholarshipScoringRulesets',
   'Nominations',
   'AnalyticsForecasts',
   'PartnerPortal',
@@ -105,6 +113,12 @@ describe('AppShell navbar', () => {
     localStorage.clear()
     setAppLocale('en')
     vi.clearAllMocks()
+    authStoreMock.userName = 'Test User'
+    authStoreMock.isAdmin = false
+    authStoreMock.canUseStaffReviewQueue = false
+    authStoreMock.canUsePartnerPortal = false
+    authStoreMock.logout.mockResolvedValue(undefined)
+    offcanvasHide.mockClear()
   })
 
   afterEach(() => {
@@ -129,11 +143,50 @@ describe('AppShell navbar', () => {
     return { wrapper, router }
   }
 
-  it('always shows notifications and the user name outside the collapse', async () => {
+  it('always shows notifications and the user menu outside the collapse', async () => {
     const { wrapper } = await mountShell()
     expect(wrapper.find('.navbar-collapse').exists()).toBe(false)
     expect(wrapper.find('[data-testid="notifications-menu"]').exists()).toBe(true)
-    expect(wrapper.get('[data-testid="user-menu"]').text()).toContain('Sofia Martinez')
+    expect(wrapper.get('[data-testid="user-menu"]').attributes('aria-label')).toContain('Test User')
+    expect(wrapper.get('.seim-app-shell__user-menu').classes()).toContain('seim-app-shell__user-menu')
+    wrapper.unmount()
+  })
+
+  it('keeps logout reachable from the mobile offcanvas for every role chrome', async () => {
+    authStoreMock.isAdmin = true
+    authStoreMock.canUseStaffReviewQueue = true
+    authStoreMock.logout.mockClear()
+    offcanvasHide.mockClear()
+
+    const { wrapper, router } = await mountShell()
+    expect(wrapper.find('[data-testid="logout-link-offcanvas"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="admin-menu"]').exists()).toBe(true)
+    expect(wrapper.find('.seim-app-shell__user-menu').exists()).toBe(true)
+    // Command palette yields space on phone widths; locale moves into the drawer.
+    expect(wrapper.get('[data-testid="app-shell-command-palette"]').element.closest('li').className).toContain(
+      'd-none',
+    )
+
+    await wrapper.get('[data-testid="logout-link-offcanvas"]').trigger('click')
+    await flushPromises()
+    expect(authStoreMock.logout).toHaveBeenCalled()
+    expect(router.currentRoute.value.name).toBe('Login')
+
+    authStoreMock.isAdmin = false
+    authStoreMock.canUseStaffReviewQueue = false
+    wrapper.unmount()
+  })
+
+  it('logs out from the partner role chrome via the offcanvas control', async () => {
+    authStoreMock.canUsePartnerPortal = true
+    authStoreMock.logout.mockClear()
+    const { wrapper, router } = await mountShell()
+    expect(wrapper.find('[data-testid="user-menu"]').exists()).toBe(true)
+    await wrapper.get('[data-testid="logout-link-offcanvas"]').trigger('click')
+    await flushPromises()
+    expect(authStoreMock.logout).toHaveBeenCalled()
+    expect(router.currentRoute.value.name).toBe('Login')
+    authStoreMock.canUsePartnerPortal = false
     wrapper.unmount()
   })
 

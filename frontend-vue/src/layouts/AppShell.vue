@@ -44,10 +44,11 @@
         </div>
 
         <ul class="navbar-nav flex-row align-items-center flex-nowrap ms-auto seim-app-shell__utilities">
-          <li class="nav-item d-flex align-items-center me-1">
+          <!-- Lower-priority utilities hide first so the user menu (logout) stays on-screen. -->
+          <li class="nav-item d-none d-md-flex align-items-center me-1">
             <button
               type="button"
-              class="btn btn-outline-light btn-sm d-inline-flex align-items-center gap-1"
+              class="btn btn-outline-light btn-sm d-inline-flex align-items-center gap-1 seim-tap-target"
               data-testid="app-shell-command-palette"
               data-tour="command-palette"
               :aria-label="t('commandPalette.openAria')"
@@ -58,7 +59,7 @@
               <kbd class="d-none d-xl-inline seim-command-palette-kbd">{{ commandPaletteShortcut }}</kbd>
             </button>
           </li>
-          <li class="nav-item d-flex align-items-center me-1">
+          <li class="nav-item d-none d-sm-flex align-items-center me-1">
             <LocaleSwitcher
               active-class="btn-light btn-sm"
               inactive-class="btn-outline-light btn-sm"
@@ -67,7 +68,7 @@
           <li class="nav-item d-flex align-items-center">
             <button
               type="button"
-              class="btn btn-link nav-link py-2 seim-theme-toggle"
+              class="btn btn-link nav-link py-2 seim-theme-toggle seim-tap-target"
               data-testid="app-shell-theme-toggle"
               :aria-label="themeToggleAria"
               @click="toggleNavTheme"
@@ -78,10 +79,10 @@
           <TesterMenu />
           <NotificationDropdown />
 
-          <li v-if="authStore.isAdmin" class="nav-item dropdown" ref="adminMenuRoot">
+          <li v-if="authStore.isAdmin" class="nav-item dropdown seim-app-shell__admin-menu" ref="adminMenuRoot">
             <button
               type="button"
-              class="nav-link dropdown-toggle seim-nav-text-btn"
+              class="nav-link dropdown-toggle seim-nav-text-btn seim-tap-target"
               id="spaAdminNavDropdown"
               data-testid="admin-menu"
               data-tour="admin-menu"
@@ -91,7 +92,7 @@
               @click="toggleAdminMenu"
             >
               <i class="bi bi-sliders me-1" aria-hidden="true"></i>
-              <span class="d-none d-md-inline">{{ t('adminNav.consoleMenu') }}</span>
+              <span class="d-none d-lg-inline">{{ t('adminNav.consoleMenu') }}</span>
             </button>
             <ul
               class="dropdown-menu dropdown-menu-end"
@@ -145,10 +146,10 @@
             </ul>
           </li>
 
-          <li class="nav-item dropdown" ref="userMenuRoot">
+          <li class="nav-item dropdown seim-app-shell__user-menu" ref="userMenuRoot">
             <button
               type="button"
-              class="nav-link dropdown-toggle d-flex align-items-center seim-nav-text-btn"
+              class="nav-link dropdown-toggle d-flex align-items-center seim-nav-text-btn seim-tap-target"
               id="userDropdown"
               data-testid="user-menu"
               :class="{ show: userMenuOpen }"
@@ -158,7 +159,7 @@
               @click="toggleUserMenu"
             >
               <i class="bi bi-person-circle me-1" aria-hidden="true"></i>
-              <span class="d-none d-sm-inline text-truncate seim-user-name">{{ userName }}</span>
+              <span class="d-none d-md-inline text-truncate seim-user-name">{{ userName }}</span>
             </button>
             <ul
               class="dropdown-menu dropdown-menu-end"
@@ -202,13 +203,31 @@
         <h5 class="offcanvas-title">{{ brandLabel }}</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" :aria-label="t('common.close')" />
       </div>
-      <div class="offcanvas-body pt-0">
+      <div class="offcanvas-body pt-0 d-flex flex-column">
         <SidebarNavList
           :sections="navSections"
           id-prefix="seim-offcanvas-nav"
           data-tour="sidebar-nav"
           @navigate="closeSidebarOffcanvas"
         />
+        <!-- Locale + logout stay reachable when the top bar is too dense for phone widths. -->
+        <div class="mt-auto pt-3 border-top seim-app-shell__offcanvas-account">
+          <div class="d-sm-none mb-3">
+            <LocaleSwitcher
+              active-class="btn-primary btn-sm"
+              inactive-class="btn-outline-secondary btn-sm"
+            />
+          </div>
+          <button
+            type="button"
+            class="btn btn-outline-danger w-100 seim-tap-target"
+            data-testid="logout-link-offcanvas"
+            @click="handleLogout"
+          >
+            <i class="bi bi-box-arrow-right me-1" aria-hidden="true" />
+            {{ t('dashboard.logout') }}
+          </button>
+        </div>
       </div>
     </div>
 
@@ -572,6 +591,7 @@ function closeSidebarOffcanvas() {
 
 async function handleLogout() {
   closeUserMenu()
+  closeSidebarOffcanvas()
   await authStore.logout()
   await router.replace({ name: 'Login' })
 }
@@ -637,6 +657,27 @@ async function handleLogout() {
   gap: 0.15rem;
   flex-shrink: 1;
   min-width: 0;
+}
+
+/* User menu (logout) must never be clipped by the nowrap utility strip. */
+.seim-app-shell__user-menu {
+  flex-shrink: 0;
+}
+
+.seim-app-shell__admin-menu {
+  flex-shrink: 0;
+}
+
+.seim-tap-target {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.seim-app-shell__offcanvas-account {
+  flex-shrink: 0;
 }
 
 .seim-navbar-brand__logo {
