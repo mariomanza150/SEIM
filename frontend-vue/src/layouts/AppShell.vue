@@ -8,18 +8,19 @@
       <div class="container-fluid seim-app-shell__navbar-inner">
         <div class="d-flex align-items-center flex-shrink-0">
           <button
-            class="btn btn-outline-light me-2 d-lg-none"
+            class="btn btn-outline-light me-2 d-lg-none seim-tap-target"
             type="button"
             data-bs-toggle="offcanvas"
             data-bs-target="#seimSidebarOffcanvas"
             aria-controls="seimSidebarOffcanvas"
+            data-testid="sidebar-offcanvas-toggle"
             :aria-label="t('dashboard.toggleNav')"
           >
             <i class="bi bi-list" aria-hidden="true" />
           </button>
           <button
             type="button"
-            class="btn btn-outline-light me-2 d-none d-md-inline-flex align-items-center"
+            class="btn btn-outline-light me-2 d-none d-lg-inline-flex align-items-center seim-tap-target"
             :aria-pressed="sidebarCollapsed ? 'true' : 'false'"
             :aria-label="t('dashboard.toggleSidebar')"
             :title="sidebarCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')"
@@ -234,8 +235,8 @@
     <div class="container-fluid mt-4">
       <div class="row">
         <aside
-          class="d-none d-md-block seim-app-shell__aside"
-          :class="sidebarCollapsed ? 'seim-app-shell__aside--rail' : 'col-md-3 col-lg-2'"
+          class="d-none d-lg-block seim-app-shell__aside"
+          :class="sidebarCollapsed ? 'seim-app-shell__aside--rail' : 'col-lg-2'"
           :aria-label="t('dashboard.mainNavAria')"
           data-tour="sidebar-nav"
           data-testid="app-shell-aside"
@@ -262,7 +263,7 @@
         <section
           ref="mainColEl"
           class="seim-app-shell__main-col"
-          :class="sidebarCollapsed ? 'col' : 'col-12 col-md-9 col-lg-10'"
+          :class="sidebarCollapsed ? 'col' : 'col-12 col-lg-10'"
           data-testid="app-shell-main"
         >
           <router-view v-slot="{ Component }">
@@ -334,6 +335,16 @@ watch(
   (next, prev) => {
     if (!prev || next === prev) return
     nextTick(() => scrollMainIntoView(mainColEl.value))
+  },
+)
+
+// Close the mobile drawer on any route change (including browser back / deep links)
+// so the backdrop cannot cover the newly shown view.
+watch(
+  () => route.fullPath,
+  (next, prev) => {
+    if (!prev || next === prev) return
+    closeSidebarOffcanvas()
   },
 )
 
@@ -651,6 +662,8 @@ async function handleLogout() {
 
 .seim-app-shell__rail-toggle {
   line-height: 1;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
 }
 
 .seim-app-shell__utilities {

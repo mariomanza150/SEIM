@@ -242,9 +242,12 @@ defineExpose({ refresh: fetchRecent })
 }
 
 .btn-close-sm {
+  box-sizing: content-box;
   width: 0.65rem;
   height: 0.65rem;
-  padding: 0.45rem;
+  /* Enlarge the hit area to ~44px without growing the visible X. */
+  padding: 0.85rem;
+  margin: -0.4rem;
   background-size: 0.55em;
   opacity: 0.55;
 }

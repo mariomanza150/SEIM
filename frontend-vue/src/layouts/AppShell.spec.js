@@ -21,7 +21,7 @@ vi.mock('@/services/api', () => ({
             nav_brand: 'SEIM',
             short_name: 'SEIM',
             name: 'SEIM',
-            theme_css: 'uadec/theme.css',
+            theme_css: 'brand/theme.css',
             theme: {},
           },
         })
@@ -149,6 +149,26 @@ describe('AppShell navbar', () => {
     expect(wrapper.find('[data-testid="notifications-menu"]').exists()).toBe(true)
     expect(wrapper.get('[data-testid="user-menu"]').attributes('aria-label')).toContain('Test User')
     expect(wrapper.get('.seim-app-shell__user-menu').classes()).toContain('seim-app-shell__user-menu')
+    wrapper.unmount()
+  })
+
+  it('exposes a testable mobile offcanvas toggle and keeps aside desktop-only', async () => {
+    const { wrapper } = await mountShell()
+    const toggle = wrapper.get('[data-testid="sidebar-offcanvas-toggle"]')
+    expect(toggle.classes()).toContain('d-lg-none')
+    expect(toggle.classes()).toContain('seim-tap-target')
+    expect(wrapper.get('[data-testid="app-shell-aside"]').classes()).toContain('d-lg-block')
+    expect(wrapper.get('[data-testid="app-shell-aside"]').classes()).not.toContain('d-md-block')
+    expect(wrapper.get('[data-testid="sidebar-collapse-toggle"]').classes()).toContain('d-lg-inline-flex')
+    wrapper.unmount()
+  })
+
+  it('closes the offcanvas when the route changes (back / deep link)', async () => {
+    const { wrapper, router } = await mountShell()
+    offcanvasHide.mockClear()
+    await router.push({ name: 'Applications' })
+    await flushPromises()
+    expect(offcanvasHide).toHaveBeenCalled()
     wrapper.unmount()
   })
 
