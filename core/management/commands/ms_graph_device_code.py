@@ -137,6 +137,7 @@ class Command(BaseCommand):
         self.stdout.write(
             self.style.SUCCESS(
                 f"Refresh token written to {path.resolve()}. "
-                "Set MS_GRAPH_REFRESH_TOKEN from this file (do not commit it)."
+                "Set MS_GRAPH_REFRESH_TOKEN from this file (do not commit it). "
+                "Any prior reconnect-required flag was cleared."
             )
         )

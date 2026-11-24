@@ -22,6 +22,8 @@ from core.email.ms_graph import (
     CACHE_REFRESH_KEY,
     MicrosoftGraphAuthError,
     get_access_token,
+    is_reconnect_required,
+    mark_reconnect_required,
     persist_refresh_token,
     refresh_access_token,
     send_mail_payload,
@@ -46,9 +48,13 @@ GRAPH_SETTINGS = {
 
 @pytest.fixture(autouse=True)
 def _clear_cache():
-    cache.clear()
+    # LocMem LOCATION is shared across Graph tests; clear it under that backend
+    # so reconnect flags cannot leak (test settings default to DummyCache).
+    with override_settings(CACHES=LOCMEM_CACHES):
+        cache.clear()
     yield
-    cache.clear()
+    with override_settings(CACHES=LOCMEM_CACHES):
+        cache.clear()
 
 
 @override_settings(**GRAPH_SETTINGS)
@@ -123,14 +129,122 @@ def test_send_messages_success(mock_post):
 
 @override_settings(**GRAPH_SETTINGS)
 @patch("core.email.ms_graph.requests.post")
-def test_refresh_failure_raises(mock_post):
+def test_refresh_invalid_grant_sets_reconnect_and_stops_retries(mock_post):
     fail_resp = MagicMock()
     fail_resp.status_code = 400
-    fail_resp.json.return_value = {"error": "invalid_grant"}
+    fail_resp.json.return_value = {
+        "error": "invalid_grant",
+        "error_codes": [70000],
+        "error_description": "should-not-appear-in-logs",
+    }
+    mock_post.return_value = fail_resp
+
+    with pytest.raises(MicrosoftGraphAuthError, match="reconnect required") as excinfo:
+        refresh_access_token()
+    assert excinfo.value.reconnect_required is True
+    assert excinfo.value.error_code == "invalid_grant"
+    assert is_reconnect_required()
+
+    mock_post.reset_mock()
+    with pytest.raises(MicrosoftGraphAuthError, match="reconnect required"):
+        refresh_access_token()
+    mock_post.assert_not_called()
+
+    with pytest.raises(MicrosoftGraphAuthError, match="reconnect required"):
+        send_mail_payload(
+            {
+                "message": {
+                    "subject": "x",
+                    "body": {"contentType": "Text", "content": "y"},
+                }
+            }
+        )
+    mock_post.assert_not_called()
+
+
+@override_settings(**GRAPH_SETTINGS)
+@patch("core.email.ms_graph.requests.post")
+def test_refresh_5xx_does_not_set_reconnect(mock_post):
+    fail_resp = MagicMock()
+    fail_resp.status_code = 503
+    fail_resp.json.return_value = {"error": "temporarily_unavailable"}
     mock_post.return_value = fail_resp
 
     with pytest.raises(MicrosoftGraphAuthError, match="token refresh failed"):
         refresh_access_token()
+    assert not is_reconnect_required()
+
+
+@override_settings(**GRAPH_SETTINGS)
+@patch("core.email.ms_graph.requests.post")
+def test_refresh_network_error_does_not_set_reconnect(mock_post):
+    import requests as req
+
+    mock_post.side_effect = req.ConnectionError("boom")
+    with pytest.raises(MicrosoftGraphAuthError, match="request failed"):
+        refresh_access_token()
+    assert not is_reconnect_required()
+
+
+@override_settings(**GRAPH_SETTINGS)
+@patch("core.email.ms_graph.requests.post")
+def test_env_token_change_clears_reconnect_then_refresh_succeeds(mock_post):
+    mark_reconnect_required(
+        error_code="invalid_grant",
+        http_status=400,
+        refresh_token="bootstrap-refresh-token",
+    )
+    assert is_reconnect_required()
+
+    with override_settings(
+        **{**GRAPH_SETTINGS, "MS_GRAPH_REFRESH_TOKEN": "replacement-refresh-token"}
+    ):
+        token_resp = MagicMock()
+        token_resp.status_code = 200
+        token_resp.json.return_value = {
+            "access_token": "access-ok",
+            "expires_in": 3600,
+            "refresh_token": "replacement-refresh-token",
+        }
+        mock_post.return_value = token_resp
+        assert refresh_access_token() == "access-ok"
+        assert not is_reconnect_required()
+
+
+@override_settings(**GRAPH_SETTINGS)
+def test_persist_refresh_token_clears_reconnect():
+    mark_reconnect_required(error_code="invalid_grant", http_status=400)
+    persist_refresh_token("device-code-refresh-token")
+    assert not is_reconnect_required()
+    assert cache.get(CACHE_REFRESH_KEY) == "device-code-refresh-token"
+
+
+@override_settings(**GRAPH_SETTINGS)
+@patch("core.email.ms_graph.requests.post")
+def test_bootstrap_token_change_after_fp_recorded_reseeds(mock_post):
+    from core.email.ms_graph import get_refresh_token
+
+    get_refresh_token()
+    mark_reconnect_required(
+        error_code="invalid_grant",
+        http_status=400,
+        refresh_token="bootstrap-refresh-token",
+    )
+    assert is_reconnect_required()
+
+    with override_settings(
+        **{**GRAPH_SETTINGS, "MS_GRAPH_REFRESH_TOKEN": "brand-new-bootstrap"}
+    ):
+        token_resp = MagicMock()
+        token_resp.status_code = 200
+        token_resp.json.return_value = {
+            "access_token": "access-after-reseed",
+            "expires_in": 3600,
+        }
+        mock_post.return_value = token_resp
+        assert refresh_access_token() == "access-after-reseed"
+        assert cache.get(CACHE_REFRESH_KEY) == "brand-new-bootstrap"
+        assert not is_reconnect_required()
 
 
 @override_settings(**GRAPH_SETTINGS)

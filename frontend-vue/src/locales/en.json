@@ -1869,6 +1869,9 @@
     "newApplication": "New application",
     "emDash": "—"
   },
+  "opsNotices": {
+    "title": "Ops notice:"
+  },
   "dashboard": {
     "mainNavAria": "Main navigation",
     "toggleNav": "Toggle navigation",

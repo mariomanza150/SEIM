@@ -193,6 +193,24 @@
     </nav>
 
     <div
+      v-if="opsNotices.length"
+      class="alert alert-warning rounded-0 mb-0 border-0 border-bottom"
+      role="status"
+      data-testid="ops-notices-banner"
+    >
+      <div class="container-fluid py-1">
+        <div
+          v-for="notice in opsNotices"
+          :key="notice.id"
+          class="small mb-0"
+        >
+          <strong class="me-1">{{ t('opsNotices.title') }}</strong>
+          <span>{{ notice.message }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div
       id="seimSidebarOffcanvas"
       class="offcanvas offcanvas-start d-lg-none"
       tabindex="-1"
@@ -272,6 +290,7 @@ import { useFeatures } from '@/composables/useFeatures'
 import { useThemeToggle } from '@/composables/useThemeToggle'
 import { useCommandPalette } from '@/composables/useCommandPalette'
 import { Offcanvas } from 'bootstrap'
+import api from '@/services/api'
 import { readSidebarCollapsed, writeSidebarCollapsed } from '@/utils/sidebarPrefs'
 import { scrollMainIntoView } from '@/utils/scrollMain'
 
@@ -307,6 +326,7 @@ const {
 
 const sidebarCollapsed = ref(false)
 const mainColEl = ref(null)
+const opsNotices = ref([])
 
 // Bring the main content to the top of the viewport on navigation (path changes
 // only, so filter/query updates on the same page do not jump the scroll).
@@ -330,9 +350,23 @@ const commandPaletteShortcut = computed(() => {
   return 'Ctrl+K'
 })
 
+async function loadOpsNotices() {
+  if (!authStore.canUseStaffReviewQueue) {
+    opsNotices.value = []
+    return
+  }
+  try {
+    const { data } = await api.get('/api/ops-notices/')
+    opsNotices.value = Array.isArray(data?.notices) ? data.notices : []
+  } catch {
+    opsNotices.value = []
+  }
+}
+
 onMounted(() => {
   loadBranding()
   loadFeatures()
+  loadOpsNotices()
   sidebarCollapsed.value = readSidebarCollapsed()
 })
 

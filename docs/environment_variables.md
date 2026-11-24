@@ -202,6 +202,8 @@ DEFAULT_FROM_EMAIL=you@hotmail.com
 
 Rotated refresh tokens are stored in Django cache (Redis via django-redis in prod). Do not log tokens. After changing prod env, recreate `web` / `celery` / `celery-beat` (keep the Redis volume so the cached refresh token survives).
 
+If token refresh returns a non-recoverable 4xx (for example `invalid_grant`), SEIM sets a reconnect-required flag in cache, stops further refresh/send attempts, marks `/health/` check `ms_graph` as error (overall `degraded`), and shows a staff ops notice. Re-run `python manage.py ms_graph_device_code` (or update `MS_GRAPH_REFRESH_TOKEN` and recreate services) to clear the flag. Transient 5xx / network / `429` failures do not set the flag.
+
 ### **☁️ AWS Configuration**
 
 | Variable | Required | Default | Description |
