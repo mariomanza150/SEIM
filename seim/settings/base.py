@@ -575,6 +575,22 @@ WAGTAILAPI_SEARCH_ENABLED = True
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
+# Public CMS/Wagtail image trees remain readable without auth.
+# Everything else under MEDIA_URL is ACL-checked by ``core.media_views.serve_media``.
+MEDIA_PUBLIC_PREFIXES = (
+    "images/",
+    "original_images/",
+)
+MEDIA_PROTECTED_PREFIXES = (
+    "documents/",
+    "agreement_repository/",
+    "document_templates/",
+    "qa_issues/",
+)
+# When nginx terminates media, Django returns X-Accel-Redirect to this internal URL.
+MEDIA_INTERNAL_URL = "/internal_media/"
+USE_X_ACCEL_REDIRECT = env.bool("USE_X_ACCEL_REDIRECT", default=False)
+
 # Wagtail search backend
 WAGTAILSEARCH_BACKENDS = {
     "default": {

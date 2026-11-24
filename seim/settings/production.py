@@ -89,11 +89,12 @@ DEBUG = False
 # (the win-a8 test stack sets DEPLOY_TIER=test explicitly).
 DEPLOY_TIER = env("DEPLOY_TIER", default="production").strip().lower()
 
-# When True, Django serves ``MEDIA_URL`` (before Wagtail catch-all). Use for
-# single-container / Cloudflare Tunnel local-prod stacks that have no nginx
-# media location. Real production should keep this False and let the reverse
-# proxy serve ``MEDIA_ROOT``.
+# Legacy flag: ``/media/`` is always registered on the ACL-guarded Django view.
+# Keep True for single-container / Cloudflare Tunnel stacks without nginx so
+# operators know Django is the media front door. With nginx, set
+# USE_X_ACCEL_REDIRECT=1 and proxy ``/media/`` to Django (see nginx/nginx.conf).
 SERVE_MEDIA = env.bool("SERVE_MEDIA", default=False)
+USE_X_ACCEL_REDIRECT = env.bool("USE_X_ACCEL_REDIRECT", default=False)
 
 # Trust X-Forwarded-Proto/Host from Tailscale Serve or another TLS terminator.
 _use_tls_proxy = env.bool("USE_TLS_PROXY_HEADERS", default=False)

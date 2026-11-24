@@ -120,7 +120,22 @@ server {
         alias /app/staticfiles/;
     }
     
+    # Public Wagtail images only — never alias documents/ as public.
+    location ^~ /media/images/ {
+        alias /app/media/images/;
+    }
+    location ^~ /media/original_images/ {
+        alias /app/media/original_images/;
+    }
     location /media/ {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    location /internal_media/ {
+        internal;
         alias /app/media/;
     }
 }

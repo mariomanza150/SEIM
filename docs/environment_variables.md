@@ -317,6 +317,8 @@ UAdeC is the default/example theme. Override to run SEIM for another institution
 | `STATIC_ROOT` | ❌ | `staticfiles/` | Static files collection directory |
 | `MEDIA_URL` | ❌ | `/media/` | Media files URL prefix |
 | `MEDIA_ROOT` | ❌ | `media/` | Media files storage directory |
+| `USE_X_ACCEL_REDIRECT` | ❌ | `False` | When `True`, Django returns `X-Accel-Redirect` for authorized media (nginx `/internal_media/`). Required for production nginx ACL. |
+| `SERVE_MEDIA` | ❌ | `False` | Legacy flag; `/media/` is always registered on the ACL-guarded Django view. |
 
 #### **Static/Media Configuration:**
 ```bash
@@ -326,9 +328,13 @@ STATIC_ROOT=staticfiles/
 MEDIA_URL=/media/
 MEDIA_ROOT=media/
 
-# Production (with CDN)
+# Production (nginx ACL + X-Accel-Redirect)
+USE_X_ACCEL_REDIRECT=1
+# Protected uploads are never world-readable aliases under /media/documents/
+
+# Production (with CDN for public static only — keep private uploads ACL-gated)
 STATIC_URL=https://cdn.yourdomain.com/static/
-MEDIA_URL=https://cdn.yourdomain.com/media/
+MEDIA_URL=/media/
 ```
 
 ### **📊 Logging Configuration**
