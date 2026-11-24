@@ -412,12 +412,15 @@ class ProgramViewSet(viewsets.ModelViewSet):
     filterset_class = ProgramFilter  # Use advanced filter
     search_fields = ["name", "description"]
     ordering_fields = ["name", "start_date", "end_date", "created_at"]
+    ordering = ["name", "pk"]
 
     def get_queryset(self):
         seat_filter = Q(
             application__withdrawn=False,
             application__status__name__in=SEAT_HOLDING_APPLICATION_STATUS_NAMES,
         )
+        # Explicit order_by: Count() annotations clear Meta.ordering and make
+        # paginated lists non-deterministic (UnorderedObjectListWarning).
         return (
             Program.objects.select_related("application_form")
             .prefetch_related(
@@ -425,6 +428,7 @@ class ProgramViewSet(viewsets.ModelViewSet):
                 "field_requirements__required_from_status",
             )
             .annotate(_seat_holding_count=Count("application", filter=seat_filter))
+            .order_by("name", "pk")
         )
 
     def perform_create(self, serializer):
