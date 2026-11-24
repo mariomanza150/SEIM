@@ -316,6 +316,15 @@ body {
   }
 }
 
+/* Touch-friendly minimum for primary chrome controls (~44px). */
+.seim-tap-target {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Soft min-widths that never force horizontal page bleed on narrow viewports. */
 .seim-min-w-filter {
   min-width: min(220px, 100%);

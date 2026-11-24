@@ -163,9 +163,16 @@ function emitNavigate() {
 </script>
 
 <style scoped>
+.seim-sidebar-nav :deep(.list-group-item) {
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+}
+
 .seim-sidebar-nav__section-toggle {
   font-size: 0.8rem;
   letter-spacing: 0.02em;
+  min-height: 2.75rem;
 }
 
 .seim-sidebar-nav__section-toggle:hover,

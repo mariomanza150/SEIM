@@ -3,7 +3,7 @@
     <div class="seim-auth-layout__utilities">
       <button
         type="button"
-        class="btn btn-sm seim-auth-layout__theme-btn"
+        class="btn btn-sm seim-auth-layout__theme-btn seim-tap-target"
         :aria-label="themeToggleAria"
         data-testid="auth-theme-toggle"
         @click="toggleTheme"
