@@ -253,7 +253,7 @@ describe('Notifications', () => {
             id: 7,
             title: 'Application Status Update',
             message:
-              'Your application for Fulbright Program status has changed to under_review.',
+              'Your application for Program Alpha status has changed to under_review.',
             is_read: false,
             category: 'info',
             sent_at: new Date().toISOString(),
@@ -276,5 +276,180 @@ describe('Notifications', () => {
     expect(wrapper.text()).toContain('En revisión')
     expect(wrapper.text()).not.toContain('under_review')
     expect(wrapper.text()).toContain('Ver solicitud')
+  })
+
+  it('marks all unread notifications as read', async () => {
+    setupDefaultGets({
+      list: mockNotificationsListResponse({
+        results: [
+          {
+            id: 1,
+            title: 'Ready for review',
+            message: 'A document is waiting.',
+            is_read: false,
+            category: 'warning',
+            sent_at: new Date().toISOString(),
+          },
+        ],
+        count: 1,
+      }),
+      unreadCount: 3,
+    })
+    api.post.mockResolvedValue({ data: {} })
+    const wrapper = mount(Notifications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.get('[data-testid="mark-all-read-btn"]').trigger('click')
+    await flushPromises()
+    expect(api.post).toHaveBeenCalledWith('/api/notifications/mark_all_read/')
+    expect(success).toHaveBeenCalledWith(i18n.global.t('notifications.toastAllMarkedRead'))
+    expect(wrapper.find('[data-testid="mark-all-read-btn"]').exists()).toBe(false)
+  })
+
+  it('toasts when mark-all-read fails', async () => {
+    setupDefaultGets({
+      list: mockNotificationsListResponse({
+        results: [
+          {
+            id: 1,
+            title: 'Ready for review',
+            message: 'A document is waiting.',
+            is_read: false,
+            category: 'info',
+            sent_at: new Date().toISOString(),
+          },
+        ],
+        count: 1,
+      }),
+      unreadCount: 1,
+    })
+    api.post.mockRejectedValue(new Error('offline'))
+    const wrapper = mount(Notifications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.get('[data-testid="mark-all-read-btn"]').trigger('click')
+    await flushPromises()
+    expect(errorToast).toHaveBeenCalledWith(i18n.global.t('notifications.toastMarkAllFailed'))
+  })
+
+  it('filters by category and clears filters', async () => {
+    setupDefaultGets({
+      list: mockNotificationsListResponse({
+        results: [
+          {
+            id: 1,
+            title: 'Warning item',
+            message: 'Check this',
+            is_read: true,
+            category: 'warning',
+            sent_at: new Date().toISOString(),
+          },
+        ],
+        count: 1,
+      }),
+    })
+    const wrapper = mount(Notifications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    api.get.mockClear()
+    setupDefaultGets()
+    await wrapper.get('#notifications-filter-category').setValue('warning')
+    await wrapper.get('#notifications-filter-category').trigger('change')
+    await flushPromises()
+    const filtered = api.get.mock.calls.filter(([, cfg]) => cfg?.params?.page_size !== 1)
+    expect(filtered.at(-1)[1].params).toMatchObject({ category: 'warning', page: 1 })
+
+    api.get.mockClear()
+    setupDefaultGets()
+    await wrapper.get('[data-testid="compact-filter-clear"]').trigger('click')
+    await flushPromises()
+    const cleared = api.get.mock.calls.filter(([, cfg]) => cfg?.params?.page_size !== 1)
+    expect(cleared.at(-1)[1].params).toMatchObject({ page: 1 })
+    expect(cleared.at(-1)[1].params.category).toBeUndefined()
+  })
+
+  it('refreshes when a notification-new window event fires', async () => {
+    setupDefaultGets()
+    mount(Notifications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    api.get.mockClear()
+    setupDefaultGets({ unreadCount: 2 })
+    window.dispatchEvent(new Event('notification-new'))
+    await flushPromises()
+    expect(api.get).toHaveBeenCalled()
+  })
+
+  it('renders unknown categories with the info badge fallback', async () => {
+    setupDefaultGets({
+      list: mockNotificationsListResponse({
+        results: [
+          {
+            id: 8,
+            title: 'System note',
+            message: 'Maintenance window',
+            is_read: true,
+            category: 'custom',
+            sent_at: new Date().toISOString(),
+          },
+        ],
+        count: 1,
+      }),
+    })
+    const wrapper = mount(Notifications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('.badge.bg-secondary').exists()).toBe(true)
+    expect(wrapper.text()).toContain(i18n.global.t('notifications.categoryInfo'))
+  })
+
+  it('toasts when dismiss fails', async () => {
+    setupDefaultGets({
+      list: mockNotificationsListResponse({
+        results: [
+          {
+            id: 42,
+            title: 'Keep me',
+            message: 'Still here',
+            is_read: true,
+            category: 'info',
+            sent_at: new Date().toISOString(),
+          },
+        ],
+        count: 1,
+      }),
+    })
+    api.delete.mockRejectedValue(new Error('offline'))
+    const wrapper = mount(Notifications, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.get('[data-testid="dismiss-notification-btn"]').trigger('click')
+    await flushPromises()
+    expect(errorToast).toHaveBeenCalledWith(i18n.global.t('notifications.toastDismissFailed'))
+    expect(wrapper.text()).toContain('Keep me')
   })
 })

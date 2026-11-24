@@ -11,8 +11,15 @@ vi.mock('@/services/api', () => ({
   default: { get: vi.fn(), post: vi.fn(), patch: vi.fn(), delete: vi.fn() },
 }))
 
+const successToast = vi.fn()
+const errorToast = vi.fn()
 vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({ success: vi.fn(), error: vi.fn() }),
+  useToast: () => ({ success: successToast, error: errorToast }),
+}))
+
+const mockConfirm = vi.fn().mockResolvedValue(true)
+vi.mock('@/composables/useConfirm', () => ({
+  useConfirm: () => ({ confirm: mockConfirm }),
 }))
 
 const mockPayload = {
@@ -75,6 +82,9 @@ describe('NotificationRouting', () => {
     localStorage.clear()
     setAppLocale('en')
     vi.clearAllMocks()
+    successToast.mockClear()
+    errorToast.mockClear()
+    mockConfirm.mockResolvedValue(true)
     api.get.mockImplementation((url) => {
       if (String(url).includes('notification-routing-overrides')) {
         return Promise.resolve({ data: { results: [], next: null } })
@@ -150,5 +160,102 @@ describe('NotificationRouting', () => {
     expect(wrapper.text()).toContain('application_deadline')
     expect(wrapper.text()).toContain('documents')
     expect(wrapper.text()).toContain('reminder_event_type')
+  })
+
+  it('shows forbidden error when routing reference returns 403', async () => {
+    api.get.mockRejectedValue({ response: { status: 403 } })
+    const wrapper = mount(NotificationRouting, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain(i18n.global.t('notificationRoutingPage.forbidden'))
+    expect(errorToast).toHaveBeenCalledWith(i18n.global.t('notificationRoutingPage.forbidden'))
+  })
+
+  it('shows load error for non-403 failures', async () => {
+    api.get.mockRejectedValue(new Error('offline'))
+    const wrapper = mount(NotificationRouting, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain(i18n.global.t('notificationRoutingPage.loadError'))
+    expect(errorToast).toHaveBeenCalledWith(i18n.global.t('notificationRoutingPage.loadError'))
+  })
+
+  it('creates a routing override from the form', async () => {
+    api.post.mockResolvedValue({ data: { id: 'new-1' } })
+    const wrapper = mount(NotificationRouting, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.get('#nr-override-kind').setValue('reminder_event_type')
+    await wrapper.get('#nr-override-key').setValue('application_deadline')
+    await wrapper.get('#nr-override-cat').setValue('documents')
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+    expect(api.post).toHaveBeenCalledWith('/api/notification-routing-overrides/', {
+      kind: 'reminder_event_type',
+      key: 'application_deadline',
+      settings_category: 'documents',
+      is_active: true,
+    })
+    expect(successToast).toHaveBeenCalledWith(i18n.global.t('notificationRoutingPage.overrideCreatedToast'))
+  })
+
+  it('edits and deletes an existing override', async () => {
+    const ov = {
+      id: 'ov-1',
+      kind: 'reminder_event_type',
+      key: 'application_deadline',
+      settings_category: 'documents',
+      is_active: true,
+    }
+    api.get.mockImplementation((url) => {
+      if (String(url).includes('notification-routing-overrides')) {
+        return Promise.resolve({ data: { results: [ov], next: null } })
+      }
+      return Promise.resolve({ data: mockPayload })
+    })
+    api.patch.mockResolvedValue({ data: ov })
+    api.delete.mockResolvedValue({})
+    const wrapper = mount(NotificationRouting, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+
+    const editBtn = wrapper.findAll('button').find((b) =>
+      b.text().includes(i18n.global.t('notificationRoutingPage.editOverride')),
+    )
+    await editBtn.trigger('click')
+    await wrapper.get('#nr-override-cat').setValue('applications')
+    await wrapper.find('form').trigger('submit.prevent')
+    await flushPromises()
+    expect(api.patch).toHaveBeenCalledWith('/api/notification-routing-overrides/ov-1/', {
+      kind: 'reminder_event_type',
+      key: 'application_deadline',
+      settings_category: 'applications',
+      is_active: true,
+    })
+
+    const deleteBtn = wrapper.findAll('button').find((b) =>
+      b.text() === i18n.global.t('notificationRoutingPage.deleteOverride'),
+    )
+    await deleteBtn.trigger('click')
+    await flushPromises()
+    expect(mockConfirm).toHaveBeenCalled()
+    expect(api.delete).toHaveBeenCalledWith('/api/notification-routing-overrides/ov-1/')
+    expect(successToast).toHaveBeenCalledWith(i18n.global.t('notificationRoutingPage.overrideDeletedToast'))
   })
 })

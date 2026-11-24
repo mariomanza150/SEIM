@@ -12,8 +12,15 @@ vi.mock('@/services/api', () => ({
   default: { get: vi.fn(), delete: vi.fn() },
 }))
 
+const toastSuccess = vi.fn()
+const toastError = vi.fn()
 vi.mock('@/composables/useToast', () => ({
-  useToast: () => ({ success: vi.fn(), error: vi.fn() }),
+  useToast: () => ({ success: toastSuccess, error: toastError }),
+}))
+
+const mockConfirm = vi.fn().mockResolvedValue(true)
+vi.mock('@/composables/useConfirm', () => ({
+  useConfirm: () => ({ confirm: mockConfirm }),
 }))
 
 const routeQuery = { status: '' }
@@ -38,6 +45,9 @@ describe('Applications', () => {
     routeQuery.status = ''
     delete routeQuery.direction
     vi.clearAllMocks()
+    toastSuccess.mockClear()
+    toastError.mockClear()
+    mockConfirm.mockResolvedValue(true)
     global.confirm = vi.fn(() => false)
   })
 
@@ -343,5 +353,107 @@ describe('Applications', () => {
       expect(calls).toHaveLength(1)
       expect(calls[0]).toEqual({ page: 1, ordering: '-created_at', direction: 'incoming' })
     })
+  })
+
+  it('deletes a draft application after confirm', async () => {
+    api.get.mockImplementation((url) => {
+      if (String(url).startsWith('/api/programs')) {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      return Promise.resolve({
+        data: {
+          results: [
+            {
+              id: 'draft-1',
+              status: 'draft',
+              created_at: '2026-01-10T12:00:00Z',
+              submitted_at: null,
+              program_name: 'Program Alpha',
+            },
+          ],
+          count: 1,
+          next: null,
+          previous: null,
+        },
+      })
+    })
+    api.delete.mockResolvedValue({})
+    const wrapper = mountApplications()
+    await flushPromises()
+    const deleteBtn = wrapper.findAll('button').find(
+      (b) => b.attributes('aria-label') === i18n.global.t('applicationsPage.deleteAria'),
+    )
+    expect(deleteBtn).toBeTruthy()
+    await deleteBtn.trigger('click')
+    await flushPromises()
+    expect(mockConfirm).toHaveBeenCalled()
+    expect(api.delete).toHaveBeenCalledWith('/api/applications/draft-1/')
+    expect(toastSuccess).toHaveBeenCalledWith(i18n.global.t('applicationsPage.deletedToast'))
+  })
+
+  it('toasts when draft delete fails', async () => {
+    api.get.mockImplementation((url) => {
+      if (String(url).startsWith('/api/programs')) {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      return Promise.resolve({
+        data: {
+          results: [
+            {
+              id: 'draft-2',
+              status: 'draft',
+              created_at: '2026-01-10T12:00:00Z',
+              submitted_at: null,
+              program_name: 'Program Beta',
+            },
+          ],
+          count: 1,
+          next: null,
+          previous: null,
+        },
+      })
+    })
+    api.delete.mockRejectedValue(new Error('offline'))
+    const wrapper = mountApplications()
+    await flushPromises()
+    const deleteBtn = wrapper.findAll('button').find(
+      (b) => b.attributes('aria-label') === i18n.global.t('applicationsPage.deleteAria'),
+    )
+    await deleteBtn.trigger('click')
+    await flushPromises()
+    expect(toastError).toHaveBeenCalledWith(i18n.global.t('applicationsPage.deleteToastError'))
+  })
+
+  it('skips delete when the confirm dialog is cancelled', async () => {
+    mockConfirm.mockResolvedValue(false)
+    api.get.mockImplementation((url) => {
+      if (String(url).startsWith('/api/programs')) {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      return Promise.resolve({
+        data: {
+          results: [
+            {
+              id: 'draft-3',
+              status: 'draft',
+              created_at: '2026-01-10T12:00:00Z',
+              submitted_at: null,
+              program_name: 'Program Gamma',
+            },
+          ],
+          count: 1,
+          next: null,
+          previous: null,
+        },
+      })
+    })
+    const wrapper = mountApplications()
+    await flushPromises()
+    const deleteBtn = wrapper.findAll('button').find(
+      (b) => b.attributes('aria-label') === i18n.global.t('applicationsPage.deleteAria'),
+    )
+    await deleteBtn.trigger('click')
+    await flushPromises()
+    expect(api.delete).not.toHaveBeenCalled()
   })
 })
