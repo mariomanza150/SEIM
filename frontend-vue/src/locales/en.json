@@ -2842,6 +2842,7 @@
     "breadcrumbAria": "Breadcrumb",
     "loading": "Loading forecasts…",
     "loadError": "Could not load forecasts.",
+    "programsLoadError": "Could not load programs for forecasts.",
     "demandHeading": "Demand forecast",
     "trend": "Trend: {n} applications/week",
     "colWeek": "Week starting",
