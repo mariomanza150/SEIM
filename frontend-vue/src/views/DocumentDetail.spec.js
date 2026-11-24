@@ -14,6 +14,8 @@ vi.mock('vue-router', () => ({
 
 const mockAuthStore = {
   userRole: 'student',
+  isAdmin: false,
+  canUseStaffReviewQueue: false,
   checkAuth: vi.fn().mockResolvedValue(undefined),
 }
 
@@ -85,6 +87,8 @@ describe('DocumentDetail', () => {
     localStorage.clear()
     setAppLocale('en')
     mockAuthStore.userRole = 'student'
+    mockAuthStore.isAdmin = false
+    mockAuthStore.canUseStaffReviewQueue = false
     mockConfirm.mockResolvedValue(true)
     vi.clearAllMocks()
     mockSuccessFlow()
@@ -119,9 +123,26 @@ describe('DocumentDetail', () => {
     )
     expect(wrapper.find('[data-testid="replace-file-input"]').attributes('accept')).toBe('.pdf')
     expect(wrapper.find('[data-testid="download-type-template"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="document-auth-download-main"]').exists()).toBe(true)
+    expect(wrapper.find('a[href*="/media/"]').exists()).toBe(false)
     for (const a of wrapper.findAll('a[target="_blank"]')) {
       expect(a.attributes('rel')).toBe('noopener noreferrer')
     }
+  })
+
+  it('shows staff validate controls for superuser via canUseStaffReviewQueue', async () => {
+    mockAuthStore.userRole = null
+    mockAuthStore.isAdmin = true
+    mockAuthStore.canUseStaffReviewQueue = true
+    const wrapper = mount(DocumentDetail, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.markValid'))
+    expect(wrapper.text()).toContain(i18n.global.t('documentDetailPage.markInvalid'))
   })
 
   it('shows translated error when document fetch fails', async () => {
@@ -188,11 +209,10 @@ describe('DocumentDetail', () => {
     const recovery = wrapper.find('[data-testid="preview-error-recovery"]')
     expect(recovery.exists()).toBe(true)
     expect(recovery.text()).toContain(i18n.global.t('documentDetailPage.previewError'))
-    const links = recovery.findAll('a')
-    expect(links.length).toBe(2)
-    expect(links[0].attributes('download')).toBeDefined()
-    expect(links[1].attributes('target')).toBe('_blank')
-    expect(links[1].attributes('rel')).toBe('noopener noreferrer')
+    expect(wrapper.find('[data-testid="document-auth-download"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="document-auth-open"]').exists()).toBe(true)
+    // Must not expose unauthenticated /media/ links for private documents.
+    expect(wrapper.find('a[href*="/media/"]').exists()).toBe(false)
   })
 
   it('renders a PDF embed when preview returns a PDF blob', async () => {
@@ -399,6 +419,7 @@ describe('DocumentDetail', () => {
 
   it('requires a rejection note before marking invalid', async () => {
     mockAuthStore.userRole = 'coordinator'
+    mockAuthStore.canUseStaffReviewQueue = true
     api.post.mockResolvedValue({ data: {} })
     const wrapper = mount(DocumentDetail, {
       global: {
@@ -419,6 +440,7 @@ describe('DocumentDetail', () => {
 
   it('confirms and posts invalid with note details', async () => {
     mockAuthStore.userRole = 'coordinator'
+    mockAuthStore.canUseStaffReviewQueue = true
     api.post.mockResolvedValue({ data: {} })
     const wrapper = mount(DocumentDetail, {
       global: {
@@ -445,6 +467,7 @@ describe('DocumentDetail', () => {
 
   it('soft-confirms before marking valid', async () => {
     mockAuthStore.userRole = 'coordinator'
+    mockAuthStore.canUseStaffReviewQueue = true
     api.post.mockResolvedValue({ data: {} })
     const wrapper = mount(DocumentDetail, {
       global: {

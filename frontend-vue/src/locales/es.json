@@ -1829,6 +1829,7 @@
     "loadingList": "Cargando documentos…",
     "loadError": "No se pudieron cargar los documentos. Inténtalo de nuevo.",
     "loadToastError": "Error al cargar los documentos",
+    "filtersLoadError": "No se pudieron cargar las opciones de filtro. Los filtros pueden estar incompletos.",
     "colDocument": "Documento",
     "colType": "Tipo",
     "colApplication": "Solicitud",
@@ -2198,6 +2199,7 @@
     "confirmSubmit": "¿Seguro que quieres enviar esta solicitud? No podrás editarla después del envío.",
     "confirmDelete": "¿Seguro que quieres eliminar esta solicitud? Esta acción no se puede deshacer.",
     "toastSubmitted": "¡Solicitud enviada correctamente!",
+    "toastWaitlisted": "Solicitud recibida — estás en lista de espera porque el programa está a capacidad.",
     "toastSubmitFailed": "No se pudo enviar la solicitud",
     "toastDeleted": "Solicitud eliminada correctamente",
     "toastDeleteFailed": "No se pudo eliminar la solicitud",
@@ -2663,6 +2665,7 @@
     "empty": "No hay postulantes enviados, en lista de espera o nominados para este programa.",
     "emptyCtaReviewQueue": "Abrir cola de revisión",
     "loadError": "No se pudieron cargar las nominaciones.",
+    "programsLoadError": "No se pudieron cargar los programas para nominaciones.",
     "saveSuccess": "Orden guardado.",
     "matchSuccess": "Se nominaron {nominated} y {waitlisted} pasaron a lista de espera."
   },

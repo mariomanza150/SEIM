@@ -49,4 +49,50 @@ describe('usePageState', () => {
     await expect(run()).rejects.toBeTruthy()
     expect(onError).toHaveBeenCalledWith('Server error', expect.anything())
   })
+
+  it('ignores stale success when a newer run completes first', async () => {
+    let resolveSlow
+    const slow = new Promise((resolve) => {
+      resolveSlow = resolve
+    })
+    const fetcher = vi
+      .fn()
+      .mockImplementationOnce(() => slow)
+      .mockResolvedValueOnce({ id: 'new' })
+
+    const { data, loading, run } = usePageState(fetcher)
+    const first = run()
+    const second = run()
+    await second
+    expect(data.value).toEqual({ id: 'new' })
+    expect(loading.value).toBe(false)
+
+    resolveSlow({ id: 'stale' })
+    await first
+    expect(data.value).toEqual({ id: 'new' })
+    expect(loading.value).toBe(false)
+  })
+
+  it('does not clear data when a stale request fails after a newer success', async () => {
+    let rejectSlow
+    const slowFail = new Promise((_, reject) => {
+      rejectSlow = reject
+    })
+    const fetcher = vi
+      .fn()
+      .mockImplementationOnce(() => slowFail)
+      .mockResolvedValueOnce({ id: 'kept' })
+
+    const onError = vi.fn()
+    const { data, error, run } = usePageState(fetcher, { onError, errorFallback: 'Failed' })
+    const first = run()
+    await run()
+    expect(data.value).toEqual({ id: 'kept' })
+
+    rejectSlow({ response: { data: { detail: 'stale fail' } } })
+    await expect(first).rejects.toBeTruthy()
+    expect(data.value).toEqual({ id: 'kept' })
+    expect(error.value).toBe('')
+    expect(onError).not.toHaveBeenCalled()
+  })
 })

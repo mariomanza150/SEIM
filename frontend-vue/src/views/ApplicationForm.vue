@@ -1884,7 +1884,10 @@ function initializeDynamicFormValues(schema, responses = {}) {
   dynamicFieldErrors.value = {}
 }
 
+let dynamicFormLoadSeq = 0
+
 async function loadDynamicForm(formTypeId, responses = null) {
+  const seq = ++dynamicFormLoadSeq
   if (!formTypeId) {
     resetDynamicForm()
     return
@@ -1896,13 +1899,16 @@ async function loadDynamicForm(formTypeId, responses = null) {
 
   try {
     const params = {}
-    if (form.value.program) {
-      params.program = form.value.program
+    const expectedProgram = form.value.program
+    if (expectedProgram) {
+      params.program = expectedProgram
     }
     const response = await api.get(
       `/api/application-forms/form-types/${formTypeId}/form_schema/`,
       { params },
     )
+    if (seq !== dynamicFormLoadSeq) return
+    if (String(form.value.program || '') !== String(expectedProgram || '')) return
     dynamicForm.value = {
       ...response.data,
       multi_step: Boolean(response.data.multi_step),
@@ -1911,11 +1917,14 @@ async function loadDynamicForm(formTypeId, responses = null) {
     initializeDynamicFormValues(response.data.schema, responses || {})
     syncStepFromApplicationLayout()
   } catch (err) {
+    if (seq !== dynamicFormLoadSeq) return
     console.error('Failed to load dynamic form schema:', err)
     resetDynamicForm()
     dynamicFormLoadError.value = t('applicationFormPage.dynamicFormLoadFailed')
   } finally {
-    dynamicFormLoading.value = false
+    if (seq === dynamicFormLoadSeq) {
+      dynamicFormLoading.value = false
+    }
   }
 }
 
@@ -2136,35 +2145,36 @@ function validateHostDestinationClient() {
 }
 
 async function handleSubmit() {
+  if (submitting.value) return
   errors.value = {}
   dynamicFormErrors.value = []
-
-  if (!(await persistProfileEligibility())) {
-    errorToast(t('applicationFormPage.toastFixErrors'))
-    return
-  }
-
-  if (!validateHostDestinationClient()) {
-    errorToast(t('applicationFormPage.toastFixErrors'))
-    await scrollToFirstValidationAlert()
-    return
-  }
-
-  if (hasDynamicFields.value) {
-    if (isMultiStep.value && !isLastStep.value) {
-      if (!validateDynamicForm(visibleDynamicFields.value)) {
-        errorToast(t('applicationFormPage.toastFixErrors'))
-        return
-      }
-    } else if (!validateDynamicForm(allVisibleDynamicFields.value)) {
-      errorToast(t('applicationFormPage.toastFixErrors'))
-      return
-    }
-  }
-
+  // Lock early so overlapping clicks during profile/client validation cannot double-create.
   submitting.value = true
 
   try {
+    if (!(await persistProfileEligibility())) {
+      errorToast(t('applicationFormPage.toastFixErrors'))
+      return
+    }
+
+    if (!validateHostDestinationClient()) {
+      errorToast(t('applicationFormPage.toastFixErrors'))
+      await scrollToFirstValidationAlert()
+      return
+    }
+
+    if (hasDynamicFields.value) {
+      if (isMultiStep.value && !isLastStep.value) {
+        if (!validateDynamicForm(visibleDynamicFields.value)) {
+          errorToast(t('applicationFormPage.toastFixErrors'))
+          return
+        }
+      } else if (!validateDynamicForm(allVisibleDynamicFields.value)) {
+        errorToast(t('applicationFormPage.toastFixErrors'))
+        return
+      }
+    }
+
     const useMulti = isMultiStep.value
     const fieldsForPayload = useMulti ? visibleDynamicFields.value : allVisibleDynamicFields.value
     const data = {
@@ -2226,26 +2236,27 @@ async function handleSubmit() {
 }
 
 async function saveDraft() {
+  if (submitting.value) return
   errors.value = {}
   dynamicFormErrors.value = []
+  submitting.value = true
 
-  if (!(await persistProfileEligibility())) {
-    errorToast(t('applicationFormPage.toastFixErrors'))
-    return
-  }
-
-  if (hasDynamicFields.value && isMultiStep.value) {
-    if (!validateDynamicForm(visibleDynamicFields.value)) {
+  try {
+    if (!(await persistProfileEligibility())) {
       errorToast(t('applicationFormPage.toastFixErrors'))
       return
     }
-  } else if (hasDynamicFields.value && !validateDynamicForm(allVisibleDynamicFields.value)) {
-    errorToast(t('applicationFormPage.toastFixErrors'))
-    return
-  }
 
-  submitting.value = true
-  try {
+    if (hasDynamicFields.value && isMultiStep.value) {
+      if (!validateDynamicForm(visibleDynamicFields.value)) {
+        errorToast(t('applicationFormPage.toastFixErrors'))
+        return
+      }
+    } else if (hasDynamicFields.value && !validateDynamicForm(allVisibleDynamicFields.value)) {
+      errorToast(t('applicationFormPage.toastFixErrors'))
+      return
+    }
+
     const useMulti = isMultiStep.value
     const fieldsForPayload = useMulti ? visibleDynamicFields.value : allVisibleDynamicFields.value
     const data = {

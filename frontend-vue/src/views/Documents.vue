@@ -175,7 +175,12 @@
         :loading-hint="t('documentsPage.loadingList')"
         :skeleton-columns="6"
       >
-      <ResponsiveList :items="documents" item-key="id" mobile-test-id="documents-mobile">
+      <ResponsiveList
+        :items="documents"
+        :columns="mobileColumns"
+        item-key="id"
+        mobile-test-id="documents-mobile"
+      >
       <div v-if="documents.length > 0">
         <div class="table-responsive">
           <table class="table table-hover align-middle">
@@ -250,20 +255,69 @@
             </tbody>
           </table>
         </div>
-
-        <!-- Pagination -->
-        <Pagination
-          :count="pagination.count"
-          :page-size="pagination.pageSize"
-          :current-page="pagination.currentPage"
-          :can-go-previous="!!pagination.previous"
-          :can-go-next="!!pagination.next"
-          :aria-label="t('documentsPage.paginationAria')"
-          ul-class="mt-4"
-          @page-change="goToPage"
-        />
       </div>
+      <template #col-name="{ item }">
+        <span class="fw-medium">{{ fileName(item.file) }}</span>
+      </template>
+      <template #col-type="{ item }">
+        <span class="badge bg-secondary">{{
+          documentTypeLabel(item.type, t('documentDetailPage.notAvailable'))
+        }}</span>
+      </template>
+      <template #col-application="{ item }">
+        <router-link
+          :to="{ name: 'ApplicationDetail', params: { id: documentApplicationId(item.application) } }"
+          class="text-decoration-none"
+        >
+          {{
+            documentApplicationProgramName(
+              item.application,
+              applications,
+              t('documentDetailPage.unknownApplication'),
+            )
+          }}
+        </router-link>
+      </template>
+      <template #col-status="{ item }">
+        <span class="badge" :class="documentReviewStatusBadgeClass(item)">
+          {{ documentReviewStatusLabel(item, { t, te }) }}
+        </span>
+      </template>
+      <template #actions="{ item }">
+        <router-link
+          :to="{ name: 'DocumentDetail', params: { id: item.id } }"
+          class="btn btn-sm btn-outline-primary"
+          data-testid="document-detail-link"
+          :aria-label="t('documentsPage.viewDetailAria')"
+        >
+          <i class="bi bi-eye" aria-hidden="true"></i>
+        </router-link>
+        <button
+          v-if="item.file"
+          type="button"
+          class="btn btn-sm btn-outline-secondary"
+          :title="t('documentsPage.downloadTitle')"
+          :aria-label="t('documentsPage.downloadTitle')"
+          :disabled="downloadingId === item.id"
+          data-testid="document-download"
+          @click="downloadDocument(item)"
+        >
+          <i class="bi bi-download" aria-hidden="true"></i>
+        </button>
+      </template>
       </ResponsiveList>
+
+      <Pagination
+        v-if="documents.length > 0"
+        :count="pagination.count"
+        :page-size="pagination.pageSize"
+        :current-page="pagination.currentPage"
+        :can-go-previous="!!pagination.previous"
+        :can-go-next="!!pagination.next"
+        :aria-label="t('documentsPage.paginationAria')"
+        ul-class="mt-4"
+        @page-change="goToPage"
+      />
 
         <template #emptyActions>
           <router-link :to="{ name: 'Applications' }" class="btn btn-primary">
@@ -353,6 +407,13 @@ const pagination = ref({
   pageSize: 10,
 })
 
+const mobileColumns = computed(() => [
+  { key: 'name', label: t('documentsPage.colDocument') },
+  { key: 'type', label: t('documentsPage.colType') },
+  { key: 'application', label: t('documentsPage.colApplication') },
+  { key: 'status', label: t('documentsPage.colStatus') },
+])
+
 async function fetchApplications() {
   try {
     const response = await api.get('/api/applications/', {
@@ -361,6 +422,7 @@ async function fetchApplications() {
     applications.value = response.data.results || response.data
   } catch {
     applications.value = []
+    errorToast(t('documentsPage.filtersLoadError'))
   }
 }
 
@@ -370,6 +432,7 @@ async function fetchDocumentTypes() {
     documentTypes.value = response.data.results || response.data
   } catch {
     documentTypes.value = []
+    errorToast(t('documentsPage.filtersLoadError'))
   }
 }
 
@@ -383,6 +446,7 @@ async function fetchPrefillTemplates() {
     prefillTemplates.value = response.data.results || response.data || []
   } catch {
     prefillTemplates.value = []
+    errorToast(t('documentsPage.filtersLoadError'))
   }
 }
 
