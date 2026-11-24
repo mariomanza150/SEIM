@@ -1,5 +1,6 @@
 <template>
-  <div class="admin-programs-page">
+  <div class="admin-programs-page" data-tour="admin-programs-page">
+    <div data-tour="admin-programs-header">
     <PageHeader :title="t('adminPrograms.title')">
       <template #breadcrumb>
         <PageBreadcrumb
@@ -20,12 +21,14 @@
         <button type="button" class="btn btn-outline-secondary" :disabled="loading" @click="fetchPrograms">
           <i class="bi bi-arrow-clockwise me-1" aria-hidden="true"></i>{{ t('adminCommon.refresh') }}
         </button>
-        <button type="button" class="btn btn-primary" @click="openCreate">
+        <button type="button" class="btn btn-primary" data-tour="admin-programs-create" @click="openCreate">
           <i class="bi bi-plus-circle me-1" aria-hidden="true"></i>{{ t('adminPrograms.create') }}
         </button>
       </template>
     </PageHeader>
+    </div>
 
+    <div data-tour="admin-programs-filters">
     <CompactFilterBar test-id="admin-programs-filters" @clear="clearFilters">
       <template #primary>
         <div class="col-md-6">
@@ -57,6 +60,7 @@
         </div>
       </template>
     </CompactFilterBar>
+    </div>
 
     <PageStateShell
       :loading="loading"
@@ -67,7 +71,7 @@
       :loading-label="t('adminPrograms.loadingList')"
       :skeleton-columns="5"
     >
-    <div class="card">
+    <div class="card" data-tour="admin-programs-table">
       <ResponsiveList
         :items="programs"
         :columns="mobileColumns"

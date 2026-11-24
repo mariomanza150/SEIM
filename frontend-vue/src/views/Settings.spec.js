@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
+import { createMemoryHistory, createRouter } from 'vue-router'
 import Settings from './Settings.vue'
 import api from '@/services/api'
 import i18n, { LOCALE_STORAGE_KEY, setAppLocale } from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
+import { useProductTour } from '@/composables/useProductTour'
 
 const mockSuccessToast = vi.fn()
 const mockErrorToast = vi.fn()
@@ -21,25 +23,42 @@ vi.mock('@/services/api', () => ({
   },
 }))
 
-vi.mock('vue-router', async (importOriginal) => {
-  const actual = await importOriginal()
-  return {
-    ...actual,
-    useRoute: () => ({ query: {}, params: {}, path: '/seim/settings', name: 'Settings' }),
-  }
-})
+function makeRouter() {
+  return createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: '/settings', name: 'Settings', component: Settings },
+      { path: '/', name: 'Dashboard', component: { template: '<div />' } },
+      { path: '/applications', name: 'Applications', component: { template: '<div />' } },
+      { path: '/documents', name: 'Documents', component: { template: '<div />' } },
+      { path: '/applications/new', name: 'ApplicationNew', component: { template: '<div />' } },
+      { path: '/review', name: 'CoordinatorReviewQueue', component: { template: '<div />' } },
+      { path: '/partner', name: 'PartnerPortal', component: { template: '<div />' } },
+      { path: '/admin/programs', name: 'AdminPrograms', component: { template: '<div />' } },
+      { path: '/profile', name: 'Profile', component: { template: '<div />' } },
+      { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
+    ],
+  })
+}
 
-function mountView() {
+async function mountView() {
   const pinia = createPinia()
   setActivePinia(pinia)
-  return mount(Settings, {
+  const router = makeRouter()
+  await router.push({ name: 'Settings' })
+  await router.isReady()
+  const auth = useAuthStore()
+  auth.accessToken = 't'
+  auth.user = { id: 11, email: 'student@example.edu', role: 'student', full_name: 'Example Student' }
+  const wrapper = mount(Settings, {
     global: {
-      plugins: [pinia, i18n],
+      plugins: [pinia, i18n, router],
       stubs: {
         RouterLink: { template: '<a><slot /></a>' },
       },
     },
   })
+  return wrapper
 }
 
 const defaultSettingsPayload = {
@@ -92,7 +111,7 @@ describe('Settings', () => {
           resolveGet = resolve
         }),
     )
-    const wrapper = mountView()
+    const wrapper = await mountView()
     expect(wrapper.find('.placeholder').exists()).toBe(true)
     expect(wrapper.find('[data-testid="settings-theme"]').exists()).toBe(false)
     resolveGet({ data: defaultSettingsPayload })
@@ -103,7 +122,7 @@ describe('Settings', () => {
 
   it('binds label[for], name, and autocomplete on appearance and digest selects', async () => {
     api.get.mockResolvedValue({ data: defaultSettingsPayload })
-    const wrapper = mountView()
+    const wrapper = await mountView()
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="settings-theme"]').exists()).toBe(true)
     })
@@ -146,7 +165,7 @@ describe('Settings', () => {
       },
     })
 
-    const wrapper = mountView()
+    const wrapper = await mountView()
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="settings-theme"]').exists()).toBe(true)
     })
@@ -187,7 +206,7 @@ describe('Settings', () => {
     })
     api.patch.mockResolvedValue({ data: {} })
 
-    const wrapper = mountView()
+    const wrapper = await mountView()
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="settings-theme"]').exists()).toBe(true)
     })
@@ -231,7 +250,7 @@ describe('Settings', () => {
       },
     })
 
-    const wrapper = mountView()
+    const wrapper = await mountView()
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="settings-ui-language"]').exists()).toBe(true)
     })
@@ -244,12 +263,15 @@ describe('Settings', () => {
     api.get.mockResolvedValue({ data: { ...defaultSettingsPayload } })
     const pinia = createPinia()
     setActivePinia(pinia)
+    const router = makeRouter()
+    await router.push({ name: 'Settings' })
+    await router.isReady()
     const auth = useAuthStore()
     auth.accessToken = 't'
     auth.user = { role: 'coordinator', full_name: 'Coord' }
     const wrapper = mount(Settings, {
       global: {
-        plugins: [pinia, i18n],
+        plugins: [pinia, i18n, router],
         stubs: { RouterLink: { template: '<a><slot /></a>' } },
       },
     })
@@ -265,12 +287,15 @@ describe('Settings', () => {
     api.get.mockResolvedValue({ data: { ...defaultSettingsPayload } })
     const pinia = createPinia()
     setActivePinia(pinia)
+    const router = makeRouter()
+    await router.push({ name: 'Settings' })
+    await router.isReady()
     const auth = useAuthStore()
     auth.accessToken = 't'
     auth.user = { role: 'student', full_name: 'Stu' }
     const wrapper = mount(Settings, {
       global: {
-        plugins: [pinia, i18n],
+        plugins: [pinia, i18n, router],
         stubs: { RouterLink: { template: '<a><slot /></a>' } },
       },
     })
@@ -283,7 +308,7 @@ describe('Settings', () => {
   it('posts a password change from the dedicated form', async () => {
     api.get.mockResolvedValue({ data: { ...defaultSettingsPayload } })
     api.post.mockResolvedValue({ data: { detail: 'Password changed successfully.' } })
-    const wrapper = mountView()
+    const wrapper = await mountView()
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="change-password-form"]').exists()).toBe(true)
     })
@@ -300,7 +325,7 @@ describe('Settings', () => {
   })
 
   it('shows Google Calendar card and unconfigured message', async () => {
-    const wrapper = mountView()
+    const wrapper = await mountView()
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="google-calendar-card"]').exists()).toBe(true)
     })
@@ -319,9 +344,30 @@ describe('Settings', () => {
       }
       return Promise.resolve({ data: defaultSettingsPayload })
     })
-    const wrapper = mountView()
+    const wrapper = await mountView()
     await vi.waitFor(() => {
       expect(wrapper.find('[data-testid="google-calendar-connect"]').exists()).toBe(true)
     })
+  })
+
+  it('replays the welcome product tour from Settings', async () => {
+    const wrapper = await mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="settings-replay-tour"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="settings-replay-tour"]').trigger('click')
+    await flushPromises()
+    expect(useProductTour().open.value).toBe(true)
+    expect(useProductTour().pageId.value).toBe('dashboard')
+  })
+
+  it('starts a named page tour from Settings', async () => {
+    const wrapper = await mountView()
+    await vi.waitFor(() => {
+      expect(wrapper.find('[data-testid="settings-page-tour-applications"]').exists()).toBe(true)
+    })
+    await wrapper.find('[data-testid="settings-page-tour-applications"]').trigger('click')
+    await flushPromises()
+    expect(useProductTour().pendingPageId.value).toBe('applications')
   })
 })

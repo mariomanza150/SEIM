@@ -17,6 +17,33 @@
       </template>
     </PageHeader>
 
+    <div class="card mb-4" data-testid="help-walkthrough-card">
+      <div class="card-body">
+        <h2 class="h5 mb-2">{{ t('help.walkthroughCardTitle') }}</h2>
+        <p class="text-muted small mb-3">{{ t('help.walkthroughCardBody') }}</p>
+        <div class="d-flex flex-wrap gap-2">
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm"
+            data-testid="help-replay-welcome-tour"
+            @click="replayWelcomeTour"
+          >
+            {{ t('help.replayWelcomeTour') }}
+          </button>
+          <button
+            v-for="pageId in availablePageTours"
+            :key="pageId"
+            type="button"
+            class="btn btn-outline-secondary btn-sm"
+            :data-testid="`help-start-page-tour-${pageId}`"
+            @click="startPageTour(pageId)"
+          >
+            {{ t('help.pageTourLabel', { title: pageTourTitle(pageId) }) }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="row mb-4">
       <div class="col-md-8 col-lg-6">
         <label class="form-label" for="help-search">{{ t('help.searchLabel') }}</label>
@@ -73,16 +100,33 @@
       >
         <h3 class="h5 mb-3">{{ topicLabel(group.topic) }}</h3>
         <div class="list-group">
-          <router-link
+          <div
             v-for="article in group.articles"
             :key="article.slug"
-            :to="{ name: 'HelpArticle', params: { slug: article.slug } }"
-            class="list-group-item list-group-item-action"
-            :data-testid="`help-article-link-${article.slug}`"
+            class="list-group-item"
+            :data-testid="`help-article-row-${article.slug}`"
           >
-            <div class="fw-semibold">{{ article.title }}</div>
-            <div v-if="article.introduction" class="text-muted small">{{ article.introduction }}</div>
-          </router-link>
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+              <router-link
+                :to="{ name: 'HelpArticle', params: { slug: article.slug } }"
+                class="text-decoration-none text-body flex-grow-1"
+                :data-testid="`help-article-link-${article.slug}`"
+              >
+                <div class="fw-semibold">{{ article.title }}</div>
+                <div v-if="article.introduction" class="text-muted small">{{ article.introduction }}</div>
+              </router-link>
+              <button
+                v-if="walkthroughPageFor(article)"
+                type="button"
+                class="btn btn-sm btn-outline-primary flex-shrink-0"
+                :data-testid="`help-start-walkthrough-${article.slug}`"
+                :title="t('help.startWalkthroughHint')"
+                @click="startWalkthroughFor(article)"
+              >
+                {{ t('help.startWalkthrough') }}
+              </button>
+            </div>
+          </div>
         </div>
       </section>
     </div>
@@ -95,7 +139,12 @@ import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useToast } from '@/composables/useToast'
+import { useStartWalkthrough } from '@/composables/useStartWalkthrough'
 import { fetchHelpArticles, unwrapHelpArticles } from '@/services/help'
+import {
+  DASHBOARD_PAGE_ID,
+  pageToursForRole,
+} from '@/utils/tourDefinitions'
 import PageHeader from '@/components/PageHeader.vue'
 import PageBreadcrumb from '@/components/PageBreadcrumb.vue'
 import PageStateShell from '@/components/State/PageStateShell.vue'
@@ -115,6 +164,35 @@ const route = useRoute()
 const router = useRouter()
 const { t, te } = useI18n()
 const { error: errorToast } = useToast()
+const {
+  startWalkthrough,
+  startWalkthroughForArticle,
+  resolvePageTourFromHelp,
+  currentRole,
+} = useStartWalkthrough()
+
+const availablePageTours = computed(() => pageToursForRole(currentRole()))
+
+function pageTourTitle(pageId) {
+  const key = `tours.pages.${pageId}.title`
+  return te(key) ? t(key) : pageId
+}
+
+function walkthroughPageFor(article) {
+  return resolvePageTourFromHelp(article)
+}
+
+async function startWalkthroughFor(article) {
+  await startWalkthroughForArticle(article)
+}
+
+async function startPageTour(pageId) {
+  await startWalkthrough(pageId, { force: true })
+}
+
+async function replayWelcomeTour() {
+  await startWalkthrough(DASHBOARD_PAGE_ID, { force: true })
+}
 
 const loading = ref(true)
 const error = ref('')

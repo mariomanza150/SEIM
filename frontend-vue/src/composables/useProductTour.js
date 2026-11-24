@@ -7,15 +7,19 @@ import { useProductTourStore } from '@/stores/productTour'
  */
 export function useProductTour() {
   const store = useProductTourStore()
-  const { open, stepIndex, role, tourId, force } = storeToRefs(store)
+  const { open, stepIndex, role, tourId, pageId, force, pendingPageId } = storeToRefs(store)
 
   return {
     open,
     stepIndex,
     role,
     tourId,
+    pageId,
     force,
+    pendingPageId,
     openTour: store.openTour,
+    requestPageTour: store.requestPageTour,
+    clearPendingPageTour: store.clearPendingPageTour,
     closeTour: store.closeTour,
     setStepIndex: store.setStepIndex,
   }

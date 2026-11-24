@@ -1,5 +1,6 @@
 <template>
-  <div class="application-form-page">
+  <div class="application-form-page" data-tour="application-form-page">
+    <div data-tour="application-form-header">
     <PageHeader
       :title="isEditMode ? t('applicationFormPage.titleEdit') : t('applicationFormPage.titleNew')"
       :subtitle="isEditMode ? t('applicationFormPage.subtitleEdit') : t('applicationFormPage.subtitleNew')"
@@ -16,6 +17,7 @@
         />
       </template>
     </PageHeader>
+    </div>
 
     <PageStateShell
       :loading="loading"
@@ -177,7 +179,7 @@
                 </div>
 
                 <!-- Program Selection -->
-                <div class="mb-4">
+                <div class="mb-4" data-tour="application-form-program">
                   <label for="program" class="form-label">
                     {{ t('applicationFormPage.programLabel') }} <span class="text-danger">*</span>
                   </label>
@@ -689,7 +691,12 @@
                   {{ dynamicFormLoadError }}
                 </div>
 
-                <div v-else-if="hasDynamicFields" class="mb-4" data-testid="dynamic-form-section">
+                <div
+                  v-else-if="hasDynamicFields"
+                  class="mb-4"
+                  data-testid="dynamic-form-section"
+                  data-tour="application-form-dynamic"
+                >
                   <div class="d-flex align-items-center justify-content-between mb-3">
                     <div>
                       <h5 class="mb-1">{{ t('applicationFormPage.programQuestions') }}</h5>
@@ -931,7 +938,7 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between" data-tour="application-form-actions">
                   <router-link :to="{ name: 'Applications' }" class="btn btn-outline-secondary" data-testid="cancel-link">
                     <i class="bi bi-x-circle me-2"></i>{{ t('applicationFormPage.cancel') }}
                   </router-link>

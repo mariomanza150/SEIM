@@ -217,7 +217,10 @@
     "googleCalendarError": "Google Calendar action failed.",
     "googleCalendarSyncSuccess": "Calendar synced. SEIM events restored where Google differed; Google-only events appear on Deadlines.",
     "googleCalendarDisconnectedToast": "Google Calendar disconnected.",
-    "googleCalendarConnectedToast": "Google Calendar connected."
+    "googleCalendarConnectedToast": "Google Calendar connected.",
+    "startPageTour": "Start page tour",
+    "pageToursHeading": "Walkthroughs",
+    "pageToursBody": "Replay the welcome tour or start a page-level walkthrough available for your role."
   },
   "login": {
     "subtitle": "Sign in to continue",
@@ -406,7 +409,13 @@
       "admin": "Administration",
       "account": "Account",
       "other": "Other"
-    }
+    },
+    "startWalkthrough": "Start walkthrough",
+    "startWalkthroughHint": "Open the related page and start an interactive tour for your role.",
+    "walkthroughCardTitle": "Interactive walkthroughs",
+    "walkthroughCardBody": "Replay the product tour or start a guided tour for a major workflow page.",
+    "replayWelcomeTour": "Replay welcome tour",
+    "pageTourLabel": "Page tour: {title}"
   },
   "adminNav": {
     "sectionTitle": "Admin",
@@ -491,6 +500,161 @@
         "statsBody": "Dashboard cards summarize items relevant to your partner role.",
         "portalTitle": "Partner portal",
         "portalBody": "Acknowledge nominations and manage partner documents from the portal."
+      }
+    },
+    "startWalkthrough": "Start walkthrough",
+    "replayTour": "Replay product tour",
+    "replayPageTour": "Replay page tour",
+    "startPageTour": "Start page tour",
+    "pageToursHeading": "Page walkthroughs",
+    "pageToursBody": "Replay the welcome tour or launch a guided walkthrough for a major page.",
+    "noPageTour": "No walkthrough is available for this page and role.",
+    "pages": {
+      "applications": {
+        "title": "Applications walkthrough",
+        "steps": {
+          "headerTitle": "Applications",
+          "headerBody": "This page lists exchange applications you can open, filter, or start.",
+          "actionsTitle": "Start an application",
+          "actionsBody": "Create a new draft when you are ready to apply to a program.",
+          "tabsTitle": "Direction tabs",
+          "tabsBody": "Switch between outgoing and incoming applications when both are available.",
+          "filtersTitle": "Filters and search",
+          "filtersBody": "Narrow the list by status, period, program, or keywords.",
+          "listTitle": "Application cards",
+          "listBody": "Open a card to see status, readiness, and next actions."
+        },
+        "student": {
+          "steps": {
+            "actionsBody": "Start a new exchange application draft from here.",
+            "listBody": "Track drafts and submitted applications. Open one to continue or review comments."
+          }
+        },
+        "staff": {
+          "steps": {
+            "actionsBody": "You can open applications tied to your coordination work from this list.",
+            "listBody": "Use the list to jump into an application before deeper review in the queue."
+          }
+        },
+        "admin": {
+          "steps": {
+            "actionsBody": "Admins can open or inspect applications from this list when needed.",
+            "listBody": "Inspect application volume and open records for operational follow-up."
+          }
+        }
+      },
+      "application-form": {
+        "title": "Application form walkthrough",
+        "steps": {
+          "headerTitle": "Application form",
+          "headerBody": "Complete program selection and form fields before submitting.",
+          "programTitle": "Choose a program",
+          "programBody": "Select the exchange program. Filters help you find the right destination.",
+          "dynamicTitle": "Dynamic form fields",
+          "dynamicBody": "Answer the questions required by this program. Save drafts as you go.",
+          "submitTitle": "Save and submit",
+          "submitBody": "Save a draft anytime. Submit only when eligibility and required fields are complete."
+        },
+        "student": {
+          "steps": {
+            "submitBody": "Save often. Submit when documents and eligibility checks are ready."
+          }
+        },
+        "staff": {
+          "steps": {
+            "headerBody": "Staff may assist with draft corrections when the workflow allows edits."
+          }
+        },
+        "admin": {
+          "steps": {
+            "headerBody": "Admins can adjust operational application data from related admin editors when needed."
+          }
+        }
+      },
+      "documents": {
+        "title": "Documents walkthrough",
+        "steps": {
+          "headerTitle": "Documents",
+          "headerBody": "Upload, replace, and track files linked to applications.",
+          "prefillTitle": "Prefill templates",
+          "prefillBody": "Download institution templates prefilled with your profile when available.",
+          "filtersTitle": "Document filters",
+          "filtersBody": "Filter by application, document type, or validation status.",
+          "listTitle": "Document list",
+          "listBody": "Open a document to download, replace, or read review comments."
+        },
+        "student": {
+          "steps": {
+            "listBody": "Upload required files and respond quickly when a resubmit is requested."
+          }
+        },
+        "staff": {
+          "steps": {
+            "listBody": "Validate or request resubmits with a clear reason and deadline."
+          }
+        },
+        "admin": {
+          "steps": {
+            "headerBody": "Admins can inspect document status across applications from this list."
+          }
+        }
+      },
+      "review-queue": {
+        "title": "Review queue walkthrough",
+        "steps": {
+          "headerTitle": "Review queue",
+          "headerBody": "Triage submitted applications that need coordinator action.",
+          "filtersTitle": "Queue filters",
+          "filtersBody": "Focus on pending review, document resubmits, or items assigned to you.",
+          "listTitle": "Queue results",
+          "listBody": "Open a row to review the form, documents, and allowed status transitions."
+        },
+        "staff": {
+          "steps": {
+            "listBody": "Advance status only when the step requirements are met. Notes stay on the timeline."
+          }
+        },
+        "admin": {
+          "steps": {
+            "headerBody": "Admins share this queue with coordinators for operational triage."
+          }
+        }
+      },
+      "partner-portal": {
+        "title": "Partner portal walkthrough",
+        "steps": {
+          "headerTitle": "Partner portal",
+          "headerBody": "Review agreements, nominated applicants, and partner document tasks.",
+          "agreementsTitle": "Exchange agreements",
+          "agreementsBody": "Open an agreement to see status and required institutional documents.",
+          "nomineesTitle": "Nominated applicants",
+          "nomineesBody": "Acknowledge nominations and open checklists for host requirements.",
+          "docsTitle": "Partner documents",
+          "docsBody": "Upload or replace institutional files requested for the selected agreement."
+        },
+        "partner": {
+          "steps": {
+            "nomineesBody": "Acknowledge each nomination and complete host checklist items on time."
+          }
+        }
+      },
+      "admin-programs": {
+        "title": "Programs admin walkthrough",
+        "steps": {
+          "headerTitle": "Programs",
+          "headerBody": "Create and maintain exchange programs used by applicants.",
+          "createTitle": "Create a program",
+          "createBody": "Add a new program, then configure destinations and windows.",
+          "filtersTitle": "Search and filters",
+          "filtersBody": "Find programs by name or active status before editing.",
+          "tableTitle": "Program list",
+          "tableBody": "Edit a program, manage destinations, or clone an existing configuration."
+        },
+        "admin": {
+          "steps": {
+            "tableBody": "Use destinations to model host campuses. Keep eligibility and agreements aligned before opening a call."
+          }
+        }
       }
     }
   },

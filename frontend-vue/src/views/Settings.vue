@@ -368,7 +368,7 @@
             <div class="card-header"><h6 class="mb-0"><i class="bi bi-question-circle me-2"></i>{{ t('settings.sidebarHelpTitle') }}</h6></div>
             <div class="card-body small">
               <p class="mb-3">{{ t('settings.sidebarHelpBody') }}</p>
-              <div class="d-flex flex-wrap gap-2">
+              <div class="d-flex flex-wrap gap-2 mb-3">
                 <router-link :to="{ name: 'HelpCenter' }" class="btn btn-outline-primary btn-sm" data-testid="settings-help-link">
                   {{ t('settings.sidebarHelpCta') }}
                 </router-link>
@@ -379,6 +379,29 @@
                   @click="replayProductTour"
                 >
                   {{ t('settings.replayTour') }}
+                </button>
+              </div>
+              <p class="mb-2 fw-semibold">{{ t('settings.pageToursHeading') }}</p>
+              <p class="mb-2 text-muted">{{ t('settings.pageToursBody') }}</p>
+              <div class="d-flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  data-testid="settings-start-page-tour"
+                  :disabled="!currentRoutePageTour"
+                  @click="startCurrentPageTour"
+                >
+                  {{ t('settings.startPageTour') }}
+                </button>
+                <button
+                  v-for="pageId in availablePageTours"
+                  :key="pageId"
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  :data-testid="`settings-page-tour-${pageId}`"
+                  @click="startNamedPageTour(pageId)"
+                >
+                  {{ pageTourTitle(pageId) }}
                 </button>
               </div>
             </div>
@@ -409,18 +432,25 @@ import { applyUiPreferences } from '@/services/uiPreferences'
 import { setAppLocale } from '@/i18n'
 import router from '@/router'
 import { resolveDocumentTitle, syncAppSocialMeta } from '@/utils/documentTitle'
-import { useProductTour } from '@/composables/useProductTour'
+import { useStartWalkthrough } from '@/composables/useStartWalkthrough'
 import {
-  clearTourCompletion,
-  resolveTourRole,
-  tourIdForRole,
-  tourStorageUserKey,
+  DASHBOARD_PAGE_ID,
+  pageToursForRole,
+  resolvePageTourFromRoute,
 } from '@/utils/tourDefinitions'
 
 const authStore = useAuthStore()
 const route = useRoute()
-const { t, locale } = useI18n()
-const { openTour } = useProductTour()
+const { t, te, locale } = useI18n()
+const { startWalkthrough, currentRole } = useStartWalkthrough()
+
+const availablePageTours = computed(() => pageToursForRole(currentRole()))
+const currentRoutePageTour = computed(() => resolvePageTourFromRoute(route.name))
+
+function pageTourTitle(pageId) {
+  const key = `tours.pages.${pageId}.title`
+  return te(key) ? t(key) : pageId
+}
 
 function onLocaleChange() {
   setAppLocale(locale.value)
@@ -428,14 +458,18 @@ function onLocaleChange() {
   syncAppSocialMeta(t, router.currentRoute.value)
 }
 
-function replayProductTour() {
-  if (!authStore.isAuthenticated) return
-  const userKey = tourStorageUserKey(authStore.user)
-  if (!userKey) return
-  const role = resolveTourRole(authStore)
-  const tourId = tourIdForRole(role)
-  clearTourCompletion(userKey, tourId)
-  openTour({ role, tourId, force: true })
+async function replayProductTour() {
+  await startWalkthrough(DASHBOARD_PAGE_ID, { force: true })
+}
+
+async function startCurrentPageTour() {
+  const pageId = currentRoutePageTour.value
+  if (!pageId) return
+  await startWalkthrough(pageId, { force: true })
+}
+
+async function startNamedPageTour(pageId) {
+  await startWalkthrough(pageId, { force: true })
 }
 
 const { success, error: errorToast } = useToast()

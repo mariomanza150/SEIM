@@ -3,10 +3,12 @@
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
+import { createPinia, setActivePinia } from 'pinia'
 import { createMemoryHistory, createRouter } from 'vue-router'
 import HelpArticle from './HelpArticle.vue'
 import i18n, { setAppLocale } from '@/i18n'
 import { fetchHelpArticle, fetchHelpArticles } from '@/services/help'
+import { useProductTour } from '@/composables/useProductTour'
 
 vi.mock('@/services/help', () => ({
   fetchHelpArticle: vi.fn(),
@@ -14,21 +16,37 @@ vi.mock('@/services/help', () => ({
   unwrapHelpArticles: (data) => (Array.isArray(data) ? data : data?.results || []),
 }))
 
+const authStoreMock = {
+  isAuthenticated: true,
+  user: { id: 3, email: 'student@example.edu' },
+  isAdmin: false,
+  canUseStaffReviewQueue: false,
+  canUsePartnerPortal: false,
+}
+
+vi.mock('@/stores/auth', () => ({
+  useAuthStore: () => authStoreMock,
+}))
+
 async function mountArticle(slug = 'start-application') {
+  const pinia = createPinia()
+  setActivePinia(pinia)
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
       { path: '/help', name: 'HelpCenter', component: { template: '<div />' } },
       { path: '/help/:slug', name: 'HelpArticle', component: HelpArticle },
       { path: '/', name: 'Dashboard', component: { template: '<div />' } },
+      { path: '/applications', name: 'Applications', component: { template: '<div />' } },
+      { path: '/applications/new', name: 'ApplicationNew', component: { template: '<div />' } },
     ],
   })
   await router.push({ name: 'HelpArticle', params: { slug } })
   const wrapper = mount(HelpArticle, {
-    global: { plugins: [i18n, router] },
+    global: { plugins: [i18n, router, pinia] },
   })
   await flushPromises()
-  return { wrapper, router }
+  return { wrapper, router, pinia }
 }
 
 describe('HelpArticle', () => {
@@ -73,5 +91,14 @@ describe('HelpArticle', () => {
     fetchHelpArticle.mockRejectedValue({ response: { status: 404 } })
     const { wrapper } = await mountArticle('missing')
     expect(wrapper.get('[data-testid="help-article-unavailable"]').text()).toContain('Article not available')
+  })
+
+  it('wires Start walkthrough CTA from the article contextual key', async () => {
+    const { wrapper, router } = await mountArticle()
+    const cta = wrapper.get('[data-testid="help-article-start-walkthrough"]')
+    await cta.trigger('click')
+    await flushPromises()
+    expect(router.currentRoute.value.name).toBe('ApplicationNew')
+    expect(useProductTour().pendingPageId.value).toBe('application-form')
   })
 })
