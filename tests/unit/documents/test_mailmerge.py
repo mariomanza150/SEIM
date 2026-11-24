@@ -368,3 +368,44 @@ class DocxHasFillableFieldsTests(SimpleTestCase):
     def test_blank_docx_has_no_fillable_fields(self):
         raw = _blank_docx()
         self.assertFalse(docx_has_fillable_fields(raw))
+
+
+class XmlEscapeMergeValueTests(SimpleTestCase):
+    def test_placeholder_merge_escapes_ampersand_and_angle_brackets(self):
+        body = """
+        <w:p>
+          <w:r><w:t>{{FullName}}</w:t></w:r>
+        </w:p>
+        """
+        raw = _pack_docx(**{"word/document.xml": _doc(body)})
+        filled = merge_docx(
+            raw,
+            {"FullName": 'Ada & Grace <Lab> "Quote"'},
+        )
+        with zipfile.ZipFile(io.BytesIO(filled)) as zf:
+            xml_bytes = zf.read("word/document.xml")
+        xml_text = xml_bytes.decode("utf-8")
+        # Raw specials must not appear unescaped in the OOXML payload.
+        self.assertNotIn("Ada & Grace", xml_text)
+        self.assertNotIn("<Lab>", xml_text)
+        self.assertIn("Ada &amp; Grace", xml_text)
+        self.assertIn("&lt;Lab&gt;", xml_text)
+        # Round-trip through lxml yields the original characters.
+        root = etree.fromstring(xml_bytes)
+        self.assertEqual(_joined_text(root), 'Ada & Grace <Lab> "Quote"')
+
+    def test_mergefield_escapes_ampersand_and_angle_brackets(self):
+        body = """
+        <w:p>
+          <w:fldSimple w:instr=" MERGEFIELD FullName ">
+            <w:r><w:t>«FullName»</w:t></w:r>
+          </w:fldSimple>
+        </w:p>
+        """
+        raw = _pack_docx(**{"word/document.xml": _doc(body)})
+        filled = merge_docx(raw, {"FullName": "A & B <C>"})
+        with zipfile.ZipFile(io.BytesIO(filled)) as zf:
+            xml_text = zf.read("word/document.xml").decode("utf-8")
+        self.assertIn("A &amp; B", xml_text)
+        self.assertIn("&lt;C&gt;", xml_text)
+        self.assertEqual(_joined_text(_read_part(filled)), "A & B <C>")

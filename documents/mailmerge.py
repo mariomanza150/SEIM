@@ -13,6 +13,7 @@ import re
 import zipfile
 from datetime import date, datetime
 from decimal import Decimal
+from xml.sax.saxutils import escape as xml_escape
 
 from django.core.exceptions import ObjectDoesNotExist
 from lxml import etree
@@ -22,6 +23,8 @@ XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
 NSMAP = {"w": W_NS}
 FLD_INSTR_RE = re.compile(r"MERGEFIELD\s+([A-Za-z][A-Za-z0-9_]*)", re.IGNORECASE)
 PLACEHOLDER_RE = re.compile(r"\{\{([A-Za-z][A-Za-z0-9_]*)\}\}")
+# XML 1.0 disallows most C0 controls in text nodes (tab/LF/CR are fine).
+_ILLEGAL_XML_CHARS_RE = re.compile(r"[\x00-\x08\x0B\x0C\x0E-\x1F]")
 
 # Catalog shown to admins when authoring templates.
 MERGE_FIELD_CATALOG: list[dict[str, str]] = [
@@ -113,6 +116,24 @@ def _fmt(value) -> str:
     if isinstance(value, Decimal):
         return format(value, "f")
     return str(value)
+
+
+def _xml_escape_merge_value(value: str) -> str:
+    """Escape ``&``, ``<``, ``>``, and quotes for safe OOXML text insertion."""
+    cleaned = _ILLEGAL_XML_CHARS_RE.sub("", value or "")
+    return xml_escape(cleaned, {'"': "&quot;", "'": "&apos;"})
+
+
+def _assign_ooxml_text(node, value: str) -> None:
+    """Set a ``w:t`` node's text after XML-escaping the merge value.
+
+    Escaped text is parsed once so entities become Unicode; ``etree.tostring``
+    then re-serializes them correctly (no double-encoding in the .docx).
+    """
+    escaped = _xml_escape_merge_value(value)
+    fragment = etree.fromstring(f'<w:t xmlns:w="{W_NS}">{escaped}</w:t>')
+    node.text = fragment.text
+    node.set(XML_SPACE, "preserve")
 
 
 def _related_name(obj, attr: str) -> str:
@@ -344,14 +365,12 @@ def _set_run_text(run, text: str) -> None:
     """Replace all w:t nodes in a run with a single text node."""
     texts = run.findall(f"{{{W_NS}}}t")
     if texts:
-        texts[0].text = text
-        texts[0].set(XML_SPACE, "preserve")
+        _assign_ooxml_text(texts[0], text)
         for extra in texts[1:]:
             run.remove(extra)
         return
     t_el = etree.SubElement(run, f"{{{W_NS}}}t")
-    t_el.set(XML_SPACE, "preserve")
-    t_el.text = text
+    _assign_ooxml_text(t_el, text)
 
 
 def _replace_simple_fields(root, lookup) -> None:
@@ -508,8 +527,7 @@ def _replace_placeholders_in_paragraph(para, lookup) -> None:
         touched.update(range(start_i, end_i + 1))
 
     for index in sorted(touched):
-        t_nodes[index].text = texts[index]
-        t_nodes[index].set(XML_SPACE, "preserve")
+        _assign_ooxml_text(t_nodes[index], texts[index])
 
 
 def _replace_placeholders(root, lookup) -> None:
