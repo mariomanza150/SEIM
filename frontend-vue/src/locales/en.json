@@ -1505,6 +1505,7 @@
     "threadHeading": "Agreement thread — {title}",
     "threadLoading": "Loading messages…",
     "threadEmpty": "No messages yet.",
+    "threadLoadError": "Could not load messages for this agreement.",
     "threadLabel": "Message",
     "threadSubmit": "Send",
     "threadPrivateLabel": "Private staff note (hidden from partners)",

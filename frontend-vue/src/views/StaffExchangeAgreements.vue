@@ -19,8 +19,9 @@
       <CompactFilterBar :clear-label="t('exchangeAgreementsPage.clearFilters')" @clear="clearFilters">
         <template #primary>
             <div class="col-md-4">
-              <label class="form-label">{{ t('exchangeAgreementsPage.searchLabel') }}</label>
+              <label class="form-label" for="ag-search">{{ t('exchangeAgreementsPage.searchLabel') }}</label>
               <input
+                id="ag-search"
                 v-model="filters.search"
                 type="text"
                 class="form-control"
@@ -29,15 +30,15 @@
               />
             </div>
             <div class="col-md-2">
-              <label class="form-label">{{ t('exchangeAgreementsPage.colStatus') }}</label>
-              <select v-model="filters.status" class="form-select" @change="fetchAgreements(1)">
+              <label class="form-label" for="ag-status">{{ t('exchangeAgreementsPage.colStatus') }}</label>
+              <select id="ag-status" v-model="filters.status" class="form-select" @change="fetchAgreements(1)">
                 <option value="">{{ t('exchangeAgreementsPage.filterOptionAll') }}</option>
                 <option v-for="s in statusChoices" :key="s.value" :value="s.value">{{ s.label }}</option>
               </select>
             </div>
             <div class="col-md-2">
-              <label class="form-label">{{ t('exchangeAgreementsPage.typeLabel') }}</label>
-              <select v-model="filters.agreement_type" class="form-select" @change="fetchAgreements(1)">
+              <label class="form-label" for="ag-type">{{ t('exchangeAgreementsPage.typeLabel') }}</label>
+              <select id="ag-type" v-model="filters.agreement_type" class="form-select" @change="fetchAgreements(1)">
                 <option value="">{{ t('exchangeAgreementsPage.filterOptionAll') }}</option>
                 <option v-for="ty in typeChoices" :key="ty.value" :value="ty.value">{{ ty.label }}</option>
               </select>
@@ -46,15 +47,16 @@
         <template #advanced>
             <div class="row g-2">
             <div class="col-md-4">
-              <label class="form-label">{{ t('exchangeAgreementsPage.linkedProgramLabel') }}</label>
-              <select v-model="filters.program" class="form-select" @change="fetchAgreements(1)">
+              <label class="form-label" for="ag-program">{{ t('exchangeAgreementsPage.linkedProgramLabel') }}</label>
+              <select id="ag-program" v-model="filters.program" class="form-select" @change="fetchAgreements(1)">
                 <option value="">{{ t('exchangeAgreementsPage.programAny') }}</option>
                 <option v-for="p in programs" :key="p.id" :value="p.id">{{ p.name }}</option>
               </select>
             </div>
             <div class="col-md-3">
-              <label class="form-label">{{ t('exchangeAgreementsPage.partnerContainsLabel') }}</label>
+              <label class="form-label" for="ag-partner">{{ t('exchangeAgreementsPage.partnerContainsLabel') }}</label>
               <input
+                id="ag-partner"
                 v-model="filters.partner"
                 type="text"
                 class="form-control"
@@ -62,16 +64,17 @@
               />
             </div>
             <div class="col-md-2">
-              <label class="form-label">{{ t('exchangeAgreementsPage.endAfterLabel') }}</label>
-              <input v-model="filters.end_date_after" type="date" class="form-control" @change="fetchAgreements(1)" />
+              <label class="form-label" for="ag-end-after">{{ t('exchangeAgreementsPage.endAfterLabel') }}</label>
+              <input id="ag-end-after" v-model="filters.end_date_after" type="date" class="form-control" @change="fetchAgreements(1)" />
             </div>
             <div class="col-md-2">
-              <label class="form-label">{{ t('exchangeAgreementsPage.endBeforeLabel') }}</label>
-              <input v-model="filters.end_date_before" type="date" class="form-control" @change="fetchAgreements(1)" />
+              <label class="form-label" for="ag-end-before">{{ t('exchangeAgreementsPage.endBeforeLabel') }}</label>
+              <input id="ag-end-before" v-model="filters.end_date_before" type="date" class="form-control" @change="fetchAgreements(1)" />
             </div>
             <div class="col-md-2">
-              <label class="form-label">{{ t('exchangeAgreementsPage.expiringDaysLabel') }}</label>
+              <label class="form-label" for="ag-expiring">{{ t('exchangeAgreementsPage.expiringDaysLabel') }}</label>
               <input
+                id="ag-expiring"
                 v-model.number="filters.expiring_within_days"
                 type="number"
                 min="0"
@@ -81,8 +84,8 @@
               />
             </div>
             <div class="col-md-3">
-              <label class="form-label">{{ t('exchangeAgreementsPage.sortLabel') }}</label>
-              <select v-model="filters.ordering" class="form-select" @change="fetchAgreements(1)">
+              <label class="form-label" for="ag-sort">{{ t('exchangeAgreementsPage.sortLabel') }}</label>
+              <select id="ag-sort" v-model="filters.ordering" class="form-select" @change="fetchAgreements(1)">
                 <option value="-end_date">{{ t('exchangeAgreementsPage.sortEndSoonest') }}</option>
                 <option value="end_date">{{ t('exchangeAgreementsPage.sortEndLatest') }}</option>
                 <option value="-created_at">{{ t('exchangeAgreementsPage.sortNewest') }}</option>
@@ -304,6 +307,14 @@
         </div>
         <div class="card-body">
           <div v-if="threadLoading" class="text-muted small">{{ t('exchangeAgreementsPage.threadLoading') }}</div>
+          <div
+            v-else-if="threadLoadError"
+            class="alert alert-warning small"
+            role="alert"
+            data-testid="agreements-thread-load-error"
+          >
+            {{ threadLoadError }}
+          </div>
           <ul v-else class="list-unstyled mb-3">
             <li v-for="c in threadComments" :key="c.id" class="mb-2">
               <div class="small text-muted">
@@ -461,6 +472,7 @@ const threadComments = ref([])
 const threadText = ref('')
 const threadPrivate = ref(false)
 const threadLoading = ref(false)
+const threadLoadError = ref('')
 const threadBusy = ref(false)
 const loading = ref(true)
 const error = ref(null)
@@ -563,12 +575,14 @@ async function openThread(a) {
   threadAgreement.value = a
   threadText.value = ''
   threadPrivate.value = false
+  threadLoadError.value = ''
   threadLoading.value = true
   try {
     const { data } = await api.get(`/api/exchange-agreements/${a.id}/comments/`)
     threadComments.value = Array.isArray(data) ? data : data.results ?? []
   } catch {
     threadComments.value = []
+    threadLoadError.value = t('exchangeAgreementsPage.threadLoadError')
   } finally {
     threadLoading.value = false
   }

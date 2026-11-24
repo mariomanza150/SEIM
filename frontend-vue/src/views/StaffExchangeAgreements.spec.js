@@ -190,4 +190,65 @@ describe('StaffExchangeAgreements', () => {
     })
     expect(wrapper.text()).toContain('Hello partner')
   })
+
+  it('shows thread load error instead of empty when comments GET fails', async () => {
+    api.get.mockImplementation((url) => {
+      if (url === '/api/programs/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/saved-searches/') {
+        return Promise.resolve({ data: { results: [] } })
+      }
+      if (url === '/api/exchange-agreements/') {
+        return Promise.resolve({
+          data: {
+            results: [
+              {
+                id: 'agr-1',
+                title: 'MoU',
+                partner_institution_name: 'Partner Org',
+                status: 'active',
+                partner_contacts: [],
+              },
+            ],
+            count: 1,
+          },
+        })
+      }
+      if (url === '/api/exchange-agreements/agr-1/comments/') {
+        return Promise.reject(new Error('network'))
+      }
+      return Promise.reject(new Error(`Unexpected GET ${url}`))
+    })
+    const wrapper = mount(StaffExchangeAgreements, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('[data-testid="agreements-open-thread"]').trigger('click')
+    await flushPromises()
+    expect(wrapper.find('[data-testid="agreements-thread-load-error"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="agreements-thread-load-error"]').text()).toContain(
+      i18n.global.t('exchangeAgreementsPage.threadLoadError'),
+    )
+    expect(wrapper.text()).not.toContain(i18n.global.t('exchangeAgreementsPage.threadEmpty'))
+  })
+
+  it('associates primary filter labels with controls via for/id', async () => {
+    const wrapper = mount(StaffExchangeAgreements, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('label[for="ag-search"]').exists()).toBe(true)
+    expect(wrapper.find('#ag-search').exists()).toBe(true)
+    expect(wrapper.find('label[for="ag-status"]').exists()).toBe(true)
+    expect(wrapper.find('#ag-status').exists()).toBe(true)
+    expect(wrapper.find('label[for="ag-type"]').exists()).toBe(true)
+    expect(wrapper.find('#ag-type').exists()).toBe(true)
+  })
 })
