@@ -1134,8 +1134,18 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         )
 
         if self.action == "list":
-            base_qs = base_qs.prefetch_related(
+            # Prefetch host institutions so list readiness (per-row status) does
+            # not issue program_has_active_host_institutions.exists() per row.
+            host_inst_prefetch = Prefetch(
+                "program__host_institutions",
+                queryset=HostInstitution.objects.filter(is_active=True),
+            )
+            base_qs = base_qs.select_related(
+                "student__profile",
+                "program__application_form",
+            ).prefetch_related(
                 req_prefetch,
+                host_inst_prefetch,
                 "student__roles",
                 list_doc_prefetch,
             )
