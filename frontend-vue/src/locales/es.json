@@ -2666,6 +2666,8 @@
     "emptyCtaReviewQueue": "Abrir cola de revisión",
     "loadError": "No se pudieron cargar las nominaciones.",
     "programsLoadError": "No se pudieron cargar los programas para nominaciones.",
+    "saveError": "No se pudo guardar el orden de nominaciones.",
+    "matchError": "No se pudieron asignar las nominaciones a plazas.",
     "saveSuccess": "Orden guardado.",
     "matchSuccess": "Se nominaron {nominated} y {waitlisted} pasaron a lista de espera."
   },
