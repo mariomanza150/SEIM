@@ -1104,7 +1104,11 @@ class ScholarshipDisbursementInline(admin.TabularInline):
 @admin.register(ScholarshipAward)
 class ScholarshipAwardAdmin(admin.ModelAdmin):
     list_display = ("application", "status", "amount", "currency", "decided_at")
-    list_select_related = ("application", "application__student", "application__program")
+    list_select_related = (
+        "application",
+        "application__student",
+        "application__program",
+    )
     list_filter = ("status", "currency")
     search_fields = (
         "application__student__email",
