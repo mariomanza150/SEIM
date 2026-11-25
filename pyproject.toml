@@ -23,7 +23,7 @@ dependencies = [
     "djangorestframework-simplejwt==5.5.1",
     "defusedxml==0.7.1",
     # Database and Caching
-    "psycopg2-binary==2.9.11",
+    "psycopg2-binary==2.9.13",
     "redis==8.1.0",
     "django-redis==6.0.0",
     "django-cacheops==7.2",
