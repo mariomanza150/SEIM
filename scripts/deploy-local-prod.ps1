@@ -182,7 +182,11 @@ try {
     $profileArgs = @()
     $tokenLine = Select-String -Path $EnvFile -Pattern '^\s*CLOUDFLARE_TUNNEL_TOKEN\s*=\s*\S+' -ErrorAction SilentlyContinue
     if ($tokenLine) {
-        $profileArgs = @("--profile", "cloudflare")
+        $profileArgs += @("--profile", "cloudflare")
+    }
+    $autohealLine = Select-String -Path $EnvFile -Pattern '^\s*SEIM_AUTOHEAL\s*=\s*(1|true|yes)\s*$' -ErrorAction SilentlyContinue
+    if ($autohealLine -or ($env:SEIM_AUTOHEAL -match '^(1|true|yes)$')) {
+        $profileArgs += @("--profile", "autoheal")
     }
 
     $upTimeout = Get-StepTimeout $ComposeUpTimeoutSec "docker compose up"
