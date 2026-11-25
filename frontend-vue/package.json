@@ -12,7 +12,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@bpmn-io/properties-panel": "^3.40.6",
+    "@bpmn-io/properties-panel": "^3.60.2",
     "@sentry/vue": "^11.16.0",
     "axios": "^1.21.1",
     "bootstrap": "^5.3.9",
