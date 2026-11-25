@@ -1,0 +1,22 @@
+# Front proxy for local-prod. Publishes host ports; upstream is Compose service DNS.
+# Dynamic A records refresh so scale-up (blue/green) web containers are picked up.
+{
+	auto_https off
+}
+
+:8000 {
+	reverse_proxy {
+		dynamic a web 8000 {
+			refresh 2s
+			dial_timeout 3s
+			versions ipv4
+		}
+		lb_policy round_robin
+		health_uri /health/live/
+		health_interval 3s
+		health_timeout 2s
+		health_statuses 2xx
+		fail_duration 5s
+		unhealthy_latency 5s
+	}
+}

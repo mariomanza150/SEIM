@@ -27,6 +27,9 @@ param(
     [switch]$SkipDbBackup,
     [switch]$SkipSmoke,
     [switch]$SkipRegistryPush,
+    [switch]$SkipRollout,
+    [double]$MinFreeMemoryGiB = 1.5,
+    [int]$RolloutTimeoutSec = 180,
     [int]$HealthTimeoutSec = 180,
     [int]$SmokeTimeoutSec = 240,
     [int]$RegistryTimeoutSec = 120,
@@ -50,12 +53,13 @@ Set-Location $ProjectRoot
 $ComposeFile = "docker-compose.local-prod.yml"
 $ProjectName = "seim-localprod"
 $EnvFile = ".env.local-prod"
-$HealthUrl = "http://localhost:8020/health/live/"
-$FinalHealthUrl = "http://localhost:8020/health/"
+$CaddyHttpPort = if ($env:CADDY_HTTP_PORT) { $env:CADDY_HTTP_PORT } else { "8020" }
+$HealthUrl = "http://localhost:${CaddyHttpPort}/health/live/"
+$FinalHealthUrl = "http://localhost:${CaddyHttpPort}/health/"
 $LockRepo = "SEIM"
 $LockRunId = if ($env:GITHUB_RUN_ID) { "gh-$($env:GITHUB_RUN_ID)-$($env:GITHUB_RUN_ATTEMPT)" } else { "manual-$PID-$([DateTimeOffset]::UtcNow.ToUnixTimeSeconds())" }
-# Fallback start order: data services first, the tunnel last; anything else in between.
-$StartOrder = @("db", "redis", "toefl", "web", "celery", "celery-beat", "cloudflared")
+# Fallback start order: data services first, proxy before tunnel; anything else in between.
+$StartOrder = @("db", "redis", "toefl", "web", "celery", "celery-beat", "caddy", "cloudflared")
 $ScriptDeadline = (Get-Date).AddSeconds($TotalBudgetSec)
 $DbBackupDirRel = if ($env:SEIM_DB_BACKUP_DIR) { $env:SEIM_DB_BACKUP_DIR.Trim() } else { "backups/local-prod" }
 $DbBackupKeep = 10
@@ -228,6 +232,100 @@ function Set-LastGoodTags([string]$AppImage, [string]$ToeflImage) {
     }
 }
 
+function Get-AvailableMemoryGiB {
+    if ($IsLinux) {
+        $avail = (Select-String -Path /proc/meminfo -Pattern '^MemAvailable:\s+(\d+)' -ErrorAction SilentlyContinue).Matches.Groups[1].Value
+        if ($avail) { return [double]$avail / (1024.0 * 1024.0) }
+    }
+    if (-not ($IsLinux -or $IsMacOS)) {
+        $os = Get-CimInstance Win32_OperatingSystem
+        return [double]$os.FreePhysicalMemory / (1024.0 * 1024.0)
+    }
+    return [double]::MaxValue
+}
+
+function Assert-SufficientMemory([double]$MinGiB) {
+    $free = Get-AvailableMemoryGiB
+    Write-Host ("Available memory: {0:N2} GiB (minimum {1:N2} GiB)" -f $free, $MinGiB)
+    if ($free -lt $MinGiB) {
+        throw ("Aborting deploy: free memory {0:N2} GiB is below {1:N2} GiB (blue-green needs headroom for a second web/celery)" -f $free, $MinGiB)
+    }
+}
+
+function Get-ComposeServiceIds([string]$Project, [string]$Compose, [string]$EnvPath, [string]$Service) {
+    $out = & docker compose -p $Project -f $Compose --env-file $EnvPath ps -q $Service 2>$null
+    return @($out | Where-Object { $_ -and $_.Trim() } | ForEach-Object { $_.Trim() })
+}
+
+function Wait-ContainersHealthy([string[]]$Ids, [int]$TimeoutSec) {
+    $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    foreach ($id in $Ids) {
+        $ok = $false
+        while ((Get-Date) -lt $deadline) {
+            $health = (& docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' $id 2>$null)
+            if ($health -eq "healthy" -or $health -eq "running") {
+                # Prefer explicit healthy when a healthcheck exists.
+                $hasHc = (& docker inspect --format '{{if .State.Health}}yes{{else}}no{{end}}' $id 2>$null)
+                if ($hasHc -eq "no" -and $health -eq "running") { $ok = $true; break }
+                if ($health -eq "healthy") { $ok = $true; break }
+            }
+            Start-Sleep -Seconds 3
+        }
+        if (-not $ok) { throw "Container $id did not become healthy within ${TimeoutSec}s" }
+    }
+}
+
+function Invoke-BlueGreenRollout([string]$Project, [string]$Compose, [string]$EnvPath, [string]$Service, [int]$TimeoutSec) {
+    # Port of docker-rollout: scale to 2x, wait for new healthy, retire old. No container_name/ports on service.
+    $oldIds = Get-ComposeServiceIds $Project $Compose $EnvPath $Service
+    if ($oldIds.Count -eq 0) {
+        Write-Host "Cold start $Service"
+        $code = Invoke-Bounded @(
+            "compose", "-p", $Project, "-f", $Compose, "--env-file", $EnvPath,
+            "up", "-d", "--no-build", "--no-deps", "--wait", "--wait-timeout", "$TimeoutSec", $Service
+        ) $TimeoutSec "compose up $Service"
+        if ($null -eq $code -or $code -ne 0) { throw "compose up $Service failed" }
+        return
+    }
+    $scale = $oldIds.Count * 2
+    Write-Host "Scaling $Service to $scale (keeping $($oldIds.Count) old)"
+    $code = Invoke-Bounded @(
+        "compose", "-p", $Project, "-f", $Compose, "--env-file", $EnvPath,
+        "up", "-d", "--no-build", "--no-deps", "--no-recreate", "--scale", "$Service=$scale", $Service
+    ) $TimeoutSec "compose scale $Service"
+    if ($null -eq $code -or $code -ne 0) { throw "compose scale $Service failed" }
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSec)
+    $newIds = @()
+    while ((Get-Date) -lt $deadline) {
+        $all = Get-ComposeServiceIds $Project $Compose $EnvPath $Service
+        $newIds = @($all | Where-Object { $oldIds -notcontains $_ })
+        if ($newIds.Count -ge $oldIds.Count) { break }
+        Start-Sleep -Seconds 3
+    }
+    if ($newIds.Count -lt $oldIds.Count) {
+        throw "Timed out waiting for new $Service containers (have $($newIds.Count), need $($oldIds.Count))"
+    }
+    Wait-ContainersHealthy -Ids $newIds -TimeoutSec ([Math]::Max(30, [int]($deadline - (Get-Date)).TotalSeconds))
+    Write-Host "Retiring old $Service containers: $($oldIds -join ', ')"
+    foreach ($id in $oldIds) {
+        $null = Invoke-Bounded @("stop", $id) 60 "docker stop $id"
+        $null = Invoke-Bounded @("rm", $id) 30 "docker rm $id"
+    }
+}
+
+function Invoke-BeatBounce([string]$Project, [string]$Compose, [string]$EnvPath, [int]$TimeoutSec) {
+    Write-Host "celery-beat: stop then start (single replica)"
+    $null = Invoke-Bounded @(
+        "compose", "-p", $Project, "-f", $Compose, "--env-file", $EnvPath, "stop", "celery-beat"
+    ) 60 "compose stop celery-beat"
+    $code = Invoke-Bounded @(
+        "compose", "-p", $Project, "-f", $Compose, "--env-file", $EnvPath,
+        "up", "-d", "--no-build", "--no-deps", "--wait", "--wait-timeout", "$TimeoutSec", "celery-beat"
+    ) $TimeoutSec "compose up celery-beat"
+    if ($null -eq $code -or $code -ne 0) { throw "compose up celery-beat failed" }
+}
+
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
     throw "Docker CLI not found. Start Docker Desktop and retry."
 }
@@ -374,19 +472,50 @@ try {
         $profileArgs += @("--profile", "autoheal")
     }
 
+    Assert-SufficientMemory -MinGiB $MinFreeMemoryGiB
+    Assert-LockHeld $heartbeat
+
     $upTimeout = Get-StepTimeout $ComposeUpTimeoutSec "docker compose up"
-    Write-Step "Starting / updating stack $($profileArgs -join ' ') (hard timeout ${upTimeout}s)"
-    $upArgs = @("compose", "-p", $ProjectName, "-f", $ComposeFile, "--env-file", $EnvFile) + $profileArgs + @(
-        "up", "-d", "--no-build", "--remove-orphans", "--wait", "--wait-timeout", "$ComposeWaitTimeoutSec")
-    $upExit = Invoke-Bounded $upArgs $upTimeout "docker compose up"
-    if ($null -eq $upExit) {
-        # The hang seen on this machine: containers recreated but never started. Start what compose left in Created
-        # (still holding the lock, so Otto stays off); the health check below decides the job.
-        $recovered = $true
-        Write-Step "Fallback: starting $ProjectName containers left in Created state ($($StartOrder -join ', '))"
-        Invoke-CreatedContainerStart -Project $ProjectName -PerContainerSec $StartTimeoutSec -TotalSec (Get-StepTimeout $FallbackTimeoutSec "the fallback")
-    } elseif ($upExit -ne 0) {
-        throw "docker compose up failed (exit $upExit)"
+    if ($SkipRollout) {
+        Write-Step "Starting / updating stack (no blue-green) $($profileArgs -join ' ') (hard timeout ${upTimeout}s)"
+        $upArgs = @("compose", "-p", $ProjectName, "-f", $ComposeFile, "--env-file", $EnvFile) + $profileArgs + @(
+            "up", "-d", "--no-build", "--remove-orphans", "--wait", "--wait-timeout", "$ComposeWaitTimeoutSec")
+        $upExit = Invoke-Bounded $upArgs $upTimeout "docker compose up"
+        if ($null -eq $upExit) {
+            $recovered = $true
+            Write-Step "Fallback: starting $ProjectName containers left in Created state ($($StartOrder -join ', '))"
+            Invoke-CreatedContainerStart -Project $ProjectName -PerContainerSec $StartTimeoutSec -TotalSec (Get-StepTimeout $FallbackTimeoutSec "the fallback")
+        } elseif ($upExit -ne 0) {
+            throw "docker compose up failed (exit $upExit)"
+        }
+    } else {
+        # Side services first (proxy starts after web is healthy via depends_on during web rollout).
+        Write-Step "Starting side services (toefl + profiles) then blue-green web/celery"
+        $sideArgs = @("compose", "-p", $ProjectName, "-f", $ComposeFile, "--env-file", $EnvFile) + $profileArgs + @(
+            "up", "-d", "--no-build", "--remove-orphans", "--no-deps", "toefl")
+        $null = Invoke-Bounded $sideArgs (Get-StepTimeout 120 "toefl up") "compose up toefl"
+
+        $rolloutTimeout = Get-StepTimeout $RolloutTimeoutSec "blue-green rollout"
+        Invoke-BlueGreenRollout -Project $ProjectName -Compose $ComposeFile -EnvPath $EnvFile -Service "web" -TimeoutSec $rolloutTimeout
+        Assert-LockHeld $heartbeat
+        Invoke-BlueGreenRollout -Project $ProjectName -Compose $ComposeFile -EnvPath $EnvFile -Service "celery" -TimeoutSec $rolloutTimeout
+        Assert-LockHeld $heartbeat
+        Invoke-BeatBounce -Project $ProjectName -Compose $ComposeFile -EnvPath $EnvFile -TimeoutSec $rolloutTimeout
+        Assert-LockHeld $heartbeat
+
+        Write-Step "Starting caddy (+ optional cloudflare/autoheal profiles)"
+        $proxyArgs = @("compose", "-p", $ProjectName, "-f", $ComposeFile, "--env-file", $EnvFile) + $profileArgs + @(
+            "up", "-d", "--no-build", "--remove-orphans", "--wait", "--wait-timeout", "$ComposeWaitTimeoutSec", "caddy")
+        if ($profileArgs -contains "cloudflare") { $proxyArgs += "cloudflared" }
+        if ($profileArgs -contains "autoheal") { $proxyArgs += "autoheal" }
+        $proxyExit = Invoke-Bounded $proxyArgs $upTimeout "compose up caddy"
+        if ($null -eq $proxyExit) {
+            $recovered = $true
+            Write-Step "Fallback: starting $ProjectName containers left in Created state"
+            Invoke-CreatedContainerStart -Project $ProjectName -PerContainerSec $StartTimeoutSec -TotalSec (Get-StepTimeout $FallbackTimeoutSec "the fallback")
+        } elseif ($proxyExit -ne 0) {
+            throw "compose up caddy/profiles failed (exit $proxyExit)"
+        }
     }
     Assert-LockHeld $heartbeat
 
@@ -437,7 +566,7 @@ try {
 }
 
 Write-Step "Deploy complete"
-Write-Host "App: http://localhost:8020/seim/" -ForegroundColor Green
+Write-Host "App: http://localhost:${CaddyHttpPort}/seim/" -ForegroundColor Green
 Write-Host "Health: $HealthUrl" -ForegroundColor Green
 Write-Host "Image: $AppImage (last-good updated)" -ForegroundColor Green
 $null = Invoke-Bounded @("compose", "-p", $ProjectName, "-f", $ComposeFile, "ps") 30 "docker compose ps"
