@@ -53,6 +53,8 @@ Runs on: **after CI succeeds** on `main` / `master`, or `workflow_dispatch`
 
 **Migrate path:** deploy brings up `db`/`redis`, takes a `pg_dump`, runs the one-shot Compose `migrate` profile, then rolls out app containers. Web startup no longer runs `migrate` or `collectstatic` (statics are baked into `Dockerfile.prod`).
 
+**Local registry (no GHCR):** `deploy/docker-compose.registry.yml` runs `registry:2` on `127.0.0.1:${LOCAL_REGISTRY_PORT:-5000}` only. Deploy builds `LOCAL_REGISTRY/seim-app:<git-sha>` (and `seim-toefl`), smoke-tests the app image (empty Postgres → migrate → `check --deploy` → `/health/live/`), pushes the SHA tag, deploys that exact tag, then promotes `last-good` after health passes. Configure Docker Engine `insecure-registries` for the loopback address. Do not use a GitHub token or GHCR on this path.
+
 **Maintenance lock and timeouts:** the deploy takes the machine-wide maintenance lock
 (`C:\ProgramData\ops\maintenance.lock`, `scripts/maintenance-lock.ps1`, same protocol as local-ai-stack) before the
 build, renews it with a heartbeat (TTL 10 min) and releases it at the end, so deploys across repos never overlap and

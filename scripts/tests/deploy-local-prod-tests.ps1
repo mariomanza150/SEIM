@@ -16,7 +16,9 @@ $www = Join-Path $root "www"
 $calls = Join-Path $root "calls.log"
 New-Item -ItemType Directory -Force -Path (Join-Path $sandbox "scripts"), $bin, $www | Out-Null
 Copy-Item (Join-Path $repoRoot "scripts/deploy-local-prod.ps1"), (Join-Path $repoRoot "scripts/maintenance-lock.ps1") (Join-Path $sandbox "scripts")
-Set-Content -Path (Join-Path $sandbox ".env.local-prod") -Value "CLOUDFLARE_TUNNEL_TOKEN=test-not-a-token"
+New-Item -ItemType Directory -Force -Path (Join-Path $sandbox "deploy") | Out-Null
+Set-Content -Path (Join-Path $sandbox "deploy/docker-compose.registry.yml") -Value "services: { registry: {} }"
+Set-Content -Path (Join-Path $sandbox ".env.local-prod") -Value "CLOUDFLARE_TUNNEL_TOKEN=test-not-a-token`nLOCAL_REGISTRY=127.0.0.1:5000"
 Set-Content -Path (Join-Path $sandbox "docker-compose.local-prod.yml") -Value "services: {}"
 
 $fakeDocker = @'
@@ -35,8 +37,10 @@ case "$*" in
     exit 0;;
   *pg_dump*) printf 'PGDMP'; exit 0;;
   *'run --rm migrate'*) exit ${FAKE_MIGRATE_EXIT:-0};;
+  *'docker-compose.registry.yml'*|*'up -d --wait --wait-timeout 60'*) exit 0;;
   *'up -d --no-build --wait'*'db redis'*) exit ${FAKE_DATA_UP_EXIT:-0};;
   *' up '*) [ "$FAKE_UP" = hang ] && exec sleep 600; exit ${FAKE_UP_EXIT:-0};;
+  'push '*|'tag '*|'pull '*) exit 0;;
   "ps -a "*)
     [ "$FAKE_UP" = hang ] && printf '%s\n' \
       "seim-web-local-prod|com.docker.compose.project=seim-localprod,com.docker.compose.service=web" \
@@ -75,7 +79,9 @@ function Assert([bool]$Cond, [string]$Message) { if (-not $Cond) { throw "assert
 function Invoke-Deploy([hashtable]$Env, [string[]]$DeployArgs) {
     $lock = Join-Path $root ("lock-" + [Guid]::NewGuid().ToString("N") + "/maintenance.lock")
     $vars = @{ PATH = "$bin$([IO.Path]::PathSeparator)$env:PATH"; MAINTENANCE_LOCK = $lock; FAKE_CALLS = $calls;
-               GITHUB_RUN_ID = "111"; GITHUB_RUN_ATTEMPT = "1" } + $Env
+               GITHUB_RUN_ID = "111"; GITHUB_RUN_ATTEMPT = "1";
+               SEIM_IMAGE_TAG = "testdeadbeef"; GIT_COMMIT = "testdeadbeef";
+               LOCAL_REGISTRY = "127.0.0.1:5000" } + $Env
     $saved = @{}
     foreach ($k in $vars.Keys) { $saved[$k] = [Environment]::GetEnvironmentVariable($k); [Environment]::SetEnvironmentVariable($k, [string]$vars[$k]) }
     if (Test-Path $calls) { Remove-Item $calls }
@@ -84,7 +90,7 @@ function Invoke-Deploy([hashtable]$Env, [string[]]$DeployArgs) {
             New-Item -ItemType Directory -Force -Path (Split-Path $lock) | Out-Null
             Set-Content -Path $lock -Value $Env.PRELOCK -NoNewline
         }
-        $out = & $pwshExe -NoProfile -File (Join-Path $sandbox "scripts/deploy-local-prod.ps1") -SkipPull -HealthTimeoutSec 6 -ComposeUpTimeoutSec 3 -LockWaitSec 2 -StartTimeoutSec 5 @DeployArgs 2>&1 | Out-String
+        $out = & $pwshExe -NoProfile -File (Join-Path $sandbox "scripts/deploy-local-prod.ps1") -SkipPull -SkipSmoke -HealthTimeoutSec 6 -ComposeUpTimeoutSec 3 -LockWaitSec 2 -StartTimeoutSec 5 @DeployArgs 2>&1 | Out-String
         $code = $LASTEXITCODE
     } finally {
         foreach ($k in $saved.Keys) { [Environment]::SetEnvironmentVariable($k, $saved[$k]) }
@@ -100,14 +106,17 @@ function Test-Case([string]$Name, [scriptblock]$Body) {
 }
 
 try {
-    Test-Case "a normal deploy: lock, build, db/redis, pg_dump, migrate, up, health, release" {
+    Test-Case "a normal deploy: lock, registry, build, push, db/redis, pg_dump, migrate, up, last-good, release" {
         $r = Invoke-Deploy @{} @()
         Assert ($r.Code -eq 0) "exit $($r.Code): $($r.Out)"
-        Assert ($r.Calls[0] -match "build web celery celery-beat toefl \[lock=held\]") "build under the lock: $($r.Calls[0])"
+        Assert (@($r.Calls | Where-Object { $_ -match 'docker-compose.registry.yml' -or $_ -match 'wait-timeout 60' }).Count -ge 1) "registry up"
+        Assert (@($r.Calls | Where-Object { $_ -match 'build web celery celery-beat toefl \[lock=held\]' }).Count -eq 1) "build under the lock"
+        Assert (@($r.Calls | Where-Object { $_ -match 'push 127.0.0.1:5000/seim-app:testdeadbeef' }).Count -ge 1) "push sha"
         Assert (@($r.Calls | Where-Object { $_ -match 'up -d --no-build --wait --wait-timeout 180 db redis' }).Count -eq 1) "db/redis up first"
         Assert (@($r.Calls | Where-Object { $_ -match 'pg_dump' }).Count -eq 1) "pg_dump before migrate"
         Assert (@($r.Calls | Where-Object { $_ -match 'run --rm migrate' }).Count -eq 1) "one-shot migrate"
         Assert (@($r.Calls | Where-Object { $_ -match 'up -d --no-build --remove-orphans --wait --wait-timeout 180 \[lock=held\]' }).Count -eq 1) "app up"
+        Assert (@($r.Calls | Where-Object { $_ -match 'tag .*last-good' }).Count -ge 1) "last-good tagged"
         Assert (-not $r.LockLeft) "released"
     }
 
@@ -134,7 +143,7 @@ try {
         $r = Invoke-Deploy @{ FAKE_BUILD_SLEEP = "5"; FAKE_GUARD_DURING_BUILD = "1" } @("-LockTtlSec", "3")
         Assert ($r.Code -ne 0) "should fail: $($r.Out)"
         Assert ($r.Out -match "heartbeat failed \(no renewal for") "reason: $($r.Out)"
-        Assert (@($r.Calls | Where-Object { $_ -match ' up ' }).Count -eq 0) "up never ran"
+        Assert (@($r.Calls | Where-Object { $_ -match 'remove-orphans|--profile migrate|pg_dump' }).Count -eq 0) "app rollout never ran"
         Assert (-not $r.LockLeft) "released"
     }
 
