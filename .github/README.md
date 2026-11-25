@@ -8,7 +8,7 @@ Automated workflows for SEIM: quality gates, tests, container scan, E2E, and dep
 
 Runs on: **push** to `main`, `master`, `develop`, `feature/vue-migration`; **pull request** targeting `main`, `master`, `develop`
 
-**Jobs:** Ruff · Bandit + `pip-audit` · mypy (non-blocking) · backend pytest (unit + integration, coverage XML) · Vue Vitest + coverage + Vite build · Docker build (Vue dist + collectstatic) + Trivy SARIF · Locust on pull requests only.
+**Jobs:** Ruff · **Migration safety** (`makemigrations --check` + `django-migration-linter`; PR label `contract-migration` allows intentional contract steps — see `docs/migrations.md`) · Bandit + `pip-audit` · mypy (non-blocking) · backend pytest (unit + integration, coverage XML) · Vue Vitest + coverage + Vite build · Docker build (Vue dist + collectstatic) + Trivy SARIF · Locust on pull requests only.
 
 **Secrets:** `CODECOV_TOKEN` — required on same-repo CI so coverage uploads to Codecov. Missing token **fails the job** (`scripts/check_codecov_ci.py`). Fork PRs skip the token requirement because GitHub does not expose secrets. Coverage artifacts are still generated. The hard pytest gate is `--cov-fail-under=80`. See setup below.
 
