@@ -190,7 +190,7 @@ function Invoke-MigrateService([string]$Project, [string]$Compose, [string]$EnvP
 
 function Ensure-LocalRegistry([int]$TimeoutSec) {
     if (-not (Test-Path $RegistryCompose)) {
-        throw "Missing $RegistryCompose — local registry compose file required"
+        throw "Missing $RegistryCompose - local registry compose file required"
     }
     Write-Host "Ensuring local registry at $LocalRegistry (loopback only)"
     $upArgs = @(
@@ -310,7 +310,7 @@ try {
 
         if (-not $SkipSmoke) {
             $smokeTimeout = Get-StepTimeout $SmokeTimeoutSec "image smoke test"
-            Write-Step "Smoke-testing $AppImage (empty Postgres → migrate → check --deploy → /health/live/)"
+            Write-Step "Smoke-testing $AppImage (empty Postgres -> migrate -> check --deploy -> /health/live/)"
             $smokeScript = Join-Path $PSScriptRoot "smoke-local-prod-image.ps1"
             $smokeProc = Start-Process -FilePath "pwsh" -ArgumentList @(
                 "-NoProfile", "-File", $smokeScript, "-Image", $AppImage, "-TimeoutSec", "$smokeTimeout"
