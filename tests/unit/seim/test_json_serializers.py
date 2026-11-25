@@ -42,7 +42,7 @@ def test_settings_modules_have_no_pickle_serializer():
 
 
 @pytest.mark.django_db
-def test_send_notification_delay_passes_string_id():
+def test_send_notification_delay_passes_string_id(django_capture_on_commit_callbacks):
     from django.contrib.auth import get_user_model
 
     from notifications.services import NotificationService
@@ -54,12 +54,13 @@ def test_send_notification_delay_passes_string_id():
         password="testpass123",
     )
     with patch("notifications.services.send_notification_by_id.delay") as delay:
-        NotificationService.send_notification(
-            recipient=user,
-            title="Hello",
-            message="World",
-            notification_type="email",
-        )
+        with django_capture_on_commit_callbacks(execute=True):
+            NotificationService.send_notification(
+                recipient=user,
+                title="Hello",
+                message="World",
+                notification_type="email",
+            )
     delay.assert_called_once()
     (arg,) = delay.call_args.args
     assert isinstance(arg, str)

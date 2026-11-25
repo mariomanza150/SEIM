@@ -209,10 +209,14 @@ class NotificationService:
             category=category,
         )
 
-        # Send email notification if type is email or both
+        # Send email notification if type is email or both.
+        # Defer Celery enqueue until the surrounding DB transaction commits so
+        # workers never race a rolled-back Notification row.
         if effective_type in ["email", "both"]:
             # UUID must be str for CELERY_TASK_SERIALIZER=json
-            send_notification_by_id.delay(str(notification.id))
+            transaction.on_commit(
+                lambda nid=str(notification.id): send_notification_by_id.delay(nid)
+            )
 
         # Send real-time notification via WebSocket
         if effective_type in ("in_app", "both"):

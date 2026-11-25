@@ -136,30 +136,52 @@ class TestNotificationService(TestCase):
 
     @patch("notifications.services.send_notification_by_id.delay")
     def test_send_notification_email(self, mock_task):
-        """Test sending email notification triggers task."""
-        notification = NotificationService.send_notification(
-            recipient=self.user1,
-            title="Email Test",
-            message="Test email",
-            notification_type="email",
-        )
+        """Test sending email notification triggers task after commit."""
+        with self.captureOnCommitCallbacks(execute=True):
+            notification = NotificationService.send_notification(
+                recipient=self.user1,
+                title="Email Test",
+                message="Test email",
+                notification_type="email",
+            )
 
         self.assertEqual(notification.notification_type, "email")
-        # Verify task was called
+        # Verify task was called with str UUID for CELERY_TASK_SERIALIZER=json
         mock_task.assert_called_once_with(str(notification.id))
 
     @patch("notifications.services.send_notification_by_id.delay")
     def test_send_notification_both(self, mock_task):
-        """Test sending both in-app and email notification."""
-        notification = NotificationService.send_notification(
-            recipient=self.user1,
-            title="Both Test",
-            message="Test both",
-            notification_type="both",
-        )
+        """Test sending both in-app and email notification after commit."""
+        with self.captureOnCommitCallbacks(execute=True):
+            notification = NotificationService.send_notification(
+                recipient=self.user1,
+                title="Both Test",
+                message="Test both",
+                notification_type="both",
+            )
 
         self.assertEqual(notification.notification_type, "both")
-        # Verify task was called
+        # Verify task was called with str UUID for CELERY_TASK_SERIALIZER=json
+        mock_task.assert_called_once_with(str(notification.id))
+
+    @patch("notifications.services.send_notification_by_id.delay")
+    def test_send_notification_email_deferred_until_commit(self, mock_task):
+        """Celery email enqueue must not run until the DB transaction commits."""
+        from django.db import transaction
+
+        with self.captureOnCommitCallbacks() as callbacks:
+            with transaction.atomic():
+                notification = NotificationService.send_notification(
+                    recipient=self.user1,
+                    title="Deferred Email",
+                    message="Queued after commit",
+                    notification_type="email",
+                )
+                mock_task.assert_not_called()
+
+        self.assertEqual(len(callbacks), 1)
+        mock_task.assert_not_called()
+        callbacks[0]()
         mock_task.assert_called_once_with(str(notification.id))
 
     def test_send_notification_with_action_url(self):
@@ -212,13 +234,14 @@ class TestNotificationService(TestCase):
         s.inapp_applications = False
         s.save()
 
-        notification = NotificationService.send_notification(
-            recipient=self.user1,
-            title="App",
-            message="Body",
-            notification_type="both",
-            settings_category="applications",
-        )
+        with self.captureOnCommitCallbacks(execute=True):
+            notification = NotificationService.send_notification(
+                recipient=self.user1,
+                title="App",
+                message="Body",
+                notification_type="both",
+                settings_category="applications",
+            )
         self.assertIsNotNone(notification)
         self.assertEqual(notification.notification_type, "email")
         mock_task.assert_called_once_with(str(notification.id))
@@ -298,13 +321,14 @@ class TestNotificationService(TestCase):
         s.inapp_comments = False
         s.save()
 
-        notification = NotificationService.send_notification(
-            recipient=self.user1,
-            title="Comment",
-            message="Body",
-            notification_type="both",
-            settings_category="comments",
-        )
+        with self.captureOnCommitCallbacks(execute=True):
+            notification = NotificationService.send_notification(
+                recipient=self.user1,
+                title="Comment",
+                message="Body",
+                notification_type="both",
+                settings_category="comments",
+            )
         self.assertIsNotNone(notification)
         self.assertEqual(notification.notification_type, "email")
         mock_task.assert_called_once_with(str(notification.id))
@@ -345,13 +369,14 @@ class TestNotificationService(TestCase):
         s.inapp_programs = False
         s.save()
 
-        notification = NotificationService.send_notification(
-            recipient=self.user1,
-            title="Program",
-            message="Body",
-            notification_type="both",
-            settings_category="programs",
-        )
+        with self.captureOnCommitCallbacks(execute=True):
+            notification = NotificationService.send_notification(
+                recipient=self.user1,
+                title="Program",
+                message="Body",
+                notification_type="both",
+                settings_category="programs",
+            )
         self.assertIsNotNone(notification)
         self.assertEqual(notification.notification_type, "email")
         mock_task.assert_called_once_with(str(notification.id))
@@ -365,13 +390,14 @@ class TestNotificationService(TestCase):
         s.inapp_system = False
         s.save()
 
-        notification = NotificationService.send_notification(
-            recipient=self.user1,
-            title="System",
-            message="Body",
-            notification_type="both",
-            settings_category="system",
-        )
+        with self.captureOnCommitCallbacks(execute=True):
+            notification = NotificationService.send_notification(
+                recipient=self.user1,
+                title="System",
+                message="Body",
+                notification_type="both",
+                settings_category="system",
+            )
         self.assertIsNotNone(notification)
         self.assertEqual(notification.notification_type, "email")
         mock_task.assert_called_once_with(str(notification.id))

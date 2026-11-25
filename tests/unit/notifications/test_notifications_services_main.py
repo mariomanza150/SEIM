@@ -70,31 +70,33 @@ class NotificationServiceTestCase(TestCase):
         self.assertFalse(notification.is_read)
 
     def test_send_notification_email(self):
-        """Test email notification sending."""
+        """Test email notification sending after commit."""
         with patch(
             "notifications.services.send_notification_by_id.delay"
         ) as mock_send_email:
-            notification = NotificationService.send_notification(
-                recipient=self.student,
-                title="Email Notification",
-                message="This is an email notification",
-                notification_type="email",
-            )
+            with self.captureOnCommitCallbacks(execute=True):
+                notification = NotificationService.send_notification(
+                    recipient=self.student,
+                    title="Email Notification",
+                    message="This is an email notification",
+                    notification_type="email",
+                )
 
             self.assertIsNotNone(notification)
             mock_send_email.assert_called_once_with(str(notification.id))
 
     def test_send_notification_both(self):
-        """Test both email and in-app notification sending."""
+        """Test both email and in-app notification sending after commit."""
         with patch(
             "notifications.services.send_notification_by_id.delay"
         ) as mock_send_email:
-            notification = NotificationService.send_notification(
-                recipient=self.student,
-                title="Both Notification",
-                message="This is both email and in-app notification",
-                notification_type="both",
-            )
+            with self.captureOnCommitCallbacks(execute=True):
+                notification = NotificationService.send_notification(
+                    recipient=self.student,
+                    title="Both Notification",
+                    message="This is both email and in-app notification",
+                    notification_type="both",
+                )
 
             self.assertIsNotNone(notification)
             mock_send_email.assert_called_once_with(str(notification.id))
