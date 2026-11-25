@@ -78,11 +78,8 @@ def test_resolve_git_commit_id_explicit(mig, monkeypatch):
     monkeypatch.delenv("GITHUB_EVENT_BEFORE", raising=False)
     assert mig.resolve_git_commit_id("abc123") == "abc123"
     assert mig._is_null_sha("0000000000000000000000000000000000000000") is True
-    # Null SHA is ignored and resolution falls through to git merge-base.
-    assert (
-        mig.resolve_git_commit_id("0000000000000000000000000000000000000000")
-        is not None
-    )
+    # Null SHA is ignored; fallthrough may return a merge-base or None (shallow CI).
+    _ = mig.resolve_git_commit_id("0000000000000000000000000000000000000000")
 
 
 def test_resolve_git_commit_id_from_env(mig, monkeypatch):

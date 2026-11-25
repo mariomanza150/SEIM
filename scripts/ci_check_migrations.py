@@ -222,6 +222,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     git_commit_id = resolve_git_commit_id(args.git_commit_id)
+    if git_commit_id and not _git_rev_parse("--verify", f"{git_commit_id}^{{commit}}"):
+        # Shallow checkouts often lack the PR base; fetch it for git-diff linting.
+        print(f"# fetching comparison commit {git_commit_id}", flush=True)
+        subprocess.call(
+            ["git", "fetch", "--no-tags", "--depth=1", "origin", git_commit_id],
+            cwd=REPO_ROOT,
+        )
+
     linter_code = run_migration_linter(git_commit_id=git_commit_id)
     if linter_code == 0:
         print("OK: migration linter passed.")
@@ -245,8 +253,9 @@ def main(argv: list[str] | None = None) -> int:
 
     print(
         "::error::django-migration-linter found backward-incompatible "
-        "migration operations in new first-party migrations. Prefer "
-        "expand/contract (docs/migrations.md). "
+        "migration operations in new first-party migrations (or could not "
+        "git-diff against the comparison commit). Prefer expand/contract "
+        "(docs/migrations.md). Ensure CI checks out with fetch-depth: 0. "
         f"Only add the `{CONTRACT_LABEL}` label for a deliberate contract step "
         "that will break old app code after deploy.",
         flush=True,

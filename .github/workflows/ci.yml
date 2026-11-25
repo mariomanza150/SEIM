@@ -114,7 +114,10 @@ jobs:
           --health-timeout 5s
           --health-retries 5
     steps:
+      # Full history so django-migration-linter can git-diff against the PR base.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
