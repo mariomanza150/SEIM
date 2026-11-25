@@ -28,8 +28,10 @@ param(
     [switch]$SkipSmoke,
     [switch]$SkipRegistryPush,
     [switch]$SkipRollout,
+    [switch]$SkipPostDeployWatch,
     [double]$MinFreeMemoryGiB = 1.5,
     [int]$RolloutTimeoutSec = 180,
+    [int]$PostDeployWatchSec = 300,
     [int]$HealthTimeoutSec = 180,
     [int]$SmokeTimeoutSec = 240,
     [int]$RegistryTimeoutSec = 120,
@@ -326,6 +328,60 @@ function Invoke-BeatBounce([string]$Project, [string]$Compose, [string]$EnvPath,
     if ($null -eq $code -or $code -ne 0) { throw "compose up celery-beat failed" }
 }
 
+function Send-DeploySlackAlert([string]$Text) {
+    # Incoming webhook URL from runner env / Actions secret — never commit the URL.
+    $url = $env:SEIM_DEPLOY_SLACK_WEBHOOK_URL
+    if (-not $url) {
+        Write-Host "SEIM_DEPLOY_SLACK_WEBHOOK_URL unset; Slack alert skipped" -ForegroundColor Yellow
+        return
+    }
+    try {
+        $body = @{ text = $Text } | ConvertTo-Json -Compress
+        Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json; charset=utf-8" -Body $body -TimeoutSec 15 | Out-Null
+        Write-Host "Slack deploy alert sent"
+    } catch {
+        Write-Host "Slack deploy alert failed: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+}
+
+function Test-HealthOnce([string]$Url) {
+    try {
+        $response = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 5
+        return ($response.StatusCode -eq 200)
+    } catch {
+        return $false
+    }
+}
+
+function Invoke-CodeOnlyRollback([string]$Project, [string]$Compose, [string]$EnvPath, [string[]]$ProfileArgs, [int]$TimeoutSec) {
+    # Roll images back to last-good. Never touches Postgres / migrate.
+    Write-Host "CODE-ONLY ROLLBACK to $LocalRegistry/seim-app:last-good (DB unchanged)" -ForegroundColor Yellow
+    $env:SEIM_IMAGE_TAG = "last-good"
+    $script:AppImage = "$LocalRegistry/seim-app:last-good"
+    $script:ToeflImage = "$LocalRegistry/seim-toefl:last-good"
+    $null = Invoke-Bounded @("pull", $script:AppImage) 120 "docker pull last-good app"
+    $null = Invoke-Bounded @("pull", $script:ToeflImage) 120 "docker pull last-good toefl"
+
+    if ($SkipRollout) {
+        $upArgs = @("compose", "-p", $Project, "-f", $Compose, "--env-file", $EnvPath) + $ProfileArgs + @(
+            "up", "-d", "--no-build", "--force-recreate", "--wait", "--wait-timeout", "$TimeoutSec",
+            "web", "celery", "celery-beat", "caddy", "toefl")
+        $code = Invoke-Bounded $upArgs $TimeoutSec "compose rollback up"
+        if ($null -eq $code -or $code -ne 0) { throw "rollback compose up failed (exit $code)" }
+    } else {
+        Invoke-BlueGreenRollout -Project $Project -Compose $Compose -EnvPath $EnvPath -Service "web" -TimeoutSec $TimeoutSec
+        Invoke-BlueGreenRollout -Project $Project -Compose $Compose -EnvPath $EnvPath -Service "celery" -TimeoutSec $TimeoutSec
+        Invoke-BeatBounce -Project $Project -Compose $Compose -EnvPath $EnvPath -TimeoutSec $TimeoutSec
+        $proxyArgs = @("compose", "-p", $Project, "-f", $Compose, "--env-file", $EnvPath) + $ProfileArgs + @(
+            "up", "-d", "--no-build", "--wait", "--wait-timeout", "$TimeoutSec", "caddy", "toefl")
+        $code = Invoke-Bounded $proxyArgs $TimeoutSec "compose rollback caddy"
+        if ($null -eq $code -or $code -ne 0) { throw "rollback caddy up failed (exit $code)" }
+    }
+    if (-not (Test-HealthOnce $HealthUrl)) {
+        throw "Rollback to last-good completed but $HealthUrl is still unhealthy"
+    }
+}
+
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
     throw "Docker CLI not found. Start Docker Desktop and retry."
 }
@@ -556,6 +612,28 @@ try {
     }
     if ($recovered) {
         Write-Host "::warning::docker compose up hung and was killed; the stack was started by the fallback and is healthy."
+    }
+
+    # Watch after the switch before promoting last-good so rollback still has the previous tag.
+    if (-not $SkipPostDeployWatch -and $PostDeployWatchSec -gt 0) {
+        Write-Step "Post-deploy health watch (${PostDeployWatchSec}s) before promoting last-good"
+        $watchDeadline = (Get-Date).AddSeconds($PostDeployWatchSec)
+        $rolledBack = $false
+        while ((Get-Date) -lt $watchDeadline) {
+            Assert-LockHeld $heartbeat
+            if (-not (Test-HealthOnce $HealthUrl)) {
+                $msg = "SEIM local-prod health failed within ${PostDeployWatchSec}s after deploying $($env:SEIM_IMAGE_TAG); rolling back images to last-good (DB untouched)."
+                Write-Host $msg -ForegroundColor Red
+                Send-DeploySlackAlert $msg
+                Invoke-CodeOnlyRollback -Project $ProjectName -Compose $ComposeFile -EnvPath $EnvFile -ProfileArgs $profileArgs -TimeoutSec (Get-StepTimeout $RolloutTimeoutSec "rollback")
+                $rolledBack = $true
+                throw "Deploy rolled back to last-good after post-deploy health failure"
+            }
+            Start-Sleep -Seconds 15
+        }
+        if (-not $rolledBack) {
+            Write-Host "Post-deploy watch passed"
+        }
     }
 
     Write-Step "Promoting $AppImage to last-good (local registry)"

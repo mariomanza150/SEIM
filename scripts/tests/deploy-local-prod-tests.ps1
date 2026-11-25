@@ -90,7 +90,7 @@ function Invoke-Deploy([hashtable]$Env, [string[]]$DeployArgs) {
             New-Item -ItemType Directory -Force -Path (Split-Path $lock) | Out-Null
             Set-Content -Path $lock -Value $Env.PRELOCK -NoNewline
         }
-        $out = & $pwshExe -NoProfile -File (Join-Path $sandbox "scripts/deploy-local-prod.ps1") -SkipPull -SkipSmoke -SkipRollout -HealthTimeoutSec 6 -ComposeUpTimeoutSec 3 -LockWaitSec 2 -StartTimeoutSec 5 -MinFreeMemoryGiB 0 @DeployArgs 2>&1 | Out-String
+        $out = & $pwshExe -NoProfile -File (Join-Path $sandbox "scripts/deploy-local-prod.ps1") -SkipPull -SkipSmoke -SkipRollout -SkipPostDeployWatch -HealthTimeoutSec 6 -ComposeUpTimeoutSec 3 -LockWaitSec 2 -StartTimeoutSec 5 -MinFreeMemoryGiB 0 @DeployArgs 2>&1 | Out-String
         $code = $LASTEXITCODE
     } finally {
         foreach ($k in $saved.Keys) { [Environment]::SetEnvironmentVariable($k, $saved[$k]) }
