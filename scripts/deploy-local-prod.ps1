@@ -57,6 +57,8 @@ $LockRunId = if ($env:GITHUB_RUN_ID) { "gh-$($env:GITHUB_RUN_ID)-$($env:GITHUB_R
 # Fallback start order: data services first, the tunnel last; anything else in between.
 $StartOrder = @("db", "redis", "toefl", "web", "celery", "celery-beat", "cloudflared")
 $ScriptDeadline = (Get-Date).AddSeconds($TotalBudgetSec)
+# Runner-level opt-out of the image smoke test (it uses docker run). Set SEIM_SKIP_SMOKE=1 on the runner host.
+if ($env:SEIM_SKIP_SMOKE -match '^(1|true|yes)$') { $SkipSmoke = [switch]$true }
 $DbBackupDirRel = if ($env:SEIM_DB_BACKUP_DIR) { $env:SEIM_DB_BACKUP_DIR.Trim() } else { "backups/local-prod" }
 $DbBackupKeep = 10
 if ($env:SEIM_DB_BACKUP_KEEP -match '^\d+$') { $DbBackupKeep = [int]$env:SEIM_DB_BACKUP_KEEP }
@@ -312,7 +314,8 @@ try {
             $smokeTimeout = Get-StepTimeout $SmokeTimeoutSec "image smoke test"
             Write-Step "Smoke-testing $AppImage (empty Postgres -> migrate -> check --deploy -> /health/live/)"
             $smokeScript = Join-Path $PSScriptRoot "smoke-local-prod-image.ps1"
-            $smokeProc = Start-Process -FilePath "pwsh" -ArgumentList @(
+            $smokeShell = if (Get-Command pwsh -ErrorAction SilentlyContinue) { "pwsh" } else { "powershell" }
+            $smokeProc = Start-Process -FilePath $smokeShell -ArgumentList @(
                 "-NoProfile", "-File", $smokeScript, "-Image", $AppImage, "-TimeoutSec", "$smokeTimeout"
             ) -NoNewWindow -PassThru
             $null = $smokeProc.Handle
