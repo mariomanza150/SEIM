@@ -87,8 +87,9 @@ jobs:
           $status = if ('${{ job.status }}' -eq 'success') { '✅' } else { '❌' }
           @"
           ## Local-prod deploy $status
-          - **Health:** http://localhost:8020/health/live/
+          - **Health:** http://localhost:8020/health/live/ (Caddy → web)
           - **Compose project:** seim-localprod
           - **Trigger:** ${{ github.event_name }}
-          - **Migrate:** one-shot ``migrate`` Compose profile (after pg_dump, before app up)
+          - **Migrate:** one-shot ``migrate`` profile after pg_dump
+          - **Rollout:** blue-green web/celery; beat stop/start; abort if free RAM &lt; 1.5 GiB
           "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8

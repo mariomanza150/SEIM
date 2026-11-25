@@ -95,17 +95,13 @@ services:
         VITE_SENTRY_TRACES_SAMPLE_RATE: ${VITE_SENTRY_TRACES_SAMPLE_RATE:-0.05}
         VITE_SENTRY_LOGS_LEVEL: ${VITE_SENTRY_LOGS_LEVEL:-warn}
         GIT_COMMIT: ${GIT_COMMIT:-}
-    container_name: seim-web-local-prod
+    # No container_name / host ports: Caddy publishes 8020/8021 and blue-green scale needs unique names.
     env_file:
       - .env.local-prod
     restart: unless-stopped
     # See scripts/local-prod-web-entry.sh — waits for Postgres TCP, then gunicorn.
     # Migrations: ``migrate`` service. Statics: baked in Dockerfile.prod (do not mount over staticfiles).
     command: ["bash", "/app/scripts/local-prod-web-entry.sh"]
-    # Published ports avoid clashing with dev compose (``web`` uses host 8001). Use 8020/8021 for local-prod.
-    ports:
-      - "8020:8000"
-      - "8021:8000"
     volumes:
       - media_prod_volume:/app/media
       - logs_prod_volume:/app/logs
@@ -180,7 +176,7 @@ services:
         VITE_SENTRY_TRACES_SAMPLE_RATE: ${VITE_SENTRY_TRACES_SAMPLE_RATE:-0.05}
         VITE_SENTRY_LOGS_LEVEL: ${VITE_SENTRY_LOGS_LEVEL:-warn}
         GIT_COMMIT: ${GIT_COMMIT:-}
-    container_name: seim-celery-local-prod
+    # No container_name: scaled during blue-green rollout (see deploy-local-prod.ps1).
     env_file:
       - .env.local-prod
     restart: unless-stopped
@@ -292,6 +288,28 @@ services:
       - ADMIN_PASSWORD=${TOEFL_ADMIN_PASSWORD:-admin}
       - PUBLIC_BASE_URL=${TOEFL_PUBLIC_BASE_URL:-http://localhost:5020}
       - APPLICATION_ROOT=${TOEFL_APPLICATION_ROOT:-}
+
+  # Publishes host ports and proxies to Compose DNS name ``web`` (supports scale > 1).
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    ports:
+      - "${CADDY_HTTP_PORT:-8020}:8000"
+      - "${CADDY_ALT_PORT:-8021}:8000"
+    volumes:
+      - ./deploy/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      - seim-prod-network
+    depends_on:
+      web:
+        condition: service_healthy
+    mem_limit: ${CADDY_MEM_LIMIT:-128m}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8000/health/live/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   # Managed Cloudflare Tunnel (Zero Trust token). Dashboard public hostname -> http://web:8000 (cloudflared runs on seim-prod-network, not in web's netns)
   #   docker compose -p seim-localprod -f docker-compose.local-prod.yml --profile cloudflare --env-file .env.local-prod up -d
