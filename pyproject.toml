@@ -125,7 +125,7 @@ dev = [
     "freezegun==1.5.5",
     "responses==0.24.1",
     "httpretty==1.1.4",
-    "coverage==7.11.3",
+    "coverage==7.17.4",
     "webdriver-manager==4.1.2",
     # Performance profiling
     "memory-profiler==0.61.0",
@@ -146,7 +146,7 @@ test = [
     "freezegun==1.5.5",
     "responses==0.24.1",
     "httpretty==1.1.4",
-    "coverage==7.11.3",
+    "coverage==7.17.4",
     # Selenium (host-oriented tests; kept for parity with dev)
     "webdriver-manager==4.1.2",
     # Playwright E2E
