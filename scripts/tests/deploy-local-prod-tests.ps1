@@ -33,7 +33,10 @@ case "$*" in
     done
     rm -f "$MAINTENANCE_LOCK.takeover"
     exit 0;;
-  *" up "*) [ "$FAKE_UP" = hang ] && exec sleep 600; exit ${FAKE_UP_EXIT:-0};;
+  *pg_dump*) printf 'PGDMP'; exit 0;;
+  *'run --rm migrate'*) exit ${FAKE_MIGRATE_EXIT:-0};;
+  *'up -d --no-build --wait'*'db redis'*) exit ${FAKE_DATA_UP_EXIT:-0};;
+  *' up '*) [ "$FAKE_UP" = hang ] && exec sleep 600; exit ${FAKE_UP_EXIT:-0};;
   "ps -a "*)
     [ "$FAKE_UP" = hang ] && printf '%s\n' \
       "seim-web-local-prod|com.docker.compose.project=seim-localprod,com.docker.compose.service=web" \
@@ -97,12 +100,22 @@ function Test-Case([string]$Name, [scriptblock]$Body) {
 }
 
 try {
-    Test-Case "a normal deploy: lock, build, up --no-build --wait, health, release" {
+    Test-Case "a normal deploy: lock, build, db/redis, pg_dump, migrate, up, health, release" {
         $r = Invoke-Deploy @{} @()
         Assert ($r.Code -eq 0) "exit $($r.Code): $($r.Out)"
         Assert ($r.Calls[0] -match "build web celery celery-beat toefl \[lock=held\]") "build under the lock: $($r.Calls[0])"
-        Assert ($r.Calls[1] -match "up -d --no-build --remove-orphans --wait --wait-timeout 180 \[lock=held\]") "up: $($r.Calls[1])"
+        Assert (@($r.Calls | Where-Object { $_ -match 'up -d --no-build --wait --wait-timeout 180 db redis' }).Count -eq 1) "db/redis up first"
+        Assert (@($r.Calls | Where-Object { $_ -match 'pg_dump' }).Count -eq 1) "pg_dump before migrate"
+        Assert (@($r.Calls | Where-Object { $_ -match 'run --rm migrate' }).Count -eq 1) "one-shot migrate"
+        Assert (@($r.Calls | Where-Object { $_ -match 'up -d --no-build --remove-orphans --wait --wait-timeout 180 \[lock=held\]' }).Count -eq 1) "app up"
         Assert (-not $r.LockLeft) "released"
+    }
+
+    Test-Case "SkipMigrate skips the migrate service but still dumps and rolls out" {
+        $r = Invoke-Deploy @{} @("-SkipMigrate")
+        Assert ($r.Code -eq 0) "exit $($r.Code): $($r.Out)"
+        Assert (@($r.Calls | Where-Object { $_ -match 'pg_dump' }).Count -eq 1) "still dumps"
+        Assert (@($r.Calls | Where-Object { $_ -match 'run --rm migrate' }).Count -eq 0) "no migrate"
     }
 
     Test-Case "up hangs: compose killed, Created containers started db/redis first under the lock, job passes with a warning" {
