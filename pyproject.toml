@@ -108,7 +108,7 @@ dev = [
     # Development utilities
     "ipython==8.18.1",
     "ipdb==0.13.13",
-    "django-debug-toolbar==6.1.0",
+    "django-debug-toolbar==8.0.0",
     "django-livereload==1.7",
     # Testing and Code Coverage (aligned with [test])
     "pytest==8.3.5",
