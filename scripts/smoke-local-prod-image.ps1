@@ -1,5 +1,5 @@
 # Smoke-test a built seim-app image before tagging / deploying.
-# Empty Postgres → migrate → check --deploy → gunicorn → GET /health/live/
+# Empty Postgres -> migrate -> check --deploy -> gunicorn -> GET /health/live/
 #
 #   .\scripts\smoke-local-prod-image.ps1 -Image "127.0.0.1:5000/seim-app:abc123"
 #
