@@ -347,6 +347,9 @@ python manage.py shell
 # Create migrations
 python manage.py makemigrations
 
+# Schema safety (expand/contract): see docs/migrations.md
+# CI runs scripts/ci_check_migrations.py (makemigrations --check + django-migration-linter).
+
 # Apply migrations
 python manage.py migrate
 

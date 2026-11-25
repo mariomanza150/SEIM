@@ -121,6 +121,15 @@ INSTALLED_APPS = [
     if app not in DISABLED_APPS and not app.startswith("wagtail")
 ]
 
+# Optional CI tooling (scripts/ci_check_migrations.py); not a runtime dependency.
+if "django_migration_linter" not in INSTALLED_APPS:
+    try:
+        import django_migration_linter  # noqa: F401
+    except ImportError:
+        pass
+    else:
+        INSTALLED_APPS = [*INSTALLED_APPS, "django_migration_linter"]
+
 # Wagtail is stripped from INSTALLED_APPS but base TEMPLATES still reference its context
 # processors; remove them so Django template rendering (e.g. admin dashboard) works in tests.
 TEMPLATES = copy.deepcopy(TEMPLATES)

@@ -25,6 +25,7 @@ Welcome to the SEIM (Student Exchange Information Manager) documentation. This c
 
 ### **👨‍💻 Development**
 - **[Developer Guide](developer_guide.md)** - Development workflow, standards, and best practices
+- **[Migrations (expand/contract)](migrations.md)** - Schema change safety and CI gates
 - **[Architecture](architecture.md)** - System design and technical architecture
 - **[Business Rules](business_rules.md)** - Business logic and rules
 - **[Frontend Guide](frontend_guide.md)** - Vue SPA + CMS patterns
