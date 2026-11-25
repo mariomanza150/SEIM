@@ -79,6 +79,10 @@ services:
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
       - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      # Settings import requires the Celery broker/backend even for a one-shot migrate.
+      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+      - SECURE_SSL_REDIRECT=False
 
   web:
     image: ${LOCAL_REGISTRY:-127.0.0.1:5000}/seim-app:${SEIM_IMAGE_TAG:-local}
