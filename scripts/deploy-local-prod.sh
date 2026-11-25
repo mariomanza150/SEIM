@@ -65,6 +65,24 @@ if [[ "$SKIP_BUILD" -eq 0 ]]; then
     docker "${BUILD_ARGS[@]}"
 fi
 
+step "Ensuring db and redis are up"
+docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" --env-file "$ENV_FILE" \
+    up -d --no-build --wait db redis
+
+BACKUP_DIR="${SEIM_DB_BACKUP_DIR:-backups/local-prod}"
+mkdir -p "$BACKUP_DIR"
+DB_PASSWORD="$(grep -E '^\s*DB_PASSWORD\s*=' "$ENV_FILE" | head -1 | cut -d= -f2- | tr -d "\"'" || true)"
+DB_PASSWORD="${DB_PASSWORD:-changeme123}"
+DUMP_FILE="$BACKUP_DIR/seim_prod-$(date -u +%Y%m%dT%H%M%SZ).dump"
+step "Pre-migrate database backup (pg_dump -> $DUMP_FILE)"
+docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" --env-file "$ENV_FILE" \
+    exec -T -e "PGPASSWORD=$DB_PASSWORD" db \
+    pg_dump -U seimuser -d seim_prod -Fc > "$DUMP_FILE"
+
+step "Applying migrations (one-shot migrate service)"
+docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" --env-file "$ENV_FILE" \
+    --profile migrate run --rm migrate
+
 step "Starting / updating stack"
 docker compose -p "$PROJECT_NAME" -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
 

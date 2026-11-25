@@ -35,22 +35,23 @@ Runs on: **after CI succeeds** on `main` / `master`, or `workflow_dispatch`
 **One-time setup:**
 
 1. Copy `env.local-prod.example` → `.env.local-prod` (if not already done).
-2. GitHub → **Settings → Actions → Runners → New self-hosted runner** (Windows x64). Extract to e.g. `C:\actions-runner\seim-localprod`.
-3. Register with labels `self-hosted,windows,local-prod`:
+2. Set a **machine** environment variable `SEIM_REPO` to the absolute path of the local SEIM clone used by the runner (never commit host paths). Optionally set `SEIM_DB_BACKUP_DIR` for pre-migrate `pg_dump` output (default `backups/local-prod` under the repo).
+3. GitHub → **Settings → Actions → Runners → New self-hosted runner** (Windows x64). Extract to a local runner directory (example placeholder: `C:\actions-runner\seim-localprod`).
+4. Register with labels `self-hosted,windows,local-prod`:
    ```powershell
    $env:RUNNER_TOKEN = "<registration-token>"
-   .\scripts\setup-local-prod-runner.ps1 -RunnerDir "C:\actions-runner\seim-localprod"
-   cd C:\actions-runner\seim-localprod
+   .\scripts\setup-local-prod-runner.ps1 -RunnerDir "<runner-dir>"
+   cd <runner-dir>
    .\svc.cmd install
    .\svc.cmd start
    ```
-4. Once per machine, elevated: create `C:\ProgramData\ops` for the maintenance lock and give every runner account
-   Modify on it (it finds the runner services/tasks itself, or pass `-Account`):
+5. Once per machine, elevated: create the maintenance-lock directory (`%ProgramData%\ops`) and give every runner account Modify on it:
    ```powershell
    .\scripts\setup-maintenance-lock-dir.ps1
    ```
-   On win-a8 the SEIM, local-ai-stack and Cataloqui runners run as `WIN-A82J3T7T7M5\Rene Montes` (scheduled tasks).
-5. Push to `main` → CI green → **Deploy local-prod** runs automatically.
+6. Push to `main` → CI green → **Deploy local-prod** runs automatically.
+
+**Migrate path:** deploy brings up `db`/`redis`, takes a `pg_dump`, runs the one-shot Compose `migrate` profile, then rolls out app containers. Web startup no longer runs `migrate` or `collectstatic` (statics are baked into `Dockerfile.prod`).
 
 **Maintenance lock and timeouts:** the deploy takes the machine-wide maintenance lock
 (`C:\ProgramData\ops\maintenance.lock`, `scripts/maintenance-lock.ps1`, same protocol as local-ai-stack) before the

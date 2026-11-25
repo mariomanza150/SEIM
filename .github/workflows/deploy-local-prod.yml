@@ -52,14 +52,17 @@ jobs:
       - name: Sync repo and deploy
         shell: powershell
         env:
-          SEIM_REPO: C:\Users\mario\Documents\MARIO\SEIM
+          # Set SEIM_REPO on the self-hosted runner machine (system/user env), not in the repo.
           DEPLOY_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
         run: |
           docker version
           docker compose version
 
+          if (-not $env:SEIM_REPO) {
+            throw "SEIM_REPO is not set on this runner. Set a machine env var to the local clone path (see .github/README.md)."
+          }
           if (-not (Test-Path $env:SEIM_REPO)) {
-            throw "SEIM repo not found at $env:SEIM_REPO"
+            throw "SEIM repo not found at SEIM_REPO=$env:SEIM_REPO"
           }
           Set-Location $env:SEIM_REPO
           git fetch origin main
@@ -84,8 +87,8 @@ jobs:
           $status = if ('${{ job.status }}' -eq 'success') { '✅' } else { '❌' }
           @"
           ## Local-prod deploy $status
-          - **URL:** http://localhost:8020/seim/
           - **Health:** http://localhost:8020/health/live/
           - **Compose project:** seim-localprod
           - **Trigger:** ${{ github.event_name }}
+          - **Migrate:** one-shot ``migrate`` Compose profile (after pg_dump, before app up)
           "@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8

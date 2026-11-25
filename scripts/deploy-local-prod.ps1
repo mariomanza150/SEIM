@@ -23,12 +23,16 @@ param(
     [switch]$NoCache,
     [switch]$SkipPull,
     [switch]$SkipBuild,
+    [switch]$SkipMigrate,
+    [switch]$SkipDbBackup,
     [int]$HealthTimeoutSec = 180,
     [int]$LockWaitSec = 180,
     [int]$LockTtlSec = 600,
     [int]$BuildTimeoutSec = 480,
     [int]$ComposeWaitTimeoutSec = 180,
     [int]$ComposeUpTimeoutSec = 240,
+    [int]$MigrateTimeoutSec = 180,
+    [int]$DbBackupTimeoutSec = 120,
     [int]$StartTimeoutSec = 30,
     [int]$FallbackTimeoutSec = 120,
     [int]$TotalBudgetSec = 1080
@@ -49,6 +53,9 @@ $LockRunId = if ($env:GITHUB_RUN_ID) { "gh-$($env:GITHUB_RUN_ID)-$($env:GITHUB_R
 # Fallback start order: data services first, the tunnel last; anything else in between.
 $StartOrder = @("db", "redis", "toefl", "web", "celery", "celery-beat", "cloudflared")
 $ScriptDeadline = (Get-Date).AddSeconds($TotalBudgetSec)
+$DbBackupDirRel = if ($env:SEIM_DB_BACKUP_DIR) { $env:SEIM_DB_BACKUP_DIR.Trim() } else { "backups/local-prod" }
+$DbBackupKeep = 10
+if ($env:SEIM_DB_BACKUP_KEEP -match '^\d+$') { $DbBackupKeep = [int]$env:SEIM_DB_BACKUP_KEEP }
 
 . (Join-Path $PSScriptRoot "maintenance-lock.ps1")
 
@@ -119,6 +126,60 @@ function Assert-LockHeld($Heartbeat) {
     if ($why) { throw "Maintenance lock heartbeat failed ($why); stopping the deploy" }
 }
 
+function Get-EnvFileValue([string]$Path, [string]$Key, [string]$Default = "") {
+    $line = Select-String -Path $Path -Pattern ("^\s*" + [regex]::Escape($Key) + "\s*=") -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $line) { return $Default }
+    $raw = ($line.Line -split "=", 2)[1].Trim()
+    if ($raw.StartsWith('"') -and $raw.EndsWith('"')) { $raw = $raw.Substring(1, $raw.Length - 2) }
+    if ($raw.StartsWith("'") -and $raw.EndsWith("'")) { $raw = $raw.Substring(1, $raw.Length - 2) }
+    if (-not $raw) { return $Default }
+    return $raw
+}
+
+function Invoke-PreMigrateDbBackup([string]$Project, [string]$Compose, [string]$EnvPath, [int]$TimeoutSec) {
+    # Custom-format dump from the running db container into SEIM_DB_BACKUP_DIR (host path).
+    $dbPass = Get-EnvFileValue $EnvPath "DB_PASSWORD" "changeme123"
+    $backupRoot = if ([System.IO.Path]::IsPathRooted($DbBackupDirRel)) { $DbBackupDirRel } else { Join-Path $ProjectRoot $DbBackupDirRel }
+    New-Item -ItemType Directory -Force -Path $backupRoot | Out-Null
+    $stamp = (Get-Date).ToUniversalTime().ToString("yyyyMMddTHHmmssZ")
+    $outFile = Join-Path $backupRoot ("seim_prod-" + $stamp + ".dump")
+    Write-Host "pg_dump -> $outFile"
+    $dumpArgs = @(
+        "compose", "-p", $Project, "-f", $Compose, "--env-file", $EnvPath,
+        "exec", "-T", "-e", "PGPASSWORD=$dbPass", "db",
+        "pg_dump", "-U", "seimuser", "-d", "seim_prod", "-Fc"
+    )
+    $proc = Start-Process -FilePath "docker" -ArgumentList $dumpArgs -NoNewWindow -PassThru `
+        -RedirectStandardOutput $outFile -RedirectStandardError (Join-Path $backupRoot "pg_dump.err")
+    $null = $proc.Handle
+    if (-not $proc.WaitForExit($TimeoutSec * 1000)) {
+        Write-Host "pg_dump did not finish in ${TimeoutSec}s; killing it" -ForegroundColor Red
+        & taskkill /T /F /PID $proc.Id | Out-Host
+        throw "pg_dump timed out after ${TimeoutSec}s"
+    }
+    if ($proc.ExitCode -ne 0) {
+        $err = if (Test-Path (Join-Path $backupRoot "pg_dump.err")) { Get-Content (Join-Path $backupRoot "pg_dump.err") -Raw } else { "" }
+        throw "pg_dump failed (exit $($proc.ExitCode)): $err"
+    }
+    # Retention: keep newest N dumps.
+    $dumps = @(Get-ChildItem -Path $backupRoot -Filter "seim_prod-*.dump" | Sort-Object LastWriteTime -Descending)
+    if ($dumps.Count -gt $DbBackupKeep) {
+        $dumps | Select-Object -Skip $DbBackupKeep | ForEach-Object { Remove-Item -Force $_.FullName }
+    }
+}
+
+function Invoke-MigrateService([string]$Project, [string]$Compose, [string]$EnvPath, [int]$TimeoutSec) {
+    # One-shot migrate profile (does not stay running). Requires db healthy.
+    $args = @(
+        "compose", "-p", $Project, "-f", $Compose, "--env-file", $EnvPath,
+        "--profile", "migrate",
+        "run", "--rm", "migrate"
+    )
+    $code = Invoke-Bounded $args $TimeoutSec "docker compose run migrate"
+    if ($null -eq $code) { throw "docker compose run migrate timed out after ${TimeoutSec}s" }
+    if ($code -ne 0) { throw "docker compose run migrate failed (exit $code)" }
+}
+
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
     throw "Docker CLI not found. Start Docker Desktop and retry."
 }
@@ -176,6 +237,31 @@ try {
         if ($buildExit -ne 0) { throw "docker compose build failed (exit $buildExit)" }
     }
     Assert-LockHeld $heartbeat
+
+    # Data plane first so pg_dump / migrate can talk to a healthy Postgres before app rollout.
+    $dataUpTimeout = Get-StepTimeout $ComposeWaitTimeoutSec "db/redis up"
+    Write-Step "Ensuring db and redis are up (hard timeout ${dataUpTimeout}s)"
+    $dataUpArgs = @(
+        "compose", "-p", $ProjectName, "-f", $ComposeFile, "--env-file", $EnvFile,
+        "up", "-d", "--no-build", "--wait", "--wait-timeout", "$ComposeWaitTimeoutSec", "db", "redis")
+    $dataUpExit = Invoke-Bounded $dataUpArgs $dataUpTimeout "docker compose up db redis"
+    if ($null -eq $dataUpExit) { throw "docker compose up db redis timed out after ${dataUpTimeout}s" }
+    if ($dataUpExit -ne 0) { throw "docker compose up db redis failed (exit $dataUpExit)" }
+    Assert-LockHeld $heartbeat
+
+    if (-not $SkipDbBackup) {
+        $backupTimeout = Get-StepTimeout $DbBackupTimeoutSec "pg_dump"
+        Write-Step "Pre-migrate database backup (pg_dump, hard timeout ${backupTimeout}s)"
+        Invoke-PreMigrateDbBackup -Project $ProjectName -Compose $ComposeFile -EnvPath $EnvFile -TimeoutSec $backupTimeout
+        Assert-LockHeld $heartbeat
+    }
+
+    if (-not $SkipMigrate) {
+        $migrateTimeout = Get-StepTimeout $MigrateTimeoutSec "migrate"
+        Write-Step "Applying migrations (one-shot migrate service, hard timeout ${migrateTimeout}s)"
+        Invoke-MigrateService -Project $ProjectName -Compose $ComposeFile -EnvPath $EnvFile -TimeoutSec $migrateTimeout
+        Assert-LockHeld $heartbeat
+    }
 
     # Include the named-tunnel profile when a token is configured; otherwise
     # --remove-orphans would tear down the running cloudflared container.

@@ -38,6 +38,39 @@ services:
       timeout: 5s
       retries: 5
 
+  # One-shot schema apply. Deploy runs this after pg_dump and before web/celery rollout.
+  #   docker compose -p seim-localprod -f docker-compose.local-prod.yml --env-file .env.local-prod run --rm migrate
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+      args:
+        VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+        VITE_SENTRY_ENVIRONMENT: ${VITE_SENTRY_ENVIRONMENT:-${SENTRY_ENVIRONMENT:-local-prod}}
+        VITE_SENTRY_RELEASE: ${SENTRY_RELEASE:-${GIT_COMMIT:-}}
+        VITE_SENTRY_SAMPLE_RATE: ${VITE_SENTRY_SAMPLE_RATE:-1.0}
+        VITE_SENTRY_TRACES_SAMPLE_RATE: ${VITE_SENTRY_TRACES_SAMPLE_RATE:-0.05}
+        VITE_SENTRY_LOGS_LEVEL: ${VITE_SENTRY_LOGS_LEVEL:-warn}
+        GIT_COMMIT: ${GIT_COMMIT:-}
+    env_file:
+      - .env.local-prod
+    profiles: ["migrate"]
+    restart: "no"
+    command: ["python", "manage.py", "migrate", "--noinput"]
+    networks:
+      - seim-prod-network
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - DJANGO_SETTINGS_MODULE=seim.settings.production
+      - DJANGO_ENV=production
+      - DEBUG=False
+      - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
+      - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
+
   web:
     build:
       context: .
@@ -56,14 +89,14 @@ services:
     env_file:
       - .env.local-prod
     restart: unless-stopped
-    # See scripts/local-prod-web-entry.sh — waits for Compose DNS + Postgres TCP before migrate.
+    # See scripts/local-prod-web-entry.sh — waits for Postgres TCP, then gunicorn.
+    # Migrations: ``migrate`` service. Statics: baked in Dockerfile.prod (do not mount over staticfiles).
     command: ["bash", "/app/scripts/local-prod-web-entry.sh"]
     # Published ports avoid clashing with dev compose (``web`` uses host 8001). Use 8020/8021 for local-prod.
     ports:
       - "8020:8000"
       - "8021:8000"
     volumes:
-      - static_prod_volume:/app/staticfiles
       - media_prod_volume:/app/media
       - logs_prod_volume:/app/logs
     networks:
@@ -87,6 +120,7 @@ services:
       - DISABLE_THROTTLE_E2E=1
       - SECRET_KEY=${SECRET_KEY:-your-secret-key-change-me-in-real-production}
       # Explicit hosts only — ALLOW_ANY_HOST / * are rejected by production settings.
+      # Override via CORS_ALLOWED_ORIGINS / CSRF_TRUSTED_ORIGINS / DJANGO_ALLOWED_HOSTS in .env.local-prod.
       - DJANGO_ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,host.docker.internal,.ts.net}
       - DATABASE_URL=postgresql://seimuser:${DB_PASSWORD:-changeme123}@db:5432/seim_prod
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
@@ -97,11 +131,11 @@ services:
       - CSRF_COOKIE_SECURE=False
       - SECURE_HSTS_SECONDS=0
       # TLS terminators (Cloudflare Tunnel / Tailscale Serve) proxy HTTP to this container.
-      # Backend is plain HTTP: ``http://127.0.0.1:8020`` — not https://.
+      # Backend is plain HTTP on the published host ports — not https://.
       - USE_TLS_PROXY_HEADERS=1
       - USE_REQUEST_HOST_FOR_SITE=1
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://desktop-kg5i7pt.tail4dc6e5.ts.net}
-      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://desktop-kg5i7pt.tail4dc6e5.ts.net,https://*.trycloudflare.com,https://*.cfargotunnel.com}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020}
+      - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-http://localhost:8020,http://127.0.0.1:8020,http://localhost:8021,http://127.0.0.1:8021,http://host.docker.internal:8020,https://*.trycloudflare.com,https://*.cfargotunnel.com}
       - TOEFL_API_BASE_URL=${TOEFL_API_BASE_URL:-http://toefl:5000}
       - TOEFL_API_KEY=${TOEFL_API_KEY:-toefl-api-key-change-me}
       - TOEFL_SIGNING_SECRET=${TOEFL_SIGNING_SECRET:-toefl-signing-secret-change-me}
@@ -245,8 +279,7 @@ volumes:
     driver: local
   redis_prod_data:
     driver: local
-  static_prod_volume:
-    driver: local
+  # staticfiles are baked into Dockerfile.prod; do not mount a volume over /app/staticfiles.
   media_prod_volume:
     driver: local
   logs_prod_volume:

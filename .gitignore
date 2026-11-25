@@ -228,6 +228,7 @@ tenant_config.json
 *.bak
 *.backup
 *.tmp
+backups/
 logs/runner-registration-token.txt
 logs/cloudflare-tunnel.url
 logs/cloudflare-tunnel.log
