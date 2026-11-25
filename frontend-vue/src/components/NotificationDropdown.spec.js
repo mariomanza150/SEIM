@@ -225,4 +225,72 @@ describe('NotificationDropdown', () => {
     expect(wrapper.text()).toContain('Hello')
     wrapper.unmount()
   })
+
+  it('marks a notification as read from the dropdown', async () => {
+    api.get.mockImplementation((_url, opts) => {
+      const p = opts?.params || {}
+      if (p.is_read === false) {
+        return Promise.resolve({ data: { count: 1, results: [] } })
+      }
+      return Promise.resolve({
+        data: {
+          results: [
+            {
+              id: 11,
+              title: 'Unread notice',
+              message: 'Please review',
+              is_read: false,
+              sent_at: new Date().toISOString(),
+            },
+          ],
+          count: 1,
+        },
+      })
+    })
+    api.post.mockResolvedValue({})
+    const wrapper = mount(NotificationDropdown, {
+      attachTo: document.body,
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    await wrapper.find('#notificationDropdown').trigger('click')
+    await flushPromises()
+    await wrapper.get('[data-testid="notification-mark-read"]').trigger('click')
+    await flushPromises()
+    expect(api.post).toHaveBeenCalledWith('/api/notifications/11/mark_read/')
+    wrapper.unmount()
+  })
+
+  it('refreshes when a notification-new event fires', async () => {
+    const wrapper = mount(NotificationDropdown, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    api.get.mockClear()
+    window.dispatchEvent(new Event('notification-new'))
+    await flushPromises()
+    expect(api.get).toHaveBeenCalled()
+    wrapper.unmount()
+  })
+
+  it('swallows fetch failures without crashing', async () => {
+    api.get.mockRejectedValue(new Error('offline'))
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const wrapper = mount(NotificationDropdown, {
+      global: {
+        plugins: [i18n],
+        stubs: { RouterLink: { template: '<a><slot /></a>' } },
+      },
+    })
+    await flushPromises()
+    expect(wrapper.find('#notificationDropdown').exists()).toBe(true)
+    warn.mockRestore()
+  })
+
 })
