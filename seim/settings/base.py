@@ -11,6 +11,7 @@ from pathlib import Path
 import environ
 
 from core.branding import DEFAULT_INSTITUTION, merge_institution_config
+from core.static_headers import whitenoise_add_headers
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -262,6 +263,9 @@ STATICFILES_FINDERS = [
 
 # WhiteNoise configuration for production
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# Default non-hashed max-age is 60s; HTML entry docs (SPA index.html under /static/)
+# must not be cached at all — hashed assets keep immutable forever via Manifest storage.
+WHITENOISE_ADD_HEADERS_FUNCTION = whitenoise_add_headers
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
