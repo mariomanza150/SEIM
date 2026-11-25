@@ -25,7 +25,11 @@ param(
     [switch]$SkipBuild,
     [switch]$SkipMigrate,
     [switch]$SkipDbBackup,
+    [switch]$SkipSmoke,
+    [switch]$SkipRegistryPush,
     [int]$HealthTimeoutSec = 180,
+    [int]$SmokeTimeoutSec = 240,
+    [int]$RegistryTimeoutSec = 120,
     [int]$LockWaitSec = 180,
     [int]$LockTtlSec = 600,
     [int]$BuildTimeoutSec = 480,
@@ -56,6 +60,10 @@ $ScriptDeadline = (Get-Date).AddSeconds($TotalBudgetSec)
 $DbBackupDirRel = if ($env:SEIM_DB_BACKUP_DIR) { $env:SEIM_DB_BACKUP_DIR.Trim() } else { "backups/local-prod" }
 $DbBackupKeep = 10
 if ($env:SEIM_DB_BACKUP_KEEP -match '^\d+$') { $DbBackupKeep = [int]$env:SEIM_DB_BACKUP_KEEP }
+$RegistryCompose = Join-Path $ProjectRoot "deploy/docker-compose.registry.yml"
+$LocalRegistry = "127.0.0.1:5000"
+$AppImage = ""
+$ToeflImage = ""
 
 . (Join-Path $PSScriptRoot "maintenance-lock.ps1")
 
@@ -180,6 +188,46 @@ function Invoke-MigrateService([string]$Project, [string]$Compose, [string]$EnvP
     if ($code -ne 0) { throw "docker compose run migrate failed (exit $code)" }
 }
 
+function Ensure-LocalRegistry([int]$TimeoutSec) {
+    if (-not (Test-Path $RegistryCompose)) {
+        throw "Missing $RegistryCompose — local registry compose file required"
+    }
+    Write-Host "Ensuring local registry at $LocalRegistry (loopback only)"
+    $upArgs = @(
+        "compose", "-f", $RegistryCompose, "--env-file", $EnvFile,
+        "up", "-d", "--wait", "--wait-timeout", "60"
+    )
+    $code = Invoke-Bounded $upArgs $TimeoutSec "docker compose up registry"
+    if ($null -eq $code) { throw "local registry up timed out after ${TimeoutSec}s" }
+    if ($code -ne 0) { throw "local registry up failed (exit $code)" }
+}
+
+function Publish-ImageTags([string]$AppImage, [string]$ToeflImage, [switch]$AlsoLastGood) {
+    $targets = @($AppImage, $ToeflImage)
+    if ($AlsoLastGood) {
+        $targets += @(($AppImage -replace ':[^:]+$', ':last-good'), ($ToeflImage -replace ':[^:]+$', ':last-good'))
+    }
+    foreach ($t in $targets) {
+        Write-Host "docker push $t"
+        $code = Invoke-Bounded @("push", $t) 120 "docker push $t"
+        if ($null -eq $code) { throw "docker push $t timed out" }
+        if ($code -ne 0) { throw "docker push $t failed (exit $code)" }
+    }
+}
+
+function Set-LastGoodTags([string]$AppImage, [string]$ToeflImage) {
+    $appGood = ($AppImage -replace ':[^:]+$', ':last-good')
+    $toeflGood = ($ToeflImage -replace ':[^:]+$', ':last-good')
+    foreach ($pair in @(@($AppImage, $appGood), @($ToeflImage, $toeflGood))) {
+        Write-Host "docker tag $($pair[0]) -> $($pair[1])"
+        $code = Invoke-Bounded @("tag", $pair[0], $pair[1]) 30 "docker tag $($pair[1])"
+        if ($null -eq $code -or $code -ne 0) { throw "docker tag $($pair[1]) failed" }
+    }
+    if (-not $SkipRegistryPush) {
+        Publish-ImageTags -AppImage $appGood -ToeflImage $toeflGood
+    }
+}
+
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
     throw "Docker CLI not found. Start Docker Desktop and retry."
 }
@@ -191,6 +239,18 @@ Copy env.local-prod.example to .env.local-prod and configure secrets first.
 "@
 }
 
+if ($env:LOCAL_REGISTRY) {
+    $LocalRegistry = $env:LOCAL_REGISTRY.Trim()
+} else {
+    $fromEnv = Get-EnvFileValue $EnvFile "LOCAL_REGISTRY" ""
+    if ($fromEnv) { $LocalRegistry = $fromEnv }
+}
+$env:LOCAL_REGISTRY = $LocalRegistry
+if (-not $env:LOCAL_REGISTRY_PORT) {
+    $portPart = ($LocalRegistry -split ":", 2)[-1]
+    if ($portPart -match '^\d+$') { $env:LOCAL_REGISTRY_PORT = $portPart }
+}
+
 if (-not $SkipPull) {
     Write-Step "Pulling latest git changes"
     git pull --ff-only
@@ -199,11 +259,20 @@ if (-not $SkipPull) {
 # Stamp the build with the deployed commit (tester version badge / settings.BUILD_COMMIT, and the
 # GlitchTip release unless SENTRY_RELEASE is set). It is a build arg baked into the image, so
 # -SkipBuild reuses the running images and keeps their release.
-try {
-    $env:GIT_COMMIT = (git rev-parse HEAD).Trim()
-} catch {
-    $env:GIT_COMMIT = ""
+# SEIM_IMAGE_TAG may be pre-set (tests / pinned rollback); otherwise use git HEAD.
+if (-not $env:SEIM_IMAGE_TAG) {
+    try {
+        $env:GIT_COMMIT = (git rev-parse HEAD).Trim()
+    } catch {
+        $env:GIT_COMMIT = ""
+    }
+    if (-not $env:GIT_COMMIT) { throw "Could not resolve git HEAD for SEIM_IMAGE_TAG" }
+    $env:SEIM_IMAGE_TAG = $env:GIT_COMMIT
+} else {
+    if (-not $env:GIT_COMMIT) { $env:GIT_COMMIT = $env:SEIM_IMAGE_TAG }
 }
+$AppImage = "$LocalRegistry/seim-app:$($env:SEIM_IMAGE_TAG)"
+$ToeflImage = "$LocalRegistry/seim-toefl:$($env:SEIM_IMAGE_TAG)"
 
 Write-Step "Taking the maintenance lock ($LockRepo run $LockRunId, wait up to ${LockWaitSec}s)"
 try {
@@ -218,9 +287,12 @@ $recovered = $false
 try {
     $heartbeat = Start-MaintenanceLockHeartbeat -Repo $LockRepo -RunId $LockRunId -TtlSeconds $LockTtlSec
 
+    Ensure-LocalRegistry -TimeoutSec (Get-StepTimeout $RegistryTimeoutSec "local registry")
+    Assert-LockHeld $heartbeat
+
     if (-not $SkipBuild) {
         $buildTimeout = Get-StepTimeout $BuildTimeoutSec "the build"
-        Write-Step "Building production images (web, celery, celery-beat, toefl) (hard timeout ${buildTimeout}s)"
+        Write-Step "Building images tagged $AppImage (and toefl) (hard timeout ${buildTimeout}s)"
         $buildArgs = @(
             "compose", "-p", $ProjectName,
             "-f", $ComposeFile,
@@ -230,11 +302,38 @@ try {
         if ($NoCache) {
             $buildArgs += "--no-cache"
         }
-        # Build toefl too so its tag always matches the deployed commit and `up` recreates it.
+        # Build tags as image: LOCAL_REGISTRY/seim-app:SEIM_IMAGE_TAG (and seim-toefl).
         $buildArgs += @("web", "celery", "celery-beat", "toefl")
         $buildExit = Invoke-Bounded $buildArgs $buildTimeout "docker compose build"
         if ($null -eq $buildExit) { throw "docker compose build timed out after ${buildTimeout}s" }
         if ($buildExit -ne 0) { throw "docker compose build failed (exit $buildExit)" }
+
+        if (-not $SkipSmoke) {
+            $smokeTimeout = Get-StepTimeout $SmokeTimeoutSec "image smoke test"
+            Write-Step "Smoke-testing $AppImage (empty Postgres → migrate → check --deploy → /health/live/)"
+            $smokeScript = Join-Path $PSScriptRoot "smoke-local-prod-image.ps1"
+            $smokeProc = Start-Process -FilePath "pwsh" -ArgumentList @(
+                "-NoProfile", "-File", $smokeScript, "-Image", $AppImage, "-TimeoutSec", "$smokeTimeout"
+            ) -NoNewWindow -PassThru
+            $null = $smokeProc.Handle
+            if (-not $smokeProc.WaitForExit(($smokeTimeout + 30) * 1000)) {
+                & taskkill /T /F /PID $smokeProc.Id | Out-Host
+                throw "smoke test timed out after ${smokeTimeout}s"
+            }
+            if ($smokeProc.ExitCode -ne 0) { throw "smoke test failed (exit $($smokeProc.ExitCode))" }
+        }
+
+        if (-not $SkipRegistryPush) {
+            Write-Step "Pushing SHA tags to local registry $LocalRegistry"
+            Publish-ImageTags -AppImage $AppImage -ToeflImage $ToeflImage
+        }
+    } else {
+        Write-Step "SkipBuild: using existing tag $AppImage"
+        if (-not $SkipRegistryPush) {
+            # Prefer the exact SHA from the local registry when rebuilding was skipped.
+            $null = Invoke-Bounded @("pull", $AppImage) 120 "docker pull $AppImage"
+            $null = Invoke-Bounded @("pull", $ToeflImage) 120 "docker pull $ToeflImage"
+        }
     }
     Assert-LockHeld $heartbeat
 
@@ -325,6 +424,9 @@ try {
     if ($recovered) {
         Write-Host "::warning::docker compose up hung and was killed; the stack was started by the fallback and is healthy."
     }
+
+    Write-Step "Promoting $AppImage to last-good (local registry)"
+    Set-LastGoodTags -AppImage $AppImage -ToeflImage $ToeflImage
 } finally {
     Stop-MaintenanceLockHeartbeat $heartbeat
     Exit-MaintenanceLock -Repo $LockRepo -RunId $LockRunId | Out-Null
@@ -333,4 +435,5 @@ try {
 Write-Step "Deploy complete"
 Write-Host "App: http://localhost:8020/seim/" -ForegroundColor Green
 Write-Host "Health: $HealthUrl" -ForegroundColor Green
+Write-Host "Image: $AppImage (last-good updated)" -ForegroundColor Green
 $null = Invoke-Bounded @("compose", "-p", $ProjectName, "-f", $ComposeFile, "ps") 30 "docker compose ps"

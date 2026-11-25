@@ -1,0 +1,37 @@
+# Local-only container image registry for local-prod deploys.
+# Bound to loopback so it is not reachable from other hosts.
+#
+# Address comes from env (never commit a hostname):
+#   LOCAL_REGISTRY=127.0.0.1:5000
+#   LOCAL_REGISTRY_PORT=5000
+#
+# Start:
+#   docker compose -f deploy/docker-compose.registry.yml --env-file .env.local-prod up -d
+#
+# Docker Engine must allow this HTTP registry (Docker Desktop → Docker Engine JSON):
+#   "insecure-registries": ["127.0.0.1:5000"]
+#
+# Do not push to GHCR from the local-prod path; no GitHub token is used here.
+
+name: seim-local-registry
+
+services:
+  registry:
+    image: registry:2
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${LOCAL_REGISTRY_PORT:-5000}:5000"
+    environment:
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    volumes:
+      - seim_local_registry_data:/var/lib/registry
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:5000/v2/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  seim_local_registry_data:
+    driver: local

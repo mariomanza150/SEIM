@@ -41,6 +41,8 @@ services:
   # One-shot schema apply. Deploy runs this after pg_dump and before web/celery rollout.
   #   docker compose -p seim-localprod -f docker-compose.local-prod.yml --env-file .env.local-prod run --rm migrate
   migrate:
+    # Tag comes from LOCAL_REGISTRY + SEIM_IMAGE_TAG (deploy sets the git SHA).
+    image: ${LOCAL_REGISTRY:-127.0.0.1:5000}/seim-app:${SEIM_IMAGE_TAG:-local}
     build:
       context: .
       dockerfile: Dockerfile.prod
@@ -72,6 +74,7 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
 
   web:
+    image: ${LOCAL_REGISTRY:-127.0.0.1:5000}/seim-app:${SEIM_IMAGE_TAG:-local}
     build:
       context: .
       dockerfile: Dockerfile.prod
@@ -145,6 +148,7 @@ services:
       - TOEFL_DEFAULT_EXAM_CODE=${TOEFL_DEFAULT_EXAM_CODE:-director_extracted}
 
   celery:
+    image: ${LOCAL_REGISTRY:-127.0.0.1:5000}/seim-app:${SEIM_IMAGE_TAG:-local}
     build:
       context: .
       dockerfile: Dockerfile.prod
@@ -192,6 +196,7 @@ services:
       - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD:-redis123}@redis:6379/0
 
   celery-beat:
+    image: ${LOCAL_REGISTRY:-127.0.0.1:5000}/seim-app:${SEIM_IMAGE_TAG:-local}
     build:
       context: .
       dockerfile: Dockerfile.prod
@@ -239,6 +244,7 @@ services:
 
 
   toefl:
+    image: ${LOCAL_REGISTRY:-127.0.0.1:5000}/seim-toefl:${SEIM_IMAGE_TAG:-local}
     build:
       context: ${TOEFL_CONTEXT:-../toefl-practice}
       dockerfile: Dockerfile
