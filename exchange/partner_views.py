@@ -113,6 +113,24 @@ class PartnerAgreementViewSet(viewsets.ReadOnlyModelViewSet):
             return qs.all()
         return qs.filter(id__in=partner_agreement_ids(user))
 
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        user = self.request.user
+        if getattr(user, "is_authenticated", False):
+            roles = list(user.roles.all())
+            cache = getattr(user, "_prefetched_objects_cache", None)
+            if cache is None:
+                user._prefetched_objects_cache = {}
+            user._prefetched_objects_cache["roles"] = roles
+            ctx["viewer_is_agreement_staff"] = bool(
+                user.is_staff
+                or user.is_superuser
+                or user.has_any_role(["coordinator", "admin"])
+            )
+        else:
+            ctx["viewer_is_agreement_staff"] = False
+        return ctx
+
     @action(
         detail=True,
         methods=["get", "post"],
@@ -264,10 +282,30 @@ class PartnerApplicationViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsPartnerOrStaff]
 
     def get_queryset(self):
+        from documents.models import Document
+        from exchange.models import ProgramDocumentRequirement
+
         user = self.request.user
+        # Checklist serialization walks requirements, uploads, successors, and
+        # resubmissions — prefetch so list cost stays flat as rows grow.
+        req_qs = (
+            ProgramDocumentRequirement.objects.select_related(
+                "document_type", "required_from_status"
+            )
+            .prefetch_related("document_type__file_type_families")
+            .order_by("sort_order", "id")
+        )
+        doc_qs = Document.objects.select_related("type").prefetch_related(
+            "type__file_type_families",
+            "successors",
+            "documentresubmissionrequest_set",
+        )
         qs = Application.objects.select_related(
             "program", "student", "status"
-        ).prefetch_related("document_set", "document_set__type")
+        ).prefetch_related(
+            Prefetch("program__program_document_requirements", queryset=req_qs),
+            Prefetch("document_set", queryset=doc_qs),
+        )
         if _is_staff(user):
             return qs.all()
         return qs.filter(
