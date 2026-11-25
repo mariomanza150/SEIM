@@ -27,6 +27,7 @@ class ExchangeAgreementDocumentAdmin(admin.ModelAdmin):
         "created_at",
         "supersedes",
     )
+    list_select_related = ("agreement", "uploaded_by", "supersedes")
     list_filter = ("category", "agreement")
     search_fields = (
         "title",
@@ -117,6 +118,7 @@ class DocumentAdmin(admin.ModelAdmin):
         "validated_at",
         "supersedes",
     )
+    list_select_related = ("application", "type", "uploaded_by", "supersedes")
     search_fields = ("application__id", "type__name", "uploaded_by__email")
     list_filter = ("is_valid", "type")
     list_editable = ("is_valid",)
@@ -145,6 +147,7 @@ class DocumentAdmin(admin.ModelAdmin):
 @admin.register(DocumentValidation)
 class DocumentValidationAdmin(admin.ModelAdmin):
     list_display = ("document", "validator", "result", "validated_at")
+    list_select_related = ("document", "validator")
     search_fields = ("document__id", "validator__email", "result")
     readonly_fields = ("validated_at", "created_at", "updated_at")
 
@@ -152,6 +155,7 @@ class DocumentValidationAdmin(admin.ModelAdmin):
 @admin.register(DocumentResubmissionRequest)
 class DocumentResubmissionRequestAdmin(admin.ModelAdmin):
     list_display = ("document", "requested_by", "resolved", "requested_at")
+    list_select_related = ("document", "requested_by")
     search_fields = ("document__id", "requested_by__email", "reason")
     list_filter = ("resolved",)
     readonly_fields = ("requested_at", "created_at", "updated_at")

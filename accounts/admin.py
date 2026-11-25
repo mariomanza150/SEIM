@@ -95,6 +95,7 @@ class ProfileAdmin(admin.ModelAdmin):
         "school",
         "is_ready_to_apply",
     )
+    list_select_related = ("user", "academic_level", "school", "unidad", "gender")
     list_filter = ("academic_level", "school", "unidad", "gender")
     search_fields = ("user__email", "secondary_email", "matricula", "rfc")
 
@@ -121,6 +122,7 @@ class AllowedEmailDomainAdmin(CatalogAdmin):
         "is_active",
         "ordering",
     )
+    list_select_related = ("default_grade_scale",)
     list_editable = ("lock_grade_scale", "is_active", "ordering")
     list_filter = ("is_active", "lock_grade_scale")
 
@@ -138,7 +140,7 @@ class AcademicLevelAdmin(CatalogAdmin):
 
 @admin.register(SchoolFaculty)
 class SchoolFacultyAdmin(CatalogAdmin):
-    pass
+    list_select_related = ("unidad",)
 
 
 @admin.register(Unidad)
@@ -154,6 +156,7 @@ class BankInstitutionAdmin(CatalogAdmin):
 @admin.register(HomeAcademicProgram)
 class HomeAcademicProgramAdmin(CatalogAdmin):
     list_display = ("name", "school", "code", "is_active", "ordering")
+    list_select_related = ("school",)
     list_filter = ("school", "is_active")
 
 
